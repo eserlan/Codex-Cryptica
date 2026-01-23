@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ConnectionSchema } from './connection';
 
 export const EntityTypeSchema = z.enum(['npc', 'location', 'item', 'event', 'faction']);
 
@@ -7,8 +8,11 @@ export const EntitySchema = z.object({
   type: EntityTypeSchema,
   title: z.string().min(1),
   tags: z.array(z.string()).default([]),
-  connections: z.array(z.any()).default([]), // Refined in ConnectionSchema
-  content: z.string().optional(), // Markdown content
+  connections: z.array(ConnectionSchema).default([]),
+  content: z.string().default(''), // Markdown content, default empty
+  metadata: z.object({
+    coordinates: z.object({ x: z.number(), y: z.number() }).optional()
+  }).optional()
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

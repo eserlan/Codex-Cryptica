@@ -1,4 +1,5 @@
 import cytoscape from 'cytoscape';
+export * from './transformer';
 
 export interface GraphOptions {
   container?: HTMLElement;
@@ -17,7 +18,7 @@ export const initGraph = (options: GraphOptions) => {
         selector: 'node',
         style: {
           'background-color': '#666',
-          'label': 'data(id)'
+          'label': 'data(label)' // Updated to use label
         }
       },
       {
@@ -32,8 +33,8 @@ export const initGraph = (options: GraphOptions) => {
       }
     ],
     layout: {
-      name: 'grid',
-      rows: 1
+      name: 'cose', // Better default layout
+      animate: false
     }
   });
 };

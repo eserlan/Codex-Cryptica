@@ -20,6 +20,7 @@
     "cytoscape": "^3.28.0",
     "editor-core": "*",
     "graph-engine": "*",
+    "js-yaml": "^4.1.1",
     "rxdb": "^15.0.0",
     "rxjs": "^7.8.0",
     "schema": "*"
@@ -31,6 +32,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.3.1",
+    "@types/js-yaml": "^4.0.9",
     "autoprefixer": "^10.4.23",
     "jsdom": "^27.4.0",
     "postcss": "^8.5.6",
