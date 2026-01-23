@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "test": "vitest run",
+    "lint": "svelte-check --tsconfig ./tsconfig.json && eslint .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
@@ -21,8 +22,7 @@
     "graph-engine": "*",
     "rxdb": "^15.0.0",
     "rxjs": "^7.8.0",
-    "schema": "*",
-    "zustand": "^4.5.0"
+    "schema": "*"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^7.0.0",

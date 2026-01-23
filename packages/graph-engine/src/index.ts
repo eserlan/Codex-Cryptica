@@ -1,14 +1,16 @@
 import cytoscape from 'cytoscape';
 
 export interface GraphOptions {
-  container: HTMLElement;
+  container?: HTMLElement;
   elements?: any[];
   style?: any[];
+  headless?: boolean;
 }
 
 export const initGraph = (options: GraphOptions) => {
   return cytoscape({
     container: options.container,
+    headless: options.headless,
     elements: options.elements || [],
     style: options.style || [
       {
