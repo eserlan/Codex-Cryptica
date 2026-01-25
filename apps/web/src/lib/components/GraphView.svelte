@@ -14,15 +14,15 @@
     selectedId: string | null;
   }>();
 
-  function toggleConnectMode() {
+  const toggleConnectMode = () => {
     connectMode = !connectMode;
     if (!connectMode) {
       sourceId = null;
       cy?.$(".selected-source").removeClass("selected-source");
     }
-  }
+  };
 
-  function handleKeyDown(e: KeyboardEvent) {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       // Don't toggle if user is typing in an input (though we don't have many here yet)
       if (
@@ -35,7 +35,7 @@
     if (e.key === "Escape" && connectMode) {
       toggleConnectMode();
     }
-  }
+  };
 
   // Green Sci-Fi Theme ("Green Ops")
   const SCIFI_GREEN_STYLE = [
@@ -215,7 +215,7 @@
           const layout = cy.layout({
             name: "cose",
             animate: true,
-            // @ts-ignore - 'duration' is valid for cose but types might be strict
+            // @ts-expect-error - 'duration' is valid for cose but types might be strict
             duration: 800,
             padding: 50,
             componentSpacing: 100,

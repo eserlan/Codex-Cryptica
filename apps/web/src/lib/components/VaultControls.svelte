@@ -6,7 +6,7 @@
     let newTitle = $state("");
     let newType = $state<Entity["type"]>("npc");
 
-    async function handleCreate() {
+    const handleCreate = async () => {
         if (!newTitle.trim()) return;
         try {
             await vault.createEntity(newType, newTitle);
@@ -15,7 +15,7 @@
         } catch (err) {
             console.error(err);
         }
-    }
+    };
 </script>
 
 <div class="flex flex-col gap-2">

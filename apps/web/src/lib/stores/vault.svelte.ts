@@ -41,7 +41,7 @@ class VaultStore {
   }
 
   async verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    // @ts-ignore - queryPermission might not be in all TS types yet
+    // @ts-expect-error - queryPermission might not be in all TS types yet
     const state = await handle.queryPermission({ mode: 'readwrite' });
     if (state === 'granted') return true;
     return false;
@@ -49,7 +49,7 @@ class VaultStore {
 
   async requestPermission() {
     if (!this.rootHandle) return;
-    // @ts-ignore
+    // @ts-expect-error - File System API types
     const state = await this.rootHandle.requestPermission({ mode: 'readwrite' });
     if (state === 'granted') {
       this.isAuthorized = true;
@@ -64,7 +64,7 @@ class VaultStore {
   async openDirectory() {
     this.errorMessage = null;
 
-    // @ts-ignore
+    // @ts-expect-error - File System API types
     if (typeof window.showDirectoryPicker === 'undefined') {
       this.status = 'error';
       this.errorMessage = "API unsupported. Try Chrome or check Brave Shield/Flags.";
@@ -73,7 +73,7 @@ class VaultStore {
 
     try {
       this.status = 'loading';
-      // @ts-ignore
+      // @ts-expect-error - File System API types
       const handle = await window.showDirectoryPicker({
         mode: 'readwrite'
       });
@@ -121,7 +121,7 @@ class VaultStore {
         metadata: {
           ...metadata.metadata
         } as any,
-        // @ts-ignore
+        // @ts-expect-error - File System API types
         _fsHandle: file.handle,
         _path: file.path
       };
@@ -156,7 +156,7 @@ class VaultStore {
   }
 
   async saveToDisk(entity: Entity) {
-    // @ts-ignore
+    // @ts-expect-error - File System API types
     const handle = entity._fsHandle as FileSystemFileHandle;
     if (handle) {
       this.status = 'saving';
@@ -193,9 +193,8 @@ class VaultStore {
       tags: [],
       connections: [],
       metadata: {},
-      // @ts-ignore
+      // @ts-expect-error - File System API types
       _fsHandle: handle,
-      // @ts-ignore
       _path: [filename]
     };
 
@@ -209,16 +208,16 @@ class VaultStore {
     const entity = this.entities[id];
     if (!entity) return;
 
-    // @ts-ignore
+    // @ts-expect-error - File System API types
     const handle = entity._fsHandle as FileSystemFileHandle;
-    // @ts-ignore
+    // @ts-expect-error - File System API types
     const path = entity._path as string[];
 
     if (handle && this.rootHandle) {
       if (path && path.length === 1) {
         await this.rootHandle.removeEntry(path[0]);
       } else {
-        // @ts-ignore
+        // @ts-expect-error - File System API types
         if (handle.remove) await handle.remove();
       }
     }

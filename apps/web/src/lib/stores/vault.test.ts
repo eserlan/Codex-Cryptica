@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { vault } from './vault.svelte';
-import { SvelteMap } from 'svelte/reactivity';
 import * as fsUtils from '../utils/fs';
 
 // Mock dependencies
@@ -17,9 +16,8 @@ vi.mock('../utils/idb', () => ({
 }));
 
 // Mock global window.showDirectoryPicker
-// @ts-ignore
 global.window = global.window || {};
-// @ts-ignore
+// @ts-expect-error - Mocking global
 global.window.showDirectoryPicker = vi.fn();
 
 describe('VaultStore', () => {
@@ -50,7 +48,7 @@ Content`);
 
     // Mock directory picker
     const mockHandle = {};
-    // @ts-ignore
+    // @ts-expect-error - Mocking global
     (window.showDirectoryPicker as any).mockResolvedValue(mockHandle);
 
     await vault.openDirectory();
@@ -116,7 +114,7 @@ id: test
 ---
 Link to [[Other|The Label]]`);
 
-    // @ts-ignore
+    // @ts-expect-error - Mocking global
     window.showDirectoryPicker.mockResolvedValue({});
     await vault.openDirectory();
 

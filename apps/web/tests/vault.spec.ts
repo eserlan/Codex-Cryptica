@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 
 test('Open Vault button calls showDirectoryPicker', async ({ page }) => {
     // Mock window.showDirectoryPicker
     await page.addInitScript(() => {
-        // @ts-ignore
+        // @ts-expect-error - Mock browser API
         window.showDirectoryPicker = async () => {
             console.log('MOCK: showDirectoryPicker called');
             return {

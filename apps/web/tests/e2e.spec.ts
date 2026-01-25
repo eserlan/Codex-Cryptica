@@ -6,7 +6,7 @@ const mockFileSystem = {
     name: 'test-vault',
     requestPermission: async () => 'granted',
     queryPermission: async () => 'granted',
-    entries: async function* () { return; }, // Default empty async iterator
+    entries: async function* () { yield* []; }, // Default empty async iterator
     getFileHandle: async (name: string) => ({
         kind: 'file',
         name: name,
@@ -41,7 +41,7 @@ test.describe('Vault E2E', () => {
                                     },
                                     get: () => {
                                         const r: any = {};
-                                        setTimeout(() => { r.result = null; r.onsuccess && r.onsuccess(); }, 10);
+                                        setTimeout(() => { r.result = null; if (r.onsuccess) r.onsuccess(); }, 10);
                                         return r;
                                     },
                                     delete: () => {
@@ -52,7 +52,7 @@ test.describe('Vault E2E', () => {
                                 })
                             })
                         };
-                        request.onsuccess && request.onsuccess({ target: request });
+                        if (request.onsuccess) request.onsuccess({ target: request });
                     }, 10);
                     return request;
                 }
@@ -60,9 +60,8 @@ test.describe('Vault E2E', () => {
 
             try {
                 // Try simple assignment first
-                // @ts-ignore
                 window.indexedDB = mockIDB as unknown as IDBFactory;
-            } catch (e) {
+            } catch {
                 console.log('Simple assignment failed, trying defineProperty');
             }
 
@@ -80,7 +79,7 @@ test.describe('Vault E2E', () => {
                 name: 'test-vault',
                 requestPermission: async () => 'granted',
                 queryPermission: async () => 'granted',
-                entries: async function* () { return; },
+                entries: async function* () { yield* []; },
                 values: () => [],
                 getFileHandle: async (name: string) => ({
                     kind: 'file',
@@ -90,7 +89,7 @@ test.describe('Vault E2E', () => {
                 getDirectoryHandle: async () => mockFileSystem
             };
 
-            // @ts-ignore
+            // @ts-expect-error - Mock browser API
             window.showDirectoryPicker = async () => {
                 console.log('MOCK: showDirectoryPicker invoked');
                 return mockFileSystem;
@@ -118,7 +117,7 @@ test.describe('Vault E2E', () => {
                 { name: 'Bob.md', kind: 'file', content: '---\nid: bob\ntitle: Bob\ntype: npc\n---\n# Bob' }
             ];
 
-            // @ts-ignore
+            // @ts-expect-error - Mock browser API
             window.showDirectoryPicker = async () => {
                 const mockFS = {
                     kind: 'directory',
@@ -174,7 +173,7 @@ test.describe('Vault E2E', () => {
                 { name: "NodeA.md", kind: "file", content: "---\nid: node-a\ntitle: Node A\ntype: npc\n---\n# Node A" },
                 { name: "NodeB.md", kind: "file", content: "---\nid: node-b\ntitle: Node B\ntype: npc\n---\n# Node B" }
             ];
-            // @ts-ignore
+            // @ts-expect-error - Mock browser API
             window.showDirectoryPicker = async () => ({
                 kind: "directory", name: "test-vault", requestPermission: async () => "granted", queryPermission: async () => "granted",
                 values: () => files,
@@ -200,7 +199,7 @@ test.describe('Vault E2E', () => {
         // Setup vault to enable graph interaction
         await page.addInitScript(() => {
             const files = [{ name: "A.md", kind: "file", content: "---\nid: a\n---\n" }];
-            // @ts-ignore
+            // @ts-expect-error - Mock browser API
             window.showDirectoryPicker = async () => ({
                 kind: "directory", name: "test-vault", requestPermission: async () => "granted", queryPermission: async () => "granted",
                 values: () => files,

@@ -11,25 +11,25 @@
     let editTitle = $state("");
     let editImage = $state("");
 
-    function startEditing() {
+    const startEditing = () => {
         if (!entity) return;
         editTitle = entity.title;
         editImage = entity.image || "";
         isEditing = true;
-    }
+    };
 
-    function cancelEditing() {
+    const cancelEditing = () => {
         isEditing = false;
-    }
+    };
 
-    function saveChanges() {
+    const saveChanges = () => {
         if (!entity) return;
         vault.updateEntity(entity.id, {
             title: editTitle,
             image: editImage || undefined,
         });
         isEditing = false;
-    }
+    };
 
     // Mock stats since schema might not have them yet
     const stats = [
