@@ -26,9 +26,13 @@
             {:else if vault.status === "saving"}
                 <span class="text-yellow-600">Saving...</span>
             {:else if vault.status === "error"}
-                <span class="text-red-600">Error</span>
-            {:else if vault.entities.size > 0 || vault.rootHandle}
-                {vault.entities.size} Entities
+                <span
+                    class="text-red-500 font-bold text-xs bg-red-900/20 px-2 py-1 rounded border border-red-900/50"
+                >
+                    {vault.errorMessage || "Error"}
+                </span>
+            {:else if vault.allEntities.length > 0 || vault.rootHandle}
+                {vault.allEntities.length} Entities
             {:else}
                 No Vault Open
             {/if}

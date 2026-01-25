@@ -4,9 +4,18 @@ import { getPersistedHandle, persistHandle, clearPersistedHandle } from '../util
 import type { Entity } from 'schema';
 
 class VaultStore {
-  entities = $state<Map<string, Entity>>(new Map());
+  entities = $state<Record<string, Entity>>({});
   status = $state<'idle' | 'loading' | 'saving' | 'error'>('idle');
+  errorMessage = $state<string | null>(null);
+
+  get allEntities() {
+    return Object.values(this.entities);
+  }
+
   rootHandle = $state<FileSystemDirectoryHandle | undefined>(undefined);
+  // ... (rest of props)
+
+  // ...
   isAuthorized = $state(false);
 
   private saveTimers = new Map<string, NodeJS.Timeout>();
@@ -35,10 +44,6 @@ class VaultStore {
     // @ts-ignore - queryPermission might not be in all TS types yet
     const state = await handle.queryPermission({ mode: 'readwrite' });
     if (state === 'granted') return true;
-
-    // If 'prompt', we can't automatically prompt on init (requires user gesture)
-    // So we just return false and let the user click "Grant Access" later if we want to implement that
-    // For now, if not granted, we wait for a manual gesture
     return false;
   }
 
@@ -57,6 +62,14 @@ class VaultStore {
   }
 
   async openDirectory() {
+    this.errorMessage = null;
+
+    if (typeof window.showDirectoryPicker === 'undefined') {
+      this.status = 'error';
+      this.errorMessage = "API unsupported. Try Chrome or check Brave Shield/Flags.";
+      return;
+    }
+
     try {
       this.status = 'loading';
       // @ts-ignore
@@ -68,9 +81,14 @@ class VaultStore {
       await persistHandle(handle);
       await this.loadFiles();
       this.status = 'idle';
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       this.status = 'error';
+      if (err.name === 'AbortError') {
+        this.status = 'idle'; // Reset if user cancelled
+      } else {
+        this.errorMessage = "Failed to access vault. " + (err.message || "");
+      }
     }
   }
 
@@ -78,7 +96,7 @@ class VaultStore {
     if (!this.rootHandle) return;
 
     const files = await walkDirectory(this.rootHandle);
-    const newEntities = new Map<string, Entity>();
+    const newEntities: Record<string, Entity> = {};
 
     for (const file of files) {
       const text = await readFile(file.handle);
@@ -98,40 +116,40 @@ class VaultStore {
         tags: metadata.tags || [],
         connections,
         content: content,
+        image: metadata.image,
         metadata: {
           ...metadata.metadata
         } as any,
-        // Runtime props
         // @ts-ignore
         _fsHandle: file.handle,
-        _path: file.path // Store path for deletion
+        _path: file.path
       };
 
-      newEntities.set(entity.id, entity);
+      newEntities[entity.id] = entity;
     }
 
     this.entities = newEntities;
   }
 
   updateEntity(id: string, updates: Partial<Entity>) {
-    const entity = this.entities.get(id);
+    const entity = this.entities[id];
     if (!entity) return;
 
     const updated = { ...entity, ...updates };
-    this.entities.set(id, updated);
+    this.entities[id] = updated;
 
     this.scheduleSave(updated);
   }
 
   scheduleSave(entity: Entity) {
     if (this.saveTimers.has(entity.id)) {
-      clearTimeout(this.saveTimers.get(entity.id));
+      clearTimeout(this.saveTimers.get(entity.id)!);
     }
 
     const timer = setTimeout(() => {
       this.saveToDisk(entity);
       this.saveTimers.delete(entity.id);
-    }, 1000); // 1s debounce
+    }, 1000);
 
     this.saveTimers.set(entity.id, timer);
   }
@@ -157,14 +175,12 @@ class VaultStore {
 
   async createEntity(type: Entity['type'], title: string): Promise<string> {
     const id = sanitizeId(title);
-    if (this.entities.has(id)) {
+    if (this.entities[id]) {
       throw new Error(`Entity ${id} already exists`);
     }
 
-    // Create file on disk immediately?
     if (!this.rootHandle) throw new Error("Vault not open");
 
-    // For MVP assuming flat structure or root
     const filename = `${id}.md`;
     const handle = await this.rootHandle.getFileHandle(filename, { create: true });
 
@@ -182,15 +198,14 @@ class VaultStore {
       _path: [filename]
     };
 
-    // Initial write
     await writeFile(handle, stringifyEntity(newEntity));
 
-    this.entities.set(id, newEntity);
+    this.entities[id] = newEntity;
     return id;
   }
 
   async deleteEntity(id: string): Promise<void> {
-    const entity = this.entities.get(id);
+    const entity = this.entities[id];
     if (!entity) return;
 
     // @ts-ignore
@@ -199,22 +214,15 @@ class VaultStore {
     const path = entity._path as string[];
 
     if (handle && this.rootHandle) {
-      // Try to remove from root if path is flat
-      // If nested, we need to traverse. For MVP assume we can remove using handle.remove() if supported
-      // or removeEntry from parent.
-      // Assuming flat structure at root for now based on createEntity logic
       if (path && path.length === 1) {
         await this.rootHandle.removeEntry(path[0]);
       } else {
-        // Fallback or complex deletion
-        // try handle.remove() which works in Chrome 110+
         // @ts-ignore
         if (handle.remove) await handle.remove();
-        else console.warn("Cannot delete nested file without traversal");
       }
     }
 
-    this.entities.delete(id);
+    delete this.entities[id];
   }
 
   async refresh() {
@@ -222,10 +230,9 @@ class VaultStore {
   }
 
   addConnection(sourceId: string, targetId: string, type: string = "related_to") {
-    const source = this.entities.get(sourceId);
+    const source = this.entities[sourceId];
     if (!source) return;
 
-    // Avoid duplicate connections
     if (
       source.connections.some((c) => c.target === targetId && c.type === type)
     ) {
@@ -236,7 +243,7 @@ class VaultStore {
       target: targetId,
       type,
       strength: 1,
-      label: undefined, // Default label for manual connections
+      label: undefined,
     };
 
     const updated = {
@@ -244,7 +251,7 @@ class VaultStore {
       connections: [...source.connections, newConnection],
     };
 
-    this.entities.set(sourceId, updated);
+    this.entities[sourceId] = updated;
     this.scheduleSave(updated);
   }
 }

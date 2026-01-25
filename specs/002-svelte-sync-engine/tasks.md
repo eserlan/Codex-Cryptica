@@ -42,6 +42,8 @@
 - [x] T022 [US2] Create Cytoscape container component in `apps/web/src/lib/components/GraphView.svelte`
 - [x] T023 [US2] Implement `$effect` to update Cytoscape elements when store changes in `apps/web/src/lib/components/GraphView.svelte`
 - [x] T024 [US2] Add `GraphView` to main layout for visualization in `apps/web/src/routes/+page.svelte`
+- [x] T024b [US2] Implement robust layout and resizing logic in `apps/web/src/lib/components/GraphView.svelte`
+- [x] T024c [US2] Implement "Connect Mode" UI and interaction logic in `apps/web/src/lib/components/GraphView.svelte`
 
 ## Phase 5: User Story 3 (Persistence)
 *Goal: "Auto-Save". Write changes back to the File System.*
@@ -58,7 +60,7 @@
 - [ ] T030 Refactor heavy parsing logic to Web Worker in `apps/web/src/lib/workers/sync.ts`
 - [ ] T031 Integrate Web Worker with `VaultStore` in `apps/web/src/lib/stores/vault.svelte.ts`
 - [ ] T032 Verify offline capability (Service Worker check) in `apps/web/src/service-worker.ts`
-- [ ] T033 Run full E2E test suite for "Edit -> Graph Update -> Persist" flow
+- [x] T033 Run full E2E test suite for "Edit -> Graph Update -> Persist" flow
 
 ## Dependencies
 

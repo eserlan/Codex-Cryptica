@@ -1,0 +1,64 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+
+Running 4 tests using 4 workers
+
+[1A[2K[1/4] [chromium] › tests/e2e.spec.ts:45:5 › Vault E2E › Open Populated Vault
+[1A[2K[2/4] [chromium] › tests/e2e.spec.ts:85:5 › Vault E2E › Graph View Renders
+[1A[2K[3/4] [chromium] › tests/e2e.spec.ts:34:5 › Vault E2E › Initial State (No Vault)
+[1A[2K[4/4] [chromium] › tests/e2e.spec.ts:39:5 › Vault E2E › Open Empty Vault
+[1A[2K  1) [chromium] › tests/e2e.spec.ts:39:5 › Vault E2E › Open Empty Vault ────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('0 Entities')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('0 Entities')[22m
+
+
+      39 |     test('Open Empty Vault', async ({ page }) => {
+      40 |         await page.getByRole('button', { name: 'Open Vault' }).click();
+    > 41 |         await expect(page.getByText('0 Entities')).toBeVisible();
+         |                                                    ^
+      42 |         await expect(page.getByText('Your vault is empty')).toBeVisible();
+      43 |     });
+      44 |
+        at /home/espen/proj/Codex-Arcana/apps/web/tests/e2e.spec.ts:41:52
+
+    Error Context: test-results/e2e-Vault-E2E-Open-Empty-Vault-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › tests/e2e.spec.ts:45:5 › Vault E2E › Open Populated Vault ────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText('2 Entities')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText('2 Entities')[22m
+
+
+      72 |
+      73 |         // Verify Header Status
+    > 74 |         await expect(page.getByText('2 Entities')).toBeVisible();
+         |                                                    ^
+      75 |
+      76 |         // Verify Entity Cards
+      77 |         await expect(page.getByText('Alice', { exact: true })).toBeVisible();
+        at /home/espen/proj/Codex-Arcana/apps/web/tests/e2e.spec.ts:74:52
+
+    Error Context: test-results/e2e-Vault-E2E-Open-Populated-Vault-chromium/error-context.md
+
+
+[1A[2K  2 failed
+    [chromium] › tests/e2e.spec.ts:39:5 › Vault E2E › Open Empty Vault ─────────────────────────────
+    [chromium] › tests/e2e.spec.ts:45:5 › Vault E2E › Open Populated Vault ─────────────────────────
+  2 passed (8.1s)

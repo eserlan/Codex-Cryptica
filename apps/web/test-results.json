@@ -1,0 +1,250 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+{
+  "config": {
+    "configFile": "/home/espen/proj/Codex-Arcana/apps/web/playwright.config.ts",
+    "rootDir": "/home/espen/proj/Codex-Arcana/apps/web/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 4
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/espen/proj/Codex-Arcana/apps/web/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 4
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/espen/proj/Codex-Arcana/apps/web/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "runAgents": "none",
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.58.0",
+    "workers": 6,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "e2e.spec.ts",
+      "file": "e2e.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Vault E2E",
+          "file": "e2e.spec.ts",
+          "line": 18,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Initial State (No Vault)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 781,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "BROWSER: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "BROWSER: [vite] connected.\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-24T19:59:37.992Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b1c7859d981cc20c96be-2393e13c229083dd116e",
+              "file": "e2e.spec.ts",
+              "line": 102,
+              "column": 5
+            },
+            {
+              "title": "Open Empty Vault",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "passed",
+                      "duration": 1293,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "BROWSER: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "BROWSER: [vite] connected.\n"
+                        },
+                        {
+                          "text": "BROWSER: MOCK: showDirectoryPicker invoked\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-24T19:59:37.815Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b1c7859d981cc20c96be-d56fbde86c0a4b3fc128",
+              "file": "e2e.spec.ts",
+              "line": 107,
+              "column": 5
+            },
+            {
+              "title": "Open Populated Vault",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "passed",
+                      "duration": 1070,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "BROWSER: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "BROWSER: [vite] connected.\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-24T19:59:37.936Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b1c7859d981cc20c96be-1b039b685966d42cec15",
+              "file": "e2e.spec.ts",
+              "line": 113,
+              "column": 5
+            },
+            {
+              "title": "Graph View Renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 825,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "BROWSER: [vite] connecting...\n"
+                        },
+                        {
+                          "text": "BROWSER: [vite] connected.\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-01-24T19:59:37.970Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "b1c7859d981cc20c96be-cc258455cfa5bea84611",
+              "file": "e2e.spec.ts",
+              "line": 170,
+              "column": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-01-24T19:59:36.020Z",
+    "duration": 3283.228,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

@@ -21,7 +21,7 @@
 		<VaultControls />
 	</header>
 
-	<main class="flex-1 p-4 relative">
+	<main class="flex-1 relative">
 		{@render children()}
 	</main>
 </div>

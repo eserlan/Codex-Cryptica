@@ -38,4 +38,53 @@ describe('GraphTransformer', () => {
     expect(edge?.data.target).toBe('n2');
     expect(edge?.data.strength).toBe(0.5);
   });
+
+  it("should handle entities with missing connections", () => {
+    const entities: any[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    expect(elements).toHaveLength(1);
+    expect(elements[0].group).toBe("nodes");
+  });
+
+  it("should handle entities with missing metadata", () => {
+    const entities: any[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        connections: [],
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    expect(elements).toHaveLength(1);
+    expect((elements[0] as any).position).toBeUndefined();
+  });
+
+  it("should transform image field", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: [],
+        connections: [],
+        content: "",
+        image: "http://example.com/img.png"
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+    const node = elements.find(e => e.group === 'nodes' && e.data.id === 'n1');
+    expect(node?.data.image).toBe("http://example.com/img.png");
+  });
 });

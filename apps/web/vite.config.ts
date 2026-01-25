@@ -5,5 +5,14 @@ export default defineConfig({
 	plugins: [sveltekit() as any],
 	test: {
 		include: ['src/**/*.{test,spec}.{js,ts}']
+	},
+	server: {
+		fs: {
+			// Allow serving files from the workspace root
+			allow: ['..']
+		}
+	},
+	optimizeDeps: {
+		exclude: ['graph-engine', 'editor-core', 'schema']
 	}
 });

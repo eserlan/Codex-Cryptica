@@ -7,6 +7,7 @@ export interface GraphNode {
     label: string;
     type: string;
     weight: number;
+    image?: string;
   };
   position?: { x: number; y: number };
 }
@@ -36,16 +37,17 @@ export class GraphTransformer {
           id: entity.id,
           label: entity.title,
           type: entity.type,
-          weight: entity.connections.length // Basic weight based on connectivity
+          weight: entity.connections?.length || 0, // Basic weight based on connectivity
+          image: entity.image
         },
         position: entity.metadata?.coordinates
       });
 
       // Create Edges
-      for (const conn of entity.connections) {
+      for (const conn of (entity.connections || [])) {
         // Construct a unique edge ID: source-target-type
         const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
-        
+
         elements.push({
           group: 'edges',
           data: {
