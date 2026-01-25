@@ -1,0 +1,5 @@
+Auto-merging apps/web/package.json
+CONFLICT (content): Merge conflict in apps/web/package.json
+Auto-merging package-lock.json
+CONFLICT (content): Merge conflict in package-lock.json
+Automatic merge failed; fix conflicts and then commit the result.
