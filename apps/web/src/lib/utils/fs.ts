@@ -39,7 +39,6 @@ export async function walkDirectory(
   path: string[] = [],
 ): Promise<FileEntry[]> {
   const entries: FileEntry[] = [];
-
   // @ts-expect-error - TS might not have full FS types yet depending on config
   for await (const [name, handle] of dirHandle.entries()) {
     if (handle.kind === "file") {

@@ -1,11 +1,12 @@
 # Codex-Arcana Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-23
+Auto-generated from all feature plans. Last updated: 2026-01-25
 
 ## Active Technologies
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
+- FlexSearch (004-fuzzy-search)
 
 ## Project Structure
 
@@ -26,6 +27,7 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 
 - 003-gdrive-mirroring: Added TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script`
+- 004-fuzzy-search: Added FlexSearch for client-side fuzzy search
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

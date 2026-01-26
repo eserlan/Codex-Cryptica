@@ -2,6 +2,9 @@
 node_modules/
 dist/
 build/
+test-results/
+apps/web/test-results/
+apps/web/playwright-report/
 .env
 .env.local
 .env.development.local

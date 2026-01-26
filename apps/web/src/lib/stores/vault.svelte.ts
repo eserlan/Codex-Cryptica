@@ -2,11 +2,13 @@ import { parseMarkdown, stringifyEntity, sanitizeId } from "../utils/markdown";
 import { walkDirectory, readFile, writeFile } from "../utils/fs";
 import { getPersistedHandle, persistHandle } from "../utils/idb";
 import type { Entity } from "schema";
+import { searchService } from "../services/search";
 
 class VaultStore {
   entities = $state<Record<string, Entity>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   errorMessage = $state<string | null>(null);
+  selectedEntityId = $state<string | null>(null);
 
   get allEntities() {
     return Object.values(this.entities);
@@ -102,6 +104,9 @@ class VaultStore {
     const files = await walkDirectory(this.rootHandle);
     const newEntities: Record<string, Entity> = {};
 
+    // Clear index before reloading
+    await searchService.clear();
+
     for (const file of files) {
       const text = await readFile(file.handle);
       const { metadata, content, wikiLinks } = parseMarkdown(text);
@@ -129,7 +134,40 @@ class VaultStore {
         _path: file.path,
       };
 
+      if (!entity.id || entity.id === 'undefined') {
+        console.error('CRITICAL: Attempted to index entity with invalid ID!', { title: entity.title, id: entity.id, path: entity._path });
+        continue;
+      }
+
       newEntities[entity.id] = entity;
+
+      const metadataKeywords = Object.values(entity.metadata || {}).flatMap((value) => {
+        if (typeof value === 'string') return [value];
+        if (Array.isArray(value)) {
+          return value.filter((item) => typeof item === 'string') as string[];
+        }
+        return [];
+      });
+
+      const keywords = [
+        ...(entity.tags || []),
+        (metadata as any).lore || '',
+        ...metadataKeywords
+      ].join(' ');
+
+      const searchEntry = {
+        id: entity.id,
+        title: entity.title,
+        content: entity.content,
+        path: Array.isArray(entity._path) ? entity._path.join('/') : entity._path as string,
+        keywords,
+        updatedAt: Date.now()
+      };
+
+      console.log('Indexing entity:', searchEntry.id, searchEntry.title);
+
+      // Index the entity
+      await searchService.index(searchEntry);
     }
 
     this.entities = newEntities;
@@ -166,6 +204,15 @@ class VaultStore {
       try {
         const content = stringifyEntity(entity);
         await writeFile(handle, content);
+
+        // Update index
+        await searchService.index({
+          id: entity.id,
+          title: entity.title,
+          content: entity.content,
+          path: Array.isArray(entity._path) ? entity._path.join('/') : entity._path as string,
+          updatedAt: Date.now()
+        });
       } catch (err) {
         console.error("Failed to save", err);
         this.status = "error";
@@ -206,6 +253,16 @@ class VaultStore {
     await writeFile(handle, stringifyEntity(newEntity));
 
     this.entities[id] = newEntity;
+
+    // Index new entity
+    await searchService.index({
+      id: newEntity.id,
+      title: newEntity.title,
+      content: newEntity.content,
+      path: Array.isArray(newEntity._path) ? newEntity._path.join('/') : newEntity._path as string,
+      updatedAt: Date.now()
+    });
+
     return id;
   }
 
@@ -215,7 +272,6 @@ class VaultStore {
 
     // @ts-expect-error - File System API types
     const handle = entity._fsHandle as FileSystemFileHandle;
-    // @ts-expect-error - File System API types
     const path = entity._path as string[];
 
     if (handle && this.rootHandle) {
@@ -226,6 +282,9 @@ class VaultStore {
         if (handle.remove) await handle.remove();
       }
     }
+
+    // Remove from index
+    await searchService.remove(id);
 
     delete this.entities[id];
   }

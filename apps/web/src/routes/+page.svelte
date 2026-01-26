@@ -3,19 +3,19 @@
     import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
     import { vault } from "$lib/stores/vault.svelte";
 
-    let selectedEntityId = $state(null);
-    let selectedEntity = $derived(
-        selectedEntityId ? vault.entities[selectedEntityId] : null,
-    );
+    let selectedEntity = $derived.by(() => {
+        const id = vault.selectedEntityId;
+        return id ? vault.entities[id] : null;
+    });
 </script>
 
 <div class="h-[calc(100vh-65px)] relative bg-black overflow-hidden">
-    <GraphView bind:selectedId={selectedEntityId} />
+    <GraphView bind:selectedId={vault.selectedEntityId} />
 
     {#if selectedEntity}
         <EntityDetailPanel
             entity={selectedEntity}
-            onClose={() => (selectedEntityId = null)}
+            onClose={() => (vault.selectedEntityId = null)}
         />
     {/if}
 

@@ -23,6 +23,7 @@ export const EntitySchema = z.object({
       coordinates: z.object({ x: z.number(), y: z.number() }).optional(),
     })
     .optional(),
+  _path: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
 export type Entity = z.infer<typeof EntitySchema>;

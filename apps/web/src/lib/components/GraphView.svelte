@@ -288,6 +288,26 @@
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
 
+  // Center on selection when it changes externally
+  $effect(() => {
+    if (cy && selectedId) {
+      const node = cy.$id(selectedId);
+      if (node.length > 0) {
+        // Select the node in Cytoscape if not already selected
+        if (!node.selected()) {
+          cy.$(":selected").unselect(); // Optional: clear other selections
+          node.select();
+        }
+
+        cy.animate({
+          center: { eles: node },
+          duration: 500,
+          easing: "ease-out-cubic",
+        });
+      }
+    }
+  });
+
   $effect(() => {
     if (cy && graph.elements) {
       console.log(
