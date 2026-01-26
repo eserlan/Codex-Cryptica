@@ -44,7 +44,7 @@ const { MockWorker } = vi.hoisted(() => {
   return { MockWorker };
 });
 
-vi.mock('../workers/search-v3.worker?worker', () => {
+vi.mock('../lib/workers/search.worker?worker', () => {
   return {
     default: MockWorker
   };

@@ -9,6 +9,15 @@ vi.mock("../utils/fs", () => ({
   writeFile: vi.fn(),
 }));
 
+vi.mock("../services/search", () => ({
+  searchService: {
+    index: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+    init: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 vi.mock("../utils/idb", () => ({
   persistHandle: vi.fn(),
   getPersistedHandle: vi.fn(),

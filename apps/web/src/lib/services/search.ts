@@ -1,6 +1,6 @@
 import type { SearchEntry, SearchResult, SearchOptions } from 'schema';
 // We import the worker constructor using Vite's syntax
-import SearchWorker from '../workers/search-v3.worker?worker';
+import SearchWorker from '../workers/search.worker?worker';
 
 export class SearchService {
   private worker: Worker | null = null;
