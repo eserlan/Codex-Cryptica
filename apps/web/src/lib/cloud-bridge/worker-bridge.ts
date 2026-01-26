@@ -17,9 +17,7 @@ export class WorkerBridge {
     this.setupListeners();
 
     if (browser) {
-      setTimeout(() => this.startSync(), 1000);
-
-      // Setup periodic sync based on config
+      // Setup periodic sync based on config only if enabled
       cloudConfig.subscribe((config: CloudConfig) => {
         if (this.syncIntervalId) clearInterval(this.syncIntervalId);
         if (config.enabled && config.syncInterval > 0) {
@@ -61,14 +59,9 @@ export class WorkerBridge {
     const config = get(cloudConfig) as CloudConfig;
     if (!config.enabled) return;
 
-    // Ensure we have a valid token
+    // Only proceed if already authenticated. We don't want to trigger popups automatically on load.
     if (!this.gdriveAdapter.isAuthenticated()) {
-      try {
-        await this.gdriveAdapter.connect();
-      } catch (e) {
-        console.error("Auto-connect failed", e);
-        return;
-      }
+      return;
     }
 
     // Get the raw access token (Note: GoogleDriveAdapter needs to expose this or we cheat a bit)

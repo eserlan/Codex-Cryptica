@@ -16,6 +16,8 @@
     selectedId: string | null;
   }>();
 
+  let skipNextCenter = false;
+
   // Hover state
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
@@ -240,13 +242,8 @@
           }
         } else {
           // Selection Logic for Detail Panel
+          skipNextCenter = true;
           selectedId = targetId;
-          // Center slightly on node
-          cy?.animate({
-            center: { eles: targetNode },
-            duration: 500,
-            easing: "ease-out-cubic",
-          });
         }
       });
 
@@ -299,11 +296,15 @@
           node.select();
         }
 
-        cy.animate({
-          center: { eles: node },
-          duration: 500,
-          easing: "ease-out-cubic",
-        });
+        if (skipNextCenter) {
+          skipNextCenter = false;
+        } else {
+          cy.animate({
+            center: { eles: node },
+            duration: 500,
+            easing: "ease-out-cubic",
+          });
+        }
       }
     }
   });

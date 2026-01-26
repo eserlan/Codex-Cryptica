@@ -18,6 +18,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
   private initGis() {
     if (typeof google !== "undefined" && google.accounts) {
+      if (!CLIENT_ID) {
+        console.warn("VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.");
+        return;
+      }
       this.tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
         scope: SCOPES,
@@ -30,6 +34,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       });
       this.gisInited = true;
     }
+  }
+
+  isConfigured(): boolean {
+    return !!CLIENT_ID;
   }
 
   private async initGapi() {
@@ -56,13 +64,19 @@ export class GoogleDriveAdapter implements ICloudAdapter {
           return;
         }
         this.accessToken = resp.access_token;
-        // User info is not directly available in implicit flow without extra call
-        // For now return a placeholder or fetch profile if needed
-        resolve("user@google-drive-connected");
+
+        try {
+          const about = await gapi.client.drive.about.get({
+            fields: "user(emailAddress)",
+          });
+          const email = about.result.user?.emailAddress || "connected-user";
+          resolve(email);
+        } catch (e) {
+          console.warn("Failed to fetch user email", e);
+          resolve("connected-user");
+        }
       };
 
-      // Prompt if no token or check if we can silently get it?
-      // Implicit flow always triggers callback
       if (gapi.client.getToken() === null) {
         this.tokenClient.requestAccessToken({ prompt: "consent" });
       } else {
@@ -71,8 +85,12 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     });
   }
 
+  getAccessToken(): string | null {
+    return this.accessToken || gapi.client.getToken()?.access_token || null;
+  }
+
   isAuthenticated(): boolean {
-    return !!this.accessToken;
+    return !!this.getAccessToken();
   }
 
   async disconnect(): Promise<void> {

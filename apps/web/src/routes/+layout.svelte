@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "../app.css";
 	import VaultControls from "$lib/components/VaultControls.svelte";
+	import CloudStatus from "$lib/components/settings/CloudStatus.svelte";
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { searchStore } from "$lib/stores/search";
@@ -24,7 +25,7 @@
 
 <div class="app-layout min-h-screen bg-black flex flex-col">
 	<header
-		class="px-6 py-4 bg-[#0c0c0c] border-b border-green-900/30 flex justify-between items-center sticky top-0 z-10"
+		class="px-6 py-4 bg-[#0c0c0c] border-b border-green-900/30 flex justify-between items-center sticky top-0 z-[100]"
 	>
 		<h1
 			class="text-xl font-bold text-gray-100 font-mono tracking-wide flex items-center gap-3 shrink-0"
@@ -61,6 +62,7 @@
 
 		<div class="flex items-center gap-4 shrink-0">
 			<VaultControls />
+			<CloudStatus />
 		</div>
 	</header>
 
