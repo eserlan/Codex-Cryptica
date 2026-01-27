@@ -1,0 +1,119 @@
+<script lang="ts">
+    import { oracle } from "$lib/stores/oracle.svelte";
+    import { onMount } from "svelte";
+
+    let inputKey = $state("");
+    let showKey = $state(false);
+
+    onMount(() => {
+        oracle.init();
+    });
+
+    const handleSave = async () => {
+        if (inputKey.trim()) {
+            await oracle.setKey(inputKey.trim());
+            inputKey = "";
+        }
+    };
+
+    const handleClear = async () => {
+        if (
+            confirm(
+                "Are you sure you want to disable the Oracle and delete the API key from this device?",
+            )
+        ) {
+            await oracle.clearKey();
+        }
+    };
+</script>
+
+<div class="p-4 border border-purple-900/30 rounded-lg bg-black/40 mt-4">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+            <div
+                class="w-2 h-2 bg-purple-500 rounded-full {oracle.isEnabled
+                    ? 'animate-pulse'
+                    : 'opacity-30'}"
+            ></div>
+            <h3
+                class="font-semibold text-purple-100 uppercase tracking-wider text-xs"
+            >
+                Lore Oracle (Gemini AI)
+            </h3>
+        </div>
+
+        {#if oracle.isEnabled}
+            <button
+                onclick={handleClear}
+                class="text-[10px] text-red-400 hover:text-red-300 uppercase tracking-tighter"
+            >
+                Disable & Clear Key
+            </button>
+        {/if}
+    </div>
+
+    <p class="text-xs text-purple-200/60 mb-4 leading-relaxed">
+        Power your archives with Google Gemini. This feature is <strong
+            >strictly opt-in</strong
+        >. Your notes are sent to Google only when you chat with the Oracle.
+    </p>
+
+    {#if !oracle.isEnabled}
+        <div class="space-y-3">
+            <div class="flex flex-col gap-1">
+                <label
+                    for="gemini-api-key"
+                    class="text-[10px] text-purple-400 uppercase font-bold"
+                    >Gemini API Key</label
+                >
+                <div class="relative">
+                    <input
+                        id="gemini-api-key"
+                        type={showKey ? "text" : "password"}
+                        placeholder="Paste your API key here..."
+                        class="w-full bg-black/50 border border-purple-900/50 rounded px-3 py-2 text-sm text-purple-100 focus:border-purple-500 outline-none pr-10"
+                        bind:value={inputKey}
+                    />
+                    <button
+                        type="button"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-purple-400 hover:text-purple-200"
+                        onclick={() => (showKey = !showKey)}
+                    >
+                        {showKey ? "👁️" : "👁️‍🗨️"}
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between gap-3">
+                <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-[10px] text-purple-400 hover:text-purple-300 underline underline-offset-2"
+                >
+                    Get a free key from Google AI Studio →
+                </a>
+
+                <button
+                    class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded text-[10px] tracking-widest transition-all disabled:opacity-50"
+                    onclick={handleSave}
+                    disabled={!inputKey.trim()}
+                >
+                    ENABLE
+                </button>
+            </div>
+        </div>
+    {:else}
+        <div
+            class="p-3 bg-purple-900/10 border border-purple-900/30 rounded flex items-center justify-between"
+        >
+            <div class="flex items-center gap-2">
+                <span class="text-purple-400">✨</span>
+                <span class="text-xs text-purple-100">Oracle is Active</span>
+            </div>
+            <span class="text-[10px] text-purple-500 font-mono"
+                >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
+            >
+        </div>
+    {/if}
+</div>
