@@ -24,7 +24,23 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     this.initGapi();
   }
 
-  private initGis() {
+  private async waitForScript(check: () => boolean, timeout = 10000): Promise<boolean> {
+    const start = Date.now();
+    while (!check()) {
+      if (Date.now() - start > timeout) return false;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return true;
+  }
+
+  private async initGis() {
+    // Wait for google.accounts to be loaded
+    const loaded = await this.waitForScript(() => typeof google !== "undefined" && !!google.accounts);
+    if (!loaded) {
+      console.warn("Google Identity Services script failed to load");
+      return;
+    }
+
     if (typeof google !== "undefined" && google.accounts) {
       const { CLIENT_ID, SCOPES } = getGoogleConfig();
       if (!CLIENT_ID) {
@@ -51,6 +67,12 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
   private async initGapi() {
     // Wait for gapi to be loaded
+    const loaded = await this.waitForScript(() => typeof gapi !== "undefined");
+    if (!loaded) {
+      console.warn("Google API script failed to load");
+      return;
+    }
+
     if (typeof gapi !== "undefined") {
       await new Promise<void>((resolve) => gapi.load("client", resolve));
       await gapi.client.init({
