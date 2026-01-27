@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai"
 import { searchService } from "./search";
 import { vault } from "../stores/vault.svelte";
 
-const MODEL_NAME = "gemini-3-flash";
+const MODEL_NAME = "gemini-1.5-flash";
 
 export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
