@@ -13,15 +13,52 @@ class OracleStore {
   apiKey = $state<string | null>(null);
   isModal = $state(false);
 
+  private channel: BroadcastChannel | null = null;
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      this.channel = new BroadcastChannel("codex-oracle-sync");
+      this.channel.onmessage = (event) => {
+        const { type, data } = event.data;
+        if (type === "SYNC_STATE") {
+          // Avoid feedback loops by checking if data is actually different
+          if (JSON.stringify(this.messages) !== JSON.stringify(data.messages)) {
+            this.messages = data.messages;
+          }
+          this.isLoading = data.isLoading;
+          this.apiKey = data.apiKey;
+        } else if (type === "REQUEST_STATE") {
+          this.broadcast();
+        }
+      };
+
+      // Request state from other windows on load
+      this.channel.postMessage({ type: "REQUEST_STATE" });
+    }
+  }
+
+  private broadcast() {
+    this.channel?.postMessage({
+      type: "SYNC_STATE",
+      data: {
+        messages: $state.snapshot(this.messages),
+        isLoading: this.isLoading,
+        apiKey: this.apiKey
+      }
+    });
+  }
+
   async init() {
     const db = await getDB();
     this.apiKey = (await db.get("settings", "ai_api_key")) || null;
+    this.broadcast();
   }
 
   async setKey(key: string) {
     const db = await getDB();
-    await db.put("settings", key, "ai_api_key");
+    await db.put("settings", "ai_api_key", key); // Fixed argument order from previous view
     this.apiKey = key;
+    this.broadcast();
   }
 
   async clearKey() {
@@ -29,6 +66,7 @@ class OracleStore {
     await db.delete("settings", "ai_api_key");
     this.apiKey = null;
     this.messages = [];
+    this.broadcast();
   }
 
   isEnabled = $derived(!!this.apiKey);
@@ -38,22 +76,24 @@ class OracleStore {
 
     this.messages = [...this.messages, { role: "user", content: query }];
     this.isLoading = true;
+    this.broadcast();
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
     this.messages = [...this.messages, { role: "assistant", content: "" }];
 
     try {
-      // Pass history (all messages before the current turn) to the AI service
       const history = this.messages.slice(0, -2);
       await aiService.generateResponse(this.apiKey, query, history, (partial) => {
-        // Update the last message in place (using Svelte 5 reactivity)
         this.messages[assistantMsgIndex].content = partial;
+        this.broadcast();
       });
     } catch (err: any) {
       this.messages = [...this.messages, { role: "system", content: err.message || "Error generating response." }];
+      this.broadcast();
     } finally {
       this.isLoading = false;
+      this.broadcast();
     }
   }
 

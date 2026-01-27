@@ -9,7 +9,10 @@
 	import { syncStats } from "$stores/sync-stats";
 	import { onMount } from "svelte";
 
+	import { page } from "$app/state";
 	let { children } = $props();
+
+	const isPopup = $derived(page.url.pathname === "/oracle");
 
 	onMount(() => {
 		vault.init();
@@ -33,53 +36,60 @@
 <svelte:window on:keydown={handleKeydown} />
 
 <div class="app-layout min-h-screen bg-black flex flex-col">
-	<header
-		class="px-4 md:px-6 py-3 md:py-4 bg-[#0c0c0c] border-b border-green-900/30 flex flex-wrap md:flex-nowrap justify-between items-center sticky top-0 z-50 gap-y-3"
-	>
-		<h1
-			class="text-lg md:text-xl font-bold text-gray-100 font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
+	{#if !isPopup}
+		<header
+			class="px-4 md:px-6 py-3 md:py-4 bg-[#0c0c0c] border-b border-green-900/30 flex flex-wrap md:flex-nowrap justify-between items-center sticky top-0 z-50 gap-y-3"
 		>
-			<span class="text-green-500">📚</span>
-			<span class="hidden sm:inline">Codex Arcana</span>
-			<span class="sm:hidden text-green-500">CA</span>
-		</h1>
+			<h1
+				class="text-lg md:text-xl font-bold text-gray-100 font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
+			>
+				<span class="text-green-500">📚</span>
+				<span class="hidden sm:inline">Codex Arcana</span>
+				<span class="sm:hidden text-green-500">CA</span>
+			</h1>
 
-		<div class="flex-1 order-3 md:order-2 w-full md:max-w-xl md:px-4">
-			<div class="relative group">
-				<svg
-					class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-900 group-focus-within:text-green-500 transition-colors"
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+			<div class="flex-1 order-3 md:order-2 w-full md:max-w-xl md:px-4">
+				<div class="relative group">
+					<svg
+						class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-900 group-focus-within:text-green-500 transition-colors"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+						/>
+					</svg>
+					<input
+						type="text"
+						placeholder="Search (Cmd+K)..."
+						class="w-full bg-black border border-green-900/50 hover:border-green-700 focus:border-green-500 focus:ring-1 focus:ring-green-500/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-gray-100 transition-all placeholder:text-green-900/50"
+						onfocus={() => searchStore.open()}
+						value={$searchStore.query}
+						oninput={(e) =>
+							searchStore.setQuery(e.currentTarget.value)}
 					/>
-				</svg>
-				<input
-					type="text"
-					placeholder="Search (Cmd+K)..."
-					class="w-full bg-black border border-green-900/50 hover:border-green-700 focus:border-green-500 focus:ring-1 focus:ring-green-500/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-gray-100 transition-all placeholder:text-green-900/50"
-					onfocus={() => searchStore.open()}
-					value={$searchStore.query}
-					oninput={(e) => searchStore.setQuery(e.currentTarget.value)}
-				/>
+				</div>
 			</div>
-		</div>
 
-		<div class="flex items-center gap-2 md:gap-4 shrink-0 order-2 md:order-3">
-			<VaultControls />
-			<CloudStatus />
-		</div>
-	</header>
+			<div
+				class="flex items-center gap-2 md:gap-4 shrink-0 order-2 md:order-3"
+			>
+				<VaultControls />
+				<CloudStatus />
+			</div>
+		</header>
+	{/if}
 
 	<main class="flex-1 relative">
 		{@render children()}
 	</main>
 
-	<SearchModal />
-	<OracleWindow />
+	{#if !isPopup}
+		<SearchModal />
+		<OracleWindow />
+	{/if}
 </div>
