@@ -87,19 +87,64 @@ export class SyncEngine {
   }
 
   async applyPlan(plan: SyncPlan) {
+    const CONCURRENCY = 5;
+    const metadataUpdates: SyncMetadata[] = [];
+
+    // Helper for parallel execution
+    const runParallel = async <T>(items: T[], fn: (item: T) => Promise<void>) => {
+      const iterator = items.entries();
+      const worker = async () => {
+        for (const [, item] of iterator) {
+          try {
+            await fn(item);
+          } catch (err) {
+            console.error("Sync error for item:", item, err);
+            // Continue with other items despite error
+          }
+        }
+      };
+      const workers = Array.from({ length: Math.min(items.length, CONCURRENCY) }, worker);
+      await Promise.all(workers);
+    };
+
     // Execute uploads
-    for (const file of plan.uploads) {
-      const content = await this.fsAdapter.readFile(file.path);
-      const meta = await this.cloudAdapter.uploadFile(file.path, content, file.remoteId);
-      await this.updateMetadata(file.path, meta, file.lastModified);
+    if (plan.uploads.length > 0) {
+      console.log(`[SyncEngine] Uploading ${plan.uploads.length} files...`);
+      await runParallel(plan.uploads, async (file) => {
+        const content = await this.fsAdapter.readFile(file.path);
+        const meta = await this.cloudAdapter.uploadFile(file.path, content, file.remoteId);
+
+        metadataUpdates.push({
+          filePath: file.path,
+          remoteId: meta.id,
+          localModified: file.lastModified,
+          remoteModified: meta.modifiedTime,
+          syncStatus: "SYNCED",
+        });
+      });
     }
 
     // Execute downloads
-    for (const file of plan.downloads) {
-      const content = await this.cloudAdapter.downloadFile(file.id);
-      // Ensure path matches naming convention
-      await this.fsAdapter.writeFile(file.name, content);
-      await this.updateMetadata(file.name, file, Date.now());
+    if (plan.downloads.length > 0) {
+      console.log(`[SyncEngine] Downloading ${plan.downloads.length} files...`);
+      await runParallel(plan.downloads, async (file) => {
+        const content = await this.cloudAdapter.downloadFile(file.id);
+        await this.fsAdapter.writeFile(file.name, content);
+
+        metadataUpdates.push({
+          filePath: file.name,
+          remoteId: file.id,
+          localModified: Date.now(),
+          remoteModified: file.modifiedTime,
+          syncStatus: "SYNCED",
+        });
+      });
+    }
+
+    // Batch update metadata
+    if (metadataUpdates.length > 0) {
+      console.log(`[SyncEngine] Updating metadata for ${metadataUpdates.length} files...`);
+      await this.metadataStore.bulkPut(metadataUpdates);
     }
   }
 

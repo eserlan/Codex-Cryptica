@@ -54,6 +54,17 @@ export class MetadataStore {
     return db.put(STORE_NAME, metadata);
   }
 
+  async bulkPut(items: SyncMetadata[]): Promise<void> {
+    if (items.length === 0) return;
+    const db = await this.dbPromise;
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    await Promise.all([
+      ...items.map(item => store.put(item)),
+      tx.done
+    ]);
+  }
+
   async delete(filePath: string): Promise<void> {
     const db = await this.dbPromise;
     await db.delete(STORE_NAME, filePath);
