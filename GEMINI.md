@@ -9,6 +9,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - FlexSearch (004-fuzzy-search)
 - @sveltejs/adapter-static (005-gh-pages-deploy)
 - IndexedDB Caching (007-scalability-hardening)
+- Google Gemini API (008-lore-oracle)
 
 ## Project Structure
 

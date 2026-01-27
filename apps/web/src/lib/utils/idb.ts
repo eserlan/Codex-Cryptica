@@ -21,7 +21,7 @@ const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
-function getDB() {
+export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion) {

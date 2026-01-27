@@ -3,6 +3,7 @@
 	import VaultControls from "$lib/components/VaultControls.svelte";
 	import CloudStatus from "$lib/components/settings/CloudStatus.svelte";
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
+	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { searchStore } from "$lib/stores/search";
 	import { onMount } from "svelte";
@@ -77,4 +78,5 @@
 	</main>
 
 	<SearchModal />
+	<OracleWindow />
 </div>
