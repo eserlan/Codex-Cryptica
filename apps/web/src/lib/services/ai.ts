@@ -20,6 +20,8 @@ Your primary goal is to provide information from the provided context or convers
 
 If the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
 
+When generating a "Chronicle" or "Blurb" for a subject, always keep it concise: a short, focused two to three sentence description.
+
 Only if you have NO information about the subject in either the new context blocks OR the previous messages, and you aren't asked to invent it, say "I cannot find that in your records." 
 
 Always prioritize the vault context as the absolute truth.`
@@ -27,20 +29,9 @@ Always prioritize the vault context as the absolute truth.`
     this.currentApiKey = apiKey;
   }
 
-  async generateResponse(apiKey: string, query: string, history: any[], onUpdate: (partial: string) => void) {
+  async generateResponse(apiKey: string, query: string, history: any[], context: string, onUpdate: (partial: string) => void) {
     this.init(apiKey);
     if (!this.model) throw new Error("AI Model not initialized");
-
-    // Extract already sent entity titles from history to avoid redundancy
-    const alreadySentTitles = new Set<string>();
-    history.forEach(m => {
-      if (m.role === "user") {
-        const matches = m.content.matchAll(/--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g);
-        for (const match of matches) {
-          alreadySentTitles.add(match[1]);
-        }
-      }
-    });
 
     // Create a new session with current history
     const chat = this.model.startChat({
@@ -51,8 +42,6 @@ Always prioritize the vault context as the absolute truth.`
     });
 
     try {
-      const { content: context } = await this.retrieveContext(query, alreadySentTitles);
-
       const finalQuery = context
         ? `[NEW LORE CONTEXT]\n${context}\n\n[USER QUERY]\n${query}`
         : query;
@@ -74,7 +63,7 @@ Always prioritize the vault context as the absolute truth.`
     }
   }
 
-  private async retrieveContext(query: string, excludeTitles: Set<string>): Promise<{ content: string }> {
+  async retrieveContext(query: string, excludeTitles: Set<string>): Promise<{ content: string, primaryEntityId?: string }> {
     // 1. Get search results for relevance
     let results = await searchService.search(query, { limit: 5 });
 
@@ -95,11 +84,13 @@ Always prioritize the vault context as the absolute truth.`
     const activeId = vault.selectedEntityId;
 
     // 3. Build context from both search results and active entity
-    const potentialIds = new Set(results.map(r => r.id));
-    if (activeId) potentialIds.add(activeId);
+    const potentialIds = Array.from(new Set(results.map(r => r.id)));
+    if (activeId && !potentialIds.includes(activeId)) potentialIds.unshift(activeId);
+
+    const primaryEntityId = activeId || potentialIds[0];
 
     // 4. Filter for NEW titles only
-    const contents = Array.from(potentialIds)
+    const contents = potentialIds
       .map(id => {
         const entity = vault.entities[id];
         if (!entity) return null;
@@ -127,7 +118,8 @@ Always prioritize the vault context as the absolute truth.`
     }
 
     return {
-      content: contents.join("\n\n")
+      content: contents.join("\n\n"),
+      primaryEntityId
     };
   }
 }

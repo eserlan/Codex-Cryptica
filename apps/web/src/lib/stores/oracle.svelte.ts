@@ -4,6 +4,7 @@ import { getDB } from "../utils/idb";
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
+  entityId?: string; // ID of the entity this message is primarily about
 }
 
 class OracleStore {
@@ -83,8 +84,25 @@ class OracleStore {
     this.messages = [...this.messages, { role: "assistant", content: "" }];
 
     try {
+      // Extract already sent entity titles from history to avoid redundancy
+      const alreadySentTitles = new Set<string>();
+      this.messages.forEach(m => {
+        if (m.role === "user") {
+          const matches = m.content.matchAll(/--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g);
+          for (const match of matches) {
+            alreadySentTitles.add(match[1]);
+          }
+        }
+      });
+
+      const { content: context, primaryEntityId } = await aiService.retrieveContext(query, alreadySentTitles);
+
+      // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
+      this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
+      this.messages[assistantMsgIndex].entityId = primaryEntityId;
+
       const history = this.messages.slice(0, -2);
-      await aiService.generateResponse(this.apiKey, query, history, (partial) => {
+      await aiService.generateResponse(this.apiKey, query, history, context, (partial) => {
         this.messages[assistantMsgIndex].content = partial;
         this.broadcast();
       });
