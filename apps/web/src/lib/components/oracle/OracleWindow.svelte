@@ -152,15 +152,55 @@
 <!-- Toggle Button -->
 {#if !oracle.isOpen}
   <button
-    class="fixed bottom-6 right-6 md:bottom-20 md:right-6 w-14 h-14 bg-purple-900/20 border border-purple-500/50 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-900/40 hover:text-purple-200 hover:scale-110 active:scale-90 transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)] z-50 group overflow-hidden"
+    class="fixed bottom-6 right-6 md:bottom-20 md:right-6 w-14 h-14 bg-purple-900/10 border border-purple-500/30 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-900/30 hover:text-purple-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)] z-50 group overflow-hidden"
     onclick={() => oracle.toggle()}
     transition:fade
     title="Open Lore Oracle"
   >
+    <!-- Internal Orb Content -->
     <div
-      class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
+      class="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent"
     ></div>
-    <span class="icon-[heroicons--sparkles] w-7 h-7 group-hover:animate-pulse"
-    ></span>
+    <div
+      class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] from-purple-500/20 transition-opacity duration-300"
+    ></div>
+
+    <!-- Magical Sparkle SVG -->
+    <svg
+      class="w-7 h-7 relative z-10 transition-transform duration-500 group-hover:rotate-12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+    >
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
+      />
+    </svg>
+
+    <!-- Scanning Line Effect -->
+    <div
+      class="absolute inset-0 pointer-events-none overflow-hidden opacity-30"
+    >
+      <div
+        class="w-full h-[1px] bg-purple-400/50 absolute top-0 animate-scan"
+      ></div>
+    </div>
   </button>
 {/if}
+
+<style>
+  @keyframes -global-scan {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(200%);
+    }
+  }
+  .animate-scan {
+    animation: -global-scan 3s linear infinite;
+  }
+</style>
