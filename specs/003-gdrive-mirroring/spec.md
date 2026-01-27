@@ -71,8 +71,24 @@ As a creator moving from desktop to mobile, I want the app to detect and pull th
 - **FR-007**: System MUST sync data at a periodic interval (e.g., every 5 minutes) when local changes are detected.
 - **FR-008**: System MUST implement a `Cross-Origin-Opener-Policy` (COOP) that allows secure communication between the application and the Google OAuth popup.
 
-### Key Entities _(include if feature involves data)_
+### Performance & Reliability (Added Jan 2026)
+- **FR-009**: Sync engine MUST utilize metadata history to detect file changes, ignoring timestamp discrepancies caused by cross-device transfers.
+- **FR-010**: Sync operations MUST support parallel file transfers (minimum concurrency of 5) to optimize throughput for large vaults.
+- **FR-011**: Database updates during sync MUST be batched to ensure UI responsiveness.
+- **FR-012**: The system MUST detect authentication failures and provide a clear "Reconnect" action.
 
+### User Story: Reliable Sync
+As a user, I want the sync engine to only upload files I have actually modified, preventing infinite sync loops due to timestamp quirks.
+
+### User Story: Fast Sync
+As a power user, I want parallel transfers so that syncing hundreds of small files finishes quickly.
+
+### Key Entities _(include if feature involves data)_
+### NFR-004: Partial Sync Resilience
+The sync engine MUST periodically save progress (checkpointing) during large batch operations. If the sync process is interrupted (e.g. network loss, tab closure), previously synced files MUST NOT be re-processed in the next run.
+
+### NFR-005: Initialization Concurrency
+The cloud adapter MUST handle multiple concurrent initialization requests (e.g., from UI components mounting simultaneously) by deduping script loading and authentication calls.
 - **Cloud Bridge Configuration**: Stores user preference for sync (enabled/disabled), linked account identifier, and last sync timestamp.
 - **World Graph Snapshot**: The serialized version of the lore data being mirrored to the cloud.
 

@@ -86,3 +86,10 @@ apps/web/
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 | --------- | ---------- | ------------------------------------ |
 | N/A       |            |                                      |
+
+## Performance Update (Jan 2026)
+
+Architecture Refinements:
+- **Parallelism**: Switched from sequential to batched parallel transfers (concurrency=5).
+- **Metadata History**: Implemented "Last-Sync-State" tracking to prevent unnecessary re-uploads (Sync Loop fix).
+- **Batching**: Optimized IndexedDB writes.

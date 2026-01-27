@@ -37,8 +37,18 @@
         }
     };
 
+    let isFlashing = $state(false);
+
     const handleSync = () => {
+        console.group("[CloudStatus] SYNC NOW Clicked");
+        isFlashing = true;
+        // set immediately to provide feedback
+        syncStats.setStatus("SYNCING");
+        console.log("[CloudStatus] UI: setStatus('SYNCING')");
+        console.log("[CloudStatus] Calling workerBridge.startSync()...");
         workerBridge.startSync();
+        setTimeout(() => (isFlashing = false), 500);
+        console.groupEnd();
     };
 
     const toggleSync = (e: Event) => {
@@ -46,32 +56,75 @@
         cloudConfig.setEnabled(target.checked);
     };
 
+    // Check if gapi token exists - adapter now caches and restores tokens automatically
+    // We use polling because gapi state changes aren't reactive in Svelte
+    let hasToken = $state(false);
+
+    $effect(() => {
+        const checkToken = () => {
+            hasToken =
+                typeof window !== "undefined" &&
+                typeof window.gapi !== "undefined" &&
+                !!window.gapi.client?.getToken()?.access_token;
+        };
+
+        checkToken();
+        const interval = setInterval(checkToken, 5000);
+
+        const onFocus = () => checkToken();
+        window.addEventListener("focus", onFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener("focus", onFocus);
+        };
+    });
+
     let status = $derived($syncStats.status);
     let isSyncing = $derived(status === "SCANNING" || status === "SYNCING");
     let isConnected = $derived(
         $cloudConfig.enabled && $cloudConfig.connectedEmail,
     );
-    let isConfigured = $derived(adapter?.isConfigured());
+    let isConfigured = $derived(
+        adapter?.isConfigured() ||
+            (typeof window !== "undefined" &&
+                (window as any).TEST_FORCE_CONFIGURED),
+    );
 </script>
 
 <div class="relative font-mono cloud-status-container">
     <button
-        class="w-8 h-8 flex items-center justify-center border border-green-900/30 hover:border-green-500 rounded transition group relative {showMenu
+        class="w-8 h-8 flex items-center justify-center border border-green-900/30 hover:border-green-500 rounded transition-all group relative {showMenu
             ? 'z-[60] border-green-500 bg-green-900/10'
-            : 'z-10'}"
+            : 'z-10'} {isFlashing
+            ? 'ring-2 ring-green-500 ring-opacity-50 scale-95'
+            : ''}"
         onclick={() => (showMenu = !showMenu)}
         title={isConnected
             ? `Connected as ${$cloudConfig.connectedEmail}`
             : "Cloud Sync Settings"}
         data-testid="cloud-status-button"
     >
+        {#if isFlashing}
+            <div
+                class="absolute inset-0 bg-green-500/20 rounded animate-ping pointer-events-none"
+            ></div>
+        {/if}
         <span
-            class="text-lg {isConnected
+            class="text-lg transition-all {isConnected
                 ? 'text-green-500'
-                : 'text-green-900 group-hover:text-green-700'}"
+                : 'text-green-900 group-hover:text-green-700'} {isSyncing
+                ? 'animate-pulse'
+                : ''}"
         >
-            {isSyncing ? "●" : "☁"}
+            {isSyncing ? "⚡" : "☁"}
         </span>
+        {#if isSyncing}
+            <span
+                class="text-[8px] text-green-500 font-bold ml-1 hidden xs:inline animate-pulse"
+                >SYNCING</span
+            >
+        {/if}
         {#if isConnected && !isSyncing}
             <span
                 class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-green-500 rounded-full border border-black animate-pulse"
@@ -174,7 +227,8 @@
                                 <span
                                     class={status === "ERROR"
                                         ? "text-red-400"
-                                        : "text-green-500"}>{status}</span
+                                        : "text-green-500 font-bold"}
+                                    >{status}</span
                                 >
                             </div>
                             {#if $syncStats.stats}
@@ -185,7 +239,7 @@
                                         <div class="text-gray-600 uppercase">
                                             Uploaded
                                         </div>
-                                        <div class="text-gray-300">
+                                        <div class="text-green-900/80">
                                             {$syncStats.stats.filesUploaded}
                                         </div>
                                     </div>
@@ -193,7 +247,7 @@
                                         <div class="text-gray-600 uppercase">
                                             Downloaded
                                         </div>
-                                        <div class="text-gray-300">
+                                        <div class="text-green-900/80">
                                             {$syncStats.stats.filesDownloaded}
                                         </div>
                                     </div>
@@ -211,18 +265,33 @@
 
                         <div class="flex gap-2">
                             <button
-                                class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-500 text-black font-bold rounded transition disabled:opacity-50"
-                                onclick={handleSync}
-                                disabled={isSyncing || !$cloudConfig.enabled}
+                                class="flex-1 px-3 py-2 text-black font-bold rounded transition-all disabled:opacity-50 flex items-center justify-center gap-2 {isFlashing
+                                    ? 'scale-95 ring-2 ring-green-400'
+                                    : ''} {!hasToken
+                                    ? 'bg-amber-500 hover:bg-amber-400'
+                                    : 'bg-green-600 hover:bg-green-500'}"
+                                onclick={!hasToken ? handleLogin : handleSync}
+                                disabled={isSyncing ||
+                                    !$cloudConfig.enabled ||
+                                    isLoading}
                             >
-                                SYNC NOW
+                                {#if isSyncing || isLoading}
+                                    <span
+                                        class="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"
+                                    ></span>
+                                    {isSyncing ? "SYNCING..." : "CONNECTING..."}
+                                {:else if !hasToken}
+                                    RECONNECT
+                                {:else}
+                                    SYNC NOW
+                                {/if}
                             </button>
                             <button
                                 class="px-3 py-2 border border-red-900/50 text-red-900 hover:text-red-500 hover:border-red-500 rounded transition"
                                 onclick={handleLogout}
                                 title="Disconnect"
                             >
-                                ⏻
+                                Unlink
                             </button>
                         </div>
                     </div>

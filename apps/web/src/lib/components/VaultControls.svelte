@@ -19,8 +19,10 @@
 </script>
 
 <div class="flex flex-col gap-2 font-mono">
-    <div class="flex gap-3 items-center">
-        <div class="text-xs text-gray-500 tracking-wider uppercase">
+    <div class="flex gap-1.5 md:gap-3 items-center">
+        <div
+            class="text-[10px] md:text-xs text-gray-500 tracking-wider uppercase hidden sm:block"
+        >
             {#if vault.status === "loading"}
                 <span class="animate-pulse text-green-500">LOADING...</span>
             {:else if vault.status === "saving"}
@@ -42,24 +44,24 @@
 
         {#if !vault.rootHandle}
             <button
-                class="px-4 py-1.5 bg-green-600 hover:bg-green-500 text-black rounded text-xs font-bold tracking-widest transition"
+                class="px-3 md:px-4 py-1.5 bg-green-600 hover:bg-green-500 text-black rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
                 onclick={() => vault.openDirectory()}
             >
-                OPEN VAULT
+                OPEN <span class="hidden xs:inline">VAULT</span>
             </button>
         {:else if !vault.isAuthorized}
             <button
-                class="px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-black rounded text-xs font-bold tracking-widest transition"
+                class="px-3 md:px-4 py-1.5 bg-amber-600 hover:bg-amber-500 text-black rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
                 onclick={() => vault.requestPermission()}
             >
                 GRANT ACCESS
             </button>
         {:else}
             <button
-                class="px-4 py-1.5 border border-green-900 text-green-600 hover:text-green-400 hover:border-green-700 rounded text-xs font-bold tracking-widest transition"
+                class="px-3 md:px-4 py-1.5 border border-green-900 text-green-600 hover:text-green-400 hover:border-green-700 rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
                 onclick={() => (showForm = !showForm)}
             >
-                {showForm ? "CANCEL" : "+ NEW ENTRY"}
+                {showForm ? "CANCEL" : "+ NEW"}
             </button>
             <button
                 class="px-2 py-1.5 border border-green-900/50 text-green-700 hover:text-green-500 hover:border-green-700 rounded text-sm transition"
@@ -69,9 +71,9 @@
                 ↻
             </button>
             <button
-                class="px-2 py-1.5 border border-green-900/50 text-amber-700 hover:text-amber-500 hover:border-amber-700 rounded text-xs transition"
+                class="px-2 py-1.5 border border-green-900/50 text-amber-700 hover:text-amber-500 hover:border-amber-700 rounded text-[10px] transition hidden xs:block"
                 onclick={() => vault.rebuildIndex()}
-                title="Rebuild Cache"
+                title="Clear cache and re-index all vault files. Use if search seems out of sync."
             >
                 REBUILD
             </button>

@@ -1,5 +1,0 @@
-npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
-Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
-Getting Svelte diagnostics...
-
-svelte-check found 0 errors and 0 warnings

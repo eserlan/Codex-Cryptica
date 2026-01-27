@@ -1,21 +1,21 @@
 import SyncWorker from "$workers/sync?worker";
 import { cloudConfig } from "$stores/cloud-config";
 import { get } from "svelte/store";
-import { GoogleDriveAdapter } from "./google-drive/adapter";
 import { vault } from "$lib/stores/vault.svelte";
 import { browser } from "$app/environment";
 import type { CloudConfig } from "./index";
 
 export class WorkerBridge {
-  private worker: Worker;
-  private gdriveAdapter: GoogleDriveAdapter;
-  private syncIntervalId: any;
+  // worker will be undefined in SSR
+  private worker!: Worker;
+  private syncIntervalId: ReturnType<typeof setInterval> | null = null;
   private unsubscribers: (() => void)[] = [];
 
   constructor() {
-    this.worker = new SyncWorker();
-    this.gdriveAdapter = new GoogleDriveAdapter();
-    this.setupListeners();
+    if (browser) {
+      this.worker = new SyncWorker();
+      this.setupListeners();
+    }
 
     if (browser) {
       // Setup periodic sync based on config only if enabled
@@ -39,33 +39,85 @@ export class WorkerBridge {
   }
 
   private setupListeners() {
-    // ... same ...
+    this.worker.onmessage = (event) => {
+      const { type, payload } = event.data;
+
+      // Since this is a class-based bridge, we'll import the store directly
+      // but we need to handle the store update carefully.
+      import("$stores/sync-stats").then(({ syncStats }) => {
+        switch (type) {
+          case "SYNC_STATUS":
+            syncStats.setStatus(payload);
+            break;
+          case "SYNC_COMPLETE":
+            syncStats.updateStats({
+              filesUploaded: payload.uploads,
+              filesDownloaded: payload.downloads,
+            });
+            cloudConfig.updateLastSync(Date.now());
+            break;
+          case "SYNC_ERROR":
+            syncStats.setError(payload);
+            break;
+        }
+      });
+    };
   }
 
   async startSync() {
+    console.group("[WorkerBridge] startSync");
     const config = get(cloudConfig) as CloudConfig;
-    if (!config.enabled) return;
+    console.log("[WorkerBridge] Config:", config);
 
-    if (!this.gdriveAdapter.isAuthenticated()) return;
+    if (!config.enabled) {
+      console.warn("Sync aborted: config.enabled is false");
+      console.groupEnd();
+      return;
+    }
 
-    const token = gapi.client.getToken()?.access_token;
+    // Check gapi token directly
+    const tokenObj =
+      typeof gapi !== "undefined" && gapi.client ? gapi.client.getToken() : null;
+    const token = tokenObj?.access_token;
+
+    console.log("[WorkerBridge] GAPI Token Status:", {
+      defined: typeof gapi !== 'undefined',
+      hasClient: typeof gapi !== 'undefined' && !!gapi.client,
+      tokenObj: tokenObj ? "PRESENT" : "NULL",
+      accessToken: token ? "PRESENT (hidden)" : "MISSING"
+    });
+
+    if (!token) {
+      console.warn("Sync aborted: no gapi access token found");
+      console.groupEnd();
+      return;
+    }
+
     const email = config.connectedEmail;
     const storageKey = `gdrive_folder_id:${email}`;
     const folderId = localStorage.getItem(storageKey);
     const rootHandle = vault.rootHandle;
 
-    if (token) {
-      // Send single initialization + start command to avoid race condition
-      this.worker.postMessage({
-        type: "INIT_SYNC",
-        payload: { 
-          accessToken: token,
-          folderId: folderId || undefined,
-          rootHandle: rootHandle
-        },
-      });
-      this.worker.postMessage({ type: "START_SYNC" });
-    }
+    console.log("[WorkerBridge] Sync Parameters:", {
+      email,
+      folderId,
+      hasRootHandle: !!rootHandle,
+    });
+
+
+    console.log("Posting INIT_SYNC + START_SYNC to worker...");
+    // Send single initialization + start command to avoid race condition
+    this.worker.postMessage({
+      type: "INIT_SYNC",
+      payload: {
+        accessToken: token,
+        folderId: folderId || undefined,
+        rootHandle: rootHandle
+      }
+    });
+
+    this.worker.postMessage({ type: "START_SYNC" });
+    console.groupEnd();
   }
 }
 

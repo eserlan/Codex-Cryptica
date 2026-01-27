@@ -29,7 +29,7 @@ test("Open Vault button calls showDirectoryPicker", async ({ page }) => {
     (msg) => msg.text() === "MOCK: showDirectoryPicker called",
   );
 
-  await page.getByRole("button", { name: "Open Vault" }).click();
+  await page.getByRole("button", { name: "OPEN VAULT" }).click();
 
   await consolePromise;
 

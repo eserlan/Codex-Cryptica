@@ -1,7 +1,0 @@
-npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
-
-  ERROR
-    Unknown option --filter
-
-  Run `$ svelte-check --help` for more info.
-
