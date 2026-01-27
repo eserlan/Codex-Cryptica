@@ -7,18 +7,19 @@ const MODEL_NAME = "gemini-1.5-flash";
 export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: GenerativeModel | null = null;
+  private currentApiKey: string | null = null;
 
   init(apiKey: string) {
-    if (this.genAI) return;
+    if (this.genAI && this.model && this.currentApiKey === apiKey) return;
+    
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: MODEL_NAME });
+    this.currentApiKey = apiKey;
   }
 
   async generateResponse(apiKey: string, query: string, onUpdate: (partial: string) => void) {
     // Re-init if key changed or first time
-    if (!this.genAI) {
-        this.init(apiKey);
-    }
+    this.init(apiKey);
 
     if (!this.model) throw new Error("AI Model not initialized");
 
@@ -54,14 +55,18 @@ export class AIService {
     const results = await searchService.search(query, { limit: 5 });
     
     // Fetch content from VaultStore
-    const contents = results.map(result => {
-        const entity = vault.entities[result.id];
-        if (!entity) return "";
-        return `
-        --- File: ${entity.title} ---
-        ${entity.content}
-        `;
-    });
+    const contents = results
+        .map(result => {
+            const entity = vault.entities[result.id];
+            if (!entity || !entity.content) return null;
+            
+            // Limit content per file to ~10k characters to prevent prompt bloat
+            // while still providing significant context.
+            const truncated = entity.content.slice(0, 10000);
+            
+            return `--- File: ${entity.title} ---\n${truncated}`;
+        })
+        .filter((c): c is string => c !== null);
 
     return contents.join("\n\n");
   }

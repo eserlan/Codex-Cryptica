@@ -43,6 +43,8 @@
       <button 
         class="text-purple-400 hover:text-purple-200"
         onclick={() => oracle.toggle()}
+        aria-label="Close oracle window"
+        title="Close"
       >
         ✕
       </button>

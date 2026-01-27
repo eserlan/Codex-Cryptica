@@ -8,7 +8,7 @@ Integrate Google Gemini via `@google/generative-ai` to provide a lightweight, ac
 ### 1. The Brain (`GeminiService`)
 - **Library**: `@google/generative-ai`
 - **Model**: `gemini-1.5-flash` (Fast, cheap/free, large context).
-- **Authentication**: User-provided API Key stored in `localStorage` (or `idb` settings).
+- **Authentication**: User-provided API Key stored in IndexedDB via `idb` settings (see `idb.ts`).
 
 ### 2. The Retrieval (`RAG`)
 - **Query**: User input -> `SearchService.search(query)`.
