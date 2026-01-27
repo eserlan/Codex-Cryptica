@@ -9,7 +9,7 @@ const getGoogleConfig = () => ({
 const TOKEN_STORAGE_KEY = "codex-arcana-gdrive-token";
 
 interface CachedToken {
-  access_token: string;
+  resp: google.accounts.oauth2.TokenResponse;
   expires_at: number; // timestamp
 }
 
@@ -78,10 +78,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       }
 
       console.log("[GDriveAdapter] Restoring cached token");
-      this.accessToken = tokenData.access_token;
+      this.accessToken = tokenData.resp.access_token;
 
       if (gapi.client) {
-        gapi.client.setToken({ access_token: tokenData.access_token });
+        gapi.client.setToken(tokenData.resp);
       }
       return true;
     } catch (e) {
@@ -90,9 +90,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     }
   }
 
-  private cacheToken(accessToken: string, expiresIn: number) {
+  private cacheToken(resp: google.accounts.oauth2.TokenResponse) {
+    const expiresIn = Number(resp.expires_in) || 3600;
     const tokenData: CachedToken = {
-      access_token: accessToken,
+      resp,
       expires_at: Date.now() + expiresIn * 1000,
     };
     localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData));
@@ -117,10 +118,8 @@ export class GoogleDriveAdapter implements ICloudAdapter {
         }
         this.accessToken = resp.access_token;
 
-        // Cache token for persistence across page refreshes
-        // expires_in is typically 3600 seconds (1 hour)
-        const expiresIn = Number(resp.expires_in) || 3600;
-        this.cacheToken(resp.access_token, expiresIn);
+        // Cache full token for persistence
+        this.cacheToken(resp);
 
         // Explicitly set the token in gapi so it's globally available to workerBridge
         if (typeof gapi !== 'undefined' && gapi.client) {
