@@ -145,6 +145,17 @@ description: "Task list template for feature implementation"
 
 ---
 
+## Phase 7: Performance & Reliability (Added Jan 2026)
+
+**Purpose**: Hardening the sync engine for large vaults and verifying correctness.
+
+- [x] T031 Implement Metadata-based change detection (fixes "Sync Loop") in apps/web/src/lib/cloud-bridge/sync-engine/engine.ts
+- [x] T032 Implement Parallel File Transfers (concurrency=5) in apps/web/src/lib/cloud-bridge/sync-engine/engine.ts
+- [x] T033 Implement Batched Metadata Updates in apps/web/src/lib/cloud-bridge/sync-engine/metadata-store.ts
+- [x] T034 Implement "Reconnect" flow for expired tokens in apps/web/src/lib/components/settings/CloudStatus.svelte
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
