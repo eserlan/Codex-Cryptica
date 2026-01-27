@@ -1,5 +1,9 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "VITE_GOOGLE_CLIENT_ID",
+    "NODE_ENV"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [
