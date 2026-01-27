@@ -236,7 +236,9 @@
                                     class="flex gap-3 text-sm text-gray-400 items-start group"
                                 >
                                     <span
-                                        class="text-green-500 mt-1 icon-[lucide--chevron-right] w-3 h-3 shrink-0"
+                                        class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
+                                            ? 'text-green-500 icon-[lucide--arrow-up-right]'
+                                            : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
                                     ></span>
                                     <div class="flex-1 min-w-0">
                                         <button
