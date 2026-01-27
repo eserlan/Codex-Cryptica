@@ -50,11 +50,12 @@
     // Lightbox state
     let showLightbox = $state(false);
 
-    // Active tab
-    let activeTab = $state<"status" | "lore" | "inventory">("status");
-
     $effect(() => {
-        if (entity && activeTab === "lore" && entity.lore === undefined) {
+        if (
+            entity &&
+            vault.activeDetailTab === "lore" &&
+            entity.lore === undefined
+        ) {
             vault.fetchLore(entity.id);
         }
     });
@@ -139,34 +140,36 @@
                 class="flex gap-6 text-[10px] font-bold tracking-widest text-gray-500 border-b border-green-900/30 pb-2"
             >
                 <button
-                    class={activeTab === "status"
+                    class={vault.activeDetailTab === "status"
                         ? "text-green-400 border-b-2 border-green-400 pb-2 -mb-2.5"
                         : "hover:text-gray-300 transition"}
-                    onclick={() => (activeTab = "status")}>STATUS</button
+                    onclick={() => (vault.activeDetailTab = "status")}
+                    >STATUS</button
                 >
                 <button
-                    class={activeTab === "lore"
+                    class={vault.activeDetailTab === "lore"
                         ? "text-green-400 border-b-2 border-green-400 pb-2 -mb-2.5"
                         : "hover:text-gray-300 transition"}
                     onclick={() => {
-                        activeTab = "lore";
+                        vault.activeDetailTab = "lore";
                         if (entity && entity.lore === undefined) {
                             vault.fetchLore(entity.id);
                         }
                     }}>LORE & NOTES</button
                 >
                 <button
-                    class={activeTab === "inventory"
+                    class={vault.activeDetailTab === "inventory"
                         ? "text-green-400 border-b-2 border-green-400 pb-2 -mb-2.5"
                         : "hover:text-gray-300 transition"}
-                    onclick={() => (activeTab = "inventory")}>INVENTORY</button
+                    onclick={() => (vault.activeDetailTab = "inventory")}
+                    >INVENTORY</button
                 >
             </div>
         </div>
 
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-            {#if activeTab === "status"}
+            {#if vault.activeDetailTab === "status"}
                 <div class="space-y-8">
                     <!-- Chronicle / Content -->
                     <div>
@@ -226,7 +229,7 @@
                         </ul>
                     </div>
                 </div>
-            {:else if activeTab === "lore"}
+            {:else if vault.activeDetailTab === "lore"}
                 <div class="space-y-4">
                     <div>
                         <div
@@ -257,7 +260,7 @@
                         {/if}
                     </div>
                 </div>
-            {:else if activeTab === "inventory"}
+            {:else if vault.activeDetailTab === "inventory"}
                 <div class="text-gray-500 italic text-sm">
                     Inventory coming soon...
                 </div>

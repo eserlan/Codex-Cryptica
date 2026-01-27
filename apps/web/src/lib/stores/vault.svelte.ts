@@ -13,6 +13,7 @@ class VaultStore {
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
+  activeDetailTab = $state<"status" | "lore" | "inventory">("status");
 
   get allEntities() {
     return Object.values(this.entities);
@@ -103,10 +104,10 @@ class VaultStore {
 
     this.status = "loading";
     const files = await walkDirectory(this.rootHandle);
-    
+
     // Clear index before reloading
     await searchService.clear();
-    
+
     // Reset entities or keep them? "loadFiles" usually implies a fresh load or refresh.
     // If we want to be smooth, we might want to keep existing until replaced, but that handles deletions poorly.
     // Let's clear start fresh but progressively.
@@ -117,51 +118,51 @@ class VaultStore {
     for (let i = 0; i < files.length; i += CHUNK_SIZE) {
       const chunk = files.slice(i, i + CHUNK_SIZE);
       const chunkEntities: Record<string, LocalEntity> = {};
-      
+
       await Promise.all(chunk.map(async (fileEntry) => {
         try {
           const filePath = Array.isArray(fileEntry.path) ? fileEntry.path.join('/') : fileEntry.path;
           const file = await fileEntry.handle.getFile();
           const lastModified = file.lastModified;
           const cached = await cacheService.get(filePath);
-          
+
           let entity: LocalEntity;
 
           // Hit Path: Use cached entity if valid
           if (cached && cached.lastModified === lastModified) {
-             entity = { ...cached.entity, _fsHandle: fileEntry.handle, _path: fileEntry.path };
+            entity = { ...cached.entity, _fsHandle: fileEntry.handle, _path: fileEntry.path };
           } else {
-             // Miss Path: Parse and cache
-             const text = await file.text();
-             const { metadata, content, wikiLinks } = parseMarkdown(text);
+            // Miss Path: Parse and cache
+            const text = await file.text();
+            const { metadata, content, wikiLinks } = parseMarkdown(text);
 
-             let id = metadata.id;
-             if (!id) {
-               id = sanitizeId(fileEntry.path[fileEntry.path.length - 1].replace(".md", ""));
-             }
+            let id = metadata.id;
+            if (!id) {
+              id = sanitizeId(fileEntry.path[fileEntry.path.length - 1].replace(".md", ""));
+            }
 
-             const connections = [...(metadata.connections || []), ...wikiLinks];
+            const connections = [...(metadata.connections || []), ...wikiLinks];
 
-             entity = {
-               id: id!,
-               type: metadata.type || "npc",
-               title: metadata.title || id!,
-               tags: metadata.tags || [],
-               connections,
-               content: content,
-               lore: metadata.lore,
-               image: metadata.image,
-               metadata: metadata.metadata,
-               _fsHandle: fileEntry.handle,
-               _path: fileEntry.path,
-             };
-             
-             // Update Cache (best-effort; failures should not abort processing)
-             try {
-               await cacheService.set(filePath, lastModified, entity);
-             } catch (error) {
-               console.error("Failed to update cache for file:", filePath, error);
-             }
+            entity = {
+              id: id!,
+              type: metadata.type || "npc",
+              title: metadata.title || id!,
+              tags: metadata.tags || [],
+              connections,
+              content: content,
+              lore: metadata.lore,
+              image: metadata.image,
+              metadata: metadata.metadata,
+              _fsHandle: fileEntry.handle,
+              _path: fileEntry.path,
+            };
+
+            // Update Cache (best-effort; failures should not abort processing)
+            try {
+              await cacheService.set(filePath, lastModified, entity);
+            } catch (error) {
+              console.error("Failed to update cache for file:", filePath, error);
+            }
           }
 
           if (!entity.id || entity.id === 'undefined') {
@@ -225,8 +226,8 @@ class VaultStore {
       await this.saveToDisk(entity);
       this.status = "idle";
     }).catch(err => {
-        console.error("Save failed for", entity.title, err);
-        this.status = "error";
+      console.error("Save failed for", entity.title, err);
+      this.status = "error";
     });
   }
 
