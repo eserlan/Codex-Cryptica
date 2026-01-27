@@ -1,20 +1,17 @@
 import SyncWorker from "$workers/sync?worker";
 import { cloudConfig } from "$stores/cloud-config";
 import { get } from "svelte/store";
-import { GoogleDriveAdapter } from "./google-drive/adapter";
 import { vault } from "$lib/stores/vault.svelte";
 import { browser } from "$app/environment";
 import type { CloudConfig } from "./index";
 
 export class WorkerBridge {
   private worker: Worker;
-  private gdriveAdapter: GoogleDriveAdapter;
-  private syncIntervalId: any;
+  private syncIntervalId: ReturnType<typeof setInterval> | null = null;
   private unsubscribers: (() => void)[] = [];
 
   constructor() {
     this.worker = new SyncWorker();
-    this.gdriveAdapter = new GoogleDriveAdapter();
     this.setupListeners();
 
     if (browser) {
@@ -41,7 +38,7 @@ export class WorkerBridge {
   private setupListeners() {
     this.worker.onmessage = (event) => {
       const { type, payload } = event.data;
-      
+
       // Since this is a class-based bridge, we'll import the store directly
       // but we need to handle the store update carefully.
       import("$stores/sync-stats").then(({ syncStats }) => {
@@ -64,29 +61,45 @@ export class WorkerBridge {
   }
 
   async startSync() {
+    console.log("[WorkerBridge] startSync() called");
     const config = get(cloudConfig) as CloudConfig;
-    if (!config.enabled) return;
 
-    if (!this.gdriveAdapter.isAuthenticated()) return;
+    if (!config.enabled) {
+      console.warn("[WorkerBridge] Sync aborted: config.enabled is false");
+      return;
+    }
 
-    const token = gapi.client.getToken()?.access_token;
+    // Check gapi token directly instead of adapter instance (which may not share auth state)
+    const token = typeof gapi !== 'undefined' ? gapi.client?.getToken()?.access_token : null;
+    if (!token) {
+      console.warn("[WorkerBridge] Sync aborted: no gapi access token");
+      return;
+    }
+
     const email = config.connectedEmail;
     const storageKey = `gdrive_folder_id:${email}`;
     const folderId = localStorage.getItem(storageKey);
     const rootHandle = vault.rootHandle;
 
-    if (token) {
-      // Send single initialization + start command to avoid race condition
-      this.worker.postMessage({
-        type: "INIT_SYNC",
-        payload: { 
-          accessToken: token,
-          folderId: folderId || undefined,
-          rootHandle: rootHandle
-        },
-      });
-      this.worker.postMessage({ type: "START_SYNC" });
-    }
+    console.log("[WorkerBridge] Sync state:", {
+      hasToken: !!token,
+      email,
+      folderId,
+      hasRootHandle: !!rootHandle,
+    });
+
+
+    console.log("[WorkerBridge] Posting INIT_SYNC + START_SYNC to worker");
+    // Send single initialization + start command to avoid race condition
+    this.worker.postMessage({
+      type: "INIT_SYNC",
+      payload: {
+        accessToken: token,
+        folderId: folderId || undefined,
+        rootHandle: rootHandle
+      },
+    });
+    this.worker.postMessage({ type: "START_SYNC" });
   }
 }
 

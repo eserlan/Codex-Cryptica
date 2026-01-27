@@ -1,4 +1,6 @@
 <script lang="ts">
+    /* eslint-disable no-undef */
+    /* global gapi */
     import { cloudConfig } from "$stores/cloud-config";
     import { syncStats } from "$stores/sync-stats";
     import { GoogleDriveAdapter } from "$lib/cloud-bridge/google-drive/adapter";
@@ -51,6 +53,41 @@
         const target = e.target as HTMLInputElement;
         cloudConfig.setEnabled(target.checked);
     };
+
+    // Check if gapi token exists - this is needed because OAuth tokens don't persist across page refresh
+    let hasToken = $derived(
+        typeof gapi !== "undefined" && !!gapi.client?.getToken()?.access_token,
+    );
+
+    // Detect when config says connected but token is missing (session expired or page refresh)
+    let needsReauth = $derived(
+        $cloudConfig.enabled && $cloudConfig.connectedEmail && !hasToken,
+    );
+
+    // Auto re-auth: try to silently get a new token when we detect session is stale
+    $effect(() => {
+        if (needsReauth && !isLoading && typeof gapi !== "undefined") {
+            console.log(
+                "[CloudStatus] Session stale, attempting silent re-auth...",
+            );
+            isLoading = true;
+            adapter
+                .connect()
+                .then(() => {
+                    console.log("[CloudStatus] Silent re-auth successful");
+                })
+                .catch((e: any) => {
+                    console.warn(
+                        "[CloudStatus] Silent re-auth failed, user may need to reconnect:",
+                        e,
+                    );
+                    // Don't reset config - let user manually reconnect if needed
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+        }
+    });
 
     let status = $derived($syncStats.status);
     let isSyncing = $derived(status === "SCANNING" || status === "SYNCING");
@@ -235,13 +272,26 @@
                             </div>
                         {/if}
 
+                        {#if needsReauth && isLoading}
+                            <div
+                                class="text-amber-400 text-[10px] bg-amber-900/10 p-2 border border-amber-900/30 rounded flex items-center gap-2"
+                            >
+                                <span
+                                    class="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"
+                                ></span>
+                                <span>Reconnecting to Google Drive...</span>
+                            </div>
+                        {/if}
+
                         <div class="flex gap-2">
                             <button
                                 class="flex-1 px-3 py-2 bg-green-600 hover:bg-green-500 text-black font-bold rounded transition-all disabled:opacity-50 flex items-center justify-center gap-2 {isFlashing
                                     ? 'scale-95 ring-2 ring-green-400'
                                     : ''}"
                                 onclick={handleSync}
-                                disabled={isSyncing || !$cloudConfig.enabled}
+                                disabled={isSyncing ||
+                                    !$cloudConfig.enabled ||
+                                    !hasToken}
                             >
                                 {#if isSyncing}
                                     <span
