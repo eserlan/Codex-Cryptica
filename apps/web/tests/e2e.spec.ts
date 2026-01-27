@@ -1,32 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-// Mock File System Access API
-const mockFileSystem = {
-  kind: "directory",
-  name: "test-vault",
-  requestPermission: async () => "granted",
-  queryPermission: async () => "granted",
-  entries: async function* () {
-    yield* [];
-  }, // Default empty async iterator
-  getFileHandle: async (name: string) => ({
-    kind: "file",
-    name: name,
-    getFile: async () =>
-      new File(
-        [
-          "---\nid: " +
-          name.replace(".md", "") +
-          "\ntitle: " +
-          name +
-          "\ntype: npc\n---\n# Content",
-        ],
-        name,
-      ),
-  }),
-  getDirectoryHandle: async () => mockFileSystem,
-};
-
 test.describe("Vault E2E", () => {
   test.beforeEach(async ({ page }) => {
     // Debugging: Pipe console logs
@@ -35,58 +8,32 @@ test.describe("Vault E2E", () => {
 
     // Setup default empty vault mock
     await page.addInitScript(() => {
-      // Mock IndexedDB to avoid DataCloneError with mock handles
-      const mockIDB = {
-        open: () => {
-          const request: any = {};
-          setTimeout(() => {
-            request.result = {
-              createObjectStore: () => { },
-              objectStoreNames: { contains: () => false },
-              transaction: () => ({
-                objectStore: () => ({
-                  put: () => {
-                    const r: any = {};
-                    setTimeout(() => r.onsuccess && r.onsuccess(), 10);
-                    return r;
-                  },
-                  get: () => {
-                    const r: any = {};
-                    setTimeout(() => {
-                      r.result = null;
-                      if (r.onsuccess) r.onsuccess();
-                    }, 10);
-                    return r;
-                  },
-                  delete: () => {
-                    const r: any = {};
-                    setTimeout(() => r.onsuccess && r.onsuccess(), 10);
-                    return r;
-                  },
-                }),
-              }),
+      // Intercept IndexedDB to handle DataCloneError with mock handles
+      // instead of completely mocking the entire API which is brittle.
+      const originalPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (...args: [unknown, IDBValidKey?]) {
+        try {
+          return originalPut.apply(this, args);
+        } catch (e: any) {
+          if (e.name === 'DataCloneError') {
+            console.log("MOCK: Caught DataCloneError in IndexedDB, returning fake success");
+            const req: any = {
+              onsuccess: null,
+              onerror: null,
+              result: args[1],
+              readyState: 'done',
+              addEventListener: function (type: string, listener: any) {
+                if (type === 'success') this.onsuccess = listener;
+              }
             };
-            if (request.onsuccess) request.onsuccess({ target: request });
-          }, 10);
-          return request;
-        },
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({ target: req });
+            }, 0);
+            return req;
+          }
+          throw e;
+        }
       };
-
-      try {
-        // Try simple assignment first
-        window.indexedDB = mockIDB as unknown as IDBFactory;
-      } catch {
-        console.log("Simple assignment failed, trying defineProperty");
-      }
-
-      // Force override if simple assignment didn't work or just to be safe
-      if (window.indexedDB !== (mockIDB as unknown as IDBFactory)) {
-        Object.defineProperty(window, "indexedDB", {
-          value: mockIDB,
-          writable: true,
-          configurable: true,
-        });
-      }
 
       const mockFileSystem = {
         kind: "directory",
@@ -103,11 +50,11 @@ test.describe("Vault E2E", () => {
           getFile: async () =>
             new File(
               [
-                "---\nid: " +
-                name.replace(".md", "") +
-                "\ntitle: " +
-                name +
-                "\ntype: npc\n---\n# Content",
+                `---\nid: ${name.replace(".md", "")} 
+title: ${name}
+type: npc
+---
+# Content`,
               ],
               name,
             ),
@@ -182,8 +129,6 @@ test.describe("Vault E2E", () => {
       };
     });
 
-    // Reload to apply new mock *before* interaction if needed, but here we just need to ensure the click uses the new mock.
-    // Actually, initScript runs on load. We need to reload to change the mock behavior effectively or overwrite it.
     await page.reload();
 
     await page.getByRole("button", { name: "OPEN VAULT" }).click();
@@ -191,24 +136,22 @@ test.describe("Vault E2E", () => {
     // Verify Header Status
     await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES");
 
-    // Verify Entity Cards via Search (since Graph is Canvas-based)
-    // Open Search Modal
+    // Verify Entity Cards via Search
     await page.keyboard.press("Control+k");
     await page.keyboard.press("Meta+k");
 
-    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
+    await expect(page.getByPlaceholder("Search (Cmd+K)...")).toBeVisible();
 
     // Type query to populate results
-    await page.getByPlaceholder("Search notes...").fill("Alice");
+    await page.getByPlaceholder("Search (Cmd+K)...").fill("Alice");
 
     await expect(page.getByTestId("search-result").filter({ hasText: "Alice" })).toBeVisible();
 
-    // Close search to reset state if needed
+    // Close search
     await page.keyboard.press("Escape");
   });
 
   test("Graph View Renders with Height", async ({ page }) => {
-    // Reuse populated mock setup logic or just do it inline efficiently
     await page.addInitScript(() => {
       const files = [
         {
