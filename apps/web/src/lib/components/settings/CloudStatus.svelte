@@ -55,9 +55,20 @@
     };
 
     // Check if gapi token exists - adapter now caches and restores tokens automatically
-    let hasToken = $derived(
-        typeof gapi !== "undefined" && !!gapi.client?.getToken()?.access_token,
-    );
+    // We use polling because gapi state changes aren't reactive in Svelte
+    let hasToken = $state(false);
+
+    $effect(() => {
+        const checkToken = () => {
+            hasToken =
+                typeof gapi !== "undefined" &&
+                !!gapi.client?.getToken()?.access_token;
+        };
+
+        checkToken();
+        const interval = setInterval(checkToken, 1000);
+        return () => clearInterval(interval);
+    });
 
     let status = $derived($syncStats.status);
     let isSyncing = $derived(status === "SCANNING" || status === "SYNCING");
