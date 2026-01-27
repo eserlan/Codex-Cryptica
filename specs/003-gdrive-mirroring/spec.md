@@ -84,7 +84,11 @@ As a user, I want the sync engine to only upload files I have actually modified,
 As a power user, I want parallel transfers so that syncing hundreds of small files finishes quickly.
 
 ### Key Entities _(include if feature involves data)_
+### NFR-004: Partial Sync Resilience
+The sync engine MUST periodically save progress (checkpointing) during large batch operations. If the sync process is interrupted (e.g. network loss, tab closure), previously synced files MUST NOT be re-processed in the next run.
 
+### NFR-005: Initialization Concurrency
+The cloud adapter MUST handle multiple concurrent initialization requests (e.g., from UI components mounting simultaneously) by deduping script loading and authentication calls.
 - **Cloud Bridge Configuration**: Stores user preference for sync (enabled/disabled), linked account identifier, and last sync timestamp.
 - **World Graph Snapshot**: The serialized version of the lore data being mirrored to the cloud.
 

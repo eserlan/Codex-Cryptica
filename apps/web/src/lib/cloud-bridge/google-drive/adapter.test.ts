@@ -73,7 +73,7 @@ describe("GoogleDriveAdapter Auth", () => {
     expect(google.accounts.oauth2.initTokenClient).toHaveBeenCalled();
   });
 
-  it.skip("should request access token when connect is called", async () => {
+  it("should request access token when connect is called", async () => {
     // We need to mock the callback flow manually because our mock client 
     // needs to trigger the callback that the adapter sets on it.
 
@@ -102,6 +102,28 @@ describe("GoogleDriveAdapter Auth", () => {
     (globalThis as any).gapi = undefined;
     (globalThis as any).google = undefined;
 
+    // Capture the callback when initTokenClient is called
+    let capturedConfig: any = null;
+    const mockInitTokenClient = vi.fn().mockImplementation((config) => {
+      capturedConfig = config;
+      return {
+        requestAccessToken: vi.fn(),
+        callback: config.callback
+      };
+    });
+
+    // Setup google mock with our capturing spy
+    mockGoogle = {
+      accounts: {
+        oauth2: {
+          initTokenClient: mockInitTokenClient,
+          hasGrantedAllScopes: vi.fn().mockReturnValue(true),
+        },
+      },
+    };
+    // Re-assign to global as we messed with it
+    (globalThis as any).google = mockGoogle;
+
     // Re-instantiate adapter to trigger fresh init
     adapter = new GoogleDriveAdapter();
 
@@ -111,6 +133,7 @@ describe("GoogleDriveAdapter Auth", () => {
       // Restore globals after a delay to simulate script load
       setTimeout(() => {
         (globalThis as any).gapi = mockGapi;
+        // ensure google is set to our mock with the capturing spy
         (globalThis as any).google = mockGoogle;
       }, 50);
       return baseWaitForScript(check);
@@ -121,42 +144,25 @@ describe("GoogleDriveAdapter Auth", () => {
     const p2 = adapter.connect();
     const p3 = adapter.connect();
 
-    // Manually trigger the auth callback for the FIRST valid request that gets through
-    // We need to wait a bit for the "script" to load and init to happen
+    // Wait for the "script load" and initialization to happen
     await new Promise(r => setTimeout(r, 300));
 
-    // Verify initTokenClient called EXACTLY once using the captured reference.
-    // NOTE: This assertion is skipped because it's flaky in the test environment (mock reference mismatch)
-    // but was manually verified via logs.
-    // expect(mockGoogle.accounts.oauth2.initTokenClient).toHaveBeenCalledTimes(1);
-
-    // Trigger the callback if possible to unblock promises
-    try {
-      const initCall = mockGoogle.accounts.oauth2.initTokenClient.mock.calls[0];
-      if (initCall) {
-        const config = initCall[0];
-        config.callback({ access_token: "concurrent-token" });
-      } else {
-        // Fallback: manually trigger the callbacks of the TokenClient mock if avail
-        // This assumes the adapter has stored the client
-        console.log("Mock call not found, skipping callback trigger");
-      }
-    } catch (e) {
-      console.log("Error triggering callback:", e);
+    // Now trigger the callback if we captured it
+    if (capturedConfig && capturedConfig.callback) {
+      capturedConfig.callback({ access_token: "concurrent-token" });
+    } else {
+      throw new Error("initTokenClient was not called or callback not captured!");
     }
 
-    // NOTE: If callback is not triggered, promises might hang or fail.
-    // But since we saw in logs that init IS happening, hopefully calls[0] exists.
-
     // All promises should resolve to the same result
-    // If they hang, the test timeout will catch it.
     const results = await Promise.all([p1, p2, p3]);
 
     expect(results[0]).toBe("test@example.com");
     expect(results[1]).toBe("test@example.com");
     expect(results[2]).toBe("test@example.com");
 
-    // Init should still only be called once (Proxy for caching working)
+    // Init should still only be called once
+    expect(mockInitTokenClient).toHaveBeenCalledTimes(1);
     expect(mockGapi.load).toHaveBeenCalledTimes(1);
   });
 });
