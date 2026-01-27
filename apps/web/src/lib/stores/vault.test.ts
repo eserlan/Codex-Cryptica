@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, waitFor } from "vitest";
 import { vault } from "./vault.svelte";
 import * as fsUtils from "../utils/fs";
 
@@ -84,7 +84,6 @@ Content`);
   });
 
   it("should update entity and schedule save", async () => {
-    vi.useFakeTimers();
     const mockFileHandle = {
       createWritable: vi
         .fn()
@@ -101,11 +100,10 @@ Content`);
 
     expect(vault.entities["test"]?.title).toBe("Updated");
 
-    // Fast-forward debounce timer
-    vi.runAllTimers();
-
-    expect(fsUtils.writeFile).toHaveBeenCalled();
-    vi.useRealTimers();
+    // Wait for the queue to process the save
+    await vi.waitFor(() => {
+        expect(fsUtils.writeFile).toHaveBeenCalled();
+    });
   });
 
   it("should delete entity", async () => {
@@ -146,7 +144,6 @@ Link to [[Other|The Label]]`);
   });
 
   it("should update connection label", async () => {
-    vi.useFakeTimers();
     const mockFileHandle = {
       createWritable: vi
         .fn()
@@ -168,9 +165,9 @@ Link to [[Other|The Label]]`);
     expect(vault.entities["source"]?.connections[0].label).toBe("Best Friends");
     expect(vault.entities["source"]?.connections[0].type).toBe("knows"); // Unchanged
 
-    vi.runAllTimers();
-    expect(fsUtils.writeFile).toHaveBeenCalled();
-    vi.useRealTimers();
+    await vi.waitFor(() => {
+        expect(fsUtils.writeFile).toHaveBeenCalled();
+    });
   });
 
   it("should not fail when updating non-existent connection", () => {
@@ -218,7 +215,6 @@ Link to [[Other|The Label]]`);
     // Based on implementation, lore is part of frontmatter or separate section.
     // Let's verify updateEntity handles lore field.
 
-    vi.useFakeTimers();
     const mockFileHandle = {
       createWritable: vi
         .fn()
@@ -236,12 +232,11 @@ Link to [[Other|The Label]]`);
 
     expect(vault.entities["test-lore"]?.lore).toBe("New Secret Lore");
 
-    vi.runAllTimers();
-
-    expect(fsUtils.writeFile).toHaveBeenCalled();
+    await vi.waitFor(() => {
+        expect(fsUtils.writeFile).toHaveBeenCalled();
+    });
     // Verify that the written content includes the lore (either in frontmatter or body)
     // This depends on how _serializeAttributes handles it.
     // We just check that write was called for now.
-    vi.useRealTimers();
   });
 });
