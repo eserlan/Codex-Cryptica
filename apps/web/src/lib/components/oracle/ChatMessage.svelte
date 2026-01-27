@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { fade } from "svelte/transition";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
 
@@ -26,9 +27,6 @@
 
     // Visual feedback
     isSaved = true;
-    setTimeout(() => {
-      isSaved = false;
-    }, 2000);
   };
 </script>
 
@@ -51,23 +49,18 @@
         {@html html}
       </div>
 
-      {#if targetEntity && message.content.length > 20}
-        <div class="mt-3 pt-3 border-t border-zinc-800 flex justify-end">
+      {#if targetEntity && message.content.length > 20 && !isSaved}
+        <div
+          class="mt-3 pt-3 border-t border-zinc-800 flex justify-end"
+          transition:fade
+        >
           <button
             onclick={copyToChronicle}
-            class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all
-              {isSaved
-              ? 'bg-green-600/20 text-green-400 border border-green-500/50'
-              : 'bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600'}"
+            class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600"
             title="Save this blurb to {targetEntity.title}'s chronicle"
           >
-            {#if isSaved}
-              <span class="icon-[heroicons--check] w-3 h-3"></span>
-              ARCHIVE UPDATED
-            {:else}
-              <span class="icon-[lucide--copy-plus] w-3 h-3"></span>
-              COPY TO {(targetEntity.title || targetEntity.id).toUpperCase()} CHRONICLE
-            {/if}
+            <span class="icon-[lucide--copy-plus] w-3 h-3"></span>
+            COPY TO {(targetEntity.title || targetEntity.id).toUpperCase()} CHRONICLE
           </button>
         </div>
       {/if}
