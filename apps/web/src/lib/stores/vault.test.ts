@@ -79,7 +79,7 @@ Content`)
     const cachedEntity = {
         id: "cached-id",
         title: "Cached Title",
-        type: "npc",
+        type: "npc" as const,
         content: "Cached Content",
         tags: [],
         connections: [],
