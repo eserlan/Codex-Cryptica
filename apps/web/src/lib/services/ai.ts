@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, type GenerativeModel, type ChatSession } from "@google/generative-ai";
+import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
 import { searchService } from "./search";
 import { vault } from "../stores/vault.svelte";
 
@@ -8,8 +8,6 @@ export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: GenerativeModel | null = null;
   private currentApiKey: string | null = null;
-  private chatSession: ChatSession | null = null;
-  private sentEntityIds = new Set<string>();
 
   init(apiKey: string) {
     if (this.genAI && this.model && this.currentApiKey === apiKey) return;
@@ -18,41 +16,48 @@ export class AIService {
     this.model = this.genAI.getGenerativeModel({
       model: MODEL_NAME,
       systemInstruction: `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 
-Your primary goal is to provide information from the provided context. 
-However, if the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
-Always prioritize the vault context as the absolute truth, but act as a creative collaborator when invited to build upon it. 
-If information is completely missing and you aren't asked to invent it, say "I cannot find that in your records."`
+Your primary goal is to provide information from the provided context or conversation history. 
+
+If the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
+
+Only if you have NO information about the subject in either the new context blocks OR the previous messages, and you aren't asked to invent it, say "I cannot find that in your records." 
+
+Always prioritize the vault context as the absolute truth.`
     });
     this.currentApiKey = apiKey;
-    this.chatSession = null; // Reset session on re-init
   }
 
   async generateResponse(apiKey: string, query: string, history: any[], onUpdate: (partial: string) => void) {
     this.init(apiKey);
     if (!this.model) throw new Error("AI Model not initialized");
 
-    // Reset session if history is empty
-    if (history.length === 0 || !this.chatSession) {
-      this.chatSession = this.model.startChat({
-        history: history.map(m => ({
-          role: m.role === "assistant" ? "model" : "user",
-          parts: [{ text: m.content }]
-        }))
-      });
-      this.sentEntityIds.clear();
-    }
+    // Extract already sent entity titles from history to avoid redundancy
+    const alreadySentTitles = new Set<string>();
+    history.forEach(m => {
+      if (m.role === "user") {
+        const matches = m.content.matchAll(/--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g);
+        for (const match of matches) {
+          alreadySentTitles.add(match[1]);
+        }
+      }
+    });
+
+    // Create a new session with current history
+    const chat = this.model.startChat({
+      history: history.map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }))
+    });
 
     try {
-      const { content: context, ids: newIds } = await this.retrieveContext(query, this.sentEntityIds);
-
-      // Add newly sent entities to our tracking set
-      newIds.forEach(id => this.sentEntityIds.add(id));
+      const { content: context } = await this.retrieveContext(query, alreadySentTitles);
 
       const finalQuery = context
         ? `[NEW LORE CONTEXT]\n${context}\n\n[USER QUERY]\n${query}`
         : query;
 
-      const result = await this.chatSession.sendMessageStream(finalQuery);
+      const result = await chat.sendMessageStream(finalQuery);
 
       let fullText = "";
       for await (const chunk of result.stream) {
@@ -69,7 +74,7 @@ If information is completely missing and you aren't asked to invent it, say "I c
     }
   }
 
-  private async retrieveContext(query: string, excludeIds: Set<string>): Promise<{ content: string; ids: string[] }> {
+  private async retrieveContext(query: string, excludeTitles: Set<string>): Promise<{ content: string }> {
     // 1. Get search results for relevance
     let results = await searchService.search(query, { limit: 5 });
 
@@ -93,19 +98,18 @@ If information is completely missing and you aren't asked to invent it, say "I c
     const potentialIds = new Set(results.map(r => r.id));
     if (activeId) potentialIds.add(activeId);
 
-    // 4. Filter for NEW IDs only
-    const newIds: string[] = [];
+    // 4. Filter for NEW titles only
     const contents = Array.from(potentialIds)
       .map(id => {
-        if (excludeIds.has(id)) return null; // Skip already sent
-
         const entity = vault.entities[id];
         if (!entity) return null;
+
+        // Skip if this title was already sent in the history
+        if (excludeTitles.has(entity.title)) return null;
 
         const mainContent = entity.content?.trim() || entity.lore?.trim();
         if (!mainContent) return null;
 
-        newIds.push(id);
         const isActive = id === activeId;
         const prefix = isActive ? "[ACTIVE FILE] " : "";
         const truncated = mainContent.slice(0, 10000);
@@ -114,8 +118,8 @@ If information is completely missing and you aren't asked to invent it, say "I c
       })
       .filter((c): c is string => c !== null);
 
-    // 5. Fallback: If we still have NO lore context at all for this turn, provide titles if nothing ever sent
-    if (contents.length === 0 && excludeIds.size === 0) {
+    // 5. Last resort: If we have NO lore context yet in this whole conversation, provide titles
+    if (contents.length === 0 && excludeTitles.size === 0) {
       const allTitles = Object.values(vault.entities).map(e => e.title).join(", ");
       if (allTitles) {
         contents.push(`--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`);
@@ -123,8 +127,7 @@ If information is completely missing and you aren't asked to invent it, say "I c
     }
 
     return {
-      content: contents.join("\n\n"),
-      ids: newIds
+      content: contents.join("\n\n")
     };
   }
 }
