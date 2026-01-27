@@ -34,7 +34,7 @@
   ></div>
 
   <div
-    class="fixed bottom-0 left-0 w-full md:bottom-44 md:left-6 md:w-96 h-[80vh] md:h-[500px] bg-black/95 border-t md:border border-purple-900/50 rounded-t-xl md:rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
+    class="fixed bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-[80vh] md:h-[65vh] md:max-h-[800px] md:min-h-[500px] bg-black/95 border-t md:border border-purple-900/50 rounded-t-xl md:rounded-lg shadow-2xl flex flex-col z-50 overflow-hidden"
     transition:fly={{ y: 50, duration: 300 }}
   >
     <!-- Header -->
