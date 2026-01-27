@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai"
 import { searchService } from "./search";
 import { vault } from "../stores/vault.svelte";
 
-const MODEL_NAME = "gemini-3-flash-preview";
+const MODEL_NAME = "gemini-3-flash";
 
 export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
@@ -26,12 +26,12 @@ export class AIService {
     try {
       const context = await this.retrieveContext(query);
       console.log(`[AIService] Final RAG Context length: ${context.length}`);
-      console.log(`[AIService] FULL CONTEXT:\n${context}`);
 
       const systemPrompt = `You are the Lore Oracle, an expert on the user's personal world. 
-Answer the question based ONLY on the provided context if possible. 
-If the answer is not in the context, but is a general greeting or unrelated to lore, respond politely as the Oracle.
-If it's about lore and not in context, say "I cannot find that in your records."
+Answer the question based on the provided context. 
+If the information is sparse, use what is available to be as helpful as possible.
+If the question is a greeting or general, respond politely as the Oracle.
+Only if the query is specifically about lore and there is absolutely ZERO relevant information in the context, say "I cannot find that in your records."
 
 Context:
 ${context}
@@ -70,12 +70,9 @@ ${context}
         .filter(w => w.length > 2 && !['the', 'and', 'was', 'for', 'who', 'how', 'did', 'his', 'her', 'they', 'with', 'from'].includes(w));
 
       if (keywords.length > 0) {
-        console.log(`[AIService] No direct matches, retrying with keywords: ${keywords.join(', ')}`);
         results = await searchService.search(keywords.join(' '), { limit: 5 });
       }
     }
-
-    console.log(`[AIService] Search results for "${query}":`, results.map(r => r.title));
 
     // 2. Identify the active entity to prioritize it
     const activeId = vault.selectedEntityId;
@@ -87,18 +84,15 @@ ${context}
     const contents = Array.from(contextIds)
       .map(id => {
         const entity = vault.entities[id];
-        if (!entity) {
-          console.warn(`[AIService] Entity not found in vault for ID: "${id}"`);
-          return null;
-        }
-        if (!entity.content) {
-          console.warn(`[AIService] Entity "${entity.title}" (ID: ${id}) has no content!`);
-          return null;
-        }
+        if (!entity) return null;
+
+        // Use body content, but fallback to lore field if body is empty
+        const mainContent = entity.content?.trim() || entity.lore?.trim();
+        if (!mainContent) return null;
 
         const isActive = id === activeId;
         const prefix = isActive ? "[ACTIVE FILE] " : "";
-        const truncated = entity.content.slice(0, 10000);
+        const truncated = mainContent.slice(0, 10000);
 
         return `--- ${prefix}File: ${entity.title} ---\n${truncated}`;
       })

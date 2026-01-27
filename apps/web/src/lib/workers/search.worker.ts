@@ -58,14 +58,11 @@ const search = async (query: string, options: SearchOptions = {}): Promise<Searc
   if (!index) return [];
 
   const limit = options.limit || 20;
-
-  console.log(`[Worker] Searching for: "${query}"`, options);
   const results = await index.searchAsync(query, {
     limit,
     enrich: true,
     suggest: true
   });
-  console.log(`[Worker] Raw results found: ${results.length} fields matched`);
 
 
   const resultsMap = new Map<string, SearchResult>();
