@@ -3,6 +3,7 @@ import { syncStats } from "$stores/sync-stats";
 import { cloudConfig } from "$stores/cloud-config";
 import { get } from "svelte/store";
 import { GoogleDriveAdapter } from "./google-drive/adapter";
+import { vault } from "$lib/stores/vault.svelte";
 import { browser } from "$app/environment";
 import type { CloudConfig } from "./index";
 

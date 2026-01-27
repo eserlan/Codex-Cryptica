@@ -5,7 +5,6 @@ test.describe('Fuzzy Search', () => {
         // Mock File System Access API and IndexedDB
         await page.addInitScript(() => {
             // MOCK INDEXED DB
-            // @ts-expect-error - Mock
             indexedDB.open = () => {
                 const req: any = {
                     onupgradeneeded: null,
@@ -145,7 +144,6 @@ test.describe('Fuzzy Search', () => {
                 }
             ];
 
-            // @ts-expect-error - Accessing internal store
             const { searchStore } = window as any;
             if (searchStore) {
                 searchStore.update((s: any) => ({

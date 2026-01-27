@@ -3,7 +3,7 @@
 import FlexSearch from 'flexsearch';
 import type { SearchEntry, SearchResult, SearchOptions } from 'schema';
 
-import { extractIdAndDoc, type SearchDocument } from '../utils/search-utils';
+import { extractIdAndDoc } from '../utils/search-utils';
 
 
 
