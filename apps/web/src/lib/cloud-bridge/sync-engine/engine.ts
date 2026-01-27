@@ -4,7 +4,7 @@ import type { MetadataStore, SyncMetadata } from "./metadata-store";
 import { resolveConflict } from "./conflict";
 
 interface SyncPlan {
-  uploads: FileEntry[];
+  uploads: (FileEntry & { remoteId?: string })[];
   downloads: RemoteFileMeta[];
   deletes: string[]; // paths
 }
@@ -14,7 +14,7 @@ export class SyncEngine {
     private cloudAdapter: ICloudAdapter,
     private fsAdapter: FileSystemAdapter,
     private metadataStore: MetadataStore,
-  ) {}
+  ) { }
 
   async scan(): Promise<{
     local: FileEntry[];
@@ -51,13 +51,13 @@ export class SyncEngine {
         // New Local File -> Upload
         plan.uploads.push(local);
       } else {
-        // Both exist
+        // Both exist - include remoteId for update
         const decision = resolveConflict(
           local.lastModified,
           remote.modifiedTime,
         );
         if (decision === "UPLOAD") {
-          plan.uploads.push(local);
+          plan.uploads.push({ ...local, remoteId: remote.id });
         } else if (decision === "DOWNLOAD") {
           plan.downloads.push(remote);
         }
@@ -90,7 +90,7 @@ export class SyncEngine {
     // Execute uploads
     for (const file of plan.uploads) {
       const content = await this.fsAdapter.readFile(file.path);
-      const meta = await this.cloudAdapter.uploadFile(file.path, content);
+      const meta = await this.cloudAdapter.uploadFile(file.path, content, file.remoteId);
       await this.updateMetadata(file.path, meta, file.lastModified);
     }
 
