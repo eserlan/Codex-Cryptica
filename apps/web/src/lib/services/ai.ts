@@ -85,11 +85,17 @@ Always prioritize the vault context as the absolute truth.`
     // 2. Identify the active entity to prioritize it
     const activeId = vault.selectedEntityId;
 
-    // 3. Build context from both search results and active entity
-    const potentialIds = Array.from(new Set(results.map(r => r.id)));
-    if (activeId && !potentialIds.includes(activeId)) potentialIds.unshift(activeId);
+    // 3. Identification of primary target
+    // We prioritize search results: if we found a direct match, that's likely the target for archival.
+    const searchIds = results.map(r => r.id);
+    const primaryEntityId = searchIds[0] || activeId;
 
-    const primaryEntityId = activeId || potentialIds[0];
+    // Build the collection of IDs to fetch context for
+    const potentialIds = Array.from(new Set([...searchIds]));
+    if (activeId && !potentialIds.includes(activeId)) {
+      // Add active entity for RAG context, but keep it as secondary if it wasn't a search match
+      potentialIds.push(activeId);
+    }
 
     // 4. Filter for NEW titles only
     const contents = potentialIds
