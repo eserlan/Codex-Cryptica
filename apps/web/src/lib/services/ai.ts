@@ -107,7 +107,23 @@ Always prioritize the vault context as the absolute truth.`
         const prefix = isActive ? "[ACTIVE FILE] " : "";
         const truncated = mainContent.slice(0, 10000);
 
-        return `--- ${prefix}File: ${entity.title} ---\n${truncated}`;
+        // 4b. Add Connection Context
+        let connectionContext = "";
+        const outbound = entity.connections.map(c => {
+          const target = vault.entities[c.target]?.title || c.target;
+          return `- ${c.label || c.type}: ${target}`;
+        });
+
+        const inbound = (vault.inboundConnections[id] || []).map(item => {
+          const source = vault.entities[item.sourceId]?.title || item.sourceId;
+          return `- ${source}: ${item.connection.label || item.connection.type}`;
+        });
+
+        if (outbound.length > 0 || inbound.length > 0) {
+          connectionContext = "\n--- Connections ---\n" + [...outbound, ...inbound].join("\n");
+        }
+
+        return `--- ${prefix}File: ${entity.title} ---\n${truncated}${connectionContext}`;
       })
       .filter((c): c is string => c !== null);
 
