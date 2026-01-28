@@ -144,7 +144,7 @@
                 <span class="text-purple-400 icon-[heroicons--sparkles] w-4 h-4"
                 ></span>
                 <span class="text-xs text-purple-100">
-                    {oracle.apiKey ? "Oracle is Active" : "Oracle Guest Mode"}
+                    {oracle.apiKey ? "Oracle is Active" : "Oracle Lite Mode"}
                 </span>
             </div>
             {#if oracle.apiKey}
@@ -153,7 +153,7 @@
                 >
             {:else}
                 <span class="text-[10px] text-purple-500 font-mono uppercase"
-                    >Shared Access</span
+                    >LITE ACCESS</span
                 >
             {/if}
         </div>

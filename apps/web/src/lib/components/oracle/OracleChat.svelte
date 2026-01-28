@@ -134,6 +134,22 @@
                                 {oracle.tier}
                             </span>
                         </div>
+
+                        <!-- Lite/Shared Indicator -->
+                        {#if !oracle.apiKey}
+                            <div class="w-px h-6 bg-white/10 mx-1"></div>
+                            <div class="flex flex-col items-center gap-1">
+                                <span
+                                    class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
+                                    >Access</span
+                                >
+                                <span
+                                    class="text-xs px-2 py-0.5 rounded border border-blue-400/30 bg-blue-500/10 text-blue-300 uppercase tracking-wider font-bold"
+                                >
+                                    LITE
+                                </span>
+                            </div>
+                        {/if}
                     </div>
                 </div>
             </div>

@@ -59,7 +59,8 @@ describe("OracleStore", () => {
 
   it("should initialize with empty state", () => {
     expect(oracle.messages).toHaveLength(0);
-    expect(oracle.isEnabled).toBe(false);
+    // isEnabled depends on VITE_SHARED_GEMINI_KEY in the test environment
+    expect(oracle.isEnabled).toBe(!!import.meta.env.VITE_SHARED_GEMINI_KEY);
   });
 
   it("should load API key from database on init", async () => {

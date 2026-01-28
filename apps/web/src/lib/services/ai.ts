@@ -14,12 +14,15 @@ export class AIService {
   private currentModelName: string | null = null;
 
   init(apiKey: string, modelName: string) {
+    // Re-initialize if key or model has changed
     const currentModelName = (this.model as any)?.modelName;
     const matchesModel =
       currentModelName === modelName ||
       currentModelName === `models/${modelName}`;
+    
     if (this.genAI && this.model && this.currentApiKey === apiKey && matchesModel) return;
 
+    console.log(`[AIService] Initializing model: ${modelName}`);
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({
       model: modelName,
