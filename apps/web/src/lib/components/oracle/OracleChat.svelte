@@ -13,21 +13,20 @@
 
     const adjustHeight = () => {
         if (!textArea) return;
-        textArea.style.height = "1px";
+        textArea.style.height = "auto";
         textArea.style.height = `${Math.min(textArea.scrollHeight, 200)}px`;
     };
 
     $effect(() => {
-        if (input !== undefined) {
-            adjustHeight();
-        }
+        input; // Dependency
+        adjustHeight();
     });
 
     const handleSubmit = async () => {
         if (!input || oracle.isLoading) return;
         const query = input;
         input = "";
-        tick().then(() => adjustHeight());
+        if (textArea) textArea.style.height = "";
         await oracle.ask(query);
     };
 
@@ -149,6 +148,7 @@
             <textarea
                 bind:this={textArea}
                 bind:value={input}
+                data-testid="oracle-input"
                 onkeydown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
