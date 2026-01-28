@@ -71,16 +71,14 @@
             targetId: c.target,
         }));
 
-        // Inbound: From other entities to this one
-        const inbound = vault.allEntities.flatMap((e) =>
-            e.connections
-                .filter((c: Connection) => c.target === entity.id)
-                .map((c: Connection) => ({
-                    ...c,
-                    isOutbound: false,
-                    displayTitle: e.title,
-                    targetId: e.id,
-                })),
+        // Inbound: From other entities to this one (optimized lookup)
+        const inbound = (vault.inboundConnections[entity.id] || []).map(
+            (item) => ({
+                ...item.connection,
+                isOutbound: false,
+                displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
+                targetId: item.sourceId,
+            }),
         );
 
         return [...outbound, ...inbound];
@@ -178,9 +176,6 @@
                         : "hover:text-gray-300 transition"}
                     onclick={() => {
                         vault.activeDetailTab = "lore";
-                        if (entity && entity.lore === undefined) {
-                            vault.fetchLore(entity.id);
-                        }
                     }}>LORE & NOTES</button
                 >
                 <button

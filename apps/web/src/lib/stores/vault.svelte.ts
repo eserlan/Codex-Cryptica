@@ -2,7 +2,7 @@ import { parseMarkdown, stringifyEntity, sanitizeId } from "../utils/markdown";
 import { walkDirectory, readFile, writeFile } from "../utils/fs";
 import { getPersistedHandle, persistHandle } from "../utils/idb";
 import { KeyedTaskQueue } from "../utils/queue";
-import type { Entity } from "schema";
+import type { Entity, Connection } from "schema";
 import { searchService } from "../services/search";
 import { cacheService } from "../services/cache";
 
@@ -15,6 +15,23 @@ class VaultStore {
   selectedEntityId = $state<string | null>(null);
   activeDetailTab = $state<"status" | "lore" | "inventory">("status");
 
+  /**
+   * Bidirectional Adjacency List
+   * Maps target entity IDs to an array of source entities that point to them.
+   */
+  inboundConnections = $state<Record<string, { sourceId: string; connection: Connection }[]>>({});
+
+  updateInboundConnections() {
+    const map: Record<string, { sourceId: string; connection: Connection }[]> = {};
+    for (const entity of Object.values(this.entities)) {
+      for (const conn of entity.connections) {
+        if (!map[conn.target]) map[conn.target] = [];
+        map[conn.target].push({ sourceId: entity.id, connection: conn });
+      }
+    }
+    this.inboundConnections = map;
+  }
+
   get allEntities() {
     return Object.values(this.entities);
   }
@@ -26,6 +43,7 @@ class VaultStore {
   isAuthorized = $state(false);
 
   private saveQueue = new KeyedTaskQueue();
+  private loadingLore = new Set<string>();
 
   constructor() {
     // Initialization happens via init() called from the root component
@@ -207,6 +225,7 @@ class VaultStore {
       this.entities = { ...this.entities, ...chunkEntities };
     }
 
+    this.updateInboundConnections();
     this.status = "idle";
   }
 
@@ -286,6 +305,7 @@ class VaultStore {
       updatedAt: Date.now()
     });
 
+    this.updateInboundConnections();
     return id;
   }
 
@@ -308,6 +328,7 @@ class VaultStore {
     await searchService.remove(id);
 
     delete this.entities[id];
+    this.updateInboundConnections();
   }
 
   async refresh() {
@@ -346,6 +367,7 @@ class VaultStore {
     };
 
     this.entities[sourceId] = updated;
+    this.updateInboundConnections();
     this.scheduleSave(updated);
   }
 
@@ -368,8 +390,8 @@ class VaultStore {
       ...updated.connections[connIndex],
       ...updates,
     };
-
     this.entities[sourceId] = updated;
+    this.updateInboundConnections();
     this.scheduleSave(updated);
   }
 
@@ -383,15 +405,17 @@ class VaultStore {
     };
 
     this.entities[sourceId] = updated;
+    this.updateInboundConnections();
     this.scheduleSave(updated);
   }
   async fetchLore(id: string) {
     const entity = this.entities[id];
-    if (!entity) return;
+    if (!entity || this.loadingLore.has(id)) return;
 
     const handle = entity._fsHandle as FileSystemFileHandle;
     if (!handle) return;
 
+    this.loadingLore.add(id);
     try {
       const text = await readFile(handle);
       const { metadata } = parseMarkdown(text);
@@ -404,6 +428,8 @@ class VaultStore {
       }
     } catch (err) {
       console.error("Failed to fetch lore", err);
+    } finally {
+      this.loadingLore.delete(id);
     }
   }
 }

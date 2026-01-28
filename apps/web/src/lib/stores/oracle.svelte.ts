@@ -49,6 +49,15 @@ class OracleStore {
     });
   }
 
+  private lastBroadcast = 0;
+  private broadcastThrottle() {
+    const now = Date.now();
+    if (now - this.lastBroadcast > 150) {
+      this.broadcast();
+      this.lastBroadcast = now;
+    }
+  }
+
   async init() {
     const db = await getDB();
     this.apiKey = (await db.get("settings", "ai_api_key")) || null;
@@ -57,7 +66,7 @@ class OracleStore {
 
   async setKey(key: string) {
     const db = await getDB();
-    await db.put("settings", "ai_api_key", key); // Fixed argument order from previous view
+    await db.put("settings", key, "ai_api_key");
     this.apiKey = key;
     this.broadcast();
   }
@@ -70,7 +79,9 @@ class OracleStore {
     this.broadcast();
   }
 
-  isEnabled = $derived(!!this.apiKey);
+  get isEnabled() {
+    return !!this.apiKey;
+  }
 
   async ask(query: string) {
     if (!query.trim() || !this.apiKey) return;
@@ -104,7 +115,7 @@ class OracleStore {
       const history = this.messages.slice(0, -2);
       await aiService.generateResponse(this.apiKey, query, history, context, (partial) => {
         this.messages[assistantMsgIndex].content = partial;
-        this.broadcast();
+        this.broadcastThrottle();
       });
     } catch (err: any) {
       this.messages = [...this.messages, { role: "system", content: err.message || "Error generating response." }];

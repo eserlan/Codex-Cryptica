@@ -20,17 +20,23 @@
 
   const copyToChronicle = () => {
     if (!message.entityId || !message.content) return;
+    const existing = vault.entities[message.entityId]?.content || "";
+    const newContent = existing ? `${existing}\n\n---\n${message.content}` : message.content;
+    
     vault.selectedEntityId = message.entityId;
     vault.activeDetailTab = "status";
-    vault.updateEntity(message.entityId, { content: message.content });
+    vault.updateEntity(message.entityId, { content: newContent });
     isSaved = true;
   };
 
   const copyToLore = () => {
     if (!message.entityId || !message.content) return;
+    const existing = vault.entities[message.entityId]?.lore || "";
+    const newContent = existing ? `${existing}\n\n---\n${message.content}` : message.content;
+
     vault.selectedEntityId = message.entityId;
     vault.activeDetailTab = "lore";
-    vault.updateEntity(message.entityId, { lore: message.content });
+    vault.updateEntity(message.entityId, { lore: newContent });
     isSaved = true;
   };
 </script>

@@ -294,4 +294,37 @@ Link to [[Other|The Label]]`)
     // This depends on how _serializeAttributes handles it.
     // We just check that write was called for now.
   });
+
+  it("should compute inboundConnections correctly", () => {
+    vault.entities["a"] = {
+      id: "a",
+      title: "Node A",
+      type: "npc",
+      connections: [{ target: "b", type: "enemy", strength: 1 }],
+    } as any;
+    vault.entities["c"] = {
+      id: "c",
+      title: "Node C",
+      type: "npc",
+      connections: [{ target: "b", type: "friend", strength: 1 }],
+    } as any;
+    vault.entities["b"] = {
+      id: "b",
+      title: "Node B",
+      type: "npc",
+      connections: [],
+    } as any;
+
+    vault.updateInboundConnections();
+    const inbound = vault.inboundConnections;
+    expect(inbound["b"]).toHaveLength(2);
+    expect(inbound["b"]).toContainEqual({
+      sourceId: "a",
+      connection: expect.objectContaining({ target: "b", type: "enemy" }),
+    });
+    expect(inbound["b"]).toContainEqual({
+      sourceId: "c",
+      connection: expect.objectContaining({ target: "b", type: "friend" }),
+    });
+  });
 });

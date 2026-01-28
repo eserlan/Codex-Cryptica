@@ -3,6 +3,7 @@
     import { uiStore } from "$stores/ui.svelte";
     import ChatMessage from "./ChatMessage.svelte";
     import { fade } from "svelte/transition";
+    import { tick } from "svelte";
 
     let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -18,13 +19,12 @@
 
     $effect(() => {
         if (oracle.messages.length && scrollContainer) {
-            // Small timeout to ensure DOM has updated
-            setTimeout(() => {
+            tick().then(() => {
                 scrollContainer?.scrollTo({
                     top: scrollContainer.scrollHeight,
                     behavior: "smooth",
                 });
-            }, 0);
+            });
         }
     });
 </script>
