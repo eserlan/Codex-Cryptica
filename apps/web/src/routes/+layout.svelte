@@ -44,7 +44,7 @@
 			<span class="sm:hidden text-green-500">CA</span>
 		</h1>
 
-		<div class="flex-1 order-3 md:order-2 w-full md:max-w-xl md:px-4">
+		<div class="md:flex-1 order-3 md:order-2 w-full md:max-w-xl md:px-4">
 			<div class="relative group">
 				<svg
 					class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-900 group-focus-within:text-green-500 transition-colors"

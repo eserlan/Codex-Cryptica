@@ -81,7 +81,7 @@ test.describe('Fuzzy Search', () => {
         });
     });
 
-    test.skip('Search works offline', async ({ page, context }) => {
+    test('Search works offline', async ({ page, context }) => {
         page.on('console', msg => console.log('PAGE LOG:', msg.text()));
         await page.goto('/');
 
@@ -98,7 +98,7 @@ test.describe('Fuzzy Search', () => {
         await page.keyboard.press('Control+k');
         await page.keyboard.press('Meta+k');
 
-        const input = page.getByPlaceholder('Search (Cmd+K)...');
+        const input = page.getByPlaceholder('Search notes...');
         await expect(input).toBeVisible();
 
         // 4. Type query
@@ -116,7 +116,7 @@ test.describe('Fuzzy Search', () => {
         await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: 'My Note' })).toBeVisible();
     });
 
-    test.skip('handles search results with missing IDs via path fallback', async ({ page }) => {
+    test('handles search results with missing IDs via path fallback', async ({ page }) => {
         page.on('console', msg => console.log('PAGE LOG:', msg.text()));
         await page.goto('/');
 
@@ -156,7 +156,7 @@ test.describe('Fuzzy Search', () => {
         await resultItem.click();
 
         // 5. Verify Fallback worked
-        await expect(page.getByPlaceholder('Search (Cmd+K)...')).not.toBeVisible();
+        await expect(page.getByPlaceholder('Search notes...')).not.toBeVisible();
 
         // Check for the title in the detail panel
         await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: /Crone/i })).toBeVisible();

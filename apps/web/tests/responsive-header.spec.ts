@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Header Responsiveness", () => {
-  test.skip("should show mobile logo and wrap header elements on small screens", async ({ page }) => {
+  test("should show mobile logo and wrap header elements on small screens", async ({ page }) => {
     // Set viewport to a typical mobile width
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
