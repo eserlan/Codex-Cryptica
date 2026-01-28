@@ -65,7 +65,7 @@ Always prioritize the vault context as the absolute truth.`
     }
   }
 
-  async retrieveContext(query: string, excludeTitles: Set<string>): Promise<{ content: string, primaryEntityId?: string }> {
+  async retrieveContext(query: string, excludeTitles: Set<string>, lastEntityId?: string): Promise<{ content: string, primaryEntityId?: string }> {
     // 1. Get search results for relevance
     let results = await searchService.search(query, { limit: 5 });
 
@@ -86,14 +86,22 @@ Always prioritize the vault context as the absolute truth.`
     const activeId = vault.selectedEntityId;
 
     // 3. Identification of primary target
-    // We prioritize search results: if we found a direct match, that's likely the target for archival.
+    // We prioritize search results: if we found a direct match, that's definitely the target.
+    // If not, we check if we have a "sticky" entity from the previous conversation turn.
+    // Finally, we fall back to the active viewer selection.
     const searchIds = results.map(r => r.id);
-    const primaryEntityId = searchIds[0] || activeId;
+    const primaryEntityId = searchIds[0] || lastEntityId || activeId;
 
     // Build the collection of IDs to fetch context for
     const potentialIds = Array.from(new Set([...searchIds]));
+
+    // Add sticky entity for context if it wasn't a search match
+    if (lastEntityId && !potentialIds.includes(lastEntityId)) {
+      potentialIds.push(lastEntityId);
+    }
+
+    // Add active entity for RAG context
     if (activeId && !potentialIds.includes(activeId)) {
-      // Add active entity for RAG context, but keep it as secondary if it wasn't a search match
       potentialIds.push(activeId);
     }
 
@@ -143,7 +151,7 @@ Always prioritize the vault context as the absolute truth.`
 
     return {
       content: contents.join("\n\n"),
-      primaryEntityId
+      primaryEntityId: primaryEntityId || undefined
     };
   }
 }

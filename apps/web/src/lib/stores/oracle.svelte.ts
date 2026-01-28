@@ -106,7 +106,16 @@ class OracleStore {
         }
       });
 
-      const { content: context, primaryEntityId } = await aiService.retrieveContext(query, alreadySentTitles);
+      // Identify the last entity we were talking about
+      let lastEntityId: string | undefined;
+      for (let i = this.messages.length - 1; i >= 0; i--) {
+        if (this.messages[i].entityId) {
+          lastEntityId = this.messages[i].entityId;
+          break;
+        }
+      }
+
+      const { content: context, primaryEntityId } = await aiService.retrieveContext(query, alreadySentTitles, lastEntityId);
 
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
