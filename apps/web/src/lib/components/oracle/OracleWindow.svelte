@@ -28,8 +28,8 @@
   <div
     class="fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-black/95 border border-purple-900/50 shadow-2xl
     {oracle.isModal
-      ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[80vh] md:w-[800px] md:h-[70vh] rounded-xl'
-      : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-[80vh] md:h-[calc(100vh-420px)] md:max-h-[800px] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
+      ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-auto max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
+      : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-auto max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
     transition:fly={{ y: 50, duration: 300 }}
   >
     <!-- Header -->
