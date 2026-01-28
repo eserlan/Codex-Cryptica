@@ -2,6 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [
     "VITE_GOOGLE_CLIENT_ID",
+    "VITE_SHARED_GEMINI_KEY",
     "NODE_ENV"
   ],
   "tasks": {

@@ -53,10 +53,38 @@
     </div>
 
     <p class="text-xs text-purple-200/60 mb-4 leading-relaxed">
-        Power your archives with Google Gemini. This feature is <strong
-            >strictly opt-in</strong
-        >. Your notes are sent to Google only when you chat with the Oracle.
+        Power your archives with Google Gemini. Choose between the <strong
+            >Lite</strong
+        >
+        tier for efficiency or <strong>Advanced</strong> for complex reasoning.
     </p>
+
+    <!-- Tier Selection -->
+    <div class="mb-4 space-y-2">
+        <span class="text-[10px] text-purple-400 uppercase font-bold block"
+            >Oracle Tier</span
+        >
+        <div class="grid grid-cols-2 gap-2">
+            <button
+                class="px-3 py-2 rounded text-[10px] font-bold tracking-widest transition-all border {oracle.tier ===
+                'lite'
+                    ? 'bg-purple-600/20 border-purple-500 text-purple-100'
+                    : 'bg-black/40 border-purple-900/30 text-purple-400 hover:border-purple-700'}"
+                onclick={() => oracle.setTier("lite")}
+            >
+                LITE (2.5 FLASH)
+            </button>
+            <button
+                class="px-3 py-2 rounded text-[10px] font-bold tracking-widest transition-all border {oracle.tier ===
+                'advanced'
+                    ? 'bg-purple-600/20 border-purple-500 text-purple-100'
+                    : 'bg-black/40 border-purple-900/30 text-purple-400 hover:border-purple-700'}"
+                onclick={() => oracle.setTier("advanced")}
+            >
+                ADVANCED (3 FLASH)
+            </button>
+        </div>
+    </div>
 
     {#if !oracle.isEnabled}
         <div class="space-y-3">
@@ -115,11 +143,19 @@
             <div class="flex items-center gap-2">
                 <span class="text-purple-400 icon-[heroicons--sparkles] w-4 h-4"
                 ></span>
-                <span class="text-xs text-purple-100">Oracle is Active</span>
+                <span class="text-xs text-purple-100">
+                    {oracle.apiKey ? "Oracle is Active" : "Oracle Lite Mode"}
+                </span>
             </div>
-            <span class="text-[10px] text-purple-500 font-mono"
-                >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
-            >
+            {#if oracle.apiKey}
+                <span class="text-[10px] text-purple-500 font-mono"
+                    >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
+                >
+            {:else}
+                <span class="text-[10px] text-purple-500 font-mono uppercase"
+                    >LITE ACCESS</span
+                >
+            {/if}
         </div>
     {/if}
 </div>

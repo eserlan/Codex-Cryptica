@@ -24,9 +24,13 @@ vi.mock("../utils/idb", () => ({
 }));
 
 vi.mock("../services/ai", () => ({
+  TIER_MODES: {
+    lite: "gemini-2.5-flash-lite",
+    advanced: "gemini-3-flash-preview",
+  },
   aiService: {
     generateResponse: vi.fn(),
-    retrieveContext: vi.fn(),
+    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined }),
   },
 }));
 
@@ -37,11 +41,26 @@ describe("OracleStore", () => {
     oracle.apiKey = null;
     oracle.isOpen = false;
     oracle.isLoading = false;
+    // Mock crypto if needed
+    if (!global.crypto) {
+      Object.defineProperty(global, 'crypto', {
+        value: {
+          randomUUID: () => "mock-uuid-" + Math.random()
+        }
+      });
+    }
+  });
+
+  it("should allow writing to messages directly", () => {
+    oracle.messages = [{ id: "1", role: "user", content: "direct" }];
+    expect(oracle.messages).toHaveLength(1);
+    oracle.messages = [];
   });
 
   it("should initialize with empty state", () => {
     expect(oracle.messages).toHaveLength(0);
-    expect(oracle.isEnabled).toBe(false);
+    // isEnabled depends on VITE_SHARED_GEMINI_KEY in the test environment
+    expect(oracle.isEnabled).toBe(!!import.meta.env.VITE_SHARED_GEMINI_KEY);
   });
 
   it("should load API key from database on init", async () => {
@@ -62,6 +81,27 @@ describe("OracleStore", () => {
 
     expect(mockDB.put).toHaveBeenCalledWith("settings", "new-key", "ai_api_key");
     expect(oracle.apiKey).toBe("new-key");
+  });
+
+  it("should load tier from database on init", async () => {
+    const mockDB = await idbUtils.getDB();
+    vi.mocked(mockDB.get).mockResolvedValueOnce("test-api-key");
+    vi.mocked(mockDB.get).mockResolvedValueOnce("advanced");
+
+    await oracle.init();
+
+    expect(mockDB.get).toHaveBeenCalledWith("settings", "ai_api_key");
+    expect(mockDB.get).toHaveBeenCalledWith("settings", "ai_tier");
+    expect(oracle.tier).toBe("advanced");
+  });
+
+  it("should save tier to database", async () => {
+    const mockDB = await idbUtils.getDB();
+
+    await oracle.setTier("advanced");
+
+    expect(mockDB.put).toHaveBeenCalledWith("settings", "advanced", "ai_tier");
+    expect(oracle.tier).toBe("advanced");
   });
 
   it("should clear API key and messages", async () => {

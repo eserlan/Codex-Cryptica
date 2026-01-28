@@ -20,7 +20,7 @@
     vault.selectedEntityId ? vault.entities[vault.selectedEntityId] : null,
   );
   let canOverride = $derived(
-    activeEntity && targetEntity && activeEntity.id !== targetEntity.id,
+    activeEntity && (!targetEntity || activeEntity.id !== targetEntity.id),
   );
 
   let isSaved = $state(false);
@@ -57,7 +57,7 @@
   });
 
   const copyToChronicle = () => {
-    const finalTargetId = message.archiveTargetId || message.entityId;
+    const finalTargetId = message.archiveTargetId || message.entityId || (activeEntity ? activeEntity.id : null);
     if (!finalTargetId || !message.content) return;
     const existing = vault.entities[finalTargetId]?.content || "";
     const newContent = existing
@@ -71,7 +71,7 @@
   };
 
   const copyToLore = () => {
-    const finalTargetId = message.archiveTargetId || message.entityId;
+    const finalTargetId = message.archiveTargetId || message.entityId || (activeEntity ? activeEntity.id : null);
     if (!finalTargetId || !message.content) return;
     const existing = vault.entities[finalTargetId]?.lore || "";
     const newContent = existing
@@ -104,7 +104,7 @@
         {@html html}
       </div>
 
-      {#if targetEntity && message.content.length > 20 && !isSaved}
+      {#if (targetEntity || activeEntity) && message.content.length > 20 && !isSaved}
         <div
           class="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 justify-end"
           transition:fade
@@ -128,22 +128,22 @@
             <button
               onclick={copyToChronicle}
               class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600 max-w-[250px]"
-              title="Save to {targetEntity.title}"
+              title="Save to {(targetEntity || activeEntity!).title}"
             >
               <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"></span>
               <span class="truncate"
-                >COPY TO CHRONICLE ({targetEntity.title.toUpperCase()})</span
+                >COPY TO CHRONICLE ({(targetEntity || activeEntity!).title.toUpperCase()})</span
               >
             </button>
           {:else}
             <button
               onclick={copyToLore}
               class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-blue-900/20 text-blue-400 border border-blue-800/30 hover:bg-blue-600 hover:text-black hover:border-blue-600 max-w-[250px]"
-              title="Save to {targetEntity.title}"
+              title="Save to {(targetEntity || activeEntity!).title}"
             >
               <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"></span>
               <span class="truncate"
-                >COPY TO LORE ({targetEntity.title.toUpperCase()})</span
+                >COPY TO LORE ({(targetEntity || activeEntity!).title.toUpperCase()})</span
               >
             </button>
           {/if}

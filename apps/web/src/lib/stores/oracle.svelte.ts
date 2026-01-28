@@ -1,4 +1,4 @@
-import { aiService } from "../services/ai";
+import { aiService, TIER_MODES } from "../services/ai";
 import { getDB } from "../utils/idb";
 
 export interface ChatMessage {
@@ -14,6 +14,7 @@ class OracleStore {
   isOpen = $state(false);
   isLoading = $state(false);
   apiKey = $state<string | null>(null);
+  tier = $state<"lite" | "advanced">("lite");
   isModal = $state(false);
 
   private channel: BroadcastChannel | null = null;
@@ -30,6 +31,7 @@ class OracleStore {
           }
           this.isLoading = data.isLoading;
           this.apiKey = data.apiKey;
+          this.tier = data.tier || "lite";
         } else if (type === "REQUEST_STATE") {
           this.broadcast();
         }
@@ -46,7 +48,8 @@ class OracleStore {
       data: {
         messages: $state.snapshot(this.messages),
         isLoading: this.isLoading,
-        apiKey: this.apiKey
+        apiKey: this.apiKey,
+        tier: this.tier
       }
     });
   }
@@ -63,6 +66,14 @@ class OracleStore {
   async init() {
     const db = await getDB();
     this.apiKey = (await db.get("settings", "ai_api_key")) || null;
+    this.tier = (await db.get("settings", "ai_tier")) || "lite";
+    this.broadcast();
+  }
+
+  async setTier(tier: "lite" | "advanced") {
+    const db = await getDB();
+    await db.put("settings", tier, "ai_tier");
+    this.tier = tier;
     this.broadcast();
   }
 
@@ -82,11 +93,16 @@ class OracleStore {
   }
 
   get isEnabled() {
-    return !!this.apiKey;
+    return !!this.apiKey || !!import.meta.env.VITE_SHARED_GEMINI_KEY;
+  }
+
+  get effectiveApiKey() {
+    return this.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
   }
 
   async ask(query: string) {
-    if (!query.trim() || !this.apiKey) return;
+    const key = this.effectiveApiKey;
+    if (!query.trim() || !key) return;
 
     this.messages = [...this.messages, { id: crypto.randomUUID(), role: "user", content: query }];
     this.isLoading = true;
@@ -124,7 +140,8 @@ class OracleStore {
       this.messages[assistantMsgIndex].entityId = primaryEntityId;
 
       const history = this.messages.slice(0, -2);
-      await aiService.generateResponse(this.apiKey, query, history, context, (partial) => {
+      const modelName = TIER_MODES[this.tier];
+      await aiService.generateResponse(key, query, history, context, modelName, (partial) => {
         this.messages[assistantMsgIndex].content = partial;
         this.broadcastThrottle();
       });

@@ -54,6 +54,19 @@ This project uses **GitHub Actions** for continuous integration. Every push and 
 - **Graph Visualization**: [Cytoscape.js](https://js.cytoscape.org/)
 - **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
 
+### Security & Lore Oracle
+
+The Lore Oracle (AI Assistant) uses Google Gemini. It can be used in two modes:
+
+1.  **User Provided Key**: Users enter their own API key in the settings. This is stored securely in their local browser (IndexedDB).
+2.  **Lite Mode (Shared Key)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" tier.
+
+**Important for Developers:** Because this is a static frontend application, any shared key provided at build time is **publicly visible** in the compiled JavaScript. To prevent abuse, you **must** restrict your API key in the [Google Cloud Console](https://console.cloud.google.com/):
+- Go to **APIs & Services > Credentials**.
+- Select your API Key.
+- Under **Application restrictions**, choose **Websites (HTTP referrers)**.
+- Add your deployment domain (e.g., `https://your-username.github.io/*`).
+
 ### Features
 
 - Local-first storage (OPFS)

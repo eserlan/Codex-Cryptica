@@ -13,16 +13,8 @@
 
     const adjustHeight = () => {
         if (!textArea) return;
-
-        const currentHeight = textArea.clientHeight;
-        const scrollHeight = textArea.scrollHeight;
-        const maxHeight = 200;
-
-        // Only adjust if there's a meaningful change to avoid jitter
-        if (scrollHeight !== currentHeight || input === "") {
-            textArea.style.height = "auto";
-            textArea.style.height = `${Math.min(textArea.scrollHeight, maxHeight)}px`;
-        }
+        textArea.style.height = "auto";
+        textArea.style.height = `${Math.min(textArea.scrollHeight, 200)}px`;
     };
 
     $effect(() => {
@@ -63,9 +55,9 @@
         <h3 class="text-purple-100 font-bold uppercase tracking-widest text-xs">
             Oracle Offline
         </h3>
-        <p class="text-xs text-purple-300/70 leading-relaxed">
+        <p class="text-xs text-purple-300/70 leading-relaxed max-w-[280px]">
             To consult the archives, please provide a <strong
-                >Google Gemini API Key</strong
+                class="text-purple-200">Google Gemini API Key</strong
             > in the Settings panel.
         </p>
 
@@ -120,12 +112,45 @@
                     </p>
                 </div>
 
-                <div class="pt-4">
+                <div class="pt-4 space-y-2">
                     <p
                         class="text-[9px] text-purple-900/40 uppercase tracking-widest animate-bounce"
                     >
                         Awaiting your query...
                     </p>
+                    <div class="flex items-center justify-center gap-3 pt-3">
+                        <!-- Tier Badge -->
+                        <div class="flex flex-col items-center gap-1">
+                            <span
+                                class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
+                                >Current Tier</span
+                            >
+                            <span
+                                class="text-xs px-2 py-0.5 rounded border font-bold uppercase tracking-wider shadow-sm
+                                {oracle.tier === 'lite'
+                                    ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
+                                    : 'border-amber-500/50 bg-amber-500/10 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.2)]'}"
+                            >
+                                {oracle.tier}
+                            </span>
+                        </div>
+
+                        <!-- Lite/Shared Indicator -->
+                        {#if !oracle.apiKey}
+                            <div class="w-px h-6 bg-white/10 mx-1"></div>
+                            <div class="flex flex-col items-center gap-1">
+                                <span
+                                    class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
+                                    >Access</span
+                                >
+                                <span
+                                    class="text-xs px-2 py-0.5 rounded border border-blue-400/30 bg-blue-500/10 text-blue-300 uppercase tracking-wider font-bold"
+                                >
+                                    LITE
+                                </span>
+                            </div>
+                        {/if}
+                    </div>
                 </div>
             </div>
         {/if}
