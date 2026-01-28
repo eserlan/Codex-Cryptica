@@ -58,11 +58,7 @@
         <p class="text-xs text-purple-300/70 leading-relaxed max-w-[280px]">
             To consult the archives, please provide a <strong
                 class="text-purple-200">Google Gemini API Key</strong
-            >.
-            <br /><br />
-            <span class="text-[10px] opacity-70">
-                Guest Mode is currently unavailable (No Shared Key detected).
-            </span>
+            > in the Settings panel.
         </p>
 
         <button
@@ -138,22 +134,6 @@
                                 {oracle.tier}
                             </span>
                         </div>
-
-                        <!-- Guest Badge -->
-                        {#if !oracle.apiKey}
-                            <div class="w-px h-6 bg-white/10 mx-1"></div>
-                            <div class="flex flex-col items-center gap-1">
-                                <span
-                                    class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
-                                    >Access</span
-                                >
-                                <span
-                                    class="text-xs px-2 py-0.5 rounded border border-blue-400/30 bg-blue-500/10 text-blue-300 uppercase tracking-wider font-bold"
-                                >
-                                    Guest
-                                </span>
-                            </div>
-                        {/if}
                     </div>
                 </div>
             </div>
