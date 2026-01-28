@@ -140,6 +140,10 @@ fi
 
 # Output results
 if $JSON_MODE; then
+    if ! command -v jq &> /dev/null; then
+        echo "ERROR: 'jq' is not installed but required for JSON output." >&2
+        exit 1
+    fi
     # Build JSON array of documents
     if [[ ${#docs[@]} -eq 0 ]]; then
         json_docs="[]"

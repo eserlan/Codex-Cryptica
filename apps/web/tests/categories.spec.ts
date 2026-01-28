@@ -106,37 +106,18 @@ test.describe("Category Architecture Modal", () => {
         await page.getByTestId("manage-categories-button").click();
         await expect(page.getByText("Category Architecture")).toBeVisible();
 
-        // Delete NPC category using JavaScript (to bypass hover issues)
-        await page.evaluate(() => {
-            const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
-            const npcInput = inputs.find(input => (input as HTMLInputElement).value === 'NPC');
-            if (npcInput) {
-                const row = npcInput.closest('div.group');
-                const deleteBtn = row?.querySelector('button[title="Delete Category"]') as HTMLButtonElement;
-                if (deleteBtn) {
-                    deleteBtn.style.opacity = '1';
-                    deleteBtn.click();
-                }
-            }
-        });
-        await page.waitForTimeout(300);
-
-        // Verify NPC is gone
-        const npcGone = await page.evaluate(() => {
-            const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
-            return !inputs.some(input => (input as HTMLInputElement).value === 'NPC');
-        });
-        expect(npcGone).toBe(true);
+        // Delete NPC category naturally
+        const npcInput = page.locator('input[value="NPC"]');
+        const row = page.locator('div.group').filter({ has: npcInput });
+        await row.hover(); 
+        await row.getByTitle("Delete Category").click();
+        
+        await expect(npcInput).not.toBeVisible();
 
         // Click Reset to Defaults
         await page.getByRole("button", { name: /RESET TO DEFAULTS/i }).click();
-        await page.waitForTimeout(300);
-
+        
         // Verify NPC is back
-        const npcBack = await page.evaluate(() => {
-            const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
-            return inputs.some(input => (input as HTMLInputElement).value === 'NPC');
-        });
-        expect(npcBack).toBe(true);
+        await expect(npcInput).toBeVisible();
     });
 });
