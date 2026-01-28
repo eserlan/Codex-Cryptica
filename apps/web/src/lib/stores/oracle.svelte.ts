@@ -145,6 +145,14 @@ class OracleStore {
   toggleModal() {
     this.isModal = !this.isModal;
   }
+
+  updateMessageEntity(msg: ChatMessage, entityId: string) {
+    const target = this.messages.find(m => m === msg);
+    if (target) {
+      target.entityId = entityId;
+      this.broadcast();
+    }
+  }
 }
 
 export const oracle = new OracleStore();
