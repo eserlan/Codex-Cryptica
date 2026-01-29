@@ -1,11 +1,13 @@
 <script lang="ts">
     import { categories } from "$lib/stores/categories.svelte";
     import { sanitizeId } from "$lib/utils/markdown";
+    import { getIconClass } from "$lib/utils/icons";
     import { fade, scale } from "svelte/transition";
 
     let newLabel = $state("");
     let newColor = $state("#60a5fa");
     let newIcon = $state("icon-[lucide--circle]");
+    let errorMessage = $state("");
 
     // Icon Picker State
     let isPickerOpen = $state(false);
@@ -66,10 +68,11 @@
     };
 
     const handleAdd = () => {
+        errorMessage = "";
         if (!newLabel.trim()) return;
         const id = sanitizeId(newLabel);
         if (categories.getCategory(id)) {
-            alert("Category already exists");
+            errorMessage = "Category already exists";
             return;
         }
         categories.addCategory({
@@ -82,11 +85,17 @@
         newIcon = "icon-[lucide--circle]";
     };
 
-    const getIconClass = (iconStr: string | undefined) => {
-        if (!iconStr) return "icon-[lucide--circle]";
-        const parts = iconStr.split(":");
-        if (parts.length === 2) return `icon-[${parts[0]}--${parts[1]}]`;
-        return iconStr.startsWith("icon-") ? iconStr : `icon-[lucide--circle]`;
+    const handleLabelUpdate = (id: string, value: string) => {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            // Revert to current value by forcing a re-render
+            const cat = categories.getCategory(id);
+            if (cat) {
+                categories.updateCategory(id, { label: cat.label });
+            }
+            return;
+        }
+        categories.updateCategory(id, { label: trimmed });
     };
 </script>
 
@@ -96,6 +105,7 @@
         {#each categories.list as cat (cat.id)}
             <div
                 class="flex items-center gap-3 p-1.5 rounded-md hover:bg-white/5 transition-colors group"
+                data-testid="category-row-{cat.id}"
             >
                 <!-- Color -->
                 <input
@@ -113,9 +123,7 @@
                     type="text"
                     value={cat.label}
                     onchange={(e) =>
-                        categories.updateCategory(cat.id, {
-                            label: e.currentTarget.value,
-                        })}
+                        handleLabelUpdate(cat.id, e.currentTarget.value)}
                     class="flex-1 bg-transparent border-0 text-sm font-medium text-gray-200 focus:text-purple-400 focus:outline-none transition-colors py-0.5 px-0"
                 />
 
@@ -155,6 +163,7 @@
                 placeholder="New category..."
                 class="flex-1 bg-black/50 border border-purple-900/30 rounded px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-purple-500 placeholder-purple-900/40"
                 onkeydown={(e) => e.key === "Enter" && handleAdd()}
+                onfocus={() => (errorMessage = "")}
             />
             <button
                 onclick={() => openPicker("new")}
@@ -171,6 +180,12 @@
                 ADD
             </button>
         </div>
+        {#if errorMessage}
+            <div class="mt-2 text-xs text-red-400 flex items-center gap-1.5">
+                <span class="icon-[lucide--alert-circle] w-3 h-3"></span>
+                {errorMessage}
+            </div>
+        {/if}
     </div>
 
     <!-- Reset Section -->

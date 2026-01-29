@@ -9,8 +9,11 @@
     <div
         class="fixed inset-0 bg-black/80 z-[100] backdrop-blur-sm"
         onclick={() => uiStore.closeCategoryManager()}
+        onkeydown={(e) => e.key === "Escape" && uiStore.closeCategoryManager()}
+        role="button"
+        tabindex="-1"
+        aria-label="Close modal"
         transition:fade
-        aria-hidden="true"
     ></div>
 
     <div
@@ -22,7 +25,8 @@
             class="px-6 py-4 border-b border-purple-900/30 bg-purple-900/20 flex justify-between items-center"
         >
             <div class="flex items-center gap-3">
-                <span class="text-purple-400 icon-[lucide--tags] w-5 h-5"></span>
+                <span class="text-purple-400 icon-[lucide--tags] w-5 h-5"
+                ></span>
                 <span
                     class="text-xs font-bold text-purple-100 tracking-[0.2em] uppercase"
                     >Category Architecture</span
@@ -40,15 +44,18 @@
         <!-- Body -->
         <div class="p-6 overflow-y-auto custom-scrollbar">
             <p class="text-xs text-purple-200/60 mb-6 leading-relaxed">
-                Define the ontology of your world. Each category determines node border colors and structural categorization.
+                Define the ontology of your world. Each category determines node
+                border colors and structural categorization.
             </p>
-            
+
             <!-- We can reuse CategorySettings but maybe style it specifically for modal -->
             <CategorySettings />
         </div>
-        
+
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-purple-900/20 bg-purple-900/5 flex justify-end">
+        <div
+            class="px-6 py-4 border-t border-purple-900/20 bg-purple-900/5 flex justify-end"
+        >
             <button
                 onclick={() => uiStore.closeCategoryManager()}
                 class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95"

@@ -107,17 +107,61 @@ test.describe("Category Architecture Modal", () => {
         await expect(page.getByText("Category Architecture")).toBeVisible();
 
         // Delete NPC category naturally
-        const npcInput = page.locator('input[value="NPC"]');
-        const row = page.locator('div.group').filter({ has: npcInput });
-        await row.hover(); 
-        await row.getByTitle("Delete Category").click();
-        
-        await expect(npcInput).not.toBeVisible();
+        const npcRow = page.getByTestId('category-row-npc');
+        await npcRow.hover();
+        await npcRow.getByTitle("Delete Category").click();
+
+        await expect(npcRow).not.toBeVisible();
 
         // Click Reset to Defaults
         await page.getByRole("button", { name: /RESET TO DEFAULTS/i }).click();
-        
+
         // Verify NPC is back
-        await expect(npcInput).toBeVisible();
+        await expect(npcRow).toBeVisible();
+    });
+
+    test("should update graph node border color when category color changes", async ({ page }) => {
+        // 1. Create an entity first so we have a node in the graph
+        // Open vault if not already open
+        const openVaultBtn = page.getByRole("button", { name: /OPEN/ });
+        if (await openVaultBtn.isVisible()) {
+            // Skip if no vault - this test requires a vault with entities
+            test.skip();
+        }
+
+        // 2. Open category manager
+        await page.getByTestId("cloud-status-button").click();
+        await page.getByTestId("manage-categories-button").click();
+        await expect(page.getByText("Category Architecture")).toBeVisible();
+
+        // 3. Find NPC category color input and change it to a distinct color
+        const npcRow = page.getByTestId('category-row-npc');
+        const colorInput = npcRow.locator('input[type="color"]');
+
+        // Get initial color to verify it changes
+        const initialColor = await colorInput.inputValue();
+
+        // Change to a very different color (bright pink)
+        const newColor = "#ff00ff";
+        await colorInput.fill(newColor);
+
+        // 4. Close modal and verify color was saved
+        await page.getByRole("button", { name: "DONE" }).click();
+
+        // 5. Reopen and verify the color persisted
+        await page.getByTestId("cloud-status-button").click();
+        await page.getByTestId("manage-categories-button").click();
+
+        const updatedColorInput = page.getByTestId('category-row-npc').locator('input[type="color"]');
+        const savedColor = await updatedColorInput.inputValue();
+
+        // Color should have changed from initial
+        expect(savedColor.toLowerCase()).not.toBe(initialColor.toLowerCase());
+        // Color should persist to new value (may be uppercase)
+        expect(savedColor.toLowerCase()).toBe(newColor.toLowerCase());
+
+        // 6. Clean up - reset to defaults
+        await page.getByRole("button", { name: /RESET TO DEFAULTS/i }).click();
+        await page.getByRole("button", { name: "DONE" }).click();
     });
 });

@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 
+export const DEFAULT_ICON = "lucide:circle";
+
 export const CategorySchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  color: z.string(),
-  icon: z.string().optional(),
+  id: z.string().min(1),
+  label: z.string().min(1),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color"),
+  icon: z.string().default(DEFAULT_ICON),
 });
 
 export type Category = z.infer<typeof CategorySchema>;

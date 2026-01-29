@@ -7,7 +7,7 @@ class CategoryStore {
 
   async init() {
     if (this.isLoaded) return;
-    
+
     try {
       const db = await getDB();
       const stored = await db.get("settings", "categories");
@@ -32,25 +32,25 @@ class CategoryStore {
 
   addCategory(category: Category) {
     this.list.push(category);
-    this.save();
+    void this.save();
   }
 
   updateCategory(id: string, updates: Partial<Category>) {
     const index = this.list.findIndex((c) => c.id === id);
     if (index !== -1) {
       this.list[index] = { ...this.list[index], ...updates };
-      this.save();
+      void this.save();
     }
   }
 
   removeCategory(id: string) {
     this.list = this.list.filter((c) => c.id !== id);
-    this.save();
+    void this.save();
   }
 
   resetToDefaults() {
     this.list = [...DEFAULT_CATEGORIES];
-    this.save();
+    void this.save();
   }
 
   getCategory(id: string): Category | undefined {
