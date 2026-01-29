@@ -52,9 +52,9 @@ export interface ICloudAdapter {
   /**
    * Download a file.
    * @param fileId Remote File ID
-   * @returns File content as text
+   * @returns File content as Blob
    */
-  downloadFile(fileId: string): Promise<string>;
+  downloadFile(fileId: string): Promise<Blob>;
 
   /**
    * Delete a file remotely.
@@ -68,6 +68,7 @@ export interface RemoteFileMeta {
   mimeType: string;
   modifiedTime: string; // ISO
   parents: string[];
+  appProperties?: Record<string, string>;
 }
 
 export type SyncStatus = "IDLE" | "SCANNING" | "SYNCING" | "ERROR";

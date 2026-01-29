@@ -52,16 +52,15 @@ export class FileSystemAdapter {
     }
   }
 
-  async readFile(path: string): Promise<string> {
+  async readFile(path: string): Promise<Blob> {
     await this.init();
     if (!this.root) throw new Error("FS not initialized");
 
     const handle = await this.getFileHandle(path);
-    const file = await handle.getFile();
-    return file.text();
+    return handle.getFile();
   }
 
-  async writeFile(path: string, content: string): Promise<void> {
+  async writeFile(path: string, content: Blob | string): Promise<void> {
     await this.init();
     if (!this.root) throw new Error("FS not initialized");
 

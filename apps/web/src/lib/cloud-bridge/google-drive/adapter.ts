@@ -284,13 +284,15 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     throw new Error("Not implemented");
   }
 
-  async downloadFile(fileId: string): Promise<string> {
+  async downloadFile(fileId: string): Promise<Blob> {
     if (!this.accessToken) throw new Error("Not authenticated");
     const response = await gapi.client.drive.files.get({
       fileId: fileId,
       alt: "media",
     });
-    return response.body;
+    // Note: GAPI response.body may mangle binary data. 
+    // For binary-safe downloads (e.g. images), use fetch() as implemented in WorkerDriveAdapter.
+    return new Blob([response.body], { type: response.headers?.['content-type'] || 'application/octet-stream' });
   }
 
   async deleteFile(fileId: string): Promise<void> {

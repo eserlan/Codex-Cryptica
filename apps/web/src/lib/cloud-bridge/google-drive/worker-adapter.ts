@@ -37,13 +37,16 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     const fileMap = new Map<string, RemoteFileMeta>();
     if (data.files) {
       for (const file of data.files) {
-        if (file.name && file.id) {
-          fileMap.set(file.name, {
+        // Use appProperties.vault_path as the key if available, fallback to name
+        const vaultPath = file.appProperties?.vault_path || file.name;
+        if (vaultPath && file.id) {
+          fileMap.set(vaultPath, {
             id: file.id,
             name: file.name,
             mimeType: file.mimeType || "",
             modifiedTime: file.modifiedTime || "",
             parents: file.parents || [],
+            appProperties: file.appProperties,
           });
         }
       }
@@ -51,22 +54,47 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     return fileMap;
   }
 
+  private getMimeType(path: string): string {
+    const ext = path.split(".").pop()?.toLowerCase();
+    switch (ext) {
+      case "md":
+        return "text/markdown";
+      case "png":
+        return "image/png";
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      case "json":
+        return "application/json";
+      default:
+        return "application/octet-stream";
+    }
+  }
+
   async uploadFile(
     path: string,
     content: string | Blob,
     existingId?: string,
   ): Promise<RemoteFileMeta> {
-    if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
+    if (!this.folderId)
+      throw new Error("WorkerDriveAdapter: folderId is required");
     const method = existingId ? "PATCH" : "POST";
     const baseUrl = existingId ? `${UPLOAD_BASE}/${existingId}` : UPLOAD_BASE;
     const url = new URL(baseUrl);
     url.searchParams.append("uploadType", "multipart");
 
+    if (path.length > 100) {
+      console.warn(`[WorkerDriveAdapter] Path length (${path.length}) exceeds safe appProperties limit (124 bytes). Sync may fail for: ${path}`);
+    }
+
+    const mimeType = this.getMimeType(path);
     const metadata = {
       name: path.split("/").pop(),
-      mimeType:
-        typeof content === "string" ? "text/markdown" : "application/json",
+      mimeType: mimeType,
       parents: existingId ? undefined : [this.folderId],
+      appProperties: {
+        vault_path: path,
+      },
     };
 
     const form = new FormData();
@@ -76,9 +104,7 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     );
     form.append(
       "file",
-      content instanceof Blob
-        ? content
-        : new Blob([content], { type: metadata.mimeType }),
+      content instanceof Blob ? content : new Blob([content], { type: mimeType }),
     );
 
     const res = await fetch(url.toString(), {
@@ -96,16 +122,17 @@ export class WorkerDriveAdapter implements ICloudAdapter {
       mimeType: file.mimeType,
       modifiedTime: file.modifiedTime,
       parents: file.parents,
+      appProperties: file.appProperties,
     };
   }
 
-  async downloadFile(fileId: string): Promise<string> {
+  async downloadFile(fileId: string): Promise<Blob> {
     const url = `${API_BASE}/${fileId}?alt=media`;
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
     if (!res.ok) throw new Error(`GDrive Download Error: ${res.statusText}`);
-    return res.text();
+    return res.blob();
   }
 
   async deleteFile(fileId: string): Promise<void> {

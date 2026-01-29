@@ -199,10 +199,11 @@ export class SyncEngine {
       console.log(`[SyncEngine] Downloading ${plan.downloads.length} files...`);
       await runParallel(plan.downloads, async (file) => {
         const content = await this.cloudAdapter.downloadFile(file.id);
-        await this.fsAdapter.writeFile(file.name, content);
+        const localPath = file.appProperties?.vault_path || file.name;
+        await this.fsAdapter.writeFile(localPath, content);
 
         metadataUpdates.push({
-          filePath: file.name,
+          filePath: localPath,
           remoteId: file.id,
           localModified: Date.now(),
           remoteModified: file.modifiedTime,
