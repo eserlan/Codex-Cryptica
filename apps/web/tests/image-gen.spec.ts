@@ -11,10 +11,34 @@ test.describe("Oracle Image Generation", () => {
                 if ((window as any).vault) {
                     (window as any).vault.isAuthorized = true;
                     (window as any).vault.status = 'idle';
-                    (window as any).vault.rootHandle = { kind: 'directory' };
+                    (window as any).vault.rootHandle = {
+                        kind: 'directory',
+                        getFileHandle: async () => ({
+                            kind: 'file',
+                            getFile: async () => ({
+                                text: async () => "",
+                                lastModified: Date.now()
+                            }),
+                            createWritable: async () => ({
+                                write: async () => { },
+                                close: async () => { }
+                            })
+                        }),
+                        getDirectoryHandle: async () => ({
+                            kind: 'directory',
+                            getFileHandle: async () => ({
+                                kind: 'file',
+                                createWritable: async () => ({
+                                    write: async () => { },
+                                    close: async () => { }
+                                })
+                            })
+                        }),
+                        removeEntry: async () => { }
+                    };
                 }
             };
-            
+
             applyMocks();
             // Continuously apply mocks to fight hydration/re-init
             setInterval(applyMocks, 100);
@@ -42,7 +66,7 @@ test.describe("Oracle Image Generation", () => {
         const trigger = page.locator("button[title='Open Lore Oracle']");
         await trigger.waitFor({ state: "visible", timeout: 15000 });
         await trigger.click();
-        
+
         // 2. Type image command
         const input = page.getByTestId("oracle-input");
         await input.fill("/draw a tiny red pixel");
@@ -51,7 +75,7 @@ test.describe("Oracle Image Generation", () => {
         // 3. Verify image appears
         const generatedImage = page.locator("img[alt*='tiny red pixel']");
         await expect(generatedImage).toBeVisible({ timeout: 20000 });
-        
+
         // 4. Click to open lightbox
         await generatedImage.click();
         await expect(page.getByTestId("close-lightbox")).toBeVisible();
@@ -73,15 +97,18 @@ test.describe("Oracle Image Generation", () => {
         const newBtn = page.getByTestId("new-entity-button");
         await newBtn.waitFor({ state: "visible", timeout: 15000 });
         await newBtn.click();
-        
+
         await page.getByPlaceholder("Entry Title...").fill("Test Drag Entity");
         await page.getByRole("button", { name: "ADD" }).click();
-        
+
+        // Wait for detail panel to open
+        await expect(page.locator("[aria-label='Image drop zone']")).toBeVisible({ timeout: 10000 });
+
         // 2. Generate image
         await page.locator("button[title='Open Lore Oracle']").click();
         await page.getByTestId("oracle-input").fill("/draw test drag");
         await page.keyboard.press("Enter");
-        
+
         const generatedImage = page.locator("img[alt*='test drag']");
         await expect(generatedImage).toBeVisible({ timeout: 20000 });
 

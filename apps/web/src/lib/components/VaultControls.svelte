@@ -8,7 +8,9 @@
 
     $effect(() => {
         if (showForm && categories.list.length > 0) {
-            const currentIsValid = categories.list.some(c => c.id === newType);
+            const currentIsValid = categories.list.some(
+                (c) => c.id === newType,
+            );
             if (!currentIsValid) {
                 newType = categories.list[0].id;
             }

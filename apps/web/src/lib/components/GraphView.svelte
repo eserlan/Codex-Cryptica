@@ -8,6 +8,7 @@
   import { parse } from "marked";
   import type { Core, NodeSingular } from "cytoscape";
   import { BASE_STYLE, getTypeStyles } from "$lib/themes/graph-theme";
+  import Minimap from "$lib/components/graph/Minimap.svelte";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -182,17 +183,9 @@
               const resolvedUrl = await vault.resolveImagePath(
                 (el.data.thumbnail || el.data.image)!,
               );
-              // Only apply if we got a valid browser-usable URL (blob: or data:)
-              if (
-                resolvedUrl &&
-                (resolvedUrl.startsWith("blob:") ||
-                  resolvedUrl.startsWith("data:"))
-              ) {
-                cy?.$id(el.data.id).style({
-                  "background-image": resolvedUrl,
-                  "background-fit": "cover",
-                  "background-opacity": 1,
-                });
+              // Only apply if we got a valid URL
+              if (resolvedUrl) {
+                cy?.$id(el.data.id).data("resolvedImage", resolvedUrl);
               }
             }
           }
@@ -372,25 +365,10 @@
       </div>
     {/if}
 
-    <!-- Mini-map Decoration (Static Mock) -->
-    <div
-      class="w-48 h-32 bg-black/80 backdrop-blur border border-green-900/50 rounded-lg p-2 hidden md:block pointer-events-auto shadow-2xl"
-    >
-      <div
-        class="w-full h-full border border-green-900/30 relative overflow-hidden"
-      >
-        <div
-          class="absolute top-1/4 left-1/4 w-1/2 h-1/2 border border-green-500/30 bg-green-500/5"
-        ></div>
-        <div
-          class="absolute bottom-2 left-2 w-1 h-1 bg-green-500 rounded-full animate-pulse"
-        ></div>
-        <span
-          class="absolute bottom-1 right-2 text-[8px] text-green-800 font-mono"
-          >LIVE_SURVEILLANCE_ACTIVE</span
-        >
-      </div>
-    </div>
+    <!-- Real Mini-map -->
+    {#if cy}
+      <Minimap {cy} absolute={false} width={192} height={128} />
+    {/if}
   </div>
 
   <!-- Zoom Controls (Bottom Left) -->
