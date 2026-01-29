@@ -6,6 +6,7 @@
 
     import { uiStore } from "$stores/ui.svelte";
     import AISettings from "./AISettings.svelte";
+    import { base } from "$app/paths";
 
     let adapter = new GoogleDriveAdapter();
     let isLoading = $state(false);
@@ -312,6 +313,12 @@
                                 <span class="icon-[lucide--tags] w-3 h-3"></span>
                                 MANAGE CATEGORIES
                             </button>
+                        </div>
+
+                        <div class="pt-2 flex justify-center gap-4 text-[9px] text-gray-700 uppercase tracking-tighter">
+                            <a href="{base}/privacy" class="hover:text-green-900 transition-colors">Privacy Policy</a>
+                            <span>•</span>
+                            <a href="{base}/terms" class="hover:text-green-900 transition-colors">Terms of Service</a>
                         </div>
                     </div>
                 {/if}
