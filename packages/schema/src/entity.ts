@@ -40,4 +40,5 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: "item", label: "Item", color: "#facc15", icon: "lucide:package" },
   { id: "event", label: "Event", color: "#e879f9", icon: "lucide:calendar" },
   { id: "faction", label: "Faction", color: "#fb923c", icon: "lucide:users" },
+  { id: "note", label: "Note", color: "#94a3b8", icon: "lucide:file-text" },
 ];

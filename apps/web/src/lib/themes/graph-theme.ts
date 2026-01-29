@@ -119,4 +119,8 @@ export const SCIFI_GREEN_STYLE = [
     selector: 'node[type="faction"]',
     style: { "border-color": "#fb923c", "border-width": 3 },
   },
+  {
+    selector: 'node[type="note"]',
+    style: { "border-color": "#94a3b8", "border-width": 3 },
+  },
 ];
