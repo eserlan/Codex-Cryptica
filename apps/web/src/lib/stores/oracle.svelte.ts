@@ -111,6 +111,10 @@ class OracleStore {
   }
 
   get effectiveApiKey() {
+    // Advanced mode REQUIRES a personal API key
+    if (this.tier === "advanced") {
+      return this.apiKey;
+    }
     return this.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
   }
 

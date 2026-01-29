@@ -86,14 +86,34 @@
         </div>
     </div>
 
-    {#if !oracle.isEnabled}
-        <div class="space-y-3">
+    <!-- Personal Key Status/Management -->
+    {#if oracle.apiKey}
+        <div
+            class="p-3 bg-purple-900/10 border border-purple-900/30 rounded flex items-center justify-between mb-4"
+        >
+            <div class="flex items-center gap-2">
+                <span class="text-purple-400 icon-[heroicons--sparkles] w-4 h-4"
+                ></span>
+                <span class="text-xs text-purple-100"> Oracle is Active </span>
+            </div>
+            <span class="text-[10px] text-purple-500 font-mono"
+                >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
+            >
+        </div>
+    {:else}
+        <div class="space-y-3 mt-4">
             <div class="flex flex-col gap-1">
                 <label
                     for="gemini-api-key"
-                    class="text-[10px] text-purple-400 uppercase font-bold"
-                    >Gemini API Key</label
+                    class="text-[10px] text-purple-400 uppercase font-bold flex justify-between"
                 >
+                    <span>Gemini API Key</span>
+                    {#if oracle.tier === "advanced"}
+                        <span class="text-amber-500 animate-pulse"
+                            >! REQUIRED FOR ADVANCED</span
+                        >
+                    {/if}
+                </label>
                 <div class="relative">
                     <input
                         id="gemini-api-key"
@@ -136,26 +156,11 @@
                 </button>
             </div>
         </div>
-    {:else}
-        <div
-            class="p-3 bg-purple-900/10 border border-purple-900/30 rounded flex items-center justify-between"
-        >
-            <div class="flex items-center gap-2">
-                <span class="text-purple-400 icon-[heroicons--sparkles] w-4 h-4"
-                ></span>
-                <span class="text-xs text-purple-100">
-                    {oracle.apiKey ? "Oracle is Active" : "Oracle Lite Mode"}
-                </span>
+
+        {#if import.meta.env.VITE_SHARED_GEMINI_KEY && oracle.tier === "lite"}
+            <div class="mt-4 p-2 bg-green-900/10 border border-green-900/20 rounded text-[10px] text-green-400 font-mono uppercase text-center">
+                Shared Lite Access Available
             </div>
-            {#if oracle.apiKey}
-                <span class="text-[10px] text-purple-500 font-mono"
-                    >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
-                >
-            {:else}
-                <span class="text-[10px] text-purple-500 font-mono uppercase"
-                    >LITE ACCESS</span
-                >
-            {/if}
-        </div>
+        {/if}
     {/if}
 </div>
