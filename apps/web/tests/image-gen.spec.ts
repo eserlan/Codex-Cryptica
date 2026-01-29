@@ -20,7 +20,7 @@ test.describe("Oracle Image Generation", () => {
 
     test("should trigger image generation and display the result", async ({ page }) => {
         // Mock the generateContent API
-        await page.route("**/models/gemini-2.0-flash:generateContent**", async (route) => {
+        await page.route("**/models/gemini-2.5-flash-image:generateContent**", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "application/json",
@@ -103,7 +103,7 @@ test.describe("Oracle Image Generation", () => {
         await expect(page.locator("h2", { hasText: "Test Image Entity" })).toBeVisible();
 
         // 2. Generate an image (mocked)
-        await page.route("**/models/gemini-2.0-flash:generateContent**", async (route) => {
+        await page.route("**/models/gemini-2.5-flash-image:generateContent**", async (route) => {
             await route.fulfill({
                 status: 200,
                 contentType: "application/json",

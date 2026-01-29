@@ -55,9 +55,9 @@ User visualization request: ${query}`;
   }
 
   async generateImage(apiKey: string, prompt: string): Promise<Blob> {
-    // We use gemini-2.0-flash which is a multimodal model capable of generating images
-    // via the standard, CORS-friendly generateContent endpoint.
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // We use gemini-2.5-flash-image (Nano Banana) which is optimized for image generation
+    // and available via the standard, CORS-friendly generateContent endpoint.
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
 
     const response = await fetch(url, {
       method: "POST",
