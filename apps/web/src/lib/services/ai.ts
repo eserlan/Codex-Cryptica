@@ -47,7 +47,10 @@ If the user asks for a visual, image, portrait, or to see what something looks l
 
   enhancePrompt(query: string, context: string): string {
     if (!context) return query;
-    return `You are a world-building artist. Use the following context to ground your visualization accurately:
+    return `You are a world-building artist. 
+
+Use the following context to ground your visualization accurately. 
+If a "GLOBAL ART STYLE" is provided, ensure the generated image strictly adheres to that aesthetic style.
 
 ${context}
 
@@ -196,11 +199,31 @@ User visualization request: ${query}`;
     return followUpPatterns.some(p => p.test(q));
   }
 
-  async retrieveContext(query: string, excludeTitles: Set<string>, lastEntityId?: string): Promise<{ content: string, primaryEntityId?: string }> {
+  async retrieveContext(
+    query: string,
+    excludeTitles: Set<string>,
+    lastEntityId?: string,
+    isImage: boolean = false,
+  ): Promise<{ content: string; primaryEntityId?: string }> {
     // 1. Get search results for relevance
     let results = await searchService.search(query, { limit: 5 });
 
-    // 1b. Fallback 1: if no results, try extracting keywords
+    // 1b. Style Search: If this is an image request, look for a style guide or aesthetic note
+    let styleContext = "";
+    if (isImage) {
+      const styleResults = await searchService.search(
+        "art style visual aesthetic world guide",
+        { limit: 1 },
+      );
+      if (styleResults.length > 0 && styleResults[0].score > 0.5) {
+        const styleEntity = vault.entities[styleResults[0].id];
+        if (styleEntity && !excludeTitles.has(styleEntity.title)) {
+          styleContext = `--- GLOBAL ART STYLE ---\n${styleEntity.content || styleEntity.lore || ""}\n\n`;
+        }
+      }
+    }
+
+    // 1c. Fallback 1: if no results, try extracting keywords
     if (results.length === 0) {
       const keywords = query
         .toLowerCase()
@@ -319,8 +342,8 @@ User visualization request: ${query}`;
     }
 
     return {
-      content: contents.join("\n\n"),
-      primaryEntityId: primaryEntityId || undefined
+      content: styleContext + contents.join("\n\n"),
+      primaryEntityId: primaryEntityId || undefined,
     };
   }
 }

@@ -159,7 +159,12 @@ class OracleStore {
       }
 
       const { content: context, primaryEntityId } =
-        await aiService.retrieveContext(query, alreadySentTitles, lastEntityId);
+        await aiService.retrieveContext(
+          query,
+          alreadySentTitles,
+          lastEntityId,
+          isImageRequest,
+        );
 
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
