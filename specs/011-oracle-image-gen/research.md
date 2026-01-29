@@ -22,6 +22,16 @@
     - Oracle Chat images will have `draggable="true"` and a `data-image-path` attribute.
     - `EntityDetailPanel` will have a drop zone that listens for `drop` events, extracts the path, and updates the active entity via `vault.updateEntity`.
 
+## Decision: Performance Optimization (Thumbnails)
+- **Choice**: Canvas-based 128px Thumbnails
+- **Rationale**: Keeps the Knowledge Graph responsive even with many images. Cytoscape nodes load much faster with small thumbnails than full-resolution generated images.
+- **Implementation**: Generated on-the-fly during the archive process and stored as a separate file.
+
+## Decision: Visual Consistency (Style-Awareness)
+- **Choice**: Invalidation-aware Style Caching
+- **Rationale**: Automates "Art Style" grounding without the overhead of repeated full-vault searches.
+- **Implementation**: Performs a semantic lookup for "art style" guides on first request and caches the result until the vault state changes.
+
 ## Alternatives Considered
 - **OpenAI DALL-E 3**: Rejected due to additional API key requirements and fragmentation of AI providers.
 - **Cloudinary/External CDN Storage**: Rejected as it violates the "Local-First" principle and requires internet access for visualization.

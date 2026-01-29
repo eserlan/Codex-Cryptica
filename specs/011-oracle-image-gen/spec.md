@@ -82,6 +82,9 @@ As a power user, I want to drag a generated image from the chat window directly 
 - **FR-006**: System MUST use 'Nano Banana' (Google Gemini 2.5 Flash Image) for image generation.
 - **FR-007**: System MUST support local persistence of images within the vault (OPFS) ONLY when explicitly attached to an entity. Ephemeral chat images SHOULD use temporary blob URLs.
 - **FR-008**: System MUST support dragging generated images from the chat and dropping them onto the Entity Detail Panel to trigger local persistence and update the entity's image.
+- **FR-009**: System MUST automatically generate a low-resolution thumbnail (128px) for every archived image to optimize Knowledge Graph performance.
+- **FR-010**: System MUST automatically retrieve and apply "Art Style" or "Aesthetic" guidelines from the vault to ensure visual consistency across generated images.
+- **FR-011**: System MUST provide a "Note" default category for miscellaneous information that does not fit into characters or locations.
 
 ## Clarifications
 

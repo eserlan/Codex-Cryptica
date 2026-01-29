@@ -46,17 +46,17 @@ specs/011-oracle-image-gen/
 apps/web/src/
 ├── lib/
 │   ├── services/
-│   │   └── ai.ts        # Extended with Imagen support
+│   │   └── ai.ts        # Extended with Nano Banana support and Style Caching
 │   ├── stores/
-│   │   ├── oracle.svelte.ts # Updated to handle image messages
-│   │   └── vault.svelte.ts  # Updated with image persistence logic
+│   │   ├── oracle.svelte.ts # Updated to handle image messages and intent detection
+│   │   └── vault.svelte.ts  # Updated with image persistence, thumbnail generation, and path resolution
 │   └── components/
 │       ├── oracle/
 │       │   └── ChatMessage.svelte # Image rendering and drag support
-│       └── EntityDetailPanel.svelte # Drop zone implementation
+│       └── EntityDetailPanel.svelte # Drop zone and async image resolution
 └── tests/
     └── e2e/
-        └── image-gen.spec.ts # New E2E test suite
+        └── image-gen.spec.ts # Comprehensive visual workflow tests
 ```
 
-**Structure Decision**: Standard SvelteKit layout. New logic is encapsulated in existing AI, Oracle, and Vault services/stores to maintain architectural consistency.
+**Structure Decision**: Standard SvelteKit layout. New logic is encapsulated in existing AI, Oracle, and Vault services/stores to maintain architectural consistency. Thumbnail generation is performed client-side using a hidden Canvas to minimize storage and processing overhead. Art Style lookups are memoized in an invalidation-aware cache to ensure zero-latency repeats.
