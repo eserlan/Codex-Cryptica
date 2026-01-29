@@ -47,7 +47,26 @@
 
   const updateProjection = () => {
     if (!cy) return;
-    const bb = cy.elements().boundingBox({ includeOverlays: false });
+    const eles = cy.elements();
+    
+    // If there are no elements, avoid calling boundingBox and reset to safe defaults
+    if (!eles || eles.length === 0) {
+      graphBounds = { x1: 0, y1: 0, x2: 0, y2: 0, w: 1, h: 1 };
+      scale = 1;
+      return;
+    }
+
+    const bb = eles.boundingBox({ includeOverlays: false });
+
+    // Validate bounding box values to guard against Infinity/NaN
+    if (
+      !Number.isFinite(bb.x1) ||
+      !Number.isFinite(bb.y1) ||
+      !Number.isFinite(bb.w) ||
+      !Number.isFinite(bb.h)
+    ) {
+      return;
+    }
 
     // Add padding
     const x1 = bb.x1 - SCALE_PADDING;
@@ -55,8 +74,15 @@
     const w = bb.w + SCALE_PADDING * 2;
     const h = bb.h + SCALE_PADDING * 2;
 
-    // Avoid divide by zero
-    if (w <= 0 || h <= 0) return;
+    // Avoid divide by zero and non-finite dimensions
+    if (
+      !Number.isFinite(w) ||
+      !Number.isFinite(h) ||
+      w <= 0 ||
+      h <= 0
+    ) {
+      return;
+    }
 
     // Calculate 'contain' fit scale
     const scaleX = width / w;
@@ -120,12 +146,12 @@
       const offsetX = (width - contentW) / 2;
       const offsetY = (height - contentH) / 2;
 
-      ctx.fillStyle = "#22c55e"; // green-500
       for (const node of nodes) {
         const mx = (node.x - graphBounds.x1) * scale + offsetX;
         const my = (node.y - graphBounds.y1) * scale + offsetY;
 
         // Draw
+        ctx.fillStyle = node.color; // Use node color
         ctx.beginPath();
         ctx.arc(mx, my, 2, 0, Math.PI * 2);
         ctx.fill();
@@ -153,11 +179,13 @@
 
   // Navigation Logic (US2)
   let isDragging = false;
+  let hasMoved = false; // Track if actual drag occurred
   let dragStart = { x: 0, y: 0 }; // Minimap coordinates
 
   const handleDragStart = (e: MouseEvent) => {
     e.stopPropagation(); // Don't trigger click on background
     isDragging = true;
+    hasMoved = false;
     dragStart = { x: e.clientX, y: e.clientY };
     e.preventDefault(); // Prevent text selection
   };
@@ -167,6 +195,10 @@
 
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
+    
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+        hasMoved = true;
+    }
 
     // Convert minimap delta to graph delta
     if (scale > 0) {
@@ -182,11 +214,13 @@
 
   const handleDragEnd = () => {
     isDragging = false;
+    // Don't reset hasMoved here, we need it for click handler
   };
 
   const handleMinimapClick = (e: MouseEvent) => {
     // Ignore if clicking the viewport rect itself (handled by drag or propagation stopped)
-    if (isDragging || collapsed) return;
+    // Also ignore if we just finished a drag operation
+    if (isDragging || hasMoved || collapsed) return;
     if (!cy || scale <= 0) return;
 
     // e.offsetX/Y is relative to the target.
@@ -237,15 +271,17 @@
 
     // Listeners
     if (cy) {
-      cy.on("add remove move", handleGraphUpdate);
+      cy.on("add remove position", handleGraphUpdate);
       cy.on("resize", updateProjection);
     }
   });
 
   onDestroy(() => {
-    cancelAnimationFrame(animationFrameId);
+    if (animationFrameId !== undefined) {
+      cancelAnimationFrame(animationFrameId);
+    }
     if (cy) {
-      cy.off("add remove move", handleGraphUpdate);
+      cy.off("add remove position", handleGraphUpdate);
       cy.off("resize", updateProjection);
     }
   });
@@ -260,17 +296,50 @@
     ? 'absolute-pos'
     : 'relative-pos'}"
   style="width: {width}px; height: {height}px;"
+  role="application"
+  aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
+  tabindex="0"
   onclick={handleMinimapClick}
+  onkeydown={(event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      (event.currentTarget as HTMLElement).click();
+    }
+  }}
 >
   <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
   ></canvas>
 
   <!-- Viewport Overlay -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="viewport-rect"
     style={viewRectStyle}
+    role="button"
+    aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
+    tabindex="0"
     onmousedown={handleDragStart}
+    onkeydown={(event) => {
+      const key = event.key;
+      if (
+        key === "ArrowUp" ||
+        key === "ArrowDown" ||
+        key === "ArrowLeft" ||
+        key === "ArrowRight"
+      ) {
+        event.preventDefault();
+        const pan = cy.pan();
+        const step = 20;
+        if (key === "ArrowUp") {
+          cy.pan({ x: pan.x, y: pan.y - step });
+        } else if (key === "ArrowDown") {
+          cy.pan({ x: pan.x, y: pan.y + step });
+        } else if (key === "ArrowLeft") {
+          cy.pan({ x: pan.x - step, y: pan.y });
+        } else if (key === "ArrowRight") {
+          cy.pan({ x: pan.x + step, y: pan.y });
+        }
+      }
+    }}
   ></div>
 
   <!-- Toggle Button -->
@@ -341,6 +410,12 @@
     z-index: 60;
     opacity: 0; /* Hidden by default, shown on hover */
     transition: opacity 0.2s;
+  }
+
+  .toggle-btn:focus-visible {
+    opacity: 1;
+    outline: 2px solid #4ade80;
+    outline-offset: 2px;
   }
 
   .minimap-container:hover .toggle-btn {

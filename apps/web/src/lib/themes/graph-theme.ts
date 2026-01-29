@@ -29,6 +29,7 @@ export const BASE_STYLE = [
       width: 48,
       height: 48,
       "border-width": 2,
+      "border-color": "#4ade80", // Brighter border for images
     },
   },
   {

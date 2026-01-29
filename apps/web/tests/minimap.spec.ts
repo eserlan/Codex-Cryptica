@@ -52,6 +52,9 @@ test.describe("Minimap Navigation", () => {
     await page.mouse.down();
     await page.mouse.move(boxBefore.x + 50, boxBefore.y + 50);
     await page.mouse.up();
+    
+    // Allow RAF loop to catch up
+    await page.waitForTimeout(100);
 
     // 3. Verify it moved (since graph syncs back, if graph panned, rect should be in new pos)
     // Note: The graph pan is async, but our test runs fast. We might need to wait for update.
