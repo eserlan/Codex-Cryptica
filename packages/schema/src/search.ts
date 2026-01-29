@@ -2,6 +2,7 @@ export interface SearchEntry {
   id: string;
   title: string;
   content: string;
+  type?: string; // Entity category ID
   keywords?: string;
   path: string;
   updatedAt: number;
@@ -10,6 +11,7 @@ export interface SearchEntry {
 export interface SearchResult {
   id: string;
   title: string;
+  type?: string; // Entity category ID
   path: string;
   excerpt?: string;
   score: number;

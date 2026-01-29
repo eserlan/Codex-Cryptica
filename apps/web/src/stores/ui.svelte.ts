@@ -1,5 +1,6 @@
 class UIStore {
     showSettings = $state(false);
+    showCategoryManager = $state(false);
 
     openSettings() {
         this.showSettings = true;
@@ -11,6 +12,15 @@ class UIStore {
 
     toggleSettings() {
         this.showSettings = !this.showSettings;
+    }
+
+    openCategoryManager() {
+        this.showCategoryManager = true;
+        this.showSettings = false; // Close settings when opening manager
+    }
+
+    closeCategoryManager() {
+        this.showCategoryManager = false;
     }
 }
 

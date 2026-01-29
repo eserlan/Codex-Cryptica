@@ -1,4 +1,6 @@
-export const SCIFI_GREEN_STYLE = [
+import type { Category } from "schema";
+
+export const BASE_STYLE = [
   {
     selector: "node",
     style: {
@@ -82,40 +84,39 @@ export const SCIFI_GREEN_STYLE = [
       opacity: 1,
     },
   },
-  // Type-specific Node Borders
-  {
-    selector: 'node[type="npc"]',
+] as any[];
+
+export const getTypeStyles = (categories: Category[]) => {
+  return categories.map((cat) => ({
+    selector: `node[type="${cat.id}"]`,
     style: {
-      "border-color": "#60a5fa", // Blue-400
+      "border-color": cat.color,
       "border-width": 3,
     },
+  }));
+};
+
+// Kept for backward compatibility if needed, but we should move to dynamic
+export const SCIFI_GREEN_STYLE = [
+  ...BASE_STYLE,
+  {
+    selector: 'node[type="npc"]',
+    style: { "border-color": "#60a5fa", "border-width": 3 },
   },
   {
     selector: 'node[type="location"]',
-    style: {
-      "border-color": "#4ade80", // Green-400
-      "border-width": 3,
-    },
+    style: { "border-color": "#4ade80", "border-width": 3 },
   },
   {
     selector: 'node[type="item"]',
-    style: {
-      "border-color": "#facc15", // Yellow-400
-      "border-width": 3,
-    },
+    style: { "border-color": "#facc15", "border-width": 3 },
   },
   {
     selector: 'node[type="event"]',
-    style: {
-      "border-color": "#e879f9", // Fuchsia-400
-      "border-width": 3,
-    },
+    style: { "border-color": "#e879f9", "border-width": 3 },
   },
   {
     selector: 'node[type="faction"]',
-    style: {
-      "border-color": "#fb923c", // Orange-400
-      "border-width": 3,
-    },
+    style: { "border-color": "#fb923c", "border-width": 3 },
   },
-] as any[];
+];

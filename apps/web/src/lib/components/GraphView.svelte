@@ -4,12 +4,15 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import { parse } from "marked";
   import type { Core, NodeSingular } from "cytoscape";
-  import { SCIFI_GREEN_STYLE } from "$lib/themes/graph-theme";
+  import { BASE_STYLE, getTypeStyles } from "$lib/themes/graph-theme";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
+
+  let graphStyle = $derived([...BASE_STYLE, ...getTypeStyles(categories.list)]);
 
   let connectMode = $state(false);
   let sourceId = $state<string | null>(null);
@@ -61,7 +64,7 @@
       cy = initGraph({
         container,
         elements: graph.elements,
-        style: SCIFI_GREEN_STYLE,
+        style: graphStyle,
       });
 
       // Hover events
@@ -162,6 +165,12 @@
 
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
+
+  $effect(() => {
+    if (cy && graphStyle) {
+      cy.style(graphStyle);
+    }
+  });
 
   // Center on selection when it changes externally
   $effect(() => {

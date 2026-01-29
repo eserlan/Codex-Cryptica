@@ -38,7 +38,7 @@ const initIndex = () => {
         }
       }
     ],
-    store: ['id', 'title', 'path', 'content']
+    store: ['id', 'title', 'path', 'content', 'type']
   };
 
   index = new FlexSearch.Document(config);
@@ -97,6 +97,7 @@ const search = async (query: string, options: SearchOptions = {}): Promise<Searc
         resultsMap.set(id, {
           id,
           title: entry?.title || id,
+          type: entry?.type,
           path: entry?.path || '',
           matchType: field === 'keywords' ? 'content' : field, // UI doesn't have 'keywords' type yet
           score: currentScore,

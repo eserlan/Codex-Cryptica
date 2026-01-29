@@ -2,6 +2,8 @@
   import { tick } from "svelte";
   import { searchStore } from "$lib/stores/search";
   import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icons";
   import { goto } from "$app/navigation";
   import type { SearchResult } from "schema";
   import { marked } from "marked";
@@ -76,10 +78,7 @@
         const derivedId = basename.replace(/\.md$/, "");
         vault.selectedEntityId = derivedId;
       } else {
-        console.error(
-          "CRITICAL: Selected a search result with no ID or path!",
-          result,
-        );
+        console.error("CRITICAL: Selected a search result with no ID or path!");
         return;
       }
     } else {
@@ -189,10 +188,28 @@
               on:click={(e) => selectResult(result, e)}
               data-testid="search-result"
             >
-              <span class="font-medium truncate">
+              <span class="font-medium truncate flex items-center gap-2">
+                {#if result.type}
+                  <span
+                    class="{getIconClass(
+                      categories.getCategory(result.type)?.icon,
+                    )} w-3.5 h-3.5 shrink-0"
+                    style="color: {categories.getColor(result.type)}"
+                  ></span>
+                {/if}
                 {@html renderMarkdown(result.title, $searchStore.query)}
               </span>
-              <span class="text-xs text-zinc-500 truncate">{result.path}</span>
+              <div class="flex items-center gap-2 text-xs text-zinc-500">
+                {#if result.type}
+                  <span
+                    class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                    style="color: {categories.getColor(result.type)}"
+                  >
+                    {categories.getCategory(result.type)?.label || result.type}
+                  </span>
+                {/if}
+                <span class="truncate">{result.path}</span>
+              </div>
               {#if result.excerpt}
                 <p
                   class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"

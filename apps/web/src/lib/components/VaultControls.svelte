@@ -1,10 +1,16 @@
 <script lang="ts">
     import { vault } from "$lib/stores/vault.svelte";
-    import type { Entity } from "schema";
+    import { categories } from "$lib/stores/categories.svelte";
 
     let showForm = $state(false);
     let newTitle = $state("");
-    let newType = $state<Entity["type"]>("npc");
+    let newType = $state<string>("npc");
+
+    $effect(() => {
+        if (showForm && categories.list.length > 0 && !categories.list.some(c => c.id === newType)) {
+            newType = categories.list[0].id;
+        }
+    });
 
     const handleCreate = async () => {
         if (!newTitle.trim()) return;
@@ -103,11 +109,9 @@
                 bind:value={newType}
                 class="px-2 py-1.5 text-xs bg-black border border-green-800 text-gray-300 rounded focus:outline-none focus:border-green-500"
             >
-                <option value="npc">NPC</option>
-                <option value="location">Location</option>
-                <option value="item">Item</option>
-                <option value="event">Event</option>
-                <option value="faction">Faction</option>
+                {#each categories.list as cat}
+                    <option value={cat.id}>{cat.label}</option>
+                {/each}
             </select>
             <button
                 type="submit"

@@ -3,6 +3,7 @@ export interface SearchDocument {
     title: string;
     content: string;
     path: string;
+    type?: string;
     keywords?: string;
 }
 
