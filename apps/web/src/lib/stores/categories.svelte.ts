@@ -7,12 +7,20 @@ class CategoryStore {
 
   async init() {
     if (this.isLoaded) return;
-    
+
     try {
       const db = await getDB();
       const stored = await db.get("settings", "categories");
       if (stored && Array.isArray(stored)) {
-        this.list = stored;
+        // Merge Logic: Keep user-customized/added categories, 
+        // but ensure all CURRENT defaults are also present.
+        const merged = [...stored];
+        DEFAULT_CATEGORIES.forEach((defaultCat) => {
+          if (!merged.some((c) => c.id === defaultCat.id)) {
+            merged.push(defaultCat);
+          }
+        });
+        this.list = merged;
       }
     } catch (e) {
       console.error("Failed to load categories", e);
