@@ -20,8 +20,8 @@ Codex Arcana integrates with Google Gemini API for features like "Lore Oracle" (
 - **Data Transfer**: When you use these features, specific content from your vault (text for analysis or prompts for images) is sent to Google's servers.
 - **Google's Privacy**: The processing of this data is subject to [Google's Privacy Policy](https://policies.google.com/privacy) and [Generative AI Terms](https://ai.google.dev/terms).
 
-## 4. No Tracking or Cookies
-Codex Arcana does not use advertising cookies, tracking scripts, or analytics packages. The only data collected is standard server-side logs if the application is accessed via a public URL, which are used solely for troubleshooting and security.
+## 4. No Tracking
+Codex Arcana does not use advertising cookies, tracking scripts, analytics packages, or server-side logging. All application state is maintained locally in your browser. When hosted as a static site, no data about your usage is collected or stored by the application.
 
 ## 5. Changes to This Policy
 We may update this policy occasionally. Continued use of the application after changes constitutes acceptance of the new terms.
