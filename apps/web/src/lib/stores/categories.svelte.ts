@@ -39,6 +39,13 @@ class CategoryStore {
   }
 
   addCategory(category: Category) {
+    // Prevent duplicate category IDs by updating existing entries instead of pushing duplicates.
+    const existingIndex = this.list.findIndex((c) => c.id === category.id);
+    if (existingIndex !== -1) {
+      // Use updateCategory to preserve centralized update logic.
+      this.updateCategory(category.id, category);
+      return;
+    }
     this.list.push(category);
     void this.save();
   }

@@ -3,7 +3,7 @@
   import { searchStore } from "$lib/stores/search";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icons";
+  import { getIconClass } from "$lib/utils/icon";
   import { goto } from "$app/navigation";
   import type { SearchResult } from "schema";
   import { marked } from "marked";

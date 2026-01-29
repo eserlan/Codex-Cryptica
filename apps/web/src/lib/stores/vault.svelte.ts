@@ -64,6 +64,8 @@ class VaultStore {
       }
     } catch (err) {
       console.error("Failed to init vault", err);
+    } finally {
+      this.status = "idle";
     }
   }
 
@@ -135,117 +137,150 @@ class VaultStore {
     if (!this.rootHandle) return;
 
     this.status = "loading";
-    aiService.clearStyleCache();
-    const files = await walkDirectory(this.rootHandle);
+    try {
+      aiService.clearStyleCache();
+      const files = await walkDirectory(this.rootHandle);
 
-    // Clear index before reloading
-    await searchService.clear();
+      // Clear index before reloading
+      await searchService.clear();
 
-    // Reset entities or keep them? "loadFiles" usually implies a fresh load or refresh.
-    // If we want to be smooth, we might want to keep existing until replaced, but that handles deletions poorly.
-    // Let's clear start fresh but progressively.
-    this.entities = {};
+      // Reset entities or keep them? "loadFiles" usually implies a fresh load or refresh.
+      // If we want to be smooth, we might want to keep existing until replaced, but that handles deletions poorly.
+      // Let's clear start fresh but progressively.
+      this.entities = {};
 
-    // Process files in parallel chunks to avoid overwhelming the system while staying fast
-    const CHUNK_SIZE = 20;
-    for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-      const chunk = files.slice(i, i + CHUNK_SIZE);
-      const chunkEntities: Record<string, LocalEntity> = {};
+      // Process files in parallel chunks to avoid overwhelming the system while staying fast
+      const CHUNK_SIZE = 20;
+      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+        const chunk = files.slice(i, i + CHUNK_SIZE);
+        const chunkEntities: Record<string, LocalEntity> = {};
 
-      await Promise.all(chunk.map(async (fileEntry) => {
-        try {
-          const filePath = Array.isArray(fileEntry.path) ? fileEntry.path.join('/') : fileEntry.path;
-          const file = await fileEntry.handle.getFile();
-          const lastModified = file.lastModified;
-          const cached = await cacheService.get(filePath);
-
-          let entity: LocalEntity;
-
-          // Hit Path: Use cached entity if valid
-          if (cached && cached.lastModified === lastModified) {
-            entity = { ...cached.entity, _fsHandle: fileEntry.handle, _path: fileEntry.path };
-          } else {
-            // Miss Path: Parse and cache
-            const text = await file.text();
-            const { metadata, content, wikiLinks } = parseMarkdown(text);
-
-            let id = metadata.id;
-            if (!id) {
-              id = sanitizeId(fileEntry.path[fileEntry.path.length - 1].replace(".md", ""));
-            }
-
-            const connections = [...(metadata.connections || []), ...wikiLinks];
-
-            entity = {
-              id: id!,
-              type: metadata.type || "npc",
-              title: metadata.title || id!,
-              tags: metadata.tags || [],
-              connections,
-              content: content,
-              lore: metadata.lore,
-              image: metadata.image,
-              metadata: metadata.metadata,
-              _fsHandle: fileEntry.handle,
-              _path: fileEntry.path,
-            };
-
-            // Update Cache (best-effort; failures should not abort processing)
+        await Promise.all(
+          chunk.map(async (fileEntry) => {
             try {
-              await cacheService.set(filePath, lastModified, entity);
-            } catch (error) {
-              console.error("Failed to update cache for file:", filePath, error);
+              const filePath = Array.isArray(fileEntry.path)
+                ? fileEntry.path.join("/")
+                : fileEntry.path;
+              const file = await fileEntry.handle.getFile();
+              const lastModified = file.lastModified;
+              const cached = await cacheService.get(filePath);
+
+              let entity: LocalEntity;
+
+              // Hit Path: Use cached entity if valid
+              if (cached && cached.lastModified === lastModified) {
+                entity = {
+                  ...cached.entity,
+                  _fsHandle: fileEntry.handle,
+                  _path: fileEntry.path,
+                };
+              } else {
+                // Miss Path: Parse and cache
+                const text = await file.text();
+                const { metadata, content, wikiLinks } = parseMarkdown(text);
+
+                let id = metadata.id;
+                if (!id) {
+                  id = sanitizeId(
+                    fileEntry.path[fileEntry.path.length - 1].replace(
+                      ".md",
+                      "",
+                    ),
+                  );
+                }
+
+                const connections = [
+                  ...(metadata.connections || []),
+                  ...wikiLinks,
+                ];
+
+                entity = {
+                  id: id!,
+                  type: metadata.type || "npc",
+                  title: metadata.title || id!,
+                  tags: metadata.tags || [],
+                  connections,
+                  content: content,
+                  lore: metadata.lore,
+                  image: metadata.image,
+                  metadata: metadata.metadata,
+                  _fsHandle: fileEntry.handle,
+                  _path: fileEntry.path,
+                };
+
+                // Update Cache (best-effort; failures should not abort processing)
+                try {
+                  await cacheService.set(filePath, lastModified, entity);
+                } catch (error) {
+                  console.error(
+                    "Failed to update cache for file:",
+                    filePath,
+                    error,
+                  );
+                }
+              }
+
+              if (!entity.id || entity.id === "undefined") {
+                console.error(
+                  "CRITICAL: Attempted to index entity with invalid ID!",
+                  { title: entity.title, id: entity.id, path: entity._path },
+                );
+                return;
+              }
+
+              chunkEntities[entity.id] = entity;
+
+              const metadataValues = Object.values(entity.metadata || {});
+              const metadataKeywords = metadataValues.flatMap((value) => {
+                if (typeof value === "string") return [value];
+                if (Array.isArray(value)) {
+                  return value.filter(
+                    (item): item is string => typeof item === "string",
+                  );
+                }
+                return [];
+              });
+
+              const keywords = [
+                ...(entity.tags || []),
+                entity.lore || "",
+                ...metadataKeywords,
+              ].join(" ");
+
+              const searchEntry = {
+                id: entity.id,
+                title: entity.title,
+                content: entity.content,
+                type: entity.type,
+                path: filePath,
+                keywords,
+                updatedAt: Date.now(),
+              };
+
+              // Index the entity
+              await searchService.index(searchEntry);
+            } catch (err) {
+              console.error(
+                `Failed to process file ${fileEntry.path.join("/")}:`,
+                err,
+              );
             }
-          }
+          }),
+        );
 
-          if (!entity.id || entity.id === 'undefined') {
-            console.error('CRITICAL: Attempted to index entity with invalid ID!', { title: entity.title, id: entity.id, path: entity._path });
-            return;
-          }
+        // Update state incrementally
+        this.entities = { ...this.entities, ...chunkEntities };
+      }
 
-          chunkEntities[entity.id] = entity;
-
-          const metadataValues = Object.values(entity.metadata || {});
-          const metadataKeywords = metadataValues.flatMap((value) => {
-            if (typeof value === 'string') return [value];
-            if (Array.isArray(value)) {
-              return value.filter((item): item is string => typeof item === 'string');
-            }
-            return [];
-          });
-
-          const keywords = [
-            ...(entity.tags || []),
-            entity.lore || '',
-            ...metadataKeywords
-          ].join(' ');
-
-          const searchEntry = {
-            id: entity.id,
-            title: entity.title,
-            content: entity.content,
-            type: entity.type,
-            path: filePath,
-            keywords,
-            updatedAt: Date.now()
-          };
-
-          // Index the entity
-          await searchService.index(searchEntry);
-        } catch (err) {
-          console.error(`Failed to process file ${fileEntry.path.join('/')}:`, err);
-        }
-      }));
-
-      // Update state incrementally
-      this.entities = { ...this.entities, ...chunkEntities };
+      this.updateInboundConnections();
+    } finally {
+      this.status = "idle";
     }
-
-    this.updateInboundConnections();
-    this.status = "idle";
   }
 
   private imageBlobCache = new Map<string, string>();
+  private pendingResolutions = new Map<string, Promise<string>>();
+  private readonly MAX_CACHE_SIZE = 50;
 
   async resolveImagePath(path: string): Promise<string> {
     if (!path) return "";
@@ -259,42 +294,67 @@ class VaultStore {
 
     // Check cache
     if (this.imageBlobCache.has(path)) {
-      return this.imageBlobCache.get(path)!;
+      // Re-insert to mark as recently used (basic LRU)
+      const url = this.imageBlobCache.get(path)!;
+      this.imageBlobCache.delete(path);
+      this.imageBlobCache.set(path, url);
+      return url;
+    }
+
+    // Check for in-flight requests
+    if (this.pendingResolutions.has(path)) {
+      return this.pendingResolutions.get(path)!;
     }
 
     if (!this.rootHandle) return path;
 
-    try {
-      // Normalize path (remove leading ./)
-      const normalized = path.startsWith("./") ? path.slice(2) : path;
-      const segments = normalized.split("/");
+    const resolutionPromise = (async () => {
+      try {
+        // Normalize path (remove leading ./)
+        const normalized = path.startsWith("./") ? path.slice(2) : path;
+        const segments = normalized.split("/");
 
-      let currentHandle: FileSystemDirectoryHandle | FileSystemFileHandle =
-        this.rootHandle;
+        let currentHandle: FileSystemDirectoryHandle | FileSystemFileHandle =
+          this.rootHandle!;
 
-      for (let i = 0; i < segments.length; i++) {
-        const segment = segments[i];
-        if (i === segments.length - 1) {
-          // Last segment is the file
-          const fileHandle = await (
-            currentHandle as FileSystemDirectoryHandle
-          ).getFileHandle(segment);
-          const file = await fileHandle.getFile();
-          const url = URL.createObjectURL(file);
-          this.imageBlobCache.set(path, url);
-          return url;
-        } else {
-          currentHandle = await (
-            currentHandle as FileSystemDirectoryHandle
-          ).getDirectoryHandle(segment);
+        for (let i = 0; i < segments.length; i++) {
+          const segment = segments[i];
+          if (i === segments.length - 1) {
+            // Last segment is the file
+            const fileHandle = await (
+              currentHandle as FileSystemDirectoryHandle
+            ).getFileHandle(segment);
+            const file = await fileHandle.getFile();
+            const url = URL.createObjectURL(file);
+
+            // Cache management
+            if (this.imageBlobCache.size >= this.MAX_CACHE_SIZE) {
+              const firstKey = this.imageBlobCache.keys().next().value;
+              if (firstKey) {
+                const oldUrl = this.imageBlobCache.get(firstKey);
+                if (oldUrl) URL.revokeObjectURL(oldUrl);
+                this.imageBlobCache.delete(firstKey);
+              }
+            }
+
+            this.imageBlobCache.set(path, url);
+            return url;
+          } else {
+            currentHandle = await (
+              currentHandle as FileSystemDirectoryHandle
+            ).getDirectoryHandle(segment);
+          }
         }
+      } catch (err) {
+        console.error("Failed to resolve image path", path, err);
+      } finally {
+        this.pendingResolutions.delete(path);
       }
-    } catch (err) {
-      console.error("Failed to resolve image path", path, err);
-    }
+      return "";
+    })();
 
-    // Return empty string on failure - Cytoscape/CSS can't use local file paths
-    return "";
+    this.pendingResolutions.set(path, resolutionPromise);
+    return resolutionPromise;
   }
 
   // Cleanup blob URLs on destroy/reset if needed
@@ -304,6 +364,9 @@ class VaultStore {
   }
 
   async saveImageToVault(blob: Blob, entityId: string): Promise<string> {
+    if (!(blob instanceof Blob) || blob.size === 0) {
+      throw new Error("Invalid image data provided for archival.");
+    }
     if (!this.rootHandle) throw new Error("Vault not open");
 
     try {
@@ -360,6 +423,11 @@ class VaultStore {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
+        if (!ctx) {
+          reject(new Error("Failed to initialize canvas context for thumbnail generation"));
+          return;
+        }
+
         // Calculate dimensions to maintain aspect ratio
         let width = img.width;
         let height = img.height;
@@ -400,15 +468,26 @@ class VaultStore {
     });
   }
 
-  updateEntity(id: string, updates: Partial<Entity>) {
+  updateEntity(id: string, updates: Partial<Entity>): boolean {
     const entity = this.entities[id];
-    if (!entity) return;
+    if (!entity) return false;
 
     const updated = { ...entity, ...updates };
     this.entities[id] = updated;
 
-    aiService.clearStyleCache();
+    // Granular Cache Invalidation: Only clear if the title suggests style relevance
+    const styleKeywords = ["art style", "visual aesthetic", "world guide", "style"];
+    const isPossiblyStyle = styleKeywords.some(kw => 
+      entity.title.toLowerCase().includes(kw) || 
+      (updates.title && updates.title.toLowerCase().includes(kw))
+    );
+
+    if (isPossiblyStyle) {
+      aiService.clearStyleCache();
+    }
+
     this.scheduleSave(updated);
+    return true;
   }
 
   scheduleSave(entity: Entity) {

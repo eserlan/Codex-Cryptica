@@ -28,14 +28,19 @@ describe("AIService Context Retrieval", () => {
         vi.clearAllMocks();
         // Setup entities in the mocked vault
         (vault as any).entities = {
-            "woods-id": { id: "woods-id", title: "The Woods", content: "Dark woods.", connections: [] },
-            "crone-id": { id: "crone-id", title: "The Crone", content: "Old woman.", connections: [] },
-            "guardsman-id": { id: "guardsman-id", title: "The Guardsman", content: "A guard in the woods.", connections: [] },
-            "ai-id": { id: "ai-id", title: "AI", content: "The Artificial Intelligence.", connections: [] },
+            "woods-id": { id: "woods-id", title: "The Woods", content: "Dark woods.", connections: [], tags: [] },
+            "crone-id": { id: "crone-id", title: "The Crone", content: "Old woman.", connections: [], tags: [] },
+            "guardsman-id": { id: "guardsman-id", title: "The Guardsman", content: "A guard in the woods.", connections: [], tags: [] },
+            "ai-id": { id: "ai-id", title: "AI", content: "The Artificial Intelligence.", connections: [], tags: [] },
         };
         (vault as any).selectedEntityId = null;
         (vault as any).inboundConnections = {};
         vi.mocked(searchService.search).mockResolvedValue([]);
+        
+        // Mock clearStyleCache if it doesn't exist on the instance
+        if (!(aiService as any).clearStyleCache) {
+            (aiService as any).clearStyleCache = vi.fn();
+        }
     });
 
     it("should prioritize explicit title matches over active selection", async () => {

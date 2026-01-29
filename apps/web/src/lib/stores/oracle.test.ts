@@ -134,10 +134,10 @@ describe("OracleStore", () => {
     // Test various intent keywords
     const intents = [
       "/draw a dragon",
-      "sketch of a tavern",
+      "generate an image of a tavern",
       "paint a portrait of Eldrin",
-      "visualize the sawmill",
-      "show me what he looks like"
+      "visualize this scene",
+      "show me a picture of the sawmill"
     ];
 
     for (const query of intents) {

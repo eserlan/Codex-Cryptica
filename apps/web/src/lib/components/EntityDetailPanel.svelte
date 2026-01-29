@@ -38,7 +38,7 @@
                 content: editContent,
                 lore: editLore,
                 image: editImage,
-                type: entity.type, // Preserve type
+                type: entity.type, // Explicitly preserve type
             });
             isEditing = false;
         } catch (err) {
@@ -87,6 +87,7 @@
                     await vault.saveImageToVault(message.imageBlob, entity.id);
                 } catch (err) {
                     console.error("Failed to save dropped image", err);
+                    alert("Failed to archive dropped image.");
                 }
             }
         } else if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
@@ -96,6 +97,7 @@
                     await vault.saveImageToVault(file, entity.id);
                 } catch (err) {
                     console.error("Failed to save dropped external file", err);
+                    alert("Failed to save external image.");
                 }
             }
         }

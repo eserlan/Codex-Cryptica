@@ -87,12 +87,23 @@ class OracleStore {
     this.broadcast();
   }
 
-  async clearKey() {
-    const db = await getDB();
-    await db.delete("settings", "ai_api_key");
+  clearKey() {
+    getDB().then(db => {
+      db.delete("settings", "ai_api_key");
+    });
     this.apiKey = null;
-    this.messages = [];
+    this.clearMessages();
     this.broadcast();
+  }
+
+  clearMessages() {
+    // Revoke all blob URLs to prevent memory leaks
+    this.messages.forEach(m => {
+      if (m.imageUrl && m.imageUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(m.imageUrl);
+      }
+    });
+    this.messages = [];
   }
 
   get isEnabled() {
@@ -104,21 +115,67 @@ class OracleStore {
   }
 
   private detectImageIntent(query: string): boolean {
-    const q = query.toLowerCase();
-    return (
-      q.includes("/draw") ||
-      q.includes("/image") ||
-      q.startsWith("draw") ||
-      q.includes("draw me") ||
-      q.includes("draw a") ||
-      q.includes("portrait of") ||
-      q.includes("visualize") ||
+    const q = query.toLowerCase().trim();
+
+    // Explicit command-style triggers
+    if (q.startsWith("/draw") || q.startsWith("/image")) {
+      return true;
+    }
+
+    // Common explicit phrases
+    if (
       q.includes("generate an image") ||
-      q.includes("show me what") ||
-      q.includes("show me a") ||
-      q.includes("sketch of") ||
-      q.includes("paint a")
-    );
+      q.includes("generate a picture") ||
+      q.includes("generate a photo")
+    ) {
+      return true;
+    }
+
+    // Very image-specific constructions
+    if (/\bportrait of\b/.test(q) || /\bsketch of\b/.test(q)) {
+      return true;
+    }
+
+    const imageNouns = [
+      "image",
+      "picture",
+      "photo",
+      "photograph",
+      "illustration",
+      "portrait",
+      "scene",
+      "logo",
+      "icon",
+      "diagram",
+      "map",
+    ];
+
+    const verbs = [
+      "draw",
+      "sketch",
+      "paint",
+      "illustrate",
+      "visualize",
+      "show",
+      "generate",
+      "create",
+    ];
+
+    // Require a verb and an image-related noun, both as whole words.
+    for (const verb of verbs) {
+      const verbRegex = new RegExp(`\\b${verb}\\b`);
+      if (!verbRegex.test(q)) continue;
+
+      for (const noun of imageNouns) {
+        // Allow some text between verb and noun but enforce both in the query.
+        const pattern = new RegExp(`\\b${verb}\\b[\\s\\S]{0,80}\\b${noun}\\b`);
+        if (pattern.test(q)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   async ask(query: string) {

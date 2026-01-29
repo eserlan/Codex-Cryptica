@@ -1,7 +1,7 @@
 <script lang="ts">
     import { categories } from "$lib/stores/categories.svelte";
     import { sanitizeId } from "$lib/utils/markdown";
-    import { getIconClass } from "$lib/utils/icons";
+    import { getIconClass } from "$lib/utils/icon";
     import { fade, scale } from "svelte/transition";
 
     let newLabel = $state("");
@@ -138,7 +138,11 @@
 
                 <!-- Delete -->
                 <button
-                    onclick={() => categories.removeCategory(cat.id)}
+                    onclick={() => {
+                        if (confirm(`Delete category "${cat.label}"? Entities using this category will fallback to default style.`)) {
+                            categories.removeCategory(cat.id);
+                        }
+                    }}
                     class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-500 transition-all p-1"
                     aria-label="Delete category {cat.label}"
                     title="Delete Category"

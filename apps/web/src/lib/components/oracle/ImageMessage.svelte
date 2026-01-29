@@ -7,6 +7,7 @@
 
   let showLightbox = $state(false);
   let isArchiving = $state(false);
+  let archiveError = $state<string | null>(null);
 
   let activeEntity = $derived(
     vault.selectedEntityId ? vault.entities[vault.selectedEntityId] : null,
@@ -16,10 +17,12 @@
     if (!message.imageBlob || !activeEntity) return;
     
     isArchiving = true;
+    archiveError = null;
     try {
       await vault.saveImageToVault(message.imageBlob, activeEntity.id);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to archive image", err);
+      archiveError = err.message || "Failed to save image.";
     } finally {
       isArchiving = false;
     }
@@ -63,7 +66,7 @@
 
     <!-- Actions -->
     {#if activeEntity}
-      <div class="flex justify-end" transition:fade>
+      <div class="flex flex-col gap-2 items-end" transition:fade>
         <button
           onclick={handleSave}
           disabled={isArchiving}
@@ -77,6 +80,9 @@
             SAVE TO {activeEntity.title.toUpperCase()}
           {/if}
         </button>
+        {#if archiveError}
+          <span class="text-[9px] text-red-400 font-mono italic">{archiveError}</span>
+        {/if}
       </div>
     {/if}
   {:else}
