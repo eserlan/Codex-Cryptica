@@ -6,6 +6,7 @@
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import CategoryManagerModal from "$lib/components/settings/CategoryManagerModal.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
+	import { oracle } from "$lib/stores/oracle.svelte";
 	import { categories } from "$lib/stores/categories.svelte";
 	import { searchStore } from "$lib/stores/search";
 	import { syncStats } from "$stores/sync-stats";
@@ -25,6 +26,7 @@
 		if (import.meta.env.DEV) {
 			(window as any).searchStore = searchStore;
 			(window as any).vault = vault;
+			(window as any).oracle = oracle;
 			(window as any).categories = categories;
 			(window as any).syncStats = syncStats;
 			(window as any).cloudConfig = cloudConfig;

@@ -42,6 +42,59 @@ Only if you have NO information about the subject in either the new context bloc
     this.currentApiKey = apiKey;
     this.currentModelName = modelName;
   }
+
+  enhancePrompt(query: string, context: string): string {
+    if (!context) return query;
+    return `Context: ${context}\n\nUser request: ${query}`;
+  }
+
+  async generateImage(apiKey: string, prompt: string): Promise<Blob> {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateImage?key=${apiKey}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        instances: [
+          {
+            prompt: prompt,
+          },
+        ],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "1:1",
+          safetySetting: "block_none",
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      const message = err.error?.message || response.statusText;
+      if (message.toLowerCase().includes("safety") || message.toLowerCase().includes("block")) {
+        throw new Error("The Oracle cannot visualize this request due to safety policies.");
+      }
+      throw new Error(`Image Generation Error: ${message}`);
+    }
+
+    const data = await response.json();
+    const base64Data = data.predictions?.[0]?.bytesBase64Encoded;
+    
+    if (!base64Data) {
+      throw new Error("No image data returned from AI");
+    }
+
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return new Blob([bytes], { type: "image/png" });
+  }
+
   async generateResponse(apiKey: string, query: string, history: any[], context: string, modelName: string, onUpdate: (partial: string) => void) {
     this.init(apiKey, modelName);
     if (!this.model) throw new Error("AI Model not initialized");

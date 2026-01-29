@@ -5,6 +5,7 @@
   import { fade } from "svelte/transition";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
+  import ImageMessage from "./ImageMessage.svelte";
 
   let { message }: { message: ChatMessage } = $props();
 
@@ -100,11 +101,14 @@
       : 'bg-zinc-900/50 text-gray-200 border border-zinc-800'}"
   >
     {#if message.role === "assistant"}
-      <div class="prose prose-invert prose-sm">
-        {@html html}
-      </div>
+      {#if message.type === "image"}
+        <ImageMessage {message} />
+      {:else}
+        <div class="prose prose-invert prose-sm">
+          {@html html}
+        </div>
 
-      {#if (targetEntity || activeEntity) && message.content.length > 20 && !isSaved}
+        {#if (targetEntity || activeEntity) && message.content.length > 20 && !isSaved}
         <div
           class="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 justify-end"
           transition:fade
@@ -149,6 +153,7 @@
           {/if}
         </div>
       {/if}
+    {/if}
     {:else}
       {message.content}
     {/if}

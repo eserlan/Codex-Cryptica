@@ -57,11 +57,21 @@ class VaultStore {
         if (hasAccess) {
           this.rootHandle = persisted;
           this.isAuthorized = true;
+          await this.ensureImagesDirectory();
           await this.loadFiles();
         }
       }
     } catch (err) {
       console.error("Failed to init vault", err);
+    }
+  }
+
+  async ensureImagesDirectory() {
+    if (!this.rootHandle) return;
+    try {
+      await this.rootHandle.getDirectoryHandle("images", { create: true });
+    } catch (err) {
+      console.error("Failed to create images directory", err);
     }
   }
 
@@ -104,6 +114,7 @@ class VaultStore {
       this.rootHandle = handle;
       this.isAuthorized = true;
       await persistHandle(handle);
+      await this.ensureImagesDirectory();
       await this.loadFiles();
       this.status = "idle";
     } catch (err: any) {
@@ -228,6 +239,38 @@ class VaultStore {
 
     this.updateInboundConnections();
     this.status = "idle";
+  }
+
+  async saveImageToVault(blob: Blob, entityId: string): Promise<string> {
+    if (!this.rootHandle) throw new Error("Vault not open");
+
+    try {
+      const imagesDir = await this.rootHandle.getDirectoryHandle("images", {
+        create: true,
+      });
+
+      // Generate filename: {entity-id}-{timestamp}-{hash}.png
+      const timestamp = Date.now();
+      const hash = Math.random().toString(36).substring(2, 8);
+      const filename = `${entityId}-${timestamp}-${hash}.png`;
+
+      const fileHandle = await imagesDir.getFileHandle(filename, {
+        create: true,
+      });
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+
+      const relativePath = `./images/${filename}`;
+
+      // Update entity metadata
+      this.updateEntity(entityId, { image: relativePath });
+
+      return relativePath;
+    } catch (err) {
+      console.error("Failed to save image to vault", err);
+      throw err;
+    }
   }
 
   updateEntity(id: string, updates: Partial<Entity>) {

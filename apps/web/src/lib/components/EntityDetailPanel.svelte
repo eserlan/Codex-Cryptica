@@ -1,7 +1,8 @@
 <script lang="ts">
     import type { Entity, Connection } from "schema";
-    import { fly } from "svelte/transition";
+    import { fly, fade } from "svelte/transition";
     import { vault } from "$lib/stores/vault.svelte";
+    import { oracle } from "$lib/stores/oracle.svelte";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
 
     let { entity, onClose } = $props<{
@@ -49,6 +50,38 @@
 
     // Lightbox state
     let showLightbox = $state(false);
+    let isDraggingOver = $state(false);
+
+    const handleDragOver = (e: DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer?.types.includes("application/codex-image-id")) {
+            isDraggingOver = true;
+            e.dataTransfer.dropEffect = "copy";
+        }
+    };
+
+    const handleDragLeave = () => {
+        isDraggingOver = false;
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+        e.preventDefault();
+        isDraggingOver = false;
+
+        if (!entity) return;
+
+        const messageId = e.dataTransfer?.getData("application/codex-image-id");
+        if (messageId) {
+            const message = oracle.messages.find((m) => m.id === messageId);
+            if (message?.imageBlob) {
+                try {
+                    await vault.saveImageToVault(message.imageBlob, entity.id);
+                } catch (err) {
+                    console.error("Failed to save dropped image", err);
+                }
+            }
+        }
+    };
 
     $effect(() => {
         if (
@@ -121,37 +154,75 @@
             </div>
 
             <!-- Image Preview / Input -->
-            {#if isEditing}
-                <div class="mb-4">
-                    <label
-                        class="block text-[10px] text-green-600 font-bold mb-1"
-                        for="entity-image-url">IMAGE URL</label
-                    >
-                    <input
-                        id="entity-image-url"
-                        type="text"
-                        bind:value={editImage}
-                        class="bg-black/50 border border-green-800 text-gray-300 px-2 py-1 text-xs focus:outline-none focus:border-green-500 w-full placeholder-green-900/50"
-                        placeholder="https://..."
-                    />
-                </div>
-            {:else if entity.image}
-                <button
-                    onclick={() => (showLightbox = true)}
-                    class="mb-4 w-full aspect-square rounded border border-green-900/30 overflow-hidden relative group cursor-pointer hover:border-green-700 transition block"
-                >
-                    <img
-                        src={entity.image}
-                        alt={entity.title}
-                        class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
-                    />
-                    <div
-                        class="absolute bottom-2 right-2 bg-black/70 text-green-500 text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
-                    >
-                        Click to enlarge
+            <div
+                class="relative {isDraggingOver
+                    ? 'ring-2 ring-purple-500 ring-offset-4 ring-offset-black bg-purple-500/10'
+                    : ''} transition-all rounded-lg"
+                ondragover={handleDragOver}
+                ondragleave={handleDragLeave}
+                ondrop={handleDrop}
+                role="region"
+                aria-label="Image drop zone"
+            >
+                {#if isEditing}
+                    <div class="mb-4">
+                        <label
+                            class="block text-[10px] text-green-600 font-bold mb-1"
+                            for="entity-image-url">IMAGE URL</label
+                        >
+                        <input
+                            id="entity-image-url"
+                            type="text"
+                            bind:value={editImage}
+                            class="bg-black/50 border border-green-800 text-gray-300 px-2 py-1 text-xs focus:outline-none focus:border-green-500 w-full placeholder-green-900/50"
+                            placeholder="https://..."
+                        />
                     </div>
-                </button>
-            {/if}
+                {:else if entity.image}
+                    <button
+                        onclick={() => (showLightbox = true)}
+                        class="mb-4 w-full aspect-square rounded border border-green-900/30 overflow-hidden relative group cursor-pointer hover:border-green-700 transition block"
+                    >
+                        <img
+                            src={entity.image}
+                            alt={entity.title}
+                            class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                        />
+                        <div
+                            class="absolute bottom-2 right-2 bg-black/70 text-green-500 text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
+                        >
+                            Click to enlarge
+                        </div>
+                    </button>
+                {:else}
+                    <div
+                        class="mb-4 w-full aspect-square rounded border border-dashed border-green-900/30 flex flex-col items-center justify-center gap-2 text-green-900 group-hover:border-green-700 transition"
+                    >
+                        <span class="icon-[lucide--image] w-8 h-8 opacity-20"
+                        ></span>
+                        <span class="text-[9px] font-bold uppercase opacity-40"
+                            >No Image</span
+                        >
+                    </div>
+                {/if}
+
+                {#if isDraggingOver}
+                    <div
+                        class="absolute inset-0 bg-purple-600/20 backdrop-blur-sm flex items-center justify-center rounded-lg pointer-events-none"
+                        transition:fade
+                    >
+                        <div class="flex flex-col items-center gap-2">
+                            <span
+                                class="icon-[lucide--download-cloud] w-8 h-8 text-purple-400 animate-bounce"
+                            ></span>
+                            <span
+                                class="text-[10px] font-bold text-purple-300 tracking-widest"
+                                >DROP TO ARCHIVE</span
+                            >
+                        </div>
+                    </div>
+                {/if}
+            </div>
 
             <div
                 class="text-xs font-bold tracking-widest text-green-600 uppercase mb-4"

@@ -45,23 +45,23 @@ describe("VaultStore", () => {
 
   it("should load files from directory", async () => {
     // Mock FS response
+    const mockDirectoryHandle = {
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+    };
     const mockFileHandle = {
         getFile: vi.fn().mockResolvedValue({
             lastModified: 1234567890,
-            text: vi.fn().mockResolvedValue(`---
-id: test
-title: Test Node
-type: npc
----
-Content`)
-        })
+            text: vi.fn().mockResolvedValue(`---\nid: test\ntype: npc\ntitle: Test Node\n---\nContent`)
+        }),
+        kind: 'file',
+        name: 'test.md'
     };
-    const mockFiles = [{ handle: mockFileHandle, path: ["test.md"] }];
-    vi.mocked(fsUtils.walkDirectory).mockResolvedValue(mockFiles as any);
 
-    // Mock directory picker
-    const mockHandle = {};
-    (window.showDirectoryPicker as any).mockResolvedValue(mockHandle);
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+        { handle: mockFileHandle as any, path: ['test.md'] }
+    ]);
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(mockDirectoryHandle as any);
 
     await vault.openDirectory();
 
@@ -174,27 +174,31 @@ Content`)
   });
 
   it("should parse wiki-links with labels correctly", async () => {
+    const mockDirectoryHandle = {
+        getDirectoryHandle: vi.fn().mockResolvedValue({}),
+    };
     const mockFileHandle = {
         getFile: vi.fn().mockResolvedValue({
             lastModified: 1234567890,
-            text: vi.fn().mockResolvedValue(`---
-id: test
----
-Link to [[Other|The Label]]`)
-        })
+            text: vi.fn().mockResolvedValue(`---\nid: test\ntitle: Test\ntype: npc\n---\n[[other|Labeled Link]]`)
+        }),
+        kind: 'file',
+        name: 'test.md'
     };
-    const mockFiles = [{ handle: mockFileHandle, path: ["test.md"] }];
-    vi.mocked(fsUtils.walkDirectory).mockResolvedValue(mockFiles as any);
 
-    (window.showDirectoryPicker as any).mockResolvedValue({});
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+        { handle: mockFileHandle as any, path: ['test.md'] }
+    ]);
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(mockDirectoryHandle as any);
+
     await vault.openDirectory();
 
     const entity = vault.entities["test"];
     expect(entity?.connections).toContainEqual({
       target: "other",
       type: "related_to",
-      label: "The Label",
       strength: 1,
+      label: "Labeled Link"
     });
   });
 

@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
+- TypeScript 5.x / Node.js 20+ + `@google/generative-ai` (for context), Browser Native `fetch` (for Imagen REST API), `idb` (for metadata) (011-oracle-image-gen)
+- OPFS (Origin Private File System) for binary images, Markdown (frontmatter) for entity linkage. (011-oracle-image-gen)
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
@@ -33,11 +35,10 @@ npm test; npm run lint
 TypeScript: Follow standard conventions
 
 ## Recent Changes
+- 011-oracle-image-gen: Added TypeScript 5.x / Node.js 20+ + `@google/generative-ai` (for context), Browser Native `fetch` (for Imagen REST API), `idb` (for metadata)
 
 - 003-gdrive-mirroring: Added TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script`
 - 004-fuzzy-search: Added FlexSearch for client-side fuzzy search
-- 005-gh-pages-deploy: Configured for static hosting on GitHub Pages
-- 009-mobile-ux-sync-feedback: Implemented responsive header and enhanced sync visual indicators
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

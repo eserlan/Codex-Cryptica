@@ -132,3 +132,19 @@ describe("AIService Context Retrieval", () => {
         expect(primaryEntityId).toBe("guardsman-id");
     });
 });
+
+describe("AIService Prompt Enhancement", () => {
+    it("should return the query as is when no context is provided", () => {
+        const query = "Draw a dragon";
+        const result = aiService.enhancePrompt(query, "");
+        expect(result).toBe(query);
+    });
+
+    it("should include context in the prompt when provided", () => {
+        const query = "Show me what he looks like";
+        const context = "--- File: Eldrin ---\nAn old elf with stars.";
+        const result = aiService.enhancePrompt(query, context);
+        expect(result).toContain("Context: --- File: Eldrin ---");
+        expect(result).toContain("User request: Show me what he looks like");
+    });
+});

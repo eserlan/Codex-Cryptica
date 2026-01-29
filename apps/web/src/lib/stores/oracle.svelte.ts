@@ -5,6 +5,9 @@ export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
   role: "user" | "assistant" | "system";
   content: string;
+  type?: "text" | "image";
+  imageUrl?: string; // temporary blob: URL or local path
+  imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
   archiveTargetId?: string; // ID of the entity where the user wants to archive this message
 }
@@ -100,24 +103,51 @@ class OracleStore {
     return this.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
   }
 
+  private detectImageIntent(query: string): boolean {
+    const q = query.toLowerCase();
+    return (
+      q.startsWith("/draw") ||
+      q.includes("draw a picture") ||
+      q.includes("generate an image") ||
+      q.includes("visualize") ||
+      q.includes("show me what") ||
+      q.includes("show me a")
+    );
+  }
+
   async ask(query: string) {
     const key = this.effectiveApiKey;
     if (!query.trim() || !key) return;
 
-    this.messages = [...this.messages, { id: crypto.randomUUID(), role: "user", content: query }];
+    const isImageRequest = this.detectImageIntent(query);
+
+    this.messages = [
+      ...this.messages,
+      { id: crypto.randomUUID(), role: "user", content: query },
+    ];
     this.isLoading = true;
     this.broadcast();
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
-    this.messages = [...this.messages, { id: crypto.randomUUID(), role: "assistant", content: "" }];
+    this.messages = [
+      ...this.messages,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "",
+        type: isImageRequest ? "image" : "text",
+      },
+    ];
 
     try {
       // Extract already sent entity titles from history to avoid redundancy
       const alreadySentTitles = new Set<string>();
-      this.messages.forEach(m => {
+      this.messages.forEach((m) => {
         if (m.role === "user") {
-          const matches = m.content.matchAll(/--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g);
+          const matches = m.content.matchAll(
+            /--- (?:\[ACTIVE FILE\] )?File: ([^\n-]+) ---/g,
+          );
           for (const match of matches) {
             alreadySentTitles.add(match[1]);
           }
@@ -133,20 +163,49 @@ class OracleStore {
         }
       }
 
-      const { content: context, primaryEntityId } = await aiService.retrieveContext(query, alreadySentTitles, lastEntityId);
+      const { content: context, primaryEntityId } =
+        await aiService.retrieveContext(query, alreadySentTitles, lastEntityId);
 
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
       this.messages[assistantMsgIndex].entityId = primaryEntityId;
 
-      const history = this.messages.slice(0, -2);
-      const modelName = TIER_MODES[this.tier];
-      await aiService.generateResponse(key, query, history, context, modelName, (partial) => {
-        this.messages[assistantMsgIndex].content = partial;
-        this.broadcastThrottle();
-      });
+      if (isImageRequest) {
+        // Image Generation Flow
+        const finalPrompt = aiService.enhancePrompt(query, context);
+
+        const blob = await aiService.generateImage(key, finalPrompt);
+        const imageUrl = URL.createObjectURL(blob);
+
+        this.messages[assistantMsgIndex].imageUrl = imageUrl;
+        this.messages[assistantMsgIndex].imageBlob = blob;
+        this.messages[assistantMsgIndex].content = `Generated visualization for: "${query}"`;
+        this.broadcast();
+      } else {
+        // Text Generation Flow
+        const history = this.messages.slice(0, -2);
+        const modelName = TIER_MODES[this.tier];
+        await aiService.generateResponse(
+          key,
+          query,
+          history,
+          context,
+          modelName,
+          (partial) => {
+            this.messages[assistantMsgIndex].content = partial;
+            this.broadcastThrottle();
+          },
+        );
+      }
     } catch (err: any) {
-      this.messages = [...this.messages, { id: crypto.randomUUID(), role: "system", content: err.message || "Error generating response." }];
+      this.messages = [
+        ...this.messages,
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: err.message || "Error generating response.",
+        },
+      ];
       this.broadcast();
     } finally {
       this.isLoading = false;
