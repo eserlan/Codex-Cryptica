@@ -12,6 +12,7 @@
 	import { uiStore } from "$stores/ui.svelte";
 	import { syncStats } from "$stores/sync-stats";
 	import { cloudConfig } from "$stores/cloud-config";
+	import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
 	import { onMount } from "svelte";
 
 	import { page } from "$app/state";
@@ -37,6 +38,7 @@
 			(window as any).uiStore = uiStore;
 			(window as any).syncStats = syncStats;
 			(window as any).cloudConfig = cloudConfig;
+			(window as any).workerBridge = workerBridge;
 		}
 	});
 

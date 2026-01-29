@@ -9,6 +9,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - N/A (Transient UI state) (012-minimap)
 - TypeScript 5.x / Node.js 20+ + Cytoscape.js, Svelte 5 (014-graph-focus-mode)
 - N/A (UI-only state) (014-graph-focus-mode)
+- TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb` (017-sync-refinement)
+- OPFS (Vault), IndexedDB (Metadata Store) (017-sync-refinement)
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
@@ -39,10 +41,9 @@ npm test; npm run lint
 TypeScript: Follow standard conventions
 
 ## Recent Changes
+- 017-sync-refinement: Added TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb`
 - 014-graph-focus-mode: Added TypeScript 5.x / Node.js 20+ + Cytoscape.js, Svelte 5
 - 012-minimap: Added TypeScript 5.x / Node.js 20+ + Cytoscape.js (Graph Engine), Svelte 5 (UI Framework)
-- 011-oracle-image-gen: Added TypeScript 5.x / Node.js 20+ + `@google/generative-ai` (for context), Browser Native `fetch` (for Imagen REST API), `idb` (for metadata)
-- 003-gdrive-mirroring: Initial implementation of Google Drive sync.
 
 
 <!-- MANUAL ADDITIONS START -->

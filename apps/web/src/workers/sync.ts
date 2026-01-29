@@ -51,15 +51,19 @@ self.onmessage = async (event) => {
         const plan = engine.calculateDiff(local, remote, metadata);
         console.log(`SyncWorker: Plan calculated. Uploads: ${plan.uploads.length}, Downloads: ${plan.downloads.length}`);
 
-        if (plan.uploads.length > 0 || plan.downloads.length > 0) {
+        if (plan.uploads.length > 0 || plan.downloads.length > 0 || plan.deletes.length > 0) {
           self.postMessage({ type: "SYNC_STATUS", payload: "SYNCING" });
-          await engine.applyPlan(plan);
+          await engine.applyPlan(plan, (phase, current, total) => {
+            self.postMessage({
+              type: "SYNC_PROGRESS",
+              payload: { phase, current, total },
+            });
+          });
 
-          // If downloads occurred, notify main thread to update Graph
+          // If downloads occurred, notify main thread to update Graph/Vault
           if (plan.downloads.length > 0) {
             self.postMessage({
-              type: "PARSE_CONTENT",
-              content: "remote-updates",
+              type: "REMOTE_UPDATES_DOWNLOADED",
             });
           }
         }
