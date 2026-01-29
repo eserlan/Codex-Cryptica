@@ -2,6 +2,7 @@ export interface SearchEntry {
   id: string;
   title: string;
   content: string;
+  type?: string; // Entity category ID
   keywords?: string;
   path: string;
   updatedAt: number;

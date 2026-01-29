@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import { searchStore } from "$lib/stores/search";
   import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import { goto } from "$app/navigation";
   import type { SearchResult } from "schema";
   import { marked } from "marked";
@@ -78,7 +79,6 @@
       } else {
         console.error(
           "CRITICAL: Selected a search result with no ID or path!",
-          result,
         );
         return;
       }
@@ -106,6 +106,16 @@
     if (event.target === event.currentTarget) {
       searchStore.close();
     }
+  };
+
+  // Helper to format iconify classes
+  const getIconClass = (iconStr: string | undefined) => {
+    if (!iconStr) return "icon-[lucide--circle]";
+    const parts = iconStr.split(':');
+    if (parts.length === 2) {
+      return `icon-[${parts[0]}--${parts[1]}]`;
+    }
+    return iconStr.startsWith('icon-') ? iconStr : `icon-[lucide--circle]`;
   };
 
   const highlightText = (text: string, query: string) => {
@@ -189,10 +199,26 @@
               on:click={(e) => selectResult(result, e)}
               data-testid="search-result"
             >
-              <span class="font-medium truncate">
+              <span class="font-medium truncate flex items-center gap-2">
+                {#if result.type}
+                  <span 
+                    class="{getIconClass(categories.getCategory(result.type)?.icon)} w-3.5 h-3.5 shrink-0"
+                    style="color: {categories.getColor(result.type)}"
+                  ></span>
+                {/if}
                 {@html renderMarkdown(result.title, $searchStore.query)}
               </span>
-              <span class="text-xs text-zinc-500 truncate">{result.path}</span>
+              <div class="flex items-center gap-2 text-xs text-zinc-500">
+                {#if result.type}
+                  <span 
+                    class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                    style="color: {categories.getColor(result.type)}"
+                  >
+                    {categories.getCategory(result.type)?.label || result.type}
+                  </span>
+                {/if}
+                <span class="truncate">{result.path}</span>
+              </div>
               {#if result.excerpt}
                 <p
                   class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"

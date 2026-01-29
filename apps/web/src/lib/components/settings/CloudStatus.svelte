@@ -122,7 +122,7 @@
             <span
                 class="w-5 h-5 {isSyncing
                     ? 'icon-[lucide--zap] animate-pulse'
-                    : 'icon-[lucide--cloud]'}"
+                    : 'icon-[lucide--settings]'}"
             ></span>
         </span>
         {#if isSyncing}
@@ -302,6 +302,16 @@
                         </div>
                         <div class="pt-4 border-t border-green-900/20">
                             <AISettings />
+                        </div>
+                        <div class="pt-4 border-t border-green-900/20">
+                            <button
+                                onclick={() => uiStore.openCategoryManager()}
+                                class="w-full py-2 bg-purple-900/20 border border-purple-500/30 text-purple-300 hover:bg-purple-600 hover:text-black rounded text-[10px] font-bold tracking-widest transition-all flex items-center justify-center gap-2"
+                                data-testid="manage-categories-button"
+                            >
+                                <span class="icon-[lucide--tags] w-3 h-3"></span>
+                                MANAGE CATEGORIES
+                            </button>
                         </div>
                     </div>
                 {/if}

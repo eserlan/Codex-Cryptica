@@ -209,6 +209,7 @@ class VaultStore {
             id: entity.id,
             title: entity.title,
             content: entity.content,
+            type: entity.type,
             path: filePath,
             keywords,
             updatedAt: Date.now()
@@ -261,6 +262,7 @@ class VaultStore {
         id: entity.id,
         title: entity.title,
         content: entity.content,
+        type: entity.type,
         path: Array.isArray(entity._path) ? entity._path.join('/') : entity._path as string,
         updatedAt: Date.now()
       });
@@ -298,10 +300,11 @@ class VaultStore {
 
     // Index new entity
     await searchService.index({
-      id: newEntity.id,
-      title: newEntity.title,
-      content: newEntity.content,
-      path: Array.isArray(newEntity._path) ? newEntity._path.join('/') : newEntity._path as string,
+      id,
+      title,
+      content: "",
+      type,
+      path: filename,
       updatedAt: Date.now()
     });
 

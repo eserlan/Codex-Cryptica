@@ -14,9 +14,9 @@ test.describe("Sync Visual Feedback", () => {
       (window as any).gapi = {
         load: (lib: any, cb: any) => cb(),
         client: {
-          init: async () => {},
+          init: async () => { },
           getToken: () => ({ access_token: "mock-token" }),
-          setToken: () => {},
+          setToken: () => { },
         },
       };
     });
@@ -62,7 +62,7 @@ test.describe("Sync Visual Feedback", () => {
 
   test("should change icon and animate when syncing", async ({ page }) => {
     const cloudBtn = page.getByTestId("cloud-status-button");
-    const statusIcon = cloudBtn.locator('span.text-lg');
+    const statusIcon = cloudBtn.locator('span.w-5.h-5');
 
     // Manually trigger syncing state in the store via window object
     await page.waitForFunction(() => !!(window as any).syncStats);
@@ -74,8 +74,8 @@ test.describe("Sync Visual Feedback", () => {
       }
     });
 
-    // Check if the icon changes to the syncing state (⚡ and pulse)
-    await expect(statusIcon).toHaveText('⚡');
+    // Check if the icon changes to the syncing state (zap icon class and pulse)
+    await expect(statusIcon).toHaveClass(/icon-\[lucide--zap\]/);
     await expect(statusIcon).toHaveClass(/animate-pulse/);
 
     // Open menu to check SYNCING text

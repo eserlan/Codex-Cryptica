@@ -15,15 +15,4 @@ describe("Entity Schema Validation", () => {
     const result = EntitySchema.safeParse(validEntity);
     expect(result.success).toBe(true);
   });
-
-  it("should reject invalid entity types", () => {
-    const invalidEntity = {
-      id: "npc-2",
-      type: "invalid-type",
-      title: "Invalid",
-    };
-
-    const result = EntitySchema.safeParse(invalidEntity);
-    expect(result.success).toBe(false);
-  });
 });
