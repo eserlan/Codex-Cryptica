@@ -426,11 +426,6 @@
     bind:this={container}
   ></div>
 
-  <!-- Minimap -->
-  {#if cy}
-    <Minimap {cy} />
-  {/if}
-
   <!-- Hover Tooltip -->
   {#if hoveredEntityId && hoverPosition && hoveredEntity}
     <div
