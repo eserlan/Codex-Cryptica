@@ -111,6 +111,8 @@ class VaultStore {
       const handle = await window.showDirectoryPicker({
         mode: "readwrite",
       });
+      
+      this.clearImageCache();
       this.rootHandle = handle;
       this.isAuthorized = true;
       await persistHandle(handle);
@@ -306,11 +308,13 @@ class VaultStore {
         create: true,
       });
 
-      // Generate filename: {entity-id}-{timestamp}-{hash}.png
       const timestamp = Date.now();
       const hash = crypto.randomUUID().split("-")[0];
-      const filename = `${entityId}-${timestamp}-${hash}.png`;
+      const baseFilename = `${entityId}-${timestamp}-${hash}`;
+      const filename = `${baseFilename}.png`;
+      const thumbFilename = `${baseFilename}-thumb.png`;
 
+      // Save original
       const fileHandle = await imagesDir.getFileHandle(filename, {
         create: true,
       });
@@ -318,16 +322,79 @@ class VaultStore {
       await writable.write(blob);
       await writable.close();
 
+      // Generate and save thumbnail
+      const thumbBlob = await this.generateThumbnail(blob, 128);
+      const thumbHandle = await imagesDir.getFileHandle(thumbFilename, {
+        create: true,
+      });
+      const thumbWritable = await thumbHandle.createWritable();
+      await thumbWritable.write(thumbBlob);
+      await thumbWritable.close();
+
       const relativePath = `./images/${filename}`;
+      const thumbPath = `./images/${thumbFilename}`;
 
       // Update entity metadata
-      this.updateEntity(entityId, { image: relativePath });
+      this.updateEntity(entityId, { image: relativePath, thumbnail: thumbPath });
 
       return relativePath;
     } catch (err) {
       console.error("Failed to save image to vault", err);
       throw err;
     }
+  }
+
+  private async generateThumbnail(
+    blob: Blob,
+    size: number,
+  ): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(blob);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // Calculate dimensions to maintain aspect ratio
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > size) {
+            height *= size / width;
+            width = size;
+          }
+        } else {
+          if (height > size) {
+            width *= size / height;
+            height = size;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (result) => {
+            if (result) resolve(result);
+            else reject(new Error("Canvas toBlob failed"));
+          },
+          "image/png",
+          0.8,
+        );
+      };
+
+      img.onerror = (err) => {
+        URL.revokeObjectURL(url);
+        reject(err);
+      };
+
+      img.src = url;
+    });
   }
 
   updateEntity(id: string, updates: Partial<Entity>) {

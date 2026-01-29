@@ -21,6 +21,7 @@ export const EntitySchema = z.object({
   content: z.string().default(""), // Markdown content, default empty
   lore: z.string().optional(), // Extended lore & rich notes
   image: z.string().optional(),
+  thumbnail: z.string().optional(),
   metadata: z
     .object({
       coordinates: z.object({ x: z.number(), y: z.number() }).optional(),

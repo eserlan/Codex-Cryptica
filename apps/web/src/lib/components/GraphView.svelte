@@ -176,14 +176,15 @@
   $effect(() => {
     if (cy && graph.elements) {
       graph.elements.forEach(async (el) => {
-        if (el.group === "nodes" && el.data.image) {
-          const resolvedUrl = await vault.resolveImagePath(el.data.image);
+        if (el.group === "nodes" && (el.data.thumbnail || el.data.image)) {
+          const resolvedUrl = await vault.resolveImagePath(
+            el.data.thumbnail || el.data.image,
+          );
           if (resolvedUrl) {
             cy?.$id(el.data.id).style({
               "background-image": resolvedUrl,
               "background-fit": "cover",
               "background-opacity": 1,
-              // If it's an image, we might want to hide the label or adjust border
             });
           }
         }
