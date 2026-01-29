@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement the foundational "Triangle of Truth" architecture for Codex Arcana. This involves setting up a SvelteKit PWA with a local-first data layer (RxDB + OPFS), a graph visualization engine (Cytoscape.js), and a rich text editor (Tiptap) that syncs bidirectional links to the graph and file system in real-time.
+Implement the foundational "Triangle of Truth" architecture for Codex Cryptica. This involves setting up a SvelteKit PWA with a local-first data layer (RxDB + OPFS), a graph visualization engine (Cytoscape.js), and a rich text editor (Tiptap) that syncs bidirectional links to the graph and file system in real-time.
 
 ## Technical Context
 

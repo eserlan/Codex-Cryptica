@@ -22,5 +22,5 @@ Determines the layout configuration based on screen width.
 | Breakpoint | Class | Layout Impact |
 |------------|-------|---------------|
 | < 640px | `xs` / `sm` | "CA" logo, full-width detail panel, stacked header. |
-| 640px - 768px | `md` | "Codex Arcana" title, search visible, 1/3 width panel. |
+| 640px - 768px | `md` | "Codex Cryptica" title, search visible, 1/3 width panel. |
 | > 1024px | `lg` / `xl` | Full header, 1/4 width panel. |

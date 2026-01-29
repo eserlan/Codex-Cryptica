@@ -1,4 +1,4 @@
-# Codex Arcana
+# Codex Cryptica
 
 ## Getting Started
 

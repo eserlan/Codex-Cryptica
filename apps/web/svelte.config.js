@@ -15,7 +15,7 @@ const config = {
 			'$workers': 'src/workers'
 		},
 		paths: {
-			base: process.env.NODE_ENV === 'production' ? '/Codex-Arcana' : ''
+			base: ''
 		}
 	}
 };

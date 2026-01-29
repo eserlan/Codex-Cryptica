@@ -109,6 +109,8 @@ test.describe("Category Architecture Modal", () => {
         // Delete NPC category naturally
         const npcRow = page.getByTestId('category-row-npc');
         await npcRow.hover();
+        // Handle the confirm dialog
+        page.once('dialog', dialog => dialog.accept());
         await npcRow.getByTitle("Delete Category").click();
 
         await expect(npcRow).not.toBeVisible();

@@ -68,7 +68,7 @@ description: "Task list template for feature implementation"
 
 ## Phase 3: User Story 1 - Secure Cloud Link (Priority: P1) 🎯 MVP
 
-**Goal**: Securely connect personal Google Drive to Codex Arcana.
+**Goal**: Securely connect personal Google Drive to Codex Cryptica.
 
 **Independent Test**: Initiate "Enable Cloud Bridge", complete Auth, verify "Connected" state.
 

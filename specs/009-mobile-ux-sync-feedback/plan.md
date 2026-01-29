@@ -3,7 +3,7 @@
 **Branch**: `009-mobile-ux-sync-feedback` | **Date**: 2026-01-27 | **Spec**: [specs/009-mobile-ux-sync-feedback/spec.md]
 
 ## Summary
-Refactor the Codex Arcana web application for mobile responsiveness and enhanced synchronization feedback. This involves updating the header layout using Tailwind breakpoints, implementing a mobile-friendly EntityDetailPanel, and refining the CloudStatus component with clear visual animations and status updates.
+Refactor the Codex Cryptica web application for mobile responsiveness and enhanced synchronization feedback. This involves updating the header layout using Tailwind breakpoints, implementing a mobile-friendly EntityDetailPanel, and refining the CloudStatus component with clear visual animations and status updates.
 
 ## Technical Context
 

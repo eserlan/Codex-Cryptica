@@ -1,18 +1,18 @@
-# Terms of Service for Codex Arcana
+# Terms of Service for Codex Cryptica
 
 **Last Updated: 2026-01-29**
 
-By using Codex Arcana, you agree to the following terms and conditions.
+By using Codex Cryptica, you agree to the following terms and conditions.
 
 ## 1. Description of Service
-Codex Arcana is a creative writing and lore management tool. It provides local storage, optional cloud synchronization via Google Drive, and AI-assisted content generation via Google Gemini.
+Codex Cryptica is a creative writing and lore management tool. It provides local storage, optional cloud synchronization via Google Drive, and AI-assisted content generation via Google Gemini.
 
 ## 2. User Content and Ownership
-- You retain full ownership and copyright of all content you create in Codex Arcana.
+- You retain full ownership and copyright of all content you create in Codex Cryptica.
 - We claim no rights to your "Vaults," notes, or generated images.
 
 ## 3. Data Responsibility
-- Codex Arcana is a local-first application. You are solely responsible for backing up your data.
+- Codex Cryptica is a local-first application. You are solely responsible for backing up your data.
 - While we provide Google Drive synchronization as a convenience, we are not liable for any data loss resulting from sync errors, browser cache clearing, or service interruptions.
 
 ## 4. AI Usage and Compliance

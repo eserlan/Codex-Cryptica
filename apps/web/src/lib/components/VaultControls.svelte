@@ -20,7 +20,8 @@
     const handleCreate = async () => {
         if (!newTitle.trim()) return;
         try {
-            await vault.createEntity(newType, newTitle);
+            const id = await vault.createEntity(newType, newTitle);
+            vault.selectedEntityId = id;
             newTitle = "";
             showForm = false;
         } catch (err) {

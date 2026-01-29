@@ -10,7 +10,7 @@
 3. Build artifacts are generated and pushed to the static hosting environment.
 
 ## Manual Testing
-1. Navigate to `https://eserlan.github.io/Codex-Arcana/`.
+1. Navigate to `https://codexcryptica.com/`.
 2. Verify assets (icons, styles) load correctly.
 3. Refresh the page on a sub-page to verify SPA fallback works (404.html).
 

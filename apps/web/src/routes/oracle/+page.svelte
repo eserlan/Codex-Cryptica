@@ -5,7 +5,7 @@
 
     onMount(() => {
         oracle.init();
-        document.title = "Lore Oracle | Codex Arcana";
+        document.title = "Lore Oracle | Codex Cryptica";
     });
 </script>
 
@@ -34,7 +34,7 @@
 
     <OracleChat
         onOpenSettings={() => {
-            alert("Please update settings in the main Codex Arcana window.");
+            alert("Please update settings in the main Codex Cryptica window.");
         }}
     />
 </div>

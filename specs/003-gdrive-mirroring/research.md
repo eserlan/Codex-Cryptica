@@ -34,7 +34,7 @@
 
 **Rationale**:
 
-- **Folder Structure**: We will create a root folder named `Codex Arcana` (or similar) if it doesn't exist.
+- **Folder Structure**: We will create a root folder named `Codex Cryptica` (or similar) if it doesn't exist.
 - **File Identification**: We will store the `appProperties` on GDrive files to tag them as belonging to our app, or rely on the `drive.file` scope which implicitly isolates them.
 - **Content**: files will be uploaded as `text/markdown` or `application/json` (for graphs).
 

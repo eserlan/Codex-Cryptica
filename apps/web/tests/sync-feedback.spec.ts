@@ -29,7 +29,7 @@ test.describe("Sync Visual Feedback", () => {
         connectedEmail: "test@example.com",
         syncInterval: 300000,
       };
-      localStorage.setItem("codex-arcana-cloud-config", JSON.stringify(config));
+      localStorage.setItem("codex-cryptica-cloud-config", JSON.stringify(config));
     });
     await page.reload();
   });

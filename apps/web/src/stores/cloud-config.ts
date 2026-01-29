@@ -2,7 +2,7 @@ import { writable } from "svelte/store";
 import type { CloudConfig } from "$lib/cloud-bridge";
 import { browser } from "$app/environment";
 
-const STORAGE_KEY = "codex-arcana-cloud-config";
+const STORAGE_KEY = "codex-cryptica-cloud-config";
 
 const defaultConfig: CloudConfig = {
   enabled: false,

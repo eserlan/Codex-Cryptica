@@ -16,7 +16,7 @@ interface CodexDB extends DBSchema {
   };
 }
 
-const DB_NAME = "CodexArcana";
+const DB_NAME = "CodexCryptica";
 const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
@@ -66,9 +66,9 @@ export async function setCachedFile(
   entity: LocalEntity,
 ) {
   const db = await getDB();
-  
+
   // Store entity in cache with lastModified timestamp for cache validation.
-  
+
   await db.put("vault_cache", { path, lastModified, entity });
 }
 

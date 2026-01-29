@@ -9,7 +9,7 @@
 
 ### User Story 1 - Secure Cloud Link (Priority: P1)
 
-As a lore creator, I want to securely connect my personal Google Drive to Codex Arcana so that my local-first data is mirrored to my own private storage.
+As a lore creator, I want to securely connect my personal Google Drive to Codex Cryptica so that my local-first data is mirrored to my own private storage.
 
 **Why this priority**: Essential foundation for the "cloud bridge" and data sovereignty. Without this, no syncing can occur.
 

@@ -16,7 +16,7 @@
   <div class="mb-8 border-b border-green-900/30 pb-4">
     <a href="{base}/" class="text-green-500 hover:text-green-400 font-mono text-sm flex items-center gap-2">
       <span class="icon-[lucide--arrow-left] w-4 h-4"></span>
-      BACK TO SYSTEM
+      BACK TO CRYPTICA
     </a>
   </div>
 

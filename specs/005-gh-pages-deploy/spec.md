@@ -3,13 +3,13 @@
 **Feature Branch**: `005-gh-pages-deploy`  
 **Created**: 2026-01-26  
 **Status**: Draft  
-**Input**: User description: "Host Codex Arcana as a static SPA on GitHub Pages with automated deployment via GitHub Actions"
+**Input**: User description: "Host Codex Cryptica as a static SPA on GitHub Pages with automated deployment via GitHub Actions"
 
 ## User Scenarios & Testing
 
 ### User Story 1 - Web Access (Priority: P1)
 
-As a user, I want to access my Codex Arcana app via a public URL (e.g., `https://eserlan.github.io/Codex-Arcana/`) so that I can use the app without running it locally.
+As a user, I want to access my Codex Cryptica app via a public URL (e.g., `https://codexcryptica.com/`) so that I can use the app without running it locally.
 
 **Why this priority**: Essential for non-developer usage and cross-device convenience.
 
@@ -17,7 +17,7 @@ As a user, I want to access my Codex Arcana app via a public URL (e.g., `https:/
 
 **Acceptance Scenarios**:
 
-1. **Given** the app is deployed to GitHub Pages, **When** I navigate to the URL, **Then** the Codex Arcana header and landing page are displayed.
+1. **Given** the app is deployed to GitHub Pages, **When** I navigate to the URL, **Then** the Codex Cryptica header and landing page are displayed.
 2. **Given** the app is loaded from GitHub Pages, **When** I refresh the page on a sub-route (if any exist), **Then** I am not shown a 404 error (SPA routing works).
 
 ---

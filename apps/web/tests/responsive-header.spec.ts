@@ -6,12 +6,12 @@ test.describe("Mobile Header Responsiveness", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
 
-    // Verify "CA" logo is visible and "Codex Arcana" is hidden
+    // Verify "CA" logo is visible and "Codex Cryptica" is hidden
     const mobileLogo = page.locator('span.sm\\:hidden');
     const desktopLogo = page.locator('span.hidden.sm\\:inline');
 
     await expect(mobileLogo).toBeVisible();
-    await expect(mobileLogo).toHaveText('CA');
+    await expect(mobileLogo).toHaveText('CC');
     await expect(desktopLogo).not.toBeVisible();
 
     // Verify search bar is visible

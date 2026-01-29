@@ -7,7 +7,7 @@
 
 1.  **Google Cloud Console Project**:
     - Go to [Google Cloud Console](https://console.cloud.google.com/).
-    - Create a new project "Codex Arcana".
+    - Create a new project "Codex Cryptica".
     - Enable **Google Drive API**.
     - Configure **OAuth Consent Screen**:
       - User Type: External (or Internal for testing).
@@ -44,7 +44,7 @@
     - Check the console logs.
     - Create a new Lore Note.
     - Wait 5 minutes or trigger manual sync.
-    - Check your Google Drive for a "Codex Arcana" folder containing the file.
+    - Check your Google Drive for a "Codex Cryptica" folder containing the file.
 
 ## Troubleshooting
 

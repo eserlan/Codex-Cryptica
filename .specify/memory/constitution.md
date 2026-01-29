@@ -1,13 +1,13 @@
 <!-- SYNC IMPACT REPORT
-Version: 1.1.0 (Codex Arcana Ratification)
-Modified Principles: Replaced generic Node.js principles with Codex Arcana specific laws (Local-First, Relational-First, Performance, Modularity, System-Agnostic, PWA Integrity).
+Version: 1.1.0 (Codex Cryptica Ratification)
+Modified Principles: Replaced generic Node.js principles with Codex Cryptica specific laws (Local-First, Relational-First, Performance, Modularity, System-Agnostic, PWA Integrity).
 Added Sections: Mantra, Forbidden Patterns (The "Anti-Spec").
 Removed Sections: Technical Constraints (merged into principles or implied).
 Templates Requiring Updates: tasks-template.md (add "Offline Functionality Verification" to checklist).
 Follow-up: None.
 -->
 
-# Codex Arcana Constitution
+# Codex Cryptica Constitution
 
 > [!NOTE]
 > **Mantra**: Sovereign data. Interconnected lore. Zero latency.

@@ -19,7 +19,7 @@ interface SyncDB extends DBSchema {
   };
 }
 
-const DB_NAME = "codex-arcana-sync";
+const DB_NAME = "codex-cryptica-sync";
 const STORE_NAME = "sync_metadata";
 
 export class MetadataStore {

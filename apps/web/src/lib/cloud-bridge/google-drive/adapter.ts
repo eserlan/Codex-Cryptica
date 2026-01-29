@@ -6,7 +6,7 @@ const getGoogleConfig = () => ({
   DISCOVERY_DOC: "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
 });
 
-const TOKEN_STORAGE_KEY = "codex-arcana-gdrive-token";
+const TOKEN_STORAGE_KEY = "codex-cryptica-gdrive-token";
 
 interface CachedToken {
   resp: google.accounts.oauth2.TokenResponse;
@@ -168,10 +168,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
           });
           const email = about.result.user?.emailAddress || "connected-user";
 
-          // 2. Ensure CodexArcana folder exists
+          // 2. Ensure CodexCryptica folder exists
           let folderId = await this.getFolderId();
           if (!folderId) {
-            folderId = await this.createFolder("CodexArcana");
+            folderId = await this.createFolder("CodexCryptica");
           }
 
           // Store folder ID in localStorage scoped to the current user
@@ -195,7 +195,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
   private async getFolderId(): Promise<string | null> {
     const response = await gapi.client.drive.files.list({
-      q: "name = 'CodexArcana' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
+      q: "name = 'CodexCryptica' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
       fields: "files(id)",
     });
     const files = response.result.files || [];
@@ -203,7 +203,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     if (files.length === 0) return null;
     if (files.length === 1) return files[0].id!;
 
-    console.warn(`Multiple "CodexArcana" folders found (${files.length}). Using the first one found.`);
+    console.warn(`Multiple "CodexCryptica" folders found (${files.length}). Using the first one found.`);
     return files[0].id!;
   }
 

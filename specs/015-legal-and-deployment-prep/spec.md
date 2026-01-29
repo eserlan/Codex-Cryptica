@@ -5,7 +5,7 @@
 **Date**: 2026-01-29
 
 ## 1. Goal
-Provide the necessary legal documentation (Privacy Policy, Terms of Service) and technical groundwork required to publish Codex Arcana as a public application on Google Cloud, ensuring compliance with Google Cloud Project (GCP) requirements for OAuth and AI usage.
+Provide the necessary legal documentation (Privacy Policy, Terms of Service) and technical groundwork required to publish Codex Cryptica as a public application on Google Cloud, ensuring compliance with Google Cloud Project (GCP) requirements for OAuth and AI usage.
 
 ## 2. User Stories
 - **As a Developer**, I want to have a clear Privacy Policy so that I can complete the OAuth Consent Screen for Google Drive integration.
