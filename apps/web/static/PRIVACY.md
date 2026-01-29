@@ -27,4 +27,4 @@ Codex Arcana does not use advertising cookies, tracking scripts, analytics packa
 We may update this policy occasionally. Continued use of the application after changes constitutes acceptance of the new terms.
 
 ## 6. Contact
-For questions regarding this policy, please contact the developer at [Your Contact Info].
+For questions regarding this policy or the application's data handling, please open an issue on our [GitHub repository](https://github.com/eserlan/Codex-Arcana/issues).
