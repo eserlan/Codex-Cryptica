@@ -30,4 +30,4 @@ In no event shall the developer be liable for any indirect, incidental, special,
 We reserve the right to discontinue the application or restrict access at any time without notice.
 
 ## 8. Governing Law
-These terms are governed by the laws of [Your Jurisdiction].
+These terms are governed by the laws of your local jurisdiction.
