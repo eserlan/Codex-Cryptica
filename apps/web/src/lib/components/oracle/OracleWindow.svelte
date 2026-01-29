@@ -1,12 +1,13 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
   import { uiStore } from "$stores/ui.svelte";
+  import { base } from "$app/paths";
   import OracleChat from "./OracleChat.svelte";
   import { fly, fade } from "svelte/transition";
 
   const popOut = () => {
     window.open(
-      "/oracle",
+      `${base}/oracle`,
       "codex-oracle",
       "width=600,height=800,menubar=no,toolbar=no,location=no,status=no",
     );

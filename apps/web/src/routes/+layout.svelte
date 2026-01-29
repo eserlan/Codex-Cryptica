@@ -14,9 +14,10 @@
 	import { onMount } from "svelte";
 
 	import { page } from "$app/state";
+	import { base } from "$app/paths";
 	let { children } = $props();
 
-	const isPopup = $derived(page.url.pathname === "/oracle");
+	const isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
 	onMount(() => {
 		vault.init();
