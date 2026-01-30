@@ -75,10 +75,9 @@ As a developer and screen-reader user, I want the UI to follow clean coding stan
 - **FR-004**: **Event-Driven Minimap**: Minimap redraws MUST be triggered by Cytoscape events (`pan`, `zoom`, `resize`, etc.) rather than a polling loop.
 - **FR-005**: **RAF-Throttled Redraws**: Minimap redraws MUST be throttled to a maximum of 30fps using `requestAnimationFrame` during rapid event firing.
 - **FR-006**: **Sync Timestamping**: `OracleStore` synced state MUST include a `lastUpdated` timestamp to enable cheap sync comparisons.
-- **FR-007**: **Canvas Pooling**: System MUST use a module-level `OffscreenCanvas` pool for thumbnail generation to reduce GC pressure.
-- **FR-008**: **Specificity Cleanup**: System MUST remove the `!important` override in `GraphView.svelte` by resolving the underlying CSS specificity conflict.
-- **FR-009**: **Dynamic Style Variables**: Components MUST use Svelte `style:--var` syntax instead of inline style string concatenation.
-- **FR-010**: **Theme Centralization**: All hardcoded hex colors MUST be moved to `app.css` as CSS custom properties.
+- **FR-007**: **Specificity Cleanup**: System MUST remove the `!important` override in `GraphView.svelte` by resolving the underlying CSS specificity conflict.
+- **FR-008**: **Dynamic Style Variables**: Components MUST use Svelte `style:--var` syntax instead of inline style string concatenation.
+- **FR-009**: **Theme Centralization**: All hardcoded hex colors MUST be moved to `app.css` as CSS custom properties.
 
 ## Success Criteria
 
@@ -86,6 +85,5 @@ As a developer and screen-reader user, I want the UI to follow clean coding stan
 
 - **SC-001**: Graph interaction latency remains <100ms in vaults with 100+ entities.
 - **SC-002**: Idle CPU usage for the web application is <1% on modern mobile browsers.
-- **SC-003**: No new `HTMLCanvasElement` or `CanvasRenderingContext2D` objects are allocated during repeated thumbnail generation (verified via heap snapshot).
-- **SC-004**: Zero accessibility linter warnings in the `Minimap` component.
-- **SC-005**: `npm run lint` passes with no style or a11y violations in the affected files.
+- **SC-003**: Zero accessibility linter warnings in the `Minimap` component.
+- **SC-004**: `npm run lint` passes with no style or a11y violations in the affected files.

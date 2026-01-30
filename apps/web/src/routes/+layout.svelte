@@ -29,6 +29,50 @@
 		vault.init();
 		categories.init();
 
+		const handleGlobalError = (event: ErrorEvent) => {
+			// Ignore non-fatal script/asset load failures (common when offline)
+			if (
+				event.target instanceof HTMLScriptElement ||
+				event.target instanceof HTMLLinkElement
+			) {
+				return;
+			}
+
+			const message = event.message || "";
+			if (
+				message.includes("Script error") ||
+				message.includes("Load failed")
+			) {
+				return;
+			}
+
+			console.error("[Fatal Error]", event);
+			uiStore.setGlobalError(event.message, event.error?.stack);
+		};
+
+		const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+			const reason = event.reason;
+			const message = reason?.message || "";
+
+			// Filter out common network errors that aren't fatal to the app logic
+			if (
+				message.includes("Failed to fetch") ||
+				message.includes("NetworkError") ||
+				message.includes("Load failed")
+			) {
+				return;
+			}
+
+			console.error("[Fatal Rejection]", event);
+			uiStore.setGlobalError(
+				message || "Unhandled Promise Rejection",
+				reason?.stack,
+			);
+		};
+
+		window.addEventListener("error", handleGlobalError);
+		window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
 		// Expose for E2E testing
 		if (import.meta.env.DEV) {
 			(window as any).searchStore = searchStore;
@@ -40,6 +84,14 @@
 			(window as any).cloudConfig = cloudConfig;
 			(window as any).workerBridge = workerBridge;
 		}
+
+		return () => {
+			window.removeEventListener("error", handleGlobalError);
+			window.removeEventListener(
+				"unhandledrejection",
+				handleUnhandledRejection,
+			);
+		};
 	});
 
 	const handleKeydown = (event: KeyboardEvent) => {
@@ -139,3 +191,48 @@
 		<SettingsModal />
 	{/if}
 </div>
+
+{#if uiStore.globalError}
+	<div
+		class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 text-red-500 font-mono"
+	>
+		<div
+			class="max-w-2xl w-full border border-red-900 bg-red-950/20 p-8 rounded shadow-2xl relative"
+		>
+			<div
+				class="absolute -top-px -left-px w-4 h-4 border-t-2 border-l-2 border-red-500"
+			></div>
+			<div
+				class="absolute -bottom-px -right-px w-4 h-4 border-b-2 border-r-2 border-red-500"
+			></div>
+
+			<h2 class="text-2xl font-black mb-4 flex items-center gap-3">
+				<span class="icon-[lucide--alert-triangle] w-8 h-8"></span>
+				SYSTEM FAILURE
+			</h2>
+			<p class="text-red-400 mb-6 font-bold">
+				{uiStore.globalError.message}
+			</p>
+			{#if uiStore.globalError.stack}
+				<pre
+					class="bg-black/50 p-4 rounded text-[10px] overflow-auto max-h-40 border border-red-900/30 mb-6"
+					>{uiStore.globalError.stack}</pre
+				>
+			{/if}
+			<div class="flex gap-4">
+				<button
+					onclick={() => window.location.reload()}
+					class="flex-1 py-3 bg-red-600 hover:bg-red-500 text-black font-bold rounded transition-all active:scale-95 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+				>
+					REBOOT SYSTEM
+				</button>
+				<button
+					onclick={() => uiStore.clearGlobalError()}
+					class="px-6 py-3 border border-red-900 text-red-900 hover:text-red-500 hover:border-red-500 transition-colors"
+				>
+					IGNORE
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}

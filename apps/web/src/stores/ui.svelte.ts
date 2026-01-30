@@ -3,6 +3,15 @@ export type SettingsTab = "vault" | "sync" | "intelligence" | "schema" | "about"
 class UIStore {
     showSettings = $state(false);
     activeSettingsTab = $state<SettingsTab>("vault");
+    globalError = $state<{ message: string; stack?: string } | null>(null);
+
+    setGlobalError(message: string, stack?: string) {
+        this.globalError = { message, stack };
+    }
+
+    clearGlobalError() {
+        this.globalError = null;
+    }
 
     openSettings(tab: SettingsTab = "vault") {
         this.activeSettingsTab = tab;

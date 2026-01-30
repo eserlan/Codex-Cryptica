@@ -10,21 +10,23 @@
 
 
 @layer base {
-
   :root {
-
     --color-bg-primary: #050505;
-
     --color-accent-primary: #4ade80;
-
     --color-accent-dim: #16a34a;
-
     --color-accent-dark: #15803d;
-
     --color-accent-deep: #14532d;
-
     --color-border-primary: rgba(22, 163, 74, 0.5);
+    
+    --color-text-primary: #4ade80;
+    --color-text-muted: #15803d;
+    --color-text-dim: #166534;
+    
+    --color-warning: #eab308;
+    --color-danger: #ef4444;
 
+    --color-oracle-primary: #a855f7;
+    --color-oracle-dim: #7e22ce;
+    --color-oracle-dark: #581c87;
   }
-
 }

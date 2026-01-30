@@ -28,10 +28,33 @@
             console.error(err);
         }
     };
+
+    let isOffline = $state(false);
+    $effect(() => {
+        if (typeof window === "undefined") return;
+        const updateStatus = () => (isOffline = !navigator.onLine);
+        window.addEventListener("online", updateStatus);
+        window.addEventListener("offline", updateStatus);
+        updateStatus();
+        return () => {
+            window.removeEventListener("online", updateStatus);
+            window.removeEventListener("offline", updateStatus);
+        };
+    });
 </script>
 
 <div class="flex flex-col gap-2 font-mono">
     <div class="flex gap-1.5 md:gap-3 items-center">
+        {#if isOffline}
+            <div
+                class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help"
+                title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
+            >
+                <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
+                <span class="hidden md:inline">OFFLINE</span>
+            </div>
+        {/if}
+
         <div
             class="text-[10px] md:text-xs text-gray-500 tracking-wider uppercase hidden sm:block"
         >

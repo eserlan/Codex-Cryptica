@@ -107,7 +107,7 @@
         id: node.id(),
         x: pos.x,
         y: pos.y,
-        color: node.style("background-color") || "#22c55e",
+        color: node.style("background-color") || "#4ade80",
       });
     }
     nodes = newNodes;
@@ -296,29 +296,31 @@
   class="minimap-container {collapsed ? 'collapsed' : ''} {absolute
     ? 'absolute-pos'
     : 'relative-pos'}"
-  style:width="{width}px"
-  style:height="{height}px"
-  role="application"
+  style:width="{collapsed ? 40 : width}px"
+  style:height="{collapsed ? 40 : height}px"
+  role="button"
   aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
   tabindex="0"
   onclick={handleMinimapClick}
-  onkeydown={(event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      (event.currentTarget as HTMLElement).click();
-    }
-  }}
->
-  <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
-  ></canvas>
-
-  <!-- Viewport Overlay -->
+      onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        (event.currentTarget as HTMLElement).click();
+      }
+    }}
+  >
+    <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
+    ></canvas>
+  
+    <!-- Viewport Overlay -->
+  
   <div
     class="viewport-rect"
     style:left="{viewportX}px"
     style:top="{viewportY}px"
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
+    style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%, transparent)"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
@@ -386,8 +388,6 @@
   }
 
   .minimap-container.collapsed {
-    width: 2.5rem !important;
-    height: 2.5rem !important;
     border-radius: 9999px;
     cursor: pointer;
   }
@@ -408,7 +408,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: rgba(74, 222, 128, 0.7);
+    color: var(--color-accent-primary);
+    opacity: 0.7;
     background: rgba(0, 0, 0, 0.5);
     border-radius: 0.25rem;
     cursor: pointer;
@@ -448,6 +449,6 @@
 
   .viewport-rect:active {
     cursor: grabbing;
-    background-color: rgba(74, 222, 128, 0.2);
+    background-color: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
   }
 </style>
