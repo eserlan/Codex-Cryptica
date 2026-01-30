@@ -24,5 +24,7 @@
     
     --color-warning: #eab308;
     --color-danger: #ef4444;
+    --color-accent-primary-alpha-10: rgba(74, 222, 128, 0.1);
+    --color-accent-primary-alpha-20: rgba(74, 222, 128, 0.2);
   }
 }

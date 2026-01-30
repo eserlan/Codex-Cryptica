@@ -1,23 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-// Define the class at the top level so it's accessible to types
-class MockBroadcastChannel {
-  name: string;
-  onmessage: ((event: MessageEvent) => void) | null = null;
-  constructor(name: string) {
-    this.name = name;
-  }
-  postMessage = vi.fn();
-  close = vi.fn();
-}
-
 // Hoist mocks to run before imports
 vi.hoisted(() => {
   if (typeof window === "undefined") {
     (global as any).window = {};
   }
 
+  class MockBroadcastChannel {
+    name: string;
+    onmessage: ((event: MessageEvent) => void) | null = null;
+    constructor(name: string) {
+      this.name = name;
+    }
+    postMessage = vi.fn();
+    close = vi.fn();
+  }
+
   (global as any).BroadcastChannel = MockBroadcastChannel;
+  return { MockBroadcastChannel };
 });
 
 import { oracle } from "./oracle.svelte";
@@ -179,7 +179,7 @@ describe("OracleStore", () => {
   });
 
   it("should skip sync if lastUpdated matches", () => {
-    const channel = (oracle as any).channel as MockBroadcastChannel;
+    const channel = (oracle as any).channel as any;
     oracle.messages = [{ id: "1", role: "user", content: "local" }];
     const timestamp = 123456789;
     oracle.lastUpdated = timestamp;
@@ -207,7 +207,7 @@ describe("OracleStore", () => {
   });
 
   it("should perform sync if lastUpdated differs", () => {
-    const channel = (oracle as any).channel as MockBroadcastChannel;
+    const channel = (oracle as any).channel as any;
     oracle.messages = [{ id: "1", role: "user", content: "local" }];
     oracle.lastUpdated = 100;
 

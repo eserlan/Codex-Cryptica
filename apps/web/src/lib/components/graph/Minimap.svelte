@@ -103,13 +103,12 @@
       const node = cyNodes[i];
       const pos = node.position();
       // Simple style extraction - stick to theme color for MVP
-              newNodes.push({
-              id: node.id(),
-              x: pos.x,
-              y: pos.y,
-              color: node.style("background-color") || "var(--color-accent-primary)",
-            });
-      
+      newNodes.push({
+        id: node.id(),
+        x: pos.x,
+        y: pos.y,
+        color: node.style("background-color") || "#4ade80",
+      });
     }
     nodes = newNodes;
   };
@@ -303,17 +302,18 @@
   aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
   tabindex="0"
   onclick={handleMinimapClick}
-  onkeydown={(event) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      (event.currentTarget as HTMLElement).click();
-    }
-  }}
->
-  <canvas bind:this={canvas} width={collapsed ? 40 : width} height={collapsed ? 40 : height} class="w-full h-full block"
-  ></canvas>
-
-  <!-- Viewport Overlay -->
+      onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        (event.currentTarget as HTMLElement).click();
+      }
+    }}
+  >
+    <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
+    ></canvas>
+  
+    <!-- Viewport Overlay -->
+  
   <div
     class="viewport-rect"
     style:left="{viewportX}px"
