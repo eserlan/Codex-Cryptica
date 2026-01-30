@@ -35,7 +35,7 @@ test.describe("Sync Visual Feedback", () => {
   });
 
   test("should show flash effect when sync button is clicked", async ({ page }) => {
-    const cloudBtn = page.getByTestId("cloud-status-button");
+    const cloudBtn = page.getByTestId("settings-button");
 
     // Open menu
     await cloudBtn.click();
@@ -61,7 +61,7 @@ test.describe("Sync Visual Feedback", () => {
   });
 
   test("should change icon and animate when syncing", async ({ page }) => {
-    const cloudBtn = page.getByTestId("cloud-status-button");
+    const cloudBtn = page.getByTestId("settings-button");
     const statusIcon = cloudBtn.locator('span.w-5.h-5');
 
     // Manually trigger syncing state in the store via window object

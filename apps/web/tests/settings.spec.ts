@@ -40,9 +40,10 @@ test.describe("Settings Modal", () => {
     });
 
     test("should open directly to sync tab from cloud button", async ({ page }) => {
-        const cloudBtn = page.locator('button[data-testid="cloud-status-button"]');
-        await expect(cloudBtn).toBeVisible();
-        await cloudBtn.click();
+        const settingsBtn = page.locator('button[data-testid="settings-button"]');
+        await expect(settingsBtn).toBeVisible();
+        await settingsBtn.click();
+        await page.click('nav button:has-text("Cloud Sync")');
         await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Cloud Sync' })).toBeVisible();
     });

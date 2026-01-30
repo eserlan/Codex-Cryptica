@@ -21,9 +21,9 @@ test.describe("Category Architecture Modal", () => {
 
     test("should open Category Architecture modal and display default categories", async ({ page }) => {
         // 1. Open main Settings
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
-        await expect(page.locator('h2', { hasText: 'Cloud Sync' })).toBeVisible();
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
+        await expect(page.locator('h2', { hasText: 'Vault' })).toBeVisible();
 
         // 2. Open Schema tab via sidebar
         await page.click('nav button:has-text("Schema")');
@@ -50,8 +50,8 @@ test.describe("Category Architecture Modal", () => {
 
     test("should add a new category in session", async ({ page }) => {
         // Open settings and go to Schema
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
@@ -86,8 +86,8 @@ test.describe("Category Architecture Modal", () => {
 
     test("should open and close glyph library picker", async ({ page }) => {
         // Open settings and go to Schema
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
@@ -108,8 +108,8 @@ test.describe("Category Architecture Modal", () => {
 
     test("should reset categories to defaults", async ({ page }) => {
         // Open settings and go to Schema
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
@@ -140,8 +140,8 @@ test.describe("Category Architecture Modal", () => {
         }
 
         // 2. Open settings and go to Schema
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
@@ -161,8 +161,8 @@ test.describe("Category Architecture Modal", () => {
         await page.click('button[aria-label="Close Settings"]');
 
         // 5. Reopen and verify the color persisted
-        await page.getByTestId("cloud-status-button").click();
-        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
+        await page.getByTestId("settings-button").click();
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
 

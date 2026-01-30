@@ -1,7 +1,6 @@
 <script lang="ts">
 	import "../app.css";
 	import VaultControls from "$lib/components/VaultControls.svelte";
-	import CloudStatus from "$lib/components/settings/CloudStatus.svelte";
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
@@ -139,16 +138,26 @@
 				class="flex items-center gap-2 md:gap-4 shrink-0 order-2 md:order-3"
 			>
 				<VaultControls />
-				<CloudStatus />
 				<button
 					class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings &&
 					uiStore.activeSettingsTab !== 'sync'
 						? 'border-green-500 bg-green-900/10 text-green-500'
-						: 'border-green-900/30 hover:border-green-500 text-green-900 hover:text-green-500'}"
+						: 'border-green-900/30 hover:border-green-500 text-green-900 hover:text-green-500'} relative"
 					onclick={() => uiStore.toggleSettings("vault")}
 					title="Application Settings"
+					data-testid="settings-button"
 				>
-					<span class="icon-[lucide--settings] w-5 h-5"></span>
+					<span
+						class="w-5 h-5 {$syncStats.status === 'SCANNING' ||
+						$syncStats.status === 'SYNCING'
+							? 'icon-[lucide--zap] animate-pulse text-green-500'
+							: 'icon-[lucide--settings]'}"
+					></span>
+					{#if $cloudConfig.enabled && $cloudConfig.connectedEmail && $syncStats.status === 'IDLE'}
+						<span
+							class="absolute top-1 right-1 w-1.5 h-1.5 bg-green-500 rounded-full border border-black animate-pulse"
+						></span>
+					{/if}
 				</button>
 			</div>
 		</header>

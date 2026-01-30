@@ -6,6 +6,12 @@ vi.hoisted(() => {
     (global as any).window = {};
   }
 
+  if (typeof navigator === "undefined") {
+    (global as any).navigator = { onLine: true };
+  } else {
+    (global as any).navigator.onLine = true;
+  }
+
   class MockBroadcastChannel {
     name: string;
     onmessage: ((event: MessageEvent) => void) | null = null;
@@ -29,6 +35,14 @@ vi.mock("../utils/idb", () => ({
     get: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
+    getAll: vi.fn().mockResolvedValue([]),
+    transaction: vi.fn().mockReturnValue({
+      store: {
+        clear: vi.fn(),
+        put: vi.fn(),
+      },
+      done: Promise.resolve(),
+    }),
   }),
 }));
 
@@ -41,7 +55,8 @@ vi.mock("../services/ai", () => ({
     generateResponse: vi.fn(),
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     enhancePrompt: vi.fn().mockImplementation((q) => q),
-    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined }),
+    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined, sourceIds: [] }),
+    expandQuery: vi.fn().mockResolvedValue("expanded query"),
   },
 }));
 

@@ -539,13 +539,33 @@ class VaultStore {
       const content = stringifyEntity(entity);
       await writeFile(handle, content);
 
+      const metadataValues = Object.values(entity.metadata || {});
+      const metadataKeywords = metadataValues.flatMap((value) => {
+        if (typeof value === "string") return [value];
+        if (Array.isArray(value)) {
+          return value.filter(
+            (item): item is string => typeof item === "string",
+          );
+        }
+        return [];
+      });
+
+      const keywords = [
+        ...(entity.tags || []),
+        entity.lore || "",
+        ...metadataKeywords,
+      ].join(" ");
+
+      const filePath = Array.isArray(entity._path) ? entity._path.join('/') : entity._path as string;
+
       // Update index
       await searchService.index({
         id: entity.id,
         title: entity.title,
         content: entity.content,
         type: entity.type,
-        path: Array.isArray(entity._path) ? entity._path.join('/') : entity._path as string,
+        path: filePath,
+        keywords,
         updatedAt: Date.now()
       });
     }

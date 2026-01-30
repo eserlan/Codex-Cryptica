@@ -104,7 +104,7 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
             // Define primary action buttons to test
             const primaryButtons = [
                 page.getByRole("button", { name: /OPEN VAULT|VAULT/i }),
-                page.getByTestId("cloud-status-button"),
+                page.getByTestId("settings-button"),
             ];
 
             for (const button of primaryButtons) {
@@ -139,7 +139,7 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
             await page.setViewportSize({ width: 375, height: 667 });
             await page.goto("/");
 
-            const cloudBtn = page.getByTestId("cloud-status-button");
+            const cloudBtn = page.getByTestId("settings-button");
             await expect(cloudBtn).toBeVisible();
 
             const box = await cloudBtn.boundingBox();
