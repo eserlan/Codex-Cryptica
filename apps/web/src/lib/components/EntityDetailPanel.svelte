@@ -142,7 +142,8 @@
             (item) => ({
                 ...item.connection,
                 isOutbound: false,
-                displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
+                displayTitle:
+                    vault.entities[item.sourceId]?.title || item.sourceId,
                 targetId: item.sourceId,
             }),
         );
@@ -150,6 +151,12 @@
         return [...outbound, ...inbound];
     });
 </script>
+
+<svelte:window
+    onkeydown={(e) => {
+        if (e.key === "Escape" && showLightbox) showLightbox = false;
+    }}
+/>
 
 {#if entity}
     <div
@@ -350,13 +357,17 @@
                                                 <span class="text-green-700"
                                                     >{entity.title}</span
                                                 >
-                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span
+                                                    class="relation-arrow icon-[lucide--move-right]"
+                                                ></span>
                                                 <strong
                                                     class="text-gray-300 group-hover:text-green-400 transition"
                                                     >{conn.label ||
                                                         conn.type}</strong
                                                 >
-                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span
+                                                    class="relation-arrow icon-[lucide--move-right]"
+                                                ></span>
                                                 <span class="text-gray-300"
                                                     >{conn.displayTitle}</span
                                                 >
@@ -364,13 +375,17 @@
                                                 <span class="text-gray-300"
                                                     >{conn.displayTitle}</span
                                                 >
-                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span
+                                                    class="relation-arrow icon-[lucide--move-right]"
+                                                ></span>
                                                 <strong
                                                     class="text-gray-300 group-hover:text-green-400 transition"
                                                     >{conn.label ||
                                                         conn.type}</strong
                                                 >
-                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span
+                                                    class="relation-arrow icon-[lucide--move-right]"
+                                                ></span>
                                                 <span class="text-green-700"
                                                     >{entity.title}</span
                                                 >

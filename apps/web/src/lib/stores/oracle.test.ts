@@ -22,8 +22,17 @@ vi.hoisted(() => {
     close = vi.fn();
   }
 
+  class MockWorker {
+    onmessage: ((event: MessageEvent) => void) | null = null;
+    postMessage = vi.fn();
+    terminate = vi.fn();
+    addEventListener = vi.fn();
+    removeEventListener = vi.fn();
+  }
+
   (global as any).BroadcastChannel = MockBroadcastChannel;
-  return { MockBroadcastChannel };
+  (global as any).Worker = MockWorker;
+  return { MockBroadcastChannel, MockWorker };
 });
 
 import { oracle } from "./oracle.svelte";
@@ -55,8 +64,19 @@ vi.mock("../services/ai", () => ({
     generateResponse: vi.fn(),
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     enhancePrompt: vi.fn().mockImplementation((q) => q),
-    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined, sourceIds: [] }),
+    retrieveContext: vi.fn().mockResolvedValue({
+      content: "context",
+      primaryEntityId: undefined,
+      sourceIds: [],
+    }),
     expandQuery: vi.fn().mockResolvedValue("expanded query"),
+  },
+}));
+
+vi.mock("../services/search", () => ({
+  searchService: {
+    init: vi.fn(),
+    search: vi.fn().mockResolvedValue([]),
   },
 }));
 
@@ -180,7 +200,7 @@ describe("OracleStore", () => {
   it("should update lastUpdated on message changes", async () => {
     const initialTime = oracle.lastUpdated;
     oracle.apiKey = "test-key";
-    
+
     vi.advanceTimersByTime(10);
     // Simulate ask
     await oracle.ask("hello");

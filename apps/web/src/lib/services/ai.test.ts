@@ -25,7 +25,7 @@ const mockModel = {
 
 vi.mock("@google/generative-ai", () => {
     return {
-        GoogleGenerativeAI: vi.fn().mockImplementation(function() {
+        GoogleGenerativeAI: vi.fn().mockImplementation(function () {
             return {
                 getGenerativeModel: vi.fn().mockReturnValue(mockModel),
             };
@@ -45,7 +45,7 @@ describe("AIService Context Retrieval", () => {
         };
         (vault as any).selectedEntityId = null;
         (vault as any).inboundConnections = {};
-        
+
         // Default search mock: return match if query includes title with word boundaries
         vi.mocked(searchService.search).mockImplementation(async (q) => {
             const results = [];
@@ -58,7 +58,7 @@ describe("AIService Context Retrieval", () => {
             }
             return results;
         });
-        
+
         // Mock clearStyleCache if it doesn't exist on the instance
         if (!(aiService as any).clearStyleCache) {
             (aiService as any).clearStyleCache = vi.fn();
@@ -67,18 +67,18 @@ describe("AIService Context Retrieval", () => {
 
     it("should prioritize explicit title matches over active selection", async () => {
         (vault as any).selectedEntityId = "crone-id";
-        const { primaryEntityId } = await aiService.retrieveContext("Tell me about The Woods", new Set(), undefined, false);
+        const { primaryEntityId } = await aiService.retrieveContext("Tell me about The Woods", new Set(), vault, undefined, false);
         expect(primaryEntityId).toBe("woods-id");
     });
 
     it("should match short titles only with word boundaries", async () => {
         // "AI" is length 2.
         // It should match "Tell me about AI"
-        const { primaryEntityId: match1 } = await aiService.retrieveContext("Tell me about AI", new Set(), undefined, false);
+        const { primaryEntityId: match1 } = await aiService.retrieveContext("Tell me about AI", new Set(), vault, undefined, false);
         expect(match1).toBe("ai-id");
 
         // It should NOT match "Training" (substring "AI")
-        const { primaryEntityId: match2 } = await aiService.retrieveContext("Training is hard", new Set(), undefined, false);
+        const { primaryEntityId: match2 } = await aiService.retrieveContext("Training is hard", new Set(), vault, undefined, false);
         expect(match2).not.toBe("ai-id");
     });
 
@@ -90,7 +90,7 @@ describe("AIService Context Retrieval", () => {
 
         // Query doesn't mention the woods directly, so Tier 1 (Explicit Match) fails.
         // Tier 2 (High Confidence Search) should win.
-        const { primaryEntityId } = await aiService.retrieveContext("What is in that place?", new Set(), undefined, false);
+        const { primaryEntityId } = await aiService.retrieveContext("What is in that place?", new Set(), vault, undefined, false);
         expect(primaryEntityId).toBe("woods-id");
     });
 
@@ -101,7 +101,7 @@ describe("AIService Context Retrieval", () => {
 
         // Explicit match fails. High-confidence search says "Crone". Sticky says "Woods".
         // Search should win Tier 2 vs Tier 3.
-        const { primaryEntityId } = await aiService.retrieveContext("Tell me about that ancient woman", new Set(), "woods-id", false);
+        const { primaryEntityId } = await aiService.retrieveContext("Tell me about that ancient woman", new Set(), vault, "woods-id", false);
         expect(primaryEntityId).toBe("crone-id");
     });
 
@@ -109,7 +109,7 @@ describe("AIService Context Retrieval", () => {
         (vault as any).selectedEntityId = "crone-id";
         // Not an explicit match, no high-confidence search match.
         // Tier 3 (Sticky Follow-up) should win because of "it".
-        const { primaryEntityId } = await aiService.retrieveContext("it?", new Set(), "woods-id", false);
+        const { primaryEntityId } = await aiService.retrieveContext("it?", new Set(), vault, "woods-id", false);
         expect(primaryEntityId).toBe("woods-id");
     });
 
@@ -121,7 +121,7 @@ describe("AIService Context Retrieval", () => {
 
         // Tier 1 fails, Tier 2 fails (0.4 < 0.6), Tier 3 fails (not a follow-up)
         // Tier 4 (Active View) should win.
-        const { primaryEntityId } = await aiService.retrieveContext("Who is there?", new Set(), undefined, false);
+        const { primaryEntityId } = await aiService.retrieveContext("Who is there?", new Set(), vault, undefined, false);
         expect(primaryEntityId).toBe("crone-id");
     });
 
@@ -134,12 +134,12 @@ describe("AIService Context Retrieval", () => {
         ];
 
         // Outbound case
-        const { content: contentOut } = await aiService.retrieveContext("The Woods", new Set(), undefined, false);
+        const { content: contentOut } = await aiService.retrieveContext("The Woods", new Set(), vault, undefined, false);
         expect(contentOut).toContain("--- Connections ---");
         expect(contentOut).toContain("- The Woods → Ancient Dweller → The Crone");
 
         // Inbound case
-        const { content: contentIn } = await aiService.retrieveContext("The Crone", new Set(), undefined, false);
+        const { content: contentIn } = await aiService.retrieveContext("The Crone", new Set(), vault, undefined, false);
         expect(contentIn).toContain("--- Connections ---");
         expect(contentIn).toContain("- The Woods → inhabited_by → The Crone");
     });
@@ -149,13 +149,13 @@ describe("AIService Context Retrieval", () => {
             { target: "missing-id", type: "part_of" }
         ];
 
-        const { content } = await aiService.retrieveContext("The Woods", new Set(), undefined, false);
+        const { content } = await aiService.retrieveContext("The Woods", new Set(), vault, undefined, false);
         expect(content).toContain("[missing entity: missing-id]");
     });
 
     it("should recognize lone pronouns as follow-ups", async () => {
         (vault as any).selectedEntityId = "crone-id";
-        const { primaryEntityId } = await aiService.retrieveContext("it", new Set(), "guardsman-id", false);
+        const { primaryEntityId } = await aiService.retrieveContext("it", new Set(), vault, "guardsman-id", false);
         expect(primaryEntityId).toBe("guardsman-id");
     });
 
@@ -170,7 +170,7 @@ describe("AIService Context Retrieval", () => {
                 tags: []
             };
 
-            const { content } = await aiService.retrieveContext("Fusion Entity", new Set(), undefined, false);
+            const { content } = await aiService.retrieveContext("Fusion Entity", new Set(), vault, undefined, false);
             expect(content).toContain("This is secret lore.");
             expect(content).toContain("This is content.");
         });
@@ -197,8 +197,8 @@ describe("AIService Context Retrieval", () => {
                 { id: "match-id", title: "Match", score: 0.9, matchType: "title", path: "" }
             ]);
 
-            const { content, sourceIds } = await aiService.retrieveContext("query", new Set(), undefined, false);
-            
+            const { content, sourceIds } = await aiService.retrieveContext("query", new Set(), vault, undefined, false);
+
             // Total should be around 10k
             expect(content.length).toBeLessThanOrEqual(10100); // Allow for headers/newlines
             expect(sourceIds).toContain("active-id");
@@ -215,7 +215,7 @@ describe("AIService Context Retrieval", () => {
                 { id: "crone-id", title: "The Crone", score: 0.8, matchType: "title", path: "" }
             ]);
 
-            const { sourceIds } = await aiService.retrieveContext("The Woods and Crone", new Set(), undefined, false);
+            const { sourceIds } = await aiService.retrieveContext("The Woods and Crone", new Set(), vault, undefined, false);
             expect(sourceIds).toContain("woods-id");
             expect(sourceIds).toContain("crone-id");
         });
@@ -255,8 +255,8 @@ describe("AIService Context Retrieval", () => {
                 { id: "location-id", title: "The Tavern", score: 0.9, matchType: "title", path: "" }
             ]);
 
-            const { content, sourceIds } = await aiService.retrieveContext("Where is Barnaby?", new Set(), undefined, false);
-            
+            const { content, sourceIds } = await aiService.retrieveContext("Where is Barnaby?", new Set(), vault, undefined, false);
+
             expect(sourceIds).toContain("location-id");
             expect(sourceIds).toContain("npc-id");
             expect(content).toContain("Barnaby the barkeep.");
@@ -291,21 +291,21 @@ describe("AIService Style Caching", () => {
         vi.mocked(searchService.search).mockResolvedValue([
             { id: "style-id", title: "World Aesthetic", score: 0.9, matchType: "title", path: "" }
         ]);
-        (vault as any).entities["style-id"] = { 
-            id: "style-id", 
-            title: "World Aesthetic", 
+        (vault as any).entities["style-id"] = {
+            id: "style-id",
+            title: "World Aesthetic",
             content: "Cyberpunk style.",
             connections: [],
             tags: []
         };
 
         // First call triggers search
-        await aiService.retrieveContext("test", new Set(), undefined, true);
+        await aiService.retrieveContext("test", new Set(), vault, undefined, true);
         const callsAfterFirst = vi.mocked(searchService.search).mock.calls.length;
         expect(callsAfterFirst).toBeGreaterThan(0);
-        
+
         // Second call should NOT trigger more search (cached)
-        await aiService.retrieveContext("test 2", new Set(), undefined, true);
+        await aiService.retrieveContext("test 2", new Set(), vault, undefined, true);
         expect(vi.mocked(searchService.search).mock.calls.length).toBe(callsAfterFirst + 1); // +1 for the main context search
     });
 
@@ -313,20 +313,20 @@ describe("AIService Style Caching", () => {
         vi.mocked(searchService.search).mockResolvedValue([
             { id: "style-id", title: "Style", score: 0.9, matchType: "title", path: "" }
         ]);
-        (vault as any).entities["style-id"] = { 
-            id: "style-id", 
-            title: "Style", 
+        (vault as any).entities["style-id"] = {
+            id: "style-id",
+            title: "Style",
             content: "...",
             connections: [],
             tags: []
         };
 
-        await aiService.retrieveContext("test", new Set(), undefined, true);
+        await aiService.retrieveContext("test", new Set(), vault, undefined, true);
         const calls1 = vi.mocked(searchService.search).mock.calls.length;
 
         aiService.clearStyleCache();
-        
-        await aiService.retrieveContext("test 2", new Set(), undefined, true);
+
+        await aiService.retrieveContext("test 2", new Set(), vault, undefined, true);
         const calls2 = vi.mocked(searchService.search).mock.calls.length;
         expect(calls2).toBeGreaterThan(calls1 + 1); // +1 for main search, +1 for style search
     });

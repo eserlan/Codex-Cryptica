@@ -650,7 +650,7 @@ class VaultStore {
     }
   }
 
-  async createEntity(type: Entity["type"], title: string): Promise<string> {
+  async createEntity(type: Entity["type"], title: string, initialData?: Partial<Entity>): Promise<string> {
     if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
     const id = sanitizeId(title);
     if (this.entities[id]) {
@@ -668,10 +668,13 @@ class VaultStore {
       id,
       type,
       title,
-      content: "",
-      tags: [],
-      connections: [],
-      metadata: {},
+      content: initialData?.content || "",
+      tags: initialData?.tags || [],
+      connections: initialData?.connections || [],
+      metadata: initialData?.metadata || {},
+      lore: initialData?.lore,
+      image: initialData?.image,
+      thumbnail: initialData?.thumbnail,
       _fsHandle: handle,
       _path: [filename],
     };
@@ -679,18 +682,18 @@ class VaultStore {
     await writeFile(handle, stringifyEntity(newEntity));
 
     this.entities[id] = newEntity;
+    this.rebuildInboundMap();
 
     // Index new entity
     await searchService.index({
       id,
       title,
-      content: "",
+      content: newEntity.content,
       type,
       path: filename,
       updatedAt: Date.now()
     });
 
-    // Note: new entities have no connections, so no inbound update needed
     return id;
   }
 

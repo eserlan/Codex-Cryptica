@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
 import { searchService } from "./search";
-import { vault } from "../stores/vault.svelte";
+
 
 export const TIER_MODES = {
   lite: "gemini-2.5-flash-lite",
@@ -74,7 +74,7 @@ STANDALONE SEARCH QUERY:`;
     const matchesModel =
       currentModelName === modelName ||
       currentModelName === `models/${modelName}`;
-    
+
     if (this.genAI && this.model && this.currentApiKey === apiKey && matchesModel) return;
 
     console.log(`[AIService] Initializing model: ${modelName}`);
@@ -90,6 +90,14 @@ If the user asks you to expand, describe, or fill in the blanks, you should feel
 When providing information, consider two formats:
 1. Chronicle / Blurb: A short, focused 2-3 sentence summary. (Default if "blurb", "chronicle", or "short desc" is mentioned)
 2. Lore / Notes: An expansive, detailed deep-dive including "hooks", secrets, and background fluff.
+
+SPECIAL COMMANDS:
+- /draw [subject]: Trigger image generation.
+- /create [subject]: The user strictly wants to create a new record. You MUST provide the response in a structured format so the system can extract it:
+  **Name:** [Entity Title]
+  **Type:** [npc | faction | location | item | event | concept]
+  **Chronicle:** [Short summary blurb]
+  **Lore:** [Detailed notes and history]
 
 Only if you have NO information about the subject in either the new context blocks OR the previous messages, and you aren't asked to invent it, say "I cannot find that in your records." 
 
@@ -177,18 +185,50 @@ User visualization request: ${query}`;
     this.init(apiKey, modelName);
     if (!this.model) throw new Error("AI Model not initialized");
 
-    // Create a new session with current history
+    // Create a sanitized history that alternating between user and model, starting with user.
+    // Filter out system messages and ensure content is present.
+    const sanitizedHistory: { role: "user" | "model", parts: { text: string }[] }[] = [];
+
+    for (const m of history) {
+      if (m.role !== "user" && m.role !== "assistant") continue;
+
+      const role = m.role === "assistant" ? "model" : "user";
+      const content = m.content?.trim() || "(empty message)";
+
+      if (sanitizedHistory.length === 0) {
+        if (role === "user") {
+          sanitizedHistory.push({ role, parts: [{ text: content }] });
+        }
+      } else {
+        const last = sanitizedHistory[sanitizedHistory.length - 1];
+        if (last.role === role) {
+          // Merge consecutive messages of the same role
+          last.parts[0].text += "\n\n" + content;
+        } else {
+          sanitizedHistory.push({ role, parts: [{ text: content }] });
+        }
+      }
+    }
+
+    // Ensure the history ends with 'model' if it's not empty, 
+    // because chat.sendMessage will add the current 'user' query.
+    // If it ends with 'user', Gemini might error on consecutive user turns.
+    let prefixContext = "";
+    if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === "user") {
+      // In this case, we have a user message with no assistant response yet.
+      // We pop it and add it to the current query context to preserve intent.
+      const lastUser = sanitizedHistory.pop();
+      prefixContext = `[PREVIOUS USER MESSAGE]:\n${lastUser!.parts[0].text}\n\n`;
+    }
+
     const chat = this.model.startChat({
-      history: history.map(m => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }]
-      }))
+      history: sanitizedHistory
     });
 
     try {
       const finalQuery = context
-        ? `[NEW LORE CONTEXT]\n${context}\n\n[USER QUERY]\n${query}`
-        : query;
+        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}[USER QUERY]\n${query}`
+        : `${prefixContext}${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
 
@@ -211,15 +251,15 @@ User visualization request: ${query}`;
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private findExplicitSubject(query: string): string | undefined {
+  private findExplicitSubject(query: string, entities: Record<string, any>): string | undefined {
     const queryLower = query.toLowerCase();
-    const entities = Object.values(vault.entities);
+    const entityList = Object.values(entities);
 
     // Find entities whose titles are explicitly mentioned in the query
     // For very short titles (length <= 2), require a word-boundary match to avoid false positives.
     // Sort by title length descending to match "The Forbidden Woods" before "The" or "Woods"
-    const matches = entities
-      .filter(e => {
+    const matches = entityList
+      .filter((e: any) => {
         const titleLower = e.title.toLowerCase();
         if (titleLower.length > 2) {
           return queryLower.includes(titleLower);
@@ -227,7 +267,7 @@ User visualization request: ${query}`;
         const pattern = new RegExp(`\\b${this.escapeRegExp(titleLower)}\\b`);
         return pattern.test(queryLower);
       })
-      .sort((a, b) => b.title.length - a.title.length);
+      .sort((a: any, b: any) => b.title.length - a.title.length);
 
     return matches[0]?.id;
   }
@@ -258,6 +298,7 @@ User visualization request: ${query}`;
   async retrieveContext(
     query: string,
     excludeTitles: Set<string>,
+    vault: any, // Injected dependency to avoid checking cycle
     lastEntityId?: string,
     isImage: boolean = false,
   ): Promise<{ content: string; primaryEntityId?: string; sourceIds: string[] }> {
@@ -308,6 +349,7 @@ User visualization request: ${query}`;
               "they",
               "with",
               "from",
+              "from",
             ].includes(w),
         );
 
@@ -320,7 +362,7 @@ User visualization request: ${query}`;
     const activeId = vault.selectedEntityId;
 
     // 3. Identification of primary target
-    const explicitSubject = this.findExplicitSubject(query);
+    const explicitSubject = this.findExplicitSubject(query, vault.entities);
     const topSearchResult = results[0];
     const isHighConfidenceSearch =
       topSearchResult && topSearchResult.score >= 0.6;
@@ -351,17 +393,17 @@ User visualization request: ${query}`;
       if (!entity || excludeTitles.has(entity.title)) return;
 
       // FR-003: Enrichment uses only content (Chronicle). Fusion uses both for primary.
-      const mainContent = isEnrichment 
-        ? (entity.content || "").trim() 
+      const mainContent = isEnrichment
+        ? (entity.content || "").trim()
         : this.getConsolidatedContext(entity);
       if (!mainContent && !isEnrichment) return;
 
       const isActive = id === activeId;
       const prefix = isActive ? "[ACTIVE FILE] " : "";
-      
+
       // 4b. Add Connection Context
       let connectionContext = "";
-      const outbound = entity.connections.map((c) => {
+      const outbound = (entity.connections || []).map((c: any) => {
         const targetEntity = vault.entities[c.target];
         const target =
           targetEntity && targetEntity.title
@@ -370,7 +412,7 @@ User visualization request: ${query}`;
         return `- ${entity.title} → ${c.label || c.type} → ${target}`;
       });
 
-      const inbound = (vault.inboundConnections[id] || []).map((item) => {
+      const inbound = (vault.inboundConnections[id] || []).map((item: any) => {
         const sourceEntity = vault.entities[item.sourceId];
         const source =
           sourceEntity && sourceEntity.title
@@ -386,7 +428,7 @@ User visualization request: ${query}`;
 
       const header = `--- ${prefix}File: ${entity.title} ---\n`;
       const fullSnippet = `${header}${mainContent}${connectionContext}`;
-      
+
       // Ensure we don't exceed limit
       if (currentTotal + fullSnippet.length > MAX_CHARS) {
         // If it's a primary match, we truncate content but preserve connections
@@ -397,7 +439,7 @@ User visualization request: ${query}`;
             const truncated = mainContent.slice(0, allowed) + "... [truncated content]";
             contextMap.set(id, `${header}${truncated}${connectionContext}`);
             sourceIds.push(id);
-            currentTotal = MAX_CHARS; 
+            currentTotal = MAX_CHARS;
           }
         }
         return;
@@ -449,7 +491,7 @@ User visualization request: ${query}`;
     let finalContent = Array.from(contextMap.values()).join("\n\n");
     if (contextMap.size === 0 && excludeTitles.size === 0) {
       const allTitles = Object.values(vault.entities)
-        .map((e) => e.title)
+        .map((e: any) => e.title)
         .join(", ");
       if (allTitles) {
         finalContent = `--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`;

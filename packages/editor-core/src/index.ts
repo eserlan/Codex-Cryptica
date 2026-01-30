@@ -32,3 +32,5 @@ export const WikiLink = Extension.create<WikiLinkOptions>({
     ];
   },
 });
+
+export * from './parsing/oracle';

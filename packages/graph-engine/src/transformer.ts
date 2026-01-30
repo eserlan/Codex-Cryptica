@@ -29,11 +29,13 @@ export type GraphElement = GraphNode | GraphEdge;
 
 export class GraphTransformer {
   static entitiesToElements(entities: Entity[]): GraphElement[] {
-    const elements: GraphElement[] = [];
+    // Create a Set of valid entity IDs for O(1) lookups
+    const validIds = new Set(entities.map((e) => e.id));
 
-    for (const entity of entities) {
-      // Create Node - only include image/thumbnail if they have valid values
-      // (Cytoscape selectors like `node[image]` match even empty strings)
+    return entities.flatMap((entity) => {
+      const elements: GraphElement[] = [];
+
+      // Create Node
       const nodeData: GraphNode["data"] = {
         id: entity.id,
         label: entity.title,
@@ -51,6 +53,9 @@ export class GraphTransformer {
 
       // Create Edges
       for (const conn of entity.connections || []) {
+        // Skip edges to non-existent targets
+        if (!validIds.has(conn.target)) continue;
+
         // Construct a unique edge ID: source-target-type
         const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
 
@@ -66,8 +71,8 @@ export class GraphTransformer {
           },
         });
       }
-    }
 
-    return elements;
+      return elements;
+    });
   }
 }

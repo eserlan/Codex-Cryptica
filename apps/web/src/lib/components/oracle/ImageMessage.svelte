@@ -15,7 +15,7 @@
 
   const handleSave = async () => {
     if (!message.imageBlob || !activeEntity) return;
-    
+
     isArchiving = true;
     archiveError = null;
     try {
@@ -33,13 +33,19 @@
       e.dataTransfer?.setData("text/plain", message.imageUrl);
       // We also pass the ID to identify this message's blob if needed
       e.dataTransfer?.setData("application/codex-image-id", message.id);
-      
+
       if (e.dataTransfer) {
         e.dataTransfer.effectAllowed = "copy";
       }
     }
   };
 </script>
+
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key === "Escape" && showLightbox) showLightbox = false;
+  }}
+/>
 
 <div class="flex flex-col gap-3 w-full max-w-sm">
   {#if message.imageUrl}
@@ -55,10 +61,14 @@
         ondragstart={handleDragStart}
         onclick={() => (showLightbox = true)}
       />
-      
+
       <!-- Overlay Info -->
-      <div class="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <span class="text-[9px] bg-black/70 text-purple-300 px-1.5 py-0.5 rounded backdrop-blur-sm border border-purple-500/20">
+      <div
+        class="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+      >
+        <span
+          class="text-[9px] bg-black/70 text-purple-300 px-1.5 py-0.5 rounded backdrop-blur-sm border border-purple-500/20"
+        >
           DRAG TO ENTITY
         </span>
       </div>
@@ -81,18 +91,26 @@
           {/if}
         </button>
         {#if archiveError}
-          <span class="text-[9px] text-red-400 font-mono italic">{archiveError}</span>
+          <span class="text-[9px] text-red-400 font-mono italic"
+            >{archiveError}</span
+          >
         {/if}
       </div>
     {/if}
   {:else}
     <!-- Loading State -->
-    <div class="w-full aspect-square bg-purple-900/10 border border-purple-900/20 rounded-lg flex flex-col items-center justify-center gap-3 animate-pulse">
+    <div
+      class="w-full aspect-square bg-purple-900/10 border border-purple-900/20 rounded-lg flex flex-col items-center justify-center gap-3 animate-pulse"
+    >
       <div class="relative">
         <span class="icon-[lucide--sparkles] w-8 h-8 text-purple-500/50"></span>
-        <div class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"></div>
+        <div
+          class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"
+        ></div>
       </div>
-      <span class="text-[10px] font-mono text-purple-400 tracking-widest">VISUALIZING...</span>
+      <span class="text-[10px] font-mono text-purple-400 tracking-widest"
+        >VISUALIZING...</span
+      >
     </div>
   {/if}
 </div>
@@ -116,8 +134,8 @@
         <p class="text-gray-400 text-xs font-mono">{message.content}</p>
       </div>
     </div>
-    
-    <button 
+
+    <button
       class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
       onclick={() => (showLightbox = false)}
       aria-label="Close lightbox"

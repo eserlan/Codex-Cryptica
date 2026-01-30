@@ -1,5 +1,7 @@
 import { aiService, TIER_MODES } from "../services/ai";
 import { getDB } from "../utils/idb";
+import { graph } from "./graph.svelte";
+import { vault } from "./vault.svelte";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
@@ -95,7 +97,7 @@ class OracleStore {
     const db = await getDB();
     this.apiKey = (await db.get("settings", "ai_api_key")) || null;
     this.tier = (await db.get("settings", "ai_tier")) || "lite";
-    
+
     // Load chat history
     const savedMessages = await db.getAll("chat_history");
     if (savedMessages && savedMessages.length > 0) {
@@ -242,7 +244,8 @@ class OracleStore {
       return;
     }
 
-    const isImageRequest = this.detectImageIntent(query);
+    const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
+    const isImageRequest = !isCreateRequest && this.detectImageIntent(query);
 
     this.messages = [
       ...this.messages,
@@ -288,6 +291,7 @@ class OracleStore {
         await aiService.retrieveContext(
           searchQuery,
           alreadySentTitles,
+          vault,
           lastEntityId,
           isImageRequest,
         );
@@ -313,6 +317,7 @@ class OracleStore {
         // Text Generation Flow
         const history = this.messages.slice(0, -2);
         const modelName = TIER_MODES[this.tier];
+        let fullResponse = "";
         await aiService.generateResponse(
           key,
           query,
@@ -320,11 +325,60 @@ class OracleStore {
           context,
           modelName,
           (partial) => {
+            fullResponse = partial;
             this.messages[assistantMsgIndex].content = partial;
             this.lastUpdated = Date.now();
             this.broadcastThrottle();
           },
         );
+
+        // Auto-Creation Flow for /create
+        if (isCreateRequest && !import.meta.env.SSR) {
+          const { parseOracleResponse } = await import("editor-core");
+          const parsed = parseOracleResponse(fullResponse);
+
+          if (parsed.title && !vault.isGuest) {
+            try {
+              const type = (parsed.type || "npc") as any;
+              const id = await vault.createEntity(type, parsed.title, {
+                content: parsed.chronicle,
+                lore: parsed.lore,
+                connections: parsed.wikiLinks || []
+              });
+
+              // Provide visual confirmation
+              this.messages = [
+                ...this.messages,
+                {
+                  id: crypto.randomUUID(),
+                  role: "system",
+                  content: `✅ Automatically created node: **${parsed.title}** (${type.toUpperCase()})`
+                }
+              ];
+
+              this.messages[assistantMsgIndex].entityId = id;
+              vault.selectedEntityId = id;
+              vault.activeDetailTab = "status";
+
+              // Refit the graph to show the newly created entity
+              graph.requestFit();
+            } catch (e: any) {
+              console.error("[Oracle] Auto-create failed:", e);
+              const errorMsg = `❌ Auto-creation failed: ${e.message}`;
+              this.messages = [
+                ...this.messages,
+                {
+                  id: crypto.randomUUID(),
+                  role: "system",
+                  content: errorMsg
+                }
+              ];
+              // Also show a global notification for high-visibility failure
+              const { uiStore } = await import("$stores/ui.svelte");
+              uiStore.setGlobalError(errorMsg);
+            }
+          }
+        }
       }
     } catch (err: any) {
       this.messages = [

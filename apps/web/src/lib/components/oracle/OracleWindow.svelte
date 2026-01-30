@@ -93,7 +93,7 @@
 <!-- Toggle Button -->
 {#if !oracle.isOpen}
   <button
-    class="fixed bottom-4 right-6 md:bottom-18 md:left-6 w-10 h-10 bg-purple-900/10 border border-purple-500/30 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-900/30 hover:text-purple-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)] z-50 group overflow-hidden"
+    class="fixed bottom-4 right-6 md:bottom-28 md:left-6 w-10 h-10 bg-purple-900/10 border border-purple-500/30 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-900/30 hover:text-purple-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)] z-50 group overflow-hidden"
     onclick={() => oracle.toggle()}
     transition:fade
     title="Open Lore Oracle"

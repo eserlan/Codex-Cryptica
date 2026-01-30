@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "../app.css";
+	import { aiService } from "$lib/services/ai";
 	import VaultControls from "$lib/components/VaultControls.svelte";
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
@@ -187,6 +188,7 @@
 			(window as any).searchStore = searchStore;
 			(window as any).vault = vault;
 			(window as any).oracle = oracle;
+			(window as any).aiService = aiService;
 			(window as any).categories = categories;
 			(window as any).uiStore = uiStore;
 			(window as any).syncStats = syncStats;
