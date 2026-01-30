@@ -320,7 +320,7 @@
     style:top="{viewportY}px"
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
-    style:background-color="var(--color-accent-primary-alpha-10, rgba(74, 222, 128, 0.1))"
+    style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%, transparent)"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
@@ -449,6 +449,6 @@
 
   .viewport-rect:active {
     cursor: grabbing;
-    background-color: var(--color-accent-primary-alpha-20, rgba(74, 222, 128, 0.2));
+    background-color: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
   }
 </style>

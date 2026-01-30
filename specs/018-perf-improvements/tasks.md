@@ -96,7 +96,7 @@
 
 **Purpose**: Final verification and documentation.
 
-- [ ] T023 Run full performance profiling per `quickstart.md` to confirm SC-001 and SC-002
+- [x] T023 Run full performance profiling per `quickstart.md` to confirm SC-001 and SC-002
 - [x] T024 Code cleanup and removal of any lingering debug logs
 - [x] T025 [P] Update `README.md` if performance characteristics have significantly changed
-- [ ] T026 **Offline Functionality Verification** (Verify Service Worker caching after performance optimizations)
+- [x] T026 **Offline Functionality Verification** (Verify Service Worker caching after performance optimizations)

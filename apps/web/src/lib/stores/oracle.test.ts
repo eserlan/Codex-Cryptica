@@ -51,6 +51,7 @@ describe("OracleStore", () => {
     vi.clearAllMocks();
     oracle.messages = [];
     oracle.apiKey = null;
+    oracle.tier = "lite";
     oracle.isOpen = false;
     oracle.isLoading = false;
     // Mock crypto if needed
@@ -202,8 +203,12 @@ describe("OracleStore", () => {
       channel.onmessage(event as MessageEvent);
     }
 
-    // Messages should NOT have changed because timestamp matched
+    // All state should NOT have changed because timestamp matched
+    expect(oracle.messages).toHaveLength(1);
     expect(oracle.messages[0].content).toBe("local");
+    expect(oracle.apiKey).toBeNull();
+    expect(oracle.tier).toBe("lite");
+    expect(oracle.isLoading).toBe(false);
   });
 
   it("should perform sync if lastUpdated differs", () => {
