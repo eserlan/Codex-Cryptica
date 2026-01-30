@@ -46,7 +46,7 @@
 
     const handleKeydown = (e: KeyboardEvent) => {
         if (!helpStore.activeTour) return;
-        
+
         if (e.key === "Escape") {
             helpStore.skipTour();
         } else if (e.key === "ArrowRight") {
@@ -64,7 +64,7 @@
 
     let maskStyle = $derived.by(() => {
         if (!targetRect) return "";
-        
+
         const padding = 8;
         const x = targetRect.left - padding;
         const y = targetRect.top - padding;
@@ -112,18 +112,21 @@
 </script>
 
 {#if helpStore.activeTour && !isDisabled}
-    <div
-        class="fixed inset-0 z-[900] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
-        style={maskStyle}
-        transition:fade
-        role="presentation"
-    ></div>
+    {#if targetRect}
+        <div
+            class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
+            style={maskStyle}
+            transition:fade
+            role="presentation"
+        ></div>
+    {/if}
 
     {#if helpStore.currentStep}
-        <GuideTooltip 
-            step={helpStore.currentStep} 
-            {targetRect} 
-            isLast={helpStore.activeTour.currentStepIndex === helpStore.activeTour.steps.length - 1}
+        <GuideTooltip
+            step={helpStore.currentStep}
+            {targetRect}
+            isLast={helpStore.activeTour.currentStepIndex ===
+                helpStore.activeTour.steps.length - 1}
             current={helpStore.activeTour.currentStepIndex + 1}
             total={helpStore.activeTour.steps.length}
         />
