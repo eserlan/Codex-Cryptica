@@ -10,7 +10,7 @@ This feature addresses RAG visibility issues (like the "Named Cat" problem) and 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x / Node.js 20+
-**Primary Dependencies**: @google/generative-ai, FlexSearch, Svelte 5
+**Primary Dependencies**: @google/generative-ai FlexSearch, Svelte 5
 **Storage**: IndexedDB (Chat History), Markdown (Vault)
 **Testing**: Vitest, Playwright
 **Target Platform**: Browser / Mobile
