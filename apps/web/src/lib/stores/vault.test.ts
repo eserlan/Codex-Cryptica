@@ -59,9 +59,13 @@ function createCanvasMock() {
   return {
     getContext: () => ({
       drawImage: () => { },
+      clearRect: () => { },
     }),
     toBlob: (callback: (blob: Blob | null) => void) => {
       callback(new Blob(["thumb"], { type: "image/png" }));
+    },
+    convertToBlob: async () => {
+      return new Blob(["thumb"], { type: "image/webp" });
     },
     width: 0,
     height: 0,
@@ -251,6 +255,7 @@ describe("VaultStore", () => {
 
     vault.entities["test"] = {
       id: "test",
+      connections: [],
       _fsHandle: mockFileHandle,
       _path: ["test.md"],
     } as any;
@@ -387,18 +392,12 @@ describe("VaultStore", () => {
     // We just check that write was called for now.
   });
 
-  it("should compute inboundConnections correctly", () => {
+  it("should compute inboundConnections incrementally", () => {
     vault.entities["a"] = {
       id: "a",
       title: "Node A",
       type: "npc",
-      connections: [{ target: "b", type: "enemy", strength: 1 }],
-    } as any;
-    vault.entities["c"] = {
-      id: "c",
-      title: "Node C",
-      type: "npc",
-      connections: [{ target: "b", type: "friend", strength: 1 }],
+      connections: [],
     } as any;
     vault.entities["b"] = {
       id: "b",
@@ -407,16 +406,16 @@ describe("VaultStore", () => {
       connections: [],
     } as any;
 
-    vault.updateInboundConnections();
+    vault.addConnection("a", "b", "enemy");
+    
     const inbound = vault.inboundConnections;
-    expect(inbound["b"]).toHaveLength(2);
+    expect(inbound["b"]).toHaveLength(1);
     expect(inbound["b"]).toContainEqual({
       sourceId: "a",
       connection: expect.objectContaining({ target: "b", type: "enemy" }),
     });
-    expect(inbound["b"]).toContainEqual({
-      sourceId: "c",
-      connection: expect.objectContaining({ target: "b", type: "friend" }),
-    });
+
+    vault.removeConnection("a", "b");
+    expect(vault.inboundConnections["b"]).toBeUndefined();
   });
 });

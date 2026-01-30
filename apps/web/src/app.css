@@ -2,5 +2,29 @@
 @plugin "@iconify/tailwind4";
 
 @theme {
+
   --breakpoint-xs: 475px;
+
+}
+
+
+
+@layer base {
+
+  :root {
+
+    --color-bg-primary: #050505;
+
+    --color-accent-primary: #4ade80;
+
+    --color-accent-dim: #16a34a;
+
+    --color-accent-dark: #15803d;
+
+    --color-accent-deep: #14532d;
+
+    --color-border-primary: rgba(22, 163, 74, 0.5);
+
+  }
+
 }

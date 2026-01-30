@@ -38,7 +38,7 @@
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.2em;
-        color: #4ade80;
+        color: var(--color-accent-primary);
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid rgba(74, 222, 128, 0.2);
@@ -49,18 +49,18 @@
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.15em;
-        color: #4ade80;
+        color: var(--color-accent-primary);
         margin-top: 4rem;
         margin-bottom: 1.5rem;
         padding-bottom: 0.75rem;
-        border-bottom: 2px solid rgba(20, 83, 45, 0.4);
+        border-bottom: 2px solid var(--color-border-primary);
     }
 
     .legal-content :global(h3) {
         font-size: 1.125rem;
         font-weight: 800;
         text-transform: uppercase;
-        color: #4ade80;
+        color: var(--color-accent-primary);
         margin-top: 2.5rem;
         margin-bottom: 1rem;
     }
@@ -78,12 +78,12 @@
     }
 
     .legal-content :global(strong) {
-        color: #4ade80;
+        color: var(--color-accent-primary);
         font-weight: 700;
     }
 
     .legal-content :global(a) {
-        color: #4ade80;
+        color: var(--color-accent-primary);
         text-decoration: underline;
         text-decoration-thickness: 1px;
         text-underline-offset: 4px;

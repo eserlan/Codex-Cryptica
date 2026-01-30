@@ -7,7 +7,15 @@ import { searchService } from "../services/search";
 import { cacheService } from "../services/cache";
 import { aiService } from "../services/ai";
 
-export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle };
+// Module-level Canvas Pool for thumbnail generation (reduces GC pressure)
+const CanvasPool = {
+  canvas: typeof OffscreenCanvas !== 'undefined' ? new OffscreenCanvas(512, 512) : null,
+  get ctx() {
+    return this.canvas?.getContext('2d');
+  }
+};
+
+export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle; _path?: string | string[] };
 
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
@@ -22,15 +30,29 @@ class VaultStore {
    */
   inboundConnections = $state<Record<string, { sourceId: string; connection: Connection }[]>>({});
 
-  updateInboundConnections() {
-    const map: Record<string, { sourceId: string; connection: Connection }[]> = {};
-    for (const entity of Object.values(this.entities)) {
-      for (const conn of entity.connections) {
-        if (!map[conn.target]) map[conn.target] = [];
-        map[conn.target].push({ sourceId: entity.id, connection: conn });
+  /**
+   * Incremental Adjacency Map Updates (O(1))
+   */
+  private addInboundConnection(sourceId: string, connection: Connection) {
+    const targetId = connection.target;
+    if (!this.inboundConnections[targetId]) {
+      this.inboundConnections[targetId] = [];
+    }
+    // Prevent duplicates
+    if (!this.inboundConnections[targetId].some(c => c.sourceId === sourceId && c.connection.type === connection.type)) {
+      this.inboundConnections[targetId].push({ sourceId, connection });
+    }
+  }
+
+  private removeInboundConnection(sourceId: string, targetId: string) {
+    if (this.inboundConnections[targetId]) {
+      this.inboundConnections[targetId] = this.inboundConnections[targetId].filter(
+        c => c.sourceId !== sourceId
+      );
+      if (this.inboundConnections[targetId].length === 0) {
+        delete this.inboundConnections[targetId];
       }
     }
-    this.inboundConnections = map;
   }
 
   get allEntities() {
@@ -144,10 +166,8 @@ class VaultStore {
       // Clear index before reloading
       await searchService.clear();
 
-      // Reset entities or keep them? "loadFiles" usually implies a fresh load or refresh.
-      // If we want to be smooth, we might want to keep existing until replaced, but that handles deletions poorly.
-      // Let's clear start fresh but progressively.
       this.entities = {};
+      const newInboundMap: Record<string, { sourceId: string; connection: Connection }[]> = {};
 
       // Process files in parallel chunks to avoid overwhelming the system while staying fast
       const CHUNK_SIZE = 20;
@@ -230,6 +250,12 @@ class VaultStore {
 
               chunkEntities[entity.id] = entity;
 
+              // Build inbound map for this chunk
+              for (const conn of entity.connections) {
+                if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
+                newInboundMap[conn.target].push({ sourceId: entity.id, connection: conn });
+              }
+
               const metadataValues = Object.values(entity.metadata || {});
               const metadataKeywords = metadataValues.flatMap((value) => {
                 if (typeof value === "string") return [value];
@@ -272,7 +298,7 @@ class VaultStore {
         this.entities = { ...this.entities, ...chunkEntities };
       }
 
-      this.updateInboundConnections();
+      this.inboundConnections = newInboundMap;
     } finally {
       this.status = "idle";
     }
@@ -420,43 +446,23 @@ class VaultStore {
 
       img.onload = () => {
         URL.revokeObjectURL(url);
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+        
+        // Use pooled canvas/context to reduce GC pressure
+        const canvas = CanvasPool.canvas;
+        const ctx = CanvasPool.ctx;
 
-        if (!ctx) {
-          reject(new Error("Failed to initialize canvas context for thumbnail generation"));
-          return;
-        }
-
-        // Calculate dimensions to maintain aspect ratio
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > size) {
-            height *= size / width;
-            width = size;
+        if (!ctx || !canvas) {
+          // Fallback to standard canvas if OffscreenCanvas is unavailable or context fails
+          const fallbackCanvas = document.createElement("canvas");
+          const fallbackCtx = fallbackCanvas.getContext("2d");
+          if (!fallbackCtx) {
+            reject(new Error("Failed to initialize canvas context for thumbnail generation"));
+            return;
           }
+          this.drawOnCanvas(img, fallbackCanvas, fallbackCtx, size, resolve, reject);
         } else {
-          if (height > size) {
-            width *= size / height;
-            height = size;
-          }
+          this.drawOnCanvas(img, canvas, ctx as unknown as CanvasRenderingContext2D, size, resolve, reject);
         }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (result) => {
-            if (result) resolve(result);
-            else reject(new Error("Canvas toBlob failed"));
-          },
-          "image/webp",
-          0.75,
-        );
       };
 
       img.onerror = (err) => {
@@ -466,6 +472,46 @@ class VaultStore {
 
       img.src = url;
     });
+  }
+
+  private drawOnCanvas(
+    img: HTMLImageElement,
+    canvas: HTMLCanvasElement | OffscreenCanvas,
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+    size: number,
+    resolve: (blob: Blob) => void,
+    reject: (err: Error) => void
+  ) {
+    // Calculate dimensions to maintain aspect ratio
+    let width = img.width;
+    let height = img.height;
+
+    if (width > height) {
+      if (width > size) {
+        height *= size / width;
+        width = size;
+      }
+    } else {
+      if (height > size) {
+        width *= size / height;
+        height = size;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const blobPromise = 'toBlob' in canvas
+      ? new Promise<Blob | null>(r => (canvas as HTMLCanvasElement).toBlob(r, "image/webp", 0.75))
+      : (canvas as OffscreenCanvas).convertToBlob({ type: "image/webp", quality: 0.75 });
+
+    blobPromise.then((result) => {
+      if (result) resolve(result);
+      else reject(new Error("Canvas toBlob failed"));
+    }).catch(reject);
   }
 
   updateEntity(id: string, updates: Partial<Entity>): boolean {
@@ -558,7 +604,7 @@ class VaultStore {
       updatedAt: Date.now()
     });
 
-    this.updateInboundConnections();
+    // Note: new entities have no connections, so no inbound update needed
     return id;
   }
 
@@ -580,8 +626,15 @@ class VaultStore {
     // Remove from index
     await searchService.remove(id);
 
+    // Remove its connections from the inbound map
+    for (const conn of entity.connections) {
+      this.removeInboundConnection(id, conn.target);
+    }
+
+    // Also remove any inbound connections POINTING to this entity
+    delete this.inboundConnections[id];
+
     delete this.entities[id];
-    this.updateInboundConnections();
   }
 
   async refresh() {
@@ -602,7 +655,7 @@ class VaultStore {
     if (!source) return;
 
     if (
-      source.connections.some((c) => c.target === targetId && c.type === type)
+      source.connections.some((c: Connection) => c.target === targetId && c.type === type)
     ) {
       return;
     }
@@ -620,7 +673,7 @@ class VaultStore {
     };
 
     this.entities[sourceId] = updated;
-    this.updateInboundConnections();
+    this.addInboundConnection(sourceId, newConnection);
     this.scheduleSave(updated);
   }
 
@@ -633,18 +686,26 @@ class VaultStore {
     if (!source) return;
 
     const connIndex = source.connections.findIndex(
-      (c) => c.target === targetId,
+      (c: Connection) => c.target === targetId,
     );
     if (connIndex === -1) return;
 
-    const updated = { ...source };
-    updated.connections = [...source.connections];
-    updated.connections[connIndex] = {
-      ...updated.connections[connIndex],
+    const oldConnection = source.connections[connIndex];
+    const updatedConnection = {
+      ...oldConnection,
       ...updates,
     };
+
+    const updated = { ...source };
+    updated.connections = [...source.connections];
+    updated.connections[connIndex] = updatedConnection;
+
     this.entities[sourceId] = updated;
-    this.updateInboundConnections();
+    
+    // Update inbound map
+    this.removeInboundConnection(sourceId, targetId);
+    this.addInboundConnection(sourceId, updatedConnection);
+
     this.scheduleSave(updated);
   }
 
@@ -654,11 +715,11 @@ class VaultStore {
 
     const updated = {
       ...source,
-      connections: source.connections.filter((c) => c.target !== targetId),
+      connections: source.connections.filter((c: Connection) => c.target !== targetId),
     };
 
     this.entities[sourceId] = updated;
-    this.updateInboundConnections();
+    this.removeInboundConnection(sourceId, targetId);
     this.scheduleSave(updated);
   }
   async fetchLore(id: string) {

@@ -14,6 +14,7 @@ export interface ChatMessage {
 
 class OracleStore {
   messages = $state<ChatMessage[]>([]);
+  lastUpdated = $state<number>(Date.now());
   isOpen = $state(false);
   isLoading = $state(false);
   apiKey = $state<string | null>(null);
@@ -28,9 +29,13 @@ class OracleStore {
       this.channel.onmessage = (event) => {
         const { type, data } = event.data;
         if (type === "SYNC_STATE") {
-          // Avoid feedback loops by checking if data is actually different
+          // Optimization: Cheap timestamp check before deep JSON serialization
+          if (this.lastUpdated === data.lastUpdated) return;
+
+          // Fallback to content check if timestamps differ
           if (JSON.stringify(this.messages) !== JSON.stringify(data.messages)) {
             this.messages = data.messages;
+            this.lastUpdated = data.lastUpdated;
           }
           this.isLoading = data.isLoading;
           this.apiKey = data.apiKey;
@@ -50,6 +55,7 @@ class OracleStore {
       type: "SYNC_STATE",
       data: {
         messages: $state.snapshot(this.messages),
+        lastUpdated: this.lastUpdated,
         isLoading: this.isLoading,
         apiKey: this.apiKey,
         tier: this.tier
@@ -77,6 +83,7 @@ class OracleStore {
     const db = await getDB();
     await db.put("settings", tier, "ai_tier");
     this.tier = tier;
+    this.lastUpdated = Date.now();
     this.broadcast();
   }
 
@@ -84,6 +91,7 @@ class OracleStore {
     const db = await getDB();
     await db.put("settings", key, "ai_api_key");
     this.apiKey = key;
+    this.lastUpdated = Date.now();
     this.broadcast();
   }
 
@@ -93,6 +101,7 @@ class OracleStore {
     });
     this.apiKey = null;
     this.clearMessages();
+    this.lastUpdated = Date.now();
     this.broadcast();
   }
 
@@ -104,6 +113,7 @@ class OracleStore {
       }
     });
     this.messages = [];
+    this.lastUpdated = Date.now();
   }
 
   get isEnabled() {
@@ -192,6 +202,7 @@ class OracleStore {
       ...this.messages,
       { id: crypto.randomUUID(), role: "user", content: query },
     ];
+    this.lastUpdated = Date.now();
     this.isLoading = true;
     this.broadcast();
 
@@ -206,6 +217,7 @@ class OracleStore {
         type: isImageRequest ? "image" : "text",
       },
     ];
+    this.lastUpdated = Date.now();
 
     try {
       const alreadySentTitles = this.getSentTitles();
@@ -241,6 +253,7 @@ class OracleStore {
         this.messages[assistantMsgIndex].imageUrl = imageUrl;
         this.messages[assistantMsgIndex].imageBlob = blob;
         this.messages[assistantMsgIndex].content = `Generated visualization for: "${query}"`;
+        this.lastUpdated = Date.now();
         this.broadcast();
       } else {
         // Text Generation Flow
@@ -254,6 +267,7 @@ class OracleStore {
           modelName,
           (partial) => {
             this.messages[assistantMsgIndex].content = partial;
+            this.lastUpdated = Date.now();
             this.broadcastThrottle();
           },
         );
@@ -267,9 +281,11 @@ class OracleStore {
           content: err.message || "Error generating response.",
         },
       ];
+      this.lastUpdated = Date.now();
       this.broadcast();
     } finally {
       this.isLoading = false;
+      this.lastUpdated = Date.now();
       this.broadcast();
     }
   }
