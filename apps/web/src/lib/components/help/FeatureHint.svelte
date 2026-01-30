@@ -1,6 +1,6 @@
 <script lang="ts">
     import { helpStore } from "$stores/help.svelte";
-    import { fade, fly } from "svelte/transition";
+    import { fly } from "svelte/transition";
     import { FEATURE_HINTS } from "$lib/config/help-content";
 
     let { hintId } = $props<{ hintId: string }>();
@@ -20,6 +20,7 @@
                 onclick={() => helpStore.dismissHint(hintId)}
                 class="text-green-700 hover:text-green-400 transition-colors"
                 data-testid="dismiss-hint-button"
+                aria-label="Dismiss hint"
             >
                 <span class="icon-[lucide--x] w-3 h-3"></span>
             </button>

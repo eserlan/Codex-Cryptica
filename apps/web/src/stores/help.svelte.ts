@@ -1,6 +1,6 @@
 import { browser } from "$app/environment";
 import { VERSION } from "$lib/config";
-import { type GuideStep, type HelpArticle, type FeatureHint, ONBOARDING_TOUR, HELP_ARTICLES } from "$lib/config/help-content";
+import { type GuideStep, type HelpArticle, ONBOARDING_TOUR, HELP_ARTICLES } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
@@ -47,32 +47,40 @@ class HelpStore {
         if (saved) {
             try {
                 const loaded = JSON.parse(saved);
-                this.state.completedTours = loaded.completedTours || [];
-                this.state.dismissedHints = loaded.dismissedHints || [];
-                
-                // Version Tracking
-                if (loaded.lastSeenVersion !== VERSION) {
-                    console.log(`[HelpStore] Version updated: ${loaded.lastSeenVersion} -> ${VERSION}`);
-                    this.state.lastSeenVersion = VERSION;
-                    this.save();
-                    // Future: Trigger specific "What's New" tours here
+                if (loaded && typeof loaded === "object") {
+                    this.state.completedTours = loaded.completedTours || [];
+                    this.state.dismissedHints = loaded.dismissedHints || [];
+
+                    // Version Tracking
+                    if (loaded.lastSeenVersion !== VERSION) {
+                        console.log(
+                            `[HelpStore] Version updated: ${loaded.lastSeenVersion} -> ${VERSION}`,
+                        );
+                        this.state.lastSeenVersion = VERSION;
+                        this.save();
+                        // Future: Trigger specific "What's New" tours here
+                    }
                 }
             } catch (e) {
                 console.error("Failed to load help state", e);
             }
         }
 
+        this.buildIndex();
+    }
+
+    private buildIndex() {
         // Initialize FlexSearch
         this.index = new FlexSearch.Document({
             document: {
                 id: "id",
                 index: ["title", "tags", "content"],
-                store: true
+                store: true,
             },
-            tokenize: "forward"
+            tokenize: "forward",
         });
 
-        HELP_ARTICLES.forEach(article => this.index.add(article));
+        HELP_ARTICLES.forEach((article) => this.index.add(article));
         this.searchResults = HELP_ARTICLES;
     }
 
@@ -85,6 +93,8 @@ class HelpStore {
     // --- Tour Methods ---
 
     startTour(id: string) {
+        if (browser && (window as any).DISABLE_ONBOARDING) return;
+        
         if (id === "initial-onboarding") {
             this.activeTour = {
                 id,
@@ -131,7 +141,7 @@ class HelpStore {
     setSearchQuery(query: string) {
         this.searchQuery = query;
         if (!this.index) {
-            this.init();
+            this.buildIndex();
         }
         if (!query) {
             this.searchResults = HELP_ARTICLES;

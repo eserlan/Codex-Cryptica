@@ -1,6 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("MarkdownEditor", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
+  });
+
   test("initializes with content and updates output", async ({ page }) => {
     await page.goto("/test/markdown-editor");
 

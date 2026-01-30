@@ -56,7 +56,6 @@
         const y = targetRect.top - padding;
         const w = targetRect.width + padding * 2;
         const h = targetRect.height + padding * 2;
-        const r = 8; // rounded corners for the spotlight
 
         // SVG mask approach for maximum compatibility and sharpness
         return `clip-path: polygon(
@@ -77,7 +76,7 @@
 {#if helpStore.activeTour && !isDisabled}
     <div
         class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
-        style="pointer-events: none; {maskStyle}"
+        style={maskStyle}
         transition:fade
         role="presentation"
     ></div>
@@ -94,11 +93,4 @@
 {/if}
 
 <style>
-    /* Ensure the target element is "above" everything else conceptually, 
-       even though we are using a mask on the overlay */
-    :global(.tour-highlight) {
-        position: relative;
-        z-index: 201 !important;
-        pointer-events: none;
-    }
 </style>

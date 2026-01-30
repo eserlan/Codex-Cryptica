@@ -52,7 +52,8 @@
 				message.includes("isHeadless") ||
 				message.includes("notify") ||
 				message.includes("INTERNET_DISCONNECTED") ||
-				message.includes("Fetch")
+				message.includes("Failed to fetch") ||
+				message.includes("NetworkError")
 			) {
 				return;
 			}

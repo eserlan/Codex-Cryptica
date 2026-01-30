@@ -9,6 +9,7 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
     test.beforeEach(async ({ page }) => {
         // Mock File System Access API for vault
         await page.addInitScript(() => {
+            (window as any).DISABLE_ONBOARDING = true;
             const files = [
                 {
                     name: "TestEntity.md",

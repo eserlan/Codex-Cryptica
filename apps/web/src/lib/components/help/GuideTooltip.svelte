@@ -1,7 +1,8 @@
 <script lang="ts">
     import { helpStore } from "$stores/help.svelte";
-    import { fly, fade } from "svelte/transition";
+    import { fly } from "svelte/transition";
     import { parse } from "marked";
+    import DOMPurify from "isomorphic-dompurify";
     import type { GuideStep } from "$lib/config/help-content";
 
     let { step, targetRect, isLast, current, total } = $props<{
@@ -93,7 +94,7 @@
     <div class="p-5">
         <h3 class="text-green-400 text-sm font-bold mb-2 uppercase tracking-wider">{step.title}</h3>
         <div class="text-green-100/80 text-xs leading-relaxed prose prose-invert prose-p:my-1 prose-strong:text-green-400 prose-code:text-green-300">
-            {@html parse(step.content)}
+            {@html DOMPurify.sanitize(parse(step.content) as string)}
         </div>
     </div>
 

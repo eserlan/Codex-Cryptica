@@ -1,6 +1,7 @@
 <script lang="ts">
     import { helpStore } from "$stores/help.svelte";
     import { parse } from "marked";
+    import DOMPurify from "isomorphic-dompurify";
     import { slide } from "svelte/transition";
 
     let expandedId = $state<string | null>(null);
@@ -46,7 +47,7 @@
                         transition:slide
                     >
                         <div class="text-xs text-green-100/80 leading-relaxed prose prose-invert prose-p:my-2 prose-headings:text-green-500 prose-headings:text-xs prose-headings:font-bold prose-headings:uppercase prose-headings:tracking-widest prose-headings:mt-4 prose-headings:mb-2 prose-strong:text-green-400 prose-code:text-green-300">
-                            {@html parse(article.content)}
+                            {@html DOMPurify.sanitize(parse(article.content) as string)}
                         </div>
                     </div>
                 {/if}
