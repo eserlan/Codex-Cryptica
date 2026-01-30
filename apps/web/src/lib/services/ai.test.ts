@@ -114,12 +114,12 @@ describe("AIService Context Retrieval", () => {
         // Outbound case
         const { content: contentOut } = await aiService.retrieveContext("The Woods", new Set(), undefined, false);
         expect(contentOut).toContain("--- Connections ---");
-        expect(contentOut).toContain("- Ancient Dweller: The Crone");
+        expect(contentOut).toContain("- The Woods → Ancient Dweller → The Crone");
 
         // Inbound case
         const { content: contentIn } = await aiService.retrieveContext("The Crone", new Set(), undefined, false);
         expect(contentIn).toContain("--- Connections ---");
-        expect(contentIn).toContain("- The Woods: inhabited_by");
+        expect(contentIn).toContain("- The Woods → inhabited_by → The Crone");
     });
 
     it("should handle missing entities in connection context gracefully", async () => {
