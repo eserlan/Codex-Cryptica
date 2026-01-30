@@ -8,6 +8,7 @@ test.describe("Vault E2E", () => {
 
     // Setup default empty vault mock
     await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
       // Intercept IndexedDB to handle DataCloneError with mock handles
       // instead of completely mocking the entire API which is brittle.
       const originalPut = IDBObjectStore.prototype.put;

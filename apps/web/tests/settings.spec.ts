@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Settings Modal", () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
         await page.goto("/");
+        // removed eval
         // Wait for app to be ready
         await page.waitForFunction(() => (window as any).uiStore !== undefined);
     });
@@ -20,17 +22,17 @@ test.describe("Settings Modal", () => {
         await expect(vaultHeading).toBeVisible();
 
         // 3. Switch to Intelligence tab
-        await page.click('nav button:has-text("Intelligence")');
+        await page.click('[role="tab"]:has-text("Intelligence")');
         await expect(page.locator('h2', { hasText: 'Intelligence' })).toBeVisible();
         await expect(page.locator('text=Lore Oracle (Gemini AI)')).toBeVisible();
 
         // 4. Switch to Schema tab
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
         await expect(page.locator('text=Define the ontology of your world')).toBeVisible();
 
         // 5. Switch to About tab
-        await page.click('nav button:has-text("About")');
+        await page.click('[role="tab"]:has-text("About")');
         await expect(page.locator('h2', { hasText: 'About' })).toBeVisible();
         await expect(page.locator('text=Manifest')).toBeVisible();
 
@@ -43,7 +45,7 @@ test.describe("Settings Modal", () => {
         const settingsBtn = page.locator('button[data-testid="settings-button"]');
         await expect(settingsBtn).toBeVisible();
         await settingsBtn.click();
-        await page.click('nav button:has-text("Cloud Sync")');
+        await page.click('[role="tab"]:has-text("Cloud Sync")');
         await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Cloud Sync' })).toBeVisible();
     });
@@ -51,13 +53,13 @@ test.describe("Settings Modal", () => {
     test("should function correctly in offline mode", async ({ page, context }) => {
         // 1. Go offline
         await context.setOffline(true);
-        
+
         // 2. Open settings
         await page.click('button[title="Application Settings"]');
         await expect(page.locator('h2', { hasText: 'Vault' })).toBeVisible();
 
         // 3. Switch tabs
-        await page.click('nav button:has-text("Intelligence")');
+        await page.click('[role="tab"]:has-text("Intelligence")');
         await expect(page.locator('h2', { hasText: 'Intelligence' })).toBeVisible();
 
         // 4. Go back online

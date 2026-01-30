@@ -81,6 +81,7 @@
             <button
                 class="px-3 md:px-4 py-1.5 bg-green-600 hover:bg-green-500 text-black rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
                 onclick={() => vault.openDirectory()}
+                data-testid="open-vault-button"
             >
                 OPEN <span class="hidden xs:inline">VAULT</span>
             </button>

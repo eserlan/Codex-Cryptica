@@ -3,6 +3,7 @@ import { test } from "@playwright/test";
 test("Open Vault button calls showDirectoryPicker", async ({ page }) => {
   // Mock window.showDirectoryPicker
   await page.addInitScript(() => {
+    (window as any).DISABLE_ONBOARDING = true;
     // @ts-expect-error - Mock browser API
     window.showDirectoryPicker = async () => {
       console.log("MOCK: showDirectoryPicker called");
@@ -22,6 +23,7 @@ test("Open Vault button calls showDirectoryPicker", async ({ page }) => {
   });
 
   await page.goto("/");
+  // removed eval
 
   // Check for console log to verify mock call
   const consolePromise = page.waitForEvent(

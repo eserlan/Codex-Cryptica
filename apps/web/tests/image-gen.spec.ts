@@ -4,6 +4,7 @@ test.describe("Oracle Image Generation", () => {
     test.beforeEach(async ({ page }) => {
         // Inject mocks and keep them persistent
         await page.addInitScript(() => {
+            (window as any).DISABLE_ONBOARDING = true;
             const applyMocks = () => {
                 if ((window as any).oracle) {
                     (window as any).oracle.apiKey = "fake-key";

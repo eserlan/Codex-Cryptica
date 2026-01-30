@@ -15,6 +15,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - OPFS (Origin Private File System), IndexedDB (via `idb`) (018-perf-improvements)
 - TypeScript 5.x / Node.js 20+ + @google/generative-ai, FlexSearch, Svelte 5 (019-oracle-rag-improvements)
 - IndexedDB (Chat History), Markdown (Vault) (019-oracle-rag-improvements)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, FlexSearch, marked (markdown parsing) (020-help-guide-system)
+- LocalStorage (progress tracking), Static JSON/Markdown (content) (020-help-guide-system)
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
@@ -45,9 +47,9 @@ npm test; npm run lint
 TypeScript: Follow standard conventions
 
 ## Recent Changes
+- 020-help-guide-system: Added TypeScript 5.x / Node.js 20+ + Svelte 5, FlexSearch, marked (markdown parsing)
 - 019-oracle-rag-improvements: Added TypeScript 5.x / Node.js 20+ + @google/generative-ai, FlexSearch, Svelte 5
 - 018-perf-improvements: Added TypeScript 5.x, Node.js 20+ + Svelte 5, Cytoscape.js, `@google/generative-ai`
-- 017-sync-refinement: Added TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb`
 
 
 <!-- MANUAL ADDITIONS START -->

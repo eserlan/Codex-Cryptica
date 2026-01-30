@@ -97,6 +97,7 @@
     onclick={() => oracle.toggle()}
     transition:fade
     title="Open Lore Oracle"
+    data-testid="oracle-orb"
   >
     <!-- Internal Orb Content -->
     <div

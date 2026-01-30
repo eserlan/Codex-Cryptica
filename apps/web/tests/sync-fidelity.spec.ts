@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Sync Fidelity & Binary Safety", () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
         await page.goto("/");
         // Wait for app to be ready
         await page.waitForFunction(() => (window as any).uiStore !== undefined);
@@ -19,7 +20,7 @@ test.describe("Sync Fidelity & Binary Safety", () => {
             (window as any).gapi = {
                 client: {
                     getToken: () => ({ access_token: 'mock-token' }),
-                    setToken: () => {}
+                    setToken: () => { }
                 }
             };
         });

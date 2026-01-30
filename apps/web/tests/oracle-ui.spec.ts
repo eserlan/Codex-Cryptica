@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Oracle UI - Elastic Input", () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
         await page.goto("/");
+        // removed eval
 
         // Enable Oracle by adding a dummy API key to IndexedDB
         await page.evaluate(async () => {
