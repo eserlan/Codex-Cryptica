@@ -10,6 +10,7 @@ export interface ChatMessage {
   imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
   archiveTargetId?: string; // ID of the entity where the user wants to archive this message
+  sources?: string[]; // IDs of entities consulted for this message (FR-001)
 }
 
 class OracleStore {
@@ -61,6 +62,23 @@ class OracleStore {
         tier: this.tier
       }
     });
+    this.saveToDB();
+  }
+
+  private async saveToDB() {
+    const db = await getDB();
+    const tx = db.transaction("chat_history", "readwrite");
+    await tx.store.clear();
+    for (const msg of $state.snapshot(this.messages)) {
+      // Don't persist blobs or temporary URLs
+      const toPersist = { ...msg };
+      delete toPersist.imageBlob;
+      if (toPersist.imageUrl?.startsWith("blob:")) {
+        delete toPersist.imageUrl;
+      }
+      await tx.store.put(toPersist);
+    }
+    await tx.done;
   }
 
   private lastBroadcast = 0;
@@ -76,6 +94,13 @@ class OracleStore {
     const db = await getDB();
     this.apiKey = (await db.get("settings", "ai_api_key")) || null;
     this.tier = (await db.get("settings", "ai_tier")) || "lite";
+    
+    // Load chat history
+    const savedMessages = await db.getAll("chat_history");
+    if (savedMessages && savedMessages.length > 0) {
+      this.messages = savedMessages;
+    }
+
     this.broadcast();
   }
 
@@ -196,6 +221,21 @@ class OracleStore {
     const key = this.effectiveApiKey;
     if (!query.trim() || !key) return;
 
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      this.messages = [
+        ...this.messages,
+        { id: crypto.randomUUID(), role: "user", content: query },
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: "The Oracle is currently offline. Conversational expansion and AI generation are suspended, but local retrieval will attempt to find matches for your raw query.",
+        },
+      ];
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      return;
+    }
+
     const isImageRequest = this.detectImageIntent(query);
 
     this.messages = [
@@ -222,6 +262,12 @@ class OracleStore {
     try {
       const alreadySentTitles = this.getSentTitles();
 
+      // Expand query if it's a follow-up (FR-004)
+      let searchQuery = query;
+      if (this.messages.length > 2 && !isImageRequest) {
+        searchQuery = await aiService.expandQuery(key, query, this.messages.slice(0, -2));
+      }
+
       // Identify the last entity we were talking about
       let lastEntityId: string | undefined;
       for (let i = this.messages.length - 1; i >= 0; i--) {
@@ -231,9 +277,9 @@ class OracleStore {
         }
       }
 
-      const { content: context, primaryEntityId } =
+      const { content: context, primaryEntityId, sourceIds } =
         await aiService.retrieveContext(
-          query,
+          searchQuery,
           alreadySentTitles,
           lastEntityId,
           isImageRequest,
@@ -242,6 +288,7 @@ class OracleStore {
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
       this.messages[assistantMsgIndex].entityId = primaryEntityId;
+      this.messages[assistantMsgIndex].sources = sourceIds;
 
       if (isImageRequest) {
         // Image Generation Flow

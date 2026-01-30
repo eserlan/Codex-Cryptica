@@ -11,8 +11,57 @@ export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: GenerativeModel | null = null;
   private currentApiKey: string | null = null;
-  private currentModelName: string | null = null;
+  currentModelName: string | null = null;
   private styleCache: string | null = null;
+
+  /**
+   * Transforms a conversational query into a standalone search term using the Lite model (FR-004).
+   */
+  async expandQuery(
+    apiKey: string,
+    query: string,
+    history: any[],
+  ): Promise<string> {
+    try {
+      const liteModel = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+        model: TIER_MODES.lite,
+      });
+
+      const conversationContext = history
+        .slice(-4) // Last 2 turns
+        .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+        .join("\n");
+
+      const prompt = `Given the following conversation history and a new user query, re-write the query into a standalone, descriptive search term that captures the user's intent. 
+Focus on resolving pronouns (he, she, it, they, that place) based on the history.
+If the query is already standalone, return it as is.
+
+CONVERSATION HISTORY:
+${conversationContext}
+
+USER QUERY: ${query}
+
+STANDALONE SEARCH QUERY:`;
+
+      const result = await liteModel.generateContent(prompt);
+      const expanded = result.response.text().trim();
+      console.log(`[AIService] Expanded query: "${query}" -> "${expanded}"`);
+      return expanded;
+    } catch (err) {
+      console.error("[AIService] Query expansion failed, using original:", err);
+      return query;
+    }
+  }
+
+  /**
+   * Concatenates lore and content fields for comprehensive context visibility (FR-006).
+   */
+  getConsolidatedContext(entity: any): string {
+    const parts = [];
+    if (entity.lore?.trim()) parts.push(entity.lore.trim());
+    if (entity.content?.trim()) parts.push(entity.content.trim());
+    return parts.join("\n\n");
+  }
 
   init(apiKey: string, modelName: string) {
     // Re-initialize if key or model has changed
@@ -206,7 +255,7 @@ User visualization request: ${query}`;
     excludeTitles: Set<string>,
     lastEntityId?: string,
     isImage: boolean = false,
-  ): Promise<{ content: string; primaryEntityId?: string }> {
+  ): Promise<{ content: string; primaryEntityId?: string; sourceIds: string[] }> {
     // 1. Style Search: If this is an image request, look for a style guide or aesthetic note
     let styleContext = "";
     if (isImage) {
@@ -220,7 +269,7 @@ User visualization request: ${query}`;
         if (styleResults.length > 0 && styleResults[0].score > 0.5) {
           const styleEntity = vault.entities[styleResults[0].id];
           if (styleEntity) {
-            styleContext = `--- GLOBAL ART STYLE ---\n${styleEntity.content || styleEntity.lore || ""}\n\n`;
+            styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
             this.styleCache = styleContext;
           }
         } else {
@@ -236,12 +285,29 @@ User visualization request: ${query}`;
     if (results.length === 0) {
       const keywords = query
         .toLowerCase()
-        .replace(/[^\w\s']/g, '')
+        .replace(/[^\w\s']/g, "")
         .split(/\s+/)
-        .filter(w => w.length > 2 && !['the', 'and', 'was', 'for', 'who', 'how', 'did', 'his', 'her', 'they', 'with', 'from'].includes(w));
+        .filter(
+          (w) =>
+            w.length > 2 &&
+            ![
+              "the",
+              "and",
+              "was",
+              "for",
+              "who",
+              "how",
+              "did",
+              "his",
+              "her",
+              "they",
+              "with",
+              "from",
+            ].includes(w),
+        );
 
       if (keywords.length > 0) {
-        results = await searchService.search(keywords.join(' '), { limit: 5 });
+        results = await searchService.search(keywords.join(" "), { limit: 5 });
       }
     }
 
@@ -249,15 +315,10 @@ User visualization request: ${query}`;
     const activeId = vault.selectedEntityId;
 
     // 3. Identification of primary target
-    // We use a multi-layered priority system:
-    // 1. Explicit Title Match in Query (High Confidence)
-    // 2. High Confidence Search Result (Score >= 0.6)
-    // 3. Sticky Conversation Context (If it's a follow-up)
-    // 4. Active Viewer Selection (Default Fallback)
-
     const explicitSubject = this.findExplicitSubject(query);
     const topSearchResult = results[0];
-    const isHighConfidenceSearch = topSearchResult && topSearchResult.score >= 0.6;
+    const isHighConfidenceSearch =
+      topSearchResult && topSearchResult.score >= 0.6;
     const isFollowUp = this.isFollowUp(query);
 
     let primaryEntityId: string | undefined;
@@ -269,90 +330,127 @@ User visualization request: ${query}`;
     } else if (isFollowUp && lastEntityId) {
       primaryEntityId = lastEntityId;
     } else {
-      primaryEntityId = activeId || (topSearchResult?.id);
+      primaryEntityId = activeId || topSearchResult?.id;
     }
 
-    const searchIds = results.map(r => r.id);
+    // 4. Build Prioritized Context (FR-005, FR-006)
+    // Priorities: 1. Selected, 2. Direct Matches, 3. Subjects, 4. Neighbors (later)
+    const contextMap = new Map<string, string>();
+    const sourceIds: string[] = [];
+    const MAX_CHARS = 10000;
+    let currentTotal = styleContext.length;
 
-    // Build the collection of IDs to fetch context for
-    const potentialIds = Array.from(new Set([...searchIds]));
+    const addEntityToContext = (id: string, isEnrichment: boolean = false) => {
+      if (contextMap.has(id)) return;
+      const entity = vault.entities[id];
+      if (!entity || excludeTitles.has(entity.title)) return;
 
-    // Ensure the primary target is ALWAYS in the context
-    if (primaryEntityId && !potentialIds.includes(primaryEntityId)) {
-      potentialIds.unshift(primaryEntityId);
-    }
+      const mainContent = this.getConsolidatedContext(entity);
+      if (!mainContent) return;
 
-    // Add sticky entity for context if it wasn't the primary but we have it.
-    // Avoid mixing a different "last" entity when a high-confidence search
-    // has already determined a distinct primary entity.
-    if (
-      lastEntityId &&
-      !potentialIds.includes(lastEntityId) &&
-      !(isHighConfidenceSearch && primaryEntityId && primaryEntityId !== lastEntityId)
-    ) {
-      potentialIds.push(lastEntityId);
-    }
+      const isActive = id === activeId;
+      const prefix = isActive ? "[ACTIVE FILE] " : "";
+      
+      // 4b. Add Connection Context
+      let connectionContext = "";
+      const outbound = entity.connections.map((c) => {
+        const targetEntity = vault.entities[c.target];
+        const target =
+          targetEntity && targetEntity.title
+            ? targetEntity.title
+            : `[missing entity: ${c.target}]`;
+        return `- ${entity.title} → ${c.label || c.type} → ${target}`;
+      });
 
-    // Add active entity for RAG context
-    if (activeId && !potentialIds.includes(activeId)) {
-      potentialIds.push(activeId);
-    }
+      const inbound = (vault.inboundConnections[id] || []).map((item) => {
+        const sourceEntity = vault.entities[item.sourceId];
+        const source =
+          sourceEntity && sourceEntity.title
+            ? sourceEntity.title
+            : `[missing entity: ${item.sourceId}]`;
+        return `- ${source} → ${item.connection.label || item.connection.type} → ${entity.title}`;
+      });
 
-    // 4. Filter for NEW titles only
-    const contents = potentialIds
-      .map(id => {
-        const entity = vault.entities[id];
-        if (!entity) return null;
+      if (outbound.length > 0 || inbound.length > 0) {
+        connectionContext =
+          "\n--- Connections ---\n" + [...outbound, ...inbound].join("\n");
+      }
 
-        // Skip if this title was already sent in the history
-        if (excludeTitles.has(entity.title)) return null;
-
-        const mainContent = entity.content?.trim() || entity.lore?.trim();
-        if (!mainContent) return null;
-
-        const isActive = id === activeId;
-        const prefix = isActive ? "[ACTIVE FILE] " : "";
-        const truncated = mainContent.slice(0, 10000);
-
-        // 4b. Add Connection Context
-        let connectionContext = "";
-        const outbound = entity.connections.map(c => {
-          const targetEntity = vault.entities[c.target];
-          const target =
-            targetEntity && targetEntity.title
-              ? targetEntity.title
-              : `[missing entity: ${c.target}]`;
-          return `- ${entity.title} → ${c.label || c.type} → ${target}`;
-        });
-
-        const inbound = (vault.inboundConnections[id] || []).map(item => {
-          const sourceEntity = vault.entities[item.sourceId];
-          const source =
-            sourceEntity && sourceEntity.title
-              ? sourceEntity.title
-              : `[missing entity: ${item.sourceId}]`;
-          return `- ${source} → ${item.connection.label || item.connection.type} → ${entity.title}`;
-        });
-
-        if (outbound.length > 0 || inbound.length > 0) {
-          connectionContext = "\n--- Connections ---\n" + [...outbound, ...inbound].join("\n");
+      const header = `--- ${prefix}File: ${entity.title} ---\n`;
+      const fullSnippet = `${header}${mainContent}${connectionContext}`;
+      
+      // Ensure we don't exceed limit
+      if (currentTotal + fullSnippet.length > MAX_CHARS) {
+        // If it's a primary match, we might want to truncate just this entity
+        if (!isEnrichment) {
+          const allowed = MAX_CHARS - currentTotal - header.length - 20; // 20 for buffer
+          if (allowed > 100) {
+            const truncated = mainContent.slice(0, allowed) + "... [truncated]";
+            contextMap.set(id, `${header}${truncated}`);
+            sourceIds.push(id);
+            currentTotal = MAX_CHARS; // Effectively full
+          }
         }
+        return;
+      }
 
-        return `--- ${prefix}File: ${entity.title} ---\n${truncated}${connectionContext}`;
-      })
-      .filter((c): c is string => c !== null);
+      contextMap.set(id, fullSnippet);
+      sourceIds.push(id);
+      currentTotal += fullSnippet.length + 2; // +2 for newlines
+    };
 
-    // 5. Last resort: If we have NO lore context yet in this whole conversation, provide titles
-    if (contents.length === 0 && excludeTitles.size === 0) {
-      const allTitles = Object.values(vault.entities).map(e => e.title).join(", ");
+    // Priority 1: Active Entity
+    if (activeId) addEntityToContext(activeId);
+
+    // Priority 2: Direct Search Matches
+    for (const res of results) {
+      if (currentTotal >= MAX_CHARS) break;
+      addEntityToContext(res.id);
+    }
+
+    // Priority 3: Conversation Subject
+    if (lastEntityId && currentTotal < MAX_CHARS) {
+      addEntityToContext(lastEntityId);
+    }
+
+    // Priority 4: Neighborhood Enrichment (FR-003)
+    // Only enrich top 3 results to avoid noise
+    const topResults = results.slice(0, 3);
+    for (const res of topResults) {
+      if (currentTotal >= MAX_CHARS) break;
+      const entity = vault.entities[res.id];
+      if (!entity) continue;
+
+      // Enrich with outbound neighbors
+      for (const conn of entity.connections) {
+        if (currentTotal >= MAX_CHARS) break;
+        // Neighbors are marked as enrichment to allow harsher truncation if needed
+        addEntityToContext(conn.target, true);
+      }
+    }
+
+    if (sourceIds.length > 0) {
+      console.log(
+        `[AIService] Consulted ${sourceIds.length} records:`,
+        sourceIds,
+      );
+    }
+
+    // 5. Last resort: If we have NO lore context yet, provide titles
+    let finalContent = Array.from(contextMap.values()).join("\n\n");
+    if (contextMap.size === 0 && excludeTitles.size === 0) {
+      const allTitles = Object.values(vault.entities)
+        .map((e) => e.title)
+        .join(", ");
       if (allTitles) {
-        contents.push(`--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`);
+        finalContent = `--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`;
       }
     }
 
     return {
-      content: styleContext + contents.join("\n\n"),
+      content: styleContext + finalContent,
       primaryEntityId: primaryEntityId || undefined,
+      sourceIds,
     };
   }
 

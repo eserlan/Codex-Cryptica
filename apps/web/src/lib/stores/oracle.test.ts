@@ -29,6 +29,14 @@ vi.mock("../utils/idb", () => ({
     get: vi.fn(),
     put: vi.fn(),
     delete: vi.fn(),
+    getAll: vi.fn().mockResolvedValue([]),
+    transaction: vi.fn().mockReturnValue({
+      store: {
+        clear: vi.fn(),
+        put: vi.fn(),
+      },
+      done: Promise.resolve(),
+    }),
   }),
 }));
 

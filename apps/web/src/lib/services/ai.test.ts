@@ -13,15 +13,25 @@ vi.mock("../stores/vault.svelte", () => ({
 
 vi.mock("./search", () => ({
     searchService: {
-        search: vi.fn(),
+        search: vi.fn().mockResolvedValue([]),
     },
 }));
 
-vi.mock("@google/generative-ai", () => ({
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-        getGenerativeModel: vi.fn(),
-    })),
-}));
+const mockModel = {
+    generateContent: vi.fn(),
+    startChat: vi.fn(),
+    sendMessageStream: vi.fn(),
+};
+
+vi.mock("@google/generative-ai", () => {
+    return {
+        GoogleGenerativeAI: vi.fn().mockImplementation(function() {
+            return {
+                getGenerativeModel: vi.fn().mockReturnValue(mockModel),
+            };
+        }),
+    };
+});
 
 describe("AIService Context Retrieval", () => {
     beforeEach(() => {
@@ -35,7 +45,19 @@ describe("AIService Context Retrieval", () => {
         };
         (vault as any).selectedEntityId = null;
         (vault as any).inboundConnections = {};
-        vi.mocked(searchService.search).mockResolvedValue([]);
+        
+        // Default search mock: return match if query includes title with word boundaries
+        vi.mocked(searchService.search).mockImplementation(async (q) => {
+            const results = [];
+            for (const id in (vault as any).entities) {
+                const entity = (vault as any).entities[id];
+                const pattern = new RegExp(`\\b${entity.title}\\b`, "i");
+                if (pattern.test(q)) {
+                    results.push({ id, title: entity.title, score: 0.9, matchType: "title", path: "" });
+                }
+            }
+            return results;
+        });
         
         // Mock clearStyleCache if it doesn't exist on the instance
         if (!(aiService as any).clearStyleCache) {
@@ -135,6 +157,110 @@ describe("AIService Context Retrieval", () => {
         (vault as any).selectedEntityId = "crone-id";
         const { primaryEntityId } = await aiService.retrieveContext("it", new Set(), "guardsman-id", false);
         expect(primaryEntityId).toBe("guardsman-id");
+    });
+
+    describe("Context Fusion & Prioritization", () => {
+        it("should combine Lore and Content in context (Context Fusion)", async () => {
+            (vault as any).entities["fusion-id"] = {
+                id: "fusion-id",
+                title: "Fusion Entity",
+                content: "This is content.",
+                lore: "This is secret lore.",
+                connections: [],
+                tags: []
+            };
+
+            const { content } = await aiService.retrieveContext("Fusion Entity", new Set(), undefined, false);
+            expect(content).toContain("This is secret lore.");
+            expect(content).toContain("This is content.");
+        });
+
+        it("should respect 10k character limit and prioritize selected entity", async () => {
+            const longText = "A".repeat(6000);
+            (vault as any).entities["active-id"] = {
+                id: "active-id",
+                title: "Active",
+                content: longText,
+                connections: [],
+                tags: []
+            };
+            (vault as any).entities["match-id"] = {
+                id: "match-id",
+                title: "Match",
+                content: longText,
+                connections: [],
+                tags: []
+            };
+
+            (vault as any).selectedEntityId = "active-id";
+            vi.mocked(searchService.search).mockResolvedValue([
+                { id: "match-id", title: "Match", score: 0.9, matchType: "title", path: "" }
+            ]);
+
+            const { content, sourceIds } = await aiService.retrieveContext("query", new Set(), undefined, false);
+            
+            // Total should be around 10k
+            expect(content.length).toBeLessThanOrEqual(10100); // Allow for headers/newlines
+            expect(sourceIds).toContain("active-id");
+            expect(sourceIds).toContain("match-id");
+            // Active should be full, Match should be truncated
+            expect(content).toContain("Active");
+            expect(content).toContain("Match");
+            expect(content).toContain("[truncated]");
+        });
+
+        it("should populate sourceIds for all consulted entities", async () => {
+            vi.mocked(searchService.search).mockResolvedValue([
+                { id: "woods-id", title: "The Woods", score: 0.9, matchType: "title", path: "" },
+                { id: "crone-id", title: "The Crone", score: 0.8, matchType: "title", path: "" }
+            ]);
+
+            const { sourceIds } = await aiService.retrieveContext("The Woods and Crone", new Set(), undefined, false);
+            expect(sourceIds).toContain("woods-id");
+            expect(sourceIds).toContain("crone-id");
+        });
+    });
+
+    describe("Query Expansion", () => {
+        it("should call Lite model to expand query", async () => {
+            const mockText = vi.fn().mockReturnValue("Expanded Term");
+            mockModel.generateContent.mockResolvedValueOnce({
+                response: { text: mockText }
+            });
+
+            const result = await aiService.expandQuery("api-key", "him?", []);
+            expect(result).toBe("Expanded Term");
+            expect(mockModel.generateContent).toHaveBeenCalledWith(expect.stringContaining("him?"));
+        });
+    });
+
+    describe("Neighborhood Enrichment", () => {
+        it("should include linked entity chronicles (Neighborhood Enrichment)", async () => {
+            (vault as any).entities["location-id"] = {
+                id: "location-id",
+                title: "The Tavern",
+                content: "A cozy tavern.",
+                connections: [{ target: "npc-id", type: "owner" }],
+                tags: []
+            };
+            (vault as any).entities["npc-id"] = {
+                id: "npc-id",
+                title: "The Owner",
+                content: "Barnaby the barkeep.",
+                connections: [],
+                tags: []
+            };
+
+            vi.mocked(searchService.search).mockResolvedValue([
+                { id: "location-id", title: "The Tavern", score: 0.9, matchType: "title", path: "" }
+            ]);
+
+            const { content, sourceIds } = await aiService.retrieveContext("Where is Barnaby?", new Set(), undefined, false);
+            
+            expect(sourceIds).toContain("location-id");
+            expect(sourceIds).toContain("npc-id");
+            expect(content).toContain("Barnaby the barkeep.");
+        });
     });
 });
 
