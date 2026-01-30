@@ -2,11 +2,11 @@ import type { ICloudShareProvider, SerializedGraph } from "../types";
 import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 
 export class PublicGDriveAdapter implements ICloudShareProvider {
-  async shareFilePublicly(fileId: string): Promise<string> {
+  async shareFilePublicly(_fileId: string): Promise<string> {
     throw new Error("PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for sharing.");
   }
 
-  async revokeShare(fileId: string): Promise<void> {
+  async revokeShare(_fileId: string): Promise<void> {
      throw new Error("PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for revoking.");
   }
 

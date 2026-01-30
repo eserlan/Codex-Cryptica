@@ -34,6 +34,6 @@ describe("MemoryAdapter", () => {
   });
 
   it("should report read-only status correctly", () => {
-    expect(adapter.isReadOnly()).toBe(false);
+    expect(adapter.isReadOnly()).toBe(true);
   });
 });

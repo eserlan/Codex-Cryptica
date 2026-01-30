@@ -39,7 +39,6 @@
                     bind:value={username}
                     placeholder="Enter Username..."
                     class="w-full bg-black border-b border-green-900 py-3 text-center text-green-400 focus:outline-none focus:border-green-500 transition-colors uppercase tracking-widest placeholder:text-green-900/50"
-                    autofocus
                 />
                 {#if error}
                     <p class="absolute -bottom-5 left-0 right-0 text-[10px] text-red-500 uppercase tracking-tighter">

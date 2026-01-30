@@ -71,6 +71,7 @@
     <button 
         class="absolute top-2 right-2 text-gray-500 hover:text-white"
         onclick={close}
+        aria-label="Close"
     >
         <span class="icon-[heroicons--x-mark] w-5 h-5"></span>
     </button>
@@ -94,9 +95,10 @@
 
     {#if shareLink}
         <div class="mb-6 space-y-2">
-            <label class="text-[10px] uppercase text-green-600 font-bold tracking-widest">Active Link</label>
+            <label for="share-link-input" class="text-[10px] uppercase text-green-600 font-bold tracking-widest">Active Link</label>
             <div class="flex gap-2">
                 <input 
+                    id="share-link-input"
                     readonly 
                     value={shareLink}
                     class="bg-black border border-green-900 text-green-400 text-xs p-2 rounded flex-1 focus:outline-none"
