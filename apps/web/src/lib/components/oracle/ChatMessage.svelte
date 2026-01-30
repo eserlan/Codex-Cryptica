@@ -6,6 +6,7 @@
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
   import ImageMessage from "./ImageMessage.svelte";
+  import { parseOracleResponse } from "editor-core";
 
   let { message }: { message: ChatMessage } = $props();
 
@@ -57,8 +58,46 @@
     return message.content.length >= LORE_THRESHOLD;
   });
 
+  let parsed = $derived(parseOracleResponse(message.content || ""));
+
+  const applySmart = () => {
+    const finalTargetId =
+      message.archiveTargetId ||
+      message.entityId ||
+      (activeEntity ? activeEntity.id : null);
+    if (!finalTargetId || !message.content) return;
+
+    // We want to update both fields if they exist in the parsed result
+    const updates: Partial<{ content: string; lore: string }> = {};
+    const entity = vault.entities[finalTargetId];
+    if (!entity) return;
+
+    if (parsed.chronicle) {
+      updates.content = entity.content
+        ? `${entity.content}\n\n---\n${parsed.chronicle}`
+        : parsed.chronicle;
+    }
+
+    if (parsed.lore) {
+      updates.lore = entity.lore
+        ? `${entity.lore}\n\n---\n${parsed.lore}`
+        : parsed.lore;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      vault.selectedEntityId = finalTargetId;
+      // If both updated, default to status, otherwise lore if only lore updated
+      vault.activeDetailTab = parsed.chronicle ? "status" : "lore";
+      vault.updateEntity(finalTargetId, updates);
+      isSaved = true;
+    }
+  };
+
   const copyToChronicle = () => {
-    const finalTargetId = message.archiveTargetId || message.entityId || (activeEntity ? activeEntity.id : null);
+    const finalTargetId =
+      message.archiveTargetId ||
+      message.entityId ||
+      (activeEntity ? activeEntity.id : null);
     if (!finalTargetId || !message.content) return;
     const existing = vault.entities[finalTargetId]?.content || "";
     const newContent = existing
@@ -72,7 +111,10 @@
   };
 
   const copyToLore = () => {
-    const finalTargetId = message.archiveTargetId || message.entityId || (activeEntity ? activeEntity.id : null);
+    const finalTargetId =
+      message.archiveTargetId ||
+      message.entityId ||
+      (activeEntity ? activeEntity.id : null);
     if (!finalTargetId || !message.content) return;
     const existing = vault.entities[finalTargetId]?.lore || "";
     const newContent = existing
@@ -109,51 +151,91 @@
         </div>
 
         {#if (targetEntity || activeEntity) && message.content.length > 20 && !isSaved}
-        <div
-          class="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 justify-end"
-          transition:fade
-        >
-          {#if canOverride}
-            <button
-              onclick={() =>
-                oracle.updateMessageEntity(message.id, activeEntity!.id)}
-              class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-zinc-800/50 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700 hover:text-white max-w-[200px]"
-              title="Change target to your current selection: {activeEntity!
-                .title}"
-            >
-              <span class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"></span>
-              <span class="truncate"
-                >USE: {activeEntity!.title.toUpperCase()}</span
+          <div
+            class="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-2 justify-end"
+            transition:fade
+          >
+            {#if canOverride}
+              <button
+                onclick={() =>
+                  oracle.updateMessageEntity(message.id, activeEntity!.id)}
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-zinc-800/50 text-zinc-400 border border-zinc-700/50 hover:bg-zinc-700 hover:text-white max-w-[200px]"
+                title="Change target to your current selection: {activeEntity!
+                  .title}"
               >
-            </button>
-          {/if}
+                <span class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"></span>
+                <span class="truncate"
+                  >USE: {activeEntity!.title.toUpperCase()}</span
+                >
+              </button>
+            {/if}
 
-          {#if !isLore}
-            <button
-              onclick={copyToChronicle}
-              class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600 max-w-[250px]"
-              title="Save to {(targetEntity || activeEntity!).title}"
-            >
-              <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"></span>
-              <span class="truncate"
-                >COPY TO CHRONICLE ({(targetEntity || activeEntity!).title.toUpperCase()})</span
+            {#if parsed.wasSplit}
+              <button
+                onclick={applySmart}
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-indigo-900/30 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white hover:border-indigo-500 max-w-[280px] group relative"
+                title="Save to {(targetEntity || activeEntity!).title}"
               >
-            </button>
-          {:else}
-            <button
-              onclick={copyToLore}
-              class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-blue-900/20 text-blue-400 border border-blue-800/30 hover:bg-blue-600 hover:text-black hover:border-blue-600 max-w-[250px]"
-              title="Save to {(targetEntity || activeEntity!).title}"
-            >
-              <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"></span>
-              <span class="truncate"
-                >COPY TO LORE ({(targetEntity || activeEntity!).title.toUpperCase()})</span
+                <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"></span>
+                <span class="truncate"
+                  >SMART APPLY TO {(
+                    targetEntity || activeEntity!
+                  ).title.toUpperCase()}</span
+                >
+
+                <!-- Tooltip Preview (User Story 3) -->
+                <div
+                  class="absolute bottom-full right-0 mb-2 w-64 bg-zinc-900 border border-zinc-700 rounded shadow-xl p-2 hidden group-hover:block z-50 text-xs"
+                >
+                  <div class="mb-2">
+                    <span class="text-green-400 font-bold uppercase text-[9px]"
+                      >Chronicle:</span
+                    >
+                    <p class="line-clamp-2 text-zinc-400">
+                      {parsed.chronicle || "(Empty)"}
+                    </p>
+                  </div>
+                  <div>
+                    <span class="text-blue-400 font-bold uppercase text-[9px]"
+                      >Lore:</span
+                    >
+                    <p class="line-clamp-2 text-zinc-400">
+                      {parsed.lore || "(Empty)"}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            {:else if !isLore}
+              <button
+                onclick={copyToChronicle}
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600 max-w-[250px]"
+                title="Save to {(targetEntity || activeEntity!).title}"
               >
-            </button>
-          {/if}
-        </div>
+                <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"></span>
+                <span class="truncate"
+                  >COPY TO CHRONICLE ({(
+                    targetEntity || activeEntity!
+                  ).title.toUpperCase()})</span
+                >
+              </button>
+            {:else}
+              <button
+                onclick={copyToLore}
+                class="flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold tracking-widest transition-all bg-blue-900/20 text-blue-400 border border-blue-800/30 hover:bg-blue-600 hover:text-black hover:border-blue-600 max-w-[250px]"
+                title="Save to {(targetEntity || activeEntity!).title}"
+              >
+                <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
+                ></span>
+                <span class="truncate"
+                  >COPY TO LORE ({(
+                    targetEntity || activeEntity!
+                  ).title.toUpperCase()})</span
+                >
+              </button>
+            {/if}
+          </div>
+        {/if}
       {/if}
-    {/if}
     {:else}
       {message.content}
     {/if}

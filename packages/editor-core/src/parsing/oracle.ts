@@ -1,0 +1,124 @@
+
+export interface OracleParseResult {
+    chronicle: string;
+    lore: string;
+    wasSplit: boolean;
+    method: 'markers' | 'heuristic' | 'none';
+}
+
+/**
+ * Parses the raw response from the Oracle AI to separate
+ * the short "Chronicle" summary from the detailed "Lore".
+ *
+ * Strategies:
+ * 1. Explicit Markers: Looks for "## Chronicle" and "## Lore" (case-insensitive).
+ * 2. Heuristic: If no markers, assumes the first paragraph is the Chronicle
+ *    and the rest is Lore.
+ */
+export function parseOracleResponse(text: string): OracleParseResult {
+    if (!text || !text.trim()) {
+        return { chronicle: "", lore: "", wasSplit: false, method: 'none' };
+    }
+
+    // Strategy 1: Explicit Markers
+    // Broaden regex to include markdown bold, headers, and simple "Label:" at start of line
+    // We use a non-global regex but with 'i' and 'm' flags.
+    const chronicleMarkerRegex = /^(?:#+\s*|\*\*|__)?Chronicle:?(?:\*\*|__|:)?\s*/im;
+    const loreMarkerRegex = /^(?:#+\s*|\*\*|__)?Lore:?(?:\*\*|__|:)?\s*/im;
+
+    const hasChronicle = chronicleMarkerRegex.test(text);
+    const hasLore = loreMarkerRegex.test(text);
+
+    if (hasChronicle || hasLore) {
+        let chronicle = "";
+        let lore = "";
+
+        const lines = text.split('\n');
+        let currentSection: 'chronicle' | 'lore' | 'preamble' = 'preamble';
+        let chronicleBuffer: string[] = [];
+        let loreBuffer: string[] = [];
+        let preambleBuffer: string[] = [];
+
+        for (const line of lines) {
+            const cronMatch = line.match(chronicleMarkerRegex);
+            const loreMatch = line.match(loreMarkerRegex);
+
+            if (cronMatch) {
+                currentSection = 'chronicle';
+                const content = line.substring(cronMatch[0].length).trim();
+                if (content) chronicleBuffer.push(content);
+                continue;
+            }
+            if (loreMatch) {
+                currentSection = 'lore';
+                const content = line.substring(loreMatch[0].length).trim();
+                if (content) loreBuffer.push(content);
+                continue;
+            }
+
+            if (currentSection === 'chronicle') {
+                chronicleBuffer.push(line);
+            } else if (currentSection === 'lore') {
+                loreBuffer.push(line);
+            } else {
+                preambleBuffer.push(line);
+            }
+        }
+
+        // Preamble handling:
+        // If we have preamble and a lore section but no chronicle section, 
+        // preamble is likely intended as the chronicle.
+        if (preambleBuffer.length > 0 && loreBuffer.length > 0 && chronicleBuffer.length === 0) {
+            chronicle = preambleBuffer.join('\n').trim();
+        } else {
+            chronicle = chronicleBuffer.join('\n').trim();
+        }
+
+        lore = loreBuffer.join('\n').trim();
+
+        // If lore is still empty but we have preamble/chronicle, 
+        // and the text was very long, maybe we missed a split? 
+        // (Actually the logic above handles explicit headers).
+
+        // If we only found ONE marker and the other is empty, we still "split"
+        // so the user sees the smart apply button.
+        const wasSplit = (chronicle !== "" && lore !== "") || (hasChronicle || hasLore);
+
+        return {
+            chronicle,
+            lore,
+            wasSplit,
+            method: 'markers'
+        };
+    }
+
+    // Strategy 2: Heuristic (Paragraph split)
+    // Fallback to single newline split if double newline doesn't exist but text is long
+    let parts = text.split(/\n\s*\n/);
+    if (parts.length === 1 && text.length > 300) {
+        // Try splitting by the first sentence or first line if it looks like a headline/summary
+        const lines = text.split('\n');
+        if (lines.length > 1) {
+            parts = [lines[0], lines.slice(1).join('\n')];
+        }
+    }
+
+    if (parts.length > 1) {
+        const chronicle = parts[0].trim();
+        const lore = parts.slice(1).join('\n\n').trim();
+        return {
+            chronicle,
+            lore,
+            wasSplit: true,
+            method: 'heuristic'
+        };
+    }
+    ;
+    // Fallback: Everything is Lore (safer than everything being Chronicle)
+    return {
+        chronicle: "",
+        lore: text.trim(),
+        wasSplit: false,
+        method: 'none'
+    };
+}
