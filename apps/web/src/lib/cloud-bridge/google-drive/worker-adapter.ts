@@ -86,7 +86,7 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     url.searchParams.append("uploadType", "multipart");
 
     const mimeType = this.getMimeType(path);
-    const boundary = "-------" + Math.random().toString(36).substring(2);
+    const boundary = "CodexSyncBoundary" + crypto.randomUUID().replace(/-/g, "");
     const delimiter = `--${boundary}\r\n`;
     const closeDelimiter = `\r\n--${boundary}--`;
 
@@ -109,9 +109,9 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     const multipartBody = new Blob(
       [
         delimiter,
-        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-          JSON.stringify(metadata) +
-          "\r\n",
+        "Content-Type: application/json; charset=UTF-8\r\n\r\n",
+        JSON.stringify(metadata),
+        "\r\n",
         delimiter,
         `Content-Type: ${mimeType}\r\n\r\n`,
         contentBlob,

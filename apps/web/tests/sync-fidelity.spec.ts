@@ -34,19 +34,39 @@ test.describe("Sync Fidelity & Binary Safety", () => {
         });
 
         // 3. Verify error status
-        // Wait for sync worker to report error - we check the syncStats state directly on window
-        await page.waitForFunction(() => {
+        // Set up a single subscription to syncStats in the page context and wait for ERROR status.
+        await page.evaluate(() => {
             const stats = (window as any).syncStats;
-            let status = '';
-            // stats is a svelte store, but in web it might be different. 
-            // In our layout we exposed it.
-            stats.subscribe((s: any) => status = s.status)();
-            return status === 'ERROR';
-        }, { timeout: 10000 });
+            if (!stats || typeof stats.subscribe !== "function") {
+                return;
+            }
+            // Avoid creating multiple subscriptions if this code is ever re-run.
+            if ((window as any).__syncStatusUnsub) {
+                return;
+            }
+            (window as any).__syncStatus = "";
+            (window as any).__syncStatusUnsub = stats.subscribe((s: any) => {
+                (window as any).__syncStatus = s?.status;
+                if (s?.status === "ERROR" && typeof (window as any).__syncStatusUnsub === "function") {
+                    // Unsubscribe once we've reached the desired state to prevent leaks.
+                    (window as any).__syncStatusUnsub();
+                    (window as any).__syncStatusUnsub = null;
+                }
+            });
+        });
+
+        await page.waitForFunction(
+            () => (window as any).__syncStatus === "ERROR",
+            { timeout: 10000 }
+        );
 
         const syncStatus = await page.evaluate(() => {
             let s: any;
-            (window as any).syncStats.subscribe((val: any) => s = val)();
+            const unsubscribe = (window as any).syncStats.subscribe((val: any) => {
+                s = val;
+            });
+            // Immediately unsubscribe after reading the current value.
+            unsubscribe();
             return s;
         });
 

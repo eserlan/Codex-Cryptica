@@ -231,7 +231,9 @@
                                     <div class="w-full h-1 bg-green-900/20 rounded-full overflow-hidden">
                                         <div 
                                             class="h-full bg-green-500 transition-all duration-300"
-                                            style="width: {(($syncStats.stats.current || 0) / ($syncStats.stats.total || 1)) * 100}%"
+                                            style="width: {($syncStats.stats.total && $syncStats.stats.total > 0
+                                                ? (($syncStats.stats.current || 0) / $syncStats.stats.total) * 100
+                                                : 0)}%"
                                         ></div>
                                     </div>
                                 </div>

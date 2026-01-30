@@ -46,13 +46,24 @@ export class SyncEngine {
 
     // 1. Remote Deduplication Pass
     const remoteGroups = new Map<string, RemoteFileMeta[]>();
+    const remoteFiles = new Map<string, RemoteFileMeta>();
+
     for (const remote of remoteFilesRaw) {
-      const path = remote.appProperties?.vault_path || remote.name;
-      if (!remoteGroups.has(path)) remoteGroups.set(path, []);
-      remoteGroups.get(path)!.push(remote);
+      const vaultPath = remote.appProperties?.vault_path;
+      if (!vaultPath) {
+        console.warn("[SyncEngine] Remote file missing vault_path; skipping deduplication", {
+          id: remote.id,
+          name: remote.name,
+        });
+        // For files without a vault_path, fall back to name for sync path,
+        // but do not deduplicate them based solely on name.
+        remoteFiles.set(remote.name, remote);
+        continue;
+      }
+      if (!remoteGroups.has(vaultPath)) remoteGroups.set(vaultPath, []);
+      remoteGroups.get(vaultPath)!.push(remote);
     }
 
-    const remoteFiles = new Map<string, RemoteFileMeta>();
     for (const [path, group] of remoteGroups) {
       if (group.length > 1) {
         console.log(`[SyncEngine] Found ${group.length} duplicates for ${path}. Cleaning up...`);
@@ -127,7 +138,10 @@ export class SyncEngine {
       if (!localMap.has(path)) {
         const meta = metadataMap.get(path);
         if (meta) {
-          const remoteUpdatedSinceSync = remote.modifiedTime !== meta.remoteModified;
+          const remoteTime = new Date(remote.modifiedTime).getTime();
+          const lastSyncedRemoteTime = new Date(meta.remoteModified).getTime();
+          const remoteUpdatedSinceSync = Math.abs(remoteTime - lastSyncedRemoteTime) > SYNC_SKEW_MS;
+
           if (remoteUpdatedSinceSync) {
             plan.downloads.push(remote);
           } else {
