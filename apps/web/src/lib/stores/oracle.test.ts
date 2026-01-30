@@ -49,7 +49,8 @@ vi.mock("../services/ai", () => ({
     generateResponse: vi.fn(),
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     enhancePrompt: vi.fn().mockImplementation((q) => q),
-    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined }),
+    retrieveContext: vi.fn().mockResolvedValue({ content: "context", primaryEntityId: undefined, sourceIds: [] }),
+    expandQuery: vi.fn().mockResolvedValue("expanded query"),
   },
 }));
 

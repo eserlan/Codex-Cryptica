@@ -33,7 +33,7 @@ export class AIService {
       });
 
       const conversationContext = history
-        .slice(-4) // Last 2 turns
+        .slice(-4) // Last 4 messages (2 turns)
         .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
         .join("\n");
 
@@ -350,8 +350,11 @@ User visualization request: ${query}`;
       const entity = vault.entities[id];
       if (!entity || excludeTitles.has(entity.title)) return;
 
-      const mainContent = this.getConsolidatedContext(entity);
-      if (!mainContent) return;
+      // FR-003: Enrichment uses only content (Chronicle). Fusion uses both for primary.
+      const mainContent = isEnrichment 
+        ? (entity.content || "").trim() 
+        : this.getConsolidatedContext(entity);
+      if (!mainContent && !isEnrichment) return;
 
       const isActive = id === activeId;
       const prefix = isActive ? "[ACTIVE FILE] " : "";
@@ -386,14 +389,15 @@ User visualization request: ${query}`;
       
       // Ensure we don't exceed limit
       if (currentTotal + fullSnippet.length > MAX_CHARS) {
-        // If it's a primary match, we might want to truncate just this entity
+        // If it's a primary match, we truncate content but preserve connections
         if (!isEnrichment) {
-          const allowed = MAX_CHARS - currentTotal - header.length - 20; // 20 for buffer
+          const overhead = header.length + connectionContext.length + 50;
+          const allowed = MAX_CHARS - currentTotal - overhead;
           if (allowed > 100) {
-            const truncated = mainContent.slice(0, allowed) + "... [truncated]";
-            contextMap.set(id, `${header}${truncated}`);
+            const truncated = mainContent.slice(0, allowed) + "... [truncated content]";
+            contextMap.set(id, `${header}${truncated}${connectionContext}`);
             sourceIds.push(id);
-            currentTotal = MAX_CHARS; // Effectively full
+            currentTotal = MAX_CHARS; 
           }
         }
         return;

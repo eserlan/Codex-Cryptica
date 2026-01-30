@@ -67,6 +67,8 @@ class OracleStore {
   private async saveToDB() {
     const db = await getDB();
     const tx = db.transaction("chat_history", "readwrite");
+    // We clear and re-insert to ensure the IndexedDB matches the in-memory array perfectly, 
+    // effectively handling message deletions without complex reconciliation logic.
     await tx.store.clear();
     for (const msg of $state.snapshot(this.messages)) {
       // Don't persist blobs or temporary URLs
@@ -236,6 +238,7 @@ class OracleStore {
       ];
       this.lastUpdated = Date.now();
       this.broadcast();
+      this.saveToDB();
       return;
     }
 

@@ -206,7 +206,7 @@ describe("AIService Context Retrieval", () => {
             // Active should be full, Match should be truncated
             expect(content).toContain("Active");
             expect(content).toContain("Match");
-            expect(content).toContain("[truncated]");
+            expect(content).toContain("[truncated content]");
         });
 
         it("should populate sourceIds for all consulted entities", async () => {
