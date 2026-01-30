@@ -47,9 +47,9 @@
 
 		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
 		if (!apiKey) {
-			console.error("Missing VITE_GOOGLE_API_KEY");
+			console.error("Missing VITE_GOOGLE_API_KEY in environment.");
 			vault.status = "error";
-			vault.errorMessage = "Configuration error: Missing API Key for public access.";
+			vault.errorMessage = "Configuration error: Guest Mode requires a VITE_GOOGLE_API_KEY. Please check your .env file.";
 			return;
 		}
 
