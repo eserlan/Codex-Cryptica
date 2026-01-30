@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Fuzzy Search', () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
         // Mock File System Access API and IndexedDB
         await page.addInitScript(() => {
             // Intercept IndexedDB to handle DataCloneError with mock handles

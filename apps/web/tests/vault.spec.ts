@@ -22,6 +22,7 @@ test("Open Vault button calls showDirectoryPicker", async ({ page }) => {
   });
 
   await page.goto("/");
+        // removed eval
 
   // Check for console log to verify mock call
   const consolePromise = page.waitForEvent(

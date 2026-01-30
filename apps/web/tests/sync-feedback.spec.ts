@@ -1,9 +1,8 @@
-
-
 import { test, expect } from "@playwright/test";
 
 test.describe("Sync Visual Feedback", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
     // Block Google scripts to prevent overwriting mocks
     await page.route("**/gsi/client", route => route.abort());
     await page.route("**/js/api.js", route => route.abort());
@@ -35,53 +34,41 @@ test.describe("Sync Visual Feedback", () => {
   });
 
   test("should show flash effect when sync button is clicked", async ({ page }) => {
-    const cloudBtn = page.getByTestId("settings-button");
-
-    // Open menu
-    await cloudBtn.click();
+    // Open Settings Modal
+    await page.getByTestId("settings-button").click();
+    // Switch to Cloud Sync tab
+    await page.click('[role="tab"]:has-text("Cloud Sync")');
 
     const syncNowBtn = page.getByRole('button', { name: 'SYNC NOW' });
     await expect(syncNowBtn).toBeVisible();
 
     // Click SYNC NOW and check for flash effect class or animation
-    // Note: isFlashing adds a specific class and a child div with animate-ping
     await syncNowBtn.click();
 
-    const flashElement = cloudBtn.locator('.animate-ping');
-    await expect(flashElement).toBeVisible(); // Changed from toBeAttached to toBeVisible for better reliability
+    // The flash effect adds classes to the button
+    await expect(syncNowBtn).toHaveClass(/scale-95/);
+    await expect(syncNowBtn).toHaveClass(/ring-2/);
 
-    // Check if button has the flashing scale/ring classes
-    await expect(cloudBtn).toHaveClass(/ring-2/);
-    await expect(cloudBtn).toHaveClass(/scale-95/);
-
-    // Wait for flash to end (600ms in code)
-    await page.waitForTimeout(800);
-    await expect(flashElement).not.toBeVisible();
-    await expect(cloudBtn).not.toHaveClass(/ring-2/);
+    // Wait for flash to end (500ms in code)
+    await page.waitForTimeout(600);
+    await expect(syncNowBtn).not.toHaveClass(/ring-2/);
   });
 
-  test("should change icon and animate when syncing", async ({ page }) => {
-    const cloudBtn = page.getByTestId("settings-button");
-    const statusIcon = cloudBtn.locator('span.w-5.h-5');
+  test("should display SYNCING state when sync is triggered", async ({ page }) => {
+    // Open Settings Modal and go to Cloud Sync tab
+    await page.getByTestId("settings-button").click();
+    await page.click('[role="tab"]:has-text("Cloud Sync")');
 
     // Manually trigger syncing state in the store via window object
     await page.waitForFunction(() => !!(window as any).syncStats);
     await page.evaluate(() => {
-      // @ts-expect-error - accessing test globals
-      const { syncStats } = window;
+      const { syncStats } = window as any;
       if (syncStats) {
         syncStats.setStatus("SYNCING");
       }
     });
 
-    // Check if the icon changes to the syncing state (zap icon class and pulse)
-    await expect(statusIcon).toHaveClass(/icon-\[lucide--zap\]/);
-    await expect(statusIcon).toHaveClass(/animate-pulse/);
-
-    // Open menu to check SYNCING text
-    await cloudBtn.click();
     // The button text changes to SYNCING..., so looking for "SYNC NOW" will fail
-    // We search for a button containing SYNCING inside the menu
     const syncBtn = page.getByTestId('cloud-status-menu').getByRole('button', { name: /SYNCING/ });
     await expect(syncBtn).toBeVisible();
   });

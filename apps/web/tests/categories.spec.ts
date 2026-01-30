@@ -2,7 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Category Architecture Modal", () => {
     test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
         await page.goto("/");
+        // removed eval
         // Force configured state for settings menu
         await page.evaluate(() => {
             (window as any).TEST_FORCE_CONFIGURED = true;
@@ -26,7 +28,7 @@ test.describe("Category Architecture Modal", () => {
         await expect(page.locator('h2', { hasText: 'Vault' })).toBeVisible();
 
         // 2. Open Schema tab via sidebar
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
 
         // 3. Verify Schema heading is visible
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
@@ -52,7 +54,7 @@ test.describe("Category Architecture Modal", () => {
         // Open settings and go to Schema
         await page.getByTestId("settings-button").click();
         await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
@@ -88,7 +90,7 @@ test.describe("Category Architecture Modal", () => {
         // Open settings and go to Schema
         await page.getByTestId("settings-button").click();
         await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
@@ -110,7 +112,7 @@ test.describe("Category Architecture Modal", () => {
         // Open settings and go to Schema
         await page.getByTestId("settings-button").click();
         await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
@@ -142,7 +144,7 @@ test.describe("Category Architecture Modal", () => {
         // 2. Open settings and go to Schema
         await page.getByTestId("settings-button").click();
         await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
@@ -163,7 +165,7 @@ test.describe("Category Architecture Modal", () => {
         // 5. Reopen and verify the color persisted
         await page.getByTestId("settings-button").click();
         await page.waitForSelector('h2:has-text("Vault")', { state: 'visible' });
-        await page.click('nav button:has-text("Schema")');
+        await page.click('[role="tab"]:has-text("Schema")');
         await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
 
         const updatedColorInput = page.getByTestId('category-row-npc').locator('input[type="color"]');

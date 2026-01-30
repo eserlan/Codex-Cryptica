@@ -4,10 +4,12 @@
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
+	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { oracle } from "$lib/stores/oracle.svelte";
 	import { categories } from "$lib/stores/categories.svelte";
 	import { searchStore } from "$lib/stores/search";
+	import { helpStore } from "$stores/help.svelte";
 	import { uiStore } from "$stores/ui.svelte";
 	import { syncStats } from "$stores/sync-stats";
 	import { cloudConfig } from "$stores/cloud-config";
@@ -27,6 +29,12 @@
 	onMount(() => {
 		vault.init();
 		categories.init();
+		helpStore.init();
+
+		// Trigger onboarding for new users
+		if (!vault.rootHandle && !helpStore.hasSeen("initial-onboarding") && !(window as any).DISABLE_ONBOARDING) {
+			helpStore.startTour("initial-onboarding");
+		}
 
 		const handleGlobalError = (event: ErrorEvent) => {
 			// Ignore non-fatal script/asset load failures (common when offline)
@@ -42,7 +50,9 @@
 				message.includes("Script error") ||
 				message.includes("Load failed") ||
 				message.includes("isHeadless") ||
-				message.includes("notify")
+				message.includes("notify") ||
+				message.includes("INTERNET_DISCONNECTED") ||
+				message.includes("Fetch")
 			) {
 				return;
 			}
@@ -59,7 +69,8 @@
 			if (
 				message.includes("Failed to fetch") ||
 				message.includes("NetworkError") ||
-				message.includes("Load failed")
+				message.includes("Load failed") ||
+				message.includes("INTERNET_DISCONNECTED")
 			) {
 				return;
 			}
@@ -132,6 +143,7 @@
 						value={$searchStore.query}
 						oninput={(e) =>
 							searchStore.setQuery(e.currentTarget.value)}
+						data-testid="search-input"
 					/>
 				</div>
 			</div>
@@ -200,12 +212,13 @@
 			<OracleWindow />
 		{/if}
 		<SettingsModal />
+		<TourOverlay />
 	{/if}
 </div>
 
-{#if uiStore.globalError}
+{#if uiStore.globalError && !(window as any).DISABLE_ERROR_OVERLAY}
 	<div
-		class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 text-red-500 font-mono"
+		class="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 text-red-500 font-mono"
 	>
 		<div
 			class="max-w-2xl w-full border border-red-900 bg-red-950/20 p-8 rounded shadow-2xl relative"

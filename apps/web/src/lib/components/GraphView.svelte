@@ -9,6 +9,7 @@
   import type { Core, NodeSingular } from "cytoscape";
   import { BASE_STYLE, getTypeStyles } from "$lib/themes/graph-theme";
   import Minimap from "$lib/components/graph/Minimap.svelte";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -493,6 +494,7 @@
   <div
     class="absolute inset-0 z-10 w-full h-full"
     bind:this={container}
+    data-testid="graph-canvas"
   ></div>
 
   <!-- Hover Tooltip -->
@@ -540,7 +542,7 @@
   <!-- Connection Hints -->
   {#if connectMode}
     <div
-      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
     >
       {#if !sourceId}
         <div
@@ -555,6 +557,8 @@
           > SELECT TARGET TO LINK
         </div>
       {/if}
+
+      <FeatureHint hintId="connect-mode" />
     </div>
   {/if}
 

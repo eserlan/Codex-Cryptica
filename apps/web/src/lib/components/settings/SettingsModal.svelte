@@ -4,6 +4,7 @@
     import CloudStatus from "./CloudStatus.svelte";
     import AISettings from "./AISettings.svelte";
     import CategorySettings from "./CategorySettings.svelte";
+    import HelpTab from "../help/HelpTab.svelte";
     import { vault } from "$lib/stores/vault.svelte";
     import { base } from "$app/paths";
     import { VERSION, CODENAME } from "$lib/config";
@@ -17,6 +18,7 @@
             icon: "icon-[lucide--brain]",
         },
         { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },
+        { id: "help", label: "Help", icon: "icon-[lucide--help-circle]" },
         { id: "about", label: "About", icon: "icon-[lucide--info]" },
     ];
 
@@ -275,6 +277,18 @@
                         >
                             <CategorySettings />
                         </div>
+                    </div>
+                {:else if uiStore.activeSettingsTab === "help"}
+                    <div
+                        role="tabpanel"
+                        id="settings-panel-help"
+                        aria-labelledby="settings-tab-help"
+                        class="space-y-6"
+                    >
+                        <p class="text-[11px] text-green-100/60 leading-relaxed">
+                            Access system documentation and interactive guides to master the art of lore management.
+                        </p>
+                        <HelpTab />
                     </div>
                 {:else if uiStore.activeSettingsTab === "about"}
                     <div
