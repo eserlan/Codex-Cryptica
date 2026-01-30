@@ -59,6 +59,7 @@
     let isDraggingOver = $state(false);
 
     const handleDragOver = (e: DragEvent) => {
+        if (vault.isGuest) return;
         e.preventDefault();
         if (
             e.dataTransfer?.types.includes("application/codex-image-id") ||
@@ -70,10 +71,12 @@
     };
 
     const handleDragLeave = () => {
+        if (vault.isGuest) return;
         isDraggingOver = false;
     };
 
     const handleDrop = async (e: DragEvent) => {
+        if (vault.isGuest) return;
         e.preventDefault();
         isDraggingOver = false;
 
@@ -448,12 +451,14 @@
                     <div class="w-4 h-4 bg-gray-800 rounded"></div>
                 </div>
                 <div class="flex gap-2">
-                    <button
-                        onclick={startEditing}
-                        class="border border-green-900 text-green-600 hover:text-green-400 hover:border-green-700 text-xs font-bold px-4 py-2 rounded tracking-widest transition"
-                    >
-                        EDIT
-                    </button>
+                    {#if !vault.isGuest}
+                        <button
+                            onclick={startEditing}
+                            class="border border-green-900 text-green-600 hover:text-green-400 hover:border-green-700 text-xs font-bold px-4 py-2 rounded tracking-widest transition"
+                        >
+                            EDIT
+                        </button>
+                    {/if}
                 </div>
             {/if}
         </div>

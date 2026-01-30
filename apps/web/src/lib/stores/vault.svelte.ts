@@ -6,6 +6,7 @@ import type { Entity, Connection } from "schema";
 import { searchService } from "../services/search";
 import { cacheService } from "../services/cache";
 import { aiService } from "../services/ai";
+import type { IStorageAdapter } from "../cloud-bridge/types";
 
 export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle; _path?: string | string[] };
 
@@ -15,6 +16,9 @@ class VaultStore {
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
   activeDetailTab = $state<"status" | "lore" | "inventory">("status");
+  
+  isGuest = $state(false);
+  storageAdapter: IStorageAdapter | null = null;
 
   /**
    * Bidirectional Adjacency List
@@ -62,6 +66,8 @@ class VaultStore {
   }
 
   async init() {
+    // Normal Mode Initialization
+    this.isGuest = false;
     try {
       const persisted = await getPersistedHandle();
       if (persisted) {
@@ -77,6 +83,40 @@ class VaultStore {
       console.error("Failed to init vault", err);
     } finally {
       this.status = "idle";
+    }
+  }
+
+  async initGuest(adapter: IStorageAdapter) {
+    this.isGuest = true;
+    this.storageAdapter = adapter;
+    this.status = "loading";
+    try {
+      await adapter.init();
+      const graph = await adapter.loadGraph();
+      if (graph) {
+        // Convert plain entities to LocalEntity (path might be virtual)
+        const localEntities: Record<string, LocalEntity> = {};
+        for (const [id, entity] of Object.entries(graph.entities)) {
+            localEntities[id] = { ...entity, _path: `${id}.md` }; // Virtual path
+        }
+        this.entities = localEntities;
+        
+        // Rebuild Inbound Connections
+        const newInboundMap: Record<string, { sourceId: string; connection: Connection }[]> = {};
+        for (const entity of Object.values(this.entities)) {
+           for (const conn of entity.connections) {
+                if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
+                newInboundMap[conn.target].push({ sourceId: entity.id, connection: conn });
+           }
+        }
+        this.inboundConnections = newInboundMap;
+      }
+    } catch (err: any) {
+        console.error("Failed to init guest vault", err);
+        this.errorMessage = err.message || "Failed to load shared campaign";
+        this.status = "error";
+    } finally {
+        if (this.status !== "error") this.status = "idle";
     }
   }
 
@@ -534,6 +574,10 @@ class VaultStore {
   }
 
   async saveToDisk(entity: Entity) {
+    if (this.isGuest) {
+      console.warn("Save blocked in Guest Mode");
+      return;
+    }
     const handle = (entity as LocalEntity)._fsHandle as FileSystemFileHandle;
     if (handle) {
       const content = stringifyEntity(entity);
@@ -572,6 +616,7 @@ class VaultStore {
   }
 
   async createEntity(type: Entity["type"], title: string): Promise<string> {
+    if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
     const id = sanitizeId(title);
     if (this.entities[id]) {
       throw new Error(`Entity ${id} already exists`);
@@ -615,6 +660,7 @@ class VaultStore {
   }
 
   async deleteEntity(id: string): Promise<void> {
+    if (this.isGuest) return; // Silent fail or throw? Silent is safer for UI.
     const entity = this.entities[id];
     if (!entity) return;
 

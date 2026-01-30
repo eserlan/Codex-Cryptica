@@ -9,6 +9,11 @@ export interface CloudConfig {
   connectedEmail?: string;
   lastSyncTimestamp?: number;
   syncInterval: number; // milliseconds
+  
+  // Sharing Extensions
+  shareStatus?: 'private' | 'public';
+  shareLink?: string;
+  gdriveFolderId?: string; // Cache the folder ID for easier sharing
 }
 
 export interface SyncStats {

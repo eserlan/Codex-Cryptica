@@ -47,7 +47,6 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 - 019-oracle-rag-improvements: Added TypeScript 5.x / Node.js 20+ + @google/generative-ai, FlexSearch, Svelte 5
 - 018-perf-improvements: Added TypeScript 5.x, Node.js 20+ + Svelte 5, Cytoscape.js, `@google/generative-ai`
-- 017-sync-refinement: Added TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb`
 
 
 <!-- MANUAL ADDITIONS START -->
