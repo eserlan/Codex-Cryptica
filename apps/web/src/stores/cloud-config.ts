@@ -46,6 +46,24 @@ function createCloudConfigStore() {
         save(newCfg);
         return newCfg;
       }),
+    setShareStatus: (status: 'private' | 'public') =>
+      update((cfg) => {
+        const newCfg = { ...cfg, shareStatus: status };
+        save(newCfg);
+        return newCfg;
+      }),
+    setShareLink: (link: string | undefined) =>
+      update((cfg) => {
+        const newCfg = { ...cfg, shareLink: link };
+        save(newCfg);
+        return newCfg;
+      }),
+    setGdriveFolderId: (id: string | undefined) =>
+      update((cfg) => {
+        const newCfg = { ...cfg, gdriveFolderId: id };
+        save(newCfg);
+        return newCfg;
+      }),
     reset: () => {
       set(defaultConfig);
       save(defaultConfig);

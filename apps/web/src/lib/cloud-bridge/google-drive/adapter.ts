@@ -341,19 +341,23 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     
     if (!folderId) throw new Error("No sync folder found.");
 
-    // List permissions to find the 'anyone' one
+    // List permissions to find and remove all 'anyone' permissions
     const res = await gapi.client.drive.permissions.list({
       fileId: folderId,
     });
     
     const permissions = res.result.permissions || [];
-    const anyonePerm = permissions.find((p: any) => p.type === 'anyone');
+    const anyonePerms = permissions.filter((p: any) => p.type === "anyone" && p.id);
     
-    if (anyonePerm && anyonePerm.id) {
-        await gapi.client.drive.permissions.delete({
+    if (anyonePerms.length > 0) {
+      await Promise.all(
+        anyonePerms.map((p: any) =>
+          gapi.client.drive.permissions.delete({
             fileId: folderId,
-            permissionId: anyonePerm.id
-        });
+            permissionId: p.id!,
+          })
+        )
+      );
     }
   }
 }

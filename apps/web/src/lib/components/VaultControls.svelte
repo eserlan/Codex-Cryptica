@@ -1,6 +1,7 @@
 <script lang="ts">
     import { vault } from "$lib/stores/vault.svelte";
-    import { cloudConfig } from "$lib/stores/cloud-config";
+    import { categories } from "$lib/stores/categories.svelte";
+    import { cloudConfig } from "$stores/cloud-config";
     import ShareModal from "$lib/components/ShareModal.svelte";
 
     let showForm = $state(false);
@@ -127,6 +128,7 @@
             >
                 <span class="icon-[lucide--refresh-cw] w-3.5 h-3.5"></span>
             </button>
+            {#if !vault.isGuest}
              <button
                 class="px-2 py-1.5 border border-green-900/50 text-blue-500 hover:text-blue-400 hover:border-blue-700 rounded text-sm transition flex items-center justify-center"
                 onclick={() => (showShare = true)}
@@ -134,6 +136,7 @@
             >
                 <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
             </button>
+            {/if}
             <button
                 class="px-3 py-1.5 border border-green-900/50 text-amber-700 hover:text-amber-500 hover:border-amber-700 rounded text-[10px] transition hidden xs:flex items-center gap-1.5"
                 onclick={() => vault.rebuildIndex()}

@@ -105,8 +105,13 @@ class VaultStore {
         const newInboundMap: Record<string, { sourceId: string; connection: Connection }[]> = {};
         for (const entity of Object.values(this.entities)) {
            for (const conn of entity.connections) {
-                if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
-                newInboundMap[conn.target].push({ sourceId: entity.id, connection: conn });
+                const targetId = conn.target;
+                // Only index inbound connections for valid targets that exist in the entity map
+                if (!targetId || !this.entities[targetId]) {
+                  continue;
+                }
+                if (!newInboundMap[targetId]) newInboundMap[targetId] = [];
+                newInboundMap[targetId].push({ sourceId: entity.id, connection: conn });
            }
         }
         this.inboundConnections = newInboundMap;
@@ -660,7 +665,9 @@ class VaultStore {
   }
 
   async deleteEntity(id: string): Promise<void> {
-    if (this.isGuest) return; // Silent fail or throw? Silent is safer for UI.
+    if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
+    
+    // 1. Delete file
     const entity = this.entities[id];
     if (!entity) return;
 

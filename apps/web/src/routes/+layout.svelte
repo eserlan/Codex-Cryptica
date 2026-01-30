@@ -32,6 +32,42 @@
 	const shareId = $derived(page.url.searchParams.get("shareId"));
 	let showGuestLogin = $state(false);
 
+	const handleJoin = async (username: string) => {
+		sessionStorage.setItem("guest_username", username);
+		showGuestLogin = false;
+		
+		// Basic validation for GDrive ID (length and alphanumeric usually)
+		if (!shareId || shareId.length < 20) {
+			vault.status = "error";
+			vault.errorMessage = "Malformed or invalid share link.";
+			// Re-show login if malformed
+			showGuestLogin = true;
+			return;
+		}
+
+		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+		if (!apiKey) {
+			console.error("Missing VITE_GOOGLE_API_KEY");
+			vault.status = "error";
+			vault.errorMessage = "Configuration error: Missing API Key for public access.";
+			return;
+		}
+
+		const publicAdapter = new PublicGDriveAdapter();
+		const memoryAdapter = new MemoryAdapter();
+		
+		try {
+			// Pre-fetch graph using public adapter
+			const graph = await publicAdapter.fetchPublicFolder(shareId!, apiKey);
+			memoryAdapter.hydrate(graph);
+			await vault.initGuest(memoryAdapter);
+		} catch (err) {
+			console.error("Guest join failed", err);
+			vault.status = "error";
+			vault.errorMessage = err instanceof Error ? err.message : "Unable to load shared vault.";
+		}
+	};
+
 	onMount(() => {
 		categories.init();
 		helpStore.init();

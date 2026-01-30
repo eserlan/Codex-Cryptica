@@ -43,7 +43,8 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
     }
 
     // 1. List files in folder
-    const listUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'&fields=files(id, name)&key=${apiKey}`;
+    const encodedFolderId = encodeURIComponent(folderId);
+    const listUrl = `https://www.googleapis.com/drive/v3/files?q='${encodedFolderId}' in parents and trashed = false and mimeType != 'application/vnd.google-apps.folder'&fields=files(id, name)&key=${apiKey}`;
     
     const listResponse = await fetch(listUrl);
     if (!listResponse.ok) {
@@ -54,6 +55,10 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
     const files = data.files || [];
     const mdFiles = files.filter((f: any) => f.name.endsWith(".md"));
 
+    if (mdFiles.length === 0) {
+        throw new Error("No markdown files found in the shared campaign folder.");
+    }
+
     const graph: SerializedGraph = {
         version: 1,
         entities: {}
@@ -62,6 +67,8 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
     // 2. Fetch each file and parse
     // Process in parallel with a limit to avoid rate limiting
     const CONCURRENCY = 5;
+    const errors: string[] = [];
+    
     for (let i = 0; i < mdFiles.length; i += CONCURRENCY) {
         const chunk = mdFiles.slice(i, i + CONCURRENCY);
         await Promise.all(chunk.map(async (file: any) => {
@@ -87,9 +94,17 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
                     metadata: metadata.metadata,
                 };
             } catch (err) {
-                console.error(`Failed to fetch/parse shared file ${file.name}:`, err);
+                const msg = `Failed to fetch/parse shared file ${file.name}: ${err}`;
+                console.error(msg);
+                errors.push(msg);
             }
         }));
+    }
+
+    if (Object.keys(graph.entities).length === 0 && errors.length > 0) {
+        throw new Error(`Failed to load any entities. Errors: ${errors.join("; ")}`);
+    } else if (errors.length > 0) {
+        console.warn(`Campaign loaded with partial errors: ${errors.join("; ")}`);
     }
 
     return graph;

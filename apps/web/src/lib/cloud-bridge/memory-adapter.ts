@@ -24,10 +24,11 @@ export class MemoryAdapter implements IStorageAdapter {
   }
 
   isReadOnly(): boolean {
-    // Memory adapter itself is writable (ephemeral), 
-    // but its persistence is effectively read-only (nothing survives reload).
-    // The Store will check `isGuest` which uses this adapter.
-    return false; 
+    // Although the in-memory store is technically writable, this adapter is used
+    // for guest/ephemeral contexts where the system should be treated as read-only
+    // from the caller's perspective. Report `true` here to avoid implying that
+    // persistent writes are allowed.
+    return true; 
   }
 
   // Helper to hydrate the memory adapter from a fetch

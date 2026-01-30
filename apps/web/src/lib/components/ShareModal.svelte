@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cloudConfig } from "$lib/stores/cloud-config";
-  import { gdrive } from "$lib/stores/gdrive.svelte";
+  import { cloudConfig } from "$stores/cloud-config";
+  import { gdriveAdapter as gdrive } from "$stores/gdrive.svelte";
   import { get } from "svelte/store";
 
   let { close }: { close: () => void } = $props();
@@ -29,12 +29,9 @@
         shareLink = link;
         
         // Save to config
-        cloudConfig.update((c) => ({
-            ...c,
-            shareStatus: "public",
-            shareLink: link,
-            gdriveFolderId: folderId
-        }));
+        cloudConfig.setShareStatus("public");
+        cloudConfig.setShareLink(link);
+        cloudConfig.setGdriveFolderId(folderId);
       }
     } catch (err: any) {
       console.error(err);
@@ -52,12 +49,8 @@
       shareLink = null;
       
       // Update config
-      cloudConfig.update((c) => ({
-          ...c,
-          shareStatus: "private",
-          shareLink: undefined
-      }));
-
+      cloudConfig.setShareStatus("private");
+      cloudConfig.setShareLink(undefined);
     } catch (err: any) {
       console.error(err);
       error = err.message || "Failed to revoke share";
