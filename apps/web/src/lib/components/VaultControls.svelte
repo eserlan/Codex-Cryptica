@@ -47,8 +47,8 @@
     <div class="flex gap-1.5 md:gap-3 items-center">
         {#if isOffline}
             <div
-                class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter"
-                title="Application is running in offline mode. Sync is suspended."
+                class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help"
+                title="All lore remains available locally. Codex Cryptica is designed for offline-first operation. Cloud sync is currently suspended."
             >
                 <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
                 <span class="hidden md:inline">OFFLINE</span>
