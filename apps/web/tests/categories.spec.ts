@@ -22,12 +22,14 @@ test.describe("Category Architecture Modal", () => {
     test("should open Category Architecture modal and display default categories", async ({ page }) => {
         // 1. Open main Settings
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Cloud Sync' })).toBeVisible();
 
         // 2. Open Schema tab via sidebar
         await page.click('nav button:has-text("Schema")');
 
         // 3. Verify Schema heading is visible
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
         // 4. Verify default categories are loaded (check for NPC which is a default category)
@@ -43,13 +45,15 @@ test.describe("Category Architecture Modal", () => {
 
         // 6. Close modal
         await page.click('button[aria-label="Close Settings"]');
-        await expect(page.locator('h2', { hasText: 'Schema' })).not.toBeVisible();
+        await expect(page.locator('[role="dialog"]')).not.toBeVisible();
     });
 
     test("should add a new category in session", async ({ page }) => {
         // Open settings and go to Schema
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
         // Count initial categories
@@ -83,11 +87,14 @@ test.describe("Category Architecture Modal", () => {
     test("should open and close glyph library picker", async ({ page }) => {
         // Open settings and go to Schema
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
         // Open glyph library via "Select Icon" button
         await page.getByTitle("Select Icon").click();
+        await page.waitForSelector('text=Glyph Library', { state: 'visible' });
         await expect(page.getByText("Glyph Library")).toBeVisible();
 
         // Verify icons are present
@@ -102,7 +109,9 @@ test.describe("Category Architecture Modal", () => {
     test("should reset categories to defaults", async ({ page }) => {
         // Open settings and go to Schema
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
         // Delete NPC category naturally
@@ -132,7 +141,9 @@ test.describe("Category Architecture Modal", () => {
 
         // 2. Open settings and go to Schema
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Schema' })).toBeVisible();
 
         // 3. Find NPC category color input and change it to a distinct color
@@ -151,7 +162,9 @@ test.describe("Category Architecture Modal", () => {
 
         // 5. Reopen and verify the color persisted
         await page.getByTestId("cloud-status-button").click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await page.click('nav button:has-text("Schema")');
+        await page.waitForSelector('h2:has-text("Schema")', { state: 'visible' });
 
         const updatedColorInput = page.getByTestId('category-row-npc').locator('input[type="color"]');
         const savedColor = await updatedColorInput.inputValue();

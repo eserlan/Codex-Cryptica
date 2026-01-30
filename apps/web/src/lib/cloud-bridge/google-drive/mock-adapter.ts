@@ -20,9 +20,9 @@ export class MockDriveAdapter implements ICloudAdapter {
     this.connected = false;
   }
 
-  async listFiles(): Promise<Map<string, RemoteFileMeta>> {
+  async listFiles(): Promise<RemoteFileMeta[]> {
     this.checkConnected();
-    return new Map(this.files);
+    return Array.from(this.files.values());
   }
 
   async uploadFile(

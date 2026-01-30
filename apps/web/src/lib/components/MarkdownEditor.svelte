@@ -43,7 +43,7 @@
             ],
             editorProps: {
                 attributes: {
-                    class: "prose prose-invert max-w-none focus:outline-none min-h-[150px] font-sans text-lg leading-relaxed text-gray-200",
+                    class: "prose prose-invert max-w-none focus:outline-none min-h-[100px] font-sans text-lg leading-relaxed text-gray-200",
                 },
             },
             content: content,

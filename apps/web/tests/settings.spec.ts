@@ -13,10 +13,9 @@ test.describe("Settings Modal", () => {
         await expect(settingsBtn).toBeVisible();
         await settingsBtn.click();
 
-        // Wait a bit for transition
-        await page.waitForTimeout(500);
-
         // 2. Verify modal is visible - find by heading
+        // Wait for selector to be present in DOM and visible
+        await page.waitForSelector('h2:has-text("Vault")', { state: 'visible', timeout: 5000 });
         const vaultHeading = page.locator('h2', { hasText: 'Vault' });
         await expect(vaultHeading).toBeVisible();
 
@@ -37,13 +36,14 @@ test.describe("Settings Modal", () => {
 
         // 6. Close modal
         await page.click('button[aria-label="Close Settings"]');
-        await expect(vaultHeading).not.toBeVisible();
+        await expect(page.locator('[role="dialog"]')).not.toBeVisible();
     });
 
     test("should open directly to sync tab from cloud button", async ({ page }) => {
         const cloudBtn = page.locator('button[data-testid="cloud-status-button"]');
         await expect(cloudBtn).toBeVisible();
         await cloudBtn.click();
+        await page.waitForSelector('h2:has-text("Cloud Sync")', { state: 'visible' });
         await expect(page.locator('h2', { hasText: 'Cloud Sync' })).toBeVisible();
     });
 

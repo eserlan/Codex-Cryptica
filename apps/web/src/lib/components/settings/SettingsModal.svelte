@@ -79,11 +79,12 @@
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-heading"
+        tabindex="-1"
         onkeydown={handleKeydown}
         transition:fly={{ y: 20, duration: 300 }}
     >
         <!-- Sidebar Navigation -->
-        <nav
+        <div
             class="w-16 md:w-48 bg-[#0c0c0c] border-r border-green-900/20 flex flex-col pt-6"
             role="tablist"
             aria-label="Settings Categories"
@@ -128,7 +129,7 @@
             >
                 Version {VERSION} // Build {CODENAME}
             </div>
-        </nav>
+        </div>
 
         <!-- Content Area -->
         <div class="flex-1 flex flex-col min-w-0 bg-[#050505]">

@@ -378,7 +378,7 @@ class VaultStore {
       const hash = crypto.randomUUID().split("-")[0];
       const baseFilename = `${entityId}-${timestamp}-${hash}`;
       const filename = `${baseFilename}.png`;
-      const thumbFilename = `${baseFilename}-thumb.png`;
+      const thumbFilename = `${baseFilename}-thumb.webp`;
 
       // Save original
       const fileHandle = await imagesDir.getFileHandle(filename, {
@@ -454,8 +454,8 @@ class VaultStore {
             if (result) resolve(result);
             else reject(new Error("Canvas toBlob failed"));
           },
-          "image/png",
-          0.8,
+          "image/webp",
+          0.75,
         );
       };
 

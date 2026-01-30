@@ -14,7 +14,7 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     // No-op for worker adapter
   }
 
-  async listFiles(): Promise<Map<string, RemoteFileMeta>> {
+  async listFiles(): Promise<RemoteFileMeta[]> {
     if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
     const url = new URL(API_BASE);
     url.searchParams.append("pageSize", "1000");
@@ -34,24 +34,20 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     if (!res.ok) throw new Error(`GDrive List Error: ${res.statusText}`);
     const data = await res.json();
 
-    const fileMap = new Map<string, RemoteFileMeta>();
+    const remoteFiles: RemoteFileMeta[] = [];
     if (data.files) {
       for (const file of data.files) {
-        // Use appProperties.vault_path as the key if available, fallback to name
-        const vaultPath = file.appProperties?.vault_path || file.name;
-        if (vaultPath && file.id) {
-          fileMap.set(vaultPath, {
-            id: file.id,
-            name: file.name,
-            mimeType: file.mimeType || "",
-            modifiedTime: file.modifiedTime || "",
-            parents: file.parents || [],
-            appProperties: file.appProperties,
-          });
-        }
+        remoteFiles.push({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType || "",
+          modifiedTime: file.modifiedTime || "",
+          parents: file.parents || [],
+          appProperties: file.appProperties,
+        });
       }
     }
-    return fileMap;
+    return remoteFiles;
   }
 
   private getMimeType(path: string): string {
@@ -64,6 +60,8 @@ export class WorkerDriveAdapter implements ICloudAdapter {
         return "text/markdown";
       case "png":
         return "image/png";
+      case "webp":
+        return "image/webp";
       case "jpg":
       case "jpeg":
         return "image/jpeg";
@@ -81,24 +79,17 @@ export class WorkerDriveAdapter implements ICloudAdapter {
   ): Promise<RemoteFileMeta> {
     if (!this.folderId)
       throw new Error("WorkerDriveAdapter: folderId is required");
+
     const method = existingId ? "PATCH" : "POST";
     const baseUrl = existingId ? `${UPLOAD_BASE}/${existingId}` : UPLOAD_BASE;
     const url = new URL(baseUrl);
     url.searchParams.append("uploadType", "multipart");
 
-    const pathByteLength = new TextEncoder().encode(path).length;
-    if (pathByteLength > 124) {
-      throw new Error(
-        `[WorkerDriveAdapter] Path byte length (${pathByteLength}) exceeds Google Drive appProperties limit (124 bytes). Sync aborted for: ${path}`,
-      );
-    }
-    if (path.length > 100) {
-      console.warn(
-        `[WorkerDriveAdapter] Path length (${path.length} chars, ${pathByteLength} bytes) approaches Google Drive appProperties limit (124 bytes).`,
-      );
-    }
-
     const mimeType = this.getMimeType(path);
+    const boundary = "CodexSyncBoundary" + crypto.randomUUID().replace(/-/g, "");
+    const delimiter = `--${boundary}\r\n`;
+    const closeDelimiter = `\r\n--${boundary}--`;
+
     const metadata = {
       name: path.split("/").filter(Boolean).pop() || "unknown",
       mimeType: mimeType,
@@ -108,23 +99,40 @@ export class WorkerDriveAdapter implements ICloudAdapter {
       },
     };
 
-    const form = new FormData();
-    form.append(
-      "metadata",
-      new Blob([JSON.stringify(metadata)], { type: "application/json" }),
-    );
-    form.append(
-      "file",
-      content instanceof Blob ? content : new Blob([content], { type: mimeType }),
+    // Convert content to Blob if it isn't already
+    const contentBlob =
+      content instanceof Blob ? content : new Blob([content], { type: mimeType });
+
+    // Construct the multipart body
+    // Part 1: Metadata (JSON)
+    // Part 2: Content (Binary)
+    const multipartBody = new Blob(
+      [
+        delimiter,
+        "Content-Type: application/json; charset=UTF-8\r\n\r\n",
+        JSON.stringify(metadata),
+        "\r\n",
+        delimiter,
+        `Content-Type: ${mimeType}\r\n\r\n`,
+        contentBlob,
+        closeDelimiter,
+      ],
+      { type: `multipart/related; boundary=${boundary}` },
     );
 
     const res = await fetch(url.toString(), {
       method,
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-      body: form,
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+      },
+      body: multipartBody,
     });
 
-    if (!res.ok) throw new Error(`GDrive Upload Error: ${res.statusText}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`GDrive Upload Error: ${res.statusText} - ${errorText}`);
+    }
+
     const file = await res.json();
 
     return {

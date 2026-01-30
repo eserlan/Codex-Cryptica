@@ -49,6 +49,13 @@ export class WorkerBridge {
           case "SYNC_STATUS":
             syncStats.setStatus(payload);
             break;
+          case "SYNC_PROGRESS":
+            syncStats.updateStats({
+              phase: payload.phase,
+              current: payload.current,
+              total: payload.total,
+            });
+            break;
           case "SYNC_COMPLETE":
             syncStats.updateStats({
               filesUploaded: payload.uploads,
@@ -58,6 +65,9 @@ export class WorkerBridge {
             break;
           case "SYNC_ERROR":
             syncStats.setError(payload);
+            break;
+          case "REMOTE_UPDATES_DOWNLOADED":
+            vault.refresh();
             break;
         }
       });

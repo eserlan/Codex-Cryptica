@@ -6,6 +6,9 @@ const initialStats: SyncStats = {
   filesDownloaded: 0,
   errors: 0,
   duration: 0,
+  phase: undefined,
+  current: undefined,
+  total: undefined,
 };
 
 const initialState: SyncState = {

@@ -202,7 +202,7 @@ describe("VaultStore", () => {
 
     expect(path).toContain("./images/test-entity-");
     expect(vault.entities["test-entity"]?.image).toBe(path);
-    expect(vault.entities["test-entity"]?.thumbnail).toContain("-thumb.png");
+    expect(vault.entities["test-entity"]?.thumbnail).toContain("-thumb.webp");
   });
 
   it("should resolve local paths to blob URLs", async () => {

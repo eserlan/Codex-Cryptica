@@ -221,6 +221,24 @@
                                     >{status}</span
                                 >
                             </div>
+                            
+                            {#if isSyncing && $syncStats.stats?.phase}
+                                <div class="mb-3">
+                                    <div class="flex justify-between text-[9px] text-green-700 uppercase mb-1">
+                                        <span>{$syncStats.stats.phase}</span>
+                                        <span>{$syncStats.stats.current} / {$syncStats.stats.total}</span>
+                                    </div>
+                                    <div class="w-full h-1 bg-green-900/20 rounded-full overflow-hidden">
+                                        <div 
+                                            class="h-full bg-green-500 transition-all duration-300"
+                                            style="width: {($syncStats.stats.total && $syncStats.stats.total > 0
+                                                ? (($syncStats.stats.current || 0) / $syncStats.stats.total) * 100
+                                                : 0)}%"
+                                        ></div>
+                                    </div>
+                                </div>
+                            {/if}
+
                             {#if $syncStats.stats}
                                 <div
                                     class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-green-900/10 text-[10px]"

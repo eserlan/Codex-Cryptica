@@ -45,21 +45,28 @@ self.onmessage = async (event) => {
         self.postMessage({ type: "SYNC_STATUS", payload: "SCANNING" });
 
         const { local, remote, metadata } = await engine.scan();
-        console.log(`SyncWorker: Scan complete. Local: ${local.length}, Remote: ${remote.size}`);
+        console.log(`SyncWorker: Scan complete. Local: ${local.length}, Remote: ${remote.length}, Metadata: ${metadata.length}`);
+        
+        if (local.length > 0) console.log('SyncWorker: Sample Local:', local[0].path);
+        if (remote.length > 0) console.log('SyncWorker: Sample Remote:', remote[0].appProperties?.vault_path || remote[0].name);
 
         // Calculate Diff
         const plan = engine.calculateDiff(local, remote, metadata);
-        console.log(`SyncWorker: Plan calculated. Uploads: ${plan.uploads.length}, Downloads: ${plan.downloads.length}`);
+        console.log(`SyncWorker: Plan calculated. Uploads: ${plan.uploads.length}, Downloads: ${plan.downloads.length}, Deletions: ${plan.deletes.length}`);
 
-        if (plan.uploads.length > 0 || plan.downloads.length > 0) {
+        if (plan.uploads.length > 0 || plan.downloads.length > 0 || plan.deletes.length > 0) {
           self.postMessage({ type: "SYNC_STATUS", payload: "SYNCING" });
-          await engine.applyPlan(plan);
+          await engine.applyPlan(plan, (phase, current, total) => {
+            self.postMessage({
+              type: "SYNC_PROGRESS",
+              payload: { phase, current, total },
+            });
+          });
 
-          // If downloads occurred, notify main thread to update Graph
+          // If downloads occurred, notify main thread to update Graph/Vault
           if (plan.downloads.length > 0) {
             self.postMessage({
-              type: "PARSE_CONTENT",
-              content: "remote-updates",
+              type: "REMOTE_UPDATES_DOWNLOADED",
             });
           }
         }

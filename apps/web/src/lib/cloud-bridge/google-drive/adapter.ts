@@ -237,7 +237,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     }
   }
 
-  async listFiles(): Promise<Map<string, RemoteFileMeta>> {
+  async listFiles(): Promise<RemoteFileMeta[]> {
     if (!this.accessToken) throw new Error("Not authenticated");
 
     // Get the email from GAPI to build the key
@@ -254,23 +254,24 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       q: `'${folderId}' in parents and trashed = false`,
     });
 
-    const fileMap = new Map<string, RemoteFileMeta>();
+    const remoteFiles: RemoteFileMeta[] = [];
     const files = response.result.files;
 
     if (files && files.length > 0) {
       for (const file of files) {
         if (file.name && file.id) {
-          fileMap.set(file.name, {
+          remoteFiles.push({
             id: file.id,
             name: file.name,
             mimeType: file.mimeType || "",
             modifiedTime: file.modifiedTime || "",
             parents: file.parents || [],
+            appProperties: file.appProperties,
           });
         }
       }
     }
-    return fileMap;
+    return remoteFiles;
   }
 
   async uploadFile(

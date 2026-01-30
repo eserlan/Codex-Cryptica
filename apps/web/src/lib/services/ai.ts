@@ -322,7 +322,7 @@ User visualization request: ${query}`;
             targetEntity && targetEntity.title
               ? targetEntity.title
               : `[missing entity: ${c.target}]`;
-          return `- ${c.label || c.type}: ${target}`;
+          return `- ${entity.title} → ${c.label || c.type} → ${target}`;
         });
 
         const inbound = (vault.inboundConnections[id] || []).map(item => {
@@ -331,7 +331,7 @@ User visualization request: ${query}`;
             sourceEntity && sourceEntity.title
               ? sourceEntity.title
               : `[missing entity: ${item.sourceId}]`;
-          return `- ${source}: ${item.connection.label || item.connection.type}`;
+          return `- ${source} → ${item.connection.label || item.connection.type} → ${entity.title}`;
         });
 
         if (outbound.length > 0 || inbound.length > 0) {

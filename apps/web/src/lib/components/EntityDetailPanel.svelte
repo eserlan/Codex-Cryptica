@@ -301,7 +301,7 @@
                             Chronicle
                         </h3>
                         {#if isEditing}
-                            <div class="h-64">
+                            <div>
                                 <MarkdownEditor
                                     content={editContent}
                                     editable={true}
@@ -341,21 +341,36 @@
                                             onclick={() =>
                                                 (vault.selectedEntityId =
                                                     conn.targetId)}
-                                            class="text-left hover:text-green-400 transition"
+                                            class="text-left hover:text-green-400 transition flex items-center flex-wrap gap-y-1"
                                         >
                                             {#if conn.isOutbound}
+                                                <span class="text-green-700"
+                                                    >{entity.title}</span
+                                                >
+                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
                                                 <strong
                                                     class="text-gray-300 group-hover:text-green-400 transition"
                                                     >{conn.label ||
                                                         conn.type}</strong
-                                                >:
-                                                {conn.displayTitle}
+                                                >
+                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span class="text-gray-300"
+                                                    >{conn.displayTitle}</span
+                                                >
                                             {:else}
+                                                <span class="text-gray-300"
+                                                    >{conn.displayTitle}</span
+                                                >
+                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
                                                 <strong
                                                     class="text-gray-300 group-hover:text-green-400 transition"
-                                                    >{conn.displayTitle}</strong
-                                                >:
-                                                {conn.label || conn.type}
+                                                    >{conn.label ||
+                                                        conn.type}</strong
+                                                >
+                                                <span class="relation-arrow icon-[lucide--move-right]"></span>
+                                                <span class="text-green-700"
+                                                    >{entity.title}</span
+                                                >
                                             {/if}
                                         </button>
                                     </div>
@@ -475,5 +490,15 @@
     .prose-content :global(.markdown-editor) {
         background: transparent;
         border: none;
+    }
+
+    .relation-arrow {
+        color: #22c55e;
+        width: 1.1rem;
+        height: 1.1rem;
+        display: inline-block;
+        vertical-align: middle;
+        margin: 0 0.4rem;
+        flex-shrink: 0;
     }
 </style>

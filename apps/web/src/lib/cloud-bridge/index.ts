@@ -16,6 +16,9 @@ export interface SyncStats {
   filesDownloaded: number;
   errors: number;
   duration: number;
+  phase?: string;
+  current?: number;
+  total?: number;
 }
 
 export interface ICloudAdapter {
@@ -32,9 +35,9 @@ export interface ICloudAdapter {
 
   /**
    * List all files in the app's folder.
-   * @returns Map of relative path -> remote file ID + metadata
+   * @returns Array of remote file metadata.
    */
-  listFiles(): Promise<Map<string, RemoteFileMeta>>;
+  listFiles(): Promise<RemoteFileMeta[]>;
 
   /**
    * Upload a file.
