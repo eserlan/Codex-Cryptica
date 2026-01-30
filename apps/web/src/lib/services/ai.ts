@@ -11,7 +11,7 @@ export class AIService {
   private genAI: GoogleGenerativeAI | null = null;
   private model: GenerativeModel | null = null;
   private currentApiKey: string | null = null;
-  currentModelName: string | null = null;
+  private currentModelName: string | null = null;
   private styleCache: string | null = null;
 
   /**
@@ -23,7 +23,12 @@ export class AIService {
     history: any[],
   ): Promise<string> {
     try {
-      const liteModel = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+      if (!this.genAI || this.currentApiKey !== apiKey) {
+        this.genAI = new GoogleGenerativeAI(apiKey);
+        this.currentApiKey = apiKey;
+      }
+
+      const liteModel = this.genAI.getGenerativeModel({
         model: TIER_MODES.lite,
       });
 

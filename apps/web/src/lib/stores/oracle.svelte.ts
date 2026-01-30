@@ -62,7 +62,6 @@ class OracleStore {
         tier: this.tier
       }
     });
-    this.saveToDB();
   }
 
   private async saveToDB() {
@@ -110,6 +109,7 @@ class OracleStore {
     this.tier = tier;
     this.lastUpdated = Date.now();
     this.broadcast();
+    this.saveToDB();
   }
 
   async setKey(key: string) {
@@ -118,6 +118,7 @@ class OracleStore {
     this.apiKey = key;
     this.lastUpdated = Date.now();
     this.broadcast();
+    this.saveToDB();
   }
 
   clearKey() {
@@ -128,6 +129,7 @@ class OracleStore {
     this.clearMessages();
     this.lastUpdated = Date.now();
     this.broadcast();
+    this.saveToDB();
   }
 
   clearMessages() {
@@ -139,6 +141,7 @@ class OracleStore {
     });
     this.messages = [];
     this.lastUpdated = Date.now();
+    this.saveToDB();
   }
 
   get isEnabled() {
@@ -245,6 +248,7 @@ class OracleStore {
     this.lastUpdated = Date.now();
     this.isLoading = true;
     this.broadcast();
+    this.saveToDB();
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
@@ -334,6 +338,7 @@ class OracleStore {
       this.isLoading = false;
       this.lastUpdated = Date.now();
       this.broadcast();
+      this.saveToDB();
     }
   }
 
@@ -353,6 +358,7 @@ class OracleStore {
     if (target) {
       target.archiveTargetId = entityId;
       this.broadcast();
+      this.saveToDB();
     }
   }
 
