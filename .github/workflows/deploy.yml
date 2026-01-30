@@ -37,11 +37,13 @@ jobs:
         run: |
           echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > apps/web/.env
           echo "VITE_SHARED_GEMINI_KEY=${{ secrets.VITE_SHARED_GEMINI_KEY }}" >> apps/web/.env
+          echo "VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}" >> apps/web/.env
 
       - name: Build
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
           NODE_ENV: production
         run: |
           npm run build --workspace=apps/web

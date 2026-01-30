@@ -42,13 +42,13 @@
   let scale = $state(1); // minimap pixels / graph units
 
   // Toggle Visibility (US4)
-  let collapsed = $state(false);
+  let collapsed = $state(true);
   const toggleMinimap = () => (collapsed = !collapsed);
 
   const updateProjection = () => {
     if (!cy) return;
     const eles = cy.elements();
-    
+
     // If there are no elements, avoid calling boundingBox and reset to safe defaults
     if (!eles || eles.length === 0) {
       graphBounds = { x1: 0, y1: 0, x2: 0, y2: 0, w: 1, h: 1 };
@@ -75,12 +75,7 @@
     const h = bb.h + SCALE_PADDING * 2;
 
     // Avoid divide by zero and non-finite dimensions
-    if (
-      !Number.isFinite(w) ||
-      !Number.isFinite(h) ||
-      w <= 0 ||
-      h <= 0
-    ) {
+    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
       return;
     }
 
@@ -193,9 +188,9 @@
 
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
-    
+
     if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-        hasMoved = true;
+      hasMoved = true;
     }
 
     // Convert minimap delta to graph delta
@@ -302,18 +297,18 @@
   aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
   tabindex="0"
   onclick={handleMinimapClick}
-      onkeydown={(event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        (event.currentTarget as HTMLElement).click();
-      }
-    }}
-  >
-    <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
-    ></canvas>
-  
-    <!-- Viewport Overlay -->
-  
+  onkeydown={(event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      (event.currentTarget as HTMLElement).click();
+    }
+  }}
+>
+  <canvas bind:this={canvas} {width} {height} class="w-full h-full block"
+  ></canvas>
+
+  <!-- Viewport Overlay -->
+
   <div
     class="viewport-rect"
     style:left="{viewportX}px"
@@ -352,7 +347,7 @@
   <!-- Toggle Button -->
   <button
     class="toggle-btn"
-    onclick={(e) => {
+    onclick={(e: MouseEvent) => {
       e.stopPropagation();
       toggleMinimap();
     }}
@@ -449,6 +444,10 @@
 
   .viewport-rect:active {
     cursor: grabbing;
-    background-color: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
+    background-color: color-mix(
+      in srgb,
+      var(--color-accent-primary) 20%,
+      transparent
+    );
   }
 </style>

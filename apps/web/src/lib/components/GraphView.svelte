@@ -77,6 +77,7 @@
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    if (vault.isGuest) return;
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       // Don't toggle if user is typing in an input (though we don't have many here yet)
       if (
@@ -167,6 +168,7 @@
 
       // Right-click on edge to edit label
       cy.on("cxttap", "edge", (evt) => {
+        if (vault.isGuest) return;
         const edge = evt.target;
         const sourceId = edge.data("source");
         const targetId = edge.data("target");
@@ -479,6 +481,7 @@
       </button>
 
       <!-- Connect Mode Toggle -->
+      {#if !vault.isGuest}
       <button
         class="w-8 h-8 flex items-center justify-center border transition {connectMode
           ? 'border-yellow-500 bg-yellow-500/20 text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]'
@@ -488,6 +491,7 @@
       >
         <span class="icon-[lucide--link] w-4 h-4"></span>
       </button>
+      {/if}
     </div>
   </div>
 

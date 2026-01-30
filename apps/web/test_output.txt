@@ -1,0 +1,165 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+
+> web@0.0.1 test
+> vitest run
+
+
+[1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/espen/proj/Codex-Arcana/apps/web[39m
+
+ [32m✓[39m src/lib/cloud-bridge/sync-engine/conflict.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/lib/cloud-bridge/memory-adapter.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/tests/search-utils.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 121[2mms[22m[39m
+[90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould match files using full relative paths
+[22m[39m[SyncEngine] lore/main.md has no remote match. Adding to UPLOADS.
+
+[90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould detect local changes in subdirectories
+[22m[39m[SyncEngine] images/hero.png changed. Local: true, Remote: false
+
+[90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould identify and clean up remote duplicates
+[22m[39m[SyncEngine] Found 2 duplicates for images/hero.png. Cleaning up...
+[SyncEngine] images/hero.png changed. Local: true, Remote: true
+[SyncEngine] Conflict for images/hero.png. Decision: DOWNLOAD
+
+ [32m✓[39m src/lib/cloud-bridge/sync-engine/engine.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize explicit title matches over active selection
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould match short titles only with word boundaries
+[22m[39m[AIService] Consulted 1 records: [ [32m'ai-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search results over active selection
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search over sticky context
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould stick to previous context for follow-up questions
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould ignore low-confidence search results and fallback to active selection
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+[22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+[22m[39m[AIService] Consulted 1 records: [ [32m'crone-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould handle missing entities in connection context gracefully
+[22m[39m[AIService] Consulted 1 records: [ [32m'woods-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould recognize lone pronouns as follow-ups
+[22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould combine Lore and Content in context (Context Fusion)
+[22m[39m[AIService] Consulted 1 records: [ [32m'fusion-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould respect 10k character limit and prioritize selected entity
+[22m[39m[AIService] Consulted 2 records: [ [32m'active-id'[39m, [32m'match-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould populate sourceIds for all consulted entities
+[22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mQuery Expansion[2m > [22m[2mshould call Lite model to expand query
+[22m[39m[AIService] Expanded query: "him?" -> "Expanded Term"
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mNeighborhood Enrichment[2m > [22m[2mshould include linked entity chronicles (Neighborhood Enrichment)
+[22m[39m[AIService] Consulted 2 records: [ [32m'location-id'[39m, [32m'npc-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+[22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+[22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+[22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+
+[90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+[22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+
+ [32m✓[39m src/lib/services/ai.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 156[2mms[22m[39m
+[90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+[22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+
+[90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+[22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+
+[90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+[22m[39m[GDriveAdapter] Restoring cached token
+
+[90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+[22m[39m[GDriveAdapter] Restoring cached token
+
+[90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+[22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+
+ [32m✓[39m src/lib/cloud-bridge/google-drive/adapter.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 97[2mms[22m[39m
+ [32m✓[39m src/smoke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/tests/search.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 70[2mms[22m[39m
+ [32m✓[39m src/stores/sync-stats.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32m✓[39m src/lib/stores/oracle.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32m✓[39m src/lib/stores/categories.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32m✓[39m src/stores/help.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32m✓[39m src/lib/stores/vault.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 239[2mms[22m[39m
+ [31m❯[39m src/lib/cloud-bridge/google-drive/public-adapter.test.ts [2m([22m[2m5 tests[22m[2m | [22m[31m3 failed[39m[2m)[22m[33m 15055[2mms[22m[39m
+     [32m✓[39m should throw error if methods unrelated to fetching are called[32m 21[2mms[22m[39m
+     [32m✓[39m should throw error if apiKey is missing[32m 1[2mms[22m[39m
+[31m     [31m×[31m should fetch file successfully[39m[33m 5018[2mms[22m[39m
+[31m     [31m×[31m should handle 404 error[39m[33m 5006[2mms[22m[39m
+[31m     [31m×[31m should handle 403 error[39m[33m 5003[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 3 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/lib/cloud-bridge/google-drive/public-adapter.test.ts[2m > [22mPublicGDriveAdapter[2m > [22mshould fetch file successfully
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/lib/cloud-bridge/google-drive/public-adapter.test.ts:[2m29:3[22m[39m
+    [90m 27| [39m  })[33m;[39m
+    [90m 28| [39m
+    [90m 29| [39m  [34mit[39m([32m"should fetch file successfully"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m  [31m^[39m
+    [90m 30| [39m    [35mconst[39m mockBlob [33m=[39m [35mnew[39m [33mBlob[39m([[32m"content"[39m][33m,[39m { type[33m:[39m [32m"text/plain"[39m })[33m;[39m
+    [90m 31| [39m    fetchMock[33m.[39m[34mmockResolvedValue[39m({
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/lib/cloud-bridge/google-drive/public-adapter.test.ts[2m > [22mPublicGDriveAdapter[2m > [22mshould handle 404 error
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/lib/cloud-bridge/google-drive/public-adapter.test.ts:[2m44:3[22m[39m
+    [90m 42| [39m  })[33m;[39m
+    [90m 43| [39m
+    [90m 44| [39m  [34mit[39m([32m"should handle 404 error"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m  [31m^[39m
+    [90m 45| [39m    fetchMock[33m.[39m[34mmockResolvedValue[39m({
+    [90m 46| [39m      ok[33m:[39m [35mfalse[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/lib/cloud-bridge/google-drive/public-adapter.test.ts[2m > [22mPublicGDriveAdapter[2m > [22mshould handle 403 error
+[31m[1mError[22m: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".[39m
+[36m [2m❯[22m src/lib/cloud-bridge/google-drive/public-adapter.test.ts:[2m54:3[22m[39m
+    [90m 52| [39m  })[33m;[39m
+    [90m 53| [39m
+    [90m 54| [39m  [34mit[39m([32m"should handle 403 error"[39m[33m,[39m [35masync[39m () [33m=>[39m {
+    [90m   | [39m  [31m^[39m
+    [90m 55| [39m    fetchMock[33m.[39m[34mmockResolvedValue[39m({
+    [90m 56| [39m      ok[33m:[39m [35mfalse[39m[33m,[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[90m (14)[39m
+[2m      Tests [22m [1m[31m3 failed[39m[22m[2m | [22m[1m[32m88 passed[39m[22m[90m (91)[39m
+[2m   Start at [22m 20:25:49
+[2m   Duration [22m 18.58s[2m (transform 20.16s, setup 0ms, import 30.75s, tests 15.93s, environment 5.21s)[22m
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/espen/proj/Codex-Arcana/apps/web
+npm error workspace web@0.0.1
+npm error location /home/espen/proj/Codex-Arcana/apps/web
+npm error command failed
+npm error command sh -c vitest run

@@ -4,7 +4,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
-  import { goto } from "$app/navigation";
   import type { SearchResult } from "schema";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
@@ -86,9 +85,6 @@
     }
 
     searchStore.close();
-
-    // Navigate (optional, but keep for now)
-    goto(`?file=${encodeURIComponent(result.path)}`);
   };
 
   const scrollToSelected = () => {

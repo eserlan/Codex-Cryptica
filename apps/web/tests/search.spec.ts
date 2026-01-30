@@ -84,7 +84,7 @@ test.describe('Fuzzy Search', () => {
 
     test('Search works offline', async ({ page, context }) => {
         page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-        await page.goto('/');
+        await page.goto('http://localhost:5173/');
 
         // 1. Open Vault to trigger indexing
         await page.getByRole('button', { name: 'OPEN VAULT' }).click();
@@ -119,7 +119,7 @@ test.describe('Fuzzy Search', () => {
 
     test('handles search results with missing IDs via path fallback', async ({ page }) => {
         page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-        await page.goto('/');
+        await page.goto('http://localhost:5173/');
 
         // 1. Open Vault to trigger initial UI state
         await page.getByRole('button', { name: 'OPEN VAULT' }).click();
@@ -161,5 +161,33 @@ test.describe('Fuzzy Search', () => {
 
         // Check for the title in the detail panel
         await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: /Crone/i })).toBeVisible();
+    });
+
+    test('selecting search result does not add redundant URL parameters', async ({ page }) => {
+        await page.goto('http://localhost:5173/');
+
+        // 1. Open Vault to trigger indexing
+        await page.getByRole('button', { name: 'OPEN VAULT' }).click();
+        await expect(page.getByTestId('entity-count')).toHaveText('2 ENTITIES', { timeout: 20000 });
+
+        // 2. Open Search Modal
+        await page.keyboard.press('Control+k');
+        await expect(page.getByPlaceholder('Search notes...')).toBeVisible();
+
+        // 3. Type query and wait for results
+        await page.getByPlaceholder('Search notes...').fill('Note');
+        const resultItem = page.getByTestId('search-result').filter({ hasText: 'My Note' });
+        await expect(resultItem).toBeVisible();
+
+        // 4. Click the result
+        await resultItem.click();
+
+        // 5. Verify modal closed and entity selected
+        await expect(page.getByPlaceholder('Search notes...')).not.toBeVisible();
+        await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: 'My Note' })).toBeVisible();
+
+        // 6. CRITICAL: Verify URL does not contain ?file=
+        const url = page.url();
+        expect(url).not.toContain('file=');
     });
 });

@@ -3,6 +3,9 @@ import type { Entity } from "schema";
 export interface SerializedGraph {
   entities: Record<string, Entity>;
   version: number;
+  assets?: Record<string, string>; // filename/path -> fileId or URL
+  deferredAssets?: Promise<void>;
+  totalFiles?: number;
 }
 
 export interface IStorageAdapter {
@@ -21,11 +24,16 @@ export interface IStorageAdapter {
    * Throws error in Read-Only mode.
    */
   saveGraph(graph: SerializedGraph): Promise<void>;
-  
+
   /**
    * Check if the adapter is read-only.
    */
   isReadOnly(): boolean;
+
+  /**
+   * Resolve a relative path (e.g. ./images/foo.png) to a usable URL.
+   */
+  resolvePath(path: string): Promise<string>;
 }
 
 export interface ICloudShareProvider {

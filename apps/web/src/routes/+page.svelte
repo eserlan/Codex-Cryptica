@@ -2,11 +2,15 @@
     import GraphView from "$lib/components/GraphView.svelte";
     import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
     import { vault } from "$lib/stores/vault.svelte";
+    import { page } from "$app/state";
 
     let selectedEntity = $derived.by(() => {
         const id = vault.selectedEntityId;
         return id ? vault.entities[id] : null;
     });
+
+    // Check if we're in guest/share mode
+    const isGuestMode = $derived(!!page.url.searchParams.get("shareId"));
 </script>
 
 <div class="h-[calc(100vh-65px)] relative bg-black overflow-hidden">
@@ -19,8 +23,8 @@
         />
     {/if}
 
-    <!-- Fallback empty state prompt only if no vault open -->
-    {#if !vault.rootHandle}
+    <!-- Fallback empty state prompt only if no vault open AND not in guest mode -->
+    {#if !vault.rootHandle && !isGuestMode}
         <div
             class="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
         >

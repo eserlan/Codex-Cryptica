@@ -4,7 +4,7 @@ const API_BASE = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3/files";
 
 export class WorkerDriveAdapter implements ICloudAdapter {
-  constructor(private accessToken: string, private folderId?: string) {}
+  constructor(private accessToken: string, private folderId?: string) { }
 
   async connect(): Promise<string> {
     return "connected-via-token";
@@ -14,40 +14,130 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     // No-op for worker adapter
   }
 
+  private folderCache = new Map<string, string>(); // name -> id
+  private folderPromises = new Map<string, Promise<string>>();
+
   async listFiles(): Promise<RemoteFileMeta[]> {
     if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
-    const url = new URL(API_BASE);
-    url.searchParams.append("pageSize", "1000");
-    url.searchParams.append(
-      "fields",
-      "files(id, name, mimeType, modifiedTime, parents, appProperties)",
-    );
-    url.searchParams.append(
-      "q",
-      `'${this.folderId}' in parents and trashed = false`,
-    );
 
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    });
+    const fetchFromFolder = async (parentId: string, _prefix = ""): Promise<RemoteFileMeta[]> => {
+      const url = new URL(API_BASE);
+      url.searchParams.append("pageSize", "1000");
+      url.searchParams.append(
+        "fields",
+        "files(id, name, mimeType, modifiedTime, parents, appProperties, thumbnailLink)",
+      );
+      url.searchParams.append(
+        "q",
+        `'${parentId}' in parents and trashed = false`,
+      );
 
-    if (!res.ok) throw new Error(`GDrive List Error: ${res.statusText}`);
-    const data = await res.json();
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
 
-    const remoteFiles: RemoteFileMeta[] = [];
-    if (data.files) {
-      for (const file of data.files) {
-        remoteFiles.push({
-          id: file.id,
-          name: file.name,
-          mimeType: file.mimeType || "",
-          modifiedTime: file.modifiedTime || "",
-          parents: file.parents || [],
-          appProperties: file.appProperties,
-        });
+      if (!res.ok) throw new Error(`GDrive List Error: ${res.statusText}`);
+      const data = await res.json();
+
+      const remoteFiles: RemoteFileMeta[] = [];
+      const folders: { id: string, name: string }[] = [];
+
+      if (data.files) {
+        for (const file of data.files) {
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            folders.push({ id: file.id, name: file.name });
+            // We don't add the folder itself to the file list for the engine
+            // but we store it in cache for uploads
+            this.folderCache.set(file.name, file.id);
+          } else if (file.name && file.id) {
+            remoteFiles.push({
+              id: file.id,
+              name: file.name,
+              mimeType: file.mimeType || "",
+              modifiedTime: file.modifiedTime || "",
+              parents: file.parents || [],
+              appProperties: file.appProperties,
+              thumbnailLink: file.thumbnailLink,
+            });
+          }
+        }
       }
+
+      // Recursively fetch subfolders (specifically 'images' for now to keep it efficient)
+      // In a real app we might want a full tree, but for Codex Cryptica, one level is enough.
+      for (const folder of folders) {
+        if (folder.name === "images") {
+          const subFiles = await fetchFromFolder(folder.id, `${folder.name}/`);
+          remoteFiles.push(...subFiles);
+        }
+      }
+
+      return remoteFiles;
+    };
+
+    return fetchFromFolder(this.folderId);
+  }
+
+  private async ensureFolder(name: string): Promise<string> {
+    if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
+    if (this.folderCache.has(name)) return this.folderCache.get(name)!;
+
+    // Check if there's already a creation in progress
+    if (this.folderPromises.has(name)) {
+      return this.folderPromises.get(name)!;
     }
-    return remoteFiles;
+
+    const creationPromise = (async () => {
+      try {
+        // Double check cache after entering promise
+        if (this.folderCache.has(name)) return this.folderCache.get(name)!;
+
+        // Search for existing
+        const q = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and '${this.folderId}' in parents and trashed = false`;
+        const url = new URL(API_BASE);
+        url.searchParams.append("q", q);
+        url.searchParams.append("fields", "files(id)");
+
+        const res = await fetch(url.toString(), {
+          headers: { Authorization: `Bearer ${this.accessToken}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.files && data.files.length > 0) {
+            const id = data.files[0].id;
+            this.folderCache.set(name, id);
+            return id;
+          }
+        }
+
+        // Create new
+        const createRes = await fetch(API_BASE, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            mimeType: "application/vnd.google-apps.folder",
+            parents: [this.folderId],
+          }),
+        });
+        if (!createRes.ok) {
+          const text = await createRes.text();
+          throw new Error(`GDrive Folder Creation Error: ${createRes.statusText} - ${text}`);
+        }
+        const createData = await createRes.json();
+        this.folderCache.set(name, createData.id);
+        return createData.id;
+      } finally {
+        // Remove promise from tracker regardless of success/failure
+        this.folderPromises.delete(name);
+      }
+    })();
+
+    this.folderPromises.set(name, creationPromise);
+    return creationPromise;
   }
 
   private getMimeType(path: string): string {
@@ -81,10 +171,19 @@ export class WorkerDriveAdapter implements ICloudAdapter {
       throw new Error("WorkerDriveAdapter: folderId is required");
 
     const mimeType = this.getMimeType(path);
+    const pathParts = path.split("/").filter(Boolean);
+    const fileName = pathParts.pop() || "unknown";
+    const subfolderName = pathParts.length > 0 ? pathParts[0] : null;
+
+    let parentId = this.folderId;
+    if (subfolderName) {
+      parentId = await this.ensureFolder(subfolderName);
+    }
+
     const metadata = {
-      name: path.split("/").filter(Boolean).pop() || "unknown",
+      name: fileName,
       mimeType: mimeType,
-      parents: existingId ? undefined : [this.folderId],
+      parents: existingId ? undefined : [parentId],
       appProperties: {
         vault_path: path,
       },

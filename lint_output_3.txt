@@ -1,0 +1,197 @@
+• Packages in scope: web
+• Running lint in 1 packages
+• Remote caching disabled
+web:lint: cache miss, executing dc73517cc92b992a
+web:lint: npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+web:lint: 
+web:lint: > web@0.0.1 lint
+web:lint: > svelte-check --tsconfig ./tsconfig.json && eslint .
+web:lint: 
+web:lint: Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
+web:lint: Getting Svelte diagnostics...
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:318:29
+web:lint: Error: Unterminated string literal. (ts)
+web:lint:     style:height="{Math.max(viewportH, 2)}px"
+web:lint:     style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%,
+web:lint:     transparent)"
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:319:17
+web:lint: Error: ',' expected. (ts)
+web:lint:     style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%,
+web:lint:     transparent)"
+web:lint:     role="button"
+web:lint:     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
+web:lint:     tabindex="0"
+web:lint:     onmousedown={handleDragStart}
+web:lint:     onkeydown={(event) => {
+web:lint:       const key = event.key;
+web:lint:       if (
+web:lint:         key === "ArrowUp" ||
+web:lint:         key === "ArrowDown" ||
+web:lint:         key === "ArrowLeft" ||
+web:lint:         key === "ArrowRight"
+web:lint:       ) {
+web:lint:         event.preventDefault();
+web:lint:         const pan = cy.pan();
+web:lint:         const step = 20;
+web:lint:         if (key === "ArrowUp") {
+web:lint:           cy.pan({ x: pan.x, y: pan.y - step });
+web:lint:         } else if (key === "ArrowDown") {
+web:lint:           cy.pan({ x: pan.x, y: pan.y + step });
+web:lint:         } else if (key === "ArrowLeft") {
+web:lint:           cy.pan({ x: pan.x - step, y: pan.y });
+web:lint:         } else if (key === "ArrowRight") {
+web:lint:           cy.pan({ x: pan.x + step, y: pan.y });
+web:lint:         }
+web:lint:       }
+web:lint:     }}
+web:lint:   ></div>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:346:10
+web:lint: Error: Unterminated string literal. (ts)
+web:lint:     }}
+web:lint:   ></div>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:349:3
+web:lint: Error: ',' expected. (ts)
+web:lint:   <!-- Toggle Button -->
+web:lint:   <button
+web:lint:     class="toggle-btn"
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:349:3
+web:lint: Error: ',' expected. (ts)
+web:lint:   <!-- Toggle Button -->
+web:lint:   <button
+web:lint:     class="toggle-btn"
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:355:61
+web:lint: Error: ',' expected. (ts)
+web:lint:     }}
+web:lint:     title={collapsed ? "Expand Minimap" : "Minimize Minimap"}
+web:lint:   >
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:357:5
+web:lint: Error: Property assignment expected. (ts)
+web:lint:   >
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint:   </button>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:357:5
+web:lint: Error: ',' expected. (ts)
+web:lint:   >
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint:   </button>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:357:44
+web:lint: Error: ',' expected. (ts)
+web:lint:   >
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint:   </button>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:358:4
+web:lint: Error: ',' expected. (ts)
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint:   </button>
+web:lint: </div>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/graph/Minimap.svelte:319:17
+web:lint: Error: Expected 2-3 arguments, but got 6. (ts)
+web:lint:     style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%,
+web:lint:     transparent)"
+web:lint:     role="button"
+web:lint:     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
+web:lint:     tabindex="0"
+web:lint:     onmousedown={handleDragStart}
+web:lint:     onkeydown={(event) => {
+web:lint:       const key = event.key;
+web:lint:       if (
+web:lint:         key === "ArrowUp" ||
+web:lint:         key === "ArrowDown" ||
+web:lint:         key === "ArrowLeft" ||
+web:lint:         key === "ArrowRight"
+web:lint:       ) {
+web:lint:         event.preventDefault();
+web:lint:         const pan = cy.pan();
+web:lint:         const step = 20;
+web:lint:         if (key === "ArrowUp") {
+web:lint:           cy.pan({ x: pan.x, y: pan.y - step });
+web:lint:         } else if (key === "ArrowDown") {
+web:lint:           cy.pan({ x: pan.x, y: pan.y + step });
+web:lint:         } else if (key === "ArrowLeft") {
+web:lint:           cy.pan({ x: pan.x - step, y: pan.y });
+web:lint:         } else if (key === "ArrowRight") {
+web:lint:           cy.pan({ x: pan.x + step, y: pan.y });
+web:lint:         }
+web:lint:       }
+web:lint:     }}
+web:lint:   ></div>
+web:lint: 
+web:lint:   <!-- Toggle Button -->
+web:lint:   <button
+web:lint:     class="toggle-btn"
+web:lint:     onclick={(e: MouseEvent) => {
+web:lint:       e.stopPropagation();
+web:lint:       toggleMinimap();
+web:lint:     }}
+web:lint:     title={collapsed ? "Expand Minimap" : "Minimize Minimap"}
+web:lint:   >
+web:lint:     <span class="icon-[lucide--map] w-4 h-4"></span>
+web:lint:   </button>
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/ShareModal.svelte:28:34
+web:lint: Warn: This reference only captures the initial value of `shareLink`. Did you mean to reference it inside a closure instead?
+web:lint: https://svelte.dev/e/state_referenced_locally (svelte)
+web:lint:         // Update the stored config as well to make it permanent
+web:lint:         cloudConfig.setShareLink(shareLink);
+web:lint:       } else {
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/ShareModal.svelte:163:13
+web:lint: Warn: A form label must be associated with a control
+web:lint: https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+web:lint:           <div class="space-y-2">
+web:lint:             <label
+web:lint:               class="text-[10px] uppercase text-cyan-600 font-bold tracking-widest"
+web:lint:               >Active Live Session</label
+web:lint:             >
+web:lint:             <div class="flex gap-2">
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:247:3
+web:lint: Warn: Unknown at rule @reference (css)
+web:lint: <style>
+web:lint:   @reference "../../../app.css";
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:250:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(code) {
+web:lint:     @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+web:lint:   }
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:253:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(strong) {
+web:lint:     @apply font-bold text-zinc-900 dark:text-zinc-100;
+web:lint:   }
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:256:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(em) {
+web:lint:     @apply italic;
+web:lint:   }
+web:lint: 
+web:lint: ====================================
+web:lint: svelte-check found 11 errors and 6 warnings in 3 files
+web:lint: npm error Lifecycle script `lint` failed with error:
+web:lint: npm error code 1
+web:lint: npm error path /home/espen/proj/Codex-Arcana/apps/web
+web:lint: npm error workspace web@0.0.1
+web:lint: npm error location /home/espen/proj/Codex-Arcana/apps/web
+web:lint: npm error command failed
+web:lint: npm error command sh -c svelte-check --tsconfig ./tsconfig.json && eslint .
+
+ Tasks:    0 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    6.591s 
+Failed:    web#lint
+

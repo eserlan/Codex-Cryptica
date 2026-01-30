@@ -1,0 +1,77 @@
+• Packages in scope: web
+• Running lint in 1 packages
+• Remote caching disabled
+web:lint: cache miss, executing 03175d70b4e84032
+web:lint: npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+web:lint: 
+web:lint: > web@0.0.1 lint
+web:lint: > svelte-check --tsconfig ./tsconfig.json && eslint .
+web:lint: 
+web:lint: Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
+web:lint: Getting Svelte diagnostics...
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/ShareModal.svelte:25:34
+web:lint: Warn: This reference only captures the initial value of `shareLink`. Did you mean to reference it inside a closure instead?
+web:lint: https://svelte.dev/e/state_referenced_locally (svelte)
+web:lint:         // Update the stored config as well to make it permanent
+web:lint:         cloudConfig.setShareLink(shareLink);
+web:lint:       } else {
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/ShareModal.svelte:105:13
+web:lint: Warn: A form label must be associated with a control
+web:lint: https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+web:lint:           <div class="space-y-2">
+web:lint:             <label
+web:lint:               class="text-[10px] uppercase text-cyan-600 font-bold tracking-widest"
+web:lint:               >Active Live Session</label
+web:lint:             >
+web:lint:             <div class="flex gap-2">
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:246:3
+web:lint: Warn: Unknown at rule @reference (css)
+web:lint: <style>
+web:lint:   @reference "../../../app.css";
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:249:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(code) {
+web:lint:     @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+web:lint:   }
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:252:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(strong) {
+web:lint:     @apply font-bold text-zinc-900 dark:text-zinc-100;
+web:lint:   }
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:255:5
+web:lint: Warn: Unknown at rule @apply (css)
+web:lint:   .preview-content :global(em) {
+web:lint:     @apply italic;
+web:lint:   }
+web:lint: 
+web:lint: ====================================
+web:lint: svelte-check found 0 errors and 6 warnings in 2 files
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/cloud-bridge/google-drive/public-adapter.ts
+web:lint:   61:7  error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+web:lint: 
+web:lint: /home/espen/proj/Codex-Arcana/apps/web/src/lib/components/ShareModal.svelte
+web:lint:   29:14  error  'e' is defined but never used              @typescript-eslint/no-unused-vars
+web:lint:   34:3   error  Move function declaration to program root  no-inner-declarations
+web:lint: 
+web:lint: ✖ 3 problems (3 errors, 0 warnings)
+web:lint: 
+web:lint: npm error Lifecycle script `lint` failed with error:
+web:lint: npm error code 1
+web:lint: npm error path /home/espen/proj/Codex-Arcana/apps/web
+web:lint: npm error workspace web@0.0.1
+web:lint: npm error location /home/espen/proj/Codex-Arcana/apps/web
+web:lint: npm error command failed
+web:lint: npm error command sh -c svelte-check --tsconfig ./tsconfig.json && eslint .
+
+ Tasks:    0 successful, 1 total
+Cached:    0 cached, 1 total
+  Time:    9.13s 
+Failed:    web#lint
+

@@ -43,6 +43,7 @@
     "isomorphic-dompurify": "^2.35.0",
     "js-yaml": "^4.1.1",
     "marked": "^17.0.1",
+    "peerjs": "^1.5.5",
     "schema": "*",
     "svelte-tiptap": "^3.0.1",
     "tiptap-markdown": "^0.9.0"

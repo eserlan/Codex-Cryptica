@@ -9,7 +9,7 @@ export interface CloudConfig {
   connectedEmail?: string;
   lastSyncTimestamp?: number;
   syncInterval: number; // milliseconds
-  
+
   // Sharing Extensions
   shareStatus?: 'private' | 'public';
   shareLink?: string;
@@ -77,6 +77,7 @@ export interface RemoteFileMeta {
   modifiedTime: string; // ISO
   parents: string[];
   appProperties?: Record<string, string>;
+  thumbnailLink?: string;
 }
 
 export type SyncStatus = "IDLE" | "SCANNING" | "SYNCING" | "ERROR";
