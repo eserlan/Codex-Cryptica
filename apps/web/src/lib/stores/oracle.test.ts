@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { oracle } from "./oracle.svelte";
 import * as idbUtils from "../utils/idb";
 
@@ -38,6 +38,7 @@ vi.mock("../services/ai", () => ({
 
 describe("OracleStore", () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.clearAllMocks();
     oracle.messages = [];
     oracle.apiKey = null;
@@ -51,6 +52,10 @@ describe("OracleStore", () => {
         }
       });
     }
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("should allow writing to messages directly", () => {
@@ -145,5 +150,22 @@ describe("OracleStore", () => {
       const assistantMsg = oracle.messages[oracle.messages.length - 1];
       expect(assistantMsg.type).toBe("image");
     }
+  });
+
+  it("should update lastUpdated on message changes", async () => {
+    const initialTime = oracle.lastUpdated;
+    oracle.apiKey = "test-key";
+    
+    vi.advanceTimersByTime(10);
+    // Simulate ask
+    await oracle.ask("hello");
+    expect(oracle.lastUpdated).toBeGreaterThan(initialTime);
+  });
+
+  it("should update lastUpdated when setting tier", async () => {
+    const initialTime = oracle.lastUpdated;
+    vi.advanceTimersByTime(10);
+    await oracle.setTier("advanced");
+    expect(oracle.lastUpdated).toBeGreaterThan(initialTime);
   });
 });

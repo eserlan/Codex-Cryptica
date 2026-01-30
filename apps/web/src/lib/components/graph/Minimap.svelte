@@ -31,7 +31,7 @@
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D | null = null;
-  let animationFrameId: number;
+  let animationFrameId: number | null = null;
   let lastDrawTime = 0;
   const FPS_LIMIT = 30; // Throttle to 30fps for minimap to save battery
   const INTERVAL = 1000 / FPS_LIMIT;
@@ -114,33 +114,31 @@
   };
 
   const draw = (timestamp: number) => {
-    if (!ctx || !canvas) return;
+    if (!ctx || !canvas || !cy) {
+      animationFrameId = null;
+      return;
+    }
 
     const elapsed = timestamp - lastDrawTime;
     if (elapsed > INTERVAL) {
       lastDrawTime = timestamp - (elapsed % INTERVAL);
 
-      // 1. Sync State (polling for smoothness)
-      if (cy) {
-        const pan = cy.pan();
-        const zoom = cy.zoom();
-        const cyWidth = cy.width();
-        const cyHeight = cy.height();
+      // 1. Sync Viewport State
+      const pan = cy.pan();
+      const zoom = cy.zoom();
+      const cyWidth = cy.width();
+      const cyHeight = cy.height();
 
-        viewport.zoom = zoom;
-        viewport.x = -pan.x / zoom;
-        viewport.y = -pan.y / zoom;
-        viewport.width = cyWidth / zoom;
-        viewport.height = cyHeight / zoom;
-      }
+      viewport.zoom = zoom;
+      viewport.x = -pan.x / zoom;
+      viewport.y = -pan.y / zoom;
+      viewport.width = cyWidth / zoom;
+      viewport.height = cyHeight / zoom;
 
       // 2. Clear
       ctx.clearRect(0, 0, width, height);
 
       // 3. Draw Nodes (Simple dots)
-      // Project graph (x,y) to minimap (mx, my)
-      // mx = (x - graphBounds.x1) * scale + offsetX
-      // To center the content in the minimap:
       const contentW = graphBounds.w * scale;
       const contentH = graphBounds.h * scale;
       const offsetX = (width - contentW) / 2;
@@ -150,32 +148,32 @@
         const mx = (node.x - graphBounds.x1) * scale + offsetX;
         const my = (node.y - graphBounds.y1) * scale + offsetY;
 
-        // Draw
-        ctx.fillStyle = node.color; // Use node color
+        ctx.fillStyle = node.color;
         ctx.beginPath();
         ctx.arc(mx, my, 2, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 4. Update Viewport Rect Style (FR-002, FR-004)
-      // Map viewport (x,y,w,h) from graph space to minimap space
-      const vx = (viewport.x - graphBounds.x1) * scale + offsetX;
-      const vy = (viewport.y - graphBounds.y1) * scale + offsetY;
-      const vw = viewport.width * scale;
-      const vh = viewport.height * scale;
-
-      viewRectStyle = `
-            left: ${vx}px; 
-            top: ${vy}px; 
-            width: ${Math.max(vw, 2)}px; 
-            height: ${Math.max(vh, 2)}px;
-        `;
+      // 4. Update Viewport Rect Style
+      viewportX = (viewport.x - graphBounds.x1) * scale + offsetX;
+      viewportY = (viewport.y - graphBounds.y1) * scale + offsetY;
+      viewportW = viewport.width * scale;
+      viewportH = viewport.height * scale;
     }
 
-    animationFrameId = requestAnimationFrame(draw);
+    animationFrameId = null;
   };
 
-  let viewRectStyle = $state("");
+  const requestRedraw = () => {
+    if (animationFrameId === null) {
+      animationFrameId = requestAnimationFrame(draw);
+    }
+  };
+
+  let viewportX = $state(0);
+  let viewportY = $state(0);
+  let viewportW = $state(0);
+  let viewportH = $state(0);
 
   // Navigation Logic (US2)
   let isDragging = false;
@@ -257,6 +255,11 @@
   const handleGraphUpdate = () => {
     syncGraphToMinimap();
     updateProjection();
+    requestRedraw();
+  };
+
+  const handleViewportUpdate = () => {
+    requestRedraw();
   };
 
   onMount(() => {
@@ -265,37 +268,36 @@
     // Initial sync
     syncGraphToMinimap();
     updateProjection();
-
-    // Start Loop
-    animationFrameId = requestAnimationFrame(draw);
+    requestRedraw();
 
     // Listeners
     if (cy) {
       cy.on("add remove position", handleGraphUpdate);
-      cy.on("resize", updateProjection);
+      cy.on("pan zoom resize", handleViewportUpdate);
     }
   });
 
   onDestroy(() => {
-    if (animationFrameId !== undefined) {
+    if (animationFrameId !== null) {
       cancelAnimationFrame(animationFrameId);
     }
     if (cy) {
       cy.off("add remove position", handleGraphUpdate);
-      cy.off("resize", updateProjection);
+      cy.off("pan zoom resize", handleViewportUpdate);
     }
   });
 </script>
 
 <svelte:window onmousemove={handleDragMove} onmouseup={handleDragEnd} />
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="minimap-container {collapsed ? 'collapsed' : ''} {absolute
     ? 'absolute-pos'
     : 'relative-pos'}"
-  style="width: {width}px; height: {height}px;"
+  style:width="{width}px"
+  style:height="{height}px"
   role="application"
   aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
   tabindex="0"
@@ -313,7 +315,10 @@
   <!-- Viewport Overlay -->
   <div
     class="viewport-rect"
-    style={viewRectStyle}
+    style:left="{viewportX}px"
+    style:top="{viewportY}px"
+    style:width="{Math.max(viewportW, 2)}px"
+    style:height="{Math.max(viewportH, 2)}px"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
@@ -358,7 +363,7 @@
 <style>
   .minimap-container {
     background-color: rgba(0, 0, 0, 0.8);
-    border: 1px solid rgba(22, 163, 74, 0.5); /* green-900/50 */
+    border: 1px solid var(--color-border-primary);
     border-radius: 0.5rem;
     overflow: hidden;
     z-index: 40;
@@ -414,7 +419,7 @@
 
   .toggle-btn:focus-visible {
     opacity: 1;
-    outline: 2px solid #4ade80;
+    outline: 2px solid var(--color-accent-primary);
     outline-offset: 2px;
   }
 
@@ -434,7 +439,7 @@
 
   .viewport-rect {
     position: absolute;
-    border: 2px solid #4ade80; /* green-400 */
+    border: 2px solid var(--color-accent-primary);
     background-color: rgba(74, 222, 128, 0.1);
     box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
     cursor: grab;

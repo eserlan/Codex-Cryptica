@@ -208,23 +208,33 @@
   // Reactive effect to resolve node images
   $effect(() => {
     if (cy && graph.elements) {
-      (async () => {
+      const currentElements = graph.elements;
+      const timeout = setTimeout(async () => {
         try {
-          for (const el of graph.elements) {
-            if (el.group === "nodes" && (el.data.thumbnail || el.data.image)) {
+          const nodesToResolve = currentElements.filter((el): el is any => 
+            el.group === "nodes" && !!(el.data.thumbnail || el.data.image)
+          );
+
+          // Batch processing in chunks of 20 to avoid microtask flooding
+          const CHUNK_SIZE = 20;
+          for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
+            const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
+            await Promise.all(chunk.map(async (el) => {
+              const data = el.data as any;
               const resolvedUrl = await vault.resolveImagePath(
-                (el.data.thumbnail || el.data.image)!,
+                (data.thumbnail || data.image)!,
               );
-              // Only apply if we got a valid URL
               if (resolvedUrl) {
-                cy?.$id(el.data.id).data("resolvedImage", resolvedUrl);
+                cy?.$id(data.id).data("resolvedImage", resolvedUrl);
               }
-            }
+            }));
           }
         } catch (error) {
           console.error("Failed to resolve node images", error);
         }
-      })();
+      }, 100); // 100ms debounce
+
+      return () => clearTimeout(timeout);
     }
   });
 
@@ -350,9 +360,9 @@
   let selectedEntity = $derived(selectedId ? vault.entities[selectedId] : null);
   let parentEntity = $derived(
     selectedId
-      ? vault.allEntities.find((e) =>
-          e.connections.some((c) => c.target === selectedId),
-        )
+      ? (vault.inboundConnections[selectedId]?.[0]?.sourceId 
+          ? vault.entities[vault.inboundConnections[selectedId][0].sourceId] 
+          : null)
       : null,
   );
 
@@ -363,12 +373,12 @@
 </script>
 
 <div
-  class="absolute inset-0 w-full h-full bg-[#050505] overflow-hidden shadow-2xl border-y border-green-900/30"
+  class="absolute inset-0 w-full h-full bg-[var(--color-bg-primary)] overflow-hidden shadow-2xl border-y border-green-900/30"
 >
-  <!-- ... (Background) ... -->
+  <!-- Decorative Grid Overlay -->
   <div
     class="absolute inset-0 pointer-events-none opacity-20"
-    style="background-image: radial-gradient(#15803d 1px, transparent 1px); background-size: 30px 30px;"
+    style="background-image: radial-gradient(var(--color-accent-dark) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
 
   <!-- Top Left Overlay (Breadcrumbs & Minimap) -->
@@ -453,7 +463,6 @@
   <!-- Graph Canvas -->
   <div
     class="absolute inset-0 z-10 w-full h-full"
-    style="display: block !important;"
     bind:this={container}
   ></div>
 
@@ -461,7 +470,9 @@
   {#if hoveredEntityId && hoverPosition && hoveredEntity}
     <div
       class="absolute z-50 pointer-events-none"
-      style="top: {hoverPosition.y}px; left: {hoverPosition.x}px; transform: translate(-50%, -115%);"
+      style:top="{hoverPosition.y}px"
+      style:left="{hoverPosition.x}px"
+      style="transform: translate(-50%, -115%);"
       transition:fade={{ duration: 150 }}
     >
       <div
