@@ -8,6 +8,40 @@ export interface TimelineLayoutOptions {
 }
 
 /**
+ * Calculates sequential positions for a set of years, with gap compression.
+ */
+export function getSequentialYearPositions(years: number[], scale: number): Record<number, number> {
+  const sortedYears = [...new Set(years)].sort((a, b) => a - b);
+  const yearPositions: Record<number, number> = {};
+  let currentPos = 0;
+
+  if (sortedYears.length > 0) {
+    yearPositions[sortedYears[0]] = 0;
+    
+    for (let i = 1; i < sortedYears.length; i++) {
+      const prevYear = sortedYears[i - 1];
+      const year = sortedYears[i];
+      const diff = year - prevYear;
+      
+      // Base spacing for sequential events
+      let spacing = scale;
+      
+      // Add "a bit" of space for larger gaps
+      if (diff > 100) {
+        spacing += scale * 0.8; 
+      } else if (diff > 20) {
+        spacing += scale * 0.4;
+      }
+      
+      currentPos += spacing;
+      yearPositions[year] = currentPos;
+    }
+  }
+
+  return yearPositions;
+}
+
+/**
  * Calculates positions for a chronological layout.
  * Nodes with identical years are spread along the secondary axis to prevent occlusion.
  */
@@ -23,45 +57,21 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
     return n.data.date?.year ?? n.data.start_date?.year ?? n.data.end_date?.year ?? 0;
   };
 
-  // 3. Group by year to handle concurrent events (jitter)
+  // 2. Group by year to handle concurrent events (jitter)
   const groupedByYear: Record<number, GraphNode[]> = {};
+  const years: number[] = [];
   for (const node of datedNodes) {
     const year = getYear(node);
+    years.push(year);
     if (!groupedByYear[year]) groupedByYear[year] = [];
     groupedByYear[year].push(node);
   }
 
-  // 4. Calculate coordinates (Sequential with Gap Compression)
-  const sortedYears = Object.keys(groupedByYear).map(Number).sort((a, b) => a - b);
-  let currentPos = 0;
-  const yearPositions: Record<number, number> = {};
-  
-  if (sortedYears.length > 0) {
-    yearPositions[sortedYears[0]] = 0;
-    
-    for (let i = 1; i < sortedYears.length; i++) {
-      const prevYear = sortedYears[i - 1];
-      const year = sortedYears[i];
-      const diff = year - prevYear;
-      
-      // Base spacing for sequential events
-      let spacing = options.scale;
-      
-      // Add "a bit" of space for larger gaps
-      if (diff > 100) {
-        spacing += options.scale * 0.8; 
-      } else if (diff > 20) {
-        spacing += options.scale * 0.4;
-      }
-      
-      currentPos += spacing;
-      yearPositions[year] = currentPos;
-    }
-  }
+  // 3. Calculate coordinates (Sequential with Gap Compression)
+  const yearPositions = getSequentialYearPositions(years, options.scale);
 
   for (const [yearStr, yearNodes] of Object.entries(groupedByYear)) {
     const year = Number(yearStr);
-    // Use the calculated sequential position instead of linear time scaling
     const primaryCoord = yearPositions[year] ?? 0;
 
     yearNodes.forEach((node, index) => {

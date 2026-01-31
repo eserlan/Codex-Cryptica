@@ -1,6 +1,6 @@
 import { vault } from "./vault.svelte";
+import { graph } from "./graph.svelte";
 import type { Era, TemporalMetadata } from "schema";
-import { getDB } from "../utils/idb";
 
 export interface TimelineEntry {
   entityId: string;
@@ -61,7 +61,6 @@ class TimelineStore {
     });
   });
 
-  eras = $state<Era[]>([]);
   viewMode = $state<'vertical' | 'horizontal'>('vertical');
   
   // Filtering
@@ -81,30 +80,15 @@ class TimelineStore {
   isLoading = $derived(vault.status === 'loading');
 
   async init() {
-    const db = await getDB();
-    const savedEras = await db.get("settings", "world_eras");
-    if (savedEras) {
-      this.eras = savedEras;
-    }
+    // Eras are now handled by graph store
   }
 
   private getEraForYear(year: number): Era | undefined {
-    return this.eras.find(era => {
+    return graph.eras.find(era => {
       const starts = year >= era.start_year;
       const ends = era.end_year === undefined || year <= era.end_year;
       return starts && ends;
     });
-  }
-
-  async setEras(eras: Era[]) {
-    this.eras = eras;
-    const db = await getDB();
-    await db.put("settings", $state.snapshot(eras), "world_eras");
-  }
-
-  async deleteEra(id: string) {
-    const updated = this.eras.filter(e => e.id !== id);
-    await this.setEras(updated);
   }
 
   toggleViewMode() {

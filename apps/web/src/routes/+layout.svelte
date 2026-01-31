@@ -108,7 +108,7 @@
 		categories.init();
 		helpStore.init();
 		timelineStore.init();
-
+		graph.init();
 		if (shareId) {
 			// Check if we already have a guest session
 			const savedUser = sessionStorage.getItem("guest_username");

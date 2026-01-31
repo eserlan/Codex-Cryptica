@@ -16,15 +16,22 @@
   let displayLabel = $state<string | undefined>(value?.label);
   let showLabelInput = $state(!!value?.label);
 
+  $effect(() => {
+    year = value?.year;
+    month = value?.month;
+    day = value?.day;
+    displayLabel = value?.label;
+  });
+
   const update = () => {
     if (year === undefined || year === null) {
       value = undefined;
     } else {
       value = {
         year,
-        month: month || undefined,
-        day: day || undefined,
-        label: displayLabel || undefined
+        month: month ?? undefined,
+        day: day ?? undefined,
+        label: displayLabel ?? undefined
       };
     }
   };

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { getRulerTicks, getEraRegions } from "graph-engine";
+  import { getRulerTicks, getEraRegions, getSequentialYearPositions } from "graph-engine";
   import type { Core } from "cytoscape";
   import { onMount } from "svelte";
 
@@ -17,27 +17,21 @@
   };
 
   onMount(() => {
-    cy.on('pan zoom position', updateTransform);
+    cy.on('pan zoom', updateTransform);
     updateTransform();
-    return () => cy.off('pan zoom position', updateTransform);
+    return () => cy.off('pan zoom', updateTransform);
   });
 
-  let minYear = $derived.by(() => {
+  let yearPositions = $derived.by(() => {
     const years = Object.values(vault.entities)
       .map(e => e.date?.year ?? e.start_date?.year ?? e.end_date?.year)
       .filter((y): y is number => y !== undefined);
-    return years.length ? Math.min(...years) : 0;
+    
+    return getSequentialYearPositions(years, graph.timelineScale);
   });
 
-  let maxYear = $derived.by(() => {
-    const years = Object.values(vault.entities)
-      .map(e => e.date?.year ?? e.start_date?.year ?? e.end_date?.year)
-      .filter((y): y is number => y !== undefined);
-    return years.length ? Math.max(...years) : 3000;
-  });
-
-  let ticks = $derived(getRulerTicks(minYear, maxYear, graph.timelineScale));
-  let eraRegions = $derived(getEraRegions(graph.eras, minYear, graph.timelineScale));
+  let ticks = $derived(getRulerTicks(yearPositions));
+  let eraRegions = $derived(getEraRegions(graph.eras, yearPositions));
 </script>
 
 {#if graph.timelineMode}

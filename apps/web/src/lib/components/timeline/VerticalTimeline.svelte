@@ -1,5 +1,6 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
   import TimelineEntryItem from "./TimelineEntryItem.svelte";
   import { fade } from "svelte/transition";
 
@@ -14,7 +15,7 @@
   });
 
   const getEraLabel = (year: number) => {
-    const era = timelineStore.eras.find(e => year >= e.start_year && (e.end_year === undefined || year <= e.end_year));
+    const era = graph.eras.find(e => year >= e.start_year && (e.end_year === undefined || year <= e.end_year));
     return era ? era.name : null;
   };
 </script>

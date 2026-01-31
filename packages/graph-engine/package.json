@@ -9,7 +9,8 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "cytoscape": "^3.28.0"
+    "cytoscape": "^3.28.0",
+    "schema": "*"
   },
   "devDependencies": {
     "jsdom": "^27.4.0",

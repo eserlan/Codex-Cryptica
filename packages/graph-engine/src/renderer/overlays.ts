@@ -1,3 +1,5 @@
+import type { Era } from "schema";
+
 export interface RulerTick {
   year: number;
   pos: number;
@@ -13,23 +15,25 @@ export interface EraRegion {
 }
 
 /**
- * Calculates tick marks for a timeline ruler.
+ * Calculates tick marks for a timeline ruler based on actual data positions.
  */
-export function getRulerTicks(minYear: number, maxYear: number, scale: number): RulerTick[] {
+export function getRulerTicks(yearPositions: Record<number, number>): RulerTick[] {
   const ticks: RulerTick[] = [];
-  const range = maxYear - minYear;
+  const years = Object.keys(yearPositions).map(Number).sort((a, b) => a - b);
   
-  // Determine interval based on scale and range
-  let interval = 1;
-  if (range > 10) interval = 5;
-  if (range > 100) interval = 50;
-  if (range > 1000) interval = 500;
+  if (years.length === 0) return [];
 
-  for (let y = Math.floor(minYear / interval) * interval; y <= maxYear; y += interval) {
+  // Determine which years to show as ticks to avoid clutter
+  // For now, let's show all years if there aren't too many, or filter them
+  const maxTicks = 50;
+  const step = Math.ceil(years.length / maxTicks);
+
+  for (let i = 0; i < years.length; i += step) {
+    const year = years[i];
     ticks.push({
-      year: y,
-      pos: (y - minYear) * scale,
-      isMajor: y % (interval * 5) === 0
+      year,
+      pos: yearPositions[year],
+      isMajor: i % 5 === 0
     });
   }
 
@@ -37,14 +41,33 @@ export function getRulerTicks(minYear: number, maxYear: number, scale: number): 
 }
 
 /**
- * Calculates geometric regions for Eras.
+ * Calculates geometric regions for Eras based on sequential positions.
  */
-export function getEraRegions(eras: any[], minYear: number, scale: number): EraRegion[] {
-  return eras.map(era => ({
-    id: era.id,
-    name: era.name,
-    startPos: (era.start_year - minYear) * scale,
-    endPos: ((era.end_year ?? era.start_year + 100) - minYear) * scale,
-    color: era.color
-  }));
+export function getEraRegions(eras: Era[], yearPositions: Record<number, number>): EraRegion[] {
+  const years = Object.keys(yearPositions).map(Number).sort((a, b) => a - b);
+  if (years.length === 0) return [];
+  
+  const lastYear = years[years.length - 1];
+  const lastPos = yearPositions[lastYear];
+
+  return eras.map(era => {
+    // Find the closest year in our data for start/end
+    const findClosestPos = (targetYear: number) => {
+      const closestYear = years.reduce((prev, curr) => 
+        Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
+      );
+      return yearPositions[closestYear];
+    };
+
+    const startPos = findClosestPos(era.start_year);
+    const endPos = era.end_year !== undefined ? findClosestPos(era.end_year) : lastPos + 500;
+
+    return {
+      id: era.id,
+      name: era.name,
+      startPos,
+      endPos,
+      color: era.color
+    };
+  });
 }
