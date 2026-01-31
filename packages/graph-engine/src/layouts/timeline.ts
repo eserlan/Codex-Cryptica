@@ -69,6 +69,7 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
 
   // 3. Calculate coordinates (Sequential with Gap Compression)
   const yearPositions = getSequentialYearPositions(years, options.scale);
+  const secondaryAxisOffset = 100; // Shift nodes away from ruler area
 
   for (const [yearStr, yearNodes] of Object.entries(groupedByYear)) {
     const year = Number(yearStr);
@@ -76,7 +77,8 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
 
     yearNodes.forEach((node, index) => {
       // Offset from center for jitter
-      const secondaryCoord = (index - (yearNodes.length - 1) / 2) * options.jitter;
+      const jitterCoord = (index - (yearNodes.length - 1) / 2) * options.jitter;
+      const secondaryCoord = jitterCoord + secondaryAxisOffset;
 
       if (options.axis === 'x') {
         positions[node.data.id] = { x: primaryCoord, y: secondaryCoord };

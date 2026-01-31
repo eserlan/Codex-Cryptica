@@ -24,26 +24,9 @@
     ...(graph.timelineMode
       ? [
           {
-            selector: "node[dateLabel]",
+            selector: "node",
             style: {
-              // Position date over, title under. 
-              // Standard node is 32px. Image node is 48px.
-              // We use text-valign center and add newlines to push them apart.
-              label: "data(dateLabel)\n\n\n\ndata(label)",
-              "text-wrap": "wrap",
-              "text-max-width": 120,
-              "text-valign": "center",
-              "text-margin-y": 0,
-              "line-height": 1.2,
-              "font-size": 9,
-              color: "#86efac",
-            },
-          },
-          {
-            selector: "node[dateLabel][resolvedImage]",
-            style: {
-              // More newlines for larger 48px image nodes
-              label: "data(dateLabel)\n\n\n\n\ndata(label)",
+              label: "", // Labels handled by TimelineOverlay
             },
           },
         ]

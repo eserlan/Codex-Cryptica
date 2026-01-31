@@ -30,6 +30,24 @@ describe("GraphTransformer", () => {
     expect(nodes[1].data.dateLabel).toBe("Age of Myth");
   });
 
+  it("should pad years to 4 digits", () => {
+    const mockEntities: Entity[] = [
+      {
+        id: "e1",
+        title: "Early Entity",
+        type: "npc",
+        connections: [],
+        content: "...",
+        date: { year: 1 }
+      }
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(mockEntities);
+    const nodes = elements.filter(el => el.group === "nodes");
+
+    expect(nodes[0].data.dateLabel).toBe("1");
+  });
+
   it("should handle missing dates gracefully", () => {
     const mockEntities: Entity[] = [
       {
