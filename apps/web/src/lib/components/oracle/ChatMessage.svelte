@@ -154,9 +154,6 @@
     ? 'items-end'
     : 'items-start'}"
 >
-  <div class="text-[10px] uppercase tracking-wider text-gray-500">
-    {message.role}
-  </div>
   <div
     class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed
     {message.role === 'user'

@@ -60,66 +60,90 @@
     </p>
 
     <!-- Tier Selection -->
-    <div class="mb-4 space-y-2">
+    <div class="mb-6 space-y-3">
         <span class="text-[10px] text-purple-400 uppercase font-bold block"
-            >Oracle Tier</span
+            >Oracle Intelligence Tier</span
         >
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-2 gap-3">
             <button
-                class="px-3 py-2 rounded text-[10px] font-bold tracking-widest transition-all border {oracle.tier ===
+                class="flex flex-col gap-1 p-3 rounded transition-all border text-left {oracle.tier ===
                 'lite'
-                    ? 'bg-purple-600/20 border-purple-500 text-purple-100'
-                    : 'bg-black/40 border-purple-900/30 text-purple-400 hover:border-purple-700'}"
+                    ? 'bg-purple-600/20 border-purple-500 ring-1 ring-purple-500/50'
+                    : 'bg-black/40 border-purple-900/30 hover:border-purple-700'}"
                 onclick={() => oracle.setTier("lite")}
             >
-                LITE (2.5 FLASH)
+                <span class="text-[10px] font-bold tracking-widest uppercase {oracle.tier === 'lite' ? 'text-purple-100' : 'text-purple-400'}">Lite Tier</span>
+                <span class="text-[9px] text-purple-300/60 leading-tight">Fast, efficient, and suitable for simple lore retrieval.</span>
             </button>
             <button
-                class="px-3 py-2 rounded text-[10px] font-bold tracking-widest transition-all border {oracle.tier ===
+                class="flex flex-col gap-1 p-3 rounded transition-all border text-left {oracle.tier ===
                 'advanced'
-                    ? 'bg-purple-600/20 border-purple-500 text-purple-100'
-                    : 'bg-black/40 border-purple-900/30 text-purple-400 hover:border-purple-700'}"
+                    ? 'bg-amber-600/20 border-amber-500 ring-1 ring-amber-500/50'
+                    : 'bg-black/40 border-purple-900/30 hover:border-purple-700'}"
                 onclick={() => oracle.setTier("advanced")}
             >
-                ADVANCED (3 FLASH)
+                <span class="text-[10px] font-bold tracking-widest uppercase {oracle.tier === 'advanced' ? 'text-amber-100' : 'text-purple-400'}">Advanced Tier</span>
+                <span class="text-[9px] text-purple-300/60 leading-tight">Superior reasoning, complex world-building, and high reliability.</span>
             </button>
         </div>
     </div>
 
-    <!-- Personal Key Status/Management -->
+    <!-- Access Management -->
     {#if oracle.apiKey}
         <div
-            class="p-3 bg-purple-900/10 border border-purple-900/30 rounded flex items-center justify-between mb-4"
+            class="p-4 bg-purple-900/10 border border-purple-900/30 rounded flex items-center justify-between mb-4"
         >
-            <div class="flex items-center gap-2">
-                <span class="text-purple-400 icon-[heroicons--sparkles] w-4 h-4"
+            <div class="flex items-center gap-3">
+                <span class="text-purple-400 icon-[heroicons--sparkles] w-5 h-5"
                 ></span>
-                <span class="text-xs text-purple-100"> Oracle is Active </span>
+                <div class="flex flex-col">
+                    <span class="text-xs text-purple-100 font-bold uppercase tracking-wider"> Personal Key Active </span>
+                    <span class="text-[9px] text-purple-500 font-mono">
+                        Provides full access to {oracle.tier.toUpperCase()} reasoning.
+                    </span>
+                </div>
             </div>
             <span class="text-[10px] text-purple-500 font-mono"
-                >KEY: ••••••••••••{oracle.apiKey?.slice(-4)}</span
+                >••••{oracle.apiKey?.slice(-4)}</span
             >
         </div>
     {:else}
-        <div class="space-y-3 mt-4">
+        {#if import.meta.env.VITE_SHARED_GEMINI_KEY && oracle.tier === "lite"}
+            <div class="p-4 bg-green-900/10 border border-green-900/30 rounded-lg mb-6 flex items-start gap-4">
+                <div class="w-8 h-8 rounded-full bg-green-900/20 flex items-center justify-center text-green-500 shrink-0">
+                    <span class="icon-[lucide--check-circle] w-5 h-5"></span>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-[10px] font-bold text-green-400 uppercase tracking-widest mb-1">Shared Access Active</h4>
+                    <p class="text-[11px] text-green-200/60 leading-relaxed">
+                        You are using the system-provided shared access for the Lite tier. This allows for basic Oracle consultation without a personal key.
+                    </p>
+                </div>
+            </div>
+        {/if}
+
+        <div class="space-y-4 pt-2 border-t border-purple-900/10">
             <div class="flex flex-col gap-1">
                 <label
                     for="gemini-api-key"
                     class="text-[10px] text-purple-400 uppercase font-bold flex justify-between"
                 >
-                    <span>Gemini API Key</span>
+                    <span>{oracle.tier === "advanced" ? "Required: Advanced Access Key" : "Upgrade to Personal Key"}</span>
                     {#if oracle.tier === "advanced"}
                         <span class="text-amber-500 animate-pulse"
-                            >! REQUIRED FOR ADVANCED</span
+                            >! ADVANCED REQUIRES PERSONAL KEY</span
                         >
                     {/if}
                 </label>
+                <p class="text-[10px] text-purple-300/40 mb-2">
+                    Providing your own key ensures consistent availability and enables higher intelligence tiers.
+                </p>
                 <div class="relative">
                     <input
                         id="gemini-api-key"
                         type={showKey ? "text" : "password"}
-                        placeholder="Paste your API key here..."
-                        class="w-full bg-black/50 border border-purple-900/50 rounded px-3 py-2 text-sm text-purple-100 focus:border-purple-500 outline-none pr-10"
+                        placeholder="Paste your Google Gemini API key..."
+                        class="w-full bg-black/50 border border-purple-900/50 rounded px-3 py-2 text-sm text-purple-100 focus:border-purple-500 outline-none pr-10 font-mono"
                         bind:value={inputKey}
                     />
                     <button
@@ -148,19 +172,13 @@
                 </a>
 
                 <button
-                    class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded text-[10px] tracking-widest transition-all disabled:opacity-50"
+                    class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded text-[10px] tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-purple-900/20"
                     onclick={handleSave}
                     disabled={!inputKey.trim()}
                 >
-                    ENABLE
+                    {oracle.tier === "advanced" ? "ACTIVATE ADVANCED" : "UPGRADE ACCESS"}
                 </button>
             </div>
         </div>
-
-        {#if import.meta.env.VITE_SHARED_GEMINI_KEY && oracle.tier === "lite"}
-            <div class="mt-4 p-2 bg-green-900/10 border border-green-900/20 rounded text-[10px] text-green-400 font-mono uppercase text-center">
-                Shared Lite Access Available
-            </div>
-        {/if}
     {/if}
 </div>

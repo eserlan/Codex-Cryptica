@@ -145,6 +145,7 @@ class OracleStore {
     });
     this.messages = [];
     this.lastUpdated = Date.now();
+    this.broadcast();
     this.saveToDB();
   }
 
