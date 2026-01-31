@@ -363,22 +363,22 @@
                             </div>
                         </div>
                     {:else if entity.date || entity.start_date || entity.end_date}
-                        <div class="flex flex-wrap gap-x-6 gap-y-2 text-xs font-mono border-b border-green-900/20 pb-4">
+                        <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono border-b border-green-900/20 pb-4">
                             {#if entity.date}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-green-500 font-bold uppercase">{getTemporalLabel(entity.type, 'date')}:</span>
+                                    <span class="text-green-400 font-bold uppercase">{getTemporalLabel(entity.type, 'date')}:</span>
                                     <span class="text-green-100">{entity.date.label || `${entity.date.year}/${entity.date.month ?? 1}/${entity.date.day ?? 1}`}</span>
                                 </div>
                             {/if}
                             {#if entity.start_date}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-green-500 font-bold uppercase">{getTemporalLabel(entity.type, 'start')}:</span>
+                                    <span class="text-green-400 font-bold uppercase">{getTemporalLabel(entity.type, 'start')}:</span>
                                     <span class="text-green-100">{entity.start_date.label || `${entity.start_date.year}/${entity.start_date.month ?? 1}/${entity.start_date.day ?? 1}`}</span>
                                 </div>
                             {/if}
                             {#if entity.end_date}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-green-500 font-bold uppercase">{getTemporalLabel(entity.type, 'end')}:</span>
+                                    <span class="text-green-400 font-bold uppercase">{getTemporalLabel(entity.type, 'end')}:</span>
                                     <span class="text-green-100">{entity.end_date.label || `${entity.end_date.year}/${entity.end_date.month ?? 1}/${entity.end_date.day ?? 1}`}</span>
                                 </div>
                             {/if}

@@ -30,7 +30,7 @@
 
 <div class="space-y-2 p-3 bg-zinc-900/30 border border-green-900/20 rounded">
   <div class="flex items-center justify-between">
-    <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest">{label}</span>
+    <span class="text-xs font-bold text-green-500 uppercase tracking-widest">{label}</span>
     {#if year !== undefined}
       <button 
         onclick={() => { year = undefined; update(); }}
@@ -43,7 +43,7 @@
 
   <div class="grid grid-cols-3 gap-2">
     <div class="flex flex-col gap-1">
-      <span class="text-[8px] text-green-900 uppercase font-bold">Year</span>
+      <span class="text-[10px] text-green-800 uppercase font-bold">Year</span>
       <input 
         type="number" 
         bind:value={year} 
@@ -53,7 +53,7 @@
       />
     </div>
     <div class="flex flex-col gap-1">
-      <span class="text-[8px] text-green-900 uppercase font-bold">Month</span>
+      <span class="text-[10px] text-green-800 uppercase font-bold">Month</span>
       <input 
         type="number" 
         min="1" 
@@ -65,7 +65,7 @@
       />
     </div>
     <div class="flex flex-col gap-1">
-      <span class="text-[8px] text-green-900 uppercase font-bold">Day</span>
+      <span class="text-[10px] text-green-800 uppercase font-bold">Day</span>
       <input 
         type="number" 
         min="1" 
@@ -79,7 +79,7 @@
   </div>
 
   <div class="flex flex-col gap-1">
-    <span class="text-[8px] text-green-900 uppercase font-bold">Display Label (Optional)</span>
+    <span class="text-[10px] text-green-800 uppercase font-bold">Display Label (Optional)</span>
     <input 
       type="text" 
       bind:value={displayLabel} 
