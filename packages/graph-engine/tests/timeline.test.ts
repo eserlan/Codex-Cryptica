@@ -43,9 +43,9 @@ describe("Timeline Layout", () => {
     });
 
     // n1 and n3 both have year 1000
-    // Secondary coords should be symmetric around 0
-    expect(positions["n1"].y).toBe(-25);
-    expect(positions["n3"].y).toBe(25);
+    // Secondary coords should be symmetric around 100 (offset)
+    expect(positions["n1"].y).toBe(75);
+    expect(positions["n3"].y).toBe(125);
   });
 
   it("should handle vertical orientation", () => {
@@ -58,6 +58,6 @@ describe("Timeline Layout", () => {
 
     expect(positions["n1"].y).toBe(0);
     expect(positions["n2"].y).toBe(14);
-    expect(positions["n1"].x).toBe(-25);
+    expect(positions["n1"].x).toBe(75);
   });
 });
