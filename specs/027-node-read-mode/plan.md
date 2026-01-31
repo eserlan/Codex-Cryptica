@@ -1,39 +1,35 @@
-# Implementation Plan: Node Read Mode
+# Implementation Plan: Entity Zen Mode
 
 **Branch**: `027-node-read-mode` | **Date**: 2026-01-31 | **Spec**: [link](./spec.md)
 **Input**: Feature specification from `/specs/027-node-read-mode/spec.md`
 
 ## Summary
 
-Implement a distraction-free "Read Mode" modal for entities, triggered from the detail panel. This feature includes a new global UI store to manage modal state, a modal component rendering markdown content using `marked`, and navigation support for interconnected nodes.
+Implement "Zen Mode," a full-screen, distraction-free environment for viewing and editing entities. This replaces the concept of a simple "Read Mode" with a robust workspace supporting deep work, tabbed data organization, and seamless graph navigation.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes)
-**Primary Dependencies**: `marked` (Markdown rendering), `isomorphic-dompurify` (Sanitization)
-**Storage**: N/A (Transient UI state)
+**Primary Dependencies**: `marked` (Markdown rendering), `isomorphic-dompurify` (Sanitization), `$lib/components/MarkdownEditor` (Editing)
+**Storage**: `vault.svelte.ts` (Data), `ui.svelte.ts` (Transient State)
 **Testing**: Playwright (E2E)
 **Target Platform**: Web (PWA)
-**Project Type**: Web application
 **Performance Goals**: <100ms modal open time
 **Constraints**: Must work offline (local-first)
 
 ## Constitution Check
 
-_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
-
-- [x] **Local-First Sovereignty**: No external data required.
+- [x] **Local-First Sovereignty**: All edits persist to local files.
 - [x] **Relational-First Navigation**: Modal includes navigation links.
-- [x] **Sub-100ms Performance**: Using lightweight `marked` parser.
-- [x] **Atomic Worldbuilding**: Modularity preserved via `NodeReadModal` component.
-- [x] **System-Agnostic Core**: No game-specific logic.
-- [x] **Pure Functional Core**: Parsing logic is pure.
-- [x] **Verifiable Reality**: E2E tests planned.
+- [x] **Sub-100ms Performance**: Lightweight stores and optimized rendering.
+- [x] **Atomic Worldbuilding**: Implemented as self-contained `EntityReadModal`.
+- [x] **System-Agnostic Core**: UI is generic (Status/Lore/Inventory).
+- [x] **Verifiable Reality**: E2E tests for Edit/Save cycles.
 - [x] **Test-First PWA Integrity**: Offline compatible.
 
 ## Project Structure
 
-### Documentation (this feature)
+### Documentation
 
 ```text
 specs/027-node-read-mode/
@@ -45,7 +41,7 @@ specs/027-node-read-mode/
 └── tasks.md             # Phase 2 output
 ```
 
-### Source Code (repository root)
+### Source Code
 
 ```text
 apps/
@@ -54,18 +50,16 @@ apps/
       lib/
         components/
           modals/
-            NodeReadModal.svelte  # [NEW] Read-only modal component
-          EntityDetailPanel.svelte # [UPDATE] Add trigger button
+            EntityReadModal.svelte  # [NEW] Full-screen Zen Mode component
+          EntityDetailPanel.svelte  # [UPDATE] Add Zen Mode trigger
         stores/
-          ui.svelte.ts            # [NEW] Global UI state store
+          ui.svelte.ts              # [NEW] Global UI state store
       routes/
-        +layout.svelte            # [UPDATE] Mount modal globally
+        +layout.svelte              # [UPDATE] Mount global modal
 ```
-
-**Structure Decision**: A new `ui.svelte.ts` store is introduced to manage global UI states (like modals) that don't fit into `vault` (data) or `graph` (visualization). This prevents circular dependencies and separates concerns.
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
+| Violation | Why Needed | Mitigation |
 | :--- | :--- | :--- |
-| New Store | Need centralized control for global modals | Passing props through +layout is cumbersome and less reactive |
+| Global UI Store | Modal needs to be accessible from anywhere (Graph, Search, Panel) | Restrict store scope to UI state only (no business logic) |
