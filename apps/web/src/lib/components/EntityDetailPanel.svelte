@@ -13,6 +13,15 @@
     }>();
 
     let isEditing = $state(false);
+    let previousEntityId = $state<string | undefined>(undefined);
+
+    $effect(() => {
+        if (entity?.id !== previousEntityId) {
+            isEditing = false;
+            previousEntityId = entity?.id;
+        }
+    });
+
     let editTitle = $state("");
     let editContent = $state("");
     let editLore = $state("");

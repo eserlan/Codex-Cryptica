@@ -74,6 +74,7 @@
         if (confirm(`Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`)) {
             try {
                 await vault.deleteEntity(entity.id);
+                isEditing = false;
                 handleClose();
             } catch (err: any) {
                 console.error("Failed to delete entity", err);
@@ -91,6 +92,10 @@
     };
 
     const navigateTo = (id: string) => {
+        if (isEditing) {
+            if (!confirm("Discard unsaved changes to navigate?")) return;
+            isEditing = false;
+        }
         uiStore.readModalEntityId = id;
     };
 

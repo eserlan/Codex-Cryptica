@@ -89,7 +89,7 @@ class GraphStore {
   }
 
   applyTimelineLayout(cy: Core) {
-    const nodes = this.elements.filter((e) => e.group === "nodes") as any[];
+    const nodes = this.elements.filter((e) => e.group === "nodes") as unknown as GraphNode[];
     const positions = getTimelineLayout(nodes, {
       axis: this.timelineAxis,
       scale: this.timelineScale,
