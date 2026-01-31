@@ -1,82 +1,77 @@
-# Feature Specification: Node Read Mode
+# Feature Specification: Entity Zen Mode (Full-Screen Edit)
 
 **Feature Branch**: `027-node-read-mode`
 **GitHub Issue**: [issue #49](https://github.com/eserlan/Codex-Cryptica/issues/49)
 **Created**: 2026-01-31
-**Status**: Draft
-**Input**: User description: "Read mode of the node - let's have a modal version of the detail pane with all the info easy readable with a cutnpaste option of the content. Also with the connection linking so we can easily navigate between nodes"
+**Status**: Implemented
+**Input**: User description: "Read mode of the node - let's have a modal version of the detail pane with all the info easy readable with a cutnpaste option of the content. Also with the connection linking so we can easily navigate between nodes."
+**Evolution**: During implementation, this feature evolved from a read-only modal into a full-screen "Zen Mode" editor to support deep work without context switching.
 
 ## User Scenarios & Testing
 
-### User Story 1 - View Node in Read Mode (Priority: P1)
+### User Story 1 - Focused Reading & Navigation (Priority: P1)
 
-As a user, I want to view the details of a node in a focused, read-only modal so that I can consume the information without the distractions of the editing interface.
+As a user, I want to view the details of a node in a spacious, full-screen modal so that I can consume long-form content and explore connections without the visual noise of the graph interface.
 
-**Why this priority**: Core functionality of the feature.
+**Why this priority**: Core functionality for consumption.
 
-**Independent Test**: Can be fully tested by selecting a node and triggering the read mode; the modal should appear with correct content.
-
-**Acceptance Scenarios**:
-
-1. **Given** a selected node in the graph or list, **When** I trigger the "Read Mode" action, **Then** a modal opens displaying the node's title, full content, and metadata.
-2. **Given** the read mode modal is open, **When** I click the close button or click outside the modal, **Then** the modal closes and returns me to the previous view.
-
-### User Story 2 - Navigate Connected Nodes (Priority: P1)
-
-As a user, I want to see and click on links to connected nodes within the read mode modal so that I can traverse the knowledge graph seamlessly.
-
-**Why this priority**: Essential for the "navigation" aspect of the request.
-
-**Independent Test**: Create two connected nodes. Open one in read mode. Click the connection link. Verify the second node is displayed.
+**Independent Test**: Open a node in Zen Mode. Verify layout is spacious (not a side panel). Click a connection. Verify new node loads instantly.
 
 **Acceptance Scenarios**:
 
-1. **Given** a node with outgoing or incoming connections, **When** I view it in Read Mode, **Then** I see a list of these connected nodes.
-2. **Given** a list of connected nodes in the modal, **When** I click on one of them, **Then** the modal updates to display the details of the clicked node.
+1. **Given** a selected node, **When** I trigger "Read/Zen Mode", **Then** a full-screen modal opens with a spacious, multi-column layout.
+2. **Given** the modal is open, **When** I click a connected node in the "Connections" sidebar, **Then** the modal content updates to the new node without closing.
 
-### User Story 3 - Copy Node Content (Priority: P2)
+### User Story 2 - Full-Screen Editing (Priority: P1)
 
-As a user, I want to easily copy the text content of the node so that I can paste it into other applications or documents.
+As a user, I want to edit the node's title, content, and metadata directly within the full-screen view so that I can perform "deep work" (writing/worldbuilding) without feeling cramped by the sidebar.
 
-**Why this priority**: Explicitly requested "cutnpaste option".
+**Why this priority**: Transforms the feature from a passive viewer to a primary workspace tool.
 
-**Independent Test**: Open a node with formatted text (bold, lists), click copy, paste into a rich text editor (e.g., Word, Google Docs), verify formatting is preserved.
+**Independent Test**: Open Zen Mode. Click "Edit". Change content. Click "Save". Close modal. Verify changes persist in the main graph/sidebar.
 
 **Acceptance Scenarios**:
 
-1. **Given** a node is open in Read Mode, **When** I click the "Copy Content" button, **Then** the node's content is copied to my system clipboard.
-2. **Given** the content is copied, **When** I paste it into a rich text editor, **Then** the formatting (bold, italics, lists) is preserved.
+1. **Given** the modal is in read mode, **When** I click "Edit", **Then** the fields (Title, Image, Content, Lore, Dates) become editable inputs.
+2. **Given** I have made changes, **When** I click "Save", **Then** the entity is updated in the vault.
+3. **Given** I have unsaved changes, **When** I try to close or navigate away, **Then** I am prompted to confirm discarding changes.
 
-### Edge Cases
+### User Story 3 - Copy Content (Priority: P2)
 
-- **Node with no content**: Modal should display a "No content available" message in italicized gray text.
-- **Node with no connections**: The connections section should be hidden or show "No connections".
-- **Large Content**: Modal body should be scrollable while keeping header/actions accessible.
-- **Markdown Rendering**: Ensure markdown in the node body is rendered properly (bold, italics, etc.) for readability, not raw text (unless raw view is toggled, but "easy readable" implies rendered).
+As a user, I want to easily copy the text content of the node so that I can paste it into other applications.
+
+**Why this priority**: Original user request ("cutnpaste option").
+
+**Independent Test**: Click Copy button. Paste into external doc. Verify text matches.
+
+**Acceptance Scenarios**:
+
+1. **Given** a node is open, **When** I click "Copy Content", **Then** the rendered content is copied to the clipboard.
 
 ## Requirements
 
 ### Functional Requirements
 
-- **FR-001**: System MUST provide a UI trigger (e.g., button, context menu, keyboard shortcut) to open a node in "Read Mode".
-- **FR-002**: System MUST display a modal overlay that covers a significant portion of the screen but maintains context of the application background.
-- **FR-003**: The modal MUST display the Node Title, Node Body (rendered Markdown), and associated Metadata (tags, etc.).
-- **FR-004**: The modal MUST display a list of connected nodes (both incoming and outgoing relationships).
-- **FR-005**: Clicking a connected node in the list MUST navigate the modal to that node's details without closing the modal.
-- **FR-006**: System MUST provide a "Copy" button that places the content on the clipboard in multiple formats (plain text/Markdown and rich text/HTML) to ensure formatting is preserved when pasting.
-- **FR-007**: The modal MUST have a prominent "Close" button located in the top-right corner.
-- **FR-008**: The modal content area MUST be scrollable for long content.
+- **FR-001**: System MUST provide a trigger to open "Zen Mode" from the standard Entity Detail Panel.
+- **FR-002**: The modal MUST provide a tabbed interface ("Status & Data", "Lore & Archives", "Inventory") to organize complex entity data.
+- **FR-003**: **Left Column**: MUST display Image, Connections list, and Delete actions.
+- **FR-004**: **Main Column**: MUST display Temporal Data (Date/Start/End) and the primary Markdown Content (Chronicle).
+- **FR-005**: **Editing**: Users MUST be able to toggle "Edit Mode" to modify Title, Image URL, Temporal Data, Content, and Lore.
+- **FR-006**: **Navigation**: Clicking a connection MUST navigate to that node within the modal.
+- **FR-007**: **Safety**: The system MUST warn the user if they attempt to close the modal or navigate while having unsaved edits.
+- **FR-008**: **Copy**: A dedicated "Copy" button MUST be available in the header.
+- **FR-009**: **Keyboard Support**: `Escape` key MUST close the modal (if no unsaved changes).
 
 ### Key Entities
 
-- **Node**: The primary data object containing Title, Body, Tags, and ID.
-- **Connection**: Represents the relationship between two Nodes (Source ID, Target ID).
+- **UI Store**: Manages `readModeNodeId` and modal visibility.
+- **Vault Store**: Source of truth for Entity data.
 
 ## Success Criteria
 
 ### Measurable Outcomes
 
-- **SC-001**: Users can access the content of any node in Read Mode within 2 clicks/interactions.
-- **SC-002**: Navigation between linked nodes inside the modal takes less than 1 second to render the new node.
-- **SC-003**: The "Copy" function successfully places the node's text content into the clipboard 100% of the time.
-- **SC-004**: Users report the "Read Mode" is easier to read than the standard edit pane (qualitative validation).
+- **SC-001**: Modal opens in < 100ms.
+- **SC-002**: Users can complete a "write -> save" cycle entirely within the modal.
+- **SC-003**: Navigation between nodes preserves the modal state (stays open).
+- **SC-004**: Unsaved changes are never lost accidentally (0% data loss on navigation/close).
