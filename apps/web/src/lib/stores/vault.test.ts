@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
 import { searchService } from "../services/search";
+import { workerBridge } from "../cloud-bridge/worker-bridge";
 import * as fsUtils from "../utils/fs";
 import * as idbUtils from "../utils/idb";
 
@@ -24,7 +25,15 @@ vi.mock("../services/search", () => ({
 vi.mock("./oracle.svelte", () => ({
   oracle: {
     clearMessages: vi.fn(),
-    messages: []
+    messages: [],
+    tier: "lite",
+    apiKey: null
+  }
+}));
+
+vi.mock("../cloud-bridge/worker-bridge", () => ({
+  workerBridge: {
+    reset: vi.fn()
   }
 }));
 
@@ -322,6 +331,7 @@ describe("VaultStore", () => {
     expect(Object.keys(vault.entities)).toHaveLength(0);
     expect(searchService.clear).toHaveBeenCalled();
     expect(oracle.clearMessages).toHaveBeenCalled();
+    expect(workerBridge.reset).toHaveBeenCalled();
   });
 
   it("should delete entity and associated media files", async () => {

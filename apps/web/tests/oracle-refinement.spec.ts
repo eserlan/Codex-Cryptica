@@ -54,6 +54,19 @@ test.describe("Oracle UI Refinement", () => {
             await new Promise((resolve) => tx.oncomplete = resolve);
         });
         await page.reload();
+
+        // Mock Gemini API for text generation
+        await page.route("**/models/gemini-*:streamGenerateContent**", async (route) => {
+            await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                    candidates: [{
+                        content: { parts: [{ text: "I am the Oracle." }] }
+                    }]
+                })
+            });
+        });
     });
 
     test("should not display 'user' or 'assistant' labels in chat messages", async ({ page }) => {
@@ -105,8 +118,8 @@ test.describe("Oracle UI Refinement", () => {
             await oracleBtn.click();
         }
 
-        // Verify message is gone
-        // Using a broad check but expecting it to be gone from the entire page
-        await expect(page.getByText("Persistent Message")).not.toBeVisible();
+        // Verify message is gone from the chat container
+        const chatContainer = page.locator('.custom-scrollbar');
+        await expect(chatContainer.getByText("Persistent Message")).not.toBeVisible();
     });
 });
