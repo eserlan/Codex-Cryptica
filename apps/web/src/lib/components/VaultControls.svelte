@@ -150,6 +150,23 @@
                 <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
             </button>
             <button
+                class="px-3 py-1.5 border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 rounded text-[10px] transition hidden xs:flex items-center gap-1.5"
+                onclick={() => {
+                    if (
+                        vault.pendingSaveCount > 0 &&
+                        !confirm(
+                            "Vault is currently saving changes. Close anyway?",
+                        )
+                    )
+                        return;
+                    vault.close();
+                }}
+                title="Close current vault and clear all campaign data."
+            >
+                <span class="icon-[lucide--folder-x] w-3.5 h-3.5"></span>
+                CLOSE
+            </button>
+            <button
                 class="px-3 py-1.5 border border-green-900/50 text-amber-700 hover:text-amber-500 hover:border-amber-700 rounded text-[10px] transition hidden xs:flex items-center gap-1.5"
                 onclick={() => vault.rebuildIndex()}
                 title="Clear cache and re-index all vault files. Use if search seems out of sync."
