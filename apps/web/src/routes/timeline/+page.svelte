@@ -1,6 +1,5 @@
 <script lang="ts">
   import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
   import VerticalTimeline from "$lib/components/timeline/VerticalTimeline.svelte";
   import HorizontalTimeline from "$lib/components/timeline/HorizontalTimeline.svelte";
   import TimelineLayoutToggle from "$lib/components/timeline/TimelineLayoutToggle.svelte";

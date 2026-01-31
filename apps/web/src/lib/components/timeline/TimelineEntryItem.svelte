@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { TimelineEntry } from "$lib/stores/timeline.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { timelineStore } from "$lib/stores/timeline.svelte";
 
   let { entry } = $props<{ entry: TimelineEntry }>();
 

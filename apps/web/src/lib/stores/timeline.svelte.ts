@@ -1,5 +1,5 @@
 import { vault } from "./vault.svelte";
-import type { Entity, Era, TemporalMetadata } from "schema";
+import type { Era, TemporalMetadata } from "schema";
 import { getDB } from "../utils/idb";
 
 export interface TimelineEntry {

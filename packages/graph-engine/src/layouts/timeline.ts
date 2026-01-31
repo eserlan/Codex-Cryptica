@@ -23,9 +23,6 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
     return n.data.date?.year ?? n.data.start_date?.year ?? n.data.end_date?.year ?? 0;
   };
 
-  // 2. Determine base year for normalization
-  const minYear = options.minYear ?? Math.min(...datedNodes.map(getYear));
-
   // 3. Group by year to handle concurrent events (jitter)
   const groupedByYear: Record<number, GraphNode[]> = {};
   for (const node of datedNodes) {

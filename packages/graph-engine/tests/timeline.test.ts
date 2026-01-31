@@ -26,8 +26,11 @@ describe("Timeline Layout", () => {
       minYear: 1000
     });
 
+    // Sequential layout:
+    // 1000 -> 0
+    // 1100 -> diff 100. Base scale 10. Gap > 20 (+4). Total 14.
     expect(positions["n1"].x).toBe(0);
-    expect(positions["n2"].x).toBe(1000); // (1100-1000) * 10
+    expect(positions["n2"].x).toBe(14); 
     expect(positions["n3"].x).toBe(0);
   });
 
@@ -54,7 +57,7 @@ describe("Timeline Layout", () => {
     });
 
     expect(positions["n1"].y).toBe(0);
-    expect(positions["n2"].y).toBe(1000);
+    expect(positions["n2"].y).toBe(14);
     expect(positions["n1"].x).toBe(-25);
   });
 });
