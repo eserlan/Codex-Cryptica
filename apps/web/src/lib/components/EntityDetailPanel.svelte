@@ -3,6 +3,7 @@
     import { fly, fade } from "svelte/transition";
     import { vault } from "$lib/stores/vault.svelte";
     import { oracle } from "$lib/stores/oracle.svelte";
+    import { uiStore } from "$lib/stores/ui.svelte";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
 
@@ -12,6 +13,15 @@
     }>();
 
     let isEditing = $state(false);
+    let previousEntityId = $state<string | undefined>(undefined);
+
+    $effect(() => {
+        if (entity?.id !== previousEntityId) {
+            isEditing = false;
+            previousEntityId = entity?.id;
+        }
+    });
+
     let editTitle = $state("");
     let editContent = $state("");
     let editLore = $state("");
@@ -237,14 +247,26 @@
                     </h2>
                 {/if}
 
-                <button
-                    onclick={onClose}
-                    class="text-green-700 hover:text-green-500 transition flex items-center justify-center p-1"
-                    aria-label="Close panel"
-                    title="Close"
-                >
-                    <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
-                </button>
+                <div class="flex items-center gap-1">
+                    {#if !isEditing}
+                        <button
+                            onclick={() => uiStore.openZenMode(entity.id)}
+                            class="text-green-700 hover:text-green-400 transition flex items-center justify-center p-1"
+                            aria-label="Enter Zen Mode"
+                            title="Zen Mode (Full Screen)"
+                        >
+                            <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+                        </button>
+                    {/if}
+                    <button
+                        onclick={onClose}
+                        class="text-green-700 hover:text-green-500 transition flex items-center justify-center p-1"
+                        aria-label="Close panel"
+                        title="Close"
+                    >
+                        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+                    </button>
+                </div>
             </div>
 
             <!-- Image Preview / Input -->

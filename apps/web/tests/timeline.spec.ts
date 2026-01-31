@@ -5,53 +5,43 @@ test.describe("World Timeline - Graph Integration", () => {
         await page.addInitScript(() => {
             (window as any).DISABLE_ONBOARDING = true;
             
-            const applyMocks = () => {
-                if (!(window as any).vault) return;
-                
-                // Mock window.showDirectoryPicker
-                (window as any).showDirectoryPicker = async () => {
-                    return {
-                        kind: "directory",
-                        name: "test-vault",
-                        requestPermission: async () => "granted",
-                        queryPermission: async () => "granted",
-                        values: async function* () {
-                            yield {
-                                kind: "file",
-                                name: "e1.md",
-                                getFile: async () => new File([
-                                    '---\nid: e1\ntitle: Event 1\ntype: event\ndate:\n  year: 1000\n---\n# E1'
-                                ], "e1.md")
-                            };
-                            yield {
-                                kind: "file",
-                                name: "e2.md",
-                                getFile: async () => new File([
-                                    '---\nid: e2\ntitle: Event 2\ntype: event\ndate:\n  year: 2000\n---\n# E2'
-                                ], "e2.md")
-                            };
-                        },
-                        entries: async function* () {
-                            yield ["e1.md", { kind: "file", name: "e1.md" }];
-                            yield ["e2.md", { kind: "file", name: "e2.md" }];
-                        },
-                        getFileHandle: async (name: string) => ({
-                            kind: "file",
-                            name,
-                            getFile: async () => new File([""], name),
-                        }),
-                        getDirectoryHandle: async (name: string) => ({
-                            kind: "directory",
-                            name,
-                        }),
-                    };
-                };
+            // Mock IDB to prevent errors
+            const originalPut = IDBObjectStore.prototype.put;
+            IDBObjectStore.prototype.put = function (...args: [unknown, IDBValidKey?]) {
+                try { return originalPut.apply(this, args); } catch { return {} as any; }
             };
 
-            applyMocks();
-            setInterval(applyMocks, 100);
+            // Mock window.showDirectoryPicker
+            (window as any).showDirectoryPicker = async () => {
+                const createMockFile = (content: string, name: string) => ({
+                    kind: 'file',
+                    name,
+                    getFile: async () => new File([content], name, { type: 'text/markdown' }),
+                    createWritable: async () => ({ write: async () => {}, close: async () => {} })
+                });
+
+                const f1 = createMockFile(
+                    '---\nid: e1\ntitle: Event 1\ntype: event\ndate:\n  year: 1000\n---\n# E1', 
+                    'e1.md'
+                );
+                const f2 = createMockFile(
+                    '---\nid: e2\ntitle: Event 2\ntype: event\ndate:\n  year: 2000\n---\n# E2', 
+                    'e2.md'
+                );
+
+                return {
+                    kind: "directory",
+                    name: "test-vault",
+                    requestPermission: async () => "granted",
+                    queryPermission: async () => "granted",
+                    values: () => [f1, f2][Symbol.iterator](),
+                    entries: () => [['e1.md', f1], ['e2.md', f2]][Symbol.iterator](),
+                    getFileHandle: async (name: string) => name === 'e1.md' ? f1 : f2,
+                    getDirectoryHandle: async (name: string) => ({ kind: "directory", name }),
+                };
+            };
         });
-        await page.goto("/");
+        await page.goto("http://localhost:5173/");
     });
 
     test("should toggle timeline mode", async ({ page }) => {

@@ -11,7 +11,7 @@ const config = {
 			strict: false
 		}),
 		alias: {
-			'$stores': 'src/stores',
+			'$stores': 'src/lib/stores',
 			'$workers': 'src/workers'
 		},
 		paths: {

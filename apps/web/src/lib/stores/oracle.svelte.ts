@@ -375,7 +375,7 @@ class OracleStore {
                 }
               ];
               // Also show a global notification for high-visibility failure
-              const { uiStore } = await import("../../stores/ui.svelte");
+              const { uiStore } = await import("./ui.svelte");
               uiStore.setGlobalError(errorMsg);
             }
           }

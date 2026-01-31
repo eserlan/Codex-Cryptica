@@ -1,5 +1,5 @@
 import { vault } from "./vault.svelte";
-import { GraphTransformer, getTimelineLayout } from "graph-engine";
+import { GraphTransformer, getTimelineLayout, type GraphNode } from "graph-engine";
 import type { Core } from "cytoscape";
 import type { Era } from "schema";
 import { getDB } from "../utils/idb";
@@ -89,7 +89,7 @@ class GraphStore {
   }
 
   applyTimelineLayout(cy: Core) {
-    const nodes = this.elements.filter((e) => e.group === "nodes") as any[];
+    const nodes = this.elements.filter((e) => e.group === "nodes") as unknown as GraphNode[];
     const positions = getTimelineLayout(nodes, {
       axis: this.timelineAxis,
       scale: this.timelineScale,
