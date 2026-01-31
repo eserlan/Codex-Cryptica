@@ -16,6 +16,7 @@
     let isEditing = $state(false);
     let activeTab = $state<"overview" | "inventory">("overview");
     let showLightbox = $state(false);
+    let scrollContainer = $state<HTMLDivElement>();
 
     // Edit State
     let editTitle = $state("");
@@ -292,8 +293,19 @@
 
 <svelte:window
     onkeydown={(e) => {
-        if (e.key === "Escape" && uiStore.showZenMode && !showLightbox)
+        if (!uiStore.showZenMode || showLightbox) return;
+
+        if (e.key === "Escape") {
             handleClose();
+        } else if (!isEditing && scrollContainer) {
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                scrollContainer.scrollBy({ top: 100, behavior: "smooth" });
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                scrollContainer.scrollBy({ top: -100, behavior: "smooth" });
+            }
+        }
     }}
 />
 
@@ -551,7 +563,10 @@
                     </div>
 
                     <!-- Right Content (Temporal & Chronicle & Lore) -->
-                    <div class="flex-1 p-8 overflow-y-auto custom-scrollbar">
+                    <div 
+                        bind:this={scrollContainer}
+                        class="flex-1 p-8 overflow-y-auto custom-scrollbar"
+                    >
                         <div class="max-w-3xl mx-auto space-y-12">
                             <!-- Temporal Data -->
                             {#if isEditing}
