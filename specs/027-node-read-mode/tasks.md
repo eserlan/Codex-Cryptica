@@ -47,4 +47,5 @@
 ## Phase 7: Verification
 
 - [x] T017 Update E2E test `apps/web/tests/node-read-mode.spec.ts` to verify Editing, Saving, and Safety prompts
-- [ ] T018 [CRITICAL] **Offline Functionality Verification**: Ensure Zen Mode opens and edits save without network
+
+- [x] T018 [CRITICAL] **Offline Functionality Verification**: Ensure Zen Mode opens and edits save without network
