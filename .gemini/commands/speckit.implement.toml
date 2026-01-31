@@ -1,6 +1,7 @@
 description = "Execute the implementation plan by processing and executing all tasks defined in tasks.md"
 
 prompt = """
+<!-- GEMINI_CMD: specify.implement -->
 ---
 description: Execute the implementation plan by processing and executing all tasks defined in tasks.md
 ---
