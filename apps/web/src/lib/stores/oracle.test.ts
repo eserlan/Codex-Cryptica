@@ -89,6 +89,7 @@ describe("OracleStore", () => {
     oracle.tier = "lite";
     oracle.isOpen = false;
     oracle.isLoading = false;
+    oracle.lastUpdated = 0;
     // Mock crypto if needed
     if (!global.crypto) {
       Object.defineProperty(global, 'crypto', {
