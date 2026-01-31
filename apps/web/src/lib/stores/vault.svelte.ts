@@ -6,12 +6,9 @@ import type { Entity, Connection } from "schema";
 import { searchService } from "../services/search";
 import { cacheService } from "../services/cache";
 import { aiService } from "../services/ai";
-<<<<<<< HEAD
-=======
 import { oracle } from "./oracle.svelte";
 import { graph } from "./graph.svelte";
 import { workerBridge } from "../cloud-bridge/worker-bridge";
->>>>>>> origin/main
 import type { IStorageAdapter } from "../cloud-bridge/types";
 
 export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle; _path?: string | string[] };
@@ -22,9 +19,6 @@ class VaultStore {
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
   activeDetailTab = $state<"status" | "lore" | "inventory">("status");
-  
-  isGuest = $state(false);
-  storageAdapter: IStorageAdapter | null = null;
 
   isGuest = $state(false);
   storageAdapter: IStorageAdapter | null = null;
@@ -115,8 +109,6 @@ class VaultStore {
     }
   }
 
-<<<<<<< HEAD
-=======
   /**
    * Detaches the current vault, clearing all in-memory campaign data 
    * and removing persistent directory references.
@@ -150,7 +142,6 @@ class VaultStore {
     }
   }
 
->>>>>>> origin/main
   async initGuest(adapter: IStorageAdapter) {
     this.isGuest = true;
     this.storageAdapter = adapter;
@@ -159,31 +150,6 @@ class VaultStore {
       await adapter.init();
       const graph = await adapter.loadGraph();
       if (graph) {
-<<<<<<< HEAD
-        // Convert plain entities to LocalEntity (path might be virtual)
-        const localEntities: Record<string, LocalEntity> = {};
-        for (const [id, entity] of Object.entries(graph.entities)) {
-            localEntities[id] = { ...entity, _path: `${id}.md` }; // Virtual path
-        }
-        this.entities = localEntities;
-        
-        // Rebuild Inbound Connections
-        const newInboundMap: Record<string, { sourceId: string; connection: Connection }[]> = {};
-        for (const entity of Object.values(this.entities)) {
-           for (const conn of entity.connections) {
-                if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
-                newInboundMap[conn.target].push({ sourceId: entity.id, connection: conn });
-           }
-        }
-        this.inboundConnections = newInboundMap;
-      }
-    } catch (err: any) {
-        console.error("Failed to init guest vault", err);
-        this.errorMessage = err.message || "Failed to load shared campaign";
-        this.status = "error";
-    } finally {
-        if (this.status !== "error") this.status = "idle";
-=======
         // Convert plain entities to LocalEntity
         const localEntities: Record<string, LocalEntity> = {};
         for (const [id, entity] of Object.entries(graph.entities)) {
@@ -198,7 +164,6 @@ class VaultStore {
       this.status = "error";
     } finally {
       if (this.status !== "error") this.status = "idle";
->>>>>>> origin/main
     }
   }
 
@@ -698,11 +663,7 @@ class VaultStore {
 
   async saveToDisk(entity: Entity) {
     if (this.isGuest) {
-<<<<<<< HEAD
-      console.warn("Save blocked in Guest Mode");
-=======
       // Allow save queue to process but do nothing
->>>>>>> origin/main
       return;
     }
     const handle = (entity as LocalEntity)._fsHandle as FileSystemFileHandle;
@@ -742,11 +703,7 @@ class VaultStore {
     }
   }
 
-<<<<<<< HEAD
-  async createEntity(type: Entity["type"], title: string): Promise<string> {
-=======
   async createEntity(type: Entity["type"], title: string, initialData?: Partial<Entity>): Promise<string> {
->>>>>>> origin/main
     if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
     const id = sanitizeId(title);
     if (this.entities[id]) {
@@ -794,13 +751,9 @@ class VaultStore {
   }
 
   async deleteEntity(id: string): Promise<void> {
-<<<<<<< HEAD
-    if (this.isGuest) return; // Silent fail or throw? Silent is safer for UI.
-=======
     if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
 
     // 1. Delete file
->>>>>>> origin/main
     const entity = this.entities[id];
     if (!entity) return;
 

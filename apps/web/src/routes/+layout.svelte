@@ -6,11 +6,7 @@
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
 	import GuestLoginModal from "$lib/components/modals/GuestLoginModal.svelte";
-<<<<<<< HEAD
-	import NodeReadModal from "$lib/components/modals/NodeReadModal.svelte";
-=======
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
->>>>>>> origin/main
 	import { vault } from "$lib/stores/vault.svelte";
 	import { oracle } from "$lib/stores/oracle.svelte";
 	import { categories } from "$lib/stores/categories.svelte";
@@ -22,10 +18,7 @@
 	import { cloudConfig } from "$stores/cloud-config";
 	import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
 	import { MemoryAdapter } from "$lib/cloud-bridge/memory-adapter";
-<<<<<<< HEAD
-=======
 	import { P2PClientAdapter } from "$lib/cloud-bridge/p2p/client-adapter";
->>>>>>> origin/main
 	import { PublicGDriveAdapter } from "$lib/cloud-bridge/google-drive/public-adapter";
 	import { onMount } from "svelte";
 
@@ -38,9 +31,6 @@
 		page.url.pathname.includes("/privacy") ||
 			page.url.pathname.includes("/terms"),
 	);
-	
-	const shareId = $derived(page.url.searchParams.get("shareId"));
-	let showGuestLogin = $state(false);
 
 	const shareId = $derived(page.url.searchParams.get("shareId"));
 	let showGuestLogin = $state(false);
@@ -113,21 +103,6 @@
 	};
 
 	onMount(() => {
-<<<<<<< HEAD
-		if (shareId) {
-			// Check if we already have a guest session
-			const savedUser = sessionStorage.getItem("guest_username");
-			if (savedUser) {
-				handleJoin(savedUser);
-			} else {
-				showGuestLogin = true;
-			}
-		} else {
-			vault.init();
-		}
-		categories.init();
-		
-=======
 		categories.init();
 		helpStore.init();
 
@@ -158,7 +133,6 @@
 				});
 		}
 
->>>>>>> origin/main
 		const handleGlobalError = (event: ErrorEvent) => {
 			// Ignore non-fatal script/asset load failures (common when offline)
 			if (
@@ -230,32 +204,6 @@
 			);
 		};
 	});
-
-	const handleJoin = async (username: string) => {
-		sessionStorage.setItem("guest_username", username);
-		showGuestLogin = false;
-		
-		// Basic validation for GDrive ID (length and alphanumeric usually)
-		if (!shareId || shareId.length < 20) {
-			vault.status = "error";
-			vault.errorMessage = "Malformed or invalid share link.";
-			return;
-		}
-
-		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-		const publicAdapter = new PublicGDriveAdapter();
-		const memoryAdapter = new MemoryAdapter();
-		
-		try {
-			// Pre-fetch graph using public adapter
-			const graph = await publicAdapter.fetchPublicFolder(shareId!, apiKey);
-			memoryAdapter.hydrate(graph);
-			await vault.initGuest(memoryAdapter);
-		} catch (err: any) {
-			console.error("Guest join failed", err);
-			// Vault initGuest handles UI error state
-		}
-	};
 
 	const handleKeydown = (event: KeyboardEvent) => {
 		if ((event.metaKey || event.ctrlKey) && event.key === "k") {
@@ -363,11 +311,7 @@
 			<OracleWindow />
 		{/if}
 		<SettingsModal />
-<<<<<<< HEAD
-		<NodeReadModal />
-=======
 		<TourOverlay />
->>>>>>> origin/main
 	{/if}
 </div>
 
@@ -375,11 +319,7 @@
 	<GuestLoginModal onJoin={handleJoin} />
 {/if}
 
-<<<<<<< HEAD
-{#if uiStore.globalError}
-=======
 {#if uiStore.globalError && !(window as any).DISABLE_ERROR_OVERLAY}
->>>>>>> origin/main
 	<div
 		class="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 text-red-500 font-mono"
 	>
