@@ -6,6 +6,7 @@
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
 	import GuestLoginModal from "$lib/components/modals/GuestLoginModal.svelte";
+	import EntityReadModal from "$lib/components/modals/EntityReadModal.svelte";
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { graph } from "$lib/stores/graph.svelte";
@@ -13,11 +14,11 @@
 	import { timelineStore } from "$lib/stores/timeline.svelte";
 	import { categories } from "$lib/stores/categories.svelte";
 	import { searchStore } from "$lib/stores/search";
-	import { helpStore } from "$stores/help.svelte";
-	import { uiStore } from "$stores/ui.svelte";
+	import { helpStore } from "$lib/stores/help.svelte";
+	import { uiStore } from "$lib/stores/ui.svelte";
 	import { guestInfo } from "$lib/stores/guest";
-	import { syncStats } from "$stores/sync-stats";
-	import { cloudConfig } from "$stores/cloud-config";
+	import { syncStats } from "$lib/stores/sync-stats";
+	import { cloudConfig } from "$lib/stores/cloud-config";
 	import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
 	import { MemoryAdapter } from "$lib/cloud-bridge/memory-adapter";
 	import { P2PClientAdapter } from "$lib/cloud-bridge/p2p/client-adapter";
@@ -315,6 +316,7 @@
 			<OracleWindow />
 		{/if}
 		<SettingsModal />
+		<EntityReadModal />
 		<TourOverlay />
 	{/if}
 </div>

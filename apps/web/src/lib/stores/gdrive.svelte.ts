@@ -1,11 +1,3 @@
-class GDriveStore {
-    async shareFolderPublicly(): Promise<string | null> {
-        return "mock-folder-id";
-    }
+import { GoogleDriveAdapter } from "$lib/cloud-bridge/google-drive/adapter";
 
-    async revokeShare(): Promise<void> {
-        return;
-    }
-}
-
-export const gdrive = new GDriveStore();
+export const gdriveAdapter = new GoogleDriveAdapter();

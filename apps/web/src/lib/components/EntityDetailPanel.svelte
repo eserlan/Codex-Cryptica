@@ -3,7 +3,7 @@
     import { fly, fade } from "svelte/transition";
     import { vault } from "$lib/stores/vault.svelte";
     import { oracle } from "$lib/stores/oracle.svelte";
-    import { ui } from "$lib/stores/ui.svelte";
+    import { uiStore } from "$lib/stores/ui.svelte";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
 
@@ -238,23 +238,26 @@
                     </h2>
                 {/if}
 
-                <button
-                    onclick={() => ui.openReadMode(entity!.id)}
-                    class="text-green-700 hover:text-green-500 transition flex items-center justify-center p-1 mr-2"
-                    aria-label="Read Mode"
-                    title="Read Mode"
-                >
-                    <span class="icon-[lucide--book-open] w-6 h-6"></span>
-                </button>
-
-                <button
-                    onclick={onClose}
-                    class="text-green-700 hover:text-green-500 transition flex items-center justify-center p-1"
-                    aria-label="Close panel"
-                    title="Close"
-                >
-                    <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
-                </button>
+                <div class="flex items-center gap-1">
+                    {#if !isEditing}
+                        <button
+                            onclick={() => uiStore.openReadModal(entity.id)}
+                            class="text-green-700 hover:text-green-400 transition flex items-center justify-center p-1"
+                            aria-label="Enter Read Mode"
+                            title="Read Mode (Focused View)"
+                        >
+                            <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+                        </button>
+                    {/if}
+                    <button
+                        onclick={onClose}
+                        class="text-green-700 hover:text-green-500 transition flex items-center justify-center p-1"
+                        aria-label="Close panel"
+                        title="Close"
+                    >
+                        <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
+                    </button>
+                </div>
             </div>
 
             <!-- Image Preview / Input -->
