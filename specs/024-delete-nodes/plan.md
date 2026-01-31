@@ -15,7 +15,7 @@ Implement a safe, relational-aware mechanism to delete lore entities from the va
 **Testing**: Vitest (Unit/Integration), Playwright (E2E)
 **Target Platform**: PWA (Web)
 **Project Type**: Monorepo (Web App + Packages)
-**Performance Goals**: UI feedback for deletion under 100ms; full cleanup under 200ms.
+**Performance Goals**: UI feedback for deletion under 100ms; full cleanup under 500ms (per SC-001 in spec.md).
 **Constraints**: Must adhere to Local-First Sovereignty and Relational-First Navigation.
 
 ## Constitution Check
@@ -54,8 +54,8 @@ apps/web/
 │   │   │   └── EntityDetailPanel.svelte  # UI for deletion trigger
 │   │   └── stores/
 │   │       └── vault.svelte.ts           # Deletion logic and relational cleanup
-│   └── tests/
-│       └── vault-delete.spec.ts          # E2E test for deletion flow
+├── tests/
+│   └── vault-delete.spec.ts          # E2E test for deletion flow
 packages/
 └── editor-core/                          # No changes expected
 ```

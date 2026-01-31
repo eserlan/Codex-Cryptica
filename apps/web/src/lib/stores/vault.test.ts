@@ -209,6 +209,41 @@ describe("VaultStore", () => {
     expect(vault.entities["test-entity"]?.thumbnail).toContain("-thumb.webp");
   });
 
+  it("should cleanup old images when replacing with new ones", async () => {
+    const mockWritable = { write: vi.fn(), close: vi.fn() };
+    const mockFileHandle = { createWritable: vi.fn().mockResolvedValue(mockWritable) };
+    const mockImagesDir = { 
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+      removeEntry: vi.fn().mockResolvedValue(undefined)
+    };
+
+    vault.rootHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
+    } as any;
+
+    // Entity already has an image
+    vault.entities["replace-entity"] = {
+      id: "replace-entity",
+      title: "Replace Entity",
+      type: "npc",
+      image: "./images/old-photo.png",
+      thumbnail: "./images/old-thumb.webp",
+      connections: [],
+      metadata: {},
+    } as any;
+
+    const blob = new Blob(["new-image"], { type: "image/png" });
+    await vault.saveImageToVault(blob, "replace-entity");
+
+    // Verify old files were removed
+    expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("old-photo.png");
+    expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("old-thumb.webp");
+    
+    // Verify new paths were set
+    expect(vault.entities["replace-entity"]?.image).toContain("replace-entity-");
+    expect(vault.entities["replace-entity"]?.image).not.toContain("old-photo.png");
+  });
+
   it("should resolve local paths to blob URLs", async () => {
     const mockFile = new File(["data"], "image.png", { type: "image/png" });
     const mockFileHandle = { getFile: vi.fn().mockResolvedValue(mockFile) };

@@ -14,5 +14,5 @@
    - Update `saveImageToVault` in `VaultStore` to check for existing `image` and `thumbnail` paths in the entity and delete those files before updating with new paths.
 
 4. **Validation**:
-   - Run `apps/web/tests/vault.test.ts` to verify basic deletion.
+   - Run `apps/web/src/lib/stores/vault.test.ts` to verify basic deletion.
    - Add a new test case for relational cleanup.

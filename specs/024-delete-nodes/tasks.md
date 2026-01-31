@@ -100,9 +100,9 @@
 ### Parallel Opportunities
 
 - T004, T005 (US1 Tests)
-- T008 (US2 Tests)
-- T010 (US3 Tests)
-- T013, T015 (Polish)
+- T009 (US2 Tests)
+- T011 (US3 Tests)
+- T014, T015 (Polish)
 
 ---
 
