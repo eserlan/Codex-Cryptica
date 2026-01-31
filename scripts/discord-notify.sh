@@ -12,23 +12,27 @@ if [ ! -t 0 ]; then
   SESSION_END_REASON=$(echo "$EVENT_DATA" | jq -r '.reason // empty')
   
   if [ -n "$SESSION_END_REASON" ]; then
-    MESSAGE="🚀 **Gemini CLI Session Ended**
-**Session ID:** 
-${CLI_SESSION_ID}
-**Reason:** ${SESSION_END_REASON}"
+    exit 0 # Silent exit for session end
   else
     # Check if it's an AfterAgent event (contains prompt and prompt_response)
     PROMPT=$(echo "$EVENT_DATA" | jq -r '.prompt // empty')
-    if [[ "$PROMPT" == *"Execute the implementation plan"* ]]; then
+    RESPONSE=$(echo "$EVENT_DATA" | jq -r '.prompt_response // empty')
+    
+    # ONLY notify if the special speckit.implement marker is present
+    if [[ "$PROMPT" == *"GEMINI_CMD: specify.implement"* ]]; then
+      # Optional: Only notify if the response indicates completion
+      # if [[ "$RESPONSE" == *"Implementation Completed"* || "$RESPONSE" == *"All tasks completed"* ]]; then
+      
       MESSAGE="✅ **Speckit Implementation Turn Completed**
 **Session ID:** 
 ${CLI_SESSION_ID}
 
 The implementation turn for the current feature has finished."
+      # else
+      #   exit 0 # Silent exit for intermediate turns
+      # fi
     else
-      MESSAGE="🤖 **Gemini Agent Turn Completed**
-**Session ID:** 
-${CLI_SESSION_ID}"
+      exit 0 # Silent exit for any other command
     fi
   fi
 else
