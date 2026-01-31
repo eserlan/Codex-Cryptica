@@ -3,7 +3,12 @@
  * Useful for ensuring file writes happen in order to prevent race conditions.
  */
 export class SequentialTaskQueue {
+  private _pendingCount = 0;
   private queue: Promise<void> = Promise.resolve();
+
+  get pendingCount() {
+    return this._pendingCount;
+  }
 
   /**
    * Adds a task to the queue.
@@ -11,7 +16,14 @@ export class SequentialTaskQueue {
    * @returns A promise that resolves when the task completes.
    */
   enqueue<T>(task: () => Promise<T>): Promise<T> {
-    const next = this.queue.then(task);
+    this._pendingCount++;
+    const next = this.queue.then(async () => {
+      try {
+        return await task();
+      } finally {
+        this._pendingCount--;
+      }
+    });
     // We catch errors here to ensure the queue chain isn't broken for subsequent tasks
     this.queue = next.catch(() => {}) as Promise<void>;
     return next;
@@ -23,6 +35,14 @@ export class SequentialTaskQueue {
  */
 export class KeyedTaskQueue {
   private queues = new Map<string, SequentialTaskQueue>();
+
+  get totalPendingCount() {
+    let count = 0;
+    for (const q of this.queues.values()) {
+      count += q.pendingCount;
+    }
+    return count;
+  }
 
   /**
    * Enqueues a task for a specific key.

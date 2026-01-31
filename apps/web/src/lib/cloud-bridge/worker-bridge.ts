@@ -38,6 +38,20 @@ export class WorkerBridge {
     this.worker.terminate();
   }
 
+  public reset() {
+    if (this.syncIntervalId) {
+      clearInterval(this.syncIntervalId);
+      this.syncIntervalId = null;
+    }
+    if (this.worker) {
+      this.worker.terminate();
+    }
+    if (browser) {
+      this.worker = new SyncWorker();
+      this.setupListeners();
+    }
+  }
+
   private setupListeners() {
     this.worker.onmessage = (event) => {
       const { type, payload } = event.data;
