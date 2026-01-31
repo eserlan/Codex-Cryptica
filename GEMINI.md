@@ -19,6 +19,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - LocalStorage (progress tracking), Static JSON/Markdown (content) (020-help-guide-system)
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (UI Framework), `packages/editor-core` (for content handling logic) (022-oracle-data-parsing)
 - OPFS (Markdown files with YAML frontmatter) (022-oracle-data-parsing)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `editor-core` (024-delete-nodes)
+- OPFS / Local Directory (Markdown files with YAML frontmatter) (024-delete-nodes)
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
@@ -49,11 +51,9 @@ npm test; npm run lint
 TypeScript: Follow standard conventions
 
 ## Recent Changes
+- 024-delete-nodes: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `editor-core`
 - 022-oracle-data-parsing: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (UI Framework), `packages/editor-core` (for content handling logic)
 - 020-help-guide-system: Added TypeScript 5.x / Node.js 20+ + Svelte 5, FlexSearch, marked (markdown parsing)
-- 019-oracle-rag-improvements: Added TypeScript 5.x / Node.js 20+ + @google/generative-ai, FlexSearch, Svelte 5
-- 018-perf-improvements: Added TypeScript 5.x, Node.js 20+ + Svelte 5, Cytoscape.js, `@google/generative-ai`
-- 017-sync-refinement: Added TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb`; OPFS (Vault), IndexedDB (Metadata Store)
 
 
 

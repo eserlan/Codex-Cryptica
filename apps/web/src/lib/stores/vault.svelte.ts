@@ -7,6 +7,7 @@ import { searchService } from "../services/search";
 import { cacheService } from "../services/cache";
 import { aiService } from "../services/ai";
 import { oracle } from "./oracle.svelte";
+import { graph } from "./graph.svelte";
 import { workerBridge } from "../cloud-bridge/worker-bridge";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 
@@ -480,6 +481,19 @@ class VaultStore {
         create: true,
       });
 
+      // Cleanup old images if they exist
+      const entity = this.entities[entityId];
+      if (entity) {
+        const deleteOldFile = async (path: string) => {
+          const filename = path.split("/").pop();
+          if (filename) {
+            await imagesDir.removeEntry(filename).catch(() => {});
+          }
+        };
+        if (entity.image) await deleteOldFile(entity.image);
+        if (entity.thumbnail) await deleteOldFile(entity.thumbnail);
+      }
+
       const timestamp = Date.now();
       const hash = crypto.randomUUID().split("-")[0];
       const baseFilename = `${entityId}-${timestamp}-${hash}`;
@@ -743,29 +757,82 @@ class VaultStore {
     const entity = this.entities[id];
     if (!entity) return;
 
-    const handle = entity._fsHandle as FileSystemFileHandle;
-    const path = entity._path as string[];
+    try {
+      const handle = entity._fsHandle as FileSystemFileHandle;
+      const path = entity._path as string[];
 
-    if (handle && this.rootHandle) {
-      if (path && path.length === 1) {
-        await this.rootHandle.removeEntry(path[0]);
-      } else {
-        if (handle.remove) await handle.remove(); // .remove() is a non-standard convenience in some impls, but our type allows removeEntry on dir
+      if (handle && this.rootHandle) {
+        if (path && path.length === 1) {
+          await this.rootHandle.removeEntry(path[0]);
+        } else {
+          if (handle.remove) await handle.remove(); // .remove() is a non-standard convenience in some impls, but our type allows removeEntry on dir
+        }
       }
+
+      // Remove from index
+      await searchService.remove(id);
+
+      // 2. Delete associated media
+      if (entity.image || entity.thumbnail) {
+        try {
+          const imagesDir = await this.rootHandle?.getDirectoryHandle("images", { create: false });
+          if (imagesDir) {
+            const deleteFile = async (path: string) => {
+              const filename = path.split("/").pop();
+              if (filename) {
+                await imagesDir.removeEntry(filename).catch(() => { });
+              }
+            };
+            if (entity.image) await deleteFile(entity.image);
+            if (entity.thumbnail) await deleteFile(entity.thumbnail);
+          }
+        } catch (err) {
+          console.warn("Failed to cleanup media files during entity deletion", err);
+        }
+      }
+
+      // 3. Relational Cleanup
+      const inbound = this.inboundConnections[id] || [];
+      for (const item of inbound) {
+        const sourceId = item.sourceId;
+        const source = this.entities[sourceId];
+        if (source) {
+          // Remove the connection from the source entity
+          const updatedSource = {
+            ...source,
+            connections: source.connections.filter(c => c.target !== id)
+          };
+          this.entities[sourceId] = updatedSource;
+          // Persist the change
+          this.scheduleSave(updatedSource);
+        }
+      }
+
+      // Remove its connections from the inbound map
+      for (const conn of entity.connections) {
+        this.removeInboundConnection(id, conn.target);
+      }
+
+      // Also remove any inbound connections POINTING to this entity
+      delete this.inboundConnections[id];
+
+      if (this.selectedEntityId === id) {
+        this.selectedEntityId = null;
+      }
+
+      delete this.entities[id];
+      this.status = "idle";
+      graph.requestFit();
+    } catch (err: any) {
+      console.error("Failed to delete entity", err);
+      this.status = "error";
+      this.errorMessage = err.message;
+      
+      // Show global error notification
+      import("../../stores/ui.svelte").then(({ uiStore }) => {
+        uiStore.setGlobalError(`Failed to delete "${entity.title}": ${err.message}`);
+      });
     }
-
-    // Remove from index
-    await searchService.remove(id);
-
-    // Remove its connections from the inbound map
-    for (const conn of entity.connections) {
-      this.removeInboundConnection(id, conn.target);
-    }
-
-    // Also remove any inbound connections POINTING to this entity
-    delete this.inboundConnections[id];
-
-    delete this.entities[id];
   }
 
   async refresh() {

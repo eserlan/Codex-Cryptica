@@ -54,6 +54,19 @@
         editLore = markdown;
     };
 
+    const handleDelete = async () => {
+        if (!entity) return;
+        if (confirm(`Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`)) {
+            try {
+                await vault.deleteEntity(entity.id);
+                onClose();
+            } catch (err: any) {
+                console.error("Failed to delete entity", err);
+                alert(`Error: ${err.message}`);
+            }
+        }
+    };
+
     // Lightbox state
     let showLightbox = $state(false);
     let isDraggingOver = $state(false);
@@ -467,6 +480,12 @@
                 </div>
                 <div class="flex gap-2">
                     {#if !vault.isGuest}
+                        <button
+                            onclick={handleDelete}
+                            class="border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-[10px] font-bold px-3 py-2 rounded tracking-widest transition"
+                        >
+                            DELETE
+                        </button>
                         <button
                             onclick={startEditing}
                             class="border border-green-900 text-green-600 hover:text-green-400 hover:border-green-700 text-xs font-bold px-4 py-2 rounded tracking-widest transition"

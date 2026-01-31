@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "name": "discord-notification",
+            "type": "command",
+            "command": "/bin/bash -c \"./scripts/discord-notify.sh\"",
+            "description": "Send Discord notification on CLI exit"
+          }
+        ]
+      }
+    ]
+  }
+}

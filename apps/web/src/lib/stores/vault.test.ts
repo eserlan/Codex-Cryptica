@@ -248,10 +248,11 @@ describe("VaultStore", () => {
     });
   });
 
-  it("should delete entity", async () => {
+  it("should delete entity and clear selection", async () => {
     const mockFileHandle = { kind: "file" };
     const mockRootHandle = { removeEntry: vi.fn() };
     vault.rootHandle = mockRootHandle as any;
+    vault.selectedEntityId = "test";
 
     vault.entities["test"] = {
       id: "test",
@@ -264,6 +265,66 @@ describe("VaultStore", () => {
 
     expect(mockRootHandle.removeEntry).toHaveBeenCalledWith("test.md");
     expect(vault.entities["test"]).toBeUndefined();
+    expect(vault.selectedEntityId).toBeNull();
+  });
+
+  it("should delete entity and associated media files", async () => {
+    const mockFileHandle = { kind: "file" };
+    const mockImagesDir = { removeEntry: vi.fn().mockResolvedValue(undefined) };
+    const mockRootHandle = { 
+      removeEntry: vi.fn().mockResolvedValue(undefined),
+      getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir)
+    };
+    vault.rootHandle = mockRootHandle as any;
+
+    vault.entities["media-node"] = {
+      id: "media-node",
+      connections: [],
+      image: "./images/photo.png",
+      thumbnail: "./images/thumb.webp",
+      _fsHandle: mockFileHandle,
+      _path: ["media-node.md"],
+    } as any;
+
+    await vault.deleteEntity("media-node");
+
+    expect(mockRootHandle.removeEntry).toHaveBeenCalledWith("media-node.md");
+    expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("photo.png");
+    expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("thumb.webp");
+    expect(vault.entities["media-node"]).toBeUndefined();
+  });
+
+  it("should cleanup relational references when an entity is deleted", async () => {
+    const mockFileHandle = { kind: "file" };
+    const mockRootHandle = { removeEntry: vi.fn().mockResolvedValue(undefined) };
+    vault.rootHandle = mockRootHandle as any;
+
+    // Entity A points to B
+    vault.entities["a"] = {
+      id: "a",
+      title: "Node A",
+      connections: [{ target: "b", type: "related_to", strength: 1 }],
+      _fsHandle: mockFileHandle,
+    } as any;
+
+    vault.entities["b"] = {
+      id: "b",
+      title: "Node B",
+      connections: [],
+      _fsHandle: mockFileHandle,
+      _path: ["b.md"],
+    } as any;
+
+    // Rebuild map so system knows about the connection
+    (vault as any).rebuildInboundMap();
+
+    await vault.deleteEntity("b");
+
+    expect(vault.entities["b"]).toBeUndefined();
+    // A's connection to B should be gone
+    expect(vault.entities["a"]?.connections).toHaveLength(0);
+    // Should have scheduled a save for A
+    expect(fsUtils.writeFile).toHaveBeenCalled();
   });
 
   it("should parse wiki-links with labels correctly", async () => {
