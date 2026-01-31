@@ -44,12 +44,16 @@
         if (!entity) return;
 
         try {
+            // Pre-process WikiLinks: convert [[Link]] to <strong>Link</strong> for rich text
+            const processedContent = (entity.content || "").replace(/\[\[(.*?)\]\]/g, "<strong>$1</strong>");
+            const processedLore = (entity.lore || "").replace(/\[\[(.*?)\]\]/g, "<strong>$1</strong>");
+
             // Render Markdown
             const chronicleHtml = DOMPurify.sanitize(
-                await marked.parse(entity.content || ""),
+                await marked.parse(processedContent),
             );
-            const loreHtml = entity.lore
-                ? DOMPurify.sanitize(await marked.parse(entity.lore))
+            const loreHtml = processedLore
+                ? DOMPurify.sanitize(await marked.parse(processedLore))
                 : "";
 
             let imageHtml = "";
@@ -60,7 +64,6 @@
                     const response = await fetch(resolvedImageUrl);
                     const originalBlob = await response.blob();
 
-                    // Convert to PNG for maximum compatibility with Doc editors
                     const img = new Image();
                     img.src = URL.createObjectURL(originalBlob);
                     await new Promise((resolve, reject) => {
@@ -74,14 +77,14 @@
                     const ctx = canvas.getContext("2d");
                     ctx?.drawImage(img, 0, 0);
 
-                    // Get PNG Data URI for HTML inlining
-                    const pngDataUri = canvas.toDataURL("image/png");
-                    imageHtml = `<img src="${pngDataUri}" alt="${entity.title}" style="max-width: 100%;" /><br/>`;
-
-                    // Also get as Blob for potential direct clipboard inclusion
+                    // Get PNG as Blob for direct clipboard inclusion
                     imageBlob = await new Promise<Blob | null>((resolve) =>
                         canvas.toBlob(resolve, "image/png"),
                     );
+
+                    // Use a placeholder src in HTML; browsers/Doc editors will resolve it 
+                    // from the image/png blob in the same ClipboardItem
+                    imageHtml = `<img src="entity-image.png" alt="${entity.title}" style="max-width: 100%;" /><br/>`;
 
                     URL.revokeObjectURL(img.src);
                 } catch (e) {
@@ -107,11 +110,11 @@
                 </html>
             `;
 
-            // Construct Plain Text
+            // Construct Plain Text (convert WikiLinks to simple text)
             let text = `${entity.title}\n\n`;
-            text += `CHRONICLE:\n${entity.content || ""}\n\n`;
+            text += `CHRONICLE:\n${(entity.content || "").replace(/\[\[(.*?)\]\]/g, "$1")}\n\n`;
             if (entity.lore) {
-                text += `DEEP LORE:\n${entity.lore}\n`;
+                text += `DEEP LORE:\n${entity.lore.replace(/\[\[(.*?)\]\]/g, "$1")}\n`;
             }
 
             const clipboardData: Record<string, Blob> = {
@@ -119,9 +122,6 @@
                 "text/plain": new Blob([text], { type: "text/plain" }),
             };
 
-            // Note: Most browsers only support one 'image/png' in ClipboardItem 
-            // and it might conflict with text/html in some implementations, 
-            // but including it is standard for rich copy.
             if (imageBlob) {
                 clipboardData["image/png"] = imageBlob;
             }
@@ -133,10 +133,10 @@
             setTimeout(() => (isCopied = false), 2000);
         } catch (err) {
             console.error("Failed to copy", err);
-            // Fallback to plain text if rich copy fails
+            // Fallback to plain text
             try {
                 await navigator.clipboard.writeText(
-                    `${entity.title}\n\n${entity.content || ""}`,
+                    `${entity.title}\n\n${(entity.content || "").replace(/\[\[(.*?)\]\]/g, "$1")}`,
                 );
                 isCopied = true;
                 setTimeout(() => (isCopied = false), 2000);
@@ -295,15 +295,23 @@
     onkeydown={(e) => {
         if (!uiStore.showZenMode || showLightbox) return;
 
+        // Don't intercept if focus is in an input, textarea, or other interactive elements
+        if (
+            document.activeElement?.tagName === "INPUT" ||
+            document.activeElement?.tagName === "TEXTAREA" ||
+            document.activeElement?.closest('[role="combobox"]')
+        )
+            return;
+
         if (e.key === "Escape") {
             handleClose();
         } else if (!isEditing && scrollContainer) {
             if (e.key === "ArrowDown") {
                 e.preventDefault();
-                scrollContainer.scrollBy({ top: 100, behavior: "smooth" });
+                scrollContainer.scrollBy({ top: 150, behavior: "auto" });
             } else if (e.key === "ArrowUp") {
                 e.preventDefault();
-                scrollContainer.scrollBy({ top: -100, behavior: "smooth" });
+                scrollContainer.scrollBy({ top: -150, behavior: "auto" });
             }
         }
     }}

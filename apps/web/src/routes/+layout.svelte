@@ -217,8 +217,8 @@
 		}
 
 		if (
-			(event.ctrlKey || event.metaKey) &&
-			event.key === "ArrowUp" &&
+			event.altKey &&
+			event.key.toLowerCase() === "z" &&
 			vault.selectedEntityId
 		) {
 			event.preventDefault();

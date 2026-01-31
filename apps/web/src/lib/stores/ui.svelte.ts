@@ -10,8 +10,10 @@ class UIStore {
     zenModeEntityId = $state<string | null>(null);
 
     // Compatibility aliases (can be deprecated later)
+    /** @deprecated Use zenModeEntityId */
     get readModeNodeId() { return this.zenModeEntityId; }
     set readModeNodeId(value: string | null) { this.zenModeEntityId = value; }
+    /** @deprecated Use showZenMode */
     get showReadModal() { return this.showZenMode; }
 
     setGlobalError(message: string, stack?: string) {
