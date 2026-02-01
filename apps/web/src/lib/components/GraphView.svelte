@@ -286,7 +286,7 @@
               el.group === "nodes" && !!(el.data.thumbnail || el.data.image),
           );
 
-          // Batch processing in chunks of 20 to avoid microtask flooding
+          // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
           for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
             const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
@@ -297,7 +297,45 @@
                   (data.thumbnail || data.image)!,
                 );
                 if (resolvedUrl) {
-                  cy?.$id(data.id).data("resolvedImage", resolvedUrl);
+                  // Detect image dimensions
+                  const img = new Image();
+                  img.src = resolvedUrl;
+                  await new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = resolve; // Continue even if image fails to load
+                  });
+
+                  // Calculate scaled dimensions (max aspect 2.0, max size 64)
+                  let w = img.naturalWidth || 100;
+                  let h = img.naturalHeight || 100;
+                  const maxDim = 64;
+                  const ratio = w / h;
+
+                  if (w > h) {
+                    w = maxDim;
+                    h = maxDim / ratio;
+                  } else {
+                    h = maxDim;
+                    w = maxDim * ratio;
+                  }
+
+                  // Hard constraints to prevent extreme boxes
+                  if (w / h > 2.5) {
+                    w = h * 2.5;
+                  }
+                  if (h / w > 2.5) {
+                    h = w * 2.5;
+                  }
+
+                  const currentCy = cy;
+                  if (currentCy) {
+                    currentCy.batch(() => {
+                      const node = currentCy.$id(data.id);
+                      node.data("resolvedImage", resolvedUrl);
+                      node.data("width", Math.round(w));
+                      node.data("height", Math.round(h));
+                    });
+                  }
                 }
               }),
             );
@@ -503,12 +541,12 @@
 </script>
 
 <div
-  class="absolute inset-0 w-full h-full bg-[var(--color-bg-primary)] overflow-hidden shadow-2xl border-y border-green-900/30"
+  class="absolute inset-0 w-full h-full bg-theme-bg overflow-hidden shadow-2xl border-y border-theme-border/30"
 >
   <!-- Decorative Grid Overlay -->
   <div
     class="absolute inset-0 pointer-events-none opacity-20"
-    style="background-image: radial-gradient(var(--color-accent-dark) 1px, transparent 1px); background-size: 30px 30px;"
+    style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
 
   <!-- Top Left Overlay (Breadcrumbs & Minimap) -->
@@ -516,30 +554,30 @@
     class="absolute top-6 left-6 z-20 flex flex-col items-start gap-3 pointer-events-none"
   >
     <div
-      class="bg-black/80 backdrop-blur border border-green-900/50 px-4 py-1.5 flex items-center gap-2 text-[10px] font-mono tracking-widest text-green-500 shadow-lg uppercase pointer-events-auto"
+      class="bg-theme-surface/80 backdrop-blur border border-theme-border px-4 py-1.5 flex items-center gap-2 text-[10px] font-mono tracking-widest text-theme-primary shadow-lg uppercase pointer-events-auto"
     >
       {#if selectedEntity}
         {#if parentEntity}
-          <span class="text-green-700"
+          <span class="text-theme-muted"
             >{parentEntity.title || parentEntity.id}</span
           >
-          <span class="text-green-700">/</span>
+          <span class="text-theme-muted">/</span>
         {/if}
-        <span class="font-bold text-green-400"
+        <span class="font-bold text-theme-primary"
           >{selectedEntity.title || selectedEntity.id}</span
         >
       {:else}
-        <span class="text-green-700">SYSTEM</span>
-        <span class="text-green-700">/</span>
-        <span class="font-bold text-green-400">OVERVIEW</span>
+        <span class="text-theme-muted">SYSTEM</span>
+        <span class="text-theme-muted">/</span>
+        <span class="font-bold text-theme-primary">OVERVIEW</span>
       {/if}
     </div>
 
     {#if selectedId}
       <div
-        class="flex items-center gap-2 text-[9px] font-bold text-green-500 animate-pulse bg-black/40 px-2 py-0.5 border border-green-500/20"
+        class="flex items-center gap-2 text-[9px] font-bold text-theme-primary animate-pulse bg-theme-surface/40 px-2 py-0.5 border border-theme-primary/20"
       >
-        <div class="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+        <div class="w-1.5 h-1.5 bg-theme-primary rounded-full"></div>
         ARCHIVE DETAIL MODE
       </div>
     {/if}
@@ -566,9 +604,9 @@
   <div class="absolute bottom-6 left-6 z-20 flex flex-col gap-2 items-start">
     <div class="flex gap-1 items-center">
       <TimelineControls onApply={applyCurrentLayout} />
-      <div class="h-6 w-px bg-green-900/30 mx-2"></div>
+      <div class="h-6 w-px bg-theme-border/30 mx-2"></div>
       <button
-        class="w-8 h-8 flex items-center justify-center border border-green-900/50 bg-black/80 text-green-500 hover:bg-green-900/20 hover:text-green-300 transition"
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => cy?.zoom(cy.zoom() * 1.2)}
         title="Zoom In"
         aria-label="Zoom In"
@@ -576,7 +614,7 @@
         <span class="icon-[lucide--zoom-in] w-4 h-4"></span>
       </button>
       <button
-        class="w-8 h-8 flex items-center justify-center border border-green-900/50 bg-black/80 text-green-500 hover:bg-green-900/20 hover:text-green-300 transition"
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => cy?.zoom(cy.zoom() / 1.2)}
         title="Zoom Out"
         aria-label="Zoom Out"
@@ -588,8 +626,8 @@
       {#if !vault.isGuest}
         <button
           class="w-8 h-8 flex items-center justify-center border transition {connectMode
-            ? 'border-yellow-500 bg-yellow-500/20 text-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]'
-            : 'border-green-900/50 bg-black/80 text-green-500 hover:bg-green-900/20 hover:text-green-300'}"
+            ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)] shadow-theme-accent/30'
+            : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition'}"
           onclick={toggleConnectMode}
           title="Connect Mode (C)"
         >
@@ -620,36 +658,34 @@
       transition:fade={{ duration: 150 }}
     >
       <div
-        class="bg-black/95 border border-green-500/50 shadow-[0_0_20px_rgba(21,128,61,0.6)] p-4 rounded-sm max-w-[400px] min-w-[200px]"
+        class="bg-theme-bg/95 border border-theme-primary/50 shadow-2xl p-4 rounded-sm max-w-[400px] min-w-[200px]"
         in:fly={{ y: 10, duration: 200 }}
       >
         <div
-          class="text-xs font-bold text-[var(--color-text-primary)] tracking-wider uppercase mb-2 border-b border-green-900/50 pb-1 flex justify-between"
+          class="text-xs font-bold text-theme-primary tracking-wider uppercase mb-2 border-b border-theme-border/50 pb-1 flex justify-between"
         >
           <span>{hoveredEntity.title}</span>
-          <span class="text-[10px] text-[var(--color-text-muted)]"
-            >{hoveredEntity.type}</span
-          >
+          <span class="text-[10px] text-theme-muted">{hoveredEntity.type}</span>
         </div>
         <div
-          class="text-sm text-green-100/90 font-mono leading-relaxed prose prose-invert prose-p:my-1 prose-headings:text-green-400 prose-headings:text-xs prose-strong:text-green-300 prose-em:text-green-200"
+          class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
         >
           {@html hoveredEntity.content
             ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
-            : '<span class="italic text-green-900">No data available</span>'}
+            : '<span class="italic text-theme-muted">No data available</span>'}
         </div>
 
         <!-- Decorative corner bits -->
         <div
-          class="absolute -top-px -left-px w-2 h-2 border-t border-l border-green-400"
+          class="absolute -top-px -left-px w-2 h-2 border-t border-l border-theme-primary"
         ></div>
         <div
-          class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-green-400"
+          class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-theme-primary"
         ></div>
       </div>
       <!-- Arrow/Stem -->
       <div
-        class="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-green-500/50"
+        class="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-theme-primary/50"
       ></div>
     </div>
   {/if}
@@ -683,10 +719,10 @@
       class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
     >
       <div
-        class="bg-black/95 border border-green-900/50 shadow-2xl p-4 min-w-[280px]"
+        class="bg-theme-surface border border-theme-border shadow-2xl p-4 min-w-[280px]"
       >
         <div
-          class="text-[10px] font-mono text-green-600 uppercase tracking-widest mb-3"
+          class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-3"
         >
           Edit Connection
         </div>
@@ -694,7 +730,7 @@
           type="text"
           bind:value={edgeEditInput}
           placeholder="Enter description..."
-          class="w-full bg-black/50 border border-green-900/50 text-green-300 px-3 py-2 text-sm font-mono focus:outline-none focus:border-green-500"
+          class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-sm font-mono focus:outline-none focus:border-theme-primary rounded"
           onkeydown={(e) => {
             if (e.key === "Enter") saveEdgeLabel();
             if (e.key === "Escape") editingEdge = null;
@@ -702,13 +738,13 @@
         />
         <div class="flex gap-2 mt-3">
           <button
-            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-green-900/20 border border-green-900/50 text-green-500 hover:bg-green-900/40 transition"
+            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-theme-bg transition rounded"
             onclick={saveEdgeLabel}
           >
             Save
           </button>
           <button
-            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-black/50 border border-green-900/50 text-green-700 hover:text-green-500 transition"
+            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary transition rounded"
             onclick={() => (editingEdge = null)}
           >
             Cancel

@@ -43,7 +43,7 @@
             ],
             editorProps: {
                 attributes: {
-                    class: "prose prose-invert max-w-none focus:outline-none min-h-[100px] font-sans text-lg leading-relaxed text-gray-200",
+                    class: "prose max-w-none focus:outline-none min-h-[100px] font-sans text-lg leading-relaxed text-theme-text",
                 },
             },
             content: content,
@@ -97,9 +97,9 @@
 <style>
     .tiptap-editor-wrapper {
         min-height: 200px;
-        background: #0a0a0a;
-        color: #d1d5db;
-        border: 1px solid rgba(34, 197, 94, 0.2);
+        background: var(--color-theme-bg);
+        color: var(--color-theme-text);
+        border: 1px solid var(--color-theme-border);
         border-radius: 4px;
         padding: 1rem;
         overflow-y: auto;
@@ -125,7 +125,7 @@
     :global(.ProseMirror td),
     :global(.ProseMirror th) {
         min-width: 1em;
-        border: 1px solid #374151; /* gray-700 */
+        border: 1px solid var(--color-theme-border);
         padding: 8px 12px;
         vertical-align: top;
         box-sizing: border-box;
@@ -135,15 +135,19 @@
     :global(.ProseMirror th) {
         font-weight: 700;
         text-align: left;
-        background-color: rgba(21, 128, 61, 0.2); /* green-700/20 */
-        color: #4ade80; /* green-400 */
-        border-color: #166534; /* green-800 */
+        background-color: color-mix(
+            in srgb,
+            var(--color-theme-primary),
+            transparent 80%
+        );
+        color: var(--color-theme-primary);
+        border-color: var(--color-theme-border);
     }
 
     :global(.ProseMirror h1),
     :global(.ProseMirror h2),
     :global(.ProseMirror h3) {
-        color: #4ade80; /* green-400 */
+        color: var(--color-theme-primary);
         font-weight: 700;
         margin-top: 1.5em;
         margin-bottom: 0.5em;
@@ -167,12 +171,16 @@
         right: 0;
         top: 0;
         bottom: 0;
-        background: rgba(74, 222, 128, 0.1); /* green-400/10 */
+        background: color-mix(
+            in srgb,
+            var(--color-theme-primary),
+            transparent 90%
+        );
         pointer-events: none;
     }
 
     :global(.ProseMirror p.is-editor-empty:first-child::before) {
-        color: #6b7280;
+        color: var(--color-theme-muted);
         content: attr(data-placeholder);
         float: left;
         height: 0;

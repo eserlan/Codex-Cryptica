@@ -6,6 +6,7 @@
   --breakpoint-xs: 475px;
 
   --color-theme-bg: var(--color-bg-primary);
+  --color-theme-surface: var(--color-bg-surface);
   --color-theme-primary: var(--color-accent-primary);
   --color-theme-secondary: var(--color-accent-dim);
   --color-theme-border: var(--color-border-primary);
@@ -22,7 +23,7 @@
   --color-green-600: var(--color-accent-dim);
   --color-green-700: var(--color-accent-dark);
   --color-green-800: var(--color-accent-dark);
-  --color-green-900: var(--color-accent-deep);
+  --color-green-900: var(--color-accent-dim);
   --color-green-950: var(--color-bg-primary);
 
   /* Override Gray scales to ensure readability across light/dark themes */
@@ -37,13 +38,17 @@
   --color-gray-900: var(--color-bg-primary);
 
   --color-zinc-100: var(--color-text-primary);
+  --color-zinc-200: var(--color-text-primary);
   --color-zinc-300: var(--color-text-muted);
+  --color-zinc-400: var(--color-text-muted);
   --color-zinc-500: var(--color-text-dim);
   --color-zinc-800: var(--color-bg-primary);
   --color-zinc-900: var(--color-bg-primary);
 
   --color-slate-100: var(--color-text-primary);
+  --color-slate-200: var(--color-text-primary);
   --color-slate-300: var(--color-text-muted);
+  --color-slate-400: var(--color-text-muted);
   --color-slate-500: var(--color-text-dim);
   --color-slate-800: var(--color-bg-primary);
   --color-slate-900: var(--color-bg-primary);
@@ -83,16 +88,18 @@
     --color-accent-dark: #15803d;
     --color-accent-deep: #14532d;
     --color-border-primary: rgba(22, 163, 74, 0.5);
-    
+
     --color-text-primary: #4ade80;
-    --color-text-muted: #15803d;
-    --color-text-dim: #166534;
+    --color-text-muted: #4ade80;
+    /* Match primary for better visibility when muted */
+    --color-text-dim: #16a34a;
+    /* Slightly darker than muted but still readable */
 
     --color-theme-accent: #facc15;
-    
+
     --font-header: 'Inter', sans-serif;
     --font-body: 'Inter', sans-serif;
-    
+
     --bg-texture: none;
 
     --color-warning: #eab308;
@@ -114,12 +121,49 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-header);
   }
 
   /* Ensure icons inherit color and are transitionable */
-  [class^="icon-"], [class*=" icon-"] {
+  [class^="icon-"],
+  [class*=" icon-"] {
     transition: color 0.3s ease;
+  }
+
+  /* Global prose and code styling */
+  .prose {
+    --tw-prose-body: var(--color-text-primary);
+    --tw-prose-headings: var(--color-text-primary);
+    --tw-prose-lead: var(--color-text-muted);
+    --tw-prose-links: var(--color-accent-primary);
+    --tw-prose-bold: var(--color-text-primary);
+    --tw-prose-counters: var(--color-text-muted);
+    --tw-prose-bullets: var(--color-accent-dim);
+    --tw-prose-hr: var(--color-border-primary);
+    --tw-prose-quotes: var(--color-text-muted);
+    --tw-prose-quote-borders: var(--color-accent-dim);
+    --tw-prose-captions: var(--color-text-dim);
+    --tw-prose-code: var(--color-text-primary);
+    --tw-prose-pre-code: var(--color-text-primary);
+    --tw-prose-pre-bg: var(--color-bg-surface);
+    --tw-prose-th-borders: var(--color-border-primary);
+    --tw-prose-td-borders: var(--color-border-primary);
+  }
+
+  code {
+    background-color: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+    color: var(--color-accent-primary);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    border: 1px solid color-mix(in srgb, var(--color-accent-primary), transparent 80%);
+    font-size: 0.85em;
+    font-family: var(--font-body);
+    font-weight: bold;
   }
 }

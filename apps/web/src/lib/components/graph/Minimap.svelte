@@ -315,7 +315,7 @@
     style:top="{viewportY}px"
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
-    style:background-color="color-mix(in srgb, var(--color-accent-primary) 10%, transparent)"
+    style:background-color="color-mix(in srgb, var(--color-theme-primary) 10%, transparent)"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
@@ -359,7 +359,7 @@
 
 <style>
   .minimap-container {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: var(--color-theme-surface);
     border: 1px solid var(--color-border-primary);
     border-radius: 0.5rem;
     overflow: hidden;
@@ -405,7 +405,7 @@
     justify-content: center;
     color: var(--color-accent-primary);
     opacity: 0.7;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--color-theme-bg);
     border-radius: 0.25rem;
     cursor: pointer;
     z-index: 60;
@@ -435,9 +435,14 @@
 
   .viewport-rect {
     position: absolute;
-    border: 2px solid var(--color-accent-primary);
-    background-color: rgba(74, 222, 128, 0.1);
-    box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+    border: 2px solid var(--color-theme-primary);
+    background-color: color-mix(
+      in srgb,
+      var(--color-theme-primary) 10%,
+      transparent
+    );
+    box-shadow: 0 0 10px
+      color-mix(in srgb, var(--color-theme-primary) 20%, transparent);
     cursor: grab;
     z-index: 50;
   }

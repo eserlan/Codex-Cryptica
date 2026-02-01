@@ -1,4 +1,4 @@
-import type { Entity, TemporalMetadata } from "schema";
+import type { Entity, TemporalMetadata, Category, StylingTemplate } from "schema";
 
 export interface GraphNode {
   group: "nodes";
@@ -103,7 +103,7 @@ export class GraphTransformer {
   }
 }
 
-export const getGraphStyle = (template: StylingTemplate, categories: Category[]) => {
+export const getGraphStyle = (template: StylingTemplate, categories: Category[]): any[] => {
   const { tokens, graph } = template;
 
   const baseStyle = [
@@ -134,8 +134,8 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
         "background-fit": "cover",
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
-        width: 48,
-        height: 48,
+        width: "data(width)",
+        height: "data(height)",
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
       },

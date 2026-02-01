@@ -104,7 +104,7 @@
     <div class="space-y-1">
         {#each categories.list as cat (cat.id)}
             <div
-                class="flex items-center gap-3 p-1.5 rounded-md hover:bg-white/5 transition-colors group"
+                class="flex items-center gap-3 p-1.5 rounded-md hover:bg-theme-primary/5 transition-colors group"
                 data-testid="category-row-{cat.id}"
             >
                 <!-- Color -->
@@ -124,13 +124,13 @@
                     value={cat.label}
                     onchange={(e) =>
                         handleLabelUpdate(cat.id, e.currentTarget.value)}
-                    class="flex-1 bg-transparent border-0 text-sm font-medium text-gray-200 focus:text-purple-400 focus:outline-none transition-colors py-0.5 px-0"
+                    class="flex-1 bg-transparent border-0 text-sm font-medium text-theme-text focus:text-theme-primary focus:outline-none transition-colors py-0.5 px-0"
                 />
 
                 <!-- Icon Trigger -->
                 <button
                     onclick={() => openPicker(cat.id)}
-                    class="w-8 h-8 flex items-center justify-center bg-black/40 border border-purple-900/20 rounded hover:border-purple-500/50 transition-all text-purple-400"
+                    class="w-8 h-8 flex items-center justify-center bg-theme-bg/30 border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary"
                     title="Change Icon"
                 >
                     <span class="{getIconClass(cat.icon)} w-4 h-4"></span>
@@ -139,7 +139,11 @@
                 <!-- Delete -->
                 <button
                     onclick={() => {
-                        if (confirm(`Delete category "${cat.label}"? Entities using this category will fallback to default style.`)) {
+                        if (
+                            confirm(
+                                `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
+                            )
+                        ) {
                             categories.removeCategory(cat.id);
                         }
                     }}
@@ -154,24 +158,26 @@
     </div>
 
     <!-- Create Section -->
-    <div class="bg-purple-900/10 p-4 rounded-lg border border-purple-500/20">
+    <div
+        class="bg-theme-primary/5 p-4 rounded-lg border border-theme-primary/20"
+    >
         <div class="flex items-center gap-3">
             <input
                 type="color"
                 bind:value={newColor}
-                class="w-6 h-6 bg-transparent border border-purple-500/30 p-0.5 cursor-pointer rounded-full shrink-0"
+                class="w-6 h-6 bg-transparent border border-theme-primary/30 p-0.5 cursor-pointer rounded-full shrink-0"
             />
             <input
                 type="text"
                 bind:value={newLabel}
                 placeholder="New category..."
-                class="flex-1 bg-black/50 border border-purple-900/30 rounded px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-purple-500 placeholder-purple-900/40"
+                class="flex-1 bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-sm text-theme-text focus:outline-none focus:border-theme-primary placeholder-theme-muted"
                 onkeydown={(e) => e.key === "Enter" && handleAdd()}
                 onfocus={() => (errorMessage = "")}
             />
             <button
                 onclick={() => openPicker("new")}
-                class="w-9 h-9 flex items-center justify-center bg-black/50 border border-purple-900/30 rounded hover:border-purple-500/50 transition-all text-purple-400 shrink-0"
+                class="w-9 h-9 flex items-center justify-center bg-theme-surface border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary shrink-0"
                 title="Select Icon"
             >
                 <span class="{getIconClass(newIcon)} w-5 h-5"></span>
@@ -179,7 +185,7 @@
             <button
                 onclick={handleAdd}
                 disabled={!newLabel.trim()}
-                class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded text-[10px] tracking-widest disabled:opacity-30 transition-all shrink-0"
+                class="px-3 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded text-xs tracking-widest disabled:opacity-30 transition-all shrink-0"
             >
                 ADD
             </button>
@@ -193,10 +199,10 @@
     </div>
 
     <!-- Reset Section -->
-    <div class="pt-4 border-t border-purple-900/20">
+    <div class="pt-4 border-t border-theme-border">
         <button
             onclick={() => categories.resetToDefaults()}
-            class="w-full py-2 bg-purple-900/10 border border-purple-900/30 text-purple-400 hover:bg-purple-900/20 hover:text-purple-300 rounded text-[10px] font-bold tracking-widest transition-all flex items-center justify-center gap-2"
+            class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-theme-bg rounded text-xs font-bold tracking-widest transition-all flex items-center justify-center gap-2"
         >
             <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>
             RESET TO DEFAULTS
@@ -209,18 +215,18 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-        class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]"
+        class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]"
         onclick={() => (isPickerOpen = false)}
         transition:fade={{ duration: 150 }}
     >
         <div
-            class="bg-[#0c0c0c] border border-purple-500/30 rounded-xl shadow-2xl w-full max-w-sm p-6"
+            class="bg-theme-surface border border-theme-border rounded-xl shadow-2xl w-full max-w-sm p-6"
             onclick={(e) => e.stopPropagation()}
             transition:scale={{ start: 0.95, duration: 200 }}
         >
             <div class="flex justify-between items-center mb-4">
                 <h5
-                    class="text-[10px] font-bold text-purple-400 uppercase tracking-widest"
+                    class="text-[10px] font-bold text-theme-primary uppercase tracking-widest"
                 >
                     Glyph Library
                 </h5>
@@ -236,7 +242,7 @@
                 {#each selectableIcons as icon}
                     <button
                         onclick={() => selectIcon(icon)}
-                        class="aspect-square flex items-center justify-center rounded border border-white/5 hover:border-purple-500/50 hover:bg-purple-500/10 text-gray-400 hover:text-purple-300 transition-all"
+                        class="aspect-square flex items-center justify-center rounded border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 text-theme-muted hover:text-theme-primary transition-all"
                         title={icon}
                     >
                         <span class="{getIconClass(icon)} w-5 h-5"></span>
@@ -255,7 +261,7 @@
         background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #7e22ce;
+        background: var(--color-accent-primary);
         border-radius: 2px;
     }
 </style>

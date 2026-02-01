@@ -1,35 +1,14 @@
 <script lang="ts">
-  import { cloudConfig } from "$stores/cloud-config";
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service";
-  import { get } from "svelte/store";
 
   let { close }: { close: () => void } = $props();
 
   let error = $state<string | null>(null);
-  let shareLink = $state<string | null>(null);
 
   // P2P State
   let p2pLoading = $state(false);
   let p2pLink = $state<string | null>(null);
   let p2pCopied = $state(false);
-
-  // Initialize state from cloudConfig
-  const config = get(cloudConfig);
-  if (config.shareLink) {
-    try {
-      const url = new URL(config.shareLink);
-      if (url.searchParams.has("file")) {
-        url.searchParams.delete("file");
-        shareLink = url.toString();
-        // Update the stored config as well to make it permanent
-        cloudConfig.setShareLink(shareLink);
-      } else {
-        shareLink = config.shareLink;
-      }
-    } catch {
-      shareLink = config.shareLink;
-    }
-  }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -89,12 +68,6 @@
       </div>
     {/if}
 
-    <!-- GDrive Section (Temporarily Disabled)
-    {#if shareLink}
-       ...
-    {/if}
-    -->
-
     <!-- P2P Section -->
     <div class="mt-2">
       <!-- Changed h4 to simpler label or removed entirely since it's the only option now -->
@@ -104,10 +77,11 @@
           <div class="space-y-2">
             <label
               class="text-[10px] uppercase text-cyan-600 font-bold tracking-widest"
-              >Active Live Session</label
+              for="p2p-link-input">Active Live Session</label
             >
             <div class="flex gap-2">
               <input
+                id="p2p-link-input"
                 readonly
                 value={p2pLink}
                 class="bg-black border border-cyan-900 text-cyan-400 text-xs p-2 rounded flex-1 focus:outline-none shadow-[0_0_10px_rgba(6,182,212,0.1)]"

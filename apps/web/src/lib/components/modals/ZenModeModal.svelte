@@ -45,8 +45,14 @@
 
         try {
             // Pre-process WikiLinks: convert [[Link]] to <strong>Link</strong> for rich text
-            const processedContent = (entity.content || "").replace(/\[\[(.*?)\]\]/g, "<strong>$1</strong>");
-            const processedLore = (entity.lore || "").replace(/\[\[(.*?)\]\]/g, "<strong>$1</strong>");
+            const processedContent = (entity.content || "").replace(
+                /\[\[(.*?)\]\]/g,
+                "<strong>$1</strong>",
+            );
+            const processedLore = (entity.lore || "").replace(
+                /\[\[(.*?)\]\]/g,
+                "<strong>$1</strong>",
+            );
 
             // Render Markdown
             const chronicleHtml = DOMPurify.sanitize(
@@ -82,7 +88,7 @@
                         canvas.toBlob(resolve, "image/png"),
                     );
 
-                    // Use a placeholder src in HTML; browsers/Doc editors will resolve it 
+                    // Use a placeholder src in HTML; browsers/Doc editors will resolve it
                     // from the image/png blob in the same ClipboardItem
                     imageHtml = `<img src="entity-image.png" alt="${entity.title}" style="max-width: 100%;" /><br/>`;
 
@@ -329,6 +335,7 @@
             role="dialog"
             aria-modal="true"
             aria-labelledby="entity-modal-title"
+            tabindex="-1"
             class="w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
             style:border-radius="var(--theme-border-radius)"
             style:border-width="var(--theme-border-width)"
@@ -338,16 +345,16 @@
         >
             <!-- Decorative Corners -->
             <div
-                class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-green-500/30 rounded-tl-lg pointer-events-none"
+                class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-theme-primary/30 rounded-tl-lg pointer-events-none"
             ></div>
             <div
-                class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-green-500/30 rounded-tr-lg pointer-events-none"
+                class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-theme-primary/30 rounded-tr-lg pointer-events-none"
             ></div>
             <div
-                class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-green-500/30 rounded-bl-lg pointer-events-none"
+                class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-theme-primary/30 rounded-bl-lg pointer-events-none"
             ></div>
             <div
-                class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-green-500/30 rounded-br-lg pointer-events-none"
+                class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-theme-primary/30 rounded-br-lg pointer-events-none"
             ></div>
 
             <!-- Header -->
@@ -402,7 +409,7 @@
                         </button>
                     {/if}
 
-                    {#if !isEditing && !vault.isAuthorized}
+                    {#if !isEditing && !vault.isGuest}
                         <button
                             onclick={startEditing}
                             class="px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
@@ -475,9 +482,10 @@
                                 <div class="mb-4">
                                     <label
                                         class="block text-[10px] text-theme-secondary font-bold mb-1"
-                                        >IMAGE URL</label
+                                        for="zen-entity-image-url">IMAGE URL</label
                                     >
                                     <input
+                                        id="zen-entity-image-url"
                                         type="text"
                                         bind:value={editImage}
                                         class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full placeholder-theme-muted rounded"
@@ -487,12 +495,12 @@
                             {:else if entity.image}
                                 <button
                                     onclick={() => (showLightbox = true)}
-                                    class="w-full aspect-square rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg"
+                                    class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50"
                                 >
                                     <img
                                         src={resolvedImageUrl}
                                         alt={entity.title}
-                                        class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                                        class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                                     />
                                     <div
                                         class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
@@ -574,7 +582,7 @@
                     </div>
 
                     <!-- Right Content (Temporal & Chronicle & Lore) -->
-                    <div 
+                    <div
                         bind:this={scrollContainer}
                         class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
                     >
@@ -681,8 +689,7 @@
                                 <h2
                                     class="text-xl font-serif font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
                                 >
-                                    <span
-                                        class="icon-[lucide--scroll] w-5 h-5"
+                                    <span class="icon-[lucide--scroll] w-5 h-5"
                                     ></span>
                                     Deep Lore & Secrets
                                 </h2>

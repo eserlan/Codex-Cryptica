@@ -18,7 +18,7 @@
 {#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
   <div
-    class="fixed inset-0 bg-black/60 z-40 {oracle.isModal
+    class="fixed inset-0 bg-black/40 z-40 {oracle.isModal
       ? 'block'
       : 'md:hidden'}"
     onclick={() => oracle.toggle()}
@@ -27,7 +27,7 @@
   ></div>
 
   <div
-    class="fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-black/95 border border-purple-900/50 shadow-2xl
+    class="fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
       : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-full max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
@@ -35,23 +35,23 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-3 border-b border-purple-900/30 bg-purple-900/20 flex justify-between items-center shrink-0"
+      class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
     >
       <div class="flex items-center gap-2">
         <div
-          class="w-2 h-2 bg-purple-500 rounded-full {oracle.isLoading
+          class="w-2 h-2 bg-theme-primary rounded-full {oracle.isLoading
             ? 'animate-pulse'
             : ''}"
         ></div>
         <span
-          class="text-[10px] font-bold text-purple-300 tracking-[0.2em] uppercase"
+          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase"
           >Lore Oracle</span
         >
       </div>
       <div class="flex items-center gap-1">
         <!-- New Window Toggle -->
         <button
-          class="w-8 h-8 flex items-center justify-center text-purple-400 hover:text-purple-200 transition-colors hidden md:flex"
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={popOut}
           title="Pop out to new window"
         >
@@ -61,7 +61,7 @@
 
         <!-- Pop-out Toggle (Modal) -->
         <button
-          class="w-8 h-8 flex items-center justify-center text-purple-400 hover:text-purple-200 transition-colors hidden md:flex"
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={() => oracle.toggleModal()}
           title={oracle.isModal ? "Minimize to side" : "Pop out to center"}
         >
@@ -72,7 +72,7 @@
           ></span>
         </button>
         <button
-          class="w-8 h-8 flex items-center justify-center text-purple-400 hover:text-purple-200 transition-colors"
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors"
           onclick={() => oracle.toggle()}
           aria-label="Close oracle window"
         >
@@ -93,7 +93,7 @@
 <!-- Toggle Button -->
 {#if !oracle.isOpen}
   <button
-    class="fixed bottom-4 right-6 md:bottom-28 md:left-6 w-10 h-10 bg-purple-900/10 border border-purple-500/30 rounded-full flex items-center justify-center text-purple-400 hover:bg-purple-900/30 hover:text-purple-200 hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(168,85,247,0.2)] z-50 group overflow-hidden"
+    class="fixed bottom-4 right-6 md:bottom-28 md:left-6 w-10 h-10 bg-theme-bg/80 border border-theme-primary/30 rounded-full flex items-center justify-center text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_var(--color-accent-primary)] shadow-theme-primary/20 z-50 group overflow-hidden"
     onclick={() => oracle.toggle()}
     transition:fade
     title="Open Lore Oracle"
@@ -101,10 +101,10 @@
   >
     <!-- Internal Orb Content -->
     <div
-      class="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent"
+      class="absolute inset-0 bg-gradient-to-t from-theme-primary/10 to-transparent"
     ></div>
     <div
-      class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-from)_0%,_transparent_70%)] from-purple-500/20 transition-opacity duration-300"
+      class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,_var(--color-accent-primary)_0%,_transparent_70%)] transition-opacity duration-300"
     ></div>
 
     <svg
@@ -125,7 +125,7 @@
       class="absolute inset-0 pointer-events-none overflow-hidden opacity-30"
     >
       <div
-        class="w-full h-[1px] bg-purple-400/50 absolute top-0 animate-scan"
+        class="w-full h-[1px] bg-theme-primary absolute top-0 animate-scan"
       ></div>
     </div>
   </button>

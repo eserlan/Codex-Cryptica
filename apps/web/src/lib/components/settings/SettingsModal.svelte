@@ -20,7 +20,11 @@
             icon: "icon-[lucide--brain]",
         },
         { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },
-        { id: "aesthetics", label: "Aesthetics", icon: "icon-[lucide--palette]" },
+        {
+            id: "aesthetics",
+            label: "Aesthetics",
+            icon: "icon-[lucide--palette]",
+        },
         { id: "help", label: "Help", icon: "icon-[lucide--help-circle]" },
         { id: "about", label: "About", icon: "icon-[lucide--info]" },
     ];
@@ -80,7 +84,7 @@
 
     <div
         bind:this={modalElement}
-        class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[800px] h-[80vh] bg-[#050505] border border-green-900/40 shadow-2xl rounded-lg overflow-hidden flex z-[101]"
+        class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] md:w-[800px] h-[80vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-heading"
@@ -90,13 +94,13 @@
     >
         <!-- Sidebar Navigation -->
         <div
-            class="w-16 md:w-48 bg-[#0c0c0c] border-r border-green-900/20 flex flex-col pt-6"
+            class="w-16 md:w-48 bg-theme-surface border-r border-theme-border flex flex-col pt-6"
             role="tablist"
             aria-label="Settings Categories"
         >
             <div class="px-6 mb-8 hidden md:block">
                 <span
-                    class="text-[10px] font-mono text-green-900 uppercase tracking-[0.3em]"
+                    class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em]"
                     >Configuration</span
                 >
             </div>
@@ -111,8 +115,8 @@
                         id="settings-tab-{tab.id}"
                         class="px-4 md:px-6 py-3 flex items-center gap-3 transition-all relative {uiStore.activeSettingsTab ===
                         tab.id
-                            ? 'text-green-400 bg-green-900/10'
-                            : 'text-green-900 hover:text-green-600 hover:bg-green-900/5'}"
+                            ? 'text-theme-primary bg-theme-primary/10'
+                            : 'text-theme-secondary hover:text-theme-primary hover:bg-theme-secondary/5'}"
                     >
                         <span class="{tab.icon} w-5 h-5"></span>
                         <span
@@ -122,7 +126,7 @@
 
                         {#if uiStore.activeSettingsTab === tab.id}
                             <div
-                                class="absolute left-0 top-0 bottom-0 w-1 bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                                class="absolute left-0 top-0 bottom-0 w-1 bg-theme-primary shadow-[0_0_10px_var(--color-accent-primary)]"
                             ></div>
                         {/if}
                     </button>
@@ -130,33 +134,33 @@
             </div>
 
             <div
-                class="mt-auto p-4 md:p-6 text-[9px] font-mono text-green-900/40 uppercase hidden md:block"
+                class="mt-auto p-4 md:p-6 text-[9px] font-mono text-theme-muted/40 uppercase hidden md:block"
             >
                 Version {VERSION} // Build {CODENAME}
             </div>
         </div>
 
         <!-- Content Area -->
-        <div class="flex-1 flex flex-col min-w-0 bg-[#050505]">
+        <div class="flex-1 flex flex-col min-w-0 bg-theme-bg">
             <!-- Header -->
             <div
-                class="px-8 py-6 flex justify-between items-center border-b border-green-900/10"
+                class="px-8 py-6 flex justify-between items-center border-b border-theme-border"
             >
                 <h2
                     id="settings-heading"
-                    class="text-lg font-bold text-green-100 uppercase tracking-widest flex items-center gap-3"
+                    class="text-lg font-bold text-theme-text uppercase tracking-widest flex items-center gap-3"
                 >
                     <span
                         class="{tabs.find(
                             (t) => t.id === uiStore.activeSettingsTab,
-                        )?.icon} text-green-500 opacity-50"
+                        )?.icon} text-theme-primary opacity-50"
                     ></span>
                     {tabs.find((t) => t.id === uiStore.activeSettingsTab)
                         ?.label}
                 </h2>
                 <button
                     onclick={close}
-                    class="text-green-900 hover:text-green-500 transition-colors"
+                    class="text-theme-muted hover:text-theme-primary transition-colors"
                     aria-label="Close Settings"
                 >
                     <span class="icon-[lucide--x] w-6 h-6"></span>
@@ -174,30 +178,30 @@
                     >
                         <section>
                             <h3
-                                class="text-xs font-bold text-green-500 uppercase mb-3 tracking-widest"
+                                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
                             >
                                 Active Archive
                             </h3>
                             <div
-                                class="bg-green-900/5 border border-green-900/20 p-4 rounded font-mono"
+                                class="bg-theme-surface border border-theme-border p-4 rounded font-mono"
                             >
                                 <div
-                                    class="text-[10px] text-green-900 uppercase mb-1"
+                                    class="text-[10px] text-theme-muted uppercase mb-1"
                                 >
                                     Status
                                 </div>
-                                <div class="text-xs text-green-100 mb-4">
+                                <div class="text-xs text-theme-text mb-4">
                                     {vault.rootHandle
                                         ? "Connected to Local File System"
                                         : "No Vault Active"}
                                 </div>
 
                                 <div
-                                    class="text-[10px] text-green-900 uppercase mb-1"
+                                    class="text-[10px] text-theme-muted uppercase mb-1"
                                 >
                                     Entity Count
                                 </div>
-                                <div class="text-xs text-green-100">
+                                <div class="text-xs text-theme-text">
                                     {vault.allEntities.length} tracked entities
                                 </div>
                             </div>
@@ -205,12 +209,12 @@
 
                         <section>
                             <h3
-                                class="text-xs font-bold text-green-500 uppercase mb-3 tracking-widest"
+                                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
                             >
                                 Maintenance
                             </h3>
                             <p
-                                class="text-[11px] text-green-100/60 mb-4 leading-relaxed"
+                                class="text-[13px] text-theme-text/70 mb-4 leading-relaxed"
                             >
                                 If your search results or graph connections seem
                                 out of sync with your local files, you can force
@@ -218,7 +222,7 @@
                             </p>
                             <button
                                 onclick={() => vault.rebuildIndex()}
-                                class="px-6 py-2 bg-green-900/20 border border-green-500/30 text-green-400 hover:bg-green-500 hover:text-black transition-all text-[10px] font-bold tracking-widest uppercase"
+                                class="px-6 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-[10px] font-bold tracking-widest uppercase"
                             >
                                 Rebuild Search Index
                             </button>
@@ -232,7 +236,7 @@
                         class="space-y-6"
                     >
                         <p
-                            class="text-[11px] text-green-100/60 leading-relaxed"
+                            class="text-[13px] text-theme-text/70 leading-relaxed"
                         >
                             Configure synchronization with external cloud
                             storage. This allows you to mirror your local-first
@@ -240,7 +244,7 @@
                             backup.
                         </p>
                         <div
-                            class="bg-green-900/5 border border-green-900/20 p-6 rounded"
+                            class="bg-theme-surface border border-theme-border p-6 rounded"
                         >
                             <CloudStatus embedMode={true} />
                         </div>
@@ -254,23 +258,28 @@
                     >
                         <section>
                             <p
-                                class="text-[11px] text-green-100/60 leading-relaxed"
+                                class="text-[13px] text-theme-text/70 leading-relaxed"
                             >
-                                Manage AI integration settings. Codex Cryptica uses
-                                Google Gemini to provide context-aware reasoning,
-                                automated tagging, and image generation.
+                                Manage AI integration settings. Codex Cryptica
+                                uses Google Gemini to provide context-aware
+                                reasoning, automated tagging, and image
+                                generation.
                             </p>
                             <AISettings />
                         </section>
 
                         <section>
                             <h3
-                                class="text-xs font-bold text-purple-500 uppercase mb-3 tracking-widest"
+                                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
                             >
                                 World Eras
                             </h3>
-                            <p class="text-[11px] text-green-100/60 leading-relaxed mb-4">
-                                Define chronological boundaries for your world's history. These will be visualized on the timeline graph.
+                            <p
+                                class="text-[13px] text-theme-text/70 leading-relaxed mb-4"
+                            >
+                                Define chronological boundaries for your world's
+                                history. These will be visualized on the
+                                timeline graph.
                             </p>
                             <EraEditor />
                         </section>
@@ -283,14 +292,14 @@
                         class="space-y-6"
                     >
                         <p
-                            class="text-[11px] text-green-100/60 leading-relaxed"
+                            class="text-[13px] text-theme-text/70 leading-relaxed"
                         >
                             Define the ontology of your world. Custom categories
                             allow you to color-code nodes and group entities by
                             their role in your narrative.
                         </p>
                         <div
-                            class="bg-green-900/5 border border-green-900/20 p-6 rounded"
+                            class="bg-theme-surface border border-theme-border p-6 rounded"
                         >
                             <CategorySettings />
                         </div>
@@ -302,8 +311,12 @@
                         aria-labelledby="settings-tab-aesthetics"
                         class="space-y-6"
                     >
-                        <p class="text-[11px] text-green-100/60 leading-relaxed">
-                            Shift the visual dimension of your workspace. Zen Templates redefine the interface aesthetic to match your world's genre.
+                        <p
+                            class="text-[13px] text-theme-text/70 leading-relaxed"
+                        >
+                            Shift the visual dimension of your workspace. Zen
+                            Templates redefine the interface aesthetic to match
+                            your world's genre.
                         </p>
                         <ThemeSelector />
                     </div>
@@ -314,8 +327,11 @@
                         aria-labelledby="settings-tab-help"
                         class="space-y-6"
                     >
-                        <p class="text-[11px] text-green-100/60 leading-relaxed">
-                            Access system documentation and interactive guides to master the art of lore management.
+                        <p
+                            class="text-[13px] text-theme-text/70 leading-relaxed"
+                        >
+                            Access system documentation and interactive guides
+                            to master the art of lore management.
                         </p>
                         <HelpTab />
                     </div>
@@ -328,7 +344,7 @@
                     >
                         <section>
                             <h3
-                                class="text-xs font-bold text-green-500 uppercase mb-4 tracking-widest border-b border-green-900/10 pb-2"
+                                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2"
                             >
                                 Manifest
                             </h3>
@@ -336,41 +352,49 @@
                                 class="grid grid-cols-2 gap-4 font-mono text-[10px]"
                             >
                                 <div>
-                                    <div class="text-green-900 uppercase mb-1">
+                                    <div
+                                        class="text-theme-muted uppercase mb-1"
+                                    >
                                         Software
                                     </div>
-                                    <div class="text-green-100">
+                                    <div class="text-theme-text">
                                         Codex Cryptica
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="text-green-900 uppercase mb-1">
+                                    <div
+                                        class="text-theme-muted uppercase mb-1"
+                                    >
                                         Codename
                                     </div>
-                                    <div class="text-green-100">
+                                    <div class="text-theme-text">
                                         {CODENAME}
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="text-green-900 uppercase mb-1">
+                                    <div
+                                        class="text-theme-muted uppercase mb-1"
+                                    >
                                         Architecture
                                     </div>
-                                    <div class="text-green-100">
+                                    <div class="text-theme-text">
                                         Local-First / Svelte 5
                                     </div>
                                 </div>
                                 <div>
-                                    <div class="text-green-900 uppercase mb-1">
+                                    <div
+                                        class="text-theme-muted uppercase mb-1"
+                                    >
                                         License
                                     </div>
-                                    <div class="text-green-100">MIT</div>
+                                    <div class="text-theme-text">MIT</div>
                                 </div>
                             </div>
                         </section>
 
                         <section>
                             <h3
-                                class="text-xs font-bold text-green-500 uppercase mb-4 tracking-widest border-b border-green-900/10 pb-2"
+                                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2"
                             >
                                 Legal Compliance
                             </h3>
@@ -379,28 +403,28 @@
                                     href="{base}/privacy"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between p-3 bg-green-900/5 border border-green-900/20 hover:border-green-500/50 transition-all rounded group"
+                                    class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                                 >
                                     <span
-                                        class="text-xs text-green-100 uppercase tracking-widest font-bold"
+                                        class="text-xs text-theme-text uppercase tracking-widest font-bold"
                                         >Privacy Policy</span
                                     >
                                     <span
-                                        class="icon-[lucide--external-link] w-4 h-4 text-green-900 group-hover:text-green-400"
+                                        class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary"
                                     ></span>
                                 </a>
                                 <a
                                     href="{base}/terms"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between p-3 bg-green-900/5 border border-green-900/20 hover:border-green-500/50 transition-all rounded group"
+                                    class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                                 >
                                     <span
-                                        class="text-xs text-green-100 uppercase tracking-widest font-bold"
+                                        class="text-xs text-theme-text uppercase tracking-widest font-bold"
                                         >Terms of Service</span
                                     >
                                     <span
-                                        class="icon-[lucide--external-link] w-4 h-4 text-green-900 group-hover:text-green-400"
+                                        class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary"
                                     ></span>
                                 </a>
                             </div>
@@ -408,12 +432,12 @@
 
                         <section class="pt-4 text-center">
                             <div
-                                class="text-[10px] font-mono text-green-900/40 uppercase tracking-[0.5em] mb-2"
+                                class="text-[10px] font-mono text-theme-muted/40 uppercase tracking-[0.5em] mb-2"
                             >
                                 Secure Connection Protocol Active
                             </div>
                             <div
-                                class="text-[8px] font-mono text-green-900/20 uppercase"
+                                class="text-[8px] font-mono text-theme-muted/20 uppercase"
                             >
                                 No telemetry detected // User privacy
                                 prioritized
@@ -434,7 +458,7 @@
         background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #15803d;
+        background: var(--color-accent-primary);
         border-radius: 2px;
     }
 </style>

@@ -52,13 +52,15 @@
     if (!graph.timelineMode || !cy || _elements.length === 0) return [];
     try {
       // Use :visible to ensure we only render labels for nodes actually shown
-      return cy.nodes("[dateLabel][dateLabel != '']:visible").map((node: NodeSingular) => ({
-        id: node.id(),
-        pos: { ...node.position() }, // Clone to ensure we have a snapshot
-        label: node.data("label"),
-        dateLabel: node.data("dateLabel"),
-        hasImage: !!node.data("resolvedImage"),
-      }));
+      return cy
+        .nodes("[dateLabel][dateLabel != '']:visible")
+        .map((node: NodeSingular) => ({
+          id: node.id(),
+          pos: { ...node.position() }, // Clone to ensure we have a snapshot
+          label: node.data("label"),
+          dateLabel: node.data("dateLabel"),
+          hasImage: !!node.data("resolvedImage"),
+        }));
     } catch {
       return [];
     }
@@ -79,13 +81,13 @@
               y="-5000"
               width={era.endPos - era.startPos + 100}
               height="10000"
-              fill={era.color || "#a855f7"}
+              fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.05"
             />
             <text
               x={era.startPos}
               y="-200"
-              fill={era.color || "#a855f7"}
+              fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.3"
               class="text-[40px] font-bold uppercase tracking-[0.5em] font-mono"
             >
@@ -97,13 +99,13 @@
               y={era.startPos - 50}
               width="10000"
               height={era.endPos - era.startPos + 100}
-              fill={era.color || "#a855f7"}
+              fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.05"
             />
             <text
               x="-400"
               y={era.startPos}
-              fill={era.color || "#a855f7"}
+              fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.3"
               transform="rotate(-90, -400, {era.startPos})"
               class="text-[40px] font-bold uppercase tracking-[0.5em] font-mono"
@@ -121,14 +123,14 @@
               y1="-10000"
               x2={tick.pos}
               y2="10000"
-              stroke="#a855f7"
+              stroke="var(--color-theme-accent)"
               stroke-opacity={tick.isMajor ? 0.1 : 0.03}
               stroke-dasharray={tick.isMajor ? "" : "5,5"}
             />
             <text
               x={tick.pos + 5}
               y="20"
-              fill="#a855f7"
+              fill="var(--color-theme-accent)"
               fill-opacity="0.2"
               class="text-[12px] font-mono font-bold"
             >
@@ -140,14 +142,14 @@
               y1={tick.pos}
               x2="10000"
               y2={tick.pos}
-              stroke="#a855f7"
+              stroke="var(--color-theme-accent)"
               stroke-opacity={tick.isMajor ? 0.1 : 0.03}
               stroke-dasharray={tick.isMajor ? "" : "5,5"}
             />
             <text
               x="20"
               y={tick.pos - 5}
-              fill="#a855f7"
+              fill="var(--color-theme-accent)"
               fill-opacity="0.2"
               class="text-[12px] font-mono font-bold"
             >
@@ -167,7 +169,7 @@
               height="14"
             >
               <div
-                class="text-[10px] text-[#c084fc] text-center font-sans leading-none select-none"
+                class="text-[10px] text-theme-accent text-center font-sans leading-none select-none"
                 style="font-family: Inter, sans-serif;"
               >
                 {node.dateLabel}
@@ -182,7 +184,7 @@
               height="60"
             >
               <div
-                class="text-[10px] text-[#86efac] text-center font-sans leading-tight line-clamp-3 select-none"
+                class="text-[10px] text-theme-primary text-center font-sans leading-tight line-clamp-3 select-none"
                 style="font-family: Inter, sans-serif;"
               >
                 {node.label}

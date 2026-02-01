@@ -48,21 +48,21 @@
         class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4"
     >
         <div
-            class="w-16 h-16 bg-purple-900/20 rounded-full flex items-center justify-center text-purple-500 mb-2"
+            class="w-16 h-16 bg-theme-primary/10 rounded-full flex items-center justify-center text-theme-primary mb-2"
         >
             <span class="icon-[heroicons--sparkles] w-8 h-8"></span>
         </div>
-        <h3 class="text-purple-100 font-bold uppercase tracking-widest text-xs">
+        <h3 class="text-theme-text font-bold uppercase tracking-widest text-xs">
             Oracle Offline
         </h3>
-        <p class="text-xs text-purple-300/70 leading-relaxed max-w-[280px]">
+        <p class="text-xs text-theme-muted leading-relaxed max-w-[280px]">
             To consult the archives, please provide a <strong
-                class="text-purple-200">Google Gemini API Key</strong
+                class="text-theme-primary">Google Gemini API Key</strong
             > in the Settings panel.
         </p>
 
         <button
-            class="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-black font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-900/40"
+            class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded-full text-[10px] tracking-widest transition-all active:scale-95 shadow-lg shadow-theme-primary/20"
             onclick={() => {
                 if (onOpenSettings) onOpenSettings();
                 else uiStore.openSettings();
@@ -71,7 +71,7 @@
             OPEN SETTINGS
         </button>
         <div class="flex flex-col gap-2 w-full pt-4">
-            <p class="text-[10px] text-purple-500 font-mono">
+            <p class="text-[10px] text-theme-muted font-mono">
                 Vault contents never leave this device except for inference via
                 your own API key.
             </p>
@@ -89,21 +89,21 @@
             >
                 <div class="relative">
                     <div
-                        class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full animate-pulse"
+                        class="absolute inset-0 bg-theme-primary/10 blur-xl rounded-full animate-pulse"
                     ></div>
                     <span
-                        class="icon-[heroicons--sparkles] w-12 h-12 text-purple-500 relative z-10 opacity-50"
+                        class="icon-[heroicons--sparkles] w-12 h-12 text-theme-primary relative z-10 opacity-50"
                     ></span>
                 </div>
 
                 <div class="space-y-2">
                     <h4
-                        class="text-purple-100 font-bold uppercase tracking-[0.2em] text-[10px]"
+                        class="text-theme-text font-bold uppercase tracking-[0.2em] text-[10px]"
                     >
                         The Archives are Open
                     </h4>
                     <p
-                        class="text-xs text-purple-400/60 leading-relaxed font-mono"
+                        class="text-xs text-theme-muted leading-relaxed font-mono"
                     >
                         Greetings, Seeker. I am the Oracle, the keeper of your
                         recorded lore. Ask of the robber, the mayor, or the
@@ -114,7 +114,7 @@
 
                 <div class="pt-4 space-y-2">
                     <p
-                        class="text-[9px] text-purple-900/40 uppercase tracking-widest animate-bounce"
+                        class="text-[9px] text-theme-muted uppercase tracking-widest animate-bounce"
                     >
                         Awaiting your query...
                     </p>
@@ -122,29 +122,28 @@
                         <!-- Tier Badge -->
                         <div class="flex flex-col items-center gap-1">
                             <span
-                                class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
+                                class="text-[9px] text-theme-muted uppercase tracking-widest font-bold"
                                 >Current Tier</span
                             >
                             <span
                                 class="text-xs px-2 py-0.5 rounded border font-bold uppercase tracking-wider shadow-sm
                                 {oracle.tier === 'lite'
-                                    ? 'border-purple-500/30 bg-purple-500/10 text-purple-300'
-                                    : 'border-amber-500/50 bg-amber-500/10 text-amber-200 shadow-[0_0_10px_rgba(245,158,11,0.2)]'}"
+                                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
+                                    : 'border-theme-accent/50 bg-theme-accent/10 text-theme-accent shadow-theme-accent/20'}"
                             >
                                 {oracle.tier}
                             </span>
                         </div>
 
-                        <!-- Lite/Shared Indicator -->
                         {#if !oracle.apiKey}
-                            <div class="w-px h-6 bg-white/10 mx-1"></div>
+                            <div class="w-px h-6 bg-theme-border mx-1"></div>
                             <div class="flex flex-col items-center gap-1">
                                 <span
-                                    class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold"
+                                    class="text-[9px] text-theme-muted uppercase tracking-widest font-bold"
                                     >Access</span
                                 >
                                 <span
-                                    class="text-xs px-2 py-0.5 rounded border border-blue-400/30 bg-blue-500/10 text-blue-300 uppercase tracking-wider font-bold"
+                                    class="text-xs px-2 py-0.5 rounded border border-theme-primary/30 bg-theme-primary/10 text-theme-primary uppercase tracking-wider font-bold"
                                 >
                                     LITE
                                 </span>
@@ -162,7 +161,7 @@
         {#if oracle.isLoading}
             <div class="flex justify-start" transition:fade>
                 <div
-                    class="bg-purple-950/20 border border-purple-900/30 px-3 py-2 rounded text-xs text-purple-400 font-mono animate-pulse"
+                    class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-mono animate-pulse"
                 >
                     Consulting archives...
                 </div>
@@ -171,7 +170,7 @@
     </div>
 
     <!-- Input -->
-    <div class="p-4 border-t border-purple-900/30 bg-purple-900/5 shrink-0">
+    <div class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0">
         <form
             onsubmit={(e) => {
                 e.preventDefault();
@@ -190,13 +189,13 @@
                     }
                 }}
                 placeholder="Ask the archives..."
-                class="flex-1 bg-black/40 border border-purple-900/40 rounded px-4 py-2.5 text-sm text-purple-100 placeholder-purple-900/50 focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600/20 transition-all font-mono resize-none overflow-hidden no-scrollbar"
+                class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-mono resize-none overflow-hidden no-scrollbar shadow-inner"
                 disabled={oracle.isLoading}
                 rows="1"
             ></textarea>
             <button
                 type="submit"
-                class="w-10 h-10 flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-black rounded transition shadow-lg shadow-purple-900/20 disabled:opacity-30 disabled:grayscale transition-all active:scale-95 shrink-0 self-end"
+                class="w-10 h-10 flex items-center justify-center bg-theme-primary hover:bg-theme-secondary text-theme-bg rounded transition shadow-lg shadow-theme-primary/20 disabled:opacity-30 disabled:grayscale transition-all active:scale-95 shrink-0 self-end"
                 disabled={!input.trim() || oracle.isLoading}
             >
                 ➤

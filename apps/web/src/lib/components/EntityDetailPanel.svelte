@@ -74,22 +74,55 @@
         editLore = markdown;
     };
 
-    const getTemporalLabel = (type: string, field: "date" | "start" | "end") => {
+    const getTemporalLabel = (
+        type: string,
+        field: "date" | "start" | "end",
+    ) => {
         const t = type.toLowerCase();
 
         if (field === "date") return "Occurrence";
 
         if (field === "start") {
-            if (["npc", "creature", "character", "monster"].some(x => t.includes(x))) return "Born";
-            if (["faction", "location", "city", "organization", "guild"].some(x => t.includes(x))) return "Founded";
-            if (["item", "artifact", "object", "weapon"].some(x => t.includes(x))) return "Created";
+            if (
+                ["npc", "creature", "character", "monster"].some((x) =>
+                    t.includes(x),
+                )
+            )
+                return "Born";
+            if (
+                ["faction", "location", "city", "organization", "guild"].some(
+                    (x) => t.includes(x),
+                )
+            )
+                return "Founded";
+            if (
+                ["item", "artifact", "object", "weapon"].some((x) =>
+                    t.includes(x),
+                )
+            )
+                return "Created";
             return "Started";
         }
 
         if (field === "end") {
-            if (["npc", "creature", "character", "monster"].some(x => t.includes(x))) return "Died";
-            if (["faction", "location", "city", "organization", "guild"].some(x => t.includes(x))) return "Dissolved";
-            if (["item", "artifact", "object", "weapon"].some(x => t.includes(x))) return "Destroyed";
+            if (
+                ["npc", "creature", "character", "monster"].some((x) =>
+                    t.includes(x),
+                )
+            )
+                return "Died";
+            if (
+                ["faction", "location", "city", "organization", "guild"].some(
+                    (x) => t.includes(x),
+                )
+            )
+                return "Dissolved";
+            if (
+                ["item", "artifact", "object", "weapon"].some((x) =>
+                    t.includes(x),
+                )
+            )
+                return "Destroyed";
             return "Ended";
         }
 
@@ -107,7 +140,11 @@
 
     const handleDelete = async () => {
         if (!entity) return;
-        if (confirm(`Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`)) {
+        if (
+            confirm(
+                `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
+            )
+        ) {
             try {
                 await vault.deleteEntity(entity.id);
                 onClose();
@@ -255,7 +292,8 @@
                             aria-label="Enter Zen Mode"
                             title="Zen Mode (Full Screen)"
                         >
-                            <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
+                            <span class="icon-[lucide--maximize-2] w-5 h-5"
+                            ></span>
                         </button>
                     {/if}
                     <button
@@ -297,12 +335,12 @@
                 {:else if entity.image}
                     <button
                         onclick={() => (showLightbox = true)}
-                        class="mb-4 w-full aspect-square rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner"
+                        class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
                     >
                         <img
                             src={resolvedImageUrl}
                             alt={entity.title}
-                            class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition"
+                            class="w-full h-auto max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                         />
                         <div
                             class="absolute bottom-2 right-2 bg-theme-surface text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
@@ -312,7 +350,7 @@
                     </button>
                 {:else}
                     <div
-                        class="mb-4 w-full aspect-square rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted group-hover:border-theme-primary transition"
+                        class="mb-4 w-full h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted group-hover:border-theme-primary transition"
                     >
                         <span class="icon-[lucide--image] w-8 h-8 opacity-20"
                         ></span>
@@ -383,34 +421,63 @@
                     {#if isEditing}
                         <div class="space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <TemporalEditor 
-                                    bind:value={editStartDate} 
-                                    label={getTemporalLabel(entity.type, 'start')} 
+                                <TemporalEditor
+                                    bind:value={editStartDate}
+                                    label={getTemporalLabel(
+                                        entity.type,
+                                        "start",
+                                    )}
                                 />
-                                <TemporalEditor 
-                                    bind:value={editEndDate} 
-                                    label={getTemporalLabel(entity.type, 'end')} 
+                                <TemporalEditor
+                                    bind:value={editEndDate}
+                                    label={getTemporalLabel(entity.type, "end")}
                                 />
                             </div>
                         </div>
-                    {:else if (entity.date?.year !== undefined) || (entity.start_date?.year !== undefined) || (entity.end_date?.year !== undefined)}
-                        <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono border-b border-theme-border pb-4">
+                    {:else if entity.date?.year !== undefined || entity.start_date?.year !== undefined || entity.end_date?.year !== undefined}
+                        <div
+                            class="flex flex-wrap gap-x-6 gap-y-2 text-sm font-mono border-b border-theme-border pb-4"
+                        >
                             {#if entity.date?.year !== undefined}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-theme-primary font-bold uppercase">{getTemporalLabel(entity.type, 'date')}:</span>
-                                    <span class="text-theme-text">{formatDate(entity.date)}</span>
+                                    <span
+                                        class="text-theme-primary font-bold uppercase"
+                                        >{getTemporalLabel(
+                                            entity.type,
+                                            "date",
+                                        )}:</span
+                                    >
+                                    <span class="text-theme-text"
+                                        >{formatDate(entity.date)}</span
+                                    >
                                 </div>
                             {/if}
                             {#if entity.start_date?.year !== undefined}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-theme-primary font-bold uppercase">{getTemporalLabel(entity.type, 'start')}:</span>
-                                    <span class="text-theme-text">{formatDate(entity.start_date)}</span>
+                                    <span
+                                        class="text-theme-primary font-bold uppercase"
+                                        >{getTemporalLabel(
+                                            entity.type,
+                                            "start",
+                                        )}:</span
+                                    >
+                                    <span class="text-theme-text"
+                                        >{formatDate(entity.start_date)}</span
+                                    >
                                 </div>
                             {/if}
                             {#if entity.end_date?.year !== undefined}
                                 <div class="flex items-baseline gap-2">
-                                    <span class="text-theme-primary font-bold uppercase">{getTemporalLabel(entity.type, 'end')}:</span>
-                                    <span class="text-theme-text">{formatDate(entity.end_date)}</span>
+                                    <span
+                                        class="text-theme-primary font-bold uppercase"
+                                        >{getTemporalLabel(
+                                            entity.type,
+                                            "end",
+                                        )}:</span
+                                    >
+                                    <span class="text-theme-text"
+                                        >{formatDate(entity.end_date)}</span
+                                    >
                                 </div>
                             {/if}
                         </div>
@@ -467,7 +534,8 @@
                                             class="text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
                                         >
                                             {#if conn.isOutbound}
-                                                <span class="text-theme-secondary"
+                                                <span
+                                                    class="text-theme-secondary"
                                                     >{entity.title}</span
                                                 >
                                                 <span
@@ -499,7 +567,8 @@
                                                 <span
                                                     class="relation-arrow icon-[lucide--move-right]"
                                                 ></span>
-                                                <span class="text-theme-secondary"
+                                                <span
+                                                    class="text-theme-secondary"
                                                     >{entity.title}</span
                                                 >
                                             {/if}
@@ -575,8 +644,12 @@
             {:else}
                 <div class="flex gap-4 text-theme-muted">
                     <!-- Icons -->
-                    <div class="w-4 h-4 bg-theme-surface border border-theme-border rounded"></div>
-                    <div class="w-4 h-4 bg-theme-surface border border-theme-border rounded"></div>
+                    <div
+                        class="w-4 h-4 bg-theme-surface border border-theme-border rounded"
+                    ></div>
+                    <div
+                        class="w-4 h-4 bg-theme-surface border border-theme-border rounded"
+                    ></div>
                 </div>
                 <div class="flex gap-2">
                     {#if !vault.isGuest}

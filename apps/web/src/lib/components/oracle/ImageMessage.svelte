@@ -56,7 +56,7 @@
       <img
         src={message.imageUrl}
         alt={message.content}
-        class="w-full rounded-lg border border-purple-900/30 shadow-lg cursor-zoom-in group-hover:border-purple-500/50 transition-all"
+        class="w-full rounded-lg border border-theme-border shadow-lg cursor-zoom-in group-hover:border-theme-primary/50 transition-all"
         draggable="true"
         ondragstart={handleDragStart}
         onclick={() => (showLightbox = true)}
@@ -67,7 +67,7 @@
         class="absolute bottom-2 left-2 right-2 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         <span
-          class="text-[9px] bg-black/70 text-purple-300 px-1.5 py-0.5 rounded backdrop-blur-sm border border-purple-500/20"
+          class="text-[9px] bg-theme-surface/80 text-theme-muted px-1.5 py-0.5 rounded backdrop-blur-sm border border-theme-border shadow-sm"
         >
           DRAG TO ENTITY
         </span>
@@ -80,7 +80,7 @@
         <button
           onclick={handleSave}
           disabled={isArchiving}
-          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-purple-900/20 text-purple-400 border border-purple-800/30 hover:bg-purple-600 hover:text-black hover:border-purple-600 disabled:opacity-50"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-primary/10 text-theme-primary border border-theme-primary/30 hover:bg-theme-primary hover:text-black max-w-[250px] disabled:opacity-50"
         >
           {#if isArchiving}
             <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
@@ -100,15 +100,16 @@
   {:else}
     <!-- Loading State -->
     <div
-      class="w-full aspect-square bg-purple-900/10 border border-purple-900/20 rounded-lg flex flex-col items-center justify-center gap-3 animate-pulse"
+      class="w-full aspect-square bg-theme-surface/30 border border-theme-border rounded-lg flex flex-col items-center justify-center gap-3 animate-pulse"
     >
       <div class="relative">
-        <span class="icon-[lucide--sparkles] w-8 h-8 text-purple-500/50"></span>
+        <span class="icon-[lucide--sparkles] w-8 h-8 text-theme-primary/50"
+        ></span>
         <div
-          class="absolute inset-0 bg-purple-500/20 blur-xl rounded-full"
+          class="absolute inset-0 bg-theme-primary/20 blur-xl rounded-full"
         ></div>
       </div>
-      <span class="text-[10px] font-mono text-purple-400 tracking-widest"
+      <span class="text-[10px] font-mono text-theme-primary tracking-widest"
         >VISUALIZING...</span
       >
     </div>
