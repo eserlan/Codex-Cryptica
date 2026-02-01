@@ -71,7 +71,7 @@ Villain is bad.`;
         await page.context().grantPermissions(['clipboard-write']);
         await modal.getByTitle('Copy Content').click();
         // Verify visual feedback (icon change)
-        await expect(modal.locator('.icon-\[lucide--check\]')).toBeVisible();
+        await expect(modal.locator('.icon-[lucide--check]')).toBeVisible();
 
         // 5. Navigate
         // Hero has connection to Villain. Find the connection link.

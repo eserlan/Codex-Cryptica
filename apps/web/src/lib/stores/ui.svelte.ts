@@ -1,5 +1,3 @@
-import { browser } from "$app/environment";
-
 export type SettingsTab = "vault" | "sync" | "intelligence" | "schema" | "aesthetics" | "about" | "help";
 
 class UIStore {
