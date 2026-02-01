@@ -6,8 +6,17 @@ import { getDB } from "../utils/idb";
 
 class GraphStore {
   // Svelte 5 derived state
+  activeLabels = $state(new Set<string>());
+
   elements = $derived.by(() => {
     let entities = vault.allEntities;
+
+    // Apply Label Filtering (OR logic)
+    if (this.activeLabels.size > 0) {
+      entities = entities.filter((e) =>
+        (e.labels || []).some((l) => this.activeLabels.has(l)),
+      );
+    }
 
     // Apply temporal filtering if in timeline mode and range is set
     if (this.timelineMode) {
@@ -78,6 +87,20 @@ class GraphStore {
   async removeEra(id: string) {
     this.eras = this.eras.filter((e) => e.id !== id);
     await this.saveEras();
+  }
+
+  toggleLabelFilter(label: string) {
+    if (this.activeLabels.has(label)) {
+      this.activeLabels.delete(label);
+    } else {
+      this.activeLabels.add(label);
+    }
+    // Svelte Set reactivity trigger
+    this.activeLabels = new Set(this.activeLabels);
+  }
+
+  clearLabelFilters() {
+    this.activeLabels = new Set();
   }
 
   toggleTimeline() {

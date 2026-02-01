@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "cytoscape": "^3.28.0",
+    "cytoscape-fcose": "^2.2.0",
     "schema": "*"
   },
   "devDependencies": {

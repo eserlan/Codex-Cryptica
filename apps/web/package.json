@@ -36,6 +36,7 @@
     "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client.drive": "^3.0.15",
     "cytoscape": "^3.28.0",
+    "cytoscape-fcose": "^2.2.0",
     "editor-core": "*",
     "flexsearch": "^0.8.212",
     "graph-engine": "*",

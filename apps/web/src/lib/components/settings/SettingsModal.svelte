@@ -6,6 +6,7 @@
     import EraEditor from "../timeline/EraEditor.svelte";
     import ThemeSelector from "./ThemeSelector.svelte";
     import CategorySettings from "./CategorySettings.svelte";
+    import LabelSettings from "./LabelSettings.svelte";
     import HelpTab from "../help/HelpTab.svelte";
     import { vault } from "$lib/stores/vault.svelte";
     import { base } from "$app/paths";
@@ -303,6 +304,20 @@
                         >
                             <CategorySettings />
                         </div>
+
+                        <h3
+                            class="text-xs font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest"
+                        >
+                            Campaign Labels
+                        </h3>
+                        <p
+                            class="text-[13px] text-theme-text/70 mb-4 leading-relaxed"
+                        >
+                            Manage the custom tags used across your entities.
+                            Renaming a label here will update all tagged files
+                            project-wide.
+                        </p>
+                        <LabelSettings />
                     </div>
                 {:else if uiStore.activeSettingsTab === "aesthetics"}
                     <div

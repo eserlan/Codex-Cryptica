@@ -16,6 +16,7 @@ export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle; _path?: strin
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
   activeDetailTab = $state<"status" | "lore" | "inventory">("status");
@@ -28,6 +29,20 @@ class VaultStore {
    * Maps target entity IDs to an array of source entities that point to them.
    */
   inboundConnections = $state<Record<string, { sourceId: string; connection: Connection }[]>>({});
+
+  /**
+   * Project-wide index of all unique labels used across entities.
+   * Case-insensitive.
+   */
+  labelIndex = $derived.by(() => {
+    const labels = new Set<string>();
+    for (const entity of Object.values(this.entities)) {
+      for (const label of entity.labels || []) {
+        labels.add(label);
+      }
+    }
+    return Array.from(labels).sort((a, b) => a.localeCompare(b));
+  });
 
   /**
    * Incremental Adjacency Map Updates (O(1))
@@ -89,8 +104,8 @@ class VaultStore {
   }
 
   async init() {
-    // Normal Mode Initialization
-    this.isGuest = false;
+    this.isInitialized = false;
+    if (this.rootHandle) return;
     try {
       const persisted = await getPersistedHandle();
       if (persisted) {
@@ -122,6 +137,7 @@ class VaultStore {
       workerBridge.reset();
 
       // 2. Clear Persistence
+      this.isInitialized = false;
       await clearPersistedHandle();
 
       // 3. Clear Memory
@@ -143,21 +159,16 @@ class VaultStore {
   }
 
   async initGuest(adapter: IStorageAdapter) {
+    this.isInitialized = false;
     this.isGuest = true;
     this.storageAdapter = adapter;
     this.status = "loading";
     try {
-      await adapter.init();
       const graph = await adapter.loadGraph();
-      if (graph) {
-        // Convert plain entities to LocalEntity
-        const localEntities: Record<string, LocalEntity> = {};
-        for (const [id, entity] of Object.entries(graph.entities)) {
-          localEntities[id] = { ...entity, _path: `${id}.md` };
-        }
-        this.entities = localEntities;
-        this.rebuildInboundMap();
-      }
+      if (!graph) throw new Error("Graph could not be loaded");
+      this.entities = graph.entities as Record<string, LocalEntity>;
+      this.rebuildInboundMap();
+      this.isInitialized = true;
     } catch (err: any) {
       console.error("Failed to init guest vault", err);
       this.errorMessage = err.message || "Failed to load shared campaign";
@@ -198,17 +209,11 @@ class VaultStore {
   }
 
   async openDirectory() {
-    this.errorMessage = null;
-
-    if (typeof window.showDirectoryPicker === "undefined") {
-      this.status = "error";
-      this.errorMessage =
-        "API unsupported. Try Chrome or check Brave Shield/Flags.";
-      return;
-    }
-
+    this.isInitialized = false;
     try {
-      this.status = "loading";
+      if (!window.showDirectoryPicker) {
+        throw new Error("Your browser does not support local vault access (File System Access API). Please use a modern browser like Chrome or Edge, and ensure you are accessing via localhost or HTTPS.");
+      }
       const handle = await window.showDirectoryPicker({
         mode: "readwrite",
       });
@@ -226,7 +231,7 @@ class VaultStore {
       if (err.name === "AbortError") {
         this.status = "idle"; // Reset if user cancelled
       } else {
-        this.errorMessage = "Failed to access vault. " + (err.message || "");
+        this.errorMessage = err.message || "Failed to access vault.";
       }
     }
   }
@@ -295,6 +300,7 @@ class VaultStore {
                   type: metadata.type || "npc",
                   title: metadata.title || id!,
                   tags: metadata.tags || [],
+                  labels: metadata.labels || [],
                   connections,
                   content: content,
                   lore: metadata.lore,
@@ -378,9 +384,9 @@ class VaultStore {
         Object.assign(this.entities, chunkEntities);
       }
 
-      this.inboundConnections = newInboundMap;
     } finally {
       this.status = "idle";
+      this.isInitialized = true;
     }
   }
 
@@ -491,7 +497,7 @@ class VaultStore {
         const deleteOldFile = async (path: string) => {
           const filename = path.split("/").pop();
           if (filename) {
-            await imagesDir.removeEntry(filename).catch(() => {});
+            await imagesDir.removeEntry(filename).catch(() => { });
           }
         };
         if (entity.image) await deleteOldFile(entity.image);
@@ -688,6 +694,7 @@ class VaultStore {
 
       const keywords = [
         ...(entity.tags || []),
+        ...(entity.labels || []),
         entity.lore || "",
         ...metadataKeywords,
       ].join(" ");
@@ -727,6 +734,7 @@ class VaultStore {
       title,
       content: initialData?.content || "",
       tags: initialData?.tags || [],
+      labels: initialData?.labels || [],
       connections: initialData?.connections || [],
       metadata: initialData?.metadata || {},
       lore: initialData?.lore,
@@ -834,7 +842,7 @@ class VaultStore {
       console.error("Failed to delete entity", err);
       this.status = "error";
       this.errorMessage = err.message;
-      
+
       // Show global error notification
       import("./ui.svelte").then(({ uiStore }) => {
         uiStore.setGlobalError(`Failed to delete "${entity.title}": ${err.message}`);
@@ -929,6 +937,67 @@ class VaultStore {
     this.removeInboundConnection(sourceId, targetId);
     this.scheduleSave(updated);
   }
+
+  addLabel(entityId: string, label: string) {
+    const entity = this.entities[entityId];
+    if (!entity) return;
+
+    const trimmedLabel = label.trim();
+    if (!trimmedLabel) return;
+
+    // Check if label already exists (case-insensitive)
+    if (entity.labels?.some((l) => l.toLowerCase() === trimmedLabel.toLowerCase())) {
+      return;
+    }
+
+    const newLabels = [...(entity.labels || []), trimmedLabel];
+    this.updateEntity(entityId, { labels: newLabels });
+  }
+
+  removeLabel(entityId: string, label: string) {
+    const entity = this.entities[entityId];
+    if (!entity) return;
+
+    const newLabels = (entity.labels || []).filter(
+      (l) => l.toLowerCase() !== label.toLowerCase(),
+    );
+
+    this.updateEntity(entityId, { labels: newLabels });
+  }
+
+  async renameLabel(oldLabel: string, newLabel: string) {
+    if (this.isGuest) return;
+    const trimmedNew = newLabel.trim();
+    if (!trimmedNew || oldLabel === trimmedNew) return;
+
+    const affectedEntities = Object.values(this.entities).filter(e =>
+      e.labels?.some(l => l.toLowerCase() === oldLabel.toLowerCase())
+    );
+
+    for (const entity of affectedEntities) {
+      const updatedLabels = (entity.labels || []).map(l =>
+        l.toLowerCase() === oldLabel.toLowerCase() ? trimmedNew : l
+      );
+      // Ensure no duplicates if the new label already existed on the entity
+      const uniqueLabels = Array.from(new Set(updatedLabels));
+      await this.updateEntity(entity.id, { labels: uniqueLabels });
+    }
+  }
+
+  async deleteLabel(label: string) {
+    if (this.isGuest) return;
+    const affectedEntities = Object.values(this.entities).filter(e =>
+      e.labels?.some(l => l.toLowerCase() === label.toLowerCase())
+    );
+
+    for (const entity of affectedEntities) {
+      const updatedLabels = (entity.labels || []).filter(l =>
+        l.toLowerCase() !== label.toLowerCase()
+      );
+      await this.updateEntity(entity.id, { labels: updatedLabels });
+    }
+  }
+
   async fetchLore(id: string) {
     const entity = this.entities[id];
     if (!entity || this.loadingLore.has(id)) return;

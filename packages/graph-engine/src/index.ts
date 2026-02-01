@@ -1,7 +1,13 @@
 import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+
+cytoscape.use(fcose);
+
 export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./renderer/overlays";
+export * from "./defaults";
+import { DEFAULT_LAYOUT_OPTIONS } from "./defaults";
 
 export interface GraphOptions {
   container?: HTMLElement;
@@ -35,8 +41,7 @@ export const initGraph = (options: GraphOptions) => {
       },
     ],
     layout: {
-      name: "cose", // Better default layout
-      animate: false,
+      ...DEFAULT_LAYOUT_OPTIONS,      
     },
   });
 };

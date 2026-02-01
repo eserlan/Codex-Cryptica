@@ -6,6 +6,8 @@
     import { uiStore } from "$lib/stores/ui.svelte";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
+    import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
+    import LabelInput from "$lib/components/labels/LabelInput.svelte";
 
     let { entity, onClose } = $props<{
         entity: Entity | null;
@@ -382,6 +384,26 @@
                 class="text-xs font-bold tracking-widest text-theme-secondary uppercase mb-4"
             >
                 {entity.type}
+            </div>
+
+            <!-- Labels Section -->
+            <div class="mb-6 space-y-2">
+                <div class="flex flex-wrap gap-1.5 min-h-[24px]">
+                    {#each entity.labels || [] as label}
+                        <LabelBadge 
+                            {label} 
+                            removable={!vault.isGuest} 
+                            onRemove={() => vault.removeLabel(entity.id, label)} 
+                        />
+                    {/each}
+                    {#if !entity.labels?.length && vault.isGuest}
+                        <span class="text-[9px] text-theme-muted italic uppercase tracking-tighter">No labels</span>
+                    {/if}
+                </div>
+                
+                {#if !vault.isGuest}
+                    <LabelInput entityId={entity.id} />
+                {/if}
             </div>
 
             <!-- Status Tabs -->
