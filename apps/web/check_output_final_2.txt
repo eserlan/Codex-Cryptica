@@ -1,0 +1,34 @@
+Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
+Getting Svelte diagnostics...
+
+/home/espen/proj/Codex-Arcana/apps/web/../../packages/graph-engine/src/index.ts:2:1
+Error: Unused '@ts-expect-error' directive. 
+import cytoscape from "cytoscape";
+// @ts-expect-error - no types available
+import fcose from "cytoscape-fcose";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:246:3
+Warn: Unknown at rule @reference (css)
+<style>
+  @reference "../../../app.css";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:249:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(code) {
+    @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:252:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(strong) {
+    @apply font-bold text-zinc-900 dark:text-zinc-100;
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:255:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(em) {
+    @apply italic;
+  }
+
+====================================
+svelte-check found 1 error and 4 warnings in 2 files

@@ -13,8 +13,9 @@ class GraphStore {
 
     // Apply Label Filtering (OR logic)
     if (this.activeLabels.size > 0) {
+      const active = this.activeLabels;
       entities = entities.filter((e) =>
-        (e.labels || []).some((l) => this.activeLabels.has(l)),
+        (e.labels || []).some((l) => active.has(l)),
       );
     }
 

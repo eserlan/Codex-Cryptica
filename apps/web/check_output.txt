@@ -1,0 +1,104 @@
+Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
+Getting Svelte diagnostics...
+
+/home/espen/proj/Codex-Arcana/apps/web/../../packages/graph-engine/src/index.ts:2:19
+Error: Could not find a declaration file for module 'cytoscape-fcose'. '/home/espen/proj/Codex-Arcana/node_modules/cytoscape-fcose/cytoscape-fcose.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/cytoscape-fcose` if it exists or add a new declaration (.d.ts) file containing `declare module 'cytoscape-fcose';` 
+import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+
+/home/espen/proj/Codex-Arcana/apps/web/../../packages/graph-engine/src/index.ts:43:7
+Error: Object literal may only specify known properties, and 'animate' does not exist in type 'BaseLayoutOptions'. 
+      name: "fcose",
+      animate: true,
+      animationDuration: 800,
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/stores/vault.svelte.ts:168:23
+Error: 'graph' is possibly 'null'. 
+      const graph = await adapter.loadGraph();
+      this.entities = graph.entities as Record<string, LocalEntity>;
+      this.rebuildInboundMap();
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/stores/vault.svelte.ts:173:27
+Error: 'err' is of type 'unknown'. 
+      console.error("Failed to init guest vault", err);
+      this.errorMessage = err.message || "Failed to load shared campaign";
+      this.status = "error";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:12:17
+Error: Property 'strength' is missing in type '{ target: string; type: string; label: string; }' but required in type '{ target: string; type: string; strength: number; label?: string | undefined; }'. 
+            connections: [
+                { target: "beta", type: "related", label: "Supply Link" },
+                { target: "gamma", type: "related", label: "Observation Post" }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:13:17
+Error: Property 'strength' is missing in type '{ target: string; type: string; label: string; }' but required in type '{ target: string; type: string; strength: number; label?: string | undefined; }'. 
+                { target: "beta", type: "related", label: "Supply Link" },
+                { target: "gamma", type: "related", label: "Observation Post" }
+            ],
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:17:9
+Error: Property 'tags' is missing in type '{ id: string; type: string; title: string; content: string; connections: never[]; labels: string[]; }' but required in type '{ type: string; id: string; title: string; tags: string[]; labels: string[]; connections: { target: string; type: string; strength: number; label?: string | undefined; }[]; content: string; date?: { year: number; label?: string | undefined; month?: number | undefined; day?: number | undefined; } | undefined; ... 6 m...'. 
+        },
+        "beta": {
+            id: "beta",
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:31:17
+Error: Property 'strength' is missing in type '{ target: string; type: string; }' but required in type '{ target: string; type: string; strength: number; label?: string | undefined; }'. 
+            connections: [
+                { target: "alpha", type: "related" }
+            ],
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:41:17
+Error: Property 'strength' is missing in type '{ target: string; type: string; label: string; }' but required in type '{ target: string; type: string; strength: number; label?: string | undefined; }'. 
+            connections: [
+                { target: "beta", type: "related", label: "Hidden Influence" }
+            ],
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:51:17
+Error: Property 'strength' is missing in type '{ target: string; type: string; }' but required in type '{ target: string; type: string; strength: number; label?: string | undefined; }'. 
+            connections: [
+                { target: "delta", type: "related" }
+            ],
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:58:21
+Error: Argument of type '{ entities: Record<string, { type: string; id: string; title: string; tags: string[]; labels: string[]; connections: { target: string; type: string; strength: number; label?: string | undefined; }[]; content: string; ... 7 more ...; _path?: string | ... 1 more ... | undefined; }>; assets: {}; }' is not assignable to parameter of type 'SerializedGraph'.
+  Property 'version' is missing in type '{ entities: Record<string, { type: string; id: string; title: string; tags: string[]; labels: string[]; connections: { target: string; type: string; strength: number; label?: string | undefined; }[]; content: string; ... 7 more ...; _path?: string | ... 1 more ... | undefined; }>; assets: {}; }' but required in type 'SerializedGraph'. 
+    const adapter = new MemoryAdapter();
+    adapter.hydrate({
+        entities: demoEntities,
+        assets: {}
+    });
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/GraphView.svelte:12:21
+Error: Could not find a declaration file for module 'cytoscape-fcose'. '/home/espen/proj/Codex-Arcana/node_modules/cytoscape-fcose/cytoscape-fcose.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/cytoscape-fcose` if it exists or add a new declaration (.d.ts) file containing `declare module 'cytoscape-fcose';` (ts)
+  import cytoscape from "cytoscape";
+  import fcose from "cytoscape-fcose";
+  import { getGraphStyle } from "graph-engine";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:246:3
+Warn: Unknown at rule @reference (css)
+<style>
+  @reference "../../../app.css";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:249:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(code) {
+    @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:252:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(strong) {
+    @apply font-bold text-zinc-900 dark:text-zinc-100;
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:255:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(em) {
+    @apply italic;
+  }
+
+====================================
+svelte-check found 12 errors and 4 warnings in 5 files

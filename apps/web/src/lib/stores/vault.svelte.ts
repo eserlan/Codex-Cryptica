@@ -300,7 +300,7 @@ class VaultStore {
                   type: metadata.type || "npc",
                   title: metadata.title || id!,
                   tags: metadata.tags || [],
-                  labels: metadata.labels || [],
+                  labels: metadata.labels,
                   connections,
                   content: content,
                   lore: metadata.lore,
@@ -974,13 +974,18 @@ class VaultStore {
       e.labels?.some(l => l.toLowerCase() === oldLabel.toLowerCase())
     );
 
-    for (const entity of affectedEntities) {
+    // Batch update in memory first to ensure UI remains responsive and consistent
+    const updates = affectedEntities.map(entity => {
       const updatedLabels = (entity.labels || []).map(l =>
         l.toLowerCase() === oldLabel.toLowerCase() ? trimmedNew : l
       );
       // Ensure no duplicates if the new label already existed on the entity
       const uniqueLabels = Array.from(new Set(updatedLabels));
-      await this.updateEntity(entity.id, { labels: uniqueLabels });
+      return { id: entity.id, labels: uniqueLabels };
+    });
+
+    for (const update of updates) {
+      await this.updateEntity(update.id, { labels: update.labels });
     }
   }
 
@@ -990,11 +995,15 @@ class VaultStore {
       e.labels?.some(l => l.toLowerCase() === label.toLowerCase())
     );
 
-    for (const entity of affectedEntities) {
+    const updates = affectedEntities.map(entity => {
       const updatedLabels = (entity.labels || []).filter(l =>
         l.toLowerCase() !== label.toLowerCase()
       );
-      await this.updateEntity(entity.id, { labels: updatedLabels });
+      return { id: entity.id, labels: updatedLabels };
+    });
+
+    for (const update of updates) {
+      await this.updateEntity(update.id, { labels: update.labels });
     }
   }
 

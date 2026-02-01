@@ -1,6 +1,6 @@
 export const DEFAULT_LAYOUT_OPTIONS = {
     name: "fcose",
-    animate: true,
+    animate: false,
     animationDuration: 800,
     quality: "default",
     randomize: true,

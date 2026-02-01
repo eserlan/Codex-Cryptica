@@ -110,8 +110,8 @@ export class GraphTransformer {
  */
 const sanitizeFontForCytoscape = (fontFamily?: string): string => {
   if (!fontFamily) return "sans-serif";
-  // Take the first font in the list, remove quotes and extra whitespace
-  const firstFont = fontFamily.split(",")[0].replace(/['"]/g, "").trim();
+  // Take the first font in the list, trim extra whitespace
+  const firstFont = fontFamily.split(",")[0].trim();
   return firstFont || "sans-serif";
 };
 

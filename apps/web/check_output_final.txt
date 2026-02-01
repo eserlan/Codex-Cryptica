@@ -1,0 +1,47 @@
+Loading svelte-check in workspace: /home/espen/proj/Codex-Arcana/apps/web
+Getting Svelte diagnostics...
+
+/home/espen/proj/Codex-Arcana/apps/web/../../packages/graph-engine/src/index.ts:2:19
+Error: Could not find a declaration file for module 'cytoscape-fcose'. '/home/espen/proj/Codex-Arcana/node_modules/cytoscape-fcose/cytoscape-fcose.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/cytoscape-fcose` if it exists or add a new declaration (.d.ts) file containing `declare module 'cytoscape-fcose';` 
+import cytoscape from "cytoscape";
+import fcose from "cytoscape-fcose";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/utils/demo.ts:64:9
+Error: Type 'string' is not assignable to type 'number'. 
+    adapter.hydrate({
+        version: "1.0",
+        entities: demoEntities,
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/GraphView.svelte:12:21
+Error: Could not find a declaration file for module 'cytoscape-fcose'. '/home/espen/proj/Codex-Arcana/node_modules/cytoscape-fcose/cytoscape-fcose.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/cytoscape-fcose` if it exists or add a new declaration (.d.ts) file containing `declare module 'cytoscape-fcose';` (ts)
+  import cytoscape from "cytoscape";
+  import fcose from "cytoscape-fcose";
+  import { getGraphStyle } from "graph-engine";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:246:3
+Warn: Unknown at rule @reference (css)
+<style>
+  @reference "../../../app.css";
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:249:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(code) {
+    @apply bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:252:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(strong) {
+    @apply font-bold text-zinc-900 dark:text-zinc-100;
+  }
+
+/home/espen/proj/Codex-Arcana/apps/web/src/lib/components/search/SearchModal.svelte:255:5
+Warn: Unknown at rule @apply (css)
+  .preview-content :global(em) {
+    @apply italic;
+  }
+
+====================================
+svelte-check found 3 errors and 4 warnings in 4 files

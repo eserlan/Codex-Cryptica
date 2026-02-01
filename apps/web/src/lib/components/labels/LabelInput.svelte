@@ -16,9 +16,10 @@
   let suggestions = $derived.by(() => {
     const query = inputValue.trim().toLowerCase();
     if (!query) return [];
+    const currentLabels = (vault.entities[entityId]?.labels || []).map(l => l.toLowerCase());
     return vault.labelIndex.filter(l => 
       l.toLowerCase().includes(query) && 
-      !vault.entities[entityId]?.labels?.includes(l)
+      !currentLabels.includes(l.toLowerCase())
     ).slice(0, 5);
   });
 
