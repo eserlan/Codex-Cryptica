@@ -109,7 +109,7 @@
                 unmount(bubbleMenuComponent);
             } catch (e) {
                 console.warn(
-                    "Failed to unmount bubble menu during MarkdownEditor onDestroy; bubble menu cleanup may be incomplete.",
+                    "Failed to unmount bubble menu",
                     { error: e, component: bubbleMenuComponent }
                 );
             }

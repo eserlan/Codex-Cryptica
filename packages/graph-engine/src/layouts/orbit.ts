@@ -69,7 +69,7 @@ export const setCentralNode = (cy: Core, centralNodeId: string, options: OrbitLa
         padding: options.padding ?? 50,
         animate: options.animate ?? true,
         animationDuration: options.animationDuration ?? 500,
-        animationEasing: 'ease-in-out-cubic' as any, // Cytoscape types are strict on easing strings
+        animationEasing: 'ease-in-out-cubic',
         minNodeSpacing: options.minNodeSpacing ?? 50,
         avoidOverlap: true,
         nodeDimensionsIncludeLabels: true,
