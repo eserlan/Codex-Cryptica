@@ -10,16 +10,24 @@
 
   $effect(() => {
     if (cy) {
-      cy.on("cxttap", "node", (evt: EventObject) => {
+      const openHandler = (evt: EventObject) => {
         const node = evt.target;
         targetId = node.id();
         position = { x: evt.renderedPosition.x, y: evt.renderedPosition.y };
         contextMenuOpen = true;
-      });
+      };
 
-      cy.on("tap", () => {
+      const closeHandler = () => {
         contextMenuOpen = false;
-      });
+      };
+
+      cy.on("cxttap", "node", openHandler);
+      cy.on("tap", closeHandler);
+
+      return () => {
+        cy.off("cxttap", "node", openHandler);
+        cy.off("tap", closeHandler);
+      };
     }
   });
 

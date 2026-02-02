@@ -8,6 +8,7 @@
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
     import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
     import LabelInput from "$lib/components/labels/LabelInput.svelte";
+    import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
 
     let { entity, onClose } = $props<{
         entity: Entity | null;
@@ -32,6 +33,7 @@
     let editStartDate = $state<Entity["start_date"]>();
     let editEndDate = $state<Entity["end_date"]>();
     let resolvedImageUrl = $state("");
+    let editingConnectionTarget = $state<string | null>(null);
 
     const startEditing = () => {
         if (!entity) return;
@@ -540,6 +542,16 @@
                         </h3>
                         <ul class="space-y-3">
                             {#each allConnections as conn}
+                                {#if editingConnectionTarget === conn.targetId && conn.isOutbound}
+                                    <li>
+                                        <ConnectionEditor
+                                            sourceId={entity.id}
+                                            connection={conn}
+                                            onSave={() => (editingConnectionTarget = null)}
+                                            onCancel={() => (editingConnectionTarget = null)}
+                                        />
+                                    </li>
+                                {:else}
                                 <li
                                     class="flex gap-3 text-sm text-theme-muted items-start group"
                                 >
@@ -548,7 +560,7 @@
                                             ? 'text-theme-primary icon-[lucide--arrow-up-right]'
                                             : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
                                     ></span>
-                                    <div class="flex-1 min-w-0">
+                                    <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
                                         <button
                                             onclick={() =>
                                                 (vault.selectedEntityId =
@@ -595,8 +607,19 @@
                                                 >
                                             {/if}
                                         </button>
+                                        
+                                        {#if conn.isOutbound && !vault.isGuest}
+                                            <button 
+                                                class="opacity-0 group-hover:opacity-100 text-theme-muted hover:text-theme-primary transition p-1"
+                                                onclick={() => editingConnectionTarget = conn.targetId}
+                                                aria-label="Edit connection"
+                                            >
+                                                <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                                            </button>
+                                        {/if}
                                     </div>
                                 </li>
+                                {/if}
                             {/each}
                             {#if allConnections.length === 0}
                                 <li class="text-sm text-theme-muted italic">

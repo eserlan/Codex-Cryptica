@@ -42,6 +42,37 @@ describe("Entity Schema Validation", () => {
     const result = EntitySchema.safeParse(customTypeEntity);
     expect(result.success).toBe(true);
   });
+
+  it("should validate connection with friendly/enemy/neutral types", () => {
+    const entity = {
+      id: "npc-3",
+      type: "npc",
+      title: "Connection Test",
+      connections: [
+        { target: "ally", type: "friendly", strength: 1 },
+        { target: "rival", type: "enemy", strength: 1 },
+        { target: "stranger", type: "neutral", strength: 0.5 }
+      ]
+    };
+    const result = EntitySchema.safeParse(entity);
+    expect(result.success).toBe(true);
+  });
+
+  it("should validate connection with custom label", () => {
+    const entity = {
+      id: "npc-4",
+      type: "npc",
+      title: "Label Test",
+      connections: [
+        { target: "dad", type: "related_to", label: "Father" }
+      ]
+    };
+    const result = EntitySchema.safeParse(entity);
+    expect(result.success).toBe(true);
+    if(result.success) {
+      expect(result.data.connections[0].label).toBe("Father");
+    }
+  });
 });
 
 describe("Category Schema Validation", () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { GraphTransformer } from "../src/transformer";
-import type { Entity } from "schema";
+import { GraphTransformer, getGraphStyle } from "../src/transformer";
+import { CONNECTION_COLORS } from "../src/defaults";
+import type { Entity, StylingTemplate } from "schema";
 
 describe("GraphTransformer", () => {
   it("should include dateLabel in node data", () => {
@@ -63,5 +64,35 @@ describe("GraphTransformer", () => {
     const nodes = elements.filter(el => el.group === "nodes");
 
     expect(nodes[0].data.dateLabel).toBe("");
+  });
+
+  it("should generate style sheet with connection type colors", () => {
+    const mockTemplate: StylingTemplate = {
+        tokens: {
+            background: "#000",
+            primary: "#f00",
+            surface: "#111",
+            text: "#fff",
+            fontBody: "Arial",
+            fontHeading: "Arial",
+        },
+        graph: {
+            nodeBorderWidth: 1,
+            nodeShape: "ellipse",
+            edgeColor: "#555",
+            edgeStyle: "solid",
+        },
+        themeId: "dark"
+    };
+
+    const styles = getGraphStyle(mockTemplate, []);
+    
+    const friendlyStyle = styles.find((s: any) => s.selector === 'edge[connectionType="friendly"]');
+    expect(friendlyStyle).toBeDefined();
+    expect(friendlyStyle.style["line-color"]).toBe(CONNECTION_COLORS.friendly);
+
+    const enemyStyle = styles.find((s: any) => s.selector === 'edge[connectionType="enemy"]');
+    expect(enemyStyle).toBeDefined();
+    expect(enemyStyle.style["line-color"]).toBe(CONNECTION_COLORS.enemy);
   });
 });
