@@ -3,6 +3,7 @@
     import { categories } from "$lib/stores/categories.svelte";
     import { cloudConfig } from "$stores/cloud-config";
     import ShareModal from "$lib/components/ShareModal.svelte";
+    import { loadDemoVault } from "$lib/utils/demo";
 
     let showForm = $state(false);
     let showShare = $state(false);
@@ -108,13 +109,31 @@
                 EXIT GUEST MODE
             </button>
         {:else if !vault.rootHandle}
-            <button
-                class="px-3 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
-                onclick={() => vault.openDirectory()}
-                data-testid="open-vault-button"
-            >
-                OPEN <span class="hidden xs:inline">VAULT</span>
-            </button>
+            <div class="flex flex-col xs:flex-row gap-2">
+                <button
+                    class="px-3 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
+                    onclick={() => vault.openDirectory()}
+                    data-testid="open-vault-button"
+                >
+                    OPEN <span class="hidden xs:inline">VAULT</span>
+                </button>
+                <button
+                    class="px-3 md:px-4 py-1.5 border border-theme-primary text-theme-primary hover:bg-theme-primary/10 rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"
+                    onclick={() => loadDemoVault(vault.initGuest.bind(vault))}
+                    data-testid="load-demo-button"
+                >
+                    LOAD DEMO
+                </button>
+            </div>
+            {#if typeof window !== "undefined" && !window.showDirectoryPicker}
+                <div
+                    class="absolute top-12 left-0 right-0 p-2 bg-amber-900/40 border border-amber-500/50 text-amber-200 text-[9px] font-mono rounded backdrop-blur z-50 animate-in fade-in slide-in-from-top-2"
+                >
+                    <span class="font-bold">SYSTEM ALERT:</span> Local File System
+                    Access is blocked in this browser. Use Chrome/Edge/Opera or try
+                    the Demo mode.
+                </div>
+            {/if}
         {:else if !vault.isAuthorized}
             <button
                 class="px-3 md:px-4 py-1.5 bg-theme-accent hover:bg-theme-accent/80 text-theme-bg rounded text-[10px] md:text-xs font-bold tracking-widest transition whitespace-nowrap"

@@ -8,7 +8,11 @@
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
   import type { Core, NodeSingular } from "cytoscape";
-  import { getGraphStyle } from "graph-engine";
+  import cytoscape from "cytoscape";
+  import fcose from "cytoscape-fcose";
+  import { getGraphStyle, DEFAULT_LAYOUT_OPTIONS } from "graph-engine";
+
+  cytoscape.use(fcose);
   import { themeStore } from "$lib/stores/theme.svelte";
   import Minimap from "$lib/components/graph/Minimap.svelte";
   import TimelineControls from "$lib/components/graph/TimelineControls.svelte";
@@ -17,13 +21,21 @@
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode, clearOrbit } from "graph-engine";
+  import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
   let currentLayout: any;
+  let stabilizationTimeout: number | undefined;
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list),
+    {
+      selector: ".filtered-out",
+      style: {
+        display: "none",
+      },
+    },
     ...(graph.timelineMode
       ? [
           {
@@ -86,7 +98,7 @@
   } | null>(null);
   let edgeEditInput = $state("");
 
-  const applyCurrentLayout = () => {
+  const applyCurrentLayout = (isInitial = false) => {
     if (!cy) return;
     if (currentLayout) {
       try {
@@ -100,6 +112,14 @@
       graph.applyTimelineLayout(cy);
     } else if (graph.orbitMode && graph.centralNodeId) {
        setCentralNode(cy, graph.centralNodeId);
+      if (isInitial) {
+        cy.resize();
+        cy.animate({
+          fit: { eles: cy.elements(), padding: 40 },
+          duration: 800,
+          easing: "ease-out-cubic",
+        });
+      }
     } else {
         // If we were in orbit mode and just exited, this block runs because !orbitMode
         // Or if we were just default, this runs.
@@ -107,15 +127,24 @@
         // We could call clearOrbit(cy) but it just runs 'cose' anyway.
         
       currentLayout = cy.layout({
-        name: "cose",
-        animate: true,
-        // @ts-expect-error - duration is valid for cose
-        duration: 800,
-        padding: 50,
-        componentSpacing: 100,
-        randomize: !initialLoaded,
+        ...DEFAULT_LAYOUT_OPTIONS,
       });
+
       currentLayout.one("layoutstop", () => {
+        if (isInitial && cy) {
+          cy.resize();
+          // Snap fit immediately to ensure visibility
+          cy.fit(cy.elements(), 40);
+
+          setTimeout(() => {
+            if (!cy) return;
+            cy.animate({
+              fit: { eles: cy.elements(), padding: 40 },
+              duration: 800,
+              easing: "ease-out-cubic",
+            });
+          }, 50);
+        }
         currentLayout = undefined;
       });
       currentLayout.run();
@@ -285,6 +314,29 @@
   $effect(() => {
     if (cy && graphStyle) {
       cy.style(graphStyle);
+    }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
+    if (currentCy && graph.activeLabels) {
+      const active = Array.from(graph.activeLabels).map((l) => l.toLowerCase());
+      currentCy.batch(() => {
+        currentCy.nodes().forEach((node) => {
+          const entity = vault.entities[node.id()];
+          if (!entity) return;
+
+          const hasMatch =
+            active.length === 0 ||
+            (entity.labels || []).some((l) => active.includes(l.toLowerCase()));
+
+          if (hasMatch) {
+            node.removeClass("filtered-out");
+          } else {
+            node.addClass("filtered-out");
+          }
+        });
+      });
     }
   });
 
@@ -503,13 +555,21 @@
         // 4. Force layout ONLY if structural changes occurred OR if first load
         const structuralChange =
           newElements.length > 0 || removedElements.length > 0;
-        const shouldRunLayout =
-          structuralChange || (!initialLoaded && graph.elements.length > 0);
+        const isFirstElements = !initialLoaded && graph.elements.length > 0;
+        const shouldRunLayout = structuralChange || isFirstElements;
 
         if (shouldRunLayout) {
-          applyCurrentLayout();
-          if (cy) {
-            initialLoaded = true;
+          if (isFirstElements) {
+            // Debounce the initial "fit" layout to allow more nodes to arrive
+            clearTimeout(stabilizationTimeout);
+            stabilizationTimeout = window.setTimeout(() => {
+              if (!initialLoaded) {
+                applyCurrentLayout(true);
+                initialLoaded = true;
+              }
+            }, 500); // 500ms window for more nodes to appear
+          } else {
+            applyCurrentLayout(false);
           }
         } else {
           // If no layout run, still might need focus update if elements were updated
@@ -599,6 +659,13 @@
       </div>
     {/if}
 
+    <div class="pointer-events-auto">
+      <LabelFilter
+        activeLabels={graph.activeLabels}
+        onToggle={(l) => graph.toggleLabelFilter(l)}
+        onClear={() => graph.clearLabelFilters()}
+      />
+    </div>
     <!-- Real Mini-map -->
     {#if cy}
       <Minimap {cy} absolute={false} width={192} height={128} />

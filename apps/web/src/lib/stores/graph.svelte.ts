@@ -6,27 +6,10 @@ import { getDB } from "../utils/idb";
 
 class GraphStore {
   // Svelte 5 derived state
+  activeLabels = $state(new Set<string>());
+
   elements = $derived.by(() => {
-    let entities = vault.allEntities;
-
-    // Apply temporal filtering if in timeline mode and range is set
-    if (this.timelineMode) {
-      entities = entities.filter((e) => {
-        const year =
-          e.date?.year ?? e.start_date?.year ?? e.end_date?.year ?? null;
-        if (year === null) return false; // Hide undated nodes in timeline mode
-
-        if (
-          this.timelineRange.start !== null &&
-          year < this.timelineRange.start
-        )
-          return false;
-        if (this.timelineRange.end !== null && year > this.timelineRange.end)
-          return false;
-        return true;
-      });
-    }
-
+    const entities = vault.allEntities;
     return GraphTransformer.entitiesToElements(entities);
   });
 
@@ -82,6 +65,20 @@ class GraphStore {
   async removeEra(id: string) {
     this.eras = this.eras.filter((e) => e.id !== id);
     await this.saveEras();
+  }
+
+  toggleLabelFilter(label: string) {
+    if (this.activeLabels.has(label)) {
+      this.activeLabels.delete(label);
+    } else {
+      this.activeLabels.add(label);
+    }
+    // Svelte Set reactivity trigger
+    this.activeLabels = new Set(this.activeLabels);
+  }
+
+  clearLabelFilters() {
+    this.activeLabels = new Set();
   }
 
   toggleTimeline() {

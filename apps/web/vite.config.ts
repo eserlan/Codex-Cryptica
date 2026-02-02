@@ -10,6 +10,9 @@ export default defineConfig({
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },
+    hmr: {
+      host: "localhost",
+    },
     fs: {
       // Allow serving files from the workspace root
       allow: [".."],

@@ -103,6 +103,18 @@ export class GraphTransformer {
   }
 }
 
+/**
+ * Cytoscape's internal style parser can be sensitive to complex font-family strings
+ * (e.g. comma-separated fallbacks or quotes). This helper sanitizes the string
+ * to provide a single, clean font name.
+ */
+const sanitizeFontForCytoscape = (fontFamily?: string): string => {
+  if (!fontFamily) return "sans-serif";
+  // Take the first font in the list, trim extra whitespace
+  const firstFont = fontFamily.split(",")[0].trim();
+  return firstFont || "sans-serif";
+};
+
 export const getGraphStyle = (template: StylingTemplate, categories: Category[]): any[] => {
   const { tokens, graph } = template;
 
@@ -118,7 +130,7 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
         shape: graph.nodeShape,
         label: "data(label)",
         color: tokens.text,
-        "font-family": tokens.fontBody,
+        "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         "font-size": 10,
         "text-valign": "bottom",
         "text-margin-y": 8,
@@ -176,7 +188,7 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
         label: "data(label)",
         "text-rotation": "autorotate",
         "font-size": 8,
-        "font-family": tokens.fontBody,
+        "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
         "text-background-opacity": 0.8,

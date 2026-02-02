@@ -6,6 +6,7 @@
     import { categories } from "$lib/stores/categories.svelte";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
+    import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
     import type { Entity } from "schema";
     import { marked } from "marked";
     import DOMPurify from "isomorphic-dompurify";
@@ -44,14 +45,14 @@
         if (!entity) return;
 
         try {
-            // Pre-process WikiLinks: convert [[Link]] to <strong>Link</strong> for rich text
+            // Pre-process WikiLinks: convert [[Link]] or [[Link|Label]] to <strong>Label</strong> for rich text
             const processedContent = (entity.content || "").replace(
-                /\[\[(.*?)\]\]/g,
-                "<strong>$1</strong>",
+                /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+                (_, target, label) => `<strong>${label || target}</strong>`,
             );
             const processedLore = (entity.lore || "").replace(
-                /\[\[(.*?)\]\]/g,
-                "<strong>$1</strong>",
+                /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
+                (_, target, label) => `<strong>${label || target}</strong>`,
             );
 
             // Render Markdown
@@ -118,9 +119,9 @@
 
             // Construct Plain Text (convert WikiLinks to simple text)
             let text = `${entity.title}\n\n`;
-            text += `CHRONICLE:\n${(entity.content || "").replace(/\[\[(.*?)\]\]/g, "$1")}\n\n`;
+            text += `CHRONICLE:\n${(entity.content || "").replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n\n`;
             if (entity.lore) {
-                text += `DEEP LORE:\n${entity.lore.replace(/\[\[(.*?)\]\]/g, "$1")}\n`;
+                text += `DEEP LORE:\n${entity.lore.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n`;
             }
 
             const clipboardData: Record<string, Blob> = {
@@ -142,7 +143,7 @@
             // Fallback to plain text
             try {
                 await navigator.clipboard.writeText(
-                    `${entity.title}\n\n${(entity.content || "").replace(/\[\[(.*?)\]\]/g, "$1")}`,
+                    `${entity.title}\n\n${(entity.content || "").replace(/[[ (.*?) ]]/g, "$1")}`,
                 );
                 isCopied = true;
                 setTimeout(() => (isCopied = false), 2000);
@@ -476,13 +477,23 @@
                     <div
                         class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
                     >
+                        <!-- Labels -->
+                        {#if entity.labels && entity.labels.length > 0}
+                            <div class="flex flex-wrap gap-1.5 mb-6">
+                                {#each entity.labels as label}
+                                    <LabelBadge {label} />
+                                {/each}
+                            </div>
+                        {/if}
+
                         <!-- Image -->
                         <div class="mb-6">
                             {#if isEditing}
                                 <div class="mb-4">
                                     <label
                                         class="block text-[10px] text-theme-secondary font-bold mb-1"
-                                        for="zen-entity-image-url">IMAGE URL</label
+                                        for="zen-entity-image-url"
+                                        >IMAGE URL</label
                                     >
                                     <input
                                         id="zen-entity-image-url"

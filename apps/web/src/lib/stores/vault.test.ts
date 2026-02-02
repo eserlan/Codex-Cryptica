@@ -148,6 +148,7 @@ describe("VaultStore", () => {
       type: "npc" as const,
       content: "Cached Content",
       tags: [],
+      labels: [],
       connections: [],
       metadata: {}
     };

@@ -25,16 +25,12 @@
 	import { P2PClientAdapter } from "$lib/cloud-bridge/p2p/client-adapter";
 	import { PublicGDriveAdapter } from "$lib/cloud-bridge/google-drive/public-adapter";
 	import { onMount } from "svelte";
-
 	import { page } from "$app/state";
 	import { base } from "$app/paths";
+	import { browser } from "$app/environment";
 	let { children } = $props();
 
 	const isPopup = $derived(page.url.pathname === `${base}/oracle`);
-	const isLegalPage = $derived(
-		page.url.pathname.includes("/privacy") ||
-			page.url.pathname.includes("/terms"),
-	);
 
 	const shareId = $derived(page.url.searchParams.get("shareId"));
 	let showGuestLogin = $state(false);
@@ -240,7 +236,8 @@
 			<h1
 				class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
 			>
-				<span class="icon-[lucide--book-open] text-theme-primary w-5 h-5"
+				<span
+					class="icon-[lucide--book-open] text-theme-primary w-5 h-5"
 				></span>
 				<span class="hidden sm:inline">Codex Cryptica</span>
 				<span class="sm:hidden text-theme-primary">CC</span>
@@ -324,12 +321,14 @@
 			</div>
 		</footer>
 		<SearchModal />
-		{#if !isLegalPage}
+		{#if (page.url.pathname as string) !== `${base}/login`}
 			<OracleWindow />
+			{#if browser}
+				<SettingsModal />
+				<ZenModeModal />
+				<TourOverlay />
+			{/if}
 		{/if}
-		<SettingsModal />
-		<ZenModeModal />
-		<TourOverlay />
 	{/if}
 </div>
 

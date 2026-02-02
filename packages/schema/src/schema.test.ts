@@ -16,6 +16,22 @@ describe("Entity Schema Validation", () => {
     expect(result.success).toBe(true);
   });
 
+  it("should validate an entity with labels", () => {
+    const labeledEntity = {
+      id: "npc-2",
+      type: "npc",
+      title: "Labeled NPC",
+      labels: ["Villain", "Session 1"],
+    };
+
+    const result = EntitySchema.safeParse(labeledEntity);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.labels).toContain("Villain");
+      expect(result.data.labels).toHaveLength(2);
+    }
+  });
+
   it("should accept custom entity types (flexible categories)", () => {
     const customTypeEntity = {
       id: "artifact-1",

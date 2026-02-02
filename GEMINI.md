@@ -60,6 +60,11 @@ TypeScript: Follow standard conventions
 - 032-central-node-orbit: Added TypeScript 5.x + `cytoscape` (Core), `svelte` (UI)
 - 030-rich-text-formatting: Added Tiptap, Floating UI
 - 028-styling-templates: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, Tailwind CSS 4.x, `idb` (for settings)
+- 030-rich-text-formatting: Added Tiptap, Floating UI
+- 028-styling-templates: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, Tailwind CSS 4.x, `idb` (for settings)
+- 026-world-timeline: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Turborepo, Vitest, Playwright
+- 024-delete-nodes: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `editor-core`
+- 022-oracle-data-parsing: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (UI Framework), `packages/editor-core` (for content handling logic)
 
 
 
