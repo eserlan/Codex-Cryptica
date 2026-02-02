@@ -95,8 +95,10 @@
     source: string;
     target: string;
     label: string;
+    type: string;
   } | null>(null);
   let edgeEditInput = $state("");
+  let edgeEditType = $state("neutral");
 
   const applyCurrentLayout = (isInitial = false) => {
     if (!cy) return;
@@ -266,13 +268,16 @@
         const sourceId = edge.data("source");
         const targetId = edge.data("target");
         const currentLabel = edge.data("label") || "";
+        const currentType = edge.data("connectionType") || "neutral";
 
         editingEdge = {
           source: sourceId,
           target: targetId,
           label: currentLabel,
+          type: currentType,
         };
         edgeEditInput = currentLabel;
+        edgeEditType = currentType;
       });
 
       cy.on("tap", (evt) => {
@@ -596,6 +601,7 @@
     if (editingEdge) {
       vault.updateConnection(editingEdge.source, editingEdge.target, {
         label: edgeEditInput || undefined,
+        type: edgeEditType,
       });
       editingEdge = null;
     }
@@ -811,6 +817,16 @@
           class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-3"
         >
           Edit Connection
+        </div>
+        <div class="mb-2">
+          <select
+            bind:value={edgeEditType}
+            class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded uppercase"
+          >
+            <option value="neutral">Neutral (Grey)</option>
+            <option value="friendly">Friendly (Green)</option>
+            <option value="enemy">Enemy (Red)</option>
+          </select>
         </div>
         <input
           type="text"
