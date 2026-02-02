@@ -10,7 +10,10 @@
     <div class="h-4 w-px bg-white/20 mx-2"></div>
     <button 
       class="text-xs font-mono uppercase hover:text-red-400 transition"
-      onclick={() => graph.toggleOrbit()}
+      onclick={(e) => {
+        e.stopPropagation();
+        graph.toggleOrbit();
+      }}
       data-testid="orbit-exit-button"
     >
       [Exit View]

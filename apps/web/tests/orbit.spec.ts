@@ -62,5 +62,21 @@ test.describe('Orbit Layout', () => {
         // 7. Exit Orbit Mode
         await page.getByTestId('orbit-exit-button').click();
         await expect(page.locator('.orbit-status')).not.toBeVisible();
+
+        // 8. Regression Test: Verify App Responsiveness
+        // If the bug (infinite loop) triggers, the app will freeze here.
+        // We attempt to interact with the graph again to ensure the main thread is free.
+        await page.evaluate(() => {
+             const cy = (window as any).cy;
+             const nodes = cy.nodes();
+             if (nodes.length > 0) {
+                 cy.emit({ type: 'tap', target: nodes[0] });
+             }
+        });
+        
+        // If we can select something, the app is alive
+        // (The exact selection isn't critical, just that the evaluate completed and UI updated)
+        // We can check if the breadcrumb or detail panel state implies selection, 
+        // or just rely on the test finishing without timeout.
     });
 });
