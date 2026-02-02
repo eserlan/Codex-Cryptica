@@ -200,6 +200,27 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
       },
     },
     {
+      selector: `edge[connectionType="friendly"]`,
+      style: {
+        "line-color": CONNECTION_COLORS.friendly,
+        "target-arrow-color": CONNECTION_COLORS.friendly,
+      },
+    },
+    {
+      selector: `edge[connectionType="enemy"]`,
+      style: {
+        "line-color": CONNECTION_COLORS.enemy,
+        "target-arrow-color": CONNECTION_COLORS.enemy,
+      },
+    },
+    {
+      selector: `edge[connectionType="neutral"]`,
+      style: {
+        "line-color": CONNECTION_COLORS.neutral,
+        "target-arrow-color": CONNECTION_COLORS.neutral,
+      },
+    },
+    {
       selector: "edge:selected",
       style: {
         "line-color": tokens.primary,

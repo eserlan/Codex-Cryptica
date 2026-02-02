@@ -110,7 +110,7 @@
 
     if (graph.timelineMode) {
       graph.applyTimelineLayout(cy);
-    } else if (graph.orbitMode) {
+    } else if (graph.orbitMode && graph.centralNodeId) {
        setCentralNode(cy, graph.centralNodeId);
       if (isInitial) {
         cy.resize();

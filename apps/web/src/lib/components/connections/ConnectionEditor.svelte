@@ -37,8 +37,9 @@
 
 <div class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3">
   <div>
-    <label class="block text-xs font-bold text-theme-secondary mb-1">RELATIONSHIP TYPE</label>
+    <label for="relationship-type" class="block text-xs font-bold text-theme-secondary mb-1">RELATIONSHIP TYPE</label>
     <select
+      id="relationship-type"
       bind:value={type}
       class="w-full bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1 text-sm focus:outline-none focus:border-theme-primary"
     >
@@ -49,8 +50,9 @@
   </div>
 
   <div>
-    <label class="block text-xs font-bold text-theme-secondary mb-1">CUSTOM LABEL (Optional)</label>
+    <label for="custom-label" class="block text-xs font-bold text-theme-secondary mb-1">CUSTOM LABEL (Optional)</label>
     <input
+      id="custom-label"
       type="text"
       bind:value={label}
       placeholder="e.g. Brother, Rival, Employer"
