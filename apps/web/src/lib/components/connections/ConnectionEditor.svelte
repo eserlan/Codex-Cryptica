@@ -15,15 +15,10 @@
   // Note: These options are coupled with `packages/schema/src/connection.ts` and 
   // `packages/graph-engine/src/defaults.ts`. If types or colors change there, update here.
   const options = [
+    { value: "related_to", label: "Default (Grey)" },
     { value: "neutral", label: "Neutral (Amber)" },
     { value: "friendly", label: "Friendly (Blue)" },
     { value: "enemy", label: "Enemy (Red)" },
-    { value: "related_to", label: "Related To (Amber)" },
-    { value: "located_in", label: "Located In (Amber)" },
-    { value: "knows", label: "Knows (Amber)" },
-    { value: "owns", label: "Owns (Amber)" },
-    { value: "part_of", label: "Part Of (Amber)" },
-    { value: "secret_advisor", label: "Secret Advisor (Amber)" },
   ];
 
   const handleSave = () => {
