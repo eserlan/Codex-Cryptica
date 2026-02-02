@@ -8,6 +8,7 @@
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
     import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
     import LabelInput from "$lib/components/labels/LabelInput.svelte";
+    import { categories } from "$lib/stores/categories.svelte";
 
     let { entity, onClose } = $props<{
         entity: Entity | null;
@@ -27,6 +28,7 @@
     let editTitle = $state("");
     let editContent = $state("");
     let editLore = $state("");
+    let editType = $state("");
     let editImage = $state("");
     let editDate = $state<Entity["date"]>();
     let editStartDate = $state<Entity["start_date"]>();
@@ -38,6 +40,7 @@
         editTitle = entity.title;
         editContent = entity.content || "";
         editLore = entity.lore || "";
+        editType = entity.type;
         editImage = entity.image || "";
         editDate = entity.date;
         editStartDate = entity.start_date;
@@ -60,7 +63,7 @@
                 date: editDate,
                 start_date: editStartDate,
                 end_date: editEndDate,
-                type: entity.type, // Explicitly preserve type
+                type: editType,
             });
             isEditing = false;
         } catch (err) {
@@ -380,27 +383,50 @@
                 {/if}
             </div>
 
-            <div
-                class="text-xs font-bold tracking-widest text-theme-secondary uppercase mb-4"
-            >
-                {entity.type}
-            </div>
+            {#if isEditing}
+                <div class="mb-4">
+                    <label
+                        class="block text-[10px] text-theme-secondary font-bold mb-1"
+                        for="entity-type">CATEGORY</label
+                    >
+                    <select
+                        id="entity-type"
+                        bind:value={editType}
+                        class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full rounded"
+                    >
+                        {#each categories.list as cat}
+                            <option value={cat.id}
+                                >{cat.label || cat.id.toUpperCase()}</option
+                            >
+                        {/each}
+                    </select>
+                </div>
+            {:else}
+                <div
+                    class="text-xs font-bold tracking-widest text-theme-secondary uppercase mb-4"
+                >
+                    {entity.type}
+                </div>
+            {/if}
 
             <!-- Labels Section -->
             <div class="mb-6 space-y-2">
                 <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                     {#each entity.labels || [] as label}
-                        <LabelBadge 
-                            {label} 
-                            removable={!vault.isGuest} 
-                            onRemove={() => vault.removeLabel(entity.id, label)} 
+                        <LabelBadge
+                            {label}
+                            removable={!vault.isGuest}
+                            onRemove={() => vault.removeLabel(entity.id, label)}
                         />
                     {/each}
                     {#if !entity.labels?.length && vault.isGuest}
-                        <span class="text-[9px] text-theme-muted italic uppercase tracking-tighter">No labels</span>
+                        <span
+                            class="text-[9px] text-theme-muted italic uppercase tracking-tighter"
+                            >No labels</span
+                        >
                     {/if}
                 </div>
-                
+
                 {#if !vault.isGuest}
                     <LabelInput entityId={entity.id} />
                 {/if}

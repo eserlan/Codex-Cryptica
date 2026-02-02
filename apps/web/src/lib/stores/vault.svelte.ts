@@ -298,7 +298,7 @@ class VaultStore {
 
                 entity = {
                   id: id!,
-                  type: metadata.type || "npc",
+                  type: metadata.type || "character",
                   title: metadata.title || id!,
                   tags: metadata.tags || [],
                   labels: metadata.labels || [],

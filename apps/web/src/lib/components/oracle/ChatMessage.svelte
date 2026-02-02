@@ -100,10 +100,22 @@
     if (!parsed.title || vault.isGuest) return;
     try {
       const type = (parsed.type || "npc") as any;
+      const connections = [
+        ...(parsed.wikiLinks || []),
+        ...(parsed.connections || []).map((name) => ({
+          target: sanitizeId(name),
+          label: name,
+          type: "related_to",
+          strength: 1.0,
+        })),
+      ];
+
       const id = await vault.createEntity(type, parsed.title, {
         content: parsed.chronicle,
         lore: parsed.lore,
-        connections: parsed.wikiLinks || [],
+        connections,
+        image: parsed.image,
+        thumbnail: parsed.thumbnail,
       });
 
       vault.selectedEntityId = id;

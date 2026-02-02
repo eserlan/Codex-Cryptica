@@ -125,10 +125,9 @@ class OracleStore {
     this.saveToDB();
   }
 
-  clearKey() {
-    getDB().then(db => {
-      db.delete("settings", "ai_api_key");
-    });
+  async clearKey() {
+    const db = await getDB();
+    await db.delete("settings", "ai_api_key");
     this.apiKey = null;
     this.clearMessages();
     this.lastUpdated = Date.now();
@@ -336,15 +335,28 @@ class OracleStore {
         // Auto-Creation Flow for /create
         if (isCreateRequest && !import.meta.env.SSR) {
           const { parseOracleResponse } = await import("editor-core");
+          const { sanitizeId } = await import("../utils/markdown");
           const parsed = parseOracleResponse(fullResponse);
 
           if (parsed.title && !vault.isGuest) {
             try {
-              const type = (parsed.type || "npc") as any;
+              const type = (parsed.type || "character") as any;
+              const connections = [
+                ...(parsed.wikiLinks || []),
+                ...(parsed.connections || []).map(name => ({
+                  target: sanitizeId(name),
+                  label: name,
+                  type: 'related_to',
+                  strength: 1.0
+                }))
+              ];
+
               const id = await vault.createEntity(type, parsed.title, {
                 content: parsed.chronicle,
                 lore: parsed.lore,
-                connections: parsed.wikiLinks || []
+                connections,
+                image: parsed.image,
+                thumbnail: parsed.thumbnail
               });
 
               // Provide visual confirmation

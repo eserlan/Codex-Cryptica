@@ -8,7 +8,7 @@
     let showForm = $state(false);
     let showShare = $state(false);
     let newTitle = $state("");
-    let newType = $state<string>("npc");
+    let newType = $state<string>("character");
 
     // Subscribe to share status
     let isShared = $derived($cloudConfig.shareStatus === "public");

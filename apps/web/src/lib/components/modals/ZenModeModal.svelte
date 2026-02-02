@@ -23,6 +23,7 @@
     let editTitle = $state("");
     let editContent = $state("");
     let editLore = $state("");
+    let editType = $state("");
     let editImage = $state("");
     let editDate = $state<Entity["date"]>();
     let editStartDate = $state<Entity["start_date"]>();
@@ -158,6 +159,7 @@
         editTitle = entity.title;
         editContent = entity.content || "";
         editLore = entity.lore || "";
+        editType = entity.type;
         editImage = entity.image || "";
         editDate = entity.date;
         editStartDate = entity.start_date;
@@ -180,7 +182,7 @@
                 date: editDate,
                 start_date: editStartDate,
                 end_date: editEndDate,
-                type: entity.type,
+                type: editType,
             });
             isEditing = false;
         } catch (err) {
@@ -369,10 +371,24 @@
                                 categories.getCategory(entity.type)?.icon,
                             )} text-theme-primary w-5 h-5"
                         ></span>
-                        <span
-                            class="text-[10px] font-bold tracking-widest text-theme-primary uppercase"
-                            >{entity.type}</span
-                        >
+                        {#if isEditing}
+                            <select
+                                bind:value={editType}
+                                class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase focus:outline-none rounded ml-2"
+                            >
+                                {#each categories.list as cat}
+                                    <option value={cat.id}
+                                        >{cat.label ||
+                                            cat.id.toUpperCase()}</option
+                                    >
+                                {/each}
+                            </select>
+                        {:else}
+                            <span
+                                class="text-[10px] font-bold tracking-widest text-theme-primary uppercase"
+                                >{entity.type}</span
+                            >
+                        {/if}
                     </div>
                     {#if isEditing}
                         <input

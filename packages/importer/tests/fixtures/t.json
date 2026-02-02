@@ -1,0 +1,169 @@
+[
+  {
+    "title": "Benjamin Bowman",
+    "type": "Character",
+    "content": "Known as **The Egyptologist**, Benjamin Bowman was once one of the heirs to the British Empire. After the catastrophic events of the early 21st century, he spent years in hiding before returning to London to salvage his resources. \n\nHe is a member of **The Coterie** and was a participant in the events of **1 - Chapter One: The Ghost Town**.",
+    "frontmatter": {
+      "aliases": "The Egyptologist",
+      "race": "Vampire",
+      "image": "https://img.alchemyrpg.com/users/6448af0b5ae9a95f29b36d0c/characters/67c9f54736c8fa8f1ef54391/m7z88k07.jpg",
+      "concept": "Character"
+    },
+    "detectedLinks": [
+      "The Coterie",
+      "1 - Chapter One: The Ghost Town",
+      "London",
+      "The British Empire"
+    ]
+  },
+  {
+    "title": "Bill",
+    "type": "Character",
+    "content": "A vampire and member of **The Coterie**. Along with **Benjamin Bowman**, Bill was an heir to the British Empire's supernatural resources. He spent over a century in the **Vampire Club** on **The Strand** before the **Fall of London** forced him into hiding.",
+    "frontmatter": {
+      "race": "Vampire",
+      "concept": "Character"
+    },
+    "detectedLinks": [
+      "The Coterie",
+      "Benjamin Bowman",
+      "The British Empire",
+      "Vampire Club",
+      "The Strand",
+      "Fall of London",
+      "1 - Chapter One: The Ghost Town"
+    ]
+  },
+  {
+    "title": "Brandr the Captain",
+    "type": "Character",
+    "content": "Brandr Sveinsson is a Viking captain reborn in leather and steel, equal parts outlaw and noble. A Brujah of the 10th generation, he functions as the leader of **The Oathbound** biker gang in modern London. He carries the weight of centuries, adorned with Norse runes and tattoos of longships and wolves.\n\n### Attributes\n- **Physical**: Strength 4, Dexterity 3, Stamina 3\n- **Social**: Charisma 3, Manipulation 2, Composure 2\n- **Mental**: Intelligence 2, Wits 3, Resolve 3\n\n### Disciplines\n- **Potence**: Soaring Leap, Lethal Body\n- **Celerity**: Cat’s Grace, Rapid Reflexes\n- **Presence**: Awe\n\n### Convictions & Touchstones\n- **Conviction**: Never betray your crew.\n- **Touchstone**: Edward “Ned” Ashcroft (wealthy lawyer and Viking reenactor).",
+    "frontmatter": {
+      "name": "Brandr Sveinsson",
+      "clan": "Brujah",
+      "generation": "10th",
+      "predatorType": "Osiris",
+      "gender": "Male",
+      "player": "espene",
+      "image": "https://cdn.midjourney.com/126cb034-7b08-49a3-a376-0c4f914f54fc/0_0.png"
+    },
+    "detectedLinks": [
+      "The Oathbound",
+      "The Coterie",
+      "London",
+      "Edward “Ned” Ashcroft",
+      "Brujah"
+    ]
+  },
+  {
+    "title": "The Oathbound",
+    "type": "Faction",
+    "content": "A modern outlaw biker gang with Viking flair, the Oathbound are half-gang, half-cult. They are fiercely loyal to **Brandr the Captain**. To mortals, they are a rough band of bikers; to Kindred, they are a living warband reflecting the Brujah need for loyalty and fire.\n\n### The Inner Circle\n- **Skald (Jamie Kerr)**: Storyteller and hype-man.\n- **Bear (Connor Doyle)**: Muscle and enforcer.\n- **Witch (Sasha Mikelson)**: Occultist and spiritualist.\n- **Rat (Lewis Harker)**: Scavenger and fixer.\n- **Shieldmaiden (Kelly Grant)**: Second-in-command.\n\n### Symbols & Identity\n- **Patch**: A wolf’s head with crossed axes.\n- **Territory**: Old warehouses and pubs near the Thames in East London.",
+    "frontmatter": {
+      "type": "Biker Gang",
+      "leader": "Brandr the Captain",
+      "image": "https://cdn.midjourney.com/876767ac-552d-4728-be19-8feb5d48f1db/0_1.png"
+    },
+    "detectedLinks": [
+      "Brandr the Captain",
+      "London",
+      "Brujah"
+    ]
+  },
+  {
+    "title": "1 - Chapter One: The Ghost Town",
+    "type": "Lore",
+    "content": "Fragments of **The Coterie**, specifically **Benjamin Bowman** and **Bill**, return to London after years in hiding. The city is described as a desolate ghost town overrun by the living. They seek a meeting with **The Toreador Anna Hyde of the Queen's Knights** on **Southbank**.\n\nHistorical Context:\n- The height of their promise was at the **Vampire Club** in 1899.\n- The **Second Inquisition**, **Fall of London**, and **Conclave of Prague** (2012) shattered their influence.\n- The **Second Convention of Prague** (2021) destroyed what remained.",
+    "frontmatter": {
+      "concept": "Event",
+      "dateBegin": "2025-01-03",
+      "image": "/assets/rf_images/event/30118617_s_1.jpg"
+    },
+    "detectedLinks": [
+      "The Coterie",
+      "Benjamin Bowman",
+      "Bill",
+      "London",
+      "The Toreador Anna Hyde of the Queen's Knights",
+      "Southbank",
+      "Vampire Club",
+      "The Strand",
+      "Second Inquisition",
+      "Fall of London",
+      "Conclave of Prague",
+      "Second Convention of Prague"
+    ]
+  },
+  {
+    "title": "The Coterie",
+    "type": "Faction",
+    "content": "An adventuring group of vampires consisting of **Benjamin Bowman**, **Bill**, and **Brandr the Captain**. Once empire builders within the **Camarilla**, they were fractured by the Second Inquisition and the events in Prague.",
+    "frontmatter": {
+      "concept": "Group",
+      "category": "Adventuring Group",
+      "image": "/assets/rf_images/group/121513479_s.jpg"
+    },
+    "detectedLinks": [
+      "Benjamin Bowman",
+      "Bill",
+      "Brandr the Captain",
+      "The Camarilla",
+      "Second Inquisition"
+    ]
+  },
+  {
+    "title": "London",
+    "type": "Location",
+    "content": "A major city and former stronghold for **The Coterie**. Following the **Fall of London** and the **Second Inquisition**, it has become a 'desolate ghost town' for vampires, heavily monitored by the living.",
+    "frontmatter": {
+      "concept": "Place",
+      "category": "City"
+    },
+    "detectedLinks": [
+      "Southbank",
+      "The Strand",
+      "The British Empire",
+      "Fall of London"
+    ]
+  },
+  {
+    "title": "Vampire",
+    "type": "Lore",
+    "content": "Immortal beings who feed on the blood of the living. They possess supernatural strength, speed, and glamour. In this chronicle, they are emerging from hiding following the purge by the **Second Inquisition**.",
+    "frontmatter": {
+      "concept": "Race",
+      "category": "Attribute"
+    },
+    "detectedLinks": [
+      "Bill",
+      "Brandr the Captain",
+      "Second Inquisition"
+    ]
+  },
+  {
+    "title": "The Camarilla",
+    "type": "Faction",
+    "content": "A powerful global sect of vampires that was significantly shattered by the **Conclave of Prague** in 2012 and the **Second Inquisition**.",
+    "frontmatter": {
+      "concept": "Group"
+    },
+    "detectedLinks": [
+      "Conclave of Prague",
+      "Second Inquisition"
+    ]
+  },
+  {
+    "title": "Southbank",
+    "type": "Location",
+    "content": "An area in **London** where **The Toreador Anna Hyde** agreed to meet with fragments of **The Coterie** under strict rules.",
+    "frontmatter": {
+      "concept": "Place",
+      "region": "London"
+    },
+    "detectedLinks": [
+      "London",
+      "The Toreador Anna Hyde",
+      "The Coterie"
+    ]
+  }
+]

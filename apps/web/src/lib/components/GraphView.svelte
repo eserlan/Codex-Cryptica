@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, untrack } from "svelte";
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
@@ -201,7 +201,9 @@
         }, HOVER_DELAY);
       });
 
-      cy.on("mouseout", "node", () => {
+      cy.on("mouseout", "node", (evt) => {
+        const node = evt.target;
+        console.log("[GraphView] mouseout node:", node.id());
         clearTimeout(hoverTimeout);
         hoveredEntityId = null;
         hoverPosition = null;
@@ -298,9 +300,16 @@
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
 
+  let lastStyle: any[] = [];
   $effect(() => {
-    if (cy && graphStyle) {
-      cy.style(graphStyle);
+    const currentStyle = graphStyle;
+    const currentCy = cy;
+    if (currentCy && currentStyle) {
+      const _isNewRef = currentStyle !== lastStyle;
+      lastStyle = currentStyle;
+      untrack(() => {
+        currentCy.style(currentStyle);
+      });
     }
   });
 
@@ -329,7 +338,8 @@
 
   // Reactive effect to resolve node images
   $effect(() => {
-    if (cy && graph.elements) {
+    const currentCy = cy;
+    if (currentCy && graph.elements) {
       const currentElements = graph.elements;
       const timeout = setTimeout(async () => {
         try {
@@ -379,7 +389,6 @@
                     h = w * 2.5;
                   }
 
-                  const currentCy = cy;
                   if (currentCy) {
                     currentCy.batch(() => {
                       const node = currentCy.$id(data.id);
@@ -405,34 +414,46 @@
   $effect(() => {
     if (cy) {
       // Re-apply timeline layout if mode or axis changes
-      const _mode = graph.timelineMode;
-      const _axis = graph.timelineAxis;
-      const _scale = graph.timelineScale;
-      applyCurrentLayout(false);
+      untrack(() => {
+        applyCurrentLayout(false);
+      });
     }
   });
 
   $effect(() => {
-    if (cy) {
-      applyFocus(selectedId);
+    const currentCy = cy;
+    if (currentCy) {
+      console.log("[GraphView] Focus Effect Triggered:", selectedId);
+      untrack(() => {
+        applyFocus(selectedId);
+      });
     }
-    if (cy && selectedId) {
-      const node = cy.$id(selectedId);
+    if (currentCy && selectedId) {
+      const node = currentCy.$id(selectedId);
       if (node.length > 0) {
         // Select the node in Cytoscape if not already selected
         if (!node.selected()) {
-          cy.$(":selected").unselect(); // Optional: clear other selections
-          node.select();
+          untrack(() => {
+            currentCy.$(":selected").unselect(); // Optional: clear other selections
+            node.select();
+          });
         }
 
         if (skipNextCenter) {
+          console.log("[GraphView] Skipping center as requested");
           skipNextCenter = false;
         } else {
-          cy.animate({
-            center: { eles: node },
-            duration: 500,
-            easing: "ease-out-cubic",
-          });
+          console.log("[GraphView] Centering on node:", selectedId);
+          const currentCy = cy;
+          if (currentCy) {
+            untrack(() => {
+              currentCy.animate({
+                center: { eles: node },
+                duration: 500,
+                easing: "ease-out-cubic",
+              });
+            });
+          }
         }
       }
     }
@@ -440,27 +461,30 @@
 
   // Manual fit request listener
   $effect(() => {
-    if (cy && graph.fitRequest > 0) {
+    const currentCy = cy;
+    if (currentCy && graph.fitRequest > 0) {
       const _req = graph.fitRequest; // track dependency
-      cy.animate({
-        fit: {
-          eles: cy.elements(),
-          padding: 50,
-        },
-        duration: 800,
-        easing: "ease-out-cubic",
+      console.log("[GraphView] Fit Request Triggered:", _req);
+      untrack(() => {
+        currentCy.animate({
+          fit: {
+            eles: currentCy.elements(),
+            padding: 50,
+          },
+          duration: 800,
+          easing: "ease-out-cubic",
+        });
       });
     }
   });
 
   $effect(() => {
-    if (cy && graph.elements) {
-      // console.log("GraphView Effect Triggered. Elements:", graph.elements.length);
-
+    const currentCy = cy;
+    if (currentCy && graph.elements) {      
       try {
-        cy.resize(); // Ensure viewport is up to date
+        currentCy.resize(); // Ensure viewport is up to date
 
-        const currentElements = cy.elements();
+        const currentElements = currentCy.elements();
         const currentIds = new Set(currentElements.map((el) => el.id()));
         const targetIds = new Set(graph.elements.map((el) => el.data.id));
 
@@ -469,7 +493,7 @@
           (el) => !targetIds.has(el.id()),
         );
         if (removedElements.length > 0) {
-          cy.remove(removedElements);
+          currentCy.remove(removedElements);
         }
 
         // 2. Add new elements safely
@@ -484,7 +508,7 @@
 
           // Always add nodes first
           if (newNodes.length > 0) {
-            cy.add(newNodes);
+            currentCy.add(newNodes);
           }
 
           // Then add edges, but ONLY if both source and target exist in the graph
@@ -499,10 +523,10 @@
             const sourceId = edgeData.source!;
             const targetId = edgeData.target!;
 
-            if (!cy) return false;
+            if (!currentCy) return false;
 
-            const sourceExists = cy.$id(sourceId).nonempty();
-            const targetExists = cy.$id(targetId).nonempty();
+            const sourceExists = currentCy.$id(sourceId).nonempty();
+            const targetExists = currentCy.$id(targetId).nonempty();
 
             if (!sourceExists || !targetExists) {
               console.warn(
@@ -515,7 +539,7 @@
 
           if (validEdges.length > 0) {
             try {
-              cy.add(validEdges);
+              currentCy.add(validEdges);
             } catch (e) {
               console.warn("Failed to add some edges to graph", e);
             }
@@ -525,7 +549,7 @@
         // 3. Update existing elements (labels, etc) - Data Sync only
         graph.elements.forEach((el) => {
           if (currentIds.has(el.data.id)) {
-            const node = cy?.$id(el.data.id);
+            const node = currentCy?.$id(el.data.id);
             if (node) {
               // Only update if data actually changed to avoid style recalc?
               // Cytoscape handles this reasonably well, but we can be explicit if needed.
@@ -548,7 +572,9 @@
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
                 applyCurrentLayout(true);
-                initialLoaded = true;
+                untrack(() => {
+                  initialLoaded = true;
+                });
               }
             }, 500); // 500ms window for more nodes to appear
           } else {

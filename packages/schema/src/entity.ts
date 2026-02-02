@@ -59,7 +59,7 @@ export type Entity = z.infer<typeof EntitySchema>;
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: "npc", label: "NPC", color: "#60a5fa", icon: "lucide:user" },
+  { id: "character", label: "Character", color: "#60a5fa", icon: "lucide:user" },
   { id: "creature", label: "Creature", color: "#f87171", icon: "lucide:paw-print" },
   { id: "location", label: "Location", color: "#4ade80", icon: "lucide:map-pin" },
   { id: "item", label: "Item", color: "#facc15", icon: "lucide:package" },
