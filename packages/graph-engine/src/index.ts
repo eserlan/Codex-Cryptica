@@ -5,6 +5,7 @@ cytoscape.use(fcose);
 
 export * from "./transformer";
 export * from "./layouts/timeline";
+export * from "./layouts/orbit";
 export * from "./renderer/overlays";
 export * from "./defaults";
 import { DEFAULT_LAYOUT_OPTIONS } from "./defaults";
