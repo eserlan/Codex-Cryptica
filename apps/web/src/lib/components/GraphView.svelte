@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
-  import { onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy, untrack } from "svelte";
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
@@ -415,15 +415,17 @@
   // Center on selection when it changes externally
   $effect(() => {
     if (cy) {
-      // Re-apply timeline layout if mode or axis changes
-      const _mode = graph.timelineMode;
-      const _axis = graph.timelineAxis;
-      const _scale = graph.timelineScale;
       // Re-apply orbit layout if params change
       const _orbit = graph.orbitMode;
       const _center = graph.centralNodeId;
       
-      applyCurrentLayout();
+      untrack(() => {
+        // Defer layout application to break synchronous reactive cycles
+        // preventing 'effect_update_depth_exceeded' errors
+        setTimeout(() => {
+          applyCurrentLayout(false);
+        }, 0);
+      });
     }
   });
 
