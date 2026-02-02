@@ -27,6 +27,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - Vault Metadata (Markdown Frontmatter or `.codex/config.json`) (028-styling-templates)
 - TypeScript 5.x + `cytoscape` (Core), `svelte` (UI) (032-central-node-orbit)
 - N/A (Transient view state) (032-central-node-orbit)
+- TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation) (033-connection-labels)
+- Markdown YAML Frontmatter (Local-First) via `vault` store (033-connection-labels)
 
 - TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
 - OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
@@ -57,14 +59,9 @@ npm test; npm run lint
 TypeScript: Follow standard conventions
 
 ## Recent Changes
+- 033-connection-labels: Added TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation)
 - 032-central-node-orbit: Added TypeScript 5.x + `cytoscape` (Core), `svelte` (UI)
 - 030-rich-text-formatting: Added Tiptap, Floating UI
-- 028-styling-templates: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, Tailwind CSS 4.x, `idb` (for settings)
-- 030-rich-text-formatting: Added Tiptap, Floating UI
-- 028-styling-templates: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, Tailwind CSS 4.x, `idb` (for settings)
-- 026-world-timeline: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Turborepo, Vitest, Playwright
-- 024-delete-nodes: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `editor-core`
-- 022-oracle-data-parsing: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (UI Framework), `packages/editor-core` (for content handling logic)
 
 
 
