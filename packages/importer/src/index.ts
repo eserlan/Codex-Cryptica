@@ -5,3 +5,4 @@ export * from './parsers/pdf';
 export * from './parsers/json';
 export * from './oracle/analyzer';
 export * from './persistence';
+export * from './utils';
