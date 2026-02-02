@@ -41,6 +41,10 @@ class GraphStore {
   });
   timelineScale = $state(100);
 
+  // Orbit State
+  orbitMode = $state(false);
+  centralNodeId = $state<string | null>(null);
+
   eras = $state<Era[]>([]);
 
   stats = $derived({
@@ -86,6 +90,19 @@ class GraphStore {
 
   setTimelineAxis(axis: "x" | "y") {
     this.timelineAxis = axis;
+  }
+
+  toggleOrbit() {
+    this.orbitMode = !this.orbitMode;
+    if (!this.orbitMode) {
+        this.centralNodeId = null;
+    }
+  }
+
+  setCentralNode(nodeId: string) {
+    this.centralNodeId = nodeId;
+    this.orbitMode = true;
+    this.timelineMode = false; // Disable timeline mode if active
   }
 
   applyTimelineLayout(cy: Core) {

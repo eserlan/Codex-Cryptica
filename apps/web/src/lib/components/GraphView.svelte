@@ -13,7 +13,10 @@
   import Minimap from "$lib/components/graph/Minimap.svelte";
   import TimelineControls from "$lib/components/graph/TimelineControls.svelte";
   import TimelineOverlay from "$lib/components/graph/TimelineOverlay.svelte";
+  import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
+  import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
+  import { setCentralNode, clearOrbit } from "graph-engine";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -95,7 +98,14 @@
 
     if (graph.timelineMode) {
       graph.applyTimelineLayout(cy);
+    } else if (graph.orbitMode && graph.centralNodeId) {
+       setCentralNode(cy, graph.centralNodeId);
     } else {
+        // If we were in orbit mode and just exited, this block runs because !orbitMode
+        // Or if we were just default, this runs.
+        // We can explicitly clear if we want, but re-running 'cose' effectively clears it.
+        // We could call clearOrbit(cy) but it just runs 'cose' anyway.
+        
       currentLayout = cy.layout({
         name: "cose",
         animate: true,
@@ -212,6 +222,9 @@
             sourceId = null;
             connectMode = false; // Auto exit connect mode
           }
+        } else if (graph.orbitMode) {
+            // US2: Switch center if clicked in orbit mode
+            graph.setCentralNode(targetId);
         } else {
           // Selection Logic for Detail Panel
           skipNextCenter = true;
@@ -356,6 +369,10 @@
       const _mode = graph.timelineMode;
       const _axis = graph.timelineAxis;
       const _scale = graph.timelineScale;
+      // Re-apply orbit layout if params change
+      const _orbit = graph.orbitMode;
+      const _center = graph.centralNodeId;
+      
       applyCurrentLayout();
     }
   });
@@ -646,6 +663,8 @@
 
   {#if cy}
     <TimelineOverlay {cy} />
+    <OrbitControls />
+    <ContextMenu {cy} />
   {/if}
 
   <!-- Hover Tooltip -->
