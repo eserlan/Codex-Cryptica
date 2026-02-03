@@ -23,6 +23,9 @@ out/
 # Turborepo
 .turbo/
 
+# SvelteKit
+.svelte-kit/
+
 # Editor
 .vscode/
 .idea/

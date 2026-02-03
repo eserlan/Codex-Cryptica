@@ -15,6 +15,12 @@ export interface ChatMessage {
   sources?: string[]; // IDs of entities consulted for this message (FR-001)
 }
 
+export interface UndoableAction {
+  description: string;
+  revert: () => Promise<void>;
+  timestamp: number;
+}
+
 class OracleStore {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
@@ -23,6 +29,9 @@ class OracleStore {
   apiKey = $state<string | null>(null);
   tier = $state<"lite" | "advanced">("lite");
   isModal = $state(false);
+
+  // Undo Stack (Transient, not persisted to DB)
+  undoStack = $state<UndoableAction[]>([]);
 
   private channel: BroadcastChannel | null = null;
 
@@ -50,6 +59,56 @@ class OracleStore {
 
       // Request state from other windows on load
       this.channel.postMessage({ type: "REQUEST_STATE" });
+    }
+  }
+
+  pushUndoAction(description: string, revert: () => Promise<void>) {
+    this.undoStack.push({
+      description,
+      revert,
+      timestamp: Date.now()
+    });
+    // Limit stack size to prevent memory leaks, keep last 50 actions
+    if (this.undoStack.length > 50) {
+      this.undoStack.shift();
+    }
+  }
+
+  async undo() {
+    if (this.undoStack.length === 0) return;
+    
+    const action = this.undoStack.pop();
+    if (action) {
+      try {
+        await action.revert();
+        
+        // Show success system message
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `↩️ Undid action: **${action.description}**`
+          }
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+      } catch (err: any) {
+        console.error("Undo failed:", err);
+        // Push it back if it failed? Or just error out. 
+        // Better to error out to avoid infinite loops if the state is broken.
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `❌ Undo failed: ${err.message}`
+          }
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+      }
     }
   }
 

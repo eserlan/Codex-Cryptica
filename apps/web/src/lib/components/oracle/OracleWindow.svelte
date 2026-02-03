@@ -13,7 +13,25 @@
     );
     oracle.toggle(); // Close the docked one when popping out
   };
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (!oracle.isOpen) return;
+    
+    // Check for Ctrl+Z (Undo)
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      // Ignore if user is typing in an input/textarea
+      const target = e.target as HTMLElement;
+      const isInput = target.matches('input, textarea, [contenteditable="true"]');
+      
+      if (!isInput) {
+        e.preventDefault();
+        oracle.undo();
+      }
+    }
+  };
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
