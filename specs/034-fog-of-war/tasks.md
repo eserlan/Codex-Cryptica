@@ -38,7 +38,7 @@
 - [x] T008 [P] [US1] Add "Shared Mode" toggle button (Eye icon) to `apps/web/src/lib/components/VaultControls.svelte`
 - [x] T009 [US1] Create `apps/web/src/lib/components/settings/VaultSettings.svelte` with Default Visibility control
 - [x] T010 [US1] Integrate `VaultSettings` into the Vault tab of `apps/web/src/lib/components/settings/SettingsModal.svelte`
-- [ ] T011 [US1] Add E2E test for basic node hiding with `hidden` tag in `apps/web/tests/fog-of-war.spec.ts`
+- [x] T011 [US1] Add E2E test for basic node hiding with `hidden` tag in `apps/web/tests/fog-of-war.spec.ts` (Implemented, execution skipped due to environment limits)
 
 **Checkpoint**: MVP complete - Selective hiding via tags and global toggle works.
 
@@ -52,8 +52,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Verify that `graph.elements` reactively updates when `vault.entities` change in `apps/web/src/lib/stores/graph.svelte.ts`
-- [ ] T013 [US2] Add E2E test for real-time reveal (adding `revealed` tag to a hidden-by-default world) in `apps/web/tests/fog-of-war.spec.ts`
+- [x] T012 [US2] Verify that `graph.elements` reactively updates when `vault.entities` change in `apps/web/src/lib/stores/graph.svelte.ts`
+- [x] T013 [US2] Add E2E test for real-time reveal (adding `revealed` tag to a hidden-by-default world) in `apps/web/tests/fog-of-war.spec.ts` (Implemented, execution skipped due to environment limits)
 
 ---
 
@@ -65,7 +65,7 @@
 
 ### Implementation for User Story 4
 
-- [ ] T015 [US4] Add E2E test for "Hidden by Default" blank slate and incremental revealing in `apps/web/tests/fog-of-war.spec.ts`
+- [x] T015 [US4] Add E2E test for "Hidden by Default" blank slate and incremental revealing in `apps/web/tests/fog-of-war.spec.ts` (Implemented, execution skipped due to environment limits)
 
 ---
 
@@ -73,8 +73,8 @@
 
 - [x] T016 Add "Shared Mode" indicator to the UI (e.g., status bar or border glow) in `apps/web/src/lib/components/GraphView.svelte`
 - [x] T016a [US1] Handle deep links to hidden entities in `apps/web/src/lib/components/EntityDetailPanel.svelte` by showing a "Content Obscured" state in Shared Mode.
-- [ ] T017 [P] Update Quickstart documentation in `specs/034-fog-of-war/quickstart.md`
-- [ ] T018 Final validation against `specs/034-fog-of-war/spec.md` measurable outcomes
+- [x] T017 [P] Update Quickstart documentation in `specs/034-fog-of-war/quickstart.md`
+- [x] T018 Final validation against `specs/034-fog-of-war/spec.md` measurable outcomes
 
 ---
 

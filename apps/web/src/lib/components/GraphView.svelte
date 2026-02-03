@@ -4,6 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";

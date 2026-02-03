@@ -1,6 +1,6 @@
 import { parseMarkdown, stringifyEntity, sanitizeId } from "../utils/markdown";
 import { walkDirectory, readFile, writeFile } from "../utils/fs";
-import { getPersistedHandle, persistHandle, clearPersistedHandle } from "../utils/idb";
+import { getPersistedHandle, persistHandle, clearPersistedHandle, getDB } from "../utils/idb";
 import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity, Connection } from "schema";
 import { searchService } from "../services/search";
