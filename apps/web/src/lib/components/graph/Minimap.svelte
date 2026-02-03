@@ -42,14 +42,14 @@
   let scale = $state(1); // minimap pixels / graph units
 
   // Toggle Visibility (US4)
-  let collapsed = $state(true);
+  let collapsed = $state(false); // Default to expanded for visibility
   const toggleMinimap = () => (collapsed = !collapsed);
 
   const updateProjection = () => {
     if (!cy) return;
-    const eles = cy.elements();
+    const eles = cy.elements().filter((el) => el.isNode()); // Only nodes for projection
 
-    // If there are no elements, avoid calling boundingBox and reset to safe defaults
+    // If there are no nodes, avoid calling boundingBox and reset to safe defaults
     if (!eles || eles.length === 0) {
       graphBounds = { x1: 0, y1: 0, x2: 0, y2: 0, w: 1, h: 1 };
       scale = 1;
@@ -71,13 +71,8 @@
     // Add padding
     const x1 = bb.x1 - SCALE_PADDING;
     const y1 = bb.y1 - SCALE_PADDING;
-    const w = bb.w + SCALE_PADDING * 2;
-    const h = bb.h + SCALE_PADDING * 2;
-
-    // Avoid divide by zero and non-finite dimensions
-    if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
-      return;
-    }
+    const w = Math.max(bb.w + SCALE_PADDING * 2, 100);
+    const h = Math.max(bb.h + SCALE_PADDING * 2, 100);
 
     // Calculate 'contain' fit scale
     const scaleX = width / w;
@@ -97,12 +92,25 @@
     for (let i = 0; i < cyNodes.length; i++) {
       const node = cyNodes[i];
       const pos = node.position();
-      // Simple style extraction - stick to theme color for MVP
+      
+      // Use border-color as the primary minimap color (this is where category colors are applied)
+      let color = node.style("border-color");
+      
+      // Fallback to background-color if border is not useful
+      if (!color || color === "transparent" || color.includes("rgba(0, 0, 0, 0)")) {
+        color = node.style("background-color");
+      }
+      
+      // Ultimate fallback to theme primary
+      if (!color || color === "transparent" || color.includes("rgba(0, 0, 0, 0)")) {
+        color = "#4ade80";
+      }
+
       newNodes.push({
         id: node.id(),
         x: pos.x,
         y: pos.y,
-        color: node.style("background-color") || "#4ade80",
+        color,
       });
     }
     nodes = newNodes;
@@ -133,20 +141,41 @@
       // 2. Clear
       ctx.clearRect(0, 0, width, height);
 
-      // 3. Draw Nodes (Simple dots)
+      // 3. Draw Nodes (Category-colored dots)
       const contentW = graphBounds.w * scale;
       const contentH = graphBounds.h * scale;
       const offsetX = (width - contentW) / 2;
       const offsetY = (height - contentH) / 2;
 
+      // Draw background glow/dots first for better contrast
+      ctx.globalAlpha = 0.3;
+      for (const node of nodes) {
+        const mx = (node.x - graphBounds.x1) * scale + offsetX;
+        const my = (node.y - graphBounds.y1) * scale + offsetY;
+        if (mx < -5 || mx > width + 5 || my < -5 || my > height + 5) continue;
+
+        ctx.fillStyle = node.color;
+        ctx.beginPath();
+        ctx.arc(mx, my, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1.0;
+
+      // Draw main dots with stroke
       for (const node of nodes) {
         const mx = (node.x - graphBounds.x1) * scale + offsetX;
         const my = (node.y - graphBounds.y1) * scale + offsetY;
 
+        if (mx < -5 || mx > width + 5 || my < -5 || my > height + 5) continue;
+
         ctx.fillStyle = node.color;
+        ctx.strokeStyle = "rgba(0,0,0,0.5)";
+        ctx.lineWidth = 1;
+        
         ctx.beginPath();
-        ctx.arc(mx, my, 2, 0, Math.PI * 2);
+        ctx.arc(mx, my, 3.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
       }
 
       // 4. Update Viewport Rect Style
@@ -164,6 +193,19 @@
       animationFrameId = requestAnimationFrame(draw);
     }
   };
+
+  // Reactive redraw on state changes
+  $effect(() => {
+    // Track dependencies
+    const _n = nodes;
+    const _b = graphBounds;
+    const _s = scale;
+    const _c = collapsed;
+    
+    if (!_c) {
+      requestRedraw();
+    }
+  });
 
   let viewportX = $state(0);
   let viewportY = $state(0);
@@ -260,16 +302,15 @@
   onMount(() => {
     ctx = canvas.getContext("2d");
 
-    // Initial sync
-    syncGraphToMinimap();
-    updateProjection();
-    requestRedraw();
-
     // Listeners
     if (cy) {
-      cy.on("add remove position", handleGraphUpdate);
+      cy.on("add remove position data", handleGraphUpdate);
       cy.on("pan zoom resize", handleViewportUpdate);
+      cy.on("layoutstop", handleGraphUpdate);
     }
+
+    // Initial sync
+    handleGraphUpdate();
   });
 
   onDestroy(() => {
@@ -277,8 +318,9 @@
       cancelAnimationFrame(animationFrameId);
     }
     if (cy) {
-      cy.off("add remove position", handleGraphUpdate);
+      cy.off("add remove position data", handleGraphUpdate);
       cy.off("pan zoom resize", handleViewportUpdate);
+      cy.off("layoutstop", handleGraphUpdate);
     }
   });
 </script>
