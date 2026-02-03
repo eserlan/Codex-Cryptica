@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Core } from "cytoscape";
   import { onMount, onDestroy } from "svelte";
+  import { isTransparent } from "$lib/utils/color";
 
   interface Props {
     cy: Core;
@@ -44,16 +45,6 @@
   // Toggle Visibility (US4)
   let collapsed = $state(false); // Default to expanded for visibility
   const toggleMinimap = () => (collapsed = !collapsed);
-
-  const isTransparent = (color: string) => {
-    if (!color || color === "transparent") return true;
-    const normalized = color.replace(/\s+/g, "").toLowerCase();
-    return (
-      normalized.includes("rgba(0,0,0,0)") ||
-      normalized.includes(",0)") ||
-      normalized === "transparent"
-    );
-  };
 
   const updateProjection = () => {
     if (!cy) return;
