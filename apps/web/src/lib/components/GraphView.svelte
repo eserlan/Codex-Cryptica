@@ -209,8 +209,7 @@
         }, HOVER_DELAY);
       });
 
-      cy.on("mouseout", "node", (evt) => {
-        const node = evt.target;
+      cy.on("mouseout", "node", (_evt) => {
         clearTimeout(hoverTimeout);
         hoveredEntityId = null;
         hoverPosition = null;
