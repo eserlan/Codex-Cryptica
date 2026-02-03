@@ -18,7 +18,6 @@ describe('DocxParser Image Extraction', () => {
     
     // Create a mock base64 image
     const mockBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVR4nGNiAAAABgADNjd8qAAAAABJRU5ErkJggg==';
-    const mockImgSrc = `data:image/png;base64,${mockBase64}`;
 
     // Mock mammoth to simulate an image in the output
     (mammoth.convertToHtml as any).mockImplementation(async (input: any, options: any) => {

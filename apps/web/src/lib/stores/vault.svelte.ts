@@ -715,6 +715,36 @@ class VaultStore {
     }
   }
 
+  async saveImportedAsset(blob: Blob, entityId: string, originalName: string): Promise<{ image: string; thumbnail: string }> {
+    if (!this.rootHandle) throw new Error("Vault not open");
+    const imagesDir = await this.rootHandle.getDirectoryHandle("images", { create: true });
+
+    const timestamp = Date.now();
+    const hash = crypto.randomUUID().split("-")[0];
+    const extension = originalName.split(".").pop() || "png";
+    const baseFilename = `${entityId}-${timestamp}-${hash}`;
+    const filename = `${baseFilename}.${extension}`;
+    const thumbFilename = `${baseFilename}-thumb.webp`;
+
+    // Save original
+    const fileHandle = await imagesDir.getFileHandle(filename, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+
+    // Generate and save thumbnail
+    const thumbBlob = await this.generateThumbnail(blob, 512);
+    const thumbHandle = await imagesDir.getFileHandle(thumbFilename, { create: true });
+    const thumbWritable = await thumbHandle.createWritable();
+    await thumbWritable.write(thumbBlob);
+    await thumbWritable.close();
+
+    return {
+      image: `./images/${filename}`,
+      thumbnail: `./images/${thumbFilename}`,
+    };
+  }
+
   async createEntity(type: Entity["type"], title: string, initialData?: Partial<Entity>): Promise<string> {
     if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
     const id = sanitizeId(title);

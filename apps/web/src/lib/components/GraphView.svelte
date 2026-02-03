@@ -211,7 +211,6 @@
 
       cy.on("mouseout", "node", (evt) => {
         const node = evt.target;
-        console.log("[GraphView] mouseout node:", node.id());
         clearTimeout(hoverTimeout);
         hoveredEntityId = null;
         hoverPosition = null;
@@ -470,7 +469,6 @@
     const currentCy = cy;
     if (currentCy && graph.fitRequest > 0) {
       const _req = graph.fitRequest; // track dependency
-      console.log("[GraphView] Fit Request Triggered:", _req);
       untrack(() => {
         currentCy.animate({
           fit: {

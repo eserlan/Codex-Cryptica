@@ -88,19 +88,30 @@
             return "note";
         };
 
-        const batchData = toSave.map(entity => {
+        const batchData = await Promise.all(toSave.map(async entity => {
             const title = entity.suggestedTitle;
+            const entityId = sanitizeId(title);
             const type = mapType(entity.suggestedType) as any;
             
             // Check for image metadata in extracted assets
             const imgRef = entity.frontmatter.image;
             let width = entity.frontmatter.width;
             let height = entity.frontmatter.height;
+            let imagePath = entity.frontmatter.image;
+            let thumbnailPath = entity.frontmatter.thumbnail;
 
             if (imgRef && extractedAssets.has(imgRef)) {
                 const asset = extractedAssets.get(imgRef);
                 width = width || asset.width;
                 height = height || asset.height;
+
+                try {
+                    const saved = await vault.saveImportedAsset(asset.blob, entityId, asset.originalName);
+                    imagePath = saved.image;
+                    thumbnailPath = saved.thumbnail;
+                } catch (err) {
+                    console.error("Failed to save imported asset:", err);
+                }
             }
 
             return {
@@ -113,8 +124,8 @@
                         width: typeof width === 'number' ? width : undefined,
                         height: typeof height === 'number' ? height : undefined,
                     },
-                    image: entity.frontmatter.image,
-                    thumbnail: entity.frontmatter.thumbnail,
+                    image: imagePath,
+                    thumbnail: thumbnailPath,
                     connections: (entity.detectedLinks || []).map((link) => {
                         const targetName = typeof link === 'string' ? link : link.target;
                         const label = typeof link === 'string' ? link : (link.label || link.target);
@@ -127,7 +138,7 @@
                     }),
                 }
             };
-        });
+        }));
 
         try {
             await vault.batchCreateEntities(batchData);

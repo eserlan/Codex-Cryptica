@@ -106,5 +106,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
         title: "Privacy & Sync",
         tags: ["offline", "google drive", "security"],
         content: "## Local-First Always\n\nYour data is yours. \n\n### Cloud Sync\nYou can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server."
+    },
+    {
+        id: "gemini-api-key",
+        title: "Acquiring a Gemini API Key",
+        tags: ["ai", "gemini", "setup"],
+        content: "## How to get your Gemini API Key\n\nCodex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:\n\n1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).\n2. **Sign In**: Use your standard Google Account.\n3. **Create API Key**: Click on 'Get API key' in the sidebar, then click 'Create API key in new project'.\n4. **Copy & Paste**: Copy the generated key and paste it into the **Intelligence** tab in Settings.\n\n### Why do I need this?\nUsing your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks."
     }
 ];

@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { generateMarkdownFile, saveAssetToOpfs } from '../../src/persistence';
+import { describe, it, expect } from 'vitest';
+import { generateMarkdownFile } from '../../src/persistence';
 import { DiscoveredEntity } from '../../src/types';
 
 describe('Persistence', () => {

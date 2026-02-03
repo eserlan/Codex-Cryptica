@@ -204,14 +204,29 @@
             </div>
 
             <div class="flex items-center justify-between gap-3">
-                <a
-                    href="https://aistudio.google.com/app/apikey"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="text-xs text-theme-secondary hover:text-theme-primary underline underline-offset-2"
-                >
-                    Get a free key from Google AI Studio →
-                </a>
+                <div class="flex flex-col gap-1">
+                    <a
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-xs text-theme-secondary hover:text-theme-primary underline underline-offset-2"
+                    >
+                        Get a free key from Google AI Studio →
+                    </a>
+                    <button
+                        onclick={() => {
+                            import("$lib/stores/ui.svelte").then(({ uiStore }) => {
+                                uiStore.activeSettingsTab = "help";
+                                import("$lib/stores/help.svelte").then(({ helpStore }) => {
+                                    helpStore.setSearchQuery("Gemini API Key");
+                                });
+                            });
+                        }}
+                        class="text-[10px] text-theme-muted hover:text-theme-primary text-left uppercase tracking-tighter"
+                    >
+                        View setup guide in Help Center
+                    </button>
+                </div>
 
                 <button
                     class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary !text-theme-bg font-bold rounded text-xs tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-theme-primary/20"

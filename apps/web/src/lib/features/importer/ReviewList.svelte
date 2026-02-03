@@ -12,11 +12,13 @@
   let selectedIds = $state(new Set(entities.map(e => e.id)));
 
   const toggleSelection = (id: string) => {
-    if (selectedIds.has(id)) {
-      selectedIds.delete(id);
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
     } else {
-      selectedIds.add(id);
+      next.add(id);
     } 
+    selectedIds = next;
   };
 
   const handleSave = () => {
