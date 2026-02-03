@@ -303,9 +303,11 @@ class OracleStore {
 
       if (isImageRequest) {
         // Image Generation Flow
-        const finalPrompt = aiService.enhancePrompt(query, context);
+        const textModelName = TIER_MODES[this.tier];
+        const visualPrompt = await aiService.distillVisualPrompt(key, query, context, textModelName);
+        const imageModelName = "gemini-2.5-flash-image";
 
-        const blob = await aiService.generateImage(key, finalPrompt);
+        const blob = await aiService.generateImage(key, visualPrompt, imageModelName);
         const imageUrl = URL.createObjectURL(blob);
 
         this.messages[assistantMsgIndex].imageUrl = imageUrl;

@@ -38,7 +38,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     // Process all chunks
     const allEntities: DiscoveredEntity[] = [];
     let processed = 0;
-    
+
     for (const chunk of chunks) {
       processed++;
       console.log(`[OracleAnalyzer] Processing chunk ${processed}/${chunks.length}...`);
@@ -58,7 +58,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     // Attempt models in order of strength/preference, aligned with app configuration
     const models = [
       'gemini-3-flash-preview', // Advanced Tier
-      'gemini-2.5-flash-lite',  // Lite Tier
+      'gemini-flash-lite-latest',  // Lite Tier
     ];
 
     for (const modelName of models) {
@@ -95,14 +95,14 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
             confidence: 1, // Placeholder
             suggestedFilename: this.slugify(item.title),
             detectedLinks: (item.detectedLinks || []).map((link: any) => {
-            if (typeof link === 'string') return { target: link };
-            return {
-              target: link.target || link.title || '',
-              label: link.label || link.type || ''
-            };
-          })
-        };
-      });
+              if (typeof link === 'string') return { target: link };
+              return {
+                target: link.target || link.title || '',
+                label: link.label || link.type || ''
+              };
+            })
+          };
+        });
 
         return { entities };
 

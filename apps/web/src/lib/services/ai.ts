@@ -3,7 +3,7 @@ import { searchService } from "./search";
 
 
 export const TIER_MODES = {
-  lite: "gemini-2.5-flash-lite",
+  lite: "gemini-flash-lite-latest",
   advanced: "gemini-3-flash-preview",
 };
 
@@ -121,64 +121,118 @@ ${context}
 User visualization request: ${query}`;
   }
 
-  async generateImage(apiKey: string, prompt: string): Promise<Blob> {
-    // We use gemini-2.5-flash-image (Nano Banana) which is optimized for image generation
-    // and available via the standard, CORS-friendly generateContent endpoint.
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`;
+  /**
+   * Distills a concise visual prompt from raw lore context using a text model.
+   * This prevents overwhelming the image model with non-visual narrative text.
+   */
+  async distillVisualPrompt(apiKey: string, query: string, context: string, modelName: string): Promise<string> {
+    if (!context) return query;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          // Instruct the model to generate an image
-          response_modalities: ["IMAGE"],
-        },
-      }),
+    console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      systemInstruction: `You are a master prompt engineer for image generation.
+      Your job is to take raw lore context and a user request and distill it into a concise, high-quality visual description.
+      
+      RULES:
+      1. Focus ONLY on physical appearance, lighting, mood, color palette, and artistic style.
+      2. Remove all narrative history, biography, or plot points that cannot be shown in a single frame.
+      3. If a "GLOBAL ART STYLE" is present in the context, translate it into specific visual instructions.
+      4. Avoid jargon; use descriptive language.
+      5. Keep the output under 1000 characters.
+      6. Output ONLY the distilled prompt text.`
     });
 
-    if (!response.ok) {
-      const err = await response.json();
-      const message = err.error?.message || response.statusText;
-      if (
-        message.toLowerCase().includes("safety") ||
-        message.toLowerCase().includes("block")
-      ) {
-        throw new Error(
-          "The Oracle cannot visualize this request due to safety policies.",
-        );
+    const prompt = `--- CONTEXT ---
+${context}
+
+--- USER REQUEST ---
+${query}
+
+Extract the distilled visual prompt:`;
+
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const distilled = response.text().trim();
+      console.log(`[AIService] Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`);
+      return distilled;
+    } catch (err) {
+      console.warn("[AIService] Failed to distill visual prompt, falling back to enhanced prompt.", err);
+      return this.enhancePrompt(query, context);
+    }
+  }
+
+  async generateImage(apiKey: string, prompt: string, modelName: string): Promise<Blob> {
+    try {
+      console.log(`[AIService] Generating image with model: ${modelName}`);
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: prompt,
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            response_modalities: ["IMAGE"],
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        const message = err.error?.message || response.statusText;
+
+        if (
+          message.toLowerCase().includes("safety") ||
+          message.toLowerCase().includes("block")
+        ) {
+          throw new Error(
+            "The Oracle cannot visualize this request due to safety policies.",
+          );
+        }
+        throw new Error(`Image Generation Error (${modelName}): ${message}`);
       }
-      throw new Error(`Image Generation Error: ${message}`);
+
+      const data = await response.json();
+      const parts = data.candidates?.[0]?.content?.parts || [];
+
+      // In generateContent multimodal responses, the image is returned in the parts
+      const imagePart = parts.find((p: any) => p.inlineData);
+      const base64Data = imagePart?.inlineData?.data;
+
+      if (!base64Data) {
+        // Check if it returned text instead (common if it fails to "draw" but wants to talk about it)
+        const textPart = parts.find((p: any) => p.text);
+        if (textPart) {
+          throw new Error(`AI returned text instead of an image: "${textPart.text.slice(0, 100)}..."`);
+        }
+        throw new Error("No image data returned from AI");
+      }
+
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      return new Blob([bytes], { type: "image/png" });
+
+    } catch (err: any) {
+      console.error(`[AIService] Image generation failed:`, err.message);
+      throw err;
     }
-
-    const data = await response.json();
-    // In generateContent multimodal responses, the image is returned in the parts
-    const base64Data = data.candidates?.[0]?.content?.parts?.find(
-      (p: any) => p.inlineData,
-    )?.inlineData?.data;
-
-    if (!base64Data) {
-      throw new Error("No image data returned from AI");
-    }
-
-    const binaryString = atob(base64Data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    return new Blob([bytes], { type: "image/png" });
   }
 
   async generateResponse(apiKey: string, query: string, history: any[], context: string, modelName: string, onUpdate: (partial: string) => void) {

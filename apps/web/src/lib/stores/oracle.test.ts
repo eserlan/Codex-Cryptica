@@ -87,7 +87,7 @@ vi.mock("../utils/idb", () => ({
 
 vi.mock("../services/ai", () => ({
   TIER_MODES: {
-    lite: "gemini-2.5-flash-lite",
+    lite: "gemini-flash-lite-latest",
     advanced: "gemini-3-flash-preview",
   },
   aiService: {
