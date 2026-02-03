@@ -59,6 +59,13 @@ npm test; npm run lint
 
 TypeScript: Follow standard conventions
 
+## Implementation Guardrails (AI Guidelines)
+
+- **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
+- **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
+- **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
+- **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
+
 ## Recent Changes
 - 033-connection-labels: Added TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation)
 - 032-central-node-orbit: Added TypeScript 5.x + `cytoscape` (Core), `svelte` (UI)

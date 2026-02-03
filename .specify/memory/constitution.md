@@ -17,6 +17,13 @@ The Oracle (Gemini) is the primary engine for transforming unstructured data int
 ### V. Privacy & Client-Side Processing
 Always prioritize client-side processing in the browser (OPFS, local library execution) to ensure user lore and data remain private and performant.
 
+### VI. Clean Implementation (AI Guardrails)
+To maintain build integrity and code quality, AI agents MUST:
+1. Prefix unused variables/parameters with `_`.
+2. Avoid stale state warnings in Svelte 5 by using `$derived` instead of `$state(prop)`.
+3. Adhere to Tailwind 4 CSS syntax standards.
+4. Ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
+
 ## Governance
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
