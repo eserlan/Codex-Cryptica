@@ -726,6 +726,14 @@
       >
         <span class="icon-[lucide--zoom-out] w-4 h-4"></span>
       </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => graph.requestFit()}
+        title="Fit to Screen"
+        aria-label="Fit to Screen"
+      >
+        <span class="icon-[lucide--maximize] w-4 h-4"></span>
+      </button>
 
       <!-- Connect Mode Toggle -->
       {#if !vault.isGuest}
