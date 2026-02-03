@@ -49,6 +49,21 @@
         >
       </div>
       <div class="flex items-center gap-1">
+        <!-- Clear Chat -->
+        {#if oracle.messages.length > 0}
+          <button
+            class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
+            onclick={() => {
+              if (confirm("Are you sure you want to clear the conversation history?")) {
+                oracle.clearMessages();
+              }
+            }}
+            title="Clear conversation history"
+          >
+            <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+          </button>
+        {/if}
+
         <!-- New Window Toggle -->
         <button
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"

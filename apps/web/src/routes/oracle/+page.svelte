@@ -25,10 +25,25 @@
                 >Lore Oracle Standalone</span
             >
         </div>
-        <div
-            class="text-[9px] font-mono text-purple-700 uppercase tracking-widest hidden sm:block"
-        >
-            Multi-Window Sync Active
+        <div class="flex items-center gap-2">
+            {#if oracle.messages.length > 0}
+                <button
+                    class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-purple-400 hover:text-red-400 border border-purple-500/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-purple-900/20"
+                    onclick={() => {
+                        if (confirm("Are you sure you want to clear the conversation history?")) {
+                            oracle.clearMessages();
+                        }
+                    }}
+                >
+                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                    Clear Chat
+                </button>
+            {/if}
+            <div
+                class="text-[9px] font-mono text-purple-700 uppercase tracking-widest hidden sm:block"
+            >
+                Multi-Window Sync Active
+            </div>
         </div>
     </div>
 
