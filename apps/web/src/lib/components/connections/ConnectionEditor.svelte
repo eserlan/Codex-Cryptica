@@ -12,6 +12,12 @@
   let type = $state(connection.type);
   let label = $state(connection.label || "");
 
+  // Sync state if connection changes (e.g. component reuse)
+  $effect(() => {
+    type = connection.type;
+    label = connection.label || "";
+  });
+
   // Note: These options are coupled with `packages/schema/src/connection.ts` and 
   // `packages/graph-engine/src/defaults.ts`. If types or colors change there, update here.
   const options = [

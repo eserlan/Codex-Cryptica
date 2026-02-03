@@ -11,6 +11,10 @@
 
   let selectedIds = $state(new Set(entities.map(e => e.id)));
 
+  $effect(() => {
+    selectedIds = new Set(entities.map(e => e.id));
+  });
+
   const toggleSelection = (id: string) => {
     const next = new Set(selectedIds);
     if (next.has(id)) {
