@@ -8,7 +8,7 @@ class UIStore {
     globalError = $state<{ message: string; stack?: string } | null>(null);
 
     get abortSignal() {
-        if (!this.abortController) {
+        if (!this.abortController || this.abortController.signal.aborted) {
             this.abortController = new AbortController();
         }
         return this.abortController.signal;

@@ -126,13 +126,17 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       } else {
         const existing = map.get(key)!;
         // Merge Content
-        existing.chronicle += `\n\n${entity.chronicle}`;
-        existing.lore += `\n\n${entity.lore}`;
-        existing.content += `\n\n${entity.content}`;
-        // Merge Image
-        if (!existing.frontmatter.image && entity.frontmatter.image) {
-          existing.frontmatter.image = entity.frontmatter.image;
+        if (entity.chronicle) {
+          existing.chronicle = [existing.chronicle, entity.chronicle].filter(Boolean).join('\n\n');
         }
+        if (entity.lore) {
+          existing.lore = [existing.lore, entity.lore].filter(Boolean).join('\n\n');
+        }
+        if (entity.content) {
+          existing.content = [existing.content, entity.content].filter(Boolean).join('\n\n');
+        }
+        // Merge Image
+        existing.frontmatter.image = existing.frontmatter.image || entity.frontmatter.image;
         // Merge Links
         const existingLinks = new Map<string, any>();
         [...existing.detectedLinks, ...entity.detectedLinks].forEach(link => {

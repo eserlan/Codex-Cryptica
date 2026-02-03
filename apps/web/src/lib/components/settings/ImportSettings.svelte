@@ -19,7 +19,17 @@
 
     $effect(() => {
         uiStore.isImporting = step === "processing" || step === "review";
+        
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (step === "processing") {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        };
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
         return () => {
+            window.removeEventListener("beforeunload", handleBeforeUnload);
             uiStore.isImporting = false;
         };
     });
@@ -112,7 +122,7 @@
             return "note";
         };
 
-        const batchData: any[] = [];
+        const batchData: Parameters<typeof vault.batchCreateEntities>[0] = [];
         
         for (const entity of toSave) {
             if (signal.aborted) break;

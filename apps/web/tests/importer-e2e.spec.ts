@@ -118,9 +118,6 @@ test.describe("Intelligent Importer E2E", () => {
         // 7. Verify modal closes
         await expect(page.locator('[role="dialog"]')).not.toBeVisible();
 
-        // 7. Verify modal closes
-        await expect(page.locator('[role="dialog"]')).not.toBeVisible();
-
         // 8. Clean up
         resolveRequest();
     });

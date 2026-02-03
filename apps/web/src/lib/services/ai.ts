@@ -126,23 +126,12 @@ User visualization request: ${query}`;
    * This prevents overwhelming the image model with non-visual narrative text.
    */
   async distillVisualPrompt(apiKey: string, query: string, context: string, modelName: string): Promise<string> {
-    if (!context) return query;
-
-    console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      systemInstruction: `You are a master prompt engineer for image generation.
-      Your job is to take raw lore context and a user request and distill it into a concise, high-quality visual description.
-      
-      RULES:
-      1. Focus ONLY on physical appearance, lighting, mood, color palette, and artistic style.
-      2. Remove all narrative history, biography, or plot points that cannot be shown in a single frame.
-      3. If a "GLOBAL ART STYLE" is present in the context, translate it into specific visual instructions.
-      4. Avoid jargon; use descriptive language.
-      5. Keep the output under 1000 characters.
-      6. Output ONLY the distilled prompt text.`
-    });
+        if (!context) return query;
+        this.init(apiKey, modelName);
+        if (!this.model) throw new Error("AI Model not initialized");
+    
+        console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
+        const model = this.model;
 
     const prompt = `--- CONTEXT ---
 ${context}
