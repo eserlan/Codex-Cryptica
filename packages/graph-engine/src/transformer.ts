@@ -58,6 +58,11 @@ export class GraphTransformer {
 
       const dateLabel = formatDate(entity.date || entity.start_date || entity.end_date);
 
+      // Visibility markers for Admin visual cues
+      const markers = [...(entity.tags || []), ...(entity.labels || [])].map(m => m.toLowerCase());
+      const isRevealed = markers.includes("revealed") || markers.includes("visible");
+      const _isHidden = markers.includes("hidden");
+
       // Create Node
       const nodeData: GraphNode["data"] = {
         id: entity.id,
@@ -71,6 +76,7 @@ export class GraphTransformer {
       };
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
+      if (isRevealed) (nodeData as any).isRevealed = true;
 
       elements.push({
         group: "nodes",
@@ -151,6 +157,17 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
         height: "data(height)",
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
+      },
+    },
+    {
+      // Revealed indicator - subtle white shine effect (doesn't override background-image)
+      selector: "node[isRevealed]",
+      style: {
+        "overlay-color": "#ffffff",
+        "overlay-opacity": 0.3,
+        "overlay-padding": 8,
+        "border-color": "#d4d4d4",
+        "border-width": graph.nodeBorderWidth + 3,
       },
     },
     {
