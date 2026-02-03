@@ -11,10 +11,10 @@
     import { TableCell } from "@tiptap/extension-table-cell";
     import { TableHeader } from "@tiptap/extension-table-header";
     import { EmbedExtension } from "./editor/EmbedExtension";
-    
+
     import EditorToolbar from "./editor/EditorToolbar.svelte";
     import EditorBubbleMenu from "./editor/EditorBubbleMenu.svelte";
-    
+
     import { mount, unmount } from "svelte";
 
     let {
@@ -37,24 +37,35 @@
     };
 
     onMount(() => {
-        const menuDom = document.createElement('div');
-        
+        const menuDom = document.createElement("div");
+
         editor = new Editor({
             element: element,
             extensions: [
-                StarterKit,
+                StarterKit.configure({
+                    // Disable link in StarterKit to avoid duplication warning
+                    link: false,
+                } as any),
                 Markdown.configure({
                     html: true,
                     transformPastedText: false,
                     transformCopiedText: true,
                 }),
                 Table.configure({ resizable: true }),
-                TableRow, TableHeader, TableCell,
+                TableRow,
+                TableHeader,
+                TableCell,
                 EmbedExtension,
-                Link.configure({ openOnClick: false, autolink: true }),
+                Link.configure({
+                    openOnClick: false,
+                    autolink: true,
+                    HTMLAttributes: {
+                        class: "text-theme-primary underline cursor-pointer",
+                    },
+                }),
                 BubbleMenu.configure({
                     element: menuDom,
-                    pluginKey: 'bubbleMenu',
+                    pluginKey: "bubbleMenu",
                 }),
             ],
             editorProps: {
@@ -71,10 +82,10 @@
         });
 
         try {
-             bubbleMenuComponent = mount(EditorBubbleMenu, {
+            bubbleMenuComponent = mount(EditorBubbleMenu, {
                 target: menuDom,
-                props: { editor }
-             });
+                props: { editor },
+            });
         } catch (e) {
             console.error("Failed to mount Bubble Menu", e);
         }
@@ -120,7 +131,10 @@
     });
 </script>
 
-<div class="markdown-editor-container flex flex-col relative w-full h-full" class:zen-mode={isZenMode}>
+<div
+    class="markdown-editor-container flex flex-col relative w-full h-full"
+    class:zen-mode={isZenMode}
+>
     <!-- Fixed Toolbar at the top -->
     {#if editable && editor}
         <EditorToolbar {editor} {isZenMode} onToggleZenMode={toggleZenMode} />
@@ -150,7 +164,7 @@
         background-color: var(--color-theme-bg);
         padding: 2rem;
     }
-    
+
     :global(.markdown-editor-container.zen-mode .tiptap-editor-wrapper) {
         max-width: 800px;
         margin: 0 auto;

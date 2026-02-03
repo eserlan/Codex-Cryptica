@@ -99,11 +99,27 @@
   const createAsNode = async () => {
     if (!parsed.title || vault.isGuest) return;
     try {
-      const type = (parsed.type || "npc") as any;
+      const type = (parsed.type || "character") as any;
+      const connections = [
+        ...(parsed.wikiLinks || []),
+        ...(parsed.connections || []).map((conn) => {
+          const targetName = typeof conn === 'string' ? conn : conn.target;
+          const label = typeof conn === 'string' ? conn : (conn.label || conn.target);
+          return {
+            target: sanitizeId(targetName),
+            label: label,
+            type: "related_to",
+            strength: 1.0,
+          };
+        }),
+      ];
+
       const id = await vault.createEntity(type, parsed.title, {
         content: parsed.chronicle,
         lore: parsed.lore,
-        connections: parsed.wikiLinks || [],
+        connections,
+        image: parsed.image,
+        thumbnail: parsed.thumbnail,
       });
 
       vault.selectedEntityId = id;

@@ -28,19 +28,19 @@ describe("CategoryStore", () => {
   });
 
   it("should update an existing category", () => {
-    categories.updateCategory("npc", { label: "Modified NPC", color: "#000000" });
-    const updated = categories.getCategory("npc");
-    expect(updated?.label).toBe("Modified NPC");
+    categories.updateCategory("character", { label: "Modified Character", color: "#000000" });
+    const updated = categories.getCategory("character");
+    expect(updated?.label).toBe("Modified Character");
     expect(updated?.color).toBe("#000000");
   });
 
   it("should remove a category", () => {
-    categories.removeCategory("npc");
-    expect(categories.getCategory("npc")).toBeUndefined();
+    categories.removeCategory("character");
+    expect(categories.getCategory("character")).toBeUndefined();
   });
 
   it("should reset to defaults", () => {
-    categories.removeCategory("npc");
+    categories.removeCategory("character");
     categories.resetToDefaults();
     expect(categories.list).toEqual(DEFAULT_CATEGORIES);
   });

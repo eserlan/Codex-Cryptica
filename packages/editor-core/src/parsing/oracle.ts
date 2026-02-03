@@ -5,6 +5,9 @@ export interface OracleParseResult {
     method: 'markers' | 'heuristic' | 'none';
     title?: string;
     type?: string;
+    image?: string;
+    thumbnail?: string;
+    connections?: (string | { target: string, label?: string })[];
     wikiLinks?: { target: string, type: string, strength: number, label?: string }[];
 }
 
@@ -22,22 +25,59 @@ export function parseOracleResponse(text: string): OracleParseResult {
         return { chronicle: "", lore: "", wasSplit: false, method: 'none' };
     }
 
+    // Attempt JSON parse first (for structured responses)
+    try {
+        const trimmed = text.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            // Find JSON in potential markdown-wrapped text
+            const jsonMatch = trimmed.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+            if (jsonMatch) {
+                const data = JSON.parse(jsonMatch[0]);
+                // If it's a single object matching our schema
+                if (data && typeof data === 'object' && !Array.isArray(data)) {
+                    if (data.title || data.content) {
+                        return {
+                            chronicle: data.chronicle || "",
+                            lore: data.content || data.lore || "",
+                            wasSplit: !!(data.chronicle && (data.content || data.lore)),
+                            method: 'none', // JSON is direct
+                            title: data.title,
+                            type: normalizeType(data.type),
+                            image: data.image || data.imageUrl || data.imageURL || data.frontmatter?.image,
+                            thumbnail: data.thumbnail || data.thumb || data.frontmatter?.thumbnail,
+                            connections: data.detectedLinks || data.connections || [],
+                            wikiLinks: extractWikiLinks(data.content || data.lore || "")
+                        };
+                    }
+                }
+            }
+        }
+    } catch {
+        // Fall back to text parsing
+    }
+
     // Cache wiki links early to avoid redundant regex calls
     const wikiLinks = extractWikiLinks(text);
 
     // Strategy 1: Explicit Markers
     // Broaden regex to include markdown bold, headers, and simple "Label:" at start of line
     // We use a non-global regex but with 'i' and 'm' flags.
-    const chronicleMarkerRegex = /^(?:#+\s*|\*\*|__)?Chronicle:?(?:\*\*|__|:)?\s*/im;
-    const loreMarkerRegex = /^(?:#+\s*|\*\*|__)?Lore:?(?:\*\*|__|:)?\s*/im;
-    const nameMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Name|Title):?(?:\*\*|__|:)?\s*/im;
-    const typeMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Type|Category):?(?:\*\*|__|:)?\s*/im;
+    const chronicleMarkerRegex = /^(?:#+\s*|\*\*|__)?Chronicle\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const loreMarkerRegex = /^(?:#+\s*|\*\*|__)?Lore\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const nameMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Name|Title)\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const typeMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Type|Category)\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const imageMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:ImageURL|ImageUrl|Image)\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const thumbMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Thumbnail|Thumb)\b(?:\*\*|__|:|\s)*:?\s*/im;
+    const connMarkerRegex = /^(?:#+\s*|\*\*|__)?(?:Connections|Related|Links)\b(?:\*\*|__|:|\s)*:?\s*/im;
 
     const hasChronicle = chronicleMarkerRegex.test(text);
     const hasLore = loreMarkerRegex.test(text);
 
     let extractedTitle: string | undefined;
     let extractedType: string | undefined;
+    let extractedImage: string | undefined;
+    let extractedThumbnail: string | undefined;
+    let extractedConnections: (string | { target: string, label?: string })[] = [];
 
     if (hasChronicle || hasLore) {
         let chronicle = "";
@@ -54,6 +94,9 @@ export function parseOracleResponse(text: string): OracleParseResult {
             const loreMatch = line.match(loreMarkerRegex);
             const nameMatch = line.match(nameMarkerRegex);
             const typeMatch = line.match(typeMarkerRegex);
+            const imageMatch = line.match(imageMarkerRegex);
+            const thumbMatch = line.match(thumbMarkerRegex);
+            const connMatch = line.match(connMarkerRegex);
 
             if (nameMatch) {
                 extractedTitle = line.substring(nameMatch[0].length).trim();
@@ -61,6 +104,20 @@ export function parseOracleResponse(text: string): OracleParseResult {
             }
             if (typeMatch) {
                 extractedType = line.substring(typeMatch[0].length).trim().toLowerCase();
+                continue;
+            }
+            if (imageMatch) {
+                extractedImage = line.substring(imageMatch[0].length).trim();
+                continue;
+            }
+            if (thumbMatch) {
+                extractedThumbnail = line.substring(thumbMatch[0].length).trim();
+                continue;
+            }
+            if (connMatch) {
+                const connStr = line.substring(connMatch[0].length).trim();
+                // Handle comma-separated or simple list
+                extractedConnections = connStr.split(',').map(s => s.trim()).filter(Boolean);
                 continue;
             }
             if (cronMatch) {
@@ -123,6 +180,9 @@ export function parseOracleResponse(text: string): OracleParseResult {
             method: 'markers',
             title: extractedTitle,
             type: normalizeType(extractedType),
+            image: extractedImage,
+            thumbnail: extractedThumbnail,
+            connections: extractedConnections,
             wikiLinks
         };
     }
@@ -187,7 +247,7 @@ export function parseOracleResponse(text: string): OracleParseResult {
 function normalizeType(raw?: string): string | undefined {
     if (!raw) return undefined;
     const t = raw.toLowerCase();
-    if (t.includes('person') || t.includes('npc') || t.includes('character')) return 'npc';
+    if (t.includes('person') || t.includes('npc') || t.includes('character')) return 'character';
     if (t.includes('place') || t.includes('location') || t.includes('settlement')) return 'location';
     if (t.includes('faction') || t.includes('guild') || t.includes('group') || t.includes('organization')) return 'faction';
     if (t.includes('item') || t.includes('artifact') || t.includes('weapon') || t.includes('object')) return 'item';
@@ -201,7 +261,7 @@ function guessType(text: string): string | undefined {
     const t = text.toLowerCase();
     // Simple keyword based guessing
     if (t.includes(' faction ') || t.includes(' guild ') || t.includes(' organization ')) return 'faction';
-    if (t.includes(' citizen ') || t.includes(' ruler ') || t.includes(' warrior ')) return 'npc';
+    if (t.includes(' citizen ') || t.includes(' ruler ') || t.includes(' warrior ')) return 'character';
     if (t.includes(' located ') || t.includes(' mountain ') || t.includes(' city ')) return 'location';
     if (t.includes(' artifact ') || t.includes(' forged ') || t.includes(' relic ')) return 'item';
     return undefined;

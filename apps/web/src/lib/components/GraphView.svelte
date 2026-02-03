@@ -54,8 +54,6 @@
     selectedId: string | null;
   }>();
 
-  let skipNextCenter = false;
-
   const applyFocus = (id: string | null) => {
     const currentCy = cy;
     if (!currentCy) return;
@@ -211,7 +209,7 @@
         }, HOVER_DELAY);
       });
 
-      cy.on("mouseout", "node", () => {
+      cy.on("mouseout", "node", (_evt) => {
         clearTimeout(hoverTimeout);
         hoveredEntityId = null;
         hoverPosition = null;
@@ -256,7 +254,6 @@
             graph.setCentralNode(targetId);
         } else {
           // Selection Logic for Detail Panel
-          skipNextCenter = true;
           selectedId = targetId;
         }
       });
@@ -314,9 +311,16 @@
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
 
+  let lastStyle: any[] = [];
   $effect(() => {
-    if (cy && graphStyle) {
-      cy.style(graphStyle);
+    const currentStyle = graphStyle;
+    const currentCy = cy;
+    if (currentCy && currentStyle) {
+      const _isNewRef = currentStyle !== lastStyle;
+      lastStyle = currentStyle;
+      untrack(() => {
+        currentCy.style(currentStyle);
+      });
     }
   });
 
@@ -345,7 +349,8 @@
 
   // Reactive effect to resolve node images
   $effect(() => {
-    if (cy && graph.elements) {
+    const currentCy = cy;
+    if (currentCy && graph.elements) {
       const currentElements = graph.elements;
       const timeout = setTimeout(async () => {
         try {
@@ -365,17 +370,23 @@
                   (data.thumbnail || data.image)!,
                 );
                 if (resolvedUrl) {
-                  // Detect image dimensions
-                  const img = new Image();
-                  img.src = resolvedUrl;
-                  await new Promise((resolve) => {
-                    img.onload = resolve;
-                    img.onerror = resolve; // Continue even if image fails to load
-                  });
+                  let w = data.width;
+                  let h = data.height;
+
+                  if (!w || !h) {
+                    // Detect image dimensions only if missing
+                    const img = new Image();
+                    img.src = resolvedUrl;
+                    await new Promise((resolve) => {
+                      img.onload = resolve;
+                      img.onerror = resolve; // Continue even if image fails to load
+                    });
+
+                    w = img.naturalWidth || 100;
+                    h = img.naturalHeight || 100;
+                  }
 
                   // Calculate scaled dimensions (max aspect 2.0, max size 64)
-                  let w = img.naturalWidth || 100;
-                  let h = img.naturalHeight || 100;
                   const maxDim = 64;
                   const ratio = w / h;
 
@@ -395,7 +406,6 @@
                     h = w * 2.5;
                   }
 
-                  const currentCy = cy;
                   if (currentCy) {
                     currentCy.batch(() => {
                       const node = currentCy.$id(data.id);
@@ -435,25 +445,18 @@
   });
 
   $effect(() => {
-    if (cy) {
+    const currentCy = cy;
+    if (currentCy) {
       applyFocus(selectedId);
-    }
-    if (cy && selectedId) {
-      const node = cy.$id(selectedId);
-      if (node.length > 0) {
-        // Select the node in Cytoscape if not already selected
-        if (!node.selected()) {
-          cy.$(":selected").unselect(); // Optional: clear other selections
-          node.select();
-        }
-
-        if (skipNextCenter) {
-          skipNextCenter = false;
-        } else {
-          cy.animate({
-            center: { eles: node },
-            duration: 500,
-            easing: "ease-out-cubic",
+      if (selectedId) {
+        const node = currentCy.$id(selectedId);
+        if (node.length > 0) {
+          untrack(() => {
+            currentCy.animate({
+              center: { eles: node },
+              duration: 500,
+              easing: "ease-out-cubic",
+            });
           });
         }
       }
@@ -462,27 +465,29 @@
 
   // Manual fit request listener
   $effect(() => {
-    if (cy && graph.fitRequest > 0) {
+    const currentCy = cy;
+    if (currentCy && graph.fitRequest > 0) {
       const _req = graph.fitRequest; // track dependency
-      cy.animate({
-        fit: {
-          eles: cy.elements(),
-          padding: 50,
-        },
-        duration: 800,
-        easing: "ease-out-cubic",
+      untrack(() => {
+        currentCy.animate({
+          fit: {
+            eles: currentCy.elements(),
+            padding: 50,
+          },
+          duration: 800,
+          easing: "ease-out-cubic",
+        });
       });
     }
   });
 
   $effect(() => {
-    if (cy && graph.elements) {
-      // console.log("GraphView Effect Triggered. Elements:", graph.elements.length);
-
+    const currentCy = cy;
+    if (currentCy && graph.elements) {      
       try {
-        cy.resize(); // Ensure viewport is up to date
+        currentCy.resize(); // Ensure viewport is up to date
 
-        const currentElements = cy.elements();
+        const currentElements = currentCy.elements();
         const currentIds = new Set(currentElements.map((el) => el.id()));
         const targetIds = new Set(graph.elements.map((el) => el.data.id));
 
@@ -491,7 +496,7 @@
           (el) => !targetIds.has(el.id()),
         );
         if (removedElements.length > 0) {
-          cy.remove(removedElements);
+          currentCy.remove(removedElements);
         }
 
         // 2. Add new elements safely
@@ -506,7 +511,7 @@
 
           // Always add nodes first
           if (newNodes.length > 0) {
-            cy.add(newNodes);
+            currentCy.add(newNodes);
           }
 
           // Then add edges, but ONLY if both source and target exist in the graph
@@ -521,10 +526,10 @@
             const sourceId = edgeData.source!;
             const targetId = edgeData.target!;
 
-            if (!cy) return false;
+            if (!currentCy) return false;
 
-            const sourceExists = cy.$id(sourceId).nonempty();
-            const targetExists = cy.$id(targetId).nonempty();
+            const sourceExists = currentCy.$id(sourceId).nonempty();
+            const targetExists = currentCy.$id(targetId).nonempty();
 
             if (!sourceExists || !targetExists) {
               console.warn(
@@ -537,7 +542,7 @@
 
           if (validEdges.length > 0) {
             try {
-              cy.add(validEdges);
+              currentCy.add(validEdges);
             } catch (e) {
               console.warn("Failed to add some edges to graph", e);
             }
@@ -545,16 +550,18 @@
         }
 
         // 3. Update existing elements (labels, etc) - Data Sync only
-        graph.elements.forEach((el) => {
-          if (currentIds.has(el.data.id)) {
-            const node = cy?.$id(el.data.id);
-            if (node) {
-              // Only update if data actually changed to avoid style recalc?
-              // Cytoscape handles this reasonably well, but we can be explicit if needed.
-              // For now, blind update is cheap enough compared to layout.
-              node.data(el.data);
+        currentCy.batch(() => {
+          graph.elements.forEach((el) => {
+            if (currentIds.has(el.data.id)) {
+              const node = currentCy.$id(el.data.id);
+              if (node) {
+                // Only update if data actually changed to avoid style recalc?
+                // Cytoscape handles this reasonably well, but we can be explicit if needed.
+                // For now, blind update is cheap enough compared to layout.
+                node.data(el.data);
+              }
             }
-          }
+          });
         });
 
         // 4. Force layout ONLY if structural changes occurred OR if first load
@@ -570,7 +577,9 @@
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
                 applyCurrentLayout(true);
-                initialLoaded = true;
+                untrack(() => {
+                  initialLoaded = true;
+                });
               }
             }, 500); // 500ms window for more nodes to appear
           } else {

@@ -6,6 +6,13 @@ vi.hoisted(() => {
     (global as any).window = {};
   }
 
+  // Mock Svelte 5 Runes
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = (v: any) => v;
+  (global as any).$effect = (v: any) => v;
+
   if (typeof navigator === "undefined") {
     (global as any).navigator = { onLine: true };
   } else {
@@ -34,6 +41,29 @@ vi.hoisted(() => {
   (global as any).Worker = MockWorker;
   return { MockBroadcastChannel, MockWorker };
 });
+
+// Mock worker and bridge to prevent alias resolution issues
+vi.mock('../cloud-bridge/worker-bridge', () => ({
+  workerBridge: {
+    reset: vi.fn(),
+    send: vi.fn(),
+  }
+}));
+
+vi.mock('./vault.svelte', () => ({
+  vault: {
+    createEntity: vi.fn(),
+    allEntities: [],
+    entities: {},
+    inboundConnections: {},
+  }
+}));
+
+vi.mock('./graph.svelte', () => ({
+  graph: {
+    requestFit: vi.fn(),
+  }
+}));
 
 import { oracle } from "./oracle.svelte";
 import * as idbUtils from "../utils/idb";
