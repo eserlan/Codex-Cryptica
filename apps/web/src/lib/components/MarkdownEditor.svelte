@@ -156,19 +156,19 @@
     /* Zen Mode State - applied via class toggle in EditorToolbar logic */
     :global(.markdown-editor-container.zen-mode) {
         position: fixed;
-        top: 0;
+        top: 65px; /* Below main app header */
         left: 0;
         right: 0;
         bottom: 0;
-        z-index: 50;
+        z-index: 150; /* High enough to be above aside and modals if needed */
         background-color: var(--color-theme-bg);
-        padding: 2rem;
+        padding: 0; /* Remove padding to allow toolbar to be flush top */
     }
 
     :global(.markdown-editor-container.zen-mode .tiptap-editor-wrapper) {
         max-width: 800px;
-        margin: 0 auto;
-        height: 100%;
+        margin: 2rem auto; /* Add margin here instead */
+        height: calc(100% - 4rem);
         border: none;
         background: transparent;
     }

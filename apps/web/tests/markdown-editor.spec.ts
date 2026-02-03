@@ -70,6 +70,10 @@ test.describe("MarkdownEditor", () => {
     await expect(editor.locator("li")).toHaveCount(2);
     await expect(editor.locator("li").first()).toHaveText("Item 1");
 
+    // Verify toolbar button is active
+    const bulletBtn = page.getByTitle("Bullet List");
+    await expect(bulletBtn).toHaveClass(/active/);
+
     // Verify markdown output
     const output = page.getByTestId("markdown-output");
     await expect(output).toContainText("- Item 1");

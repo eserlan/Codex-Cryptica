@@ -8,17 +8,54 @@
         onToggleZenMode: () => void 
     }>();
 
+    // Use a reactive trigger to force re-evaluation when the editor state changes
+    let updateTrigger = $state(0);
+
     // Derived states for active formatting
-    let isBold = $derived(editor?.isActive("bold") ?? false);
-    let isItalic = $derived(editor?.isActive("italic") ?? false);
-    let isStrike = $derived(editor?.isActive("strike") ?? false);
-    let isCode = $derived(editor?.isActive("code") ?? false);
-    let isH1 = $derived(editor?.isActive("heading", { level: 1 }) ?? false);
-    let isH2 = $derived(editor?.isActive("heading", { level: 2 }) ?? false);
-    let isH3 = $derived(editor?.isActive("heading", { level: 3 }) ?? false);
-    let isBulletList = $derived(editor?.isActive("bulletList") ?? false);
-    let isOrderedList = $derived(editor?.isActive("orderedList") ?? false);
-    let isBlockquote = $derived(editor?.isActive("blockquote") ?? false);
+    let isBold = $derived.by(() => {
+        updateTrigger; // Subscribe
+        return editor?.isActive("bold") ?? false;
+    });
+    let isItalic = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("italic") ?? false;
+    });
+    let isStrike = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("strike") ?? false;
+    });
+    let isCode = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("code") ?? false;
+    });
+    let isH1 = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("heading", { level: 1 }) ?? false;
+    });
+    let isH2 = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("heading", { level: 2 }) ?? false;
+    });
+    let isH3 = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("heading", { level: 3 }) ?? false;
+    });
+    let isBulletList = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("bulletList") ?? false;
+    });
+    let isOrderedList = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("orderedList") ?? false;
+    });
+    let isBlockquote = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("blockquote") ?? false;
+    });
+    let isLink = $derived.by(() => {
+        updateTrigger;
+        return editor?.isActive("link") ?? false;
+    });
 
     const toggleZenMode = () => {
         onToggleZenMode();
@@ -58,10 +95,16 @@
 
     onMount(() => {
         window.addEventListener("keydown", handleKeydown);
+        
+        // Listen for editor transactions to update the trigger
+        editor?.on("transaction", () => {
+            updateTrigger++;
+        });
     });
 
     onDestroy(() => {
         window.removeEventListener("keydown", handleKeydown);
+        editor?.off("transaction");
     });
 </script>
 
@@ -159,7 +202,7 @@
         <div class="flex gap-0.5">
             <button
                 onclick={setLink}
-                class="toolbar-btn {editor.isActive('link') ? 'active' : ''}"
+                class="toolbar-btn {isLink ? 'active' : ''}"
                 title="Link"
             >
                 <span class="icon-[lucide--link] w-4 h-4"></span>
@@ -169,7 +212,19 @@
         <div class="flex-1"></div>
 
         <!-- Utility -->
-        <div class="flex gap-0.5">
+        <div class="flex gap-1">
+            {#if isZenMode}
+                <button
+                    onclick={toggleZenMode}
+                    class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-red-900/10 rounded"
+                    title="Exit Zen Mode (Esc)"
+                >
+                    <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
+                    Close Zen Mode
+                </button>
+                <div class="w-px bg-green-900/30 mx-1"></div>
+            {/if}
+
             <button
                 onclick={toggleZenMode}
                 class="toolbar-btn {isZenMode ? 'active' : ''}"

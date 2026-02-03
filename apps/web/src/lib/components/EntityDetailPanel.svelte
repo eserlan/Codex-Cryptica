@@ -269,7 +269,7 @@
 {#if entity}
     <aside
         transition:fade={{ duration: 200 }}
-        class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl z-40 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)]"
+        class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)]"
     >
         <!-- Header -->
         <div class="p-6 border-b border-theme-border bg-theme-surface">
