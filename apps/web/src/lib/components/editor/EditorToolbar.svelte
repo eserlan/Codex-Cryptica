@@ -13,47 +13,47 @@
 
     // Derived states for active formatting
     let isBold = $derived.by(() => {
-        updateTrigger; // Subscribe
+        void updateTrigger; // Subscribe
         return editor?.isActive("bold") ?? false;
     });
     let isItalic = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("italic") ?? false;
     });
     let isStrike = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("strike") ?? false;
     });
     let isCode = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("code") ?? false;
     });
     let isH1 = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("heading", { level: 1 }) ?? false;
     });
     let isH2 = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("heading", { level: 2 }) ?? false;
     });
     let isH3 = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("heading", { level: 3 }) ?? false;
     });
     let isBulletList = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("bulletList") ?? false;
     });
     let isOrderedList = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("orderedList") ?? false;
     });
     let isBlockquote = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("blockquote") ?? false;
     });
     let isLink = $derived.by(() => {
-        updateTrigger;
+        void updateTrigger;
         return editor?.isActive("link") ?? false;
     });
 
@@ -96,15 +96,16 @@
     onMount(() => {
         window.addEventListener("keydown", handleKeydown);
         
-        // Listen for editor transactions to update the trigger
-        editor?.on("transaction", () => {
+        // Listen for editor selection changes to update the trigger
+        // This is less frequent than 'transaction' and prevents input lag while typing
+        editor?.on("selectionUpdate", () => {
             updateTrigger++;
         });
     });
 
     onDestroy(() => {
         window.removeEventListener("keydown", handleKeydown);
-        editor?.off("transaction");
+        editor?.off("selectionUpdate");
     });
 </script>
 

@@ -82,6 +82,7 @@
 
 @layer base {
   :root {
+    --header-height: 65px;
     --color-bg-primary: #050505;
     --color-accent-primary: #4ade80;
     --color-accent-dim: #16a34a;

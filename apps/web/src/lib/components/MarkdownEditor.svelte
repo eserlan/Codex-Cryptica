@@ -156,7 +156,7 @@
     /* Zen Mode State - applied via class toggle in EditorToolbar logic */
     :global(.markdown-editor-container.zen-mode) {
         position: fixed;
-        top: 65px; /* Below main app header */
+        top: var(--header-height, 65px); /* Below main app header */
         left: 0;
         right: 0;
         bottom: 0;
