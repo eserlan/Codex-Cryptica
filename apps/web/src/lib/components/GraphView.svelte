@@ -703,6 +703,16 @@
           : "Vertical"})
       </div>
     {/if}
+
+    {#if ui.sharedMode}
+      <div
+        class="bg-amber-900/40 backdrop-blur border border-amber-500/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-amber-300 shadow-lg uppercase pointer-events-auto"
+        transition:fade
+      >
+        <span class="icon-[lucide--eye] w-3 h-3 animate-pulse"></span>
+        Shared Mode Active (Player Preview)
+      </div>
+    {/if}
   </div>
 
   <!-- Zoom Controls (Bottom Left) -->

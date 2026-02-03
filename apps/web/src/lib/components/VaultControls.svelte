@@ -1,5 +1,6 @@
 <script lang="ts">
     import { vault } from "$lib/stores/vault.svelte";
+    import { ui } from "$lib/stores/ui.svelte";
     import { categories } from "$lib/stores/categories.svelte";
     import { cloudConfig } from "$stores/cloud-config";
     import ShareModal from "$lib/components/ShareModal.svelte";
@@ -167,6 +168,14 @@
                 title="Share Campaign"
             >
                 <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
+            </button>
+            <button
+                class="px-2 py-1.5 border border-theme-border rounded text-sm transition flex items-center justify-center {ui.sharedMode ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]' : 'text-theme-muted hover:text-theme-primary hover:border-theme-primary'}"
+                onclick={() => (ui.sharedMode = !ui.sharedMode)}
+                title={ui.sharedMode ? "Exit Shared Mode (Admin View)" : "Enter Shared Mode (Player Preview)"}
+                data-testid="shared-mode-toggle"
+            >
+                <span class={ui.sharedMode ? "icon-[lucide--eye] w-3.5 h-3.5" : "icon-[lucide--eye-off] w-3.5 h-3.5"}></span>
             </button>
             <button
                 class="px-3 py-1.5 border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 rounded text-[10px] transition hidden xs:flex items-center gap-1.5"

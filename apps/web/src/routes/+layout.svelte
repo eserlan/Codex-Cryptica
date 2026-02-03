@@ -24,6 +24,7 @@
 	import { MemoryAdapter } from "$lib/cloud-bridge/memory-adapter";
 	import { P2PClientAdapter } from "$lib/cloud-bridge/p2p/client-adapter";
 	import { PublicGDriveAdapter } from "$lib/cloud-bridge/google-drive/public-adapter";
+	import { isEntityVisible } from "schema";
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
 	import { base } from "$app/paths";
@@ -197,6 +198,7 @@
 			(window as any).syncStats = syncStats;
 			(window as any).cloudConfig = cloudConfig;
 			(window as any).workerBridge = workerBridge;
+			(window as any).isEntityVisible = isEntityVisible;
 		}
 
 		return () => {

@@ -4,6 +4,8 @@
     import { vault } from "$lib/stores/vault.svelte";
     import { oracle } from "$lib/stores/oracle.svelte";
     import { uiStore } from "$lib/stores/ui.svelte";
+    import { ui } from "$lib/stores/ui.svelte";
+    import { isEntityVisible } from "schema";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
     import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
     import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
@@ -36,6 +38,14 @@
     let editEndDate = $state<Entity["end_date"]>();
     let resolvedImageUrl = $state("");
     let editingConnectionTarget = $state<string | null>(null);
+
+    let isObscured = $derived.by(() => {
+        if (!entity || !ui.sharedMode) return false;
+        return !isEntityVisible(entity, {
+            sharedMode: ui.sharedMode,
+            defaultVisibility: vault.defaultVisibility,
+        });
+    });
 
     const startEditing = () => {
         if (!entity) return;
@@ -269,8 +279,30 @@
 {#if entity}
     <aside
         transition:fade={{ duration: 200 }}
-        class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)]"
+        class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative"
     >
+        {#if isObscured}
+            <div 
+                class="absolute inset-0 z-[60] bg-theme-surface/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
+                transition:fade
+            >
+                <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse">
+                    <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
+                </div>
+                <h3 class="text-xl font-bold text-theme-text uppercase tracking-widest mb-2">Protocol Redacted</h3>
+                <p class="text-xs text-theme-muted leading-relaxed max-w-xs">
+                    This archive entry is currently obscured by Fog of War. 
+                    Switch to Admin Mode or remove the <code class="text-amber-500">hidden</code> tag to decrypt.
+                </p>
+                <button 
+                    onclick={onClose}
+                    class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase"
+                >
+                    Return to Overview
+                </button>
+            </div>
+        {/if}
+
         <!-- Header -->
         <div class="p-6 border-b border-theme-border bg-theme-surface">
             <div class="flex justify-between items-start mb-2">

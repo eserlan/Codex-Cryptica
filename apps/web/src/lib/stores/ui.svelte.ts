@@ -25,6 +25,9 @@ class UIStore {
     showZenMode = $state(false);
     zenModeEntityId = $state<string | null>(null);
 
+    // Fog of War State
+    sharedMode = $state(false);
+
     // Compatibility aliases (can be deprecated later)
     /** @deprecated Use zenModeEntityId */
     get readModeNodeId() { return this.zenModeEntityId; }

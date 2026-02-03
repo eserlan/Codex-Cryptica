@@ -9,6 +9,7 @@
     import LabelSettings from "./LabelSettings.svelte";
     import HelpTab from "../help/HelpTab.svelte";
     import ImportSettings from "./ImportSettings.svelte";
+    import VaultSettings from "./VaultSettings.svelte";
     import { vault } from "$lib/stores/vault.svelte";
     import { base } from "$app/paths";
     import { VERSION, CODENAME } from "$lib/config";
@@ -245,6 +246,10 @@
                             >
                                 Rebuild Search Index
                             </button>
+                        </section>
+
+                        <section class="border-t border-theme-border pt-6">
+                            <VaultSettings />
                         </section>
 
                         <section class="border-t border-theme-border pt-6">

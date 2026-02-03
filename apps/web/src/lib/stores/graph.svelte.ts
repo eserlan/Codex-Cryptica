@@ -1,7 +1,8 @@
 import { vault } from "./vault.svelte";
+import { ui } from "./ui.svelte";
 import { GraphTransformer, getTimelineLayout, type GraphNode } from "graph-engine";
 import type { Core } from "cytoscape";
-import type { Era } from "schema";
+import { isEntityVisible, type Era } from "schema";
 import { getDB } from "../utils/idb";
 
 class GraphStore {
@@ -9,8 +10,17 @@ class GraphStore {
   activeLabels = $state(new Set<string>());
 
   elements = $derived.by(() => {
-    const entities = vault.allEntities;
-    return GraphTransformer.entitiesToElements(entities);
+    const allEntities = vault.allEntities;
+    const settings = {
+      sharedMode: ui.sharedMode,
+      defaultVisibility: vault.defaultVisibility,
+    };
+
+    const visibleEntities = allEntities.filter((entity) =>
+      isEntityVisible(entity, settings),
+    );
+
+    return GraphTransformer.entitiesToElements(visibleEntities);
   });
 
   fitRequest = $state(0);

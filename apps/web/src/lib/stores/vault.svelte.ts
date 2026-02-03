@@ -21,6 +21,9 @@ class VaultStore {
   selectedEntityId = $state<string | null>(null);
   activeDetailTab = $state<"status" | "lore" | "inventory">("status");
 
+  // Fog of War Settings
+  defaultVisibility = $state<"visible" | "hidden">("visible");
+
   isGuest = $state(false);
   storageAdapter: IStorageAdapter | null = null;
 
@@ -107,6 +110,12 @@ class VaultStore {
     this.isInitialized = false;
     if (this.rootHandle) return;
     try {
+      const db = await getDB();
+      const savedVisibility = await db.get("settings", "defaultVisibility");
+      if (savedVisibility) {
+        this.defaultVisibility = savedVisibility;
+      }
+
       const persisted = await getPersistedHandle();
       if (persisted) {
         const hasAccess = await this.verifyPermission(persisted);
@@ -122,6 +131,12 @@ class VaultStore {
     } finally {
       this.status = "idle";
     }
+  }
+
+  async setDefaultVisibility(visibility: "visible" | "hidden") {
+    this.defaultVisibility = visibility;
+    const db = await getDB();
+    await db.put("settings", visibility, "defaultVisibility");
   }
 
   /**

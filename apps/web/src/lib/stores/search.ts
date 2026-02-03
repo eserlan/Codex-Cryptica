@@ -1,6 +1,9 @@
 import { writable } from 'svelte/store';
 import type { SearchResult } from 'schema';
+import { isEntityVisible } from 'schema';
 import { searchService } from '$lib/services/search';
+import { vault } from './vault.svelte';
+import { ui } from './ui.svelte';
 
 function createSearchStore() {
   const { subscribe, update } = writable<{
@@ -48,7 +51,20 @@ function createSearchStore() {
         }
 
         const results = await searchService.search(query, { limit: 20 });
-        update(s => ({ ...s, results, isLoading: false }));
+
+        // Filter results based on visibility settings
+        const settings = {
+          sharedMode: ui.sharedMode,
+          defaultVisibility: vault.defaultVisibility,
+        };
+
+        const filteredResults = results.filter(result => {
+          const entity = vault.entities[result.id];
+          if (!entity) return false;
+          return isEntityVisible(entity, settings);
+        });
+
+        update(s => ({ ...s, results: filteredResults, isLoading: false }));
       } catch (error) {
         console.error('Search failed:', error);
         update(s => ({ ...s, results: [], isLoading: false }));
