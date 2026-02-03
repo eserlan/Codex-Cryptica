@@ -10,6 +10,8 @@
   import { sanitizeId } from "$lib/utils/markdown";
   import { graph } from "$lib/stores/graph.svelte";
 
+  import { onMount } from "svelte";
+
   let { message }: { message: ChatMessage } = $props();
 
   let html = $derived(
@@ -28,7 +30,26 @@
   );
 
   let isSaved = $state(false);
+
+  // Sync isSaved with global undo events
+  onMount(() => {
+    const channel = new BroadcastChannel("codex-oracle-sync");
+    channel.onmessage = (event) => {
+      const { type, data } = event.data;
+      if (type === "UNDO_PERFORMED" && data.messageId === message.id) {
+        isSaved = false;
+      }
+    };
+    return () => channel.close();
+  });
+
   const LORE_THRESHOLD = 400; // Character limit: summary (Chronicle) vs detailed (Lore).
+
+  // Only show UNDO button if this message was the last one to perform an action
+  let isLastAction = $derived(
+    oracle.undoStack.length > 0 && 
+    oracle.undoStack[oracle.undoStack.length - 1].messageId === message.id
+  );
 
   // Intelligent intent detection for archival type
   let isLore = $derived.by(() => {
@@ -112,9 +133,13 @@
       // 2. Push Undo
       if (beforeState) {
         oracle.pushUndoAction(`Smart Apply to ${beforeState.title}`, async () => {
-          vault.updateEntity(beforeState.id, beforeState);
-          isSaved = false; // Reset UI state on undo
-        });
+          // Granular revert: only restore the fields we changed
+          const undoUpdates: any = {};
+          if (parsed.chronicle) undoUpdates.content = beforeState.content;
+          if (parsed.lore) undoUpdates.lore = beforeState.lore;
+          vault.updateEntity(beforeState.id, undoUpdates);
+          isSaved = false; 
+        }, message.id);
       }
     }
   };
@@ -158,9 +183,10 @@
       // Push Undo (Delete)
       oracle.pushUndoAction(`Create Node ${parsed.title}`, async () => {
         await vault.deleteEntity(id);
+        // Reset message to point back to nothing or its original entity
+        oracle.updateMessageEntity(message.id, null); 
         isSaved = false;
-        // Optionally notify user
-      });
+      }, message.id);
 
     } catch (e) {
       console.error("Failed to create node from chat", e);
@@ -186,9 +212,9 @@
     // 2. Push Undo
     if (beforeState) {
       oracle.pushUndoAction(`Update Chronicle: ${beforeState.title}`, async () => {
-        vault.updateEntity(beforeState.id, beforeState);
+        vault.updateEntity(beforeState.id, { content: beforeState.content });
         isSaved = false;
-      });
+      }, message.id);
     }
   };
 
@@ -211,9 +237,9 @@
     // 2. Push Undo
     if (beforeState) {
       oracle.pushUndoAction(`Update Lore: ${beforeState.title}`, async () => {
-        vault.updateEntity(beforeState.id, beforeState);
+        vault.updateEntity(beforeState.id, { lore: beforeState.lore });
         isSaved = false;
-      });
+      }, message.id);
     }
   };
 
@@ -381,14 +407,16 @@
                 SAVED
               </span>
               
-              <button 
-                onclick={handleUndo}
-                class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
-                title="Undo changes (Ctrl+Z)"
-              >
-                <span class="icon-[lucide--undo-2] w-3 h-3"></span>
-                UNDO
-              </button>
+              {#if isLastAction}
+                <button 
+                  onclick={handleUndo}
+                  class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                  title="Undo changes (Ctrl+Z)"
+                >
+                  <span class="icon-[lucide--undo-2] w-3 h-3"></span>
+                  UNDO
+                </button>
+              {/if}
             </div>
           {/if}
         {/if}

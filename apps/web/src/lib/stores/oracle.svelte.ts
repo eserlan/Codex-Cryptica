@@ -16,6 +16,8 @@ export interface ChatMessage {
 }
 
 export interface UndoableAction {
+  id: string;
+  messageId?: string;
   description: string;
   revert: () => Promise<void>;
   timestamp: number;
@@ -26,6 +28,7 @@ class OracleStore {
   lastUpdated = $state<number>(0);
   isOpen = $state(false);
   isLoading = $state(false);
+  isUndoing = $state(false);
   apiKey = $state<string | null>(null);
   tier = $state<"lite" | "advanced">("lite");
   isModal = $state(false);
@@ -50,6 +53,7 @@ class OracleStore {
             this.lastUpdated = data.lastUpdated;
           }
           this.isLoading = data.isLoading;
+          this.isUndoing = data.isUndoing;
           this.apiKey = data.apiKey;
           this.tier = data.tier || "lite";
         } else if (type === "REQUEST_STATE") {
@@ -62,8 +66,10 @@ class OracleStore {
     }
   }
 
-  pushUndoAction(description: string, revert: () => Promise<void>) {
+  pushUndoAction(description: string, revert: () => Promise<void>, messageId?: string) {
     this.undoStack.push({
+      id: crypto.randomUUID(),
+      messageId,
       description,
       revert,
       timestamp: Date.now()
@@ -75,12 +81,25 @@ class OracleStore {
   }
 
   async undo() {
-    if (this.undoStack.length === 0) return;
+    if (this.undoStack.length === 0 || this.isUndoing) return;
     
-    const action = this.undoStack.pop();
+    this.isUndoing = true;
+    this.broadcast();
+
+    // Peek the action first
+    const action = this.undoStack[this.undoStack.length - 1];
     if (action) {
       try {
         await action.revert();
+        
+        // Remove from stack ONLY after successful revert
+        this.undoStack.pop();
+
+        // Broadcast local event for UI components (like ChatMessage)
+        this.channel?.postMessage({
+          type: "UNDO_PERFORMED",
+          data: { actionId: action.id, messageId: action.messageId }
+        });
         
         // Show success system message
         this.messages = [
@@ -96,19 +115,28 @@ class OracleStore {
         this.saveToDB();
       } catch (err: any) {
         console.error("Undo failed:", err);
-        // Push it back if it failed? Or just error out. 
-        // Better to error out to avoid infinite loops if the state is broken.
+        // We leave it on the stack? Copilot suggested pushing it back, 
+        // but since we peeked, we just don't pop it.
+        // Actually, if it failed, it might be stuck. 
+        // But letting the user retry is better than losing it.
+        
         this.messages = [
           ...this.messages,
           {
             id: crypto.randomUUID(),
             role: "system",
-            content: `❌ Undo failed: ${err.message}`
+            content: `❌ Undo failed: ${err.message}. You can try again.`
           }
         ];
         this.lastUpdated = Date.now();
         this.broadcast();
+      } finally {
+        this.isUndoing = false;
+        this.broadcast();
       }
+    } else {
+      this.isUndoing = false;
+      this.broadcast();
     }
   }
 
@@ -119,6 +147,7 @@ class OracleStore {
         messages: $state.snapshot(this.messages),
         lastUpdated: this.lastUpdated,
         isLoading: this.isLoading,
+        isUndoing: this.isUndoing,
         apiKey: this.apiKey,
         tier: this.tier
       }
@@ -488,10 +517,10 @@ class OracleStore {
     this.isModal = !this.isModal;
   }
 
-  updateMessageEntity(messageId: string, entityId: string) {
+  updateMessageEntity(messageId: string, entityId: string | null) {
     const target = this.messages.find(m => m.id === messageId);
     if (target) {
-      target.archiveTargetId = entityId;
+      target.archiveTargetId = entityId || undefined;
       this.broadcast();
       this.saveToDB();
     }
