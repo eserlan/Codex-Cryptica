@@ -28,6 +28,7 @@
 	import { page } from "$app/state";
 	import { base } from "$app/paths";
 	import { browser } from "$app/environment";
+	import { PATREON_URL } from "$lib/config";
 	let { children } = $props();
 
 	const isPopup = $derived(page.url.pathname === `${base}/oracle`);
@@ -304,6 +305,15 @@
 				&copy; 2026 Codex Cryptica // Local-First Intelligence
 			</div>
 			<div class="flex gap-6">
+				{#if PATREON_URL}
+					<a
+						href={PATREON_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+						>Support on Patreon</a
+					>
+				{/if}
 				<a
 					href="{base}/privacy"
 					target="_blank"
