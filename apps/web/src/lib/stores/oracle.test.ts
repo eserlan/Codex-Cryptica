@@ -111,6 +111,7 @@ describe("OracleStore", () => {
     vi.useFakeTimers();
     vi.clearAllMocks();
     oracle.messages = [];
+    oracle.undoStack = [];
     oracle.apiKey = null;
     oracle.tier = "lite";
     oracle.isOpen = false;
@@ -300,4 +301,83 @@ describe("OracleStore", () => {
     expect(oracle.messages[0].content).toBe("remote");
     expect(oracle.apiKey).toBe("new-key");
   });
+
+  describe("Undo Logic", () => {
+    it("should push undo actions to the stack with IDs", () => {
+      const revertFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", revertFn, "msg-123");
+
+      expect(oracle.undoStack.length).toBe(1);
+      expect(oracle.undoStack[0].description).toBe("Test Action");
+      expect(oracle.undoStack[0].revert).toBe(revertFn);
+      expect(oracle.undoStack[0].messageId).toBe("msg-123");
+      expect(oracle.undoStack[0].id).toBeDefined();
+    });
+
+    it("should prevent concurrent undo operations", async () => {
+      let resolveRevert: any;
+      const revertFn = vi.fn().mockReturnValue(new Promise((resolve) => {
+        resolveRevert = resolve;
+      }));
+      oracle.pushUndoAction("Concurrent Action", revertFn);
+
+      const undoPromise = oracle.undo();
+      expect(oracle.isUndoing).toBe(true);
+
+      // Try to call undo again while it's in progress
+      await oracle.undo();
+      expect(revertFn).toHaveBeenCalledTimes(1);
+
+      resolveRevert();
+      await undoPromise;
+      expect(oracle.isUndoing).toBe(false);
+    });
+
+    it("should pop and execute revert function on successful undo", async () => {
+      const revertFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", revertFn);
+
+      await oracle.undo();
+
+      expect(revertFn).toHaveBeenCalled();
+      expect(oracle.undoStack.length).toBe(0);
+    });
+
+    it("should add a system message on successful undo", async () => {
+      const revertFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", revertFn);
+
+      await oracle.undo();
+
+      const lastMessage = oracle.messages[oracle.messages.length - 1];
+      expect(lastMessage.role).toBe("system");
+      expect(lastMessage.content).toContain("Undid action: **Test Action**");
+    });
+
+    it("should keep action on stack if revert fails", async () => {
+      const errorFn = vi.fn().mockRejectedValue(new Error("Revert failed"));
+      oracle.pushUndoAction("Fail Action", errorFn);
+
+      await oracle.undo();
+
+      const lastMessage = oracle.messages[oracle.messages.length - 1];
+      expect(lastMessage.role).toBe("system");
+      expect(lastMessage.content).toContain("Undo failed: Revert failed");
+      
+      // Stack should NOT be empty (action remains for retry)
+      expect(oracle.undoStack.length).toBe(1);
+      expect(oracle.undoStack[0].description).toBe("Fail Action");
+    });
+
+    it("should limit stack size to 50", () => {
+      for (let i = 0; i < 55; i++) {
+        oracle.pushUndoAction(`Action ${i}`, async () => {});
+      }
+
+      expect(oracle.undoStack.length).toBe(50);
+      expect(oracle.undoStack[0].description).toBe("Action 5"); // First 5 should be shifted out
+      expect(oracle.undoStack[49].description).toBe("Action 54");
+    });
+  });
 });
+

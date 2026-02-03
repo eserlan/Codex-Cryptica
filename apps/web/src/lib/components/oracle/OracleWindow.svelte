@@ -13,7 +13,29 @@
     );
     oracle.toggle(); // Close the docked one when popping out
   };
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (!oracle.isOpen) return;
+    
+    // Check for Ctrl+Z (Undo)
+    if ((e.ctrlKey || e.metaKey) && e.key === "z") {
+      const target = e.target as HTMLElement;
+      const isInput = target.matches('input, textarea, [contenteditable="true"]');
+      
+      if (!isInput) {
+        // Ensure the event target is within the Oracle container to avoid intercepting 
+        // global undo shortcuts meant for other parts of the app (like the main editor)
+        const container = document.querySelector('.oracle-window-container');
+        if (container && !container.contains(target)) return;
+
+        e.preventDefault();
+        oracle.undo();
+      }
+    }
+  };
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
@@ -27,7 +49,7 @@
   ></div>
 
   <div
-    class="fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-theme-surface border border-theme-border shadow-2xl
+    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
       : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-full max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
