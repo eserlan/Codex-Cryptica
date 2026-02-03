@@ -1,6 +1,6 @@
 # Feature Specification: Patreon Support Link
 
-**Feature Branch**: `033-patreon-support-link`
+**Feature Branch**: `034-patreon-support-link`
 **Created**: 2026-02-03
 **Status**: Draft
 **Issue**: [eserlan/Codex-Cryptica#75](https://github.com/eserlan/Codex-Cryptica/issues/75)

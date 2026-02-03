@@ -67,6 +67,7 @@ TypeScript: Follow standard conventions
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
 
 ## Recent Changes
+- 034-patreon-support-link: Added Patreon support link to footer (Addresses #75)
 - 033-connection-labels: Added TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation)
 - 032-central-node-orbit: Added TypeScript 5.x + `cytoscape` (Core), `svelte` (UI)
 - 031-import-file-content: Added TypeScript 5.x / Node.js 20+
