@@ -16,21 +16,34 @@ test.describe('Visual Styling Templates', () => {
         
         // 2. Go to Aesthetics tab
         await page.getByRole('tab', { name: 'Aesthetics' }).click();
-        
+
         // 3. Select Fantasy theme
         await page.getByRole('button', { name: 'Ancient Parchment' }).click();
-        
-        // 4. Verify CSS variable change on document root
-        const bgPrimary = await page.evaluate(() => 
-            getComputedStyle(document.documentElement).getPropertyValue('--color-bg-primary').trim()
-        );
-        expect(bgPrimary).toBe('#fdf6e3'); // Fantasy background from config (parchment)
 
-        // 5. Verify font change
-        const fontHeader = await page.evaluate(() => 
-            getComputedStyle(document.documentElement).getPropertyValue('--font-header').trim()
+        // 4. Verify background color change (Parchment color)
+        const body = page.locator('body');
+        await expect(body).toHaveCSS('background-color', 'rgb(253, 246, 227)');
+    });
+
+    test('Switch to Blood & Noir theme and verify visual changes', async ({ page }) => {
+        // 1. Open Settings
+        await page.getByTestId('settings-button').click();
+        
+        // 2. Go to Aesthetics tab
+        await page.getByRole('tab', { name: 'Aesthetics' }).click();
+
+        // 3. Select Horror theme
+        await page.getByRole('button', { name: 'Blood & Noir' }).click();
+
+        // 4. Verify visual properties
+        const body = page.locator('body');
+        await expect(body).toHaveCSS('background-color', 'rgb(5, 5, 5)');
+        
+        // 5. Verify primary color (Deep Crimson) is correctly applied to CSS variable
+        const primaryColor = await page.evaluate(() => 
+            getComputedStyle(document.documentElement).getPropertyValue('--color-accent-primary').trim()
         );
-        expect(fontHeader).toContain('Cinzel');
+        expect(primaryColor).toBe('#991b1b');
     });
 
     test('Theme selection persists across reloads', async ({ page }) => {

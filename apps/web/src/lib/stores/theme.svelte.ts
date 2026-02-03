@@ -72,8 +72,17 @@ class ThemeStore {
     root.style.setProperty("--font-body", tokens.fontBody);
 
     root.style.setProperty("--theme-border-width", `${theme.graph.nodeBorderWidth}px`);
-    root.style.setProperty("--theme-glow", theme.id === 'cyberpunk' ? `0 0 15px ${tokens.primary}44` : 'none');
-    root.style.setProperty("--theme-border-radius", theme.id === 'modern' ? '12px' : '2px');
+    
+    // Theme specific visual behaviors
+    let glow = 'none';
+    if (theme.id === 'cyberpunk') glow = `0 0 15px ${tokens.primary}44`;
+    if (theme.id === 'horror') glow = `0 0 20px ${tokens.secondary}33`;
+    root.style.setProperty("--theme-glow", glow);
+
+    let radius = '2px'; // Gothic/Terminal default
+    if (theme.id === 'modern') radius = '12px';
+    if (theme.id === 'horror') radius = '0px'; // Sharp corners for horror
+    root.style.setProperty("--theme-border-radius", radius);
 
     if (tokens.texture) {
       root.style.setProperty("--bg-texture", `url('/themes/${tokens.texture}')`);
