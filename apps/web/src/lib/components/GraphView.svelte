@@ -250,8 +250,10 @@
             connectMode = false; // Auto exit connect mode
           }
         } else if (graph.orbitMode) {
-            // US2: Switch center if clicked in orbit mode
-            graph.setCentralNode(targetId);
+          // US2: Switch center if clicked in orbit mode
+          graph.setCentralNode(targetId);
+          // Also show the detail panel for the node
+          selectedId = targetId;
         } else {
           // Selection Logic for Detail Panel
           selectedId = targetId;
