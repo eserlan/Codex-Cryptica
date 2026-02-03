@@ -76,7 +76,7 @@ test.describe('Entity Labeling System', () => {
         await page.getByRole('button', { name: 'ADD' }).click();
 
         // 2. Select the entity to open Detail Panel
-        await page.getByText('Test Hero').first().click();
+        await page.locator('aside').getByText('Test Hero').click();
 
         // 3. Add a label
         const labelInput = page.getByPlaceholder('Add label...');
@@ -93,7 +93,7 @@ test.describe('Entity Labeling System', () => {
 
         // 6. Reload and verify persistence
         await page.reload();
-        await page.getByText('Test Hero').first().click();
+        await page.locator('aside').getByText('Test Hero').click();
         await expect(page.getByText('Legendary', { exact: true })).toBeVisible();
         await expect(page.getByText('MIA', { exact: true })).toBeVisible();
 
@@ -108,14 +108,14 @@ test.describe('Entity Labeling System', () => {
         await page.getByTestId('new-entity-button').click();
         await page.getByPlaceholder('Entry Title...').fill('Alpha');
         await page.getByRole('button', { name: 'ADD' }).click();
-        await page.getByText('Alpha').first().click();
+        await page.locator('aside').getByText('Alpha').click();
         await page.getByPlaceholder('Add label...').fill('Group A');
         await page.getByPlaceholder('Add label...').press('Enter');
 
         await page.getByTestId('new-entity-button').click();
         await page.getByPlaceholder('Entry Title...').fill('Beta');
         await page.getByRole('button', { name: 'ADD' }).click();
-        await page.getByText('Beta').first().click();
+        await page.locator('aside').getByText('Beta').click();
         await page.getByPlaceholder('Add label...').fill('Group B');
         await page.getByPlaceholder('Add label...').press('Enter');
 

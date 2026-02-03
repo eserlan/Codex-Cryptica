@@ -34,6 +34,7 @@
                             oracle.clearMessages();
                         }
                     }}
+                    aria-label="Clear conversation history"
                 >
                     <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
                     Clear Chat

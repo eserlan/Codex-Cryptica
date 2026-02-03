@@ -397,15 +397,11 @@
     border-radius: 0.5rem;
     overflow: hidden;
     z-index: 40;
-    pointer-events: none; /* Allow clicks to pass through to graph */
+    pointer-events: auto; /* Ensure it captures clicks */
     transition:
       width 0.3s ease,
       height 0.3s ease,
       opacity 0.3s ease;
-  }
-
-  .minimap-container > * {
-    pointer-events: auto; /* Re-enable for children */
   }
 
   .minimap-container.absolute-pos {

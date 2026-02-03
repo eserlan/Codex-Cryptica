@@ -132,7 +132,6 @@ class OracleStore {
     this.clearMessages();
     this.lastUpdated = Date.now();
     this.broadcast();
-    this.saveToDB();
   }
 
   clearMessages() {

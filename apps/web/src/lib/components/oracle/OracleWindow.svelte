@@ -59,6 +59,7 @@
               }
             }}
             title="Clear conversation history"
+            aria-label="Clear conversation history"
           >
             <span class="icon-[lucide--trash-2] w-4 h-4"></span>
           </button>
