@@ -141,6 +141,27 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeColor: "#78716c",
     },
   },
+  horror: {
+    id: "horror",
+    name: "Blood & Noir",
+    tokens: {
+      primary: "#991b1b",
+      secondary: "#7f1d1d",
+      background: "#050505",
+      surface: "#171717",
+      text: "#e5e5e5",
+      border: "rgba(153, 27, 27, 0.4)",
+      accent: "#a3a3a3",
+      fontHeader: "'Spectral', serif",
+      fontBody: "'Inter', sans-serif",
+    },
+    graph: {
+      nodeShape: "round-rectangle",
+      edgeStyle: "solid",
+      nodeBorderWidth: 2,
+      edgeColor: "#7f1d1d",
+    },
+  },
 };
 
 export const DEFAULT_THEME = THEMES.scifi;
