@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getTimelineLayout } from "../src/layouts/timeline";
+import { getTimelineLayout, hasTimelineDate } from "../src/layouts/timeline";
 import type { GraphNode } from "../src/transformer";
 
 describe("Timeline Layout", () => {
@@ -59,5 +59,27 @@ describe("Timeline Layout", () => {
     expect(positions["n1"].y).toBe(0);
     expect(positions["n2"].y).toBe(14);
     expect(positions["n1"].x).toBe(75);
+  });
+
+  it("should detect nodes without timeline metadata", () => {
+    const undatedNode: GraphNode = {
+      group: "nodes",
+      data: { id: "n4", label: "Node 4", type: "npc", weight: 0 }
+    };
+
+    const nodeWithStartDate: GraphNode = {
+      group: "nodes",
+      data: { id: "n5", label: "Node 5", type: "event", weight: 0, start_date: { year: 2000 } }
+    };
+
+    const nodeWithEndDate: GraphNode = {
+      group: "nodes",
+      data: { id: "n6", label: "Node 6", type: "event", weight: 0, end_date: { year: 2024 } }
+    };
+
+    expect(hasTimelineDate(mockNodes[0])).toBe(true);
+    expect(hasTimelineDate(undatedNode)).toBe(false);
+    expect(hasTimelineDate(nodeWithStartDate)).toBe(true);
+    expect(hasTimelineDate(nodeWithEndDate)).toBe(true);
   });
 });
