@@ -6,6 +6,32 @@ import { vault } from './vault.svelte';
 import { ui } from './ui.svelte';
 
 function createSearchStore() {
+  const loadRecents = (): SearchResult[] => {
+    if (typeof localStorage === 'undefined') return [];
+    try {
+      const raw = localStorage.getItem('search_recents');
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as SearchResult[];
+      if (!Array.isArray(parsed)) return [];
+      return parsed.filter((entry) => Boolean(entry?.id && entry?.path));
+    } catch (error) {
+      console.warn('SearchStore: Failed to parse recent searches.', error);
+      return [];
+    }
+  };
+
+  const normalizeRecent = (entry: SearchResult): SearchResult | null => {
+    if (entry.id) return entry;
+    if (!entry.path) return null;
+    const pathSegments = entry.path.split('/');
+    const basename = pathSegments[pathSegments.length - 1] || entry.path;
+    const derivedId = basename.replace(/\.md$/, '');
+    if (!derivedId) return null;
+    return { ...entry, id: derivedId };
+  };
+
+  const recents = loadRecents();
+
   const { subscribe, update } = writable<{
     query: string;
     results: SearchResult[];
@@ -19,14 +45,8 @@ function createSearchStore() {
     isOpen: false,
     selectedIndex: 0,
     isLoading: false,
-    recents: []
+    recents
   });
-
-  // Clear stale recents to prevent ID: undefined pollution
-  if (typeof localStorage !== 'undefined') {
-    localStorage.removeItem('search_recents');
-    console.log('SearchStore: Cleared stale recents from localStorage');
-  }
 
   return {
     subscribe,
@@ -82,9 +102,13 @@ function createSearchStore() {
       update(s => {
         if (s.results.length > 0 && s.results[s.selectedIndex]) {
           selected = s.results[s.selectedIndex];
+          const normalized = normalizeRecent(selected);
+          if (!normalized) {
+            return s;
+          }
 
           // Add to recents
-          const newRecents = [selected, ...s.recents.filter(r => r.id !== selected!.id)].slice(0, 5);
+          const newRecents = [normalized, ...s.recents.filter(r => r.id !== normalized.id)].slice(0, 5);
           if (typeof localStorage !== 'undefined') {
             localStorage.setItem('search_recents', JSON.stringify(newRecents));
           }

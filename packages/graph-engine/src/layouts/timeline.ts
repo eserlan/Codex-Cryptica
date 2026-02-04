@@ -7,6 +7,10 @@ export interface TimelineLayoutOptions {
   minYear?: number;
 }
 
+export function hasTimelineDate(node: GraphNode): boolean {
+  return Boolean(node.data.date || node.data.start_date || node.data.end_date);
+}
+
 /**
  * Calculates sequential positions for a set of years, with gap compression.
  */
@@ -49,7 +53,7 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
   const positions: Record<string, { x: number, y: number }> = {};
   
   // 1. Identify relevant year for each node (priority: date > start_date > end_date)
-  const datedNodes = nodes.filter(n => n.data.date || n.data.start_date || n.data.end_date);
+  const datedNodes = nodes.filter((node) => hasTimelineDate(node));
   
   if (datedNodes.length === 0) return {};
 

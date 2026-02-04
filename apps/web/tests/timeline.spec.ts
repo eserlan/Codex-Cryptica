@@ -28,15 +28,23 @@ test.describe("World Timeline - Graph Integration", () => {
                     '---\nid: e2\ntitle: Event 2\ntype: event\ndate:\n  year: 2000\n---\n# E2', 
                     'e2.md'
                 );
+                const f3 = createMockFile(
+                    '---\nid: e3\ntitle: Undated Event\ntype: event\n---\n# E3',
+                    'e3.md'
+                );
 
                 return {
                     kind: "directory",
                     name: "test-vault",
                     requestPermission: async () => "granted",
                     queryPermission: async () => "granted",
-                    values: () => [f1, f2][Symbol.iterator](),
-                    entries: () => [['e1.md', f1], ['e2.md', f2]][Symbol.iterator](),
-                    getFileHandle: async (name: string) => name === 'e1.md' ? f1 : f2,
+                    values: () => [f1, f2, f3][Symbol.iterator](),
+                    entries: () => [['e1.md', f1], ['e2.md', f2], ['e3.md', f3]][Symbol.iterator](),
+                    getFileHandle: async (name: string) => {
+                        if (name === 'e1.md') return f1;
+                        if (name === 'e2.md') return f2;
+                        return f3;
+                    },
                     getDirectoryHandle: async (name: string) => ({ kind: "directory", name }),
                 };
             };
@@ -49,7 +57,7 @@ test.describe("World Timeline - Graph Integration", () => {
         await page.getByRole("button", { name: "OPEN VAULT" }).click();
 
         // 2. Wait for entities to load
-        await expect(page.getByTestId("entity-count")).toContainText("2 ENTITIES", { timeout: 15000 });
+        await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", { timeout: 15000 });
 
         // 3. Toggle Timeline
         const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
@@ -74,5 +82,20 @@ test.describe("World Timeline - Graph Integration", () => {
             // Event 2 (Year 2000) should be to the right of Event 1 (Year 1000)
             expect(positions.e2.x).toBeGreaterThan(positions.e1.x);
         }
+    });
+
+    test("should hide undated nodes in timeline mode", async ({ page }) => {
+        await page.getByRole("button", { name: "OPEN VAULT" }).click();
+        await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", { timeout: 15000 });
+
+        const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
+        await timelineBtn.click();
+
+        await page.waitForFunction(() => {
+            const { cy } = window as any;
+            if (!cy) return false;
+            const node = cy.$id("e3");
+            return node && !node.visible();
+        });
     });
 });

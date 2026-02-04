@@ -11,7 +11,7 @@
   import type { Core, NodeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
-  import { getGraphStyle, DEFAULT_LAYOUT_OPTIONS } from "graph-engine";
+  import { getGraphStyle, DEFAULT_LAYOUT_OPTIONS, hasTimelineDate, type GraphNode } from "graph-engine";
 
   cytoscape.use(fcose);
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -33,6 +33,12 @@
     ...getGraphStyle(themeStore.activeTheme, categories.list),
     {
       selector: ".filtered-out",
+      style: {
+        display: "none",
+      },
+    },
+    {
+      selector: ".timeline-hidden",
       style: {
         display: "none",
       },
@@ -348,6 +354,24 @@
         });
       });
     }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
+    const isTimelineMode = graph.timelineMode;
+    const _elements = graph.elements;
+    if (!currentCy) return;
+    currentCy.batch(() => {
+      currentCy.nodes().forEach((node) => {
+        const data = node.data() as GraphNode["data"];
+        const hasDate = hasTimelineDate({ group: "nodes", data });
+        if (isTimelineMode && !hasDate) {
+          node.addClass("timeline-hidden");
+        } else {
+          node.removeClass("timeline-hidden");
+        }
+      });
+    });
   });
 
   // Reactive effect to resolve node images

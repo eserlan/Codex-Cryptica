@@ -5,7 +5,8 @@
 
 import { build, files, version } from '$service-worker';
 
-const CACHE = `cache-${version}`;
+const CACHE_VERSION = '4';
+const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
 	...build, // the app itself

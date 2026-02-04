@@ -190,4 +190,28 @@ test.describe('Fuzzy Search', () => {
         const url = page.url();
         expect(url).not.toContain('file=');
     });
+
+    test('shows recent searches from localStorage when opening with empty query', async ({ page }) => {
+        await page.addInitScript(() => {
+            const recents = [
+                {
+                    id: 'recent-note',
+                    title: 'Recent Note',
+                    path: 'recent-note.md',
+                    score: 0.5,
+                    matchType: 'title'
+                }
+            ];
+            window.localStorage.setItem('search_recents', JSON.stringify(recents));
+        });
+
+        await page.goto('http://localhost:5173/');
+
+        await page.keyboard.press('Control+k');
+        await page.keyboard.press('Meta+k');
+
+        const resultItem = page.getByTestId('search-result').filter({ hasText: 'Recent Note' });
+        await expect(resultItem).toBeVisible();
+        await expect(resultItem).toContainText('recent-note.md');
+    });
 });
