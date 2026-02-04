@@ -67,7 +67,19 @@ describe("Timeline Layout", () => {
       data: { id: "n4", label: "Node 4", type: "npc", weight: 0 }
     };
 
+    const nodeWithStartDate: GraphNode = {
+      group: "nodes",
+      data: { id: "n5", label: "Node 5", type: "event", weight: 0, start_date: { year: 2000 } }
+    };
+
+    const nodeWithEndDate: GraphNode = {
+      group: "nodes",
+      data: { id: "n6", label: "Node 6", type: "event", weight: 0, end_date: { year: 2024 } }
+    };
+
     expect(hasTimelineDate(mockNodes[0])).toBe(true);
     expect(hasTimelineDate(undatedNode)).toBe(false);
+    expect(hasTimelineDate(nodeWithStartDate)).toBe(true);
+    expect(hasTimelineDate(nodeWithEndDate)).toBe(true);
   });
 });

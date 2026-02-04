@@ -89,7 +89,7 @@ describe("searchStore", () => {
                     path: "alpha.md",
                     score: 0.5,
                     matchType: "title"
-                }
+                } as any
             ],
             selectedIndex: 0
         }));

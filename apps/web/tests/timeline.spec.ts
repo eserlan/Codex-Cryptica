@@ -88,9 +88,18 @@ test.describe("World Timeline - Graph Integration", () => {
         await page.getByRole("button", { name: "OPEN VAULT" }).click();
         await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", { timeout: 15000 });
 
+        // Verify undated node (e3) is visible before toggling timeline mode
+        await page.waitForFunction(() => {
+            const { cy } = window as any;
+            if (!cy) return false;
+            const node = cy.$id("e3");
+            return node && node.visible();
+        });
+
         const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
         await timelineBtn.click();
 
+        // Verify undated node is now hidden in timeline mode
         await page.waitForFunction(() => {
             const { cy } = window as any;
             if (!cy) return false;

@@ -6,6 +6,16 @@ import { vault } from './vault.svelte';
 import { ui } from './ui.svelte';
 
 function createSearchStore() {
+  const normalizeRecent = (entry: SearchResult): SearchResult | null => {
+    if (entry.id !== undefined && entry.id !== null && entry.id !== '') return entry;
+    if (!entry.path) return null;
+    const pathSegments = entry.path.split('/');
+    const basename = pathSegments[pathSegments.length - 1] || entry.path;
+    const derivedId = basename.replace(/\.md$/, '');
+    if (!derivedId) return null;
+    return { ...entry, id: derivedId };
+  };
+
   const loadRecents = (): SearchResult[] => {
     if (typeof localStorage === 'undefined') return [];
     try {
@@ -13,21 +23,13 @@ function createSearchStore() {
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
-      return parsed.filter((entry) => Boolean(entry?.id && entry?.path));
+      return parsed
+        .map((entry) => normalizeRecent(entry))
+        .filter((entry): entry is SearchResult => Boolean(entry && entry.path));
     } catch (error) {
       console.warn('SearchStore: Failed to parse recent searches.', error);
       return [];
     }
-  };
-
-  const normalizeRecent = (entry: SearchResult): SearchResult | null => {
-    if (entry.id) return entry;
-    if (!entry.path) return null;
-    const pathSegments = entry.path.split('/');
-    const basename = pathSegments[pathSegments.length - 1] || entry.path;
-    const derivedId = basename.replace(/\.md$/, '');
-    if (!derivedId) return null;
-    return { ...entry, id: derivedId };
   };
 
   const recents = loadRecents();

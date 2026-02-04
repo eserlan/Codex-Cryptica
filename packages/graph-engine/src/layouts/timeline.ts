@@ -7,6 +7,16 @@ export interface TimelineLayoutOptions {
   minYear?: number;
 }
 
+/**
+ * Checks whether a node has any timeline-related date metadata.
+ *
+ * A node is considered dateable if it has at least one of the following
+ * properties defined on its `data` object: `date`, `start_date`, or `end_date`.
+ *
+ * @param node - The graph node to inspect for timeline date fields.
+ * @returns `true` if the node has `date`, `start_date`, or `end_date` defined;
+ *          otherwise `false`.
+ */
 export function hasTimelineDate(node: GraphNode): boolean {
   return Boolean(node.data.date || node.data.start_date || node.data.end_date);
 }
