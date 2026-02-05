@@ -91,9 +91,8 @@ test.describe("Fog of War", () => {
 
     // 4. Verify Search also filters
     await page.evaluate(async () => {
-      const { searchStore } = (window as any);
-      // We manually mock search results since we can't easily trigger worker search in eval
-      searchStore.update((s: any) => ({
+      const { _searchStore } = (window as any);
+      (window as any).searchStore.update((s: any) => ({
         ...s,
         query: "node",
         results: [
@@ -117,7 +116,7 @@ test.describe("Fog of War", () => {
         { id: "revealed-node", title: "Revealed Node" }
       ];
       const settings = { sharedMode: uiStore.sharedMode, defaultVisibility: vault.defaultVisibility };
-      return results.filter(r => isEntityVisible(vault.entities[r.id], settings)).map(r => r.id);
+      return results.filter((r: any) => isEntityVisible(vault.entities[r.id], settings)).map((r: any) => r.id);
     });
 
     expect(filteredSearchIds).not.toContain("hidden-node");

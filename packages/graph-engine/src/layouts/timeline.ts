@@ -8,6 +8,20 @@ export interface TimelineLayoutOptions {
 }
 
 /**
+ * Checks whether a node has any timeline-related date metadata.
+ *
+ * A node is considered dateable if it has at least one of the following
+ * properties defined on its `data` object: `date`, `start_date`, or `end_date`.
+ *
+ * @param node - The graph node to inspect for timeline date fields.
+ * @returns `true` if the node has `date`, `start_date`, or `end_date` defined;
+ *          otherwise `false`.
+ */
+export function hasTimelineDate(node: GraphNode): boolean {
+  return Boolean(node.data.date || node.data.start_date || node.data.end_date);
+}
+
+/**
  * Calculates sequential positions for a set of years, with gap compression.
  */
 export function getSequentialYearPositions(years: number[], scale: number): Record<number, number> {
@@ -49,7 +63,7 @@ export function getTimelineLayout(nodes: GraphNode[], options: TimelineLayoutOpt
   const positions: Record<string, { x: number, y: number }> = {};
   
   // 1. Identify relevant year for each node (priority: date > start_date > end_date)
-  const datedNodes = nodes.filter(n => n.data.date || n.data.start_date || n.data.end_date);
+  const datedNodes = nodes.filter((node) => hasTimelineDate(node));
   
   if (datedNodes.length === 0) return {};
 

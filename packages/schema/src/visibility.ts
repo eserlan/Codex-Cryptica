@@ -19,15 +19,17 @@ export function isEntityVisible(entity: Entity, settings: VisibilitySettings): b
     return true;
   }
 
-  const tags = entity.tags || [];
-  
-  // 1. Force Hidden tag always takes precedence (Safety First)
-  if (tags.includes("hidden")) {
+  const tags = (entity.tags || []).map((t) => t.toLowerCase());
+  const labels = (entity.labels || []).map((l) => l.toLowerCase());
+  const allMarkers = [...tags, ...labels];
+
+  // 1. Force Hidden always takes precedence
+  if (allMarkers.includes("hidden")) {
     return false;
   }
 
-  // 2. Force Revealed tag shows it even if world is hidden
-  if (tags.includes("revealed")) {
+  // 2. Force Revealed/Visible shows it even if world is hidden
+  if (allMarkers.includes("revealed") || allMarkers.includes("visible")) {
     return true;
   }
 
