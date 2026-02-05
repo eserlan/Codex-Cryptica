@@ -43,7 +43,7 @@
   let scale = $state(1); // minimap pixels / graph units
 
   // Toggle Visibility (US4)
-  let collapsed = $state(true); // Default to expanded for visibility
+  let collapsed = $state(true); // Default to collapsed to save screen space
   const toggleMinimap = () => (collapsed = !collapsed);
 
   const updateProjection = () => {

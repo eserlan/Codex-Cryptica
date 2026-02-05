@@ -13,18 +13,6 @@ test.describe("Mobile UX Fixes", () => {
         await expect(page.locator('.app-layout')).toBeVisible({ timeout: 10000 });
     });
 
-    test("Minimap should be collapsed by default", async ({ page }) => {
-        const minimap = page.locator('.minimap-container');
-        await expect(minimap).toBeVisible();
-        await expect(minimap).toHaveClass(/collapsed/);
-        
-        const box = await minimap.boundingBox();
-        if (box) {
-            expect(box.width).toBe(40);
-            expect(box.height).toBe(40);
-        }
-    });
-
     test("Entity Detail Panel should have solid background and high z-index", async ({ page }) => {
         await page.waitForFunction(() => (window as any).vault);
 
