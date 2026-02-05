@@ -8,6 +8,7 @@
 	import GuestLoginModal from "$lib/components/modals/GuestLoginModal.svelte";
 	import ZenModeModal from "$lib/components/modals/ZenModeModal.svelte";
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
+	import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { graph } from "$lib/stores/graph.svelte";
 	import { oracle } from "$lib/stores/oracle.svelte";
@@ -36,6 +37,7 @@
 
 	const shareId = $derived(page.url.searchParams.get("shareId"));
 	let showGuestLogin = $state(false);
+	let isMobileMenuOpen = $state(false);
 
 	const handleJoin = async (username: string) => {
 		sessionStorage.setItem("guest_username", username);
@@ -234,20 +236,32 @@
 <div class="app-layout min-h-screen bg-black flex flex-col">
 	{#if !isPopup}
 		<header
-			class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex flex-wrap md:flex-nowrap justify-between items-center sticky top-0 z-50 gap-y-3"
+			class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
 		>
-			<h1
-				class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
-			>
-				<span
-					class="icon-[lucide--book-open] text-theme-primary w-5 h-5"
-				></span>
-				<span class="hidden sm:inline">Codex Cryptica</span>
-				<span class="sm:hidden text-theme-primary">CC</span>
-			</h1>
+			<!-- Mobile: Left (Menu + Brand) -->
+			<div class="flex items-center gap-3">
+				<button
+					class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
+					onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
+					aria-label="Toggle menu"
+				>
+					<span class="icon-[lucide--menu] w-6 h-6"></span>
+				</button>
 
-			<div class="flex-1 order-3 md:order-2 w-full md:max-w-xl md:px-4">
-				<div class="relative group">
+				<h1
+					class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
+				>
+					<span
+						class="icon-[lucide--book-open] text-theme-primary w-5 h-5"
+					></span>
+					<span class="hidden sm:inline">Codex Cryptica</span>
+					<span class="sm:hidden text-theme-primary">CC</span>
+				</h1>
+			</div>
+
+			<!-- Search (Desktop: Input, Mobile: Button) -->
+			<div class="flex-1 max-w-xl md:px-4 flex justify-end md:justify-center">
+				<div class="hidden md:block w-full relative group">
 					<span
 						class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-theme-muted group-focus-within:text-theme-primary transition-colors"
 					></span>
@@ -262,10 +276,18 @@
 						data-testid="search-input"
 					/>
 				</div>
+				<button 
+					class="md:hidden p-2 text-theme-muted hover:text-theme-primary transition-colors"
+					onclick={() => searchStore.open()}
+					aria-label="Search"
+				>
+					<span class="icon-[heroicons--magnifying-glass] w-6 h-6"></span>
+				</button>
 			</div>
 
+			<!-- Desktop: Right Controls -->
 			<div
-				class="flex items-center gap-2 md:gap-4 shrink-0 order-2 md:order-3"
+				class="hidden md:flex items-center gap-4 shrink-0"
 			>
 				<VaultControls />
 				<button
@@ -299,7 +321,7 @@
 
 	{#if !isPopup}
 		<footer
-			class="px-6 py-4 bg-theme-surface border-t border-theme-border flex flex-col md:flex-row justify-between items-center gap-4"
+			class="px-6 py-4 bg-theme-surface border-t border-theme-border flex flex-col md:flex-row justify-between items-center gap-4 hidden md:flex"
 		>
 			<div
 				class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
@@ -339,6 +361,7 @@
 				<SettingsModal />
 				<ZenModeModal />
 				<TourOverlay />
+				<MobileMenu bind:isOpen={isMobileMenuOpen} />
 			{/if}
 		{/if}
 	{/if}

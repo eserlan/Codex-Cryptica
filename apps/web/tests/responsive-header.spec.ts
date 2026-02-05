@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Header Responsiveness", () => {
-  test("should show mobile logo and wrap header elements on small screens", async ({ page }) => {
+  test("should show mobile logo and optimize header on small screens", async ({ page }) => {
     // Set viewport to a typical mobile width
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
@@ -14,13 +14,17 @@ test.describe("Mobile Header Responsiveness", () => {
     await expect(mobileLogo).toHaveText('CC');
     await expect(desktopLogo).not.toBeVisible();
 
-    // Verify search bar is visible
-    const searchInput = page.getByPlaceholder(/Search/);
-    await expect(searchInput).toBeVisible();
+    // Verify search button is visible (input is hidden)
+    const searchButton = page.getByLabel("Search");
+    await expect(searchButton).toBeVisible();
+    await expect(page.getByPlaceholder(/Search/)).not.toBeVisible();
 
-    // Verify vault controls and cloud status are visible
-    const vaultControls = page.locator('header').locator('div.flex.items-center.gap-2');
-    await expect(vaultControls).toBeVisible();
+    // Verify desktop vault controls are hidden
+    const desktopControls = page.locator('header .hidden.md\\:flex');
+    await expect(desktopControls).not.toBeVisible();
+
+    // Verify hamburger menu is visible
+    await expect(page.getByLabel("Toggle menu")).toBeVisible();
   });
 
   test("should hide entity labels on small screens", async ({ page }) => {

@@ -18,7 +18,7 @@ test.describe("Fog of War", () => {
     }, { timeout: 15000 });
     
     await page.evaluate(async () => {
-      const { vault, _searchStore } = (window as any);
+      const { vault } = (window as any);
       
       const mockEntities = {
         "visible-node": {
@@ -109,7 +109,7 @@ test.describe("Fog of War", () => {
     
     // For now, evaluation of store state after a mock 'search' call is best.
     const filteredSearchIds = await page.evaluate(async () => {
-      const { _searchStore, uiStore, vault, isEntityVisible } = (window as any);
+      const { uiStore, vault, isEntityVisible } = (window as any);
       const results = [
         { id: "visible-node", title: "Visible Node" },
         { id: "hidden-node", title: "Hidden Node" },

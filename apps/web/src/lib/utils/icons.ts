@@ -2,7 +2,7 @@ import { DEFAULT_ICON } from "schema";
 
 /**
  * Converts icon format from storage (lucide:name) to CSS class (icon-[lucide--name])
- * @param iconStr - Icon string in "prefix:name" or "icon-[prefix--name]" format
+ * @param iconStr - Icon string in "prefix:name" or "icon-{prefix--name}" format
  * @returns CSS class for iconify icon
  */
 export function getIconClass(iconStr: string | undefined): string {
@@ -14,7 +14,7 @@ export function getIconClass(iconStr: string | undefined): string {
         return `icon-[${parts[0]}--${parts[1]}]`;
     }
 
-    // Already in icon-[...] format or fallback
+    // Already in icon-{...} format or fallback
     return iconStr.startsWith("icon-") ? iconStr : `icon-[${DEFAULT_ICON.replace(":", "--")}]`;
 }
 

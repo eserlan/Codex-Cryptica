@@ -44,6 +44,8 @@ apps/web/
 ├── src/
 │   ├── lib/
 │   │   ├── components/
+│   │   │   ├── layout/
+│   │   │   │   └── MobileMenu.svelte
 │   │   │   ├── settings/
 │   │   │   │   └── CloudStatus.svelte
 │   │   │   ├── VaultControls.svelte
