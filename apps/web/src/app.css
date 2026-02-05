@@ -84,6 +84,7 @@
   :root {
     --header-height: 65px;
     --color-bg-primary: #050505;
+    --color-bg-surface: #0c0c0c;
     --color-accent-primary: #4ade80;
     --color-accent-dim: #16a34a;
     --color-accent-dark: #15803d;
