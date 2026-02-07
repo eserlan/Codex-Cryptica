@@ -34,6 +34,17 @@ Open [http://localhost:5173](http://localhost:5173) to view the application.
 - **packages/graph-engine**: Cytoscape.js core logic for graph visualization
 - **packages/editor-core**: Framework-agnostic Tiptap extensions and core
 
+### Development Workflow
+
+This project uses **Husky** and **lint-staged** to ensure code quality before every commit.
+
+- **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
+- **Why?**: This prevents linting and formatting errors from reaching the repository and failing CI builds.
+- **Manual Bypass**: If you absolutely need to bypass the hook (not recommended), you can use the `--no-verify` flag:
+  ```bash
+  git commit -m "your message" --no-verify
+  ```
+
 ### CI/CD
 
 This project uses **GitHub Actions** for continuous integration. Every push and pull request to the `main` branch triggers:
@@ -62,6 +73,7 @@ The Lore Oracle (AI Assistant) uses Google Gemini. It can be used in two modes:
 2.  **Lite Mode (Shared Key)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" tier.
 
 **Important for Developers:** Because this is a static frontend application, any shared key provided at build time is **publicly visible** in the compiled JavaScript. To prevent abuse, you **must** restrict your API key in the [Google Cloud Console](https://console.cloud.google.com/):
+
 - Go to **APIs & Services > Credentials**.
 - Select your API Key.
 - Under **Application restrictions**, choose **Websites (HTTP referrers)**.
