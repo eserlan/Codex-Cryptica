@@ -27,14 +27,14 @@ vi.mock("./oracle.svelte", () => ({
     clearMessages: vi.fn(),
     messages: [],
     tier: "lite",
-    apiKey: null
-  }
+    apiKey: null,
+  },
 }));
 
 vi.mock("../cloud-bridge/worker-bridge", () => ({
   workerBridge: {
-    reset: vi.fn()
-  }
+    reset: vi.fn(),
+  },
 }));
 
 vi.mock("../utils/idb", () => ({
@@ -44,6 +44,10 @@ vi.mock("../utils/idb", () => ({
   getCachedFile: vi.fn().mockResolvedValue(undefined),
   setCachedFile: vi.fn().mockResolvedValue(undefined),
   clearCache: vi.fn().mockResolvedValue(undefined),
+  getDB: vi.fn().mockResolvedValue({
+    get: vi.fn().mockResolvedValue(undefined),
+    put: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 // Mock global window.showDirectoryPicker
@@ -52,8 +56,8 @@ global.window.showDirectoryPicker = vi.fn();
 
 // Mock Image and Canvas for thumbnail testing
 class MockImage {
-  onload: () => void = () => { };
-  onerror: (err: any) => void = () => { };
+  onload: () => void = () => {};
+  onerror: (err: any) => void = () => {};
   private _src: string = "";
   width: number = 512;
   height: number = 512;
@@ -65,7 +69,9 @@ class MockImage {
       this.onload();
     }
   }
-  get src() { return this._src; }
+  get src() {
+    return this._src;
+  }
 }
 (global as any).Image = MockImage;
 
@@ -76,8 +82,8 @@ const originalCreateElement = global.document.createElement;
 function createCanvasMock() {
   return {
     getContext: () => ({
-      drawImage: () => { },
-      clearRect: () => { },
+      drawImage: () => {},
+      clearRect: () => {},
     }),
     toBlob: (callback: (blob: Blob | null) => void) => {
       callback(new Blob(["thumb"], { type: "image/png" }));
@@ -95,13 +101,25 @@ describe("VaultStore", () => {
     vi.resetAllMocks();
 
     // Re-setup canvas mock after resetAllMocks
-    global.document.createElement = vi.fn().mockImplementation((tag: string) => {
-      if (tag === "canvas") {
-        return createCanvasMock();
-      }
-      return typeof originalCreateElement === 'function' ? originalCreateElement(tag) : {};
-    });
+    global.document.createElement = vi
+      .fn()
+      .mockImplementation((tag: string) => {
+        if (tag === "canvas") {
+          return createCanvasMock();
+        }
+        return typeof originalCreateElement === "function"
+          ? originalCreateElement(tag)
+          : {};
+      });
     vault.entities = {};
+    vault.rootHandle = undefined;
+    vault.isAuthorized = false;
+
+    // Ensure getDB returns a valid mock object
+    vi.mocked(idbUtils.getDB).mockResolvedValue({
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+    } as any);
   });
 
   it("should initialize with empty state", () => {
@@ -117,17 +135,23 @@ describe("VaultStore", () => {
     const mockFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         lastModified: 1234567890,
-        text: vi.fn().mockResolvedValue(`---\nid: test\ntype: npc\ntitle: Test Node\n---\nContent`)
+        text: vi
+          .fn()
+          .mockResolvedValue(
+            `---\nid: test\ntype: npc\ntitle: Test Node\n---\nContent`,
+          ),
       }),
-      kind: 'file',
-      name: 'test.md'
+      kind: "file",
+      name: "test.md",
     };
 
     vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
-      { handle: mockFileHandle as any, path: ['test.md'] }
+      { handle: mockFileHandle as any, path: ["test.md"] },
     ]);
 
-    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(mockDirectoryHandle as any);
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockDirectoryHandle as any,
+    );
 
     await vault.openDirectory();
 
@@ -150,21 +174,21 @@ describe("VaultStore", () => {
       tags: [],
       labels: [],
       connections: [],
-      metadata: {}
+      metadata: {},
     };
 
     // Mock IDB hit
     vi.mocked(idbUtils.getCachedFile).mockResolvedValue({
       path: filePath,
       lastModified: lastModified,
-      entity: cachedEntity
+      entity: cachedEntity,
     });
 
     const mockFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         lastModified: lastModified,
-        text: vi.fn() // Should NOT be called
-      })
+        text: vi.fn(), // Should NOT be called
+      }),
     };
 
     const mockFiles = [{ handle: mockFileHandle, path: [filePath] }];
@@ -202,8 +226,12 @@ describe("VaultStore", () => {
 
   it("should save image to vault and generate paths", async () => {
     const mockWritable = { write: vi.fn(), close: vi.fn() };
-    const mockFileHandle = { createWritable: vi.fn().mockResolvedValue(mockWritable) };
-    const mockImagesDir = { getFileHandle: vi.fn().mockResolvedValue(mockFileHandle) };
+    const mockFileHandle = {
+      createWritable: vi.fn().mockResolvedValue(mockWritable),
+    };
+    const mockImagesDir = {
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+    };
 
     vault.rootHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
@@ -230,10 +258,12 @@ describe("VaultStore", () => {
 
   it("should cleanup old images when replacing with new ones", async () => {
     const mockWritable = { write: vi.fn(), close: vi.fn() };
-    const mockFileHandle = { createWritable: vi.fn().mockResolvedValue(mockWritable) };
-    const mockImagesDir = { 
+    const mockFileHandle = {
+      createWritable: vi.fn().mockResolvedValue(mockWritable),
+    };
+    const mockImagesDir = {
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
-      removeEntry: vi.fn().mockResolvedValue(undefined)
+      removeEntry: vi.fn().mockResolvedValue(undefined),
     };
 
     vault.rootHandle = {
@@ -257,16 +287,22 @@ describe("VaultStore", () => {
     // Verify old files were removed
     expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("old-photo.png");
     expect(mockImagesDir.removeEntry).toHaveBeenCalledWith("old-thumb.webp");
-    
+
     // Verify new paths were set
-    expect(vault.entities["replace-entity"]?.image).toContain("replace-entity-");
-    expect(vault.entities["replace-entity"]?.image).not.toContain("old-photo.png");
+    expect(vault.entities["replace-entity"]?.image).toContain(
+      "replace-entity-",
+    );
+    expect(vault.entities["replace-entity"]?.image).not.toContain(
+      "old-photo.png",
+    );
   });
 
   it("should resolve local paths to blob URLs", async () => {
     const mockFile = new File(["data"], "image.png", { type: "image/png" });
     const mockFileHandle = { getFile: vi.fn().mockResolvedValue(mockFile) };
-    const mockImagesDir = { getFileHandle: vi.fn().mockResolvedValue(mockFileHandle) };
+    const mockImagesDir = {
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+    };
 
     vault.rootHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
@@ -324,8 +360,8 @@ describe("VaultStore", () => {
 
   it("should reset services and state on close", async () => {
     vault.isAuthorized = true;
-    vault.entities = { "test": { id: "test" } as any };
-    
+    vault.entities = { test: { id: "test" } as any };
+
     await vault.close();
 
     expect(vault.isAuthorized).toBe(false);
@@ -338,9 +374,9 @@ describe("VaultStore", () => {
   it("should delete entity and associated media files", async () => {
     const mockFileHandle = { kind: "file" };
     const mockImagesDir = { removeEntry: vi.fn().mockResolvedValue(undefined) };
-    const mockRootHandle = { 
+    const mockRootHandle = {
       removeEntry: vi.fn().mockResolvedValue(undefined),
-      getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir)
+      getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
     };
     vault.rootHandle = mockRootHandle as any;
 
@@ -363,7 +399,9 @@ describe("VaultStore", () => {
 
   it("should cleanup relational references when an entity is deleted", async () => {
     const mockFileHandle = { kind: "file" };
-    const mockRootHandle = { removeEntry: vi.fn().mockResolvedValue(undefined) };
+    const mockRootHandle = {
+      removeEntry: vi.fn().mockResolvedValue(undefined),
+    };
     vault.rootHandle = mockRootHandle as any;
 
     // Entity A points to B
@@ -401,16 +439,22 @@ describe("VaultStore", () => {
     const mockFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         lastModified: 1234567890,
-        text: vi.fn().mockResolvedValue(`---\nid: test\ntitle: Test\ntype: npc\n---\n[[other|Labeled Link]]`)
+        text: vi
+          .fn()
+          .mockResolvedValue(
+            `---\nid: test\ntitle: Test\ntype: npc\n---\n[[other|Labeled Link]]`,
+          ),
       }),
-      kind: 'file',
-      name: 'test.md'
+      kind: "file",
+      name: "test.md",
     };
 
     vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
-      { handle: mockFileHandle as any, path: ['test.md'] }
+      { handle: mockFileHandle as any, path: ["test.md"] },
     ]);
-    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(mockDirectoryHandle as any);
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockDirectoryHandle as any,
+    );
 
     await vault.openDirectory();
 
@@ -419,7 +463,7 @@ describe("VaultStore", () => {
       target: "other",
       type: "related_to",
       strength: 1,
-      label: "Labeled Link"
+      label: "Labeled Link",
     });
   });
 
@@ -535,7 +579,7 @@ describe("VaultStore", () => {
     } as any;
 
     vault.addConnection("a", "b", "enemy");
-    
+
     const inbound = vault.inboundConnections;
     expect(inbound["b"]).toHaveLength(1);
     expect(inbound["b"]).toContainEqual({
@@ -545,5 +589,33 @@ describe("VaultStore", () => {
 
     vault.removeConnection("a", "b");
     expect(vault.inboundConnections["b"]).toBeUndefined();
+  });
+
+  it("should gracefully handle invalid persisted handle (mobile simulation)", async () => {
+    // 1. Mock a persisted handle that throws on permission query
+    const mockHandle = {
+      kind: "directory",
+      name: "broken-vault",
+      queryPermission: vi
+        .fn()
+        .mockRejectedValue(
+          new Error(
+            "NotFoundError: A requested file or directory could not be found",
+          ),
+        ),
+      requestPermission: vi.fn(),
+    };
+
+    vi.mocked(idbUtils.getPersistedHandle).mockResolvedValue(mockHandle as any);
+
+    // 2. Init vault
+    await vault.init();
+
+    // 3. Verify recovery behavior
+    expect(mockHandle.queryPermission).toHaveBeenCalled();
+    expect(idbUtils.clearPersistedHandle).toHaveBeenCalled(); // Crucial assertion
+    expect(vault.rootHandle).toBeUndefined();
+    expect(vault.isAuthorized).toBe(false);
+    expect(vault.status).toBe("idle"); // Should recover to idle, not error
   });
 });
