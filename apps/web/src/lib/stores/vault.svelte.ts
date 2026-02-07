@@ -124,10 +124,20 @@ class VaultStore {
           this.isAuthorized = true;
           await this.ensureImagesDirectory();
           await this.loadFiles();
+        } else {
+          // Permission no longer valid or handle expired
+          console.warn("Persisted handle no longer valid or permission denied.");
+          await clearPersistedHandle();
+          this.rootHandle = undefined;
+          this.isAuthorized = false;
         }
       }
     } catch (err) {
       console.error("Failed to init vault", err);
+      // Fallback: Clear potentially corrupt handle
+      await clearPersistedHandle();
+      this.rootHandle = undefined;
+      this.isAuthorized = false;
     } finally {
       this.status = "idle";
     }
@@ -239,9 +249,14 @@ class VaultStore {
   }
 
   async verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    const state = await handle.queryPermission({ mode: "readwrite" });
-    if (state === "granted") return true;
-    return false;
+    try {
+      const state = await handle.queryPermission({ mode: "readwrite" });
+      if (state === "granted") return true;
+      return false;
+    } catch (err) {
+      console.warn("Failed to query permission (handle likely invalid)", err);
+      return false;
+    }
   }
 
   async requestPermission() {
