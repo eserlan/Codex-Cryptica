@@ -391,7 +391,7 @@
                     </button>
                 {:else}
                     <div
-                        class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted group-hover:border-theme-primary transition"
+                        class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted hover:border-theme-primary transition"
                     >
                         <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
                         ></span>
