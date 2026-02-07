@@ -334,7 +334,9 @@ class VaultStore {
     debugStore.log("Loading files...");
     try {
       aiService.clearStyleCache();
-      const files = await walkDirectory(this.rootHandle);
+      const files = await walkDirectory(this.rootHandle, [], (err, path) => {
+        debugStore.error(`Failed to scan ${path.join("/")}`, err);
+      });
       debugStore.log(`Found ${files.length} files`);
 
       // Clear index before reloading

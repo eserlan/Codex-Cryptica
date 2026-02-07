@@ -1,13 +1,10 @@
 <script lang="ts">
-    import { debugStore } from '$lib/stores/debug.svelte';
+    import { debugStore, type LogEntry } from '$lib/stores/debug.svelte';
     import { fade } from 'svelte/transition';
 
     let isOpen = $state(false);
-    let logs = $state<any[]>([]);
-
-    debugStore.subscribe(value => {
-        logs = value;
-    });
+    // Auto-subscribed value
+    let logs = $derived($debugStore);
 </script>
 
 {#if logs.length > 0}
@@ -34,7 +31,7 @@
                     </button>
                 </div>
                 <div class="flex flex-col gap-1">
-                    {#each logs as log}
+                    {#each logs as log, index (`${log.timestamp}-${index}`)}
                         <div class="flex gap-2 border-b border-white/5 pb-1 last:border-0">
                             <span class="text-gray-500 whitespace-nowrap">
                                 {new Date(log.timestamp).toLocaleTimeString()}

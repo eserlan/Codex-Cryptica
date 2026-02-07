@@ -1,10 +1,10 @@
 import { writable } from 'svelte/store';
 
-interface LogEntry {
+export interface LogEntry {
     timestamp: number;
     level: 'info' | 'warn' | 'error';
     message: string;
-    data?: any;
+    data?: unknown;
 }
 
 function createDebugStore() {
