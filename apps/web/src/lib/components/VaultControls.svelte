@@ -123,12 +123,12 @@
         {#if vault.isGuest}
             <button
                 class="{btnBlue} {layoutClasses}"
-                onclick={() => {
+                onclick={async () => {
                     const url = new URL(
                         window.location.origin + window.location.pathname,
                     );
                     window.history.replaceState({}, "", url.toString());
-                    vault.init();
+                    await vault.exitGuest();
                 }}
             >
                 <span class="icon-[lucide--log-out] w-3.5 h-3.5"></span>
