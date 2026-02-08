@@ -17,28 +17,7 @@ permissions:
   id-token: write
 
 jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Dependencies
-        run: npm install
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm test
-
-  build_site:
-    needs: verify
+  build_and_verify:
     runs-on: ubuntu-latest
     steps:
       - name: Install Node.js
@@ -46,47 +25,13 @@ jobs:
         with:
           node-version: 22
 
-      # ---------------------------------------------------------
-      # 1. BUILD PRODUCTION (Always from Main)
-      # ---------------------------------------------------------
-      - name: Checkout Main (Production Source)
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          path: prod-source
-
-      - name: Install Dependencies (Prod)
-        run: |
-          cd prod-source
-          npm install
-
-      - name: Build Production (Root /)
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
-          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
-          NODE_ENV: production
-        run: |
-          cd prod-source
-          npm run build --workspace=apps/web
-          mkdir -p ${{ github.workspace }}/dist
-          cp -r apps/web/build/* ${{ github.workspace }}/dist/
-          cp apps/web/build/index.html ${{ github.workspace }}/dist/404.html
-
-      # ---------------------------------------------------------
-      # 2. BUILD STAGING (From Triggered Branch)
-      # ---------------------------------------------------------
-      - name: Checkout Triggered Branch (Staging Source)
+      # 1. VERIFY Current Branch (Staging Source)
+      - name: Checkout Current Branch
         uses: actions/checkout@v4
         with:
           path: staging-source
 
-      - name: Install Dependencies (Staging)
-        run: |
-          cd staging-source
-          npm install
-
-      - name: Build Staging (/staging)
+      - name: Verify & Build Staging (/staging)
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
@@ -96,13 +41,37 @@ jobs:
           BASE_PATH: /staging
         run: |
           cd staging-source
+          npm install
+          npm run lint
+          npm test
           npm run build --workspace=apps/web
-          mkdir -p ${{ github.workspace }}/dist/staging
-          cp -r apps/web/build/* ${{ github.workspace }}/dist/staging/
-          cp apps/web/build/index.html ${{ github.workspace }}/dist/staging/404.html
+          mkdir -p "${{ github.workspace }}/dist/staging"
+          cp -r apps/web/build/* "${{ github.workspace }}/dist/staging/"
+          cp apps/web/build/index.html "${{ github.workspace }}/dist/staging/404.html"
+
+      # 2. BUILD PRODUCTION (Always from Main)
+      - name: Checkout Main (Production Source)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod-source
+
+      - name: Build Production (Root /)
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+          NODE_ENV: production
+        run: |
+          cd prod-source
+          npm install
+          npm run build --workspace=apps/web
+          mkdir -p "${{ github.workspace }}/dist"
+          cp -r apps/web/build/* "${{ github.workspace }}/dist/"
+          cp apps/web/build/index.html "${{ github.workspace }}/dist/404.html"
 
       - name: Debug - List Dist Contents
-        run: ls -R ${{ github.workspace }}/dist
+        run: ls -R "${{ github.workspace }}/dist"
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
@@ -110,8 +79,11 @@ jobs:
           path: 'dist/'
 
   deploy:
-    needs: build_site
+    needs: build_and_verify
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
