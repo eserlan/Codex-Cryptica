@@ -42,9 +42,9 @@ jobs:
         run: |
           cd staging-source
           npm ci --ignore-scripts
-          npm run lint
-          npm test
-          npm run build --workspace=apps/web
+          npx turbo run lint
+          npx turbo run test
+          npx turbo run build --filter=web
           mkdir -p "${{ github.workspace }}/dist/staging"
           cp -r apps/web/build/* "${{ github.workspace }}/dist/staging/"
           cp apps/web/build/index.html "${{ github.workspace }}/dist/staging/404.html"
@@ -65,7 +65,7 @@ jobs:
         run: |
           cd prod-source
           npm ci --ignore-scripts
-          npm run build --workspace=apps/web
+          npx turbo run build --filter=web
           mkdir -p "${{ github.workspace }}/dist"
           cp -r apps/web/build/* "${{ github.workspace }}/dist/"
           cp apps/web/build/index.html "${{ github.workspace }}/dist/404.html"
