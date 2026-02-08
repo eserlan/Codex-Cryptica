@@ -39,10 +39,9 @@ jobs:
           NODE_ENV: production
           VITE_STAGING: true
           BASE_PATH: /staging
-          HUSKY: 0
         run: |
           cd staging-source
-          npm ci
+          npm ci --ignore-scripts
           npm run lint
           npm test
           npm run build --workspace=apps/web
@@ -63,10 +62,9 @@ jobs:
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
           VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
           NODE_ENV: production
-          HUSKY: 0
         run: |
           cd prod-source
-          npm ci
+          npm ci --ignore-scripts
           npm run build --workspace=apps/web
           mkdir -p "${{ github.workspace }}/dist"
           cp -r apps/web/build/* "${{ github.workspace }}/dist/"
