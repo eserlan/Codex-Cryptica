@@ -48,9 +48,9 @@ jobs:
         run: |
           cd prod-source
           npm run build --workspace=apps/web
-          mkdir -p ../dist
-          cp -r apps/web/build/* ../dist/
-          cp apps/web/build/index.html ../dist/404.html
+          mkdir -p ${{ github.workspace }}/dist
+          cp -r apps/web/build/* ${{ github.workspace }}/dist/
+          cp apps/web/build/index.html ${{ github.workspace }}/dist/404.html
 
       # ---------------------------------------------------------
       # 2. BUILD STAGING (From Triggered Branch)
@@ -82,12 +82,12 @@ jobs:
         run: |
           cd staging-source
           npm run build --workspace=apps/web
-          mkdir -p ../dist/staging
-          cp -r apps/web/build/* ../dist/staging/
-          cp apps/web/build/index.html ../dist/staging/404.html
+          mkdir -p ${{ github.workspace }}/dist/staging
+          cp -r apps/web/build/* ${{ github.workspace }}/dist/staging/
+          cp apps/web/build/index.html ${{ github.workspace }}/dist/staging/404.html
 
       - name: Debug - List Dist Contents
-        run: ls -R ../dist
+        run: ls -R ${{ github.workspace }}/dist
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
