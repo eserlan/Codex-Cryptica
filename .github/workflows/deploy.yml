@@ -23,7 +23,7 @@ jobs:
       HUSKY: 0 # Disable husky globally for all steps
     steps:
       - name: Checkout Current Branch
-        uses: actions/checkout@@v4
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Fetch all history so we can switch branches
 
