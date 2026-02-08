@@ -1,10 +1,10 @@
 import { writable } from 'svelte/store';
 
-interface LogEntry {
+export interface LogEntry {
     timestamp: number;
     level: 'info' | 'warn' | 'error';
     message: string;
-    data?: any;
+    data?: unknown;
 }
 
 function createDebugStore() {
@@ -27,10 +27,3 @@ function createDebugStore() {
 }
 
 export const debugStore = createDebugStore();
-
-// Optional: Override global console in dev/debug builds if needed
-// const originalConsoleLog = console.log;
-// console.log = (...args) => {
-//    debugStore.log(args.join(' '));
-//    originalConsoleLog(...args);
-// };

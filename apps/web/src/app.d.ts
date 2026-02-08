@@ -15,4 +15,13 @@ declare global {
   var gapi: typeof import("gapi");
 }
 
-export { };
+interface ImportMetaEnv {
+  readonly VITE_STAGING: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
+export {};

@@ -2,15 +2,14 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feat/*', 'fix/*' ]
   # Allow manual trigger
   workflow_dispatch:
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -21,39 +20,79 @@ jobs:
   build_site:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm install
+      # ---------------------------------------------------------
+      # 1. BUILD PRODUCTION (Always from Main)
+      # ---------------------------------------------------------
+      - name: Checkout Main (Production Source)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod-source
 
-      - name: Create .env file
+      - name: Install Dependencies (Prod)
         run: |
-          echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" > apps/web/.env
-          echo "VITE_SHARED_GEMINI_KEY=${{ secrets.VITE_SHARED_GEMINI_KEY }}" >> apps/web/.env
-          echo "VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}" >> apps/web/.env
+          cd prod-source
+          npm install
 
-      - name: Build
+      - name: Build Production (Root /)
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
           VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
           NODE_ENV: production
         run: |
+          cd prod-source
           npm run build --workspace=apps/web
-          cp apps/web/build/index.html apps/web/build/404.html
+          mkdir -p ${{ github.workspace }}/dist
+          cp -r apps/web/build/* ${{ github.workspace }}/dist/
+          cp apps/web/build/index.html ${{ github.workspace }}/dist/404.html
+
+      # ---------------------------------------------------------
+      # 2. BUILD STAGING (From Triggered Branch)
+      # ---------------------------------------------------------
+      - name: Checkout Triggered Branch (Staging Source)
+        uses: actions/checkout@v4
+        with:
+          path: staging-source
+
+      - name: Install Dependencies (Staging)
+        run: |
+          cd staging-source
+          npm install
+
+      - name: Verify Code (Lint & Test)
+        run: |
+          cd staging-source
+          npm run lint
+          npm test
+
+      - name: Build Staging (/staging)
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
+          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
+          NODE_ENV: production
+          VITE_STAGING: true
+          BASE_PATH: /staging
+        run: |
+          cd staging-source
+          npm run build --workspace=apps/web
+          mkdir -p ${{ github.workspace }}/dist/staging
+          cp -r apps/web/build/* ${{ github.workspace }}/dist/staging/
+          cp apps/web/build/index.html ${{ github.workspace }}/dist/staging/404.html
+
+      - name: Debug - List Dist Contents
+        run: ls -R ${{ github.workspace }}/dist
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          # this should match the `pages` option in your adapter-static config
-          path: 'apps/web/build/'
+          path: 'dist/'
 
   deploy:
     needs: build_site

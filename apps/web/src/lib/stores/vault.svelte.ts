@@ -147,9 +147,7 @@ class VaultStore {
           await this.loadFiles();
         } else {
           // Permission no longer valid or handle expired
-          console.warn(
-            "Persisted handle no longer valid or permission denied.",
-          );
+          console.warn("Persisted handle no longer valid or permission denied.");
           debugStore.warn("Persisted handle invalid, clearing...");
           await clearPersistedHandle();
           this.rootHandle = undefined;
@@ -289,9 +287,9 @@ class VaultStore {
       // Trying to list entries will fail if access is truly lost.
       // We limit iteration to 1 item to be fast.
       for await (const _entry of handle.values()) {
-        break;
+        break; 
       }
-
+      
       return true;
     } catch (err) {
       console.warn("Failed to verify permission (handle invalid)", err);

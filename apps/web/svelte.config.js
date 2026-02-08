@@ -15,7 +15,7 @@ const config = {
 			'$workers': 'src/workers'
 		},
 		paths: {
-			base: ''
+			base: process.env.BASE_PATH || ''
 		}
 	}
 };

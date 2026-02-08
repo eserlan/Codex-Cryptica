@@ -68,7 +68,7 @@ export async function walkDirectory(
           entries.push(...subEntries);
         }
       } catch (innerErr) {
-        if (onError) onError(innerErr, currentPath);
+        if (onError) onError(innerErr, path);
         // Continue to next entry
       }
     }

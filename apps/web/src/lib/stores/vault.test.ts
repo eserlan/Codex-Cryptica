@@ -618,4 +618,18 @@ describe("VaultStore", () => {
     expect(vault.isAuthorized).toBe(false);
     expect(vault.status).toBe("idle"); // Should recover to idle, not error
   });
+
+  it("should return false if verifyPermission iteration fails (stale handle)", async () => {
+    const mockHandle = {
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      values: vi.fn().mockImplementation(() => {
+        throw new Error("Stale handle access error");
+      })
+    };
+
+    const result = await vault.verifyPermission(mockHandle as any);
+    expect(result).toBe(false);
+    expect(mockHandle.queryPermission).toHaveBeenCalled();
+    expect(mockHandle.values).toHaveBeenCalled();
+  });
 });
