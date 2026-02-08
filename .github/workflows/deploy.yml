@@ -43,7 +43,7 @@ jobs:
           cd staging-source
           sed -i 's/"prepare": "husky"/"prepare": "echo skipping husky"/g' package.json
           npm install
-          echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+          export PATH="$PATH:$(pwd)/node_modules/.bin"
           npx turbo run lint
           npx turbo run test
           npx turbo run build --filter=web
@@ -68,7 +68,7 @@ jobs:
           cd prod-source
           sed -i 's/"prepare": "husky"/"prepare": "echo skipping husky"/g' package.json
           npm install
-          echo "$(pwd)/node_modules/.bin" >> $GITHUB_PATH
+          export PATH="$PATH:$(pwd)/node_modules/.bin"
           npx turbo run build --filter=web
           mkdir -p "${{ github.workspace }}/dist"
           cp -r apps/web/build/* "${{ github.workspace }}/dist/"
