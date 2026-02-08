@@ -8,11 +8,16 @@
 ## 2. CI/CD Workflow (GitHub Actions)
 
 - Update `.github/workflows/deploy.yml`:
-  - Create a temporary `dist` root directory.
-  - **Build 1 (Prod)**: Build normally, copy contents of `apps/web/build` to `dist/`.
-  - **Build 2 (Staging)**: Build with `VITE_STAGING=true` and `BASE_PATH=/staging`, copy contents to `dist/staging/`.
+
+  - **Triggers**: Push to `main`, `feat/*`, `fix/*`.
+
+  - **Build 1 (Prod)**: Checkout `main`, build to `dist/`.
+
+  - **Build 2 (Staging)**: Checkout triggered branch, build to `dist/staging/` with `VITE_STAGING=true`.
+
+  - **Artifact**: Upload combined `dist/`.
+
   - **404 Handling**: Ensure both `dist/404.html` and `dist/staging/404.html` exist for SPA support on GitHub Pages.
-- Upload the entire `dist` directory as the deployment artifact.
 
 ## 3. UI Gating
 
