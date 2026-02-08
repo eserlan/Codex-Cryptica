@@ -41,7 +41,7 @@ jobs:
           BASE_PATH: /staging
         run: |
           cd staging-source
-          npm ci --ignore-scripts
+          HUSKY=0 npm ci
           npx turbo run lint
           npx turbo run test
           npx turbo run build --filter=web
@@ -64,7 +64,7 @@ jobs:
           NODE_ENV: production
         run: |
           cd prod-source
-          npm ci --ignore-scripts
+          HUSKY=0 npm ci
           npx turbo run build --filter=web
           mkdir -p "${{ github.workspace }}/dist"
           cp -r apps/web/build/* "${{ github.workspace }}/dist/"
