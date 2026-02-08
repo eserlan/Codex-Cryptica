@@ -10,6 +10,7 @@ import { oracle } from "./oracle.svelte";
 import { graph } from "./graph.svelte";
 import { workerBridge } from "../cloud-bridge/worker-bridge";
 import type { IStorageAdapter } from "../cloud-bridge/types";
+import { debugStore } from "./debug.svelte";
 
 export type LocalEntity = Entity & { _fsHandle?: FileSystemHandle; _path?: string | string[] };
 
@@ -108,6 +109,7 @@ class VaultStore {
 
   async init() {
     this.isInitialized = false;
+    debugStore.log("Vault initializing...");
     if (this.rootHandle) return;
     try {
       const db = await getDB();
@@ -118,7 +120,9 @@ class VaultStore {
 
       const persisted = await getPersistedHandle();
       if (persisted) {
+        debugStore.log(`Found persisted handle: ${persisted.name}`);
         const hasAccess = await this.verifyPermission(persisted);
+        debugStore.log(`Permission verified: ${hasAccess}`);
         if (hasAccess) {
           this.rootHandle = persisted;
           this.isAuthorized = true;
@@ -127,13 +131,17 @@ class VaultStore {
         } else {
           // Permission no longer valid or handle expired
           console.warn("Persisted handle no longer valid or permission denied.");
+          debugStore.warn("Persisted handle invalid, clearing...");
           await clearPersistedHandle();
           this.rootHandle = undefined;
           this.isAuthorized = false;
         }
+      } else {
+        debugStore.log("No persisted handle found.");
       }
     } catch (err) {
       console.error("Failed to init vault", err);
+      debugStore.error("Failed to init vault", err);
       // Fallback: Clear potentially corrupt handle
       await clearPersistedHandle();
       this.rootHandle = undefined;
@@ -250,11 +258,25 @@ class VaultStore {
 
   async verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
     try {
+      // 1. Check logical permission state
       const state = await handle.queryPermission({ mode: "readwrite" });
-      if (state === "granted") return true;
-      return false;
+      if (state !== "granted") {
+        debugStore.warn(`Permission check failed: state is ${state}`);
+        return false;
+      }
+
+      // 2. Perform actual read operation (aggressive validation)
+      // Some browsers (mobile Chrome) report 'granted' even if the handle is stale.
+      // Trying to list entries will fail if access is truly lost.
+      // We limit iteration to 1 item to be fast.
+      for await (const _entry of handle.values()) {
+        break; 
+      }
+      
+      return true;
     } catch (err) {
-      console.warn("Failed to query permission (handle likely invalid)", err);
+      console.warn("Failed to verify permission (handle invalid)", err);
+      debugStore.error("Handle verification failed", err);
       return false;
     }
   }
@@ -280,9 +302,11 @@ class VaultStore {
       if (!window.showDirectoryPicker) {
         throw new Error("Your browser does not support local vault access (File System Access API). Please use a modern browser like Chrome or Edge, and ensure you are accessing via localhost or HTTPS.");
       }
+      debugStore.log("Requesting directory picker...");
       const handle = await window.showDirectoryPicker({
         mode: "readwrite",
       });
+      debugStore.log(`Directory picked: ${handle.name}`);
 
       this.clearImageCache();
       this.rootHandle = handle;
@@ -293,6 +317,7 @@ class VaultStore {
       this.status = "idle";
     } catch (err: any) {
       console.error(err);
+      debugStore.error("Failed to open directory", err);
       this.status = "error";
       if (err.name === "AbortError") {
         this.status = "idle"; // Reset if user cancelled
@@ -306,9 +331,13 @@ class VaultStore {
     if (!this.rootHandle) return;
 
     this.status = "loading";
+    debugStore.log("Loading files...");
     try {
       aiService.clearStyleCache();
-      const files = await walkDirectory(this.rootHandle);
+      const files = await walkDirectory(this.rootHandle, [], (err, path) => {
+        debugStore.error(`Failed to scan ${path.join("/")}`, err);
+      });
+      debugStore.log(`Found ${files.length} files`);
 
       // Clear index before reloading
       await searchService.clear();

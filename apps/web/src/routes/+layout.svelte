@@ -9,6 +9,7 @@
 	import ZenModeModal from "$lib/components/modals/ZenModeModal.svelte";
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
 	import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
+	import DebugConsole from "$lib/components/debug/DebugConsole.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { graph } from "$lib/stores/graph.svelte";
 	import { oracle } from "$lib/stores/oracle.svelte";
@@ -362,6 +363,9 @@
 				<ZenModeModal />
 				<TourOverlay />
 				<MobileMenu bind:isOpen={isMobileMenuOpen} />
+				{#if import.meta.env.DEV || (typeof window !== 'undefined' && (window as any).__E2E__)}
+					<DebugConsole />
+				{/if}
 			{/if}
 		{/if}
 	{/if}
