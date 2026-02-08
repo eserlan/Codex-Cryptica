@@ -65,6 +65,12 @@ jobs:
           cd staging-source
           npm install
 
+      - name: Verify Code (Lint & Test)
+        run: |
+          cd staging-source
+          npm run lint
+          npm test
+
       - name: Build Staging (/staging)
         env:
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
