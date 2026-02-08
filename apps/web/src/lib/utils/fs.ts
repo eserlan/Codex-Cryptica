@@ -45,9 +45,9 @@ export async function walkDirectory(
   try {
     // Use values() as it's sometimes more stable than entries() on certain platforms
     for await (const handle of dirHandle.values()) {
+      const name = handle.name;
+      const currentPath = [...path, name];
       try {
-        const name = handle.name;
-        const currentPath = [...path, name];
         if (handle.kind === "file") {
           if (name.endsWith(".md")) {
             entries.push({
@@ -68,7 +68,7 @@ export async function walkDirectory(
           entries.push(...subEntries);
         }
       } catch (innerErr) {
-        if (onError) onError(innerErr, path);
+        if (onError) onError(innerErr, currentPath);
         // Continue to next entry
       }
     }
