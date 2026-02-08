@@ -1,217 +1,254 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 
-test.describe('Fuzzy Search', () => {
-    test.beforeEach(async ({ page }) => {
-        await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
-        // Mock File System Access API and IndexedDB
-        await page.addInitScript(() => {
-            // Intercept IndexedDB to handle DataCloneError with mock handles
-            const originalPut = IDBObjectStore.prototype.put;
-            IDBObjectStore.prototype.put = function (...args: [unknown, IDBValidKey?]) {
-                try {
-                    return originalPut.apply(this, args);
-                } catch (e: any) {
-                    if (e.name === 'DataCloneError') {
-                        console.log("MOCK: Caught DataCloneError in IndexedDB, returning fake success");
-                        const req: any = {
-                            onsuccess: null,
-                            onerror: null,
-                            result: args[1],
-                            readyState: 'done',
-                            addEventListener: function (type: string, listener: any) {
-                                if (type === 'success') this.onsuccess = listener;
-                            }
-                        };
-                        setTimeout(() => {
-                            if (req.onsuccess) req.onsuccess({ target: req });
-                        }, 0);
-                        return req;
-                    }
-                    throw e;
-                }
+test.describe("Fuzzy Search", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    // Mock File System Access API and IndexedDB
+    await page.addInitScript(() => {
+      // Intercept IndexedDB to handle DataCloneError with mock handles
+      const originalPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (
+        ...args: [unknown, IDBValidKey?]
+      ) {
+        try {
+          return originalPut.apply(this, args);
+        } catch (e: any) {
+          if (e.name === "DataCloneError") {
+            console.log(
+              "MOCK: Caught DataCloneError in IndexedDB, returning fake success",
+            );
+            const req: any = {
+              onsuccess: null,
+              onerror: null,
+              result: args[1],
+              readyState: "done",
+              addEventListener: function (type: string, listener: any) {
+                if (type === "success") this.onsuccess = listener;
+              },
             };
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({ target: req });
+            }, 0);
+            return req;
+          }
+          throw e;
+        }
+      };
 
-            const content1 = "---\ntitle: My Note\n---\n# My Note Content";
-            const content2 = "---\ntitle: The Crone\n---\n# The Crone Content";
+      const content1 = "---\ntitle: My Note\n---\n# My Note Content";
+      const content2 = "---\ntitle: The Crone\n---\n# The Crone Content";
 
-            const createMockFile = (content: string, name: string) => {
-                const file = new File([content], name, { type: 'text/markdown' });
-                return {
-                    kind: 'file',
-                    name,
-                    getFile: async () => file,
-                    createWritable: async () => ({
-                        write: async () => { },
-                        close: async () => { }
-                    })
-                };
-            };
+      const createMockFile = (content: string, name: string) => {
+        const file = new File([content], name, { type: "text/markdown" });
+        return {
+          kind: "file",
+          name,
+          getFile: async () => file,
+          createWritable: async () => ({
+            write: async () => {},
+            close: async () => {},
+          }),
+        };
+      };
 
-            const fileHandle1 = createMockFile(content1, 'My Note.md');
-            const fileHandle2 = createMockFile(content2, 'the-crone.md');
+      const fileHandle1 = createMockFile(content1, "My Note.md");
+      const fileHandle2 = createMockFile(content2, "the-crone.md");
 
-            const dirHandle = {
-                kind: 'directory',
-                name: 'test-vault',
-                requestPermission: async () => 'granted',
-                queryPermission: async () => 'granted',
-                values: function () {
-                    return [fileHandle1, fileHandle2][Symbol.iterator]();
+      const dirHandle = {
+        kind: "directory",
+        name: "test-vault",
+        requestPermission: async () => "granted",
+        queryPermission: async () => "granted",
+        values: function () {
+          return [fileHandle1, fileHandle2][Symbol.iterator]();
+        },
+        entries: function () {
+          const entries = [
+            ["My Note.md", fileHandle1],
+            ["the-crone.md", fileHandle2],
+          ];
+          return {
+            [Symbol.asyncIterator]() {
+              let i = 0;
+              return {
+                async next() {
+                  if (i < entries.length) {
+                    return { value: entries[i++], done: false };
+                  }
+                  return { done: true };
                 },
-                entries: function () {
-                    const entries = [['My Note.md', fileHandle1], ['the-crone.md', fileHandle2]];
-                    return {
-                        [Symbol.asyncIterator]() {
-                            let i = 0;
-                            return {
-                                async next() {
-                                    if (i < entries.length) {
-                                        return { value: entries[i++], done: false };
-                                    }
-                                    return { done: true };
-                                }
-                            };
-                        }
-                    };
-                },
-                getFileHandle: async (name: string) => name === 'My Note.md' ? fileHandle1 : fileHandle2
-            };
+              };
+            },
+          };
+        },
+        getFileHandle: async (name: string) =>
+          name === "My Note.md" ? fileHandle1 : fileHandle2,
+      };
 
-            // @ts-expect-error - Mock
-            window.showDirectoryPicker = async () => dirHandle;
-        });
+      // @ts-expect-error - Mock
+      window.showDirectoryPicker = async () => dirHandle;
+    });
+  });
+
+  test("Search works offline", async ({ page, context }) => {
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+    await page.goto("http://localhost:5173/");
+
+    // 1. Open Vault to trigger indexing
+    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+
+    // Wait for indexing to complete (2 entries)
+    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+      timeout: 20000,
     });
 
-    test('Search works offline', async ({ page, context }) => {
-        page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-        await page.goto('http://localhost:5173/');
+    // 2. Go Offline
+    await context.setOffline(true);
 
-        // 1. Open Vault to trigger indexing
-        await page.getByRole('button', { name: 'OPEN VAULT' }).click();
+    // 3. Open Search Modal
+    await page.keyboard.press("Control+k");
+    await page.keyboard.press("Meta+k");
 
-        // Wait for indexing to complete (2 entries)
-        await expect(page.getByTestId('entity-count')).toHaveText('2 ENTITIES', { timeout: 20000 });
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible();
 
-        // 2. Go Offline
-        await context.setOffline(true);
+    // 4. Type query
+    await input.fill("Note");
 
-        // 3. Open Search Modal
-        await page.keyboard.press('Control+k');
-        await page.keyboard.press('Meta+k');
+    // 5. Verify results
+    await expect(
+      page.getByTestId("search-result").filter({ hasText: "My Note" }),
+    ).toBeVisible();
 
-        const input = page.getByPlaceholder('Search notes...');
-        await expect(input).toBeVisible();
+    // 6. Click the result directly
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" })
+      .click();
 
-        // 4. Type query
-        await input.fill('Note');
+    await expect(input).not.toBeVisible({ timeout: 2000 });
 
-        // 5. Verify results
-        await expect(page.getByTestId('search-result').filter({ hasText: 'My Note' })).toBeVisible();
+    // 7. Verify Detail Panel opens
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+  });
 
-        // 6. Click the result directly
-        await page.getByTestId('search-result').filter({ hasText: 'My Note' }).click();
+  test("handles search results with missing IDs via path fallback", async ({
+    page,
+  }) => {
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+    await page.goto("http://localhost:5173/");
 
-        await expect(input).not.toBeVisible({ timeout: 2000 });
-
-        // 7. Verify Detail Panel opens
-        await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: 'My Note' })).toBeVisible();
+    // 1. Open Vault to trigger initial UI state
+    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+      timeout: 20000,
     });
 
-    test('handles search results with missing IDs via path fallback', async ({ page }) => {
-        page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-        await page.goto('http://localhost:5173/');
+    // 2. Mock broken search results
+    await page.evaluate(() => {
+      const mockResults = [
+        {
+          id: undefined, // MISSING ID
+          title: "The Crone",
+          path: "the-crone.md",
+          matchType: "content",
+          score: 0.9,
+          excerpt: "The Crone is a mysterious figure...",
+        },
+      ];
 
-        // 1. Open Vault to trigger initial UI state
-        await page.getByRole('button', { name: 'OPEN VAULT' }).click();
-        await expect(page.getByTestId('entity-count')).toHaveText('2 ENTITIES', { timeout: 20000 });
-
-        // 2. Mock broken search results
-        await page.evaluate(() => {
-            const mockResults = [
-                {
-                    id: undefined, // MISSING ID
-                    title: 'The Crone',
-                    path: 'the-crone.md',
-                    matchType: 'content',
-                    score: 0.9,
-                    excerpt: 'The Crone is a mysterious figure...'
-                }
-            ];
-
-            const { searchStore } = window as any;
-            if (searchStore) {
-                searchStore.update((s: any) => ({
-                    ...s,
-                    query: 'Crone',
-                    results: mockResults,
-                    isOpen: true
-                }));
-            }
-        });
-
-        // 3. Verify the "broken" result is visible
-        const resultItem = page.getByTestId('search-result').filter({ hasText: 'The Crone' });
-        await expect(resultItem).toBeVisible();
-
-        // 4. Select the result
-        await resultItem.click();
-
-        // 5. Verify Fallback worked
-        await expect(page.getByPlaceholder('Search notes...')).not.toBeVisible();
-
-        // Check for the title in the detail panel
-        await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: /Crone/i })).toBeVisible();
+      const { searchStore } = window as any;
+      if (searchStore) {
+        searchStore.update((s: any) => ({
+          ...s,
+          query: "Crone",
+          results: mockResults,
+          isOpen: true,
+        }));
+      }
     });
 
-    test('selecting search result does not add redundant URL parameters', async ({ page }) => {
-        await page.goto('http://localhost:5173/');
+    // 3. Verify the "broken" result is visible
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "The Crone" });
+    await expect(resultItem).toBeVisible();
 
-        // 1. Open Vault to trigger indexing
-        await page.getByRole('button', { name: 'OPEN VAULT' }).click();
-        await expect(page.getByTestId('entity-count')).toHaveText('2 ENTITIES', { timeout: 20000 });
+    // 4. Select the result
+    await resultItem.click();
 
-        // 2. Open Search Modal
-        await page.keyboard.press('Control+k');
-        await expect(page.getByPlaceholder('Search notes...')).toBeVisible();
+    // 5. Verify Fallback worked
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
 
-        // 3. Type query and wait for results
-        await page.getByPlaceholder('Search notes...').fill('Note');
-        const resultItem = page.getByTestId('search-result').filter({ hasText: 'My Note' });
-        await expect(resultItem).toBeVisible();
+    // Check for the title in the detail panel
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: /Crone/i }),
+    ).toBeVisible();
+  });
 
-        // 4. Click the result
-        await resultItem.click();
+  test("selecting search result does not add redundant URL parameters", async ({
+    page,
+  }) => {
+    await page.goto("http://localhost:5173/");
 
-        // 5. Verify modal closed and entity selected
-        await expect(page.getByPlaceholder('Search notes...')).not.toBeVisible();
-        await expect(page.getByRole('heading', { level: 2 }).filter({ hasText: 'My Note' })).toBeVisible();
-
-        // 6. CRITICAL: Verify URL does not contain ?file=
-        const url = page.url();
-        expect(url).not.toContain('file=');
+    // 1. Open Vault to trigger indexing
+    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+      timeout: 20000,
     });
 
-    test('shows recent searches from localStorage when opening with empty query', async ({ page }) => {
-        await page.addInitScript(() => {
-            const recents = [
-                {
-                    id: 'recent-note',
-                    title: 'Recent Note',
-                    path: 'recent-note.md',
-                    score: 0.5,
-                    matchType: 'title'
-                }
-            ];
-            window.localStorage.setItem('search_recents', JSON.stringify(recents));
-        });
+    // 2. Open Search Modal
+    await page.keyboard.press("Control+k");
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
 
-        await page.goto('http://localhost:5173/');
+    // 3. Type query and wait for results
+    await page.getByPlaceholder("Search notes...").fill("Note");
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" });
+    await expect(resultItem).toBeVisible();
 
-        await page.keyboard.press('Control+k');
-        await page.keyboard.press('Meta+k');
+    // 4. Click the result
+    await resultItem.click();
 
-        const resultItem = page.getByTestId('search-result').filter({ hasText: 'Recent Note' });
-        await expect(resultItem).toBeVisible();
-        await expect(resultItem).toContainText('recent-note.md');
+    // 5. Verify modal closed and entity selected
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+
+    // 6. CRITICAL: Verify URL does not contain ?file=
+    const url = page.url();
+    expect(url).not.toContain("file=");
+  });
+
+  test("shows recent searches from localStorage when opening with empty query", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const recents = [
+        {
+          id: "recent-note",
+          title: "Recent Note",
+          path: "recent-note.md",
+          score: 0.5,
+          matchType: "title",
+        },
+      ];
+      window.localStorage.setItem("search_recents", JSON.stringify(recents));
     });
+
+    await page.goto("http://localhost:5173/");
+
+    // Click search input in header to open modal
+    await page.getByTestId("search-input").click();
+
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "Recent Note" });
+    await expect(resultItem).toBeVisible();
+    await expect(resultItem).toContainText("recent-note.md");
+  });
 });

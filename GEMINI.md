@@ -72,6 +72,7 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 036-oracle-undo: Implemented undo/revert capabilities for AI actions (Smart Apply, Create Node) and added global undo shortcut (Ctrl+Z).
 - 038-staging-environment: Implemented parallel staging deployment at /staging with auto-enabled debug tools.
 - 035-patreon-support-link: Added Patreon support link to footer (Addresses #75)
 - 034-fog-of-war: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `idb`
