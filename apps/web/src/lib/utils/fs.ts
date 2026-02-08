@@ -40,6 +40,8 @@ export async function walkDirectory(
   onError?: (err: unknown, path: string[]) => void,
 ): Promise<FileEntry[]> {
   const entries: FileEntry[] = [];
+  // Avoid scanning large binary folders that never contain markdown.
+  const SKIP_DIRS = new Set(["images"]);
   try {
     // Use values() as it's sometimes more stable than entries() on certain platforms
     for await (const handle of dirHandle.values()) {
@@ -54,6 +56,9 @@ export async function walkDirectory(
             });
           }
         } else if (handle.kind === "directory") {
+          if (SKIP_DIRS.has(name)) {
+            continue;
+          }
           // Recursion
           const subEntries = await walkDirectory(
             handle as FileSystemDirectoryHandle,
@@ -63,7 +68,7 @@ export async function walkDirectory(
           entries.push(...subEntries);
         }
       } catch (innerErr) {
-        if (onError) onError(innerErr, path);
+        if (onError) onError(innerErr, currentPath);
         // Continue to next entry
       }
     }

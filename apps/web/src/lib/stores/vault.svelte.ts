@@ -356,7 +356,11 @@ class VaultStore {
     try {
       aiService.clearStyleCache();
       const files = await walkDirectory(this.rootHandle, [], (err, path) => {
-        debugStore.error(`Failed to scan ${path.join("/")}`, err);
+        const errorInfo =
+          err instanceof Error
+            ? { name: err.name, message: err.message, stack: err.stack }
+            : err;
+        debugStore.error(`Failed to scan ${path.join("/")}`, errorInfo);
       });
       debugStore.log(`Found ${files.length} files`);
 
