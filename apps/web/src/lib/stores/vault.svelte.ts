@@ -406,6 +406,18 @@ class VaultStore {
 
           debugStore.log(`[Seq] Processing file: ${filePath}`);
 
+          // DEBUG: Check permission on file handle specifically
+          try {
+            const perm = await fileEntry.handle.queryPermission({
+              mode: "readwrite",
+            });
+            debugStore.log(`[Seq] File handle permission: ${perm}`);
+          } catch (permErr) {
+            debugStore.warn(
+              `[Seq] Failed to query file permission: ${permErr}`,
+            );
+          }
+
           debugStore.log(`[Seq] Calling getFile for ${filePath}`);
           const file = await fileEntry.handle.getFile();
           debugStore.log(
@@ -535,12 +547,20 @@ class VaultStore {
 
           // Index the entity
           await searchService.index(searchEntry);
-        } catch (err) {
+        } catch (err: any) {
           const filePath = Array.isArray(fileEntry.path)
             ? fileEntry.path.join("/")
             : fileEntry.path;
+
+          const errorDetails = {
+            name: err?.name,
+            message: err?.message,
+            code: err?.code,
+            stack: err?.stack,
+          };
+
           console.error(`[Seq] Failed to process file ${filePath}:`, err);
-          debugStore.error(`[Seq] Failed to process ${filePath}`, err);
+          debugStore.error(`[Seq] Failed to process ${filePath}`, errorDetails);
         }
       }
 
