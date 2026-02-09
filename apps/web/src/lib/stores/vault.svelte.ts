@@ -418,8 +418,38 @@ class VaultStore {
             );
           }
 
-          debugStore.log(`[Seq] Calling getFile for ${filePath}`);
-          const file = await fileEntry.handle.getFile();
+          let file: File;
+          try {
+            debugStore.log(`[Seq] Calling getFile for ${filePath}`);
+            file = await fileEntry.handle.getFile();
+          } catch (getFileErr: any) {
+            debugStore.warn(
+              `[Seq] Direct getFile failed: ${getFileErr?.name}. Attempting re-resolution from root.`,
+            );
+
+            // Fallback: Re-resolve handle from root
+            let currentDir = this.rootHandle;
+            if (!currentDir)
+              throw new Error("Root handle missing during re-resolution");
+
+            const parts = Array.isArray(fileEntry.path)
+              ? fileEntry.path
+              : filePath.split("/");
+            const fileName = parts[parts.length - 1];
+            const dirParts = parts.slice(0, -1);
+
+            for (const part of dirParts) {
+              currentDir = await currentDir.getDirectoryHandle(part);
+            }
+
+            const freshHandle = await currentDir.getFileHandle(fileName);
+            file = await freshHandle.getFile();
+            debugStore.log(`[Seq] Re-resolution successful for ${filePath}`);
+
+            // Update the handle in the entry for potential future use (though we are done with it here)
+            fileEntry.handle = freshHandle;
+          }
+
           debugStore.log(
             `[Seq] Got file object for ${filePath}, size: ${file.size}`,
           );
