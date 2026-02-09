@@ -386,184 +386,159 @@ class VaultStore {
         { sourceId: string; connection: Connection }[]
       > = {};
 
-      // Process files in parallel chunks to avoid overwhelming the system while staying fast
-      const CHUNK_SIZE = 20;
-      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-        const chunk = files.slice(i, i + CHUNK_SIZE);
-        const chunkEntities: Record<string, LocalEntity> = {};
+      // SEQUENTIAL PROCESSING FOR DEBUGGING/ROBUSTNESS
+      debugStore.log(`Starting sequential processing of ${files.length} files`);
 
-        debugStore.log(
-          `Processing chunk ${i / CHUNK_SIZE + 1}, size: ${chunk.length}`,
-        );
+      for (const fileEntry of files) {
+        try {
+          const filePath = Array.isArray(fileEntry.path)
+            ? fileEntry.path.join("/")
+            : fileEntry.path;
 
-        await Promise.all(
-          chunk.map(async (fileEntry) => {
-            try {
-              const filePath = Array.isArray(fileEntry.path)
-                ? fileEntry.path.join("/")
-                : fileEntry.path;
-              debugStore.log(`Processing file: ${filePath}`);
+          debugStore.log(`[Seq] Processing file: ${filePath}`);
 
-              debugStore.log(`Calling getFile for ${filePath}`);
-              const file = await fileEntry.handle.getFile();
-              debugStore.log(
-                `Got file object for ${filePath}, size: ${file.size}`,
+          debugStore.log(`[Seq] Calling getFile for ${filePath}`);
+          const file = await fileEntry.handle.getFile();
+          debugStore.log(
+            `[Seq] Got file object for ${filePath}, size: ${file.size}`,
+          );
+
+          const lastModified = file.lastModified;
+
+          debugStore.log(`[Seq] Checking cache for ${filePath}`);
+          const cached = await cacheService.get(filePath);
+          debugStore.log(`[Seq] Cache check done: ${cached ? "HIT" : "MISS"}`);
+
+          let entity: LocalEntity;
+
+          // Hit Path: Use cached entity if valid
+          if (cached && cached.lastModified === lastModified) {
+            debugStore.log(`[Seq] Using cache for ${filePath}`);
+            entity = {
+              ...cached.entity,
+              _fsHandle: fileEntry.handle,
+              _path: fileEntry.path,
+            };
+          } else {
+            debugStore.log(
+              `[Seq] Cache miss/stale for ${filePath}, reading text...`,
+            );
+            // Miss Path: Parse and cache
+            const text = await file.text();
+
+            if (typeof text !== "string") {
+              debugStore.error(
+                `[Seq] File text is not a string for ${filePath}`,
+                { type: typeof text },
               );
-
-              const lastModified = file.lastModified;
-
-              debugStore.log(`Checking cache for ${filePath}`);
-              const cached = await cacheService.get(filePath);
+            } else {
               debugStore.log(
-                `Cache check done for ${filePath}: ${cached ? "HIT" : "MISS"}`,
-              );
-
-              let entity: LocalEntity;
-
-              // Hit Path: Use cached entity if valid
-              if (cached && cached.lastModified === lastModified) {
-                debugStore.log(`Cache hit for ${filePath}`);
-                entity = {
-                  ...cached.entity,
-                  _fsHandle: fileEntry.handle,
-                  _path: fileEntry.path,
-                };
-              } else {
-                debugStore.log(`Cache miss/stale for ${filePath}`);
-                // Miss Path: Parse and cache
-                debugStore.log(`Reading text for ${filePath}...`);
-                const text = await file.text();
-
-                if (typeof text !== "string") {
-                  debugStore.error(
-                    `File text is not a string for ${filePath}`,
-                    { type: typeof text },
-                  );
-                } else {
-                  debugStore.log(
-                    `Read text for ${filePath}, length: ${text.length}`,
-                  );
-                }
-
-                const { metadata, content, wikiLinks } = parseMarkdown(
-                  text || "",
-                );
-                debugStore.log(`Parsed markdown for ${filePath}`);
-                // debugStore.log(`Parsed entity for ${filePath}:`, {
-                //   metadata,
-                //   content,
-                //   wikiLinks,
-                // });
-
-                let id = metadata.id;
-                if (!id) {
-                  id = sanitizeId(
-                    fileEntry.path[fileEntry.path.length - 1].replace(
-                      ".md",
-                      "",
-                    ),
-                  );
-                }
-
-                const connections = [
-                  ...(metadata.connections || []),
-                  ...wikiLinks,
-                ];
-
-                entity = {
-                  id: id!,
-                  type: metadata.type || "character",
-                  title: metadata.title || id!,
-                  tags: metadata.tags || [],
-                  labels: metadata.labels || [],
-                  connections,
-                  content: content,
-                  lore: metadata.lore,
-                  image: metadata.image,
-                  thumbnail: metadata.thumbnail,
-                  date: metadata.date,
-                  start_date: metadata.start_date,
-                  end_date: metadata.end_date,
-                  metadata: metadata.metadata,
-                  _fsHandle: fileEntry.handle,
-                  _path: fileEntry.path,
-                };
-
-                // Update Cache (best-effort; failures should not abort processing)
-                try {
-                  await cacheService.set(filePath, lastModified, entity);
-                } catch (error) {
-                  console.error(
-                    "Failed to update cache for file:",
-                    filePath,
-                    error,
-                  );
-                }
-              }
-
-              if (!entity.id || entity.id === "undefined") {
-                debugStore.error("Invalid ID for entity", { path: filePath });
-                console.error(
-                  "CRITICAL: Attempted to index entity with invalid ID!",
-                  { title: entity.title, id: entity.id, path: entity._path },
-                );
-                return;
-              }
-
-              chunkEntities[entity.id] = entity;
-              debugStore.log(`Successfully processed entity: ${entity.id}`);
-
-              // Build inbound map for this chunk
-              for (const conn of entity.connections) {
-                if (!newInboundMap[conn.target])
-                  newInboundMap[conn.target] = [];
-                newInboundMap[conn.target].push({
-                  sourceId: entity.id,
-                  connection: conn,
-                });
-              }
-
-              const metadataValues = Object.values(entity.metadata || {});
-              const metadataKeywords = metadataValues.flatMap((value) => {
-                if (typeof value === "string") return [value];
-                if (Array.isArray(value)) {
-                  return value.filter(
-                    (item): item is string => typeof item === "string",
-                  );
-                }
-                return [];
-              });
-
-              const keywords = [
-                ...(entity.tags || []),
-                entity.lore || "",
-                ...metadataKeywords,
-              ].join(" ");
-
-              const searchEntry = {
-                id: entity.id,
-                title: entity.title,
-                content: entity.content,
-                type: entity.type,
-                path: filePath,
-                keywords,
-                updatedAt: Date.now(),
-              };
-
-              // Index the entity
-              await searchService.index(searchEntry);
-            } catch (err) {
-              console.error(
-                `Failed to process file ${fileEntry.path.join("/")}:`,
-                err,
+                `[Seq] Read text for ${filePath}, length: ${text.length}`,
               );
             }
-          }),
-        );
 
-        // Update state incrementally
-        Object.assign(this.entities, chunkEntities);
+            const { metadata, content, wikiLinks } = parseMarkdown(text || "");
+            debugStore.log(`[Seq] Parsed markdown for ${filePath}`);
+
+            let id = metadata.id;
+            if (!id) {
+              id = sanitizeId(
+                fileEntry.path[fileEntry.path.length - 1].replace(".md", ""),
+              );
+            }
+
+            const connections = [...(metadata.connections || []), ...wikiLinks];
+
+            entity = {
+              id: id!,
+              type: metadata.type || "character",
+              title: metadata.title || id!,
+              tags: metadata.tags || [],
+              labels: metadata.labels || [],
+              connections,
+              content: content,
+              lore: metadata.lore,
+              image: metadata.image,
+              thumbnail: metadata.thumbnail,
+              date: metadata.date,
+              start_date: metadata.start_date,
+              end_date: metadata.end_date,
+              metadata: metadata.metadata,
+              _fsHandle: fileEntry.handle,
+              _path: fileEntry.path,
+            };
+
+            // Update Cache (best-effort; failures should not abort processing)
+            try {
+              await cacheService.set(filePath, lastModified, entity);
+            } catch (error) {
+              console.error(
+                "Failed to update cache for file:",
+                filePath,
+                error,
+              );
+            }
+          }
+
+          if (!entity.id || entity.id === "undefined") {
+            debugStore.error("[Seq] Invalid ID for entity", { path: filePath });
+            continue;
+          }
+
+          this.entities[entity.id] = entity;
+          debugStore.log(`[Seq] Successfully added entity: ${entity.id}`);
+
+          // Build inbound map
+          for (const conn of entity.connections) {
+            if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
+            newInboundMap[conn.target].push({
+              sourceId: entity.id,
+              connection: conn,
+            });
+          }
+
+          const metadataValues = Object.values(entity.metadata || {});
+          const metadataKeywords = metadataValues.flatMap((value) => {
+            if (typeof value === "string") return [value];
+            if (Array.isArray(value)) {
+              return value.filter(
+                (item): item is string => typeof item === "string",
+              );
+            }
+            return [];
+          });
+
+          const keywords = [
+            ...(entity.tags || []),
+            entity.lore || "",
+            ...metadataKeywords,
+          ].join(" ");
+
+          const searchEntry = {
+            id: entity.id,
+            title: entity.title,
+            content: entity.content,
+            type: entity.type,
+            path: filePath,
+            keywords,
+            updatedAt: Date.now(),
+          };
+
+          // Index the entity
+          await searchService.index(searchEntry);
+        } catch (err) {
+          const filePath = Array.isArray(fileEntry.path)
+            ? fileEntry.path.join("/")
+            : fileEntry.path;
+          console.error(`[Seq] Failed to process file ${filePath}:`, err);
+          debugStore.error(`[Seq] Failed to process ${filePath}`, err);
+        }
       }
+
+      this.inboundConnections = newInboundMap;
+      debugStore.log(
+        `Sequential processing complete. Total entities: ${Object.keys(this.entities).length}`,
+      );
     } finally {
       this.status = "idle";
       this.isInitialized = true;
