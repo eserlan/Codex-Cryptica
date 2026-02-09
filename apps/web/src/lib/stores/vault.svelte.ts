@@ -147,8 +147,17 @@ class VaultStore {
           await this.loadFiles();
         } else if (state === "prompt") {
           this.rootHandle = persisted;
+          // We must request permission before we can load files.
+          // However, requestPermission() requires a user gesture.
+          // Since init() is called on mount (not user gesture), we can't await it here immediately without triggering a browser error.
+          // Instead, we should set a state flag that prompts the user to "Reconnect" or "Grant Access" via the UI.
           this.isAuthorized = false;
-          debugStore.log("Handle found but requires permission prompt.");
+          debugStore.log(
+            "Handle found but requires permission prompt. Waiting for user interaction.",
+          );
+
+          // DO NOT call loadFiles() yet. The UI (VaultControls) should show "GRANT ACCESS" button
+          // because isAuthorized is false but rootHandle is present.
         } else {
           // Permission no longer valid or denied
           console.warn(
