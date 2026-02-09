@@ -392,12 +392,17 @@ class VaultStore {
         const chunk = files.slice(i, i + CHUNK_SIZE);
         const chunkEntities: Record<string, LocalEntity> = {};
 
+        debugStore.log(
+          `Processing chunk ${i / CHUNK_SIZE + 1}, size: ${chunk.length}`,
+        );
+
         await Promise.all(
           chunk.map(async (fileEntry) => {
             try {
               const filePath = Array.isArray(fileEntry.path)
                 ? fileEntry.path.join("/")
                 : fileEntry.path;
+              debugStore.log(`Processing file: ${filePath}`);
               const file = await fileEntry.handle.getFile();
               const lastModified = file.lastModified;
               const cached = await cacheService.get(filePath);
@@ -406,15 +411,17 @@ class VaultStore {
 
               // Hit Path: Use cached entity if valid
               if (cached && cached.lastModified === lastModified) {
+                debugStore.log(`Cache hit for ${filePath}`);
                 entity = {
                   ...cached.entity,
                   _fsHandle: fileEntry.handle,
                   _path: fileEntry.path,
                 };
               } else {
+                debugStore.log(`Cache miss/stale for ${filePath}`);
                 // Miss Path: Parse and cache
                 const text = await file.text();
-                debugStore.log(`Raw text for ${filePath}:`, text);
+                // debugStore.log(`Raw text for ${filePath}:`, text);
                 const { metadata, content, wikiLinks } = parseMarkdown(text);
                 debugStore.log(`Parsed entity for ${filePath}:`, {
                   metadata,
@@ -469,6 +476,7 @@ class VaultStore {
               }
 
               if (!entity.id || entity.id === "undefined") {
+                debugStore.error("Invalid ID for entity", { path: filePath });
                 console.error(
                   "CRITICAL: Attempted to index entity with invalid ID!",
                   { title: entity.title, id: entity.id, path: entity._path },
@@ -477,6 +485,7 @@ class VaultStore {
               }
 
               chunkEntities[entity.id] = entity;
+              debugStore.log(`Successfully processed entity: ${entity.id}`);
 
               // Build inbound map for this chunk
               for (const conn of entity.connections) {
