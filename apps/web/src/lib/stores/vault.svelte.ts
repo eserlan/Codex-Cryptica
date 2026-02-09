@@ -403,9 +403,20 @@ class VaultStore {
                 ? fileEntry.path.join("/")
                 : fileEntry.path;
               debugStore.log(`Processing file: ${filePath}`);
+
+              debugStore.log(`Calling getFile for ${filePath}`);
               const file = await fileEntry.handle.getFile();
+              debugStore.log(
+                `Got file object for ${filePath}, size: ${file.size}`,
+              );
+
               const lastModified = file.lastModified;
+
+              debugStore.log(`Checking cache for ${filePath}`);
               const cached = await cacheService.get(filePath);
+              debugStore.log(
+                `Cache check done for ${filePath}: ${cached ? "HIT" : "MISS"}`,
+              );
 
               let entity: LocalEntity;
 
@@ -420,14 +431,29 @@ class VaultStore {
               } else {
                 debugStore.log(`Cache miss/stale for ${filePath}`);
                 // Miss Path: Parse and cache
+                debugStore.log(`Reading text for ${filePath}...`);
                 const text = await file.text();
-                // debugStore.log(`Raw text for ${filePath}:`, text);
-                const { metadata, content, wikiLinks } = parseMarkdown(text);
-                debugStore.log(`Parsed entity for ${filePath}:`, {
-                  metadata,
-                  content,
-                  wikiLinks,
-                });
+
+                if (typeof text !== "string") {
+                  debugStore.error(
+                    `File text is not a string for ${filePath}`,
+                    { type: typeof text },
+                  );
+                } else {
+                  debugStore.log(
+                    `Read text for ${filePath}, length: ${text.length}`,
+                  );
+                }
+
+                const { metadata, content, wikiLinks } = parseMarkdown(
+                  text || "",
+                );
+                debugStore.log(`Parsed markdown for ${filePath}`);
+                // debugStore.log(`Parsed entity for ${filePath}:`, {
+                //   metadata,
+                //   content,
+                //   wikiLinks,
+                // });
 
                 let id = metadata.id;
                 if (!id) {
