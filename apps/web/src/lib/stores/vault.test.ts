@@ -619,16 +619,34 @@ describe("VaultStore", () => {
     expect(vault.status).toBe("idle"); // Should recover to idle, not error
   });
 
-  it("should return false if verifyPermission iteration fails (stale handle)", async () => {
+  it("should retain handle but require authorization if state is 'prompt'", async () => {
+    const mockHandle = {
+      kind: "directory",
+      name: "locked-vault",
+      queryPermission: vi.fn().mockResolvedValue("prompt"),
+    };
+
+    vi.mocked(idbUtils.getPersistedHandle).mockResolvedValue(mockHandle as any);
+
+    await vault.init();
+
+    expect(mockHandle.queryPermission).toHaveBeenCalled();
+    expect(idbUtils.clearPersistedHandle).not.toHaveBeenCalled();
+    expect(vault.rootHandle).toBe(mockHandle);
+    expect(vault.isAuthorized).toBe(false);
+    expect(vault.status).toBe("idle");
+  });
+
+  it("should return 'denied' if verifyPermission iteration fails (stale handle)", async () => {
     const mockHandle = {
       queryPermission: vi.fn().mockResolvedValue("granted"),
       values: vi.fn().mockImplementation(() => {
         throw new Error("Stale handle access error");
-      })
+      }),
     };
 
     const result = await vault.verifyPermission(mockHandle as any);
-    expect(result).toBe(false);
+    expect(result).toBe("denied");
     expect(mockHandle.queryPermission).toHaveBeenCalled();
     expect(mockHandle.values).toHaveBeenCalled();
   });

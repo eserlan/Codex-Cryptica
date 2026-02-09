@@ -138,19 +138,23 @@ class VaultStore {
       const persisted = await getPersistedHandle();
       if (persisted) {
         debugStore.log(`Found persisted handle: ${persisted.name}`);
-        const hasAccess = await this.verifyPermission(persisted);
-        debugStore.log(`Permission verified: ${hasAccess}`);
-        if (hasAccess) {
+        const state = await this.verifyPermission(persisted);
+        debugStore.log(`Permission state: ${state}`);
+        if (state === "granted") {
           this.rootHandle = persisted;
           this.isAuthorized = true;
           await this.ensureImagesDirectory();
           await this.loadFiles();
+        } else if (state === "prompt") {
+          this.rootHandle = persisted;
+          this.isAuthorized = false;
+          debugStore.log("Handle found but requires permission prompt.");
         } else {
-          // Permission no longer valid or handle expired
+          // Permission no longer valid or denied
           console.warn(
-            "Persisted handle no longer valid or permission denied.",
+            `Persisted handle invalid or denied (state: ${state}). Clearing...`,
           );
-          debugStore.warn("Persisted handle invalid, clearing...");
+          debugStore.warn(`Persisted handle invalid (${state}), clearing...`);
           await clearPersistedHandle();
           this.rootHandle = undefined;
           this.isAuthorized = false;
@@ -275,28 +279,37 @@ class VaultStore {
     }
   }
 
-  async verifyPermission(handle: FileSystemDirectoryHandle): Promise<boolean> {
+  async verifyPermission(
+    handle: FileSystemDirectoryHandle,
+  ): Promise<PermissionState> {
     try {
       // 1. Check logical permission state
       const state = await handle.queryPermission({ mode: "readwrite" });
       if (state !== "granted") {
-        debugStore.warn(`Permission check failed: state is ${state}`);
-        return false;
+        debugStore.log(`Permission state is ${state}`);
+        return state;
       }
 
       // 2. Perform actual read operation (aggressive validation)
       // Some browsers (mobile Chrome) report 'granted' even if the handle is stale.
       // Trying to list entries will fail if access is truly lost.
       // We limit iteration to 1 item to be fast.
-      for await (const _entry of handle.values()) {
-        break;
+      try {
+        for await (const _entry of handle.values()) {
+          break;
+        }
+        return "granted";
+      } catch (err) {
+        console.warn(
+          "Handle reports 'granted' but access failed (stale handle)",
+          err,
+        );
+        return "denied";
       }
-
-      return true;
     } catch (err) {
       console.warn("Failed to verify permission (handle invalid)", err);
       debugStore.error("Handle verification failed", err);
-      return false;
+      return "denied";
     }
   }
 
