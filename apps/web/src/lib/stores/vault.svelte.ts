@@ -147,7 +147,9 @@ class VaultStore {
           await this.loadFiles();
         } else {
           // Permission no longer valid or handle expired
-          console.warn("Persisted handle no longer valid or permission denied.");
+          console.warn(
+            "Persisted handle no longer valid or permission denied.",
+          );
           debugStore.warn("Persisted handle invalid, clearing...");
           await clearPersistedHandle();
           this.rootHandle = undefined;
@@ -287,9 +289,9 @@ class VaultStore {
       // Trying to list entries will fail if access is truly lost.
       // We limit iteration to 1 item to be fast.
       for await (const _entry of handle.values()) {
-        break; 
+        break;
       }
-      
+
       return true;
     } catch (err) {
       console.warn("Failed to verify permission (handle invalid)", err);
@@ -399,7 +401,13 @@ class VaultStore {
               } else {
                 // Miss Path: Parse and cache
                 const text = await file.text();
+                debugStore.log(`Raw text for ${filePath}:`, text);
                 const { metadata, content, wikiLinks } = parseMarkdown(text);
+                debugStore.log(`Parsed entity for ${filePath}:`, {
+                  metadata,
+                  content,
+                  wikiLinks,
+                });
 
                 let id = metadata.id;
                 if (!id) {
