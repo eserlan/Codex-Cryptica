@@ -133,7 +133,11 @@ class VaultStore {
 
   async init() {
     this.isInitialized = false;
-    debugStore.log(`Vault initializing (v${__APP_VERSION__})...`);
+    const isSecureContext =
+      typeof window !== "undefined" && window.isSecureContext;
+    debugStore.log(
+      `Vault initializing (v${__APP_VERSION__}) [Secure: ${isSecureContext}, Picker: ${!!window.showDirectoryPicker}]...`,
+    );
     if (this.rootHandle) return;
     try {
       const db = await getDB();

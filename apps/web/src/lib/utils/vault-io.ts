@@ -24,6 +24,21 @@ export async function writeWithRetry(
   content: Blob | string,
   path: string,
 ): Promise<FileSystemFileHandle> {
+  // DEBUG: Check current handle permission
+  try {
+    const currentPerm = await handle.queryPermission({ mode: "readwrite" });
+    if (currentPerm !== "granted") {
+      debugStore.warn(
+        `[VaultIO] Write starting on handle with ${currentPerm} permission for ${path}`,
+      );
+    }
+  } catch (e) {
+    debugStore.warn(
+      `[VaultIO] Failed to query handle permission for ${path}`,
+      e,
+    );
+  }
+
   try {
     if (typeof content === "string") {
       await writeFile(handle, content);
