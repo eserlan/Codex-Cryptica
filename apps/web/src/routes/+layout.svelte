@@ -397,22 +397,40 @@
 				Vault Locked
 			</h3>
 
+			{#if vault.errorMessage}
+				<div class="p-2 bg-red-900/20 border border-red-500/30 rounded text-[10px] text-red-400 font-mono">
+					{vault.errorMessage}
+				</div>
+			{/if}
+
 			<p class="text-sm text-theme-muted leading-relaxed">
 				Browser security requires you to re-grant access to your local files after a
 				reload.
 			</p>
 
-			<button
-				class="w-full py-3 px-4 bg-theme-accent hover:bg-theme-accent/90 text-black font-bold tracking-widest uppercase rounded transition-all shadow-lg hover:shadow-theme-accent/25 flex items-center justify-center gap-2"
-				onclick={() => vault.requestPermission()}
-			>
-				<span class="icon-[lucide--key] w-4 h-4"></span>
-				GRANT ACCESS
-			</button>
+			<div class="flex flex-col gap-2 w-full">
+				<button
+					class="w-full py-3 px-4 bg-theme-accent hover:bg-theme-accent/90 text-black font-bold tracking-widest uppercase rounded transition-all shadow-lg hover:shadow-theme-accent/25 flex items-center justify-center gap-2"
+					onclick={() => vault.requestPermission()}
+				>
+					<span class="icon-[lucide--key] w-4 h-4"></span>
+					GRANT ACCESS
+				</button>
+
+				{#if vault.status === "error" || vault.errorMessage}
+					<button
+						class="w-full py-2 px-4 border border-theme-primary text-theme-primary hover:bg-theme-primary/10 font-bold tracking-widest uppercase rounded text-[10px] transition-all flex items-center justify-center gap-2"
+						onclick={() => vault.reOpen()}
+					>
+						<span class="icon-[lucide--folder-open] w-3.5 h-3.5"></span>
+						RE-PICK FOLDER
+					</button>
+				{/if}
+			</div>
 
 			<button
 				onclick={() => vault.close()}
-				class="text-[10px] text-theme-muted hover:text-red-400 uppercase tracking-widest transition-colors"
+				class="text-[10px] text-theme-muted hover:text-red-400 uppercase tracking-widest transition-colors pt-2"
 			>
 				Close Vault
 			</button>

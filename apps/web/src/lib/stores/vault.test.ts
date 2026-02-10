@@ -641,7 +641,7 @@ describe("VaultStore", () => {
     expect(vault.status).toBe("idle");
   });
 
-  it("should return 'denied' if verifyPermission iteration fails (stale handle)", async () => {
+  it("should return 'prompt' if verifyPermission iteration fails (stale handle)", async () => {
     const mockHandle = {
       queryPermission: vi.fn().mockResolvedValue("granted"),
       values: vi.fn().mockImplementation(() => {
@@ -650,7 +650,7 @@ describe("VaultStore", () => {
     };
 
     const result = await vault.verifyPermission(mockHandle as any);
-    expect(result).toBe("denied");
+    expect(result).toBe("prompt");
     expect(mockHandle.queryPermission).toHaveBeenCalled();
     expect(mockHandle.values).toHaveBeenCalled();
   });

@@ -159,6 +159,8 @@ class VaultStore {
         `[Vault] Write test failed. Vault is READ-ONLY! ${err.name}: ${err.message}`,
         err,
       );
+      this.status = "error";
+      this.errorMessage = `Write test failed (${err.name}). Browser is enforcing read-only access. Try picking the folder again.`;
     }
   }
 
@@ -355,7 +357,8 @@ class VaultStore {
           "Handle reports 'granted' but access failed (stale handle)",
           err,
         );
-        return "denied";
+        // Fallback to prompt instead of deny to allow re-authorization
+        return "prompt";
       }
     } catch (err) {
       console.warn("Failed to verify permission (handle invalid)", err);
@@ -367,18 +370,39 @@ class VaultStore {
   async requestPermission() {
     if (!this.rootHandle) return;
     debugStore.log("[Vault] Requesting readwrite permission...");
-    const state = await this.rootHandle.requestPermission({
-      mode: "readwrite",
-    });
-    debugStore.log(`[Vault] Permission request result: ${state}`);
-    if (state === "granted") {
-      this.isAuthorized = true;
-      await this.loadFiles();
-      this.status = "idle";
-    } else {
-      this.isAuthorized = false;
-      this.status = "error";
+    try {
+      const state = await this.rootHandle.requestPermission({
+        mode: "readwrite",
+      });
+      debugStore.log(`[Vault] Permission request result: ${state}`);
+      if (state === "granted") {
+        this.isAuthorized = true;
+        await this.ensureImagesDirectory();
+        await this.testWrite();
+        
+        // If testWrite failed (it sets status internally if it wants, but let's check here)
+        // We'll let loadFiles proceed but it might fail later.
+        
+        await this.loadFiles();
+        this.status = "idle";
+      } else {
+        this.isAuthorized = false;
+        this.status = "error";
+        this.errorMessage = "Read-write permission was denied by the browser.";
+      }
+    } catch (err: any) {
+        debugStore.error("[Vault] Permission request failed", err);
+        this.status = "error";
+        this.errorMessage = `Permission error: ${err.message}. Try picking the folder again.`;
     }
+  }
+
+  async reOpen() {
+    // Clear and open fresh
+    await clearPersistedHandle();
+    this.rootHandle = undefined;
+    this.isAuthorized = false;
+    await this.openDirectory();
   }
 
   async openDirectory() {
