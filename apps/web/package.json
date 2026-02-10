@@ -1,11 +1,11 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.8.7",
+  "version": "0.8.8",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build && cp build/index.html build/404.html",
+    "build": "npm version patch --no-git-tag-version && vite build && cp build/index.html build/404.html",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "test": "vitest run",
