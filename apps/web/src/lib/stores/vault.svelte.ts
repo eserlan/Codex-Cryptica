@@ -117,7 +117,16 @@ class VaultStore {
     return Object.values(this.entities);
   }
 
-  rootHandle = $state<FileSystemDirectoryHandle | undefined>(undefined);
+  // PRIVATE NON-REACTIVE STORAGE (Prevents Svelte 5 Proxy brand-check failures)
+  #rootHandle: FileSystemDirectoryHandle | undefined = undefined;
+  #handleRegistry = new Map<string, FileSystemFileHandle>();
+
+  // Public getter for UI visibility
+  get rootHandle() {
+    return this.#rootHandle;
+  }
+
+  vaultName = $state("");
   isAuthorized = $state(false);
 
   private saveQueue = new KeyedTaskQueue();
@@ -132,13 +141,15 @@ class VaultStore {
   }
 
   async testWrite() {
-    if (!this.rootHandle) return;
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) return;
     debugStore.log("[Vault] Performing write test...");
     try {
-      const testFile = await rawRoot.getFileHandle("vault-write-test.txt", {
-        create: true,
-      });
+      const testFile = await this.#rootHandle.getFileHandle(
+        "vault-write-test.txt",
+        {
+          create: true,
+        },
+      );
       debugStore.log(
         `[Vault] Test file handle obtained: ${testFile.name} [Writable: ${!!testFile.createWritable}]`,
       );
@@ -150,7 +161,7 @@ class VaultStore {
       await writable.close();
       debugStore.log("[Vault] Write completed and stream closed.");
 
-      await rawRoot.removeEntry("vault-write-test.txt");
+      await this.#rootHandle.removeEntry("vault-write-test.txt");
       debugStore.log("[Vault] Write test successful. Vault is read-write.");
     } catch (err: any) {
       debugStore.error(
@@ -169,7 +180,7 @@ class VaultStore {
     debugStore.log(
       `Vault initializing (v${__APP_VERSION__}) [Secure: ${isSecureContext}, Picker: ${!!window.showDirectoryPicker}]...`,
     );
-    if (this.rootHandle) return;
+    if (this.#rootHandle) return;
     try {
       const db = await getDB();
       const savedVisibility = await db.get("settings", "defaultVisibility");
@@ -183,13 +194,15 @@ class VaultStore {
         const state = await this.verifyPermission(persisted);
         debugStore.log(`Permission state: ${state}`);
         if (state === "granted") {
-          this.rootHandle = persisted;
+          this.#rootHandle = persisted;
+          this.vaultName = persisted.name;
           this.isAuthorized = true;
           await this.ensureImagesDirectory();
           await this.testWrite();
           await this.loadFiles();
         } else if (state === "prompt") {
-          this.rootHandle = persisted;
+          this.#rootHandle = persisted;
+          this.vaultName = persisted.name;
           // We must request permission before we can load files.
           // However, requestPermission() requires a user gesture.
           // Since init() is called on mount (not user gesture), we can't await it here immediately without triggering a browser error.
@@ -208,7 +221,8 @@ class VaultStore {
           );
           debugStore.warn(`Persisted handle invalid (${state}), clearing...`);
           await clearPersistedHandle();
-          this.rootHandle = undefined;
+          this.#rootHandle = undefined;
+          this.vaultName = "";
           this.isAuthorized = false;
         }
       } else {
@@ -219,7 +233,8 @@ class VaultStore {
       debugStore.error("Failed to init vault", err);
       // Fallback: Clear potentially corrupt handle
       await clearPersistedHandle();
-      this.rootHandle = undefined;
+      this.#rootHandle = undefined;
+      this.vaultName = "";
       this.isAuthorized = false;
     } finally {
       this.status = "idle";
@@ -251,7 +266,9 @@ class VaultStore {
       // 3. Clear Memory
       this.entities = {};
       this.inboundConnections = {};
-      this.rootHandle = undefined;
+      this.#rootHandle = undefined;
+      this.#handleRegistry.clear();
+      this.vaultName = "";
       this.isAuthorized = false;
       this.selectedEntityId = null;
       this.isGuest = false;
@@ -310,7 +327,7 @@ class VaultStore {
       // Ensure a full re-initialization by clearing any existing root handle
       // so that init() does not early-return based on a pre-existing handle.
       // This will attempt to load the persisted local vault again.
-      this.rootHandle = undefined;
+      this.#rootHandle = undefined;
 
       // Re-initialize (attempts to load persisted local vault)
       await this.init();
@@ -323,10 +340,9 @@ class VaultStore {
   }
 
   async ensureImagesDirectory() {
-    if (!this.rootHandle) return;
+    if (!this.#rootHandle) return;
     try {
-      const rawRoot = $state.snapshot(this.rootHandle);
-      await rawRoot.getDirectoryHandle("images", { create: true });
+      await this.#rootHandle.getDirectoryHandle("images", { create: true });
     } catch (err) {
       console.error("Failed to create images directory", err);
     }
@@ -336,9 +352,8 @@ class VaultStore {
     handle: FileSystemDirectoryHandle,
   ): Promise<PermissionState> {
     try {
-      const rawHandle = $state.snapshot(handle);
       // 1. Check logical permission state
-      const state = await rawHandle.queryPermission({ mode: "readwrite" });
+      const state = await handle.queryPermission({ mode: "readwrite" });
       if (state !== "granted") {
         debugStore.log(`Permission state is ${state}`);
         return state;
@@ -349,7 +364,7 @@ class VaultStore {
       // Trying to list entries will fail if access is truly lost.
       // We limit iteration to 1 item to be fast.
       try {
-        for await (const _entry of rawHandle.values()) {
+        for await (const _entry of handle.values()) {
           break;
         }
         return "granted";
@@ -369,11 +384,10 @@ class VaultStore {
   }
 
   async requestPermission() {
-    if (!this.rootHandle) return;
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) return;
     debugStore.log("[Vault] Requesting readwrite permission...");
     try {
-      const state = await rawRoot.requestPermission({
+      const state = await this.#rootHandle.requestPermission({
         mode: "readwrite",
       });
       debugStore.log(`[Vault] Permission request result: ${state}`);
@@ -402,7 +416,7 @@ class VaultStore {
   async reOpen() {
     // Clear and open fresh
     await clearPersistedHandle();
-    this.rootHandle = undefined;
+    this.#rootHandle = undefined;
     this.isAuthorized = false;
     await this.openDirectory();
   }
@@ -429,20 +443,33 @@ class VaultStore {
       }
 
       this.clearImageCache();
-      this.rootHandle = handle;
+
+      this.#rootHandle = handle;
+
+      this.vaultName = handle.name;
+
       this.isAuthorized = perm === "granted";
+
       if (!this.isAuthorized) {
         throw new Error("Read-write permission was not granted.");
       }
+
       await persistHandle(handle);
+
       await this.ensureImagesDirectory();
+
       await this.testWrite();
+
       await this.loadFiles();
+
       this.status = "idle";
     } catch (err: any) {
       console.error(err);
+
       debugStore.error("Failed to open directory", err);
+
       this.status = "error";
+
       if (err.name === "AbortError") {
         this.status = "idle"; // Reset if user cancelled
       } else {
@@ -452,26 +479,33 @@ class VaultStore {
   }
 
   async loadFiles() {
-    if (!this.rootHandle) return;
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) return;
 
     this.status = "loading";
+
     debugStore.log("Loading files...");
+
     try {
       aiService.clearStyleCache();
-      const files = await walkDirectory(rawRoot, [], (err, path) => {
+
+      const files = await walkDirectory(this.#rootHandle, [], (err, path) => {
         const errorInfo =
           err instanceof Error
             ? { name: err.name, message: err.message, stack: err.stack }
             : err;
+
         debugStore.error(`Failed to scan ${path.join("/")}`, errorInfo);
       });
+
       debugStore.log(`Found ${files.length} files`);
 
       // Clear index before reloading
+
       await searchService.clear();
 
       this.entities = {};
+
+      this.#handleRegistry.clear();
 
       const newInboundMap: Record<
         string,
@@ -482,7 +516,7 @@ class VaultStore {
 
       const dirCache = new Map<string, FileSystemDirectoryHandle>();
 
-      dirCache.set("", rawRoot);
+      dirCache.set("", this.#rootHandle);
 
       const processFile = async (fileEntry: FileEntry) => {
         try {
@@ -493,12 +527,11 @@ class VaultStore {
           let file: File;
 
           try {
-            const rawFileHandle = $state.snapshot(fileEntry.handle);
-            file = await rawFileHandle.getFile();
+            file = await fileEntry.handle.getFile();
           } catch {
             // Fallback: Re-resolve handle from root if it becomes stale (common browser quirk)
 
-            let currentDir = rawRoot;
+            let currentDir = this.#rootHandle;
 
             if (!currentDir)
               throw new Error("Root handle missing during re-resolution");
@@ -546,10 +579,12 @@ class VaultStore {
             entity = {
               ...cached.entity,
 
-              _fsHandle: fileEntry.handle,
+              _fsHandle: undefined, // No longer stored on entity
 
               _path: fileEntry.path,
             };
+
+            this.#handleRegistry.set(entity.id, fileEntry.handle);
           } else {
             // Miss Path: Parse and cache
 
@@ -596,10 +631,12 @@ class VaultStore {
 
               metadata: metadata.metadata,
 
-              _fsHandle: fileEntry.handle,
+              _fsHandle: undefined, // No longer stored on entity
 
               _path: fileEntry.path,
             };
+
+            this.#handleRegistry.set(entity.id, fileEntry.handle);
 
             // Update Cache (best-effort)
 
@@ -734,7 +771,7 @@ class VaultStore {
       return this.pendingResolutions.get(path)!;
     }
 
-    if (!this.rootHandle) return path;
+    if (!this.#rootHandle) return path;
 
     const resolutionPromise = (async () => {
       try {
@@ -742,9 +779,8 @@ class VaultStore {
         const normalized = path.startsWith("./") ? path.slice(2) : path;
         const segments = normalized.split("/");
 
-        const rawRoot = $state.snapshot(this.rootHandle);
         let currentHandle: FileSystemDirectoryHandle | FileSystemFileHandle =
-          rawRoot!;
+          this.#rootHandle!;
 
         for (let i = 0; i < segments.length; i++) {
           const segment = segments[i];
@@ -796,11 +832,10 @@ class VaultStore {
     if (!(blob instanceof Blob) || blob.size === 0) {
       throw new Error("Invalid image data provided for archival.");
     }
-    if (!this.rootHandle) throw new Error("Vault not open");
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) throw new Error("Vault not open");
 
     try {
-      const imagesDir = await rawRoot.getDirectoryHandle("images", {
+      const imagesDir = await this.#rootHandle.getDirectoryHandle("images", {
         create: true,
       });
 
@@ -828,7 +863,12 @@ class VaultStore {
         create: true,
       });
 
-      await writeWithRetry(rawRoot, fileHandle, blob, `images/${filename}`);
+      await writeWithRetry(
+        this.#rootHandle,
+        fileHandle,
+        blob,
+        `images/${filename}`,
+      );
 
       // Generate and save thumbnail
       const thumbBlob = await generateThumbnail(blob, 512);
@@ -837,7 +877,7 @@ class VaultStore {
       });
 
       await writeWithRetry(
-        rawRoot,
+        this.#rootHandle,
         thumbHandle,
         thumbBlob,
         `images/${thumbFilename}`,
@@ -906,7 +946,6 @@ class VaultStore {
     if (existing) {
       this.entities[entity.id] = {
         ...entity,
-        _fsHandle: existing._fsHandle,
         _path: existing._path,
       };
     } else {
@@ -937,24 +976,29 @@ class VaultStore {
       // Allow save queue to process but do nothing
       return;
     }
-    const handle = (entity as LocalEntity)._fsHandle as FileSystemFileHandle;
+    const handle = this.#handleRegistry.get(entity.id);
+    if (!handle) {
+      console.warn(
+        `No FS handle found in registry for ${entity.id}. Saving aborted.`,
+      );
+      return;
+    }
+
     const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
     const pathStr = Array.isArray(path) ? path.join("/") : path;
 
     try {
       const content = stringifyEntity(entity);
-      const rawRoot = $state.snapshot(this.rootHandle);
-      const rawHandle = $state.snapshot(handle);
 
       const freshHandle = await writeWithRetry(
-        rawRoot,
-        rawHandle,
+        this.#rootHandle!,
+        handle,
         content,
         pathStr,
       );
 
-      // Update handle in case it was re-resolved
-      (entity as LocalEntity)._fsHandle = freshHandle;
+      // Update registry in case it was re-resolved
+      this.#handleRegistry.set(entity.id, freshHandle);
 
       const metadataValues = Object.values(entity.metadata || {});
       const metadataKeywords = metadataValues.flatMap((value) => {
@@ -1018,7 +1062,7 @@ class VaultStore {
     });
 
     await writeWithRetry(
-      this.rootHandle,
+      this.#rootHandle,
       fileHandle,
       blob,
       `images/${filename}`,
@@ -1031,7 +1075,7 @@ class VaultStore {
     });
 
     await writeWithRetry(
-      this.rootHandle,
+      this.#rootHandle,
       thumbHandle,
       thumbBlob,
       `images/${thumbFilename}`,
@@ -1054,11 +1098,10 @@ class VaultStore {
       throw new Error(`Entity ${id} already exists`);
     }
 
-    if (!this.rootHandle) throw new Error("Vault not open");
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) throw new Error("Vault not open");
 
     const filename = `${id}.md`;
-    const handle = await rawRoot.getFileHandle(filename, {
+    const handle = await this.#rootHandle.getFileHandle(filename, {
       create: true,
     });
 
@@ -1074,12 +1117,12 @@ class VaultStore {
       lore: initialData?.lore,
       image: initialData?.image,
       thumbnail: initialData?.thumbnail,
-      _fsHandle: handle,
+      _fsHandle: undefined, // No longer stored on entity
       _path: [filename],
     };
 
-    const rawHandle = $state.snapshot(handle);
-    await writeFile(rawHandle, stringifyEntity(newEntity));
+    await writeFile(handle, stringifyEntity(newEntity));
+    this.#handleRegistry.set(id, handle);
 
     this.entities[id] = newEntity;
     this.rebuildInboundMap();
@@ -1105,8 +1148,7 @@ class VaultStore {
     }[],
   ): Promise<string[]> {
     if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
-    if (!this.rootHandle) throw new Error("Vault not open");
-    const rawRoot = $state.snapshot(this.rootHandle);
+    if (!this.#rootHandle) throw new Error("Vault not open");
 
     const createdIds: string[] = [];
     const searchEntries: any[] = [];
@@ -1121,7 +1163,7 @@ class VaultStore {
         }
 
         const filename = `${id}.md`;
-        const handle = await rawRoot.getFileHandle(filename, {
+        const handle = await this.#rootHandle!.getFileHandle(filename, {
           create: true,
         });
 
@@ -1137,12 +1179,13 @@ class VaultStore {
           lore: data.initialData?.lore,
           image: data.initialData?.image,
           thumbnail: data.initialData?.thumbnail,
-          _fsHandle: handle,
+          _fsHandle: undefined, // No longer stored on entity
           _path: [filename],
         };
 
-        const rawHandle = $state.snapshot(handle);
-        await writeFile(rawHandle, stringifyEntity(newEntity));
+        await writeFile(handle, stringifyEntity(newEntity));
+        this.#handleRegistry.set(id, handle);
+
         this.entities[id] = newEntity;
         createdIds.push(id);
 
@@ -1175,17 +1218,15 @@ class VaultStore {
     if (!entity) return;
 
     try {
-      const handle = entity._fsHandle as FileSystemFileHandle;
+      const handle = this.#handleRegistry.get(id);
       const path = entity._path as string[];
-      const rawRoot = $state.snapshot(this.rootHandle);
-      const rawHandle = $state.snapshot(handle);
 
-      if (rawHandle && rawRoot) {
+      if (handle && this.#rootHandle) {
         // Use standard remove() if available, else fallback to removeEntry on root for top-level files
-        if (typeof (rawHandle as any).remove === "function") {
-          await (rawHandle as any).remove();
+        if (typeof (handle as any).remove === "function") {
+          await (handle as any).remove();
         } else if (path && path.length === 1) {
-          await rawRoot.removeEntry(path[0]);
+          await this.#rootHandle.removeEntry(path[0]);
         } else {
           throw new Error(
             "Deletion of nested files is not supported in this environment.",
@@ -1193,15 +1234,21 @@ class VaultStore {
         }
       }
 
+      // Cleanup handle registry
+      this.#handleRegistry.delete(id);
+
       // Remove from index
       await searchService.remove(id);
 
       // 2. Delete associated media
       if (entity.image || entity.thumbnail) {
         try {
-          const imagesDir = await rawRoot?.getDirectoryHandle("images", {
-            create: false,
-          });
+          const imagesDir = await this.#rootHandle?.getDirectoryHandle(
+            "images",
+            {
+              create: false,
+            },
+          );
           if (imagesDir) {
             const deleteFile = async (path: string) => {
               const filename = path.split("/").pop();
@@ -1437,7 +1484,7 @@ class VaultStore {
     const entity = this.entities[id];
     if (!entity || this.loadingLore.has(id)) return;
 
-    const handle = entity._fsHandle as FileSystemFileHandle;
+    const handle = this.#handleRegistry.get(id);
     if (!handle) return;
 
     this.loadingLore.add(id);

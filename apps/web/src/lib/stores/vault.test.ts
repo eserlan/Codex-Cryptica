@@ -97,7 +97,7 @@ function createCanvasMock() {
 }
 
 describe("VaultStore", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetAllMocks();
 
     // Re-setup canvas mock after resetAllMocks
@@ -111,9 +111,8 @@ describe("VaultStore", () => {
           ? originalCreateElement(tag)
           : {};
       });
-    vault.entities = {};
-    vault.rootHandle = undefined;
-    vault.isAuthorized = false;
+    await vault.close();
+    vi.mocked(idbUtils.clearPersistedHandle).mockClear();
 
     // Ensure getDB returns a valid mock object
     vi.mocked(idbUtils.getDB).mockResolvedValue({
@@ -195,7 +194,15 @@ describe("VaultStore", () => {
 
     const mockFiles = [{ handle: mockFileHandle, path: [filePath] }];
     vi.mocked(fsUtils.walkDirectory).mockResolvedValue(mockFiles as any);
-    vault.rootHandle = {} as any;
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue({
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      name: "test-vault",
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+    } as any);
+
+    await vault.openDirectory();
     vault.isAuthorized = true;
 
     await vault.loadFiles();
@@ -216,9 +223,18 @@ describe("VaultStore", () => {
         .fn()
         .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
-    vault.rootHandle = {
+    const mockRootHandle = {
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
-    } as any;
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    await vault.openDirectory();
 
     const id = await vault.createEntity("npc", "New Hero");
     expect(id).toBe("new-hero");
@@ -235,9 +251,18 @@ describe("VaultStore", () => {
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
     };
 
-    vault.rootHandle = {
+    const mockRootHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
-    } as any;
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    await vault.openDirectory();
 
     // Create the entity that will be updated with image paths
     vault.entities["test-entity"] = {
@@ -268,9 +293,18 @@ describe("VaultStore", () => {
       removeEntry: vi.fn().mockResolvedValue(undefined),
     };
 
-    vault.rootHandle = {
+    const mockRootHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
-    } as any;
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    await vault.openDirectory();
 
     // Entity already has an image
     vault.entities["replace-entity"] = {
@@ -306,9 +340,18 @@ describe("VaultStore", () => {
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
     };
 
-    vault.rootHandle = {
+    const mockRootHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
-    } as any;
+      getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    await vault.openDirectory();
 
     global.URL.createObjectURL = vi.fn().mockReturnValue("blob:resolved-url");
 
@@ -319,16 +362,33 @@ describe("VaultStore", () => {
 
   it("should update entity and schedule save", async () => {
     const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi.fn().mockResolvedValue("---\nid: test\ntitle: Test\n---\n"),
+        }),
       createWritable: vi
         .fn()
         .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
-    const entity = {
-      id: "test",
-      title: "Test",
-      _fsHandle: mockFileHandle,
-    } as any;
-    vault.entities["test"] = entity;
+
+    const mockRootHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["test.md"] },
+    ]);
+
+    await vault.openDirectory();
 
     vault.updateEntity("test", { title: "Updated" });
 
@@ -341,18 +401,34 @@ describe("VaultStore", () => {
   });
 
   it("should delete entity and clear selection", async () => {
-    const mockFileHandle = { kind: "file" };
-    const mockRootHandle = { removeEntry: vi.fn() };
-    vault.rootHandle = mockRootHandle as any;
+    const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi.fn().mockResolvedValue(""),
+        }),
+    };
+    const mockRootHandle = {
+      removeEntry: vi.fn(),
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["test.md"] },
+    ]);
+
+    await vault.openDirectory();
     vault.selectedEntityId = "test";
 
-    vault.entities["test"] = {
-      id: "test",
-      connections: [],
-      _fsHandle: mockFileHandle,
-      _path: ["test.md"],
-    } as any;
-
+    // The entity 'test' should have been loaded into entities and its handle into registry
     await vault.deleteEntity("test");
 
     expect(mockRootHandle.removeEntry).toHaveBeenCalledWith("test.md");
@@ -374,22 +450,36 @@ describe("VaultStore", () => {
   });
 
   it("should delete entity and associated media files", async () => {
-    const mockFileHandle = { kind: "file" };
+    const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              "---\nimage: ./images/photo.png\nthumbnail: ./images/thumb.webp\n---\n",
+            ),
+        }),
+    };
     const mockImagesDir = { removeEntry: vi.fn().mockResolvedValue(undefined) };
     const mockRootHandle = {
       removeEntry: vi.fn().mockResolvedValue(undefined),
       getDirectoryHandle: vi.fn().mockResolvedValue(mockImagesDir),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
     };
-    vault.rootHandle = mockRootHandle as any;
 
-    vault.entities["media-node"] = {
-      id: "media-node",
-      connections: [],
-      image: "./images/photo.png",
-      thumbnail: "./images/thumb.webp",
-      _fsHandle: mockFileHandle,
-      _path: ["media-node.md"],
-    } as any;
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["media-node.md"] },
+    ]);
+
+    await vault.openDirectory();
 
     await vault.deleteEntity("media-node");
 
@@ -400,27 +490,46 @@ describe("VaultStore", () => {
   });
 
   it("should cleanup relational references when an entity is deleted", async () => {
-    const mockFileHandle = { kind: "file" };
+    const mockFileHandleA = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              "---\nid: a\ntitle: Node A\nconnections:\n  - target: b\n    type: related_to\n    strength: 1\n---\n",
+            ),
+        }),
+    };
+    const mockFileHandleB = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi.fn().mockResolvedValue("---\nid: b\ntitle: Node B\n---\n"),
+        }),
+    };
+
     const mockRootHandle = {
       removeEntry: vi.fn().mockResolvedValue(undefined),
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
     };
-    vault.rootHandle = mockRootHandle as any;
 
-    // Entity A points to B
-    vault.entities["a"] = {
-      id: "a",
-      title: "Node A",
-      connections: [{ target: "b", type: "related_to", strength: 1 }],
-      _fsHandle: mockFileHandle,
-    } as any;
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandleA as any, path: ["a.md"] },
+      { handle: mockFileHandleB as any, path: ["b.md"] },
+    ]);
 
-    vault.entities["b"] = {
-      id: "b",
-      title: "Node B",
-      connections: [],
-      _fsHandle: mockFileHandle,
-      _path: ["b.md"],
-    } as any;
+    await vault.openDirectory();
 
     // Rebuild map so system knows about the connection
     (vault as any).rebuildInboundMap();
@@ -473,20 +582,37 @@ describe("VaultStore", () => {
 
   it("should update connection label", async () => {
     const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              "---\nid: source\ntitle: Source\nconnections:\n  - target: target\n    type: knows\n    strength: 1\n---\n",
+            ),
+        }),
       createWritable: vi
         .fn()
         .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
 
-    vault.entities["source"] = {
-      id: "source",
-      title: "Source",
-      type: "npc",
-      tags: [],
-      connections: [{ target: "target", type: "knows", strength: 1 }],
-      content: "",
-      _fsHandle: mockFileHandle,
-    } as any;
+    const mockRootHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["source.md"] },
+    ]);
+
+    await vault.openDirectory();
 
     vault.updateConnection("source", "target", { label: "Best Friends" });
 
@@ -518,16 +644,34 @@ describe("VaultStore", () => {
       "---\nlore: Decrypted Lore Content\n---\n",
     );
 
-    vault.entities["entity-with-lore"] = {
-      id: "entity-with-lore",
-      title: "Entity",
-      type: "npc",
-      tags: [],
-      connections: [],
-      content: "",
-      lore: undefined, // Initially undefined
-      _fsHandle: { kind: "file" } as any,
-    } as any;
+    const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              "---\nid: entity-with-lore\ntitle: Entity\ntype: npc\n---\n",
+            ),
+        }),
+    };
+    const mockRootHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["entity-with-lore.md"] },
+    ]);
+
+    await vault.openDirectory();
 
     await vault.fetchLore("entity-with-lore");
 
@@ -538,23 +682,38 @@ describe("VaultStore", () => {
   });
 
   it("should update lore and persist to separate file or main file depending on strategy", async () => {
-    // Assuming current strategy is still single file but field is separate in memory object
-    // Or if split file strategy is implemented, verifying that.
-    // Based on implementation, lore is part of frontmatter or separate section.
-    // Let's verify updateEntity handles lore field.
-
     const mockFileHandle = {
+      kind: "file",
+      getFile: vi
+        .fn()
+        .mockResolvedValue({
+          lastModified: 0,
+          text: vi
+            .fn()
+            .mockResolvedValue(
+              "---\nid: test-lore\ntitle: Test\n---\nMain Content",
+            ),
+        }),
       createWritable: vi
         .fn()
         .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
 
-    vault.entities["test-lore"] = {
-      id: "test-lore",
-      title: "Test",
-      _fsHandle: mockFileHandle,
-      content: "Main Content",
-    } as any;
+    const mockRootHandle = {
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    };
+
+    vi.mocked(global.window.showDirectoryPicker).mockResolvedValue(
+      mockRootHandle as any,
+    );
+    vi.mocked(fsUtils.walkDirectory).mockResolvedValue([
+      { handle: mockFileHandle as any, path: ["test-lore.md"] },
+    ]);
+
+    await vault.openDirectory();
 
     vault.updateEntity("test-lore", { lore: "New Secret Lore" });
 
@@ -563,9 +722,6 @@ describe("VaultStore", () => {
     await vi.waitFor(() => {
       expect(fsUtils.writeFile).toHaveBeenCalled();
     });
-    // Verify that the written content includes the lore (either in frontmatter or body)
-    // This depends on how _serializeAttributes handles it.
-    // We just check that write was called for now.
   });
 
   it("should compute inboundConnections incrementally", () => {
@@ -636,7 +792,7 @@ describe("VaultStore", () => {
 
     expect(mockHandle.queryPermission).toHaveBeenCalled();
     expect(idbUtils.clearPersistedHandle).not.toHaveBeenCalled();
-    expect(vault.rootHandle).toBe(mockHandle);
+    expect(vault.rootHandle).toEqual(mockHandle);
     expect(vault.isAuthorized).toBe(false);
     expect(vault.status).toBe("idle");
   });
