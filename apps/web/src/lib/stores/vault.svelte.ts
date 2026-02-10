@@ -931,10 +931,52 @@ class VaultStore {
       return;
     }
     const handle = (entity as LocalEntity)._fsHandle as FileSystemFileHandle;
-    if (handle) {
-      const content = stringifyEntity(entity);
-      await writeFile(handle, content);
 
+    // Robust Write: Retry with handle re-resolution if write fails
+    const performWrite = async (h: FileSystemFileHandle) => {
+      const content = stringifyEntity(entity);
+      await writeFile(h, content);
+    };
+
+    try {
+      if (handle) {
+        await performWrite(handle);
+      } else {
+        throw new Error("Handle missing initially");
+      }
+    } catch (writeErr: any) {
+      console.warn(
+        `[Vault] Write failed for ${entity.title}. Attempting re-resolution...`,
+        writeErr,
+      );
+
+      // Re-resolve handle from root
+      if (!this.rootHandle)
+        throw new Error("Root handle missing during save retry");
+
+      const path = (entity as LocalEntity)._path;
+      if (!path) throw new Error("Entity path missing during save retry");
+
+      const pathParts = Array.isArray(path) ? path : path.split("/");
+      const fileName = pathParts[pathParts.length - 1];
+      const dirParts = pathParts.slice(0, -1);
+
+      let currentDir = this.rootHandle;
+      for (const part of dirParts) {
+        currentDir = await currentDir.getDirectoryHandle(part);
+      }
+
+      const freshHandle = await currentDir.getFileHandle(fileName);
+
+      // Update entity handle for future use
+      (entity as LocalEntity)._fsHandle = freshHandle;
+
+      // Retry write
+      await performWrite(freshHandle);
+      console.log(`[Vault] Write retry successful for ${entity.title}`);
+    }
+
+    if (handle || (entity as LocalEntity)._fsHandle) {
       const metadataValues = Object.values(entity.metadata || {});
       const metadataKeywords = metadataValues.flatMap((value) => {
         if (typeof value === "string") return [value];
@@ -953,9 +995,9 @@ class VaultStore {
         ...metadataKeywords,
       ].join(" ");
 
-      const filePath = Array.isArray(entity._path)
-        ? entity._path.join("/")
-        : (entity._path as string);
+      const filePath = Array.isArray((entity as LocalEntity)._path)
+        ? ((entity as LocalEntity)._path as string[]).join("/")
+        : ((entity as LocalEntity)._path as string);
 
       // Update index
       await searchService.index({
