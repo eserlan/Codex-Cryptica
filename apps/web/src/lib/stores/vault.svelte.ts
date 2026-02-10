@@ -396,7 +396,13 @@ class VaultStore {
         { sourceId: string; connection: Connection }[]
       > = {};
 
-      for (const fileEntry of files) {
+      // Cache for directory handles during re-resolution to avoid redundant traversals
+
+      const dirCache = new Map<string, FileSystemDirectoryHandle>();
+
+      dirCache.set("", this.rootHandle!);
+
+      const processFile = async (fileEntry: FileEntry) => {
         try {
           const filePath = Array.isArray(fileEntry.path)
             ? fileEntry.path.join("/")
@@ -422,11 +428,23 @@ class VaultStore {
 
             const dirParts = parts.slice(0, -1);
 
+            let pathAccumulator = "";
+
             for (const part of dirParts) {
-              currentDir = await currentDir.getDirectoryHandle(part);
+              pathAccumulator = pathAccumulator
+                ? `${pathAccumulator}/${part}`
+                : part;
+
+              if (dirCache.has(pathAccumulator)) {
+                currentDir = dirCache.get(pathAccumulator)!;
+              } else {
+                currentDir = await currentDir!.getDirectoryHandle(part);
+
+                dirCache.set(pathAccumulator, currentDir);
+              }
             }
 
-            const freshHandle = await currentDir.getFileHandle(fileName);
+            const freshHandle = await currentDir!.getFileHandle(fileName);
 
             file = await freshHandle.getFile();
 
@@ -507,13 +525,15 @@ class VaultStore {
             } catch (error) {
               console.error(
                 "Failed to update cache for file:",
+
                 filePath,
+
                 error,
               );
             }
           }
 
-          if (!entity.id || entity.id === "undefined") continue;
+          if (!entity.id || entity.id === "undefined") return;
 
           this.entities[entity.id] = entity;
 
@@ -575,6 +595,16 @@ class VaultStore {
 
           console.error(`Failed to process file ${filePath}:`, err);
         }
+      };
+
+      // Process in chunks to balance speed and stability
+
+      const CHUNK_SIZE = 5;
+
+      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+        const chunk = files.slice(i, i + CHUNK_SIZE);
+
+        await Promise.all(chunk.map((fileEntry) => processFile(fileEntry)));
       }
 
       this.inboundConnections = newInboundMap;
