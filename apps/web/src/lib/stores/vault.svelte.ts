@@ -131,7 +131,7 @@ class VaultStore {
 
   async init() {
     this.isInitialized = false;
-    debugStore.log("Vault initializing...");
+    debugStore.log(`Vault initializing (v${__APP_VERSION__})...`);
     if (this.rootHandle) return;
     try {
       const db = await getDB();
