@@ -375,6 +375,57 @@
 	<GuestLoginModal onJoin={handleJoin} />
 {/if}
 
+{#if vault.rootHandle && !vault.isAuthorized && !isPopup}
+	<div
+		class="fixed inset-0 z-[900] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-300"
+	>
+		<div
+			class="bg-theme-surface border border-theme-accent shadow-2xl shadow-theme-accent/20 rounded-xl p-6 max-w-sm w-full text-center flex flex-col gap-4 relative overflow-hidden"
+		>
+			<!-- Decorative glow -->
+			<div
+				class="absolute -top-10 -left-10 w-32 h-32 bg-theme-accent/10 rounded-full blur-3xl"
+			></div>
+
+			<div
+				class="w-12 h-12 rounded-full bg-theme-accent/20 flex items-center justify-center mx-auto text-theme-accent mb-2"
+			>
+				<span class="icon-[lucide--lock] w-6 h-6"></span>
+			</div>
+
+			<h3 class="text-lg font-bold text-theme-text tracking-wide uppercase">
+				Vault Locked
+			</h3>
+
+			<p class="text-sm text-theme-muted leading-relaxed">
+				Browser security requires you to re-grant access to your local files after a
+				reload.
+			</p>
+
+			<button
+				class="w-full py-3 px-4 bg-theme-accent hover:bg-theme-accent/90 text-black font-bold tracking-widest uppercase rounded transition-all shadow-lg hover:shadow-theme-accent/25 flex items-center justify-center gap-2"
+				onclick={() => vault.requestPermission()}
+			>
+				<span class="icon-[lucide--key] w-4 h-4"></span>
+				GRANT ACCESS
+			</button>
+
+			<button
+				onclick={() => vault.close()}
+				class="text-[10px] text-theme-muted hover:text-red-400 uppercase tracking-widest transition-colors"
+			>
+				Close Vault
+			</button>
+
+			<div
+				class="text-[10px] text-theme-muted uppercase tracking-widest pt-2 opacity-50"
+			>
+				{vault.rootHandle.name}
+			</div>
+		</div>
+	</div>
+{/if}
+
 {#if uiStore.globalError && !(window as any).DISABLE_ERROR_OVERLAY}
 	<div
 		class="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-sm flex items-center justify-center p-6 text-red-500 font-mono"
