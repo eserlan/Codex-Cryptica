@@ -794,9 +794,9 @@ class VaultStore {
         await writable.close();
       }
       return handle;
-    } catch (err) {
+    } catch (err: any) {
       debugStore.warn(
-        `[Vault] Write failed for ${path}. Attempting re-resolution...`,
+        `[Vault] Write failed for ${path}. Attempting re-resolution... ${err.name} - ${err.message}`,
         err,
       );
       try {
@@ -813,8 +813,11 @@ class VaultStore {
         }
         debugStore.log(`[Vault] Write retry successful for ${path}`);
         return freshHandle;
-      } catch (retryErr) {
-        debugStore.error(`[Vault] Retry failed for ${path}:`, retryErr);
+      } catch (retryErr: any) {
+        debugStore.error(
+          `[Vault] Retry failed for ${path}: ${retryErr.name} - ${retryErr.message}`,
+          retryErr,
+        );
         throw retryErr;
       }
     }
@@ -995,7 +998,7 @@ class VaultStore {
         );
       } catch (err: any) {
         debugStore.error(
-          `[Vault] Write failed (${context}) for ${entity.title}:`,
+          `[Vault] Write failed (${context}) for ${entity.title}: ${err.name} - ${err.message}`,
           err,
         );
         throw err;
@@ -1011,7 +1014,7 @@ class VaultStore {
       }
     } catch (writeErr: any) {
       debugStore.warn(
-        `[Vault] Initial write failed for ${entity.title}. Attempting re-resolution...`,
+        `[Vault] Initial write failed for ${entity.title}. Attempting re-resolution... ${writeErr.name} - ${writeErr.message}`,
         writeErr,
       );
 
@@ -1049,8 +1052,11 @@ class VaultStore {
         // Retry write
         await performWrite(freshHandle, "retry");
         debugStore.log(`[Vault] Write retry successful for ${entity.title}`);
-      } catch (retryErr) {
-        debugStore.error(`[Vault] Retry failed for ${entity.title}:`, retryErr);
+      } catch (retryErr: any) {
+        debugStore.error(
+          `[Vault] Retry failed for ${entity.title}: ${retryErr.name} - ${retryErr.message}`,
+          retryErr,
+        );
         throw retryErr; // Propagate error so UI shows it
       }
     }
