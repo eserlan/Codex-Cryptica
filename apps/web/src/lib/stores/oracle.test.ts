@@ -16,7 +16,10 @@ vi.hoisted(() => {
   if (typeof navigator === "undefined") {
     (global as any).navigator = { onLine: true };
   } else {
-    (global as any).navigator.onLine = true;
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      writable: true,
+    });
   }
 
   class MockBroadcastChannel {
@@ -43,26 +46,26 @@ vi.hoisted(() => {
 });
 
 // Mock worker and bridge to prevent alias resolution issues
-vi.mock('../cloud-bridge/worker-bridge', () => ({
+vi.mock("../cloud-bridge/worker-bridge", () => ({
   workerBridge: {
     reset: vi.fn(),
     send: vi.fn(),
-  }
+  },
 }));
 
-vi.mock('./vault.svelte', () => ({
+vi.mock("./vault.svelte", () => ({
   vault: {
     createEntity: vi.fn(),
     allEntities: [],
     entities: {},
     inboundConnections: {},
-  }
+  },
 }));
 
-vi.mock('./graph.svelte', () => ({
+vi.mock("./graph.svelte", () => ({
   graph: {
     requestFit: vi.fn(),
-  }
+  },
 }));
 
 import { oracle } from "./oracle.svelte";
@@ -95,7 +98,9 @@ vi.mock("../services/ai", () => ({
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     distillVisualPrompt: vi.fn().mockResolvedValue("distilled"),
     enhancePrompt: vi.fn().mockReturnValue("enhanced"),
-    retrieveContext: vi.fn().mockResolvedValue({ content: "context", sourceIds: [] }),
+    retrieveContext: vi
+      .fn()
+      .mockResolvedValue({ content: "context", sourceIds: [] }),
   },
 }));
 
@@ -119,10 +124,10 @@ describe("OracleStore", () => {
     oracle.lastUpdated = 0;
     // Mock crypto if needed
     if (!global.crypto) {
-      Object.defineProperty(global, 'crypto', {
+      Object.defineProperty(global, "crypto", {
         value: {
-          randomUUID: () => "mock-uuid-" + Math.random()
-        }
+          randomUUID: () => "mock-uuid-" + Math.random(),
+        },
       });
     }
   });
@@ -159,7 +164,11 @@ describe("OracleStore", () => {
 
     await oracle.setKey("new-key");
 
-    expect(mockDB.put).toHaveBeenCalledWith("settings", "new-key", "ai_api_key");
+    expect(mockDB.put).toHaveBeenCalledWith(
+      "settings",
+      "new-key",
+      "ai_api_key",
+    );
     expect(oracle.apiKey).toBe("new-key");
   });
 
@@ -215,7 +224,7 @@ describe("OracleStore", () => {
       "generate an image of a tavern",
       "paint a portrait of Eldrin",
       "visualize this scene",
-      "show me a picture of the sawmill"
+      "show me a picture of the sawmill",
     ];
 
     for (const query of intents) {
@@ -257,9 +266,9 @@ describe("OracleStore", () => {
           lastUpdated: timestamp,
           isLoading: false,
           apiKey: null,
-          tier: "lite"
-        }
-      }
+          tier: "lite",
+        },
+      },
     };
 
     if (channel.onmessage) {
@@ -288,9 +297,9 @@ describe("OracleStore", () => {
           lastUpdated: 200,
           isLoading: false,
           apiKey: "new-key",
-          tier: "lite"
-        }
-      }
+          tier: "lite",
+        },
+      },
     };
 
     if (channel.onmessage) {
@@ -316,9 +325,11 @@ describe("OracleStore", () => {
 
     it("should prevent concurrent undo operations", async () => {
       let resolveRevert: any;
-      const revertFn = vi.fn().mockReturnValue(new Promise((resolve) => {
-        resolveRevert = resolve;
-      }));
+      const revertFn = vi.fn().mockReturnValue(
+        new Promise((resolve) => {
+          resolveRevert = resolve;
+        }),
+      );
       oracle.pushUndoAction("Concurrent Action", revertFn);
 
       const undoPromise = oracle.undo();
@@ -363,7 +374,7 @@ describe("OracleStore", () => {
       const lastMessage = oracle.messages[oracle.messages.length - 1];
       expect(lastMessage.role).toBe("system");
       expect(lastMessage.content).toContain("Undo failed: Revert failed");
-      
+
       // Stack should NOT be empty (action remains for retry)
       expect(oracle.undoStack.length).toBe(1);
       expect(oracle.undoStack[0].description).toBe("Fail Action");
@@ -380,4 +391,3 @@ describe("OracleStore", () => {
     });
   });
 });
-

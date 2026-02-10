@@ -10,26 +10,26 @@ vi.hoisted(() => {
 });
 
 // Mock worker and bridge to prevent alias resolution issues
-vi.mock('../cloud-bridge/worker-bridge', () => ({
+vi.mock("../cloud-bridge/worker-bridge", () => ({
   workerBridge: {
     reset: vi.fn(),
     send: vi.fn(),
-  }
+  },
 }));
 
-vi.mock('./oracle.svelte', () => ({
+vi.mock("./oracle.svelte", () => ({
   oracle: {
     clearMessages: vi.fn(),
     messages: [],
     tier: "lite",
-    apiKey: null
-  }
+    apiKey: null,
+  },
 }));
 
-vi.mock('./graph.svelte', () => ({
+vi.mock("./graph.svelte", () => ({
   graph: {
     requestFit: vi.fn(),
-  }
+  },
 }));
 
 import { vault } from "./vault.svelte";
@@ -57,23 +57,43 @@ global.window = global.window || {};
 global.document = global.document || { createElement: vi.fn() };
 
 describe("VaultStore - Batch Operations", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetAllMocks();
-    vault.entities = {};
-    (vault as any).inboundConnections = {};
+    await vault.close();
+
+    // Mock showDirectoryPicker for all tests
+    global.window.showDirectoryPicker = vi.fn().mockResolvedValue({
+      getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
+      name: "test-vault",
+    } as any);
   });
 
   it("should create multiple entities in a single batch", async () => {
     const mockFileHandle = {
-      createWritable: vi.fn().mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
+      createWritable: vi
+        .fn()
+        .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
-    vault.rootHandle = {
+    // Ensure the mockRootHandle used by openDirectory can return this mockFileHandle
+    global.window.showDirectoryPicker = vi.fn().mockResolvedValue({
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
-    } as any;
+    } as any);
+
+    await vault.openDirectory();
 
     const entitiesData = [
-      { type: "character" as const, title: "Hero A", initialData: { content: "Content A" } },
-      { type: "location" as const, title: "Place B", initialData: { content: "Content B" } },
+      {
+        type: "character" as const,
+        title: "Hero A",
+        initialData: { content: "Content A" },
+      },
+      {
+        type: "location" as const,
+        title: "Place B",
+        initialData: { content: "Content B" },
+      },
     ];
 
     const ids = await vault.batchCreateEntities(entitiesData);
@@ -85,21 +105,28 @@ describe("VaultStore - Batch Operations", () => {
 
     // Verify file writes
     expect(fsUtils.writeFile).toHaveBeenCalledTimes(2);
-    
+
     // Verify search indexing
     expect(searchService.index).toHaveBeenCalledTimes(2);
   });
 
   it("should skip duplicate entities during batch creation", async () => {
     const mockFileHandle = {
-      createWritable: vi.fn().mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
+      createWritable: vi
+        .fn()
+        .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
-    vault.rootHandle = {
+    global.window.showDirectoryPicker = vi.fn().mockResolvedValue({
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
-    } as any;
+    } as any);
+    await vault.openDirectory();
 
     // Pre-existing entity
-    vault.entities["existing"] = { id: "existing", title: "Existing", connections: [] } as any;
+    vault.entities["existing"] = {
+      id: "existing",
+      title: "Existing",
+      connections: [],
+    } as any;
 
     const entitiesData = [
       { type: "character" as const, title: "Existing" },
@@ -115,19 +142,22 @@ describe("VaultStore - Batch Operations", () => {
 
   it("should rebuild inbound map after batch creation", async () => {
     const mockFileHandle = {
-      createWritable: vi.fn().mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
+      createWritable: vi
+        .fn()
+        .mockResolvedValue({ write: vi.fn(), close: vi.fn() }),
     };
-    vault.rootHandle = {
+    global.window.showDirectoryPicker = vi.fn().mockResolvedValue({
       getFileHandle: vi.fn().mockResolvedValue(mockFileHandle),
-    } as any;
+    } as any);
+    await vault.openDirectory();
 
     const entitiesData = [
-      { 
-        type: "character" as const, 
-        title: "Source", 
-        initialData: { 
-          connections: [{ target: "target", type: "related_to", strength: 1 }] 
-        } 
+      {
+        type: "character" as const,
+        title: "Source",
+        initialData: {
+          connections: [{ target: "target", type: "related_to", strength: 1 }],
+        },
       },
       { type: "character" as const, title: "Target" },
     ];
