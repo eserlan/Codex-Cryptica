@@ -70,23 +70,16 @@ export async function writeWithRetry(
 
       // AGGRESSIVE: Attempt to request permission on the ROOT handle again
       // and then the fresh handle.
-      try {
-        debugStore.log(`[VaultIO] Refreshing root permissions before retry...`);
-        const rootState = await rootHandle.requestPermission({
-          mode: "readwrite",
-        });
-        debugStore.log(`[VaultIO] Root permission refresh: ${rootState}`);
+      debugStore.log(`[VaultIO] Refreshing root permissions before retry...`);
+      const rootState = await rootHandle.requestPermission({
+        mode: "readwrite",
+      });
+      debugStore.log(`[VaultIO] Root permission refresh: ${rootState}`);
 
-        const retryPerm = await freshHandle.requestPermission({
-          mode: "readwrite",
-        });
-        debugStore.log(`[VaultIO] Retry handle permission: ${retryPerm}`);
-      } catch (e) {
-        debugStore.warn(
-          "[VaultIO] Could not request permission refresh (expected if no user gesture)",
-          e,
-        );
-      }
+      const retryPerm = await freshHandle.requestPermission({
+        mode: "readwrite",
+      });
+      debugStore.log(`[VaultIO] Retry handle permission: ${retryPerm}`);
 
       if (typeof content === "string") {
         await writeFile(freshHandle, content);
