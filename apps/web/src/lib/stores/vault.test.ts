@@ -131,6 +131,8 @@ describe("VaultStore", () => {
     // Mock FS response
     const mockDirectoryHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
     };
     const mockFileHandle = {
       getFile: vi.fn().mockResolvedValue({
@@ -435,6 +437,8 @@ describe("VaultStore", () => {
   it("should parse wiki-links with labels correctly", async () => {
     const mockDirectoryHandle = {
       getDirectoryHandle: vi.fn().mockResolvedValue({}),
+      requestPermission: vi.fn().mockResolvedValue("granted"),
+      queryPermission: vi.fn().mockResolvedValue("granted"),
     };
     const mockFileHandle = {
       getFile: vi.fn().mockResolvedValue({

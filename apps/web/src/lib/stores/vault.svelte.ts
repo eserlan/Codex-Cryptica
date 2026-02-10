@@ -364,9 +364,19 @@ class VaultStore {
       });
       debugStore.log(`Directory picked: ${handle.name}`);
 
+      // Explicitly verify/request readwrite permission on the fresh handle
+      let perm = "granted";
+      if (typeof handle.requestPermission === "function") {
+        perm = await handle.requestPermission({ mode: "readwrite" });
+        debugStore.log(`Initial permission grant: ${perm}`);
+      }
+
       this.clearImageCache();
       this.rootHandle = handle;
-      this.isAuthorized = true;
+      this.isAuthorized = perm === "granted";
+      if (!this.isAuthorized) {
+        throw new Error("Read-write permission was not granted.");
+      }
       await persistHandle(handle);
       await this.ensureImagesDirectory();
       await this.loadFiles();

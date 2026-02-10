@@ -64,6 +64,21 @@ export async function writeWithRetry(
         path.split("/"),
         true,
       );
+
+      // AGGRESSIVE: Attempt to request permission on the fresh handle
+      // This may only succeed if called within a user gesture (e.g. click "Smart Apply")
+      try {
+        const retryPerm = await freshHandle.requestPermission({
+          mode: "readwrite",
+        });
+        debugStore.log(`[VaultIO] Retry handle permission: ${retryPerm}`);
+      } catch (e) {
+        debugStore.warn(
+          "[VaultIO] Could not request permission on fresh handle (expected if no user gesture)",
+          e,
+        );
+      }
+
       if (typeof content === "string") {
         await writeFile(freshHandle, content);
       } else {
