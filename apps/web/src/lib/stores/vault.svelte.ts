@@ -21,6 +21,8 @@ import { graph } from "./graph.svelte";
 import { workerBridge } from "../cloud-bridge/worker-bridge";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
+import { generateThumbnail } from "../utils/image-processing";
+import { writeWithRetry, reResolveFileHandle } from "../utils/vault-io";
 
 export type LocalEntity = Entity & {
   _fsHandle?: FileSystemHandle;
@@ -750,15 +752,21 @@ class VaultStore {
         create: true,
       });
 
-      await this.writeWithRetry(fileHandle, blob, `images/${filename}`);
+      await writeWithRetry(
+        this.rootHandle,
+        fileHandle,
+        blob,
+        `images/${filename}`,
+      );
 
       // Generate and save thumbnail
-      const thumbBlob = await this.generateThumbnail(blob, 512);
+      const thumbBlob = await generateThumbnail(blob, 512);
       const thumbHandle = await imagesDir.getFileHandle(thumbFilename, {
         create: true,
       });
 
-      await this.writeWithRetry(
+      await writeWithRetry(
+        this.rootHandle,
         thumbHandle,
         thumbBlob,
         `images/${thumbFilename}`,
@@ -778,134 +786,6 @@ class VaultStore {
       console.error("Failed to save image to vault", err);
       throw err;
     }
-  }
-
-  private async writeWithRetry(
-    handle: FileSystemFileHandle,
-    content: Blob | string,
-    path: string,
-  ): Promise<FileSystemFileHandle> {
-    try {
-      if (typeof content === "string") {
-        await writeFile(handle, content);
-      } else {
-        const writable = await handle.createWritable();
-        await writable.write(content);
-        await writable.close();
-      }
-      return handle;
-    } catch (err: any) {
-      debugStore.warn(
-        `[Vault] Write failed for ${path}. Attempting re-resolution... ${err.name} - ${err.message}`,
-        err,
-      );
-      try {
-        const freshHandle = await this.reResolveFileHandle(
-          path.split("/"),
-          true,
-        );
-        if (typeof content === "string") {
-          await writeFile(freshHandle, content);
-        } else {
-          const writable = await freshHandle.createWritable();
-          await writable.write(content);
-          await writable.close();
-        }
-        debugStore.log(`[Vault] Write retry successful for ${path}`);
-        return freshHandle;
-      } catch (retryErr: any) {
-        debugStore.error(
-          `[Vault] Retry failed for ${path}: ${retryErr.name} - ${retryErr.message}`,
-          retryErr,
-        );
-        throw retryErr;
-      }
-    }
-  }
-
-  private async generateThumbnail(blob: Blob, size: number): Promise<Blob> {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(blob);
-
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-
-        // Creating a temporary canvas is negligible compared to image decoding overhead.
-        // This avoids race conditions inherent in pooling a single canvas for async operations.
-        const canvas =
-          typeof OffscreenCanvas !== "undefined"
-            ? new OffscreenCanvas(size, size)
-            : document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        if (!ctx) {
-          reject(
-            new Error(
-              "Failed to initialize canvas context for thumbnail generation",
-            ),
-          );
-          return;
-        }
-
-        this.drawOnCanvas(img, canvas, ctx as any, size, resolve, reject);
-      };
-
-      img.onerror = (err) => {
-        URL.revokeObjectURL(url);
-        reject(err);
-      };
-
-      img.src = url;
-    });
-  }
-
-  private drawOnCanvas(
-    img: HTMLImageElement,
-    canvas: HTMLCanvasElement | OffscreenCanvas,
-    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-    size: number,
-    resolve: (blob: Blob) => void,
-    reject: (err: Error) => void,
-  ) {
-    // Calculate dimensions to maintain aspect ratio
-    let width = img.width;
-    let height = img.height;
-
-    if (width > height) {
-      if (width > size) {
-        height *= size / width;
-        width = size;
-      }
-    } else {
-      if (height > size) {
-        width *= size / height;
-        height = size;
-      }
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0, width, height);
-
-    const blobPromise =
-      "toBlob" in canvas
-        ? new Promise<Blob | null>((r) =>
-            (canvas as HTMLCanvasElement).toBlob(r, "image/webp", 0.75),
-          )
-        : (canvas as OffscreenCanvas).convertToBlob({
-            type: "image/webp",
-            quality: 0.75,
-          });
-
-    blobPromise
-      .then((result) => {
-        if (result) resolve(result);
-        else reject(new Error("Canvas toBlob failed"));
-      })
-      .catch(reject);
   }
 
   // Subscription for P2P Broadcast
@@ -1043,7 +923,7 @@ class VaultStore {
       );
 
       try {
-        const freshHandle = await this.reResolveFileHandle(path);
+        const freshHandle = await reResolveFileHandle(this.rootHandle, path);
         debugStore.log("[Vault] Re-resolution successful. Retrying write...");
 
         // Update entity handle for future use
@@ -1119,15 +999,21 @@ class VaultStore {
       create: true,
     });
 
-    await this.writeWithRetry(fileHandle, blob, `images/${filename}`);
+    await writeWithRetry(
+      this.rootHandle,
+      fileHandle,
+      blob,
+      `images/${filename}`,
+    );
 
     // Generate and save thumbnail
-    const thumbBlob = await this.generateThumbnail(blob, 512);
+    const thumbBlob = await generateThumbnail(blob, 512);
     const thumbHandle = await imagesDir.getFileHandle(thumbFilename, {
       create: true,
     });
 
-    await this.writeWithRetry(
+    await writeWithRetry(
+      this.rootHandle,
       thumbHandle,
       thumbBlob,
       `images/${thumbFilename}`,
@@ -1137,22 +1023,6 @@ class VaultStore {
       image: `./images/${filename}`,
       thumbnail: `./images/${thumbFilename}`,
     };
-  }
-
-  private async reResolveFileHandle(
-    path: string | string[],
-    create = false,
-  ): Promise<FileSystemFileHandle> {
-    if (!this.rootHandle) throw new Error("Root handle missing");
-    const pathParts = Array.isArray(path) ? path : path.split("/");
-    const fileName = pathParts[pathParts.length - 1];
-    const dirParts = pathParts.slice(0, -1);
-
-    let currentDir = this.rootHandle;
-    for (const part of dirParts) {
-      currentDir = await currentDir.getDirectoryHandle(part, { create });
-    }
-    return await currentDir.getFileHandle(fileName, { create });
   }
 
   async createEntity(
