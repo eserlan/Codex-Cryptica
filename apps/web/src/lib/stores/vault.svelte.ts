@@ -390,13 +390,11 @@ class VaultStore {
       await searchService.clear();
 
       this.entities = {};
+
       const newInboundMap: Record<
         string,
         { sourceId: string; connection: Connection }[]
       > = {};
-
-      // SEQUENTIAL PROCESSING FOR DEBUGGING/ROBUSTNESS
-      debugStore.log(`Starting sequential processing of ${files.length} files`);
 
       for (const fileEntry of files) {
         try {
@@ -404,38 +402,24 @@ class VaultStore {
             ? fileEntry.path.join("/")
             : fileEntry.path;
 
-          debugStore.log(`[Seq] Processing file: ${filePath}`);
-
-          // DEBUG: Check permission on file handle specifically
-          try {
-            const perm = await fileEntry.handle.queryPermission({
-              mode: "readwrite",
-            });
-            debugStore.log(`[Seq] File handle permission: ${perm}`);
-          } catch (permErr) {
-            debugStore.warn(
-              `[Seq] Failed to query file permission: ${permErr}`,
-            );
-          }
-
           let file: File;
-          try {
-            debugStore.log(`[Seq] Calling getFile for ${filePath}`);
-            file = await fileEntry.handle.getFile();
-          } catch (getFileErr: any) {
-            debugStore.warn(
-              `[Seq] Direct getFile failed: ${getFileErr?.name}. Attempting re-resolution from root.`,
-            );
 
-            // Fallback: Re-resolve handle from root
+          try {
+            file = await fileEntry.handle.getFile();
+          } catch {
+            // Fallback: Re-resolve handle from root if it becomes stale (common browser quirk)
+
             let currentDir = this.rootHandle;
+
             if (!currentDir)
               throw new Error("Root handle missing during re-resolution");
 
             const parts = Array.isArray(fileEntry.path)
               ? fileEntry.path
               : filePath.split("/");
+
             const fileName = parts[parts.length - 1];
+
             const dirParts = parts.slice(0, -1);
 
             for (const part of dirParts) {
@@ -443,55 +427,37 @@ class VaultStore {
             }
 
             const freshHandle = await currentDir.getFileHandle(fileName);
-            file = await freshHandle.getFile();
-            debugStore.log(`[Seq] Re-resolution successful for ${filePath}`);
 
-            // Update the handle in the entry for potential future use (though we are done with it here)
+            file = await freshHandle.getFile();
+
             fileEntry.handle = freshHandle;
           }
 
-          debugStore.log(
-            `[Seq] Got file object for ${filePath}, size: ${file.size}`,
-          );
-
           const lastModified = file.lastModified;
 
-          debugStore.log(`[Seq] Checking cache for ${filePath}`);
           const cached = await cacheService.get(filePath);
-          debugStore.log(`[Seq] Cache check done: ${cached ? "HIT" : "MISS"}`);
 
           let entity: LocalEntity;
 
           // Hit Path: Use cached entity if valid
+
           if (cached && cached.lastModified === lastModified) {
-            debugStore.log(`[Seq] Using cache for ${filePath}`);
             entity = {
               ...cached.entity,
+
               _fsHandle: fileEntry.handle,
+
               _path: fileEntry.path,
             };
           } else {
-            debugStore.log(
-              `[Seq] Cache miss/stale for ${filePath}, reading text...`,
-            );
             // Miss Path: Parse and cache
+
             const text = await file.text();
 
-            if (typeof text !== "string") {
-              debugStore.error(
-                `[Seq] File text is not a string for ${filePath}`,
-                { type: typeof text },
-              );
-            } else {
-              debugStore.log(
-                `[Seq] Read text for ${filePath}, length: ${text.length}`,
-              );
-            }
-
             const { metadata, content, wikiLinks } = parseMarkdown(text || "");
-            debugStore.log(`[Seq] Parsed markdown for ${filePath}`);
 
             let id = metadata.id;
+
             if (!id) {
               id = sanitizeId(
                 fileEntry.path[fileEntry.path.length - 1].replace(".md", ""),
@@ -502,24 +468,40 @@ class VaultStore {
 
             entity = {
               id: id!,
+
               type: metadata.type || "character",
+
               title: metadata.title || id!,
+
               tags: metadata.tags || [],
+
               labels: metadata.labels || [],
+
               connections,
+
               content: content,
+
               lore: metadata.lore,
+
               image: metadata.image,
+
               thumbnail: metadata.thumbnail,
+
               date: metadata.date,
+
               start_date: metadata.start_date,
+
               end_date: metadata.end_date,
+
               metadata: metadata.metadata,
+
               _fsHandle: fileEntry.handle,
+
               _path: fileEntry.path,
             };
 
-            // Update Cache (best-effort; failures should not abort processing)
+            // Update Cache (best-effort)
+
             try {
               await cacheService.set(filePath, lastModified, entity);
             } catch (error) {
@@ -531,72 +513,74 @@ class VaultStore {
             }
           }
 
-          if (!entity.id || entity.id === "undefined") {
-            debugStore.error("[Seq] Invalid ID for entity", { path: filePath });
-            continue;
-          }
+          if (!entity.id || entity.id === "undefined") continue;
 
           this.entities[entity.id] = entity;
-          debugStore.log(`[Seq] Successfully added entity: ${entity.id}`);
 
           // Build inbound map
+
           for (const conn of entity.connections) {
             if (!newInboundMap[conn.target]) newInboundMap[conn.target] = [];
+
             newInboundMap[conn.target].push({
               sourceId: entity.id,
+
               connection: conn,
             });
           }
 
           const metadataValues = Object.values(entity.metadata || {});
+
           const metadataKeywords = metadataValues.flatMap((value) => {
             if (typeof value === "string") return [value];
+
             if (Array.isArray(value)) {
               return value.filter(
                 (item): item is string => typeof item === "string",
               );
             }
+
             return [];
           });
 
           const keywords = [
             ...(entity.tags || []),
+
             entity.lore || "",
+
             ...metadataKeywords,
           ].join(" ");
 
-          const searchEntry = {
-            id: entity.id,
-            title: entity.title,
-            content: entity.content,
-            type: entity.type,
-            path: filePath,
-            keywords,
-            updatedAt: Date.now(),
-          };
+          // Index for search
 
-          // Index the entity
-          await searchService.index(searchEntry);
+          await searchService.index({
+            id: entity.id,
+
+            title: entity.title,
+
+            content: entity.content,
+
+            type: entity.type,
+
+            path: filePath,
+
+            keywords,
+
+            updatedAt: Date.now(),
+          });
         } catch (err: any) {
           const filePath = Array.isArray(fileEntry.path)
             ? fileEntry.path.join("/")
             : fileEntry.path;
 
-          const errorDetails = {
-            name: err?.name,
-            message: err?.message,
-            code: err?.code,
-            stack: err?.stack,
-          };
-
-          console.error(`[Seq] Failed to process file ${filePath}:`, err);
-          debugStore.error(`[Seq] Failed to process ${filePath}`, errorDetails);
+          console.error(`Failed to process file ${filePath}:`, err);
         }
       }
 
       this.inboundConnections = newInboundMap;
+
       debugStore.log(
-        `Sequential processing complete. Total entities: ${Object.keys(this.entities).length}`,
+        `Vault loaded: ${Object.keys(this.entities).length} entities`,
       );
     } finally {
       this.status = "idle";
