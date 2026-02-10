@@ -131,6 +131,26 @@ class VaultStore {
     // Initialization happens via init() called from the root component
   }
 
+  async testWrite() {
+    if (!this.rootHandle) return;
+    debugStore.log("[Vault] Performing write test...");
+    try {
+      const testFile = await this.rootHandle.getFileHandle(".write-test", {
+        create: true,
+      });
+      const writable = await testFile.createWritable();
+      await writable.write("test");
+      await writable.close();
+      await this.rootHandle.removeEntry(".write-test");
+      debugStore.log("[Vault] Write test successful. Vault is read-write.");
+    } catch (err: any) {
+      debugStore.error(
+        `[Vault] Write test failed. Vault is READ-ONLY! ${err.name}: ${err.message}`,
+        err,
+      );
+    }
+  }
+
   async init() {
     this.isInitialized = false;
     const isSecureContext =
@@ -379,6 +399,7 @@ class VaultStore {
       }
       await persistHandle(handle);
       await this.ensureImagesDirectory();
+      await this.testWrite();
       await this.loadFiles();
       this.status = "idle";
     } catch (err: any) {

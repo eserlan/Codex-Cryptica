@@ -58,6 +58,9 @@ export async function writeWithRetry(
       throw new Error("Root handle missing during retry");
     }
 
+    // Short delay to allow browser to settle (helps with race conditions/locks)
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
     try {
       const freshHandle = await reResolveFileHandle(
         rootHandle,
