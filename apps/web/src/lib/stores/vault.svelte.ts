@@ -367,6 +367,7 @@ class VaultStore {
         for await (const _entry of handle.values()) {
           break;
         }
+        await this.testWrite();
         return "granted";
       } catch (err) {
         console.warn(
