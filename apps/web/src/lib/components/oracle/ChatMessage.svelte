@@ -105,12 +105,21 @@
       message.archiveTargetId ||
       message.entityId ||
       (activeEntity ? activeEntity.id : null);
-    if (!finalTargetId || !message.content) return;
+    
+    console.log("[Oracle] Smart Apply triggered for:", finalTargetId);
+
+    if (!finalTargetId || !message.content) {
+        console.warn("[Oracle] Smart Apply aborted: Missing target or content");
+        return;
+    }
 
     // We want to update both fields if they exist in the parsed result
     const updates: Partial<{ content: string; lore: string }> = {};
     const entity = vault.entities[finalTargetId];
-    if (!entity) return;
+    if (!entity) {
+        console.error("[Oracle] Smart Apply failed: Entity not found in vault", finalTargetId);
+        return;
+    }
 
     if (parsed.chronicle) {
       updates.content = parsed.chronicle;
@@ -119,6 +128,8 @@
     if (parsed.lore) {
       updates.lore = parsed.lore;
     }
+    
+    console.log("[Oracle] Smart Apply updates:", updates);
 
     if (Object.keys(updates).length > 0) {
       // 1. Capture State
@@ -141,6 +152,8 @@
           isSaved = false; 
         }, message.id);
       }
+    } else {
+        console.warn("[Oracle] Smart Apply aborted: No updates extracted");
     }
   };
 
