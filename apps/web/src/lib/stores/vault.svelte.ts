@@ -22,7 +22,7 @@ import { workerBridge } from "../cloud-bridge/worker-bridge";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
 import { generateThumbnail } from "../utils/image-processing";
-import { writeWithRetry, reResolveFileHandle } from "../utils/vault-io";
+import { writeWithRetry } from "../utils/vault-io";
 
 export type LocalEntity = Entity & {
   _fsHandle?: FileSystemHandle;
@@ -881,81 +881,21 @@ class VaultStore {
       return;
     }
     const handle = (entity as LocalEntity)._fsHandle as FileSystemFileHandle;
-
-    // Robust Write: Retry with handle re-resolution if write fails
-    const performWrite = async (h: FileSystemFileHandle, context: string) => {
-      try {
-        const content = stringifyEntity(entity);
-        await writeFile(h, content);
-        debugStore.log(
-          `[Vault] Write successful (${context}) for ${entity.title}`,
-        );
-      } catch (err: any) {
-        debugStore.error(
-          `[Vault] Write failed (${context}) for ${entity.title}: ${err.name} - ${err.message}`,
-          err,
-        );
-        throw err;
-      }
-    };
+    const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
+    const pathStr = Array.isArray(path) ? path.join("/") : path;
 
     try {
-      if (handle) {
-        await performWrite(handle, "initial");
-      } else {
-        debugStore.warn(`[Vault] Initial handle missing for ${entity.title}`);
-        throw new Error("Handle missing initially");
-      }
-    } catch (writeErr: any) {
-      debugStore.warn(
-        `[Vault] Initial write failed for ${entity.title}. Attempting re-resolution... ${writeErr.name} - ${writeErr.message}`,
-        writeErr,
+      const content = stringifyEntity(entity);
+      const freshHandle = await writeWithRetry(
+        this.rootHandle,
+        handle,
+        content,
+        pathStr,
       );
 
-      // Re-resolve handle from root
-      if (!this.rootHandle) {
-        debugStore.error("[Vault] Root handle missing during save retry");
-        throw new Error("Root handle missing during save retry");
-      }
+      // Update handle in case it was re-resolved
+      (entity as LocalEntity)._fsHandle = freshHandle;
 
-      // DEBUG: Check root permission
-      try {
-        const rootPerm = await this.rootHandle.queryPermission({
-          mode: "readwrite",
-        });
-        debugStore.log(`[Vault] Root handle permission status: ${rootPerm}`);
-      } catch (permCheckErr) {
-        debugStore.warn(
-          "[Vault] Failed to check root permission:",
-          permCheckErr,
-        );
-      }
-
-      const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
-      debugStore.log(
-        `[Vault] Re-resolving path: ${Array.isArray(path) ? path.join("/") : path}`,
-      );
-
-      try {
-        const freshHandle = await reResolveFileHandle(this.rootHandle, path);
-        debugStore.log("[Vault] Re-resolution successful. Retrying write...");
-
-        // Update entity handle for future use
-        (entity as LocalEntity)._fsHandle = freshHandle;
-
-        // Retry write
-        await performWrite(freshHandle, "retry");
-        debugStore.log(`[Vault] Write retry successful for ${entity.title}`);
-      } catch (retryErr: any) {
-        debugStore.error(
-          `[Vault] Retry failed for ${entity.title}: ${retryErr.name} - ${retryErr.message}`,
-          retryErr,
-        );
-        throw retryErr; // Propagate error so UI shows it
-      }
-    }
-
-    if (handle || (entity as LocalEntity)._fsHandle) {
       const metadataValues = Object.values(entity.metadata || {});
       const metadataKeywords = metadataValues.flatMap((value) => {
         if (typeof value === "string") return [value];
@@ -988,6 +928,10 @@ class VaultStore {
         keywords,
         updatedAt: Date.now(),
       });
+    } catch (err: any) {
+      this.status = "error";
+      // Error logging is already handled inside writeWithRetry
+      throw err;
     }
   }
 
