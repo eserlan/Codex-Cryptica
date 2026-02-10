@@ -904,7 +904,16 @@ class VaultStore {
   ingestRemoteUpdate(entity: Entity) {
     // Just update in memory, do not schedule save
     console.log("[Vault] Ingesting remote update for:", entity.title);
-    this.entities[entity.id] = entity;
+    const existing = this.entities[entity.id];
+    if (existing) {
+      this.entities[entity.id] = {
+        ...entity,
+        _fsHandle: existing._fsHandle,
+        _path: existing._path,
+      };
+    } else {
+      this.entities[entity.id] = entity;
+    }
     // We might need to handle connections if they changed
     // But for now simple entity replacement is enough for data consistency
   }
@@ -954,8 +963,7 @@ class VaultStore {
       if (!this.rootHandle)
         throw new Error("Root handle missing during save retry");
 
-      const path = (entity as LocalEntity)._path;
-      if (!path) throw new Error("Entity path missing during save retry");
+      const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
 
       const pathParts = Array.isArray(path) ? path : path.split("/");
       const fileName = pathParts[pathParts.length - 1];
