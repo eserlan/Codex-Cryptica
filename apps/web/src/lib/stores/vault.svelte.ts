@@ -329,11 +329,11 @@ class VaultStore {
 
   async requestPermission() {
     if (!this.rootHandle) return;
-    console.log("[Vault] Requesting readwrite permission...");
+    debugStore.log("[Vault] Requesting readwrite permission...");
     const state = await this.rootHandle.requestPermission({
       mode: "readwrite",
     });
-    console.log(`[Vault] Permission request result: ${state}`);
+    debugStore.log(`[Vault] Permission request result: ${state}`);
     if (state === "granted") {
       this.isAuthorized = true;
       await this.loadFiles();
@@ -750,38 +750,19 @@ class VaultStore {
         create: true,
       });
 
-      // DEBUG: Permission check
-      try {
-        const perm = await fileHandle.queryPermission({ mode: "readwrite" });
-        console.log(`[Vault] Image file permission: ${perm}`);
-        if (perm !== "granted") {
-          console.warn(
-            `[Vault] Image file permission is ${perm}. Requesting...`,
-          );
-          const req = await fileHandle.requestPermission({ mode: "readwrite" });
-          console.log(`[Vault] Image file permission request result: ${req}`);
-        }
-      } catch (e) {
-        console.warn("[Vault] Failed to query image file permission", e);
-      }
-
-      try {
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-      } catch (writeErr) {
-        console.error("[Vault] Failed to write image file", writeErr);
-        throw writeErr;
-      }
+      await this.writeWithRetry(fileHandle, blob, `images/${filename}`);
 
       // Generate and save thumbnail
       const thumbBlob = await this.generateThumbnail(blob, 512);
       const thumbHandle = await imagesDir.getFileHandle(thumbFilename, {
         create: true,
       });
-      const thumbWritable = await thumbHandle.createWritable();
-      await thumbWritable.write(thumbBlob);
-      await thumbWritable.close();
+
+      await this.writeWithRetry(
+        thumbHandle,
+        thumbBlob,
+        `images/${thumbFilename}`,
+      );
 
       const relativePath = `./images/${filename}`;
       const thumbPath = `./images/${thumbFilename}`;
@@ -796,6 +777,46 @@ class VaultStore {
     } catch (err) {
       console.error("Failed to save image to vault", err);
       throw err;
+    }
+  }
+
+  private async writeWithRetry(
+    handle: FileSystemFileHandle,
+    content: Blob | string,
+    path: string,
+  ): Promise<FileSystemFileHandle> {
+    try {
+      if (typeof content === "string") {
+        await writeFile(handle, content);
+      } else {
+        const writable = await handle.createWritable();
+        await writable.write(content);
+        await writable.close();
+      }
+      return handle;
+    } catch (err) {
+      debugStore.warn(
+        `[Vault] Write failed for ${path}. Attempting re-resolution...`,
+        err,
+      );
+      try {
+        const freshHandle = await this.reResolveFileHandle(
+          path.split("/"),
+          true,
+        );
+        if (typeof content === "string") {
+          await writeFile(freshHandle, content);
+        } else {
+          const writable = await freshHandle.createWritable();
+          await writable.write(content);
+          await writable.close();
+        }
+        debugStore.log(`[Vault] Write retry successful for ${path}`);
+        return freshHandle;
+      } catch (retryErr) {
+        debugStore.error(`[Vault] Retry failed for ${path}:`, retryErr);
+        throw retryErr;
+      }
     }
   }
 
@@ -969,11 +990,11 @@ class VaultStore {
       try {
         const content = stringifyEntity(entity);
         await writeFile(h, content);
-        console.log(
+        debugStore.log(
           `[Vault] Write successful (${context}) for ${entity.title}`,
         );
       } catch (err: any) {
-        console.error(
+        debugStore.error(
           `[Vault] Write failed (${context}) for ${entity.title}:`,
           err,
         );
@@ -985,18 +1006,18 @@ class VaultStore {
       if (handle) {
         await performWrite(handle, "initial");
       } else {
-        console.warn(`[Vault] Initial handle missing for ${entity.title}`);
+        debugStore.warn(`[Vault] Initial handle missing for ${entity.title}`);
         throw new Error("Handle missing initially");
       }
     } catch (writeErr: any) {
-      console.warn(
+      debugStore.warn(
         `[Vault] Initial write failed for ${entity.title}. Attempting re-resolution...`,
         writeErr,
       );
 
       // Re-resolve handle from root
       if (!this.rootHandle) {
-        console.error("[Vault] Root handle missing during save retry");
+        debugStore.error("[Vault] Root handle missing during save retry");
         throw new Error("Root handle missing during save retry");
       }
 
@@ -1005,36 +1026,31 @@ class VaultStore {
         const rootPerm = await this.rootHandle.queryPermission({
           mode: "readwrite",
         });
-        console.log(`[Vault] Root handle permission status: ${rootPerm}`);
+        debugStore.log(`[Vault] Root handle permission status: ${rootPerm}`);
       } catch (permCheckErr) {
-        console.warn("[Vault] Failed to check root permission:", permCheckErr);
+        debugStore.warn(
+          "[Vault] Failed to check root permission:",
+          permCheckErr,
+        );
       }
 
       const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
-
-      const pathParts = Array.isArray(path) ? path : path.split("/");
-      const fileName = pathParts[pathParts.length - 1];
-      const dirParts = pathParts.slice(0, -1);
-
-      console.log(`[Vault] Re-resolving path: ${pathParts.join("/")}`);
+      debugStore.log(
+        `[Vault] Re-resolving path: ${Array.isArray(path) ? path.join("/") : path}`,
+      );
 
       try {
-        let currentDir = this.rootHandle;
-        for (const part of dirParts) {
-          currentDir = await currentDir.getDirectoryHandle(part);
-        }
-
-        const freshHandle = await currentDir.getFileHandle(fileName);
-        console.log("[Vault] Re-resolution successful. Retrying write...");
+        const freshHandle = await this.reResolveFileHandle(path);
+        debugStore.log("[Vault] Re-resolution successful. Retrying write...");
 
         // Update entity handle for future use
         (entity as LocalEntity)._fsHandle = freshHandle;
 
         // Retry write
         await performWrite(freshHandle, "retry");
-        console.log(`[Vault] Write retry successful for ${entity.title}`);
+        debugStore.log(`[Vault] Write retry successful for ${entity.title}`);
       } catch (retryErr) {
-        console.error(`[Vault] Retry failed for ${entity.title}:`, retryErr);
+        debugStore.error(`[Vault] Retry failed for ${entity.title}:`, retryErr);
         throw retryErr; // Propagate error so UI shows it
       }
     }
@@ -1097,36 +1113,40 @@ class VaultStore {
       create: true,
     });
 
-    // DEBUG: Permission check
-    try {
-      const perm = await fileHandle.queryPermission({ mode: "readwrite" });
-      console.log(`[Vault] Imported asset permission: ${perm}`);
-    } catch (e) {
-      console.warn("[Vault] Failed to query imported asset permission", e);
-    }
-
-    try {
-      const writable = await fileHandle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-    } catch (writeErr) {
-      console.error("[Vault] Failed to write imported asset", writeErr);
-      throw writeErr;
-    }
+    await this.writeWithRetry(fileHandle, blob, `images/${filename}`);
 
     // Generate and save thumbnail
     const thumbBlob = await this.generateThumbnail(blob, 512);
     const thumbHandle = await imagesDir.getFileHandle(thumbFilename, {
       create: true,
     });
-    const thumbWritable = await thumbHandle.createWritable();
-    await thumbWritable.write(thumbBlob);
-    await thumbWritable.close();
+
+    await this.writeWithRetry(
+      thumbHandle,
+      thumbBlob,
+      `images/${thumbFilename}`,
+    );
 
     return {
       image: `./images/${filename}`,
       thumbnail: `./images/${thumbFilename}`,
     };
+  }
+
+  private async reResolveFileHandle(
+    path: string | string[],
+    create = false,
+  ): Promise<FileSystemFileHandle> {
+    if (!this.rootHandle) throw new Error("Root handle missing");
+    const pathParts = Array.isArray(path) ? path : path.split("/");
+    const fileName = pathParts[pathParts.length - 1];
+    const dirParts = pathParts.slice(0, -1);
+
+    let currentDir = this.rootHandle;
+    for (const part of dirParts) {
+      currentDir = await currentDir.getDirectoryHandle(part, { create });
+    }
+    return await currentDir.getFileHandle(fileName, { create });
   }
 
   async createEntity(
