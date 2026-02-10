@@ -749,9 +749,30 @@ class VaultStore {
       const fileHandle = await imagesDir.getFileHandle(filename, {
         create: true,
       });
-      const writable = await fileHandle.createWritable();
-      await writable.write(blob);
-      await writable.close();
+
+      // DEBUG: Permission check
+      try {
+        const perm = await fileHandle.queryPermission({ mode: "readwrite" });
+        console.log(`[Vault] Image file permission: ${perm}`);
+        if (perm !== "granted") {
+          console.warn(
+            `[Vault] Image file permission is ${perm}. Requesting...`,
+          );
+          const req = await fileHandle.requestPermission({ mode: "readwrite" });
+          console.log(`[Vault] Image file permission request result: ${req}`);
+        }
+      } catch (e) {
+        console.warn("[Vault] Failed to query image file permission", e);
+      }
+
+      try {
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } catch (writeErr) {
+        console.error("[Vault] Failed to write image file", writeErr);
+        throw writeErr;
+      }
 
       // Generate and save thumbnail
       const thumbBlob = await this.generateThumbnail(blob, 512);
@@ -1075,9 +1096,23 @@ class VaultStore {
     const fileHandle = await imagesDir.getFileHandle(filename, {
       create: true,
     });
-    const writable = await fileHandle.createWritable();
-    await writable.write(blob);
-    await writable.close();
+
+    // DEBUG: Permission check
+    try {
+      const perm = await fileHandle.queryPermission({ mode: "readwrite" });
+      console.log(`[Vault] Imported asset permission: ${perm}`);
+    } catch (e) {
+      console.warn("[Vault] Failed to query imported asset permission", e);
+    }
+
+    try {
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    } catch (writeErr) {
+      console.error("[Vault] Failed to write imported asset", writeErr);
+      throw writeErr;
+    }
 
     // Generate and save thumbnail
     const thumbBlob = await this.generateThumbnail(blob, 512);
