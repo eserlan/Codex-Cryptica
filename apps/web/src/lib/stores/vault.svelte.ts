@@ -1,5 +1,10 @@
 import { parseMarkdown, stringifyEntity, sanitizeId } from "../utils/markdown";
-import { walkDirectory, readFile, writeFile } from "../utils/fs";
+import {
+  walkDirectory,
+  readFile,
+  writeFile,
+  type FileEntry,
+} from "../utils/fs";
 import {
   getPersistedHandle,
   persistHandle,
