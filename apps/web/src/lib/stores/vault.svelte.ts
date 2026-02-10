@@ -188,6 +188,7 @@ class VaultStore {
           this.rootHandle = persisted;
           this.isAuthorized = true;
           await this.ensureImagesDirectory();
+          await this.testWrite();
           await this.loadFiles();
         } else if (state === "prompt") {
           this.rootHandle = persisted;
@@ -379,10 +380,10 @@ class VaultStore {
         this.isAuthorized = true;
         await this.ensureImagesDirectory();
         await this.testWrite();
-        
+
         // If testWrite failed (it sets status internally if it wants, but let's check here)
         // We'll let loadFiles proceed but it might fail later.
-        
+
         await this.loadFiles();
         this.status = "idle";
       } else {
@@ -391,9 +392,9 @@ class VaultStore {
         this.errorMessage = "Read-write permission was denied by the browser.";
       }
     } catch (err: any) {
-        debugStore.error("[Vault] Permission request failed", err);
-        this.status = "error";
-        this.errorMessage = `Permission error: ${err.message}. Try picking the folder again.`;
+      debugStore.error("[Vault] Permission request failed", err);
+      this.status = "error";
+      this.errorMessage = `Permission error: ${err.message}. Try picking the folder again.`;
     }
   }
 
