@@ -135,13 +135,24 @@ class VaultStore {
     if (!this.rootHandle) return;
     debugStore.log("[Vault] Performing write test...");
     try {
-      const testFile = await this.rootHandle.getFileHandle(".write-test", {
-        create: true,
-      });
+      const testFile = await this.rootHandle.getFileHandle(
+        "vault-write-test.txt",
+        {
+          create: true,
+        },
+      );
+      debugStore.log(
+        `[Vault] Test file handle obtained: ${testFile.name} [Writable: ${!!testFile.createWritable}]`,
+      );
+
       const writable = await testFile.createWritable();
-      await writable.write("test");
+      debugStore.log("[Vault] Writable stream created.");
+
+      await writable.write("diagnostic-test");
       await writable.close();
-      await this.rootHandle.removeEntry(".write-test");
+      debugStore.log("[Vault] Write completed and stream closed.");
+
+      await this.rootHandle.removeEntry("vault-write-test.txt");
       debugStore.log("[Vault] Write test successful. Vault is read-write.");
     } catch (err: any) {
       debugStore.error(
