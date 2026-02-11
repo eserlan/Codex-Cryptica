@@ -29,6 +29,7 @@ class VaultStore {
 	isInitialized = $state(false);
 	errorMessage = $state<string | null>(null);
 	selectedEntityId = $state<string | null>(null);
+	migrationRequired = $state(false);
 
 	// Fog of War Settings
 	defaultVisibility = $state<'visible' | 'hidden'>('visible');
@@ -130,7 +131,9 @@ class VaultStore {
 
 			const migrationNeeded = await this.checkForMigration();
 			if (migrationNeeded) {
-				await this.runMigration();
+				this.migrationRequired = true;
+				// Attempt auto-migration if permissions might already be granted
+				await this.runMigration(true);
 			} else {
 				await this.loadFiles();
 			}
@@ -160,14 +163,38 @@ class VaultStore {
 		return false;
 	}
 
-	private async runMigration() {
+	async runMigration(silent = false) {
 		if (!this.#legacyFSAHandle || !this.#opfsRoot) return;
 
+		// If silent is true, we only proceed if permissions are already granted.
+		// If false, we are triggered by a user gesture and can prompt.
+		if (silent) {
+			const permission = await this.#legacyFSAHandle.queryPermission({ mode: 'read' });
+			if (permission !== 'granted') {
+				debugStore.log('Auto-migration paused: Waiting for user permission gesture.');
+				return;
+			}
+		}
+
 		this.status = 'loading';
+		this.migrationRequired = true;
 		debugStore.log('Starting migration from File System Access API to OPFS...');
 
 		try {
+			// Ensure we have permissions (will prompt if not silent)
+			// On some browsers/mobile, even querying might throw if the handle is stale
+			try {
+				const permission = await this.#legacyFSAHandle.queryPermission({ mode: 'read' });
+				if (permission !== 'granted' && !silent) {
+					await this.#legacyFSAHandle.requestPermission({ mode: 'read' });
+				}
+			} catch (permErr) {
+				debugStore.warn('Failed to query/request permission, attempting re-resolve.', permErr);
+			}
+
 			const files = await walkDirectory(this.#legacyFSAHandle);
+			debugStore.log(`Migration: Found ${files.length} files to copy.`);
+
 			for (const fileEntry of files) {
 				const content = await fileEntry.handle.getFile().then((f) => f.text());
 				await writeOpfsFile(fileEntry.path, content, this.#opfsRoot);
@@ -191,13 +218,19 @@ class VaultStore {
 			await db.put('settings', true, 'opfsMigrationComplete');
 			await clearPersistedHandle(); // Clear the old handle
 
+			this.migrationRequired = false;
 			debugStore.log('Migration complete. Loading files from OPFS.');
 			await this.loadFiles();
-		} catch (err) {
+		} catch (err: any) {
 			console.error('Migration failed', err);
-			debugStore.error('Migration to OPFS failed!', err);
-			this.status = 'error';
-			this.errorMessage = 'Failed to migrate your old vault. Please sync manually.';
+			const errorName = err?.name || 'Error';
+			const errorMessage = err?.message || 'Unknown error';
+			debugStore.error(`Migration to OPFS failed! [${errorName}] ${errorMessage}`);
+			
+			if (!silent) {
+				this.status = 'error';
+				this.errorMessage = `Failed to migrate your old vault: ${errorMessage}`;
+			}
 		}
 	}
 
