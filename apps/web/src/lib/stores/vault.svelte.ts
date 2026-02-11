@@ -196,8 +196,15 @@ class VaultStore {
 			debugStore.log(`Migration: Found ${files.length} files to copy.`);
 
 			for (const fileEntry of files) {
-				const content = await fileEntry.handle.getFile().then((f) => f.text());
-				await writeOpfsFile(fileEntry.path, content, this.#opfsRoot);
+				try {
+					debugStore.log(`Migrating file: /${fileEntry.path.join('/')}`);
+					const content = await fileEntry.handle.getFile().then((f) => f.text());
+					await writeOpfsFile(fileEntry.path, content, this.#opfsRoot);
+				} catch (fileErr: any) {
+					debugStore.error(`Failed to migrate file /${fileEntry.path.join('/')}: ${fileErr.name} - ${fileErr.message}`);
+					// Re-throw to let the main catch block handle it
+					throw fileErr;
+				}
 			}
 
 			// Migrate images directory
