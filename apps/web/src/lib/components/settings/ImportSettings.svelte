@@ -122,7 +122,8 @@
             return "note";
         };
 
-        const batchData: Parameters<typeof vault.batchCreateEntities>[0] = [];
+        // Import logic temporarily disabled
+        const batchData: any[] = [];
         
         for (const entity of toSave) {
             if (signal.aborted) break;
@@ -144,9 +145,7 @@
                 height = height || asset.height;
 
                 try {
-                    const saved = await vault.saveImportedAsset(asset.blob, entityId, asset.originalName);
-                    imagePath = saved.image;
-                    thumbnailPath = saved.thumbnail;
+                    imagePath = await vault.saveImageToVault(asset.blob, entityId, asset.originalName);
                 } catch (err) {
                     console.error("Failed to save imported asset:", err);
                 }

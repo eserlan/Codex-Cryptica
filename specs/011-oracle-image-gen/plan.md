@@ -3,6 +3,7 @@
 **Branch**: `011-oracle-image-gen` | **Date**: 2026-01-28 | **Spec**: [spec.md](./spec.md)
 
 ## Summary
+
 Extend the Lore Oracle to support on-demand image generation via Nano Banana (Gemini 2.5 Flash Image). Generated visuals will be rendered in the chat stream, persisted locally to the user's vault (OPFS), and can be linked to entities via buttons or intuitive drag-and-drop interactions.
 
 ## Technical Context

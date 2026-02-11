@@ -33,5 +33,5 @@ export const WikiLink = Extension.create<WikiLinkOptions>({
   },
 });
 
-export * from './parsing/oracle';
-export * from './validation/temporal';
+export * from "./parsing/oracle";
+export * from "./validation/temporal";

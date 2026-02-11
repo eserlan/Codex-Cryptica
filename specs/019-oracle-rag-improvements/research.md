@@ -7,9 +7,10 @@
 
 **Decision**: Use a "standalone query" generation prompt with Gemini 2.5 Flash Lite before performing the vector/fuzzy search.
 
-**Rationale**: Conversational RAG fails when users use pronouns ("Tell me more about *him*"). By re-writing the user's latest query into a standalone search term that incorporates previous context, we significantly increase the hit rate of `FlexSearch`.
+**Rationale**: Conversational RAG fails when users use pronouns ("Tell me more about _him_"). By re-writing the user's latest query into a standalone search term that incorporates previous context, we significantly increase the hit rate of `FlexSearch`.
 
 **Alternatives considered**:
+
 - **Direct History Search**: Sending the last 3 messages to the search engine. Rejected because fuzzy search handles conversational filler poorly.
 - **Semantic Subject Extraction**: Trying to extract just keywords. Rejected as it loses the nuance of the user's specific intent.
 
@@ -22,6 +23,7 @@
 **Rationale**: The `VaultStore` already maintains an incremental adjacency map. Accessing `vault.entities[id].content` (referred to as the "Chronicle") is an O(1) operation once the ID is found. Restricting to "Chronicle" (summary) prevents token bloat.
 
 **Alternatives considered**:
+
 - **Full Lore Enrichment**: Including all 1-hop lore. Rejected due to token limits (10k chars).
 - **Recursive Enrichment**: Depth 2 or higher. Rejected as it introduces too much noise and risks retrieval drift.
 

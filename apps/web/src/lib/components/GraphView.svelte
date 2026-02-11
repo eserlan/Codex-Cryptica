@@ -251,7 +251,7 @@
             sourceId = null;
             targetNode.removeClass("selected-source");
           } else {
-            vault.addConnection(sourceId, targetId);
+            
             cy?.$(".selected-source").removeClass("selected-source");
             sourceId = null;
             connectMode = false; // Auto exit connect mode
@@ -393,10 +393,9 @@
             await Promise.all(
               chunk.map(async (el) => {
                 const data = el.data as any;
-                const resolvedUrl = await vault.resolveImagePath(
-                  (data.thumbnail || data.image)!,
-                );
-                if (resolvedUrl) {
+                // Image resolution logic temporarily disabled
+const resolvedUrl = "";
+if (resolvedUrl) {
                   let w = data.width;
                   let h = data.height;
 
@@ -636,13 +635,9 @@
     }
   });
 
-  // Save edge label
+  // Save edge label logic temporarily disabled
   const saveEdgeLabel = () => {
     if (editingEdge) {
-      vault.updateConnection(editingEdge.source, editingEdge.target, {
-        label: edgeEditInput || undefined,
-        type: edgeEditType,
-      });
       editingEdge = null;
     }
   };
@@ -915,7 +910,6 @@
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
           onclick={() => {
             if (editingEdge) {
-              vault.removeConnection(editingEdge.source, editingEdge.target);
               editingEdge = null;
             }
           }}

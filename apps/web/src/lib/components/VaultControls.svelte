@@ -4,7 +4,6 @@
     import { categories } from "$lib/stores/categories.svelte";
     import { cloudConfig } from "$stores/cloud-config";
     import ShareModal from "$lib/components/ShareModal.svelte";
-    import { loadDemoVault } from "$lib/utils/demo";
 
     let { orientation = "horizontal" } = $props<{
         orientation?: "horizontal" | "vertical";
@@ -24,11 +23,8 @@
     
     const btnPrimary = $derived(`${btnBase} bg-theme-primary hover:bg-theme-secondary text-theme-bg`);
     const btnSecondary = $derived(`${btnBase} border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary`);
-    const btnOutline = $derived(`${btnBase} border border-theme-primary text-theme-primary hover:bg-theme-primary/10`);
-    const btnDanger = $derived(`${btnBase} border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700`);
     const btnAccent = $derived(`${btnBase} border border-theme-border text-theme-accent hover:text-theme-accent/80 hover:border-theme-accent`);
     const btnGhost = $derived(`${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`);
-    const btnBlue = $derived(`${btnBase} bg-blue-600 hover:bg-blue-500 text-white`);
 
     const layoutClasses = $derived(isVertical 
         ? "py-3 text-sm justify-center gap-2" 
@@ -112,7 +108,7 @@
                 >
                     {vault.errorMessage || "ERROR"}
                 </span>
-            {:else if vault.allEntities.length > 0 || vault.rootHandle}
+            {:else if vault.allEntities.length > 0}
                 <span class="text-theme-secondary" data-testid="entity-count"
                     >{vault.allEntities.length} ENTITIES</span>
             {:else}
@@ -120,56 +116,7 @@
             {/if}
         </div>
 
-        {#if vault.isGuest}
-            <button
-                class="{btnBlue} {layoutClasses}"
-                onclick={async () => {
-                    const url = new URL(
-                        window.location.origin + window.location.pathname,
-                    );
-                    window.history.replaceState({}, "", url.toString());
-                    await vault.exitGuest();
-                }}
-            >
-                <span class="icon-[lucide--log-out] w-3.5 h-3.5"></span>
-                EXIT GUEST MODE
-            </button>
-        {:else if !vault.rootHandle}
-            <div class="flex {isVertical ? 'flex-col' : 'flex-col xs:flex-row'} gap-2">
-                <button
-                    class="{btnPrimary} {layoutClasses}"
-                    onclick={() => vault.openDirectory()}
-                    data-testid="open-vault-button"
-                >
-                    {#if isVertical}<span class="icon-[lucide--folder-open] w-4 h-4"></span>{/if}
-                    OPEN <span class={isVertical ? "inline" : "hidden xs:inline"}>VAULT</span>
-                </button>
-                <button
-                    class="{btnOutline} {layoutClasses}"
-                    onclick={() => loadDemoVault(vault.initGuest.bind(vault))}
-                    data-testid="load-demo-button"
-                >
-                     {#if isVertical}<span class="icon-[lucide--play-circle] w-4 h-4"></span>{/if}
-                    LOAD DEMO
-                </button>
-            </div>
-            {#if typeof window !== "undefined" && !window.showDirectoryPicker && !isVertical}
-                <div
-                    class="absolute top-12 left-0 right-0 p-2 bg-amber-900/40 border border-amber-500/50 text-amber-200 text-[9px] font-mono rounded backdrop-blur z-50 animate-in fade-in slide-in-from-top-2"
-                >
-                    <span class="font-bold">SYSTEM ALERT:</span> Local File System
-                    Access is blocked in this browser. Use Chrome/Edge/Opera or try
-                    the Demo mode.
-                </div>
-            {/if}
-        {:else if !vault.isAuthorized}
-            <button
-                class="{btnAccent} {layoutClasses}"
-                onclick={() => vault.requestPermission()}
-            >
-                GRANT ACCESS
-            </button>
-        {:else}
+        {#if vault.isInitialized}
             <!-- Main Actions -->
             <button
                 class="{isVertical ? `${btnGhost} py-3 text-sm justify-center` : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}"
@@ -185,13 +132,13 @@
             </button>
             
             <div class="flex {isVertical ? 'flex-col gap-3' : 'gap-1.5 md:gap-3 items-center'}">
-                 <button
-                    class="{btnGhost} {iconOnlyClasses}"
-                    onclick={() => vault.refresh()}
-                    title="Reload from disk"
+                <button
+                    class="{btnAccent} {layoutClasses}"
+                    onclick={() => vault.syncToLocal()}
+                    title="Export all OPFS data to a local folder for safety."
                 >
-                    <span class="icon-[lucide--refresh-cw] w-3.5 h-3.5"></span>
-                    {#if isVertical}<span class="font-bold tracking-widest">REFRESH</span>{/if}
+                    <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
+                    {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
                 </button>
                 <button
                     class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
@@ -209,31 +156,6 @@
                 >
                     <span class={ui.sharedMode ? "icon-[lucide--eye] w-3.5 h-3.5" : "icon-[lucide--eye-off] w-3.5 h-3.5"}></span>
                      {#if isVertical}<span class="font-bold tracking-widest">{ui.sharedMode ? 'EXIT PLAYER VIEW' : 'PLAYER VIEW'}</span>{/if}
-                </button>
-                <button
-                    class="{btnDanger} {iconOnlyClasses} {isVertical ? 'flex' : 'hidden xs:flex'}"
-                    onclick={() => {
-                        if (
-                            vault.pendingSaveCount > 0 &&
-                            !confirm(
-                                "Vault is currently saving changes. Close anyway?",
-                            )
-                        )
-                            return;
-                        vault.close();
-                    }}
-                    title="Close current vault and clear all campaign data."
-                >
-                    <span class="icon-[lucide--folder-x] w-3.5 h-3.5"></span>
-                    {#if isVertical}<span class="font-bold tracking-widest">CLOSE VAULT</span>{:else}CLOSE{/if}
-                </button>
-                <button
-                    class="{btnAccent} {iconOnlyClasses} {isVertical ? 'flex' : 'hidden xs:flex'}"
-                    onclick={() => vault.rebuildIndex()}
-                    title="Clear cache and re-index all vault files. Use if search seems out of sync."
-                >
-                    <span class="icon-[lucide--database-zap] w-3 h-3"></span>
-                     {#if isVertical}<span class="font-bold tracking-widest">REBUILD INDEX</span>{:else}REBUILD{/if}
                 </button>
             </div>
         {/if}

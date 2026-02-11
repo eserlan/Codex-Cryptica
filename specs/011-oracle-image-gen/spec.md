@@ -89,6 +89,7 @@ As a power user, I want to drag a generated image from the chat window directly 
 ## Clarifications
 
 ### Session 2026-01-28
+
 - **Q**: which image generation provider/API should be used? → **A**: Nano Banana (Gemini 2.5 Flash Image).
 - **Q**: should images be stored locally in the vault or just linked via URL? → **A**: Local Persistence (OPFS).
 

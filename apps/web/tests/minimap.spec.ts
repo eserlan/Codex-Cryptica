@@ -8,13 +8,13 @@ test.describe("Minimap Navigation", () => {
       const applyMocks = () => {
         if ((window as any).vault) {
           (window as any).vault.isAuthorized = true;
-          (window as any).vault.status = 'idle';
-          (window as any).vault.rootHandle = { kind: 'directory' };
+          (window as any).vault.status = "idle";
+          (window as any).vault.rootHandle = { kind: "directory" };
           // Inject some dummy entities to ensure graph renders
           (window as any).vault.entities = {
             "node-1": { id: "node-1", title: "Node 1", connections: [] },
             "node-2": { id: "node-2", title: "Node 2", connections: [] },
-            "node-3": { id: "node-3", title: "Node 3", connections: [] }
+            "node-3": { id: "node-3", title: "Node 3", connections: [] },
           };
         }
       };
@@ -24,38 +24,40 @@ test.describe("Minimap Navigation", () => {
 
     await page.goto("/");
     // Wait for app load
-    await expect(page.getByRole("heading", { name: "Codex Cryptica" })).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByRole("heading", { name: "Codex Cryptica" }),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("should render the minimap container and canvas", async ({ page }) => {
-    const minimap = page.locator('.minimap-container');
+    const minimap = page.locator(".minimap-container");
     await expect(minimap).toBeVisible();
 
     // Expand to see canvas
     await minimap.click();
     await expect(minimap).not.toHaveClass(/collapsed/);
 
-    const canvas = minimap.locator('canvas');
+    const canvas = minimap.locator("canvas");
     await expect(canvas).toBeVisible();
 
     // Check if viewport rect is present (it should be since graph has nodes)
-    const viewportRect = minimap.locator('.viewport-rect');
+    const viewportRect = minimap.locator(".viewport-rect");
     await expect(viewportRect).toBeVisible();
   });
 
   test("should pan graph when dragging viewport rect", async ({ page }) => {
-    const minimap = page.locator('.minimap-container');
+    const minimap = page.locator(".minimap-container");
     // Expand
     await minimap.click();
     await expect(minimap).not.toHaveClass(/collapsed/);
 
     // 1. Get initial position of viewport rect
-    const viewportRect = minimap.locator('.viewport-rect');
+    const viewportRect = minimap.locator(".viewport-rect");
     await expect(viewportRect).toBeVisible();
-    
+
     // Ensure graph has settled
     await page.waitForTimeout(500);
-    
+
     const boxBefore = await viewportRect.boundingBox();
     if (!boxBefore) throw new Error("Viewport rect not found");
 
@@ -72,19 +74,26 @@ test.describe("Minimap Navigation", () => {
     // Note: The graph pan is async, but our test runs fast. We might need to wait for update.
     // The component uses RAF, so it should be within a frame or two.
 
-    await expect.poll(async () => {
-      const boxAfter = await viewportRect.boundingBox();
-      return boxAfter?.x;
-    }, { timeout: 2000 }).not.toBeCloseTo(boxBefore.x, 0); // Expect movement
+    await expect
+      .poll(
+        async () => {
+          const boxAfter = await viewportRect.boundingBox();
+          return boxAfter?.x;
+        },
+        { timeout: 2000 },
+      )
+      .not.toBeCloseTo(boxBefore.x, 0); // Expect movement
   });
 
-  test("should center graph when clicking minimap background", async ({ page }) => {
-    const minimap = page.locator('.minimap-container');
+  test("should center graph when clicking minimap background", async ({
+    page,
+  }) => {
+    const minimap = page.locator(".minimap-container");
     // Expand
     await minimap.click();
 
     // 1. Get initial viewport rect position
-    const viewportRect = page.locator('.viewport-rect');
+    const viewportRect = page.locator(".viewport-rect");
     const boxBefore = await viewportRect.boundingBox();
     if (!boxBefore) throw new Error("Viewport rect not found");
 
@@ -96,14 +105,19 @@ test.describe("Minimap Navigation", () => {
     await minimap.click({ position: { x: 10, y: 10 } });
 
     // 3. Verify viewport rect moved to match new center
-    await expect.poll(async () => {
-      const boxAfter = await viewportRect.boundingBox();
-      return boxAfter?.x;
-    }, { timeout: 2000 }).not.toBeCloseTo(boxBefore.x, 0);
+    await expect
+      .poll(
+        async () => {
+          const boxAfter = await viewportRect.boundingBox();
+          return boxAfter?.x;
+        },
+        { timeout: 2000 },
+      )
+      .not.toBeCloseTo(boxBefore.x, 0);
   });
 
   test("should toggle minimap visibility", async ({ page }) => {
-    const minimap = page.locator('.minimap-container');
+    const minimap = page.locator(".minimap-container");
 
     // Initially collapsed
     await expect(minimap).toHaveClass(/collapsed/);
@@ -114,7 +128,7 @@ test.describe("Minimap Navigation", () => {
 
     // Hover to show toggle button
     await minimap.hover();
-    const toggleBtn = minimap.locator('.toggle-btn');
+    const toggleBtn = minimap.locator(".toggle-btn");
     await expect(toggleBtn).toBeVisible();
 
     // Click toggle to collapse

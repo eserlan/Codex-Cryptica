@@ -2,7 +2,7 @@
   import { vault } from "$lib/stores/vault.svelte";
 
   const handleVisibilityChange = async (e: Event) => {
-    const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
+    const value = (e.target as HTMLSelectElement).value as 'visible' | 'hidden';
     await vault.setDefaultVisibility(value);
   };
 </script>

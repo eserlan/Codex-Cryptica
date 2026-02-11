@@ -10,6 +10,7 @@
 The current system relies on `003-gdrive-mirroring` for cloud synchronization, storing campaign data in a `CodexArcana` folder on the user's Google Drive. To implement "Public Sharing", we will leverage Google Drive's sharing capabilities.
 
 **Architecture**:
+
 - **Owner**: Uses the authenticated GDrive Cloud Bridge to set permission `role='reader', type='anyone'` on the specific campaign folder/file.
 - **Link**: A deep link into the Codex Arcana PWA (e.g., `/?shareId=<FILE_ID>`).
 - **Recipient**:
@@ -18,7 +19,8 @@ The current system relies on `003-gdrive-mirroring` for cloud synchronization, s
   - Data is fetched from Google Drive using the File ID.
 
 **Unknowns**:
-- **[NEEDS CLARIFICATION] GDrive Public Access via API**: Can the GDrive API fetch file content/metadata for a public file *without* an OAuth token? Does it require an API Key? (CORS implications for pure client-side fetch).
+
+- **[NEEDS CLARIFICATION] GDrive Public Access via API**: Can the GDrive API fetch file content/metadata for a public file _without_ an OAuth token? Does it require an API Key? (CORS implications for pure client-side fetch).
 - **[NEEDS CLARIFICATION] Guest Mode State**: How to isolate "Guest" data from any existing "Local" data if the user already uses Codex Arcana on that device? (Likely need a separate IndexedDB namespace or ephemeral in-memory store).
 - **[NEEDS CLARIFICATION] Rate Limits**: Will using a public link hit GDrive download quotas?
 

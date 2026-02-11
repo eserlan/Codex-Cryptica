@@ -23,10 +23,10 @@ Implement a "Central Node Orbit" layout mode in the graph engine using Cytoscape
 
 _GATE: Passed._
 
--   **Local-First Sovereignty**: Compliant. No server data required.
--   **Relational-First Navigation**: Compliant. Enhances graph navigation.
--   **The Sub-100ms Performance Mandate**: Compliant. `concentric` layout is $O(N)$/$O(N \log N)$ and very fast.
--   **Atomic Worldbuilding**: Compliant. Logic resides in `graph-engine`, UI in `web`.
+- **Local-First Sovereignty**: Compliant. No server data required.
+- **Relational-First Navigation**: Compliant. Enhances graph navigation.
+- **The Sub-100ms Performance Mandate**: Compliant. `concentric` layout is $O(N)$/$O(N \log N)$ and very fast.
+- **Atomic Worldbuilding**: Compliant. Logic resides in `graph-engine`, UI in `web`.
 
 ## Project Structure
 
@@ -76,5 +76,5 @@ apps/
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-| :--- | :--- | :--- |
-| N/A | | |
+| :-------- | :--------- | :----------------------------------- |
+| N/A       |            |                                      |

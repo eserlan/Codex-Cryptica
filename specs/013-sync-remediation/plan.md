@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/013-sync-remediation/spec.md`
 
 ## Summary
+
 Upgrade the Google Drive sync engine to be "Binary-Safe" and "Path-Aware". This refactor replaces string-based file transfers with `Blob` processing to support images and implements a metadata-driven path mapping system to preserve the vault's subdirectory structure (e.g., `/images`) in the cloud.
 
 ## Technical Context

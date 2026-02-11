@@ -40,7 +40,12 @@ export class SyncEngine {
     remoteFilesRaw: RemoteFileMeta[],
     metadataList: SyncMetadata[],
   ): SyncPlan {
-    const plan: SyncPlan = { uploads: [], downloads: [], deletes: [], metadataUpdates: [] };
+    const plan: SyncPlan = {
+      uploads: [],
+      downloads: [],
+      deletes: [],
+      metadataUpdates: [],
+    };
     const localMap = new Map(localFiles.map((f) => [f.path, f]));
     const metadataMap = new Map(metadataList.map((m) => [m.filePath, m]));
 
@@ -51,10 +56,13 @@ export class SyncEngine {
     for (const remote of remoteFilesRaw) {
       const vaultPath = remote.appProperties?.vault_path;
       if (!vaultPath) {
-        console.warn("[SyncEngine] Remote file missing vault_path; skipping deduplication", {
-          id: remote.id,
-          name: remote.name,
-        });
+        console.warn(
+          "[SyncEngine] Remote file missing vault_path; skipping deduplication",
+          {
+            id: remote.id,
+            name: remote.name,
+          },
+        );
         // For files without a vault_path, fall back to name for sync path,
         // but do not deduplicate them based solely on name.
         remoteFiles.set(remote.name, remote);
@@ -66,8 +74,14 @@ export class SyncEngine {
 
     for (const [path, group] of remoteGroups) {
       if (group.length > 1) {
-        console.log(`[SyncEngine] Found ${group.length} duplicates for ${path}. Cleaning up...`);
-        group.sort((a, b) => new Date(b.modifiedTime).getTime() - new Date(a.modifiedTime).getTime());
+        console.log(
+          `[SyncEngine] Found ${group.length} duplicates for ${path}. Cleaning up...`,
+        );
+        group.sort(
+          (a, b) =>
+            new Date(b.modifiedTime).getTime() -
+            new Date(a.modifiedTime).getTime(),
+        );
         const [newest, ...duplicates] = group;
         remoteFiles.set(path, newest);
         for (const dup of duplicates) {
@@ -84,14 +98,18 @@ export class SyncEngine {
       const meta = metadataMap.get(local.path);
 
       if (!remote) {
-        console.log(`[SyncEngine] ${local.path} has no remote match. Adding to UPLOADS.`);
+        console.log(
+          `[SyncEngine] ${local.path} has no remote match. Adding to UPLOADS.`,
+        );
         plan.uploads.push(local);
       } else {
         let localChanged = true;
         let remoteChanged = true;
 
         if (meta) {
-          if (Math.abs(local.lastModified - meta.localModified) < SYNC_SKEW_MS) {
+          if (
+            Math.abs(local.lastModified - meta.localModified) < SYNC_SKEW_MS
+          ) {
             localChanged = false;
           }
           const remoteTime = new Date(remote.modifiedTime).getTime();
@@ -106,15 +124,22 @@ export class SyncEngine {
           continue;
         }
 
-        console.log(`[SyncEngine] ${local.path} changed. Local: ${localChanged}, Remote: ${remoteChanged}`);
+        console.log(
+          `[SyncEngine] ${local.path} changed. Local: ${localChanged}, Remote: ${remoteChanged}`,
+        );
 
         if (localChanged && !remoteChanged) {
           plan.uploads.push({ ...local, remoteId: remote.id });
         } else if (!localChanged && remoteChanged) {
           plan.downloads.push(remote);
         } else {
-          const decision = resolveConflict(local.lastModified, remote.modifiedTime);
-          console.log(`[SyncEngine] Conflict for ${local.path}. Decision: ${decision}`);
+          const decision = resolveConflict(
+            local.lastModified,
+            remote.modifiedTime,
+          );
+          console.log(
+            `[SyncEngine] Conflict for ${local.path}. Decision: ${decision}`,
+          );
           if (decision === "UPLOAD") {
             plan.uploads.push({ ...local, remoteId: remote.id });
           } else if (decision === "DOWNLOAD") {
@@ -140,7 +165,8 @@ export class SyncEngine {
         if (meta) {
           const remoteTime = new Date(remote.modifiedTime).getTime();
           const lastSyncedRemoteTime = new Date(meta.remoteModified).getTime();
-          const remoteUpdatedSinceSync = Math.abs(remoteTime - lastSyncedRemoteTime) > SYNC_SKEW_MS;
+          const remoteUpdatedSinceSync =
+            Math.abs(remoteTime - lastSyncedRemoteTime) > SYNC_SKEW_MS;
 
           if (remoteUpdatedSinceSync) {
             plan.downloads.push(remote);
@@ -207,19 +233,26 @@ export class SyncEngine {
       }
 
       if (metadataDeletes.length > 0) {
-        await Promise.all(metadataDeletes.map((p) => this.metadataStore.delete(p)));
+        await Promise.all(
+          metadataDeletes.map((p) => this.metadataStore.delete(p)),
+        );
         metadataDeletes.length = 0;
       }
 
       if (errors.length > 0) {
         const firstError = errors[0]?.error;
-        const msg = firstError instanceof Error ? firstError.message : String(firstError);
-        throw new Error(`Sync failed for ${errors.length} items. First error: ${msg}`);
+        const msg =
+          firstError instanceof Error ? firstError.message : String(firstError);
+        throw new Error(
+          `Sync failed for ${errors.length} items. First error: ${msg}`,
+        );
       }
     };
 
     if (plan.deletes.length > 0) {
-      console.log(`[SyncEngine] Deleting ${plan.deletes.length} remote files...`);
+      console.log(
+        `[SyncEngine] Deleting ${plan.deletes.length} remote files...`,
+      );
       await runParallel(plan.deletes, "DELETING", async (del) => {
         await this.cloudAdapter.deleteFile(del.id);
         metadataDeletes.push(del.path);
@@ -230,7 +263,11 @@ export class SyncEngine {
       console.log(`[SyncEngine] Uploading ${plan.uploads.length} files...`);
       await runParallel(plan.uploads, "UPLOADING", async (file) => {
         const content = await this.fsAdapter.readFile(file.path);
-        const meta = await this.cloudAdapter.uploadFile(file.path, content, file.remoteId);
+        const meta = await this.cloudAdapter.uploadFile(
+          file.path,
+          content,
+          file.remoteId,
+        );
         metadataUpdates.push({
           filePath: file.path,
           remoteId: meta.id,
@@ -259,7 +296,9 @@ export class SyncEngine {
 
     // 4. Record Metadata-only Updates (Matches)
     if (plan.metadataUpdates.length > 0) {
-      console.log(`[SyncEngine] Recording metadata for ${plan.metadataUpdates.length} matched files...`);
+      console.log(
+        `[SyncEngine] Recording metadata for ${plan.metadataUpdates.length} matched files...`,
+      );
       for (const meta of plan.metadataUpdates) {
         metadataUpdates.push(meta);
       }
@@ -271,7 +310,11 @@ export class SyncEngine {
     }
   }
 
-  private async updateMetadata(path: string, remote: RemoteFileMeta, localTime: number) {
+  private async updateMetadata(
+    path: string,
+    remote: RemoteFileMeta,
+    localTime: number,
+  ) {
     await this.metadataStore.put({
       filePath: path,
       remoteId: remote.id,

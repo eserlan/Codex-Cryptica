@@ -12,20 +12,24 @@ test.describe("Vault E2E", () => {
       // Intercept IndexedDB to handle DataCloneError with mock handles
       // instead of completely mocking the entire API which is brittle.
       const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (...args: [unknown, IDBValidKey?]) {
+      IDBObjectStore.prototype.put = function (
+        ...args: [unknown, IDBValidKey?]
+      ) {
         try {
           return originalPut.apply(this, args);
         } catch (e: any) {
-          if (e.name === 'DataCloneError') {
-            console.log("MOCK: Caught DataCloneError in IndexedDB, returning fake success");
+          if (e.name === "DataCloneError") {
+            console.log(
+              "MOCK: Caught DataCloneError in IndexedDB, returning fake success",
+            );
             const req: any = {
               onsuccess: null,
               onerror: null,
               result: args[1],
-              readyState: 'done',
+              readyState: "done",
               addEventListener: function (type: string, listener: any) {
-                if (type === 'success') this.onsuccess = listener;
-              }
+                if (type === "success") this.onsuccess = listener;
+              },
             };
             setTimeout(() => {
               if (req.onsuccess) req.onsuccess({ target: req });
@@ -146,7 +150,9 @@ type: npc
     // Type query to populate results
     await page.getByPlaceholder("Search (Cmd+K)...").fill("Alice");
 
-    await expect(page.getByTestId("search-result").filter({ hasText: "Alice" })).toBeVisible();
+    await expect(
+      page.getByTestId("search-result").filter({ hasText: "Alice" }),
+    ).toBeVisible();
 
     // Close search
     await page.keyboard.press("Escape");

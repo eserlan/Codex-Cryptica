@@ -14,12 +14,13 @@ Implement a command pattern with an undo stack within the `OracleStore`. Refacto
 **Storage**: In-memory stack for undo history (transient).
 **Testing**: Playwright for E2E (user interactions), Unit tests for Store logic.
 **Architecture**:
+
 - `OracleStore` adds `undoStack` and `undo()` method.
 - `ChatMessage` logic for `applySmart`, `copyTo*`, `createAsNode` updated to capture "before" state and push reversers to `oracle`.
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 - **Local-First**: Undo history is local, in-memory.
 - **No external deps**: Uses standard command pattern.

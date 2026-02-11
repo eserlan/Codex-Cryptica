@@ -61,6 +61,6 @@ apps/web/src/
 
 ## Complexity Tracking
 
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| None                       |                    |                                      |
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+| --------- | ---------- | ------------------------------------ |
+| None      |            |                                      |

@@ -26,7 +26,10 @@ export const EraSchema = z.object({
   name: z.string().min(1),
   start_year: z.number(),
   end_year: z.number().optional(),
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color")
+    .optional(),
 });
 
 export type Era = z.infer<typeof EraSchema>;
@@ -61,9 +64,24 @@ export type Entity = z.infer<typeof EntitySchema>;
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  { id: "character", label: "Character", color: "#60a5fa", icon: "lucide:user" },
-  { id: "creature", label: "Creature", color: "#f87171", icon: "lucide:paw-print" },
-  { id: "location", label: "Location", color: "#4ade80", icon: "lucide:map-pin" },
+  {
+    id: "character",
+    label: "Character",
+    color: "#60a5fa",
+    icon: "lucide:user",
+  },
+  {
+    id: "creature",
+    label: "Creature",
+    color: "#f87171",
+    icon: "lucide:paw-print",
+  },
+  {
+    id: "location",
+    label: "Location",
+    color: "#4ade80",
+    icon: "lucide:map-pin",
+  },
   { id: "item", label: "Item", color: "#facc15", icon: "lucide:package" },
   { id: "event", label: "Event", color: "#e879f9", icon: "lucide:calendar" },
   { id: "faction", label: "Faction", color: "#fb923c", icon: "lucide:users" },

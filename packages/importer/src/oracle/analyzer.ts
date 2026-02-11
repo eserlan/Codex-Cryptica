@@ -1,6 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { AnalysisResult, DiscoveredEntity, OracleAnalyzerEngine, AnalysisOptions } from '../types';
-import { EXTRACTION_PROMPT } from './prompt-factory';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import type {
+  AnalysisResult,
+  DiscoveredEntity,
+  OracleAnalyzerEngine,
+  AnalysisOptions,
+} from "../types";
+import { EXTRACTION_PROMPT } from "./prompt-factory";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
@@ -12,7 +17,10 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     this.genAI = new GoogleGenerativeAI(apiKey);
   }
 
-  async analyze(text: string, options?: AnalysisOptions): Promise<AnalysisResult> {
+  async analyze(
+    text: string,
+    options?: AnalysisOptions,
+  ): Promise<AnalysisResult> {
     if (text.length <= CHUNK_SIZE) {
       return this.processChunk(text);
     }
@@ -24,7 +32,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       let end = start + CHUNK_SIZE;
       if (end < text.length) {
         // Try to find a paragraph break to split cleanly
-        const lastNewline = text.lastIndexOf('\n', end);
+        const lastNewline = text.lastIndexOf("\n", end);
         if (lastNewline > start + CHUNK_SIZE / 2) {
           end = lastNewline;
         }
@@ -41,7 +49,9 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     for (const chunk of chunks) {
       processed++;
-      console.log(`[OracleAnalyzer] Processing chunk ${processed}/${chunks.length}...`);
+      console.log(
+        `[OracleAnalyzer] Processing chunk ${processed}/${chunks.length}...`,
+      );
       if (options?.onProgress) {
         options.onProgress(processed, chunks.length);
       }
@@ -57,8 +67,8 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     // Attempt models in order of strength/preference, aligned with app configuration
     const models = [
-      'gemini-3-flash-preview', // Advanced Tier
-      'gemini-flash-lite-latest',  // Lite Tier
+      "gemini-3-flash-preview", // Advanced Tier
+      "gemini-flash-lite-latest", // Lite Tier
     ];
 
     for (const modelName of models) {
@@ -71,48 +81,55 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
         // Robust JSON extraction
         const jsonMatch = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
         if (!jsonMatch) {
-          throw new Error('No valid JSON array found in Oracle response');
+          throw new Error("No valid JSON array found in Oracle response");
         }
 
         const parsed = JSON.parse(jsonMatch[0]);
 
         const entities: DiscoveredEntity[] = parsed.map((item: any) => {
-          const rawImage = item.imageUrl || item.imageURL || item.image || item.frontmatter?.image;
-          const isValidUrl = typeof rawImage === 'string' && (rawImage.startsWith('http://') || rawImage.startsWith('https://'));
+          const rawImage =
+            item.imageUrl ||
+            item.imageURL ||
+            item.image ||
+            item.frontmatter?.image;
+          const isValidUrl =
+            typeof rawImage === "string" &&
+            (rawImage.startsWith("http://") || rawImage.startsWith("https://"));
 
           return {
             id: crypto.randomUUID(),
             suggestedTitle: item.title,
             suggestedType: item.type,
-            chronicle: item.chronicle || item.content || '',
-            lore: item.lore || '',
-            content: item.content || `${item.chronicle || ''}\n\n${item.lore || ''}`.trim(),
+            chronicle: item.chronicle || item.content || "",
+            lore: item.lore || "",
+            content:
+              item.content ||
+              `${item.chronicle || ""}\n\n${item.lore || ""}`.trim(),
             frontmatter: {
               ...item.frontmatter,
               // Prioritize explicit image URL from AI or input, only if absolute
-              image: isValidUrl ? rawImage : undefined
+              image: isValidUrl ? rawImage : undefined,
             },
             confidence: 1, // Placeholder
             suggestedFilename: this.slugify(item.title),
             detectedLinks: (item.detectedLinks || []).map((link: any) => {
-              if (typeof link === 'string') return { target: link };
+              if (typeof link === "string") return { target: link };
               return {
-                target: link.target || link.title || '',
-                label: link.label || link.type || ''
+                target: link.target || link.title || "",
+                label: link.label || link.type || "",
               };
-            })
+            }),
           };
         });
 
         return { entities };
-
       } catch (error) {
         console.warn(`Oracle Analysis failed with model ${modelName}:`, error);
         // Continue to next model
       }
     }
 
-    console.error('Oracle Analysis failed with all available models.');
+    console.error("Oracle Analysis failed with all available models.");
     return { entities: [] };
   }
 
@@ -127,22 +144,32 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
         const existing = map.get(key)!;
         // Merge Content
         if (entity.chronicle) {
-          existing.chronicle = [existing.chronicle, entity.chronicle].filter(Boolean).join('\n\n');
+          existing.chronicle = [existing.chronicle, entity.chronicle]
+            .filter(Boolean)
+            .join("\n\n");
         }
         if (entity.lore) {
-          existing.lore = [existing.lore, entity.lore].filter(Boolean).join('\n\n');
+          existing.lore = [existing.lore, entity.lore]
+            .filter(Boolean)
+            .join("\n\n");
         }
         if (entity.content) {
-          existing.content = [existing.content, entity.content].filter(Boolean).join('\n\n');
+          existing.content = [existing.content, entity.content]
+            .filter(Boolean)
+            .join("\n\n");
         }
         // Merge Image
-        existing.frontmatter.image = existing.frontmatter.image || entity.frontmatter.image;
+        existing.frontmatter.image =
+          existing.frontmatter.image || entity.frontmatter.image;
         // Merge Links
         const existingLinks = new Map<string, any>();
-        [...existing.detectedLinks, ...entity.detectedLinks].forEach(link => {
-          const l = typeof link === 'string' ? { target: link } : link;
+        [...existing.detectedLinks, ...entity.detectedLinks].forEach((link) => {
+          const l = typeof link === "string" ? { target: link } : link;
           const targetKey = l.target.toLowerCase().trim();
-          if (!existingLinks.has(targetKey) || (!existingLinks.get(targetKey).label && l.label)) {
+          if (
+            !existingLinks.has(targetKey) ||
+            (!existingLinks.get(targetKey).label && l.label)
+          ) {
             existingLinks.set(targetKey, l);
           }
         });
@@ -154,13 +181,15 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
   }
 
   private slugify(text: string): string {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, '-')     // Replace spaces with -
-      .replace(/[^\w-]+/g, '') // Remove all non-word chars
-      .replace(/--+/g, '-')   // Replace multiple - with single -
-      + '.md';
+    return (
+      text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-") // Replace spaces with -
+        .replace(/[^\w-]+/g, "") // Remove all non-word chars
+        .replace(/--+/g, "-") + // Replace multiple - with single -
+      ".md"
+    );
   }
 }

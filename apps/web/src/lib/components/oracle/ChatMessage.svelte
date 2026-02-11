@@ -136,8 +136,6 @@
       const beforeState = captureState(finalTargetId);
 
       vault.selectedEntityId = finalTargetId;
-      // If both updated, default to status, otherwise lore if only lore updated
-      vault.activeDetailTab = parsed.chronicle ? "status" : "lore";
       vault.updateEntity(finalTargetId, updates);
       isSaved = true;
 
@@ -184,7 +182,6 @@
       });
 
       vault.selectedEntityId = id;
-      vault.activeDetailTab = "status";
       isSaved = true;
 
       // Update message to point to new entity so further applies work
@@ -218,7 +215,6 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.activeDetailTab = "status";
     vault.updateEntity(finalTargetId, { content: newContent });
     isSaved = true;
 
@@ -243,7 +239,6 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.activeDetailTab = "lore";
     vault.updateEntity(finalTargetId, { lore: newContent });
     isSaved = true;
 

@@ -4,7 +4,10 @@ const API_BASE = "https://www.googleapis.com/drive/v3/files";
 const UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3/files";
 
 export class WorkerDriveAdapter implements ICloudAdapter {
-  constructor(private accessToken: string, private folderId?: string) { }
+  constructor(
+    private accessToken: string,
+    private folderId?: string,
+  ) {}
 
   async connect(): Promise<string> {
     return "connected-via-token";
@@ -18,9 +21,13 @@ export class WorkerDriveAdapter implements ICloudAdapter {
   private folderPromises = new Map<string, Promise<string>>();
 
   async listFiles(): Promise<RemoteFileMeta[]> {
-    if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
+    if (!this.folderId)
+      throw new Error("WorkerDriveAdapter: folderId is required");
 
-    const fetchFromFolder = async (parentId: string, _prefix = ""): Promise<RemoteFileMeta[]> => {
+    const fetchFromFolder = async (
+      parentId: string,
+      _prefix = "",
+    ): Promise<RemoteFileMeta[]> => {
       const url = new URL(API_BASE);
       url.searchParams.append("pageSize", "1000");
       url.searchParams.append(
@@ -40,7 +47,7 @@ export class WorkerDriveAdapter implements ICloudAdapter {
       const data = await res.json();
 
       const remoteFiles: RemoteFileMeta[] = [];
-      const folders: { id: string, name: string }[] = [];
+      const folders: { id: string; name: string }[] = [];
 
       if (data.files) {
         for (const file of data.files) {
@@ -79,7 +86,8 @@ export class WorkerDriveAdapter implements ICloudAdapter {
   }
 
   private async ensureFolder(name: string): Promise<string> {
-    if (!this.folderId) throw new Error("WorkerDriveAdapter: folderId is required");
+    if (!this.folderId)
+      throw new Error("WorkerDriveAdapter: folderId is required");
     if (this.folderCache.has(name)) return this.folderCache.get(name)!;
 
     // Check if there's already a creation in progress
@@ -125,7 +133,9 @@ export class WorkerDriveAdapter implements ICloudAdapter {
         });
         if (!createRes.ok) {
           const text = await createRes.text();
-          throw new Error(`GDrive Folder Creation Error: ${createRes.statusText} - ${text}`);
+          throw new Error(
+            `GDrive Folder Creation Error: ${createRes.statusText} - ${text}`,
+          );
         }
         const createData = await createRes.json();
         this.folderCache.set(name, createData.id);
@@ -207,17 +217,23 @@ export class WorkerDriveAdapter implements ICloudAdapter {
 
     if (!initRes.ok) {
       const errorText = await initRes.text();
-      throw new Error(`GDrive Upload Session Error: ${initRes.statusText} - ${errorText}`);
+      throw new Error(
+        `GDrive Upload Session Error: ${initRes.statusText} - ${errorText}`,
+      );
     }
 
     const sessionUri = initRes.headers.get("Location");
     if (!sessionUri) {
-      throw new Error("GDrive Upload Error: No Location header returned for resumable session");
+      throw new Error(
+        "GDrive Upload Error: No Location header returned for resumable session",
+      );
     }
 
     // Step 2: Upload the actual content to the session URI
     const contentBlob =
-      content instanceof Blob ? content : new Blob([content], { type: mimeType });
+      content instanceof Blob
+        ? content
+        : new Blob([content], { type: mimeType });
 
     const uploadRes = await fetch(sessionUri, {
       method: "PUT",
@@ -226,7 +242,9 @@ export class WorkerDriveAdapter implements ICloudAdapter {
 
     if (!uploadRes.ok) {
       const errorText = await uploadRes.text();
-      throw new Error(`GDrive Content Upload Error: ${uploadRes.statusText} - ${errorText}`);
+      throw new Error(
+        `GDrive Content Upload Error: ${uploadRes.statusText} - ${errorText}`,
+      );
     }
 
     const file = await uploadRes.json();

@@ -16,7 +16,7 @@ export interface SearchResult {
   path: string;
   excerpt?: string;
   score: number;
-  matchType: 'title' | 'content';
+  matchType: "title" | "content";
   highlights?: Array<{ start: number; length: number }>;
 }
 

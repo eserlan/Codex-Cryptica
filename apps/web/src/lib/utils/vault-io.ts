@@ -1,101 +1,50 @@
-import { debugStore } from "$lib/stores/debug.svelte";
-import { writeFile } from "./fs";
+import { debugStore } from '$lib/stores/debug.svelte';
+import { writeFile } from './fs';
 
+/**
+ * Re-resolves a file handle from a root directory handle and a path.
+ * This is useful when a handle becomes stale.
+ */
 export async function reResolveFileHandle(
-  rootHandle: FileSystemDirectoryHandle,
-  path: string | string[],
-  create = false,
+	rootHandle: FileSystemDirectoryHandle,
+	path: string | string[],
+	create = false
 ): Promise<FileSystemFileHandle> {
-  if (!rootHandle) throw new Error("Root handle missing");
-  const pathParts = Array.isArray(path) ? path : path.split("/");
-  const fileName = pathParts[pathParts.length - 1];
-  const dirParts = pathParts.slice(0, -1);
+	if (!rootHandle) throw new Error('Root handle missing');
+	const pathParts = Array.isArray(path) ? path : path.split('/');
+	const fileName = pathParts[pathParts.length - 1];
+	const dirParts = pathParts.slice(0, -1);
 
-  let currentDir = rootHandle;
-  for (const part of dirParts) {
-    currentDir = await currentDir.getDirectoryHandle(part, { create });
-  }
-  return await currentDir.getFileHandle(fileName, { create });
+	let currentDir = rootHandle;
+	for (const part of dirParts) {
+		currentDir = await currentDir.getDirectoryHandle(part, { create });
+	}
+	return await currentDir.getFileHandle(fileName, { create });
 }
 
+/**
+ * A simplified write utility for the File System Access API, used for syncing to local folders.
+ * The primary write logic for the app is now in opfs.ts.
+ */
 export async function writeWithRetry(
-  rootHandle: FileSystemDirectoryHandle | undefined,
-  handle: FileSystemFileHandle,
-  content: Blob | string,
-  path: string,
+	rootHandle: FileSystemDirectoryHandle,
+	handle: FileSystemFileHandle,
+	content: Blob | string,
+	path: string
 ): Promise<FileSystemFileHandle> {
-  // DEBUG: Check current handle permission
-  try {
-    const currentPerm = await handle.queryPermission({ mode: "readwrite" });
-    if (currentPerm !== "granted") {
-      debugStore.warn(
-        `[VaultIO] Write starting on handle with ${currentPerm} permission for ${path}`,
-      );
-    }
-  } catch (e) {
-    debugStore.warn(
-      `[VaultIO] Failed to query handle permission for ${path}`,
-      e,
-    );
-  }
-
-  try {
-    if (typeof content === "string") {
-      await writeFile(handle, content);
-    } else {
-      const writable = await handle.createWritable();
-      await writable.write(content);
-      await writable.close();
-    }
-    return handle;
-  } catch (err: any) {
-    debugStore.warn(
-      `[VaultIO] Write failed for ${path}. Attempting re-resolution... ${err.name} - ${err.message}`,
-      err,
-    );
-
-    if (!rootHandle) {
-      throw new Error("Root handle missing during retry");
-    }
-
-    // Short delay to allow browser to settle (helps with race conditions/locks)
-    await new Promise((resolve) => setTimeout(resolve, 150));
-
-    try {
-      const freshHandle = await reResolveFileHandle(
-        rootHandle,
-        path.split("/"),
-        true,
-      );
-
-      // AGGRESSIVE: Attempt to request permission on the ROOT handle again
-      // and then the fresh handle.
-      debugStore.log(`[VaultIO] Refreshing root permissions before retry...`);
-      const rootState = await rootHandle.requestPermission({
-        mode: "readwrite",
-      });
-      debugStore.log(`[VaultIO] Root permission refresh: ${rootState}`);
-
-      const retryPerm = await freshHandle.requestPermission({
-        mode: "readwrite",
-      });
-      debugStore.log(`[VaultIO] Retry handle permission: ${retryPerm}`);
-
-      if (typeof content === "string") {
-        await writeFile(freshHandle, content);
-      } else {
-        const writable = await freshHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
-      }
-      debugStore.log(`[VaultIO] Write retry successful for ${path}`);
-      return freshHandle;
-    } catch (retryErr: any) {
-      debugStore.error(
-        `[VaultIO] Retry failed for ${path}: ${retryErr.name} - ${retryErr.message}`,
-        retryErr,
-      );
-      throw retryErr;
-    }
-  }
+	try {
+		await writeFile(handle, content);
+		return handle;
+	} catch (err: any) {
+		debugStore.warn(`Write failed for ${path}, retrying once...`, err);
+		try {
+			const freshHandle = await reResolveFileHandle(rootHandle, path.split('/'), true);
+			await writeFile(freshHandle, content);
+			debugStore.log(`Write retry successful for ${path}`);
+			return freshHandle;
+		} catch (retryErr: any) {
+			debugStore.error(`Retry failed for ${path}`, retryErr);
+			throw retryErr;
+		}
+	}
 }

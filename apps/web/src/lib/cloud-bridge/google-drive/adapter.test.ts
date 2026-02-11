@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock Environment Variables
 vi.mock("$env/static/public", () => ({
-  VITE_GOOGLE_CLIENT_ID: "fake-client-id"
+  VITE_GOOGLE_CLIENT_ID: "fake-client-id",
 }));
 
 import { GoogleDriveAdapter } from "./adapter";
@@ -23,10 +23,10 @@ const createMockGapi = () => ({
       },
       files: {
         list: vi.fn().mockResolvedValue({
-          result: { files: [{ id: 'folder-id' }] },
+          result: { files: [{ id: "folder-id" }] },
         }),
         create: vi.fn().mockResolvedValue({
-          result: { id: 'new-folder-id' },
+          result: { id: "new-folder-id" },
         }),
       },
     },
@@ -61,8 +61,8 @@ describe("GoogleDriveAdapter Auth", () => {
     vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "fake-client-id");
 
     // Set up globals
-    vi.stubGlobal('gapi', createMockGapi());
-    vi.stubGlobal('google', createMockGoogle());
+    vi.stubGlobal("gapi", createMockGapi());
+    vi.stubGlobal("google", createMockGoogle());
 
     adapter = new GoogleDriveAdapter();
   });
@@ -73,11 +73,12 @@ describe("GoogleDriveAdapter Auth", () => {
   });
 
   it("should request access token when connect is called", async () => {
-    const tokenClient = vi.mocked(google.accounts.oauth2.initTokenClient).mock.results[0].value;
+    const tokenClient = vi.mocked(google.accounts.oauth2.initTokenClient).mock
+      .results[0].value;
     const connectPromise = adapter.connect();
 
     // Yield to allow async getGis/connect to proceed and set the callback
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
 
     // Simulate Google calling the callback
     tokenClient.callback({ access_token: "fake-token" });
@@ -93,13 +94,14 @@ describe("GoogleDriveAdapter Auth", () => {
     // We want to verify it is called exactly once and control the callback manually
 
     const mockTokenClient = {
-        callback: null as any,
-        requestAccessToken: vi.fn()
+      callback: null as any,
+      requestAccessToken: vi.fn(),
     };
 
     // Since 'google' is on global scope (from beforeEach), we can spy on it.
-    const initSpy = vi.spyOn(google.accounts.oauth2, 'initTokenClient')
-        .mockReturnValue(mockTokenClient as any);
+    const initSpy = vi
+      .spyOn(google.accounts.oauth2, "initTokenClient")
+      .mockReturnValue(mockTokenClient as any);
 
     // Clear any previous calls (from beforeEach)
     initSpy.mockClear();
@@ -117,7 +119,7 @@ describe("GoogleDriveAdapter Auth", () => {
     const p3 = adapter.connect();
 
     // Yield to allow promises to run
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
 
     // 3. Verification
     // initTokenClient should be called only once (by the constructor/first connect)

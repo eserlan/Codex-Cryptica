@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/014-graph-focus-mode/spec.md`
 
 ## Summary
+
 Implement a "Focus Mode" for the graph visualization. When a node is selected, its immediate neighborhood (connected nodes and edges) remains vivid while all other elements are dimmed (reduced opacity). This will be implemented using Cytoscape.js classes and selective styling to ensure sub-100ms visual feedback.
 
 ## Technical Context

@@ -60,11 +60,7 @@ As an experienced user who forgot a specific shortcut or term, I want to access 
 
 ## Requirements _(mandatory)_
 
-
-
 ### Functional Requirements
-
-
 
 - **FR-001**: System MUST provide a multi-step, static "read and click next" onboarding walkthrough using high-contrast highlight overlays for first-time users.
 
@@ -78,11 +74,7 @@ As an experienced user who forgot a specific shortcut or term, I want to access 
 
 - **FR-007**: Help Center MUST be accessible as a dedicated tab within the existing Settings Modal, with potential for future integration into the Lore Oracle for conversational assistance.
 
-
-
 ### Key Entities
-
-
 
 - **GuideStep**: Represents a single point in a walkthrough (target element selector, title, content, sequence index).
 
@@ -90,15 +82,9 @@ As an experienced user who forgot a specific shortcut or term, I want to access 
 
 - **UserProgress**: Tracks which guides the user has seen and completed.
 
-
-
 ## Success Criteria _(mandatory)_
 
-
-
 ### Measurable Outcomes
-
-
 
 - **SC-001**: Users can complete the initial onboarding tour in under 60 seconds.
 

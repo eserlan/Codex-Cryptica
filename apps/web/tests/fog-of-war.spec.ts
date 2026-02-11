@@ -8,18 +8,27 @@ test.describe("Fog of War", () => {
     });
 
     await page.goto("./");
-    
+
     // Wait for header to ensure layout is loaded
-    await expect(page.getByRole("heading", { name: "Codex Cryptica" })).toBeVisible({ timeout: 15000 });
-    
+    await expect(
+      page.getByRole("heading", { name: "Codex Cryptica" }),
+    ).toBeVisible({ timeout: 15000 });
+
     // Use the exposed stores to set up state directly, which is more reliable for E2E
-    await page.waitForFunction(() => {
-      return (window as any).vault && (window as any).searchStore && (window as any).uiStore;
-    }, { timeout: 15000 });
-    
+    await page.waitForFunction(
+      () => {
+        return (
+          (window as any).vault &&
+          (window as any).searchStore &&
+          (window as any).uiStore
+        );
+      },
+      { timeout: 15000 },
+    );
+
     await page.evaluate(async () => {
-      const { vault } = (window as any);
-      
+      const { vault } = window as any;
+
       const mockEntities = {
         "visible-node": {
           id: "visible-node",
@@ -47,7 +56,7 @@ test.describe("Fog of War", () => {
           labels: [],
           connections: [],
           content: "Revealed content",
-        }
+        },
       };
 
       // Manually hydrate the vault store
@@ -55,7 +64,7 @@ test.describe("Fog of War", () => {
       vault.isInitialized = true;
       vault.isAuthorized = true;
       vault.rootHandle = { name: "mock-vault" }; // Mock handle to satisfy UI checks
-      
+
       // Index them for search
       for (const _entity of Object.values(mockEntities)) {
         await (window as any).searchStore.update((s: any) => ({
@@ -91,32 +100,37 @@ test.describe("Fog of War", () => {
 
     // 4. Verify Search also filters
     await page.evaluate(async () => {
-      const { _searchStore } = (window as any);
+      const { _searchStore } = window as any;
       (window as any).searchStore.update((s: any) => ({
         ...s,
         query: "node",
         results: [
           { id: "visible-node", title: "Visible Node" },
           { id: "hidden-node", title: "Hidden Node" },
-          { id: "revealed-node", title: "Revealed Node" }
-        ]
+          { id: "revealed-node", title: "Revealed Node" },
+        ],
       }));
     });
 
     // Wait for the reactive filter in searchStore to apply if it was in the store logic
-    // Actually, searchStore filtering is inside setQuery. 
+    // Actually, searchStore filtering is inside setQuery.
     // Let's test the UI search if possible, or just evaluate the filtered state.
-    
+
     // For now, evaluation of store state after a mock 'search' call is best.
     const filteredSearchIds = await page.evaluate(async () => {
-      const { uiStore, vault, isEntityVisible } = (window as any);
+      const { uiStore, vault, isEntityVisible } = window as any;
       const results = [
         { id: "visible-node", title: "Visible Node" },
         { id: "hidden-node", title: "Hidden Node" },
-        { id: "revealed-node", title: "Revealed Node" }
+        { id: "revealed-node", title: "Revealed Node" },
       ];
-      const settings = { sharedMode: uiStore.sharedMode, defaultVisibility: vault.defaultVisibility };
-      return results.filter((r: any) => isEntityVisible(vault.entities[r.id], settings)).map((r: any) => r.id);
+      const settings = {
+        sharedMode: uiStore.sharedMode,
+        defaultVisibility: vault.defaultVisibility,
+      };
+      return results
+        .filter((r: any) => isEntityVisible(vault.entities[r.id], settings))
+        .map((r: any) => r.id);
     });
 
     expect(filteredSearchIds).not.toContain("hidden-node");
@@ -158,7 +172,7 @@ test.describe("Fog of War", () => {
 
     // 3. Update 'visible-node' to have 'revealed' tag
     await page.evaluate(() => {
-      const { vault } = (window as any);
+      const { vault } = window as any;
       const entity = vault.entities["visible-node"];
       vault.entities["visible-node"] = { ...entity, tags: ["revealed"] };
     });

@@ -15,7 +15,7 @@ export async function readFile(
 
 export async function writeFile(
   fileHandle: FileSystemFileHandle,
-  content: string,
+  content: string | Blob,
 ): Promise<void> {
   const writable = await fileHandle.createWritable();
   await writable.write(content);

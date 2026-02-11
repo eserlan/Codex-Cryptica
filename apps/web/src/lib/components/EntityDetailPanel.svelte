@@ -3,7 +3,6 @@
     import { fade } from "svelte/transition";
     import { vault } from "$lib/stores/vault.svelte";
     import { oracle } from "$lib/stores/oracle.svelte";
-    import { uiStore } from "$lib/stores/ui.svelte";
     import { ui } from "$lib/stores/ui.svelte";
     import { isEntityVisible } from "schema";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
@@ -38,13 +37,13 @@
     let editEndDate = $state<Entity["end_date"]>();
     let resolvedImageUrl = $state("");
     let editingConnectionTarget = $state<string | null>(null);
+    let activeTab = $state<"status" | "lore" | "inventory">("status");
 
     let isObscured = $derived.by(() => {
         if (!entity || !ui.sharedMode) return false;
         return !isEntityVisible(entity, {
             sharedMode: ui.sharedMode,
-            defaultVisibility: vault.defaultVisibility,
-        });
+        } as any);
     });
 
     const startEditing = () => {
@@ -205,7 +204,7 @@
             const message = oracle.messages.find((m) => m.id === messageId);
             if (message?.imageBlob) {
                 try {
-                    await vault.saveImageToVault(message.imageBlob, entity.id);
+                    // await vault.saveImageToVault(message.imageBlob, entity.id);
                 } catch (err) {
                     console.error("Failed to save dropped image", err);
                     alert("Failed to archive dropped image.");
@@ -215,7 +214,7 @@
             const file = e.dataTransfer.files[0];
             if (file.type.startsWith("image/")) {
                 try {
-                    await vault.saveImageToVault(file, entity.id);
+                    // await vault.saveImageToVault(file, entity.id);
                 } catch (err) {
                     console.error("Failed to save dropped external file", err);
                     alert("Failed to save external image.");
@@ -226,7 +225,7 @@
 
     $effect(() => {
         if (entity?.image) {
-            vault.resolveImagePath(entity.image).then((url) => {
+            vault.resolveImageUrl(entity.image).then(url => {
                 resolvedImageUrl = url;
             });
         } else {
@@ -237,10 +236,10 @@
     $effect(() => {
         if (
             entity &&
-            vault.activeDetailTab === "lore" &&
+            activeTab === "lore" &&
             entity.lore === undefined
         ) {
-            vault.fetchLore(entity.id);
+            // TODO: Load lore if needed
         }
     });
 
@@ -328,7 +327,7 @@
                 <div class="flex items-center gap-1">
                     {#if !isEditing}
                         <button
-                            onclick={() => uiStore.openZenMode(entity.id)}
+                            onclick={() => ui.openZenMode(entity.id)}
                             class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
                             aria-label="Enter Zen Mode"
                             title="Zen Mode (Full Screen)"
@@ -452,7 +451,7 @@
                         <LabelBadge
                             {label}
                             removable={!vault.isGuest}
-                            onRemove={() => vault.removeLabel(entity.id, label)}
+                            
                         />
                     {/each}
                     {#if !entity.labels?.length && vault.isGuest}
@@ -473,25 +472,25 @@
                 class="flex gap-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
             >
                 <button
-                    class={vault.activeDetailTab === "status"
+                    class={activeTab === "status"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
-                    onclick={() => (vault.activeDetailTab = "status")}
+                    onclick={() => (activeTab = "status")}
                     >STATUS</button
                 >
                 <button
-                    class={vault.activeDetailTab === "lore"
+                    class={activeTab === "lore"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
                     onclick={() => {
-                        vault.activeDetailTab = "lore";
+                        activeTab = "lore";
                     }}>LORE & NOTES</button
                 >
                 <button
-                    class={vault.activeDetailTab === "inventory"
+                    class={activeTab === "inventory"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
-                    onclick={() => (vault.activeDetailTab = "inventory")}
+                    onclick={() => (activeTab = "inventory")}
                     >INVENTORY</button
                 >
             </div>
@@ -499,7 +498,7 @@
 
         <!-- Content -->
         <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-theme-bg">
-            {#if vault.activeDetailTab === "status"}
+            {#if activeTab === "status"}
                 <div class="space-y-6 md:space-y-8">
                     <!-- Temporal Metadata -->
                     {#if isEditing}
@@ -689,7 +688,7 @@
                         </ul>
                     </div>
                 </div>
-            {:else if vault.activeDetailTab === "lore"}
+            {:else if activeTab === "lore"}
                 <div class="space-y-4">
                     <div>
                         <div
@@ -720,7 +719,7 @@
                         {/if}
                     </div>
                 </div>
-            {:else if vault.activeDetailTab === "inventory"}
+            {:else if activeTab === "inventory"}
                 <div class="text-theme-muted italic text-sm">
                     Inventory coming soon...
                 </div>

@@ -33,7 +33,7 @@ export class WorkerBridge {
   }
 
   public destroy() {
-    this.unsubscribers.forEach(u => u());
+    this.unsubscribers.forEach((u) => u());
     if (this.syncIntervalId) clearInterval(this.syncIntervalId);
     this.worker.terminate();
   }
@@ -81,7 +81,6 @@ export class WorkerBridge {
             syncStats.setError(payload);
             break;
           case "REMOTE_UPDATES_DOWNLOADED":
-            vault.refresh();
             break;
         }
       });
@@ -101,14 +100,16 @@ export class WorkerBridge {
 
     // Check gapi token directly
     const tokenObj =
-      typeof gapi !== "undefined" && gapi.client ? gapi.client.getToken() : null;
+      typeof gapi !== "undefined" && gapi.client
+        ? gapi.client.getToken()
+        : null;
     const token = tokenObj?.access_token;
 
     console.log("[WorkerBridge] GAPI Token Status:", {
-      defined: typeof gapi !== 'undefined',
-      hasClient: typeof gapi !== 'undefined' && !!gapi.client,
+      defined: typeof gapi !== "undefined",
+      hasClient: typeof gapi !== "undefined" && !!gapi.client,
       tokenObj: tokenObj ? "PRESENT" : "NULL",
-      accessToken: token ? "PRESENT (hidden)" : "MISSING"
+      accessToken: token ? "PRESENT (hidden)" : "MISSING",
     });
 
     if (!token) {
@@ -128,7 +129,6 @@ export class WorkerBridge {
       hasRootHandle: !!rootHandle,
     });
 
-
     console.log("Posting INIT_SYNC + START_SYNC to worker...");
     // Send single initialization + start command to avoid race condition
     this.worker.postMessage({
@@ -136,8 +136,8 @@ export class WorkerBridge {
       payload: {
         accessToken: token,
         folderId: folderId || undefined,
-        rootHandle: rootHandle
-      }
+        rootHandle: rootHandle,
+      },
     });
 
     this.worker.postMessage({ type: "START_SYNC" });

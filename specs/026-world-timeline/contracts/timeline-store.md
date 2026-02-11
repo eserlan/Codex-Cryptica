@@ -29,7 +29,7 @@ export interface ITimelineStore {
   addEntry(entry: TimelineEntry): void;
   removeEntry(entityId: string): void;
   setEras(eras: Era[]): void;
-  
+
   // Queries
   getEntriesByEra(eraId: string): TimelineEntry[];
   getEntriesByType(type: string): TimelineEntry[];

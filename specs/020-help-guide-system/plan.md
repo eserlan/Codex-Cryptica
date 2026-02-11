@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/020-help-guide-system/spec.md`
 
 ## Summary
+
 Implement a local-first, offline-capable help system including a static multi-step onboarding walkthrough and a searchable Help Center integrated into the Settings Modal. The walkthrough will use a custom Svelte 5 engine with CSS `mask-image` spotlights to ensure zero-latency performance and PWA integrity.
 
 ## Technical Context
@@ -16,7 +17,7 @@ Implement a local-first, offline-capable help system including a static multi-st
 **Project Type**: Monorepo (Turbo) - Web app focused  
 **Performance Goals**: Sub-100ms UI transitions, <100ms help search  
 **Constraints**: 100% offline functionality, no external asset loading  
-**Scale/Scope**: ~10 initial walkthrough steps, ~20 initial help articles  
+**Scale/Scope**: ~10 initial walkthrough steps, ~20 initial help articles
 
 ## Constitution Check
 
@@ -41,7 +42,7 @@ specs/020-help-guide-system/
 ├── research.md          # Decision log
 ├── data-model.md        # Entities and state
 ├── quickstart.md        # Implementation guide
-├── contracts/           
+├── contracts/
 │   └── stores.md        # Store interfaces
 └── tasks.md             # Tasks (TBD)
 ```
@@ -70,5 +71,5 @@ apps/web/
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-| :--- | :--- | :--- |
-| None | N/A | N/A |
+| :-------- | :--------- | :----------------------------------- |
+| None      | N/A        | N/A                                  |

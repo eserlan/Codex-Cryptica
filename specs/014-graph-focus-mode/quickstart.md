@@ -24,17 +24,17 @@ In `apps/web/src/lib/themes/graph-theme.ts`, add the `.dimmed` selector to `BASE
 In `apps/web/src/lib/components/GraphView.svelte`, update the `tap` listener:
 
 ```typescript
-cy.on('tap', 'node', (evt) => {
+cy.on("tap", "node", (evt) => {
   const node = evt.target;
   const neighborhood = node.neighborhood().add(node);
-  
-  cy.elements().addClass('dimmed');
-  neighborhood.removeClass('dimmed');
+
+  cy.elements().addClass("dimmed");
+  neighborhood.removeClass("dimmed");
 });
 
-cy.on('tap', (evt) => {
+cy.on("tap", (evt) => {
   if (evt.target === cy) {
-    cy.elements().removeClass('dimmed');
+    cy.elements().removeClass("dimmed");
   }
 });
 ```

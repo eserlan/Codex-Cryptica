@@ -11,7 +11,7 @@ export interface CloudConfig {
   syncInterval: number; // milliseconds
 
   // Sharing Extensions
-  shareStatus?: 'private' | 'public';
+  shareStatus?: "private" | "public";
   shareLink?: string;
   gdriveFolderId?: string; // Cache the folder ID for easier sharing
 }

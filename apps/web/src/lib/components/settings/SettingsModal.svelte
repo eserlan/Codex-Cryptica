@@ -208,8 +208,8 @@
                                     Status
                                 </div>
                                 <div class="text-xs text-theme-text mb-4">
-                                    {vault.rootHandle
-                                        ? "Connected to Local File System"
+                                    {vault.isInitialized
+                                        ? "Connected to Local Archive (OPFS)"
                                         : "No Vault Active"}
                                 </div>
 
@@ -233,18 +233,16 @@
                             <p
                                 class="text-[13px] text-theme-text/70 mb-4 leading-relaxed"
                             >
-                                If your search results or graph connections seem
-                                out of sync with your local files, you can force
-                                a full re-index of your archive.
+                                Keep your archive safe by periodically syncing your data to a local folder.
                             </p>
                             <button
-                                onclick={() => vault.rebuildIndex()}
+                                onclick={() => vault.syncToLocal()}
                                 disabled={uiStore.isImporting}
                                 aria-disabled={uiStore.isImporting ? "true" : "false"}
-                                title={uiStore.isImporting ? "Disabled during active import" : "Rebuild index"}
+                                title={uiStore.isImporting ? "Disabled during active import" : "Sync to local folder"}
                                 class="px-6 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-[10px] font-bold tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-primary/10 disabled:hover:text-theme-primary"
                             >
-                                Rebuild Search Index
+                                Sync to Local Folder
                             </button>
                         </section>
 

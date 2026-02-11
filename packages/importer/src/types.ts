@@ -1,14 +1,20 @@
 export interface ImportSession {
   id: string; // UUID
   timestamp: number;
-  status: 'parsing' | 'extracting' | 'reviewing' | 'finalizing' | 'complete' | 'error';
+  status:
+    | "parsing"
+    | "extracting"
+    | "reviewing"
+    | "finalizing"
+    | "complete"
+    | "error";
   items: ImportItem[];
 }
 
 export interface ImportItem {
   id: string; // UUID
   file: File; // Browser File object
-  status: 'pending' | 'parsing' | 'analyzing' | 'ready' | 'saved' | 'error';
+  status: "pending" | "parsing" | "analyzing" | "ready" | "saved" | "error";
 
   // Phase 1: Raw Parse
   parsedText?: string;
@@ -23,15 +29,15 @@ export interface ImportItem {
 export interface DiscoveredLink {
   target: string;
   label?: string; // e.g. "enemy of", "grandmother of"
-  type?: string;  // e.g. "located_in", "related_to"
+  type?: string; // e.g. "located_in", "related_to"
 }
 
 export interface DiscoveredEntity {
   id: string; // Temp ID
   suggestedTitle: string;
-  suggestedType: 'Character' | 'Location' | 'Item' | 'Lore' | 'Unknown';
+  suggestedType: "Character" | "Location" | "Item" | "Lore" | "Unknown";
   chronicle: string; // Short Markdown summary
-  lore: string;      // Detailed background
+  lore: string; // Detailed background
   content: string; // Markdown body (full combined content)
   frontmatter: Record<string, any>;
   confidence: number; // 0-1

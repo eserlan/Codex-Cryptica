@@ -5,17 +5,19 @@
 ## Entity Schema Updates
 
 ### `Entity` (Extended)
+
 The existing `Entity` schema in `packages/schema/src/index.ts` will be updated to include an optional `labels` array.
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
+| Property | Type       | Description                                                      |
+| :------- | :--------- | :--------------------------------------------------------------- |
 | `labels` | `string[]` | (Optional) List of case-insensitive tags assigned to the entity. |
 
 ### `VaultConfig` (Extended)
+
 Store global label definitions (if needed for custom colors in future, but currently just for indexing).
 
-| Property | Type | Description |
-| :--- | :--- | :--- |
+| Property     | Type          | Description                                                 |
+| :----------- | :------------ | :---------------------------------------------------------- |
 | `labelIndex` | `Set<string>` | Derived project-wide set of unique labels for autocomplete. |
 
 ## Relationships

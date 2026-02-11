@@ -42,7 +42,7 @@ export const initGraph = (options: GraphOptions) => {
       },
     ],
     layout: {
-      ...DEFAULT_LAYOUT_OPTIONS,      
+      ...DEFAULT_LAYOUT_OPTIONS,
     },
   });
 };

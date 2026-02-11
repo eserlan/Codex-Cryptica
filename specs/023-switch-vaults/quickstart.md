@@ -25,7 +25,9 @@ After closing, the "OPEN VAULT" button will reappear. Clicking it will trigger t
 
 ```typescript
 // tests/vault-switch.spec.ts
-await page.click('text=CLOSE VAULT');
-await expect(page.locator('text=NO VAULT')).toBeVisible();
-await expect(page.locator('[data-testid="entity-count"]')).toHaveText('0 ENTITIES');
+await page.click("text=CLOSE VAULT");
+await expect(page.locator("text=NO VAULT")).toBeVisible();
+await expect(page.locator('[data-testid="entity-count"]')).toHaveText(
+  "0 ENTITIES",
+);
 ```

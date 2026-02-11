@@ -46,7 +46,7 @@ function createCloudConfigStore() {
         save(newCfg);
         return newCfg;
       }),
-    setShareStatus: (status: 'private' | 'public') =>
+    setShareStatus: (status: "private" | "public") =>
       update((cfg) => {
         const newCfg = { ...cfg, shareStatus: status };
         save(newCfg);

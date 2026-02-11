@@ -29,7 +29,9 @@ describe("isEntityVisible", () => {
   };
 
   it("should show everything in admin mode regardless of tags", () => {
-    expect(isEntityVisible({ ...baseEntity, tags: ["hidden"] }, adminSettings)).toBe(true);
+    expect(
+      isEntityVisible({ ...baseEntity, tags: ["hidden"] }, adminSettings),
+    ).toBe(true);
     expect(isEntityVisible(baseEntity, adminSettings)).toBe(true);
   });
 
@@ -39,11 +41,21 @@ describe("isEntityVisible", () => {
     });
 
     it("should hide nodes tagged with 'hidden'", () => {
-      expect(isEntityVisible({ ...baseEntity, tags: ["hidden"] }, sharedVisibleSettings)).toBe(false);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["hidden"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
     });
 
     it("should hide nodes even if they also have 'revealed' tag (precedence)", () => {
-      expect(isEntityVisible({ ...baseEntity, tags: ["hidden", "revealed"] }, sharedVisibleSettings)).toBe(false);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["hidden", "revealed"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
     });
   });
 
@@ -53,19 +65,39 @@ describe("isEntityVisible", () => {
     });
 
     it("should show nodes tagged with 'revealed'", () => {
-      expect(isEntityVisible({ ...baseEntity, tags: ["revealed"] }, sharedHiddenSettings)).toBe(true);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["revealed"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
     });
 
     it("should show nodes with 'visible' label (alias)", () => {
-      expect(isEntityVisible({ ...baseEntity, labels: ["visible"] }, sharedHiddenSettings)).toBe(true);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, labels: ["visible"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
     });
 
     it("should hide nodes with 'hidden' label", () => {
-      expect(isEntityVisible({ ...baseEntity, labels: ["hidden"] }, sharedVisibleSettings)).toBe(false);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, labels: ["hidden"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
     });
 
     it("should still hide nodes tagged with 'hidden' even if they have 'revealed'", () => {
-      expect(isEntityVisible({ ...baseEntity, tags: ["hidden", "revealed"] }, sharedHiddenSettings)).toBe(false);
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["hidden", "revealed"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(false);
     });
   });
 });

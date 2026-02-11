@@ -10,6 +10,7 @@
 ## Test Scenarios
 
 ### TS-001: Assigning Labels
+
 1. Select an NPC (e.g., "Eldrin").
 2. In the Detail Panel, find the "Labels" section.
 3. Type "Dead" and press Enter.
@@ -17,12 +18,14 @@
 5. Close and reopen the NPC; verify the badge persists.
 
 ### TS-002: Graph Filtering
+
 1. Assign the label "Session 1" to 3 different entities.
 2. Use the Filter menu on the Graph View.
 3. Select "Session 1".
 4. **Expected**: Only the 3 tagged entities (and their connections) are visible.
 
 ### TS-003: Global Management
+
 1. Open "Label Management" in Settings.
 2. Rename "Dead" to "Deceased".
 3. **Expected**: All entities previously tagged "Dead" now show "Deceased".

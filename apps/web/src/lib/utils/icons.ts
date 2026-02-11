@@ -6,16 +6,18 @@ import { DEFAULT_ICON } from "schema";
  * @returns CSS class for iconify icon
  */
 export function getIconClass(iconStr: string | undefined): string {
-    if (!iconStr) return `icon-[${DEFAULT_ICON.replace(":", "--")}]`;
+  if (!iconStr) return `icon-[${DEFAULT_ICON.replace(":", "--")}]`;
 
-    // Handle "prefix:name" format (e.g., "lucide:user")
-    const parts = iconStr.split(":");
-    if (parts.length === 2) {
-        return `icon-[${parts[0]}--${parts[1]}]`;
-    }
+  // Handle "prefix:name" format (e.g., "lucide:user")
+  const parts = iconStr.split(":");
+  if (parts.length === 2) {
+    return `icon-[${parts[0]}--${parts[1]}]`;
+  }
 
-    // Already in icon-{...} format or fallback
-    return iconStr.startsWith("icon-") ? iconStr : `icon-[${DEFAULT_ICON.replace(":", "--")}]`;
+  // Already in icon-{...} format or fallback
+  return iconStr.startsWith("icon-")
+    ? iconStr
+    : `icon-[${DEFAULT_ICON.replace(":", "--")}]`;
 }
 
 /**

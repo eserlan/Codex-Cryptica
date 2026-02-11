@@ -5,7 +5,6 @@
 	import SearchModal from "$lib/components/search/SearchModal.svelte";
 	import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
 	import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
-	import GuestLoginModal from "$lib/components/modals/GuestLoginModal.svelte";
 	import ZenModeModal from "$lib/components/modals/ZenModeModal.svelte";
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
 	import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
@@ -19,13 +18,9 @@
 	import { helpStore } from "$lib/stores/help.svelte";
 	import { uiStore } from "$lib/stores/ui.svelte";
 	import { themeStore } from "$lib/stores/theme.svelte";
-	import { guestInfo } from "$lib/stores/guest";
 	import { syncStats } from "$lib/stores/sync-stats";
 	import { cloudConfig } from "$lib/stores/cloud-config";
 	import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
-	import { MemoryAdapter } from "$lib/cloud-bridge/memory-adapter";
-	import { P2PClientAdapter } from "$lib/cloud-bridge/p2p/client-adapter";
-	import { PublicGDriveAdapter } from "$lib/cloud-bridge/google-drive/public-adapter";
 	import { isEntityVisible } from "schema";
 	import { onMount } from "svelte";
 	import { page } from "$app/state";
@@ -36,75 +31,10 @@
 
 	const isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
-	const shareId = $derived(page.url.searchParams.get("shareId"));
-	let showGuestLogin = $state(false);
 	let isMobileMenuOpen = $state(false);
 
-	const handleJoin = async (username: string) => {
-		sessionStorage.setItem("guest_username", username);
-		guestInfo.set({ username, joinedAt: new Date() }); // Updated
-		showGuestLogin = false;
-
-		console.log("[Layout] handleJoin called. ShareId:", shareId);
-
-		// P2P Mode
-		console.log("[Layout] P2P Mode detected. ID:", shareId);
-		if (shareId?.startsWith("p2p-")) {
-			const peerId = shareId.replace("p2p-", "");
-			try {
-				const adapter = new P2PClientAdapter(peerId);
-				// P2P adapter handles its own initialization and connecting
-				await vault.initGuest(adapter);
-			} catch (err) {
-				console.error("P2P Join Failed", err);
-				vault.status = "error";
-				vault.errorMessage =
-					"Failed to connect to host. Make sure they are online!";
-			}
-			return;
-		}
-
-		// Google Drive Mode
-		// Basic validation for GDrive ID (length and alphanumeric usually)
-		if (!shareId || shareId.length < 20) {
-			vault.status = "error";
-			vault.errorMessage = "Malformed or invalid share link.";
-			// Re-show login if malformed
-			showGuestLogin = true;
-			return;
-		}
-
-		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-		if (!apiKey) {
-			console.error("Missing VITE_GOOGLE_API_KEY in environment.");
-			vault.status = "error";
-			vault.errorMessage =
-				"Configuration error: Guest Mode requires a VITE_GOOGLE_API_KEY. Please check your .env file.";
-			return;
-		}
-
-		const publicAdapter = new PublicGDriveAdapter();
-		const memoryAdapter = new MemoryAdapter();
-
-		try {
-			// Pre-fetch graph using public adapter
-			const graph = await publicAdapter.fetchPublicFolder(
-				shareId!,
-				apiKey,
-			);
-			memoryAdapter.hydrate(graph);
-			if (graph.deferredAssets) {
-				memoryAdapter.setDeferredAssets(graph.deferredAssets);
-			}
-			await vault.initGuest(memoryAdapter);
-		} catch (err) {
-			console.error("Guest join failed", err);
-			vault.status = "error";
-			vault.errorMessage =
-				err instanceof Error
-					? err.message
-					: "Unable to load shared vault.";
-		}
+	const _handleJoin = async (_username: string) => {
+		// Guest mode temporarily disabled
 	};
 
 	onMount(() => {
@@ -113,32 +43,22 @@
 		themeStore.init();
 		timelineStore.init();
 		graph.init();
-		if (shareId) {
-			// Check if we already have a guest session
-			const savedUser = sessionStorage.getItem("guest_username");
-			if (savedUser) {
-				handleJoin(savedUser);
-			} else {
-				showGuestLogin = true;
-			}
-		} else {
-			// Standard Initialization
-			vault
-				.init()
-				.then(() => {
-					// Trigger onboarding for new users after vault has initialized
-					if (
-						!vault.rootHandle &&
-						!helpStore.hasSeen("initial-onboarding") &&
-						!(window as any).DISABLE_ONBOARDING
-					) {
-						helpStore.startTour("initial-onboarding");
-					}
-				})
-				.catch((error) => {
-					console.error("Vault initialization failed", error);
-				});
-		}
+		
+		// Standard Initialization
+		vault
+			.init()
+			.then(() => {
+				// Trigger onboarding for new users after vault has initialized
+				if (
+					!helpStore.hasSeen("initial-onboarding") &&
+					!(window as any).DISABLE_ONBOARDING
+				) {
+					helpStore.startTour("initial-onboarding");
+				}
+			})
+			.catch((error) => {
+				console.error("Vault initialization failed", error);
+			});
 
 		const handleGlobalError = (event: ErrorEvent) => {
 			// Ignore non-fatal script/asset load failures (common when offline)
@@ -370,79 +290,6 @@
 		{/if}
 	{/if}
 </div>
-
-{#if showGuestLogin}
-	<GuestLoginModal onJoin={handleJoin} />
-{/if}
-
-{#if vault.rootHandle && !vault.isAuthorized && !isPopup}
-	<div
-		class="fixed inset-0 z-[900] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in duration-300"
-	>
-		<div
-			class="bg-theme-surface border border-theme-accent shadow-2xl shadow-theme-accent/20 rounded-xl p-6 max-w-sm w-full text-center flex flex-col gap-4 relative overflow-hidden"
-		>
-			<!-- Decorative glow -->
-			<div
-				class="absolute -top-10 -left-10 w-32 h-32 bg-theme-accent/10 rounded-full blur-3xl"
-			></div>
-
-			<div
-				class="w-12 h-12 rounded-full bg-theme-accent/20 flex items-center justify-center mx-auto text-theme-accent mb-2"
-			>
-				<span class="icon-[lucide--lock] w-6 h-6"></span>
-			</div>
-
-			<h3 class="text-lg font-bold text-theme-text tracking-wide uppercase">
-				Vault Locked
-			</h3>
-
-			{#if vault.errorMessage}
-				<div class="p-2 bg-red-900/20 border border-red-500/30 rounded text-[10px] text-red-400 font-mono">
-					{vault.errorMessage}
-				</div>
-			{/if}
-
-			<p class="text-sm text-theme-muted leading-relaxed">
-				Browser security requires you to re-grant access to your local files after a
-				reload.
-			</p>
-
-			<div class="flex flex-col gap-2 w-full">
-				<button
-					class="w-full py-3 px-4 bg-theme-accent hover:bg-theme-accent/90 text-black font-bold tracking-widest uppercase rounded transition-all shadow-lg hover:shadow-theme-accent/25 flex items-center justify-center gap-2"
-					onclick={() => vault.requestPermission()}
-				>
-					<span class="icon-[lucide--key] w-4 h-4"></span>
-					GRANT ACCESS
-				</button>
-
-				{#if vault.status === "error" || vault.errorMessage}
-					<button
-						class="w-full py-2 px-4 border border-theme-primary text-theme-primary hover:bg-theme-primary/10 font-bold tracking-widest uppercase rounded text-[10px] transition-all flex items-center justify-center gap-2"
-						onclick={() => vault.reOpen()}
-					>
-						<span class="icon-[lucide--folder-open] w-3.5 h-3.5"></span>
-						RE-PICK FOLDER
-					</button>
-				{/if}
-			</div>
-
-			<button
-				onclick={() => vault.close()}
-				class="text-[10px] text-theme-muted hover:text-red-400 uppercase tracking-widest transition-colors pt-2"
-			>
-				Close Vault
-			</button>
-
-			<div
-				class="text-[10px] text-theme-muted uppercase tracking-widest pt-2 opacity-50"
-			>
-				{vault.rootHandle.name}
-			</div>
-		</div>
-	</div>
-{/if}
 
 {#if uiStore.globalError && !(window as any).DISABLE_ERROR_OVERLAY}
 	<div

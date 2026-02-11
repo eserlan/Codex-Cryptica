@@ -14,15 +14,15 @@ In `apps/web/src/lib/components/GraphView.svelte`:
 <script lang="ts">
   import Minimap from "$lib/components/graph/Minimap.svelte";
   import type { Core } from "cytoscape";
-  
+
   let cy: Core | undefined = $state();
-  
+
   // ... initialization logic ...
 </script>
 
 <div class="graph-container relative w-full h-full">
   <div bind:this={container} class="w-full h-full"></div>
-  
+
   {#if cy}
     <!-- Minimap sits absolutely positioned on top of the graph container -->
     <Minimap {cy} />
@@ -36,14 +36,14 @@ The component accepts optional props for customization:
 
 ```typescript
 // Minimap.svelte props
-let { 
-  cy, 
-  width = 200, 
-  height = 150 
-}: { 
-  cy: Core; 
-  width?: number; 
-  height?: number 
+let {
+  cy,
+  width = 200,
+  height = 150,
+}: {
+  cy: Core;
+  width?: number;
+  height?: number;
 } = $props();
 ```
 

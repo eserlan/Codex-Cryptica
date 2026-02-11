@@ -9,9 +9,9 @@
     renameValue = label;
   };
 
+  // Rename label logic temporarily disabled
   const handleRename = async () => {
     if (editingLabel && renameValue.trim()) {
-      await vault.renameLabel(editingLabel, renameValue.trim());
       editingLabel = null;
     }
   };
@@ -22,7 +22,7 @@
         `Are you sure you want to delete the label "${label}" from ALL entities?`,
       )
     ) {
-      await vault.deleteLabel(label);
+      // Logic disabled
     }
   };
 </script>

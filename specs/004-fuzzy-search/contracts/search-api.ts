@@ -17,7 +17,7 @@ export interface SearchResult {
   path: string; // Added for navigation
   excerpt?: string;
   score: number;
-  matchType: 'title' | 'content';
+  matchType: "title" | "content";
   // highlights could be complex to serialize, maybe handle on client or simple ranges
 }
 

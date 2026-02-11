@@ -17,28 +17,33 @@ We will store the relative path of every file in the Google Drive `appProperties
 ### Alternatives Considered
 
 #### Option A: Mirror Directory Tree in GDrive
--   **Pros**: User can browse the folders in the GDrive web UI.
--   **Cons**: Massive overhead in GDrive API calls. High chance of race conditions during folder creation.
--   **Verdict**: Rejected for performance and reliability (Constitution Principle III).
+
+- **Pros**: User can browse the folders in the GDrive web UI.
+- **Cons**: Massive overhead in GDrive API calls. High chance of race conditions during folder creation.
+- **Verdict**: Rejected for performance and reliability (Constitution Principle III).
 
 #### Option B: Base64 String Encoding
--   **Pros**: Fits into existing `string` logic.
--   **Cons**: 33% size overhead. Increased CPU usage for encoding/decoding large images.
--   **Verdict**: Rejected for efficiency (Constitution Principle III).
+
+- **Pros**: Fits into existing `string` logic.
+- **Cons**: 33% size overhead. Increased CPU usage for encoding/decoding large images.
+- **Verdict**: Rejected for efficiency (Constitution Principle III).
 
 ## Implementation Details
 
 ### Binary Storage Pipeline
--   **Read**: `FileSystemFileHandle.getFile()` -> `file.arrayBuffer()` or simply passing the `File` object (which is a `Blob`).
--   **Transport**: `FormData` in `fetch` allows appending `Blob` objects directly.
--   **Download**: `response.blob()` instead of `response.text()`.
--   **Write**: `FileSystemWritableFileStream.write(blob)`.
+
+- **Read**: `FileSystemFileHandle.getFile()` -> `file.arrayBuffer()` or simply passing the `File` object (which is a `Blob`).
+- **Transport**: `FormData` in `fetch` allows appending `Blob` objects directly.
+- **Download**: `response.blob()` instead of `response.text()`.
+- **Write**: `FileSystemWritableFileStream.write(blob)`.
 
 ### Path Mapping
--   **Property Key**: `vault_path`
--   **Example**: `images/portrait.png`
--   **Key Constraint**: `appProperties` is only available to the application that created it, enhancing security.
+
+- **Property Key**: `vault_path`
+- **Example**: `images/portrait.png`
+- **Key Constraint**: `appProperties` is only available to the application that created it, enhancing security.
 
 ### Recursive Scanning
--   **GDrive Query**: `q: "'${folderId}' in parents and trashed = false"`
--   **Local Sync**: The `SyncEngine` will map remote files back to their local `vault_path` during the scan phase.
+
+- **GDrive Query**: `q: "'${folderId}' in parents and trashed = false"`
+- **Local Sync**: The `SyncEngine` will map remote files back to their local `vault_path` during the scan phase.

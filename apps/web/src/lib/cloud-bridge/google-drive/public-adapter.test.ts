@@ -24,21 +24,25 @@ describe.skip("PublicGDriveAdapter", () => {
   });
 
   it("should throw error if apiKey is missing", async () => {
-    await expect(adapter.fetchPublicFile("fileId", "")).rejects.toThrow("API Key is required");
+    await expect(adapter.fetchPublicFile("fileId", "")).rejects.toThrow(
+      "API Key is required",
+    );
   });
 
   it("should fetch file successfully", async () => {
     const mockBlob = new Blob(["content"], { type: "text/plain" });
     fetchMock.mockResolvedValue({
       ok: true,
-      blob: () => Promise.resolve(mockBlob)
+      blob: () => Promise.resolve(mockBlob),
     });
 
     const result = await adapter.fetchPublicFile("fileId", "key");
     expect(result).toEqual(mockBlob);
     expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("https://www.googleapis.com/drive/v3/files/fileId?key=key&alt=media"),
-      { method: "GET" }
+      expect.stringContaining(
+        "https://www.googleapis.com/drive/v3/files/fileId?key=key&alt=media",
+      ),
+      { method: "GET" },
     );
   });
 
@@ -46,19 +50,23 @@ describe.skip("PublicGDriveAdapter", () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 404,
-      statusText: "Not Found"
+      statusText: "Not Found",
     });
 
-    await expect(adapter.fetchPublicFile("fileId", "key")).rejects.toThrow("File Not Found");
+    await expect(adapter.fetchPublicFile("fileId", "key")).rejects.toThrow(
+      "File Not Found",
+    );
   });
 
   it("should handle 403 error", async () => {
     fetchMock.mockResolvedValue({
       ok: false,
       status: 403,
-      statusText: "Forbidden"
+      statusText: "Forbidden",
     });
 
-    await expect(adapter.fetchPublicFile("fileId", "key")).rejects.toThrow("Access Denied");
+    await expect(adapter.fetchPublicFile("fileId", "key")).rejects.toThrow(
+      "Access Denied",
+    );
   });
 });

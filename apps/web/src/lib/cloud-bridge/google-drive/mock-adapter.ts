@@ -50,7 +50,9 @@ export class MockDriveAdapter implements ICloudAdapter {
   async downloadFile(fileId: string): Promise<Blob> {
     this.checkConnected();
     // Simulate finding content by ID
-    return new Blob([`Mock content for file ${fileId}`], { type: "text/plain" });
+    return new Blob([`Mock content for file ${fileId}`], {
+      type: "text/plain",
+    });
   }
 
   async deleteFile(fileId: string): Promise<void> {

@@ -11,13 +11,13 @@
 To address the responsive layout requirements, we have implemented a dedicated mobile navigation system:
 
 1.  **MobileMenu Component**: A slide-out drawer (left-aligned) that houses:
-    -   Vertical "VaultControls" for campaign management.
-    -   Application settings access.
-    -   External links (Patreon, Privacy, Terms).
-    -   A unified, touch-friendly interface for all primary actions.
+    - Vertical "VaultControls" for campaign management.
+    - Application settings access.
+    - External links (Patreon, Privacy, Terms).
+    - A unified, touch-friendly interface for all primary actions.
 2.  **Responsive Header**:
-    -   **Desktop**: Full horizontal control bar and search input.
-    -   **Mobile**: Simplified header containing only the hamburger menu toggle, compact brand logo, and a search icon button.
+    - **Desktop**: Full horizontal control bar and search input.
+    - **Mobile**: Simplified header containing only the hamburger menu toggle, compact brand logo, and a search icon button.
 3.  **Vertical VaultControls**: The existing `VaultControls` component was refactored to accept an `orientation="vertical"` prop, allowing it to adapt its layout (buttons stretch to fill width) for the mobile drawer context without code duplication.
 
 ## User Scenarios & Testing
@@ -79,16 +79,20 @@ As a mobile user, I want entity details to be displayed in a space-efficient man
 - **FR-009**: The system MUST detect authentication failures and provide a clear "Reconnect" action without requiring a full page reload.
 
 ### User Story 4 - Reliable Sync Consistency (Priority: P0)
+
 As a user, I want the sync engine to only upload files I have actually modified, so that I don't waste bandwidth and time re-uploading my entire vault due to technical timestamp quirks.
 
 **Acceptance Scenarios**:
+
 1. **Given** a vault with existing files, **When** I sync without making changes, **Then** 0 files are uploaded.
 2. **Given** I download a file on a new device, **When** I sync immediately, **Then** the system recognizes the file is identical to the server version.
 
 ### User Story 5 - Fast Sync Performance (Priority: P2)
+
 As a power user with hundreds of files, I want the sync process to utilize my available bandwidth efficiently, so that I can switch devices quickly.
 
 **Acceptance Scenarios**:
+
 1. **Given** a backlog of 50 files, **When** sync starts, **Then** multiple files are uploaded/downloaded simultaneously.
 
 ### Key Entities

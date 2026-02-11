@@ -10,7 +10,13 @@ Represents a user's action of dropping files to import.
 interface ImportSession {
   id: string; // UUID
   timestamp: number;
-  status: 'parsing' | 'extracting' | 'reviewing' | 'finalizing' | 'complete' | 'error';
+  status:
+    | "parsing"
+    | "extracting"
+    | "reviewing"
+    | "finalizing"
+    | "complete"
+    | "error";
   items: ImportItem[];
 }
 ```
@@ -23,15 +29,15 @@ Represents a single source file being processed.
 interface ImportItem {
   id: string; // UUID
   file: File; // Browser File object
-  status: 'pending' | 'parsing' | 'analyzing' | 'ready' | 'saved' | 'error';
-  
+  status: "pending" | "parsing" | "analyzing" | "ready" | "saved" | "error";
+
   // Phase 1: Raw Parse
   parsedText?: string;
   extractedAssets?: ImportAsset[]; // Images found in doc
-  
+
   // Phase 2: AI Analysis
   detectedEntities?: DiscoveredEntity[]; // What the Oracle found
-  
+
   error?: string;
 }
 ```
@@ -44,11 +50,11 @@ A potential Node identified by the Oracle.
 interface DiscoveredEntity {
   id: string; // Temp ID
   suggestedTitle: string;
-  suggestedType: 'Character' | 'Location' | 'Item' | 'Lore' | 'Unknown';
+  suggestedType: "Character" | "Location" | "Item" | "Lore" | "Unknown";
   content: string; // Markdown body
   frontmatter: Record<string, any>;
   confidence: number; // 0-1
-  
+
   // Relationships
   detectedLinks: string[]; // Names of other entities mentioned
 }

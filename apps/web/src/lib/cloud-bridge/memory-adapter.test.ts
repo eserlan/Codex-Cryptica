@@ -7,8 +7,13 @@ describe("MemoryAdapter", () => {
   const mockGraph: SerializedGraph = {
     version: 1,
     entities: {
-      "e1": { id: "e1", title: "Test Entity", type: "note", content: "Content" } as any
-    }
+      e1: {
+        id: "e1",
+        title: "Test Entity",
+        type: "note",
+        content: "Content",
+      } as any,
+    },
   };
 
   beforeEach(() => {

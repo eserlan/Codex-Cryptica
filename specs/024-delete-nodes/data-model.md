@@ -16,11 +16,10 @@
    - Remove `E1.md` from the file system.
    - Remove associated image and thumbnail files (if any) from the `images/` directory.
    - Clear `E1` from IndexedDB cache.
-   
+
    ## Asset Replacement Flow
-   
    1. **Trigger**: User generates or uploads a new image for Entity `E1`.
    2. **Identification**: System identifies current `image` and `thumbnail` paths in `E1` metadata.
    3. **New Asset Storage**: System saves the new image and thumbnail files.
-   4. **Cleanup**: System deletes the *old* image and thumbnail files identified in step 2.
+   4. **Cleanup**: System deletes the _old_ image and thumbnail files identified in step 2.
    5. **Update**: System updates `E1` metadata with the new paths.

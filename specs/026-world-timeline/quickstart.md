@@ -16,6 +16,7 @@
    - Add a "Timeline" link to the main app header.
 
 ## Validation
+
 - Run `npm test --workspace=schema` to verify type safety.
 - Create nodes with varying dates and verify sorting in the Timeline View.
 - Offline Verification: Ensure timeline loads from OPFS/Local cache without network.

@@ -15,16 +15,16 @@ interface MinimapNode {
 }
 
 interface ViewportState {
-  x: number;      // Graph-space x coordinate of top-left
-  y: number;      // Graph-space y coordinate of top-left
-  width: number;  // Graph-space width of view
+  x: number; // Graph-space x coordinate of top-left
+  y: number; // Graph-space y coordinate of top-left
+  width: number; // Graph-space width of view
   height: number; // Graph-space height of view
-  zoom: number;   // Current main graph zoom level
+  zoom: number; // Current main graph zoom level
 }
 
 interface MinimapConfig {
-  scale: number;    // Ratio of Minimap Pixels : Graph Units
-  padding: number;  // Padding around the graph bounding box
+  scale: number; // Ratio of Minimap Pixels : Graph Units
+  padding: number; // Padding around the graph bounding box
 }
 ```
 
@@ -32,19 +32,19 @@ interface MinimapConfig {
 
 ### 1. Synchronization (Main Graph -> Minimap)
 
-| Trigger | Action |
-| :--- | :--- |
-| `cy.on('viewport')` | Update `ViewportState`. Reposition the Viewport Rect overlay. |
-| `cy.on('position')` | Update `MinimapNode` coordinates. Redraw Canvas. |
-| `cy.on('add/remove')` | Add/Remove `MinimapNode`. Redraw Canvas. |
-| `cy.on('style')` | Update `MinimapNode.color`. Redraw Canvas (debounced). |
+| Trigger               | Action                                                        |
+| :-------------------- | :------------------------------------------------------------ |
+| `cy.on('viewport')`   | Update `ViewportState`. Reposition the Viewport Rect overlay. |
+| `cy.on('position')`   | Update `MinimapNode` coordinates. Redraw Canvas.              |
+| `cy.on('add/remove')` | Add/Remove `MinimapNode`. Redraw Canvas.                      |
+| `cy.on('style')`      | Update `MinimapNode.color`. Redraw Canvas (debounced).        |
 
 ### 2. Navigation (Minimap -> Main Graph)
 
-| User Action | Logic |
-| :--- | :--- |
-| **Drag Rect** | Calculate delta $(dx, dy)$ in minimap pixels. Convert to graph units: $dx_g = dx / scale$. Apply `cy.panBy({ x: -dx_g, y: -dy_g })`. |
-| **Click Background** | Get click $(cx, cy)$ in minimap pixels. Convert to graph units. Call `cy.center({ x: cx_g, y: cy_g })`. |
+| User Action          | Logic                                                                                                                                |
+| :------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Drag Rect**        | Calculate delta $(dx, dy)$ in minimap pixels. Convert to graph units: $dx_g = dx / scale$. Apply `cy.panBy({ x: -dx_g, y: -dy_g })`. |
+| **Click Background** | Get click $(cx, cy)$ in minimap pixels. Convert to graph units. Call `cy.center({ x: cx_g, y: cy_g })`.                              |
 
 ## CSS / Theming
 

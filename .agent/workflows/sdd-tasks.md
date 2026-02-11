@@ -11,7 +11,7 @@ Any specific guidance from user ($ARGUMENTS).
 ## Outline
 
 1. **Setup**: Run `.specify/scripts/bash/check-prerequisites.sh --json` from repo root.
-    - Parse `FEATURE_DIR` and `AVAILABLE_DOCS` list from JSON output.
+   - Parse `FEATURE_DIR` and `AVAILABLE_DOCS` list from JSON output.
 
 2. **Load design documents**: Read from `FEATURE_DIR`:
    - **Required**: `plan.md`, `spec.md`
@@ -59,6 +59,7 @@ Every task MUST strictly follow this format:
 5. **Description**: Clear action with exact file path
 
 **Examples**:
+
 - `- [ ] T001 Create project structure per implementation plan`
 - `- [ ] T012 [P] [US1] Create User model in src/models/user.py`
 

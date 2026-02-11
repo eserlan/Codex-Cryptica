@@ -1,6 +1,10 @@
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
-import { GraphTransformer, getTimelineLayout, type GraphNode } from "graph-engine";
+import {
+  GraphTransformer,
+  getTimelineLayout,
+  type GraphNode,
+} from "graph-engine";
 import type { Core } from "cytoscape";
 import { isEntityVisible, type Era } from "schema";
 import { getDB } from "../utils/idb";
@@ -24,7 +28,7 @@ class GraphStore {
   });
 
   fitRequest = $state(0);
-  
+
   // Timeline State
   timelineMode = $state(false);
   timelineAxis = $state<"x" | "y">("x");
@@ -102,7 +106,7 @@ class GraphStore {
   toggleOrbit() {
     this.orbitMode = !this.orbitMode;
     if (!this.orbitMode) {
-        this.centralNodeId = null;
+      this.centralNodeId = null;
     }
   }
 
@@ -113,7 +117,9 @@ class GraphStore {
   }
 
   applyTimelineLayout(cy: Core) {
-    const nodes = this.elements.filter((e) => e.group === "nodes") as unknown as GraphNode[];
+    const nodes = this.elements.filter(
+      (e) => e.group === "nodes",
+    ) as unknown as GraphNode[];
     const positions = getTimelineLayout(nodes, {
       axis: this.timelineAxis,
       scale: this.timelineScale,

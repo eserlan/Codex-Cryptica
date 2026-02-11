@@ -85,6 +85,7 @@
 3. **US2 & US4** can then be implemented in any order or in parallel.
 
 ### Parallel Opportunities
+
 - T005, T006, T007 (Core filtering integration)
 - T008 (UI toggle) and T009 (Settings UI)
 - E2E tests (T011, T013, T015) can be developed together after the UI is ready.

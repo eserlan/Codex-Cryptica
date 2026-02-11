@@ -9,9 +9,9 @@ class ThemeStore {
   previewThemeId = $state<string | null>(null);
 
   activeTheme = $derived(
-    this.previewThemeId 
-      ? THEMES[this.previewThemeId] 
-      : THEMES[this.currentThemeId] || DEFAULT_THEME
+    this.previewThemeId
+      ? THEMES[this.previewThemeId]
+      : THEMES[this.currentThemeId] || DEFAULT_THEME,
   );
 
   constructor() {
@@ -57,35 +57,47 @@ class ThemeStore {
     root.style.setProperty("--color-accent-dark", tokens.secondary);
     root.style.setProperty("--color-accent-deep", tokens.background);
     root.style.setProperty("--color-border-primary", tokens.border);
-    
+
     root.style.setProperty("--color-text-primary", tokens.text);
     root.style.setProperty("--color-text-muted", tokens.secondary);
     root.style.setProperty("--color-text-dim", tokens.secondary);
-    
+
     root.style.setProperty("--color-theme-accent", tokens.accent);
-    
+
     root.style.setProperty("--color-oracle-primary", tokens.accent);
-    root.style.setProperty("--color-oracle-dim", `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 30%)`);
-    root.style.setProperty("--color-oracle-dark", `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 60%)`);
-    
+    root.style.setProperty(
+      "--color-oracle-dim",
+      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 30%)`,
+    );
+    root.style.setProperty(
+      "--color-oracle-dark",
+      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 60%)`,
+    );
+
     root.style.setProperty("--font-header", tokens.fontHeader);
     root.style.setProperty("--font-body", tokens.fontBody);
 
-    root.style.setProperty("--theme-border-width", `${theme.graph.nodeBorderWidth}px`);
-    
+    root.style.setProperty(
+      "--theme-border-width",
+      `${theme.graph.nodeBorderWidth}px`,
+    );
+
     // Theme specific visual behaviors
-    let glow = 'none';
-    if (theme.id === 'cyberpunk') glow = `0 0 15px ${tokens.primary}44`;
-    if (theme.id === 'horror') glow = `0 0 20px ${tokens.secondary}33`;
+    let glow = "none";
+    if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
+    if (theme.id === "horror") glow = `0 0 20px ${tokens.secondary}33`;
     root.style.setProperty("--theme-glow", glow);
 
-    let radius = '2px'; // Gothic/Terminal default
-    if (theme.id === 'modern') radius = '12px';
-    if (theme.id === 'horror') radius = '0px'; // Sharp corners for horror
+    let radius = "2px"; // Gothic/Terminal default
+    if (theme.id === "modern") radius = "12px";
+    if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
     root.style.setProperty("--theme-border-radius", radius);
 
     if (tokens.texture) {
-      root.style.setProperty("--bg-texture", `url('/themes/${tokens.texture}')`);
+      root.style.setProperty(
+        "--bg-texture",
+        `url('/themes/${tokens.texture}')`,
+      );
     } else {
       root.style.setProperty("--bg-texture", "none");
     }

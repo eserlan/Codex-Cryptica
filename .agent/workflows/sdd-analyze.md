@@ -53,14 +53,16 @@ Identify inconsistencies, duplications, ambiguities, and underspecified items ac
    - Output a Markdown report to the user (do not write to file).
 
    Structure:
+
    ```markdown
    ## Specification Analysis Report
 
-   | ID | Category | Severity | Location(s) | Summary | Recommendation |
-   |----|----------|----------|-------------|---------|----------------|
-   | A1 | Duplication | HIGH | ... | ... | ... |
+   | ID  | Category    | Severity | Location(s) | Summary | Recommendation |
+   | --- | ----------- | -------- | ----------- | ------- | -------------- |
+   | A1  | Duplication | HIGH     | ...         | ...     | ...            |
 
    **Coverage Summary:**
+
    - Total Requirements: X
    - Total Tasks: Y
    - Coverage %: Z%

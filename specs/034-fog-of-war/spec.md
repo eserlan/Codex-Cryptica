@@ -13,7 +13,8 @@ As a World Builder, I want to control the visibility of individual entities rela
 
 **Why this priority**: This is the core engine. It handles both "Hiding a secret in a visible world" (Blacklist) and "Revealing a discovery in a hidden world" (Whitelist).
 
-**Independent Test**: 
+**Independent Test**:
+
 - **Blacklist**: Set "Default Visibility" to **Visible**, tag an entity as `hidden`; verify it is absent from Shared view.
 - **Whitelist**: Set "Default Visibility" to **Hidden**, tag an entity as `revealed`; verify it is present in Shared view.
 
@@ -51,11 +52,7 @@ As a World Builder, I want to be able to hide all entities in my vault with a si
 1. **Given** a vault with multiple entities, **When** "Default Visibility" is set to "Hidden" and "Shared Mode" is enabled, **Then** the graph is empty.
 2. **Given** "Default Visibility" is "Hidden", **When** an entity is tagged with `revealed`, **Then** it becomes visible in Shared Mode.
 
-
-
 ### Edge Cases
-
-
 
 - **Connections to Hidden Nodes**: If Node A (Visible) is connected to Node B (Hidden), the connection (edge) should also be hidden in Shared Mode.
 
@@ -65,15 +62,9 @@ As a World Builder, I want to be able to hide all entities in my vault with a si
 
 - **Conflicting Tags**: If "Default Visibility" is "Visible" but a node has both `hidden` and `revealed` tags, `hidden` MUST take precedence (safety first).
 
-
-
 ## Requirements
 
-
-
 ### Functional Requirements
-
-
 
 - **FR-001**: System MUST support a reserved tag `hidden` in entity frontmatter to force-hide an entity.
 
@@ -91,29 +82,17 @@ As a World Builder, I want to be able to hide all entities in my vault with a si
 
 - **FR-008**: In "Shared Mode", edges connecting to a hidden node MUST be hidden.
 
-
-
-### Key Entities *(include if feature involves data)*
-
-
+### Key Entities _(include if feature involves data)_
 
 - **Entity**:
-
-    - `tags`: List of strings. Logic uses `hidden` and `revealed` for visibility control.
+  - `tags`: List of strings. Logic uses `hidden` and `revealed` for visibility control.
 
 - **Vault Settings**:
-
-    - `defaultVisibility`: Enum ("visible", "hidden")
-
-
+  - `defaultVisibility`: Enum ("visible", "hidden")
 
 ## Success Criteria
 
-
-
 ### Measurable Outcomes
-
-
 
 - **SC-001**: Hidden nodes are filtered out of the Graph in Shared Mode with 0% leakage.
 

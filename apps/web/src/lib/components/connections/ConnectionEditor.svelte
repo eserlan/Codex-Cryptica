@@ -28,10 +28,7 @@
   ];
 
   const handleSave = () => {
-    vault.updateConnection(sourceId, connection.target, {
-      type,
-      label: label.trim() || undefined,
-    });
+    vault.updateConnection(sourceId, connection.target, connection.type, type, label);
     onSave();
   };
 </script>

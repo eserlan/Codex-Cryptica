@@ -20,7 +20,10 @@ export function validateTemporal(data: TemporalMetadata): string | null {
   return null;
 }
 
-export function validateTemporalRange(start?: TemporalMetadata, end?: TemporalMetadata): string | null {
+export function validateTemporalRange(
+  start?: TemporalMetadata,
+  end?: TemporalMetadata,
+): string | null {
   if (!start || !end) return null;
 
   const startError = validateTemporal(start);
