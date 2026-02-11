@@ -22,19 +22,6 @@ self.onmessage = async (event) => {
           payload.folderId,
         );
 
-        if (payload.rootHandle) {
-          const isValid =
-            typeof FileSystemDirectoryHandle !== "undefined" &&
-            payload.rootHandle instanceof FileSystemDirectoryHandle;
-
-          if (isValid) {
-            console.log("SyncWorker: Setting local root handle");
-            fsAdapter.setRoot(payload.rootHandle);
-          } else {
-            console.error("SyncWorker: Invalid root handle provided");
-            throw new Error("Invalid root handle provided to sync worker");
-          }
-        }
         engine = new SyncEngine(cloudAdapter, fsAdapter, metadataStore);
         console.log("SyncWorker: Engine ready");
         break;

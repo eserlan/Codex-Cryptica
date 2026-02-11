@@ -81,6 +81,8 @@ export class WorkerBridge {
             syncStats.setError(payload);
             break;
           case "REMOTE_UPDATES_DOWNLOADED":
+            // Critical step: tell the vault to re-read from OPFS
+            vault.loadFiles();
             break;
         }
       });

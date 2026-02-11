@@ -5,24 +5,14 @@ export interface FileEntry {
 }
 
 export class FileSystemAdapter {
-  private root: FileSystemDirectoryHandle | null = null;
-
-  async init(): Promise<void> {
-    if (!this.root) {
-      this.root = await navigator.storage.getDirectory();
-    }
-  }
-
-  setRoot(handle: FileSystemDirectoryHandle) {
-    this.root = handle;
+  private async _getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
+    return navigator.storage.getDirectory();
   }
 
   async listAllFiles(): Promise<FileEntry[]> {
-    await this.init();
+    const root = await this._getOpfsRoot();
     const files: FileEntry[] = [];
-    if (!this.root) throw new Error("FS not initialized");
-
-    await this.scanDirectory(this.root, "", files);
+    await this.scanDirectory(root, "", files);
     return files;
   }
 
@@ -43,27 +33,18 @@ export class FileSystemAdapter {
           handle: fileHandle,
         });
       } else if (handle.kind === "directory") {
-        await this.scanDirectory(
-          handle as FileSystemDirectoryHandle,
-          path,
-          files,
-        );
+        // We currently don't sync subdirectories in OPFS to GDrive in this manner
+        // but this could be extended if needed.
       }
     }
   }
 
   async readFile(path: string): Promise<Blob> {
-    await this.init();
-    if (!this.root) throw new Error("FS not initialized");
-
     const handle = await this.getFileHandle(path);
     return handle.getFile();
   }
 
   async writeFile(path: string, content: Blob | string): Promise<void> {
-    await this.init();
-    if (!this.root) throw new Error("FS not initialized");
-
     const handle = await this.getFileHandle(path, true);
     const writable = await handle.createWritable();
     await writable.write(content);
@@ -74,13 +55,13 @@ export class FileSystemAdapter {
     path: string,
     create = false,
   ): Promise<FileSystemFileHandle> {
-    if (!this.root) throw new Error("FS not initialized");
-
+    const root = await this._getOpfsRoot();
     const parts = path.split("/");
     const fileName = parts.pop()!;
-    let currentDir = this.root;
+    let currentDir = root;
 
     for (const part of parts) {
+      if (!part) continue; // Skip empty parts from leading slashes
       currentDir = await currentDir.getDirectoryHandle(part, { create });
     }
 
