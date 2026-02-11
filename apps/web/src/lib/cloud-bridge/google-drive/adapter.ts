@@ -300,14 +300,58 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   }
 
   async uploadFile(
-    _path: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _content: string | Blob, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _existingId?: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+    path: string,
+    content: string | Blob,
+    existingId?: string,
   ): Promise<RemoteFileMeta> {
     if (!this.accessToken) throw new Error("Not authenticated");
-    // Simplified upload logic for MVP
-    // Real impl needs multipart upload for metadata + content
-    throw new Error("Not implemented");
+
+    const about = await gapi.client.drive.about.get({ fields: "user(emailAddress)" });
+    const email = about.result.user?.emailAddress;
+    const storageKey = `gdrive_folder_id:${email}`;
+    const folderId = localStorage.getItem(storageKey);
+
+    if (!folderId) throw new Error("No sync folder found. Reconnect requested.");
+
+    const fileName = path.split('/').pop() || 'Untitled.md';
+    const metadata = {
+      name: fileName,
+      appProperties: {
+        path, // Store the full relative path
+      },
+      parents: existingId ? undefined : [folderId],
+    };
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', content instanceof Blob ? content : new Blob([content]));
+
+    const method = existingId ? 'PATCH' : 'POST';
+    const url = existingId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+      body: form,
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json();
+      throw new Error(`GDrive Upload Error: ${errorBody.error.message}`);
+    }
+
+    const newMeta = await res.json();
+
+    return {
+      id: newMeta.id,
+      name: newMeta.name,
+      mimeType: newMeta.mimeType,
+      modifiedTime: newMeta.modifiedTime,
+      parents: newMeta.parents,
+      appProperties: newMeta.appProperties,
+    };
   }
 
   async downloadFile(fileId: string): Promise<Blob> {
