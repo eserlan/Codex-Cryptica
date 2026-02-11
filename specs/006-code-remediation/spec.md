@@ -6,17 +6,17 @@ A recent expert architectural review identified several key areas for improvemen
 
 ## Objectives
 
-1.  **Eliminate Type Safety Gaps:** Remove reliance on `@ts-expect-error` for File System Access API by introducing proper type definitions.
+1.  **Harden and Type Local-First Storage:** Ensure the new OPFS-based storage is robust and type-safe.
 2.  **Harden Persistence Layer:** Replace the fragile `setTimeout` save mechanism with a robust, sequential write queue to prevent race conditions.
 3.  **Optimize Graph Rendering:** Prevent unnecessary and expensive full graph re-layouts when minor state changes occur.
 4.  **Standardize Themes:** Extract hardcoded visual styles from components to improve maintainability.
 
 ## Implementation Plan
 
-### 1. File System API Type Definitions
+### 1. OPFS Storage Hardening
 
-- **Goal:** Full type safety for `window.showDirectoryPicker` and `FileSystemHandle`.
-- **Action:** Create `apps/web/src/types/file-system.d.ts` containing the standard interfaces for the File System Access API.
+- **Goal:** Ensure full type safety and reliability for the new OPFS storage layer.
+- **Action:** The migration to OPFS has largely resolved the original `NoModificationAllowedError` and brand-check issues. The primary action is to ensure all interactions with the OPFS handles are correctly typed within the `vault.svelte.ts` and `opfs.ts` utilities.
 - **Success Criteria:** Removal of all `@ts-expect-error` comments related to file system operations in `VaultStore.svelte.ts`.
 
 ### 2. Robust Write Queue (Persistence)

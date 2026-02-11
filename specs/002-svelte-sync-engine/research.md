@@ -6,26 +6,22 @@
 - **Finding**: `apps/web/package.json` confirms `"svelte": "^5.45.6"`.
 - **Decision**: Use **Svelte 5 Runes** (`$state`, `$derived`, `$effect`) for all store logic. This aligns with the "fine-grained reactivity" goal.
 
-## 2. Persistence Strategy (RxDB vs. Native FS)
+## 2. Persistence Strategy (OPFS-First)
 
-- **Context**: Spec mentions "RxDB + OPFS" but also "The Vault Store" and "File System Access API". The Constitution mandates "interoperability with other tools (e.g., Obsidian)".
-- **Constraint**: OPFS (Origin Private File System) is sandboxed and invisible to the user's OS file explorer (without special export steps). The File System Access API allows direct read/write to a user-selected folder.
-- **Conflict**: RxDB typically uses IndexedDB or OPFS (via SQLite/dedicated workers) for its storage. It doesn't natively sync to a tree of Markdown files in a user's folder.
-- **Decision**: **Hybrid Approach**.
-  - **Source of Truth**: The Local File System (accessed via File System Access API handle). This satisfies "interoperability".
-  - **In-Memory "Hot" State**: The `Vault Store` (Svelte Map/Array).
-  - **Why drop RxDB (for this scope)?**: Syncing RxDB <-> Markdown Files bi-directionally is complex and might be overkill for the initial "Sync Loop". The goal is "Markdown <-> Graph".
-  - **Revised Plan**: Implement the `Vault Store` as a custom class backed by the File System Access API. We will _not_ use RxDB for this specific feature unless strictly necessary for query performance (which for <1000 files might not be needed yet). _Correction_: Check if RxDB is already installed/used. (It is in `package.json`).
-  - **Refinement**: If RxDB is already there, we might use it as the _index_ (cache) for the Markdown files to enable fast graph queries, but the _files_ themselves are the master record.
-  - **Final Decision for this Spec**: Focus on the **Svelte Store -> File System** link. The "Vault" _is_ the in-memory representation. We will defer complex indexing.
+- **Context**: The Constitution mandates local-first storage and interoperability.
+- **Initial Approach**: The File System Access API (FSA) was chosen as the primary source of truth to allow users to directly edit their Markdown files.
+- **Problem**: FSA handles on mobile devices (Chrome on Android) suffer from silent permission revocation, leading to `NoModificationAllowedError` and a highly unreliable user experience.
+- **Decision**: **Hybrid OPFS-First Architecture**.
+  - **Primary Storage**: The **Origin Private File System (OPFS)** is now the main storage for the vault's "working memory". It is fast, reliable, and does not require persistent permission prompts.
+  - **User-Directed Export**: The **File System Access API (FSA)** is now used for a "Sync to Local Folder" feature. This allows users to create a durable, user-accessible backup of their vault, satisfying the "interoperability" requirement.
+  - **Why this is better**: This approach provides the reliability needed for a good mobile experience while still giving users full control and ownership of their data via the export feature.
 
-## 3. File System Access API & "The File Watcher"
+## 3. External File Watching
 
-- **Challenge**: The Web File System Access API does _not_ natively support "watching" a directory for changes made by _other_ apps (unless using specific browser flags or polling).
-- **Workaround**: We can only reliably detect changes made _within_ our app. For external changes, we might need a "Rescan/Reload" button or a polling mechanism (carefully managed).
+- **Challenge**: Neither OPFS nor FSA provide a reliable, native "file watching" mechanism to detect changes made by external applications.
 - **Decision**:
-  1.  Primary Loop: App Edit -> Store Update -> File Write (Debounced).
-  2.  External Edit: Manual "Reload Vault" or simple polling (every 30s?) if active. _Note_: Implementing robust "File Watching" from the browser is non-trivial. We will start with "App-driven updates" and "Load on Startup".
+  1.  The application will only be responsible for changes made within its own UI.
+  2.  The "Sync to Local Folder" feature is a one-way export from OPFS to the local disk. Future work may explore a bi-directional sync, but it is not in the current scope.
 
 ## 4. Graph Data Structure
 

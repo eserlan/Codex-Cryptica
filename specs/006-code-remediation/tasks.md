@@ -1,9 +1,5 @@
 # Tasks: Code Remediation
 
-- [ ] **Type Definitions** <!-- id: 1 -->
-  - [ ] Create `apps/web/src/types/file-system.d.ts` with complete File System Access API interfaces. <!-- id: 1.1 -->
-  - [ ] Update `apps/web/src/lib/stores/vault.svelte.ts` to remove `@ts-expect-error` and use the new types. <!-- id: 1.2 -->
-
 - [ ] **Persistence Layer** <!-- id: 2 -->
   - [ ] Create `apps/web/src/lib/utils/queue.ts` implementing a `SequentialTaskQueue`. <!-- id: 2.1 -->
   - [ ] Refactor `VaultStore.scheduleSave` to use the queue instead of `setTimeout`. <!-- id: 2.2 -->

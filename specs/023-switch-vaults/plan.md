@@ -13,7 +13,7 @@ Implement an explicit "Close Vault" mechanism that wipes all sensitive campaign 
 - **State Management**: Svelte Stores (`VaultStore`)
 - **Search Engine**: FlexSearch (SearchService)
 - **Sync Engine**: WorkerBridge (Web Workers)
-- **Persistence**: File System Access API + IndexedDB
+- **Persistence**: OPFS + IndexedDB
 
 ## Constitution Check
 

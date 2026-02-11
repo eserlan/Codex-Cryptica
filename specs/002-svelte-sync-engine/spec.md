@@ -10,9 +10,9 @@ Instead of separate states, we will create a custom store (e.g., `vault.svelte.t
 
 ### Component Svelte Implementation
 
-- **The Vault Store**: A global class using `$state` containing the collection of all Entity objects.
+- **The Vault Store**: A global class using `$state` containing the collection of all Entity objects, with all file I/O directed to the Origin Private File System (OPFS).
 - **The Graph Derived Store**: A `$derived` property that automatically transforms the Vault data into Cytoscape-ready JSON (elements).
-- **The File Watcher**: Using the File System Access API, a listener that updates the Vault store whenever a file on disk is changed.
+- **User-Directed Sync**: A method in the `VaultStore` that allows the user to export their entire OPFS vault to a local directory using the File System Access API.
 
 ## 3. Technical Spec: The Entity Schema (Svelte Interface)
 

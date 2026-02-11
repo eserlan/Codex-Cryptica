@@ -12,7 +12,7 @@ Extend the Lore Oracle to support on-demand image generation via Nano Banana (Ge
 **Primary Dependencies**: `@google/generative-ai` (for context), Browser Native `fetch` (for Nano Banana REST API), `idb` (for metadata)  
 **Storage**: OPFS (Origin Private File System) for binary images, Markdown (frontmatter) for entity linkage.  
 **Testing**: Vitest (Logic), Playwright (Drag & Drop UX)  
-**Target Platform**: Modern Web Browsers (supporting File System Access API)
+**Target Platform**: Modern Web Browsers (supporting OPFS)
 **Project Type**: Web application (SvelteKit)  
 **Performance Goals**: Image generation < 15s, UI response < 100ms.  
 **Constraints**: Requires active internet for generation, fully offline for viewing. No external image CDNs allowed.  

@@ -53,7 +53,7 @@ _Goal: "The Reactive Loop". Drive Cytoscape from Vault state._
 
 _Goal: "Auto-Save". Write changes back to the File System._
 
-- [x] T025 [US3] Implement `writeEntity` utility with File System Access API in `apps/web/src/lib/utils/fs.ts`
+- [x] T025 [US3] Implement `writeOpfsFile` utility for OPFS in `apps/web/src/lib/utils/opfs.ts`
 - [x] T026 [US3] Add debounce logic to `VaultStore` in `apps/web/src/lib/stores/vault.svelte.ts`
 - [x] T027 [US3] Trigger `writeEntity` on `updateEntity` in `apps/web/src/lib/stores/vault.svelte.ts`
 - [x] T028 [US3] Implement `deleteEntity` action (disk deletion) in `apps/web/src/lib/stores/vault.svelte.ts`
