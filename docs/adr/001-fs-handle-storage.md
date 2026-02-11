@@ -1,57 +1,54 @@
-# ADR 001: File System Handle Storage Strategy
+# ADR 001: Local-First Storage Strategy
 
-- **Status:** Proposed
-- **Date:** 2026-02-10
-- **Context:** Svelte 5 / File System Access API Interaction
+- **Status:** Superseded by OPFS-first architecture
+- **Date:** 2026-02-11
+
+---
+
+## Original Problem Statement (Pre-OPFS)
+
+This ADR originally addressed a conflict between Svelte 5's Proxy-based reactivity and the brand checks performed by the File System Access API (FSA). The initial decision was to store FSA handles in private, non-reactive class fields to prevent them from being proxied.
+
+### Limitations of the Original Solution
+
+While storing handles non-reactively solved the Svelte Proxy issue on desktop, it did not resolve a more fundamental problem on mobile devices (Chrome on Android) and in sandboxed environments. FSA handles on these platforms can have their write permissions silently revoked by the OS, leading to a `NoModificationAllowedError` that is difficult to recover from without a fresh user gesture (re-picking the folder). This made the application unreliable for mobile users.
+
+---
+
+## New Architecture: OPFS-First with FSA for Export
+
+- **Status:** Active
+- **Date:** 2026-02-11
 
 ## Context and Problem Statement
 
-In Svelte 5, all properties within a `$state` object are wrapped in JavaScript Proxies to enable fine-grained reactivity. The File System Access API (used for local vault persistence) is a security-sensitive native API that performs "brand checks" on objects passed to its methods (e.g., `createWritable`, `getFileHandle`).
+The application requires a robust, local-first storage solution that works reliably across desktop and mobile, without requiring constant permission prompts. The `NoModificationAllowedError` with the File System Access API on mobile makes it unsuitable for primary "working" storage.
 
-On mobile browsers (Chrome Android) and certain Linux builds, these brand checks fail when a Proxy is passed instead of the raw `FileSystemHandle` object, resulting in `NoModificationAllowedError` or generic `TypeErrors`.
+## Decision
 
-### Current Implementation
+We have adopted a hybrid storage architecture:
 
-We currently store `rootHandle` and entity `_fsHandle` objects directly in `$state`. To fix the errors, we must call `$state.snapshot(handle)` before every single native API call.
+1.  **Primary Storage (Working Memory):** The **Origin Private File System (OPFS)** is now the primary storage location for the vault.
+    -   **Pros:**
+        -   **High-Performance:** Optimized for frequent read/write operations.
+        -   **No Prompts:** Once initialized, it does not require user permission prompts for access.
+        -   **Reliable:** Not subject to the same silent permission revocation as FSA handles on mobile.
+        -   **Solves Brand-Check:** As it's a separate file system managed by the browser, the handle management is simpler and not exposed to the same Svelte reactivity issues.
+    -   **Cons:**
+        -   **Opaque to User:** The file system is a black box managed by the browser. Users cannot easily access or manipulate their files with external editors.
 
-## Decision Drivers
-
-1.  **Reliability:** We must ensure 100% write success on mobile devices.
-2.  **Maintainability:** Avoid "Snapshot Boilerplate"—the risk of a developer forgetting to snapshot a handle in a new feature is high.
-3.  **Performance:** Proxies add overhead; there is no benefit to making the internal structure of a native Handle reactive.
-
-## Considered Options
-
-### Option 1: Reactive Handles + Explicit Snapshots
-
-Keep handles in `$state` and use `$state.snapshot()` manually.
-
-- **Pros:** Requires no major refactoring of the store structure.
-- **Cons:** Extremely brittle. Forgetting one snapshot leads to silent "read-only" failures in production.
-
-### Option 2: Use `browser-fs-access` Library
-
-Integrate a third-party wrapper for the File System Access API.
-
-- **Pros:** Better fallbacks for older browsers (e.g., Safari).
-- **Cons:** Does not solve the Svelte Proxy problem. If the library's returned handles are put into `$state`, the brand-check issue remains.
-
-### Option 3: Private Non-Reactive Handle Storage (Decision)
-
-Move all native `FileSystemHandle` objects into private class fields (`#rootHandle`) or a non-reactive weak map. Expose only primitive metadata (name, path, authorization status) via `$state`.
-
-- **Pros:** **Guaranteed success.** The handles never touch the Svelte reactivity system, so they are never proxied. Brand checks will always pass.
-- **Cons:** Requires refactoring the `VaultStore` to separate "Handle Logic" from "UI State Logic."
+2.  **User-Directed Sync (Long-Term Storage):** The **File System Access API (FSA)** is retained for a user-initiated "Sync to Local Folder" feature.
+    -   **Pros:**
+        -   **User Sovereignty:** Provides a mechanism for users to export their entire vault to a visible, durable location on their disk. This serves as a backup and allows for external editing.
+    -   **Cons:**
+        -   Subject to the permission issues that make it unsuitable for primary storage, but acceptable for a manual, user-triggered export process.
 
 ## Decision Outcome
 
-**Decision: Option 3 (Private Non-Reactive Storage)**
+This hybrid approach provides the best of both worlds: the reliability and performance of OPFS for the core application experience, and the user control and data portability of FSA for backups and external access. All core application logic now exclusively targets OPFS.
 
-We will refactor `VaultStore` to store the raw `FileSystemDirectoryHandle` in a private field. We will also move entity handles into a non-reactive "Handle Registry" (a Map or WeakMap).
+### Implementation Details
 
-### Implementation Plan
-
-1.  **Refactor `VaultStore`:** Change `rootHandle` from a `$state` property to a private `#rootHandle`.
-2.  **State Synchronization:** Use a reactive `isAuthorized` boolean and `vaultName` string for the UI.
-3.  **Handle Registry:** Store entity-to-handle mappings in a plain JavaScript `Map` that is not part of the reactive state.
-4.  **Remove Snapshots:** Delete all `$state.snapshot()` calls once the handles are no longer reactive.
+1.  **`VaultStore` Refactor:** The store was refactored to use OPFS handles for all file operations.
+2.  **`Sync to Local` Feature:** A new UI control was added to allow users to trigger a full sync from OPFS to a user-selected local directory.
+3.  **Migration Path:** A one-time, automatic migration was created to move existing FSA-based vaults into the OPFS on first launch.
