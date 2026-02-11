@@ -68,6 +68,23 @@ export async function clearPersistedHandle(): Promise<void> {
   await db.delete("settings", "lastVaultHandle");
 }
 
+export async function getPersistedSyncHandle(): Promise<FileSystemDirectoryHandle | null> {
+  const db = await getDB();
+  return (await db.get("settings", "lastSyncHandle")) || null;
+}
+
+export async function persistSyncHandle(
+  handle: FileSystemDirectoryHandle,
+): Promise<void> {
+  const db = await getDB();
+  await db.put("settings", handle, "lastSyncHandle");
+}
+
+export async function clearPersistedSyncHandle(): Promise<void> {
+  const db = await getDB();
+  await db.delete("settings", "lastSyncHandle");
+}
+
 // Cache Service methods
 export async function getCachedFile(path: string) {
   const db = await getDB();

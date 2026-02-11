@@ -240,8 +240,27 @@ class VaultStore {
 			return;
 		}
 
+		let localHandle: FileSystemDirectoryHandle | null = null;
+
 		try {
-			const localHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+			// 1. Try to get the persisted handle
+			const db = await getDB();
+			localHandle = await db.get('settings', 'lastSyncHandle');
+
+			// 2. Verify permission
+			if (localHandle) {
+				const permission = await localHandle.queryPermission({ mode: 'readwrite' });
+				if (permission !== 'granted') {
+					await localHandle.requestPermission({ mode: 'readwrite' });
+				}
+			}
+
+			// 3. If no handle, or permission denied, prompt user
+			if (!localHandle) {
+				localHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+				await db.put('settings', localHandle, 'lastSyncHandle');
+			}
+
 			this.status = 'saving';
 			debugStore.log(`Syncing OPFS to local folder: ${localHandle.name}`);
 
@@ -259,13 +278,10 @@ class VaultStore {
 				for await (const handle of opfsImagesDir.values()) {
 					if (handle.kind === 'file') {
 						const file = await (handle as any).getFile();
-						const localFileHandle = await localImagesDir.getFileHandle(file.name, { create: true });
-						await writeWithRetry(
-							localHandle,
-							localFileHandle,
-							file,
-							`images/${file.name}`
-						);
+						const localFileHandle = await localImagesDir.getFileHandle(file.name, {
+							create: true
+						});
+						await writeWithRetry(localHandle, localFileHandle, file, `images/${file.name}`);
 					}
 				}
 			} catch (e) {
@@ -274,7 +290,13 @@ class VaultStore {
 
 			debugStore.log('Sync to local folder complete.');
 		} catch (err: any) {
-			if (err.name !== 'AbortError') {
+			if (err.name === 'NotFoundError' && localHandle) {
+				debugStore.error('Sync failed: The previously selected sync folder seems to have been moved or deleted.', err);
+				this.errorMessage = `Sync folder "${localHandle.name}" not found. Please select it again.`;
+				const db = await getDB();
+				await db.delete('settings', 'lastSyncHandle');
+				// We could re-trigger syncToLocal() here, but it's safer to let the user re-initiate.
+			} else if (err.name !== 'AbortError') {
 				console.error('Sync to local folder failed', err);
 				debugStore.error('Sync to local folder failed', err);
 				this.errorMessage = `Sync failed: ${err.message}`;
