@@ -6,6 +6,7 @@ test.describe("Oracle UI Refinement", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-shared-key";
       // Mock window.showDirectoryPicker
       // @ts-expect-error - Mock browser API
       window.showDirectoryPicker = async () => {
@@ -29,23 +30,15 @@ test.describe("Oracle UI Refinement", () => {
         };
       };
     });
-    await page.goto("/");
+    await page.goto("http://localhost:5173/");
 
-    // Open Vault
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    // Wait for auto-init
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
 
     // Enable Oracle by adding a dummy API key to IndexedDB
     await page.evaluate(async () => {
-      const request = indexedDB.open("CodexArcana", 2);
-      request.onupgradeneeded = (e: any) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains("settings")) {
-          db.createObjectStore("settings");
-        }
-        if (!db.objectStoreNames.contains("chat_history")) {
-          db.createObjectStore("chat_history", { keyPath: "id" });
-        }
-      };
+      const dbName = "CodexCryptica"; // Updated DB name
+      const request = indexedDB.open(dbName, 5); // Updated version
 
       const db: IDBDatabase = await new Promise((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
@@ -56,6 +49,7 @@ test.describe("Oracle UI Refinement", () => {
       await new Promise((resolve) => (tx.oncomplete = resolve));
     });
     await page.reload();
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
 
     // Mock Gemini API for text generation
     await page.route(
@@ -115,23 +109,32 @@ test.describe("Oracle UI Refinement", () => {
       page.locator("div").filter({ hasText: "Persistent Message" }).first(),
     ).toBeVisible();
 
-    // Close/Detach Vault
-    const closeBtn = page.getByRole("button", { name: "CLOSE" });
-    await expect(closeBtn).toBeVisible();
-    await closeBtn.click();
+    // Switch/Create new vault to clear history
+    await page.getByTitle("Switch Vault").click();
+    await page.getByRole("button", { name: "NEW VAULT" }).click();
+    await page.getByPlaceholder("Vault Name...").fill("Empty Vault");
+    await page.getByRole("button", { name: "CREATE" }).click();
 
-    // Wait for vault to actually close (OPEN VAULT button should reappear)
-    await expect(
-      page.getByRole("button", { name: "OPEN VAULT" }),
-    ).toBeVisible();
+    // Re-ensure API key exists (switch might have reset state in some edge cases)
+    await page.evaluate(async () => {
+      const dbName = "CodexCryptica";
+      const request = indexedDB.open(dbName, 5);
+      const db: IDBDatabase = await new Promise((r) => (request.onsuccess = () => r(request.result)));
+      const tx = db.transaction("settings", "readwrite");
+      tx.objectStore("settings").put("fake-key", "ai_api_key");
+      await new Promise((r) => (tx.oncomplete = r));
+    });
 
-    // Re-open Oracle if it was closed by vault reset
-    const oracleBtn = page.getByTitle("Open Lore Oracle");
-    if (await oracleBtn.isVisible()) {
-      await oracleBtn.click();
-    }
+    // Oracle should still be open, so we don't need to click toggle
+    // Verify message is gone from the chat container
 
     // Verify message is gone from the chat container
+    // Verify message is gone from the chat container
+    const messagesLength = await page.evaluate(() => (window as any).oracle.messages.length);
+    console.log("Oracle messages length after switch:", messagesLength);
+    const messagesContent = await page.evaluate(() => (window as any).oracle.messages.map((m: any) => m.content));
+    console.log("Oracle messages content:", messagesContent);
+
     const chatContainer = page.locator(".custom-scrollbar");
     await expect(
       chatContainer.getByText("Persistent Message"),

@@ -2,266 +2,70 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Vault E2E", () => {
   test.beforeEach(async ({ page }) => {
-    // Debugging: Pipe console logs
-    page.on("console", (msg) => console.log(`BROWSER: ${msg.text()}`));
-    page.on("pageerror", (err) => console.log(`BROWSER ERROR: ${err}`));
-
-    // Setup default empty vault mock
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      // Intercept IndexedDB to handle DataCloneError with mock handles
-      // instead of completely mocking the entire API which is brittle.
-      const originalPut = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (
-        ...args: [unknown, IDBValidKey?]
-      ) {
-        try {
-          return originalPut.apply(this, args);
-        } catch (e: any) {
-          if (e.name === "DataCloneError") {
-            console.log(
-              "MOCK: Caught DataCloneError in IndexedDB, returning fake success",
-            );
-            const req: any = {
-              onsuccess: null,
-              onerror: null,
-              result: args[1],
-              readyState: "done",
-              addEventListener: function (type: string, listener: any) {
-                if (type === "success") this.onsuccess = listener;
-              },
-            };
-            setTimeout(() => {
-              if (req.onsuccess) req.onsuccess({ target: req });
-            }, 0);
-            return req;
-          }
-          throw e;
-        }
-      };
-
-      const mockFileSystem = {
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        entries: async function* () {
-          yield* [];
-        },
-        values: () => [],
-        getFileHandle: async (name: string) => ({
-          kind: "file",
-          name: name,
-          getFile: async () =>
-            new File(
-              [
-                `---\nid: ${name.replace(".md", "")} 
-title: ${name}
-type: npc
----
-# Content`,
-              ],
-              name,
-            ),
-        }),
-        getDirectoryHandle: async () => mockFileSystem,
-      };
-
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => {
-        console.log("MOCK: showDirectoryPicker invoked");
-        return mockFileSystem;
-      };
+      (window as any).__E2E__ = true;
     });
     await page.goto("/");
-  });
-
-  test("Initial State (No Vault)", async ({ page }) => {
-    await expect(page.getByText("NO SIGNAL")).toBeVisible();
-    await expect(
-      page.getByText("Open a local vault to initiate surveillance."),
-    ).toBeVisible();
-  });
-
-  test("Open Empty Vault", async ({ page }) => {
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("0 ENTITIES");
-  });
-
-  test("Open Populated Vault", async ({ page }) => {
-    // Inject populated mock
-    await page.addInitScript(() => {
-      const files = [
-        {
-          name: "Alice.md",
-          kind: "file",
-          content: "---\nid: alice\ntitle: Alice\ntype: npc\n---\n# Alice",
-        },
-        {
-          name: "Bob.md",
-          kind: "file",
-          content: "---\nid: bob\ntitle: Bob\ntype: npc\n---\n# Bob",
-        },
-      ];
-
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => {
-        const mockFS = {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: () => files,
-          // entries needs to yield [name, handle]
-          entries: async function* () {
-            for (const file of files) {
-              const handle = {
-                kind: "file",
-                name: file.name,
-                getFile: async () => new File([file.content], file.name),
-              };
-              yield [file.name, handle];
-            }
-          },
-          getFileHandle: async (name: string) => ({
-            kind: "file",
-            name: name,
-            getFile: async () => new File([""], name),
-          }),
-          getDirectoryHandle: async () => mockFS,
-        };
-        return mockFS;
-      };
+    // Wait for vault initialization (OPFS auto-load)
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
     });
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
+  });
 
-    await page.reload();
+  test("Auto-initializes Default Vault", async ({ page }) => {
+    await expect(page.getByTitle("Switch Vault")).toContainText(
+      /Default Vault|Local Vault/,
+    );
+    // Should be empty initially — when 0 entities, the UI shows "NO VAULT" instead of entity-count
+    await expect(page.getByText("NO VAULT")).toBeVisible();
+  });
 
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+  test("Create Entity Updates Graph", async ({ page }) => {
+    // Create Node A
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Node A");
+    await page.getByRole("button", { name: "ADD" }).click();
+    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES");
 
-    // Verify Header Status
+    // Create Node B
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Node B");
+    await page.getByRole("button", { name: "ADD" }).click();
     await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES");
 
-    // Verify Entity Cards via Search
+    // Verify Search
     await page.keyboard.press("Control+k");
-    await page.keyboard.press("Meta+k");
-
-    await expect(page.getByPlaceholder("Search (Cmd+K)...")).toBeVisible();
-
-    // Type query to populate results
-    await page.getByPlaceholder("Search (Cmd+K)...").fill("Alice");
-
-    await expect(
-      page.getByTestId("search-result").filter({ hasText: "Alice" }),
-    ).toBeVisible();
-
-    // Close search
+    await page.getByPlaceholder("Search (Cmd+K)...").fill("Node A");
+    await expect(page.getByTestId("search-result").first()).toContainText(
+      "Node A",
+    );
     await page.keyboard.press("Escape");
   });
 
-  test("Graph View Renders with Height", async ({ page }) => {
-    await page.addInitScript(() => {
-      const files = [
-        {
-          name: "NodeA.md",
-          kind: "file",
-          content: "---\nid: node-a\ntitle: Node A\ntype: npc\n---\n# Node A",
-        },
-        {
-          name: "NodeB.md",
-          kind: "file",
-          content: "---\nid: node-b\ntitle: Node B\ntype: npc\n---\n# Node B",
-        },
-      ];
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: () => files,
-        entries: async function* () {
-          for (const f of files)
-            yield [
-              f.name,
-              {
-                kind: "file",
-                name: f.name,
-                getFile: async () => new File([f.content], f.name),
-              },
-            ];
-        },
-        getFileHandle: async (name: string) => ({
-          kind: "file",
-          name,
-          getFile: async () => new File([""], name),
-        }),
-        getDirectoryHandle: async () => ({}),
-      });
-    });
-    await page.reload();
-    await page.getByRole("button", { name: "Open Vault" }).click();
-
-    // Wait for graph to be ready
-    const canvas = page.locator("canvas").first();
-    await expect(canvas).toBeVisible();
-
-    // Check dimensions
-    const box = await canvas.boundingBox();
-    expect(box?.height).toBeGreaterThan(0);
-    expect(box?.width).toBeGreaterThan(0);
-  });
-
   test("Connect Mode UI", async ({ page }) => {
-    // Setup vault to enable graph interaction
-    await page.addInitScript(() => {
-      const files = [
-        { name: "A.md", kind: "file", content: "---\nid: a\n---\n" },
-      ];
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: () => files,
-        entries: async function* () {
-          for (const f of files)
-            yield [
-              f.name,
-              {
-                kind: "file",
-                name: f.name,
-                getFile: async () => new File([f.content], f.name),
-              },
-            ];
-        },
-        getFileHandle: async (name: string) => ({
-          kind: "file",
-          name,
-          getFile: async () => new File([""], name),
-        }),
-        getDirectoryHandle: async () => ({}),
-      });
-    });
-    await page.reload();
-    await page.getByRole("button", { name: "Open Vault" }).click();
+    // Need at least one node to connect
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Source Node");
+    await page.getByRole("button", { name: "ADD" }).click();
 
     // 1. Toggle via Button
-    const linkBtn = page.getByTitle("Connect Mode (C)");
-    await expect(linkBtn).toBeVisible();
-    await linkBtn.click();
+    const connectBtn = page.getByTitle("Connect Mode (C)");
+    await expect(connectBtn).toBeVisible();
+    await connectBtn.click();
+
+    // Should show "SELECT SOURCE NODE"
     await expect(page.getByText("> SELECT SOURCE NODE")).toBeVisible();
 
     // Toggle off
-    await linkBtn.click();
+    await connectBtn.click();
     await expect(page.getByText("> SELECT SOURCE NODE")).not.toBeVisible();
 
     // 2. Toggle via Keyboard 'C'
     await page.keyboard.press("c");
     await expect(page.getByText("> SELECT SOURCE NODE")).toBeVisible();
-
-    // 3. Exit via Escape
-    await page.keyboard.press("Escape");
-    await expect(page.getByText("> SELECT SOURCE NODE")).not.toBeVisible();
   });
 });

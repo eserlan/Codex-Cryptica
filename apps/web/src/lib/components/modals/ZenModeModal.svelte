@@ -33,11 +33,17 @@
     let isCopied = $state(false);
 
     $effect(() => {
+        let isStale = false;
         if (entity?.image) {
-            resolvedImageUrl = ""; // Image resolution logic temporarily disabled
+            vault.resolveImageUrl(entity.image).then((url) => {
+                if (!isStale) resolvedImageUrl = url;
+            });
         } else {
             resolvedImageUrl = "";
         }
+        return () => {
+            isStale = true;
+        };
     });
 
     const handleCopy = async () => {

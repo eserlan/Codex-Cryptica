@@ -42,8 +42,9 @@ test.describe("Vault Node Deletion", () => {
       };
     });
 
-    await page.goto("/");
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    await page.goto("http://localhost:5173/");
+    // Wait for auto-init
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });
 
   test("should delete a node and its file", async ({ page }) => {

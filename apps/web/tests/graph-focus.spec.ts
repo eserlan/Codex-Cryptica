@@ -2,47 +2,34 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Graph Focus Mode", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock initialization to ensure a consistent graph state
     await page.addInitScript(() => {
-      let _vault: any;
-      Object.defineProperty(window, "vault", {
-        get() {
-          return _vault;
-        },
-        set(v) {
-          _vault = v;
-          // Apply mocks immediately when vault is set
-          _vault.isAuthorized = true;
-          _vault.status = "idle";
-          _vault.rootHandle = { kind: "directory" };
-          _vault.entities = {
-            "node-1": {
-              id: "node-1",
-              title: "Node 1",
-              connections: [{ target: "node-2", type: "related" }],
-            },
-            "node-2": {
-              id: "node-2",
-              title: "Node 2",
-              connections: [],
-            },
-            "node-3": {
-              id: "node-3",
-              title: "Node 3",
-              connections: [],
-            },
-            island: {
-              id: "island",
-              title: "Island Node",
-              connections: [],
-            },
-          };
-        },
-        configurable: true,
-      });
+      (window as any).DISABLE_ONBOARDING = true;
     });
 
-    await page.goto("/");
+    await page.goto("http://localhost:5173/");
+    
+    // Create nodes via UI for clean state
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Node 1");
+    await page.getByRole("button", { name: "ADD" }).click();
+    
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Node 2");
+    await page.getByRole("button", { name: "ADD" }).click();
+    
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Node 3");
+    await page.getByRole("button", { name: "ADD" }).click();
+    
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("island");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    // Link Node 1 to Node 2
+    await page.evaluate(() => {
+        (window as any).vault.addConnection("node-1", "node-2", "related");
+    });
+
     // Wait for graph to be ready - check if cy is exposed and has nodes
     await page.waitForFunction(
       () => {

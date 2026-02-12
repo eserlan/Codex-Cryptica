@@ -6,8 +6,8 @@ test.describe("Visual Styling Templates", () => {
       (window as any).DISABLE_ONBOARDING = true;
     });
     await page.goto("http://localhost:5173/");
-    // Open a vault to enable settings
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    // Wait for auto-init
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });
 
   test("Switch to Fantasy theme and verify visual changes", async ({

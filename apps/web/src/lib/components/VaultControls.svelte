@@ -4,6 +4,7 @@
     import { categories } from "$lib/stores/categories.svelte";
     import { cloudConfig } from "$stores/cloud-config";
     import ShareModal from "$lib/components/ShareModal.svelte";
+    import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
 
     let { orientation = "horizontal" } = $props<{
         orientation?: "horizontal" | "vertical";
@@ -11,6 +12,7 @@
 
     let showForm = $state(false);
     let showShare = $state(false);
+    let showVaultSwitcher = $state(false);
     let newTitle = $state("");
     let newType = $state<string>("character");
     let isCreating = $state(false);
@@ -121,6 +123,27 @@
             </div>
         {/if}
 
+        <button
+            class="flex items-center gap-2 rounded transition-colors group {isVertical
+                ? 'justify-center w-full py-3 min-h-[44px]'
+                : 'px-2 py-1 hover:bg-theme-surface/50'}"
+            onclick={() => (showVaultSwitcher = true)}
+            title="Switch Vault"
+            data-testid="open-vault-button"
+        >
+            <span
+                class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
+            ></span>
+            <span
+                class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[120px] truncate"
+            >
+                {vault.vaultName}
+            </span>
+            <span
+                class="icon-[lucide--chevron-down] w-3 h-3 text-theme-muted/50 group-hover:text-theme-primary"
+            ></span>
+        </button>
+
         <div
             class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical
                 ? 'text-center'
@@ -215,6 +238,10 @@
 
     {#if showShare}
         <ShareModal close={() => (showShare = false)} />
+    {/if}
+
+    {#if showVaultSwitcher}
+        <VaultSwitcherModal onClose={() => (showVaultSwitcher = false)} />
     {/if}
 
     {#if showForm}

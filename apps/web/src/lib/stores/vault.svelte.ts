@@ -5,9 +5,18 @@ import {
   walkOpfsDirectory,
   writeOpfsFile,
   readOpfsBlob,
+  deleteOpfsEntry,
+  createVaultDir,
+  getVaultDir,
+  deleteVaultDir,
   type FileEntry,
 } from "../utils/opfs";
-import { getPersistedHandle, clearPersistedHandle, getDB } from "../utils/idb";
+import {
+  getPersistedHandle,
+  clearPersistedHandle,
+  getDB,
+  type VaultRecord,
+} from "../utils/idb";
 import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity, Connection } from "schema";
 import { searchService } from "../services/search";
@@ -38,6 +47,8 @@ class VaultStore {
   isOpfs = $state(true);
   isLoadingOpfs = $state(true);
   isGuest = $state(false);
+  activeVaultId = $state<string | null>(null);
+  availableVaults = $state<VaultRecord[]>([]);
   storageAdapter: IStorageAdapter | null = null;
 
   inboundConnections = $state<
@@ -108,6 +119,13 @@ class VaultStore {
     return this.#opfsRoot;
   }
 
+  private async getActiveVaultHandle(): Promise<
+    FileSystemDirectoryHandle | undefined
+  > {
+    if (!this.#opfsRoot || !this.activeVaultId) return undefined;
+    return await getVaultDir(this.#opfsRoot, this.activeVaultId);
+  }
+
   vaultName = $state("Local Vault");
   private saveQueue = new KeyedTaskQueue();
 
@@ -119,14 +137,124 @@ class VaultStore {
     // Initialization now happens in init()
   }
 
+  async listVaults(): Promise<VaultRecord[]> {
+    const db = await getDB();
+    const vaults = await db.getAll("vaults");
+    this.availableVaults = vaults.sort(
+      (a, b) => b.lastOpenedAt - a.lastOpenedAt,
+    );
+    return this.availableVaults;
+  }
+
+  async createVault(name: string): Promise<string> {
+    if (!this.#opfsRoot) throw new Error("Storage not initialized");
+
+    // Generate simple unique ID
+    const slug = sanitizeId(name) || "vault";
+    const id = `${slug}-${Date.now().toString(36).slice(-4)}`;
+
+    const db = await getDB();
+
+    // Create Directory
+    await createVaultDir(this.#opfsRoot, id);
+
+    // Register
+    const record: VaultRecord = {
+      id,
+      name,
+      createdAt: Date.now(),
+      lastOpenedAt: Date.now(),
+      entityCount: 0,
+    };
+    await db.put("vaults", record);
+
+    // Switch to new vault
+    await this.switchVault(id);
+
+    return id;
+  }
+
+  async renameVault(id: string, newName: string): Promise<void> {
+    const db = await getDB();
+    const vault = await db.get("vaults", id);
+    if (vault) {
+      vault.name = newName;
+      await db.put("vaults", vault);
+      if (this.activeVaultId === id) {
+        this.vaultName = newName;
+      }
+      await this.listVaults();
+    }
+  }
+
+  async deleteVault(id: string): Promise<void> {
+    if (id === this.activeVaultId)
+      throw new Error("Cannot delete active vault");
+    if (!this.#opfsRoot) return;
+
+    try {
+      await deleteVaultDir(this.#opfsRoot, id);
+      const db = await getDB();
+      await db.delete("vaults", id);
+      await this.listVaults();
+    } catch (e) {
+      console.warn("Failed to delete vault dir", e);
+      throw new Error("Filesystem lock prevented deletion. Please try again.");
+    }
+  }
+
+  async switchVault(id: string): Promise<void> {
+    if (this.activeVaultId === id) return;
+
+    // Ensure all pending changes are flushed before switching vaults
+    await this.saveQueue.waitForAll();
+
+    const db = await getDB();
+    const vault = await db.get("vaults", id);
+    if (!vault) throw new Error(`Vault ${id} not found`);
+
+    // Now that we've verified the target vault exists, we can safely wipe entities
+    this.entities = {};
+
+    // Clear global chat history to prevent leakage between vaults
+    // We do this at the DB level to ensure safety before any re-init
+    try {
+      const tx = db.transaction("chat_history", "readwrite");
+      await tx.store.clear();
+      await tx.done;
+    } catch (e) {
+      console.warn("Failed to clear chat history on vault switch", e);
+    }
+
+    this.status = "loading";
+    this.errorMessage = null; // Clear old errors
+
+    this.activeVaultId = id;
+    this.vaultName = vault.name;
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("vault-switched", { detail: { id } }),
+      );
+    }
+
+    await db.put("settings", id, "activeVaultId");
+
+    vault.lastOpenedAt = Date.now();
+    await db.put("vaults", vault);
+
+    await this.loadFiles();
+    await this.listVaults();
+  }
+
   async init() {
     this.isInitialized = false;
     this.isLoadingOpfs = true;
+    this.status = "loading";
     debugStore.log(`Vault initializing (v${__APP_VERSION__}) [OPFS Mode]...`);
 
     try {
       this.#opfsRoot = await getOpfsRoot();
-      this.vaultName = "Local Vault";
 
       const db = await getDB();
       const savedVisibility = await db.get("settings", "defaultVisibility");
@@ -139,9 +267,34 @@ class VaultStore {
         this.migrationRequired = true;
         // Attempt auto-migration if permissions might already be granted
         await this.runMigration(true);
-      } else {
-        await this.loadFiles();
       }
+
+      await this.migrateStructure();
+
+      this.activeVaultId = (await db.get("settings", "activeVaultId")) || null;
+      if (!this.activeVaultId && this.#opfsRoot) {
+        // Initialize default vault if none active
+        this.activeVaultId = "default";
+        await db.put("settings", "default", "activeVaultId");
+        await createVaultDir(this.#opfsRoot, "default");
+
+        const existing = await db.get("vaults", "default");
+        if (!existing) {
+          await db.put("vaults", {
+            id: "default",
+            name: "Default Vault",
+            createdAt: Date.now(),
+            lastOpenedAt: Date.now(),
+            entityCount: 0,
+          });
+        }
+      }
+
+      const vaultRecord = await db.get("vaults", this.activeVaultId!);
+      this.vaultName = vaultRecord?.name || "Local Vault";
+
+      await this.listVaults();
+      await this.loadFiles();
     } catch (err) {
       console.error("Failed to init OPFS vault", err);
       debugStore.error("Failed to init OPFS vault", err);
@@ -152,6 +305,73 @@ class VaultStore {
       this.isLoadingOpfs = false;
       this.isInitialized = true;
       if (this.status !== "error") this.status = "idle";
+    }
+  }
+
+  private async migrateStructure() {
+    if (!this.#opfsRoot) return;
+    try {
+      try {
+        await this.#opfsRoot.getDirectoryHandle("vaults");
+        return;
+      } catch {
+        /* Initial run or vaults dir missing - proceed to migration */
+      }
+
+      const rootFiles: { handle: FileSystemFileHandle; name: string }[] = [];
+      let hasImages = false;
+
+      for await (const [name, handle] of this.#opfsRoot.entries()) {
+        if (handle.kind === "file" && name.endsWith(".md")) {
+          rootFiles.push({ handle: handle as FileSystemFileHandle, name });
+        } else if (handle.kind === "directory" && name === "images") {
+          hasImages = true;
+        }
+      }
+
+      if (rootFiles.length === 0 && !hasImages) return;
+
+      debugStore.log("Migrating root files to vaults/default...");
+      const defaultVaultDir = await createVaultDir(this.#opfsRoot, "default");
+
+      for (const file of rootFiles) {
+        const content = await file.handle.getFile().then((f) => f.text());
+        await writeOpfsFile([file.name], content, defaultVaultDir);
+        await this.#opfsRoot.removeEntry(file.name);
+      }
+
+      if (hasImages) {
+        const rootImagesDir = await this.#opfsRoot.getDirectoryHandle("images");
+        const targetImagesDir = await defaultVaultDir.getDirectoryHandle(
+          "images",
+          { create: true },
+        );
+        // Walk and copy images
+        // We can reuse walkOpfsDirectory but it returns nested paths.
+        // For simplicity, let's assume flat images dir for now or just walk it manually.
+        // Or use the walker.
+        // Actually, the previous implementation I wrote in thought process was slightly manual.
+        // Let's use walkOpfsDirectory for robust image copy.
+        const imageFiles = await walkOpfsDirectory(rootImagesDir);
+        for (const img of imageFiles) {
+          const blob = await img.handle.getFile();
+          await writeOpfsFile(img.path, blob, targetImagesDir);
+        }
+        await this.#opfsRoot.removeEntry("images", { recursive: true });
+      }
+
+      const db = await getDB();
+      await db.put("vaults", {
+        id: "default",
+        name: "Default Vault",
+        createdAt: Date.now(),
+        lastOpenedAt: Date.now(),
+        entityCount: rootFiles.length,
+      });
+      await db.put("settings", "default", "activeVaultId");
+      debugStore.log("Migration to vaults/default complete.");
+    } catch (e) {
+      console.error("Structure migration failed", e);
     }
   }
 
@@ -269,19 +489,19 @@ class VaultStore {
   }
 
   async syncToLocal() {
-    if (!this.#opfsRoot) {
-      this.errorMessage = "OPFS not available.";
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) {
+      this.errorMessage = "No active vault to sync.";
       return;
     }
 
     let localHandle: FileSystemDirectoryHandle | null = null;
+    const handleKey = `syncHandle_${this.activeVaultId}`;
 
     try {
-      // 1. Try to get the persisted handle
       const db = await getDB();
-      localHandle = await db.get("settings", "lastSyncHandle");
+      localHandle = await db.get("settings", handleKey);
 
-      // 2. Verify permission
       if (localHandle) {
         const permission = await localHandle.queryPermission({
           mode: "readwrite",
@@ -291,18 +511,19 @@ class VaultStore {
         }
       }
 
-      // 3. If no handle, or permission denied, prompt user
       if (!localHandle) {
         localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-        await db.put("settings", localHandle, "lastSyncHandle");
+        await db.put("settings", localHandle, handleKey);
       }
 
       this.status = "saving";
-      debugStore.log(`Syncing OPFS to local folder: ${localHandle.name}`);
+      debugStore.log(
+        `Syncing Vault (${this.activeVaultId}) to local folder: ${localHandle.name}`,
+      );
 
-      const opfsFiles = await walkOpfsDirectory(this.#opfsRoot);
+      const opfsFiles = await walkOpfsDirectory(vaultDir);
       for (const fileEntry of opfsFiles) {
-        const content = await fileEntry.handle.getFile().then((f) => f.text());
+        const blob = await fileEntry.handle.getFile();
         const localFileHandle = await reResolveFileHandle(
           localHandle,
           fileEntry.path,
@@ -311,52 +532,20 @@ class VaultStore {
         await writeWithRetry(
           localHandle,
           localFileHandle,
-          content,
+          blob,
           fileEntry.path.join("/"),
         );
-      }
-
-      // Sync images
-      try {
-        const opfsImagesDir = await this.#opfsRoot.getDirectoryHandle("images");
-        const localImagesDir = await localHandle.getDirectoryHandle("images", {
-          create: true,
-        });
-        for await (const handle of opfsImagesDir.values()) {
-          if (handle.kind === "file") {
-            const file = await (handle as any).getFile();
-            const localFileHandle = await localImagesDir.getFileHandle(
-              file.name,
-              {
-                create: true,
-              },
-            );
-            await writeWithRetry(
-              localHandle,
-              localFileHandle,
-              file,
-              `images/${file.name}`,
-            );
-          }
-        }
-      } catch (e) {
-        debugStore.warn("No images to sync or sync failed.", e);
       }
 
       debugStore.log("Sync to local folder complete.");
     } catch (err: any) {
       if (err.name === "NotFoundError" && localHandle) {
-        debugStore.error(
-          "Sync failed: The previously selected sync folder seems to have been moved or deleted.",
-          err,
-        );
+        debugStore.error("Sync folder not found.", err);
         this.errorMessage = `Sync folder "${localHandle.name}" not found. Please select it again.`;
         const db = await getDB();
-        await db.delete("settings", "lastSyncHandle");
-        // We could re-trigger syncToLocal() here, but it's safer to let the user re-initiate.
+        await db.delete("settings", handleKey);
       } else if (err.name !== "AbortError") {
-        console.error("Sync to local folder failed", err);
-        debugStore.error("Sync to local folder failed", err);
+        console.error("Sync failed", err);
         this.errorMessage = `Sync failed: ${err.message}`;
       }
     } finally {
@@ -364,18 +553,124 @@ class VaultStore {
     }
   }
 
+  async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return false;
+
+    let localHandle: FileSystemDirectoryHandle;
+    if (handle) {
+      localHandle = handle;
+    } else {
+      try {
+        localHandle = await window.showDirectoryPicker({ mode: "read" });
+      } catch {
+        return false; // User cancelled
+      }
+    }
+
+    this.status = "loading";
+    this.errorMessage = null;
+    try {
+      // Recursively walk ALL files (including images/) from the local directory
+      const allFiles = await this.#walkAllFiles(localHandle);
+      debugStore.log(`Importing ${allFiles.length} files from local folder...`);
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const { path, handle } of allFiles) {
+        try {
+          const file = await handle.getFile();
+          const name = path[path.length - 1].toLowerCase();
+          if (name.endsWith(".md") || name.endsWith(".markdown")) {
+            const content = await file.text();
+            await writeOpfsFile(path, content, vaultDir);
+          } else {
+            await writeOpfsFile(path, file, vaultDir);
+          }
+          successCount++;
+        } catch (fileErr) {
+          console.error(`Failed to import ${path.join("/")}:`, fileErr);
+          errorCount++;
+        }
+      }
+
+      await this.loadFiles();
+
+      // Update entity count in registry
+      const db = await getDB();
+      const entityCount = Object.keys(this.entities).length;
+      const record = await db.get("vaults", this.activeVaultId!);
+      if (record) {
+        record.entityCount = entityCount;
+        await db.put("vaults", record);
+        await this.listVaults();
+      }
+
+      debugStore.log(
+        `Import complete: ${successCount} success, ${errorCount} errors. Total ${entityCount} entities.`,
+      );
+
+      if (errorCount > 0 && successCount === 0) {
+        throw new Error("No files were successfully imported.");
+      }
+
+      return true;
+    } catch (e: unknown) {
+      console.error("Import failed", e);
+      this.errorMessage = `Import failed: ${e instanceof Error ? e.message : String(e)}`;
+      return false;
+    } finally {
+      this.status = "idle";
+    }
+  }
+
+  /** Walk a directory recursively, returning ALL files (not just .md) */
+  async #walkAllFiles(
+    dirHandle: FileSystemDirectoryHandle,
+    path: string[] = [],
+  ): Promise<{ path: string[]; handle: FileSystemFileHandle }[]> {
+    const results: { path: string[]; handle: FileSystemFileHandle }[] = [];
+
+    for await (const [name, handle] of dirHandle.entries()) {
+      const currentPath = [...path, name];
+      if (handle.kind === "file") {
+        results.push({
+          path: currentPath,
+          handle: handle as FileSystemFileHandle,
+        });
+      } else if (handle.kind === "directory") {
+        const subResults = await this.#walkAllFiles(
+          handle as FileSystemDirectoryHandle,
+          currentPath,
+        );
+        results.push(...subResults);
+      }
+    }
+
+    return results;
+  }
+
   async loadFiles() {
-    if (!this.#opfsRoot) return;
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
 
     this.status = "loading";
     debugStore.log("Loading files from OPFS...");
 
     try {
       aiService.clearStyleCache();
-      const files = await walkOpfsDirectory(this.#opfsRoot, [], (err, path) => {
+      const files = await walkOpfsDirectory(vaultDir, [], (err, path) => {
         debugStore.error(`Failed to scan ${path.join("/")}`, err);
       });
-      debugStore.log(`Found ${files.length} files in OPFS.`);
+
+      // Filter for markdown files only (.md or .markdown)
+      const mdFiles = files.filter((f) => {
+        const name = f.path[f.path.length - 1].toLowerCase();
+        return name.endsWith(".md") || name.endsWith(".markdown");
+      });
+
+      debugStore.log(`Found ${mdFiles.length} markdown files in OPFS.`);
 
       await searchService.clear();
       this.entities = {};
@@ -388,7 +683,8 @@ class VaultStore {
         const filePath = fileEntry.path.join("/");
         const file = await fileEntry.handle.getFile();
         const lastModified = file.lastModified;
-        const cached = await cacheService.get(filePath);
+        const cacheKey = `${this.activeVaultId}:${filePath}`;
+        const cached = await cacheService.get(cacheKey);
 
         let entity: LocalEntity;
 
@@ -400,7 +696,10 @@ class VaultStore {
           const id =
             metadata.id ||
             sanitizeId(
-              fileEntry.path[fileEntry.path.length - 1].replace(".md", ""),
+              fileEntry.path[fileEntry.path.length - 1].replace(
+                /\.(md|markdown)$/i,
+                "",
+              ),
             );
 
           const connections = [...(metadata.connections || []), ...wikiLinks];
@@ -421,7 +720,8 @@ class VaultStore {
             metadata: metadata.metadata,
             _path: fileEntry.path,
           };
-          await cacheService.set(filePath, lastModified, entity);
+          const cacheKey = `${this.activeVaultId}:${filePath}`;
+          await cacheService.set(cacheKey, lastModified, entity);
         }
 
         if (!entity.id || entity.id === "undefined") return;
@@ -452,8 +752,8 @@ class VaultStore {
       };
 
       const CHUNK_SIZE = 5;
-      for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-        const chunk = files.slice(i, i + CHUNK_SIZE);
+      for (let i = 0; i < mdFiles.length; i += CHUNK_SIZE) {
+        const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
         await Promise.all(chunk.map(processFile));
       }
 
@@ -467,19 +767,37 @@ class VaultStore {
     }
   }
 
-  async saveToDisk(entity: Entity) {
+  async saveToDisk(entity: Entity, targetVaultId?: string | null) {
     if (this.isGuest) return;
-    if (!this.#opfsRoot) {
+    const vid = targetVaultId || this.activeVaultId;
+    if (!vid || !this.#opfsRoot) {
       console.warn("OPFS not available, skipping save.");
       return;
     }
+    const vaultDir = await getVaultDir(this.#opfsRoot, vid);
 
     const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
     try {
       const content = stringifyEntity(entity);
-      await writeOpfsFile(path, content, this.#opfsRoot);
+      await writeOpfsFile(path, content, vaultDir);
 
-      // ... (rest of search indexing logic remains the same)
+      // Update search index if it's the active vault
+      if (vid === this.activeVaultId) {
+        const keywords = [
+          ...(entity.tags || []),
+          entity.lore || "",
+          ...Object.values(entity.metadata || {}).flat(),
+        ].join(" ");
+        await searchService.index({
+          id: entity.id,
+          title: entity.title,
+          content: entity.content,
+          type: entity.type,
+          path: path.join("/"),
+          keywords,
+          updatedAt: Date.now(),
+        });
+      }
     } catch (err: any) {
       this.status = "error";
       this.errorMessage = `Failed to save ${entity.title}: ${err.message}`;
@@ -498,7 +816,8 @@ class VaultStore {
     if (this.entities[id]) {
       throw new Error(`Entity ${id} already exists`);
     }
-    if (!this.#opfsRoot) throw new Error("Vault not open");
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) throw new Error("Vault not open");
 
     const filename = `${id}.md`;
     const newEntity: LocalEntity = {
@@ -513,7 +832,7 @@ class VaultStore {
       _path: [filename],
     };
 
-    await writeOpfsFile([filename], stringifyEntity(newEntity), this.#opfsRoot);
+    await writeOpfsFile([filename], stringifyEntity(newEntity), vaultDir);
     this.entities[id] = newEntity;
     this.rebuildInboundMap();
 
@@ -569,9 +888,10 @@ class VaultStore {
 
   scheduleSave(entity: Entity) {
     this.status = "saving";
+    const targetVaultId = this.activeVaultId;
     this.saveQueue
       .enqueue(entity.id, async () => {
-        await this.saveToDisk(entity);
+        await this.saveToDisk(entity, targetVaultId);
         this.status = "idle";
       })
       .catch((err) => {
@@ -689,7 +1009,8 @@ class VaultStore {
     originalName?: string,
   ): Promise<string> {
     if (this.isGuest) throw new Error("Cannot save images in Guest Mode");
-    if (!this.#opfsRoot) throw new Error("Vault not open");
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) throw new Error("Vault not open");
 
     const entity = this.entities[entityId];
     if (!entity) throw new Error(`Entity ${entityId} not found`);
@@ -703,7 +1024,7 @@ class VaultStore {
     const thumbFilename = `${baseName}_thumb.jpg`;
 
     try {
-      const imagesDir = await this.#opfsRoot.getDirectoryHandle("images", {
+      const imagesDir = await vaultDir.getDirectoryHandle("images", {
         create: true,
       });
 
@@ -739,7 +1060,8 @@ class VaultStore {
     }[],
   ): Promise<string[]> {
     if (this.isGuest) throw new Error("Cannot create entities in Guest Mode");
-    if (!this.#opfsRoot) throw new Error("Vault not open");
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) throw new Error("Vault not open");
 
     const createdIds: string[] = [];
 
@@ -762,12 +1084,60 @@ class VaultStore {
   async resolveImageUrl(path: string): Promise<string> {
     if (!path) return "";
 
-    // If it's already a URL (external, data URI, or blob), return as is
-    if (/^(https?:\/\/|data:|blob:)/.test(path)) {
+    // If it's already a data URI or blob, return as is
+    if (/^(data:|blob:)/.test(path)) {
       return path;
     }
 
-    if (!this.#opfsRoot) return "";
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return path; // Fallback to raw path if no vault
+
+    // 1. Check if it's an external URL
+    if (/^https?:\/\//.test(path)) {
+      try {
+        const cacheDir = await vaultDir.getDirectoryHandle(".cache", {
+          create: true,
+        });
+        const externalDir = await cacheDir.getDirectoryHandle(
+          "external_images",
+          { create: true },
+        );
+
+        // Create a unique filename based on the URL
+        const safeName =
+          path
+            .replace(/[^a-z0-9]/gi, "_")
+            .toLowerCase()
+            .slice(-100) + ".cache";
+
+        try {
+          // Check if already in cache
+          const blob = await readOpfsBlob([safeName], externalDir);
+          return URL.createObjectURL(blob);
+        } catch {
+          // Not in cache, try to fetch it
+          let blob: Blob;
+          try {
+            const response = await fetch(path, { mode: "cors" });
+            if (!response.ok)
+              throw new Error(`Fetch failed: ${response.status}`);
+            blob = await response.blob();
+          } catch (err) {
+            // CORS failure or other error; do not use a third-party proxy to avoid leaking URLs
+            console.warn(`Failed to fetch external image ${path}`, err);
+            throw err;
+          }
+
+          // Save to cache
+          await writeOpfsFile([safeName], blob, externalDir);
+          return URL.createObjectURL(blob);
+        }
+      } catch (err) {
+        console.warn(`Failed to process external image cache for ${path}`, err);
+        return path; // Fallback to raw URL
+      }
+    }
+
     try {
       // Sanitize path: remove leading './' or '/' and filter empty segments
       const segments = path
@@ -775,7 +1145,7 @@ class VaultStore {
         .split("/")
         .filter((s) => s && s !== ".");
 
-      const blob = await readOpfsBlob(segments, this.#opfsRoot);
+      const blob = await readOpfsBlob(segments, vaultDir);
       return URL.createObjectURL(blob);
     } catch (err) {
       console.warn(`Failed to resolve image path: ${path}`, err);
@@ -791,26 +1161,67 @@ class VaultStore {
 
   async deleteEntity(id: string): Promise<void> {
     if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
-    if (!this.#opfsRoot) return;
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
 
     const entity = this.entities[id];
     if (!entity) return;
     const path = entity._path || [`${id}.md`];
 
     try {
-      let currentDir = this.#opfsRoot;
-      for (let i = 0; i < path.length - 1; i++) {
-        currentDir = await currentDir.getDirectoryHandle(path[i]);
-      }
-      await currentDir.removeEntry(path[path.length - 1]);
+      // 1. Delete file from OPFS
+      await deleteOpfsEntry(vaultDir, path);
 
+      // 2. Delete images from OPFS
+      if (entity.image) {
+        try {
+          const imagePath = entity.image.split("/");
+          await deleteOpfsEntry(vaultDir, imagePath);
+        } catch (e) {
+          console.warn("Failed to delete image", e);
+        }
+      }
+      if (entity.thumbnail) {
+        try {
+          const thumbPath = entity.thumbnail.split("/");
+          await deleteOpfsEntry(vaultDir, thumbPath);
+        } catch (e) {
+          console.warn("Failed to delete thumbnail", e);
+        }
+      }
+
+      // 3. Remove from memory and search
+      delete this.entities[id];
       await searchService.remove(id);
 
-      // ... (relational cleanup is the same)
-      // ... (image cleanup needs to be adapted for OPFS)
+      // 4. Cleanup connections
+      for (const conn of entity.connections) {
+        this.removeInboundConnection(id, conn.target);
+      }
+
+      const inbound = this.inboundConnections[id] || [];
+      for (const { sourceId } of inbound) {
+        const sourceEntity = this.entities[sourceId];
+        if (sourceEntity) {
+          // Find all connections from source that target this deleted entity
+          const connsToRemove = sourceEntity.connections.filter(
+            (c) => c.target === id,
+          );
+          for (const c of connsToRemove) {
+            // Remove them one by one (this schedules saves for source entities)
+            this.removeConnection(sourceId, id, c.type);
+          }
+        }
+      }
+
+      delete this.inboundConnections[id];
     } catch (err: any) {
       console.error("Failed to delete entity", err);
       // ... (error handling)
+      this.status = "error";
+      this.errorMessage = `Failed to delete ${entity.title}: ${err.message}`;
+      debugStore.error(`Delete failed for ${id}`, err);
+      throw err;
     }
   }
 }

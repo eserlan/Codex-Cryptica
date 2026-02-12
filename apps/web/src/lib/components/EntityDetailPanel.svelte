@@ -454,7 +454,11 @@
             <div class="mb-6 space-y-2">
                 <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                     {#each entity.labels || [] as label}
-                        <LabelBadge {label} removable={!vault.isGuest} />
+                        <LabelBadge
+                            {label}
+                            removable={!vault.isGuest}
+                            onRemove={() => vault.removeLabel(entity.id, label)}
+                        />
                     {/each}
                     {#if !entity.labels?.length && vault.isGuest}
                         <span
@@ -799,7 +803,8 @@
             <img
                 src={resolvedImageUrl}
                 alt={entity.title}
-                class="max-w-[90vw] max-h-[90vh] object-contain"
+                crossorigin="anonymous"
+                class="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
             />
         </button>
     {/if}

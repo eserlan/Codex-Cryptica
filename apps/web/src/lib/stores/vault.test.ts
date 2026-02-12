@@ -2,8 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { vault } from './vault.svelte';
 
-vi.mock('../utils/opfs', () => ({
-	getOpfsRoot: vi.fn().mockResolvedValue({
+vi.mock('../utils/opfs', () => {
+	const mockDir = {
 		getDirectoryHandle: vi.fn().mockResolvedValue({
 			getFileHandle: vi.fn().mockResolvedValue({
 				getFile: vi.fn().mockResolvedValue({
@@ -20,31 +20,60 @@ title: Test
 			yield {
 				kind: 'file',
 				name: 'test.md',
-				getFile: () => Promise.resolve({ text: () => Promise.resolve(`---
+				getFile: () => Promise.resolve({
+					text: () => Promise.resolve(`---
 id: test
 title: Test
 ---
-`), lastModified: 1 })
+`), lastModified: 1
+				})
 			};
+		}),
+		entries: vi.fn().mockImplementation(async function* () {
+			yield ['test.md', {
+				kind: 'file',
+				getFile: () => Promise.resolve({
+					text: () => Promise.resolve(`---
+id: test
+title: Test
+---
+`), lastModified: 1
+				})
+			}];
 		})
-	}),
-	walkOpfsDirectory: vi.fn().mockResolvedValue([
-		{
-			handle: {
-				getFile: vi.fn().mockResolvedValue({
-					text: vi.fn().mockResolvedValue(`---
+	};
+
+	return {
+		getOpfsRoot: vi.fn().mockResolvedValue(mockDir),
+		getVaultDir: vi.fn().mockResolvedValue(mockDir),
+		createVaultDir: vi.fn().mockResolvedValue(mockDir),
+		deleteVaultDir: vi.fn().mockResolvedValue(undefined),
+		getOrCreateDir: vi.fn().mockResolvedValue(mockDir),
+		walkOpfsDirectory: vi.fn().mockResolvedValue([
+			{
+				handle: {
+					getFile: vi.fn().mockResolvedValue({
+						text: vi.fn().mockResolvedValue(`---
 id: test
 title: Test
 ---
 `),
-					lastModified: 1
-				})
-			},
-			path: ['test.md']
-		}
-	]),
-	writeOpfsFile: vi.fn()
-}));
+						lastModified: 1
+					})
+				},
+				path: ['test.md']
+			}
+		]),
+		writeOpfsFile: vi.fn(),
+		readOpfsBlob: vi.fn(),
+		deleteOpfsEntry: vi.fn(),
+		readFileAsText: vi.fn().mockResolvedValue(`---
+id: test
+title: Test
+---
+`)
+	};
+});
 
 vi.mock('../services/search', () => ({
 	searchService: {

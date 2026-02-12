@@ -4,35 +4,7 @@ test.describe("Graph Fit to Screen", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      const applyMocks = () => {
-        if ((window as any).vault) {
-          (window as any).vault.isAuthorized = true;
-          (window as any).vault.status = "idle";
-          (window as any).vault.rootHandle = { kind: "directory" };
-          // Inject some dummy entities to ensure graph renders
-          (window as any).vault.entities = {
-            "node-1": {
-              id: "node-1",
-              title: "Node 1",
-              content: "Content 1",
-              connections: [{ target: "node-2", type: "related_to" }],
-            },
-            "node-2": {
-              id: "node-2",
-              title: "Node 2",
-              content: "Content 2",
-              connections: [],
-            },
-          };
-        }
-      };
-
-      const intervalId = setInterval(() => {
-        if ((window as any).vault) {
-          applyMocks();
-          clearInterval(intervalId);
-        }
-      }, 100);
+      (window as any).__E2E__ = true;
     });
   });
 
@@ -41,16 +13,35 @@ test.describe("Graph Fit to Screen", () => {
   }) => {
     await page.goto("/");
 
-    // 1. Wait for graph to load and stabilize
+    // Wait for graph canvas
     const canvas = page.getByTestId("graph-canvas");
-    await expect(canvas).toBeVisible();
-    await page.waitForFunction(() => (window as any).cy?.nodes().length > 0);
+    await expect(canvas).toBeVisible({ timeout: 10000 });
+
+    // Wait for vault to be fully initialized before creating entities
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+
+    // Create entities via vault API for proper reactivity
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "Node 1", {
+        content: "Content 1",
+      });
+      await vault.createEntity("character", "Node 2", {
+        content: "Content 2",
+      });
+      await vault.addConnection("node-1", "node-2", "related_to");
+    });
+
+    // Wait for graph to render with nodes
+    await page.waitForFunction(() => (window as any).cy?.nodes().length > 0, {
+      timeout: 15000,
+    });
 
     // 2. Deliberately mess up the view (pan and zoom way out)
     await page.evaluate(() => {
       const cy = (window as any).cy;
-
-      // Move it away
       cy.pan({ x: 1000, y: 1000 });
       cy.zoom(0.1);
     });

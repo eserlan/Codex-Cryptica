@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
+- TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native) (039-multi-campaign-switch)
+- OPFS (Files), IndexedDB (Metadata/Registry) (039-multi-campaign-switch)
 
 - TypeScript 5.x / Node.js 20+ + `@google/generative-ai` (for context), Browser Native `fetch` (for Imagen REST API), `idb` (for metadata) (011-oracle-image-gen)
 - OPFS (Origin Private File System) for binary images, Markdown (frontmatter) for entity linkage. (011-oracle-image-gen)
@@ -71,15 +73,10 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+- 039-multi-campaign-switch: Added TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native)
 
 - 036-oracle-undo: Implemented undo/revert capabilities for AI actions (Smart Apply, Create Node) and added global undo shortcut (Ctrl+Z).
 - 038-staging-environment: Implemented parallel staging deployment at /staging with auto-enabled debug tools.
-- 035-patreon-support-link: Added Patreon support link to footer (Addresses #75)
-- 034-fog-of-war: Added TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `idb`
-- 033-connection-labels: Added TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation)
-- 032-central-node-orbit: Added TypeScript 5.x + `cytoscape` (Core), `svelte` (UI)
 
 <!-- MANUAL ADDITIONS START -->
 
-- **Staging Environment**: Accessible at `/staging`. Features `VITE_STAGING=true` which enables the `DebugConsole` for on-device diagnostics without affecting production.
-- **Pre-commit Hooks**: Husky and lint-staged are active. Runs `eslint --fix` and `prettier --write` on staged files.

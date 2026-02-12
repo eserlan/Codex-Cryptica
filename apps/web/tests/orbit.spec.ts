@@ -4,41 +4,7 @@ test.describe("Orbit Layout", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      const applyMocks = () => {
-        if ((window as any).vault) {
-          (window as any).vault.isAuthorized = true;
-          (window as any).vault.status = "idle";
-          (window as any).vault.rootHandle = { kind: "directory" };
-          // Inject some dummy entities to ensure graph renders
-          (window as any).vault.entities = {
-            "node-1": {
-              id: "node-1",
-              title: "Node 1",
-              content: "Content 1",
-              connections: [{ target: "node-2", type: "related_to" }],
-            },
-            "node-2": {
-              id: "node-2",
-              title: "Node 2",
-              content: "Content 2",
-              connections: [{ target: "node-3", type: "related_to" }],
-            },
-            "node-3": {
-              id: "node-3",
-              title: "Node 3",
-              content: "Content 3",
-              connections: [],
-            },
-          };
-        }
-      };
-
-      const intervalId = setInterval(() => {
-        if ((window as any).vault) {
-          applyMocks();
-          clearInterval(intervalId);
-        }
-      }, 100);
+      (window as any).__E2E__ = true;
     });
   });
 
@@ -49,10 +15,35 @@ test.describe("Orbit Layout", () => {
 
     // 1. Wait for graph to load
     const canvas = page.getByTestId("graph-canvas");
-    await expect(canvas).toBeVisible();
+    await expect(canvas).toBeVisible({ timeout: 10000 });
 
-    // 2. Wait for graph store and activate Orbit Mode
-    await page.waitForFunction(() => !!(window as any).graph);
+    // Wait for vault to be fully initialized before creating entities
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+
+    // Create entities via vault API for proper reactivity
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "Node 1", {
+        content: "Content 1",
+      });
+      await vault.createEntity("character", "Node 2", {
+        content: "Content 2",
+      });
+      await vault.createEntity("character", "Node 3", {
+        content: "Content 3",
+      });
+      await vault.addConnection("node-1", "node-2", "related_to");
+      await vault.addConnection("node-2", "node-3", "related_to");
+    });
+
+    // Wait for graph store and nodes to render
+    await page.waitForFunction(() => (window as any).cy?.nodes().length >= 3, {
+      timeout: 15000,
+    });
+
+    // 2. Activate Orbit Mode
     await page.evaluate(() => {
       (window as any).graph.setCentralNode("node-1");
     });

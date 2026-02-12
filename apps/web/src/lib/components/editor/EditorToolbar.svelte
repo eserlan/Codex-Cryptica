@@ -218,7 +218,7 @@
                 <button
                     onclick={toggleZenMode}
                     class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-red-900/10 rounded"
-                    title="Exit Zen Mode (Esc)"
+                    title="Exit Zen Mode"
                 >
                     <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
                     Close Zen Mode
