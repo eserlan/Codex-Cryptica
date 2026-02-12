@@ -139,11 +139,13 @@
     >
       Chronicle
     </h3>
-    <MarkdownEditor
-      content={isEditing ? editContent : entity.content || "No content yet."}
-      editable={isEditing}
-      onUpdate={(val) => (editContent = val)}
-    />
+    <div class="prose-content">
+      <MarkdownEditor
+        content={isEditing ? editContent : entity.content || "No content yet."}
+        editable={isEditing}
+        onUpdate={(val) => (editContent = val)}
+      />
+    </div>
   </div>
 
   <!-- Connections -->
@@ -218,6 +220,11 @@
 </div>
 
 <style>
+  .prose-content :global(.markdown-editor) {
+    background: transparent;
+    border: none;
+  }
+
   .relation-arrow {
     color: #22c55e;
     width: 1.1rem;

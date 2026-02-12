@@ -2,8 +2,6 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
-  import { ui } from "$lib/stores/ui.svelte";
-  import { isEntityVisible } from "schema";
 
   // Sub-components
   import DetailHeader from "./entity-detail/DetailHeader.svelte";
@@ -39,13 +37,6 @@
   let editEndDate = $state<Entity["end_date"]>();
 
   let activeTab = $state<"status" | "lore" | "inventory">("status");
-
-  let isObscured = $derived.by(() => {
-    if (!entity || !ui.sharedMode) return false;
-    return !isEntityVisible(entity, {
-      sharedMode: ui.sharedMode,
-    } as any);
-  });
 
   const startEditing = () => {
     if (!entity) return;
@@ -108,7 +99,7 @@
     ontouchmove={(e) => e.stopPropagation()}
     onwheel={(e) => e.stopPropagation()}
   >
-    <DetailHeader {entity} {isEditing} bind:editTitle {isObscured} {onClose} />
+    <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
 
     <div
       class="flex-1 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
@@ -116,7 +107,7 @@
       <div class="bg-theme-surface">
         <DetailImage {entity} {isEditing} bind:editImage />
 
-        <DetailTabs bind:activeTab {isEditing} bind:editType />
+        <DetailTabs {entity} bind:activeTab {isEditing} bind:editType />
       </div>
 
       <div class="p-4 md:p-6 flex-1">
