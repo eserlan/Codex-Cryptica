@@ -21,20 +21,33 @@
     let isVertical = $derived(orientation === "vertical");
 
     // Styling derived states
-    const btnBase = "rounded font-bold tracking-widest transition whitespace-nowrap flex items-center";
-    
-    const btnPrimary = $derived(`${btnBase} bg-theme-primary hover:bg-theme-secondary text-theme-bg`);
-    const btnSecondary = $derived(`${btnBase} border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary`);
-    const btnAccent = $derived(`${btnBase} border border-theme-border text-theme-accent hover:text-theme-accent/80 hover:border-theme-accent`);
-    const btnGhost = $derived(`${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`);
+    const btnBase =
+        "rounded font-bold tracking-widest transition whitespace-nowrap flex items-center";
 
-    const layoutClasses = $derived(isVertical 
-        ? "py-3 text-sm justify-center gap-2" 
-        : "px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2");
-    
-    const iconOnlyClasses = $derived(isVertical 
-        ? "py-3 text-sm justify-start px-4 gap-3" 
-        : "px-2 py-1.5 justify-center gap-3");
+    const btnPrimary = $derived(
+        `${btnBase} bg-theme-primary hover:bg-theme-secondary text-theme-bg`,
+    );
+    const btnSecondary = $derived(
+        `${btnBase} border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary`,
+    );
+    const btnAccent = $derived(
+        `${btnBase} border border-theme-border text-theme-accent hover:text-theme-accent/80 hover:border-theme-accent`,
+    );
+    const btnGhost = $derived(
+        `${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`,
+    );
+
+    const layoutClasses = $derived(
+        isVertical
+            ? "py-3 text-sm justify-center gap-2"
+            : "px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2",
+    );
+
+    const iconOnlyClasses = $derived(
+        isVertical
+            ? "py-3 text-sm justify-start px-4 gap-3"
+            : "px-2 py-1.5 justify-center gap-3",
+    );
 
     $effect(() => {
         if (showForm && categories.list.length > 0) {
@@ -56,9 +69,9 @@
             vault.selectedEntityId = id;
             newTitle = "";
             showForm = false;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            createError = err.message || "Failed to create entity";
+            createError = err instanceof Error ? err.message : String(err);
         } finally {
             isCreating = false;
         }
@@ -79,8 +92,10 @@
 </script>
 
 <div class="flex flex-col gap-2 font-mono">
-    <div 
-        class="flex {isVertical ? 'flex-col items-stretch gap-3' : 'gap-1.5 md:gap-3 items-center'}"
+    <div
+        class="flex {isVertical
+            ? 'flex-col items-stretch gap-3'
+            : 'gap-1.5 md:gap-3 items-center'}"
     >
         {#if isOffline}
             <div
@@ -88,7 +103,9 @@
                 title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
             >
                 <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
-                <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
+                <span class={isVertical ? "inline" : "hidden md:inline"}
+                    >OFFLINE</span
+                >
             </div>
         {/if}
 
@@ -98,12 +115,16 @@
                 title="This campaign is publicly accessible via link."
             >
                 <span class="icon-[lucide--globe] w-3.5 h-3.5"></span>
-                <span class={isVertical ? "inline" : "hidden md:inline"}>SHARED</span>
+                <span class={isVertical ? "inline" : "hidden md:inline"}
+                    >SHARED</span
+                >
             </div>
         {/if}
 
         <div
-            class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical ? 'text-center' : 'hidden sm:block'}"
+            class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical
+                ? 'text-center'
+                : 'hidden sm:block'}"
         >
             {#if vault.status === "loading"}
                 <span class="animate-pulse text-theme-primary">LOADING...</span>
@@ -117,7 +138,8 @@
                 </span>
             {:else if vault.allEntities.length > 0}
                 <span class="text-theme-secondary" data-testid="entity-count"
-                    >{vault.allEntities.length} ENTITIES</span>
+                    >{vault.allEntities.length} ENTITIES</span
+                >
             {:else}
                 <span class="text-theme-muted">NO VAULT</span>
             {/if}
@@ -126,8 +148,13 @@
         {#if vault.isInitialized}
             <!-- Main Actions -->
             <button
-                class="{isVertical ? `${btnGhost} py-3 text-sm justify-center` : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}"
-                onclick={() => (showForm = !showForm)}
+                class={isVertical
+                    ? `${btnGhost} py-3 text-sm justify-center`
+                    : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+                onclick={() => {
+                    showForm = !showForm;
+                    if (showForm) createError = null;
+                }}
                 data-testid="new-entity-button"
             >
                 <span
@@ -137,8 +164,12 @@
                 ></span>
                 {showForm ? "CANCEL" : "NEW ENTITY"}
             </button>
-            
-            <div class="flex {isVertical ? 'flex-col gap-3' : 'gap-1.5 md:gap-3 items-center'}">
+
+            <div
+                class="flex {isVertical
+                    ? 'flex-col gap-3'
+                    : 'gap-1.5 md:gap-3 items-center'}"
+            >
                 <button
                     class="{btnAccent} {layoutClasses}"
                     onclick={() => vault.syncToLocal()}
@@ -153,16 +184,30 @@
                     title="Share Campaign"
                 >
                     <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
-                     {#if isVertical}<span class="font-bold tracking-widest">SHARE</span>{/if}
+                    {#if isVertical}<span class="font-bold tracking-widest"
+                            >SHARE</span
+                        >{/if}
                 </button>
                 <button
-                    class="{iconOnlyClasses} {btnGhost} {ui.sharedMode ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]' : ''}"
+                    class="{iconOnlyClasses} {btnGhost} {ui.sharedMode
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+                        : ''}"
                     onclick={() => (ui.sharedMode = !ui.sharedMode)}
-                    title={ui.sharedMode ? "Exit Shared Mode (Admin View)" : "Enter Shared Mode (Player Preview)"}
+                    title={ui.sharedMode
+                        ? "Exit Shared Mode (Admin View)"
+                        : "Enter Shared Mode (Player Preview)"}
                     data-testid="shared-mode-toggle"
                 >
-                    <span class={ui.sharedMode ? "icon-[lucide--eye] w-3.5 h-3.5" : "icon-[lucide--eye-off] w-3.5 h-3.5"}></span>
-                     {#if isVertical}<span class="font-bold tracking-widest">{ui.sharedMode ? 'EXIT PLAYER VIEW' : 'PLAYER VIEW'}</span>{/if}
+                    <span
+                        class={ui.sharedMode
+                            ? "icon-[lucide--eye] w-3.5 h-3.5"
+                            : "icon-[lucide--eye-off] w-3.5 h-3.5"}
+                    ></span>
+                    {#if isVertical}<span class="font-bold tracking-widest"
+                            >{ui.sharedMode
+                                ? "EXIT PLAYER VIEW"
+                                : "PLAYER VIEW"}</span
+                        >{/if}
                 </button>
             </div>
         {/if}
@@ -178,18 +223,24 @@
                 e.preventDefault();
                 handleCreate();
             }}
-            class="flex {isVertical ? 'flex-col' : ''} gap-2 p-3 bg-theme-surface rounded border border-theme-border animate-in slide-in-from-top-2 fade-in"
+            class="flex {isVertical
+                ? 'flex-col'
+                : 'flex-wrap'} gap-2 p-3 bg-theme-surface rounded border border-theme-border animate-in slide-in-from-top-2 fade-in"
         >
             <input
                 bind:value={newTitle}
                 aria-label="New Entity Title"
                 placeholder="Entry Title..."
-                class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical ? 'py-3 text-sm' : ''}"
+                class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical
+                    ? 'py-3 text-sm'
+                    : ''}"
             />
             <select
                 bind:value={newType}
                 aria-label="New Entity Type"
-                class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary {isVertical ? 'py-3 text-sm' : ''}"
+                class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary {isVertical
+                    ? 'py-3 text-sm'
+                    : ''}"
             >
                 {#each categories.list as cat}
                     <option value={cat.id}>{cat.label}</option>
@@ -197,7 +248,9 @@
             </select>
             <button
                 type="submit"
-                class="{btnPrimary} {isVertical ? 'py-3 text-sm justify-center' : 'px-4 py-1.5 text-xs'} disabled:opacity-50"
+                class="{btnPrimary} {isVertical
+                    ? 'py-3 text-sm justify-center'
+                    : 'px-4 py-1.5 text-xs'} disabled:opacity-50"
                 disabled={!newTitle.trim() || isCreating}
             >
                 {#if isCreating}
@@ -207,7 +260,10 @@
                 {/if}
             </button>
             {#if createError}
-                <div class="text-[10px] text-red-500 w-full text-center" role="alert">
+                <div
+                    class="text-[10px] text-red-500 w-full text-center"
+                    role="alert"
+                >
                     {createError}
                 </div>
             {/if}
