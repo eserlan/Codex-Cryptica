@@ -418,7 +418,16 @@
 
                 const resolvedUrl = await vault.resolveImageUrl(imagePath);
 
-                if (resolvedUrl) {
+                if (resolvedUrl && currentCy) {
+                  // Race condition guard: verify the node still exists and
+                  // its image path hasn't changed while we were resolving
+                  const node = currentCy.$id(data.id);
+                  if (node.length === 0) return;
+                  const currentNodeData = node.data();
+                  const currentPath =
+                    currentNodeData.thumbnail || currentNodeData.image;
+                  if (currentPath !== imagePath) return;
+
                   let w = data.width;
                   let h = data.height;
 
@@ -455,17 +464,24 @@
                     h = w * 2.5;
                   }
 
-                  if (currentCy) {
-                    currentCy.batch(() => {
-                      const node = currentCy.$id(data.id);
-                      node.data({
-                        resolvedImage: resolvedUrl,
-                        resolvedImagePath: imagePath,
-                        width: Math.round(w),
-                        height: Math.round(h),
-                      });
+                  currentCy.batch(() => {
+                    // Revoke previous blob URL to prevent memory leaks
+                    const oldUrl = node.data("resolvedImage");
+                    if (
+                      oldUrl &&
+                      oldUrl.startsWith("blob:") &&
+                      oldUrl !== resolvedUrl
+                    ) {
+                      URL.revokeObjectURL(oldUrl);
+                    }
+
+                    node.data({
+                      resolvedImage: resolvedUrl,
+                      resolvedImagePath: imagePath,
+                      width: Math.round(w),
+                      height: Math.round(h),
                     });
-                  }
+                  });
                 }
               }),
             );
