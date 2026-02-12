@@ -79,7 +79,7 @@ TypeScript: Follow standard conventions
 
 - 040-connections-proposer: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB)
 - 039-multi-campaign-switch: Added TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native)
-
+- 038-staging-environment: Implemented parallel staging deployment at /staging with auto-enabled debug tools.
 - 036-oracle-undo: Implemented undo/revert capabilities for AI actions (Smart Apply, Create Node) and added global undo shortcut (Ctrl+Z).
 
 <!-- MANUAL ADDITIONS START -->

@@ -49,9 +49,14 @@ export class ProposerBridge {
   }
 
   public terminate() {
+    // Reject all pending requests to avoid hanging promises when the worker is terminated.
+    for (const [id, { reject }] of this.pendingRequests.entries()) {
+      reject(new Error(`Proposer worker terminated while request ${id} was pending`));
+    }
+    this.pendingRequests.clear();
+
     this.worker?.terminate();
     this.worker = null;
-    this.pendingRequests.clear();
   }
 }
 

@@ -14,10 +14,12 @@ export class ProposerService implements IProposerService {
   };
 
   private dbName: string;
+  private dbVersion: number;
 
-  constructor(dbName: string = DB_NAME) {
+  constructor(dbName: string = DB_NAME, dbVersion: number = DB_VERSION) {
     this.dbName = dbName;
-    this.dbPromise = openDB(this.dbName, DB_VERSION);
+    this.dbVersion = dbVersion;
+    this.dbPromise = openDB(this.dbName, this.dbVersion);
   }
 
   async analyzeEntity(
@@ -40,6 +42,15 @@ export class ProposerService implements IProposerService {
         },
       });
 
+      // Truncate content intelligently (max 15000 chars, try to break at sentence)
+      let truncatedContent = content.slice(0, 15000);
+      if (content.length > 15000) {
+        const lastPeriod = truncatedContent.lastIndexOf('.');
+        if (lastPeriod > 10000) { // Ensure we keep a significant chunk
+            truncatedContent = truncatedContent.slice(0, lastPeriod + 1);
+        }
+      }
+
       const targetsList = availableTargets
         .map((t) => `- ${t.name} (ID: ${t.id})`)
         .join("\n");
@@ -55,7 +66,7 @@ Criteria for a connection:
 
 Source Entity Content:
 """
-${content.slice(0, 15000)}
+${truncatedContent}
 """
 
 Available Target Entities:
@@ -81,7 +92,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
       try {
         rawProposals = JSON.parse(text);
       } catch {
-        console.warn("Proposer: Failed to parse JSON", text);
+        console.warn(`Proposer: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`);
         return [];
       }
 

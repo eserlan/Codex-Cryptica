@@ -11,6 +11,7 @@ const service = new ProposerService();
 
 class ProposerStore {
   isAnalyzing = $state(false);
+  analysisError = $state<string | null>(null);
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
 
@@ -29,17 +30,27 @@ class ProposerStore {
   }
 
   async loadProposals(entityId: string) {
-    this.proposals[entityId] = await service.getProposals(entityId);
-    this.history[entityId] = await service.getHistory(entityId);
+    const p = await service.getProposals(entityId);
+    const h = await service.getHistory(entityId);
+    
+    // Guard against stale updates if navigation happened
+    if (vault.selectedEntityId !== entityId) return;
+
+    this.proposals[entityId] = p;
+    this.history[entityId] = h;
   }
 
   async analyzeCurrentEntity() {
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
+    
+    this.analysisError = null;
 
     // Load existing proposals/history if not loaded
     if (!this.proposals[entityId]) {
       await this.loadProposals(entityId);
+      // If the user changed the selected entity while loading, abort this analysis
+      if (vault.selectedEntityId !== entityId) return;
     }
 
     const apiKey = oracle.effectiveApiKey;
@@ -69,13 +80,10 @@ class ProposerStore {
         targets
       );
       
+      // Guard against stale updates
+      if (vault.selectedEntityId !== entityId) return;
+
       await service.saveProposals(newProposals);
-      // Merge with existing pending proposals to avoid overwriting user interactions?
-      // Or just replace? analyzeEntity returns ALL found proposals?
-      // No, it returns new ones.
-      // But if we have pending proposals, we should keep them if they are still valid.
-      // Simplest approach: Add new ones that don't exist.
-      // Since ID handles uniqueness, we can merge.
       
       const existing = this.proposals[entityId] || [];
       const existingIds = new Set(existing.map(p => p.id));
@@ -85,21 +93,31 @@ class ProposerStore {
       
       this.proposals[entityId] = [...existing, ...toAdd];
       
-    } catch (err) {
+    } catch (err: any) {
       console.error("Analysis failed", err);
+      this.analysisError = err.message || "Analysis failed";
     } finally {
-      this.isAnalyzing = false;
+      if (vault.selectedEntityId === entityId) {
+        this.isAnalyzing = false;
+      }
     }
   }
 
   async apply(proposal: Proposal) {
+    // Create actual connection in vault first; only proceed if successful
+    const connectionCreated = vault.addConnection(proposal.sourceId, proposal.targetId, proposal.type);
+    if (!connectionCreated) {
+      console.error("Failed to create connection in vault for proposal", proposal);
+      return;
+    }
+
     await service.applyProposal(proposal.id);
-    // Update local state
+    
+    // Update local state - verify context is still valid or just update store state regardless
+    // Updating store state regardless is safer for consistency.
     if (this.proposals[proposal.sourceId]) {
       this.proposals[proposal.sourceId] = this.proposals[proposal.sourceId].filter(p => p.id !== proposal.id);
     }
-    // Create actual connection in vault
-    vault.addConnection(proposal.sourceId, proposal.targetId, proposal.type);
   }
 
   async dismiss(proposal: Proposal) {

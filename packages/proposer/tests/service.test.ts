@@ -112,4 +112,55 @@ describe("ProposerService", () => {
     const pendingAfter = await service.getProposals("source1");
     expect(pendingAfter).toHaveLength(0);
   });
+
+  it("should dismiss proposal and add to history", async () => {
+    const proposal = {
+      id: "source1:target4",
+      sourceId: "source1",
+      targetId: "target4",
+      type: "related",
+      context: "context",
+      reason: "reason",
+      confidence: 0.8,
+      status: "pending" as const,
+      timestamp: Date.now()
+    };
+
+    await service.saveProposals([proposal]);
+    await service.dismissProposal(proposal.id);
+
+    const pending = await service.getProposals("source1");
+    expect(pending).toHaveLength(0);
+
+    const history = await service.getHistory("source1");
+    expect(history).toHaveLength(1);
+    expect(history[0].status).toBe("rejected");
+  });
+
+  it("should re-evaluate proposal from history", async () => {
+    const proposal = {
+      id: "source1:target5",
+      sourceId: "source1",
+      targetId: "target5",
+      type: "related",
+      context: "context",
+      reason: "reason",
+      confidence: 0.8,
+      status: "rejected" as const,
+      timestamp: Date.now()
+    };
+
+    // Save as rejected directly
+    const db = await openDB(dbName, 6);
+    const tx = db.transaction("proposals", "readwrite");
+    await tx.store.put(proposal);
+    await tx.done;
+    db.close();
+
+    await service.reEvaluateProposal(proposal.id);
+
+    const pending = await service.getProposals("source1");
+    expect(pending).toHaveLength(1);
+    expect(pending[0].status).toBe("pending");
+  });
 });

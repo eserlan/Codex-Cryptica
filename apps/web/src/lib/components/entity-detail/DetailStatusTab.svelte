@@ -144,7 +144,9 @@
       <MarkdownEditor
         content={isEditing ? editContent : entity.content || "No content yet."}
         editable={isEditing}
-        onUpdate={(val) => (editContent = val)}
+        onUpdate={(val) => {
+          if (isEditing) editContent = val;
+        }}
       />
     </div>
   </div>

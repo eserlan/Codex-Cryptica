@@ -5,7 +5,12 @@ import { ProposerService } from "@codex/proposer";
 const service = new ProposerService();
 
 self.onmessage = async (e: MessageEvent) => {
-  const { type, payload, id } = e.data;
+  const { type, payload, id } = e.data || {};
+
+  if (!type || !id) {
+    console.warn("ProposerWorker: Received malformed message", e.data);
+    return;
+  }
 
   try {
     if (type === "ANALYZE") {

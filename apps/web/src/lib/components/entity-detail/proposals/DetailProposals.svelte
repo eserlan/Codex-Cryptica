@@ -8,17 +8,24 @@
   let showHistory = $state(false);
 
   $effect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     // Trigger analysis when viewing an entity
     if (vault.selectedEntityId && vault.status === 'idle' && !isEditing) {
       // We could add a debounce here or let the store handle it.
       // The store checks isAnalyzing, so it won't double-trigger.
       // But we might want to wait a bit after load.
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (vault.selectedEntityId) {
           proposerStore.analyzeCurrentEntity();
         }
       }, 1000);
     }
+
+    return () => {
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    };
   });
 
   const handleApply = async (proposal: Proposal) => {

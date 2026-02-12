@@ -42,6 +42,8 @@ interface CodexDB extends DBSchema {
       targetId: string;
       type: string;
       context: string;
+      reason: string;
+      confidence: number;
       status: "pending" | "accepted" | "rejected";
       timestamp: number;
     };

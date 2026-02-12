@@ -15,13 +15,23 @@
     let isDraggingOver = $state(false);
 
     $effect(() => {
-        if (entity?.image) {
-            vault.resolveImageUrl(entity.image).then((url) => {
-                resolvedImageUrl = url;
+        const imagePath = entity?.image;
+        let cancelled = false;
+
+        if (imagePath) {
+            vault.resolveImageUrl(imagePath).then((url) => {
+                // Guard against stale async results if the entity changes
+                if (!cancelled && entity?.image === imagePath) {
+                    resolvedImageUrl = url;
+                }
             });
         } else {
             resolvedImageUrl = "";
         }
+
+        return () => {
+            cancelled = true;
+        };
     });
 
     const handleDragOver = (e: DragEvent) => {
