@@ -88,6 +88,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "You can drag generated images onto any entity in the detail panel to save them as thumbnails.",
   },
+  "proposer-discovery": {
+    id: "proposer-discovery",
+    title: "Hidden Connections Found",
+    content:
+      "The Oracle has detected potential relationships in your lore. Check the 'Oracle Suggestions' section in the detail panel to review them.",
+  },
 };
 
 export const HELP_ARTICLES: HelpArticle[] = [
@@ -97,6 +103,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
     tags: ["basics", "vault"],
     content:
       "## Welcome to the Archive\n\nCodex Cryptica is designed to give you **absolute sovereignty** over your lore. Everything you write is saved as a Markdown file in your local vault.\n\n### Core Concepts\n- **Entities**: The building blocks of your world (NPCs, Locations, Items).\n- **Chronicles**: The main text content of an entity.\n- **Lore**: Hidden attributes and meta-data used by the Oracle for context.",
+  },
+  {
+    id: "proposer-guide",
+    title: "Connections Proposer",
+    tags: ["ai", "connections", "discovery"],
+    content:
+      "## Automated Discovery\n\nThe **Connections Proposer** works in the background to find hidden links between your entities. It uses the Lore Oracle to analyze your writing and suggest relationships you might have missed.\n\n### How it Works\n1. **Background Scan**: When you view an entity, the system silently checks for potential links to other records.\n2. **Review**: Suggestions appear at the bottom of the detail panel.\n3. **Apply**: Click the checkmark to create a real connection.\n4. **Dismiss**: Click 'X' to ignore. Dismissed suggestions are saved in history just in case.",
   },
   {
     id: "graph-basics",

@@ -1,0 +1,109 @@
+﻿2026-02-08T15:02:36.5714688Z ##[group]Run npm run lint
+2026-02-08T15:02:36.5715004Z [36;1mnpm run lint[0m
+2026-02-08T15:02:36.5746264Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:36.5746553Z env:
+2026-02-08T15:02:36.5746728Z   HUSKY: 0
+2026-02-08T15:02:36.5746909Z ##[endgroup]
+2026-02-08T15:02:36.6783900Z 
+2026-02-08T15:02:36.6784397Z > lint
+2026-02-08T15:02:36.6784854Z > turbo run lint
+2026-02-08T15:02:36.6785047Z 
+2026-02-08T15:02:36.7233680Z 
+2026-02-08T15:02:36.7234654Z Attention:
+2026-02-08T15:02:36.7235911Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-02-08T15:02:36.7716665Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-02-08T15:02:36.7718447Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-02-08T15:02:36.7719934Z https://turborepo.dev/docs/telemetry
+2026-02-08T15:02:36.7720308Z 
+2026-02-08T15:02:36.7721246Z • Packages in scope: @codex/importer, editor-core, graph-engine, schema, web
+2026-02-08T15:02:36.7722239Z • Running lint in 5 packages
+2026-02-08T15:02:36.7722799Z • Remote caching disabled
+2026-02-08T15:02:40.0452634Z ##[group]schema:lint
+2026-02-08T15:02:40.0457695Z cache miss, executing 9e22d73aa4f7e992
+2026-02-08T15:02:40.0491020Z 
+2026-02-08T15:02:40.0494781Z > schema@0.0.0 lint
+2026-02-08T15:02:40.0498429Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.0502405Z 
+2026-02-08T15:02:40.0506132Z ##[endgroup]
+2026-02-08T15:02:40.0760453Z ##[group]editor-core:lint
+2026-02-08T15:02:40.0799139Z cache miss, executing 9ea4ae8ef75ceaec
+2026-02-08T15:02:40.0800366Z 
+2026-02-08T15:02:40.0800846Z > editor-core@0.0.0 lint
+2026-02-08T15:02:40.0801581Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.0801992Z 
+2026-02-08T15:02:40.0802678Z ##[endgroup]
+2026-02-08T15:02:40.1231537Z ##[group]graph-engine:lint
+2026-02-08T15:02:40.1240674Z cache miss, executing ede649efed7eeb15
+2026-02-08T15:02:40.1241075Z 
+2026-02-08T15:02:40.1241276Z > graph-engine@0.0.0 lint
+2026-02-08T15:02:40.1241722Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.1242007Z 
+2026-02-08T15:02:40.1242467Z ##[endgroup]
+2026-02-08T15:02:40.3599618Z ##[group]@codex/importer:lint
+2026-02-08T15:02:40.3600321Z cache miss, executing deacfa8b271cf0cf
+2026-02-08T15:02:40.3600658Z 
+2026-02-08T15:02:40.3600859Z > @codex/importer@0.0.0 lint
+2026-02-08T15:02:40.3601292Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.3601540Z 
+2026-02-08T15:02:40.3601998Z ##[endgroup]
+2026-02-08T15:02:52.1901596Z ##[group]web:lint
+2026-02-08T15:02:52.1902823Z cache miss, executing f36e78bfc63c39ee
+2026-02-08T15:02:52.1904330Z npm warn config ignoring workspace config at /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/.npmrc
+2026-02-08T15:02:52.1905448Z 
+2026-02-08T15:02:52.1905611Z > web@0.8.7 lint
+2026-02-08T15:02:52.1906179Z > svelte-check --tsconfig ./tsconfig.json && eslint .
+2026-02-08T15:02:52.1906579Z 
+2026-02-08T15:02:52.1907235Z Loading svelte-check in workspace: /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web
+2026-02-08T15:02:52.1908078Z Getting Svelte diagnostics...
+2026-02-08T15:02:52.1908367Z 
+2026-02-08T15:02:52.1909922Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/connections/ConnectionEditor.svelte[39m:12:21
+2026-02-08T15:02:52.1911352Z [33mWarn[39m: This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1912064Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1912394Z [36m
+2026-02-08T15:02:52.1912704Z   let type = $state([35mconnection[36m.type);
+2026-02-08T15:02:52.1913100Z   let label = $state(connection.label || "");[39m
+2026-02-08T15:02:52.1913314Z 
+2026-02-08T15:02:52.1913942Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/connections/ConnectionEditor.svelte[39m:13:22
+2026-02-08T15:02:52.1915037Z [33mWarn[39m: This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1915967Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1916409Z [36m  let type = $state(connection.type);
+2026-02-08T15:02:52.1916830Z   let label = $state([35mconnection[36m.label || "");[39m
+2026-02-08T15:02:52.1917059Z 
+2026-02-08T15:02:52.1917619Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:246:3
+2026-02-08T15:02:52.1918282Z [33mWarn[39m: Unknown at rule @reference (css)
+2026-02-08T15:02:52.1918601Z [36m<style>
+2026-02-08T15:02:52.1918953Z   [35m@reference[36m "../../../app.css";[39m
+2026-02-08T15:02:52.1919150Z 
+2026-02-08T15:02:52.1920380Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:249:5
+2026-02-08T15:02:52.1921100Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1921787Z [36m  .preview-content :global(code) {
+2026-02-08T15:02:52.1922329Z     [35m@apply[36m bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+2026-02-08T15:02:52.1922774Z   }[39m
+2026-02-08T15:02:52.1922952Z 
+2026-02-08T15:02:52.1923990Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:252:5
+2026-02-08T15:02:52.1924689Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1925075Z [36m  .preview-content :global(strong) {
+2026-02-08T15:02:52.1925505Z     [35m@apply[36m font-bold text-zinc-900 dark:text-zinc-100;
+2026-02-08T15:02:52.1925835Z   }[39m
+2026-02-08T15:02:52.1925938Z 
+2026-02-08T15:02:52.1926488Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:255:5
+2026-02-08T15:02:52.1927247Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1927635Z [36m  .preview-content :global(em) {
+2026-02-08T15:02:52.1927930Z     [35m@apply[36m italic;
+2026-02-08T15:02:52.1928159Z   }[39m
+2026-02-08T15:02:52.1928260Z 
+2026-02-08T15:02:52.1928801Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/features/importer/ReviewList.svelte[39m:12:36
+2026-02-08T15:02:52.1930201Z [33mWarn[39m: This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1930904Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1931229Z [36m
+2026-02-08T15:02:52.1931609Z   let selectedIds = $state(new Set([35mentities[36m.map(e => e.id)));[39m
+2026-02-08T15:02:52.1931902Z 
+2026-02-08T15:02:52.1932025Z ====================================
+2026-02-08T15:02:52.1932438Z [33msvelte-check found 0 errors and 7 warnings in 3 files
+2026-02-08T15:02:52.1932954Z [39m
+2026-02-08T15:02:52.1933381Z ##[endgroup]
+2026-02-08T15:02:52.1933492Z 
+2026-02-08T15:02:52.1933607Z  Tasks:    5 successful, 5 total
+2026-02-08T15:02:52.1933874Z Cached:    0 cached, 5 total
+2026-02-08T15:02:52.1934120Z   Time:    15.446s 
+2026-02-08T15:02:52.1934237Z 

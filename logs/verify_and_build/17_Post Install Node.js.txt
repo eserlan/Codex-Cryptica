@@ -1,0 +1,5 @@
+﻿2026-02-08T15:03:40.4430018Z Post job cleanup.
+2026-02-08T15:03:40.6138528Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/Codex-Cryptica/Codex-Cryptica --files-from manifest.txt --use-compress-program zstdmt
+2026-02-08T15:03:42.0697212Z Sent 58720256 of 125754412 (46.7%), 56.0 MBs/sec
+2026-02-08T15:03:43.0720056Z Sent 125754412 of 125754412 (100.0%), 60.0 MBs/sec
+2026-02-08T15:03:43.5865258Z Cache saved with the key: node-cache-Linux-x64-npm-3dfd9d80d130f803a50652139afe2122a53ad98e6e49609a22304a03142df22e

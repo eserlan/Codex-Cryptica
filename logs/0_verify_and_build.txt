@@ -1,0 +1,1210 @@
+﻿2026-02-08T15:02:22.5458845Z Current runner version: '2.331.0'
+2026-02-08T15:02:22.5483066Z ##[group]Runner Image Provisioner
+2026-02-08T15:02:22.5483945Z Hosted Compute Agent
+2026-02-08T15:02:22.5484657Z Version: 20260123.484
+2026-02-08T15:02:22.5485242Z Commit: 6bd6555ca37d84114959e1c76d2c01448ff61c5d
+2026-02-08T15:02:22.5485947Z Build Date: 2026-01-23T19:41:17Z
+2026-02-08T15:02:22.5486713Z Worker ID: {b92ab101-1539-41d2-847d-6848598afa0d}
+2026-02-08T15:02:22.5487413Z Azure Region: centralus
+2026-02-08T15:02:22.5487960Z ##[endgroup]
+2026-02-08T15:02:22.5489773Z ##[group]Operating System
+2026-02-08T15:02:22.5490396Z Ubuntu
+2026-02-08T15:02:22.5490888Z 24.04.3
+2026-02-08T15:02:22.5491519Z LTS
+2026-02-08T15:02:22.5491988Z ##[endgroup]
+2026-02-08T15:02:22.5492521Z ##[group]Runner Image
+2026-02-08T15:02:22.5493275Z Image: ubuntu-24.04
+2026-02-08T15:02:22.5493807Z Version: 20260201.15.1
+2026-02-08T15:02:22.5495179Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260201.15/images/ubuntu/Ubuntu2404-Readme.md
+2026-02-08T15:02:22.5496727Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260201.15
+2026-02-08T15:02:22.5497660Z ##[endgroup]
+2026-02-08T15:02:22.5498916Z ##[group]GITHUB_TOKEN Permissions
+2026-02-08T15:02:22.5501145Z Contents: read
+2026-02-08T15:02:22.5501940Z Metadata: read
+2026-02-08T15:02:22.5502479Z Pages: write
+2026-02-08T15:02:22.5503038Z ##[endgroup]
+2026-02-08T15:02:22.5505512Z Secret source: Actions
+2026-02-08T15:02:22.5506218Z Prepare workflow directory
+2026-02-08T15:02:22.5918420Z Prepare all required actions
+2026-02-08T15:02:22.5957186Z Getting action download info
+2026-02-08T15:02:22.9859323Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-02-08T15:02:23.0817108Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-02-08T15:02:23.1780753Z Download action repository 'actions/upload-pages-artifact@v3' (SHA:56afc609e74202658d3ffba0e8f6dda462b719fa)
+2026-02-08T15:02:23.5718208Z Getting action download info
+2026-02-08T15:02:23.7002856Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-02-08T15:02:23.8481504Z Complete job name: verify_and_build
+2026-02-08T15:02:23.9314887Z ##[group]Run actions/checkout@v4
+2026-02-08T15:02:23.9316238Z with:
+2026-02-08T15:02:23.9316992Z   fetch-depth: 0
+2026-02-08T15:02:23.9317853Z   repository: eserlan/Codex-Cryptica
+2026-02-08T15:02:23.9319323Z   token: ***
+2026-02-08T15:02:23.9320117Z   ssh-strict: true
+2026-02-08T15:02:23.9320917Z   ssh-user: git
+2026-02-08T15:02:23.9321740Z   persist-credentials: true
+2026-02-08T15:02:23.9322649Z   clean: true
+2026-02-08T15:02:23.9323475Z   sparse-checkout-cone-mode: true
+2026-02-08T15:02:23.9324474Z   fetch-tags: false
+2026-02-08T15:02:23.9325289Z   show-progress: true
+2026-02-08T15:02:23.9326100Z   lfs: false
+2026-02-08T15:02:23.9326828Z   submodules: false
+2026-02-08T15:02:23.9327635Z   set-safe-directory: true
+2026-02-08T15:02:23.9328750Z env:
+2026-02-08T15:02:23.9329658Z   HUSKY: 0
+2026-02-08T15:02:23.9330378Z ##[endgroup]
+2026-02-08T15:02:24.0448344Z Syncing repository: eserlan/Codex-Cryptica
+2026-02-08T15:02:24.0452811Z ##[group]Getting Git version info
+2026-02-08T15:02:24.0455403Z Working directory is '/home/runner/work/Codex-Cryptica/Codex-Cryptica'
+2026-02-08T15:02:24.0458387Z [command]/usr/bin/git version
+2026-02-08T15:02:24.0517005Z git version 2.52.0
+2026-02-08T15:02:24.0544772Z ##[endgroup]
+2026-02-08T15:02:24.0559816Z Temporarily overriding HOME='/home/runner/work/_temp/cbac18d7-452a-42f8-82aa-8f6753a2584b' before making global git config changes
+2026-02-08T15:02:24.0562791Z Adding repository directory to the temporary git global config as a safe directory
+2026-02-08T15:02:24.0572648Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Codex-Cryptica/Codex-Cryptica
+2026-02-08T15:02:24.0613661Z Deleting the contents of '/home/runner/work/Codex-Cryptica/Codex-Cryptica'
+2026-02-08T15:02:24.0617481Z ##[group]Initializing the repository
+2026-02-08T15:02:24.0622910Z [command]/usr/bin/git init /home/runner/work/Codex-Cryptica/Codex-Cryptica
+2026-02-08T15:02:24.0729478Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-02-08T15:02:24.0732164Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-02-08T15:02:24.0734746Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-02-08T15:02:24.0737329Z hint: call:
+2026-02-08T15:02:24.0738596Z hint:
+2026-02-08T15:02:24.0740475Z hint: 	git config --global init.defaultBranch <name>
+2026-02-08T15:02:24.0742441Z hint:
+2026-02-08T15:02:24.0744274Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-02-08T15:02:24.0747508Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-02-08T15:02:24.0750198Z hint:
+2026-02-08T15:02:24.0751406Z hint: 	git branch -m <name>
+2026-02-08T15:02:24.0752831Z hint:
+2026-02-08T15:02:24.0754671Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-02-08T15:02:24.0756868Z Initialized empty Git repository in /home/runner/work/Codex-Cryptica/Codex-Cryptica/.git/
+2026-02-08T15:02:24.0761306Z [command]/usr/bin/git remote add origin https://github.com/eserlan/Codex-Cryptica
+2026-02-08T15:02:24.0784269Z ##[endgroup]
+2026-02-08T15:02:24.0786661Z ##[group]Disabling automatic garbage collection
+2026-02-08T15:02:24.0789520Z [command]/usr/bin/git config --local gc.auto 0
+2026-02-08T15:02:24.0819648Z ##[endgroup]
+2026-02-08T15:02:24.0821950Z ##[group]Setting up auth
+2026-02-08T15:02:24.0827179Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-02-08T15:02:24.0859839Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-02-08T15:02:24.1204025Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-02-08T15:02:24.1238841Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-02-08T15:02:24.1460594Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-02-08T15:02:24.1501590Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-02-08T15:02:24.1728225Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-02-08T15:02:24.1761708Z ##[endgroup]
+2026-02-08T15:02:24.1763048Z ##[group]Fetching the repository
+2026-02-08T15:02:24.1771188Z [command]/usr/bin/git -c protocol.version=2 fetch --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/*
+2026-02-08T15:02:24.8139009Z From https://github.com/eserlan/Codex-Cryptica
+2026-02-08T15:02:24.8141162Z  * [new branch]      025-oracle-ui-refinement -> origin/025-oracle-ui-refinement
+2026-02-08T15:02:24.8143004Z  * [new branch]      028-styling-templates  -> origin/028-styling-templates
+2026-02-08T15:02:24.8144771Z  * [new branch]      032-central-node-orbit -> origin/032-central-node-orbit
+2026-02-08T15:02:24.8146613Z  * [new branch]      033-patreon-support-link -> origin/033-patreon-support-link
+2026-02-08T15:02:24.8148334Z  * [new branch]      034-fog-of-war         -> origin/034-fog-of-war
+2026-02-08T15:02:24.8150553Z  * [new branch]      codex/fix-github-issue-79 -> origin/codex/fix-github-issue-79
+2026-02-08T15:02:24.8152366Z  * [new branch]      copilot/sub-pr-33      -> origin/copilot/sub-pr-33
+2026-02-08T15:02:24.8154077Z  * [new branch]      feat/037-modern-css-tour -> origin/feat/037-modern-css-tour
+2026-02-08T15:02:24.8156148Z  * [new branch]      feature/orbit-detail-integration -> origin/feature/orbit-detail-integration
+2026-02-08T15:02:24.8158493Z  * [new branch]      fix/importer-vite-cjs-deprecation -> origin/fix/importer-vite-cjs-deprecation
+2026-02-08T15:02:24.8161464Z  * [new branch]      fix/mobile-vault-open-error -> origin/fix/mobile-vault-open-error
+2026-02-08T15:02:24.8163647Z  * [new branch]      fix/onboarding-mobile-dismiss -> origin/fix/onboarding-mobile-dismiss
+2026-02-08T15:02:24.8165541Z  * [new branch]      fix/orbit-loop         -> origin/fix/orbit-loop
+2026-02-08T15:02:24.8166981Z  * [new branch]      main                   -> origin/main
+2026-02-08T15:02:24.8168603Z  * [new branch]      mobile-detail-minimap-fix -> origin/mobile-detail-minimap-fix
+2026-02-08T15:02:24.8171038Z  * [new branch]      mobile-transparency-minimap-fix -> origin/mobile-transparency-minimap-fix
+2026-02-08T15:02:24.8200973Z [command]/usr/bin/git branch --list --remote origin/fix/mobile-vault-open-error
+2026-02-08T15:02:24.8225393Z   origin/fix/mobile-vault-open-error
+2026-02-08T15:02:24.8234175Z [command]/usr/bin/git rev-parse refs/remotes/origin/fix/mobile-vault-open-error
+2026-02-08T15:02:24.8253254Z 9ba2b994909073f1962dff1acfe4bf8fd8012b06
+2026-02-08T15:02:24.8258676Z ##[endgroup]
+2026-02-08T15:02:24.8260346Z ##[group]Determining the checkout info
+2026-02-08T15:02:24.8261892Z ##[endgroup]
+2026-02-08T15:02:24.8263369Z [command]/usr/bin/git sparse-checkout disable
+2026-02-08T15:02:24.8303034Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-02-08T15:02:24.8328914Z ##[group]Checking out the ref
+2026-02-08T15:02:24.8333691Z [command]/usr/bin/git checkout --progress --force -B fix/mobile-vault-open-error refs/remotes/origin/fix/mobile-vault-open-error
+2026-02-08T15:02:24.8766831Z Switched to a new branch 'fix/mobile-vault-open-error'
+2026-02-08T15:02:24.8770148Z branch 'fix/mobile-vault-open-error' set up to track 'origin/fix/mobile-vault-open-error'.
+2026-02-08T15:02:24.8778005Z ##[endgroup]
+2026-02-08T15:02:24.8816705Z [command]/usr/bin/git log -1 --format=%H
+2026-02-08T15:02:24.8838820Z 9ba2b994909073f1962dff1acfe4bf8fd8012b06
+2026-02-08T15:02:24.9124992Z ##[group]Run actions/setup-node@v4
+2026-02-08T15:02:24.9125957Z with:
+2026-02-08T15:02:24.9126621Z   node-version: 22
+2026-02-08T15:02:24.9127351Z   cache: npm
+2026-02-08T15:02:24.9128042Z   always-auth: false
+2026-02-08T15:02:24.9128806Z   check-latest: false
+2026-02-08T15:02:24.9130078Z   token: ***
+2026-02-08T15:02:24.9130760Z env:
+2026-02-08T15:02:24.9131396Z   HUSKY: 0
+2026-02-08T15:02:24.9132056Z ##[endgroup]
+2026-02-08T15:02:25.0973406Z Found in cache @ /opt/hostedtoolcache/node/22.22.0/x64
+2026-02-08T15:02:25.0980016Z ##[group]Environment details
+2026-02-08T15:02:25.4683318Z node: v22.22.0
+2026-02-08T15:02:25.4684756Z npm: 10.9.4
+2026-02-08T15:02:25.4685963Z yarn: 1.22.22
+2026-02-08T15:02:25.4688265Z ##[endgroup]
+2026-02-08T15:02:25.4712207Z [command]/opt/hostedtoolcache/node/22.22.0/x64/bin/npm config get cache
+2026-02-08T15:02:25.6137689Z /home/runner/.npm
+2026-02-08T15:02:25.8483827Z npm cache is not found
+2026-02-08T15:02:25.8634220Z ##[group]Run npm ci
+2026-02-08T15:02:25.8634590Z [36;1mnpm ci[0m
+2026-02-08T15:02:25.8682198Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:25.8682530Z env:
+2026-02-08T15:02:25.8682768Z   HUSKY: 0
+2026-02-08T15:02:25.8683001Z ##[endgroup]
+2026-02-08T15:02:28.6841746Z npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-02-08T15:02:29.0663420Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-02-08T15:02:29.8902420Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-02-08T15:02:30.6961400Z npm warn deprecated @types/gapi.client.drive@3.0.15: use @types/gapi.client.drive-v3 instead; see https://github.com/Maxim-Mazurok/google-api-typings-generator/issues/652 for details
+2026-02-08T15:02:31.1995737Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2026-02-08T15:02:31.2339490Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2026-02-08T15:02:31.7854698Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2026-02-08T15:02:34.4609761Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2026-02-08T15:02:36.4243190Z 
+2026-02-08T15:02:36.4243665Z > prepare
+2026-02-08T15:02:36.4244050Z > husky
+2026-02-08T15:02:36.4244166Z 
+2026-02-08T15:02:36.4725081Z HUSKY=0 skip install
+2026-02-08T15:02:36.4725804Z added 730 packages, and audited 736 packages in 11s
+2026-02-08T15:02:36.4726207Z 
+2026-02-08T15:02:36.4726466Z 270 packages are looking for funding
+2026-02-08T15:02:36.4726958Z   run `npm fund` for details
+2026-02-08T15:02:36.5013606Z 
+2026-02-08T15:02:36.5015025Z 8 vulnerabilities (3 low, 5 moderate)
+2026-02-08T15:02:36.5015499Z 
+2026-02-08T15:02:36.5015752Z To address issues that do not require attention, run:
+2026-02-08T15:02:36.5016121Z   npm audit fix
+2026-02-08T15:02:36.5016288Z 
+2026-02-08T15:02:36.5016532Z To address all issues (including breaking changes), run:
+2026-02-08T15:02:36.5016899Z   npm audit fix --force
+2026-02-08T15:02:36.5017062Z 
+2026-02-08T15:02:36.5017198Z Run `npm audit` for details.
+2026-02-08T15:02:36.5714702Z ##[group]Run npm run lint
+2026-02-08T15:02:36.5715007Z [36;1mnpm run lint[0m
+2026-02-08T15:02:36.5746270Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:36.5746556Z env:
+2026-02-08T15:02:36.5746731Z   HUSKY: 0
+2026-02-08T15:02:36.5746911Z ##[endgroup]
+2026-02-08T15:02:36.6783945Z 
+2026-02-08T15:02:36.6784402Z > lint
+2026-02-08T15:02:36.6784859Z > turbo run lint
+2026-02-08T15:02:36.6785051Z 
+2026-02-08T15:02:36.7233730Z 
+2026-02-08T15:02:36.7234665Z Attention:
+2026-02-08T15:02:36.7235925Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-02-08T15:02:36.7716706Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-02-08T15:02:36.7718456Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-02-08T15:02:36.7719944Z https://turborepo.dev/docs/telemetry
+2026-02-08T15:02:36.7720316Z 
+2026-02-08T15:02:36.7721321Z • Packages in scope: @codex/importer, editor-core, graph-engine, schema, web
+2026-02-08T15:02:36.7722244Z • Running lint in 5 packages
+2026-02-08T15:02:36.7722805Z • Remote caching disabled
+2026-02-08T15:02:40.0452674Z ##[group]schema:lint
+2026-02-08T15:02:40.0457713Z cache miss, executing 9e22d73aa4f7e992
+2026-02-08T15:02:40.0491042Z 
+2026-02-08T15:02:40.0494794Z > schema@0.0.0 lint
+2026-02-08T15:02:40.0498441Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.0502419Z 
+2026-02-08T15:02:40.0506139Z ##[endgroup]
+2026-02-08T15:02:40.0760488Z ##[group]editor-core:lint
+2026-02-08T15:02:40.0799558Z cache miss, executing 9ea4ae8ef75ceaec
+2026-02-08T15:02:40.0800374Z 
+2026-02-08T15:02:40.0800852Z > editor-core@0.0.0 lint
+2026-02-08T15:02:40.0801586Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.0801996Z 
+2026-02-08T15:02:40.0802683Z ##[endgroup]
+2026-02-08T15:02:40.1231579Z ##[group]graph-engine:lint
+2026-02-08T15:02:40.1240696Z cache miss, executing ede649efed7eeb15
+2026-02-08T15:02:40.1241084Z 
+2026-02-08T15:02:40.1241280Z > graph-engine@0.0.0 lint
+2026-02-08T15:02:40.1241765Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.1242010Z 
+2026-02-08T15:02:40.1242472Z ##[endgroup]
+2026-02-08T15:02:40.3599655Z ##[group]@codex/importer:lint
+2026-02-08T15:02:40.3600329Z cache miss, executing deacfa8b271cf0cf
+2026-02-08T15:02:40.3600664Z 
+2026-02-08T15:02:40.3600865Z > @codex/importer@0.0.0 lint
+2026-02-08T15:02:40.3601308Z > eslint "src/**/*.ts"
+2026-02-08T15:02:40.3601544Z 
+2026-02-08T15:02:40.3602004Z ##[endgroup]
+2026-02-08T15:02:52.1901633Z ##[group]web:lint
+2026-02-08T15:02:52.1902837Z cache miss, executing f36e78bfc63c39ee
+2026-02-08T15:02:52.1904346Z npm warn config ignoring workspace config at /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/.npmrc
+2026-02-08T15:02:52.1905454Z 
+2026-02-08T15:02:52.1905615Z > web@0.8.7 lint
+2026-02-08T15:02:52.1906183Z > svelte-check --tsconfig ./tsconfig.json && eslint .
+2026-02-08T15:02:52.1906585Z 
+2026-02-08T15:02:52.1907242Z Loading svelte-check in workspace: /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web
+2026-02-08T15:02:52.1908099Z Getting Svelte diagnostics...
+2026-02-08T15:02:52.1908371Z 
+2026-02-08T15:02:52.1909928Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/connections/ConnectionEditor.svelte[39m:12:21
+2026-02-08T15:02:52.1911356Z [33mWarn[39m: This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1912068Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1912397Z [36m
+2026-02-08T15:02:52.1912706Z   let type = $state([35mconnection[36m.type);
+2026-02-08T15:02:52.1913102Z   let label = $state(connection.label || "");[39m
+2026-02-08T15:02:52.1913316Z 
+2026-02-08T15:02:52.1913945Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/connections/ConnectionEditor.svelte[39m:13:22
+2026-02-08T15:02:52.1915270Z [33mWarn[39m: This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1915970Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1916412Z [36m  let type = $state(connection.type);
+2026-02-08T15:02:52.1916833Z   let label = $state([35mconnection[36m.label || "");[39m
+2026-02-08T15:02:52.1917062Z 
+2026-02-08T15:02:52.1917622Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:246:3
+2026-02-08T15:02:52.1918285Z [33mWarn[39m: Unknown at rule @reference (css)
+2026-02-08T15:02:52.1918604Z [36m<style>
+2026-02-08T15:02:52.1918955Z   [35m@reference[36m "../../../app.css";[39m
+2026-02-08T15:02:52.1919152Z 
+2026-02-08T15:02:52.1920389Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:249:5
+2026-02-08T15:02:52.1921103Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1921793Z [36m  .preview-content :global(code) {
+2026-02-08T15:02:52.1922339Z     [35m@apply[36m bg-zinc-200 dark:bg-zinc-800 px-1 rounded font-mono text-[0.9em];
+2026-02-08T15:02:52.1922778Z   }[39m
+2026-02-08T15:02:52.1922958Z 
+2026-02-08T15:02:52.1923995Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:252:5
+2026-02-08T15:02:52.1924692Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1925078Z [36m  .preview-content :global(strong) {
+2026-02-08T15:02:52.1925508Z     [35m@apply[36m font-bold text-zinc-900 dark:text-zinc-100;
+2026-02-08T15:02:52.1925838Z   }[39m
+2026-02-08T15:02:52.1925941Z 
+2026-02-08T15:02:52.1926491Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/components/search/SearchModal.svelte[39m:255:5
+2026-02-08T15:02:52.1927250Z [33mWarn[39m: Unknown at rule @apply (css)
+2026-02-08T15:02:52.1927638Z [36m  .preview-content :global(em) {
+2026-02-08T15:02:52.1927933Z     [35m@apply[36m italic;
+2026-02-08T15:02:52.1928161Z   }[39m
+2026-02-08T15:02:52.1928262Z 
+2026-02-08T15:02:52.1928809Z /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[32msrc/lib/features/importer/ReviewList.svelte[39m:12:36
+2026-02-08T15:02:52.1930205Z [33mWarn[39m: This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:02:52.1930907Z https://svelte.dev/e/state_referenced_locally (svelte)
+2026-02-08T15:02:52.1931231Z [36m
+2026-02-08T15:02:52.1931611Z   let selectedIds = $state(new Set([35mentities[36m.map(e => e.id)));[39m
+2026-02-08T15:02:52.1931904Z 
+2026-02-08T15:02:52.1932028Z ====================================
+2026-02-08T15:02:52.1932440Z [33msvelte-check found 0 errors and 7 warnings in 3 files
+2026-02-08T15:02:52.1932957Z [39m
+2026-02-08T15:02:52.1933384Z ##[endgroup]
+2026-02-08T15:02:52.1933495Z 
+2026-02-08T15:02:52.1933610Z  Tasks:    5 successful, 5 total
+2026-02-08T15:02:52.1933876Z Cached:    0 cached, 5 total
+2026-02-08T15:02:52.1934122Z   Time:    15.446s 
+2026-02-08T15:02:52.1934239Z 
+2026-02-08T15:02:52.2091297Z ##[group]Run npm test
+2026-02-08T15:02:52.2091570Z [36;1mnpm test[0m
+2026-02-08T15:02:52.2122416Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:52.2122663Z env:
+2026-02-08T15:02:52.2122831Z   HUSKY: 0
+2026-02-08T15:02:52.2123014Z ##[endgroup]
+2026-02-08T15:02:52.3114847Z 
+2026-02-08T15:02:52.3115395Z > test
+2026-02-08T15:02:52.3115721Z > turbo run test
+2026-02-08T15:02:52.3115869Z 
+2026-02-08T15:02:52.4012366Z • Packages in scope: @codex/importer, editor-core, graph-engine, schema, web
+2026-02-08T15:02:52.4013514Z • Running test in 5 packages
+2026-02-08T15:02:52.4014028Z • Remote caching disabled
+2026-02-08T15:02:55.4021619Z ##[group]schema:test
+2026-02-08T15:02:55.4027942Z cache miss, executing 179fb1ed4fb42cd9
+2026-02-08T15:02:55.4031898Z 
+2026-02-08T15:02:55.4035469Z > schema@0.0.0 test
+2026-02-08T15:02:55.4039080Z > vitest run
+2026-02-08T15:02:55.4050181Z 
+2026-02-08T15:02:55.4053883Z 
+2026-02-08T15:02:55.4058891Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/schema[39m
+2026-02-08T15:02:55.4072441Z 
+2026-02-08T15:02:55.4076933Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 12[2mms[22m[39m
+2026-02-08T15:02:55.4082479Z  [32m✓[39m src/visibility.test.ts [2m ([22m[2m9 tests[22m[2m)[22m[90m 23[2mms[22m[39m
+2026-02-08T15:02:55.4087688Z  [32m✓[39m src/schema.test.ts [2m ([22m[2m11 tests[22m[2m)[22m[90m 48[2mms[22m[39m
+2026-02-08T15:02:55.4088596Z 
+2026-02-08T15:02:55.4089701Z [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+2026-02-08T15:02:55.4090840Z [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+2026-02-08T15:02:55.4091748Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:55.4093190Z [2m   Duration [22m 1.83s[2m (transform 613ms, setup 0ms, collect 855ms, tests 83ms, environment 1ms, prepare 1.99s)[22m
+2026-02-08T15:02:55.4094110Z 
+2026-02-08T15:02:55.4094734Z ##[endgroup]
+2026-02-08T15:02:58.0751330Z ##[group]editor-core:test
+2026-02-08T15:02:58.0755904Z cache miss, executing 800d785efdb530e0
+2026-02-08T15:02:58.0776714Z 
+2026-02-08T15:02:58.0778326Z > editor-core@0.0.0 test
+2026-02-08T15:02:58.0783505Z > vitest run
+2026-02-08T15:02:58.0786056Z 
+2026-02-08T15:02:58.0788473Z 
+2026-02-08T15:02:58.0795496Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/editor-core[39m
+2026-02-08T15:02:58.0798658Z 
+2026-02-08T15:02:58.0815113Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 12[2mms[22m[39m
+2026-02-08T15:02:58.0831211Z  [32m✓[39m src/parsing/oracle.test.ts [2m ([22m[2m12 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+2026-02-08T15:02:58.0840538Z  [32m✓[39m tests/oracle.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 33[2mms[22m[39m
+2026-02-08T15:02:58.0841947Z  [32m✓[39m tests/wiki-link.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 9[2mms[22m[39m
+2026-02-08T15:02:58.0842612Z 
+2026-02-08T15:02:58.0843204Z [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+2026-02-08T15:02:58.0844206Z [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+2026-02-08T15:02:58.0844993Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:58.0846370Z [2m   Duration [22m 4.45s[2m (transform 647ms, setup 1ms, collect 979ms, tests 99ms, environment 1.50s, prepare 2.08s)[22m
+2026-02-08T15:02:58.0847106Z 
+2026-02-08T15:02:58.0847667Z ##[endgroup]
+2026-02-08T15:02:59.2866324Z ##[group]graph-engine:test
+2026-02-08T15:02:59.2881783Z cache miss, executing eb36cd6122d0d057
+2026-02-08T15:02:59.2885985Z 
+2026-02-08T15:02:59.2890138Z > graph-engine@0.0.0 test
+2026-02-08T15:02:59.2894380Z > vitest run
+2026-02-08T15:02:59.2898363Z 
+2026-02-08T15:02:59.2902517Z 
+2026-02-08T15:02:59.2907880Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/graph-engine[39m
+2026-02-08T15:02:59.2929707Z 
+2026-02-08T15:02:59.2936504Z  [32m✓[39m tests/timeline.test.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 27[2mms[22m[39m
+2026-02-08T15:02:59.2938072Z  [32m✓[39m src/transformer.test.ts [2m ([22m[2m6 tests[22m[2m)[22m[90m 38[2mms[22m[39m
+2026-02-08T15:02:59.2939618Z  [32m✓[39m tests/transformer.test.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 31[2mms[22m[39m
+2026-02-08T15:02:59.2940913Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 9[2mms[22m[39m
+2026-02-08T15:02:59.2942130Z  [32m✓[39m tests/themes.test.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 10[2mms[22m[39m
+2026-02-08T15:02:59.2943343Z  [32m✓[39m tests/orbit.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 59[2mms[22m[39m
+2026-02-08T15:02:59.2944604Z  [32m✓[39m tests/graph.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 63[2mms[22m[39m
+2026-02-08T15:02:59.2945232Z 
+2026-02-08T15:02:59.2945766Z [2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+2026-02-08T15:02:59.2946709Z [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+2026-02-08T15:02:59.2947456Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:59.2948814Z [2m   Duration [22m 5.68s[2m (transform 770ms, setup 1ms, collect 1.53s, tests 237ms, environment 1.51s, prepare 3.25s)[22m
+2026-02-08T15:02:59.2949837Z 
+2026-02-08T15:02:59.2950503Z ##[endgroup]
+2026-02-08T15:03:01.4589881Z ##[group]@codex/importer:test
+2026-02-08T15:03:01.4594082Z cache miss, executing ffc45baaba5721af
+2026-02-08T15:03:01.4597791Z 
+2026-02-08T15:03:01.4604817Z > @codex/importer@0.0.0 test
+2026-02-08T15:03:01.4608774Z > vitest run
+2026-02-08T15:03:01.4612772Z 
+2026-02-08T15:03:01.4627938Z 
+2026-02-08T15:03:01.4635223Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer[39m
+2026-02-08T15:03:01.4636317Z 
+2026-02-08T15:03:01.4638837Z  [32m✓[39m tests/import-integration.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 14[2mms[22m[39m
+2026-02-08T15:03:01.4640766Z  [32m✓[39m tests/oracle/analyzer.spec.ts [2m ([22m[2m5 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+2026-02-08T15:03:01.4643286Z [90mstderr[2m | tests/oracle/analyzer.spec.ts[2m > [22m[2mOracleAnalyzer[2m > [22m[2mhandles empty response gracefully[22m[39m
+2026-02-08T15:03:01.4645462Z Oracle Analysis failed with model gemini-3-flash-preview: Error: No valid JSON array found in Oracle response
+2026-02-08T15:03:01.4649778Z     at OracleAnalyzer.processChunk (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/oracle/analyzer.ts:74:17)
+2026-02-08T15:03:01.4651415Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/oracle/analyzer.spec.ts:94:20
+2026-02-08T15:03:01.4652941Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4654569Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4656111Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4665973Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4667636Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4669679Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4671601Z     at withEnv (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:83:5)
+2026-02-08T15:03:01.4673413Z     at run (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:105:3)
+2026-02-08T15:03:01.4675567Z Oracle Analysis failed with model gemini-flash-lite-latest: Error: No valid JSON array found in Oracle response
+2026-02-08T15:03:01.4677495Z     at OracleAnalyzer.processChunk (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/oracle/analyzer.ts:74:17)
+2026-02-08T15:03:01.4679117Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/oracle/analyzer.spec.ts:94:20
+2026-02-08T15:03:01.4680776Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4682340Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4683830Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4686162Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4688384Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4691635Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4693514Z     at withEnv (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:83:5)
+2026-02-08T15:03:01.4695418Z     at run (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:105:3)
+2026-02-08T15:03:01.4696748Z Oracle Analysis failed with all available models.
+2026-02-08T15:03:01.4697148Z 
+2026-02-08T15:03:01.4698529Z [90mstderr[2m | tests/parsers/docx-images.spec.ts[2m > [22m[2mDocxParser Image Extraction[2m > [22m[2mextracts images from docx[22m[39m
+2026-02-08T15:03:01.4700222Z Failed to detect image dimensions TypeError: URL.createObjectURL is not a function
+2026-02-08T15:03:01.4701465Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts:50:31
+2026-02-08T15:03:01.4703152Z     at Proxy.<anonymous> (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/parsers/docx-images.spec.ts:32:9)
+2026-02-08T15:03:01.4704838Z     at DocxParser.parse (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts:35:39)
+2026-02-08T15:03:01.4706351Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/parsers/docx-images.spec.ts:44:20
+2026-02-08T15:03:01.4707945Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4709726Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4711396Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4713063Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4714765Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4716476Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4717392Z 
+2026-02-08T15:03:01.4718351Z  [32m✓[39m tests/parsers/docx-images.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 72[2mms[22m[39m
+2026-02-08T15:03:01.4720177Z  [32m✓[39m tests/parsers/docx.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4721719Z  [32m✓[39m tests/parsers/text.spec.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4723381Z  [32m✓[39m tests/parsers/pdf.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4725016Z  [32m✓[39m tests/parsers/json.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 13[2mms[22m[39m
+2026-02-08T15:03:01.4726578Z  [32m✓[39m tests/persistence/persistence.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 4[2mms[22m[39m
+2026-02-08T15:03:01.4727331Z 
+2026-02-08T15:03:01.4727920Z [2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+2026-02-08T15:03:01.4728885Z [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+2026-02-08T15:03:01.4729909Z [2m   Start at [22m 15:02:53
+2026-02-08T15:03:01.4731318Z [2m   Duration [22m 7.62s[2m (transform 477ms, setup 2ms, collect 843ms, tests 173ms, environment 12.00s, prepare 2.70s)[22m
+2026-02-08T15:03:01.4732153Z 
+2026-02-08T15:03:01.4732779Z ##[endgroup]
+2026-02-08T15:03:02.6332477Z ##[group]web:test
+2026-02-08T15:03:02.6333116Z cache miss, executing c557d44554e9d8f4
+2026-02-08T15:03:02.6334386Z npm warn config ignoring workspace config at /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/.npmrc
+2026-02-08T15:03:02.6335335Z 
+2026-02-08T15:03:02.6335489Z > web@0.8.7 test
+2026-02-08T15:03:02.6335864Z > vitest run
+2026-02-08T15:03:02.6336000Z 
+2026-02-08T15:03:02.6336012Z 
+2026-02-08T15:03:02.6336783Z [1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web[39m
+2026-02-08T15:03:02.6337325Z 
+2026-02-08T15:03:02.6338662Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize explicit title matches over active selection
+2026-02-08T15:03:02.6340752Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6341302Z 
+2026-02-08T15:03:02.6342559Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould match short titles only with word boundaries
+2026-02-08T15:03:02.6344043Z [22m[39m[AIService] Consulted 1 records: [ [32m'ai-id'[39m ]
+2026-02-08T15:03:02.6344467Z 
+2026-02-08T15:03:02.6345917Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search results over active selection
+2026-02-08T15:03:02.6347650Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6348238Z 
+2026-02-08T15:03:02.6349793Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search over sticky context
+2026-02-08T15:03:02.6351443Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6352014Z 
+2026-02-08T15:03:02.6353316Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould stick to previous context for follow-up questions
+2026-02-08T15:03:02.6354993Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6355569Z 
+2026-02-08T15:03:02.6357091Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould ignore low-confidence search results and fallback to active selection
+2026-02-08T15:03:02.6358947Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+2026-02-08T15:03:02.6359701Z 
+2026-02-08T15:03:02.6360955Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+2026-02-08T15:03:02.6362508Z [22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6363022Z 
+2026-02-08T15:03:02.6364203Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+2026-02-08T15:03:02.6365946Z [22m[39m[AIService] Consulted 1 records: [ [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6366403Z 
+2026-02-08T15:03:02.6367927Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould handle missing entities in connection context gracefully
+2026-02-08T15:03:02.6370403Z [22m[39m[AIService] Consulted 1 records: [ [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6370862Z 
+2026-02-08T15:03:02.6372065Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould recognize lone pronouns as follow-ups
+2026-02-08T15:03:02.6373655Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+2026-02-08T15:03:02.6374230Z 
+2026-02-08T15:03:02.6375960Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould combine Lore and Content in context (Context Fusion)
+2026-02-08T15:03:02.6377748Z [22m[39m[AIService] Consulted 1 records: [ [32m'fusion-id'[39m ]
+2026-02-08T15:03:02.6378206Z 
+2026-02-08T15:03:02.6380220Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould respect 10k character limit and prioritize selected entity
+2026-02-08T15:03:02.6382195Z [22m[39m[AIService] Consulted 2 records: [ [32m'active-id'[39m, [32m'match-id'[39m ]
+2026-02-08T15:03:02.6382757Z 
+2026-02-08T15:03:02.6384396Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould populate sourceIds for all consulted entities
+2026-02-08T15:03:02.6386273Z [22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6386837Z 
+2026-02-08T15:03:02.6388198Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mQuery Expansion[2m > [22m[2mshould call Lite model to expand query
+2026-02-08T15:03:02.6389890Z [22m[39m[AIService] Expanded query: "him?" -> "Expanded Term"
+2026-02-08T15:03:02.6390313Z 
+2026-02-08T15:03:02.6391997Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mNeighborhood Enrichment[2m > [22m[2mshould include linked entity chronicles (Neighborhood Enrichment)
+2026-02-08T15:03:02.6393907Z [22m[39m[AIService] Consulted 2 records: [ [32m'location-id'[39m, [32m'npc-id'[39m ]
+2026-02-08T15:03:02.6394472Z 
+2026-02-08T15:03:02.6395678Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+2026-02-08T15:03:02.6397145Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6397636Z 
+2026-02-08T15:03:02.6398848Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+2026-02-08T15:03:02.6400524Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6400813Z 
+2026-02-08T15:03:02.6401487Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+2026-02-08T15:03:02.6402268Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6402521Z 
+2026-02-08T15:03:02.6403159Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+2026-02-08T15:03:02.6404094Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6404521Z 
+2026-02-08T15:03:02.6405202Z  [32m✓[39m src/lib/services/ai.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+2026-02-08T15:03:02.6407199Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould match files using full relative paths
+2026-02-08T15:03:02.6409093Z [22m[39m[SyncEngine] lore/main.md has no remote match. Adding to UPLOADS.
+2026-02-08T15:03:02.6409760Z 
+2026-02-08T15:03:02.6411343Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould detect local changes in subdirectories
+2026-02-08T15:03:02.6412976Z [22m[39m[SyncEngine] images/hero.png changed. Local: true, Remote: false
+2026-02-08T15:03:02.6413465Z 
+2026-02-08T15:03:02.6414919Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould identify and clean up remote duplicates
+2026-02-08T15:03:02.6416527Z [22m[39m[SyncEngine] Found 2 duplicates for images/hero.png. Cleaning up...
+2026-02-08T15:03:02.6417502Z [SyncEngine] images/hero.png changed. Local: true, Remote: true
+2026-02-08T15:03:02.6418391Z [SyncEngine] Conflict for images/hero.png. Decision: DOWNLOAD
+2026-02-08T15:03:02.6418816Z 
+2026-02-08T15:03:02.6419812Z  [32m✓[39m src/lib/cloud-bridge/sync-engine/engine.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+2026-02-08T15:03:02.6421320Z [90mstderr[2m | src/lib/stores/oracle.test.ts[2m > [22m[2mOracleStore[2m > [22m[2mUndo Logic[2m > [22m[2mshould keep action on stack if revert fails
+2026-02-08T15:03:02.6422036Z [22m[39mUndo failed: Error: Revert failed
+2026-02-08T15:03:02.6422681Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/oracle.test.ts:358:49
+2026-02-08T15:03:02.6423640Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+2026-02-08T15:03:02.6424674Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+2026-02-08T15:03:02.6425692Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+2026-02-08T15:03:02.6426296Z     at new Promise (<anonymous>)
+2026-02-08T15:03:02.6427121Z     at runWithTimeout [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+2026-02-08T15:03:02.6428235Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+2026-02-08T15:03:02.6429599Z     at Traces.$ [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+2026-02-08T15:03:02.6430827Z     at trace [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+2026-02-08T15:03:02.6432038Z     at runTest [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+2026-02-08T15:03:02.6432590Z 
+2026-02-08T15:03:02.6432980Z  [32m✓[39m src/lib/stores/oracle.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+2026-02-08T15:03:02.6434717Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+2026-02-08T15:03:02.6436295Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6436817Z 
+2026-02-08T15:03:02.6438202Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+2026-02-08T15:03:02.6439884Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6440355Z 
+2026-02-08T15:03:02.6441773Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6443453Z [22m[39m[GDriveAdapter] Restoring cached token
+2026-02-08T15:03:02.6443769Z 
+2026-02-08T15:03:02.6445325Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6446828Z [22m[39m[GDriveAdapter] Restoring cached token
+2026-02-08T15:03:02.6447169Z 
+2026-02-08T15:03:02.6448668Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6450529Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6451017Z 
+2026-02-08T15:03:02.6451870Z  [32m✓[39m src/lib/cloud-bridge/google-drive/adapter.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-02-08T15:03:02.6453891Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould gracefully handle invalid persisted handle (mobile simulation)
+2026-02-08T15:03:02.6455866Z [22m[39mFailed to verify permission (handle invalid) Error: NotFoundError: A requested file or directory could not be found
+2026-02-08T15:03:02.6457463Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:602:11
+2026-02-08T15:03:02.6459379Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+2026-02-08T15:03:02.6461238Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+2026-02-08T15:03:02.6462720Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+2026-02-08T15:03:02.6463350Z     at new Promise (<anonymous>)
+2026-02-08T15:03:02.6464782Z     at runWithTimeout [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+2026-02-08T15:03:02.6466860Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+2026-02-08T15:03:02.6469151Z     at Traces.$ [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+2026-02-08T15:03:02.6471693Z     at trace [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+2026-02-08T15:03:02.6474010Z     at runTest [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+2026-02-08T15:03:02.6475081Z 
+2026-02-08T15:03:02.6476490Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould gracefully handle invalid persisted handle (mobile simulation)
+2026-02-08T15:03:02.6478104Z [22m[39mPersisted handle no longer valid or permission denied.
+2026-02-08T15:03:02.6478596Z 
+2026-02-08T15:03:02.6480257Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould return false if verifyPermission iteration fails (stale handle)
+2026-02-08T15:03:02.6481988Z [22m[39mFailed to verify permission (handle invalid) Error: Stale handle access error
+2026-02-08T15:03:02.6483764Z     at Object.<anonymous> [90m(/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:626:15[90m)[39m
+2026-02-08T15:03:02.6486174Z     at Object.Mock [as values] [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:285:34[90m)[39m
+2026-02-08T15:03:02.6488704Z     at VaultStore.verifyPermission [90m(/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.svelte.ts:289:41[90m)[39m
+2026-02-08T15:03:02.6490795Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:630:20
+2026-02-08T15:03:02.6492583Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+2026-02-08T15:03:02.6493637Z 
+2026-02-08T15:03:02.6494403Z  [32m✓[39m src/lib/stores/vault.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 230[2mms[22m[39m
+2026-02-08T15:03:02.6496153Z [90mstderr[2m | src/lib/stores/vault-batch.test.ts[2m > [22m[2mVaultStore - Batch Operations[2m > [22m[2mshould skip duplicate entities during batch creation
+2026-02-08T15:03:02.6497107Z [22m[39mSkipping duplicate entity during batch import: existing
+2026-02-08T15:03:02.6497417Z 
+2026-02-08T15:03:02.6497853Z  [32m✓[39m src/lib/stores/vault-batch.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-02-08T15:03:02.6498641Z  [32m✓[39m src/tests/search-utils.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6499705Z  [32m✓[39m src/lib/stores/search.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 221[2mms[22m[39m
+2026-02-08T15:03:02.6500815Z  [2m[90m↓[39m[22m src/lib/cloud-bridge/google-drive/public-adapter.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+2026-02-08T15:03:02.6501666Z  [32m✓[39m src/lib/utils/fs.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6502372Z  [32m✓[39m src/lib/stores/categories.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-02-08T15:03:02.6503107Z  [32m✓[39m src/lib/stores/sync-stats.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6504181Z  [32m✓[39m src/tests/search.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+2026-02-08T15:03:02.6505438Z  [32m✓[39m src/lib/utils/color.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-02-08T15:03:02.6506870Z  [32m✓[39m src/lib/cloud-bridge/memory-adapter.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6508300Z  [32m✓[39m src/lib/stores/help.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-02-08T15:03:02.6509892Z  [32m✓[39m src/lib/cloud-bridge/sync-engine/conflict.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+2026-02-08T15:03:02.6511232Z  [32m✓[39m src/smoke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+2026-02-08T15:03:02.6511783Z 
+2026-02-08T15:03:02.6512502Z [2m Test Files [22m [1m[32m17 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (18)[39m
+2026-02-08T15:03:02.6513776Z [2m      Tests [22m [1m[32m110 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (115)[39m
+2026-02-08T15:03:02.6514604Z [2m   Start at [22m 15:02:57
+2026-02-08T15:03:02.6515715Z [2m   Duration [22m 5.37s[2m (transform 5.12s, setup 0ms, import 8.14s, tests 736ms, environment 1.80s)[22m
+2026-02-08T15:03:02.6516374Z 
+2026-02-08T15:03:02.6516958Z ##[endgroup]
+2026-02-08T15:03:02.6517146Z 
+2026-02-08T15:03:02.6517355Z  Tasks:    5 successful, 5 total
+2026-02-08T15:03:02.6517813Z Cached:    0 cached, 5 total
+2026-02-08T15:03:02.6518203Z   Time:    10.257s 
+2026-02-08T15:03:02.6518403Z 
+2026-02-08T15:03:02.6574206Z ##[group]Run npm run build --workspace=web
+2026-02-08T15:03:02.6574566Z [36;1mnpm run build --workspace=web[0m
+2026-02-08T15:03:02.6574852Z [36;1mmkdir -p dist/staging[0m
+2026-02-08T15:03:02.6575131Z [36;1mcp -r apps/web/build/* dist/staging/[0m
+2026-02-08T15:03:02.6575477Z [36;1mcp apps/web/build/index.html dist/staging/404.html[0m
+2026-02-08T15:03:02.6606970Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:03:02.6607222Z env:
+2026-02-08T15:03:02.6607397Z   HUSKY: 0
+2026-02-08T15:03:02.6608097Z   VITE_GOOGLE_CLIENT_ID: ***
+2026-02-08T15:03:02.6608514Z   VITE_SHARED_GEMINI_KEY: 
+2026-02-08T15:03:02.6608863Z   VITE_GOOGLE_API_KEY: ***
+2026-02-08T15:03:02.6609081Z   VITE_STAGING: true
+2026-02-08T15:03:02.6609480Z   BASE_PATH: /staging
+2026-02-08T15:03:02.6631585Z ##[endgroup]
+2026-02-08T15:03:02.7800432Z 
+2026-02-08T15:03:02.7800985Z > web@0.8.7 build
+2026-02-08T15:03:02.7801758Z > vite build && cp build/index.html build/404.html
+2026-02-08T15:03:02.7802233Z 
+2026-02-08T15:03:03.6817751Z [36mvite v7.3.1 [32mbuilding ssr environment for production...[36m[39m
+2026-02-08T15:03:03.7265043Z transforming...
+2026-02-08T15:03:04.5705330Z 3:03:04 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:12:20 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:04.5706589Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:04.5706961Z 10:   }>();
+2026-02-08T15:03:04.5707189Z 11: 
+2026-02-08T15:03:04.5707501Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:04.5707906Z                                   ^
+2026-02-08T15:03:04.5708318Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:04.5708657Z 14: 
+2026-02-08T15:03:04.5710078Z 3:03:04 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:13:21 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:04.5711244Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:04.5711602Z 11: 
+2026-02-08T15:03:04.5711906Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:04.5712350Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:04.5712728Z                                    ^
+2026-02-08T15:03:04.5713012Z 14: 
+2026-02-08T15:03:04.5713351Z 15:   // Sync state if connection changes (e.g. component reuse)
+2026-02-08T15:03:05.4573668Z 3:03:05 PM [vite-plugin-svelte] src/lib/features/importer/ReviewList.svelte:12:35 This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:05.4575286Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:05.4575995Z 10:   let { entities = [], onSave, onCancel }: Props = $props();
+2026-02-08T15:03:05.4576519Z 11: 
+2026-02-08T15:03:05.4577094Z 12:   let selectedIds = $state(new Set(entities.map(e => e.id)));
+2026-02-08T15:03:05.4577776Z                                                ^
+2026-02-08T15:03:05.4578228Z 13: 
+2026-02-08T15:03:05.4578566Z 14:   $effect(() => {
+2026-02-08T15:03:07.3233143Z [32m✓[39m 343 modules transformed.
+2026-02-08T15:03:07.4340190Z rendering chunks...
+2026-02-08T15:03:07.4650596Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:07.4664741Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/ui.svelte.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/EntityDetailPanel.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/GraphView.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/VaultControls.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/layout/MobileMenu.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/modals/ZenModeModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleChat.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleWindow.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CloudStatus.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/SettingsModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/graph.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/search.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/routes/+layout.svelte, dynamic import will not move module into another chunk.
+2026-02-08T15:03:07.4673734Z [39m
+2026-02-08T15:03:07.9130005Z [36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+2026-02-08T15:03:07.9169985Z transforming...
+2026-02-08T15:03:08.6972499Z 3:03:08 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:12:20 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:08.6974431Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:08.6974919Z 10:   }>();
+2026-02-08T15:03:08.6975227Z 11: 
+2026-02-08T15:03:08.6975683Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:08.6976183Z                                   ^
+2026-02-08T15:03:08.6976774Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:08.6977255Z 14: 
+2026-02-08T15:03:08.6979048Z 3:03:08 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:13:21 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:08.6981063Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:08.6981543Z 11: 
+2026-02-08T15:03:08.6981969Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:08.6982585Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:08.6983080Z                                    ^
+2026-02-08T15:03:08.6983452Z 14: 
+2026-02-08T15:03:08.6983969Z 15:   // Sync state if connection changes (e.g. component reuse)
+2026-02-08T15:03:09.9525890Z 3:03:09 PM [vite-plugin-svelte] src/lib/features/importer/ReviewList.svelte:12:35 This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:09.9527570Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:09.9528307Z 10:   let { entities = [], onSave, onCancel }: Props = $props();
+2026-02-08T15:03:09.9528816Z 11: 
+2026-02-08T15:03:09.9529579Z 12:   let selectedIds = $state(new Set(entities.map(e => e.id)));
+2026-02-08T15:03:09.9530246Z                                                ^
+2026-02-08T15:03:09.9530709Z 13: 
+2026-02-08T15:03:09.9531047Z 14:   $effect(() => {
+2026-02-08T15:03:16.2188210Z [32m✓[39m 891 modules transformed.
+2026-02-08T15:03:16.7708675Z rendering chunks...
+2026-02-08T15:03:16.9471830Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:16.9475810Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/turndown/lib/turndown.browser.es.js is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/utils.ts, dynamic import will not move module into another chunk.
+2026-02-08T15:03:16.9478897Z [39m
+2026-02-08T15:03:17.1076690Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:17.1085154Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/utils/markdown.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/oracle.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/cloud-bridge/google-drive/public-adapter.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/ChatMessage.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CategorySettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/timeline/EraEditor.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts, dynamic import will not move module into another chunk.
+2026-02-08T15:03:17.1091985Z [39m
+2026-02-08T15:03:17.1092381Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:17.1107880Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/ui.svelte.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/AISettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/oracle.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/EntityDetailPanel.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/GraphView.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/VaultControls.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/layout/MobileMenu.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/modals/ZenModeModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleChat.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleWindow.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CloudStatus.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/SettingsModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/graph.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/search.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/routes/+layout.svelte, dynamic import will not move module into another chunk.
+2026-02-08T15:03:17.1120058Z [39m
+2026-02-08T15:03:17.1362296Z computing gzip size...
+2026-02-08T15:03:17.1711177Z [2m.svelte-kit/output/client/[22m[32m_app/version.json                                  [39m[1m[2m  0.03 kB[22m[1m[22m[2m │ gzip:   0.05 kB[22m
+2026-02-08T15:03:17.1712939Z [2m.svelte-kit/output/client/[22m[32m.vite/manifest.json                                [39m[1m[2m 11.14 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m
+2026-02-08T15:03:17.1714078Z [2m.svelte-kit/output/client/[22m[32m_app/immutable/workers/sync-1pn-fgKB.js            [39m[1m[2m 15.88 kB[22m[1m[22m
+2026-02-08T15:03:17.1716099Z [2m.svelte-kit/output/client/[22m[32m_app/immutable/workers/search.worker-CzGuQE9n.js   [39m[1m[2m 52.34 kB[22m[1m[22m
+2026-02-08T15:03:17.1718279Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/3.B0cdjBwX.css               [39m[1m[2m  0.04 kB[22m[1m[22m[2m │ gzip:   0.06 kB[22m
+2026-02-08T15:03:17.1720675Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/OracleChat.DhCLoWEq.css      [39m[1m[2m  0.24 kB[22m[1m[22m[2m │ gzip:   0.14 kB[22m
+2026-02-08T15:03:17.1722491Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/7.D5o6K4EE.css               [39m[1m[2m  0.46 kB[22m[1m[22m[2m │ gzip:   0.15 kB[22m
+2026-02-08T15:03:17.1723673Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/LegalDocument.C9z-0L07.css   [39m[1m[2m  1.28 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m
+2026-02-08T15:03:17.1725466Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/2.BzfvmWRV.css               [39m[1m[2m  2.81 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-02-08T15:03:17.1726656Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/MarkdownEditor.WdknsPTA.css  [39m[1m[2m  2.95 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m
+2026-02-08T15:03:17.1727816Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/0.BSr43LqA.css               [39m[1m[2m162.48 kB[22m[1m[22m[2m │ gzip:  21.95 kB[22m
+2026-02-08T15:03:17.1728437Z [33m
+2026-02-08T15:03:17.1728800Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-02-08T15:03:17.1729663Z - Using dynamic import() to code-split the application
+2026-02-08T15:03:17.1730480Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-02-08T15:03:17.1731389Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+2026-02-08T15:03:17.1732368Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BIHI7g3E.js                  [39m[1m[2m  0.03 kB[22m[1m[22m[2m │ gzip:   0.05 kB[22m
+2026-02-08T15:03:17.1733470Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/MRu79t51.js                  [39m[1m[2m  0.04 kB[22m[1m[22m[2m │ gzip:   0.06 kB[22m
+2026-02-08T15:03:17.1734567Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/start.BgagfOXD.js             [39m[1m[2m  0.08 kB[22m[1m[22m[2m │ gzip:   0.09 kB[22m
+2026-02-08T15:03:17.1735669Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CneqFMom.js                  [39m[1m[2m  0.12 kB[22m[1m[22m[2m │ gzip:   0.11 kB[22m
+2026-02-08T15:03:17.1736765Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/4.Cq6sdin9.js                 [39m[1m[2m  0.19 kB[22m[1m[22m[2m │ gzip:   0.17 kB[22m
+2026-02-08T15:03:17.1737840Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/5.BmxTv_oP.js                 [39m[1m[2m  0.19 kB[22m[1m[22m[2m │ gzip:   0.17 kB[22m
+2026-02-08T15:03:17.1738954Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/D87cfImk.js                  [39m[1m[2m  0.44 kB[22m[1m[22m[2m │ gzip:   0.28 kB[22m
+2026-02-08T15:03:17.1740202Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BdCnMOcd.js                  [39m[1m[2m  0.52 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m
+2026-02-08T15:03:17.1741284Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bw9sPjqx.js                  [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-02-08T15:03:17.1742378Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/DoWg40iU.js                  [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-02-08T15:03:17.1743463Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CE1G-McA.js                  [39m[1m[2m  0.76 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m
+2026-02-08T15:03:17.1744548Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/6.BvLzLn4c.js                 [39m[1m[2m  1.13 kB[22m[1m[22m[2m │ gzip:   0.66 kB[22m
+2026-02-08T15:03:17.1745627Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CqHg0FKe.js                  [39m[1m[2m  1.15 kB[22m[1m[22m[2m │ gzip:   0.56 kB[22m
+2026-02-08T15:03:17.1746708Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/1.BIrJmWUS.js                 [39m[1m[2m  1.16 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+2026-02-08T15:03:17.1747824Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/PPVm8Dsz.js                  [39m[1m[2m  1.23 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+2026-02-08T15:03:17.1748936Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BJoWLNgy.js                  [39m[1m[2m  1.34 kB[22m[1m[22m[2m │ gzip:   0.72 kB[22m
+2026-02-08T15:03:17.1750145Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/DVk5hIYg.js                  [39m[1m[2m  1.35 kB[22m[1m[22m[2m │ gzip:   0.81 kB[22m
+2026-02-08T15:03:17.1751351Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/3.BcSNVIaZ.js                 [39m[1m[2m  1.85 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-02-08T15:03:17.1752445Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CJ-Sw_dR.js                  [39m[1m[2m  2.11 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-02-08T15:03:17.1753522Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Cf2D7pr6.js                  [39m[1m[2m  2.33 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m
+2026-02-08T15:03:17.1754606Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Cx9epcr_.js                  [39m[1m[2m  3.78 kB[22m[1m[22m[2m │ gzip:   1.83 kB[22m
+2026-02-08T15:03:17.1755791Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bj2-5bwc.js                  [39m[1m[2m  4.89 kB[22m[1m[22m[2m │ gzip:   2.17 kB[22m
+2026-02-08T15:03:17.1756892Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/app.DVcxdP8T.js               [39m[1m[2m  5.75 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m
+2026-02-08T15:03:17.1758025Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/1RtjEnGz.js                  [39m[1m[2m  7.03 kB[22m[1m[22m[2m │ gzip:   3.25 kB[22m
+2026-02-08T15:03:17.1759111Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/7.BvbhdE87.js                 [39m[1m[2m 10.69 kB[22m[1m[22m[2m │ gzip:   4.07 kB[22m
+2026-02-08T15:03:17.1760309Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CTaIb7MJ.js                  [39m[1m[2m 19.42 kB[22m[1m[22m[2m │ gzip:   6.39 kB[22m
+2026-02-08T15:03:17.1761393Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/M2XNh1yZ.js                  [39m[1m[2m 22.67 kB[22m[1m[22m[2m │ gzip:   8.75 kB[22m
+2026-02-08T15:03:17.1762472Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CqeTTMyZ.js                  [39m[1m[2m 23.51 kB[22m[1m[22m[2m │ gzip:   9.31 kB[22m
+2026-02-08T15:03:17.1763556Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CMkt-Hiu.js                  [39m[1m[2m 25.61 kB[22m[1m[22m[2m │ gzip:  10.08 kB[22m
+2026-02-08T15:03:17.1764628Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/D_1egBqb.js                  [39m[1m[2m 35.46 kB[22m[1m[22m[2m │ gzip:  12.03 kB[22m
+2026-02-08T15:03:17.1765700Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bqw_KxWH.js                  [39m[1m[2m 40.50 kB[22m[1m[22m[2m │ gzip:  12.58 kB[22m
+2026-02-08T15:03:17.1766777Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/2.CsMcbnjU.js                 [39m[1m[2m 58.84 kB[22m[1m[22m[2m │ gzip:  18.51 kB[22m
+2026-02-08T15:03:17.1767859Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CeSCVJmI.js                  [39m[1m[2m 63.35 kB[22m[1m[22m[2m │ gzip:  22.37 kB[22m
+2026-02-08T15:03:17.1768957Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Dph31JZo.js                  [39m[1m[2m100.33 kB[22m[1m[22m[2m │ gzip:  30.09 kB[22m
+2026-02-08T15:03:17.1770373Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/0.D0-B8aEO.js                 [39m[1m[2m248.75 kB[22m[1m[22m[2m │ gzip:  75.25 kB[22m
+2026-02-08T15:03:17.1771476Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BlZpXAkV.js                  [39m[1m[2m473.87 kB[22m[1m[22m[2m │ gzip: 166.03 kB[22m
+2026-02-08T15:03:17.1772565Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BffjYSMd.js                  [39m[1m[33m500.13 kB[39m[22m[2m │ gzip: 130.19 kB[22m
+2026-02-08T15:03:17.1773654Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/B9S-tpNk.js                  [39m[1m[33m750.12 kB[39m[22m[2m │ gzip: 231.33 kB[22m
+2026-02-08T15:03:17.1774262Z [32m✓ built in 9.26s[39m
+2026-02-08T15:03:17.2604581Z [36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+2026-02-08T15:03:17.2646525Z transforming...
+2026-02-08T15:03:17.2676498Z [32m✓[39m 2 modules transformed.
+2026-02-08T15:03:17.2700947Z rendering chunks...
+2026-02-08T15:03:17.2707362Z computing gzip size...
+2026-02-08T15:03:17.2713797Z [2m.svelte-kit/output/client/[22m[36mservice-worker.mjs  [39m[1m[2m2.80 kB[22m[1m[22m[2m │ gzip: 1.02 kB[22m
+2026-02-08T15:03:17.2715177Z [32m✓ built in 10ms[39m
+2026-02-08T15:03:17.2723462Z [2m.svelte-kit/output/server/[22m[32m.vite/manifest.json                                     [39m[1m[2m  7.46 kB[22m[1m[22m
+2026-02-08T15:03:17.2725776Z [2m.svelte-kit/output/server/[22m[32m_app/immutable/workers/sync-1pn-fgKB.js                 [39m[1m[2m 15.88 kB[22m[1m[22m
+2026-02-08T15:03:17.2728595Z [2m.svelte-kit/output/server/[22m[32m_app/immutable/workers/search.worker-CzGuQE9n.js        [39m[1m[2m 52.34 kB[22m[1m[22m
+2026-02-08T15:03:17.2733050Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.B0cdjBwX.css                [39m[1m[2m  0.04 kB[22m[1m[22m
+2026-02-08T15:03:17.2735504Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/OracleChat.DhCLoWEq.css           [39m[1m[2m  0.24 kB[22m[1m[22m
+2026-02-08T15:03:17.2739572Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.D5o6K4EE.css                [39m[1m[2m  0.46 kB[22m[1m[22m
+2026-02-08T15:03:17.2741444Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.BTTeOmu8.css                [39m[1m[2m  0.62 kB[22m[1m[22m
+2026-02-08T15:03:17.2743090Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/LegalDocument.C9z-0L07.css        [39m[1m[2m  1.28 kB[22m[1m[22m
+2026-02-08T15:03:17.2744198Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/MarkdownEditor.DPTBwsFl.css       [39m[1m[2m  2.65 kB[22m[1m[22m
+2026-02-08T15:03:17.2745247Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_layout.prJ3Dift.css              [39m[1m[2m157.09 kB[22m[1m[22m
+2026-02-08T15:03:17.2746226Z [2m.svelte-kit/output/server/[22m[36mchunks/false.js                                         [39m[1m[2m  0.05 kB[22m[1m[22m
+2026-02-08T15:03:17.2747179Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_layout.ts.js                             [39m[1m[2m  0.08 kB[22m[1m[22m
+2026-02-08T15:03:17.2748090Z [2m.svelte-kit/output/server/[22m[36mchunks/html.js                                          [39m[1m[2m  0.14 kB[22m[1m[22m
+2026-02-08T15:03:17.2748986Z [2m.svelte-kit/output/server/[22m[36mchunks/environment.js                                   [39m[1m[2m  0.19 kB[22m[1m[22m
+2026-02-08T15:03:17.2750295Z [2m.svelte-kit/output/server/[22m[36mentries/pages/privacy/_page.svelte.js                   [39m[1m[2m  0.23 kB[22m[1m[22m
+2026-02-08T15:03:17.2751284Z [2m.svelte-kit/output/server/[22m[36mentries/pages/terms/_page.svelte.js                     [39m[1m[2m  0.23 kB[22m[1m[22m
+2026-02-08T15:03:17.2752235Z [2m.svelte-kit/output/server/[22m[36minternal.js                                             [39m[1m[2m  0.38 kB[22m[1m[22m
+2026-02-08T15:03:17.2753133Z [2m.svelte-kit/output/server/[22m[36mchunks/state.svelte.js                                  [39m[1m[2m  0.39 kB[22m[1m[22m
+2026-02-08T15:03:17.2754025Z [2m.svelte-kit/output/server/[22m[36mchunks/server.js                                        [39m[1m[2m  0.46 kB[22m[1m[22m
+2026-02-08T15:03:17.2754908Z [2m.svelte-kit/output/server/[22m[36mchunks/index3.js                                        [39m[1m[2m  0.76 kB[22m[1m[22m
+2026-02-08T15:03:17.2755804Z [2m.svelte-kit/output/server/[22m[36mchunks/sync-stats.js                                    [39m[1m[2m  0.77 kB[22m[1m[22m
+2026-02-08T15:03:17.2756726Z [2m.svelte-kit/output/server/[22m[36mchunks/LegalDocument.js                                 [39m[1m[2m  0.84 kB[22m[1m[22m
+2026-02-08T15:03:17.2757721Z [2m.svelte-kit/output/server/[22m[36mentries/pages/test/markdown-editor/_page.svelte.js      [39m[1m[2m  0.92 kB[22m[1m[22m
+2026-02-08T15:03:17.2758924Z [2m.svelte-kit/output/server/[22m[36mchunks/MarkdownEditor.js                                [39m[1m[2m  1.05 kB[22m[1m[22m
+2026-02-08T15:03:17.2760016Z [2m.svelte-kit/output/server/[22m[36mchunks/utils.js                                         [39m[1m[2m  1.15 kB[22m[1m[22m
+2026-02-08T15:03:17.2760901Z [2m.svelte-kit/output/server/[22m[36mchunks/index.js                                         [39m[1m[2m  1.55 kB[22m[1m[22m
+2026-02-08T15:03:17.2761831Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_error.svelte.js                          [39m[1m[2m  1.57 kB[22m[1m[22m
+2026-02-08T15:03:17.2762940Z [2m.svelte-kit/output/server/[22m[36mentries/pages/oracle/_page.svelte.js                    [39m[1m[2m  1.69 kB[22m[1m[22m
+2026-02-08T15:03:17.2763923Z [2m.svelte-kit/output/server/[22m[36mchunks/categories.svelte.js                             [39m[1m[2m  1.83 kB[22m[1m[22m
+2026-02-08T15:03:17.2764854Z [2m.svelte-kit/output/server/[22m[36mchunks/exports.js                                       [39m[1m[2m  5.59 kB[22m[1m[22m
+2026-02-08T15:03:17.2765824Z [2m.svelte-kit/output/server/[22m[36mchunks/MarkdownEditor.svelte_svelte_type_style_lang.js  [39m[1m[2m  8.35 kB[22m[1m[22m
+2026-02-08T15:03:17.2766838Z [2m.svelte-kit/output/server/[22m[36mentries/pages/timeline/_page.svelte.js                  [39m[1m[2m 15.89 kB[22m[1m[22m
+2026-02-08T15:03:17.2767767Z [2m.svelte-kit/output/server/[22m[36mremote-entry.js                                         [39m[1m[2m 19.04 kB[22m[1m[22m
+2026-02-08T15:03:17.2768653Z [2m.svelte-kit/output/server/[22m[36mchunks/OracleChat.js                                    [39m[1m[2m 24.87 kB[22m[1m[22m
+2026-02-08T15:03:17.2769655Z [2m.svelte-kit/output/server/[22m[36mchunks/shared.js                                        [39m[1m[2m 25.96 kB[22m[1m[22m
+2026-02-08T15:03:17.2770541Z [2m.svelte-kit/output/server/[22m[36mchunks/internal.js                                      [39m[1m[2m 29.27 kB[22m[1m[22m
+2026-02-08T15:03:17.2771502Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_page.svelte.js                           [39m[1m[2m 35.91 kB[22m[1m[22m
+2026-02-08T15:03:17.2772449Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_layout.svelte.js                         [39m[1m[2m 42.80 kB[22m[1m[22m
+2026-02-08T15:03:17.2773373Z [2m.svelte-kit/output/server/[22m[36mchunks/index2.js                                        [39m[1m[2m 83.40 kB[22m[1m[22m
+2026-02-08T15:03:17.2774256Z [2m.svelte-kit/output/server/[22m[36mchunks/vault.svelte.js                                  [39m[1m[2m 93.36 kB[22m[1m[22m
+2026-02-08T15:03:17.2775146Z [2m.svelte-kit/output/server/[22m[36mindex.js                                                [39m[1m[2m120.35 kB[22m[1m[22m
+2026-02-08T15:03:17.2775668Z [32m✓ built in 13.57s[39m
+2026-02-08T15:03:17.2775826Z 
+2026-02-08T15:03:17.2776072Z Run npm run preview to preview your production build locally.
+2026-02-08T15:03:17.2936430Z 
+2026-02-08T15:03:17.2937040Z > Using @sveltejs/adapter-static
+2026-02-08T15:03:17.3983532Z   Wrote site to "build"
+2026-02-08T15:03:17.3984246Z   ✔ done
+2026-02-08T15:03:17.5338914Z ##[group]Run git checkout main --force
+2026-02-08T15:03:17.5339821Z [36;1mgit checkout main --force[0m
+2026-02-08T15:03:17.5340138Z [36;1mnpm ci # Refresh main dependencies[0m
+2026-02-08T15:03:17.5340432Z [36;1mnpm run build --workspace=web[0m
+2026-02-08T15:03:17.5340699Z [36;1mcp -r apps/web/build/* dist/[0m
+2026-02-08T15:03:17.5340991Z [36;1mcp apps/web/build/index.html dist/404.html[0m
+2026-02-08T15:03:17.5372570Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:03:17.5372810Z env:
+2026-02-08T15:03:17.5372983Z   HUSKY: 0
+2026-02-08T15:03:17.5373526Z   VITE_GOOGLE_CLIENT_ID: ***
+2026-02-08T15:03:17.5373764Z   VITE_SHARED_GEMINI_KEY: 
+2026-02-08T15:03:17.5374067Z   VITE_GOOGLE_API_KEY: ***
+2026-02-08T15:03:17.5374278Z   BASE_PATH: 
+2026-02-08T15:03:17.5374455Z ##[endgroup]
+2026-02-08T15:03:17.5750735Z Switched to a new branch 'main'
+2026-02-08T15:03:17.5753485Z branch 'main' set up to track 'origin/main'.
+2026-02-08T15:03:21.0804959Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-02-08T15:03:21.0979090Z npm warn deprecated @types/gapi.client.drive@3.0.15: use @types/gapi.client.drive-v3 instead; see https://github.com/Maxim-Mazurok/google-api-typings-generator/issues/652 for details
+2026-02-08T15:03:21.1999342Z npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-02-08T15:03:21.2261136Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2026-02-08T15:03:21.2406575Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-02-08T15:03:21.3391445Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2026-02-08T15:03:21.3430923Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2026-02-08T15:03:23.5284935Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2026-02-08T15:03:24.8227002Z 
+2026-02-08T15:03:24.8227466Z > prepare
+2026-02-08T15:03:24.8227711Z > husky
+2026-02-08T15:03:24.8227826Z 
+2026-02-08T15:03:24.8834965Z HUSKY=0 skip install
+2026-02-08T15:03:24.8835684Z added 730 packages, and audited 736 packages in 7s
+2026-02-08T15:03:24.8836107Z 
+2026-02-08T15:03:24.8836370Z 270 packages are looking for funding
+2026-02-08T15:03:24.8836850Z   run `npm fund` for details
+2026-02-08T15:03:24.9072385Z 
+2026-02-08T15:03:24.9072919Z 8 vulnerabilities (3 low, 5 moderate)
+2026-02-08T15:03:24.9073168Z 
+2026-02-08T15:03:24.9073390Z To address issues that do not require attention, run:
+2026-02-08T15:03:24.9073713Z   npm audit fix
+2026-02-08T15:03:24.9073839Z 
+2026-02-08T15:03:24.9074058Z To address all issues (including breaking changes), run:
+2026-02-08T15:03:24.9074404Z   npm audit fix --force
+2026-02-08T15:03:24.9074573Z 
+2026-02-08T15:03:24.9074691Z Run `npm audit` for details.
+2026-02-08T15:03:25.0781354Z 
+2026-02-08T15:03:25.0781823Z > web@0.8.7 build
+2026-02-08T15:03:25.0782269Z > vite build && cp build/index.html build/404.html
+2026-02-08T15:03:25.0782553Z 
+2026-02-08T15:03:25.7393216Z [36mvite v7.3.1 [32mbuilding ssr environment for production...[36m[39m
+2026-02-08T15:03:25.7800438Z transforming...
+2026-02-08T15:03:26.5788973Z 3:03:26 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:12:20 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:26.5791097Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:26.5791619Z 10:   }>();
+2026-02-08T15:03:26.5791905Z 11: 
+2026-02-08T15:03:26.5792371Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:26.5792931Z                                   ^
+2026-02-08T15:03:26.5793621Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:26.5794710Z 14: 
+2026-02-08T15:03:26.5796639Z 3:03:26 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:13:21 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:26.5798419Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:26.5798938Z 11: 
+2026-02-08T15:03:26.5799576Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:26.5800263Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:26.5800819Z                                    ^
+2026-02-08T15:03:26.5801250Z 14: 
+2026-02-08T15:03:26.5801855Z 15:   // Sync state if connection changes (e.g. component reuse)
+2026-02-08T15:03:27.4475838Z 3:03:27 PM [vite-plugin-svelte] src/lib/features/importer/ReviewList.svelte:12:35 This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:27.4481352Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:27.4485090Z 10:   let { entities = [], onSave, onCancel }: Props = $props();
+2026-02-08T15:03:27.4485709Z 11: 
+2026-02-08T15:03:27.4486309Z 12:   let selectedIds = $state(new Set(entities.map(e => e.id)));
+2026-02-08T15:03:27.4487037Z                                                ^
+2026-02-08T15:03:27.4487511Z 13: 
+2026-02-08T15:03:27.4487839Z 14:   $effect(() => {
+2026-02-08T15:03:29.2496391Z [32m✓[39m 343 modules transformed.
+2026-02-08T15:03:29.3659061Z rendering chunks...
+2026-02-08T15:03:29.3923780Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:29.3939107Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/ui.svelte.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/EntityDetailPanel.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/GraphView.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/VaultControls.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/layout/MobileMenu.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/modals/ZenModeModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleChat.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleWindow.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CloudStatus.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/SettingsModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/graph.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/search.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/routes/+layout.svelte, dynamic import will not move module into another chunk.
+2026-02-08T15:03:29.3952219Z [39m
+2026-02-08T15:03:29.8347256Z [36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+2026-02-08T15:03:29.9193266Z transforming...
+2026-02-08T15:03:30.6211959Z 3:03:30 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:12:20 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:30.6214058Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:30.6214654Z 10:   }>();
+2026-02-08T15:03:30.6215006Z 11: 
+2026-02-08T15:03:30.6215505Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:30.6216046Z                                   ^
+2026-02-08T15:03:30.6216465Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:30.6216805Z 14: 
+2026-02-08T15:03:30.6218459Z 3:03:30 PM [vite-plugin-svelte] src/lib/components/connections/ConnectionEditor.svelte:13:21 This reference only captures the initial value of `connection`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:30.6219996Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:30.6220366Z 11: 
+2026-02-08T15:03:30.6220671Z 12:   let type = $state(connection.type);
+2026-02-08T15:03:30.6221114Z 13:   let label = $state(connection.label || "");
+2026-02-08T15:03:30.6221491Z                                    ^
+2026-02-08T15:03:30.6221771Z 14: 
+2026-02-08T15:03:30.6222154Z 15:   // Sync state if connection changes (e.g. component reuse)
+2026-02-08T15:03:31.8746302Z 3:03:31 PM [vite-plugin-svelte] src/lib/features/importer/ReviewList.svelte:12:35 This reference only captures the initial value of `entities`. Did you mean to reference it inside a derived instead?
+2026-02-08T15:03:31.8747938Z https://svelte.dev/e/state_referenced_locally
+2026-02-08T15:03:31.8748694Z 10:   let { entities = [], onSave, onCancel }: Props = $props();
+2026-02-08T15:03:31.8749541Z 11: 
+2026-02-08T15:03:31.8750105Z 12:   let selectedIds = $state(new Set(entities.map(e => e.id)));
+2026-02-08T15:03:31.8750718Z                                                ^
+2026-02-08T15:03:31.8751132Z 13: 
+2026-02-08T15:03:31.8751445Z 14:   $effect(() => {
+2026-02-08T15:03:38.0156579Z [32m✓[39m 891 modules transformed.
+2026-02-08T15:03:38.4414988Z rendering chunks...
+2026-02-08T15:03:38.6036911Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:38.6058782Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/turndown/lib/turndown.browser.es.js is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/utils.ts, dynamic import will not move module into another chunk.
+2026-02-08T15:03:38.6061995Z [39m
+2026-02-08T15:03:38.7974468Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:38.7981714Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/utils/markdown.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/oracle.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/cloud-bridge/google-drive/public-adapter.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/ChatMessage.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CategorySettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/timeline/EraEditor.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts, dynamic import will not move module into another chunk.
+2026-02-08T15:03:38.7985561Z [39m
+2026-02-08T15:03:38.7985828Z [33m[plugin vite:reporter] 
+2026-02-08T15:03:38.7995626Z (!) /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/ui.svelte.ts is dynamically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/AISettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/oracle.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/vault.svelte.ts but also statically imported by /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/EntityDetailPanel.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/GraphView.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/VaultControls.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/layout/MobileMenu.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/modals/ZenModeModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleChat.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/oracle/OracleWindow.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/CloudStatus.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/ImportSettings.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/components/settings/SettingsModal.svelte, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/graph.svelte.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/lib/stores/search.ts, /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/src/routes/+layout.svelte, dynamic import will not move module into another chunk.
+2026-02-08T15:03:38.8002621Z [39m
+2026-02-08T15:03:38.8246094Z computing gzip size...
+2026-02-08T15:03:38.8579022Z [2m.svelte-kit/output/client/[22m[32m_app/version.json                                  [39m[1m[2m  0.03 kB[22m[1m[22m[2m │ gzip:   0.05 kB[22m
+2026-02-08T15:03:38.8580988Z [2m.svelte-kit/output/client/[22m[32m.vite/manifest.json                                [39m[1m[2m 11.14 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m
+2026-02-08T15:03:38.8582083Z [2m.svelte-kit/output/client/[22m[32m_app/immutable/workers/sync-1pn-fgKB.js            [39m[1m[2m 15.88 kB[22m[1m[22m
+2026-02-08T15:03:38.8584043Z [2m.svelte-kit/output/client/[22m[32m_app/immutable/workers/search.worker-CzGuQE9n.js   [39m[1m[2m 52.34 kB[22m[1m[22m
+2026-02-08T15:03:38.8586658Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/3.B0cdjBwX.css               [39m[1m[2m  0.04 kB[22m[1m[22m[2m │ gzip:   0.06 kB[22m
+2026-02-08T15:03:38.8589008Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/OracleChat.DhCLoWEq.css      [39m[1m[2m  0.24 kB[22m[1m[22m[2m │ gzip:   0.14 kB[22m
+2026-02-08T15:03:38.8590867Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/7.D5o6K4EE.css               [39m[1m[2m  0.46 kB[22m[1m[22m[2m │ gzip:   0.15 kB[22m
+2026-02-08T15:03:38.8592067Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/LegalDocument.C9z-0L07.css   [39m[1m[2m  1.28 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m
+2026-02-08T15:03:38.8593529Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/2.BzfvmWRV.css               [39m[1m[2m  2.81 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-02-08T15:03:38.8594688Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/MarkdownEditor.WdknsPTA.css  [39m[1m[2m  2.95 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m
+2026-02-08T15:03:38.8595851Z [2m.svelte-kit/output/client/[22m[35m_app/immutable/assets/0.BSr43LqA.css               [39m[1m[2m162.48 kB[22m[1m[22m[2m │ gzip:  21.95 kB[22m
+2026-02-08T15:03:38.8596940Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BIHI7g3E.js                  [39m[1m[2m  0.03 kB[22m[1m[22m[2m │ gzip:   0.05 kB[22m
+2026-02-08T15:03:38.8598029Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/MRu79t51.js                  [39m[1m[2m  0.04 kB[22m[1m[22m[2m │ gzip:   0.06 kB[22m
+2026-02-08T15:03:38.8599151Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/start.CiFZEtHA.js             [39m[1m[2m  0.08 kB[22m[1m[22m[2m │ gzip:   0.09 kB[22m
+2026-02-08T15:03:38.8600446Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/C2jwSqEi.js                  [39m[1m[2m  0.11 kB[22m[1m[22m[2m │ gzip:   0.10 kB[22m
+2026-02-08T15:03:38.8601062Z [33m
+2026-02-08T15:03:38.8601420Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-02-08T15:03:38.8601886Z - Using dynamic import() to code-split the application
+2026-02-08T15:03:38.8602677Z - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+2026-02-08T15:03:38.8603544Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+2026-02-08T15:03:38.8604752Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/4.CoyEoVYJ.js                 [39m[1m[2m  0.19 kB[22m[1m[22m[2m │ gzip:   0.17 kB[22m
+2026-02-08T15:03:38.8605875Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/5.BhGWmP6b.js                 [39m[1m[2m  0.19 kB[22m[1m[22m[2m │ gzip:   0.17 kB[22m
+2026-02-08T15:03:38.8606979Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/D87cfImk.js                  [39m[1m[2m  0.44 kB[22m[1m[22m[2m │ gzip:   0.28 kB[22m
+2026-02-08T15:03:38.8608081Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BdCnMOcd.js                  [39m[1m[2m  0.52 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m
+2026-02-08T15:03:38.8609158Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bw9sPjqx.js                  [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-02-08T15:03:38.8610436Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/DoWg40iU.js                  [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+2026-02-08T15:03:38.8611755Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CE1G-McA.js                  [39m[1m[2m  0.76 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m
+2026-02-08T15:03:38.8612841Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/6.BvLzLn4c.js                 [39m[1m[2m  1.13 kB[22m[1m[22m[2m │ gzip:   0.66 kB[22m
+2026-02-08T15:03:38.8613924Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/hre4hBeE.js                  [39m[1m[2m  1.15 kB[22m[1m[22m[2m │ gzip:   0.56 kB[22m
+2026-02-08T15:03:38.8615156Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/1.5jXZG6Am.js                 [39m[1m[2m  1.16 kB[22m[1m[22m[2m │ gzip:   0.65 kB[22m
+2026-02-08T15:03:38.8616236Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/PPVm8Dsz.js                  [39m[1m[2m  1.23 kB[22m[1m[22m[2m │ gzip:   0.71 kB[22m
+2026-02-08T15:03:38.8617319Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BJoWLNgy.js                  [39m[1m[2m  1.34 kB[22m[1m[22m[2m │ gzip:   0.72 kB[22m
+2026-02-08T15:03:38.8618589Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/aTPWaZXA.js                  [39m[1m[2m  1.35 kB[22m[1m[22m[2m │ gzip:   0.81 kB[22m
+2026-02-08T15:03:38.8619806Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/3.z5YISCFC.js                 [39m[1m[2m  1.85 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m
+2026-02-08T15:03:38.8620895Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CJ-Sw_dR.js                  [39m[1m[2m  2.11 kB[22m[1m[22m[2m │ gzip:   0.97 kB[22m
+2026-02-08T15:03:38.8622113Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/B4h8hyB4.js                  [39m[1m[2m  2.33 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m
+2026-02-08T15:03:38.8623382Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Cx9epcr_.js                  [39m[1m[2m  3.78 kB[22m[1m[22m[2m │ gzip:   1.83 kB[22m
+2026-02-08T15:03:38.8624491Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bj2-5bwc.js                  [39m[1m[2m  4.89 kB[22m[1m[22m[2m │ gzip:   2.17 kB[22m
+2026-02-08T15:03:38.8625648Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/entry/app.BwoAtgx9.js               [39m[1m[2m  5.75 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m
+2026-02-08T15:03:38.8626851Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/1RtjEnGz.js                  [39m[1m[2m  7.03 kB[22m[1m[22m[2m │ gzip:   3.25 kB[22m
+2026-02-08T15:03:38.8627937Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/7.D0UBUB3H.js                 [39m[1m[2m 10.69 kB[22m[1m[22m[2m │ gzip:   4.07 kB[22m
+2026-02-08T15:03:38.8629153Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/DRzTZuUV.js                  [39m[1m[2m 19.42 kB[22m[1m[22m[2m │ gzip:   6.39 kB[22m
+2026-02-08T15:03:38.8630645Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/M2XNh1yZ.js                  [39m[1m[2m 22.67 kB[22m[1m[22m[2m │ gzip:   8.75 kB[22m
+2026-02-08T15:03:38.8631745Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/CqeTTMyZ.js                  [39m[1m[2m 23.51 kB[22m[1m[22m[2m │ gzip:   9.31 kB[22m
+2026-02-08T15:03:38.8632989Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/mLi9_zLl.js                  [39m[1m[2m 25.61 kB[22m[1m[22m[2m │ gzip:  10.08 kB[22m
+2026-02-08T15:03:38.8634067Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/D_1egBqb.js                  [39m[1m[2m 35.46 kB[22m[1m[22m[2m │ gzip:  12.03 kB[22m
+2026-02-08T15:03:38.8635136Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Bqw_KxWH.js                  [39m[1m[2m 40.50 kB[22m[1m[22m[2m │ gzip:  12.58 kB[22m
+2026-02-08T15:03:38.8636216Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/2.DVBfg8Wm.js                 [39m[1m[2m 58.84 kB[22m[1m[22m[2m │ gzip:  18.51 kB[22m
+2026-02-08T15:03:38.8637304Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/D6lScYA2.js                  [39m[1m[2m 63.35 kB[22m[1m[22m[2m │ gzip:  22.37 kB[22m
+2026-02-08T15:03:38.8638384Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/Dph31JZo.js                  [39m[1m[2m100.33 kB[22m[1m[22m[2m │ gzip:  30.09 kB[22m
+2026-02-08T15:03:38.8639588Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/nodes/0.D7nNLtyC.js                 [39m[1m[2m248.78 kB[22m[1m[22m[2m │ gzip:  75.26 kB[22m
+2026-02-08T15:03:38.8640829Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BlZpXAkV.js                  [39m[1m[2m473.87 kB[22m[1m[22m[2m │ gzip: 166.03 kB[22m
+2026-02-08T15:03:38.8641926Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/BffjYSMd.js                  [39m[1m[33m500.13 kB[39m[22m[2m │ gzip: 130.19 kB[22m
+2026-02-08T15:03:38.8643014Z [2m.svelte-kit/output/client/[22m[36m_app/immutable/chunks/C851l-DJ.js                  [39m[1m[33m750.00 kB[39m[22m[2m │ gzip: 231.28 kB[22m
+2026-02-08T15:03:38.8643624Z [32m✓ built in 8.95s[39m
+2026-02-08T15:03:38.9464176Z [36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+2026-02-08T15:03:38.9506384Z transforming...
+2026-02-08T15:03:38.9535751Z [32m✓[39m 2 modules transformed.
+2026-02-08T15:03:38.9557536Z rendering chunks...
+2026-02-08T15:03:38.9564748Z computing gzip size...
+2026-02-08T15:03:38.9570331Z [2m.svelte-kit/output/client/[22m[36mservice-worker.mjs  [39m[1m[2m2.80 kB[22m[1m[22m[2m │ gzip: 1.02 kB[22m
+2026-02-08T15:03:38.9571958Z [32m✓ built in 10ms[39m
+2026-02-08T15:03:38.9579891Z [2m.svelte-kit/output/server/[22m[32m.vite/manifest.json                                     [39m[1m[2m  7.46 kB[22m[1m[22m
+2026-02-08T15:03:38.9582442Z [2m.svelte-kit/output/server/[22m[32m_app/immutable/workers/sync-1pn-fgKB.js                 [39m[1m[2m 15.88 kB[22m[1m[22m
+2026-02-08T15:03:38.9585825Z [2m.svelte-kit/output/server/[22m[32m_app/immutable/workers/search.worker-CzGuQE9n.js        [39m[1m[2m 52.34 kB[22m[1m[22m
+2026-02-08T15:03:38.9587893Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.B0cdjBwX.css                [39m[1m[2m  0.04 kB[22m[1m[22m
+2026-02-08T15:03:38.9591746Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/OracleChat.DhCLoWEq.css           [39m[1m[2m  0.24 kB[22m[1m[22m
+2026-02-08T15:03:38.9593802Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.D5o6K4EE.css                [39m[1m[2m  0.46 kB[22m[1m[22m
+2026-02-08T15:03:38.9595309Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_page.BTTeOmu8.css                [39m[1m[2m  0.62 kB[22m[1m[22m
+2026-02-08T15:03:38.9596362Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/LegalDocument.C9z-0L07.css        [39m[1m[2m  1.28 kB[22m[1m[22m
+2026-02-08T15:03:38.9597402Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/MarkdownEditor.DPTBwsFl.css       [39m[1m[2m  2.65 kB[22m[1m[22m
+2026-02-08T15:03:38.9598706Z [2m.svelte-kit/output/server/[22m[35m_app/immutable/assets/_layout.prJ3Dift.css              [39m[1m[2m157.09 kB[22m[1m[22m
+2026-02-08T15:03:38.9599959Z [2m.svelte-kit/output/server/[22m[36mchunks/false.js                                         [39m[1m[2m  0.05 kB[22m[1m[22m
+2026-02-08T15:03:38.9600911Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_layout.ts.js                             [39m[1m[2m  0.08 kB[22m[1m[22m
+2026-02-08T15:03:38.9601826Z [2m.svelte-kit/output/server/[22m[36mchunks/html.js                                          [39m[1m[2m  0.14 kB[22m[1m[22m
+2026-02-08T15:03:38.9602713Z [2m.svelte-kit/output/server/[22m[36mchunks/environment.js                                   [39m[1m[2m  0.19 kB[22m[1m[22m
+2026-02-08T15:03:38.9603666Z [2m.svelte-kit/output/server/[22m[36mentries/pages/privacy/_page.svelte.js                   [39m[1m[2m  0.23 kB[22m[1m[22m
+2026-02-08T15:03:38.9604643Z [2m.svelte-kit/output/server/[22m[36mentries/pages/terms/_page.svelte.js                     [39m[1m[2m  0.23 kB[22m[1m[22m
+2026-02-08T15:03:38.9605561Z [2m.svelte-kit/output/server/[22m[36minternal.js                                             [39m[1m[2m  0.38 kB[22m[1m[22m
+2026-02-08T15:03:38.9606439Z [2m.svelte-kit/output/server/[22m[36mchunks/state.svelte.js                                  [39m[1m[2m  0.39 kB[22m[1m[22m
+2026-02-08T15:03:38.9607502Z [2m.svelte-kit/output/server/[22m[36mchunks/server.js                                        [39m[1m[2m  0.45 kB[22m[1m[22m
+2026-02-08T15:03:38.9608379Z [2m.svelte-kit/output/server/[22m[36mchunks/index3.js                                        [39m[1m[2m  0.76 kB[22m[1m[22m
+2026-02-08T15:03:38.9609488Z [2m.svelte-kit/output/server/[22m[36mchunks/sync-stats.js                                    [39m[1m[2m  0.77 kB[22m[1m[22m
+2026-02-08T15:03:38.9610456Z [2m.svelte-kit/output/server/[22m[36mchunks/LegalDocument.js                                 [39m[1m[2m  0.84 kB[22m[1m[22m
+2026-02-08T15:03:38.9611438Z [2m.svelte-kit/output/server/[22m[36mentries/pages/test/markdown-editor/_page.svelte.js      [39m[1m[2m  0.92 kB[22m[1m[22m
+2026-02-08T15:03:38.9612423Z [2m.svelte-kit/output/server/[22m[36mchunks/MarkdownEditor.js                                [39m[1m[2m  1.05 kB[22m[1m[22m
+2026-02-08T15:03:38.9613316Z [2m.svelte-kit/output/server/[22m[36mchunks/utils.js                                         [39m[1m[2m  1.15 kB[22m[1m[22m
+2026-02-08T15:03:38.9614205Z [2m.svelte-kit/output/server/[22m[36mchunks/index.js                                         [39m[1m[2m  1.55 kB[22m[1m[22m
+2026-02-08T15:03:38.9615116Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_error.svelte.js                          [39m[1m[2m  1.57 kB[22m[1m[22m
+2026-02-08T15:03:38.9616122Z [2m.svelte-kit/output/server/[22m[36mentries/pages/oracle/_page.svelte.js                    [39m[1m[2m  1.69 kB[22m[1m[22m
+2026-02-08T15:03:38.9617131Z [2m.svelte-kit/output/server/[22m[36mchunks/categories.svelte.js                             [39m[1m[2m  1.83 kB[22m[1m[22m
+2026-02-08T15:03:38.9618052Z [2m.svelte-kit/output/server/[22m[36mchunks/exports.js                                       [39m[1m[2m  5.59 kB[22m[1m[22m
+2026-02-08T15:03:38.9619022Z [2m.svelte-kit/output/server/[22m[36mchunks/MarkdownEditor.svelte_svelte_type_style_lang.js  [39m[1m[2m  8.35 kB[22m[1m[22m
+2026-02-08T15:03:38.9620333Z [2m.svelte-kit/output/server/[22m[36mentries/pages/timeline/_page.svelte.js                  [39m[1m[2m 15.89 kB[22m[1m[22m
+2026-02-08T15:03:38.9621289Z [2m.svelte-kit/output/server/[22m[36mremote-entry.js                                         [39m[1m[2m 19.04 kB[22m[1m[22m
+2026-02-08T15:03:38.9622182Z [2m.svelte-kit/output/server/[22m[36mchunks/OracleChat.js                                    [39m[1m[2m 24.87 kB[22m[1m[22m
+2026-02-08T15:03:38.9623218Z [2m.svelte-kit/output/server/[22m[36mchunks/shared.js                                        [39m[1m[2m 25.96 kB[22m[1m[22m
+2026-02-08T15:03:38.9624114Z [2m.svelte-kit/output/server/[22m[36mchunks/internal.js                                      [39m[1m[2m 29.27 kB[22m[1m[22m
+2026-02-08T15:03:38.9625030Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_page.svelte.js                           [39m[1m[2m 35.91 kB[22m[1m[22m
+2026-02-08T15:03:38.9625975Z [2m.svelte-kit/output/server/[22m[36mentries/pages/_layout.svelte.js                         [39m[1m[2m 42.80 kB[22m[1m[22m
+2026-02-08T15:03:38.9626889Z [2m.svelte-kit/output/server/[22m[36mchunks/index2.js                                        [39m[1m[2m 83.40 kB[22m[1m[22m
+2026-02-08T15:03:38.9627779Z [2m.svelte-kit/output/server/[22m[36mchunks/vault.svelte.js                                  [39m[1m[2m 93.10 kB[22m[1m[22m
+2026-02-08T15:03:38.9628647Z [2m.svelte-kit/output/server/[22m[36mindex.js                                                [39m[1m[2m120.35 kB[22m[1m[22m
+2026-02-08T15:03:38.9629353Z [32m✓ built in 13.21s[39m
+2026-02-08T15:03:38.9629581Z 
+2026-02-08T15:03:38.9629822Z Run npm run preview to preview your production build locally.
+2026-02-08T15:03:38.9777990Z 
+2026-02-08T15:03:38.9778307Z > Using @sveltejs/adapter-static
+2026-02-08T15:03:39.0858335Z   Wrote site to "build"
+2026-02-08T15:03:39.0859420Z   ✔ done
+2026-02-08T15:03:39.2269907Z ##[group]Run actions/upload-pages-artifact@v3
+2026-02-08T15:03:39.2270244Z with:
+2026-02-08T15:03:39.2270419Z   path: dist/
+2026-02-08T15:03:39.2270607Z   name: github-pages
+2026-02-08T15:03:39.2270820Z   retention-days: 1
+2026-02-08T15:03:39.2271007Z env:
+2026-02-08T15:03:39.2271169Z   HUSKY: 0
+2026-02-08T15:03:39.2271338Z ##[endgroup]
+2026-02-08T15:03:39.2357428Z ##[group]Run echo ::group::Archive artifact
+2026-02-08T15:03:39.2357981Z [36;1mecho ::group::Archive artifact[0m
+2026-02-08T15:03:39.2358431Z [36;1mtar \[0m
+2026-02-08T15:03:39.2359115Z [36;1m  --dereference --hard-dereference \[0m
+2026-02-08T15:03:39.2359934Z [36;1m  --directory "$INPUT_PATH" \[0m
+2026-02-08T15:03:39.2360485Z [36;1m  -cvf "$RUNNER_TEMP/artifact.tar" \[0m
+2026-02-08T15:03:39.2360945Z [36;1m  --exclude=.git \[0m
+2026-02-08T15:03:39.2361324Z [36;1m  --exclude=.github \[0m
+2026-02-08T15:03:39.2361683Z [36;1m  .[0m
+2026-02-08T15:03:39.2361993Z [36;1mecho ::endgroup::[0m
+2026-02-08T15:03:39.2612837Z shell: /usr/bin/sh -e {0}
+2026-02-08T15:03:39.2613140Z env:
+2026-02-08T15:03:39.2613325Z   HUSKY: 0
+2026-02-08T15:03:39.2613504Z   INPUT_PATH: dist/
+2026-02-08T15:03:39.2613704Z ##[endgroup]
+2026-02-08T15:03:39.2686097Z ##[group]Archive artifact
+2026-02-08T15:03:39.2698909Z ./
+2026-02-08T15:03:39.2710121Z ./index.html
+2026-02-08T15:03:39.2710467Z ./staging/
+2026-02-08T15:03:39.2710835Z ./staging/index.html
+2026-02-08T15:03:39.2711192Z ./staging/_app/
+2026-02-08T15:03:39.2711593Z ./staging/_app/immutable/
+2026-02-08T15:03:39.2712096Z ./staging/_app/immutable/nodes/
+2026-02-08T15:03:39.2712664Z ./staging/_app/immutable/nodes/1.BIrJmWUS.js
+2026-02-08T15:03:39.2713264Z ./staging/_app/immutable/nodes/2.CsMcbnjU.js
+2026-02-08T15:03:39.2713875Z ./staging/_app/immutable/nodes/0.D0-B8aEO.js
+2026-02-08T15:03:39.2714477Z ./staging/_app/immutable/nodes/5.BmxTv_oP.js
+2026-02-08T15:03:39.2715065Z ./staging/_app/immutable/nodes/7.BvbhdE87.js
+2026-02-08T15:03:39.2715672Z ./staging/_app/immutable/nodes/3.BcSNVIaZ.js
+2026-02-08T15:03:39.2716267Z ./staging/_app/immutable/nodes/6.BvLzLn4c.js
+2026-02-08T15:03:39.2716849Z ./staging/_app/immutable/nodes/4.Cq6sdin9.js
+2026-02-08T15:03:39.2717387Z ./staging/_app/immutable/assets/
+2026-02-08T15:03:39.2717944Z ./staging/_app/immutable/assets/3.B0cdjBwX.css
+2026-02-08T15:03:39.2718472Z ./staging/_app/immutable/assets/OracleChat.DhCLoWEq.css
+2026-02-08T15:03:39.2718943Z ./staging/_app/immutable/assets/LegalDocument.C9z-0L07.css
+2026-02-08T15:03:39.2719696Z ./staging/_app/immutable/assets/0.BSr43LqA.css
+2026-02-08T15:03:39.2720421Z ./staging/_app/immutable/assets/MarkdownEditor.WdknsPTA.css
+2026-02-08T15:03:39.2721111Z ./staging/_app/immutable/assets/2.BzfvmWRV.css
+2026-02-08T15:03:39.2721654Z ./staging/_app/immutable/assets/7.D5o6K4EE.css
+2026-02-08T15:03:39.2721984Z ./staging/_app/immutable/chunks/
+2026-02-08T15:03:39.2722302Z ./staging/_app/immutable/chunks/Bj2-5bwc.js
+2026-02-08T15:03:39.2722634Z ./staging/_app/immutable/chunks/BIHI7g3E.js
+2026-02-08T15:03:39.2722975Z ./staging/_app/immutable/chunks/Bw9sPjqx.js
+2026-02-08T15:03:39.2723314Z ./staging/_app/immutable/chunks/Dph31JZo.js
+2026-02-08T15:03:39.2723644Z ./staging/_app/immutable/chunks/MRu79t51.js
+2026-02-08T15:03:39.2723968Z ./staging/_app/immutable/chunks/PPVm8Dsz.js
+2026-02-08T15:03:39.2724296Z ./staging/_app/immutable/chunks/Bqw_KxWH.js
+2026-02-08T15:03:39.2724625Z ./staging/_app/immutable/chunks/CMkt-Hiu.js
+2026-02-08T15:03:39.2725095Z ./staging/_app/immutable/chunks/DVk5hIYg.js
+2026-02-08T15:03:39.2725663Z ./staging/_app/immutable/chunks/Cf2D7pr6.js
+2026-02-08T15:03:39.2726202Z ./staging/_app/immutable/chunks/CE1G-McA.js
+2026-02-08T15:03:39.2726530Z ./staging/_app/immutable/chunks/CTaIb7MJ.js
+2026-02-08T15:03:39.2726850Z ./staging/_app/immutable/chunks/D_1egBqb.js
+2026-02-08T15:03:39.2727165Z ./staging/_app/immutable/chunks/1RtjEnGz.js
+2026-02-08T15:03:39.2727488Z ./staging/_app/immutable/chunks/CJ-Sw_dR.js
+2026-02-08T15:03:39.2727812Z ./staging/_app/immutable/chunks/M2XNh1yZ.js
+2026-02-08T15:03:39.2728388Z ./staging/_app/immutable/chunks/CqHg0FKe.js
+2026-02-08T15:03:39.2728879Z ./staging/_app/immutable/chunks/CqeTTMyZ.js
+2026-02-08T15:03:39.2729910Z ./staging/_app/immutable/chunks/BdCnMOcd.js
+2026-02-08T15:03:39.2730496Z ./staging/_app/immutable/chunks/B9S-tpNk.js
+2026-02-08T15:03:39.2731075Z ./staging/_app/immutable/chunks/CeSCVJmI.js
+2026-02-08T15:03:39.2731639Z ./staging/_app/immutable/chunks/CneqFMom.js
+2026-02-08T15:03:39.2732205Z ./staging/_app/immutable/chunks/BlZpXAkV.js
+2026-02-08T15:03:39.2732769Z ./staging/_app/immutable/chunks/DoWg40iU.js
+2026-02-08T15:03:39.2733338Z ./staging/_app/immutable/chunks/BJoWLNgy.js
+2026-02-08T15:03:39.2733899Z ./staging/_app/immutable/chunks/BffjYSMd.js
+2026-02-08T15:03:39.2734479Z ./staging/_app/immutable/chunks/D87cfImk.js
+2026-02-08T15:03:39.2735048Z ./staging/_app/immutable/chunks/Cx9epcr_.js
+2026-02-08T15:03:39.2735597Z ./staging/_app/immutable/workers/
+2026-02-08T15:03:39.2736188Z ./staging/_app/immutable/workers/search.worker-CzGuQE9n.js
+2026-02-08T15:03:39.2736856Z ./staging/_app/immutable/workers/sync-1pn-fgKB.js
+2026-02-08T15:03:39.2737436Z ./staging/_app/immutable/entry/
+2026-02-08T15:03:39.2737980Z ./staging/_app/immutable/entry/app.DVcxdP8T.js
+2026-02-08T15:03:39.2738605Z ./staging/_app/immutable/entry/start.BgagfOXD.js
+2026-02-08T15:03:39.2739113Z ./staging/_app/env.js
+2026-02-08T15:03:39.2739662Z ./staging/_app/version.json
+2026-02-08T15:03:39.2740067Z ./staging/favicon.png
+2026-02-08T15:03:39.2740434Z ./staging/PRIVACY.md
+2026-02-08T15:03:39.2740815Z ./staging/service-worker.js
+2026-02-08T15:03:39.2741211Z ./staging/robots.txt
+2026-02-08T15:03:39.2741540Z ./staging/CNAME
+2026-02-08T15:03:39.2741865Z ./staging/404.html
+2026-02-08T15:03:39.2742203Z ./staging/TERMS.md
+2026-02-08T15:03:39.2742513Z ./_app/
+2026-02-08T15:03:39.2742816Z ./_app/immutable/
+2026-02-08T15:03:39.2743161Z ./_app/immutable/nodes/
+2026-02-08T15:03:39.2743612Z ./_app/immutable/nodes/1.5jXZG6Am.js
+2026-02-08T15:03:39.2744122Z ./_app/immutable/nodes/3.z5YISCFC.js
+2026-02-08T15:03:39.2744631Z ./_app/immutable/nodes/7.D0UBUB3H.js
+2026-02-08T15:03:39.2745162Z ./_app/immutable/nodes/2.DVBfg8Wm.js
+2026-02-08T15:03:39.2745675Z ./_app/immutable/nodes/5.BhGWmP6b.js
+2026-02-08T15:03:39.2746180Z ./_app/immutable/nodes/0.D7nNLtyC.js
+2026-02-08T15:03:39.2746691Z ./_app/immutable/nodes/4.CoyEoVYJ.js
+2026-02-08T15:03:39.2747183Z ./_app/immutable/nodes/6.BvLzLn4c.js
+2026-02-08T15:03:39.2747628Z ./_app/immutable/assets/
+2026-02-08T15:03:39.2748106Z ./_app/immutable/assets/3.B0cdjBwX.css
+2026-02-08T15:03:39.2748699Z ./_app/immutable/assets/OracleChat.DhCLoWEq.css
+2026-02-08T15:03:39.2749514Z ./_app/immutable/assets/LegalDocument.C9z-0L07.css
+2026-02-08T15:03:39.2750126Z ./_app/immutable/assets/0.BSr43LqA.css
+2026-02-08T15:03:39.2750739Z ./_app/immutable/assets/MarkdownEditor.WdknsPTA.css
+2026-02-08T15:03:39.2751342Z ./_app/immutable/assets/2.BzfvmWRV.css
+2026-02-08T15:03:39.2751872Z ./_app/immutable/assets/7.D5o6K4EE.css
+2026-02-08T15:03:39.2752202Z ./_app/immutable/chunks/
+2026-02-08T15:03:39.2752483Z ./_app/immutable/chunks/Bj2-5bwc.js
+2026-02-08T15:03:39.2752779Z ./_app/immutable/chunks/BIHI7g3E.js
+2026-02-08T15:03:39.2753072Z ./_app/immutable/chunks/Bw9sPjqx.js
+2026-02-08T15:03:39.2753357Z ./_app/immutable/chunks/Dph31JZo.js
+2026-02-08T15:03:39.2753645Z ./_app/immutable/chunks/MRu79t51.js
+2026-02-08T15:03:39.2753928Z ./_app/immutable/chunks/PPVm8Dsz.js
+2026-02-08T15:03:39.2754235Z ./_app/immutable/chunks/Bqw_KxWH.js
+2026-02-08T15:03:39.2755857Z ./_app/immutable/chunks/C851l-DJ.js
+2026-02-08T15:03:39.2756733Z ./_app/immutable/chunks/CE1G-McA.js
+2026-02-08T15:03:39.2757305Z ./_app/immutable/chunks/B4h8hyB4.js
+2026-02-08T15:03:39.2757838Z ./_app/immutable/chunks/mLi9_zLl.js
+2026-02-08T15:03:39.2758381Z ./_app/immutable/chunks/D_1egBqb.js
+2026-02-08T15:03:39.2758908Z ./_app/immutable/chunks/1RtjEnGz.js
+2026-02-08T15:03:39.2759581Z ./_app/immutable/chunks/CJ-Sw_dR.js
+2026-02-08T15:03:39.2760085Z ./_app/immutable/chunks/M2XNh1yZ.js
+2026-02-08T15:03:39.2760573Z ./_app/immutable/chunks/CqeTTMyZ.js
+2026-02-08T15:03:39.2761265Z ./_app/immutable/chunks/BdCnMOcd.js
+2026-02-08T15:03:39.2762254Z ./_app/immutable/chunks/hre4hBeE.js
+2026-02-08T15:03:39.2762805Z ./_app/immutable/chunks/BlZpXAkV.js
+2026-02-08T15:03:39.2767464Z ./_app/immutable/chunks/DoWg40iU.js
+2026-02-08T15:03:39.2768027Z ./_app/immutable/chunks/DRzTZuUV.js
+2026-02-08T15:03:39.2768559Z ./_app/immutable/chunks/C2jwSqEi.js
+2026-02-08T15:03:39.2769076Z ./_app/immutable/chunks/BJoWLNgy.js
+2026-02-08T15:03:39.2769809Z ./_app/immutable/chunks/BffjYSMd.js
+2026-02-08T15:03:39.2773938Z ./_app/immutable/chunks/D87cfImk.js
+2026-02-08T15:03:39.2774472Z ./_app/immutable/chunks/aTPWaZXA.js
+2026-02-08T15:03:39.2775029Z ./_app/immutable/chunks/Cx9epcr_.js
+2026-02-08T15:03:39.2775546Z ./_app/immutable/chunks/D6lScYA2.js
+2026-02-08T15:03:39.2776024Z ./_app/immutable/workers/
+2026-02-08T15:03:39.2776606Z ./_app/immutable/workers/search.worker-CzGuQE9n.js
+2026-02-08T15:03:39.2777275Z ./_app/immutable/workers/sync-1pn-fgKB.js
+2026-02-08T15:03:39.2777783Z ./_app/immutable/entry/
+2026-02-08T15:03:39.2778270Z ./_app/immutable/entry/app.BwoAtgx9.js
+2026-02-08T15:03:39.2778850Z ./_app/immutable/entry/start.CiFZEtHA.js
+2026-02-08T15:03:39.2779470Z ./_app/env.js
+2026-02-08T15:03:39.2779815Z ./_app/version.json
+2026-02-08T15:03:39.2780147Z ./favicon.png
+2026-02-08T15:03:39.2782302Z ./PRIVACY.md
+2026-02-08T15:03:39.2782667Z ./service-worker.js
+2026-02-08T15:03:39.2783006Z ./robots.txt
+2026-02-08T15:03:39.2783291Z ./CNAME
+2026-02-08T15:03:39.2784659Z ./404.html
+2026-02-08T15:03:39.2784980Z ./TERMS.md
+2026-02-08T15:03:39.2786148Z ##[endgroup]
+2026-02-08T15:03:39.2871407Z ##[group]Run actions/upload-artifact@v4
+2026-02-08T15:03:39.2871793Z with:
+2026-02-08T15:03:39.2872097Z   name: github-pages
+2026-02-08T15:03:39.2872411Z   path: /home/runner/work/_temp/artifact.tar
+2026-02-08T15:03:39.2872779Z   retention-days: 1
+2026-02-08T15:03:39.2873109Z   if-no-files-found: error
+2026-02-08T15:03:39.2873412Z   compression-level: 6
+2026-02-08T15:03:39.2873743Z   overwrite: false
+2026-02-08T15:03:39.2874078Z   include-hidden-files: false
+2026-02-08T15:03:39.2874386Z env:
+2026-02-08T15:03:39.2874645Z   HUSKY: 0
+2026-02-08T15:03:39.2874939Z ##[endgroup]
+2026-02-08T15:03:39.5030645Z With the provided path, there will be 1 file uploaded
+2026-02-08T15:03:39.5035878Z Artifact name is valid!
+2026-02-08T15:03:39.5037285Z Root directory input is valid!
+2026-02-08T15:03:39.6407180Z Beginning upload of artifact content to blob storage
+2026-02-08T15:03:40.2833425Z Uploaded bytes 2336293
+2026-02-08T15:03:40.3306425Z Finished uploading artifact content to blob storage!
+2026-02-08T15:03:40.3308838Z SHA256 digest of uploaded artifact zip is fb7d1baa4431155b0cfc0cd825866d46d6e3e834baa7644ae28ab2b6d8bcb823
+2026-02-08T15:03:40.3311007Z Finalizing artifact upload
+2026-02-08T15:03:40.4249931Z Artifact github-pages.zip successfully finalized. Artifact ID 5423045460
+2026-02-08T15:03:40.4251018Z Artifact github-pages has been successfully uploaded! Final size is 2336293 bytes. Artifact ID is 5423045460
+2026-02-08T15:03:40.4259123Z Artifact download URL: https://github.com/eserlan/Codex-Cryptica/actions/runs/21800235994/artifacts/5423045460
+2026-02-08T15:03:40.4430032Z Post job cleanup.
+2026-02-08T15:03:40.6138568Z [command]/usr/bin/tar --posix -cf cache.tzst --exclude cache.tzst -P -C /home/runner/work/Codex-Cryptica/Codex-Cryptica --files-from manifest.txt --use-compress-program zstdmt
+2026-02-08T15:03:42.0697248Z Sent 58720256 of 125754412 (46.7%), 56.0 MBs/sec
+2026-02-08T15:03:43.0720093Z Sent 125754412 of 125754412 (100.0%), 60.0 MBs/sec
+2026-02-08T15:03:43.5865291Z Cache saved with the key: node-cache-Linux-x64-npm-3dfd9d80d130f803a50652139afe2122a53ad98e6e49609a22304a03142df22e
+2026-02-08T15:03:43.5998227Z Post job cleanup.
+2026-02-08T15:03:43.6924836Z [command]/usr/bin/git version
+2026-02-08T15:03:43.6961341Z git version 2.52.0
+2026-02-08T15:03:43.7004502Z Temporarily overriding HOME='/home/runner/work/_temp/f8a4f2e2-76c8-4cbc-aa56-169cfdf41e72' before making global git config changes
+2026-02-08T15:03:43.7006108Z Adding repository directory to the temporary git global config as a safe directory
+2026-02-08T15:03:43.7018260Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Codex-Cryptica/Codex-Cryptica
+2026-02-08T15:03:43.7052546Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-02-08T15:03:43.7085091Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-02-08T15:03:43.7315514Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-02-08T15:03:43.7336296Z http.https://github.com/.extraheader
+2026-02-08T15:03:43.7350087Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-02-08T15:03:43.7381168Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-02-08T15:03:43.7603907Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-02-08T15:03:43.7635866Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-02-08T15:03:43.7973352Z Cleaning up orphan processes

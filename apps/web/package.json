@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@codex/importer": "*",
+    "@codex/proposer": "*",
     "@google/generative-ai": "^0.24.1",
     "@milkdown/core": "^7.18.0",
     "@milkdown/ctx": "^7.18.0",

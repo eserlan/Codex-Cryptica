@@ -1,0 +1,300 @@
+﻿2026-02-08T15:02:52.2091285Z ##[group]Run npm test
+2026-02-08T15:02:52.2091567Z [36;1mnpm test[0m
+2026-02-08T15:02:52.2122408Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:52.2122660Z env:
+2026-02-08T15:02:52.2122828Z   HUSKY: 0
+2026-02-08T15:02:52.2123011Z ##[endgroup]
+2026-02-08T15:02:52.3114807Z 
+2026-02-08T15:02:52.3115385Z > test
+2026-02-08T15:02:52.3115717Z > turbo run test
+2026-02-08T15:02:52.3115866Z 
+2026-02-08T15:02:52.4012320Z • Packages in scope: @codex/importer, editor-core, graph-engine, schema, web
+2026-02-08T15:02:52.4013501Z • Running test in 5 packages
+2026-02-08T15:02:52.4014024Z • Remote caching disabled
+2026-02-08T15:02:55.4021569Z ##[group]schema:test
+2026-02-08T15:02:55.4027920Z cache miss, executing 179fb1ed4fb42cd9
+2026-02-08T15:02:55.4031885Z 
+2026-02-08T15:02:55.4035462Z > schema@0.0.0 test
+2026-02-08T15:02:55.4039074Z > vitest run
+2026-02-08T15:02:55.4050165Z 
+2026-02-08T15:02:55.4053872Z 
+2026-02-08T15:02:55.4058706Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/schema[39m
+2026-02-08T15:02:55.4072425Z 
+2026-02-08T15:02:55.4076923Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 12[2mms[22m[39m
+2026-02-08T15:02:55.4082465Z  [32m✓[39m src/visibility.test.ts [2m ([22m[2m9 tests[22m[2m)[22m[90m 23[2mms[22m[39m
+2026-02-08T15:02:55.4087675Z  [32m✓[39m src/schema.test.ts [2m ([22m[2m11 tests[22m[2m)[22m[90m 48[2mms[22m[39m
+2026-02-08T15:02:55.4088590Z 
+2026-02-08T15:02:55.4089695Z [2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+2026-02-08T15:02:55.4090831Z [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+2026-02-08T15:02:55.4091742Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:55.4093181Z [2m   Duration [22m 1.83s[2m (transform 613ms, setup 0ms, collect 855ms, tests 83ms, environment 1ms, prepare 1.99s)[22m
+2026-02-08T15:02:55.4094102Z 
+2026-02-08T15:02:55.4094728Z ##[endgroup]
+2026-02-08T15:02:58.0751291Z ##[group]editor-core:test
+2026-02-08T15:02:58.0755856Z cache miss, executing 800d785efdb530e0
+2026-02-08T15:02:58.0776691Z 
+2026-02-08T15:02:58.0778314Z > editor-core@0.0.0 test
+2026-02-08T15:02:58.0783491Z > vitest run
+2026-02-08T15:02:58.0786044Z 
+2026-02-08T15:02:58.0788437Z 
+2026-02-08T15:02:58.0795481Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/editor-core[39m
+2026-02-08T15:02:58.0798644Z 
+2026-02-08T15:02:58.0815092Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 12[2mms[22m[39m
+2026-02-08T15:02:58.0831194Z  [32m✓[39m src/parsing/oracle.test.ts [2m ([22m[2m12 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+2026-02-08T15:02:58.0840521Z  [32m✓[39m tests/oracle.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 33[2mms[22m[39m
+2026-02-08T15:02:58.0841933Z  [32m✓[39m tests/wiki-link.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 9[2mms[22m[39m
+2026-02-08T15:02:58.0842601Z 
+2026-02-08T15:02:58.0843169Z [2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+2026-02-08T15:02:58.0844196Z [2m      Tests [22m [1m[32m19 passed[39m[22m[90m (19)[39m
+2026-02-08T15:02:58.0844981Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:58.0846349Z [2m   Duration [22m 4.45s[2m (transform 647ms, setup 1ms, collect 979ms, tests 99ms, environment 1.50s, prepare 2.08s)[22m
+2026-02-08T15:02:58.0847099Z 
+2026-02-08T15:02:58.0847663Z ##[endgroup]
+2026-02-08T15:02:59.2866282Z ##[group]graph-engine:test
+2026-02-08T15:02:59.2881763Z cache miss, executing eb36cd6122d0d057
+2026-02-08T15:02:59.2885972Z 
+2026-02-08T15:02:59.2890126Z > graph-engine@0.0.0 test
+2026-02-08T15:02:59.2894367Z > vitest run
+2026-02-08T15:02:59.2898351Z 
+2026-02-08T15:02:59.2902507Z 
+2026-02-08T15:02:59.2907866Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/graph-engine[39m
+2026-02-08T15:02:59.2929684Z 
+2026-02-08T15:02:59.2930993Z  [32m✓[39m tests/timeline.test.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 27[2mms[22m[39m
+2026-02-08T15:02:59.2938063Z  [32m✓[39m src/transformer.test.ts [2m ([22m[2m6 tests[22m[2m)[22m[90m 38[2mms[22m[39m
+2026-02-08T15:02:59.2939609Z  [32m✓[39m tests/transformer.test.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 31[2mms[22m[39m
+2026-02-08T15:02:59.2940907Z  [32m✓[39m src/smoke.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 9[2mms[22m[39m
+2026-02-08T15:02:59.2942125Z  [32m✓[39m tests/themes.test.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 10[2mms[22m[39m
+2026-02-08T15:02:59.2943337Z  [32m✓[39m tests/orbit.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 59[2mms[22m[39m
+2026-02-08T15:02:59.2944597Z  [32m✓[39m tests/graph.test.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 63[2mms[22m[39m
+2026-02-08T15:02:59.2945226Z 
+2026-02-08T15:02:59.2945761Z [2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+2026-02-08T15:02:59.2946703Z [2m      Tests [22m [1m[32m21 passed[39m[22m[90m (21)[39m
+2026-02-08T15:02:59.2947434Z [2m   Start at [22m 15:02:53
+2026-02-08T15:02:59.2948808Z [2m   Duration [22m 5.68s[2m (transform 770ms, setup 1ms, collect 1.53s, tests 237ms, environment 1.51s, prepare 3.25s)[22m
+2026-02-08T15:02:59.2949832Z 
+2026-02-08T15:02:59.2950497Z ##[endgroup]
+2026-02-08T15:03:01.4589840Z ##[group]@codex/importer:test
+2026-02-08T15:03:01.4594068Z cache miss, executing ffc45baaba5721af
+2026-02-08T15:03:01.4597776Z 
+2026-02-08T15:03:01.4604803Z > @codex/importer@0.0.0 test
+2026-02-08T15:03:01.4608763Z > vitest run
+2026-02-08T15:03:01.4612754Z 
+2026-02-08T15:03:01.4627913Z 
+2026-02-08T15:03:01.4635207Z [7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer[39m
+2026-02-08T15:03:01.4636309Z 
+2026-02-08T15:03:01.4638818Z  [32m✓[39m tests/import-integration.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 14[2mms[22m[39m
+2026-02-08T15:03:01.4640731Z  [32m✓[39m tests/oracle/analyzer.spec.ts [2m ([22m[2m5 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+2026-02-08T15:03:01.4643272Z [90mstderr[2m | tests/oracle/analyzer.spec.ts[2m > [22m[2mOracleAnalyzer[2m > [22m[2mhandles empty response gracefully[22m[39m
+2026-02-08T15:03:01.4645447Z Oracle Analysis failed with model gemini-3-flash-preview: Error: No valid JSON array found in Oracle response
+2026-02-08T15:03:01.4649764Z     at OracleAnalyzer.processChunk (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/oracle/analyzer.ts:74:17)
+2026-02-08T15:03:01.4651405Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/oracle/analyzer.spec.ts:94:20
+2026-02-08T15:03:01.4652932Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4654557Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4656080Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4665954Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4667628Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4669668Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4671589Z     at withEnv (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:83:5)
+2026-02-08T15:03:01.4673401Z     at run (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:105:3)
+2026-02-08T15:03:01.4675557Z Oracle Analysis failed with model gemini-flash-lite-latest: Error: No valid JSON array found in Oracle response
+2026-02-08T15:03:01.4677230Z     at OracleAnalyzer.processChunk (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/oracle/analyzer.ts:74:17)
+2026-02-08T15:03:01.4679111Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/oracle/analyzer.spec.ts:94:20
+2026-02-08T15:03:01.4680769Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4682335Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4683823Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4686148Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4688370Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4691605Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4693507Z     at withEnv (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:83:5)
+2026-02-08T15:03:01.4695408Z     at run (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:105:3)
+2026-02-08T15:03:01.4696744Z Oracle Analysis failed with all available models.
+2026-02-08T15:03:01.4697143Z 
+2026-02-08T15:03:01.4698524Z [90mstderr[2m | tests/parsers/docx-images.spec.ts[2m > [22m[2mDocxParser Image Extraction[2m > [22m[2mextracts images from docx[22m[39m
+2026-02-08T15:03:01.4700217Z Failed to detect image dimensions TypeError: URL.createObjectURL is not a function
+2026-02-08T15:03:01.4701458Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts:50:31
+2026-02-08T15:03:01.4703134Z     at Proxy.<anonymous> (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/parsers/docx-images.spec.ts:32:9)
+2026-02-08T15:03:01.4704833Z     at DocxParser.parse (/home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/src/parsers/docx.ts:35:39)
+2026-02-08T15:03:01.4706345Z     at /home/runner/work/Codex-Cryptica/Codex-Cryptica/packages/importer/tests/parsers/docx-images.spec.ts:44:20
+2026-02-08T15:03:01.4707935Z     at runTest (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:781:11)
+2026-02-08T15:03:01.4709713Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4711385Z     at runSuite (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:909:15)
+2026-02-08T15:03:01.4713037Z     at runFiles (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:958:5)
+2026-02-08T15:03:01.4714760Z     at startTests (file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/@vitest/runner/dist/index.js:967:3)
+2026-02-08T15:03:01.4716471Z     at file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+2026-02-08T15:03:01.4717385Z 
+2026-02-08T15:03:01.4718343Z  [32m✓[39m tests/parsers/docx-images.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 72[2mms[22m[39m
+2026-02-08T15:03:01.4720169Z  [32m✓[39m tests/parsers/docx.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4721713Z  [32m✓[39m tests/parsers/text.spec.ts [2m ([22m[2m4 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4723372Z  [32m✓[39m tests/parsers/pdf.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+2026-02-08T15:03:01.4724755Z  [32m✓[39m tests/parsers/json.spec.ts [2m ([22m[2m2 tests[22m[2m)[22m[90m 13[2mms[22m[39m
+2026-02-08T15:03:01.4726566Z  [32m✓[39m tests/persistence/persistence.spec.ts [2m ([22m[2m1 test[22m[2m)[22m[90m 4[2mms[22m[39m
+2026-02-08T15:03:01.4727323Z 
+2026-02-08T15:03:01.4727912Z [2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+2026-02-08T15:03:01.4728876Z [2m      Tests [22m [1m[32m18 passed[39m[22m[90m (18)[39m
+2026-02-08T15:03:01.4729898Z [2m   Start at [22m 15:02:53
+2026-02-08T15:03:01.4731306Z [2m   Duration [22m 7.62s[2m (transform 477ms, setup 2ms, collect 843ms, tests 173ms, environment 12.00s, prepare 2.70s)[22m
+2026-02-08T15:03:01.4732143Z 
+2026-02-08T15:03:01.4732773Z ##[endgroup]
+2026-02-08T15:03:02.6332439Z ##[group]web:test
+2026-02-08T15:03:02.6333111Z cache miss, executing c557d44554e9d8f4
+2026-02-08T15:03:02.6334368Z npm warn config ignoring workspace config at /home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/.npmrc
+2026-02-08T15:03:02.6335328Z 
+2026-02-08T15:03:02.6335485Z > web@0.8.7 test
+2026-02-08T15:03:02.6335843Z > vitest run
+2026-02-08T15:03:02.6335997Z 
+2026-02-08T15:03:02.6336011Z 
+2026-02-08T15:03:02.6336779Z [1m[46m RUN [49m[22m [36mv4.0.18 [39m[90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web[39m
+2026-02-08T15:03:02.6337319Z 
+2026-02-08T15:03:02.6338653Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize explicit title matches over active selection
+2026-02-08T15:03:02.6340739Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6341295Z 
+2026-02-08T15:03:02.6342551Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould match short titles only with word boundaries
+2026-02-08T15:03:02.6344037Z [22m[39m[AIService] Consulted 1 records: [ [32m'ai-id'[39m ]
+2026-02-08T15:03:02.6344462Z 
+2026-02-08T15:03:02.6345900Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search results over active selection
+2026-02-08T15:03:02.6347642Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6348233Z 
+2026-02-08T15:03:02.6349785Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould prioritize high-confidence search over sticky context
+2026-02-08T15:03:02.6351438Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6352011Z 
+2026-02-08T15:03:02.6353309Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould stick to previous context for follow-up questions
+2026-02-08T15:03:02.6354987Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6355565Z 
+2026-02-08T15:03:02.6357077Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould ignore low-confidence search results and fallback to active selection
+2026-02-08T15:03:02.6358938Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+2026-02-08T15:03:02.6359695Z 
+2026-02-08T15:03:02.6360949Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+2026-02-08T15:03:02.6362503Z [22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6363018Z 
+2026-02-08T15:03:02.6364198Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould include connection context in the retrieved text
+2026-02-08T15:03:02.6365940Z [22m[39m[AIService] Consulted 1 records: [ [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6366397Z 
+2026-02-08T15:03:02.6367737Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould handle missing entities in connection context gracefully
+2026-02-08T15:03:02.6370393Z [22m[39m[AIService] Consulted 1 records: [ [32m'woods-id'[39m ]
+2026-02-08T15:03:02.6370858Z 
+2026-02-08T15:03:02.6372060Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mshould recognize lone pronouns as follow-ups
+2026-02-08T15:03:02.6373650Z [22m[39m[AIService] Consulted 2 records: [ [32m'crone-id'[39m, [32m'guardsman-id'[39m ]
+2026-02-08T15:03:02.6374226Z 
+2026-02-08T15:03:02.6375954Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould combine Lore and Content in context (Context Fusion)
+2026-02-08T15:03:02.6377743Z [22m[39m[AIService] Consulted 1 records: [ [32m'fusion-id'[39m ]
+2026-02-08T15:03:02.6378202Z 
+2026-02-08T15:03:02.6380204Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould respect 10k character limit and prioritize selected entity
+2026-02-08T15:03:02.6382190Z [22m[39m[AIService] Consulted 2 records: [ [32m'active-id'[39m, [32m'match-id'[39m ]
+2026-02-08T15:03:02.6382754Z 
+2026-02-08T15:03:02.6384391Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mContext Fusion & Prioritization[2m > [22m[2mshould populate sourceIds for all consulted entities
+2026-02-08T15:03:02.6386268Z [22m[39m[AIService] Consulted 2 records: [ [32m'woods-id'[39m, [32m'crone-id'[39m ]
+2026-02-08T15:03:02.6386834Z 
+2026-02-08T15:03:02.6388187Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mQuery Expansion[2m > [22m[2mshould call Lite model to expand query
+2026-02-08T15:03:02.6389884Z [22m[39m[AIService] Expanded query: "him?" -> "Expanded Term"
+2026-02-08T15:03:02.6390310Z 
+2026-02-08T15:03:02.6391984Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Context Retrieval[2m > [22m[2mNeighborhood Enrichment[2m > [22m[2mshould include linked entity chronicles (Neighborhood Enrichment)
+2026-02-08T15:03:02.6393901Z [22m[39m[AIService] Consulted 2 records: [ [32m'location-id'[39m, [32m'npc-id'[39m ]
+2026-02-08T15:03:02.6394468Z 
+2026-02-08T15:03:02.6395670Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+2026-02-08T15:03:02.6397127Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6397629Z 
+2026-02-08T15:03:02.6398827Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould cache the style context after first lookup
+2026-02-08T15:03:02.6400514Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6400810Z 
+2026-02-08T15:03:02.6401475Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+2026-02-08T15:03:02.6402265Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6402519Z 
+2026-02-08T15:03:02.6403156Z [90mstdout[2m | src/lib/services/ai.test.ts[2m > [22m[2mAIService Style Caching[2m > [22m[2mshould clear cache when clearStyleCache is called
+2026-02-08T15:03:02.6404089Z [22m[39m[AIService] Consulted 1 records: [ [32m'style-id'[39m ]
+2026-02-08T15:03:02.6404518Z 
+2026-02-08T15:03:02.6405197Z  [32m✓[39m src/lib/services/ai.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+2026-02-08T15:03:02.6407194Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould match files using full relative paths
+2026-02-08T15:03:02.6409087Z [22m[39m[SyncEngine] lore/main.md has no remote match. Adding to UPLOADS.
+2026-02-08T15:03:02.6409756Z 
+2026-02-08T15:03:02.6411179Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould detect local changes in subdirectories
+2026-02-08T15:03:02.6412972Z [22m[39m[SyncEngine] images/hero.png changed. Local: true, Remote: false
+2026-02-08T15:03:02.6413462Z 
+2026-02-08T15:03:02.6414915Z [90mstdout[2m | src/lib/cloud-bridge/sync-engine/engine.test.ts[2m > [22m[2mSyncEngine Path-Aware Diff Logic[2m > [22m[2mshould identify and clean up remote duplicates
+2026-02-08T15:03:02.6416523Z [22m[39m[SyncEngine] Found 2 duplicates for images/hero.png. Cleaning up...
+2026-02-08T15:03:02.6417496Z [SyncEngine] images/hero.png changed. Local: true, Remote: true
+2026-02-08T15:03:02.6418387Z [SyncEngine] Conflict for images/hero.png. Decision: DOWNLOAD
+2026-02-08T15:03:02.6418812Z 
+2026-02-08T15:03:02.6419802Z  [32m✓[39m src/lib/cloud-bridge/sync-engine/engine.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+2026-02-08T15:03:02.6421302Z [90mstderr[2m | src/lib/stores/oracle.test.ts[2m > [22m[2mOracleStore[2m > [22m[2mUndo Logic[2m > [22m[2mshould keep action on stack if revert fails
+2026-02-08T15:03:02.6422034Z [22m[39mUndo failed: Error: Revert failed
+2026-02-08T15:03:02.6422678Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/oracle.test.ts:358:49
+2026-02-08T15:03:02.6423638Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+2026-02-08T15:03:02.6424672Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+2026-02-08T15:03:02.6425690Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+2026-02-08T15:03:02.6426294Z     at new Promise (<anonymous>)
+2026-02-08T15:03:02.6427114Z     at runWithTimeout [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+2026-02-08T15:03:02.6428232Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+2026-02-08T15:03:02.6429596Z     at Traces.$ [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+2026-02-08T15:03:02.6430825Z     at trace [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+2026-02-08T15:03:02.6432035Z     at runTest [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+2026-02-08T15:03:02.6432587Z 
+2026-02-08T15:03:02.6432977Z  [32m✓[39m src/lib/stores/oracle.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+2026-02-08T15:03:02.6434695Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+2026-02-08T15:03:02.6436285Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6436811Z 
+2026-02-08T15:03:02.6438188Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould request access token when connect is called
+2026-02-08T15:03:02.6439878Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6440352Z 
+2026-02-08T15:03:02.6441768Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6443448Z [22m[39m[GDriveAdapter] Restoring cached token
+2026-02-08T15:03:02.6443765Z 
+2026-02-08T15:03:02.6445159Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6446823Z [22m[39m[GDriveAdapter] Restoring cached token
+2026-02-08T15:03:02.6447165Z 
+2026-02-08T15:03:02.6448663Z [90mstdout[2m | src/lib/cloud-bridge/google-drive/adapter.test.ts[2m > [22m[2mGoogleDriveAdapter Auth[2m > [22m[2mshould handle concurrent connect calls without race conditions
+2026-02-08T15:03:02.6450524Z [22m[39m[GDriveAdapter] Token cached, expires in [33m3600[39m seconds
+2026-02-08T15:03:02.6451014Z 
+2026-02-08T15:03:02.6451865Z  [32m✓[39m src/lib/cloud-bridge/google-drive/adapter.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+2026-02-08T15:03:02.6453886Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould gracefully handle invalid persisted handle (mobile simulation)
+2026-02-08T15:03:02.6455853Z [22m[39mFailed to verify permission (handle invalid) Error: NotFoundError: A requested file or directory could not be found
+2026-02-08T15:03:02.6457459Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:602:11
+2026-02-08T15:03:02.6459374Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:145:11
+2026-02-08T15:03:02.6461232Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:26
+2026-02-08T15:03:02.6462715Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1243:20
+2026-02-08T15:03:02.6463348Z     at new Promise (<anonymous>)
+2026-02-08T15:03:02.6464773Z     at runWithTimeout [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1209:10[90m)[39m
+2026-02-08T15:03:02.6466838Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:37
+2026-02-08T15:03:02.6469131Z     at Traces.$ [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.CCmnQaNT.js:142:27[90m)[39m
+2026-02-08T15:03:02.6471681Z     at trace [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+2026-02-08T15:03:02.6473998Z     at runTest [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:1653:12[90m)[39m
+2026-02-08T15:03:02.6475070Z 
+2026-02-08T15:03:02.6476478Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould gracefully handle invalid persisted handle (mobile simulation)
+2026-02-08T15:03:02.6478082Z [22m[39mPersisted handle no longer valid or permission denied.
+2026-02-08T15:03:02.6478589Z 
+2026-02-08T15:03:02.6480246Z [90mstderr[2m | src/lib/stores/vault.test.ts[2m > [22m[2mVaultStore[2m > [22m[2mshould return false if verifyPermission iteration fails (stale handle)
+2026-02-08T15:03:02.6481976Z [22m[39mFailed to verify permission (handle invalid) Error: Stale handle access error
+2026-02-08T15:03:02.6483751Z     at Object.<anonymous> [90m(/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:626:15[90m)[39m
+2026-02-08T15:03:02.6486160Z     at Object.Mock [as values] [90m(file:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/spy[24m/dist/index.js:285:34[90m)[39m
+2026-02-08T15:03:02.6488694Z     at VaultStore.verifyPermission [90m(/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.svelte.ts:289:41[90m)[39m
+2026-02-08T15:03:02.6490615Z     at [90m/home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39msrc/lib/stores/vault.test.ts:630:20
+2026-02-08T15:03:02.6492574Z     at [90mfile:///home/runner/work/Codex-Cryptica/Codex-Cryptica/apps/web/[39mnode_modules/[4m@vitest/runner[24m/dist/index.js:915:20
+2026-02-08T15:03:02.6493627Z 
+2026-02-08T15:03:02.6494396Z  [32m✓[39m src/lib/stores/vault.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 230[2mms[22m[39m
+2026-02-08T15:03:02.6496143Z [90mstderr[2m | src/lib/stores/vault-batch.test.ts[2m > [22m[2mVaultStore - Batch Operations[2m > [22m[2mshould skip duplicate entities during batch creation
+2026-02-08T15:03:02.6497102Z [22m[39mSkipping duplicate entity during batch import: existing
+2026-02-08T15:03:02.6497413Z 
+2026-02-08T15:03:02.6497850Z  [32m✓[39m src/lib/stores/vault-batch.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+2026-02-08T15:03:02.6498637Z  [32m✓[39m src/tests/search-utils.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6499688Z  [32m✓[39m src/lib/stores/search.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 221[2mms[22m[39m
+2026-02-08T15:03:02.6500811Z  [2m[90m↓[39m[22m src/lib/cloud-bridge/google-drive/public-adapter.test.ts [2m([22m[2m5 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m
+2026-02-08T15:03:02.6501662Z  [32m✓[39m src/lib/utils/fs.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6502369Z  [32m✓[39m src/lib/stores/categories.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+2026-02-08T15:03:02.6503104Z  [32m✓[39m src/lib/stores/sync-stats.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6504176Z  [32m✓[39m src/tests/search.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+2026-02-08T15:03:02.6505434Z  [32m✓[39m src/lib/utils/color.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+2026-02-08T15:03:02.6506853Z  [32m✓[39m src/lib/cloud-bridge/memory-adapter.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+2026-02-08T15:03:02.6508295Z  [32m✓[39m src/lib/stores/help.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+2026-02-08T15:03:02.6509886Z  [32m✓[39m src/lib/cloud-bridge/sync-engine/conflict.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+2026-02-08T15:03:02.6511228Z  [32m✓[39m src/smoke.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+2026-02-08T15:03:02.6511778Z 
+2026-02-08T15:03:02.6512498Z [2m Test Files [22m [1m[32m17 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (18)[39m
+2026-02-08T15:03:02.6513772Z [2m      Tests [22m [1m[32m110 passed[39m[22m[2m | [22m[33m5 skipped[39m[90m (115)[39m
+2026-02-08T15:03:02.6514601Z [2m   Start at [22m 15:02:57
+2026-02-08T15:03:02.6515711Z [2m   Duration [22m 5.37s[2m (transform 5.12s, setup 0ms, import 8.14s, tests 736ms, environment 1.80s)[22m
+2026-02-08T15:03:02.6516371Z 
+2026-02-08T15:03:02.6516954Z ##[endgroup]
+2026-02-08T15:03:02.6517143Z 
+2026-02-08T15:03:02.6517341Z  Tasks:    5 successful, 5 total
+2026-02-08T15:03:02.6517810Z Cached:    0 cached, 5 total
+2026-02-08T15:03:02.6518200Z   Time:    10.257s 
+2026-02-08T15:03:02.6518399Z 

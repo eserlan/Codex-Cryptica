@@ -4,6 +4,7 @@
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
+  import DetailProposals from "./proposals/DetailProposals.svelte";
 
   let {
     entity,
@@ -217,6 +218,8 @@
       {/if}
     </ul>
   </div>
+
+  <DetailProposals {isEditing} />
 </div>
 
 <style>

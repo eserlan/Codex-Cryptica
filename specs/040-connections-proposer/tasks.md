@@ -19,9 +19,9 @@ description: "Task list for Connections Proposer implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 [P] Update IndexedDB schema to include 'proposals' store in `apps/web/src/lib/utils/idb.ts`
-- [ ] T002 Create directory structure for proposer sub-components in `apps/web/src/lib/components/entity-detail/proposals/`
-- [ ] T003 [P] Initialize `packages/proposer` workspace with basic TypeScript config and `types.ts`
+- [x] T001 [P] Update IndexedDB schema to include 'proposals' store in `apps/web/src/lib/utils/idb.ts`
+- [x] T002 Create directory structure for proposer sub-components in `apps/web/src/lib/components/entity-detail/proposals/`
+- [x] T003 [P] Initialize `packages/proposer` workspace with basic TypeScript config and `types.ts`
 
 ---
 
@@ -29,10 +29,10 @@ description: "Task list for Connections Proposer implementation"
 
 **Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-- [ ] T004 Implement `ProposerService` skeleton in `packages/proposer/src/service.ts`
-- [ ] T005 [P] Create `ProposerStore` in `apps/web/src/lib/stores/proposer.svelte.ts` for orchestration
-- [ ] T006 Setup `ProposerWorker` infrastructure in `apps/web/src/lib/workers/proposer.worker.ts`
-- [ ] T007 [P] Configure worker bridge for proposer in `apps/web/src/lib/cloud-bridge/proposer-bridge.ts`
+- [x] T004 Implement `ProposerService` skeleton in `packages/proposer/src/service.ts`
+- [x] T005 [P] Create `ProposerStore` in `apps/web/src/lib/stores/proposer.svelte.ts` for orchestration
+- [x] T006 Setup `ProposerWorker` infrastructure in `apps/web/src/lib/workers/proposer.worker.ts`
+- [x] T007 [P] Configure worker bridge for proposer in `apps/web/src/lib/cloud-bridge/proposer-bridge.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -46,12 +46,12 @@ description: "Task list for Connections Proposer implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement semantic scan logic in `ProposerService.analyzeEntity` using Gemini SDK in `packages/proposer/src/service.ts`
-- [ ] T009 [US1] Implement background scan orchestration in `ProposerStore` (watch `vault.status`) in `apps/web/src/lib/stores/proposer.svelte.ts`
-- [ ] T010 [P] [US1] Create `DetailProposals.svelte` component in `apps/web/src/lib/components/entity-detail/DetailProposals.svelte`
-- [ ] T011 [US1] Integrate `DetailProposals` into `apps/web/src/lib/components/EntityDetailPanel.svelte`
-- [ ] T012 [US1] Implement duplicate connection prevention (FR-007) in `packages/proposer/src/service.ts`
-- [ ] T013 [US1] Add unit tests for semantic matching in `packages/proposer/tests/service.test.ts`
+- [x] T008 [US1] Implement semantic scan logic in `ProposerService.analyzeEntity` using Gemini SDK in `packages/proposer/src/service.ts`
+- [x] T009 [US1] Implement background scan orchestration in `ProposerStore` (watch `vault.status`) in `apps/web/src/lib/stores/proposer.svelte.ts`
+- [x] T010 [P] [US1] Create `DetailProposals.svelte` component in `apps/web/src/lib/components/entity-detail/DetailProposals.svelte`
+- [x] T011 [US1] Integrate `DetailProposals` into `apps/web/src/lib/components/EntityDetailPanel.svelte`
+- [x] T012 [US1] Implement duplicate connection prevention (FR-007) in `packages/proposer/src/service.ts`
+- [x] T013 [US1] Add unit tests for semantic matching in `packages/proposer/tests/service.test.ts`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently.
 
@@ -65,10 +65,10 @@ description: "Task list for Connections Proposer implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Implement `applyProposal` logic (connection creation + IDB update) in `packages/proposer/src/service.ts`
-- [ ] T015 [US2] Implement `dismissProposal` logic (rejection state + IDB update) in `packages/proposer/src/service.ts`
-- [ ] T016 [US2] Add action buttons (Apply/Dismiss) to `apps/web/src/lib/components/entity-detail/DetailProposals.svelte`
-- [ ] T017 [US2] Add integration tests for proposal processing in `apps/web/tests/proposer-e2e.spec.ts`
+- [x] T014 [US2] Implement `applyProposal` logic (connection creation + IDB update) in `packages/proposer/src/service.ts`
+- [x] T015 [US2] Implement `dismissProposal` logic (rejection state + IDB update) in `packages/proposer/src/service.ts`
+- [x] T016 [US2] Add action buttons (Apply/Dismiss) to `apps/web/src/lib/components/entity-detail/DetailProposals.svelte`
+- [x] T017 [US2] Add integration tests for proposal processing in `apps/web/tests/proposer-e2e.spec.ts`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently.
 
@@ -82,10 +82,10 @@ description: "Task list for Connections Proposer implementation"
 
 ### Implementation for User Story 3
 
-- [ ] T018 [US3] Implement circular buffer logic (max 20) for rejected proposals in `packages/proposer/src/service.ts`
-- [ ] T019 [P] [US3] Create `ProposalHistory.svelte` component in `apps/web/src/lib/components/entity-detail/proposals/ProposalHistory.svelte`
-- [ ] T020 [US3] Implement `reEvaluateProposal` logic in `ProposerStore` and `ProposerService`.
-- [ ] T021 [US3] Integrate history view into `DetailProposals` (e.g., a "History" tab or modal).
+- [x] T018 [US3] Implement circular buffer logic (max 20) for rejected proposals in `packages/proposer/src/service.ts`
+- [x] T019 [P] [US3] Create `ProposalHistory.svelte` component in `apps/web/src/lib/components/entity-detail/proposals/ProposalHistory.svelte`
+- [x] T020 [US3] Implement `reEvaluateProposal` logic in `ProposerStore` and `ProposerService`.
+- [x] T021 [US3] Integrate history view into `DetailProposals` (e.g., a "History" tab or modal).
 
 **Checkpoint**: All user stories should now be independently functional.
 
@@ -95,9 +95,9 @@ description: "Task list for Connections Proposer implementation"
 
 **Purpose**: Provide user-facing guidance for the new feature per Constitution VII.
 
-- [ ] T022 [P] Create help article for Connections Proposer in `apps/web/src/lib/config/help-content.ts`
-- [ ] T023 [P] Add `proposer-discovery` feature hint to `FEATURE_HINTS` in `apps/web/src/lib/config/help-content.ts`
-- [ ] T024 Trigger the `proposer-discovery` hint when the first AI proposal is generated in `ProposerStore`.
+- [x] T022 [P] Create help article for Connections Proposer in `apps/web/src/lib/config/help-content.ts`
+- [x] T023 [P] Add `proposer-discovery` feature hint to `FEATURE_HINTS` in `apps/web/src/lib/config/help-content.ts`
+- [x] T024 Trigger the `proposer-discovery` hint when the first AI proposal is generated in `ProposerStore`.
 
 ---
 
@@ -105,11 +105,11 @@ description: "Task list for Connections Proposer implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T025 [P] Tune AI prompt confidence thresholds in `packages/proposer/src/service.ts` for better signal-to-noise ratio.
-- [ ] T026 Optimize background scan debouncing to minimize Gemini API costs.
-- [ ] T027 [P] Add loading skeletons/spinners for active background scans in the UI.
-- [ ] T028 Performance audit: verify 60fps target during background worker execution.
-- [ ] T029 Final E2E verification of `quickstart.md` scenarios.
+- [x] T025 [P] Tune AI prompt confidence thresholds in `packages/proposer/src/service.ts` for better signal-to-noise ratio.
+- [x] T026 Optimize background scan debouncing to minimize Gemini API costs.
+- [x] T027 [P] Add loading skeletons/spinners for active background scans in the UI.
+- [x] T028 Performance audit: verify 60fps target during background worker execution.
+- [x] T029 Final E2E verification of `quickstart.md` scenarios.
 
 ---
 

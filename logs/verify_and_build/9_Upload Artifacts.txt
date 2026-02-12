@@ -1,0 +1,178 @@
+﻿2026-02-08T15:03:39.2269894Z ##[group]Run actions/upload-pages-artifact@v3
+2026-02-08T15:03:39.2270240Z with:
+2026-02-08T15:03:39.2270417Z   path: dist/
+2026-02-08T15:03:39.2270605Z   name: github-pages
+2026-02-08T15:03:39.2270818Z   retention-days: 1
+2026-02-08T15:03:39.2271004Z env:
+2026-02-08T15:03:39.2271167Z   HUSKY: 0
+2026-02-08T15:03:39.2271336Z ##[endgroup]
+2026-02-08T15:03:39.2357415Z ##[group]Run echo ::group::Archive artifact
+2026-02-08T15:03:39.2357973Z [36;1mecho ::group::Archive artifact[0m
+2026-02-08T15:03:39.2358426Z [36;1mtar \[0m
+2026-02-08T15:03:39.2359109Z [36;1m  --dereference --hard-dereference \[0m
+2026-02-08T15:03:39.2359924Z [36;1m  --directory "$INPUT_PATH" \[0m
+2026-02-08T15:03:39.2360479Z [36;1m  -cvf "$RUNNER_TEMP/artifact.tar" \[0m
+2026-02-08T15:03:39.2360933Z [36;1m  --exclude=.git \[0m
+2026-02-08T15:03:39.2361320Z [36;1m  --exclude=.github \[0m
+2026-02-08T15:03:39.2361679Z [36;1m  .[0m
+2026-02-08T15:03:39.2361979Z [36;1mecho ::endgroup::[0m
+2026-02-08T15:03:39.2612738Z shell: /usr/bin/sh -e {0}
+2026-02-08T15:03:39.2613137Z env:
+2026-02-08T15:03:39.2613322Z   HUSKY: 0
+2026-02-08T15:03:39.2613501Z   INPUT_PATH: dist/
+2026-02-08T15:03:39.2613702Z ##[endgroup]
+2026-02-08T15:03:39.2686082Z ##[group]Archive artifact
+2026-02-08T15:03:39.2698843Z ./
+2026-02-08T15:03:39.2710107Z ./index.html
+2026-02-08T15:03:39.2710462Z ./staging/
+2026-02-08T15:03:39.2710830Z ./staging/index.html
+2026-02-08T15:03:39.2711188Z ./staging/_app/
+2026-02-08T15:03:39.2711588Z ./staging/_app/immutable/
+2026-02-08T15:03:39.2712092Z ./staging/_app/immutable/nodes/
+2026-02-08T15:03:39.2712659Z ./staging/_app/immutable/nodes/1.BIrJmWUS.js
+2026-02-08T15:03:39.2713260Z ./staging/_app/immutable/nodes/2.CsMcbnjU.js
+2026-02-08T15:03:39.2713871Z ./staging/_app/immutable/nodes/0.D0-B8aEO.js
+2026-02-08T15:03:39.2714473Z ./staging/_app/immutable/nodes/5.BmxTv_oP.js
+2026-02-08T15:03:39.2715062Z ./staging/_app/immutable/nodes/7.BvbhdE87.js
+2026-02-08T15:03:39.2715657Z ./staging/_app/immutable/nodes/3.BcSNVIaZ.js
+2026-02-08T15:03:39.2716263Z ./staging/_app/immutable/nodes/6.BvLzLn4c.js
+2026-02-08T15:03:39.2716846Z ./staging/_app/immutable/nodes/4.Cq6sdin9.js
+2026-02-08T15:03:39.2717384Z ./staging/_app/immutable/assets/
+2026-02-08T15:03:39.2717941Z ./staging/_app/immutable/assets/3.B0cdjBwX.css
+2026-02-08T15:03:39.2718469Z ./staging/_app/immutable/assets/OracleChat.DhCLoWEq.css
+2026-02-08T15:03:39.2718940Z ./staging/_app/immutable/assets/LegalDocument.C9z-0L07.css
+2026-02-08T15:03:39.2719690Z ./staging/_app/immutable/assets/0.BSr43LqA.css
+2026-02-08T15:03:39.2720417Z ./staging/_app/immutable/assets/MarkdownEditor.WdknsPTA.css
+2026-02-08T15:03:39.2721108Z ./staging/_app/immutable/assets/2.BzfvmWRV.css
+2026-02-08T15:03:39.2721652Z ./staging/_app/immutable/assets/7.D5o6K4EE.css
+2026-02-08T15:03:39.2721981Z ./staging/_app/immutable/chunks/
+2026-02-08T15:03:39.2722300Z ./staging/_app/immutable/chunks/Bj2-5bwc.js
+2026-02-08T15:03:39.2722632Z ./staging/_app/immutable/chunks/BIHI7g3E.js
+2026-02-08T15:03:39.2722966Z ./staging/_app/immutable/chunks/Bw9sPjqx.js
+2026-02-08T15:03:39.2723312Z ./staging/_app/immutable/chunks/Dph31JZo.js
+2026-02-08T15:03:39.2723642Z ./staging/_app/immutable/chunks/MRu79t51.js
+2026-02-08T15:03:39.2723966Z ./staging/_app/immutable/chunks/PPVm8Dsz.js
+2026-02-08T15:03:39.2724294Z ./staging/_app/immutable/chunks/Bqw_KxWH.js
+2026-02-08T15:03:39.2724624Z ./staging/_app/immutable/chunks/CMkt-Hiu.js
+2026-02-08T15:03:39.2725091Z ./staging/_app/immutable/chunks/DVk5hIYg.js
+2026-02-08T15:03:39.2725659Z ./staging/_app/immutable/chunks/Cf2D7pr6.js
+2026-02-08T15:03:39.2726200Z ./staging/_app/immutable/chunks/CE1G-McA.js
+2026-02-08T15:03:39.2726528Z ./staging/_app/immutable/chunks/CTaIb7MJ.js
+2026-02-08T15:03:39.2726848Z ./staging/_app/immutable/chunks/D_1egBqb.js
+2026-02-08T15:03:39.2727163Z ./staging/_app/immutable/chunks/1RtjEnGz.js
+2026-02-08T15:03:39.2727486Z ./staging/_app/immutable/chunks/CJ-Sw_dR.js
+2026-02-08T15:03:39.2727810Z ./staging/_app/immutable/chunks/M2XNh1yZ.js
+2026-02-08T15:03:39.2728137Z ./staging/_app/immutable/chunks/CqHg0FKe.js
+2026-02-08T15:03:39.2728877Z ./staging/_app/immutable/chunks/CqeTTMyZ.js
+2026-02-08T15:03:39.2729907Z ./staging/_app/immutable/chunks/BdCnMOcd.js
+2026-02-08T15:03:39.2730492Z ./staging/_app/immutable/chunks/B9S-tpNk.js
+2026-02-08T15:03:39.2731071Z ./staging/_app/immutable/chunks/CeSCVJmI.js
+2026-02-08T15:03:39.2731636Z ./staging/_app/immutable/chunks/CneqFMom.js
+2026-02-08T15:03:39.2732202Z ./staging/_app/immutable/chunks/BlZpXAkV.js
+2026-02-08T15:03:39.2732765Z ./staging/_app/immutable/chunks/DoWg40iU.js
+2026-02-08T15:03:39.2733335Z ./staging/_app/immutable/chunks/BJoWLNgy.js
+2026-02-08T15:03:39.2733896Z ./staging/_app/immutable/chunks/BffjYSMd.js
+2026-02-08T15:03:39.2734476Z ./staging/_app/immutable/chunks/D87cfImk.js
+2026-02-08T15:03:39.2735045Z ./staging/_app/immutable/chunks/Cx9epcr_.js
+2026-02-08T15:03:39.2735594Z ./staging/_app/immutable/workers/
+2026-02-08T15:03:39.2736185Z ./staging/_app/immutable/workers/search.worker-CzGuQE9n.js
+2026-02-08T15:03:39.2736845Z ./staging/_app/immutable/workers/sync-1pn-fgKB.js
+2026-02-08T15:03:39.2737431Z ./staging/_app/immutable/entry/
+2026-02-08T15:03:39.2737976Z ./staging/_app/immutable/entry/app.DVcxdP8T.js
+2026-02-08T15:03:39.2738602Z ./staging/_app/immutable/entry/start.BgagfOXD.js
+2026-02-08T15:03:39.2739110Z ./staging/_app/env.js
+2026-02-08T15:03:39.2739657Z ./staging/_app/version.json
+2026-02-08T15:03:39.2740063Z ./staging/favicon.png
+2026-02-08T15:03:39.2740430Z ./staging/PRIVACY.md
+2026-02-08T15:03:39.2740812Z ./staging/service-worker.js
+2026-02-08T15:03:39.2741207Z ./staging/robots.txt
+2026-02-08T15:03:39.2741536Z ./staging/CNAME
+2026-02-08T15:03:39.2741862Z ./staging/404.html
+2026-02-08T15:03:39.2742200Z ./staging/TERMS.md
+2026-02-08T15:03:39.2742509Z ./_app/
+2026-02-08T15:03:39.2742812Z ./_app/immutable/
+2026-02-08T15:03:39.2743158Z ./_app/immutable/nodes/
+2026-02-08T15:03:39.2743608Z ./_app/immutable/nodes/1.5jXZG6Am.js
+2026-02-08T15:03:39.2744119Z ./_app/immutable/nodes/3.z5YISCFC.js
+2026-02-08T15:03:39.2744619Z ./_app/immutable/nodes/7.D0UBUB3H.js
+2026-02-08T15:03:39.2745158Z ./_app/immutable/nodes/2.DVBfg8Wm.js
+2026-02-08T15:03:39.2745672Z ./_app/immutable/nodes/5.BhGWmP6b.js
+2026-02-08T15:03:39.2746177Z ./_app/immutable/nodes/0.D7nNLtyC.js
+2026-02-08T15:03:39.2746681Z ./_app/immutable/nodes/4.CoyEoVYJ.js
+2026-02-08T15:03:39.2747180Z ./_app/immutable/nodes/6.BvLzLn4c.js
+2026-02-08T15:03:39.2747625Z ./_app/immutable/assets/
+2026-02-08T15:03:39.2748102Z ./_app/immutable/assets/3.B0cdjBwX.css
+2026-02-08T15:03:39.2748696Z ./_app/immutable/assets/OracleChat.DhCLoWEq.css
+2026-02-08T15:03:39.2749510Z ./_app/immutable/assets/LegalDocument.C9z-0L07.css
+2026-02-08T15:03:39.2750123Z ./_app/immutable/assets/0.BSr43LqA.css
+2026-02-08T15:03:39.2750736Z ./_app/immutable/assets/MarkdownEditor.WdknsPTA.css
+2026-02-08T15:03:39.2751339Z ./_app/immutable/assets/2.BzfvmWRV.css
+2026-02-08T15:03:39.2751868Z ./_app/immutable/assets/7.D5o6K4EE.css
+2026-02-08T15:03:39.2752200Z ./_app/immutable/chunks/
+2026-02-08T15:03:39.2752476Z ./_app/immutable/chunks/Bj2-5bwc.js
+2026-02-08T15:03:39.2752776Z ./_app/immutable/chunks/BIHI7g3E.js
+2026-02-08T15:03:39.2753070Z ./_app/immutable/chunks/Bw9sPjqx.js
+2026-02-08T15:03:39.2753355Z ./_app/immutable/chunks/Dph31JZo.js
+2026-02-08T15:03:39.2753643Z ./_app/immutable/chunks/MRu79t51.js
+2026-02-08T15:03:39.2753926Z ./_app/immutable/chunks/PPVm8Dsz.js
+2026-02-08T15:03:39.2754233Z ./_app/immutable/chunks/Bqw_KxWH.js
+2026-02-08T15:03:39.2755843Z ./_app/immutable/chunks/C851l-DJ.js
+2026-02-08T15:03:39.2756727Z ./_app/immutable/chunks/CE1G-McA.js
+2026-02-08T15:03:39.2757292Z ./_app/immutable/chunks/B4h8hyB4.js
+2026-02-08T15:03:39.2757833Z ./_app/immutable/chunks/mLi9_zLl.js
+2026-02-08T15:03:39.2758376Z ./_app/immutable/chunks/D_1egBqb.js
+2026-02-08T15:03:39.2758901Z ./_app/immutable/chunks/1RtjEnGz.js
+2026-02-08T15:03:39.2759569Z ./_app/immutable/chunks/CJ-Sw_dR.js
+2026-02-08T15:03:39.2760082Z ./_app/immutable/chunks/M2XNh1yZ.js
+2026-02-08T15:03:39.2760570Z ./_app/immutable/chunks/CqeTTMyZ.js
+2026-02-08T15:03:39.2761042Z ./_app/immutable/chunks/BdCnMOcd.js
+2026-02-08T15:03:39.2762243Z ./_app/immutable/chunks/hre4hBeE.js
+2026-02-08T15:03:39.2762801Z ./_app/immutable/chunks/BlZpXAkV.js
+2026-02-08T15:03:39.2767454Z ./_app/immutable/chunks/DoWg40iU.js
+2026-02-08T15:03:39.2768022Z ./_app/immutable/chunks/DRzTZuUV.js
+2026-02-08T15:03:39.2768555Z ./_app/immutable/chunks/C2jwSqEi.js
+2026-02-08T15:03:39.2769070Z ./_app/immutable/chunks/BJoWLNgy.js
+2026-02-08T15:03:39.2769804Z ./_app/immutable/chunks/BffjYSMd.js
+2026-02-08T15:03:39.2773929Z ./_app/immutable/chunks/D87cfImk.js
+2026-02-08T15:03:39.2774468Z ./_app/immutable/chunks/aTPWaZXA.js
+2026-02-08T15:03:39.2775023Z ./_app/immutable/chunks/Cx9epcr_.js
+2026-02-08T15:03:39.2775543Z ./_app/immutable/chunks/D6lScYA2.js
+2026-02-08T15:03:39.2776019Z ./_app/immutable/workers/
+2026-02-08T15:03:39.2776601Z ./_app/immutable/workers/search.worker-CzGuQE9n.js
+2026-02-08T15:03:39.2777270Z ./_app/immutable/workers/sync-1pn-fgKB.js
+2026-02-08T15:03:39.2777778Z ./_app/immutable/entry/
+2026-02-08T15:03:39.2778255Z ./_app/immutable/entry/app.BwoAtgx9.js
+2026-02-08T15:03:39.2778846Z ./_app/immutable/entry/start.CiFZEtHA.js
+2026-02-08T15:03:39.2779465Z ./_app/env.js
+2026-02-08T15:03:39.2779810Z ./_app/version.json
+2026-02-08T15:03:39.2780143Z ./favicon.png
+2026-02-08T15:03:39.2782292Z ./PRIVACY.md
+2026-02-08T15:03:39.2782662Z ./service-worker.js
+2026-02-08T15:03:39.2783001Z ./robots.txt
+2026-02-08T15:03:39.2783287Z ./CNAME
+2026-02-08T15:03:39.2784646Z ./404.html
+2026-02-08T15:03:39.2784976Z ./TERMS.md
+2026-02-08T15:03:39.2786144Z ##[endgroup]
+2026-02-08T15:03:39.2871399Z ##[group]Run actions/upload-artifact@v4
+2026-02-08T15:03:39.2871790Z with:
+2026-02-08T15:03:39.2872094Z   name: github-pages
+2026-02-08T15:03:39.2872408Z   path: /home/runner/work/_temp/artifact.tar
+2026-02-08T15:03:39.2872776Z   retention-days: 1
+2026-02-08T15:03:39.2873107Z   if-no-files-found: error
+2026-02-08T15:03:39.2873409Z   compression-level: 6
+2026-02-08T15:03:39.2873741Z   overwrite: false
+2026-02-08T15:03:39.2874066Z   include-hidden-files: false
+2026-02-08T15:03:39.2874383Z env:
+2026-02-08T15:03:39.2874643Z   HUSKY: 0
+2026-02-08T15:03:39.2874936Z ##[endgroup]
+2026-02-08T15:03:39.5030610Z With the provided path, there will be 1 file uploaded
+2026-02-08T15:03:39.5035866Z Artifact name is valid!
+2026-02-08T15:03:39.5037274Z Root directory input is valid!
+2026-02-08T15:03:39.6407157Z Beginning upload of artifact content to blob storage
+2026-02-08T15:03:40.2833390Z Uploaded bytes 2336293
+2026-02-08T15:03:40.3306395Z Finished uploading artifact content to blob storage!
+2026-02-08T15:03:40.3308831Z SHA256 digest of uploaded artifact zip is fb7d1baa4431155b0cfc0cd825866d46d6e3e834baa7644ae28ab2b6d8bcb823
+2026-02-08T15:03:40.3310999Z Finalizing artifact upload
+2026-02-08T15:03:40.4249901Z Artifact github-pages.zip successfully finalized. Artifact ID 5423045460
+2026-02-08T15:03:40.4251013Z Artifact github-pages has been successfully uploaded! Final size is 2336293 bytes. Artifact ID is 5423045460
+2026-02-08T15:03:40.4259078Z Artifact download URL: https://github.com/eserlan/Codex-Cryptica/actions/runs/21800235994/artifacts/5423045460

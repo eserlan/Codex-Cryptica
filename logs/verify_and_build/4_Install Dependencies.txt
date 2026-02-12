@@ -1,0 +1,33 @@
+﻿2026-02-08T15:02:25.8634198Z ##[group]Run npm ci
+2026-02-08T15:02:25.8634584Z [36;1mnpm ci[0m
+2026-02-08T15:02:25.8682181Z shell: /usr/bin/bash -e {0}
+2026-02-08T15:02:25.8682526Z env:
+2026-02-08T15:02:25.8682765Z   HUSKY: 0
+2026-02-08T15:02:25.8682997Z ##[endgroup]
+2026-02-08T15:02:28.6841701Z npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-02-08T15:02:29.0663349Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-02-08T15:02:29.8902370Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-02-08T15:02:30.6961340Z npm warn deprecated @types/gapi.client.drive@3.0.15: use @types/gapi.client.drive-v3 instead; see https://github.com/Maxim-Mazurok/google-api-typings-generator/issues/652 for details
+2026-02-08T15:02:31.1995600Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2026-02-08T15:02:31.2339434Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2026-02-08T15:02:31.7854652Z npm warn deprecated glob@7.2.3: Glob versions prior to v9 are no longer supported
+2026-02-08T15:02:34.4609703Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2026-02-08T15:02:36.4243143Z 
+2026-02-08T15:02:36.4243657Z > prepare
+2026-02-08T15:02:36.4244047Z > husky
+2026-02-08T15:02:36.4244162Z 
+2026-02-08T15:02:36.4725039Z HUSKY=0 skip install
+2026-02-08T15:02:36.4725789Z added 730 packages, and audited 736 packages in 11s
+2026-02-08T15:02:36.4726203Z 
+2026-02-08T15:02:36.4726461Z 270 packages are looking for funding
+2026-02-08T15:02:36.4726954Z   run `npm fund` for details
+2026-02-08T15:02:36.5013515Z 
+2026-02-08T15:02:36.5014975Z 8 vulnerabilities (3 low, 5 moderate)
+2026-02-08T15:02:36.5015495Z 
+2026-02-08T15:02:36.5015749Z To address issues that do not require attention, run:
+2026-02-08T15:02:36.5016111Z   npm audit fix
+2026-02-08T15:02:36.5016285Z 
+2026-02-08T15:02:36.5016529Z To address all issues (including breaking changes), run:
+2026-02-08T15:02:36.5016897Z   npm audit fix --force
+2026-02-08T15:02:36.5017060Z 
+2026-02-08T15:02:36.5017195Z Run `npm audit` for details.
