@@ -1,75 +1,69 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { vault } from './vault.svelte';
+// apps/web/src/lib/stores/vault-switch.test.ts
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createMockOpfs, createMockIDB } from "../../tests/mocks/storage";
+import * as opfsUtils from "../utils/opfs";
+import * as idbUtils from "../utils/idb";
 
-const { mockDB, mockRoot } = vi.hoisted(() => {
-  return {
-    mockDB: {
-      get: vi.fn(),
-      put: vi.fn(),
-      getAll: vi.fn(),
-      delete: vi.fn(),
-    },
-    mockRoot: {
-      getDirectoryHandle: vi.fn().mockResolvedValue({
-        entries: async function* () { },
-        getFileHandle: vi.fn(),
-        removeEntry: vi.fn(),
-      }),
-      entries: async function* () { },
-    }
-  };
+// Mock Svelte 5 Runes
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = vi.fn((fn) => fn());
+  (global as any).$effect = (v: any) => v;
 });
 
-vi.mock('../utils/idb', () => ({
-  getDB: vi.fn().mockResolvedValue(mockDB),
-  getPersistedHandle: vi.fn(),
-  clearPersistedHandle: vi.fn(),
+// Mock Services
+vi.mock("../services/search", () => ({
+  searchService: {
+    index: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
-vi.mock('../utils/opfs', () => ({
-  getOpfsRoot: vi.fn().mockResolvedValue(mockRoot),
-  getVaultDir: vi.fn().mockResolvedValue(mockRoot),
-  createVaultDir: vi.fn().mockResolvedValue(mockRoot),
-  deleteVaultDir: vi.fn().mockResolvedValue(undefined),
-  getOrCreateDir: vi.fn().mockResolvedValue(mockRoot),
-  walkOpfsDirectory: vi.fn().mockResolvedValue([]),
-  writeOpfsFile: vi.fn(),
-  deleteOpfsEntry: vi.fn(),
-  readOpfsBlob: vi.fn(),
-  readFileAsText: vi.fn(),
+vi.mock("../services/ai", () => ({
+  aiService: {
+    clearStyleCache: vi.fn(),
+  },
 }));
 
-// Mock Search/Cache/Debug
-vi.mock('../services/search', () => ({ searchService: { clear: vi.fn(), index: vi.fn(), remove: vi.fn() } }));
-vi.mock('../services/cache', () => ({ cacheService: { get: vi.fn(), set: vi.fn() } }));
-vi.mock('./debug.svelte', () => ({ debugStore: { log: vi.fn(), error: vi.fn(), warn: vi.fn() } }));
+import { vault } from "./vault.svelte";
+import { vaultRegistry } from "./vault-registry.svelte";
 
-describe('VaultStore Multi-Vault', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vault.activeVaultId = null;
-    vault.entities = {};
+describe("VaultStore Multi-Vault", () => {
+  let mockOpfs: any;
+  let mockIDB: any;
+
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    mockOpfs = createMockOpfs();
+    mockIDB = createMockIDB();
+
+    vi.spyOn(opfsUtils, "getOpfsRoot").mockResolvedValue(mockOpfs);
+    vi.spyOn(idbUtils, "getDB").mockResolvedValue(mockIDB as any);
+
+    // Force re-init
+    (vault as any).isInitialized = false;
+    (vaultRegistry as any).isInitialized = false;
+
+    await vault.init();
   });
 
-  it('should list vaults from IDB', async () => {
-    const vaults = [{ id: 'v1', name: 'Vault 1', lastOpenedAt: 100 }];
-    mockDB.getAll.mockResolvedValue(vaults);
-
-    await vault.listVaults();
-    expect(vault.availableVaults).toEqual(vaults);
+  it("should initialize with default vault if none active", async () => {
+    expect(vault.activeVaultId).toBe("default");
+    expect(vault.vaultName).toBe("Default Vault");
   });
 
-  it('should switch vault', async () => {
-    const targetVault = { id: 'v2', name: 'Vault 2', lastOpenedAt: 100 };
-    mockDB.get.mockImplementation((store, key) => {
-      if (store === 'vaults' && key === 'v2') return targetVault;
-      return null;
-    });
+  it("should switch vault", async () => {
+    // 1. Create a second vault
+    const newId = await vault.createVault("Campaign B");
+    expect(vault.activeVaultId).toBe(newId);
+    expect(vault.vaultName).toBe("Campaign B");
 
-    await vault.switchVault('v2');
-
-    expect(vault.activeVaultId).toBe('v2');
-    expect(vault.vaultName).toBe('Vault 2');
-    expect(mockDB.put).toHaveBeenCalledWith('settings', 'v2', 'activeVaultId');
+    // 2. Switch back to default
+    await vault.switchVault("default");
+    expect(vault.activeVaultId).toBe("default");
+    expect(vault.vaultName).toBe("Default Vault");
   });
 });

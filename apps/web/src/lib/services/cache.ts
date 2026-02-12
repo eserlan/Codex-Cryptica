@@ -1,5 +1,5 @@
 import { getCachedFile, setCachedFile, clearCache } from "../utils/idb";
-import type { LocalEntity } from "../stores/vault.svelte";
+import type { LocalEntity } from "../stores/vault/types";
 
 export class CacheService {
   async get(path: string) {

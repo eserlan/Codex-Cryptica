@@ -1,0 +1,22 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+
+Running 1 test using 1 worker
+
+[BROWSER]: [vite] connecting...
+[BROWSER]: [vite] connected.
+[BROWSER]: [VaultStore] New Instance Created 1770921248273
+[BROWSER]: [VaultStore] initialized OPFS root: true
+[BROWSER]: !!! [Worker v1.2.0 - KEYWORDS] LOADED !!!
+[BROWSER]: [VaultStore] loadFiles called activeVaultId=default
+[BROWSER]: !!! [Worker v1.2.0 - KEYWORDS] LOADED !!!
+[BROWSER]: [VaultStore] loadFiles success. entities=0
+[BROWSER]: [VaultStore] createVault {name: Temp-1770921249590, opfsRoot: true}
+[TEST] Expecting vault name: Temp-1770921249590
+[BROWSER]: [VaultStore] switchVault called with id: temp-1770921249590-sdlt
+[BROWSER]: [VaultStore] switchVault set activeVaultId=temp-1770921249590-sdlt, vaultName=Temp-1770921249590
+[BROWSER]: [VaultStore] loadFiles called activeVaultId=temp-1770921249590-sdlt
+[BROWSER]: !!! [Worker v1.2.0 - KEYWORDS] LOADED !!!
+[BROWSER]: [VaultStore] loadFiles success. entities=0
+  ✓  1 [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault (2.4s)
+
+  1 passed (4.2s)
