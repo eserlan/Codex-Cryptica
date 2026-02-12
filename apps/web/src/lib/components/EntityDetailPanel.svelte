@@ -385,6 +385,7 @@
                         <img
                             src={resolvedImageUrl}
                             alt={entity.title}
+                            crossorigin="anonymous"
                             class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                         />
                         <div
@@ -799,7 +800,8 @@
             <img
                 src={resolvedImageUrl}
                 alt={entity.title}
-                class="max-w-[90vw] max-h-[90vh] object-contain"
+                crossorigin="anonymous"
+                class="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
             />
         </button>
     {/if}

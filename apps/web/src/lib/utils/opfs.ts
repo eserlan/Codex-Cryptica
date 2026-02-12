@@ -1,127 +1,177 @@
-// apps/web/src/lib/utils/opfs.ts
-import { debugStore } from '$lib/stores/debug.svelte';
+export interface FileEntry {
+  handle: FileSystemFileHandle;
+  path: string[];
+}
+
+const VAULTS_DIR = "vaults";
 
 /**
- * Gets the root directory of the Origin Private File System.
+ * Gets the root directory handle for the Origin Private File System.
  */
 export async function getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
-	return await navigator.storage.getDirectory();
+  return await navigator.storage.getDirectory();
 }
 
 /**
- * Recursively walks an OPFS directory and returns a list of file entries.
+ * Gets or creates a directory at the specified path relative to the root handle.
+ */
+export async function getOrCreateDir(
+  root: FileSystemDirectoryHandle,
+  path: string[]
+): Promise<FileSystemDirectoryHandle> {
+  let currentDir = root;
+  for (const part of path) {
+    currentDir = await currentDir.getDirectoryHandle(part, { create: true });
+  }
+  return currentDir;
+}
+
+/**
+ * Recursively walks an OPFS directory and returns a list of all files.
  */
 export async function walkOpfsDirectory(
-	dirHandle: FileSystemDirectoryHandle,
-	path: string[] = [],
-	onError?: (err: unknown, path: string[]) => void
+  dirHandle: FileSystemDirectoryHandle,
+  path: string[] = [],
+  onError?: (error: unknown, path: string[]) => void
 ): Promise<FileEntry[]> {
-	const entries: FileEntry[] = [];
-	const SKIP_DIRS = new Set(['images']);
-
-	try {
-		for await (const handle of dirHandle.values()) {
-			const name = handle.name;
-			const currentPath = [...path, name];
-			try {
-				if (handle.kind === 'file') {
-					if (name.endsWith('.md')) {
-						entries.push({
-							handle: handle as FileSystemFileHandle,
-							path: currentPath
-						});
-					}
-				} else if (handle.kind === 'directory') {
-					if (SKIP_DIRS.has(name)) {
-						continue;
-					}
-					const subEntries = await walkOpfsDirectory(
-						handle as FileSystemDirectoryHandle,
-						currentPath,
-						onError
-					);
-					entries.push(...subEntries);
-				}
-			} catch (innerErr) {
-				if (onError) onError(innerErr, currentPath);
-			}
-		}
-	} catch (err) {
-		if (onError) onError(err, path);
-		debugStore.error('Failed to walk OPFS directory', { path, err });
-		throw err;
-	}
-
-	return entries;
+  const files: FileEntry[] = [];
+  try {
+    for await (const [name, handle] of dirHandle.entries()) {
+      try {
+        const currentPath = [...path, name];
+        if (handle.kind === "file") {
+          files.push({ handle: handle as FileSystemFileHandle, path: currentPath });
+        } else if (handle.kind === "directory") {
+          const subFiles = await walkOpfsDirectory(
+            handle as FileSystemDirectoryHandle,
+            currentPath,
+            onError
+          );
+          files.push(...subFiles);
+        }
+      } catch (error) {
+        if (onError) {
+          onError(error, [...path, name]);
+        } else {
+          console.error(`Error processing entry ${[...path, name].join("/")}:`, error);
+        }
+      }
+    }
+  } catch (error) {
+    if (onError) {
+      onError(error, path);
+    } else {
+      console.error(`Error walking directory ${path.join("/")}:`, error);
+    }
+  }
+  return files;
 }
 
 /**
- * Writes content to a file in OPFS.
+ * Reads a file as text from OPFS given its path segments.
  */
-export async function writeOpfsFile(
-	path: string[],
-	content: string | Blob,
-	baseHandle?: FileSystemDirectoryHandle
-): Promise<FileSystemFileHandle> {
-	const root = baseHandle || (await getOpfsRoot());
-	let currentDir = root;
-
-	// Navigate to the target directory, creating subdirectories as needed
-	for (let i = 0; i < path.length - 1; i++) {
-		currentDir = await currentDir.getDirectoryHandle(path[i], { create: true });
-	}
-
-	const fileName = path[path.length - 1];
-	const fileHandle = await currentDir.getFileHandle(fileName, { create: true });
-
-	const writable = await fileHandle.createWritable();
-	await writable.write(content);
-	await writable.close();
-
-	return fileHandle;
-}
-
-/**
- * Reads a file from OPFS.
- */
-export async function readOpfsFile(
-	path: string[],
-	baseHandle?: FileSystemDirectoryHandle
+export async function readFileAsText(
+  root: FileSystemDirectoryHandle,
+  path: string[]
 ): Promise<string> {
-	const root = baseHandle || (await getOpfsRoot());
-	let currentDir = root;
-
-	for (let i = 0; i < path.length - 1; i++) {
-		currentDir = await currentDir.getDirectoryHandle(path[i]);
-	}
-
-	const fileName = path[path.length - 1];
-	const fileHandle = await currentDir.getFileHandle(fileName);
-	const file = await fileHandle.getFile();
-	return await file.text();
+  if (path.length === 0) throw new Error("Path cannot be empty");
+  
+  const fileName = path[path.length - 1];
+  const dirPath = path.slice(0, -1);
+  
+  const dirHandle = await getOrCreateDir(root, dirPath);
+  const fileHandle = await dirHandle.getFileHandle(fileName);
+  const file = await fileHandle.getFile();
+  return await file.text();
 }
 
 /**
- * Reads a file as a Blob from OPFS.
+ * Reads a file as a Blob from OPFS given its path segments.
  */
 export async function readOpfsBlob(
-	path: string[],
-	baseHandle?: FileSystemDirectoryHandle
+  path: string[],
+  root: FileSystemDirectoryHandle
 ): Promise<Blob> {
-	const root = baseHandle || (await getOpfsRoot());
-	let currentDir = root;
+  if (path.length === 0) throw new Error("Path cannot be empty");
 
-	for (let i = 0; i < path.length - 1; i++) {
-		currentDir = await currentDir.getDirectoryHandle(path[i]);
-	}
+  const fileName = path[path.length - 1];
+  const dirPath = path.slice(0, -1);
 
-	const fileName = path[path.length - 1];
-	const fileHandle = await currentDir.getFileHandle(fileName);
-	const file = await fileHandle.getFile();
-	return file;
+  // If dirPath is empty, we are at root (relative to provided handle)
+  let dirHandle = root;
+  if (dirPath.length > 0) {
+    dirHandle = await getOrCreateDir(root, dirPath);
+  }
+
+  const fileHandle = await dirHandle.getFileHandle(fileName);
+  return await fileHandle.getFile();
 }
 
-export interface FileEntry {
-	handle: FileSystemFileHandle;
-	path: string[]; // Relative path from root
+/**
+ * Writes content (string or Blob) to a file in OPFS.
+ */
+export async function writeOpfsFile(
+  path: string[],
+  content: string | Blob | File,
+  root: FileSystemDirectoryHandle
+): Promise<void> {
+  if (path.length === 0) throw new Error("Path cannot be empty");
+  
+  const fileName = path[path.length - 1];
+  const dirPath = path.slice(0, -1);
+  
+  const dirHandle = await getOrCreateDir(root, dirPath);
+  const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+  
+  // Create a writable stream to the file
+  const writable = await fileHandle.createWritable();
+  await writable.write(content);
+  await writable.close();
+}
+
+/**
+ * Deletes a file or directory in OPFS.
+ */
+export async function deleteOpfsEntry(
+  root: FileSystemDirectoryHandle,
+  path: string[]
+): Promise<void> {
+  if (path.length === 0) throw new Error("Path cannot be empty");
+
+  const entryName = path[path.length - 1];
+  const dirPath = path.slice(0, -1);
+  
+  const dirHandle = await getOrCreateDir(root, dirPath);
+  await dirHandle.removeEntry(entryName, { recursive: true });
+}
+
+/**
+ * Gets the directory handle for a specific vault.
+ */
+export async function getVaultDir(
+  root: FileSystemDirectoryHandle,
+  vaultId: string
+): Promise<FileSystemDirectoryHandle> {
+  return await getOrCreateDir(root, [VAULTS_DIR, vaultId]);
+}
+
+/**
+ * Creates a new vault directory.
+ */
+export async function createVaultDir(
+  root: FileSystemDirectoryHandle,
+  vaultId: string
+): Promise<FileSystemDirectoryHandle> {
+  return await getOrCreateDir(root, [VAULTS_DIR, vaultId]);
+}
+
+/**
+ * Deletes a vault directory and all its contents.
+ */
+export async function deleteVaultDir(
+  root: FileSystemDirectoryHandle,
+  vaultId: string
+): Promise<void> {
+  const vaultsDir = await getOrCreateDir(root, [VAULTS_DIR]);
+  await vaultsDir.removeEntry(vaultId, { recursive: true });
 }

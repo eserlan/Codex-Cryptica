@@ -1,6 +1,14 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault.svelte";
 
+export interface VaultRecord {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastOpenedAt: number;
+  entityCount: number;
+}
+
 interface CodexDB extends DBSchema {
   settings: {
     key: string;
@@ -22,10 +30,14 @@ interface CodexDB extends DBSchema {
     key: string; // id
     value: any; // Era
   };
+  vaults: {
+    key: string; // id
+    value: VaultRecord;
+  };
 }
 
 const DB_NAME = "CodexCryptica";
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -44,6 +56,9 @@ export function getDB() {
         }
         if (oldVersion < 4 && !db.objectStoreNames.contains("world_eras")) {
           db.createObjectStore("world_eras", { keyPath: "id" });
+        }
+        if (oldVersion < 5 && !db.objectStoreNames.contains("vaults")) {
+          db.createObjectStore("vaults", { keyPath: "id" });
         }
       },
     });

@@ -3,14 +3,16 @@ import { test, expect } from "@playwright/test";
 test.describe("Category Architecture Modal", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
-    await page.goto("/");
-    // removed eval
-    // Force configured state for settings menu
-    await page.evaluate(() => {
-      (window as any).TEST_FORCE_CONFIGURED = true;
-    });
-    // Wait for vault to initialize
+    await page.goto("http://localhost:5173/");
+    
+    // Wait for vault to initialize automatically
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    
+    // Ensure categories are initialized (they should be, but let's be safe)
+    await page.evaluate(async () => {
+      await (window as any).categories.init();
+    });
+
     // Simulate connected cloud state so manage-categories-button is visible
     await page.evaluate(() => {
       const cloudConfig = (window as any).cloudConfig;
@@ -36,16 +38,16 @@ test.describe("Category Architecture Modal", () => {
     await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
     await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
 
-    // 4. Verify default categories are loaded (check for NPC which is a default category)
-    const hasNpc = await page.evaluate(() => {
+    // 4. Verify default categories are loaded (check for Character which is a default category)
+    const hasCharacter = await page.evaluate(() => {
       const inputs = Array.from(
         document.querySelectorAll('input[type="text"]'),
       );
       return inputs.some(
-        (input) => (input as HTMLInputElement).value === "NPC",
+        (input) => (input as HTMLInputElement).value.toLowerCase() === "character",
       );
     });
-    expect(hasNpc).toBe(true);
+    expect(hasCharacter).toBe(true);
 
     // 5. Verify the new category input and ADD button exist
     await expect(page.getByPlaceholder("New category...")).toBeVisible();
@@ -132,20 +134,20 @@ test.describe("Category Architecture Modal", () => {
     await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
     await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
 
-    // Delete NPC category naturally
-    const npcRow = page.getByTestId("category-row-npc");
-    await npcRow.hover();
+    // Delete character category naturally
+    const characterRow = page.getByTestId("category-row-character");
+    await characterRow.hover();
     // Handle the confirm dialog
     page.once("dialog", (dialog) => dialog.accept());
-    await npcRow.getByTitle("Delete Category").click();
+    await characterRow.getByTitle("Delete Category").click();
 
-    await expect(npcRow).not.toBeVisible();
+    await expect(characterRow).not.toBeVisible();
 
     // Click Reset to Defaults
     await page.getByRole("button", { name: /RESET TO DEFAULTS/i }).click();
 
-    // Verify NPC is back
-    await expect(npcRow).toBeVisible();
+    // Verify character is back
+    await expect(characterRow).toBeVisible();
   });
 
   test("should update graph node border color when category color changes", async ({
@@ -166,9 +168,9 @@ test.describe("Category Architecture Modal", () => {
     await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
     await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
 
-    // 3. Find NPC category color input and change it to a distinct color
-    const npcRow = page.getByTestId("category-row-npc");
-    const colorInput = npcRow.locator('input[type="color"]');
+    // 3. Find character category color input and change it to a distinct color
+    const characterRow = page.getByTestId("category-row-character");
+    const colorInput = characterRow.locator('input[type="color"]');
 
     // Get initial color to verify it changes
     const initialColor = await colorInput.inputValue();
@@ -187,7 +189,7 @@ test.describe("Category Architecture Modal", () => {
     await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
 
     const updatedColorInput = page
-      .getByTestId("category-row-npc")
+      .getByTestId("category-row-character")
       .locator('input[type="color"]');
     const savedColor = await updatedColorInput.inputValue();
 

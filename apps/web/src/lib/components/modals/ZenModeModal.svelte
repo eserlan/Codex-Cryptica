@@ -34,7 +34,9 @@
 
     $effect(() => {
         if (entity?.image) {
-            resolvedImageUrl = ""; // Image resolution logic temporarily disabled
+            vault.resolveImageUrl(entity.image).then(url => {
+                resolvedImageUrl = url;
+            });
         } else {
             resolvedImageUrl = "";
         }

@@ -240,7 +240,8 @@ class OracleStore {
   }
 
   get isEnabled() {
-    return !!this.apiKey || !!import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey = (typeof window !== 'undefined' && (window as any).__SHARED_GEMINI_KEY__) || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    return !!this.apiKey || !!sharedKey;
   }
 
   get effectiveApiKey() {
@@ -248,7 +249,8 @@ class OracleStore {
     if (this.tier === "advanced") {
       return this.apiKey;
     }
-    return this.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey = (typeof window !== 'undefined' && (window as any).__SHARED_GEMINI_KEY__) || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    return this.apiKey || sharedKey;
   }
 
   private detectImageIntent(query: string): boolean {

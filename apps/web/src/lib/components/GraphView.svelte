@@ -256,6 +256,9 @@
             sourceId = null;
             targetNode.removeClass("selected-source");
           } else {
+            // Create the connection in the store
+            vault.addConnection(sourceId, targetId, "neutral");
+
             cy?.$(".selected-source").removeClass("selected-source");
             sourceId = null;
             connectMode = false; // Auto exit connect mode
@@ -434,6 +437,7 @@
                   if (!w || !h) {
                     // Detect image dimensions only if missing
                     const img = new Image();
+                    img.crossOrigin = "anonymous";
                     img.src = resolvedUrl;
                     await new Promise((resolve) => {
                       img.onload = resolve;
@@ -677,9 +681,16 @@
     }
   });
 
-  // Save edge label logic temporarily disabled
+  // Save edge label logic
   const saveEdgeLabel = () => {
     if (editingEdge) {
+      vault.updateConnection(
+        editingEdge.source,
+        editingEdge.target,
+        editingEdge.type,
+        edgeEditType,
+        edgeEditInput,
+      );
       editingEdge = null;
     }
   };
@@ -952,6 +963,11 @@
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
           onclick={() => {
             if (editingEdge) {
+              vault.removeConnection(
+                editingEdge.source,
+                editingEdge.target,
+                editingEdge.type,
+              );
               editingEdge = null;
             }
           }}
