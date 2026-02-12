@@ -11,7 +11,12 @@
   import type { Core, NodeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
-  import { getGraphStyle, DEFAULT_LAYOUT_OPTIONS, hasTimelineDate, type GraphNode } from "graph-engine";
+  import {
+    getGraphStyle,
+    DEFAULT_LAYOUT_OPTIONS,
+    hasTimelineDate,
+    type GraphNode,
+  } from "graph-engine";
 
   cytoscape.use(fcose);
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -118,7 +123,7 @@
     if (graph.timelineMode) {
       graph.applyTimelineLayout(cy);
     } else if (graph.orbitMode && graph.centralNodeId) {
-       setCentralNode(cy, graph.centralNodeId);
+      setCentralNode(cy, graph.centralNodeId);
       if (isInitial) {
         cy.resize();
         cy.animate({
@@ -128,9 +133,9 @@
         });
       }
     } else {
-        // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
-        // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
-        // here, because its effect is equivalent to re-running 'cose' with these options.
+      // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
+      // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
+      // here, because its effect is equivalent to re-running 'cose' with these options.
       currentLayout = cy.layout({
         ...DEFAULT_LAYOUT_OPTIONS,
       });
@@ -251,7 +256,6 @@
             sourceId = null;
             targetNode.removeClass("selected-source");
           } else {
-            
             cy?.$(".selected-source").removeClass("selected-source");
             sourceId = null;
             connectMode = false; // Auto exit connect mode
@@ -393,9 +397,12 @@
             await Promise.all(
               chunk.map(async (el) => {
                 const data = el.data as any;
-                // Image resolution logic temporarily disabled
-const resolvedUrl = "";
-if (resolvedUrl) {
+                const imagePath = data.thumbnail || data.image;
+                if (!imagePath) return;
+
+                const resolvedUrl = await vault.resolveImageUrl(imagePath);
+
+                if (resolvedUrl) {
                   let w = data.width;
                   let h = data.height;
 
@@ -459,7 +466,7 @@ if (resolvedUrl) {
       // Re-apply orbit layout if params change
       const _orbit = graph.orbitMode;
       const _center = graph.centralNodeId;
-      
+
       untrack(() => {
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
@@ -513,7 +520,7 @@ if (resolvedUrl) {
 
   $effect(() => {
     const currentCy = cy;
-    if (currentCy && graph.elements) {      
+    if (currentCy && graph.elements) {
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
