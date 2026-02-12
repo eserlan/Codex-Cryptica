@@ -13,6 +13,8 @@
     let showShare = $state(false);
     let newTitle = $state("");
     let newType = $state<string>("character");
+    let isCreating = $state(false);
+    let createError = $state<string | null>(null);
 
     // Logic
     let isShared = $derived($cloudConfig.shareStatus === "public");
@@ -47,13 +49,18 @@
 
     const handleCreate = async () => {
         if (!newTitle.trim()) return;
+        isCreating = true;
+        createError = null;
         try {
             const id = await vault.createEntity(newType, newTitle);
             vault.selectedEntityId = id;
             newTitle = "";
             showForm = false;
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            createError = err.message || "Failed to create entity";
+        } finally {
+            isCreating = false;
         }
     };
 
@@ -175,11 +182,13 @@
         >
             <input
                 bind:value={newTitle}
+                aria-label="New Entity Title"
                 placeholder="Entry Title..."
                 class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical ? 'py-3 text-sm' : ''}"
             />
             <select
                 bind:value={newType}
+                aria-label="New Entity Type"
                 class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary {isVertical ? 'py-3 text-sm' : ''}"
             >
                 {#each categories.list as cat}
@@ -189,10 +198,19 @@
             <button
                 type="submit"
                 class="{btnPrimary} {isVertical ? 'py-3 text-sm justify-center' : 'px-4 py-1.5 text-xs'} disabled:opacity-50"
-                disabled={!newTitle.trim()}
+                disabled={!newTitle.trim() || isCreating}
             >
-                ADD
+                {#if isCreating}
+                    <span class="animate-pulse">ADDING...</span>
+                {:else}
+                    ADD
+                {/if}
             </button>
+            {#if createError}
+                <div class="text-[10px] text-red-500 w-full text-center" role="alert">
+                    {createError}
+                </div>
+            {/if}
         </form>
     {/if}
 </div>
