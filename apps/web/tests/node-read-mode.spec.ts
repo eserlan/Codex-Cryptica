@@ -39,8 +39,8 @@ Villain is bad.`;
         getFile: async () =>
           new File([content], name, { type: "text/markdown" }),
         createWritable: async () => ({
-          write: async () => {},
-          close: async () => {},
+          write: async () => { },
+          close: async () => { },
         }),
       });
 
@@ -65,12 +65,15 @@ Villain is bad.`;
 
   test("Open Read Mode, Copy, Navigate, and Close", async ({ page }) => {
     await page.goto("http://localhost:5173/");
-    
+
+    // Wait for vault to be ready
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
     // Create test entities with specific content
     await page.evaluate(async () => {
-        await (window as any).vault.createEntity("character", "Hero", { content: "# Hero Content\nHero is bold." });
-        await (window as any).vault.createEntity("character", "Villain", { content: "# Villain Content\nVillain is bad." });
-        await (window as any).vault.addConnection("hero", "villain", "enemy");
+      await (window as any).vault.createEntity("character", "Hero", { content: "# Hero Content\nHero is bold." });
+      await (window as any).vault.createEntity("character", "Villain", { content: "# Villain Content\nVillain is bad." });
+      await (window as any).vault.addConnection("hero", "villain", "enemy");
     });
 
     await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
@@ -104,7 +107,7 @@ Villain is bad.`;
     const connectionLink = modal.locator('button', { hasText: 'Villain' });
     await expect(connectionLink).toBeVisible();
     await connectionLink.click();
-    
+
     // 6. Verify Content Updates
     // Using a regex and waiting for the specific title in the modal
     await expect(modal.getByTestId("entity-title")).toHaveText(/Villain/i, { timeout: 10000 });
@@ -117,12 +120,12 @@ Villain is bad.`;
 
   test("Open Zen Mode via Keyboard Shortcut (Alt+Z)", async ({ page }) => {
     await page.goto("http://localhost:5173/");
-    
+
     // Create test entities
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Hero");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Villain");
     await page.getByRole("button", { name: "ADD" }).click();
@@ -152,12 +155,12 @@ Villain is bad.`;
     page,
   }) => {
     await page.goto("http://localhost:5173/");
-    
+
     // Create test entities
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Hero");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Villain");
     await page.getByRole("button", { name: "ADD" }).click();

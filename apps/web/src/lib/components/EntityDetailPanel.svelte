@@ -385,7 +385,6 @@
                         <img
                             src={resolvedImageUrl}
                             alt={entity.title}
-                            crossorigin="anonymous"
                             class="w-full h-auto max-h-48 md:max-h-80 object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                         />
                         <div
@@ -455,7 +454,11 @@
             <div class="mb-6 space-y-2">
                 <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                     {#each entity.labels || [] as label}
-                        <LabelBadge {label} removable={!vault.isGuest} />
+                        <LabelBadge
+                            {label}
+                            removable={!vault.isGuest}
+                            onRemove={() => vault.removeLabel(entity.id, label)}
+                        />
                     {/each}
                     {#if !entity.labels?.length && vault.isGuest}
                         <span

@@ -13,17 +13,30 @@ export async function getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
 }
 
 /**
+ * Gets a directory handle at the specified path relative to the root handle.
+ * @param create If true, creates the directory if it doesn't exist.
+ */
+export async function getDirHandle(
+  root: FileSystemDirectoryHandle,
+  path: string[],
+  create: boolean = false
+): Promise<FileSystemDirectoryHandle> {
+  let currentDir = root;
+  for (const part of path) {
+    currentDir = await currentDir.getDirectoryHandle(part, { create });
+  }
+  return currentDir;
+}
+
+/**
  * Gets or creates a directory at the specified path relative to the root handle.
+ * @deprecated Use getDirHandle(root, path, true) instead.
  */
 export async function getOrCreateDir(
   root: FileSystemDirectoryHandle,
   path: string[]
 ): Promise<FileSystemDirectoryHandle> {
-  let currentDir = root;
-  for (const part of path) {
-    currentDir = await currentDir.getDirectoryHandle(part, { create: true });
-  }
-  return currentDir;
+  return getDirHandle(root, path, true);
 }
 
 /**
@@ -63,6 +76,7 @@ export async function walkOpfsDirectory(
     } else {
       console.error(`Error walking directory ${path.join("/")}:`, error);
     }
+    throw error;
   }
   return files;
 }
@@ -75,11 +89,11 @@ export async function readFileAsText(
   path: string[]
 ): Promise<string> {
   if (path.length === 0) throw new Error("Path cannot be empty");
-  
+
   const fileName = path[path.length - 1];
   const dirPath = path.slice(0, -1);
-  
-  const dirHandle = await getOrCreateDir(root, dirPath);
+
+  const dirHandle = await getDirHandle(root, dirPath, false);
   const fileHandle = await dirHandle.getFileHandle(fileName);
   const file = await fileHandle.getFile();
   return await file.text();
@@ -100,7 +114,7 @@ export async function readOpfsBlob(
   // If dirPath is empty, we are at root (relative to provided handle)
   let dirHandle = root;
   if (dirPath.length > 0) {
-    dirHandle = await getOrCreateDir(root, dirPath);
+    dirHandle = await getDirHandle(root, dirPath, false);
   }
 
   const fileHandle = await dirHandle.getFileHandle(fileName);
@@ -116,13 +130,13 @@ export async function writeOpfsFile(
   root: FileSystemDirectoryHandle
 ): Promise<void> {
   if (path.length === 0) throw new Error("Path cannot be empty");
-  
+
   const fileName = path[path.length - 1];
   const dirPath = path.slice(0, -1);
-  
+
   const dirHandle = await getOrCreateDir(root, dirPath);
   const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
-  
+
   // Create a writable stream to the file
   const writable = await fileHandle.createWritable();
   await writable.write(content);
@@ -140,8 +154,8 @@ export async function deleteOpfsEntry(
 
   const entryName = path[path.length - 1];
   const dirPath = path.slice(0, -1);
-  
-  const dirHandle = await getOrCreateDir(root, dirPath);
+
+  const dirHandle = await getDirHandle(root, dirPath, false);
   await dirHandle.removeEntry(entryName, { recursive: true });
 }
 

@@ -2,7 +2,11 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Help Onboarding Walkthrough", () => {
   test.beforeEach(async ({ page }) => {
-    // Ensure clean state
+    // Ensure clean state and force onboarding
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = false;
+    });
+
     await page.goto("/");
     await page.evaluate(() => {
       localStorage.clear();

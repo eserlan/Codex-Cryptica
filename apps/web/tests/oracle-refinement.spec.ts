@@ -39,7 +39,7 @@ test.describe("Oracle UI Refinement", () => {
     await page.evaluate(async () => {
       const dbName = "CodexCryptica"; // Updated DB name
       const request = indexedDB.open(dbName, 5); // Updated version
-      
+
       const db: IDBDatabase = await new Promise((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
@@ -123,17 +123,18 @@ test.describe("Oracle UI Refinement", () => {
       const tx = db.transaction("settings", "readwrite");
       tx.objectStore("settings").put("fake-key", "ai_api_key");
       await new Promise((r) => (tx.oncomplete = r));
-      
-      // Force store to re-read key immediately
-      await (window as any).oracle.init();
     });
 
-    // Wait for the toggle button to be visible again (it disappears if isEnabled is false)
-    const toggleBtn = page.getByTitle("Open Lore Oracle");
-    await expect(toggleBtn).toBeVisible({ timeout: 10000 });
-    await toggleBtn.click();
+    // Oracle should still be open, so we don't need to click toggle
+    // Verify message is gone from the chat container
 
     // Verify message is gone from the chat container
+    // Verify message is gone from the chat container
+    const messagesLength = await page.evaluate(() => (window as any).oracle.messages.length);
+    console.log("Oracle messages length after switch:", messagesLength);
+    const messagesContent = await page.evaluate(() => (window as any).oracle.messages.map((m: any) => m.content));
+    console.log("Oracle messages content:", messagesContent);
+
     const chatContainer = page.locator(".custom-scrollbar");
     await expect(
       chatContainer.getByText("Persistent Message"),

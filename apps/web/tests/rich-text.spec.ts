@@ -1,6 +1,12 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Rich Text Editor", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+    });
+  });
+
   test("Editor loads and updates content", async ({ page }) => {
     await page.goto("/test/markdown-editor");
 

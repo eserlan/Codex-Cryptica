@@ -437,7 +437,6 @@
                   if (!w || !h) {
                     // Detect image dimensions only if missing
                     const img = new Image();
-                    img.crossOrigin = "anonymous";
                     img.src = resolvedUrl;
                     await new Promise((resolve) => {
                       img.onload = resolve;

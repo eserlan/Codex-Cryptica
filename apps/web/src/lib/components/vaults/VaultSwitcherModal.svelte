@@ -128,14 +128,14 @@
   transition:fade
   data-testid="vault-switcher-modal"
 >
-  <div
+  <div role="dialog" aria-modal="true" aria-labelledby="vault-selector-title"
     class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
     transition:scale
   >
     <div
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
     >
-      <h2 class="text-lg font-bold text-theme-primary tracking-wide">
+      <h2 id="vault-selector-title" class="text-lg font-bold text-theme-primary tracking-wide">
         VAULT SELECTOR
       </h2>
       <button onclick={onClose} class="text-theme-muted hover:text-theme-text" title="Close Selector" aria-label="Close Selector">

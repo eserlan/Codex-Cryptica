@@ -63,6 +63,11 @@ class OracleStore {
 
       // Request state from other windows on load
       this.channel.postMessage({ type: "REQUEST_STATE" });
+
+      // Listen for vault switches to clear chat history
+      window.addEventListener("vault-switched", () => {
+        this.clearMessages();
+      });
     }
   }
 

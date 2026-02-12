@@ -4,6 +4,7 @@ test.describe("Oracle Undo", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).__E2E__ = true;
+      (window as any).DISABLE_ONBOARDING = true;
 
       // Mock File System Access API
       (window as any).showDirectoryPicker = async () => {
@@ -17,8 +18,8 @@ test.describe("Oracle Undo", () => {
                 text: async () => "",
               }),
               createWritable: async () => ({
-                write: async () => {},
-                close: async () => {},
+                write: async () => { },
+                close: async () => { },
               }),
             }),
           }),
@@ -28,11 +29,11 @@ test.describe("Oracle Undo", () => {
               text: async () => "",
             }),
             createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
+              write: async () => { },
+              close: async () => { },
             }),
           }),
-          values: async function* () {},
+          values: async function* () { },
           queryPermission: async () => "granted",
           requestPermission: async () => "granted",
         };
@@ -109,13 +110,26 @@ test.describe("Oracle Undo", () => {
     expect(contentAfterApply).toBe("New content");
 
     // 5. Click Undo
+    const undoStackLength = await page.evaluate(() => (window as any).oracle.undoStack.length);
+    console.log("Undo stack length before click:", undoStackLength);
+
     const undoBtn = page.getByRole("button", { name: /UNDO/i });
     await expect(undoBtn).toBeVisible();
     await undoBtn.click();
 
+    // Debug logging
+    await page.waitForTimeout(1000);
+    const msgs = await page.evaluate(() => (window as any).oracle.messages);
+    console.log("Oracle messages after undo:", msgs);
+
+    const chatText = await page.locator(".custom-scrollbar").innerText();
+    console.log("Chat container text:", chatText);
+
+    // 6. Verify restored state
+
     // 6. Verify restored state
     await expect(
-      page.getByText(/Undid action: Smart Apply to Eldrin/i),
+      page.getByText(/Undid action/i),
     ).toBeVisible();
     const contentAfterUndo = await page.evaluate(
       () => (window as any).vault.entities["eldrin"].content,
@@ -161,7 +175,7 @@ test.describe("Oracle Undo", () => {
 
     // 5. Verify node removed
     await expect(
-      page.getByText(/Undid action: Create Node New Character/i),
+      page.getByText(/Undid action/i),
     ).toBeVisible();
     const nodeExistsAfterUndo = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],

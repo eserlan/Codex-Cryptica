@@ -27,6 +27,9 @@ test.describe("Fog of War", () => {
       { timeout: 15000 },
     );
 
+    // Wait for vault to be ready
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
     // Create entities via vault API to trigger proper reactivity
     await page.evaluate(async () => {
       const { vault } = window as any;
