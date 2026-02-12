@@ -161,7 +161,7 @@ export const getGraphStyle = (
       },
     },
     {
-      selector: "node[resolvedImage]",
+      selector: "node[resolvedImage][width][height]",
       style: {
         "background-fit": "cover",
         "background-clip": "node",

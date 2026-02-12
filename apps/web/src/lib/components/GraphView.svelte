@@ -442,9 +442,11 @@
                   if (currentCy) {
                     currentCy.batch(() => {
                       const node = currentCy.$id(data.id);
-                      node.data("resolvedImage", resolvedUrl);
-                      node.data("width", Math.round(w));
-                      node.data("height", Math.round(h));
+                      node.data({
+                        resolvedImage: resolvedUrl,
+                        width: Math.round(w),
+                        height: Math.round(h),
+                      });
                     });
                   }
                 }
