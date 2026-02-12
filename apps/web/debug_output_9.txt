@@ -1,0 +1,55 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+
+Running 1 test using 1 worker
+
+[BROWSER]: [vite] connecting...
+[BROWSER]: [vite] connected.
+[BROWSER]: [VaultStore] New Instance Created 1770921190291
+[BROWSER]: [VaultStore] New Instance Created 1770921190379
+[BROWSER]: [VaultStore] initialized OPFS root: true
+[BROWSER]: !!! [Worker v1.2.0 - KEYWORDS] LOADED !!!
+[BROWSER]: [VaultStore] loadFiles called activeVaultId=default
+[BROWSER]: !!! [Worker v1.2.0 - KEYWORDS] LOADED !!!
+[BROWSER]: [VaultStore] loadFiles success. entities=0
+[BROWSER]: [VaultStore] createVault {name: Temp-1770921191360, opfsRoot: false}
+[BROWSER]: [VaultStore] Storage not initialized. Instance: VaultStore
+[BROWSER]: Error: Storage not initialized
+    at VaultStore.createVault (http://localhost:5173/src/lib/stores/vault.svelte.ts?t=1770919774984:278:10)
+    at handleCreate (http://localhost:5173/src/lib/components/vaults/VaultSwitcherModal.svelte?t=1770919775460:151:41)
+    at HTMLFormElement.<anonymous> (http://localhost:5173/src/lib/components/vaults/VaultSwitcherModal.svelte?t=1770919775460:544:5)
+    at http://localhost:5173/node_modules/.vite/deps/chunk-TRZTZUOO.js?v=af5f60f5:4389:25
+    at without_reactive_context (http://localhost:5173/node_modules/.vite/deps/chunk-TRZTZUOO.js?v=af5f60f5:2833:12)
+    at HTMLFormElement.target_handler (http://localhost:5173/node_modules/.vite/deps/chunk-TRZTZUOO.js?v=af5f60f5:4388:14)
+[TEST] Expecting vault name: Temp-1770921191360
+  ✘  1 [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault (7.0s)
+
+
+  1) [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTitle('Switch Vault')
+    Expected substring: [32m"Temp-1770921191360"[39m
+    Received string:    [31m" Default Vault "[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTitle('Switch Vault')[22m
+    [2m    9 × locator resolved to <button title="Switch Vault" data-testid="open-vault-button" class="flex items-center gap-2 rounded transition-colors group px-2 py-1 hover:bg-theme-surface/50">…</button>[22m
+    [2m      - unexpected value " Default Vault "[22m
+
+
+      22 |
+      23 |         console.log(`[TEST] Expecting vault name: ${vaultName}`);
+    > 24 |         await expect(page.getByTitle('Switch Vault')).toContainText(vaultName);
+         |                                                       ^
+      25 |     });
+      26 | });
+      27 |
+        at /home/espen/proj/Codex-Arcana/apps/web/tests/debug-vault.spec.ts:24:55
+
+    Error Context: test-results/debug-vault-Vault-Manageme-4dc78-d-create-and-switch-a-vault-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault 

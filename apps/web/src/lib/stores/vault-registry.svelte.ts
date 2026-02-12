@@ -1,8 +1,8 @@
 // apps/web/src/lib/stores/vault-registry.svelte.ts
 import { getDB, type VaultRecord } from "../utils/idb";
-import { getOpfsRoot, createVaultDir, deleteVaultDir } from "../utils/opfs";
-import { sanitizeId } from "../utils/markdown";
+import { getOpfsRoot, createVaultDir } from "../utils/opfs";
 import { debugStore } from "./debug.svelte";
+import * as registry from "./vault/registry";
 
 class VaultRegistryStore {
   availableVaults = $state<VaultRecord[]>([]);
@@ -14,6 +14,9 @@ class VaultRegistryStore {
   #opfsRoot: FileSystemDirectoryHandle | undefined = undefined;
 
   get rootHandle() {
+    if (!this.isInitialized) {
+      console.warn("[VaultRegistry] rootHandle accessed before initialization");
+    }
     return this.#opfsRoot;
   }
 
@@ -33,7 +36,7 @@ class VaultRegistryStore {
         await db.put("settings", "default", "activeVaultId");
         await createVaultDir(this.#opfsRoot, "default");
 
-        const existing = await db.get("vaults", "default");
+        const existing = await registry.getVault("default");
         if (!existing) {
           await db.put("vaults", {
             id: "default",
@@ -46,7 +49,7 @@ class VaultRegistryStore {
       }
 
       const vaultRecord = this.activeVaultId
-        ? await db.get("vaults", this.activeVaultId)
+        ? await registry.getVault(this.activeVaultId)
         : null;
       this.vaultName = vaultRecord?.name || "Local Vault";
 
@@ -61,47 +64,23 @@ class VaultRegistryStore {
   }
 
   async listVaults(): Promise<VaultRecord[]> {
-    const db = await getDB();
-    const vaults = await db.getAll("vaults");
-    this.availableVaults = vaults.sort(
-      (a, b) => b.lastOpenedAt - a.lastOpenedAt,
-    );
+    this.availableVaults = await registry.listVaults();
     return this.availableVaults;
   }
 
   async createVault(name: string): Promise<string> {
     if (!this.#opfsRoot) throw new Error("Storage not initialized");
-
-    const slug = sanitizeId(name) || "vault";
-    const id = `${slug}-${Date.now().toString(36).slice(-4)}`;
-
-    const db = await getDB();
-    await createVaultDir(this.#opfsRoot, id);
-
-    const record: VaultRecord = {
-      id,
-      name,
-      createdAt: Date.now(),
-      lastOpenedAt: Date.now(),
-      entityCount: 0,
-    };
-    await db.put("vaults", record);
-
+    const record = await registry.createVault(this.#opfsRoot, name);
     await this.listVaults();
-    return id;
+    return record.id;
   }
 
   async renameVault(id: string, newName: string): Promise<void> {
-    const db = await getDB();
-    const vault = await db.get("vaults", id);
-    if (vault) {
-      vault.name = newName;
-      await db.put("vaults", vault);
-      if (this.activeVaultId === id) {
-        this.vaultName = newName;
-      }
-      await this.listVaults();
+    const record = await registry.renameVault(id, newName);
+    if (record && this.activeVaultId === id) {
+      this.vaultName = newName;
     }
+    await this.listVaults();
   }
 
   async deleteVault(id: string): Promise<void> {
@@ -109,30 +88,21 @@ class VaultRegistryStore {
       throw new Error("Cannot delete active vault");
     if (!this.#opfsRoot) return;
 
-    try {
-      await deleteVaultDir(this.#opfsRoot, id);
-      const db = await getDB();
-      await db.delete("vaults", id);
-      await this.listVaults();
-    } catch (e) {
-      console.warn("[VaultRegistry] Failed to delete vault dir", e);
-      throw new Error("Filesystem lock prevented deletion. Please try again.");
-    }
+    await registry.deleteVault(this.#opfsRoot, id);
+    await this.listVaults();
   }
 
   async setActiveVault(id: string): Promise<void> {
-    const db = await getDB();
-    const vaultRecord = await db.get("vaults", id);
+    const vaultRecord = await registry.getVault(id);
     if (!vaultRecord) throw new Error(`Vault ${id} not found`);
 
     this.activeVaultId = id;
     this.vaultName = vaultRecord.name;
 
+    const db = await getDB();
     await db.put("settings", id, "activeVaultId");
 
-    vaultRecord.lastOpenedAt = Date.now();
-    await db.put("vaults", vaultRecord);
-
+    await registry.updateLastOpened(id);
     await this.listVaults();
   }
 }

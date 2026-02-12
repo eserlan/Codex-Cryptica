@@ -1,0 +1,39 @@
+npm warn config ignoring workspace config at /home/espen/proj/Codex-Arcana/apps/web/.npmrc
+
+Running 1 test using 1 worker
+
+[BROWSER]: [vite] connecting...
+[BROWSER]: [vite] connected.
+[BROWSER]: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+[BROWSER]: The next HMR update will cause the page to reload
+[BROWSER]: TypeError: Failed to fetch dynamically imported module: http://localhost:5173/.svelte-kit/generated/client/nodes/0.js?t=1770920795881
+  ✘  1 [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault (11.0s)
+
+
+  1) [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('graph-canvas')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for getByTestId('graph-canvas')[22m
+
+
+      10 |         });
+      11 |         await page.goto('/');
+    > 12 |         await expect(page.getByTestId('graph-canvas')).toBeVisible({ timeout: 10000 });
+         |                                                        ^
+      13 |     });
+      14 |
+      15 |     test('should create and switch a vault', async ({ page }) => {
+        at /home/espen/proj/Codex-Arcana/apps/web/tests/debug-vault.spec.ts:12:56
+
+    Error Context: test-results/debug-vault-Vault-Manageme-4dc78-d-create-and-switch-a-vault-chromium/error-context.md
+
+  1 failed
+    [chromium] › tests/debug-vault.spec.ts:15:5 › Vault Management Debug › should create and switch a vault 

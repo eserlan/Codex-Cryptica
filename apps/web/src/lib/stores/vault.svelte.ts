@@ -147,6 +147,17 @@ class VaultStore {
         search: searchService,
         ai: aiService,
       };
+    } else {
+      // Non-browser / SSR environment without injected services:
+      // search indexing and AI features will be disabled.
+      this.services = null;
+      console.warn(
+        "[VaultStore] Services are not available (likely SSR/non-browser environment). " +
+          "Search indexing and AI features are disabled.",
+      );
+      debugStore.log(
+        "Vault services unavailable: running without search indexing or AI features (SSR/non-browser).",
+      );
     }
 
     try {
@@ -232,13 +243,15 @@ class VaultStore {
         await db.put("vaults", record);
         await vaultRegistry.listVaults();
       }
+      this.status = "idle";
       return true;
     } else {
-      if (result.error !== "User cancelled") {
+      if (result.error === "User cancelled") {
+        this.status = "idle";
+      } else {
         this.status = "error";
         this.errorMessage = result.error || "Import failed";
       }
-      this.status = "idle";
       return false;
     }
   }
@@ -249,13 +262,39 @@ class VaultStore {
 
     this.status = "loading";
     try {
-      if (this.services) this.services.ai.clearStyleCache();
+      if (this.services) {
+        this.services.ai.clearStyleCache();
+        await this.services.search.clear();
+      }
 
       const { entities } = await vaultIO.loadVaultFiles(
         this.activeVaultId,
         vaultDir,
       );
       this.entities = entities;
+
+      // Repopulate search index
+      if (this.services) {
+        const indexPromises = Object.values(entities).map((entity) => {
+          const path = entity._path?.join("/") || `${entity.id}.md`;
+          const keywords = [
+            ...(entity.tags || []),
+            entity.lore || "",
+            ...Object.values(entity.metadata || {}).flat(),
+          ].join(" ");
+          return this.services!.search.index({
+            id: entity.id,
+            title: entity.title,
+            content: entity.content,
+            type: entity.type,
+            path,
+            keywords,
+            updatedAt: Date.now(),
+          });
+        });
+        await Promise.all(indexPromises);
+      }
+
       this.status = "idle";
     } catch (err) {
       console.error("[VaultStore] loadFiles failed", err);
@@ -318,8 +357,8 @@ class VaultStore {
   }
 
   async createEntity(
-    type: Entity["type"] = "note",
-    title = "New Entity",
+    type: Entity["type"],
+    title: string,
     initialData: Partial<Entity> = {},
   ): Promise<string> {
     const newEntity = vaultEntities.createEntity(
@@ -525,6 +564,13 @@ class VaultStore {
 }
 
 const VAULT_KEY = "__codex_vault_instance__";
-export const vault: VaultStore =
-  (globalThis as any)[VAULT_KEY] ??
-  ((globalThis as any)[VAULT_KEY] = new VaultStore());
+
+function getVaultSingleton(): VaultStore {
+  const globalObj = globalThis as any;
+  if (!globalObj[VAULT_KEY]) {
+    globalObj[VAULT_KEY] = new VaultStore();
+  }
+  return globalObj[VAULT_KEY] as VaultStore;
+}
+
+export const vault: VaultStore = getVaultSingleton();
