@@ -8,7 +8,7 @@ This plan outlines the steps to implement the Patreon support link in the applic
 
 - Define the Patreon URL in a configuration file or constant.
 - Location: `apps/web/src/lib/constants.ts` (or similar) or directly in the component if no central config exists.
-  - *Note*: Checking for existing constants file first.
+  - _Note_: Checking for existing constants file first.
 
 ### 2. UI Implementation
 
@@ -30,6 +30,7 @@ This plan outlines the steps to implement the Patreon support link in the applic
 ## Verification Plan
 
 ### Manual Verification
+
 - Start the dev server (`npm run dev`).
 - Scroll to the footer.
 - Visual check: Does it look like "Privacy Policy"?

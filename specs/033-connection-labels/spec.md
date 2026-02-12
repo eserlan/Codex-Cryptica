@@ -55,18 +55,18 @@ As a World Builder, I want to add custom text labels to connections (e.g., "Fath
 - **FR-002**: Supported categories MUST include: "Friendly", "Enemy", "Neutral" (Default).
 - **FR-003**: System MUST allow users to input a custom text label for the connection (optional).
 - **FR-004**: Graph Engine MUST render edge colors based on the Relationship Category:
-    - Friendly: Green (e.g., `#22c55e`)
-    - Enemy: Red (e.g., `#ef4444`)
-    - Neutral: Default Grey
+  - Friendly: Green (e.g., `#22c55e`)
+  - Enemy: Red (e.g., `#ef4444`)
+  - Neutral: Default Grey
 - **FR-005**: Graph Engine MUST render the custom text label on the edge if present.
 - **FR-006**: Connection data MUST be persisted in the YAML frontmatter of the source entity using a schema that supports these new fields.
 
 ### Key Entities
 
 - **Connection**:
-    - `target`: Entity ID (existing)
-    - `type`: Relationship Category (enum: friendly, enemy, neutral) [New]
-    - `label`: Custom text (string) [New]
+  - `target`: Entity ID (existing)
+  - `type`: Relationship Category (enum: friendly, enemy, neutral) [New]
+  - `label`: Custom text (string) [New]
 
 ## Success Criteria
 

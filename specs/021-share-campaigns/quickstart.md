@@ -4,7 +4,7 @@
 
 - A Google Cloud Project with the Drive API enabled.
 - An **API Key** created in the Google Cloud Console.
-  - *Recommended*: Restrict this key to the HTTP Referrer of your development (localhost) or production URL.
+  - _Recommended_: Restrict this key to the HTTP Referrer of your development (localhost) or production URL.
 - Set `VITE_GOOGLE_API_KEY` in your `.env` file.
 
 ## Testing the Share Flow (Owner)

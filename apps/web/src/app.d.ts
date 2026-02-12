@@ -13,6 +13,7 @@ declare global {
   }
   // eslint-disable-next-line no-var
   var gapi: typeof import("gapi");
+  const __APP_VERSION__: string;
 }
 
 interface ImportMetaEnv {

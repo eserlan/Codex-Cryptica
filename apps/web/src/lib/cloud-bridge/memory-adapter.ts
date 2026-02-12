@@ -15,7 +15,7 @@ export class MemoryAdapter implements IStorageAdapter {
   async saveGraph(graph: SerializedGraph): Promise<void> {
     // In Guest Mode, we might want to prevent saving, or allow ephemeral saving.
     // The interface says "Throws error in Read-Only mode".
-    // But MemoryAdapter implies ephemeral state. 
+    // But MemoryAdapter implies ephemeral state.
     // If we use this for Guest Mode *viewing*, saving should be blocked at the Store level or here.
     // Let's assume MemoryAdapter allows writing to memory, but the Store enforces ReadOnly.
     // OR, we can make MemoryAdapter strictly ReadOnly if populated from a load.
@@ -47,7 +47,7 @@ export class MemoryAdapter implements IStorageAdapter {
 
     const findAsset = () => {
       if (!this.graph?.assets) return null;
-      const normalized = path.replace(/^\.\//, '');
+      const normalized = path.replace(/^\.\//, "");
       return this.graph.assets[normalized] || this.graph.assets[path];
     };
 
@@ -60,12 +60,12 @@ export class MemoryAdapter implements IStorageAdapter {
     }
 
     if (assetEntry) {
-      if (assetEntry.startsWith('http')) return assetEntry;
+      if (assetEntry.startsWith("http")) return assetEntry;
 
-      const [id, thumbnailLink] = assetEntry.split('|');
+      const [id, thumbnailLink] = assetEntry.split("|");
 
       if (thumbnailLink) {
-        return thumbnailLink.replace(/=s\d+$/, '=s1000');
+        return thumbnailLink.replace(/=s\d+$/, "=s1000");
       }
 
       return `https://drive.google.com/uc?export=view&id=${id}`;

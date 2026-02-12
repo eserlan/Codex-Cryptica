@@ -26,7 +26,7 @@
     {/if}
 
     <!-- Fallback empty state prompt only if no vault open AND not in guest mode -->
-    {#if !vault.isInitialized && !vault.rootHandle && !isGuestMode}
+    {#if !vault.isInitialized && !isGuestMode}
         <div
             class="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
         >

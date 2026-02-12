@@ -22,13 +22,21 @@ describe("CategoryStore", () => {
   });
 
   it("should add a new category", () => {
-    const newCat = { id: "test", label: "Test", color: "#ffffff", icon: "lucide:star" };
+    const newCat = {
+      id: "test",
+      label: "Test",
+      color: "#ffffff",
+      icon: "lucide:star",
+    };
     categories.addCategory(newCat);
     expect(categories.list).toContainEqual(newCat);
   });
 
   it("should update an existing category", () => {
-    categories.updateCategory("character", { label: "Modified Character", color: "#000000" });
+    categories.updateCategory("character", {
+      label: "Modified Character",
+      color: "#000000",
+    });
     const updated = categories.getCategory("character");
     expect(updated?.label).toBe("Modified Character");
     expect(updated?.color).toBe("#000000");

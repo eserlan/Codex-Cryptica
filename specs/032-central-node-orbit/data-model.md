@@ -23,16 +23,16 @@ interface OrbitState {
 
 The graph engine will temporarily calculate and assign these internal properties during the layout phase. They are not saved to the node data object permanently.
 
-| Attribute | Type | Description |
-| :--- | :--- | :--- |
-| `_orbitLevel` | `number` | The BFS distance from the central node. 0 = Center. |
+| Attribute     | Type     | Description                                             |
+| :------------ | :------- | :------------------------------------------------------ |
+| `_orbitLevel` | `number` | The BFS distance from the central node. 0 = Center.     |
 | `_orbitIndex` | `number` | Calculated value for the `concentric` layout algorithm. |
 
 ## Persistence
 
--   **None**.
--   When the user reloads the app, the graph returns to the default layout.
--   When the user clicks "Exit Orbit View", the graph returns to the default layout (or previous positions).
+- **None**.
+- When the user reloads the app, the graph returns to the default layout.
+- When the user clicks "Exit Orbit View", the graph returns to the default layout (or previous positions).
 
 ## Configuration (Optional/Future)
 

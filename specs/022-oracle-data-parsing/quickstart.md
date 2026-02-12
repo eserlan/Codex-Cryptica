@@ -5,9 +5,10 @@
 The parser is located in `@codex/editor-core`.
 
 ```typescript
-import { parseOracleResponse } from '@codex/editor-core';
+import { parseOracleResponse } from "@codex/editor-core";
 
-const rawOutput = "## Chronicle\nA brave hero.\n\n## Lore\nBorn in the mountains...";
+const rawOutput =
+  "## Chronicle\nA brave hero.\n\n## Lore\nBorn in the mountains...";
 const { chronicle, lore, wasSplit } = parseOracleResponse(rawOutput);
 
 if (wasSplit) {
@@ -28,6 +29,8 @@ The `ChatMessage.svelte` component uses the `OracleParseResult` to decide whethe
      APPLY ALL TO NODE
   </button>
 {/if}
+```
+
 ```
 
 ```

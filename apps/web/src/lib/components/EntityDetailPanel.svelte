@@ -3,7 +3,6 @@
     import { fade } from "svelte/transition";
     import { vault } from "$lib/stores/vault.svelte";
     import { oracle } from "$lib/stores/oracle.svelte";
-    import { uiStore } from "$lib/stores/ui.svelte";
     import { ui } from "$lib/stores/ui.svelte";
     import { isEntityVisible } from "schema";
     import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
@@ -38,13 +37,13 @@
     let editEndDate = $state<Entity["end_date"]>();
     let resolvedImageUrl = $state("");
     let editingConnectionTarget = $state<string | null>(null);
+    let activeTab = $state<"status" | "lore" | "inventory">("status");
 
     let isObscured = $derived.by(() => {
         if (!entity || !ui.sharedMode) return false;
         return !isEntityVisible(entity, {
             sharedMode: ui.sharedMode,
-            defaultVisibility: vault.defaultVisibility,
-        });
+        } as any);
     });
 
     const startEditing = () => {
@@ -226,7 +225,7 @@
 
     $effect(() => {
         if (entity?.image) {
-            vault.resolveImagePath(entity.image).then((url) => {
+            vault.resolveImageUrl(entity.image).then((url) => {
                 resolvedImageUrl = url;
             });
         } else {
@@ -235,12 +234,8 @@
     });
 
     $effect(() => {
-        if (
-            entity &&
-            vault.activeDetailTab === "lore" &&
-            entity.lore === undefined
-        ) {
-            vault.fetchLore(entity.id);
+        if (entity && activeTab === "lore" && entity.lore === undefined) {
+            // TODO: Load lore if needed
         }
     });
 
@@ -284,19 +279,28 @@
         onwheel={(e) => e.stopPropagation()}
     >
         {#if isObscured}
-            <div 
+            <div
                 class="absolute inset-0 z-[60] bg-theme-surface/90 backdrop-blur-md flex flex-col items-center justify-center p-8 text-center"
                 transition:fade
             >
-                <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse">
-                    <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
+                <div
+                    class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 animate-pulse"
+                >
+                    <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"
+                    ></span>
                 </div>
-                <h3 class="text-xl font-bold text-theme-text uppercase tracking-widest mb-2">Protocol Redacted</h3>
+                <h3
+                    class="text-xl font-bold text-theme-text uppercase tracking-widest mb-2"
+                >
+                    Protocol Redacted
+                </h3>
                 <p class="text-xs text-theme-muted leading-relaxed max-w-xs">
-                    This archive entry is currently obscured by Fog of War. 
-                    Switch to Admin Mode or remove the <code class="text-amber-500">hidden</code> tag to decrypt.
+                    This archive entry is currently obscured by Fog of War.
+                    Switch to Admin Mode or remove the <code
+                        class="text-amber-500">hidden</code
+                    > tag to decrypt.
                 </p>
-                <button 
+                <button
                     onclick={onClose}
                     class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase"
                 >
@@ -328,7 +332,7 @@
                 <div class="flex items-center gap-1">
                     {#if !isEditing}
                         <button
-                            onclick={() => uiStore.openZenMode(entity.id)}
+                            onclick={() => ui.openZenMode(entity.id)}
                             class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
                             aria-label="Enter Zen Mode"
                             title="Zen Mode (Full Screen)"
@@ -393,7 +397,8 @@
                     <div
                         class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted hover:border-theme-primary transition"
                     >
-                        <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
+                        <span
+                            class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
                         ></span>
                         <span class="text-[9px] font-bold uppercase opacity-40"
                             >No Image</span
@@ -449,11 +454,7 @@
             <div class="mb-6 space-y-2">
                 <div class="flex flex-wrap gap-1.5 min-h-[24px]">
                     {#each entity.labels || [] as label}
-                        <LabelBadge
-                            {label}
-                            removable={!vault.isGuest}
-                            onRemove={() => vault.removeLabel(entity.id, label)}
-                        />
+                        <LabelBadge {label} removable={!vault.isGuest} />
                     {/each}
                     {#if !entity.labels?.length && vault.isGuest}
                         <span
@@ -473,33 +474,33 @@
                 class="flex gap-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
             >
                 <button
-                    class={vault.activeDetailTab === "status"
+                    class={activeTab === "status"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
-                    onclick={() => (vault.activeDetailTab = "status")}
-                    >STATUS</button
+                    onclick={() => (activeTab = "status")}>STATUS</button
                 >
                 <button
-                    class={vault.activeDetailTab === "lore"
+                    class={activeTab === "lore"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
                     onclick={() => {
-                        vault.activeDetailTab = "lore";
+                        activeTab = "lore";
                     }}>LORE & NOTES</button
                 >
                 <button
-                    class={vault.activeDetailTab === "inventory"
+                    class={activeTab === "inventory"
                         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
                         : "hover:text-theme-text transition"}
-                    onclick={() => (vault.activeDetailTab = "inventory")}
-                    >INVENTORY</button
+                    onclick={() => (activeTab = "inventory")}>INVENTORY</button
                 >
             </div>
         </div>
 
         <!-- Content -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-theme-bg">
-            {#if vault.activeDetailTab === "status"}
+        <div
+            class="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar bg-theme-bg"
+        >
+            {#if activeTab === "status"}
                 <div class="space-y-6 md:space-y-8">
                     <!-- Temporal Metadata -->
                     {#if isEditing}
@@ -607,78 +608,90 @@
                                         <ConnectionEditor
                                             sourceId={entity.id}
                                             connection={conn}
-                                            onSave={() => (editingConnectionTarget = null)}
-                                            onCancel={() => (editingConnectionTarget = null)}
+                                            onSave={() =>
+                                                (editingConnectionTarget =
+                                                    null)}
+                                            onCancel={() =>
+                                                (editingConnectionTarget =
+                                                    null)}
                                         />
                                     </li>
                                 {:else}
-                                <li
-                                    class="flex gap-3 text-sm text-theme-muted items-start group"
-                                >
-                                    <span
-                                        class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
-                                            ? 'text-theme-primary icon-[lucide--arrow-up-right]'
-                                            : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
-                                    ></span>
-                                    <div class="flex-1 min-w-0 flex justify-between items-start gap-2">
-                                        <button
-                                            onclick={() =>
-                                                (vault.selectedEntityId =
-                                                    conn.targetId)}
-                                            class="text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
+                                    <li
+                                        class="flex gap-3 text-sm text-theme-muted items-start group"
+                                    >
+                                        <span
+                                            class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
+                                                ? 'text-theme-primary icon-[lucide--arrow-up-right]'
+                                                : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
+                                        ></span>
+                                        <div
+                                            class="flex-1 min-w-0 flex justify-between items-start gap-2"
                                         >
-                                            {#if conn.isOutbound}
-                                                <span
-                                                    class="text-theme-secondary"
-                                                    >{entity.title}</span
-                                                >
-                                                <span
-                                                    class="relation-arrow icon-[lucide--move-right]"
-                                                ></span>
-                                                <strong
-                                                    class="text-theme-text group-hover:text-theme-primary transition"
-                                                    >{conn.label ||
-                                                        conn.type}</strong
-                                                >
-                                                <span
-                                                    class="relation-arrow icon-[lucide--move-right]"
-                                                ></span>
-                                                <span class="text-theme-text"
-                                                    >{conn.displayTitle}</span
-                                                >
-                                            {:else}
-                                                <span class="text-theme-text"
-                                                    >{conn.displayTitle}</span
-                                                >
-                                                <span
-                                                    class="relation-arrow icon-[lucide--move-right]"
-                                                ></span>
-                                                <strong
-                                                    class="text-theme-text group-hover:text-theme-primary transition"
-                                                    >{conn.label ||
-                                                        conn.type}</strong
-                                                >
-                                                <span
-                                                    class="relation-arrow icon-[lucide--move-right]"
-                                                ></span>
-                                                <span
-                                                    class="text-theme-secondary"
-                                                    >{entity.title}</span
-                                                >
-                                            {/if}
-                                        </button>
-                                        
-                                        {#if conn.isOutbound && !vault.isGuest}
-                                            <button 
-                                                class="text-theme-muted hover:text-theme-primary transition p-1"
-                                                onclick={() => editingConnectionTarget = conn.targetId}
-                                                aria-label="Edit connection"
+                                            <button
+                                                onclick={() =>
+                                                    (vault.selectedEntityId =
+                                                        conn.targetId)}
+                                                class="text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
                                             >
-                                                <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                                                {#if conn.isOutbound}
+                                                    <span
+                                                        class="text-theme-secondary"
+                                                        >{entity.title}</span
+                                                    >
+                                                    <span
+                                                        class="relation-arrow icon-[lucide--move-right]"
+                                                    ></span>
+                                                    <strong
+                                                        class="text-theme-text group-hover:text-theme-primary transition"
+                                                        >{conn.label ||
+                                                            conn.type}</strong
+                                                    >
+                                                    <span
+                                                        class="relation-arrow icon-[lucide--move-right]"
+                                                    ></span>
+                                                    <span
+                                                        class="text-theme-text"
+                                                        >{conn.displayTitle}</span
+                                                    >
+                                                {:else}
+                                                    <span
+                                                        class="text-theme-text"
+                                                        >{conn.displayTitle}</span
+                                                    >
+                                                    <span
+                                                        class="relation-arrow icon-[lucide--move-right]"
+                                                    ></span>
+                                                    <strong
+                                                        class="text-theme-text group-hover:text-theme-primary transition"
+                                                        >{conn.label ||
+                                                            conn.type}</strong
+                                                    >
+                                                    <span
+                                                        class="relation-arrow icon-[lucide--move-right]"
+                                                    ></span>
+                                                    <span
+                                                        class="text-theme-secondary"
+                                                        >{entity.title}</span
+                                                    >
+                                                {/if}
                                             </button>
-                                        {/if}
-                                    </div>
-                                </li>
+
+                                            {#if conn.isOutbound && !vault.isGuest}
+                                                <button
+                                                    class="text-theme-muted hover:text-theme-primary transition p-1"
+                                                    onclick={() =>
+                                                        (editingConnectionTarget =
+                                                            conn.targetId)}
+                                                    aria-label="Edit connection"
+                                                >
+                                                    <span
+                                                        class="icon-[lucide--pencil] w-3 h-3"
+                                                    ></span>
+                                                </button>
+                                            {/if}
+                                        </div>
+                                    </li>
                                 {/if}
                             {/each}
                             {#if allConnections.length === 0}
@@ -689,7 +702,7 @@
                         </ul>
                     </div>
                 </div>
-            {:else if vault.activeDetailTab === "lore"}
+            {:else if activeTab === "lore"}
                 <div class="space-y-4">
                     <div>
                         <div
@@ -720,7 +733,7 @@
                         {/if}
                     </div>
                 </div>
-            {:else if vault.activeDetailTab === "inventory"}
+            {:else if activeTab === "inventory"}
                 <div class="text-theme-muted italic text-sm">
                     Inventory coming soon...
                 </div>

@@ -12,7 +12,7 @@ describe("GraphTransformer", () => {
         type: "npc",
         connections: [],
         content: "Content 1",
-        date: { year: 1240, month: 5, day: 12 }
+        date: { year: 1240, month: 5, day: 12 },
       },
       {
         id: "e2",
@@ -20,12 +20,12 @@ describe("GraphTransformer", () => {
         type: "location",
         connections: [],
         content: "Content 2",
-        start_date: { year: 1000, label: "Age of Myth" }
-      }
+        start_date: { year: 1000, label: "Age of Myth" },
+      },
     ];
 
     const elements = GraphTransformer.entitiesToElements(mockEntities);
-    const nodes = elements.filter(el => el.group === "nodes");
+    const nodes = elements.filter((el) => el.group === "nodes");
 
     expect(nodes[0].data.dateLabel).toBe("1240-05-12");
     expect(nodes[1].data.dateLabel).toBe("Age of Myth");
@@ -39,12 +39,12 @@ describe("GraphTransformer", () => {
         type: "npc",
         connections: [],
         content: "...",
-        date: { year: 1 }
-      }
+        date: { year: 1 },
+      },
     ];
 
     const elements = GraphTransformer.entitiesToElements(mockEntities);
-    const nodes = elements.filter(el => el.group === "nodes");
+    const nodes = elements.filter((el) => el.group === "nodes");
 
     expect(nodes[0].data.dateLabel).toBe("1");
   });
@@ -56,42 +56,46 @@ describe("GraphTransformer", () => {
         title: "Entity 1",
         type: "npc",
         connections: [],
-        content: "Content 1"
-      }
+        content: "Content 1",
+      },
     ];
 
     const elements = GraphTransformer.entitiesToElements(mockEntities);
-    const nodes = elements.filter(el => el.group === "nodes");
+    const nodes = elements.filter((el) => el.group === "nodes");
 
     expect(nodes[0].data.dateLabel).toBe("");
   });
 
   it("should generate style sheet with connection type colors", () => {
     const mockTemplate: StylingTemplate = {
-        tokens: {
-            background: "#000",
-            primary: "#f00",
-            surface: "#111",
-            text: "#fff",
-            fontBody: "Arial",
-            fontHeading: "Arial",
-        },
-        graph: {
-            nodeBorderWidth: 1,
-            nodeShape: "ellipse",
-            edgeColor: "#555",
-            edgeStyle: "solid",
-        },
-        themeId: "dark"
+      tokens: {
+        background: "#000",
+        primary: "#f00",
+        surface: "#111",
+        text: "#fff",
+        fontBody: "Arial",
+        fontHeading: "Arial",
+      },
+      graph: {
+        nodeBorderWidth: 1,
+        nodeShape: "ellipse",
+        edgeColor: "#555",
+        edgeStyle: "solid",
+      },
+      themeId: "dark",
     };
 
     const styles = getGraphStyle(mockTemplate, []);
-    
-    const friendlyStyle = styles.find((s: any) => s.selector === 'edge[connectionType="friendly"]');
+
+    const friendlyStyle = styles.find(
+      (s: any) => s.selector === 'edge[connectionType="friendly"]',
+    );
     expect(friendlyStyle).toBeDefined();
     expect(friendlyStyle.style["line-color"]).toBe(CONNECTION_COLORS.friendly);
 
-    const enemyStyle = styles.find((s: any) => s.selector === 'edge[connectionType="enemy"]');
+    const enemyStyle = styles.find(
+      (s: any) => s.selector === 'edge[connectionType="enemy"]',
+    );
     expect(enemyStyle).toBeDefined();
     expect(enemyStyle.style["line-color"]).toBe(CONNECTION_COLORS.enemy);
   });

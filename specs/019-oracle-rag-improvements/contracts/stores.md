@@ -14,12 +14,12 @@ interface AIService {
    * Retrieves full context including fusion and enrichment.
    */
   retrieveContext(
-    query: string, 
-    excludeTitles: Set<string>, 
+    query: string,
+    excludeTitles: Set<string>,
     lastEntityId?: string,
-    isImage?: boolean
-  ): Promise<{ 
-    content: string; 
+    isImage?: boolean,
+  ): Promise<{
+    content: string;
     primaryEntityId?: string;
     sourceIds: string[]; // FR-001
   }>;
@@ -31,8 +31,8 @@ interface AIService {
 ```typescript
 class OracleStore {
   // Now includes sources for internal logging
-  messages: ChatMessage[]; 
-  
+  messages: ChatMessage[];
+
   // Persists to IndexedDB
   async ask(query: string): Promise<void>;
 }

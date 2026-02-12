@@ -8,12 +8,15 @@ export type VisibilitySettings = {
 /**
  * Core visibility check logic for Fog of War.
  * Precedence Rule: 'hidden' tag > 'revealed' tag > defaultVisibility.
- * 
+ *
  * @param entity The entity to check
  * @param settings The current visibility settings
  * @returns true if the entity should be visible, false otherwise
  */
-export function isEntityVisible(entity: Entity, settings: VisibilitySettings): boolean {
+export function isEntityVisible(
+  entity: Entity,
+  settings: VisibilitySettings,
+): boolean {
   // Shared Mode must be active for Fog of War logic to apply.
   if (!settings.sharedMode) {
     return true;

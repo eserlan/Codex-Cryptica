@@ -3,11 +3,15 @@ import { parseMarkdown, sanitizeId } from "../../utils/markdown";
 
 export class PublicGDriveAdapter implements ICloudShareProvider {
   async shareFilePublicly(_fileId: string): Promise<string> {
-    throw new Error("PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for sharing.");
+    throw new Error(
+      "PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for sharing.",
+    );
   }
 
   async revokeShare(_fileId: string): Promise<void> {
-    throw new Error("PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for revoking.");
+    throw new Error(
+      "PublicGDriveAdapter is strictly for fetching. Use authenticated adapter for revoking.",
+    );
   }
 
   private async ensureGapiInited(apiKey: string): Promise<boolean> {
@@ -21,7 +25,9 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
       if (!(gapi.client as any).drive) {
         await gapi.client.init({
           apiKey: apiKey,
-          discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+          discoveryDocs: [
+            "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
+          ],
         });
       } else if (apiKey) {
         // If already inited but we have a new key, we can't easily re-init,
@@ -40,10 +46,14 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
     await this.ensureGapiInited(apiKey);
 
     while (Date.now() - start < timeout) {
-      if (typeof gapi !== "undefined" && gapi.client && (gapi.client as any).drive) {
+      if (
+        typeof gapi !== "undefined" &&
+        gapi.client &&
+        (gapi.client as any).drive
+      ) {
         return true;
       }
-      await new Promise(r => setTimeout(r, 200));
+      await new Promise((r) => setTimeout(r, 200));
     }
     return false;
   }
@@ -53,7 +63,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
   private async withLock<T>(task: () => Promise<T>): Promise<T> {
     const previous = this.requestMutex;
     let resolve: () => void;
-    this.requestMutex = new Promise(r => resolve = r);
+    this.requestMutex = new Promise((r) => (resolve = r));
     await previous;
     try {
       return await task();
@@ -78,25 +88,30 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
           const response = await (gapi.client as any).request({
             path: `https://www.googleapis.com/drive/v3/files/${fileId}`,
             params: {
-              alt: 'media',
+              alt: "media",
               key: apiKey,
-              acknowledgeAbuse: true
-            }
+              acknowledgeAbuse: true,
+            },
           });
 
           if (response.body) {
-            return new Blob([response.body], { type: 'text/plain' });
+            return new Blob([response.body], { type: "text/plain" });
           }
           if (response.result) {
-            const content = typeof response.result === 'string' ? response.result : JSON.stringify(response.result);
-            return new Blob([content], { type: 'text/plain' });
+            const content =
+              typeof response.result === "string"
+                ? response.result
+                : JSON.stringify(response.result);
+            return new Blob([content], { type: "text/plain" });
           }
         } catch (err: any) {
-          console.warn(`[PublicGDriveAdapter] GAPI Content access failed for ${fileId}. Status: ${err.status}`);
+          console.warn(
+            `[PublicGDriveAdapter] GAPI Content access failed for ${fileId}. Status: ${err.status}`,
+          );
           // If it's a 404, we can stop immediately
           if (err.status === 404) throw new Error("File Not Found");
 
-          // If it's a 403, it might be bot detection or missing permissions. 
+          // If it's a 403, it might be bot detection or missing permissions.
           // We'll let it fall through to the fetch Phase 2.
         }
       }
@@ -109,15 +124,19 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
         if (response.ok) return await response.blob();
 
         if (response.status === 403) {
-          // If we get here, Google is strictly denying access. 
+          // If we get here, Google is strictly denying access.
           // This is either "Anyone with link" is not set, or your IP/API Key is flagged.
-          throw new Error("Access Denied: Is the file shared correctly? Google might also be blocking automated requests.");
+          throw new Error(
+            "Access Denied: Is the file shared correctly? Google might also be blocking automated requests.",
+          );
         }
         throw new Error(`HTTP ${response.status}`);
       } catch (err: any) {
         // Check if we already have a descriptive error from above
         if (err.message?.includes("Access Denied")) throw err;
-        throw new Error(`Fetch failed: ${err.message || 'Unknown Network Error'}`);
+        throw new Error(
+          `Fetch failed: ${err.message || "Unknown Network Error"}`,
+        );
       }
     });
   }
@@ -125,7 +144,10 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
   /**
    * Fetches all .md files from a public folder and returns a SerializedGraph.
    */
-  async fetchPublicFolder(folderId: string, apiKey: string): Promise<SerializedGraph> {
+  async fetchPublicFolder(
+    folderId: string,
+    apiKey: string,
+  ): Promise<SerializedGraph> {
     if (!apiKey) {
       throw new Error("API Key is required for guest mode.");
     }
@@ -134,18 +156,22 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
 
     // Fallback logic if GAPI fails to load
     if (!gapiReady) {
-      console.warn("[PublicGDriveAdapter] GAPI not available for folder listing, falling back to fetch.");
+      console.warn(
+        "[PublicGDriveAdapter] GAPI not available for folder listing, falling back to fetch.",
+      );
       return this.fetchPublicFolderLegacy(folderId, apiKey);
     }
 
     // 1. List files in folder using GAPI
     try {
       const encodedFolderId = folderId; // GAPI handles encoding
-      const listResponse = await this.withLock(() => gapi.client.drive.files.list({
-        q: `'${encodedFolderId}' in parents and trashed = false`,
-        fields: 'files(id, name, thumbnailLink, webContentLink, mimeType)',
-        key: apiKey
-      }));
+      const listResponse = await this.withLock(() =>
+        gapi.client.drive.files.list({
+          q: `'${encodedFolderId}' in parents and trashed = false`,
+          fields: "files(id, name, thumbnailLink, webContentLink, mimeType)",
+          key: apiKey,
+        }),
+      );
 
       const allFiles = listResponse.result.files || [];
       const assets: Record<string, string> = {};
@@ -155,8 +181,8 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
         filesList.forEach((f: any) => {
           if (f.name.endsWith(".md")) {
             mdFiles.push(f);
-          } else if (f.mimeType !== 'application/vnd.google-apps.folder') {
-            const assetValue = `${f.id}${f.thumbnailLink ? '|' + f.thumbnailLink : ''}`;
+          } else if (f.mimeType !== "application/vnd.google-apps.folder") {
+            const assetValue = `${f.id}${f.thumbnailLink ? "|" + f.thumbnailLink : ""}`;
             assets[f.name] = assetValue;
             assets[`${prefix}${f.name}`] = assetValue;
             assets[`./${prefix}${f.name}`] = assetValue;
@@ -167,23 +193,42 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
       processFiles(allFiles);
 
       // 1b. Background images folder listing
-      const imagesFolder = allFiles.find((f: any) => f.name === "images" && f.mimeType === "application/vnd.google-apps.folder");
+      const imagesFolder = allFiles.find(
+        (f: any) =>
+          f.name === "images" &&
+          f.mimeType === "application/vnd.google-apps.folder",
+      );
       let imagesListingPromise = Promise.resolve();
       if (imagesFolder) {
-        console.log("[PublicGDriveAdapter] Found images folder, queuing background listing...");
+        console.log(
+          "[PublicGDriveAdapter] Found images folder, queuing background listing...",
+        );
         // Use withLock to ensure it stays in sequence even if triggered "in background"
-        imagesListingPromise = this.withLock(() => gapi.client.drive.files.list({
-          q: `'${imagesFolder.id}' in parents and trashed = false`,
-          fields: 'files(id, name, thumbnailLink, webContentLink, mimeType)',
-          key: apiKey
-        })).then(imgData => {
-          console.log(`[PublicGDriveAdapter] Background images listing complete: ${imgData.result.files?.length || 0} assets found.`);
-          processFiles(imgData.result.files || [], "images/");
-        }).catch(err => console.error("[PublicGDriveAdapter] Background images listing failed", err));
+        imagesListingPromise = this.withLock(() =>
+          gapi.client.drive.files.list({
+            q: `'${imagesFolder.id}' in parents and trashed = false`,
+            fields: "files(id, name, thumbnailLink, webContentLink, mimeType)",
+            key: apiKey,
+          }),
+        )
+          .then((imgData) => {
+            console.log(
+              `[PublicGDriveAdapter] Background images listing complete: ${imgData.result.files?.length || 0} assets found.`,
+            );
+            processFiles(imgData.result.files || [], "images/");
+          })
+          .catch((err) =>
+            console.error(
+              "[PublicGDriveAdapter] Background images listing failed",
+              err,
+            ),
+          );
       }
 
       if (mdFiles.length === 0) {
-        throw new Error("No markdown files found in the shared campaign folder.");
+        throw new Error(
+          "No markdown files found in the shared campaign folder.",
+        );
       }
 
       const graph: SerializedGraph = {
@@ -191,7 +236,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
         entities: {},
         assets,
         deferredAssets: imagesListingPromise,
-        totalFiles: mdFiles.length
+        totalFiles: mdFiles.length,
       };
 
       // 2. Fetch each file and parse
@@ -224,10 +269,16 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
           };
         } catch (err: any) {
           // If it's a network error (Failed to fetch), retry with backoff
-          if (attempt < 3 && (err.message?.includes("Failed to fetch") || err.name === "TypeError")) {
+          if (
+            attempt < 3 &&
+            (err.message?.includes("Failed to fetch") ||
+              err.name === "TypeError")
+          ) {
             const delay = 500 * Math.pow(2, attempt - 1);
-            console.warn(`[PublicGDriveAdapter] Retrying ${file.name} in ${delay}ms... (Attempt ${attempt + 1})`);
-            await new Promise(r => setTimeout(r, delay));
+            console.warn(
+              `[PublicGDriveAdapter] Retrying ${file.name} in ${delay}ms... (Attempt ${attempt + 1})`,
+            );
+            await new Promise((r) => setTimeout(r, delay));
             return fetchEntity(file, attempt + 1);
           }
 
@@ -244,19 +295,26 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
 
         // Add a breather between batches to respect GDrive API throttling
         if (i + CONCURRENCY < mdFiles.length) {
-          await new Promise(r => setTimeout(r, 300));
+          await new Promise((r) => setTimeout(r, 300));
         }
       }
 
       if (Object.keys(graph.entities).length === 0 && errors.length > 0) {
-        throw new Error(`Failed to load any entities. Errors: ${errors.join("; ")}`);
+        throw new Error(
+          `Failed to load any entities. Errors: ${errors.join("; ")}`,
+        );
       } else if (errors.length > 0) {
-        console.warn(`Campaign loaded with partial errors: ${errors.join("; ")}`);
+        console.warn(
+          `Campaign loaded with partial errors: ${errors.join("; ")}`,
+        );
       }
 
       return graph;
     } catch (err: any) {
-      console.error("[PublicGDriveAdapter] GAPI folder fetch failed, trying legacy fallback", err);
+      console.error(
+        "[PublicGDriveAdapter] GAPI folder fetch failed, trying legacy fallback",
+        err,
+      );
       // If it's a specific "No entities found" error, just rethrow
       if (err.message?.includes("No markdown files found")) throw err;
       return this.fetchPublicFolderLegacy(folderId, apiKey);
@@ -273,7 +331,10 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
    * Fallback for environments where GAPI cannot load.
    * NOTE: This will likely fail CORS for media content but might work for metadata.
    */
-  private async fetchPublicFolderLegacy(folderId: string, apiKey: string): Promise<SerializedGraph> {
+  private async fetchPublicFolderLegacy(
+    folderId: string,
+    apiKey: string,
+  ): Promise<SerializedGraph> {
     const encodedFolderId = encodeURIComponent(folderId);
     const listUrl = `https://www.googleapis.com/drive/v3/files?q='${encodedFolderId}' in parents and trashed = false&fields=files(id, name, thumbnailLink, webContentLink, mimeType)&key=${apiKey}`;
 
@@ -291,8 +352,8 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
       filesList.forEach((f: any) => {
         if (f.name.endsWith(".md")) {
           mdFiles.push(f);
-        } else if (f.mimeType !== 'application/vnd.google-apps.folder') {
-          const assetValue = `${f.id}${f.thumbnailLink ? '|' + f.thumbnailLink : ''}`;
+        } else if (f.mimeType !== "application/vnd.google-apps.folder") {
+          const assetValue = `${f.id}${f.thumbnailLink ? "|" + f.thumbnailLink : ""}`;
           assets[f.name] = assetValue;
           assets[`${prefix}${f.name}`] = assetValue;
           assets[`./${prefix}${f.name}`] = assetValue;
@@ -306,7 +367,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
       version: 1,
       entities: {},
       assets,
-      totalFiles: mdFiles.length
+      totalFiles: mdFiles.length,
     };
 
     const CONCURRENCY = 6;

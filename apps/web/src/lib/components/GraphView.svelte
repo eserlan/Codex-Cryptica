@@ -11,7 +11,12 @@
   import type { Core, NodeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
-  import { getGraphStyle, DEFAULT_LAYOUT_OPTIONS, hasTimelineDate, type GraphNode } from "graph-engine";
+  import {
+    getGraphStyle,
+    DEFAULT_LAYOUT_OPTIONS,
+    hasTimelineDate,
+    type GraphNode,
+  } from "graph-engine";
 
   cytoscape.use(fcose);
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -118,7 +123,7 @@
     if (graph.timelineMode) {
       graph.applyTimelineLayout(cy);
     } else if (graph.orbitMode && graph.centralNodeId) {
-       setCentralNode(cy, graph.centralNodeId);
+      setCentralNode(cy, graph.centralNodeId);
       if (isInitial) {
         cy.resize();
         cy.animate({
@@ -128,9 +133,9 @@
         });
       }
     } else {
-        // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
-        // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
-        // here, because its effect is equivalent to re-running 'cose' with these options.
+      // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
+      // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
+      // here, because its effect is equivalent to re-running 'cose' with these options.
       currentLayout = cy.layout({
         ...DEFAULT_LAYOUT_OPTIONS,
       });
@@ -251,7 +256,6 @@
             sourceId = null;
             targetNode.removeClass("selected-source");
           } else {
-            vault.addConnection(sourceId, targetId);
             cy?.$(".selected-source").removeClass("selected-source");
             sourceId = null;
             connectMode = false; // Auto exit connect mode
@@ -393,9 +397,11 @@
             await Promise.all(
               chunk.map(async (el) => {
                 const data = el.data as any;
-                const resolvedUrl = await vault.resolveImagePath(
-                  (data.thumbnail || data.image)!,
-                );
+                const imagePath = data.thumbnail || data.image;
+                if (!imagePath) return;
+
+                const resolvedUrl = await vault.resolveImageUrl(imagePath);
+
                 if (resolvedUrl) {
                   let w = data.width;
                   let h = data.height;
@@ -436,9 +442,11 @@
                   if (currentCy) {
                     currentCy.batch(() => {
                       const node = currentCy.$id(data.id);
-                      node.data("resolvedImage", resolvedUrl);
-                      node.data("width", Math.round(w));
-                      node.data("height", Math.round(h));
+                      node.data({
+                        resolvedImage: resolvedUrl,
+                        width: Math.round(w),
+                        height: Math.round(h),
+                      });
                     });
                   }
                 }
@@ -460,7 +468,7 @@
       // Re-apply orbit layout if params change
       const _orbit = graph.orbitMode;
       const _center = graph.centralNodeId;
-      
+
       untrack(() => {
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
@@ -514,7 +522,7 @@
 
   $effect(() => {
     const currentCy = cy;
-    if (currentCy && graph.elements) {      
+    if (currentCy && graph.elements) {
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
@@ -636,13 +644,9 @@
     }
   });
 
-  // Save edge label
+  // Save edge label logic temporarily disabled
   const saveEdgeLabel = () => {
     if (editingEdge) {
-      vault.updateConnection(editingEdge.source, editingEdge.target, {
-        label: edgeEditInput || undefined,
-        type: edgeEditType,
-      });
       editingEdge = null;
     }
   };
@@ -915,7 +919,6 @@
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
           onclick={() => {
             if (editingEdge) {
-              vault.removeConnection(editingEdge.source, editingEdge.target);
               editingEdge = null;
             }
           }}

@@ -5,20 +5,22 @@
 The `helpStore` manages the active walkthrough state and the help article library.
 
 ### State Properties
+
 ```typescript
 interface HelpState {
-    activeTour: {
-        id: string;
-        currentStep: number;
-        steps: GuideStep[];
-    } | null;
-    searchQuery: string;
-    searchResults: HelpArticle[];
-    isSettingsHelpOpen: boolean;
+  activeTour: {
+    id: string;
+    currentStep: number;
+    steps: GuideStep[];
+  } | null;
+  searchQuery: string;
+  searchResults: HelpArticle[];
+  isSettingsHelpOpen: boolean;
 }
 ```
 
 ### Methods
+
 - **`startTour(tourId: string)`**: Loads the specified tour and opens the overlay.
 - **`nextStep()`**: Advances to the next step or finishes if at the end.
 - **`prevStep()`**: Goes back to the previous step.
@@ -27,6 +29,7 @@ interface HelpState {
 - **`init()`**: Loads completion status from LocalStorage.
 
 ## Events
+
 - **`HELP_TOUR_STARTED`**: Dispatched when a guide begins.
 - **`HELP_TOUR_COMPLETED`**: Dispatched when a user reaches the last step.
 - **`HELP_HINT_SHOWN`**: Dispatched when a contextual tooltip appears.

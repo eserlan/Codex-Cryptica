@@ -10,8 +10,8 @@ Implement a reactive synchronization pipeline using Svelte Stores to bridge loca
 ## Technical Context
 
 **Language/Version**: TypeScript 5.0+
-**Primary Dependencies**: Svelte 5 (or 4, TBD), Cytoscape.js, File System Access API. (RxDB removed in favor of native FS).
-**Storage**: Local File System (OPFS) via File System Access API
+**Primary Dependencies**: Svelte 5, Cytoscape.js, OPFS, and File System Access API (for export).
+**Storage**: OPFS (Primary), with FSA for user-directed "Sync to Local Folder".
 **Testing**: Vitest (Unit/Integration), Playwright (E2E - implied by "Headless browser" requirement in Constitution)
 **Target Platform**: Web (PWA), Local-First
 **Project Type**: Monorepo (Turbo) - `apps/web`, `packages/graph-engine`, `packages/schema`
@@ -23,7 +23,7 @@ Implement a reactive synchronization pipeline using Svelte Stores to bridge loca
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-- [x] **I. Local-First Sovereignty**: Uses OPFS/Local FS. No central DB. (Re-verified: Design uses File System Access API)
+- [x] **I. Local-First Sovereignty**: Uses OPFS for primary storage with a user-controlled FSA export, ensuring data ownership.
 - [x] **II. Relational-First Navigation**: Graph is derived from content. (Re-verified: Derived stores)
 - [x] **III. Sub-100ms Performance**: Svelte fine-grained reactivity + Web Workers. (Re-verified: Svelte 5 runes)
 - [x] **IV. Atomic Worldbuilding**: Sync engine is a distinct module ("The Pulse").

@@ -12,7 +12,7 @@ class CategoryStore {
       const db = await getDB();
       const stored = await db.get("settings", "categories");
       if (stored && Array.isArray(stored)) {
-        // Merge Logic: Keep user-customized/added categories, 
+        // Merge Logic: Keep user-customized/added categories,
         // but ensure all CURRENT defaults are also present.
         const merged = [...stored];
         DEFAULT_CATEGORIES.forEach((defaultCat) => {

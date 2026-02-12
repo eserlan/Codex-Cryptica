@@ -18,16 +18,13 @@ To improve the reliability of mobile debugging and prevent testing in production
 3.  **Debug Activation**: The `DebugConsole` (implemented in Spec 037) must be automatically enabled in the staging environment.
 
 4.  **Branch Strategy**:
+    - **Production (Root)**: Always built from the `main` branch.
 
-    *   **Production (Root)**: Always built from the `main` branch.
-
-    *   **Staging (/staging)**: Built from the currently pushed branch (`main` or `feat/*`, `fix/*`).
-
-
+    - **Staging (/staging)**: Built from the currently pushed branch (`main` or `feat/*`, `fix/*`).
 
 ## Architecture
 
-- **GitHub Actions**: The `deploy.yml` workflow checks out `main` for the production build and the *triggered branch* for the staging build.
+- **GitHub Actions**: The `deploy.yml` workflow checks out `main` for the production build and the _triggered branch_ for the staging build.
 
 - **Base Path Routing**: The `svelte.config.js` uses a `BASE_PATH` environment variable to adjust asset links and routing.
 - **Environment Gating**: A `VITE_STAGING` environment variable is used to conditionally render the `DebugConsole` component.

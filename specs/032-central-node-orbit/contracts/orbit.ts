@@ -33,6 +33,6 @@ export interface OrbitLayoutManager {
  * Events emitted by the Graph Engine related to Orbit Layout.
  */
 export type OrbitEvents = {
-  'orbit:start': { centralNodeId: string };
-  'orbit:end': void;
+  "orbit:start": { centralNodeId: string };
+  "orbit:end": void;
 };

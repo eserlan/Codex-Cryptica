@@ -3,24 +3,26 @@
 ## Entities
 
 ### ChatMessage (Updated)
+
 Represents a single turn in the Oracle conversation.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Unique UUID |
-| role | "user" \| "assistant" | Message origin |
-| content | string | Text content |
-| sources | string[] (Optional) | Array of entity IDs consulted for this response (FR-001) |
-| type | "text" \| "image" | Response format |
+| Field   | Type                  | Description                                              |
+| ------- | --------------------- | -------------------------------------------------------- |
+| id      | string                | Unique UUID                                              |
+| role    | "user" \| "assistant" | Message origin                                           |
+| content | string                | Text content                                             |
+| sources | string[] (Optional)   | Array of entity IDs consulted for this response (FR-001) |
+| type    | "text" \| "image"     | Response format                                          |
 
 ### ContextPayload (Internal)
+
 The structure sent to Gemini for inference.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| expandedQuery | string | The re-written standalone query (FR-004) |
-| primaryEntities | LocalEntity[] | Entities matching search query (Full Context Fusion) |
-| neighborEntities | ChronicleSnippet[] | Summaries of 1-hop linked entities (FR-003) |
+| Field            | Type               | Description                                          |
+| ---------------- | ------------------ | ---------------------------------------------------- |
+| expandedQuery    | string             | The re-written standalone query (FR-004)             |
+| primaryEntities  | LocalEntity[]      | Entities matching search query (Full Context Fusion) |
+| neighborEntities | ChronicleSnippet[] | Summaries of 1-hop linked entities (FR-003)          |
 
 ## State Transitions
 

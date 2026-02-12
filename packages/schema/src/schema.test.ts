@@ -35,7 +35,7 @@ describe("Entity Schema Validation", () => {
   it("should accept custom entity types (flexible categories)", () => {
     const customTypeEntity = {
       id: "artifact-1",
-      type: "artifact",  // Custom category type
+      type: "artifact", // Custom category type
       title: "Magic Sword",
     };
 
@@ -51,8 +51,8 @@ describe("Entity Schema Validation", () => {
       connections: [
         { target: "ally", type: "friendly", strength: 1 },
         { target: "rival", type: "enemy", strength: 1 },
-        { target: "stranger", type: "neutral", strength: 0.5 }
-      ]
+        { target: "stranger", type: "neutral", strength: 0.5 },
+      ],
     };
     const result = EntitySchema.safeParse(entity);
     expect(result.success).toBe(true);
@@ -63,13 +63,11 @@ describe("Entity Schema Validation", () => {
       id: "npc-4",
       type: "npc",
       title: "Label Test",
-      connections: [
-        { target: "dad", type: "related_to", label: "Father" }
-      ]
+      connections: [{ target: "dad", type: "related_to", label: "Father" }],
     };
     const result = EntitySchema.safeParse(entity);
     expect(result.success).toBe(true);
-    if(result.success) {
+    if (result.success) {
       expect(result.data.connections[0].label).toBe("Father");
     }
   });

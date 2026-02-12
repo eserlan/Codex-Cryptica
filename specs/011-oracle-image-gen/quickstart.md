@@ -10,4 +10,5 @@
 6.  **UI - Lightbox**: Ensure the existing lightbox works with local blob URLs.
 
 ## Sample Query
+
 > "/draw a portrait of Eldrin as a wise old elf with stars in his robes"

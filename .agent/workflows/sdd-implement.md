@@ -11,11 +11,11 @@ Any guidance ($ARGUMENTS).
 ## Outline
 
 1. Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` from repo root.
-    - Parse `FEATURE_DIR` and `AVAILABLE_DOCS` (including `tasks.md`).
+   - Parse `FEATURE_DIR` and `AVAILABLE_DOCS` (including `tasks.md`).
 
 2. **Check checklists status**:
-    - Check `FEATURE_DIR/checklists/*.md`.
-    - If any incomplete, warn user. If stuck, ask user to proceed.
+   - Check `FEATURE_DIR/checklists/*.md`.
+   - If any incomplete, warn user. If stuck, ask user to proceed.
 
 3. Load and analyze the implementation context:
    - **REQUIRED**: Read `tasks.md`.

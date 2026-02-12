@@ -11,7 +11,7 @@ interface CampaignMetadata {
   id: string;
   name: string;
   // ... existing fields
-  
+
   /**
    * Google Drive File ID for the sync file.
    * Required for generating the share link.
@@ -23,7 +23,7 @@ interface CampaignMetadata {
    * - 'private': Only accessible by owner.
    * - 'public': Accessible via link (read-only).
    */
-  shareStatus: 'private' | 'public';
+  shareStatus: "private" | "public";
 
   /**
    * The generated public link (cached).

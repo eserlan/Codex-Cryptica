@@ -1,12 +1,15 @@
 # AI Contract: Image Generation (Nano Banana / Gemini 2.5 Flash Image)
 
 ## Request
+
 **Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`
 **Headers**:
+
 - `Authorization: Bearer [USER_API_KEY]`
 - `Content-Type: application/json`
 
 **Body**:
+
 ```json
 {
   "instances": [
@@ -23,8 +26,10 @@
 ```
 
 ## Response (Success)
+
 **Status**: 200 OK
 **Body**:
+
 ```json
 {
   "predictions": [
@@ -37,8 +42,10 @@
 ```
 
 ## Response (Error)
+
 **Status**: 4xx/5xx
 **Body**:
+
 ```json
 {
   "error": {

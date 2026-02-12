@@ -66,13 +66,17 @@ class OracleStore {
     }
   }
 
-  pushUndoAction(description: string, revert: () => Promise<void>, messageId?: string) {
+  pushUndoAction(
+    description: string,
+    revert: () => Promise<void>,
+    messageId?: string,
+  ) {
     this.undoStack.push({
       id: crypto.randomUUID(),
       messageId,
       description,
       revert,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     // Limit stack size to prevent memory leaks, keep last 50 actions
     if (this.undoStack.length > 50) {
@@ -82,7 +86,7 @@ class OracleStore {
 
   async undo() {
     if (this.undoStack.length === 0 || this.isUndoing) return;
-    
+
     this.isUndoing = true;
     this.broadcast();
 
@@ -91,42 +95,42 @@ class OracleStore {
     if (action) {
       try {
         await action.revert();
-        
+
         // Remove from stack ONLY after successful revert
         this.undoStack.pop();
 
         // Broadcast local event for UI components (like ChatMessage)
         this.channel?.postMessage({
           type: "UNDO_PERFORMED",
-          data: { actionId: action.id, messageId: action.messageId }
+          data: { actionId: action.id, messageId: action.messageId },
         });
-        
+
         // Show success system message
         this.messages = [
           ...this.messages,
           {
             id: crypto.randomUUID(),
             role: "system",
-            content: `↩️ Undid action: **${action.description}**`
-          }
+            content: `↩️ Undid action: **${action.description}**`,
+          },
         ];
         this.lastUpdated = Date.now();
         this.broadcast();
         this.saveToDB();
       } catch (err: any) {
         console.error("Undo failed:", err);
-        // We leave it on the stack? Copilot suggested pushing it back, 
+        // We leave it on the stack? Copilot suggested pushing it back,
         // but since we peeked, we just don't pop it.
-        // Actually, if it failed, it might be stuck. 
+        // Actually, if it failed, it might be stuck.
         // But letting the user retry is better than losing it.
-        
+
         this.messages = [
           ...this.messages,
           {
             id: crypto.randomUUID(),
             role: "system",
-            content: `❌ Undo failed: ${err.message}. You can try again.`
-          }
+            content: `❌ Undo failed: ${err.message}. You can try again.`,
+          },
         ];
         this.lastUpdated = Date.now();
         this.broadcast();
@@ -149,15 +153,15 @@ class OracleStore {
         isLoading: this.isLoading,
         isUndoing: this.isUndoing,
         apiKey: this.apiKey,
-        tier: this.tier
-      }
+        tier: this.tier,
+      },
     });
   }
 
   private async saveToDB() {
     const db = await getDB();
     const tx = db.transaction("chat_history", "readwrite");
-    // We clear and re-insert to ensure the IndexedDB matches the in-memory array perfectly, 
+    // We clear and re-insert to ensure the IndexedDB matches the in-memory array perfectly,
     // effectively handling message deletions without complex reconciliation logic.
     await tx.store.clear();
     for (const msg of $state.snapshot(this.messages)) {
@@ -224,7 +228,7 @@ class OracleStore {
 
   clearMessages() {
     // Revoke all blob URLs to prevent memory leaks
-    this.messages.forEach(m => {
+    this.messages.forEach((m) => {
       if (m.imageUrl && m.imageUrl.startsWith("blob:")) {
         URL.revokeObjectURL(m.imageUrl);
       }
@@ -322,7 +326,8 @@ class OracleStore {
         {
           id: crypto.randomUUID(),
           role: "system",
-          content: "The Oracle is currently offline. Conversational expansion and AI generation are suspended, but local retrieval will attempt to find matches for your raw query.",
+          content:
+            "The Oracle is currently offline. Conversational expansion and AI generation are suspended, but local retrieval will attempt to find matches for your raw query.",
         },
       ];
       this.lastUpdated = Date.now();
@@ -362,7 +367,11 @@ class OracleStore {
       // Expand query if it's a follow-up (FR-004)
       let searchQuery = query;
       if (this.messages.length > 2 && !isImageRequest) {
-        searchQuery = await aiService.expandQuery(key, query, this.messages.slice(0, -2));
+        searchQuery = await aiService.expandQuery(
+          key,
+          query,
+          this.messages.slice(0, -2),
+        );
       }
 
       // Identify the last entity we were talking about
@@ -374,14 +383,17 @@ class OracleStore {
         }
       }
 
-      const { content: context, primaryEntityId, sourceIds } =
-        await aiService.retrieveContext(
-          searchQuery,
-          alreadySentTitles,
-          vault,
-          lastEntityId,
-          isImageRequest,
-        );
+      const {
+        content: context,
+        primaryEntityId,
+        sourceIds,
+      } = await aiService.retrieveContext(
+        searchQuery,
+        alreadySentTitles,
+        vault,
+        lastEntityId,
+        isImageRequest,
+      );
 
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
@@ -391,16 +403,26 @@ class OracleStore {
       if (isImageRequest) {
         // Image Generation Flow
         const textModelName = TIER_MODES[this.tier];
-        const visualPrompt = await aiService.distillVisualPrompt(key, query, context, textModelName);
+        const visualPrompt = await aiService.distillVisualPrompt(
+          key,
+          query,
+          context,
+          textModelName,
+        );
         const imageModelName = "gemini-2.5-flash-image";
 
-        const blob = await aiService.generateImage(key, visualPrompt, imageModelName);
+        const blob = await aiService.generateImage(
+          key,
+          visualPrompt,
+          imageModelName,
+        );
         const imageUrl = URL.createObjectURL(blob);
 
         this.messages[assistantMsgIndex].type = "image";
         this.messages[assistantMsgIndex].imageUrl = imageUrl;
         this.messages[assistantMsgIndex].imageBlob = blob;
-        this.messages[assistantMsgIndex].content = `Generated visualization for: "${query}"`;
+        this.messages[assistantMsgIndex].content =
+          `Generated visualization for: "${query}"`;
         this.lastUpdated = Date.now();
         this.broadcast();
       } else {
@@ -433,16 +455,18 @@ class OracleStore {
               const type = (parsed.type || "character") as any;
               const connections = [
                 ...(parsed.wikiLinks || []),
-                ...(parsed.connections || []).map(conn => {
-                  const targetName = typeof conn === 'string' ? conn : conn.target;
-                  const label = typeof conn === 'string' ? conn : (conn.label || conn.target);
+                ...(parsed.connections || []).map((conn) => {
+                  const targetName =
+                    typeof conn === "string" ? conn : conn.target;
+                  const label =
+                    typeof conn === "string" ? conn : conn.label || conn.target;
                   return {
                     target: sanitizeId(targetName),
                     label: label,
-                    type: 'related_to',
-                    strength: 1.0
+                    type: "related_to",
+                    strength: 1.0,
                   };
-                })
+                }),
               ];
 
               const id = await vault.createEntity(type, parsed.title, {
@@ -450,7 +474,7 @@ class OracleStore {
                 lore: parsed.lore,
                 connections,
                 image: parsed.image,
-                thumbnail: parsed.thumbnail
+                thumbnail: parsed.thumbnail,
               });
 
               // Provide visual confirmation
@@ -459,13 +483,12 @@ class OracleStore {
                 {
                   id: crypto.randomUUID(),
                   role: "system",
-                  content: `✅ Automatically created node: **${parsed.title}** (${type.toUpperCase()})`
-                }
+                  content: `✅ Automatically created node: **${parsed.title}** (${type.toUpperCase()})`,
+                },
               ];
 
               this.messages[assistantMsgIndex].entityId = id;
               vault.selectedEntityId = id;
-              vault.activeDetailTab = "status";
 
               // Refit the graph to show the newly created entity
               graph.requestFit();
@@ -477,8 +500,8 @@ class OracleStore {
                 {
                   id: crypto.randomUUID(),
                   role: "system",
-                  content: errorMsg
-                }
+                  content: errorMsg,
+                },
               ];
               // Also show a global notification for high-visibility failure
               const { uiStore } = await import("./ui.svelte");
@@ -518,7 +541,7 @@ class OracleStore {
   }
 
   updateMessageEntity(messageId: string, entityId: string | null) {
-    const target = this.messages.find(m => m.id === messageId);
+    const target = this.messages.find((m) => m.id === messageId);
     if (target) {
       target.archiveTargetId = entityId || undefined;
       this.broadcast();

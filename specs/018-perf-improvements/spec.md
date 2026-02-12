@@ -71,7 +71,7 @@ As a developer and screen-reader user, I want the UI to follow clean coding stan
 
 - **FR-001**: **Batched Image Resolution**: System MUST batch node image resolution operations using `Promise.all` in chunks of 20.
 - **FR-002**: **Debounced Resolution**: System MUST debounce graph image updates by 100ms to prevent micro-task flooding during interaction.
-- **FR-003**: **Incremental Adjacency Map**: `VaultStore` MUST update inbound connections incrementally (O(1)) instead of rebuilding the map (O(N*M)) on every change.
+- **FR-003**: **Incremental Adjacency Map**: `VaultStore` MUST update inbound connections incrementally (O(1)) instead of rebuilding the map (O(N\*M)) on every change.
 - **FR-004**: **Event-Driven Minimap**: Minimap redraws MUST be triggered by Cytoscape events (`pan`, `zoom`, `resize`, etc.) rather than a polling loop.
 - **FR-005**: **RAF-Throttled Redraws**: Minimap redraws MUST be throttled to a maximum of 30fps using `requestAnimationFrame` during rapid event firing.
 - **FR-006**: **Sync Timestamping**: `OracleStore` synced state MUST include a `lastUpdated` timestamp to enable cheap sync comparisons.

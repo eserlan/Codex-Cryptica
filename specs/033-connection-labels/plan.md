@@ -70,5 +70,5 @@ apps/
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-| :--- | :--- | :--- |
-| N/A | | |
+| :-------- | :--------- | :----------------------------------- |
+| N/A       |            |                                      |

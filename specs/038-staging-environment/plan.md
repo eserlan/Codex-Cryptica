@@ -8,7 +8,6 @@
 ## 2. CI/CD Workflow (GitHub Actions)
 
 - Update `.github/workflows/deploy.yml`:
-
   - **Triggers**: Push to `main`, `feat/*`, `fix/*`.
 
   - **Build 1 (Prod)**: Checkout `main`, build to `dist/`.

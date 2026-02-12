@@ -16,11 +16,11 @@ test.describe("Guest Mode", () => {
   test("should enter guest mode and then exit correctly", async ({ page }) => {
     // Navigate with a shareId to trigger guest mode
     await page.goto("/?shareId=p2p-test-id");
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
 
     // 1. Verify Guest Login Modal appears
     // The h2 contains "Shared Campaign"
-    const modalHeader = page.getByRole('heading', { name: 'Shared Campaign' });
+    const modalHeader = page.getByRole("heading", { name: "Shared Campaign" });
     await expect(modalHeader).toBeVisible({ timeout: 10000 });
 
     // 2. Join as guest
@@ -30,7 +30,7 @@ test.describe("Guest Mode", () => {
     // Wait for the modal to disappear
     await expect(modalHeader).not.toBeVisible();
 
-    // 3. Verify EXIT GUEST MODE button is visible 
+    // 3. Verify EXIT GUEST MODE button is visible
     const exitButton = page.getByRole("button", { name: "EXIT GUEST MODE" });
     await expect(exitButton).toBeVisible();
 
@@ -44,15 +44,17 @@ test.describe("Guest Mode", () => {
     await expect(openVaultButton).toBeVisible();
   });
 
-  test("should show exit guest mode button in mobile menu", async ({ page }) => {
+  test("should show exit guest mode button in mobile menu", async ({
+    page,
+  }) => {
     // Set viewport to mobile
     await page.setViewportSize({ width: 375, height: 667 });
 
     await page.goto("/?shareId=p2p-test-id");
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState("networkidle");
 
     // Verify modal
-    const modalHeader = page.getByRole('heading', { name: 'Shared Campaign' });
+    const modalHeader = page.getByRole("heading", { name: "Shared Campaign" });
     await expect(modalHeader).toBeVisible();
 
     // Join as guest
@@ -72,6 +74,8 @@ test.describe("Guest Mode", () => {
 
     // Verify exit worked
     await expect(page).not.toHaveURL(/shareId=/);
-    await expect(page.getByRole("button", { name: "OPEN VAULT" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "OPEN VAULT" }),
+    ).toBeVisible();
   });
 });

@@ -29,7 +29,11 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     clear: vi.fn(),
   };
 
-  const engine = new SyncEngine(mockCloud as any, mockFs as any, mockMetadata as any);
+  const engine = new SyncEngine(
+    mockCloud as any,
+    mockFs as any,
+    mockMetadata as any,
+  );
 
   it("should match files using full relative paths", () => {
     const localFiles: FileEntry[] = [
@@ -38,11 +42,24 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     ];
 
     const remoteFiles: RemoteFileMeta[] = [
-      { id: "rem1", name: "hero.png", modifiedTime: "2026-01-01T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
+      {
+        id: "rem1",
+        name: "hero.png",
+        modifiedTime: "2026-01-01T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
     ];
 
     const metadata: SyncMetadata[] = [
-      { filePath: "images/hero.png", remoteId: "rem1", localModified: 1000, remoteModified: "2026-01-01T00:00:00Z", syncStatus: "SYNCED" },
+      {
+        filePath: "images/hero.png",
+        remoteId: "rem1",
+        localModified: 1000,
+        remoteModified: "2026-01-01T00:00:00Z",
+        syncStatus: "SYNCED",
+      },
     ];
 
     const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
@@ -60,11 +77,24 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     ];
 
     const remoteFiles: RemoteFileMeta[] = [
-      { id: "rem1", name: "hero.png", modifiedTime: "2026-01-01T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
+      {
+        id: "rem1",
+        name: "hero.png",
+        modifiedTime: "2026-01-01T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
     ];
 
     const metadata: SyncMetadata[] = [
-      { filePath: "images/hero.png", remoteId: "rem1", localModified: 1000, remoteModified: "2026-01-01T00:00:00Z", syncStatus: "SYNCED" },
+      {
+        filePath: "images/hero.png",
+        remoteId: "rem1",
+        localModified: 1000,
+        remoteModified: "2026-01-01T00:00:00Z",
+        syncStatus: "SYNCED",
+      },
     ];
 
     const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
@@ -80,8 +110,22 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     ];
 
     const remoteFiles: RemoteFileMeta[] = [
-      { id: "rem1", name: "hero.png", modifiedTime: "2026-01-01T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
-      { id: "rem2", name: "hero.png", modifiedTime: "2026-01-02T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
+      {
+        id: "rem1",
+        name: "hero.png",
+        modifiedTime: "2026-01-01T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
+      {
+        id: "rem2",
+        name: "hero.png",
+        modifiedTime: "2026-01-02T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
     ];
 
     const metadata: SyncMetadata[] = [];
@@ -92,7 +136,7 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     expect(plan.deletes.length).toBe(1);
     expect(plan.deletes[0].id).toBe("rem1");
     expect(plan.deletes[0].path).toBe("images/hero.png");
-    
+
     // rem2 should be downloaded because we have no metadata saying we've seen it
     expect(plan.downloads.length).toBe(1);
     expect(plan.downloads[0].id).toBe("rem2");
@@ -102,11 +146,24 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     const localFiles: FileEntry[] = []; // hero.png deleted locally
 
     const remoteFiles: RemoteFileMeta[] = [
-      { id: "rem1", name: "hero.png", modifiedTime: "2026-01-01T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
+      {
+        id: "rem1",
+        name: "hero.png",
+        modifiedTime: "2026-01-01T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
     ];
 
     const metadata: SyncMetadata[] = [
-      { filePath: "images/hero.png", remoteId: "rem1", localModified: 1000, remoteModified: "2026-01-01T00:00:00Z", syncStatus: "SYNCED" },
+      {
+        filePath: "images/hero.png",
+        remoteId: "rem1",
+        localModified: 1000,
+        remoteModified: "2026-01-01T00:00:00Z",
+        syncStatus: "SYNCED",
+      },
     ];
 
     const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
@@ -122,11 +179,24 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     const localFiles: FileEntry[] = []; // deleted locally
 
     const remoteFiles: RemoteFileMeta[] = [
-      { id: "rem1", name: "hero.png", modifiedTime: "2026-01-05T00:00:00Z", parents: [], appProperties: { vault_path: "images/hero.png" }, mimeType: "image/png" },
+      {
+        id: "rem1",
+        name: "hero.png",
+        modifiedTime: "2026-01-05T00:00:00Z",
+        parents: [],
+        appProperties: { vault_path: "images/hero.png" },
+        mimeType: "image/png",
+      },
     ];
 
     const metadata: SyncMetadata[] = [
-      { filePath: "images/hero.png", remoteId: "rem1", localModified: 1000, remoteModified: "2026-01-01T00:00:00Z", syncStatus: "SYNCED" },
+      {
+        filePath: "images/hero.png",
+        remoteId: "rem1",
+        localModified: 1000,
+        remoteModified: "2026-01-01T00:00:00Z",
+        syncStatus: "SYNCED",
+      },
     ];
 
     const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);

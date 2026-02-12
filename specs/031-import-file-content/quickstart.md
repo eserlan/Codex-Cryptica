@@ -13,8 +13,8 @@ npm install @codex/importer
 ### 1. Initialize the Importer
 
 ```typescript
-import { Importer } from '@codex/importer';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Importer } from "@codex/importer";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(API_KEY);
 const importer = new Importer({
@@ -26,7 +26,7 @@ const importer = new Importer({
 ### 2. Process a File
 
 ```typescript
-const fileInput = document.getElementById('file-upload');
+const fileInput = document.getElementById("file-upload");
 const file = fileInput.files[0];
 
 // Step 1: Parse (Local)
@@ -38,7 +38,7 @@ console.log(parseResult.assets); // Blobs
 const analysis = await importer.analyze(parseResult.text);
 
 // Step 3: Handle Results
-analysis.entities.forEach(entity => {
+analysis.entities.forEach((entity) => {
   console.log(`Found ${entity.type}: ${entity.title}`);
   // Save to your vault...
 });
@@ -46,10 +46,10 @@ analysis.entities.forEach(entity => {
 
 ## Supported Formats
 
-*   **PDF**: Text extraction only (initially).
-*   **DOCX**: Text + Image extraction. Preserves Headers/Lists.
-*   **TXT/MD**: Raw text import.
-*   **JSON**: Heuristic structure analysis.
+- **PDF**: Text extraction only (initially).
+- **DOCX**: Text + Image extraction. Preserves Headers/Lists.
+- **TXT/MD**: Raw text import.
+- **JSON**: Heuristic structure analysis.
 
 ## Configuration
 

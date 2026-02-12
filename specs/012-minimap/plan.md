@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/012-minimap/spec.md`
 
 ## Summary
+
 Implement a high-performance, interactive minimap for the Cytoscape graph visualization. The minimap will provide a bird's-eye view of the entire graph, allow rapid viewport panning by dragging a "view rect", and support click-to-jump navigation.
 
 ## Technical Context

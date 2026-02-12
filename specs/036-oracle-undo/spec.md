@@ -14,6 +14,7 @@ As a user, I want to undo the last "Smart Apply", "Copy to Chronicle", or "Copy 
 **Why this priority**: "Smart Apply" is a destructive action that overwrites existing content. Accidental clicks or poor AI suggestions can lead to data loss if not reversible. This is the core pain point of Issue #80.
 
 **Independent Test**:
+
 1. Open Oracle.
 2. Select an entity.
 3. Ask Oracle to generate content.
@@ -37,6 +38,7 @@ As a user, I want to undo the "Create as Node" action so that I can quickly remo
 **Why this priority**: Users may accidentally create nodes they didn't intend to, cluttering their vault.
 
 **Independent Test**:
+
 1. Ask Oracle to create a character.
 2. Click "Create as NPC: [Name]".
 3. Verify new node exists in the graph/list.
@@ -51,9 +53,9 @@ As a user, I want to undo the "Create as Node" action so that I can quickly remo
 
 ### Edge Cases
 
-- **Multiple Undo**: Currently scoping to single-level or multi-level undo? -> *Start with a stack, allowing multiple undos.*
-- **Session Persistence**: If I close the Oracle or refresh the page, does history persist? -> *No, undo history should be transient for the session.*
-- **Conflict**: What if I modify the entity manually in the editor, then try to undo the Oracle action? -> *The undo action restores the entity to the exact state captured at the time of the Oracle action, overwriting any subsequent manual edits. This is standard "Revert" behavior.*
+- **Multiple Undo**: Currently scoping to single-level or multi-level undo? -> _Start with a stack, allowing multiple undos._
+- **Session Persistence**: If I close the Oracle or refresh the page, does history persist? -> _No, undo history should be transient for the session._
+- **Conflict**: What if I modify the entity manually in the editor, then try to undo the Oracle action? -> _The undo action restores the entity to the exact state captured at the time of the Oracle action, overwriting any subsequent manual edits. This is standard "Revert" behavior._
 
 ## Requirements
 

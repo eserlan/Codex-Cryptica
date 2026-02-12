@@ -1,4 +1,9 @@
-import type { Entity, TemporalMetadata, Category, StylingTemplate } from "schema";
+import type {
+  Entity,
+  TemporalMetadata,
+  Category,
+  StylingTemplate,
+} from "schema";
 import { CONNECTION_COLORS } from "./defaults";
 
 export interface GraphNode {
@@ -56,11 +61,16 @@ export class GraphTransformer {
     return entities.flatMap((entity) => {
       const elements: GraphElement[] = [];
 
-      const dateLabel = formatDate(entity.date || entity.start_date || entity.end_date);
+      const dateLabel = formatDate(
+        entity.date || entity.start_date || entity.end_date,
+      );
 
       // Visibility markers for Admin visual cues
-      const markers = [...(entity.tags || []), ...(entity.labels || [])].map(m => m.toLowerCase());
-      const isRevealed = markers.includes("revealed") || markers.includes("visible");
+      const markers = [...(entity.tags || []), ...(entity.labels || [])].map(
+        (m) => m.toLowerCase(),
+      );
+      const isRevealed =
+        markers.includes("revealed") || markers.includes("visible");
       const _isHidden = markers.includes("hidden");
 
       // Create Node
@@ -122,7 +132,10 @@ const sanitizeFontForCytoscape = (fontFamily?: string): string => {
   return firstFont || "sans-serif";
 };
 
-export const getGraphStyle = (template: StylingTemplate, categories: Category[]): any[] => {
+export const getGraphStyle = (
+  template: StylingTemplate,
+  categories: Category[],
+): any[] => {
   const { tokens, graph } = template;
 
   const baseStyle = [
@@ -148,7 +161,7 @@ export const getGraphStyle = (template: StylingTemplate, categories: Category[])
       },
     },
     {
-      selector: "node[resolvedImage]",
+      selector: "node[resolvedImage][width][height]",
       style: {
         "background-fit": "cover",
         "background-clip": "node",

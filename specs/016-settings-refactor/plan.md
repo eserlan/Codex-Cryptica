@@ -13,7 +13,7 @@ Refactor the application settings UI from a "Cloud-first" dropdown to a unified,
 **Storage**: N/A (UI-only state)  
 **Testing**: Playwright (E2E)  
 **Target Platform**: Web (Responsive)  
-**Project Type**: SvelteKit Web App  
+**Project Type**: SvelteKit Web App
 
 ## Constitution Check
 
@@ -51,5 +51,5 @@ apps/web/src/
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|--------------------------------------|
+| --------- | ---------- | ------------------------------------ |
 | None      |            |                                      |

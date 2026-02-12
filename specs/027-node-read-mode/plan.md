@@ -60,6 +60,6 @@ apps/
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Mitigation |
-| :--- | :--- | :--- |
+| Violation       | Why Needed                                                        | Mitigation                                                |
+| :-------------- | :---------------------------------------------------------------- | :-------------------------------------------------------- |
 | Global UI Store | Modal needs to be accessible from anywhere (Graph, Search, Panel) | Restrict store scope to UI state only (no business logic) |

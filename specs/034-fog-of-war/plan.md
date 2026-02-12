@@ -21,7 +21,7 @@ Implement a "Fog of War" system for shared worlds that allows content to be hidd
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 - [x] **Library-First**: Filtering logic will be integrated into `packages/graph-engine` and `packages/schema`.
 - [x] **TDD**: Playwright tests will verify 0% leakage in Shared Mode. Vitest will cover tag logic.
@@ -73,12 +73,11 @@ packages/
 
 ## Complexity Tracking
 
-*No violations identified.*
-
+_No violations identified._
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
+| -------------------------- | ------------------ | ------------------------------------ |
+| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |

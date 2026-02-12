@@ -105,12 +105,21 @@
       message.archiveTargetId ||
       message.entityId ||
       (activeEntity ? activeEntity.id : null);
-    if (!finalTargetId || !message.content) return;
+    
+    console.log("[Oracle] Smart Apply triggered for:", finalTargetId);
+
+    if (!finalTargetId || !message.content) {
+        console.warn("[Oracle] Smart Apply aborted: Missing target or content");
+        return;
+    }
 
     // We want to update both fields if they exist in the parsed result
     const updates: Partial<{ content: string; lore: string }> = {};
     const entity = vault.entities[finalTargetId];
-    if (!entity) return;
+    if (!entity) {
+        console.error("[Oracle] Smart Apply failed: Entity not found in vault", finalTargetId);
+        return;
+    }
 
     if (parsed.chronicle) {
       updates.content = parsed.chronicle;
@@ -119,14 +128,14 @@
     if (parsed.lore) {
       updates.lore = parsed.lore;
     }
+    
+    console.log("[Oracle] Smart Apply updates:", updates);
 
     if (Object.keys(updates).length > 0) {
       // 1. Capture State
       const beforeState = captureState(finalTargetId);
 
       vault.selectedEntityId = finalTargetId;
-      // If both updated, default to status, otherwise lore if only lore updated
-      vault.activeDetailTab = parsed.chronicle ? "status" : "lore";
       vault.updateEntity(finalTargetId, updates);
       isSaved = true;
 
@@ -141,6 +150,8 @@
           isSaved = false; 
         }, message.id);
       }
+    } else {
+        console.warn("[Oracle] Smart Apply aborted: No updates extracted");
     }
   };
 
@@ -171,7 +182,6 @@
       });
 
       vault.selectedEntityId = id;
-      vault.activeDetailTab = "status";
       isSaved = true;
 
       // Update message to point to new entity so further applies work
@@ -205,7 +215,6 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.activeDetailTab = "status";
     vault.updateEntity(finalTargetId, { content: newContent });
     isSaved = true;
 
@@ -230,7 +239,6 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.activeDetailTab = "lore";
     vault.updateEntity(finalTargetId, { lore: newContent });
     isSaved = true;
 

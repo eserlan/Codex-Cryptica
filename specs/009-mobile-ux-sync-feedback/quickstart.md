@@ -1,6 +1,7 @@
 # Quickstart: Mobile UX & Sync Feedback
 
 ## Prerequisites
+
 - Cloud Sync must be configured (see `003-gdrive-mirroring`) to test the full feedback loop.
 
 ## Development Steps
@@ -19,6 +20,7 @@
    - Verify the `EntityDetailPanel` occupies the full screen width and can be closed via the 'X' button.
 
 ## Verification
+
 ```bash
 # Run unit tests for the sync-stats store
 npm run test:unit --prefix apps/web src/stores/sync-stats.test.ts

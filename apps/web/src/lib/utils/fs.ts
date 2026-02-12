@@ -1,3 +1,5 @@
+import { debugStore } from '$lib/stores/debug.svelte';
+
 export async function getFileHandle(
   dirHandle: FileSystemDirectoryHandle,
   name: string,
@@ -15,7 +17,7 @@ export async function readFile(
 
 export async function writeFile(
   fileHandle: FileSystemFileHandle,
-  content: string,
+  content: string | Blob,
 ): Promise<void> {
   const writable = await fileHandle.createWritable();
   await writable.write(content);
@@ -37,15 +39,20 @@ export interface FileEntry {
 export async function walkDirectory(
   dirHandle: FileSystemDirectoryHandle,
   path: string[] = [],
-  onError?: (err: unknown, path: string[]) => void
+  onError?: (err: unknown, path: string[]) => void,
 ): Promise<FileEntry[]> {
   const entries: FileEntry[] = [];
+  // Avoid scanning large binary folders that never contain markdown.
+  const SKIP_DIRS = new Set(["images"]);
+  
+  debugStore.log(`Walking directory: /${path.join('/')}`);
+
   try {
     // Use values() as it's sometimes more stable than entries() on certain platforms
     for await (const handle of dirHandle.values()) {
+      const name = handle.name;
+      const currentPath = [...path, name];
       try {
-        const name = handle.name;
-        const currentPath = [...path, name];
         if (handle.kind === "file") {
           if (name.endsWith(".md")) {
             entries.push({
@@ -54,20 +61,26 @@ export async function walkDirectory(
             });
           }
         } else if (handle.kind === "directory") {
+          if (SKIP_DIRS.has(name)) {
+            debugStore.log(`Skipping directory: /${currentPath.join('/')}`);
+            continue;
+          }
           // Recursion
           const subEntries = await walkDirectory(
             handle as FileSystemDirectoryHandle,
             currentPath,
-            onError
+            onError,
           );
           entries.push(...subEntries);
         }
-      } catch (innerErr) {
-        if (onError) onError(innerErr, path);
+      } catch (innerErr: any) {
+        debugStore.error(`Error processing entry /${currentPath.join('/')}: ${innerErr.name} - ${innerErr.message}`);
+        if (onError) onError(innerErr, currentPath);
         // Continue to next entry
       }
     }
-  } catch (err) {
+  } catch (err: any) {
+    debugStore.error(`Failed to iterate directory handle for /${path.join('/')}: ${err.name} - ${err.message}`);
     if (onError) onError(err, path);
     throw err; // Re-throw to fail the specific walk if iteration itself fails
   }

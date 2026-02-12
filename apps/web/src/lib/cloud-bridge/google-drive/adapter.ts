@@ -27,7 +27,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     this.getGapi();
   }
 
-  private async waitForScript(check: () => boolean, timeout = 10000): Promise<boolean> {
+  private async waitForScript(
+    check: () => boolean,
+    timeout = 10000,
+  ): Promise<boolean> {
     const start = Date.now();
     while (!check()) {
       if (Date.now() - start > timeout) return false;
@@ -39,10 +42,10 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   private getGis(): Promise<void> {
     if (this.gisInitPromise) return this.gisInitPromise;
     this.gisInitPromise = (async () => {
-
-
       // Wait for google.accounts to be loaded
-      const loaded = await this.waitForScript(() => typeof google !== "undefined" && !!google.accounts);
+      const loaded = await this.waitForScript(
+        () => typeof google !== "undefined" && !!google.accounts,
+      );
       if (!loaded) {
         console.warn("Google Identity Services script failed to load");
         return;
@@ -51,7 +54,9 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       if (typeof google !== "undefined" && google.accounts) {
         const { CLIENT_ID, SCOPES } = getGoogleConfig();
         if (!CLIENT_ID) {
-          console.warn("VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.");
+          console.warn(
+            "VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.",
+          );
           return;
         }
         this.tokenClient = google.accounts.oauth2.initTokenClient({
@@ -78,7 +83,9 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     if (this.gapiInitPromise) return this.gapiInitPromise;
     this.gapiInitPromise = (async () => {
       // Wait for gapi to be loaded
-      const loaded = await this.waitForScript(() => typeof gapi !== "undefined");
+      const loaded = await this.waitForScript(
+        () => typeof gapi !== "undefined",
+      );
       if (!loaded) {
         console.warn("Google API script failed to load");
         return;
@@ -133,7 +140,11 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       expires_at: Date.now() + expiresIn * 1000,
     };
     localStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify(tokenData));
-    console.log("[GDriveAdapter] Token cached, expires in", expiresIn, "seconds");
+    console.log(
+      "[GDriveAdapter] Token cached, expires in",
+      expiresIn,
+      "seconds",
+    );
   }
 
   async connect(): Promise<string> {
@@ -142,7 +153,11 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
     return new Promise((resolve, reject) => {
       if (!this.tokenClient) {
-        reject(new Error("Google Identity Services not initialized (missing Client ID?)"));
+        reject(
+          new Error(
+            "Google Identity Services not initialized (missing Client ID?)",
+          ),
+        );
         return;
       }
       (this.tokenClient as any).callback = async (
@@ -158,11 +173,12 @@ export class GoogleDriveAdapter implements ICloudAdapter {
         this.cacheToken(resp);
 
         // Explicitly set the token in gapi so it's globally available to workerBridge
-        if (typeof gapi !== 'undefined' && gapi.client) {
+        if (typeof gapi !== "undefined" && gapi.client) {
           gapi.client.setToken(resp);
         }
 
-        try {          // 1. Get user info
+        try {
+          // 1. Get user info
           const about = await gapi.client.drive.about.get({
             fields: "user(emailAddress)",
           });
@@ -181,7 +197,11 @@ export class GoogleDriveAdapter implements ICloudAdapter {
           resolve(email);
         } catch (e) {
           console.error("Failed to complete GDrive setup", e);
-          reject(e instanceof Error ? e : new Error("Failed to complete GDrive setup"));
+          reject(
+            e instanceof Error
+              ? e
+              : new Error("Failed to complete GDrive setup"),
+          );
         }
       };
 
@@ -203,7 +223,9 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     if (files.length === 0) return null;
     if (files.length === 1) return files[0].id!;
 
-    console.warn(`Multiple "CodexCryptica" folders found (${files.length}). Using the first one found.`);
+    console.warn(
+      `Multiple "CodexCryptica" folders found (${files.length}). Using the first one found.`,
+    );
     return files[0].id!;
   }
 
@@ -229,11 +251,11 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   async disconnect(): Promise<void> {
     const token = gapi.client.getToken();
     if (token !== null) {
-      google.accounts.oauth2.revoke(token.access_token, () => { });
+      google.accounts.oauth2.revoke(token.access_token, () => {});
       gapi.client.setToken(null);
       this.accessToken = null;
       localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem('gdrive_folder_id');
+      localStorage.removeItem("gdrive_folder_id");
     }
   }
 
@@ -241,12 +263,15 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     if (!this.accessToken) throw new Error("Not authenticated");
 
     // Get the email from GAPI to build the key
-    const about = await gapi.client.drive.about.get({ fields: 'user(emailAddress)' });
+    const about = await gapi.client.drive.about.get({
+      fields: "user(emailAddress)",
+    });
     const email = about.result.user?.emailAddress;
     const storageKey = `gdrive_folder_id:${email}`;
 
     const folderId = localStorage.getItem(storageKey);
-    if (!folderId) throw new Error("No sync folder found. Reconnect requested.");
+    if (!folderId)
+      throw new Error("No sync folder found. Reconnect requested.");
 
     const response = await gapi.client.drive.files.list({
       pageSize: 1000,
@@ -275,14 +300,58 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   }
 
   async uploadFile(
-    _path: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _content: string | Blob, // eslint-disable-line @typescript-eslint/no-unused-vars
-    _existingId?: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+    path: string,
+    content: string | Blob,
+    existingId?: string,
   ): Promise<RemoteFileMeta> {
     if (!this.accessToken) throw new Error("Not authenticated");
-    // Simplified upload logic for MVP
-    // Real impl needs multipart upload for metadata + content
-    throw new Error("Not implemented");
+
+    const about = await gapi.client.drive.about.get({ fields: "user(emailAddress)" });
+    const email = about.result.user?.emailAddress;
+    const storageKey = `gdrive_folder_id:${email}`;
+    const folderId = localStorage.getItem(storageKey);
+
+    if (!folderId) throw new Error("No sync folder found. Reconnect requested.");
+
+    const fileName = path.split('/').pop() || 'Untitled.md';
+    const metadata = {
+      name: fileName,
+      appProperties: {
+        path, // Store the full relative path
+      },
+      parents: existingId ? undefined : [folderId],
+    };
+
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', content instanceof Blob ? content : new Blob([content]));
+
+    const method = existingId ? 'PATCH' : 'POST';
+    const url = existingId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+      body: form,
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json();
+      throw new Error(`GDrive Upload Error: ${errorBody.error.message}`);
+    }
+
+    const newMeta = await res.json();
+
+    return {
+      id: newMeta.id,
+      name: newMeta.name,
+      mimeType: newMeta.mimeType,
+      modifiedTime: newMeta.modifiedTime,
+      parents: newMeta.parents,
+      appProperties: newMeta.appProperties,
+    };
   }
 
   async downloadFile(fileId: string): Promise<Blob> {
@@ -305,13 +374,15 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
   async shareFolderPublicly(): Promise<string> {
     if (!this.accessToken) throw new Error("Not authenticated");
-    
+
     // Get folder ID from storage or resolve it
-    const about = await gapi.client.drive.about.get({ fields: 'user(emailAddress)' });
+    const about = await gapi.client.drive.about.get({
+      fields: "user(emailAddress)",
+    });
     const email = about.result.user?.emailAddress;
     const storageKey = `gdrive_folder_id:${email}`;
     const folderId = localStorage.getItem(storageKey);
-    
+
     if (!folderId) throw new Error("No sync folder found.");
 
     // Create 'anyone' permission
@@ -333,30 +404,34 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
   async revokeShare(): Promise<void> {
     if (!this.accessToken) throw new Error("Not authenticated");
-    
-    const about = await gapi.client.drive.about.get({ fields: 'user(emailAddress)' });
+
+    const about = await gapi.client.drive.about.get({
+      fields: "user(emailAddress)",
+    });
     const email = about.result.user?.emailAddress;
     const storageKey = `gdrive_folder_id:${email}`;
     const folderId = localStorage.getItem(storageKey);
-    
+
     if (!folderId) throw new Error("No sync folder found.");
 
     // List permissions to find and remove all 'anyone' permissions
     const res = await gapi.client.drive.permissions.list({
       fileId: folderId,
     });
-    
+
     const permissions = res.result.permissions || [];
-    const anyonePerms = permissions.filter((p: any) => p.type === "anyone" && p.id);
-    
+    const anyonePerms = permissions.filter(
+      (p: any) => p.type === "anyone" && p.id,
+    );
+
     if (anyonePerms.length > 0) {
       await Promise.all(
         anyonePerms.map((p: any) =>
           gapi.client.drive.permissions.delete({
             fileId: folderId,
             permissionId: p.id!,
-          })
-        )
+          }),
+        ),
       );
     }
   }

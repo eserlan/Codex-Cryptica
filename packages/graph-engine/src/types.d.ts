@@ -1,1 +1,1 @@
-declare module 'cytoscape-fcose';
+declare module "cytoscape-fcose";

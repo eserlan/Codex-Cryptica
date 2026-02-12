@@ -13,7 +13,7 @@ export interface ThemeTokens {
 
 export interface GraphStyleConfig {
   nodeShape: string;
-  edgeStyle: 'solid' | 'dashed' | 'dotted';
+  edgeStyle: "solid" | "dashed" | "dotted";
   nodeBorderWidth: number;
   edgeColor: string;
 }

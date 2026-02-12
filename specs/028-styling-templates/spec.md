@@ -53,7 +53,7 @@ As a User, I want the Knowledge Graph to adopt the stylistic cues of the selecte
 
 ### Edge Cases
 
-- **Custom Colors Override**: How does a template interact with user-defined category colors? (Assumption: Template defines the *base* and *secondary* colors, while category colors remain primary node identifiers).
+- **Custom Colors Override**: How does a template interact with user-defined category colors? (Assumption: Template defines the _base_ and _secondary_ colors, while category colors remain primary node identifiers).
 - **Incomplete Assets**: What if a custom icon or image is not available for a specific theme? (Assumption: System fallbacks to a neutral "standard" icon).
 - **High Contrast/Accessibility**: Ensuring that genre-specific aesthetics (like dark "Cyberpunk" or textured "Post-Apocalyptic") do not violate legibility standards.
 

@@ -12,6 +12,7 @@
 - **Phase 5 (US3)**: Dependent on Phase 3.
 
 ## Phase 1: Setup
+
 **Goal**: Initialize project with necessary dependencies and structure.
 
 - [x] T001 Install `flexsearch` dependency in `apps/web/package.json`
@@ -20,6 +21,7 @@
 - [x] T004 Create directory `apps/web/src/lib/components/search` if not exists
 
 ## Phase 2: Foundational (Core Engine)
+
 **Goal**: Establish the search worker and service bridge.
 **Independent Test**: Unit test `SearchService` can send/receive messages from worker.
 
@@ -30,6 +32,7 @@
 - [x] T009 Create `apps/web/src/tests/search.test.ts` to verify worker communication (mocked)
 
 ## Phase 3: Global Note Navigation (User Story 1 - P1)
+
 **Goal**: Users can find and open notes by title.
 **Independent Test**: Open modal, type title, see result.
 
@@ -41,6 +44,7 @@
 - [x] T015 [US1] Render search results (titles only) in `SearchModal.svelte`
 
 ## Phase 4: Search Within Content (User Story 2 - P2)
+
 **Goal**: Users can find notes by content.
 **Independent Test**: Search for unique string in body, see result.
 
@@ -50,6 +54,7 @@
 - [x] T019 [US2] Implement ranking logic in worker (Title > Content) if not handled by FlexSearch configuration
 
 ## Phase 5: Keyboard Navigation (User Story 3 - P2)
+
 **Goal**: Full keyboard control of search results.
 **Independent Test**: Navigate results with arrows, select with Enter.
 
@@ -60,6 +65,7 @@
 - [x] T024 [US3] Implement "Recent Notes" display in `SearchModal.svelte` when query is empty
 
 ## Final Phase: Polish & Quality
+
 **Goal**: Production-ready experience.
 
 - [x] T025 [P] Implement highlighting of matched terms in `SearchModal.svelte`
@@ -69,6 +75,7 @@
 - [x] T029 Implement persistent search bar in the application header (`apps/web/src/routes/+layout.svelte`)
 
 ## Implementation Strategy
+
 1. **MVP (Phase 1-3)**: purely title search.
 2. **Enhanced (Phase 4)**: add content search.
 3. **UX (Phase 5+)**: add keyboard nav and polish.

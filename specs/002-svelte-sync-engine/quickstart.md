@@ -3,11 +3,11 @@
 ## Prerequisites
 
 - Svelte 5 Environment
-- Browser with File System Access API support (Chrome/Edge/Desktop Safari)
+- Modern Browser with OPFS support (Chrome/Edge/Firefox)
 
 ## 1. Initialization
 
-In your root layout (`+layout.svelte`), mount the Vault provider.
+In your root layout (`+layout.svelte`), the `VaultStore` is initialized automatically. No user interaction is required to open the default vault.
 
 ```svelte
 <script lang="ts">
@@ -15,14 +15,10 @@ In your root layout (`+layout.svelte`), mount the Vault provider.
   import { vault } from '$lib/stores/vault';
 
   onMount(async () => {
-    // Ideally, check for a stored handle in IndexedDB to auto-reopen
-    // For now, we wait for user interaction
+    // The vault now initializes itself automatically using OPFS.
+    await vault.init();
   });
 </script>
-
-<button onclick={() => vault.openDirectory()}>
-  Open Vault
-</button>
 ```
 
 ## 2. Using the Graph

@@ -1,11 +1,13 @@
-import type { FileParser, ParseResult } from '../types';
+import type { FileParser, ParseResult } from "../types";
 
 export class TextParser implements FileParser {
   accepts(file: File): boolean {
-    return file.type === 'text/plain' ||
-      file.type === 'text/markdown' ||
-      file.name.endsWith('.txt') ||
-      file.name.endsWith('.md');
+    return (
+      file.type === "text/plain" ||
+      file.type === "text/markdown" ||
+      file.name.endsWith(".txt") ||
+      file.name.endsWith(".md")
+    );
   }
 
   async parse(file: File): Promise<ParseResult> {
@@ -19,7 +21,7 @@ export class TextParser implements FileParser {
     return {
       text,
       assets: [],
-      metadata: {}
+      metadata: {},
     };
   }
 }

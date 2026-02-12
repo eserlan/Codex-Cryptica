@@ -1,31 +1,36 @@
 # Implementation Plan: Lore Oracle (Cloud Opt-In)
 
 ## Overview
+
 Integrate Google Gemini via `@google/generative-ai` to provide a lightweight, accessible AI chat interface. This feature utilizes local-first context retrieval (RAG) to ground the AI's responses in the user's own notes.
 
 ## Architecture
 
 ### 1. The Brain (`AIService`)
+
 - **Library**: `@google/generative-ai`
 - **Model**: `gemini-3-flash-preview` (Configurable, defaults to latest Flash for speed/cost).
 - **System Instruction**: Defines the Oracle persona as a wise keeper of records who can "weave new threads" when asked to expand.
 - **Authentication**: User-provided API Key stored in IndexedDB (`settings` store).
 
 ### 2. State Synchronization (`BroadcastChannel`)
+
 - **Channel**: `codex-oracle-sync`
 - **Mechanism**: The `OracleStore` uses a BroadcastChannel to sync `messages`, `isLoading`, and `apiKey` across all open windows.
 - **Requests**: New windows broadcast a `REQUEST_STATE` message to populate their local state from existing instances.
 
 ### 3. Context Retrieval (`RAG`)
+
 - **Logic**:
-    1. Direct Fuzzy Search (FlexSearch).
-    2. Keyword Extraction Fallback (if search returns 0).
-    3. Active Entity Prioritization (always include selected entity).
-    4. **Relational Context**: Includes bidirectional links (Outbound and Inbound) to provide social/structural context.
-    5. Redundancy Filter: Tracks titles already sent in the current conversation turn.
+  1. Direct Fuzzy Search (FlexSearch).
+  2. Keyword Extraction Fallback (if search returns 0).
+  3. Active Entity Prioritization (always include selected entity).
+  4. **Relational Context**: Includes bidirectional links (Outbound and Inbound) to provide social/structural context.
+  5. Redundancy Filter: Tracks titles already sent in the current conversation turn.
 - **Truncation**: Limits individual file context to 10,000 characters to prevent prompt bloat.
 
 ### 4. Direct Vault Integration
+
 - Chat messages contain an `entityId` when the Oracle is focused on a specific node.
 - **Intelligent Archival**:
   - Responses under 400 chars (or with "blurb"/"chronicle" intent): **Copy to Chronicle** (Summary).
@@ -42,6 +47,7 @@ Integrate Google Gemini via `@google/generative-ai` to provide a lightweight, ac
 - **`src/lib/components/settings/AISettings.svelte`**: API Key management.
 
 ## Risks & Mitigations
+
 - **API Rate Limits**: Handled via 429 error detection and user notification.
 - **Context Redundancy**: Mitigated by tracking sent titles in the convo session.
 - **Reactivity Loops**: BroadcastChannel logic includes deep equality checks before updating state.

@@ -21,7 +21,7 @@ Transform the primary Cytoscape knowledge graph into a chronological visualizati
 ## Constitution Check
 
 - **I. Local-First Sovereignty**: PASS. Data remains in Markdown frontmatter.
-- **II. Relational-First Navigation**: PASS. Timeline is a view *of* the graph, not a replacement.
+- **II. Relational-First Navigation**: PASS. Timeline is a view _of_ the graph, not a replacement.
 - **III. Sub-100ms Performance**: PASS. Layout calculations happen in-memory; animations use hardware-accelerated canvas.
 - **VI. Pure Functional Core**: PASS. Coordinate mapping logic is a pure function in `graph-engine`.
 

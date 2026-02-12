@@ -81,11 +81,7 @@ As a lore keeper, I want the Oracle to have access to all sections of an entity 
 
 ## Requirements _(mandatory)_
 
-
-
 ### Functional Requirements
-
-
 
 - **FR-001**: **Internal Trace Logging**: System MUST include the IDs of all consulted entities in the `ChatMessage` metadata.
 
@@ -98,25 +94,15 @@ As a lore keeper, I want the Oracle to have access to all sections of an entity 
 - **FR-005**: **Context Prioritization**: System MUST prioritize: 1. Selected Entity, 2. Direct Search Matches, 3. Conversationally Identified Subjects, 4. Neighbor Chronicles.
 - **FR-006**: **Context Fusion**: System MUST concatenate and include both the markdown `content` AND the frontmatter `lore` field when building the context for an entity.
 
-
-
 ### Key Entities _(include if feature involves data)_
-
-
 
 - **ChatMessage**: Now requires a `sources` field (array of entity IDs) in its metadata for audit/logging.
 
 - **ContextPayload**: Enriched with neighbor summaries (chronicles).
 
-
-
 ## Success Criteria _(mandatory)_
 
-
-
 ### Measurable Outcomes
-
-
 
 - **SC-001**: 100% of Oracle assistant messages contain source entity IDs in their internal state.
 

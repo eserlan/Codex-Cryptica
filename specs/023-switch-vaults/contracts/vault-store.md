@@ -4,7 +4,7 @@
 
 ```typescript
 /**
- * Detaches the current vault, clearing all in-memory campaign data 
+ * Detaches the current vault, clearing all in-memory campaign data
  * and removing persistent directory references.
  */
 async close(): Promise<void>;

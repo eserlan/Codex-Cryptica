@@ -38,9 +38,9 @@ specs/024-delete-nodes/
 ├── research.md          # Decision log for cleanup and UI
 ├── data-model.md        # Deletion flow and state transitions
 ├── quickstart.md        # Implementation checklist
-├── contracts/           
+├── contracts/
 │   └── vault-store.md   # API contract for deleteEntity
-└── checklists/          
+└── checklists/
     └── requirements.md  # Spec quality checklist
 ```
 

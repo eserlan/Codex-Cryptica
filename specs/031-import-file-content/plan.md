@@ -10,22 +10,23 @@ Implement a file import system capable of ingesting PDF, DOCX, TXT, and JSON fil
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x / Node.js 20+
-**Primary Dependencies**: 
+**Primary Dependencies**:
+
 - `svelte` (UI)
 - `@google/generative-ai` (Oracle Analysis)
 - `mammoth.js` (DOCX Parsing - NEEDS VERIFICATION)
 - `pdfjs-dist` (PDF Parsing - NEEDS VERIFICATION)
 - `tiptap` (or similar for intermediate editor, though parsing to Markdown is goal)
-**Storage**: OPFS (Origin Private File System) via `editor-core`.
-**Testing**: Vitest (Unit), Playwright (E2E).
-**Target Platform**: Browser (Client-side processing preferred for privacy/speed, fallback to server if needed).
-**Project Type**: Monorepo (Web App + Packages).
-**Performance Goals**: Parse <5MB files in <3s.
-**Constraints**: Browser environment limits for heavy parsing (PDF).
+  **Storage**: OPFS (Origin Private File System) via `editor-core`.
+  **Testing**: Vitest (Unit), Playwright (E2E).
+  **Target Platform**: Browser (Client-side processing preferred for privacy/speed, fallback to server if needed).
+  **Project Type**: Monorepo (Web App + Packages).
+  **Performance Goals**: Parse <5MB files in <3s.
+  **Constraints**: Browser environment limits for heavy parsing (PDF).
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 1.  **Library-First**: Core parsing logic should reside in a package (likely `packages/importer`), not just the Svelte app.
 2.  **Test-First**: Unit tests for parsers (mocking files) are essential.
@@ -71,6 +72,6 @@ packages/
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
+| Violation                         | Why Needed                                                                      | Simpler Alternative Rejected Because                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | New Package (`packages/importer`) | Parsing dependencies (pdfjs, mammoth) are heavy and distinct from editor logic. | Polluting `editor-core` with heavy non-editor deps increases bundle size for non-import flows. |

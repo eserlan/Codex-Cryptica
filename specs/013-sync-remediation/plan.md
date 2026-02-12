@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/013-sync-remediation/spec.md`
 
 ## Summary
+
 Upgrade the Google Drive sync engine to be "Binary-Safe" and "Path-Aware". This refactor replaces string-based file transfers with `Blob` processing to support images and implements a metadata-driven path mapping system to preserve the vault's subdirectory structure (e.g., `/images`) in the cloud.
 
 ## Technical Context
@@ -12,7 +13,7 @@ Upgrade the Google Drive sync engine to be "Binary-Safe" and "Path-Aware". This 
 **Primary Dependencies**: Google API Client (GAPI), Browser Native `fetch`, `idb` (IndexedDB)
 **Storage**: OPFS (Origin Private File System) for binary local storage, Google Drive for cloud mirroring.
 **Testing**: Vitest (Unit logic), Playwright (Integration/E2E)
-**Target Platform**: Modern Browsers (supporting File System Access API & OPFS)
+**Target Platform**: Modern Browsers (supporting OPFS and FSA for export)
 **Project Type**: Web application (SvelteKit)
 **Performance Goals**: Support parallel sync (5+ files), zero main-thread blocking during I/O.
 **Constraints**: GDrive `appProperties` is limited to 124 bytes per property (enough for relative paths).

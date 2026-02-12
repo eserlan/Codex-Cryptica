@@ -87,7 +87,6 @@ As a World Builder, I want to visualize named "Eras" as distinct background regi
 - **FR-007**: System MUST provide a range-filter to hide/show nodes based on temporal boundaries.
 - **FR-008**: System MUST maintain edge visibility between nodes in Timeline Mode.
 
-
 ### Key Entities _(include if feature involves data)_
 
 - **Temporal Metadata**: Attributes added to standard entities (NPC, Location, etc.) including `date`, `start_date`, `end_date`, and `era`.

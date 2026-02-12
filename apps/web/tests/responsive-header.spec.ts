@@ -1,17 +1,19 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Mobile Header Responsiveness", () => {
-  test("should show mobile logo and optimize header on small screens", async ({ page }) => {
+  test("should show mobile logo and optimize header on small screens", async ({
+    page,
+  }) => {
     // Set viewport to a typical mobile width
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
 
     // Verify "CA" logo is visible and "Codex Cryptica" is hidden
-    const mobileLogo = page.locator('span.sm\\:hidden');
-    const desktopLogo = page.locator('span.hidden.sm\\:inline');
+    const mobileLogo = page.locator("span.sm\\:hidden");
+    const desktopLogo = page.locator("span.hidden.sm\\:inline");
 
     await expect(mobileLogo).toBeVisible();
-    await expect(mobileLogo).toHaveText('CC');
+    await expect(mobileLogo).toHaveText("CC");
     await expect(desktopLogo).not.toBeVisible();
 
     // Verify search button is visible (input is hidden)
@@ -20,7 +22,7 @@ test.describe("Mobile Header Responsiveness", () => {
     await expect(page.getByPlaceholder(/Search/)).not.toBeVisible();
 
     // Verify desktop vault controls are hidden
-    const desktopControls = page.locator('header .hidden.md\\:flex');
+    const desktopControls = page.locator("header .hidden.md\\:flex");
     await expect(desktopControls).not.toBeVisible();
 
     // Verify hamburger menu is visible

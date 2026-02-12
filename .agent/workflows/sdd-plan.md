@@ -11,13 +11,13 @@ The user input `$ARGUMENTS` can specify additional context or overrides. If empt
 ## Outline
 
 1. **Setup**: Run `.specify/scripts/bash/setup-plan.sh --json` from repo root.
-    - Parse the JSON output for `FEATURE_SPEC`, `IMPL_PLAN`, `SPECS_DIR`, and `BRANCH`.
-    - If command fails, ensure you are in a feature branch or specify the feature.
+   - Parse the JSON output for `FEATURE_SPEC`, `IMPL_PLAN`, `SPECS_DIR`, and `BRANCH`.
+   - If command fails, ensure you are in a feature branch or specify the feature.
 
-2. **Load context**: 
-    - Read `FEATURE_SPEC` (path from step 1).
-    - Read `.specify/memory/constitution.md`. 
-    - Load `IMPL_PLAN` template (this file is created/copied by the script in step 1, you should read it from the path provided).
+2. **Load context**:
+   - Read `FEATURE_SPEC` (path from step 1).
+   - Read `.specify/memory/constitution.md`.
+   - Load `IMPL_PLAN` template (this file is created/copied by the script in step 1, you should read it from the path provided).
 
 3. **Execute plan workflow**: Follow the structure in `IMPL_PLAN` template to:
    - Fill **Technical Context** (mark unknowns as "NEEDS CLARIFICATION")
@@ -41,7 +41,6 @@ The user input `$ARGUMENTS` can specify additional context or overrides. If empt
 
 2. **Generate and dispatch research agents**:
    - For each unknown, perform necessary research (using search tools or code reading).
-   
 3. **Consolidate findings** in `research.md` (in `SPECS_DIR`) using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]

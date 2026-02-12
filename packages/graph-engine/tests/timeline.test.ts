@@ -6,16 +6,34 @@ describe("Timeline Layout", () => {
   const mockNodes: GraphNode[] = [
     {
       group: "nodes",
-      data: { id: "n1", label: "Node 1", type: "npc", weight: 0, date: { year: 1000 } }
+      data: {
+        id: "n1",
+        label: "Node 1",
+        type: "npc",
+        weight: 0,
+        date: { year: 1000 },
+      },
     },
     {
       group: "nodes",
-      data: { id: "n2", label: "Node 2", type: "npc", weight: 0, date: { year: 1100 } }
+      data: {
+        id: "n2",
+        label: "Node 2",
+        type: "npc",
+        weight: 0,
+        date: { year: 1100 },
+      },
     },
     {
       group: "nodes",
-      data: { id: "n3", label: "Node 3", type: "npc", weight: 0, date: { year: 1000 } }
-    }
+      data: {
+        id: "n3",
+        label: "Node 3",
+        type: "npc",
+        weight: 0,
+        date: { year: 1000 },
+      },
+    },
   ];
 
   it("should calculate horizontal positions based on year", () => {
@@ -23,14 +41,14 @@ describe("Timeline Layout", () => {
       axis: "x",
       scale: 10,
       jitter: 50,
-      minYear: 1000
+      minYear: 1000,
     });
 
     // Sequential layout:
     // 1000 -> 0
     // 1100 -> diff 100. Base scale 10. Gap > 20 (+4). Total 14.
     expect(positions["n1"].x).toBe(0);
-    expect(positions["n2"].x).toBe(14); 
+    expect(positions["n2"].x).toBe(14);
     expect(positions["n3"].x).toBe(0);
   });
 
@@ -39,7 +57,7 @@ describe("Timeline Layout", () => {
       axis: "x",
       scale: 10,
       jitter: 50,
-      minYear: 1000
+      minYear: 1000,
     });
 
     // n1 and n3 both have year 1000
@@ -53,7 +71,7 @@ describe("Timeline Layout", () => {
       axis: "y",
       scale: 10,
       jitter: 50,
-      minYear: 1000
+      minYear: 1000,
     });
 
     expect(positions["n1"].y).toBe(0);
@@ -64,17 +82,29 @@ describe("Timeline Layout", () => {
   it("should detect nodes without timeline metadata", () => {
     const undatedNode: GraphNode = {
       group: "nodes",
-      data: { id: "n4", label: "Node 4", type: "npc", weight: 0 }
+      data: { id: "n4", label: "Node 4", type: "npc", weight: 0 },
     };
 
     const nodeWithStartDate: GraphNode = {
       group: "nodes",
-      data: { id: "n5", label: "Node 5", type: "event", weight: 0, start_date: { year: 2000 } }
+      data: {
+        id: "n5",
+        label: "Node 5",
+        type: "event",
+        weight: 0,
+        start_date: { year: 2000 },
+      },
     };
 
     const nodeWithEndDate: GraphNode = {
       group: "nodes",
-      data: { id: "n6", label: "Node 6", type: "event", weight: 0, end_date: { year: 2024 } }
+      data: {
+        id: "n6",
+        label: "Node 6",
+        type: "event",
+        weight: 0,
+        end_date: { year: 2024 },
+      },
     };
 
     expect(hasTimelineDate(mockNodes[0])).toBe(true);

@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test.describe("MarkdownEditor", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => (window as any).DISABLE_ONBOARDING = true);
+    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
     await page.goto("/test/markdown-editor");
   });
 
@@ -93,7 +93,9 @@ test.describe("MarkdownEditor", () => {
 
     // Verify DOM
     await expect(editor.locator("blockquote")).toBeVisible();
-    await expect(editor.locator("blockquote p").first()).toHaveText("This is a quote");
+    await expect(editor.locator("blockquote p").first()).toHaveText(
+      "This is a quote",
+    );
 
     // Verify toolbar button is active
     const quoteBtn = page.getByTitle("Blockquote");

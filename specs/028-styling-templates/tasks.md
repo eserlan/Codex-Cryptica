@@ -52,7 +52,6 @@
 - [x] T022 [US3] Add integration tests for graph style generation in `packages/graph-engine/tests/themes.test.ts`
 - [x] T019 [x] Add "Offline Functionality Verification" for all theme assets (textures/fonts)
 
-
 ---
 
 ## Dependencies

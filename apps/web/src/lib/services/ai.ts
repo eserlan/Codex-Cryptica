@@ -1,6 +1,8 @@
-import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
+import {
+  GoogleGenerativeAI,
+  type GenerativeModel,
+} from "@google/generative-ai";
 import { searchService } from "./search";
-
 
 export const TIER_MODES = {
   lite: "gemini-flash-lite-latest",
@@ -75,7 +77,13 @@ STANDALONE SEARCH QUERY:`;
       currentModelName === modelName ||
       currentModelName === `models/${modelName}`;
 
-    if (this.genAI && this.model && this.currentApiKey === apiKey && matchesModel) return;
+    if (
+      this.genAI &&
+      this.model &&
+      this.currentApiKey === apiKey &&
+      matchesModel
+    )
+      return;
 
     console.log(`[AIService] Initializing model: ${modelName}`);
     this.clearStyleCache();
@@ -103,7 +111,7 @@ Only if you have NO information about the subject in either the new context bloc
 
 If the user asks for a visual, image, portrait, or to see what something looks like, inform them that they can use the "/draw" command to have you visualize it.
 
-      Always prioritize the vault context as the absolute truth.`
+      Always prioritize the vault context as the absolute truth.`,
     });
     this.currentApiKey = apiKey;
     this.currentModelName = modelName;
@@ -125,13 +133,18 @@ User visualization request: ${query}`;
    * Distills a concise visual prompt from raw lore context using a text model.
    * This prevents overwhelming the image model with non-visual narrative text.
    */
-  async distillVisualPrompt(apiKey: string, query: string, context: string, modelName: string): Promise<string> {
-        if (!context) return query;
-        this.init(apiKey, modelName);
-        if (!this.model) throw new Error("AI Model not initialized");
-    
-        console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
-        const model = this.model;
+  async distillVisualPrompt(
+    apiKey: string,
+    query: string,
+    context: string,
+    modelName: string,
+  ): Promise<string> {
+    if (!context) return query;
+    this.init(apiKey, modelName);
+    if (!this.model) throw new Error("AI Model not initialized");
+
+    console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
+    const model = this.model;
 
     const prompt = `--- CONTEXT ---
 ${context}
@@ -145,15 +158,24 @@ Extract the distilled visual prompt:`;
       const result = await model.generateContent(prompt);
       const response = await result.response;
       const distilled = response.text().trim();
-      console.log(`[AIService] Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`);
+      console.log(
+        `[AIService] Distilled Visual Prompt: "${distilled.slice(0, 50)}..."`,
+      );
       return distilled;
     } catch (err) {
-      console.warn("[AIService] Failed to distill visual prompt, falling back to enhanced prompt.", err);
+      console.warn(
+        "[AIService] Failed to distill visual prompt, falling back to enhanced prompt.",
+        err,
+      );
       return this.enhancePrompt(query, context);
     }
   }
 
-  async generateImage(apiKey: string, prompt: string, modelName: string): Promise<Blob> {
+  async generateImage(
+    apiKey: string,
+    prompt: string,
+    modelName: string,
+  ): Promise<Blob> {
     try {
       console.log(`[AIService] Generating image with model: ${modelName}`);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -205,7 +227,9 @@ Extract the distilled visual prompt:`;
         // Check if it returned text instead (common if it fails to "draw" but wants to talk about it)
         const textPart = parts.find((p: any) => p.text);
         if (textPart) {
-          throw new Error(`AI returned text instead of an image: "${textPart.text.slice(0, 100)}..."`);
+          throw new Error(
+            `AI returned text instead of an image: "${textPart.text.slice(0, 100)}..."`,
+          );
         }
         throw new Error("No image data returned from AI");
       }
@@ -217,20 +241,29 @@ Extract the distilled visual prompt:`;
       }
 
       return new Blob([bytes], { type: "image/png" });
-
     } catch (err: any) {
       console.error(`[AIService] Image generation failed:`, err.message);
       throw err;
     }
   }
 
-  async generateResponse(apiKey: string, query: string, history: any[], context: string, modelName: string, onUpdate: (partial: string) => void) {
+  async generateResponse(
+    apiKey: string,
+    query: string,
+    history: any[],
+    context: string,
+    modelName: string,
+    onUpdate: (partial: string) => void,
+  ) {
     this.init(apiKey, modelName);
     if (!this.model) throw new Error("AI Model not initialized");
 
     // Create a sanitized history that alternating between user and model, starting with user.
     // Filter out system messages and ensure content is present.
-    const sanitizedHistory: { role: "user" | "model", parts: { text: string }[] }[] = [];
+    const sanitizedHistory: {
+      role: "user" | "model";
+      parts: { text: string }[];
+    }[] = [];
 
     for (const m of history) {
       if (m.role !== "user" && m.role !== "assistant") continue;
@@ -253,11 +286,14 @@ Extract the distilled visual prompt:`;
       }
     }
 
-    // Ensure the history ends with 'model' if it's not empty, 
+    // Ensure the history ends with 'model' if it's not empty,
     // because chat.sendMessage will add the current 'user' query.
     // If it ends with 'user', Gemini might error on consecutive user turns.
     let prefixContext = "";
-    if (sanitizedHistory.length > 0 && sanitizedHistory[sanitizedHistory.length - 1].role === "user") {
+    if (
+      sanitizedHistory.length > 0 &&
+      sanitizedHistory[sanitizedHistory.length - 1].role === "user"
+    ) {
       // In this case, we have a user message with no assistant response yet.
       // We pop it and add it to the current query context to preserve intent.
       const lastUser = sanitizedHistory.pop();
@@ -265,7 +301,7 @@ Extract the distilled visual prompt:`;
     }
 
     const chat = this.model.startChat({
-      history: sanitizedHistory
+      history: sanitizedHistory,
     });
 
     try {
@@ -294,7 +330,10 @@ Extract the distilled visual prompt:`;
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  private findExplicitSubject(query: string, entities: Record<string, any>): string | undefined {
+  private findExplicitSubject(
+    query: string,
+    entities: Record<string, any>,
+  ): string | undefined {
     const queryLower = query.toLowerCase();
     const entityList = Object.values(entities);
 
@@ -323,7 +362,7 @@ Extract the distilled visual prompt:`;
       /^elaborate$/i,
       /^anything else\??$/i,
       /^and\b/i,
-      /^what about (it|him|her|them|that|she|he|they)\??$/i
+      /^what about (it|him|her|them|that|she|he|they)\??$/i,
     ];
 
     // Short queries are often follow-ups
@@ -331,11 +370,12 @@ Extract the distilled visual prompt:`;
     if (isShort) {
       // Treat queries that are just a pronoun (optionally with ?) as follow-ups,
       // e.g. "it", "her?", "them".
-      const pronounOnlyPattern = /^(it|him|her|them|that|she|he|they|his|hers|its)\??$/i;
+      const pronounOnlyPattern =
+        /^(it|him|her|them|that|she|he|they|his|hers|its)\??$/i;
       if (pronounOnlyPattern.test(q)) return true;
     }
 
-    return followUpPatterns.some(p => p.test(q));
+    return followUpPatterns.some((p) => p.test(q));
   }
 
   async retrieveContext(
@@ -344,7 +384,11 @@ Extract the distilled visual prompt:`;
     vault: any, // Injected dependency to avoid checking cycle
     lastEntityId?: string,
     isImage: boolean = false,
-  ): Promise<{ content: string; primaryEntityId?: string; sourceIds: string[] }> {
+  ): Promise<{
+    content: string;
+    primaryEntityId?: string;
+    sourceIds: string[];
+  }> {
     // 1. Style Search: If this is an image request, look for a style guide or aesthetic note
     let styleContext = "";
     if (isImage) {
@@ -479,7 +523,8 @@ Extract the distilled visual prompt:`;
           const overhead = header.length + connectionContext.length + 50;
           const allowed = MAX_CHARS - currentTotal - overhead;
           if (allowed > 100) {
-            const truncated = mainContent.slice(0, allowed) + "... [truncated content]";
+            const truncated =
+              mainContent.slice(0, allowed) + "... [truncated content]";
             contextMap.set(id, `${header}${truncated}${connectionContext}`);
             sourceIds.push(id);
             currentTotal = MAX_CHARS;
