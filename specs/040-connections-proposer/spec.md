@@ -69,6 +69,7 @@ As a lore keeper, I want to see a history of connections I previously dismissed,
 - **FR-005**: System MUST hide rejected proposals from the main view to prevent UI clutter.
 - **FR-006**: System MUST maintain a "Rejected History" log of the last 20 dismissed proposals per entity.
 - **FR-007**: System MUST prevent suggesting a connection that already exists in the vault.
+- **FR-008**: System MUST include a user-facing help article and feature hint explaining the proposer's logic and how to manage suggestions.
 
 ### Key Entities _(include if feature involves data)_
 
