@@ -2,8 +2,15 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Vault E2E", () => {
   test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+    });
     await page.goto("/");
-    // Wait for initialization (OPFS auto-load)
+    // Wait for vault initialization (OPFS auto-load)
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });

@@ -43,23 +43,14 @@ test.describe("Oracle Undo", () => {
     // Wait for the app to initialize
     await expect(page.getByTestId("oracle-orb")).toBeVisible();
 
-    // Set a mock API key to enable Oracle (stored in IDB, not localStorage)
+    // Set a mock API key to enable Oracle using the app's oracle API
     await page.evaluate(async () => {
-      // Use the app's own getDB or access IDB directly
-      const request = indexedDB.open("CodexCryptica", 5);
-      await new Promise<void>((resolve, reject) => {
-        request.onsuccess = (event: any) => {
-          const db = event.target.result;
-          const tx = db.transaction("settings", "readwrite");
-          tx.objectStore("settings").put("test-key", "ai_api_key");
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        };
-        request.onerror = () => reject(request.error);
-      });
-      // Also set it on the oracle store directly for immediate use
       const oracle = (window as any).oracle;
-      if (oracle) oracle.apiKey = "test-key";
+      if (oracle && typeof oracle.setKey === "function") {
+        await oracle.setKey("test-key");
+      } else if (oracle) {
+        oracle.apiKey = "test-key";
+      }
     });
 
     // Initialize vault

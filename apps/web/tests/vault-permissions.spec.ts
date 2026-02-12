@@ -72,10 +72,14 @@ test.describe("Vault Permissions Handling", () => {
 
     // 5. Verify:
     // - App should NOT be in error state (no red screen)
-    // - App should show "NO SIGNAL" (indicating handle was cleared and state reset)
+    // - App should show "NO VAULT" (indicating handle was cleared, vault init completed with 0 entities)
 
     await expect(page.locator("text=SYSTEM FAILURE")).not.toBeVisible();
-    await expect(page.getByText("NO SIGNAL")).toBeVisible({ timeout: 10000 });
+    // Wait for vault to finish initializing after reload
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+    await expect(page.getByText("NO VAULT")).toBeVisible({ timeout: 10000 });
 
     // Optional: Verify handle was cleared from IDB?
     // That requires peeking into IDB again, which is extra, but the UI state is the primary user concern.

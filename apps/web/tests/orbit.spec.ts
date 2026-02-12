@@ -17,6 +17,11 @@ test.describe("Orbit Layout", () => {
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible({ timeout: 10000 });
 
+    // Wait for vault to be fully initialized before creating entities
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+
     // Create entities via vault API for proper reactivity
     await page.evaluate(async () => {
       const vault = (window as any).vault;
