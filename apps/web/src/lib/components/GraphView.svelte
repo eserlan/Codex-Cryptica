@@ -385,10 +385,26 @@
       const currentElements = graph.elements;
       const timeout = setTimeout(async () => {
         try {
-          const nodesToResolve = currentElements.filter(
-            (el): el is any =>
-              el.group === "nodes" && !!(el.data.thumbnail || el.data.image),
-          );
+          const nodesToResolve = currentElements.filter((el): el is any => {
+            if (el.group !== "nodes") return false;
+            const imagePath = el.data.thumbnail || el.data.image;
+            if (!imagePath) return false;
+
+            // Check if already resolved in Cytoscape
+            if (currentCy) {
+              const node = currentCy.$id(el.data.id);
+              if (node.length > 0) {
+                const currentData = node.data();
+                if (
+                  currentData.resolvedImage &&
+                  currentData.resolvedImagePath === imagePath
+                ) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          });
 
           // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
@@ -444,6 +460,7 @@
                       const node = currentCy.$id(data.id);
                       node.data({
                         resolvedImage: resolvedUrl,
+                        resolvedImagePath: imagePath,
                         width: Math.round(w),
                         height: Math.round(h),
                       });
