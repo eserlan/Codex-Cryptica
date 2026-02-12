@@ -18,7 +18,14 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 sw.addEventListener("install", (event) => {
   async function addFilesToCache() {
     const cache = await caches.open(CACHE);
-    await cache.addAll(ASSETS);
+    // Be resilient: add assets individually so one failure doesn't block everything
+    for (const asset of ASSETS) {
+      try {
+        await cache.add(asset);
+      } catch (err) {
+        console.warn(`[SW] Failed to cache asset: ${asset}`, err);
+      }
+    }
   }
 
   event.waitUntil(addFilesToCache());
