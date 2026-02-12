@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
 
@@ -13,7 +14,7 @@
   let deletingId = $state<string | null>(null);
 
   const handleSwitch = async (id: string) => {
-    if (id === vault.activeVaultId) return;
+    if (id === vaultRegistry.activeVaultId) return;
     isLoading = true;
     try {
       await vault.switchVault(id);
@@ -29,7 +30,7 @@
     if (!editingId || !editName.trim()) return;
     isLoading = true;
     try {
-      await vault.renameVault(editingId, editName);
+      await vaultRegistry.renameVault(editingId, editName);
       editingId = null;
     } catch (e) {
       console.error(e);
@@ -42,7 +43,7 @@
     if (!deletingId) return;
     isLoading = true;
     try {
-      await vault.deleteVault(deletingId);
+      await vaultRegistry.deleteVault(deletingId);
       deletingId = null;
     } catch (e) {
       console.error(e);
@@ -100,7 +101,7 @@
     isLoading = true;
     try {
       const handle = await window.showDirectoryPicker({ mode: "read" });
-      if (v.id !== vault.activeVaultId) {
+      if (v.id !== vaultRegistry.activeVaultId) {
         await vault.switchVault(v.id);
       }
       await vault.importFromFolder(handle);
@@ -120,7 +121,7 @@
       hour: "2-digit",
       minute: "2-digit",
     });
-  }
+  };
 </script>
 
 <div
@@ -128,26 +129,37 @@
   transition:fade
   data-testid="vault-switcher-modal"
 >
-  <div role="dialog" aria-modal="true" aria-labelledby="vault-selector-title"
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="vault-selector-title"
     class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
     transition:scale
   >
     <div
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
     >
-      <h2 id="vault-selector-title" class="text-lg font-bold text-theme-primary tracking-wide">
+      <h2
+        id="vault-selector-title"
+        class="text-lg font-bold text-theme-primary tracking-wide"
+      >
         VAULT SELECTOR
       </h2>
-      <button onclick={onClose} class="text-theme-muted hover:text-theme-text" title="Close Selector" aria-label="Close Selector">
+      <button
+        onclick={onClose}
+        class="text-theme-muted hover:text-theme-text"
+        title="Close Selector"
+        aria-label="Close Selector"
+      >
         <span class="icon-[lucide--x] w-5 h-5"></span>
       </button>
     </div>
 
     <div class="overflow-y-auto p-2 space-y-1 flex-1 bg-theme-bg/50 relative">
-      {#each vault.availableVaults as v (v.id)}
+      {#each vaultRegistry.availableVaults as v (v.id)}
         <div
           class="w-full text-left p-3 rounded border transition-all flex justify-between items-center group
-            {v.id === vault.activeVaultId
+            {v.id === vaultRegistry.activeVaultId
             ? 'bg-theme-primary/10 border-theme-primary text-theme-primary'
             : 'bg-theme-surface border-transparent hover:border-theme-border hover:bg-theme-surface/80 text-theme-text'}"
         >
@@ -192,7 +204,7 @@
             >
               <div class="font-bold text-sm flex items-center gap-2">
                 {v.name}
-                {#if v.id === vault.activeVaultId}
+                {#if v.id === vaultRegistry.activeVaultId}
                   <span
                     class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-mono"
                     >ACTIVE</span
@@ -229,7 +241,7 @@
                 <span class="icon-[lucide--edit-2] w-3.5 h-3.5"></span>
               </button>
 
-              {#if v.id !== vault.activeVaultId}
+              {#if v.id !== vaultRegistry.activeVaultId}
                 <button
                   class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                   onclick={() => (deletingId = v.id)}
@@ -259,7 +271,7 @@
             </h3>
             <p class="text-xs text-theme-text mb-4 leading-relaxed">
               This will permanently delete "<strong
-                >{vault.availableVaults.find((v) => v.id === deletingId)
+                >{vaultRegistry.availableVaults.find((v) => v.id === deletingId)
                   ?.name}</strong
               >" and all its files. This action cannot be undone.
             </p>

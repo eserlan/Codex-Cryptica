@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { LocalEntity } from "../stores/vault.svelte";
+import type { LocalEntity } from "../stores/vault/types";
 
 export interface VaultRecord {
   id: string;

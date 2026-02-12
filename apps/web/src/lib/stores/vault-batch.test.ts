@@ -1,100 +1,68 @@
+// apps/web/src/lib/stores/vault-batch.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import * as opfs from "../utils/opfs";
+import { createMockOpfs, createMockIDB } from "../../tests/mocks/storage";
+import * as opfsUtils from "../utils/opfs";
+import * as idbUtils from "../utils/idb";
 
 // Mock Svelte 5 Runes
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
   (global as any).$state.snapshot = (v: any) => v;
   (global as any).$derived = (v: any) => v;
-  (global as any).$derived.by = (v: any) => v;
+  (global as any).$derived.by = vi.fn((fn) => fn());
   (global as any).$effect = (v: any) => v;
 });
 
-// Mock dependencies
-vi.mock("../utils/fs", () => ({
-  walkDirectory: vi.fn(),
-  readFile: vi.fn(),
-  writeFile: vi.fn(),
-}));
-
+// Mock Services
 vi.mock("../services/search", () => ({
   searchService: {
     index: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn().mockResolvedValue(undefined),
-    init: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
-// Mock worker and bridge to prevent alias resolution issues
-vi.mock("../cloud-bridge/worker-bridge", () => ({
-  workerBridge: {
-    reset: vi.fn(),
-    send: vi.fn(),
+vi.mock("../services/ai", () => ({
+  aiService: {
+    clearStyleCache: vi.fn(),
   },
 }));
-
-vi.mock("./oracle.svelte", () => ({
-  oracle: {
-    clearMessages: vi.fn(),
-    messages: [],
-    tier: "lite",
-    apiKey: null,
-  },
-}));
-
-vi.mock("./graph.svelte", () => ({
-  graph: {
-    requestFit: vi.fn(),
-  },
-}));
-
-// Mock global window and document for Image/Canvas
-global.window = global.window || {};
-global.document = global.document || { createElement: vi.fn() };
 
 import { vault } from "./vault.svelte";
+import { vaultRegistry } from "./vault-registry.svelte";
 
 describe("VaultStore - Entity Creation", () => {
+  let mockOpfs: any;
+  let mockIDB: any;
+
   beforeEach(async () => {
     vi.resetAllMocks();
-    
-    // Create a robust mock root
-    const mockRoot: any = {
-      kind: 'directory',
-      name: 'root',
-      getDirectoryHandle: vi.fn().mockImplementation(async () => mockRoot),
-      getFileHandle: vi.fn().mockResolvedValue({
-        kind: 'file',
-        createWritable: vi.fn().mockResolvedValue({
-          write: vi.fn(),
-          close: vi.fn(),
-        }),
-        getFile: vi.fn().mockResolvedValue({
-          text: vi.fn().mockResolvedValue(''),
-          lastModified: Date.now(),
-        }),
-      }),
-      values: vi.fn().mockReturnValue([]),
-    };
+    mockOpfs = createMockOpfs();
+    mockIDB = createMockIDB();
 
-    // Spy on getOpfsRoot
-    vi.spyOn(opfs, 'getOpfsRoot').mockResolvedValue(mockRoot);
+    vi.spyOn(opfsUtils, "getOpfsRoot").mockResolvedValue(mockOpfs);
+    vi.spyOn(idbUtils, "getDB").mockResolvedValue(mockIDB as any);
+
+    // Force re-init
+    (vault as any).isInitialized = false;
+    (vaultRegistry as any).isInitialized = false;
 
     await vault.init();
     vault.entities = {};
-    (vault as any).inboundConnections = {};
   });
 
   it("should create a single entity", async () => {
-    await vault.createEntity("character", "Hero A", { content: "Content A" });
+    const id = await vault.createEntity("character", "Hero A", {
+      content: "Content A",
+    });
     expect(Object.keys(vault.entities)).toHaveLength(1);
-    expect(vault.entities["hero-a"]?.title).toBe("Hero A");
+    expect(vault.entities[id]?.title).toBe("Hero A");
   });
 
-  it("should skip duplicate entities during creation", async () => {
+  it("should handle duplicate titles by generating unique IDs", async () => {
     await vault.createEntity("character", "Hero A", { content: "Content A" });
-    await expect(vault.createEntity("character", "Hero A")).rejects.toThrow();
+    const id2 = await vault.createEntity("character", "Hero A");
+    expect(Object.keys(vault.entities)).toHaveLength(2);
+    expect(id2).toBe("hero-a-1");
   });
 });
-
