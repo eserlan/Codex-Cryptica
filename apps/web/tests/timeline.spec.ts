@@ -75,19 +75,19 @@ test.describe("World Timeline - Graph Integration", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Event 1");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Event 2");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Undated Event");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Set dates via store for speed/stability in test
     await page.evaluate(() => {
-        (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-        (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
+      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
+      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
     });
 
     // Wait for entities to load/update
@@ -133,18 +133,18 @@ test.describe("World Timeline - Graph Integration", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Event 1");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Event 2");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Undated Event");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.evaluate(() => {
-        (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
-        (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
+      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
+      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
     });
 
     await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", {

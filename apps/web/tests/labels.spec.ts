@@ -108,17 +108,22 @@ test.describe("Entity Labeling System", () => {
     // 6. Reload and verify persistence
     await page.reload();
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    
+
     // Use search to find the hero again
     await page.keyboard.press("Control+k");
     await page.getByPlaceholder("Search notes...").fill("Test Hero");
-    await page.getByTestId("search-result").filter({ hasText: "Test Hero" }).click();
-    
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Test Hero" })
+      .click();
+
     await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
     await expect(page.getByText("MIA", { exact: true })).toBeVisible();
 
     // 7. Remove a label
-    await page.getByRole("button", { name: /Remove label MIA/i }).click({ force: true });
+    await page
+      .getByRole("button", { name: /Remove label MIA/i })
+      .click({ force: true });
     await expect(page.getByText("MIA", { exact: true })).not.toBeVisible();
     await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
   });

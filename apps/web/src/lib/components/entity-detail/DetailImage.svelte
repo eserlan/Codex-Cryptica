@@ -16,12 +16,11 @@
 
     $effect(() => {
         const imagePath = entity?.image;
-        let cancelled = false;
+        let stale = false;
 
         if (imagePath) {
             vault.resolveImageUrl(imagePath).then((url) => {
-                // Guard against stale async results if the entity changes
-                if (!cancelled && entity?.image === imagePath) {
+                if (!stale && entity?.image === imagePath) {
                     resolvedImageUrl = url;
                 }
             });
@@ -30,7 +29,7 @@
         }
 
         return () => {
-            cancelled = true;
+            stale = true;
         };
     });
 
@@ -85,7 +84,9 @@
 
 <svelte:window
     onkeydown={(e) => {
-        if (e.key === "Escape" && showLightbox) showLightbox = false;
+        if (e.key === "Escape") {
+            if (showLightbox) showLightbox = false;
+        }
     }}
 />
 

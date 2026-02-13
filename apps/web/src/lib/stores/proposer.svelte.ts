@@ -4,12 +4,10 @@ import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
-
-// We use the service directly for DB operations (get/apply/dismiss)
-// and the bridge for heavy analysis tasks.
-const service = new ProposerService();
+import { getDB } from "../utils/idb";
 
 class ProposerStore {
+  private service: ProposerService | null = null;
   isAnalyzing = $state(false);
   analysisError = $state<string | null>(null);
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
@@ -29,10 +27,18 @@ class ProposerStore {
     //
   }
 
+  private getService(): ProposerService {
+    if (!this.service) {
+      this.service = new ProposerService("CodexCryptica", 6, getDB());
+    }
+    return this.service;
+  }
+
   async loadProposals(entityId: string) {
+    const service = this.getService();
     const p = await service.getProposals(entityId);
     const h = await service.getHistory(entityId);
-    
+
     // Guard against stale updates if navigation happened
     if (vault.selectedEntityId !== entityId) return;
 
@@ -43,7 +49,7 @@ class ProposerStore {
   async analyzeCurrentEntity() {
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
-    
+
     this.analysisError = null;
 
     // Load existing proposals/history if not loaded
@@ -63,12 +69,14 @@ class ProposerStore {
     try {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
-      const existingTargetIds = new Set(entity.connections.map(c => c.target));
-      
+      const existingTargetIds = new Set(
+        entity.connections.map((c) => c.target),
+      );
+
       const targets = Object.values(vault.entities)
-        .filter(e => e.id !== entityId && !existingTargetIds.has(e.id))
-        .map(e => ({ id: e.id, name: e.title }));
-        
+        .filter((e) => e.id !== entityId && !existingTargetIds.has(e.id))
+        .map((e) => ({ id: e.id, name: e.title }));
+
       // Use the lite model for background tasks to save cost/latency
       const modelName = TIER_MODES["lite"];
 
@@ -76,23 +84,27 @@ class ProposerStore {
         apiKey,
         modelName,
         entityId,
-        entity.content || "",
-        targets
+        `${entity.content || ""} \n\n ${entity.lore || ""}`.trim(),
+        targets,
       );
-      
+
       // Guard against stale updates
       if (vault.selectedEntityId !== entityId) return;
 
+      const service = this.getService();
       await service.saveProposals(newProposals);
-      
+
       const existing = this.proposals[entityId] || [];
-      const existingIds = new Set(existing.map(p => p.id));
-      const historyIds = new Set((this.history[entityId] || []).map(p => p.id));
-      
-      const toAdd = newProposals.filter(p => !existingIds.has(p.id) && !historyIds.has(p.id));
-      
+      const existingIds = new Set(existing.map((p) => p.id));
+      const historyIds = new Set(
+        (this.history[entityId] || []).map((p) => p.id),
+      );
+
+      const toAdd = newProposals.filter(
+        (p) => !existingIds.has(p.id) && !historyIds.has(p.id),
+      );
+
       this.proposals[entityId] = [...existing, ...toAdd];
-      
     } catch (err: any) {
       console.error("Analysis failed", err);
       this.analysisError = err.message || "Analysis failed";
@@ -105,39 +117,65 @@ class ProposerStore {
 
   async apply(proposal: Proposal) {
     // Create actual connection in vault first; only proceed if successful
-    const connectionCreated = vault.addConnection(proposal.sourceId, proposal.targetId, proposal.type);
+    const connectionCreated = vault.addConnection(
+      proposal.sourceId,
+      proposal.targetId,
+      proposal.type,
+    );
     if (!connectionCreated) {
-      console.error("Failed to create connection in vault for proposal", proposal);
+      console.error(
+        "Failed to create connection in vault for proposal",
+        proposal,
+      );
       return;
     }
 
+    const service = this.getService();
     await service.applyProposal(proposal.id);
-    
+
     // Update local state - verify context is still valid or just update store state regardless
     // Updating store state regardless is safer for consistency.
     if (this.proposals[proposal.sourceId]) {
-      this.proposals[proposal.sourceId] = this.proposals[proposal.sourceId].filter(p => p.id !== proposal.id);
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
     }
   }
 
   async dismiss(proposal: Proposal) {
+    const service = this.getService();
     await service.dismissProposal(proposal.id);
     if (this.proposals[proposal.sourceId]) {
-      this.proposals[proposal.sourceId] = this.proposals[proposal.sourceId].filter(p => p.id !== proposal.id);
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
     }
     // Add to history
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
-    this.history[proposal.sourceId] = [proposal, ...this.history[proposal.sourceId]];
+    this.history[proposal.sourceId] = [
+      proposal,
+      ...this.history[proposal.sourceId],
+    ];
+    if (this.history[proposal.sourceId].length > 20) {
+      this.history[proposal.sourceId].pop();
+    }
   }
 
   async reEvaluate(proposal: Proposal) {
+    const service = this.getService();
     await service.reEvaluateProposal(proposal.id);
     // Move from history to proposals
     if (this.history[proposal.sourceId]) {
-      this.history[proposal.sourceId] = this.history[proposal.sourceId].filter(p => p.id !== proposal.id);
+      this.history[proposal.sourceId] = this.history[proposal.sourceId].filter(
+        (p) => p.id !== proposal.id,
+      );
     }
-    if (!this.proposals[proposal.sourceId]) this.proposals[proposal.sourceId] = [];
-    this.proposals[proposal.sourceId] = [...this.proposals[proposal.sourceId], proposal];
+    if (!this.proposals[proposal.sourceId])
+      this.proposals[proposal.sourceId] = [];
+    this.proposals[proposal.sourceId] = [
+      ...this.proposals[proposal.sourceId],
+      proposal,
+    ];
   }
 }
 

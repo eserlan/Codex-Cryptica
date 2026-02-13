@@ -21,7 +21,9 @@
                 <MarkdownEditor
                     content={editLore}
                     editable={true}
-                    onUpdate={(val) => editLore = val}
+                    onUpdate={(val) => {
+                        if (isEditing) editLore = val;
+                    }}
                 />
             </div>
         {:else}

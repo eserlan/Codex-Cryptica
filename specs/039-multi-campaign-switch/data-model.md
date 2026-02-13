@@ -3,7 +3,9 @@
 ## Entities
 
 ### VaultRecord
+
 Represents the configuration and identity of a single vault.
+
 - `id`: string (slug, primary key)
 - `name`: string (display title)
 - `createdAt`: number (timestamp)
@@ -11,13 +13,16 @@ Represents the configuration and identity of a single vault.
 - `entityCount`: number (cached count for display in vault picker)
 
 ### VaultRegistry
+
 A global collection of all `VaultRecord` entries.
+
 - Stored in IndexedDB: `vaults` object store (key: `id`).
 - Current Active Vault ID: Stored in `settings` store under key `activeVaultId`.
 
 ## Storage Strategy
 
 ### OPFS Structure (Primary)
+
 ```text
 / (OPFS Root)
 └── vaults/
@@ -31,6 +36,7 @@ A global collection of all `VaultRecord` entries.
 ```
 
 ### IndexedDB Schema (v5)
+
 ```text
 CodexCryptica (v5)
 ├── settings        # key-value pairs (activeVaultId, defaultVisibility, etc.)
@@ -41,12 +47,14 @@ CodexCryptica (v5)
 ```
 
 ### FSA Sync (Optional)
+
 - User-selected directory via `showDirectoryPicker()`
 - One-way export: OPFS vault → local folder
 - One-way import: local folder → OPFS vault
 - Handle stored in `settings` as `lastSyncHandle` for convenience
 
 ### Migration Path
+
 - Existing users on the OPFS branch have files at the root of OPFS.
 - **Auto-migration**: On first run with multi-vault support, if `vaults/` directory does not exist but `.md` files exist at root:
   1. Create a vault named "Default Vault" (id: `default`).

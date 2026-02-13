@@ -245,7 +245,10 @@ class OracleStore {
   }
 
   get isEnabled() {
-    const sharedKey = (typeof window !== 'undefined' && (window as any).__SHARED_GEMINI_KEY__) || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey =
+      (typeof window !== "undefined" &&
+        (window as any).__SHARED_GEMINI_KEY__) ||
+      import.meta.env.VITE_SHARED_GEMINI_KEY;
     return !!this.apiKey || !!sharedKey;
   }
 
@@ -254,7 +257,10 @@ class OracleStore {
     if (this.tier === "advanced") {
       return this.apiKey;
     }
-    const sharedKey = (typeof window !== 'undefined' && (window as any).__SHARED_GEMINI_KEY__) || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey =
+      (typeof window !== "undefined" &&
+        (window as any).__SHARED_GEMINI_KEY__) ||
+      import.meta.env.VITE_SHARED_GEMINI_KEY;
     return this.apiKey || sharedKey;
   }
 

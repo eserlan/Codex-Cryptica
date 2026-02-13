@@ -123,7 +123,7 @@ describe("ProposerService", () => {
       reason: "reason",
       confidence: 0.8,
       status: "pending" as const,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     await service.saveProposals([proposal]);
@@ -147,7 +147,7 @@ describe("ProposerService", () => {
       reason: "reason",
       confidence: 0.8,
       status: "rejected" as const,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Save as rejected directly

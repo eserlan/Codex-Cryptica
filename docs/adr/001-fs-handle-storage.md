@@ -29,19 +29,19 @@ The application requires a robust, local-first storage solution that works relia
 We have adopted a hybrid storage architecture:
 
 1.  **Primary Storage (Working Memory):** The **Origin Private File System (OPFS)** is now the primary storage location for the vault.
-    -   **Pros:**
-        -   **High-Performance:** Optimized for frequent read/write operations.
-        -   **No Prompts:** Once initialized, it does not require user permission prompts for access.
-        -   **Reliable:** Not subject to the same silent permission revocation as FSA handles on mobile.
-        -   **Solves Brand-Check:** As it's a separate file system managed by the browser, the handle management is simpler and not exposed to the same Svelte reactivity issues.
-    -   **Cons:**
-        -   **Opaque to User:** The file system is a black box managed by the browser. Users cannot easily access or manipulate their files with external editors.
+    - **Pros:**
+      - **High-Performance:** Optimized for frequent read/write operations.
+      - **No Prompts:** Once initialized, it does not require user permission prompts for access.
+      - **Reliable:** Not subject to the same silent permission revocation as FSA handles on mobile.
+      - **Solves Brand-Check:** As it's a separate file system managed by the browser, the handle management is simpler and not exposed to the same Svelte reactivity issues.
+    - **Cons:**
+      - **Opaque to User:** The file system is a black box managed by the browser. Users cannot easily access or manipulate their files with external editors.
 
 2.  **User-Directed Sync (Long-Term Storage):** The **File System Access API (FSA)** is retained for a user-initiated "Sync to Local Folder" feature.
-    -   **Pros:**
-        -   **User Sovereignty:** Provides a mechanism for users to export their entire vault to a visible, durable location on their disk. This serves as a backup and allows for external editing.
-    -   **Cons:**
-        -   Subject to the permission issues that make it unsuitable for primary storage, but acceptable for a manual, user-triggered export process.
+    - **Pros:**
+      - **User Sovereignty:** Provides a mechanism for users to export their entire vault to a visible, durable location on their disk. This serves as a backup and allows for external editing.
+    - **Cons:**
+      - Subject to the permission issues that make it unsuitable for primary storage, but acceptable for a manual, user-triggered export process.
 
 ## Decision Outcome
 

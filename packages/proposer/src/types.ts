@@ -21,15 +21,15 @@ export interface IProposerService {
     modelName: string,
     entityId: string,
     content: string,
-    availableTargets: { id: string; name: string }[]
+    availableTargets: { id: string; name: string }[],
   ): Promise<Proposal[]>;
-  
+
   getProposals(entityId: string): Promise<Proposal[]>;
   getHistory(entityId: string): Promise<Proposal[]>;
-  
+
   applyProposal(proposalId: string): Promise<void>;
   dismissProposal(proposalId: string): Promise<void>;
   reEvaluateProposal(proposalId: string): Promise<void>;
-  
+
   saveProposals(proposals: Proposal[]): Promise<void>;
 }

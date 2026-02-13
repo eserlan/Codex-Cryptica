@@ -7,7 +7,7 @@ const DB_VERSION = 6;
 const PROPOSAL_STORE = "proposals";
 
 export class ProposerService implements IProposerService {
-  private dbPromise: Promise<IDBPDatabase<any>>;
+  private dbPromise: Promise<IDBPDatabase<any>> | null = null;
   private config: ProposerConfig = {
     minConfidence: 0.6,
     maxHistory: 20,
@@ -16,10 +16,23 @@ export class ProposerService implements IProposerService {
   private dbName: string;
   private dbVersion: number;
 
-  constructor(dbName: string = DB_NAME, dbVersion: number = DB_VERSION) {
+  constructor(
+    dbName: string = DB_NAME,
+    dbVersion: number = DB_VERSION,
+    externalDbPromise?: Promise<IDBPDatabase<any>>,
+  ) {
     this.dbName = dbName;
     this.dbVersion = dbVersion;
-    this.dbPromise = openDB(this.dbName, this.dbVersion);
+    if (externalDbPromise) {
+      this.dbPromise = externalDbPromise;
+    }
+  }
+
+  private async getDB(): Promise<IDBPDatabase<any>> {
+    if (!this.dbPromise) {
+      this.dbPromise = openDB(this.dbName, this.dbVersion);
+    }
+    return this.dbPromise;
   }
 
   async analyzeEntity(
@@ -45,9 +58,10 @@ export class ProposerService implements IProposerService {
       // Truncate content intelligently (max 15000 chars, try to break at sentence)
       let truncatedContent = content.slice(0, 15000);
       if (content.length > 15000) {
-        const lastPeriod = truncatedContent.lastIndexOf('.');
-        if (lastPeriod > 10000) { // Ensure we keep a significant chunk
-            truncatedContent = truncatedContent.slice(0, lastPeriod + 1);
+        const lastPeriod = truncatedContent.lastIndexOf(".");
+        if (lastPeriod > 10000) {
+          // Ensure we keep a significant chunk
+          truncatedContent = truncatedContent.slice(0, lastPeriod + 1);
         }
       }
 
@@ -66,7 +80,7 @@ Criteria for a connection:
 
 Source Entity Content:
 """
-${truncatedContent}
+${truncatedContent.replace(/"""/g, "''\"")}
 """
 
 Available Target Entities:
@@ -92,7 +106,9 @@ Only return the JSON. If no connections are found, return empty array [].`;
       try {
         rawProposals = JSON.parse(text);
       } catch {
-        console.warn(`Proposer: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`);
+        console.warn(
+          `Proposer: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`,
+        );
         return [];
       }
 
@@ -129,7 +145,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async getProposals(entityId: string): Promise<Proposal[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     const allProposals = await db.getAllFromIndex(
       PROPOSAL_STORE,
       "by-source",
@@ -139,7 +155,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async getHistory(entityId: string): Promise<Proposal[]> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     const allProposals = await db.getAllFromIndex(
       PROPOSAL_STORE,
       "by-source",
@@ -152,7 +168,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async applyProposal(proposalId: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
@@ -162,7 +178,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async dismissProposal(proposalId: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
@@ -172,7 +188,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async reEvaluateProposal(proposalId: string): Promise<void> {
-    const db = await this.dbPromise;
+    const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
@@ -182,7 +198,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async saveProposals(proposals: Proposal[]): Promise<void> {
-    const db = await this.dbPromise;
+    if (proposals.length === 0) return;
+    const db = await this.getDB();
     const tx = db.transaction(PROPOSAL_STORE, "readwrite");
     await Promise.all(proposals.map((p) => tx.store.put(p)));
     await tx.done;
