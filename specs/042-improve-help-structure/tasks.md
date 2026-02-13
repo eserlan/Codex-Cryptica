@@ -42,6 +42,7 @@ description: "Task list for Improve Help Structure feature"
 - [x] T012 Verify Help UI renders the content correctly (Markdown formatting, titles)
 - [x] T013 Verify Search functionality finds the new articles
 - [x] T013.5 Create and verify E2E tests in `apps/web/tests/help-system.spec.ts`
+- [x] T013.6 Address PR feedback for direct help links (init check, validation, cleanup, a11y)
 
 ## Phase 4: Polish & Cross-Cutting Concerns
 
