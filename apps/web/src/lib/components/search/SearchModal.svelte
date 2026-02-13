@@ -8,14 +8,14 @@
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
 
-  let inputElement: HTMLInputElement;
-  let resultsContainer: HTMLDivElement;
+  let inputElement = $state<HTMLInputElement>();
+  let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
   // Auto-focus input when modal opens
   $effect(() => {
     if (searchStore.isOpen && inputElement) {
-      tick().then(() => inputElement.focus());
+      tick().then(() => inputElement?.focus());
     }
   });
 
@@ -140,8 +140,8 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm"
-    on:click={handleBackdropClick}
-    on:keydown={(e) => e.key === "Escape" && searchStore.close()}
+    onclick={handleBackdropClick}
+    onkeydown={(e) => e.key === "Escape" && searchStore.close()}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
@@ -159,8 +159,8 @@
             bind:this={inputElement}
             type="text"
             value={searchStore.query}
-            on:input={handleInput}
-            on:keydown={handleKeydown}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
             placeholder="Search notes..."
             class="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
             role="combobox"
@@ -212,7 +212,7 @@
                   {index === searchStore.selectedIndex
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
                   : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
-                on:click={(e) => selectResult(result, e)}
+                onclick={(e) => selectResult(result, e)}
                 data-testid="search-result"
               >
                 <span class="font-medium truncate flex items-center gap-2">

@@ -8,7 +8,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
-  import type { Core, NodeSingular } from "cytoscape";
+  import type { Core, NodeSingular, _Position } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
   import {
@@ -137,7 +137,7 @@
         });
 
         cy.nodes().animate({
-          position: (node) => positions[node.id()],
+          position: ((node: NodeSingular) => positions[node.id()]) as any,
           duration: 500,
           easing: "ease-out-cubic",
         });
@@ -174,7 +174,7 @@
           cy.fit(cy.elements(), 40);
         } else {
           cy.nodes().animate({
-            position: (node) => positions[node.id()],
+            position: ((node: NodeSingular) => positions[node.id()]) as any,
             duration: 1000,
             easing: "ease-out-quad",
           });
