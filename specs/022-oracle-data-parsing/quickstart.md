@@ -25,9 +25,7 @@ The `ChatMessage.svelte` component uses the `OracleParseResult` to decide whethe
 <!-- ChatMessage.svelte -->
 {@const parsed = parseOracleResponse(message.content)}
 {#if parsed.wasSplit}
-  <button onclick={() => applyIntelligent(parsed)}>
-     APPLY ALL TO NODE
-  </button>
+  <button onclick={() => applyIntelligent(parsed)}> APPLY ALL TO NODE </button>
 {/if}
 ```
 

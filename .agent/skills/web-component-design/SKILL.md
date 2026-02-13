@@ -234,17 +234,15 @@ const isActive = computed(() => tabs?.activeTab.value === props.id);
 ```svelte
 <script lang="ts">
   interface Props {
-    variant?: 'primary' | 'secondary';
-    size?: 'sm' | 'md' | 'lg';
+    variant?: "primary" | "secondary";
+    size?: "sm" | "md" | "lg";
     onclick?: () => void;
-    children: import('svelte').Snippet;
+    children: import("svelte").Snippet;
   }
 
-  let { variant = 'primary', size = 'md', onclick, children }: Props = $props();
+  let { variant = "primary", size = "md", onclick, children }: Props = $props();
 
-  const classes = $derived(
-    `btn btn-${variant} btn-${size}`
-  );
+  const classes = $derived(`btn btn-${variant} btn-${size}`);
 </script>
 
 <button class={classes} {onclick}>

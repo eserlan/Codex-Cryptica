@@ -6,9 +6,7 @@ To switch to a different campaign, first close the active one:
 
 ```svelte
 <!-- VaultControls.svelte -->
-<button onclick={() => vault.close()}>
-  CLOSE VAULT
-</button>
+<button onclick={() => vault.close()}> CLOSE VAULT </button>
 ```
 
 ## Mounting a New Vault
@@ -16,9 +14,7 @@ To switch to a different campaign, first close the active one:
 After closing, the "OPEN VAULT" button will reappear. Clicking it will trigger the standard browser file picker:
 
 ```svelte
-<button onclick={() => vault.openDirectory()}>
-  OPEN VAULT
-</button>
+<button onclick={() => vault.openDirectory()}> OPEN VAULT </button>
 ```
 
 ## E2E Testing Verification

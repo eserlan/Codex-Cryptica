@@ -15,8 +15,8 @@ Manage Cytoscape lifecycle and reactivity using Svelte 5 `$effect` and `onMount`
 
 ```svelte
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import cytoscape, { type Core } from 'cytoscape';
+  import { onMount, onDestroy } from "svelte";
+  import cytoscape, { type Core } from "cytoscape";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -26,8 +26,10 @@ Manage Cytoscape lifecycle and reactivity using Svelte 5 `$effect` and `onMount`
     cy = cytoscape({
       container,
       elements,
-      style: [ /* styles */ ],
-      layout: { name: 'cose' }
+      style: [
+        /* styles */
+      ],
+      layout: { name: "cose" },
     });
   });
 
@@ -40,7 +42,7 @@ Manage Cytoscape lifecycle and reactivity using Svelte 5 `$effect` and `onMount`
     if (cy && elements) {
       cy.elements().remove();
       cy.add(elements);
-      cy.layout({ name: 'cose', animate: true }).run();
+      cy.layout({ name: "cose", animate: true }).run();
     }
   });
 </script>
