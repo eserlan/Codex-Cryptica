@@ -8,7 +8,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
-  import type { Core, NodeSingular, _Position } from "cytoscape";
+  import type { Core, NodeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
   import {
@@ -34,7 +34,7 @@
   let cy: Core | undefined = $state();
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
-  let _isLayoutRunning = $state(false);
+  let isLayoutRunning = $state(false);
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list),
@@ -124,7 +124,7 @@
     }
 
     if (graph.timelineMode) {
-      _isLayoutRunning = true;
+      isLayoutRunning = true;
       try {
         const nodes = graph.elements.filter(
           (e) => e.group === "nodes",
@@ -136,15 +136,17 @@
           jitter: 150,
         });
 
-        cy.nodes().animate({
-          position: ((node: NodeSingular) => positions[node.id()]) as any,
-          duration: 500,
-          easing: "ease-out-cubic",
-        });
+        cy.layout({
+          name: "preset",
+          positions: positions,
+          animate: true,
+          animationDuration: 500,
+          animationEasing: "ease-out-cubic",
+        }).run();
       } catch (err) {
         console.error("Timeline layout failed:", err);
       } finally {
-        _isLayoutRunning = false;
+        isLayoutRunning = false;
       }
     } else if (graph.orbitMode && graph.centralNodeId) {
       setCentralNode(cy, graph.centralNodeId);
@@ -158,7 +160,7 @@
       }
     } else {
       // Background FCOSE Layout
-      _isLayoutRunning = true;
+      isLayoutRunning = true;
       try {
         const elements = graph.elements;
         const positions = await layoutService.runFcose(elements, {
@@ -173,11 +175,13 @@
           });
           cy.fit(cy.elements(), 40);
         } else {
-          cy.nodes().animate({
-            position: ((node: NodeSingular) => positions[node.id()]) as any,
-            duration: 1000,
-            easing: "ease-out-quad",
-          });
+          cy.layout({
+            name: "preset",
+            positions: positions,
+            animate: true,
+            animationDuration: 1000,
+            animationEasing: "ease-out-quad",
+          }).run();
         }
       } catch (err) {
         console.error("Background layout failed:", err);
@@ -187,7 +191,7 @@
         });
         currentLayout.run();
       } finally {
-        _isLayoutRunning = false;
+        isLayoutRunning = false;
       }
     }
   };
@@ -835,6 +839,16 @@
       >
         <span class="icon-[lucide--eye] w-3 h-3 animate-pulse"></span>
         Shared Mode Active (Player Preview)
+      </div>
+    {/if}
+
+    {#if isLayoutRunning}
+      <div
+        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
+        transition:fade
+      >
+        <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
+        Neural Layout Synthesis Processing...
       </div>
     {/if}
   </div>

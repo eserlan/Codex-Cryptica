@@ -1,11 +1,6 @@
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
-import {
-  GraphTransformer,
-  _getTimelineLayout,
-  type _GraphNode,
-} from "graph-engine";
-import type { _Core } from "cytoscape";
+import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era } from "schema";
 import { getDB } from "../utils/idb";
 
