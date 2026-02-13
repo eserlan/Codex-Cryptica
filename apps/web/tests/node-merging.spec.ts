@@ -228,7 +228,7 @@ test.describe("Node Merging", () => {
       );
 
       // 3. Verify hint NOT visible initially
-      await expect(page.getByText("Merging Entries")).not.toBeVisible();
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
 
       // 4. Select two nodes via Cytoscape API
       await page.evaluate(() => {
@@ -238,12 +238,12 @@ test.describe("Node Merging", () => {
       });
 
       // 5. Verify hint appears
-      await expect(page.getByText("Merging Entries")).toBeVisible();
-      await expect(page.getByText("You can combine duplicates")).toBeVisible();
+      await expect(page.getByText("Merging Nodes")).toBeVisible();
+      await expect(page.getByText("You can combine duplicates.")).toBeVisible();
 
       // 6. Dismiss hint
       await page.getByTestId("dismiss-hint-button").click();
-      await expect(page.getByText("Merging Entries")).not.toBeVisible();
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
 
       // 7. Unselect and re-select to verify it stays dismissed
       await page.evaluate(() => {
@@ -252,7 +252,7 @@ test.describe("Node Merging", () => {
         cy.$id("node-a").select();
         cy.$id("node-b").select();
       });
-      await expect(page.getByText("Consolidation Power")).not.toBeVisible();
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
     });
   });
 });

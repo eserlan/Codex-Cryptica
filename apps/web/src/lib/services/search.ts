@@ -8,20 +8,45 @@ export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchEngine> | null = null;
 
+  private static current: SearchService | null = null;
+  private static vaultListenerAttached = false;
+  private static readonly handleVaultSwitched = () => {
+    const current = SearchService.current;
+    if (current) {
+      current.terminate();
+      current.initWorker();
+    }
+  };
+
   constructor() {
     if (typeof window !== "undefined") {
-      this.worker = new SearchWorker();
-      this.api = Comlink.wrap<SearchEngine>(this.worker);
-      // Initialize immediately
-      this.init();
+      this.initWorker();
+      SearchService.current = this;
 
-      window.addEventListener("vault-switched", () => {
-        this.worker?.terminate();
-        this.worker = new SearchWorker();
-        this.api = Comlink.wrap<SearchEngine>(this.worker);
-        this.init();
-      });
+      if (!SearchService.vaultListenerAttached) {
+        window.addEventListener(
+          "vault-switched",
+          SearchService.handleVaultSwitched,
+        );
+        SearchService.vaultListenerAttached = true;
+      }
     }
+  }
+
+  private initWorker() {
+    this.worker = new SearchWorker();
+    this.api = Comlink.wrap<SearchEngine>(this.worker);
+    // Initialize immediately
+    this.init();
+  }
+
+  terminate() {
+    if (this.api) {
+      this.api[Comlink.releaseProxy](); // Release the Comlink proxy
+      this.api = null;
+    }
+    this.worker?.terminate();
+    this.worker = null;
   }
 
   async init(_options: { phonetic?: boolean } = {}): Promise<void> {

@@ -1,23 +1,43 @@
 import * as Comlink from "comlink";
 import LayoutWorker from "../workers/layout.worker?worker";
 import type { LayoutEngine, LayoutResult } from "graph-engine";
+// NOTE: This import intentionally targets an internal `src` path of graph-engine
+// because `TimelineLayoutOptions` is not exposed via the public package entrypoint.
+// If graph-engine's internal layout structure changes, this import will need updating.
 import type { TimelineLayoutOptions } from "graph-engine/src/layouts/timeline";
 
 export class LayoutService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<LayoutEngine> | null = null;
 
+  private static current: LayoutService | null = null;
+  private static vaultListenerAttached = false;
+  private static readonly handleVaultSwitched = () => {
+    const current = LayoutService.current;
+    if (current) {
+      current.terminate();
+      current.initWorker();
+    }
+  };
+
   constructor() {
     if (typeof window !== "undefined") {
-      this.worker = new LayoutWorker();
-      this.api = Comlink.wrap<LayoutEngine>(this.worker);
+      this.initWorker();
+      LayoutService.current = this;
 
-      window.addEventListener("vault-switched", () => {
-        this.terminate();
-        this.worker = new LayoutWorker();
-        this.api = Comlink.wrap<LayoutEngine>(this.worker);
-      });
+      if (!LayoutService.vaultListenerAttached) {
+        window.addEventListener(
+          "vault-switched",
+          LayoutService.handleVaultSwitched,
+        );
+        LayoutService.vaultListenerAttached = true;
+      }
     }
+  }
+
+  private initWorker() {
+    this.worker = new LayoutWorker();
+    this.api = Comlink.wrap<LayoutEngine>(this.worker);
   }
 
   async runFcose(elements: any[], options: any = {}): Promise<LayoutResult> {

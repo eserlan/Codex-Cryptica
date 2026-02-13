@@ -159,7 +159,6 @@ export class SearchEngine {
 
   clear() {
     this.index = null;
-    this.initIndex();
   }
 }
 

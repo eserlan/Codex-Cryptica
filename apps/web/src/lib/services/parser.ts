@@ -9,17 +9,40 @@ export class ParserService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<ParserEngine> | null = null;
 
+  private static current: ParserService | null = null;
+  private static vaultListenerAttached = false;
+  private static readonly handleVaultSwitched = () => {
+    const current = ParserService.current;
+    if (current) {
+      current.terminate();
+      current.initWorker();
+    }
+  };
+
   constructor() {
     if (typeof window !== "undefined") {
-      this.worker = new ParserWorker();
-      this.api = Comlink.wrap<ParserEngine>(this.worker);
+      this.initWorker();
+      ParserService.current = this;
 
-      window.addEventListener("vault-switched", () => {
-        this.terminate();
-        this.worker = new ParserWorker();
-        this.api = Comlink.wrap<ParserEngine>(this.worker);
-      });
+      if (!ParserService.vaultListenerAttached) {
+        window.addEventListener(
+          "vault-switched",
+          ParserService.handleVaultSwitched,
+        );
+        ParserService.vaultListenerAttached = true;
+      }
     }
+  }
+
+  private initWorker() {
+    this.worker = new ParserWorker();
+    this.api = Comlink.wrap<ParserEngine>(this.worker);
+  }
+
+  terminate() {
+    this.worker?.terminate();
+    this.worker = null;
+    this.api = null;
   }
 
   async parse(content: string): Promise<string> {
@@ -35,12 +58,6 @@ export class ParserService {
       return this.api.parseInline(content);
     }
     return marked.parseInline(content) as string;
-  }
-
-  terminate() {
-    this.worker?.terminate();
-    this.worker = null;
-    this.api = null;
   }
 }
 

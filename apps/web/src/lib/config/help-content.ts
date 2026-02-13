@@ -93,7 +93,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "node-merging": {
     id: "node-merging",
-    title: "Merging Entries",
+    title: "Merging Nodes",
     content:
       "You can combine duplicates. Select two or more nodes, right-click, and choose 'Merge Nodes'.",
   },

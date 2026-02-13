@@ -24,21 +24,30 @@ export class LayoutEngine {
       style: [],
     });
 
-    return new Promise((resolve) => {
-      const layout = cy.layout({
-        name: "fcose",
-        ...options,
-        stop: () => {
-          const positions: LayoutResult = {};
-          cy.nodes().forEach((node) => {
-            positions[node.id()] = node.position();
-          });
-          cy.destroy();
-          resolve(positions);
-        },
-      });
+    return new Promise<LayoutResult>((resolve, reject) => {
+      try {
+        const layout = cy.layout({
+          name: "fcose",
+          ...options,
+          stop: () => {
+            const positions: LayoutResult = {};
+            cy.nodes().forEach((node) => {
+              positions[node.id()] = node.position();
+            });
+            cy.destroy();
+            resolve(positions);
+          },
+        });
 
-      layout.run();
+        layout.run();
+      } catch (error) {
+        try {
+          cy.destroy();
+        } catch {
+          // ignore cleanup errors
+        }
+        reject(error);
+      }
     });
   }
 
