@@ -78,8 +78,6 @@ class VaultStore {
     return Object.values(this.entities);
   }
 
-  #legacyFSAHandle: FileSystemDirectoryHandle | undefined = undefined;
-
   private async getActiveVaultHandle(): Promise<
     FileSystemDirectoryHandle | undefined
   > {
