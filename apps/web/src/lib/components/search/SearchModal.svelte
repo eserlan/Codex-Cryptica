@@ -164,7 +164,9 @@
             role="combobox"
             aria-autocomplete="list"
             aria-expanded="true"
-            aria-controls="search-results-list"
+            aria-controls={$searchStore.results.length > 0
+              ? "search-results-list"
+              : undefined}
             aria-label="Search notes"
             aria-activedescendant={$searchStore.results.length > 0
               ? `search-result-${$searchStore.selectedIndex}`
@@ -174,12 +176,7 @@
       </div>
 
       <!-- Results List -->
-      <div
-        bind:this={resultsContainer}
-        class="flex-1 overflow-y-auto p-2 space-y-1"
-        role="listbox"
-        id="search-results-list"
-      >
+      <div class="flex-1 overflow-y-auto p-2">
         {#if $searchStore.results.length === 0 && $searchStore.query}
           <div
             class="p-12 flex flex-col items-center justify-center gap-3 text-zinc-500"
@@ -196,49 +193,59 @@
             </div>
           </div>
         {:else if $searchStore.results.length > 0}
-          {#each $searchStore.results as result, index (result.id || `fallback-${index}`)}
-            <button
-              id="search-result-{index}"
-              role="option"
-              aria-selected={index === $searchStore.selectedIndex}
-              class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
-                {index === $searchStore.selectedIndex
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
-                : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
-              on:click={(e) => selectResult(result, e)}
-              data-testid="search-result"
-            >
-              <span class="font-medium truncate flex items-center gap-2">
-                {#if result.type}
-                  <span
-                    class="{getIconClass(
-                      categories.getCategory(result.type)?.icon,
-                    )} w-3.5 h-3.5 shrink-0"
-                    style="color: {categories.getColor(result.type)}"
-                  ></span>
-                {/if}
-                {@html renderMarkdown(result.title, $searchStore.query)}
-              </span>
-              <div class="flex items-center gap-2 text-xs text-zinc-500">
-                {#if result.type}
-                  <span
-                    class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
-                    style="color: {categories.getColor(result.type)}"
+          <div
+            bind:this={resultsContainer}
+            class="space-y-1"
+            role="listbox"
+            id="search-results-list"
+            aria-label="Search results"
+          >
+            {#each $searchStore.results as result, index (result.id || `fallback-${index}`)}
+              <button
+                id="search-result-{index}"
+                role="option"
+                tabindex="-1"
+                aria-selected={index === $searchStore.selectedIndex}
+                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
+                  {index === $searchStore.selectedIndex
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
+                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
+                on:click={(e) => selectResult(result, e)}
+                data-testid="search-result"
+              >
+                <span class="font-medium truncate flex items-center gap-2">
+                  {#if result.type}
+                    <span
+                      class="{getIconClass(
+                        categories.getCategory(result.type)?.icon,
+                      )} w-3.5 h-3.5 shrink-0"
+                      style="color: {categories.getColor(result.type)}"
+                    ></span>
+                  {/if}
+                  {@html renderMarkdown(result.title, $searchStore.query)}
+                </span>
+                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                  {#if result.type}
+                    <span
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      style="color: {categories.getColor(result.type)}"
+                    >
+                      {categories.getCategory(result.type)?.label ||
+                        result.type}
+                    </span>
+                  {/if}
+                  <span class="truncate">{result.path}</span>
+                </div>
+                {#if result.excerpt}
+                  <p
+                    class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
                   >
-                    {categories.getCategory(result.type)?.label || result.type}
-                  </span>
+                    {@html renderMarkdown(result.excerpt, $searchStore.query)}
+                  </p>
                 {/if}
-                <span class="truncate">{result.path}</span>
-              </div>
-              {#if result.excerpt}
-                <p
-                  class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
-                >
-                  {@html renderMarkdown(result.excerpt, $searchStore.query)}
-                </p>
-              {/if}
-            </button>
-          {/each}
+              </button>
+            {/each}
+          </div>
         {/if}
       </div>
 
