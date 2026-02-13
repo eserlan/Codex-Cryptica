@@ -18,8 +18,8 @@ test.describe("Oracle Undo", () => {
                 text: async () => "",
               }),
               createWritable: async () => ({
-                write: async () => { },
-                close: async () => { },
+                write: async () => {},
+                close: async () => {},
               }),
             }),
           }),
@@ -29,11 +29,11 @@ test.describe("Oracle Undo", () => {
               text: async () => "",
             }),
             createWritable: async () => ({
-              write: async () => { },
-              close: async () => { },
+              write: async () => {},
+              close: async () => {},
             }),
           }),
-          values: async function* () { },
+          values: async function* () {},
           queryPermission: async () => "granted",
           requestPermission: async () => "granted",
         };
@@ -110,7 +110,9 @@ test.describe("Oracle Undo", () => {
     expect(contentAfterApply).toBe("New content");
 
     // 5. Click Undo
-    const undoStackLength = await page.evaluate(() => (window as any).oracle.undoStack.length);
+    const undoStackLength = await page.evaluate(
+      () => (window as any).oracle.undoStack.length,
+    );
     console.log("Undo stack length before click:", undoStackLength);
 
     const undoBtn = page.getByRole("button", { name: /UNDO/i });
@@ -128,9 +130,7 @@ test.describe("Oracle Undo", () => {
     // 6. Verify restored state
 
     // 6. Verify restored state
-    await expect(
-      page.getByText(/Undid action/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Undid action/i)).toBeVisible();
     const contentAfterUndo = await page.evaluate(
       () => (window as any).vault.entities["eldrin"].content,
     );
@@ -174,9 +174,7 @@ test.describe("Oracle Undo", () => {
     await undoBtn.click();
 
     // 5. Verify node removed
-    await expect(
-      page.getByText(/Undid action/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Undid action/i)).toBeVisible();
     const nodeExistsAfterUndo = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],
     );

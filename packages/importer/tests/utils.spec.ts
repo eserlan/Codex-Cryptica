@@ -22,7 +22,8 @@ describe("htmlToMarkdown", () => {
   });
 
   it("handles links and images", () => {
-    const html = '<a href="https://example.com">Link</a><img src="img.png" alt="Alt text">';
+    const html =
+      '<a href="https://example.com">Link</a><img src="img.png" alt="Alt text">';
     const result = htmlToMarkdown(html);
     expect(result).toContain("[Link](https://example.com)");
     expect(result).toContain("![Alt text](img.png)");
@@ -48,7 +49,8 @@ describe("htmlToMarkdown", () => {
   });
 
   it("handles nested elements", () => {
-    const html = "<div><p>Paragraph with <em>italic <strong>bold</strong></em></p></div>";
+    const html =
+      "<div><p>Paragraph with <em>italic <strong>bold</strong></em></p></div>";
     expect(htmlToMarkdown(html)).toBe("Paragraph with *italic **bold***");
   });
 });

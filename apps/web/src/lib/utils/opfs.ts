@@ -19,7 +19,7 @@ export async function getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
 export async function getDirHandle(
   root: FileSystemDirectoryHandle,
   path: string[],
-  create: boolean = false
+  create: boolean = false,
 ): Promise<FileSystemDirectoryHandle> {
   let currentDir = root;
   for (const part of path) {
@@ -34,7 +34,7 @@ export async function getDirHandle(
  */
 export async function getOrCreateDir(
   root: FileSystemDirectoryHandle,
-  path: string[]
+  path: string[],
 ): Promise<FileSystemDirectoryHandle> {
   return getDirHandle(root, path, true);
 }
@@ -45,7 +45,7 @@ export async function getOrCreateDir(
 export async function walkOpfsDirectory(
   dirHandle: FileSystemDirectoryHandle,
   path: string[] = [],
-  onError?: (error: unknown, path: string[]) => void
+  onError?: (error: unknown, path: string[]) => void,
 ): Promise<FileEntry[]> {
   const files: FileEntry[] = [];
   try {
@@ -53,12 +53,15 @@ export async function walkOpfsDirectory(
       try {
         const currentPath = [...path, name];
         if (handle.kind === "file") {
-          files.push({ handle: handle as FileSystemFileHandle, path: currentPath });
+          files.push({
+            handle: handle as FileSystemFileHandle,
+            path: currentPath,
+          });
         } else if (handle.kind === "directory") {
           const subFiles = await walkOpfsDirectory(
             handle as FileSystemDirectoryHandle,
             currentPath,
-            onError
+            onError,
           );
           files.push(...subFiles);
         }
@@ -66,7 +69,10 @@ export async function walkOpfsDirectory(
         if (onError) {
           onError(error, [...path, name]);
         } else {
-          console.error(`Error processing entry ${[...path, name].join("/")}:`, error);
+          console.error(
+            `Error processing entry ${[...path, name].join("/")}:`,
+            error,
+          );
         }
       }
     }
@@ -86,7 +92,7 @@ export async function walkOpfsDirectory(
  */
 export async function readFileAsText(
   root: FileSystemDirectoryHandle,
-  path: string[]
+  path: string[],
 ): Promise<string> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
@@ -104,7 +110,7 @@ export async function readFileAsText(
  */
 export async function readOpfsBlob(
   path: string[],
-  root: FileSystemDirectoryHandle
+  root: FileSystemDirectoryHandle,
 ): Promise<Blob> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
@@ -127,7 +133,7 @@ export async function readOpfsBlob(
 export async function writeOpfsFile(
   path: string[],
   content: string | Blob | File,
-  root: FileSystemDirectoryHandle
+  root: FileSystemDirectoryHandle,
 ): Promise<void> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
@@ -148,7 +154,7 @@ export async function writeOpfsFile(
  */
 export async function deleteOpfsEntry(
   root: FileSystemDirectoryHandle,
-  path: string[]
+  path: string[],
 ): Promise<void> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
@@ -164,7 +170,7 @@ export async function deleteOpfsEntry(
  */
 export async function getVaultDir(
   root: FileSystemDirectoryHandle,
-  vaultId: string
+  vaultId: string,
 ): Promise<FileSystemDirectoryHandle> {
   return await getOrCreateDir(root, [VAULTS_DIR, vaultId]);
 }
@@ -174,7 +180,7 @@ export async function getVaultDir(
  */
 export async function createVaultDir(
   root: FileSystemDirectoryHandle,
-  vaultId: string
+  vaultId: string,
 ): Promise<FileSystemDirectoryHandle> {
   return await getOrCreateDir(root, [VAULTS_DIR, vaultId]);
 }
@@ -184,7 +190,7 @@ export async function createVaultDir(
  */
 export async function deleteVaultDir(
   root: FileSystemDirectoryHandle,
-  vaultId: string
+  vaultId: string,
 ): Promise<void> {
   const vaultsDir = await getOrCreateDir(root, [VAULTS_DIR]);
   await vaultsDir.removeEntry(vaultId, { recursive: true });

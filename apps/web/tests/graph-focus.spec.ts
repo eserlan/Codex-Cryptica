@@ -7,27 +7,27 @@ test.describe("Graph Focus Mode", () => {
     });
 
     await page.goto("http://localhost:5173/");
-    
+
     // Create nodes via UI for clean state
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Node 1");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Node 2");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("Node 3");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("island");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Link Node 1 to Node 2
     await page.evaluate(() => {
-        (window as any).vault.addConnection("node-1", "node-2", "related");
+      (window as any).vault.addConnection("node-1", "node-2", "related");
     });
 
     // Wait for graph to be ready - check if cy is exposed and has nodes

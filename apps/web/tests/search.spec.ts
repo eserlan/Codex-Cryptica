@@ -98,7 +98,7 @@ test.describe("Fuzzy Search", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();
@@ -150,7 +150,7 @@ test.describe("Fuzzy Search", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();
@@ -210,7 +210,7 @@ test.describe("Fuzzy Search", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
-    
+
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Entry Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();

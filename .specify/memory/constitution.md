@@ -31,6 +31,10 @@ To maintain build integrity and code quality, AI agents MUST:
 3. Adhere to Tailwind 4 CSS syntax standards.
 4. Ensure comprehensive type definitions (e.g. `node` types) in workspace packages.
 
+### VII. User Documentation
+
+Every major feature MUST include a corresponding user-facing help description or guide article within `apps/web/src/lib/config/help-content.ts`. Features with complex interactions SHOULD also include a `FeatureHint` to guide first-time usage.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.

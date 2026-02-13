@@ -76,12 +76,15 @@ test.describe("Vault Permissions Handling", () => {
 
     await expect(page.locator("text=SYSTEM FAILURE")).not.toBeVisible();
     // Wait for vault to finish initializing after reload
-    await page.waitForFunction(() => {
-      const status = (window as any).vault?.status;
-      return status === "idle" || status === "error";
-    }, {
-      timeout: 15000,
-    });
+    await page.waitForFunction(
+      () => {
+        const status = (window as any).vault?.status;
+        return status === "idle" || status === "error";
+      },
+      {
+        timeout: 15000,
+      },
+    );
     await expect(page.getByText("NO VAULT")).toBeVisible({ timeout: 10000 });
 
     // Optional: Verify handle was cleared from IDB?
