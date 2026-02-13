@@ -34,44 +34,27 @@
       <div
         class="border border-theme-border bg-theme-primary/5 rounded overflow-hidden"
       >
-        <button
-          onclick={() => helpStore.toggleArticle(article.id)}
-          class="w-full px-4 py-3 flex justify-between items-center hover:bg-theme-primary/5 transition-colors text-left"
-          aria-expanded={helpStore.expandedId === article.id}
+        <div
+          class="flex items-stretch hover:bg-theme-primary/5 transition-colors"
         >
-          <div class="flex flex-col">
-            <span
-              class="text-sm font-bold text-theme-primary uppercase tracking-wider"
-              >{article.title}</span
-            >
-            <div class="flex gap-2 mt-1">
-              {#each article.tags as tag}
-                <span
-                  class="text-xs bg-theme-primary/10 text-theme-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter"
-                  >#{tag}</span
-                >
-              {/each}
-            </div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div
-              role="button"
-              tabindex="0"
-              onclick={(e) => {
-                e.stopPropagation();
-                helpStore.copyShareLink(article.id);
-              }}
-              onkeydown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation();
-                  helpStore.copyShareLink(article.id);
-                }
-              }}
-              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
-              title="Copy direct link"
-              aria-label="Copy direct link to {article.title}"
-            >
-              <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+          <button
+            onclick={() => helpStore.toggleArticle(article.id)}
+            class="flex-1 px-4 py-3 flex justify-between items-center text-left"
+            aria-expanded={helpStore.expandedId === article.id}
+          >
+            <div class="flex flex-col">
+              <span
+                class="text-sm font-bold text-theme-primary uppercase tracking-wider"
+                >{article.title}</span
+              >
+              <div class="flex gap-2 mt-1">
+                {#each article.tags as tag}
+                  <span
+                    class="text-xs bg-theme-primary/10 text-theme-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter"
+                    >#{tag}</span
+                  >
+                {/each}
+              </div>
             </div>
             <span
               class="icon-[lucide--chevron-down] w-4 h-4 text-theme-muted transition-transform {helpStore.expandedId ===
@@ -79,8 +62,17 @@
                 ? 'rotate-180 text-theme-primary'
                 : ''}"
             ></span>
-          </div>
-        </button>
+          </button>
+
+          <button
+            onclick={() => helpStore.copyShareLink(article.id)}
+            class="px-4 text-theme-muted hover:text-theme-primary transition-colors border-l border-theme-border/50"
+            title="Copy direct link"
+            aria-label="Copy direct link to {article.title}"
+          >
+            <span class="icon-[lucide--link] w-3.5 h-3.5"></span>
+          </button>
+        </div>
 
         {#if helpStore.expandedId === article.id}
           <div

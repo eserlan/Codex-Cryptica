@@ -17,6 +17,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { searchStore } from "$lib/stores/search";
   import { helpStore } from "$lib/stores/help.svelte";
+  import { HELP_ARTICLES } from "$lib/config/help-content";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { syncStats } from "$lib/stores/sync-stats";
@@ -137,14 +138,21 @@
 
   // Handle Direct Help Links (#help/article-id)
   $effect(() => {
+    if (!helpStore.isInitialized) return;
+
     const hash = page.url.hash;
     if (hash && hash.startsWith("#help/")) {
       const articleId = hash.replace("#help/", "");
       if (articleId) {
-        // Small delay to ensure stores are initialized
-        setTimeout(() => {
-          helpStore.openHelpToArticle(articleId);
-        }, 100);
+        // Validate article exists
+        const exists = HELP_ARTICLES.some((a) => a.id === articleId);
+        if (exists) {
+          // Small delay to ensure UI components are ready to receive state changes
+          const timer = setTimeout(() => {
+            helpStore.openHelpToArticle(articleId);
+          }, 100);
+          return () => clearTimeout(timer);
+        }
       }
     }
   });

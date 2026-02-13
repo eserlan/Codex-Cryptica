@@ -36,6 +36,7 @@ class HelpStore {
   searchResults = $state<HelpArticle[]>([]);
   isHelpOpen = $state(false);
   expandedId = $state<string | null>(null);
+  isInitialized = $state(false);
 
   // Persistence State
   private state = $state<HelpStoreState>({
@@ -76,6 +77,7 @@ class HelpStore {
     }
 
     this.buildIndex();
+    this.isInitialized = true;
   }
 
   private buildIndex() {
