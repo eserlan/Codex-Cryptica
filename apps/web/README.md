@@ -40,3 +40,21 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Help & Documentation
+
+Help articles are managed as Markdown files in `src/lib/content/help/`.
+To add a new article:
+
+1. Create a `.md` file in that directory.
+2. Add frontmatter:
+   ```yaml
+   ---
+   id: unique-id
+   title: Article Title
+   tags: [tag1, tag2]
+   rank: 10
+   ---
+   ```
+3. Write content in Markdown.
+4. Verify by running `npm test`.
