@@ -31,6 +31,9 @@ export class ProposerService implements IProposerService {
   private getDB() {
     if (!this.dbPromise) {
       this.dbPromise = openDB(this.dbName, this.dbVersion, {
+        // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
+        // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
+        // for creating the 'proposals' store.
         upgrade(db, _oldVersion) {
           if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
             const store = db.createObjectStore(PROPOSAL_STORE, {

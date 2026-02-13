@@ -205,13 +205,8 @@ export class NodeMergeService {
     // Apply Update
     vault.updateEntity(targetId, updates);
 
-    // 2. Delete Source Nodes
-    // We filter sourceIds to exclude targetId (just in case)
+    // 2. Determine Source Nodes to Delete
     const toDelete = sourceIds.filter((id) => id !== targetId);
-
-    for (const id of toDelete) {
-      await vault.deleteEntity(id);
-    }
 
     // 3. Update Backlinks (US3)
     // We do this BEFORE deletion to ensure we have titles, although we can just get them before.
@@ -219,7 +214,7 @@ export class NodeMergeService {
     // Source IDs are passed.
     await this.updateBacklinks(toDelete, targetId);
 
-    // 2. Delete Source Nodes
+    // 4. Delete Source Nodes
     for (const id of toDelete) {
       await vault.deleteEntity(id);
     }
