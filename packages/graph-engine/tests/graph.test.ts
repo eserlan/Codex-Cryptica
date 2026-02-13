@@ -1,12 +1,9 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { initGraph } from "../src/index";
 
 describe("Graph Engine", () => {
   it("should initialize a cytoscape instance", () => {
-    // Mock container
-    const container = document.createElement("div");
-
     const cy = initGraph({
       headless: true,
       elements: [
