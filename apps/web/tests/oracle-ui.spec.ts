@@ -9,7 +9,7 @@ test.describe("Oracle UI - Elastic Input", () => {
     // Enable Oracle by adding a dummy API key to IndexedDB
     await page.evaluate(async () => {
       // Create/open DB
-      const request = indexedDB.open("CodexArcana", 2);
+      const request = indexedDB.open("CodexArcana", 7);
       request.onupgradeneeded = (e: any) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains("settings")) {
