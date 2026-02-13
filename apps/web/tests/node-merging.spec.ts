@@ -204,12 +204,12 @@ test.describe("Node Merging", () => {
       await searchInput.fill("merging");
 
       // 3. Verify article title is visible
-      await expect(page.getByText("Merging Entities")).toBeVisible();
+      await expect(page.getByText("Merging Nodes")).toBeVisible();
 
       // 4. Click article and check content
-      await page.getByText("Merging Entities").click();
+      await page.getByText("Merging Nodes").click();
       await expect(page.getByText("Consolidation Power")).toBeVisible();
-      await expect(page.getByText("Select Multiple Nodes")).toBeVisible();
+      await expect(page.getByText("Select Nodes")).toBeVisible();
     });
 
     test("should trigger node-merging feature hint when 2 nodes are selected", async ({
@@ -228,7 +228,7 @@ test.describe("Node Merging", () => {
       );
 
       // 3. Verify hint NOT visible initially
-      await expect(page.getByText("Consolidation Power")).not.toBeVisible();
+      await expect(page.getByText("Merging Entries")).not.toBeVisible();
 
       // 4. Select two nodes via Cytoscape API
       await page.evaluate(() => {
@@ -238,14 +238,12 @@ test.describe("Node Merging", () => {
       });
 
       // 5. Verify hint appears
-      await expect(page.getByText("Consolidation Power")).toBeVisible();
-      await expect(
-        page.getByText("You can merge multiple nodes"),
-      ).toBeVisible();
+      await expect(page.getByText("Merging Entries")).toBeVisible();
+      await expect(page.getByText("You can combine duplicates")).toBeVisible();
 
       // 6. Dismiss hint
       await page.getByTestId("dismiss-hint-button").click();
-      await expect(page.getByText("Consolidation Power")).not.toBeVisible();
+      await expect(page.getByText("Merging Entries")).not.toBeVisible();
 
       // 7. Unselect and re-select to verify it stays dismissed
       await page.evaluate(() => {

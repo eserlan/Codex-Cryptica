@@ -174,12 +174,9 @@ test.describe("Fuzzy Search", () => {
 
       const { searchStore } = window as any;
       if (searchStore) {
-        searchStore.update((s: any) => ({
-          ...s,
-          query: "Crone",
-          results: mockResults,
-          isOpen: true,
-        }));
+        searchStore.query = "Crone";
+        searchStore.results = mockResults;
+        searchStore.isOpen = true;
       }
     });
 

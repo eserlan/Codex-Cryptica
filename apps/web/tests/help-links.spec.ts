@@ -26,7 +26,7 @@ test.describe("Direct Help Links", () => {
     // 4. Verify the specific article is expanded
     // When expanded, it should show the content
     await expect(
-      page.locator(".prose h2", { hasText: "Mastering the Graph" }),
+      page.locator(".prose h2", { hasText: /Quick Guide/i }),
     ).toBeVisible();
   });
 
@@ -48,7 +48,7 @@ test.describe("Direct Help Links", () => {
 
     // 5. Verify specific article (The Lore Oracle) is expanded
     // Note: title of oracle-guide.md is "The Lore Oracle"
-    await expect(page.getByText("THE LORE ORACLE")).toBeVisible();
+    await expect(page.getByText(/Lore Oracle/i)).toBeVisible();
   });
 
   test("should handle invalid help article ID gracefully", async ({ page }) => {

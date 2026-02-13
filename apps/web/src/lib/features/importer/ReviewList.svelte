@@ -9,7 +9,7 @@
 
   let { entities = [], onSave, onCancel }: Props = $props();
 
-  let _selectedIds = $state(new Set(entities.map((e) => e.id)));
+  let _selectedIds = $state(new Set<string>());
 
   $effect(() => {
     _selectedIds = new Set(entities.map((e) => e.id));

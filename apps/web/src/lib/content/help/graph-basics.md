@@ -5,7 +5,7 @@ tags: [navigation, connections]
 rank: 3
 ---
 
-## Mastering the Graph
+## Quick Guide
 
 The graph is your primary way to navigate.
 
