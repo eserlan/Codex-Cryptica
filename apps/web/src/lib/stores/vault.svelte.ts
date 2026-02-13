@@ -19,7 +19,7 @@ import { generateThumbnail } from "../utils/image-processing";
 import { writeWithRetry, reResolveFileHandle } from "../utils/vault-io";
 import { walkDirectory } from "../utils/fs";
 
-export type LocalEntity = Entity & {
+export type LocalEntity = Omit<Entity, "_path"> & {
   _path?: string[];
 };
 
@@ -235,7 +235,7 @@ class VaultStore {
         );
         for await (const handle of imagesDir.values()) {
           if (handle.kind === "file") {
-            const file = await (handle as any).getFile();
+            const file = await (handle as FileSystemFileHandle).getFile();
             await writeOpfsFile([file.name], file, opfsImagesDir);
           }
         }
@@ -324,7 +324,7 @@ class VaultStore {
         });
         for await (const handle of opfsImagesDir.values()) {
           if (handle.kind === "file") {
-            const file = await (handle as any).getFile();
+            const file = await (handle as FileSystemFileHandle).getFile();
             const localFileHandle = await localImagesDir.getFileHandle(
               file.name,
               {
@@ -467,14 +467,18 @@ class VaultStore {
     }
   }
 
-  async saveToDisk(entity: Entity) {
+  async saveToDisk(entity: LocalEntity | Entity) {
     if (this.isGuest) return;
     if (!this.#opfsRoot) {
       console.warn("OPFS not available, skipping save.");
       return;
     }
 
-    const path = (entity as LocalEntity)._path || [`${entity.id}.md`];
+    const path = entity._path
+      ? Array.isArray(entity._path)
+        ? entity._path
+        : [entity._path]
+      : [`${entity.id}.md`];
     try {
       const content = stringifyEntity(entity);
       await writeOpfsFile(path, content, this.#opfsRoot);
@@ -540,12 +544,12 @@ class VaultStore {
   // For brevity, I'll focus on the core architectural change first.
   // The following methods are placeholders and need to be adapted.
 
-  updateEntity(id: string, updates: Partial<Entity>): boolean {
+  updateEntity(id: string, updates: Partial<LocalEntity>): boolean {
     const entity = this.entities[id];
     if (!entity) return false;
 
-    const updated = { ...entity, ...updates };
-    this.entities[id] = updated as any;
+    const updated: LocalEntity = { ...entity, ...updates };
+    this.entities[id] = updated;
 
     const styleKeywords = [
       "art style",
@@ -567,7 +571,7 @@ class VaultStore {
     return true;
   }
 
-  scheduleSave(entity: Entity) {
+  scheduleSave(entity: LocalEntity) {
     this.status = "saving";
     this.saveQueue
       .enqueue(entity.id, async () => {
@@ -587,8 +591,8 @@ class VaultStore {
     const labels = entity.labels || [];
     if (labels.includes(label)) return false;
 
-    const updated = { ...entity, labels: [...labels, label] };
-    this.entities[id] = updated as any;
+    const updated: LocalEntity = { ...entity, labels: [...labels, label] };
+    this.entities[id] = updated;
     this.scheduleSave(updated);
     return true;
   }
@@ -600,11 +604,11 @@ class VaultStore {
     const labels = entity.labels || [];
     if (!labels.includes(label)) return false;
 
-    const updated = {
+    const updated: LocalEntity = {
       ...entity,
       labels: labels.filter((l) => l !== label),
     };
-    this.entities[id] = updated as any;
+    this.entities[id] = updated;
     this.scheduleSave(updated);
     return true;
   }
@@ -624,12 +628,12 @@ class VaultStore {
       label,
       strength: 1,
     };
-    const updated = {
+    const updated: LocalEntity = {
       ...entity,
       connections: [...entity.connections, connection],
     };
 
-    this.entities[sourceId] = updated as any;
+    this.entities[sourceId] = updated;
     this.addInboundConnection(sourceId, connection);
     this.scheduleSave(updated);
     return true;
@@ -652,8 +656,8 @@ class VaultStore {
       return c;
     });
 
-    const updated = { ...entity, connections };
-    this.entities[sourceId] = updated as any;
+    const updated: LocalEntity = { ...entity, connections };
+    this.entities[sourceId] = updated;
 
     // Update inbound map
     this.removeInboundConnection(sourceId, targetId);
@@ -676,8 +680,8 @@ class VaultStore {
       (c) => !(c.target === targetId && c.type === type),
     );
 
-    const updated = { ...entity, connections };
-    this.entities[sourceId] = updated as any;
+    const updated: LocalEntity = { ...entity, connections };
+    this.entities[sourceId] = updated;
     this.removeInboundConnection(sourceId, targetId);
     this.scheduleSave(updated);
     return true;
