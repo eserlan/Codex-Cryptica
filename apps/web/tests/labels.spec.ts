@@ -63,20 +63,20 @@ test.describe("Entity Labeling System", () => {
         };
       }
     });
-    await page.goto("/");
+    await page.goto("http://localhost:5173/");
 
     // Handle console logs from the page
     page.on("console", (msg) => {
       console.log("PAGE LOG:", msg.text());
     });
 
-    // Open a vault and wait for it to be ready
-    console.log("TEST: Clicking OPEN VAULT");
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
-
     console.log("TEST: Waiting for vault.isInitialized");
-    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 20000,
+    });
+    // Wait for the UI to be fully active
+    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+      timeout: 10000,
     });
   });
 
@@ -102,14 +102,28 @@ test.describe("Entity Labeling System", () => {
     await labelInput.press("Enter");
     await expect(page.getByText("MIA", { exact: true })).toBeVisible();
 
+    // Wait for auto-save to finish (ensure it hits OPFS)
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
     // 6. Reload and verify persistence
     await page.reload();
-    await page.locator("aside").getByText("Test Hero").click();
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
+    // Use search to find the hero again
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Search notes...").fill("Test Hero");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Test Hero" })
+      .click();
+
     await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
     await expect(page.getByText("MIA", { exact: true })).toBeVisible();
 
     // 7. Remove a label
-    await page.getByRole("button", { name: "Remove label MIA" }).click();
+    await page
+      .getByRole("button", { name: /Remove label MIA/i })
+      .click({ force: true });
     await expect(page.getByText("MIA", { exact: true })).not.toBeVisible();
     await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
   });

@@ -1,84 +1,55 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Vault Switching and Detachment", () => {
+test.describe("Vault Switching", () => {
   test.beforeEach(async ({ page }) => {
-    // Ensure clean state
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => {
-        return {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: () => [],
-          getDirectoryHandle: async () => ({
-            kind: "directory",
-            name: "images",
-            getFileHandle: async () => ({
-              kind: "file",
-              createWritable: async () => ({
-                write: async () => {},
-                close: async () => {},
-              }),
-            }),
-          }),
-          getFileHandle: async () => ({
-            kind: "file",
-            name: "test.md",
-            getFile: async () => new File([""], "test.md"),
-          }),
-        };
-      };
     });
-
     await page.goto("/");
-    await page.evaluate(() => {
-      localStorage.clear();
-      indexedDB.deleteDatabase("CodexCryptica");
+    // Wait for initialization
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
     });
-    await page.reload();
   });
 
-  test("should detach and clear active vault", async ({ page }) => {
-    // 1. Open a vault
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
-
-    // Wait for vault to load (mocked)
-    await expect(
-      page.locator('[data-testid="open-vault-button"]'),
-    ).not.toBeVisible();
-
-    // 2. Close the vault
-    await page.getByRole("button", { name: "CLOSE" }).click();
-
-    // 3. Verify state is cleared
-    await expect(
-      page.getByRole("button", { name: "OPEN VAULT" }),
-    ).toBeVisible();
-    await expect(page.getByText("NO VAULT")).toBeVisible();
-
-    // 4. Verify persistence is cleared by reloading
-    await page.reload();
-    await expect(
-      page.getByRole("button", { name: "OPEN VAULT" }),
-    ).toBeVisible();
-    await expect(page.getByText("NO VAULT")).toBeVisible();
+  test("should display current vault name in header", async ({ page }) => {
+    // Default vault should be active (created by migration/init)
+    await expect(page.getByTitle("Switch Vault")).toBeVisible();
+    // Use regex to match "Default Vault" or "Local Vault" if migration logic varies
+    await expect(page.getByTitle("Switch Vault")).toContainText(
+      /Default Vault|Local Vault/,
+    );
   });
 
-  test("should allow mounting a different campaign after detaching", async ({
-    page,
-  }) => {
-    // 1. Open Vault A
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
-    await expect(page.getByRole("button", { name: "CLOSE" })).toBeVisible();
+  test("should open vault switcher modal", async ({ page }) => {
+    await page.getByTitle("Switch Vault").click();
+    await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
+    // Default vault should be listed and active
+    const modal = page.getByTestId("vault-switcher-modal");
+    const defaultVaultRow = modal
+      .getByRole("button", { name: /Default Vault|Local Vault/ })
+      .first();
+    await expect(defaultVaultRow).toBeVisible();
+    await expect(defaultVaultRow).toContainText("ACTIVE");
+  });
 
-    // 2. Detach Vault A
-    await page.getByRole("button", { name: "CLOSE" }).click();
+  test("should create and switch to a new vault", async ({ page }) => {
+    await page.getByTitle("Switch Vault").click();
+    await page.getByRole("button", { name: "NEW VAULT" }).click();
 
-    // 3. Open Vault B (mocked same way, but verifying flow)
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
-    await expect(page.getByRole("button", { name: "CLOSE" })).toBeVisible();
+    await page.getByPlaceholder("Vault Name...").fill("Test Vault");
+    await page.getByRole("button", { name: "CREATE" }).click();
+
+    // Header should update
+    await expect(page.getByTitle("Switch Vault")).toContainText("Test Vault");
+
+    // Verify list update
+    await page.getByTitle("Switch Vault").click();
+    const modal = page.getByTestId("vault-switcher-modal");
+    const newVaultRow = modal
+      .getByRole("button", { name: "Test Vault" })
+      .first();
+    await expect(newVaultRow).toBeVisible();
+    await expect(newVaultRow).toContainText("ACTIVE");
   });
 });

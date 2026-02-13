@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DiscoveredEntity } from '@codex/importer';
+  import type { DiscoveredEntity } from "@codex/importer";
 
   interface Props {
     entities: DiscoveredEntity[];
@@ -9,38 +9,38 @@
 
   let { entities = [], onSave, onCancel }: Props = $props();
 
-  let selectedIds = $state(new Set(entities.map(e => e.id)));
+  let _selectedIds = $state(new Set(entities.map((e) => e.id)));
 
   $effect(() => {
-    selectedIds = new Set(entities.map(e => e.id));
+    _selectedIds = new Set(entities.map((e) => e.id));
   });
 
   const toggleSelection = (id: string) => {
-    const next = new Set(selectedIds);
+    const next = new Set(_selectedIds);
     if (next.has(id)) {
       next.delete(id);
     } else {
       next.add(id);
-    } 
-    selectedIds = next;
+    }
+    _selectedIds = next;
   };
 
   const handleSave = () => {
-    const toSave = entities.filter(e => selectedIds.has(e.id));
+    const toSave = entities.filter((e) => _selectedIds.has(e.id));
     onSave(toSave);
   };
 </script>
 
 <div class="review-list">
   <h3>Review Identified Entities</h3>
-  
+
   <div class="entities">
     {#each entities as entity}
       <div class="entity-card">
         <label>
-          <input 
-            type="checkbox" 
-            checked={selectedIds.has(entity.id)}
+          <input
+            type="checkbox"
+            checked={_selectedIds.has(entity.id)}
             onchange={() => toggleSelection(entity.id)}
           />
           <div class="info">
@@ -49,7 +49,7 @@
           </div>
         </label>
         <div class="preview">
-          {(entity.chronicle || entity.content || '').slice(0, 100)}...
+          {(entity.chronicle || entity.content || "").slice(0, 100)}...
         </div>
       </div>
     {/each}
@@ -58,7 +58,7 @@
   <div class="actions">
     <button onclick={onCancel}>Cancel</button>
     <button class="primary" onclick={handleSave}>
-      Import {selectedIds.size} Items
+      Import {_selectedIds.size} Items
     </button>
   </div>
 </div>

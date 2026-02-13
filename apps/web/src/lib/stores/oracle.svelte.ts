@@ -63,6 +63,11 @@ class OracleStore {
 
       // Request state from other windows on load
       this.channel.postMessage({ type: "REQUEST_STATE" });
+
+      // Listen for vault switches to clear chat history
+      window.addEventListener("vault-switched", () => {
+        this.clearMessages();
+      });
     }
   }
 
@@ -240,7 +245,11 @@ class OracleStore {
   }
 
   get isEnabled() {
-    return !!this.apiKey || !!import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey =
+      (typeof window !== "undefined" &&
+        (window as any).__SHARED_GEMINI_KEY__) ||
+      import.meta.env.VITE_SHARED_GEMINI_KEY;
+    return !!this.apiKey || !!sharedKey;
   }
 
   get effectiveApiKey() {
@@ -248,7 +257,11 @@ class OracleStore {
     if (this.tier === "advanced") {
       return this.apiKey;
     }
-    return this.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const sharedKey =
+      (typeof window !== "undefined" &&
+        (window as any).__SHARED_GEMINI_KEY__) ||
+      import.meta.env.VITE_SHARED_GEMINI_KEY;
+    return this.apiKey || sharedKey;
   }
 
   private detectImageIntent(query: string): boolean {

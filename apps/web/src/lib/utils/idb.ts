@@ -1,5 +1,13 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
-import type { LocalEntity } from "../stores/vault.svelte";
+import type { LocalEntity } from "../stores/vault/types";
+
+export interface VaultRecord {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastOpenedAt: number;
+  entityCount: number;
+}
 
 interface CodexDB extends DBSchema {
   settings: {
@@ -22,10 +30,32 @@ interface CodexDB extends DBSchema {
     key: string; // id
     value: any; // Era
   };
+  vaults: {
+    key: string; // id
+    value: VaultRecord;
+  };
+  proposals: {
+    key: string; // composite key or auto-inc? Let's use id or [sourceId, targetId]
+    value: {
+      id: string; // unique id for the proposal
+      sourceId: string;
+      targetId: string;
+      type: string;
+      context: string;
+      reason: string;
+      confidence: number;
+      status: "pending" | "accepted" | "rejected";
+      timestamp: number;
+    };
+    indexes: {
+      "by-source": string;
+      "by-status": string;
+    };
+  };
 }
 
 const DB_NAME = "CodexCryptica";
-const DB_VERSION = 4;
+const DB_VERSION = 6;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -44,6 +74,14 @@ export function getDB() {
         }
         if (oldVersion < 4 && !db.objectStoreNames.contains("world_eras")) {
           db.createObjectStore("world_eras", { keyPath: "id" });
+        }
+        if (oldVersion < 5 && !db.objectStoreNames.contains("vaults")) {
+          db.createObjectStore("vaults", { keyPath: "id" });
+        }
+        if (oldVersion < 6 && !db.objectStoreNames.contains("proposals")) {
+          const store = db.createObjectStore("proposals", { keyPath: "id" });
+          store.createIndex("by-source", "sourceId");
+          store.createIndex("by-status", "status");
         }
       },
     });

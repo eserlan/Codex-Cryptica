@@ -71,10 +71,26 @@ test.describe("World Timeline - Graph Integration", () => {
   });
 
   test("should toggle timeline mode", async ({ page }) => {
-    // 1. Open Vault
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    // 1. Create entities via UI
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Event 1");
+    await page.getByRole("button", { name: "ADD" }).click();
 
-    // 2. Wait for entities to load
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Event 2");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Undated Event");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    // 2. Set dates via store for speed/stability in test
+    await page.evaluate(() => {
+      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
+      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
+    });
+
+    // Wait for entities to load/update
     await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", {
       timeout: 15000,
     });
@@ -89,13 +105,19 @@ test.describe("World Timeline - Graph Integration", () => {
       page.getByText("Chronological Synchrony Active"),
     ).toBeVisible();
 
+    // Wait for layout to settle
+    await page.waitForTimeout(1000);
+
     // 5. Verify node positions
     const positions = await page.evaluate(() => {
       const { cy } = window as any;
       if (!cy) return null;
+      const e1 = cy.$id("event-1");
+      const e2 = cy.$id("event-2");
+      if (e1.empty() || e2.empty()) return null;
       return {
-        e1: cy.$id("e1").position(),
-        e2: cy.$id("e2").position(),
+        e1: e1.position(),
+        e2: e2.position(),
       };
     });
 
@@ -107,16 +129,33 @@ test.describe("World Timeline - Graph Integration", () => {
   });
 
   test("should hide undated nodes in timeline mode", async ({ page }) => {
-    await page.getByRole("button", { name: "OPEN VAULT" }).click();
+    // Create entities via UI
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Event 1");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Event 2");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Undated Event");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.evaluate(() => {
+      (window as any).vault.updateEntity("event-1", { date: { year: 1000 } });
+      (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
+    });
+
     await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", {
       timeout: 15000,
     });
 
-    // Verify undated node (e3) is visible before toggling timeline mode
+    // Verify undated node (undated-event) is visible before toggling timeline mode
     await page.waitForFunction(() => {
       const { cy } = window as any;
       if (!cy) return false;
-      const node = cy.$id("e3");
+      const node = cy.$id("undated-event");
       return node && node.visible();
     });
 
@@ -127,7 +166,7 @@ test.describe("World Timeline - Graph Integration", () => {
     await page.waitForFunction(() => {
       const { cy } = window as any;
       if (!cy) return false;
-      const node = cy.$id("e3");
+      const node = cy.$id("undated-event");
       return node && !node.visible();
     });
   });

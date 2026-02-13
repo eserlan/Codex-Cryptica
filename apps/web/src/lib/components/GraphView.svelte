@@ -256,6 +256,9 @@
             sourceId = null;
             targetNode.removeClass("selected-source");
           } else {
+            // Create the connection in the store
+            vault.addConnection(sourceId, targetId, "neutral");
+
             cy?.$(".selected-source").removeClass("selected-source");
             sourceId = null;
             connectMode = false; // Auto exit connect mode
@@ -385,10 +388,26 @@
       const currentElements = graph.elements;
       const timeout = setTimeout(async () => {
         try {
-          const nodesToResolve = currentElements.filter(
-            (el): el is any =>
-              el.group === "nodes" && !!(el.data.thumbnail || el.data.image),
-          );
+          const nodesToResolve = currentElements.filter((el): el is any => {
+            if (el.group !== "nodes") return false;
+            const imagePath = el.data.thumbnail || el.data.image;
+            if (!imagePath) return false;
+
+            // Check if already resolved in Cytoscape
+            if (currentCy) {
+              const node = currentCy.$id(el.data.id);
+              if (node.length > 0) {
+                const currentData = node.data();
+                if (
+                  currentData.resolvedImage &&
+                  currentData.resolvedImagePath === imagePath
+                ) {
+                  return false;
+                }
+              }
+            }
+            return true;
+          });
 
           // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
@@ -402,7 +421,16 @@
 
                 const resolvedUrl = await vault.resolveImageUrl(imagePath);
 
-                if (resolvedUrl) {
+                if (resolvedUrl && currentCy) {
+                  // Race condition guard: verify the node still exists and
+                  // its image path hasn't changed while we were resolving
+                  const node = currentCy.$id(data.id);
+                  if (node.length === 0) return;
+                  const currentNodeData = node.data();
+                  const currentPath =
+                    currentNodeData.thumbnail || currentNodeData.image;
+                  if (currentPath !== imagePath) return;
+
                   let w = data.width;
                   let h = data.height;
 
@@ -439,16 +467,24 @@
                     h = w * 2.5;
                   }
 
-                  if (currentCy) {
-                    currentCy.batch(() => {
-                      const node = currentCy.$id(data.id);
-                      node.data({
-                        resolvedImage: resolvedUrl,
-                        width: Math.round(w),
-                        height: Math.round(h),
-                      });
+                  currentCy.batch(() => {
+                    // Revoke previous blob URL to prevent memory leaks
+                    const oldUrl = node.data("resolvedImage");
+                    if (
+                      oldUrl &&
+                      oldUrl.startsWith("blob:") &&
+                      oldUrl !== resolvedUrl
+                    ) {
+                      URL.revokeObjectURL(oldUrl);
+                    }
+
+                    node.data({
+                      resolvedImage: resolvedUrl,
+                      resolvedImagePath: imagePath,
+                      width: Math.round(w),
+                      height: Math.round(h),
                     });
-                  }
+                  });
                 }
               }),
             );
@@ -644,9 +680,16 @@
     }
   });
 
-  // Save edge label logic temporarily disabled
+  // Save edge label logic
   const saveEdgeLabel = () => {
     if (editingEdge) {
+      vault.updateConnection(
+        editingEdge.source,
+        editingEdge.target,
+        editingEdge.type,
+        edgeEditType,
+        edgeEditInput,
+      );
       editingEdge = null;
     }
   };
@@ -919,6 +962,11 @@
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
           onclick={() => {
             if (editingEdge) {
+              vault.removeConnection(
+                editingEdge.source,
+                editingEdge.target,
+                editingEdge.type,
+              );
               editingEdge = null;
             }
           }}

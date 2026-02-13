@@ -20,43 +20,43 @@ Pass `onSuccess` and `onError` as the second argument to `.mutate()` to get maxi
 
 ```svelte
 <script lang="ts">
-	import { createMutation } from '@tanstack/svelte-query';
-	import * as rpc from '$lib/query';
+  import { createMutation } from "@tanstack/svelte-query";
+  import * as rpc from "$lib/query";
 
-	// Create mutation with just .options (no parentheses!)
-	const deleteSessionMutation = createMutation(
-		rpc.sessions.deleteSession.options,
-	);
+  // Create mutation with just .options (no parentheses!)
+  const deleteSessionMutation = createMutation(
+    rpc.sessions.deleteSession.options,
+  );
 
-	// Local state that we can access in callbacks
-	let isDialogOpen = $state(false);
+  // Local state that we can access in callbacks
+  let isDialogOpen = $state(false);
 </script>
 
 <Button
-	onclick={() => {
-		// Pass callbacks as second argument to .mutate()
-		deleteSessionMutation.mutate(
-			{ sessionId },
-			{
-				onSuccess: () => {
-					// Access local state and context
-					isDialogOpen = false;
-					toast.success('Session deleted');
-					goto('/sessions');
-				},
-				onError: (error) => {
-					toast.error(error.title, { description: error.description });
-				},
-			},
-		);
-	}}
-	disabled={deleteSessionMutation.isPending}
+  onclick={() => {
+    // Pass callbacks as second argument to .mutate()
+    deleteSessionMutation.mutate(
+      { sessionId },
+      {
+        onSuccess: () => {
+          // Access local state and context
+          isDialogOpen = false;
+          toast.success("Session deleted");
+          goto("/sessions");
+        },
+        onError: (error) => {
+          toast.error(error.title, { description: error.description });
+        },
+      },
+    );
+  }}
+  disabled={deleteSessionMutation.isPending}
 >
-	{#if deleteSessionMutation.isPending}
-		Deleting...
-	{:else}
-		Delete
-	{/if}
+  {#if deleteSessionMutation.isPending}
+    Deleting...
+  {:else}
+    Delete
+  {/if}
 </Button>
 ```
 
@@ -99,9 +99,9 @@ When a handler function only calls `.mutate()`, inline it directly:
 ```svelte
 <!-- Avoid: Unnecessary wrapper function -->
 <script>
-	function handleShare() {
-		shareMutation.mutate({ id });
-	}
+  function handleShare() {
+    shareMutation.mutate({ id });
+  }
 </script>
 
 <!-- Good: Inline simple handlers -->
@@ -167,14 +167,14 @@ Use proper component composition following shadcn-svelte patterns:
 
 ```svelte
 <Dialog.Root bind:open={isOpen}>
-	<Dialog.Trigger>
-		<Button>Open</Button>
-	</Dialog.Trigger>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Title</Dialog.Title>
-		</Dialog.Header>
-	</Dialog.Content>
+  <Dialog.Trigger>
+    <Button>Open</Button>
+  </Dialog.Trigger>
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Title</Dialog.Title>
+    </Dialog.Header>
+  </Dialog.Content>
 </Dialog.Root>
 ```
 
@@ -196,20 +196,20 @@ When building interactive components (especially with dialogs/modals), create se
 ```svelte
 <!-- Parent component -->
 <script>
-	let deletingItem = $state(null);
+  let deletingItem = $state(null);
 
-	function handleDelete(item) {
-		// delete logic
-		deletingItem = null;
-	}
+  function handleDelete(item) {
+    // delete logic
+    deletingItem = null;
+  }
 </script>
 
 {#each items as item}
-	<Button onclick={() => (deletingItem = item)}>Delete</Button>
+  <Button onclick={() => (deletingItem = item)}>Delete</Button>
 {/each}
 
 <AlertDialog open={!!deletingItem}>
-	<!-- Single dialog for all items -->
+  <!-- Single dialog for all items -->
 </AlertDialog>
 ```
 
@@ -218,26 +218,26 @@ When building interactive components (especially with dialogs/modals), create se
 ```svelte
 <!-- DeleteItemButton.svelte -->
 <script>
-	let { item } = $props();
-	let open = $state(false);
+  let { item } = $props();
+  let open = $state(false);
 
-	function handleDelete() {
-		// delete logic directly in component
-	}
+  function handleDelete() {
+    // delete logic directly in component
+  }
 </script>
 
 <AlertDialog.Root bind:open>
-	<AlertDialog.Trigger>
-		<Button>Delete</Button>
-	</AlertDialog.Trigger>
-	<AlertDialog.Content>
-		<!-- Dialog content -->
-	</AlertDialog.Content>
+  <AlertDialog.Trigger>
+    <Button>Delete</Button>
+  </AlertDialog.Trigger>
+  <AlertDialog.Content>
+    <!-- Dialog content -->
+  </AlertDialog.Content>
 </AlertDialog.Root>
 
 <!-- Parent component -->
 {#each items as item}
-	<DeleteItemButton {item} />
+  <DeleteItemButton {item} />
 {/each}
 ```
 

@@ -1,5 +1,6 @@
 import type { SerializedGraph } from "../types";
 import { vault } from "../../stores/vault.svelte";
+import { vaultRegistry } from "../../stores/vault-registry.svelte";
 import type { Entity } from "schema";
 import Peer from "peerjs";
 
@@ -104,7 +105,7 @@ export class P2PHostService {
       // We can use the internal handles if available
 
       // For now, let's assume we can get it via the Vault fs helpers
-      if (!vault.rootHandle) {
+      if (!vaultRegistry.rootHandle) {
         console.warn("[P2P Host] No root handle available to serve files");
         return;
       }
@@ -118,12 +119,12 @@ export class P2PHostService {
 
       if (parts.length === 1) {
         // Root file
-        fileHandle = await vault.rootHandle
+        fileHandle = await vaultRegistry.rootHandle
           .getFileHandle(parts[0])
           .catch(() => undefined);
       } else if (parts[0] === "images" && parts.length === 2) {
         // Image in images/ folder
-        const imgDir = await vault.rootHandle
+        const imgDir = await vaultRegistry.rootHandle
           .getDirectoryHandle("images")
           .catch(() => undefined);
         if (imgDir)

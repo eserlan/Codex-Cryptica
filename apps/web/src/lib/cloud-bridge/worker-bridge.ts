@@ -2,6 +2,7 @@ import SyncWorker from "$workers/sync?worker";
 import { cloudConfig } from "$stores/cloud-config";
 import { get } from "svelte/store";
 import { vault } from "$lib/stores/vault.svelte";
+import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 import { browser } from "$app/environment";
 import type { CloudConfig } from "./index";
 
@@ -83,7 +84,9 @@ export class WorkerBridge {
           case "REMOTE_UPDATES_DOWNLOADED":
             // Critical step: tell the vault to re-read from OPFS
             vault.loadFiles();
-            console.log("[WorkerBridge] Remote updates downloaded, reloading vault...");
+            console.log(
+              "[WorkerBridge] Remote updates downloaded, reloading vault...",
+            );
             break;
         }
       });
@@ -124,7 +127,7 @@ export class WorkerBridge {
     const email = config.connectedEmail;
     const storageKey = `gdrive_folder_id:${email}`;
     const folderId = localStorage.getItem(storageKey);
-    const rootHandle = vault.rootHandle;
+    const rootHandle = vaultRegistry.rootHandle;
 
     console.log("[WorkerBridge] Sync Parameters:", {
       email,
