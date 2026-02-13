@@ -4,7 +4,7 @@ import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
-import { getDB, DB_VERSION } from "../utils/idb";
+import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
@@ -29,7 +29,7 @@ class ProposerStore {
 
   private getService(): ProposerService {
     if (!this.service) {
-      this.service = new ProposerService("CodexCryptica", DB_VERSION, getDB());
+      this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
     }
     return this.service;
   }

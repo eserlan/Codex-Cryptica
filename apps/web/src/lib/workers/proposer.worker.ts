@@ -1,9 +1,18 @@
 /// <reference lib="webworker" />
 
 import { ProposerService } from "@codex/proposer";
-import { getDB, DB_VERSION } from "../utils/idb";
+import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
-const service = new ProposerService("CodexCryptica", DB_VERSION, getDB());
+let service: ProposerService | null = null;
+
+function getService() {
+  if (!service) {
+    // We defer opening the DB until we actually need it (e.g. for future persistence tasks)
+    // For now ANALYZE is pure logic, but this keeps it consistent with the main app.
+    service = new ProposerService(DB_NAME, DB_VERSION, getDB());
+  }
+  return service;
+}
 
 self.onmessage = async (e: MessageEvent) => {
   const { type, payload, id } = e.data || {};
@@ -17,7 +26,7 @@ self.onmessage = async (e: MessageEvent) => {
     if (type === "ANALYZE") {
       const { apiKey, modelName, entityId, content, availableTargets } =
         payload;
-      const proposals = await service.analyzeEntity(
+      const proposals = await getService().analyzeEntity(
         apiKey,
         modelName,
         entityId,
