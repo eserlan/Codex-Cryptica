@@ -629,11 +629,26 @@
           graph.elements.forEach((el) => {
             if (currentIds.has(el.data.id)) {
               const node = currentCy.$id(el.data.id);
-              if (node) {
-                // Only update if data actually changed to avoid style recalc?
-                // Cytoscape handles this reasonably well, but we can be explicit if needed.
-                // For now, blind update is cheap enough compared to layout.
-                node.data(el.data);
+              if (node.length > 0) {
+                const currentData = node.data();
+                const newData = el.data;
+
+                // Shallow equality check to prevent unnecessary style recalculations
+                let changed = false;
+                for (const key in newData) {
+                  // Skip ID as it's the lookup key
+                  if (key === "id") continue;
+
+                  const k = key as keyof typeof newData;
+                  if (currentData[k] !== newData[k]) {
+                    changed = true;
+                    break;
+                  }
+                }
+
+                if (changed) {
+                  node.data(newData);
+                }
               }
             }
           });
