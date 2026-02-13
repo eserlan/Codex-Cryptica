@@ -161,6 +161,14 @@
             on:keydown={handleKeydown}
             placeholder="Search notes..."
             class="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            aria-controls="search-results-list"
+            aria-label="Search notes"
+            aria-activedescendant={$searchStore.results.length > 0
+              ? `search-result-${$searchStore.selectedIndex}`
+              : undefined}
           />
         </div>
       </div>
@@ -169,14 +177,30 @@
       <div
         bind:this={resultsContainer}
         class="flex-1 overflow-y-auto p-2 space-y-1"
+        role="listbox"
+        id="search-results-list"
       >
         {#if $searchStore.results.length === 0 && $searchStore.query}
-          <div class="p-8 text-center text-zinc-500">
-            No results found for "{$searchStore.query}"
+          <div
+            class="p-12 flex flex-col items-center justify-center gap-3 text-zinc-500"
+            role="status"
+          >
+            <span
+              class="icon-[heroicons--magnifying-glass-minus] w-12 h-12 opacity-50"
+            ></span>
+            <div class="text-sm">
+              We couldn't find any notes matching "<span
+                class="font-medium text-zinc-900 dark:text-zinc-100"
+                >{$searchStore.query}</span
+              >"
+            </div>
           </div>
         {:else if $searchStore.results.length > 0}
           {#each $searchStore.results as result, index (result.id || `fallback-${index}`)}
             <button
+              id="search-result-{index}"
+              role="option"
+              aria-selected={index === $searchStore.selectedIndex}
               class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
                 {index === $searchStore.selectedIndex
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
