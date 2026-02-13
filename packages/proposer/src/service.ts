@@ -2,8 +2,8 @@ import type { IProposerService, Proposal, ProposerConfig } from "./types";
 import { openDB, type IDBPDatabase } from "idb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const DB_NAME = "CodexCryptica";
-const DB_VERSION = 7;
+const DB_NAME = "ProposerStandalone";
+const DB_VERSION = 1;
 const PROPOSAL_STORE = "proposals";
 
 export class ProposerService implements IProposerService {

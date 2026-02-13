@@ -1,8 +1,9 @@
 /// <reference lib="webworker" />
 
 import { ProposerService } from "@codex/proposer";
+import { getDB, DB_VERSION } from "../utils/idb";
 
-const service = new ProposerService();
+const service = new ProposerService("CodexCryptica", DB_VERSION, getDB());
 
 self.onmessage = async (e: MessageEvent) => {
   const { type, payload, id } = e.data || {};

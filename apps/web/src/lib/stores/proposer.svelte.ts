@@ -4,7 +4,7 @@ import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
-import { getDB } from "../utils/idb";
+import { getDB, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
@@ -29,7 +29,7 @@ class ProposerStore {
 
   private getService(): ProposerService {
     if (!this.service) {
-      this.service = new ProposerService("CodexCryptica", 7, getDB());
+      this.service = new ProposerService("CodexCryptica", DB_VERSION, getDB());
     }
     return this.service;
   }
@@ -70,10 +70,12 @@ class ProposerStore {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
       // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
-      const existingConnectedIds = new Set([
-        ...entity.connections.map((c) => c.target),
-        ...(vault.inboundConnections[entityId] || []).map((c) => c.sourceId),
-      ]);
+      const existingConnectedIds = new Set(
+        entity.connections.map((c) => c.target),
+      );
+      for (const inbound of vault.inboundConnections[entityId] || []) {
+        existingConnectedIds.add(inbound.sourceId);
+      }
 
       const targets = Object.values(vault.entities)
         .filter((e) => e.id !== entityId && !existingConnectedIds.has(e.id))
