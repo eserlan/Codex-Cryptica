@@ -28,11 +28,13 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
+  import { layoutService } from "$lib/services/layout";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
+  let _isLayoutRunning = $state(false);
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list),
@@ -111,7 +113,7 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = (isInitial = false) => {
+  const applyCurrentLayout = async (isInitial = false) => {
     if (!cy) return;
     if (currentLayout) {
       try {
@@ -122,7 +124,28 @@
     }
 
     if (graph.timelineMode) {
-      graph.applyTimelineLayout(cy);
+      _isLayoutRunning = true;
+      try {
+        const nodes = graph.elements.filter(
+          (e) => e.group === "nodes",
+        ) as any[];
+
+        const positions = await layoutService.runTimeline(nodes, {
+          axis: graph.timelineAxis,
+          scale: graph.timelineScale,
+          jitter: 150,
+        });
+
+        cy.nodes().animate({
+          position: (node) => positions[node.id()],
+          duration: 500,
+          easing: "ease-out-cubic",
+        });
+      } catch (err) {
+        console.error("Timeline layout failed:", err);
+      } finally {
+        _isLayoutRunning = false;
+      }
     } else if (graph.orbitMode && graph.centralNodeId) {
       setCentralNode(cy, graph.centralNodeId);
       if (isInitial) {
@@ -134,31 +157,38 @@
         });
       }
     } else {
-      // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
-      // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
-      // here, because its effect is equivalent to re-running 'cose' with these options.
-      currentLayout = cy.layout({
-        ...DEFAULT_LAYOUT_OPTIONS,
-      });
+      // Background FCOSE Layout
+      _isLayoutRunning = true;
+      try {
+        const elements = graph.elements;
+        const positions = await layoutService.runFcose(elements, {
+          ...DEFAULT_LAYOUT_OPTIONS,
+          animate: false, // Math only in worker
+        });
 
-      currentLayout.one("layoutstop", () => {
-        if (isInitial && cy) {
-          cy.resize();
-          // Snap fit immediately to ensure visibility
+        if (isInitial) {
+          cy.nodes().forEach((n) => {
+            const pos = positions[n.id()];
+            if (pos) n.position(pos);
+          });
           cy.fit(cy.elements(), 40);
-
-          setTimeout(() => {
-            if (!cy) return;
-            cy.animate({
-              fit: { eles: cy.elements(), padding: 40 },
-              duration: 800,
-              easing: "ease-out-cubic",
-            });
-          }, 50);
+        } else {
+          cy.nodes().animate({
+            position: (node) => positions[node.id()],
+            duration: 1000,
+            easing: "ease-out-quad",
+          });
         }
-        currentLayout = undefined;
-      });
-      currentLayout.run();
+      } catch (err) {
+        console.error("Background layout failed:", err);
+        // Fallback to main thread
+        currentLayout = cy.layout({
+          ...DEFAULT_LAYOUT_OPTIONS,
+        });
+        currentLayout.run();
+      } finally {
+        _isLayoutRunning = false;
+      }
     }
   };
 

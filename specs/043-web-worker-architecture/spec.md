@@ -35,7 +35,7 @@ As a user, I want the graph to rearrange itself smoothly when I switch views or 
 
 - Refactor `search.worker.ts` to use `Comlink`.
 - Implement `SearchService` as a wrapper around the Comlink worker.
-- Use **Transferables** for large search result sets if possible.
+- System MUST use **Transferables** (ArrayBuffers) for search result sets exceeding 100 items to minimize serialization overhead.
 
 ### FR-002: Background Graph Layout
 
@@ -48,6 +48,11 @@ As a user, I want the graph to rearrange itself smoothly when I switch views or 
 - Offload `marked` parsing to a worker for very large chronicles (>50kb).
 - Prevent UI blocking when switching between complex lore entries.
 
+### FR-004: User Documentation
+
+- System MUST include a new help article in `help-content.ts` titled "Performance Optimization".
+- The article MUST explain the "Background Brain" (Web Workers) and how it handles scaling for large vaults.
+
 ---
 
 ## Success Criteria
@@ -55,6 +60,7 @@ As a user, I want the graph to rearrange itself smoothly when I switch views or 
 ### Measurable Outcomes
 
 - **SC-001**: Main thread blocking tasks > 16ms during search/layout reduced by 90%.
+  - _Verification_: Measured via Chrome DevTools "Performance" profile trace comparing a "Main Thread" layout vs "Worker Thread" layout on a 5,000 node dataset.
 - **SC-002**: "Layout" operations no longer freeze graph interactions (zoom/pan).
 - **SC-003**: Lighthouse Performance score remains high (>90) even with stress-test datasets.
 

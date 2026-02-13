@@ -3,7 +3,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
-  import { marked } from "marked";
+  import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import ImageMessage from "./ImageMessage.svelte";
   import { parseOracleResponse } from "editor-core";
@@ -14,9 +14,6 @@
 
   let { message }: { message: ChatMessage } = $props();
 
-  let html = $derived(
-    DOMPurify.sanitize(marked.parse(message.content || "") as string),
-  );
   let targetEntity = $derived(
     message.archiveTargetId || message.entityId
       ? vault.entities[message.archiveTargetId || message.entityId!]
@@ -47,8 +44,8 @@
 
   // Only show UNDO button if this message was the last one to perform an action
   let isLastAction = $derived(
-    oracle.undoStack.length > 0 && 
-    oracle.undoStack[oracle.undoStack.length - 1].messageId === message.id
+    oracle.undoStack.length > 0 &&
+      oracle.undoStack[oracle.undoStack.length - 1].messageId === message.id,
   );
 
   // Intelligent intent detection for archival type
@@ -95,7 +92,10 @@
     try {
       return structuredClone($state.snapshot(entity));
     } catch (e) {
-      console.warn("Failed to structuredClone entity, falling back to JSON parse/stringify", e);
+      console.warn(
+        "Failed to structuredClone entity, falling back to JSON parse/stringify",
+        e,
+      );
       return JSON.parse(JSON.stringify($state.snapshot(entity)));
     }
   };
@@ -105,20 +105,23 @@
       message.archiveTargetId ||
       message.entityId ||
       (activeEntity ? activeEntity.id : null);
-    
+
     console.log("[Oracle] Smart Apply triggered for:", finalTargetId);
 
     if (!finalTargetId || !message.content) {
-        console.warn("[Oracle] Smart Apply aborted: Missing target or content");
-        return;
+      console.warn("[Oracle] Smart Apply aborted: Missing target or content");
+      return;
     }
 
     // We want to update both fields if they exist in the parsed result
     const updates: Partial<{ content: string; lore: string }> = {};
     const entity = vault.entities[finalTargetId];
     if (!entity) {
-        console.error("[Oracle] Smart Apply failed: Entity not found in vault", finalTargetId);
-        return;
+      console.error(
+        "[Oracle] Smart Apply failed: Entity not found in vault",
+        finalTargetId,
+      );
+      return;
     }
 
     if (parsed.chronicle) {
@@ -128,7 +131,7 @@
     if (parsed.lore) {
       updates.lore = parsed.lore;
     }
-    
+
     console.log("[Oracle] Smart Apply updates:", updates);
 
     if (Object.keys(updates).length > 0) {
@@ -141,17 +144,21 @@
 
       // 2. Push Undo
       if (beforeState) {
-        oracle.pushUndoAction(`Smart Apply to ${beforeState.title}`, async () => {
-          // Granular revert: only restore the fields we changed
-          const undoUpdates: any = {};
-          if (parsed.chronicle) undoUpdates.content = beforeState.content;
-          if (parsed.lore) undoUpdates.lore = beforeState.lore;
-          vault.updateEntity(beforeState.id, undoUpdates);
-          isSaved = false; 
-        }, message.id);
+        oracle.pushUndoAction(
+          `Smart Apply to ${beforeState.title}`,
+          async () => {
+            // Granular revert: only restore the fields we changed
+            const undoUpdates: any = {};
+            if (parsed.chronicle) undoUpdates.content = beforeState.content;
+            if (parsed.lore) undoUpdates.lore = beforeState.lore;
+            vault.updateEntity(beforeState.id, undoUpdates);
+            isSaved = false;
+          },
+          message.id,
+        );
       }
     } else {
-        console.warn("[Oracle] Smart Apply aborted: No updates extracted");
+      console.warn("[Oracle] Smart Apply aborted: No updates extracted");
     }
   };
 
@@ -162,8 +169,9 @@
       const connections = [
         ...(parsed.wikiLinks || []),
         ...(parsed.connections || []).map((conn) => {
-          const targetName = typeof conn === 'string' ? conn : conn.target;
-          const label = typeof conn === 'string' ? conn : (conn.label || conn.target);
+          const targetName = typeof conn === "string" ? conn : conn.target;
+          const label =
+            typeof conn === "string" ? conn : conn.label || conn.target;
           return {
             target: sanitizeId(targetName),
             label: label,
@@ -191,13 +199,16 @@
       graph.requestFit();
 
       // Push Undo (Delete)
-      oracle.pushUndoAction(`Create Node ${parsed.title}`, async () => {
-        await vault.deleteEntity(id);
-        // Reset message to point back to nothing or its original entity
-        oracle.updateMessageEntity(message.id, null); 
-        isSaved = false;
-      }, message.id);
-
+      oracle.pushUndoAction(
+        `Create Node ${parsed.title}`,
+        async () => {
+          await vault.deleteEntity(id);
+          // Reset message to point back to nothing or its original entity
+          oracle.updateMessageEntity(message.id, null);
+          isSaved = false;
+        },
+        message.id,
+      );
     } catch (e) {
       console.error("Failed to create node from chat", e);
     }
@@ -220,10 +231,14 @@
 
     // 2. Push Undo
     if (beforeState) {
-      oracle.pushUndoAction(`Update Chronicle: ${beforeState.title}`, async () => {
-        vault.updateEntity(beforeState.id, { content: beforeState.content });
-        isSaved = false;
-      }, message.id);
+      oracle.pushUndoAction(
+        `Update Chronicle: ${beforeState.title}`,
+        async () => {
+          vault.updateEntity(beforeState.id, { content: beforeState.content });
+          isSaved = false;
+        },
+        message.id,
+      );
     }
   };
 
@@ -244,20 +259,24 @@
 
     // 2. Push Undo
     if (beforeState) {
-      oracle.pushUndoAction(`Update Lore: ${beforeState.title}`, async () => {
-        vault.updateEntity(beforeState.id, { lore: beforeState.lore });
-        isSaved = false;
-      }, message.id);
+      oracle.pushUndoAction(
+        `Update Lore: ${beforeState.title}`,
+        async () => {
+          vault.updateEntity(beforeState.id, { lore: beforeState.lore });
+          isSaved = false;
+        },
+        message.id,
+      );
     }
   };
 
   const handleUndo = async () => {
     await oracle.undo();
-    // Local UI update handled by reactivity if we needed it, 
-    // but oracle.undo() manages the stack. 
-    // We just might want to reset isSaved if we could correlate, 
+    // Local UI update handled by reactivity if we needed it,
+    // but oracle.undo() manages the stack.
+    // We just might want to reset isSaved if we could correlate,
     // but simply clicking undo is enough.
-    // Ideally we track if *this* message was the last action, 
+    // Ideally we track if *this* message was the last action,
     // but for now global undo is the pattern.
   };
 </script>
@@ -278,7 +297,9 @@
         <ImageMessage {message} />
       {:else}
         <div class="prose prose-sm">
-          {@html html}
+          {#await parserService.parse(message.content || "") then html}
+            {@html DOMPurify.sanitize(html)}
+          {/await}
         </div>
 
         {#if (targetEntity || activeEntity || showCreate) && message.content.length > 20}
@@ -410,13 +431,15 @@
               class="mt-3 pt-2 border-t border-theme-border flex items-center justify-between"
               transition:fade
             >
-              <span class="text-[10px] text-green-400 font-bold uppercase tracking-wider flex items-center gap-1">
+              <span
+                class="text-[10px] text-green-400 font-bold uppercase tracking-wider flex items-center gap-1"
+              >
                 <span class="icon-[lucide--check-circle] w-3 h-3"></span>
                 SAVED
               </span>
-              
+
               {#if isLastAction}
-                <button 
+                <button
                   onclick={handleUndo}
                   class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
                   title="Undo changes (Ctrl+Z)"
