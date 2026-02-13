@@ -1,11 +1,6 @@
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
-import {
-  GraphTransformer,
-  getTimelineLayout,
-  type GraphNode,
-} from "graph-engine";
-import type { Core } from "cytoscape";
+import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era } from "schema";
 import { getDB } from "../utils/idb";
 
@@ -114,25 +109,6 @@ class GraphStore {
     this.centralNodeId = nodeId;
     this.orbitMode = true;
     this.timelineMode = false; // Disable timeline mode if active
-  }
-
-  applyTimelineLayout(cy: Core) {
-    const nodes = this.elements.filter(
-      (e) => e.group === "nodes",
-    ) as unknown as GraphNode[];
-    const positions = getTimelineLayout(nodes, {
-      axis: this.timelineAxis,
-      scale: this.timelineScale,
-      jitter: 150, // Standard separation for concurrent events
-    });
-
-    cy.layout({
-      name: "preset",
-      positions: positions,
-      animate: true,
-      animationDuration: 500,
-      padding: 100,
-    }).run();
   }
 }
 

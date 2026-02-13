@@ -15,7 +15,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { searchStore } from "$lib/stores/search";
+  import { searchStore } from "$lib/stores/search.svelte";
   import { helpStore } from "$lib/stores/help.svelte";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { uiStore } from "$lib/stores/ui.svelte";
@@ -213,7 +213,7 @@
             placeholder="Search (Cmd+K)..."
             class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-theme-text transition-all placeholder:text-theme-muted/50"
             onfocus={() => searchStore.open()}
-            value={$searchStore.query}
+            value={searchStore.query}
             oninput={(e) => searchStore.setQuery(e.currentTarget.value)}
             data-testid="search-input"
           />

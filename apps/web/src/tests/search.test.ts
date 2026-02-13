@@ -1,50 +1,41 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { MockWorker } = vi.hoisted(() => {
+const { MockWorker, mockApi } = vi.hoisted(() => {
+  const mockApi = {
+    initIndex: vi.fn().mockResolvedValue(true),
+    add: vi.fn().mockResolvedValue(true),
+    remove: vi.fn().mockResolvedValue(true),
+    search: vi.fn().mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
+    searchOptimized: vi
+      .fn()
+      .mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
+    clear: vi.fn().mockResolvedValue(true),
+  };
+
   class MockWorker {
-    onmessage: ((event: MessageEvent) => void) | null = null;
-
-    constructor() {
-      // confirm construction
-    }
-
-    postMessage(data: any) {
-      setTimeout(() => {
-        if (this.onmessage) {
-          let result = undefined;
-          const error = undefined;
-
-          if (data.type === "INIT") result = true;
-          if (data.type === "INDEX") result = true;
-          if (data.type === "SEARCH")
-            result = [{ id: "1", title: "Test", score: 1 }];
-
-          this.onmessage({
-            data: {
-              type: data.type,
-              id: data.id,
-              result,
-              error,
-            },
-          } as MessageEvent);
-        }
-      }, 10);
-    }
-
+    constructor() {}
+    postMessage() {}
     terminate() {}
+    addEventListener() {}
+    removeEventListener() {}
   }
 
-  // Make it available globally so when SearchService calls `new SearchWorker()`
-  // (which is mapped to this) it works in the test env.
-  if (typeof window !== "undefined") {
-    (window as any).Worker = MockWorker;
-  }
-  (global as any).Worker = MockWorker;
-
-  return { MockWorker };
+  return { MockWorker, mockApi };
 });
 
+vi.stubGlobal("Worker", MockWorker);
+
+// Mock Comlink
+vi.mock("comlink", () => {
+  return {
+    wrap: vi.fn(() => mockApi),
+    expose: vi.fn(),
+    transfer: vi.fn((obj) => obj),
+  };
+});
+
+// Mock the worker import
 vi.mock("../lib/workers/search.worker?worker", () => {
   return {
     default: MockWorker,
@@ -58,10 +49,6 @@ describe("SearchService", () => {
   let service: SearchService;
 
   beforeEach(() => {
-    // Ensure window is defined (jsdom should handle this)
-    if (typeof window === "undefined") {
-      throw new Error("Window is undefined in test");
-    }
     service = new SearchService();
   });
 
@@ -71,6 +58,7 @@ describe("SearchService", () => {
 
   it("should initialize", async () => {
     await expect(service.init()).resolves.toBe(true);
+    expect(mockApi.initIndex).toHaveBeenCalled();
   });
 
   it("should index an entry", async () => {
@@ -82,11 +70,16 @@ describe("SearchService", () => {
       updatedAt: Date.now(),
     };
     await expect(service.index(entry)).resolves.toBe(true);
+    expect(mockApi.add).toHaveBeenCalledWith(entry);
   });
 
   it("should perform a search", async () => {
     const results = await service.search("query");
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("1");
+    expect(mockApi.searchOptimized).toHaveBeenCalledWith(
+      "query",
+      expect.any(Object),
+    );
   });
 });

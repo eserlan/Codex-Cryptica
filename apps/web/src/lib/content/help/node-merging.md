@@ -1,6 +1,6 @@
 ---
 id: node-merging
-title: Merging Entities
+title: Merging Nodes
 tags: [organization, cleanup, ai]
 rank: 7
 ---
@@ -11,7 +11,7 @@ Sometimes duplicate entities appear, especially after importing content. The **M
 
 ### How to Merge
 
-1. **Select Multiple Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.
+1. **Select Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.
 2. **Right-Click**: Open the context menu on one of the selected nodes.
 3. **Select 'Merge Nodes'**: This opens the merge dialog.
 

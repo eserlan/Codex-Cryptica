@@ -1,12 +1,13 @@
 <script lang="ts">
   import { helpStore } from "$stores/help.svelte";
-  import { marked } from "marked";
+  import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import { slide } from "svelte/transition";
 
-  const parseContent = (content: string) => {
+  const parseContent = async (content: string) => {
     try {
-      return DOMPurify.sanitize(marked.parse(content) as string);
+      const html = await parserService.parse(content);
+      return DOMPurify.sanitize(html);
     } catch (e) {
       console.error("Failed to parse help article", e);
       return content;
@@ -82,7 +83,9 @@
             <div
               class="text-[13px] text-theme-text/80 leading-relaxed prose prose-theme prose-p:my-2 prose-headings:text-theme-primary prose-headings:text-xs prose-headings:font-bold prose-headings:uppercase prose-headings:tracking-widest prose-headings:mt-4 prose-headings:mb-2 prose-strong:text-theme-primary prose-code:text-theme-primary"
             >
-              {@html parseContent(article.content)}
+              {#await parseContent(article.content) then html}
+                {@html html}
+              {/await}
             </div>
           </div>
         {/if}
