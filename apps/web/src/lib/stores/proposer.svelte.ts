@@ -69,12 +69,14 @@ class ProposerStore {
     try {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
-      const existingTargetIds = new Set(
-        entity.connections.map((c) => c.target),
-      );
+      // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
+      const existingConnectedIds = new Set([
+        ...entity.connections.map((c) => c.target),
+        ...(vault.inboundConnections[entityId] || []).map((c) => c.sourceId),
+      ]);
 
       const targets = Object.values(vault.entities)
-        .filter((e) => e.id !== entityId && !existingTargetIds.has(e.id))
+        .filter((e) => e.id !== entityId && !existingConnectedIds.has(e.id))
         .map((e) => ({ id: e.id, name: e.title }));
 
       // Use the lite model for background tasks to save cost/latency
