@@ -38,7 +38,7 @@ test.describe("Oracle UI Refinement", () => {
     // Enable Oracle by adding a dummy API key to IndexedDB
     await page.evaluate(async () => {
       const dbName = "CodexCryptica"; // Updated DB name
-      const request = indexedDB.open(dbName, 5); // Updated version
+      const request = indexedDB.open(dbName, 7); // Updated version
 
       const db: IDBDatabase = await new Promise((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
@@ -118,7 +118,7 @@ test.describe("Oracle UI Refinement", () => {
     // Re-ensure API key exists (switch might have reset state in some edge cases)
     await page.evaluate(async () => {
       const dbName = "CodexCryptica";
-      const request = indexedDB.open(dbName, 5);
+      const request = indexedDB.open(dbName, 7);
       const db: IDBDatabase = await new Promise(
         (r) => (request.onsuccess = () => r(request.result)),
       );

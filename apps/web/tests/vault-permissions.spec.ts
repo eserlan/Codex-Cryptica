@@ -25,7 +25,7 @@ test.describe("Vault Permissions Handling", () => {
 
       // Helper to seed IDB
       (window as any).__seedBrokenHandle = async () => {
-        const request = indexedDB.open("CodexCryptica", 5);
+        const request = indexedDB.open("CodexCryptica", 7);
         request.onupgradeneeded = (event: any) => {
           const db = event.target.result;
           if (!db.objectStoreNames.contains("settings")) {
