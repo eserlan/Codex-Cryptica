@@ -24,11 +24,11 @@ test.describe("Help Onboarding Walkthrough", () => {
     await page.getByRole("button", { name: "Next" }).click();
 
     // 3. Check if Vault step is highlighted (Vault info should be visible)
-    await expect(page.getByText("Your Archive")).toBeVisible();
+    await expect(page.getByText("Open a Vault")).toBeVisible();
 
     // 4. Navigate through all steps
     await page.getByRole("button", { name: "Next" }).click(); // Search
-    await expect(page.getByText("Omni-Search")).toBeVisible();
+    await expect(page.getByText("Quick Search")).toBeVisible();
 
     await page.getByRole("button", { name: "Next" }).click(); // Graph
     await expect(page.getByText("Knowledge Graph")).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("Help Onboarding Walkthrough", () => {
     await expect(page.getByText("Lore Oracle")).toBeVisible();
 
     await page.getByRole("button", { name: "Next" }).click(); // Settings
-    await expect(page.getByText("Configuration")).toBeVisible();
+    await expect(page.getByText("Settings")).toBeVisible();
 
     // 5. Finish tour
     await page.getByRole("button", { name: "Finish" }).click();
@@ -60,7 +60,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // Click Next to go to Vault step which HAS a specific target
     await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByText("Your Archive")).toBeVisible();
+    await expect(page.getByText("Open a Vault")).toBeVisible();
 
     // Now the dimming overlay SHOULD be visible (spotlight on vault button)
     await expect(dimmingOverlay).toBeVisible();
@@ -87,7 +87,7 @@ test.describe("Help Onboarding Walkthrough", () => {
     await page.keyboard.press("c");
 
     // 2. Verify hint appears
-    await expect(page.getByText("CONNECT MODE")).toBeVisible();
+    await expect(page.getByText("Linking Nodes")).toBeVisible();
 
     // 3. Dismiss hint
     await page.getByTestId("dismiss-hint-button").click();

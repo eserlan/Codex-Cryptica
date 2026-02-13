@@ -27,23 +27,23 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: "body",
     title: "Welcome to Codex Cryptica",
     content:
-      "Discover a new way to manage your RPG campaigns with **local-first sovereignty** and AI-powered lore expansion. Your data never leaves your device.",
+      "This tool gives you absolute control over your campaign notes. Everything stays on your computer for total privacy.",
     position: "bottom",
   },
   {
     id: "vault",
     targetSelector: '[data-testid="open-vault-button"]',
-    title: "Your Archive",
+    title: "Open a Vault",
     content:
-      "Connect to a local folder on your computer. All your lore will be stored as human-readable Markdown files.",
+      "Choose a folder on your computer to store your files. Your lore is saved as standard Markdown files.",
     position: "bottom",
   },
   {
     id: "search",
     targetSelector: '[data-testid="search-input"]',
-    title: "Omni-Search",
+    title: "Quick Search",
     content:
-      "Press `Cmd+K` to search through your entire campaign. We use fuzzy matching to find exactly what you're looking for.",
+      "Press `Cmd+K` to search everything. Find NPCs, locations, and events instantly.",
     position: "bottom",
   },
   {
@@ -51,7 +51,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="graph-canvas"]',
     title: "Knowledge Graph",
     content:
-      "Visualize the connections between your NPCs, locations, and artifacts. Press `C` to enter Connect Mode and link entities.",
+      "See how everything connects. Press `C` to start linking people and places together.",
     position: "top",
   },
   {
@@ -59,15 +59,15 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="oracle-orb"]',
     title: "Lore Oracle",
     content:
-      "Ask the AI anything about your world. It understands the context of your graph and helps you expand your lore.",
+      "Ask the AI questions about your world or type `/draw` to generate character art.",
     position: "top",
   },
   {
     id: "settings",
     targetSelector: '[data-testid="settings-button"]',
-    title: "Configuration",
+    title: "Settings",
     content:
-      "Manage your categories, AI settings, and cloud synchronization here.",
+      "Manage your AI keys, change NPC categories, or set up Google Drive syncing.",
     position: "bottom",
   },
 ];
@@ -75,27 +75,39 @@ export const ONBOARDING_TOUR: GuideStep[] = [
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
   "connect-mode": {
     id: "connect-mode",
-    title: "Connect Mode",
+    title: "Linking Nodes",
     content:
-      "Click a source node, then click a target node to create a connection.",
+      "Click one node and then another to create a relationship between them.",
   },
   "oracle-image": {
     id: "oracle-image",
-    title: "Visualizing Lore",
+    title: "Saving Art",
     content:
-      "You can drag generated images onto any entity in the detail panel to save them as thumbnails.",
+      "You can drag any AI-generated image onto an entry in the sidebar to save it as their portrait.",
   },
   "proposer-discovery": {
     id: "proposer-discovery",
-    title: "Hidden Connections Found",
+    title: "New Connection Found",
     content:
-      "The Oracle has detected potential relationships in your lore. Check the 'Oracle Suggestions' section in the detail panel to review them.",
+      "The AI found a potential link in your notes. Check 'Oracle Suggestions' to review it.",
   },
   "node-merging": {
     id: "node-merging",
-    title: "Consolidation Power",
+    title: "Merging Entries",
     content:
-      "You can merge multiple nodes to eliminate duplicates. Select 2+ nodes in the graph, right-click, and choose 'Merge Nodes'.",
+      "You can combine duplicates. Select two or more nodes, right-click, and choose 'Merge Nodes'.",
+  },
+  "fog-of-war": {
+    id: "fog-of-war",
+    title: "Hiding Spoilers",
+    content:
+      "Right-click a node to hide it from the graph. Great for keeping secrets during a session!",
+  },
+  "vault-switcher": {
+    id: "vault-switcher",
+    title: "Switching Campaigns",
+    content:
+      "Click your Vault's name at the top to switch to a different campaign folder.",
   },
 };
 

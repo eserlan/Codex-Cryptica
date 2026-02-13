@@ -1,17 +1,19 @@
 ---
 id: proposer-guide
-title: Connections Proposer
+title: Suggested Connections
 tags: [ai, connections, discovery]
 rank: 2
 ---
 
-## Automated Discovery
+## Finding Hidden Links
 
-The **Connections Proposer** works in the background to find hidden links between your entities. It uses the Lore Oracle to analyze your writing and suggest relationships you might have missed.
+The **Connections Proposer** works in the background to find relationships you might have forgotten to link in the graph.
 
-### How it Works
+### How to use it
 
-1. **Background Scan**: When you view an entity, the system silently checks for potential links to other records.
-2. **Review**: Suggestions appear at the bottom of the detail panel.
-3. **Apply**: Click the checkmark to create a real connection.
-4. **Dismiss**: Click 'X' to ignore. Dismissed suggestions are saved in history just in case.
+1. **Automatic Scan**: While you read or edit an entry, the AI looks for names or themes mentioned in other files.
+2. **Reviewing Suggestions**: Check the **Oracle Suggestions** panel at the bottom of the screen.
+3. **Creating the Link**: If a suggestion looks good, click the checkmark to add it to your graph permanently.
+
+> [!TIP]
+> The more detailed your notes are, the better the AI becomes at finding interesting connections between your characters and locations.
