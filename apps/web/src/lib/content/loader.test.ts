@@ -15,6 +15,8 @@ Some content here.`;
 
     const article = parseHelpArticle("/path/to/test-article.md", rawContent);
 
+    if (!article) throw new Error("Article failed to parse");
+
     expect(article.id).toBe("test-article");
     expect(article.title).toBe("Test Article");
     expect(article.tags).toEqual(["tag1", "tag2"]);

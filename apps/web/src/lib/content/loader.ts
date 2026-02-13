@@ -51,7 +51,6 @@ export function parseHelpArticle(
 }
 
 export function loadHelpArticles(): HelpArticleWithRank[] {
-  // @ts-expect-error - import.meta.glob is a Vite feature
   const modules = import.meta.glob("./help/*.md", {
     eager: true,
     query: "?raw",
