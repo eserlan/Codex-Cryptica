@@ -4,15 +4,9 @@ test.describe("Oracle Clear Chat", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("/");
-
-    // Enable Oracle by adding a dummy API key
-    await page.evaluate(async () => {
-      if ((window as any).oracle) {
-        (window as any).oracle.apiKey = "fake-key";
-      }
-    });
   });
 
   test("should show clear chat button only when messages exist and clear history on click (docked)", async ({
