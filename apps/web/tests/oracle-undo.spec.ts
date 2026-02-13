@@ -57,8 +57,8 @@ test.describe("Oracle Undo", () => {
     // Initialize vault
     await page.evaluate(async () => {
       const vault = (window as any).vault;
-      if (vault.status !== "ready" && !vault.rootHandle) {
-        await vault.openDirectory();
+      if (vault.status !== "ready" && !vault.activeVaultId) {
+        await vault.importFromFolder();
       }
     });
 
