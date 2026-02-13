@@ -139,4 +139,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     content:
       "## How to get your Gemini API Key\n\nCodex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:\n\n1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).\n2. **Sign In**: Use your standard Google Account.\n3. **Create API Key**: Click on 'Get API key' in the sidebar, then click 'Create API key in new project'.\n4. **Copy & Paste**: Copy the generated key and paste it into the **Intelligence** tab in Settings.\n\n### Why do I need this?\nUsing your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.",
   },
+  {
+    id: "node-merging",
+    title: "Merging Entities",
+    tags: ["organization", "cleanup", "ai"],
+    content: 
+      "## Consolidation Power\n\nSometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.\n\n### How to Merge\n1. **Select Multiple Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.\n2. **Right-Click**: Open the context menu on one of the selected nodes.\n3. **Select 'Merge Nodes'**: This opens the merge dialog.\n\n### Merge Strategies\n- **Concatenate**: Simply appends the content of all source nodes into the target node.\n- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.\n\n**Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.",
+  },
 ];

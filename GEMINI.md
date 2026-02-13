@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
+- OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache) (041-node-merging)
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native) (039-multi-campaign-switch)
 - OPFS (Files), IndexedDB (Metadata/Registry) (039-multi-campaign-switch)
@@ -76,10 +77,9 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+- 041-node-merging: Added TypeScript 5.x / Node.js 20+
+- 041-node-merging: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 - 040-connections-proposer: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB)
-- 039-multi-campaign-switch: Added TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native)
-- 038-staging-environment: Implemented parallel staging deployment at /staging with auto-enabled debug tools.
-- 036-oracle-undo: Implemented undo/revert capabilities for AI actions (Smart Apply, Create Node) and added global undo shortcut (Ctrl+Z).
 
 <!-- MANUAL ADDITIONS START -->

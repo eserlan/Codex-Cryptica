@@ -247,6 +247,53 @@ Extract the distilled visual prompt:`;
     }
   }
 
+  async generateMergeProposal(
+    apiKey: string,
+    modelName: string,
+    target: any,
+    sources: any[]
+  ): Promise<{ body: string; lore?: string }> {
+    this.init(apiKey, modelName);
+    if (!this.model) throw new Error("AI Model not initialized");
+
+    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.getConsolidatedContext(target)}`;
+    const sourceContext = sources.map((s, i) => 
+        `--- SOURCE ${i+1}: ${s.title} (${s.type}) ---\n${this.getConsolidatedContext(s)}`
+    ).join("\n\n");
+
+    const prompt = `You are a master archivist. Merge the following records into a single cohesive entry.
+    
+${targetContext}
+
+${sourceContext}
+
+INSTRUCTIONS:
+1. Create a single, unified description (Markdown) that incorporates all key information.
+2. Resolve contradictions by favoring the TARGET, but mention significant variations as rumors if interesting.
+3. If 'Lore' is present, synthesize a deep-dive section.
+4. Return ONLY the merged content in this JSON format:
+{
+  "body": "The main description...",
+  "lore": "Optional extended lore..."
+}
+`;
+
+    try {
+        const result = await this.model.generateContent(prompt);
+        const text = result.response.text();
+        // Attempt to parse JSON. If it fails, fallback to raw text as body.
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        } else {
+            return { body: text };
+        }
+    } catch (err: any) {
+        console.error("[AIService] Merge generation failed:", err);
+        throw new Error(`Merge failed: ${err.message}`);
+    }
+  }
+
   async generateResponse(
     apiKey: string,
     query: string,

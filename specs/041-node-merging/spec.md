@@ -60,6 +60,14 @@ As a user, I want links pointing to the original nodes to be automatically updat
 
 1. **Given** Node C links to Node A, **When** Node A is merged into Node B, **Then** Node C's link is updated to point to Node B.
 
+### Edge Cases
+
+- **Conflicting Metadata**: If source nodes have different "types" or conflicting frontmatter, the AI should propose a resolution, but the user must verify. Default to the "primary" (target) node's type if not specified.
+- **Open in Editor**: If a node to be merged is currently open with unsaved changes, the system should prompt to save or discard before merging.
+- **AI Failure**: If the AI service is unavailable, the merge should still proceed with a concatenation of content (manual fallback).
+- **Self-Merge**: The system must prevent selecting the same node multiple times or merging a node into itself.
+- **Large Content**: Extremely large nodes might exceed AI context windows; the system should handle truncation or warn the user.
+
 ## Requirements
 
 ### Functional Requirements
