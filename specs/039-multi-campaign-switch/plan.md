@@ -4,6 +4,7 @@
 **Input**: Feature specification from `/specs/039-multi-campaign-switch/spec.md`
 
 ## Summary
+
 Implement multi-vault support using OPFS as primary storage, with optional FSA sync. Each vault lives in an OPFS subdirectory. An IndexedDB registry tracks vault metadata for the picker UI. The existing `closeVault()` method handles state cleanup during switches.
 
 ## Technical Context
@@ -37,7 +38,7 @@ specs/039-multi-campaign-switch/
 ├── research.md          # Decision log
 ├── data-model.md        # OPFS and IDB schema
 ├── quickstart.md        # Verification steps
-├── contracts/           
+├── contracts/
 │   └── vault-service.ts # Interface for switching
 ├── checklists/
 │   └── requirements.md  # Quality check
@@ -64,13 +65,13 @@ apps/web/src/lib/
 
 Current `main` uses FSA (File System Access API) as primary storage. This feature refactors to OPFS as primary with FSA as optional sync:
 
-| Aspect | Before (FSA) | After (OPFS + Sync) |
-|--------|-------------|---------------------|
-| Primary I/O | `showDirectoryPicker()` | `navigator.storage.getDirectory()` |
-| File operations | `fs.ts` + `walkDirectory()` | `opfs.ts` + OPFS directory APIs |
-| Permission model | User-granted per session | Always available, no prompts |
-| Multi-vault | Single `rootHandle` | `vaults/{id}/` subdirectories |
-| External access | Direct file access | Optional sync via FSA |
+| Aspect           | Before (FSA)                | After (OPFS + Sync)                |
+| ---------------- | --------------------------- | ---------------------------------- |
+| Primary I/O      | `showDirectoryPicker()`     | `navigator.storage.getDirectory()` |
+| File operations  | `fs.ts` + `walkDirectory()` | `opfs.ts` + OPFS directory APIs    |
+| Permission model | User-granted per session    | Always available, no prompts       |
+| Multi-vault      | Single `rootHandle`         | `vaults/{id}/` subdirectories      |
+| External access  | Direct file access          | Optional sync via FSA              |
 
 ## Complexity Tracking
 

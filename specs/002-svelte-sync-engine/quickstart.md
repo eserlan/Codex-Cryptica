@@ -11,8 +11,8 @@ In your root layout (`+layout.svelte`), the `VaultStore` is initialized automati
 
 ```svelte
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { vault } from '$lib/stores/vault';
+  import { onMount } from "svelte";
+  import { vault } from "$lib/stores/vault";
 
   onMount(async () => {
     // The vault now initializes itself automatically using OPFS.
@@ -27,8 +27,8 @@ Connect the derived graph store to your Cytoscape component.
 
 ```svelte
 <script lang="ts">
-  import { graph } from '$lib/stores/graph';
-  import Cytoscape from 'cytoscape';
+  import { graph } from "$lib/stores/graph";
+  import Cytoscape from "cytoscape";
 
   let container: HTMLElement;
   let cy: Cytoscape.Core;
@@ -37,7 +37,7 @@ Connect the derived graph store to your Cytoscape component.
   $effect(() => {
     if (cy && $graph.elements) {
       cy.json({ elements: $graph.elements });
-      cy.layout({ name: 'cose' }).run();
+      cy.layout({ name: "cose" }).run();
     }
   });
 
@@ -55,7 +55,7 @@ Updates to the vault automatically propagate to the graph.
 
 ```svelte
 <script lang="ts">
-  import { vault } from '$lib/stores/vault';
+  import { vault } from "$lib/stores/vault";
 
   function updateTitle(id: string, newTitle: string) {
     vault.updateEntity(id, { title: newTitle });

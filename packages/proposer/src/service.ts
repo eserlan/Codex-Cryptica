@@ -16,14 +16,30 @@ export class ProposerService implements IProposerService {
   private dbName: string;
   private dbVersion: number;
 
-  constructor(dbName: string = DB_NAME, dbVersion: number = DB_VERSION) {
+  constructor(
+    dbName: string = DB_NAME,
+    dbVersion: number = DB_VERSION,
+    externalDbPromise?: Promise<IDBPDatabase<any>>,
+  ) {
     this.dbName = dbName;
     this.dbVersion = dbVersion;
+    if (externalDbPromise) {
+      this.dbPromise = externalDbPromise;
+    }
   }
 
   private getDB() {
     if (!this.dbPromise) {
       this.dbPromise = openDB(this.dbName, this.dbVersion, {
+        upgrade(db, _oldVersion) {
+          if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
+            const store = db.createObjectStore(PROPOSAL_STORE, {
+              keyPath: "id",
+            });
+            store.createIndex("by-source", "sourceId");
+            store.createIndex("by-status", "status");
+          }
+        },
         blocking: () => {
           console.warn(
             "[ProposerService] DB Upgrade requested. Closing connection.",
@@ -87,7 +103,7 @@ Criteria for a connection:
 
 Source Entity Content:
 """
-${truncatedContent}
+${truncatedContent.replace(/"""/g, "''\"")}
 """
 
 Available Target Entities:
@@ -206,6 +222,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
   }
 
   async saveProposals(proposals: Proposal[]): Promise<void> {
+    if (proposals.length === 0) return;
     const db = await this.getDB();
     const tx = db.transaction(PROPOSAL_STORE, "readwrite");
 

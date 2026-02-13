@@ -60,7 +60,9 @@ export class KeyedTaskQueue {
    * Waits for all enqueued tasks in all queues to complete.
    */
   async waitForAll(): Promise<void> {
-    const all = Array.from(this.queues.values()).map(q => q.enqueue(async () => {}));
+    const all = Array.from(this.queues.values()).map((q) =>
+      q.enqueue(async () => {}),
+    );
     await Promise.all(all);
   }
 }

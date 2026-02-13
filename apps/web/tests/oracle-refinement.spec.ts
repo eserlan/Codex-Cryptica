@@ -38,7 +38,7 @@ test.describe("Oracle UI Refinement", () => {
     // Enable Oracle by adding a dummy API key to IndexedDB
     await page.evaluate(async () => {
       const dbName = "CodexCryptica"; // Updated DB name
-      const request = indexedDB.open(dbName, 5); // Updated version
+      const request = indexedDB.open(dbName, 7); // Updated version
 
       const db: IDBDatabase = await new Promise((resolve, reject) => {
         request.onsuccess = () => resolve(request.result);
@@ -118,8 +118,10 @@ test.describe("Oracle UI Refinement", () => {
     // Re-ensure API key exists (switch might have reset state in some edge cases)
     await page.evaluate(async () => {
       const dbName = "CodexCryptica";
-      const request = indexedDB.open(dbName, 5);
-      const db: IDBDatabase = await new Promise((r) => (request.onsuccess = () => r(request.result)));
+      const request = indexedDB.open(dbName, 7);
+      const db: IDBDatabase = await new Promise(
+        (r) => (request.onsuccess = () => r(request.result)),
+      );
       const tx = db.transaction("settings", "readwrite");
       tx.objectStore("settings").put("fake-key", "ai_api_key");
       await new Promise((r) => (tx.oncomplete = r));
@@ -130,9 +132,13 @@ test.describe("Oracle UI Refinement", () => {
 
     // Verify message is gone from the chat container
     // Verify message is gone from the chat container
-    const messagesLength = await page.evaluate(() => (window as any).oracle.messages.length);
+    const messagesLength = await page.evaluate(
+      () => (window as any).oracle.messages.length,
+    );
     console.log("Oracle messages length after switch:", messagesLength);
-    const messagesContent = await page.evaluate(() => (window as any).oracle.messages.map((m: any) => m.content));
+    const messagesContent = await page.evaluate(() =>
+      (window as any).oracle.messages.map((m: any) => m.content),
+    );
     console.log("Oracle messages content:", messagesContent);
 
     const chatContainer = page.locator(".custom-scrollbar");

@@ -4,7 +4,10 @@ import type { Proposal } from "@codex/proposer";
 
 export class ProposerBridge {
   private worker: Worker | null = null;
-  private pendingRequests = new Map<string, { resolve: (val: any) => void; reject: (err: any) => void }>();
+  private pendingRequests = new Map<
+    string,
+    { resolve: (val: any) => void; reject: (err: any) => void }
+  >();
 
   constructor() {
     if (browser) {
@@ -33,7 +36,7 @@ export class ProposerBridge {
     modelName: string,
     entityId: string,
     content: string,
-    availableTargets: { id: string; name: string }[]
+    availableTargets: { id: string; name: string }[],
   ): Promise<Proposal[]> {
     if (!this.worker) return [];
 
@@ -43,7 +46,7 @@ export class ProposerBridge {
       this.worker!.postMessage({
         type: "ANALYZE",
         id,
-        payload: { apiKey, modelName, entityId, content, availableTargets }
+        payload: { apiKey, modelName, entityId, content, availableTargets },
       });
     });
   }
@@ -51,7 +54,9 @@ export class ProposerBridge {
   public terminate() {
     // Reject all pending requests to avoid hanging promises when the worker is terminated.
     for (const [id, { reject }] of this.pendingRequests.entries()) {
-      reject(new Error(`Proposer worker terminated while request ${id} was pending`));
+      reject(
+        new Error(`Proposer worker terminated while request ${id} was pending`),
+      );
     }
     this.pendingRequests.clear();
 

@@ -4,10 +4,10 @@ test.describe("Category Architecture Modal", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
     await page.goto("http://localhost:5173/");
-    
+
     // Wait for vault to initialize automatically
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
-    
+
     // Ensure categories are initialized (they should be, but let's be safe)
     await page.evaluate(async () => {
       await (window as any).categories.init();
@@ -44,7 +44,8 @@ test.describe("Category Architecture Modal", () => {
         document.querySelectorAll('input[type="text"]'),
       );
       return inputs.some(
-        (input) => (input as HTMLInputElement).value.toLowerCase() === "character",
+        (input) =>
+          (input as HTMLInputElement).value.toLowerCase() === "character",
       );
     });
     expect(hasCharacter).toBe(true);

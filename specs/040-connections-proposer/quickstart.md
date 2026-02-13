@@ -18,12 +18,12 @@ Include the new `DetailProposals` component in the sidebar view.
 
 ```svelte
 <script>
-    import DetailProposals from "./entity-detail/DetailProposals.svelte";
-    let { entity } = $props();
+  import DetailProposals from "./entity-detail/DetailProposals.svelte";
+  let { entity } = $props();
 </script>
 
 {#if entity}
-    <DetailProposals {entity} />
+  <DetailProposals {entity} />
 {/if}
 ```
 

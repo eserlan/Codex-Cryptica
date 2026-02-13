@@ -4,12 +4,10 @@ import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
-
-// We use the service directly for DB operations (get/apply/dismiss)
-// and the bridge for heavy analysis tasks.
-const service = new ProposerService();
+import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
+  private service: ProposerService | null = null;
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
@@ -30,11 +28,19 @@ class ProposerStore {
     //
   }
 
+  private getService(): ProposerService {
+    if (!this.service) {
+      this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
+    }
+    return this.service;
+  }
+
   async loadProposals(entityId: string) {
     if (this.isLoadingProposals) return;
 
     this.isLoadingProposals = true;
     try {
+      const service = this.getService();
       const p = await service.getProposals(entityId);
       const h = await service.getHistory(entityId);
 
@@ -71,12 +77,16 @@ class ProposerStore {
     try {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
-      const existingTargetIds = new Set(
+      // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
+      const existingConnectedIds = new Set(
         entity.connections.map((c) => c.target),
       );
+      for (const inbound of vault.inboundConnections[entityId] || []) {
+        existingConnectedIds.add(inbound.sourceId);
+      }
 
       const targets = Object.values(vault.entities)
-        .filter((e) => e.id !== entityId && !existingTargetIds.has(e.id))
+        .filter((e) => e.id !== entityId && !existingConnectedIds.has(e.id))
         .map((e) => ({ id: e.id, name: e.title }));
 
       // Use the lite model for background tasks to save cost/latency
@@ -86,13 +96,14 @@ class ProposerStore {
         apiKey,
         modelName,
         entityId,
-        entity.content || "",
+        `${entity.content || ""} \n\n ${entity.lore || ""}`.trim(),
         targets,
       );
 
       // Guard against stale updates
       if (vault.selectedEntityId !== entityId) return;
 
+      const service = this.getService();
       await service.saveProposals(newProposals);
 
       const existing = this.proposals[entityId] || [];
@@ -131,6 +142,7 @@ class ProposerStore {
       return;
     }
 
+    const service = this.getService();
     await service.applyProposal(proposal.id);
 
     // Update local state - verify context is still valid or just update store state regardless
@@ -143,6 +155,7 @@ class ProposerStore {
   }
 
   async dismiss(proposal: Proposal) {
+    const service = this.getService();
     await service.dismissProposal(proposal.id);
     if (this.proposals[proposal.sourceId]) {
       this.proposals[proposal.sourceId] = this.proposals[
@@ -155,9 +168,13 @@ class ProposerStore {
       proposal,
       ...this.history[proposal.sourceId],
     ];
+    if (this.history[proposal.sourceId].length > 20) {
+      this.history[proposal.sourceId].pop();
+    }
   }
 
   async reEvaluate(proposal: Proposal) {
+    const service = this.getService();
     await service.reEvaluateProposal(proposal.id);
     // Move from history to proposals
     if (this.history[proposal.sourceId]) {

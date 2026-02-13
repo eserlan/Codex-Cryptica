@@ -154,7 +154,7 @@ export async function runMigration(
       });
       for await (const handle of imagesDir.values()) {
         if (handle.kind === "file") {
-          const file = await (handle as any).getFile();
+          const file = await (handle as FileSystemFileHandle).getFile();
           await writeOpfsFile([file.name], file, opfsImagesDir);
         }
       }

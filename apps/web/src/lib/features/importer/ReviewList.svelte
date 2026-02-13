@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { DiscoveredEntity } from '@codex/importer';
+  import type { DiscoveredEntity } from "@codex/importer";
 
   interface Props {
     entities: DiscoveredEntity[];
@@ -9,10 +9,10 @@
 
   let { entities = [], onSave, onCancel }: Props = $props();
 
-  let _selectedIds = $state(new Set(entities.map(e => e.id)));
+  let _selectedIds = $state(new Set(entities.map((e) => e.id)));
 
   $effect(() => {
-    _selectedIds = new Set(entities.map(e => e.id));
+    _selectedIds = new Set(entities.map((e) => e.id));
   });
 
   const toggleSelection = (id: string) => {
@@ -21,25 +21,25 @@
       next.delete(id);
     } else {
       next.add(id);
-    } 
+    }
     _selectedIds = next;
   };
 
   const handleSave = () => {
-    const toSave = entities.filter(e => _selectedIds.has(e.id));
+    const toSave = entities.filter((e) => _selectedIds.has(e.id));
     onSave(toSave);
   };
 </script>
 
 <div class="review-list">
   <h3>Review Identified Entities</h3>
-  
+
   <div class="entities">
     {#each entities as entity}
       <div class="entity-card">
         <label>
-          <input 
-            type="checkbox" 
+          <input
+            type="checkbox"
             checked={_selectedIds.has(entity.id)}
             onchange={() => toggleSelection(entity.id)}
           />
@@ -49,7 +49,7 @@
           </div>
         </label>
         <div class="preview">
-          {(entity.chronicle || entity.content || '').slice(0, 100)}...
+          {(entity.chronicle || entity.content || "").slice(0, 100)}...
         </div>
       </div>
     {/each}
