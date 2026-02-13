@@ -3,6 +3,7 @@
 **Feature Branch**: `041-node-merging`  
 **Created**: 2026-02-13  
 **Status**: Draft  
+**Related Issue**: [#123](https://github.com/eserlan/Codex-Cryptica/issues/123)  
 **Input**: User description: "Merge nodes/entities, especially useful after imports. Use AI to consolidate descriptions."
 
 ## User Scenarios & Testing
