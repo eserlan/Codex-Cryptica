@@ -99,4 +99,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
 };
 
-export const HELP_ARTICLES: HelpArticle[] = loadHelpArticles();
+let initialArticles: HelpArticle[] = [];
+try {
+  initialArticles = loadHelpArticles();
+} catch (e) {
+  console.error("Failed to load help articles:", e);
+  // We fall back to empty array to allow the app to build/run without help content
+  // instead of crashing the entire module initialization.
+}
+
+export const HELP_ARTICLES: HelpArticle[] = initialArticles;

@@ -8,14 +8,10 @@ export interface HelpArticle {
   rank?: number;
 }
 
-export interface HelpArticleWithRank extends HelpArticle {
-  rank?: number;
-}
-
 export function parseHelpArticle(
   path: string,
   rawContent: string,
-): HelpArticleWithRank | null {
+): HelpArticle | null {
   // Regex to extract frontmatter block (YAML) and content
   // Matches --- at start, followed by yaml block, then ---, then content
   const frontmatterRegex =
@@ -27,7 +23,7 @@ export function parseHelpArticle(
     return null;
   }
 
-  const [_, yaml, content] = match;
+  const [_fullMatch, yaml, content] = match;
 
   try {
     const metadata = load(yaml) as Record<string, any>;
@@ -50,14 +46,10 @@ export function parseHelpArticle(
   }
 }
 
-export function loadHelpArticles(): HelpArticleWithRank[] {
-  const modules = import.meta.glob("./help/*.md", {
-    eager: true,
-    query: "?raw",
-    import: "default",
-  });
-
-  const articles: HelpArticleWithRank[] = [];
+export function processHelpArticles(
+  modules: Record<string, any>,
+): HelpArticle[] {
+  const articles: HelpArticle[] = [];
   const loadedIds = new Set<string>();
 
   const paths = Object.keys(modules).sort();
@@ -91,4 +83,14 @@ export function loadHelpArticles(): HelpArticleWithRank[] {
     }
     return a.title.localeCompare(b.title);
   });
+}
+
+export function loadHelpArticles(): HelpArticle[] {
+  const modules = import.meta.glob("./help/*.md", {
+    eager: true,
+    query: "?raw",
+    import: "default",
+  });
+
+  return processHelpArticles(modules);
 }

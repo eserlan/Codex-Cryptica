@@ -43,9 +43,6 @@ test.describe("Help Center System", () => {
     await expect(page.getByText("Acquiring a Gemini API Key")).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
 
-    // Should hide unrelated articles (e.g. Graph Basics)
-    // Note: Graph Basics might show if it mentions Gemini, but "Knowledge Graph" title shouldn't be prominent if we search strictly
-    // Let's search for something very specific
     await searchInput.fill("Sovereignty");
     await expect(page.getByText("Getting Started")).toBeVisible();
     await expect(page.getByText("Connections Proposer")).not.toBeVisible();
@@ -69,9 +66,5 @@ test.describe("Help Center System", () => {
     await expect(
       page.locator('strong:has-text("absolute sovereignty")'),
     ).toBeVisible();
-
-    // 4. Verify back navigation (if applicable, or just close)
-    // The current UI might just expand the article or show it in place.
-    // Assuming standard behavior of clicking article expands/shows it.
   });
 });

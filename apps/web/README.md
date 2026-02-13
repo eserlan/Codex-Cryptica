@@ -57,4 +57,13 @@ To add a new article:
    ---
    ```
 3. Write content in Markdown.
+
+### Article Sorting (Rank)
+
+The `rank` field in the frontmatter determines the order of articles in the help system.
+
+- Articles are sorted by `rank` (ascending), then by `title`.
+- Use spaced values (e.g., 10, 20, 30) to allow for future insertions without renumbering all articles.
+- If `rank` is missing, the article defaults to the end of the list.
+
 4. Verify by running `npm test`.
