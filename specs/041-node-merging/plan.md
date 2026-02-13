@@ -11,17 +11,18 @@ This feature enables users to merge multiple nodes (entities) into a single cons
 
 **Language/Version**: TypeScript 5.x / Node.js 20+
 **Primary Dependencies**:
+
 - `svelte` (UI Framework)
 - `cytoscape` (Graph visualization & selection)
 - `@google/generative-ai` (AI Content Generation)
 - `idb` (IndexedDB for metadata)
 - `editor-core` (Markdown parsing/storage)
-**Storage**: OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache)
-**Testing**: Vitest (Unit), Playwright (E2E)
-**Target Platform**: Browser (PWA capable)
-**Project Type**: Monorepo (Web App + Packages)
-**Performance Goals**: Merge operation should complete within < 5s (excluding network latency for AI).
-**Constraints**: Must handle large files gracefully. Must ensure data integrity (atomic operation where possible).
+  **Storage**: OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache)
+  **Testing**: Vitest (Unit), Playwright (E2E)
+  **Target Platform**: Browser (PWA capable)
+  **Project Type**: Monorepo (Web App + Packages)
+  **Performance Goals**: Merge operation should complete within < 5s (excluding network latency for AI).
+  **Constraints**: Must handle large files gracefully. Must ensure data integrity (atomic operation where possible).
 
 ## Constitution Check
 
@@ -58,23 +59,27 @@ apps/web/src/lib/services/
 apps/web/src/lib/components/dialogs/
 └── MergeNodesDialog.svelte      # UI for selection/preview
 
+apps/web/src/lib/config/
+└── help-content.ts              # Help articles and feature hints
+
 packages/editor-core/src/operations/
 └── merge-utils.ts               # Pure functions for merging frontmatter/content
 ```
 
 **Structure Decision**:
+
 - `MergeNodesDialog.svelte`: Handles the UI for selecting the "target" node (if not obvious) and previewing the merged content.
 - `node-merge.service.ts`: Encapsulates the logic:
-    1. Fetch content of source nodes.
-    2. Call AI to generate merged content.
-    3. Update connections (re-link edges).
-    4. Update back-links (find & replace in other files).
-    5. Delete old files, write new file.
-    6. Update index.
+  1. Fetch content of source nodes.
+  2. Call AI to generate merged content.
+  3. Update connections (re-link edges).
+  4. Update back-links (find & replace in other files).
+  5. Delete old files, write new file.
+  6. Update index.
 - `merge-utils.ts`: Pure logic for merging frontmatter (handling conflicts) and concatenating body text.
 
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-| :--- | :--- | :--- |
-| N/A | | |
+| :-------- | :--------- | :----------------------------------- |
+| N/A       |            |                                      |

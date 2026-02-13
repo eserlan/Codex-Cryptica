@@ -81,6 +81,7 @@ As a user, I want links pointing to the original nodes to be automatically updat
 - **FR-006**: Upon confirmation, the system MUST delete the original nodes and create/update the target node.
 - **FR-007**: The system MUST identify all incoming and outgoing connections of the original nodes and transfer them to the merged node.
 - **FR-008**: The system MUST update any internal links (wikilinks) in other nodes that pointed to the deleted nodes.
+- **FR-009**: The system MUST include a user-facing help article and feature hint explaining the merge process and strategies.
 
 ## Success Criteria
 

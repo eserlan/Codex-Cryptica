@@ -94,6 +94,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "The Oracle has detected potential relationships in your lore. Check the 'Oracle Suggestions' section in the detail panel to review them.",
   },
+  "node-merging": {
+    id: "node-merging",
+    title: "Consolidation Power",
+    content:
+      "You can merge multiple nodes to eliminate duplicates. Select 2+ nodes in the graph, right-click, and choose 'Merge Nodes'.",
+  },
 };
 
 export const HELP_ARTICLES: HelpArticle[] = [
@@ -143,7 +149,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     id: "node-merging",
     title: "Merging Entities",
     tags: ["organization", "cleanup", "ai"],
-    content: 
+    content:
       "## Consolidation Power\n\nSometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.\n\n### How to Merge\n1. **Select Multiple Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.\n2. **Right-Click**: Open the context menu on one of the selected nodes.\n3. **Select 'Merge Nodes'**: This opens the merge dialog.\n\n### Merge Strategies\n- **Concatenate**: Simply appends the content of all source nodes into the target node.\n- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.\n\n**Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.",
   },
 ];

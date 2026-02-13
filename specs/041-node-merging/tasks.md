@@ -81,6 +81,8 @@
 - [x] T022 Add toast notifications for success/failure in `apps/web/src/lib/services/node-merge.service.ts`
 - [x] T023 Refresh graph view context after merge in `apps/web/src/lib/services/node-merge.service.ts`
 - [x] T024 Create help documentation in `apps/web/src/lib/config/help-content.ts` (Constitution VII)
+- [x] T025 Add `node-merging` feature hint to `apps/web/src/lib/config/help-content.ts`
+- [x] T026 Trigger the merge feature hint when multiple nodes are selected in the graph
 
 ## Dependencies & Execution Order
 

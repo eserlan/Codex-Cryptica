@@ -98,6 +98,7 @@
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
   let hoverTimeout: number | undefined;
+  let selectionCount = $state(0);
   const HOVER_DELAY = 800; // ms
 
   // Edge editing state
@@ -302,6 +303,10 @@
           // Close edge editor on background tap
           editingEdge = null;
         }
+      });
+
+      cy.on("select unselect", "node", () => {
+        selectionCount = cy?.$("node:selected").length || 0;
       });
     }
   });
@@ -924,6 +929,15 @@
       {/if}
 
       <FeatureHint hintId="connect-mode" />
+    </div>
+  {/if}
+
+  <!-- Merge Hint -->
+  {#if selectionCount >= 2 && !connectMode}
+    <div
+      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
+    >
+      <FeatureHint hintId="node-merging" />
     </div>
   {/if}
 
