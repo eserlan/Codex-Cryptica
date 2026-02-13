@@ -111,7 +111,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
 
       let rawProposals: any[] = [];
       try {
-        rawProposals = JSON.parse(text);
+        const cleanedText = text.replace(/```json|```/g, "").trim();
+        rawProposals = JSON.parse(cleanedText);
       } catch {
         console.warn(
           `Proposer: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`,
@@ -207,7 +208,17 @@ Only return the JSON. If no connections are found, return empty array [].`;
   async saveProposals(proposals: Proposal[]): Promise<void> {
     const db = await this.getDB();
     const tx = db.transaction(PROPOSAL_STORE, "readwrite");
-    await Promise.all(proposals.map((p) => tx.store.put(p)));
+
+    await Promise.all(
+      proposals.map(async (p) => {
+        const existing = await tx.store.get(p.id);
+        // Only put if it's new OR if the existing one is still pending (update metadata/confidence)
+        if (!existing || existing.status === "pending") {
+          await tx.store.put(p);
+        }
+      }),
+    );
+
     await tx.done;
   }
 }
