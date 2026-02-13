@@ -2,7 +2,7 @@
 
 **Feature Branch**: `042-improve-help-structure`
 **Created**: 2026-02-13
-**Status**: Draft
+**Status**: Implemented
 **Input**: User description: "make it easier to create and manage help articles by writing them in Markdown (md) format and then rendering them directly within the help section"
 
 ## User Scenarios & Testing

@@ -24,7 +24,7 @@ test.describe("Help Center System", () => {
     // 4. Verify list of articles from markdown files
     // Check for specific titles we know exist from migration
     await expect(page.getByText("Getting Started")).toBeVisible();
-    await expect(page.getByText("Suggested Connections")).toBeVisible();
+    await expect(page.getByText("Connections Proposer")).toBeVisible();
     await expect(page.getByText("Knowledge Graph")).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
   });
@@ -39,13 +39,13 @@ test.describe("Help Center System", () => {
     await searchInput.fill("Gemini");
 
     // 3. Verify filtering works
-    // Should show "The Lore Oracle" and "Setting up the AI"
-    await expect(page.getByText("Setting up the AI")).toBeVisible();
+    // Should show "The Lore Oracle" and "Acquiring a Gemini API Key"
+    await expect(page.getByText("Acquiring a Gemini API Key")).toBeVisible();
     await expect(page.getByText("The Lore Oracle")).toBeVisible();
 
     await searchInput.fill("Sovereignty");
     await expect(page.getByText("Getting Started")).toBeVisible();
-    await expect(page.getByText("Suggested Connections")).not.toBeVisible();
+    await expect(page.getByText("Connections Proposer")).not.toBeVisible();
   });
 
   test("should display article content when clicked", async ({ page }) => {
@@ -59,12 +59,12 @@ test.describe("Help Center System", () => {
     // 3. Verify content renders (Markdown to HTML)
     // Check for h2 header in content
     await expect(
-      page.locator('.prose h2:has-text("Welcome to Codex Cryptica")'),
+      page.locator('.prose h2:has-text("Welcome to the Archive")'),
     ).toBeVisible();
 
     // Check for bold text
     await expect(
-      page.locator('strong:has-text("Digital Sovereignty")'),
+      page.locator('strong:has-text("absolute sovereignty")'),
     ).toBeVisible();
   });
 });

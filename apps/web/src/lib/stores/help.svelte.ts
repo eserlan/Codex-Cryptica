@@ -7,6 +7,7 @@ import {
   HELP_ARTICLES,
 } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
+import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -34,6 +35,8 @@ class HelpStore {
   searchQuery = $state("");
   searchResults = $state<HelpArticle[]>([]);
   isHelpOpen = $state(false);
+  expandedId = $state<string | null>(null);
+  isInitialized = $state(false);
 
   // Persistence State
   private state = $state<HelpStoreState>({
@@ -74,6 +77,7 @@ class HelpStore {
     }
 
     this.buildIndex();
+    this.isInitialized = true;
   }
 
   private buildIndex() {
@@ -170,6 +174,31 @@ class HelpStore {
       this.searchResults = HELP_ARTICLES.filter((a) => allMatches.has(a.id));
     } else {
       this.searchResults = [];
+    }
+  }
+
+  toggleArticle(id: string) {
+    this.expandedId = this.expandedId === id ? null : id;
+  }
+
+  openHelpToArticle(id: string) {
+    // Find article to verify it exists
+    const article = HELP_ARTICLES.find((a) => a.id === id);
+    if (article) {
+      this.expandedId = id;
+      uiStore.openSettings("help");
+    }
+  }
+
+  async copyShareLink(id: string) {
+    if (!browser) return;
+    try {
+      const url = new URL(window.location.href);
+      url.hash = `help/${id}`;
+      await navigator.clipboard.writeText(url.toString());
+      // Future: Add a toast notification here
+    } catch (e) {
+      console.error("[HelpStore] Failed to copy link to clipboard", e);
     }
   }
 

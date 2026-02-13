@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
+
 - OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache) (041-node-merging)
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native) (039-multi-campaign-switch)
@@ -77,6 +78,8 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 042-improve-help-structure: Migrated help content to Markdown files with frontmatter and implemented direct help linking.
 - 041-node-merging: Added TypeScript 5.x / Node.js 20+
 - 041-node-merging: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 

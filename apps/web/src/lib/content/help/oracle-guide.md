@@ -5,12 +5,11 @@ tags: [ai, gemini, rag]
 rank: 4
 ---
 
-## Your AI Assistant
+## AI Intelligence
 
-The Lore Oracle is an AI powered by **Google Gemini**. Unlike standard AI, it actually reads your campaign files to help you brainstorm and remember details.
+The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
 
-### What it can do
+### Features
 
-- **Context Search**: Ask "Who is the ruler of Oakhaven?" and it will find the answer in your notes.
-- **Generate Images**: Type `/draw [description]` to create art for your characters or locations.
-- **Suggest Links**: It can find themes or relationships you might have missed and suggest them as new connections.
+- **Context Fusion**: Combines visible chronicles and hidden lore.
+- **Image Generation**: Type `/draw [description]` to visualize your world.

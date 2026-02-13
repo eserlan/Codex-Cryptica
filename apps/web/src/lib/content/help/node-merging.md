@@ -1,21 +1,23 @@
 ---
 id: node-merging
-title: Merging Nodes
+title: Merging Entities
 tags: [organization, cleanup, ai]
 rank: 7
 ---
 
-## Cleaning up Duplicates
+## Consolidation Power
 
-If you accidentally create two entries for the same person or place, you can merge them into one.
+Sometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.
 
 ### How to Merge
 
-1. **Select Nodes**: Hold `Shift` and click the nodes you want to combine in the graph.
-2. **Right-Click**: Click on one of the selected nodes and choose **'Merge Nodes'**.
-3. **Choose a Method**:
-   - **Combine**: Simply puts all the text from both files into one.
-   - **AI Rewrite**: Asks the Oracle to rewrite the two entries into one smooth, cohesive story.
+1. **Select Multiple Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.
+2. **Right-Click**: Open the context menu on one of the selected nodes.
+3. **Select 'Merge Nodes'**: This opens the merge dialog.
 
-> [!CAUTION]
-> Once you merge, the extra nodes are deleted and the data is moved to the "Primary" node. This cannot be easily undone!
+### Merge Strategies
+
+- **Concatenate**: Simply appends the content of all source nodes into the target node.
+- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.
+
+**Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.

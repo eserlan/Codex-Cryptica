@@ -1,18 +1,14 @@
 ---
 id: offline-sync
-title: Privacy & Syncing
+title: Privacy & Sync
 tags: [offline, google drive, security]
 rank: 5
 ---
 
-## Your Data is Private
+## Local-First Always
 
-Codex Cryptica is "Local-First." This means your campaign data is stored on your machine, not on our servers.
+Your data is yours.
 
-### Using Google Drive
+### Cloud Sync
 
-If you want to access your notes on multiple computers, you can enable **Google Drive Sync** in the settings.
-
-- **Direct Connection**: Codex connects directly to your personal Google Drive.
-- **Automatic Updates**: When you save a file on one computer, it will automatically update on your other devices.
-- **Secure**: Only you have access to your files.
+You can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server.
