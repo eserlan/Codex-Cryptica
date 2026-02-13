@@ -62,7 +62,7 @@ let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, _oldVersion) {
+      upgrade(db, _oldVersion, _newVersion) {
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings");
         }
@@ -83,6 +83,18 @@ export function getDB() {
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");
         }
+      },
+      blocked() {
+        console.warn("[IDB] Database Open Blocked");
+      },
+      blocking() {
+        console.warn("[IDB] Database Open Blocking - closing older connection");
+        if (dbPromise) {
+          dbPromise.then((db) => db.close());
+        }
+      },
+      terminated() {
+        console.error("[IDB] Database Connection Terminated");
       },
     });
   }

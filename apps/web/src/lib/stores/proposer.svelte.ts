@@ -9,6 +9,7 @@ import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 class ProposerStore {
   private service: ProposerService | null = null;
   isAnalyzing = $state(false);
+  isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
@@ -35,15 +36,22 @@ class ProposerStore {
   }
 
   async loadProposals(entityId: string) {
-    const service = this.getService();
-    const p = await service.getProposals(entityId);
-    const h = await service.getHistory(entityId);
+    if (this.isLoadingProposals) return;
 
-    // Guard against stale updates if navigation happened
-    if (vault.selectedEntityId !== entityId) return;
+    this.isLoadingProposals = true;
+    try {
+      const service = this.getService();
+      const p = await service.getProposals(entityId);
+      const h = await service.getHistory(entityId);
 
-    this.proposals[entityId] = p;
-    this.history[entityId] = h;
+      // Guard against stale updates if navigation happened
+      if (vault.selectedEntityId !== entityId) return;
+
+      this.proposals[entityId] = p;
+      this.history[entityId] = h;
+    } finally {
+      this.isLoadingProposals = false;
+    }
   }
 
   async analyzeCurrentEntity() {

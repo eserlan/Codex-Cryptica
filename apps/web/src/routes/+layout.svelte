@@ -9,6 +9,7 @@
 	import TourOverlay from "$lib/components/help/TourOverlay.svelte";
 	import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
 	import DebugConsole from "$lib/components/debug/DebugConsole.svelte";
+    import MergeNodesDialog from "$lib/components/dialogs/MergeNodesDialog.svelte";
 	import { vault } from "$lib/stores/vault.svelte";
 	import { graph } from "$lib/stores/graph.svelte";
 	import { oracle } from "$lib/stores/oracle.svelte";
@@ -283,6 +284,11 @@
 				<ZenModeModal />
 				<TourOverlay />
 				<MobileMenu bind:isOpen={isMobileMenuOpen} />
+                <MergeNodesDialog 
+                    isOpen={uiStore.mergeDialog.open}
+                    sourceNodeIds={uiStore.mergeDialog.sourceIds}
+                    onClose={() => uiStore.closeMergeDialog()}
+                />
 				{#if import.meta.env.DEV || (typeof window !== 'undefined' && (window as any).__E2E__) || import.meta.env.VITE_STAGING === 'true'}
 					<DebugConsole />
 				{/if}

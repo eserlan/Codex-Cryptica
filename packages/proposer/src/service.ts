@@ -2,12 +2,12 @@ import type { IProposerService, Proposal, ProposerConfig } from "./types";
 import { openDB, type IDBPDatabase } from "idb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const DB_NAME = "ProposerStandalone";
-const DB_VERSION = 1;
+const DB_NAME = "CodexCryptica";
+const DB_VERSION = 7;
 const PROPOSAL_STORE = "proposals";
 
 export class ProposerService implements IProposerService {
-  private dbPromise: Promise<IDBPDatabase<any>> | null = null;
+  private dbPromise: Promise<IDBPDatabase<any>> | undefined;
   private config: ProposerConfig = {
     minConfidence: 0.6,
     maxHistory: 20,
@@ -28,9 +28,12 @@ export class ProposerService implements IProposerService {
     }
   }
 
-  private async getDB(): Promise<IDBPDatabase<any>> {
+  private getDB() {
     if (!this.dbPromise) {
       this.dbPromise = openDB(this.dbName, this.dbVersion, {
+        // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
+        // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
+        // for creating the 'proposals' store.
         upgrade(db, _oldVersion) {
           if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
             const store = db.createObjectStore(PROPOSAL_STORE, {
@@ -39,6 +42,19 @@ export class ProposerService implements IProposerService {
             store.createIndex("by-source", "sourceId");
             store.createIndex("by-status", "status");
           }
+        },
+        blocking: () => {
+          console.warn(
+            "[ProposerService] DB Upgrade requested. Closing connection.",
+          );
+          if (this.dbPromise) {
+            this.dbPromise.then((db) => db.close());
+            this.dbPromise = undefined;
+          }
+        },
+        terminated: () => {
+          console.error("[ProposerService] DB Connection terminated.");
+          this.dbPromise = undefined;
         },
       });
     }
@@ -114,7 +130,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
 
       let rawProposals: any[] = [];
       try {
-        rawProposals = JSON.parse(text);
+        const cleanedText = text.replace(/```json|```/g, "").trim();
+        rawProposals = JSON.parse(cleanedText);
       } catch {
         console.warn(
           `Proposer: Failed to parse JSON response for entity ${entityId}. Raw text: ${text.slice(0, 100)}...`,
@@ -211,7 +228,17 @@ Only return the JSON. If no connections are found, return empty array [].`;
     if (proposals.length === 0) return;
     const db = await this.getDB();
     const tx = db.transaction(PROPOSAL_STORE, "readwrite");
-    await Promise.all(proposals.map((p) => tx.store.put(p)));
+
+    await Promise.all(
+      proposals.map(async (p) => {
+        const existing = await tx.store.get(p.id);
+        // Only put if it's new OR if the existing one is still pending (update metadata/confidence)
+        if (!existing || existing.status === "pending") {
+          await tx.store.put(p);
+        }
+      }),
+    );
+
     await tx.done;
   }
 }

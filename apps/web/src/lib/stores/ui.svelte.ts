@@ -35,6 +35,20 @@ class UIStore {
   // Fog of War State
   sharedMode = $state(false);
 
+  // Merge Dialog State
+  mergeDialog = $state<{
+    open: boolean;
+    sourceIds: string[];
+  }>({ open: false, sourceIds: [] });
+
+  openMergeDialog(sourceIds: string[]) {
+    this.mergeDialog = { open: true, sourceIds };
+  }
+
+  closeMergeDialog() {
+    this.mergeDialog = { open: false, sourceIds: [] };
+  }
+
   // Compatibility aliases (can be deprecated later)
   /** @deprecated Use zenModeEntityId */
   get readModeNodeId() {
