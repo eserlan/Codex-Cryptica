@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@tiptap/core": "^2.2.0",
-    "@tiptap/pm": "^2.2.0",
+    "@tiptap/pm": "^3.19.0",
     "@tiptap/starter-kit": "^2.2.0"
   },
   "devDependencies": {
-    "jsdom": "^27.4.0",
+    "jsdom": "^28.0.0",
     "typescript": "^5.7.3",
     "vitest": "^1.0.0"
   }
