@@ -15,10 +15,12 @@ import * as vaultRelationships from "./vault/relationships";
 import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
 
+import type { SearchEntry } from "schema";
+
 // Service Interfaces for Dependency Injection
 export interface IVaultServices {
   search: {
-    index: (data: any) => Promise<void>;
+    index: (data: SearchEntry) => Promise<void>;
     remove: (id: string) => Promise<void>;
     clear: () => Promise<void>;
   };
@@ -305,7 +307,10 @@ class VaultStore {
     }
   }
 
-  async saveToDisk(entity: Entity, targetVaultId?: string | null) {
+  async saveToDisk(
+    entity: LocalEntity | Entity,
+    targetVaultId?: string | null,
+  ) {
     const vid = targetVaultId || this.activeVaultId;
     if (!vid || !vaultRegistry.rootHandle) return;
     const vaultDir = await getVaultDir(vaultRegistry.rootHandle, vid);
@@ -342,7 +347,7 @@ class VaultStore {
     }
   }
 
-  scheduleSave(entity: Entity) {
+  scheduleSave(entity: LocalEntity | Entity) {
     this.status = "saving";
     const targetVaultId = this.activeVaultId;
     this.saveQueue
@@ -372,7 +377,7 @@ class VaultStore {
     return newEntity.id;
   }
 
-  updateEntity(id: string, updates: Partial<Entity>): boolean {
+  updateEntity(id: string, updates: Partial<LocalEntity>): boolean {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -566,11 +571,11 @@ class VaultStore {
 const VAULT_KEY = "__codex_vault_instance__";
 
 function getVaultSingleton(): VaultStore {
-  const globalObj = globalThis as any;
+  const globalObj = globalThis as unknown as Record<string, VaultStore>;
   if (!globalObj[VAULT_KEY]) {
     globalObj[VAULT_KEY] = new VaultStore();
   }
-  return globalObj[VAULT_KEY] as VaultStore;
+  return globalObj[VAULT_KEY];
 }
 
 export const vault: VaultStore = getVaultSingleton();
