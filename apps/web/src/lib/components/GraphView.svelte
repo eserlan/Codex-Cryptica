@@ -647,7 +647,9 @@
                 }
 
                 if (changed) {
-                  node.data(newData);
+                  // Merge with existing data so we don't lose dynamic properties
+                  // (e.g. resolvedImage, width, height set by async loaders)
+                  node.data({ ...currentData, ...newData });
                 }
               }
             }
