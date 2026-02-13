@@ -4,7 +4,7 @@ export const GraphNodeSchema = z.object({
   id: z.string(),
   label: z.string(),
   type: z.string().optional(),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
   position: z
     .object({
       x: z.number(),
@@ -19,7 +19,7 @@ export const GraphEdgeSchema = z.object({
   target: z.string(),
   label: z.string().optional(),
   type: z.string().optional(),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.string(), z.any()).optional(),
 });
 
 export type GraphNode = z.infer<typeof GraphNodeSchema>;
