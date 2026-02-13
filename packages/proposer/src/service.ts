@@ -3,7 +3,7 @@ import { openDB, type IDBPDatabase } from "idb";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const DB_NAME = "CodexCryptica";
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 const PROPOSAL_STORE = "proposals";
 
 export class ProposerService implements IProposerService {
@@ -30,7 +30,17 @@ export class ProposerService implements IProposerService {
 
   private async getDB(): Promise<IDBPDatabase<any>> {
     if (!this.dbPromise) {
-      this.dbPromise = openDB(this.dbName, this.dbVersion);
+      this.dbPromise = openDB(this.dbName, this.dbVersion, {
+        upgrade(db, _oldVersion) {
+          if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
+            const store = db.createObjectStore(PROPOSAL_STORE, {
+              keyPath: "id",
+            });
+            store.createIndex("by-source", "sourceId");
+            store.createIndex("by-status", "status");
+          }
+        },
+      });
     }
     return this.dbPromise;
   }

@@ -29,7 +29,7 @@ class ProposerStore {
 
   private getService(): ProposerService {
     if (!this.service) {
-      this.service = new ProposerService("CodexCryptica", 6, getDB());
+      this.service = new ProposerService("CodexCryptica", 7, getDB());
     }
     return this.service;
   }

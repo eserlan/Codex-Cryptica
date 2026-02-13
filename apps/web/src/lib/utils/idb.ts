@@ -55,7 +55,7 @@ interface CodexDB extends DBSchema {
 }
 
 const DB_NAME = "CodexCryptica";
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -78,7 +78,7 @@ export function getDB() {
         if (oldVersion < 5 && !db.objectStoreNames.contains("vaults")) {
           db.createObjectStore("vaults", { keyPath: "id" });
         }
-        if (oldVersion < 6 && !db.objectStoreNames.contains("proposals")) {
+        if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");

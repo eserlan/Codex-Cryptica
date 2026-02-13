@@ -36,7 +36,7 @@ describe("ProposerService", () => {
 
     // Setup DB schema for testing
     // We open and close immediately to ensure schema is created
-    const db = await openDB(dbName, 6, {
+    const db = await openDB(dbName, 7, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
@@ -151,7 +151,7 @@ describe("ProposerService", () => {
     };
 
     // Save as rejected directly
-    const db = await openDB(dbName, 6);
+    const db = await openDB(dbName, 7);
     const tx = db.transaction("proposals", "readwrite");
     await tx.store.put(proposal);
     await tx.done;
