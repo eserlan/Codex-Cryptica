@@ -1,5 +1,5 @@
 import { writeOpfsFile, readOpfsBlob } from "../../utils/opfs";
-import { generateThumbnail } from "../../utils/image-processing";
+import { generateThumbnail, convertToWebP } from "../../utils/image-processing";
 
 export async function saveImageToVault(
   vaultHandle: FileSystemDirectoryHandle,
@@ -9,29 +9,28 @@ export async function saveImageToVault(
 ): Promise<{ image: string; thumbnail: string }> {
   if (!vaultHandle) throw new Error("Vault not open");
 
-  const extension = blob.type.split("/")[1] || "png";
   const timestamp = Date.now();
   const baseName = originalName
     ? originalName.replace(/\.[^/.]+$/, "")
     : `img_${entityId}_${timestamp}`;
-  const filename = `${baseName}.${extension}`;
-  const thumbFilename = `${baseName}_thumb.jpg`;
+  const filename = `${baseName}.webp`;
+  const thumbFilename = `${baseName}_thumb.webp`;
 
   try {
     const imagesDir = await vaultHandle.getDirectoryHandle("images", {
       create: true,
     });
 
-    // Save original image
-    await writeOpfsFile([filename], blob, imagesDir);
+    // Convert original image to WebP and save
+    const webpBlob = await convertToWebP(blob);
+    await writeOpfsFile([filename], webpBlob, imagesDir);
 
-    // Generate and save thumbnail
+    // Generate and save thumbnail (already outputs WebP)
     const thumbnailBlob = await generateThumbnail(blob, 200);
     await writeOpfsFile([thumbFilename], thumbnailBlob, imagesDir);
 
     const imagePath = `images/${filename}`;
     const thumbnailPath = `images/${thumbFilename}`;
-
     return { image: imagePath, thumbnail: thumbnailPath };
   } catch (err: any) {
     console.error("Failed to save image to OPFS", err);

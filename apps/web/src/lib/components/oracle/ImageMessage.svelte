@@ -18,9 +18,8 @@
 
     isArchiving = true;
     archiveError = null;
-    // Image archiving logic temporarily disabled
     try {
-      // await vault.saveImageToVault(message.imageBlob, activeEntity.id);
+      await vault.saveImageToVault(message.imageBlob, activeEntity.id);
     } catch (err: any) {
       console.error("Failed to archive image", err);
       archiveError = err.message || "Failed to save image.";
