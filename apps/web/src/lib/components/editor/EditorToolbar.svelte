@@ -236,8 +236,8 @@
         <button
           onclick={toggleZenMode}
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-red-900/10 rounded"
-          title="Exit Zen Mode"
-          aria-label="Exit Zen Mode"
+          title="Close Zen Mode"
+          aria-label="Close Zen Mode"
         >
           <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
           Close Zen Mode
@@ -249,7 +249,9 @@
         onclick={toggleZenMode}
         class="toolbar-btn {isZenMode ? 'active' : ''}"
         title={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}
-        aria-label={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}
+        aria-label={isZenMode
+          ? "Exit Zen Mode (Esc)"
+          : "Zen Mode (Cmd+Shift+F)"}
       >
         {#if isZenMode}
           <span class="icon-[lucide--minimize] w-4 h-4"></span>

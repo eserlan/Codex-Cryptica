@@ -191,7 +191,9 @@
           class="{btnAccent} {layoutClasses}"
           onclick={() => vault.syncToLocal()}
           title="Export all OPFS data to a local folder for safety."
-          aria-label="Export all OPFS data to a local folder for safety."
+          aria-label={isVertical
+            ? "SYNC TO FOLDER - Export all OPFS data to a local folder for safety."
+            : "SYNC - Export all OPFS data to a local folder for safety."}
         >
           <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
           {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
@@ -200,7 +202,7 @@
           class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
           onclick={() => (showShare = true)}
           title="Share Campaign"
-          aria-label="Share Campaign"
+          aria-label={isVertical ? "SHARE - Share Campaign" : "Share Campaign"}
         >
           <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
           {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
@@ -214,9 +216,13 @@
           title={ui.sharedMode
             ? "Exit Shared Mode (Admin View)"
             : "Enter Shared Mode (Player Preview)"}
-          aria-label={ui.sharedMode
-            ? "Exit Shared Mode (Admin View)"
-            : "Enter Shared Mode (Player Preview)"}
+          aria-label={isVertical
+            ? ui.sharedMode
+              ? "EXIT PLAYER VIEW - Exit Shared Mode (Admin View)"
+              : "PLAYER VIEW - Enter Shared Mode (Player Preview)"
+            : ui.sharedMode
+              ? "Exit Shared Mode (Admin View)"
+              : "Enter Shared Mode (Player Preview)"}
           data-testid="shared-mode-toggle"
         >
           <span
