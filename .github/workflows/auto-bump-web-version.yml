@@ -1,0 +1,41 @@
+name: Auto Bump Web Version After Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-version:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bump web version and service worker cache
+        run: node scripts/bump-web-version.mjs
+
+      - name: Commit and push version bump
+        run: |
+          if git diff --quiet; then
+            echo "No version changes detected; skipping commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/package.json apps/web/src/lib/config.ts apps/web/src/service-worker.ts
+          git commit -m "chore(web): auto-bump version after merge #${{ github.event.pull_request.number }} [skip ci]"
+          git push
