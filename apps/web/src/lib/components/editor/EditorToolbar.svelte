@@ -124,6 +124,7 @@
         onclick={() => editor.chain().focus().toggleBold().run()}
         class="toolbar-btn {isBold ? 'active' : ''}"
         title="Bold (Cmd+B)"
+        aria-label="Bold (Cmd+B)"
       >
         <span class="icon-[lucide--bold] w-4 h-4"></span>
       </button>
@@ -131,6 +132,7 @@
         onclick={() => editor.chain().focus().toggleItalic().run()}
         class="toolbar-btn {isItalic ? 'active' : ''}"
         title="Italic (Cmd+I)"
+        aria-label="Italic (Cmd+I)"
       >
         <span class="icon-[lucide--italic] w-4 h-4"></span>
       </button>
@@ -138,6 +140,7 @@
         onclick={() => editor.chain().focus().toggleStrike().run()}
         class="toolbar-btn {isStrike ? 'active' : ''}"
         title="Strike"
+        aria-label="Strike"
       >
         <span class="icon-[lucide--strikethrough] w-4 h-4"></span>
       </button>
@@ -145,6 +148,7 @@
         onclick={() => editor.chain().focus().toggleCode().run()}
         class="toolbar-btn {isCode ? 'active' : ''}"
         title="Code (Cmd+E)"
+        aria-label="Code (Cmd+E)"
       >
         <span class="icon-[lucide--code] w-4 h-4"></span>
       </button>
@@ -158,6 +162,7 @@
         onclick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         class="toolbar-btn {isH1 ? 'active' : ''}"
         title="Heading 1"
+        aria-label="Heading 1"
       >
         <span class="icon-[lucide--heading-1] w-4 h-4"></span>
       </button>
@@ -165,6 +170,7 @@
         onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         class="toolbar-btn {isH2 ? 'active' : ''}"
         title="Heading 2"
+        aria-label="Heading 2"
       >
         <span class="icon-[lucide--heading-2] w-4 h-4"></span>
       </button>
@@ -172,6 +178,7 @@
         onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         class="toolbar-btn {isH3 ? 'active' : ''}"
         title="Heading 3"
+        aria-label="Heading 3"
       >
         <span class="icon-[lucide--heading-3] w-4 h-4"></span>
       </button>
@@ -185,6 +192,7 @@
         onclick={() => editor.chain().focus().toggleBulletList().run()}
         class="toolbar-btn {isBulletList ? 'active' : ''}"
         title="Bullet List"
+        aria-label="Bullet List"
       >
         <span class="icon-[lucide--list] w-4 h-4"></span>
       </button>
@@ -192,6 +200,7 @@
         onclick={() => editor.chain().focus().toggleOrderedList().run()}
         class="toolbar-btn {isOrderedList ? 'active' : ''}"
         title="Ordered List"
+        aria-label="Ordered List"
       >
         <span class="icon-[lucide--list-ordered] w-4 h-4"></span>
       </button>
@@ -199,6 +208,7 @@
         onclick={() => editor.chain().focus().toggleBlockquote().run()}
         class="toolbar-btn {isBlockquote ? 'active' : ''}"
         title="Blockquote"
+        aria-label="Blockquote"
       >
         <span class="icon-[lucide--quote] w-4 h-4"></span>
       </button>
@@ -212,6 +222,7 @@
         onclick={setLink}
         class="toolbar-btn {isLink ? 'active' : ''}"
         title="Link"
+        aria-label="Link"
       >
         <span class="icon-[lucide--link] w-4 h-4"></span>
       </button>
@@ -226,6 +237,7 @@
           onclick={toggleZenMode}
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-red-900/10 rounded"
           title="Exit Zen Mode"
+          aria-label="Exit Zen Mode"
         >
           <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
           Close Zen Mode
@@ -237,6 +249,7 @@
         onclick={toggleZenMode}
         class="toolbar-btn {isZenMode ? 'active' : ''}"
         title={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}
+        aria-label={isZenMode ? "Exit Zen Mode (Esc)" : "Zen Mode (Cmd+Shift+F)"}
       >
         {#if isZenMode}
           <span class="icon-[lucide--minimize] w-4 h-4"></span>
