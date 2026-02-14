@@ -4,6 +4,7 @@ test.describe("Oracle Image Save to Entity", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
 
     await page.goto("/");

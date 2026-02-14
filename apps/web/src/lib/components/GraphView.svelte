@@ -130,7 +130,7 @@
           (e) => e.group === "nodes",
         ) as any[];
 
-        const positions = await layoutService.runTimeline(nodes, {
+        const positions = await layoutService.runTimeline($state.snapshot(nodes), {
           axis: graph.timelineAxis,
           scale: graph.timelineScale,
           jitter: 150,
@@ -163,7 +163,7 @@
       isLayoutRunning = true;
       try {
         const elements = graph.elements;
-        const positions = await layoutService.runFcose(elements, {
+        const positions = await layoutService.runFcose($state.snapshot(elements), {
           ...DEFAULT_LAYOUT_OPTIONS,
           animate: false, // Math only in worker
         });
@@ -543,8 +543,10 @@
       // Re-apply orbit layout if params change
       const _orbit = graph.orbitMode;
       const _center = graph.centralNodeId;
+      const _timeline = graph.timelineMode;
 
       untrack(() => {
+        if (!initialLoaded) return;
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
         setTimeout(() => {
