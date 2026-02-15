@@ -14,7 +14,7 @@
   );
 
   const handleSave = async () => {
-    if (!message.imageBlob || !activeEntity) return;
+    if (!message.imageBlob || !activeEntity || vault.isGuest) return;
 
     isArchiving = true;
     archiveError = null;
@@ -75,7 +75,7 @@
     </div>
 
     <!-- Actions -->
-    {#if activeEntity}
+    {#if activeEntity && !vault.isGuest}
       <div class="flex flex-col gap-2 items-end" transition:fade>
         <button
           onclick={handleSave}
