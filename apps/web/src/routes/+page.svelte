@@ -21,25 +21,49 @@
       vault.isGuest = true; // Activate guest mode
 
       try {
-        await p2pGuestService.connectToHost(peerId, (graph) => {
-          // Update vault entities with received data
-          // Note: This needs to handle potential merge/replacement strategies
-          // For now, simply replace current entities.
-          vault.entities = Object.fromEntries(
-            Object.entries(graph.entities).map(([id, entity]) => [
-              id,
-              {
-                ...entity,
-                _path:
-                  typeof entity._path === "string"
-                    ? [entity._path]
-                    : entity._path,
-              },
-            ]),
-          );
-          vault.isInitialized = true; // Mark vault as initialized in guest mode
-          vault.status = "idle";
-        });
+        await p2pGuestService.connectToHost(
+          peerId,
+          (graph) => {
+            // Update vault entities with received data
+            // Note: This needs to handle potential merge/replacement strategies
+            // For now, simply replace current entities.
+            vault.entities = Object.fromEntries(
+              Object.entries(graph.entities).map(([id, entity]) => [
+                id,
+                {
+                  ...entity,
+                  _path:
+                    typeof entity._path === "string"
+                      ? [entity._path]
+                      : entity._path,
+                },
+              ]),
+            );
+            if (graph.defaultVisibility) {
+              vault.defaultVisibility = graph.defaultVisibility;
+            }
+            // Force shared mode for guests to ensure Fog of War is active
+            import("../lib/stores/ui.svelte").then(({ ui }) => {
+              ui.sharedMode = true;
+            });
+            vault.isInitialized = true; // Mark vault as initialized in guest mode
+            vault.status = "idle";
+          },
+          (updatedEntity) => {
+            // Real-time update from host
+            vault.entities[updatedEntity.id] = {
+              ...updatedEntity,
+              _path:
+                typeof updatedEntity._path === "string"
+                  ? [updatedEntity._path]
+                  : updatedEntity._path,
+            };
+          },
+          (deletedId) => {
+            // Real-time delete from host
+            delete vault.entities[deletedId];
+          },
+        );
       } catch (err) {
         console.error("[Guest Mode] Failed to connect to host:", err);
         vault.isGuest = false;

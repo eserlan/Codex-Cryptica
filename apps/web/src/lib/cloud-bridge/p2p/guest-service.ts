@@ -11,6 +11,8 @@ export class P2PGuestService {
   async connectToHost(
     hostId: string,
     onDataReceived: (graph: SerializedGraph) => void,
+    onEntityUpdate: (entity: any) => void,
+    onEntityDelete: (id: string) => void,
   ): Promise<void> {
     if (!this.peer) {
       const PeerClass = (window as any).Peer || Peer;
@@ -28,6 +30,10 @@ export class P2PGuestService {
       this.connection.on("data", (data: any) => {
         if (data.type === "GRAPH_SYNC" && this.dataCallback) {
           this.dataCallback(data.payload);
+        } else if (data.type === "ENTITY_UPDATE") {
+          onEntityUpdate(data.payload);
+        } else if (data.type === "ENTITY_DELETE") {
+          onEntityDelete(data.payload);
         }
         // TODO: Handle other data types like incremental updates or file requests
       });

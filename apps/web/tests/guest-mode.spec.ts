@@ -28,6 +28,8 @@ test.describe("Guest Mode (P2P Share)", () => {
       },
     },
     assets: {},
+    defaultVisibility: "visible",
+    sharedMode: true,
   };
 
   test.beforeEach(async ({ page }) => {
@@ -40,48 +42,49 @@ test.describe("Guest Mode (P2P Share)", () => {
       (window as any).Peer = class MockPeer {
         onopenCallback: (id: string) => void = () => {};
         onconnectionCallback: (conn: any) => void = () => {};
+        activeConnections: any[] = [];
 
         constructor(_id: string | undefined, _options: any) {
-          console.log(`[MockPeer] CONSTRUCTOR CALLED with ID: ${_id}`);
+          (window as any).mockPeerInstance = this;
           // Simulate the 'open' event with a slight delay
           setTimeout(() => {
-            const mockId = "mock-peer-host";
-            console.log(`[MockPeer] Triggering OPEN event with ID: ${mockId}`);
+            const mockId = "mock-guest-peer";
             this.onopenCallback(mockId);
           }, 100);
         }
 
         on(event: string, callback: (arg: any) => void) {
-          console.log(`[MockPeer] Registered listener for event: ${event}`);
           if (event === "open") this.onopenCallback = callback;
           if (event === "connection") this.onconnectionCallback = callback;
         }
 
-        connect(peerId: string) {
-          console.log(`[MockPeer] Attempting to connect to: ${peerId}`);
+        connect(_peerId: string) {
           const mockConnection = {
             onopenCallback: () => {},
             onmessageCallback: (_data: any) => {},
             oncloseCallback: () => {},
             onerrorCallback: (_err: any) => {},
-            on: (_event: string, callback: (..._args: any[]) => void) => {
-              if (_event === "open") mockConnection.onopenCallback = callback;
-              if (_event === "data")
-                mockConnection.onmessageCallback = callback;
-              if (_event === "close") mockConnection.oncloseCallback = callback;
-              if (_event === "error") mockConnection.onerrorCallback = callback;
+            on: (event: string, callback: (..._args: any[]) => void) => {
+              if (event === "open") mockConnection.onopenCallback = callback;
+              if (event === "data") mockConnection.onmessageCallback = callback;
+              if (event === "close") mockConnection.oncloseCallback = callback;
+              if (event === "error") mockConnection.onerrorCallback = callback;
             },
             send: (_data: any) => {},
             close: () => {
               mockConnection.oncloseCallback();
             },
+            simulateData: (data: any) => {
+              mockConnection.onmessageCallback(data);
+            },
           };
+
+          this.activeConnections.push(mockConnection);
 
           // Simulate successful connection immediately
           setTimeout(() => {
             mockConnection.onopenCallback();
             // Simulate receiving initial graph data from the host
-            // Use a slightly longer delay to ensure the app has attached its listener
             setTimeout(() => {
               mockConnection.onmessageCallback({
                 type: "GRAPH_SYNC",
@@ -134,29 +137,22 @@ test.describe("Guest Mode (P2P Share)", () => {
       page.locator("h2", { hasText: "Shared Mountain" }),
     ).toBeVisible();
 
-    // Check if the title input is disabled (or if it's rendered as text in guest mode)
-    // Based on EntityDetailPanel implementation, it might still be an input but disabled
-    const entityTitleInput = page.locator(
-      "input[placeholder='Title'], h2:has-text('Shared Mountain')",
-    );
-    const isInput = await entityTitleInput.evaluate(
-      (el) => el.tagName === "INPUT",
-    );
-    if (isInput) {
+    // Check if the title input is disabled
+    const entityTitleInput = page.locator("input[placeholder='Title']");
+    if ((await entityTitleInput.count()) > 0) {
       await expect(entityTitleInput).toBeDisabled();
     }
 
     // Verify save button is not visible
-    await expect(page.getByRole("button", { name: "SAVE" })).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "SAVE CHANGES" }),
+    ).not.toBeVisible();
 
-    // 5. Verify image save button in oracle is disabled or not visible
-    // Mock image message
+    // 5. Verify image save button in oracle is not visible
     const imageUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-
     await page.evaluate((url) => {
-      (window as any).oracle.isOpen = true; // Open oracle chat
-      // We need a dummy blob, but in the browser context
+      (window as any).oracle.isOpen = true;
       const dummyBlob = new Blob([""], { type: "image/png" });
       (window as any).oracle.addTestImageMessage(
         "A shared image.",
@@ -166,15 +162,29 @@ test.describe("Guest Mode (P2P Share)", () => {
       );
     }, imageUrl);
 
-    // The "SAVE TO..." button should NOT be visible or should be disabled
-    // In guest mode, handleSave has a guard: if (!message.imageBlob || !activeEntity || vault.isGuest) return;
-    // Actually, ImageMessage.svelte might still render it but it won't work,
-    // or better yet, it should be hidden.
     const saveImageButton = page.getByRole("button", { name: /SAVE TO/i });
     await expect(saveImageButton).not.toBeVisible();
 
-    // 6. Verify "EXIT GUEST MODE" button appears and works
-    // We need to find where this button is rendered. It should be in VaultControls probably?
-    // Let's check VaultControls.svelte
+    // 6. Test Real-time Updates: Host updates an entity
+    const updatedEntity = {
+      ...MOCK_GRAPH_DATA.entities["test-entity-1"],
+      title: "Updated Mountain",
+    };
+
+    await page.evaluate((entity) => {
+      (window as any).mockPeerInstance.activeConnections[0].simulateData({
+        type: "ENTITY_UPDATE",
+        payload: entity,
+      });
+    }, updatedEntity);
+
+    // Verify title updated in UI
+    await expect(
+      page.locator("h2", { hasText: "Updated Mountain" }),
+    ).toBeVisible();
+
+    // 7. Verify "EXIT GUEST MODE" button appears
+    const exitButton = page.getByTestId("exit-guest-mode-button");
+    await expect(exitButton).toBeVisible();
   });
 });

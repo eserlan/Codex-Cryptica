@@ -17,10 +17,12 @@ export class P2PHostService {
     if (this._isHosting && this.peerId) return this.peerId;
 
     // Subscribe to local vault updates
-    if (this.unsubscribe) this.unsubscribe();
-    // this.unsubscribe = vault.subscribe((entity) => {
-    //   this.broadcastEntityUpdate(entity);
-    // });
+    vault.onEntityUpdate = (entity) => {
+      this.broadcastEntityUpdate(entity);
+    };
+    vault.onEntityDelete = (id) => {
+      this.broadcastEntityDelete(id);
+    };
 
     return new Promise((resolve, reject) => {
       // Generate a random ID with a prefix
@@ -95,6 +97,8 @@ export class P2PHostService {
       version: 1,
       entities,
       assets,
+      defaultVisibility: vault.defaultVisibility,
+      sharedMode: true, // Always force shared mode for guests
     };
   }
 
@@ -173,11 +177,26 @@ export class P2PHostService {
     });
   }
 
+  private broadcastEntityDelete(id: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting delete for:", id);
+
+    const message = {
+      type: "ENTITY_DELETE",
+      payload: id,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
   stopHosting() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
+    vault.onEntityUpdate = null;
+    vault.onEntityDelete = null;
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;
