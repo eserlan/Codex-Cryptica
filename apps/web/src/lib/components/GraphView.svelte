@@ -175,14 +175,29 @@
       // Background FCOSE Layout
       isLayoutRunning = true;
       try {
-        const elements = graph.elements;
-        const positions = await layoutService.runFcose(
-          $state.snapshot(elements),
-          {
-            ...DEFAULT_LAYOUT_OPTIONS,
-            animate: false, // Math only in worker
-          },
-        );
+        // Use live dimensions from Cytoscape if available, otherwise fallback to store
+        // This ensures the layout accounts for resolved image sizes
+        const elements = $state.snapshot(graph.elements).map((el: any) => {
+          if (el.group === "nodes" && cy) {
+            const cyNode = cy.$id(el.data.id);
+            if (cyNode && cyNode.length > 0) {
+              return {
+                ...el,
+                data: {
+                  ...el.data,
+                  width: cyNode.data("width") || el.data.width,
+                  height: cyNode.data("height") || el.data.height,
+                },
+              };
+            }
+          }
+          return el;
+        });
+
+        const positions = await layoutService.runFcose(elements, {
+          ...DEFAULT_LAYOUT_OPTIONS,
+          animate: false, // Math only in worker
+        });
 
         if (isInitial) {
           cy.nodes().forEach((n) => {

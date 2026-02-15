@@ -6,13 +6,15 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   randomize: true,
   packComponents: true,
   nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: 15000,
-  idealEdgeLength: 170,
-  gravity: 0.01,
-  numIter: 2300,
+  nodeRepulsion: 180000, // Strong repulsion
+  idealEdgeLength: 150, // Good spacing
+  nodeSeparation: 100, // Explicit gap
+  gravity: 0.1,
+  gravityRange: 3.8,
+  numIter: 3500,
   tile: true,
-  tilingPaddingVertical: 20,
-  tilingPaddingHorizontal: 20,
+  tilingPaddingVertical: 100,
+  tilingPaddingHorizontal: 100,
 };
 
 export const CONNECTION_COLORS = {

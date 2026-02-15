@@ -21,7 +21,15 @@ export class LayoutEngine {
     const cy = cytoscape({
       headless: true,
       elements,
-      style: [],
+      style: [
+        {
+          selector: "node",
+          style: {
+            width: "data(width)",
+            height: "data(height)",
+          },
+        },
+      ],
     });
 
     return new Promise<LayoutResult>((resolve, reject) => {
