@@ -182,6 +182,7 @@
                 bind:this={textArea}
                 bind:value={input}
                 data-testid="oracle-input"
+                aria-label="Chat Input"
                 onkeydown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
                         e.preventDefault();
@@ -197,6 +198,7 @@
                 type="submit"
                 class="w-10 h-10 flex items-center justify-center bg-theme-primary hover:bg-theme-secondary text-theme-bg rounded transition shadow-lg shadow-theme-primary/20 disabled:opacity-30 disabled:grayscale transition-all active:scale-95 shrink-0 self-end"
                 disabled={!input.trim() || oracle.isLoading}
+                aria-label="Send Message"
             >
                 ➤
             </button>
