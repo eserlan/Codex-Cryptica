@@ -766,6 +766,13 @@
   let hoveredEntity = $derived(
     hoveredEntityId ? vault.entities[hoveredEntityId] : null,
   );
+
+  // Memoize markdown parsing to avoid re-parsing on every render (e.g. when tooltip position updates)
+  let hoveredEntityHtml = $derived(
+    hoveredEntity?.content
+      ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
+      : '<span class="italic text-theme-muted">No data available</span>',
+  );
 </script>
 
 <div
@@ -935,9 +942,7 @@
         <div
           class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
         >
-          {@html hoveredEntity.content
-            ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
-            : '<span class="italic text-theme-muted">No data available</span>'}
+          {@html hoveredEntityHtml}
         </div>
 
         <!-- Decorative corner bits -->
