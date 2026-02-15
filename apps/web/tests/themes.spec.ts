@@ -58,30 +58,21 @@ test.describe("Visual Styling Templates", () => {
     await page.getByRole("button", { name: "Neon Night" }).click();
 
     // Verify cyberpunk color
-    let primary = await page.evaluate(() =>
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--color-accent-primary")
-        .trim(),
+    await expect(page.locator("html")).toHaveCSS(
+      "--color-accent-primary",
+      "#f472b6",
     );
-    expect(primary).toBe("#f472b6");
 
     // Reload page
     await page.reload();
 
-    // Wait for theme to be applied
-    await page.waitForFunction(
-      () =>
-        getComputedStyle(document.documentElement)
-          .getPropertyValue("--color-accent-primary")
-          .trim() !== "",
-    );
+    // Wait for auto-init
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
 
     // Verify it persisted
-    primary = await page.evaluate(() =>
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--color-accent-primary")
-        .trim(),
+    await expect(page.locator("html")).toHaveCSS(
+      "--color-accent-primary",
+      "#f472b6",
     );
-    expect(primary).toBe("#f472b6");
   });
 });
