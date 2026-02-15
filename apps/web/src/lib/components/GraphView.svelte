@@ -123,6 +123,16 @@
       }
     }
 
+    if (vault.isGuest) {
+      // For guests, we rely entirely on synced positions.
+      // Simply fit to view initially if needed.
+      if (isInitial) {
+        cy.fit(cy.elements(), 40);
+      }
+      isLayoutRunning = false;
+      return;
+    }
+
     if (graph.timelineMode) {
       isLayoutRunning = true;
       try {
@@ -130,11 +140,14 @@
           (e) => e.group === "nodes",
         ) as any[];
 
-        const positions = await layoutService.runTimeline($state.snapshot(nodes), {
-          axis: graph.timelineAxis,
-          scale: graph.timelineScale,
-          jitter: 150,
-        });
+        const positions = await layoutService.runTimeline(
+          $state.snapshot(nodes),
+          {
+            axis: graph.timelineAxis,
+            scale: graph.timelineScale,
+            jitter: 150,
+          },
+        );
 
         cy.layout({
           name: "preset",
@@ -163,10 +176,13 @@
       isLayoutRunning = true;
       try {
         const elements = graph.elements;
-        const positions = await layoutService.runFcose($state.snapshot(elements), {
-          ...DEFAULT_LAYOUT_OPTIONS,
-          animate: false, // Math only in worker
-        });
+        const positions = await layoutService.runFcose(
+          $state.snapshot(elements),
+          {
+            ...DEFAULT_LAYOUT_OPTIONS,
+            animate: false, // Math only in worker
+          },
+        );
 
         if (isInitial) {
           cy.nodes().forEach((n) => {
@@ -450,6 +466,7 @@
 
           // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
+          let hasUpdates = false;
           for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
             const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
             await Promise.all(
@@ -523,10 +540,19 @@
                       width: Math.round(w),
                       height: Math.round(h),
                     });
+                    hasUpdates = true;
                   });
                 }
               }),
             );
+          }
+
+          if (hasUpdates) {
+            // Re-run layout now that node dimensions are accurate
+            // Use a slight delay to allow batching if multiple chunks finish close together
+            setTimeout(() => {
+              applyCurrentLayout(false);
+            }, 200);
           }
         } catch (error) {
           console.error("Failed to resolve node images", error);
@@ -890,6 +916,18 @@
         aria-label="Fit to Screen"
       >
         <span class="icon-[lucide--maximize] w-4 h-4"></span>
+      </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => applyCurrentLayout(true)}
+        title="Redraw Layout"
+        aria-label="Redraw Layout"
+      >
+        <span
+          class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+            ? 'animate-spin'
+            : ''}"
+        ></span>
       </button>
 
       <!-- Connect Mode Toggle -->

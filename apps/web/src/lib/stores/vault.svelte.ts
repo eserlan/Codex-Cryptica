@@ -45,6 +45,10 @@ class VaultStore {
   isGuest = $state(false);
   storageAdapter: IStorageAdapter | null = null;
 
+  // Real-time update hooks
+  onEntityUpdate: ((entity: LocalEntity) => void) | null = null;
+  onEntityDelete: ((id: string) => void) | null = null;
+
   // Services (Injected)
   private services: IVaultServices | null = null;
 
@@ -347,6 +351,7 @@ class VaultStore {
 
   scheduleSave(entity: LocalEntity | Entity) {
     this.status = "saving";
+    if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
     const targetVaultId = this.activeVaultId;
     this.saveQueue
       .enqueue(entity.id, async () => {
@@ -414,9 +419,13 @@ class VaultStore {
       await vaultEntities.deleteEntity(vaultDir, this.entities, id);
     if (deletedEntity) {
       this.entities = entities;
+      if (this.onEntityDelete) this.onEntityDelete(id);
       modifiedIds.forEach((mId) => {
         const entity = this.entities[mId];
-        if (entity) this.scheduleSave(entity);
+        if (entity) {
+          this.scheduleSave(entity);
+          if (this.onEntityUpdate) this.onEntityUpdate(entity);
+        }
       });
       if (this.services) await this.services.search.remove(id);
     }

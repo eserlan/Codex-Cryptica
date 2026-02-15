@@ -17,10 +17,12 @@ export class P2PHostService {
     if (this._isHosting && this.peerId) return this.peerId;
 
     // Subscribe to local vault updates
-    if (this.unsubscribe) this.unsubscribe();
-    // this.unsubscribe = vault.subscribe((entity) => {
-    //   this.broadcastEntityUpdate(entity);
-    // });
+    vault.onEntityUpdate = (entity) => {
+      this.broadcastEntityUpdate(entity);
+    };
+    vault.onEntityDelete = (id) => {
+      this.broadcastEntityDelete(id);
+    };
 
     return new Promise((resolve, reject) => {
       // Generate a random ID with a prefix
@@ -48,13 +50,31 @@ export class P2PHostService {
   }
 
   private handleConnection(conn: any) {
+    if (this.connections.some((c) => c.peer === conn.peer && c.open)) {
+      console.log(
+        "[P2P Host] Guest already connected with an open link:",
+        conn.peer,
+      );
+      // Optional: we could close the new one, but often PeerJS is just recovering
+    }
+
     console.log("[P2P Host] New guest connected:", conn.peer);
     this.connections.push(conn);
 
     conn.on("open", async () => {
-      // 1. Send Initial Graph
-      const graph = await this.prepareGraphPayload();
-      conn.send({ type: "GRAPH_SYNC", payload: graph });
+      try {
+        console.log("[P2P Host] Connection open for guest:", conn.peer);
+        // 1. Send Initial Graph
+        const graph = await this.prepareGraphPayload();
+        conn.send({ type: "GRAPH_SYNC", payload: graph });
+        console.log("[P2P Host] Initial graph sent to:", conn.peer);
+      } catch (err) {
+        console.error(
+          "[P2P Host] Failed to send initial graph to:",
+          conn.peer,
+          err,
+        );
+      }
     });
 
     conn.on("data", async (data: any) => {
@@ -74,14 +94,14 @@ export class P2PHostService {
   private async prepareGraphPayload(): Promise<SerializedGraph> {
     // Serialize current vault state
     // We must sanitize entities to remove non-serializable objects like FileSystemHandles through destructuring
-    const rawEntities = vault.entities;
+    const rawEntities = $state.snapshot(vault.entities);
     const entities: Record<string, Entity> = {};
     const assets: Record<string, string> = {};
 
     // Build a mapping for assets and sanitize entities
     for (const [id, localEntity] of Object.entries(rawEntities)) {
       // Strip _fsHandle and other runtime-only props that PeerJS can't serialize
-      const { ...safeEntity } = localEntity;
+      const { _fsHandle, ...safeEntity } = localEntity as any;
       entities[id] = safeEntity;
 
       // If we have an image path, map it
@@ -95,6 +115,8 @@ export class P2PHostService {
       version: 1,
       entities,
       assets,
+      defaultVisibility: vault.defaultVisibility,
+      sharedMode: true, // Always force shared mode for guests
     };
   }
 
@@ -157,7 +179,8 @@ export class P2PHostService {
     if (this.connections.length === 0) return;
 
     // Sanitize
-    const { _fsHandle, ...safeEntity } = entity;
+    const snap = $state.snapshot(entity);
+    const { _fsHandle, ...safeEntity } = snap;
 
     console.log("[P2P Host] Broadcasting update for:", safeEntity.title);
 
@@ -173,11 +196,26 @@ export class P2PHostService {
     });
   }
 
+  private broadcastEntityDelete(id: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting delete for:", id);
+
+    const message = {
+      type: "ENTITY_DELETE",
+      payload: id,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
   stopHosting() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
-    }
+    vault.onEntityUpdate = null;
+    vault.onEntityDelete = null;
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;
