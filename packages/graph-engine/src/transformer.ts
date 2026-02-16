@@ -266,7 +266,8 @@ export const getGraphStyle = (
   ];
 
   const categoryStyles = categories.map((cat) => ({
-    selector: `node[type="${cat.id}"]`,
+    // Include specific selector for image nodes to override base image style (which has [resolvedImage][width][height])
+    selector: `node[type="${cat.id}"], node[type="${cat.id}"][resolvedImage][width][height]`,
     style: {
       "border-color": cat.color,
       "border-width": graph.nodeBorderWidth + 2,
