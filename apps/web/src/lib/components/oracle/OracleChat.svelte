@@ -2,6 +2,8 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { uiStore } from "$stores/ui.svelte";
   import ChatMessage from "./ChatMessage.svelte";
+  import CommandMenu from "./CommandMenu.svelte";
+  import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
 
@@ -10,6 +12,8 @@
   let input = $state("");
   let scrollContainer = $state<HTMLDivElement>();
   let textArea = $state<HTMLTextAreaElement>();
+  let commandMenu = $state<ReturnType<typeof CommandMenu>>();
+  let showCommandMenu = $state(false);
 
   const adjustHeight = () => {
     if (!textArea) return;
@@ -21,13 +25,32 @@
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     input; // Reactive dependency
     adjustHeight();
+
+    if (input.startsWith("/")) {
+      showCommandMenu = true;
+    } else {
+      showCommandMenu = false;
+    }
   });
 
   const handleSubmit = async () => {
     if (!input || oracle.isLoading) return;
-    const query = input;
+    const query = input.trim();
     input = "";
     if (textArea) textArea.style.height = "";
+
+    // Check if it's a command
+    if (query.startsWith("/")) {
+      const parts = query.split(" ");
+      const cmdName = parts[0];
+      const args = parts.slice(1).join(" ");
+      const cmd = chatCommands.find((c) => c.name === cmdName);
+      if (cmd) {
+        await cmd.handler(args);
+        return;
+      }
+    }
+
     await oracle.ask(query);
   };
 
@@ -168,6 +191,20 @@
 
   <!-- Input -->
   <div class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0">
+    {#if showCommandMenu}
+      <CommandMenu
+        bind:this={commandMenu}
+        bind:input
+        anchorEl={textArea || null}
+        onSelect={(cmd) => {
+          input = cmd.name + " ";
+          tick().then(() => textArea?.focus());
+        }}
+        onClose={() => {
+          showCommandMenu = false;
+        }}
+      />
+    {/if}
     <form
       onsubmit={(e) => {
         e.preventDefault();
@@ -181,6 +218,9 @@
         data-testid="oracle-input"
         aria-label="Chat Input"
         onkeydown={(e) => {
+          if (showCommandMenu && commandMenu?.handleKeyDown(e)) {
+            return;
+          }
           if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
             e.preventDefault();
             handleSubmit();

@@ -18,6 +18,8 @@
   "dependencies": {
     "@codex/importer": "*",
     "@codex/proposer": "*",
+    "@codex/search-engine": "*",
+    "@floating-ui/dom": "^1.7.5",
     "@google/generative-ai": "^0.24.1",
     "@milkdown/core": "^7.18.0",
     "@milkdown/ctx": "^7.18.0",
@@ -41,7 +43,6 @@
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",
     "editor-core": "*",
-    "@codex/search-engine": "*",
     "flexsearch": "^0.8.212",
     "graph-engine": "*",
     "idb": "^8.0.3",

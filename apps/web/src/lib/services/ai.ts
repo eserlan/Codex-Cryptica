@@ -297,6 +297,34 @@ INSTRUCTIONS:
     }
   }
 
+  async parseConnectionIntent(
+    apiKey: string,
+    modelName: string,
+    input: string,
+  ) {
+    const { ProposerService } = await import("@codex/proposer");
+    const proposer = new ProposerService();
+    return proposer.parseConnectionIntent(apiKey, modelName, input);
+  }
+
+  async generateConnectionProposal(
+    apiKey: string,
+    modelName: string,
+    source: any,
+    target: any,
+  ) {
+    const { ProposerService } = await import("@codex/proposer");
+    const proposer = new ProposerService();
+    return proposer.generateConnectionProposal(
+      apiKey,
+      modelName,
+      this.getConsolidatedContext(source),
+      this.getConsolidatedContext(target),
+      source.title,
+      target.title,
+    );
+  }
+
   async generateResponse(
     apiKey: string,
     query: string,

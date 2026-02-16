@@ -6,6 +6,7 @@
   import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import ImageMessage from "./ImageMessage.svelte";
+  import ConnectionWizard from "./ConnectionWizard.svelte";
   import { parseOracleResponse } from "editor-core";
   import { sanitizeId } from "$lib/utils/markdown";
   import { graph } from "$lib/stores/graph.svelte";
@@ -295,6 +296,10 @@
     {#if message.role === "assistant"}
       {#if message.type === "image"}
         <ImageMessage {message} />
+      {:else if message.type === "wizard"}
+        {#if message.wizardType === "connection"}
+          <ConnectionWizard {message} />
+        {/if}
       {:else}
         <div class="prose prose-sm">
           {#await parserService.parse(message.content || "") then html}

@@ -214,6 +214,82 @@ Only return the JSON. If no connections are found, return empty array [].`;
     await db.put(PROPOSAL_STORE, proposal);
   }
 
+  async generateConnectionProposal(
+    apiKey: string,
+    modelName: string,
+    sourceContent: string,
+    targetContent: string,
+    sourceTitle: string,
+    targetTitle: string,
+  ): Promise<import("./types").ConnectionProposal> {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    const prompt = `Analyze the following two entities from a fantasy world and propose a thematic connection type and label.
+    
+SOURCE ENTITY: ${sourceTitle}
+${sourceContent.length > 5000 ? sourceContent.slice(0, 5000) + "..." : sourceContent}
+
+TARGET ENTITY: ${targetTitle}
+${targetContent.length > 5000 ? targetContent.slice(0, 5000) + "..." : targetContent}
+
+INSTRUCTIONS:
+1. Identify the most likely relationship between them based on the provided lore.
+2. Select a base type from: 'related_to' (default), 'neutral' (ambiguous/formal), 'friendly' (allies/positive), 'enemy' (rivals/negative).
+3. Provide a specific short label (e.g., "Former Student", "Sworn Enemy", "Occasional Ally").
+4. Provide a brief 1-sentence explanation.
+
+Output JSON:
+{
+  "type": "related_to" | "neutral" | "friendly" | "enemy",
+  "label": "string",
+  "explanation": "string"
+}`;
+
+    const result = await model.generateContent(prompt);
+    return JSON.parse(result.response.text());
+  }
+
+  async parseConnectionIntent(
+    apiKey: string,
+    modelName: string,
+    input: string,
+  ): Promise<{
+    sourceName: string;
+    targetName: string;
+    type?: string;
+    label?: string;
+  }> {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    const prompt = `Extract the source entity, target entity, and the relationship type/label from the following natural language connection request.
+    
+USER INPUT: "${input}"
+
+INSTRUCTIONS:
+1. Identify the "From" (source) entity and "To" (target) entity. The user often uses the pattern "<from> <relationship> <to>" (e.g., "General leader of the army").
+2. If a relationship type is implied, map it to one of: 'related_to', 'neutral', 'friendly', 'enemy'.
+3. Extract the specific relationship label (e.g., "leader of", "master of", "rival of").
+
+Output JSON:
+{
+  "sourceName": "string",
+  "targetName": "string",
+  "type": "related_to" | "neutral" | "friendly" | "enemy" (optional),
+  "label": "string" (optional)
+}`;
+
+    const result = await model.generateContent(prompt);
+    return JSON.parse(result.response.text());
+  }
+
   async reEvaluateProposal(proposalId: string): Promise<void> {
     const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);

@@ -7,7 +7,8 @@ export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "text" | "image";
+  type?: "text" | "image" | "wizard";
+  wizardType?: "connection";
   imageUrl?: string; // temporary blob: URL or local path
   imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
@@ -328,9 +329,33 @@ class OracleStore {
     return false;
   }
 
+  startWizard(type: "connection") {
+    this.messages = [
+      ...this.messages,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "Starting connection wizard...",
+        type: "wizard",
+        wizardType: type,
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
+  removeMessage(id: string) {
+    this.messages = this.messages.filter((m) => m.id !== id);
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
   async ask(query: string) {
     const key = this.effectiveApiKey;
     if (!query.trim() || !key) return;
+    // ... rest of implementation (omitted for brevity in replace, but I must keep it)
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.messages = [
@@ -350,7 +375,9 @@ class OracleStore {
     }
 
     const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
-    const isImageRequest = !isCreateRequest && this.detectImageIntent(query);
+    const isConnectRequest = query.toLowerCase().trim().startsWith("/connect");
+    const isImageRequest =
+      !isCreateRequest && !isConnectRequest && this.detectImageIntent(query);
 
     this.messages = [
       ...this.messages,
@@ -360,6 +387,100 @@ class OracleStore {
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /connect request
+    if (isConnectRequest) {
+      try {
+        const modelName = TIER_MODES[this.tier];
+        const intent = await aiService.parseConnectionIntent(
+          key,
+          modelName,
+          query,
+        );
+
+        // Try to resolve entities via search
+        const { searchService } = await import("../services/search");
+        const sourceRes = await searchService.search(intent.sourceName, {
+          limit: 1,
+        });
+        const targetRes = await searchService.search(intent.targetName, {
+          limit: 1,
+        });
+
+        console.log(
+          `[Oracle] Direct Resolve: "${intent.sourceName}" -> ${sourceRes[0]?.id}, "${intent.targetName}" -> ${targetRes[0]?.id}`,
+        );
+
+        if (sourceRes[0] && targetRes[0]) {
+          const sourceId = sourceRes[0].id;
+          const targetId = targetRes[0].id;
+          const source = vault.entities[sourceId];
+          const target = vault.entities[targetId];
+
+          if (source && target) {
+            // Direct Creation
+            const type = intent.type || "related_to";
+            const label = intent.label || "";
+            const success = vault.addConnection(
+              source.id,
+              target.id,
+              type,
+              label,
+            );
+
+            if (success) {
+              this.messages = [
+                ...this.messages,
+                {
+                  id: crypto.randomUUID(),
+                  role: "system",
+                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || type}*.`,
+                },
+              ];
+
+              // Push Undo
+              this.pushUndoAction(
+                `Connect ${source.title} to ${target.title}`,
+                async () => {
+                  vault.removeConnection(source.id, target.id, type);
+                },
+              );
+
+              this.lastUpdated = Date.now();
+              this.isLoading = false;
+              this.broadcast();
+              this.saveToDB();
+              return;
+            } else {
+              throw new Error("Vault refused to create connection.");
+            }
+          } else {
+            const missingName = !source ? intent.sourceName : intent.targetName;
+            throw new Error(
+              `Entity "${missingName}" was found in search but is missing from the active vault.`,
+            );
+          }
+        }
+
+        throw new Error(
+          "Could not identify both entities. Try using the guided wizard with `/connect oracle`.",
+        );
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
