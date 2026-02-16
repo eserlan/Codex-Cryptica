@@ -89,39 +89,44 @@
 
         if (signal.aborted) break;
 
-        // Lenient identification of existing entities
-        for (const entity of analysis.entities) {
-          const id = sanitizeId(entity.suggestedTitle) || "untitled";
-          if (vault.entities[id]) {
-            entity.matchedEntityId = id;
-          } else {
-            // Fuzzy search for "somewhat" match
-            const results = await searchService.search(entity.suggestedTitle, {
-              limit: 1,
-            });
-            if (results.length > 0 && results[0].score > 0.9) {
-              const matchedEntity = vault.entities[results[0].id];
-              if (matchedEntity) {
-                // Double check: titles should share at least one significant word to avoid false positives
-                const suggestedWords = entity.suggestedTitle
-                  .toLowerCase()
-                  .split(/\s+/)
-                  .filter((w) => w.length > 3);
-                const matchedWords = matchedEntity.title
-                  .toLowerCase()
-                  .split(/\s+/)
-                  .filter((w) => w.length > 3);
-                const hasWordMatch = suggestedWords.some((w) =>
-                  matchedWords.includes(w),
-                );
+        // Lenient identification of existing entities in parallel
+        await Promise.all(
+          analysis.entities.map(async (entity) => {
+            const id = sanitizeId(entity.suggestedTitle) || "untitled";
+            if (vault.entities[id]) {
+              entity.matchedEntityId = id;
+            } else {
+              // Fuzzy search for "somewhat" match
+              const results = await searchService.search(
+                entity.suggestedTitle,
+                {
+                  limit: 1,
+                },
+              );
+              if (results.length > 0 && results[0].score > 0.9) {
+                const matchedEntity = vault.entities[results[0].id];
+                if (matchedEntity) {
+                  // Double check: titles should share at least one significant word to avoid false positives
+                  const suggestedWords = entity.suggestedTitle
+                    .toLowerCase()
+                    .split(/\s+/)
+                    .filter((w) => w.length > 3);
+                  const matchedWords = matchedEntity.title
+                    .toLowerCase()
+                    .split(/\s+/)
+                    .filter((w) => w.length > 3);
+                  const hasWordMatch = suggestedWords.some((w) =>
+                    matchedWords.includes(w),
+                  );
 
-                if (hasWordMatch) {
-                  entity.matchedEntityId = results[0].id;
+                  if (hasWordMatch) {
+                    entity.matchedEntityId = results[0].id;
+                  }
                 }
               }
             }
-          }
-        }
+          }),
+        );
 
         discoveredEntities = [...discoveredEntities, ...analysis.entities];
       } catch (err: any) {
@@ -167,14 +172,30 @@
         // ISSUE #149: Don't import existing nodes, just connect to them.
         const existing = vault.entities[existingId];
         statusMessage = `Updating connections for existing entity: ${existing.title}...`;
-        for (const link of entity.detectedLinks) {
-          const targetName = typeof link === "string" ? link : link.target;
-          const label =
-            typeof link === "string" ? link : link.label || link.target;
-          const targetId = sanitizeId(targetName) || "untitled";
 
-          // Add connection to the existing entity
-          vault.addConnection(existing.id, targetId, "related_to", label);
+        const newConnections = (entity.detectedLinks || [])
+          .map((link) => {
+            const targetName = typeof link === "string" ? link : link.target;
+            const label =
+              typeof link === "string" ? link : link.label || link.target;
+            return {
+              target: sanitizeId(targetName) || "untitled",
+              label,
+              type: "related_to",
+              strength: 1,
+            };
+          })
+          .filter(
+            (newConn) =>
+              !existing.connections.some(
+                (c) => c.target === newConn.target && c.label === newConn.label,
+              ),
+          );
+
+        if (newConnections.length > 0) {
+          vault.updateEntity(existing.id, {
+            connections: [...existing.connections, ...newConnections],
+          });
         }
         continue; // Skip creation
       }

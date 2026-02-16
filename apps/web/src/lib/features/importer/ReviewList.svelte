@@ -15,7 +15,7 @@
 
   $effect(() => {
     // Only re-initialize if the entities ARRAY identity has changed
-    if (entities !== _lastEntities) {
+    if (entities !== _lastEntities && entities.length > 0) {
       const initialSelection = new Set<string>();
       for (const entity of entities) {
         if (!entity.matchedEntityId) {
