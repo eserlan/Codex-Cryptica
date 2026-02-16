@@ -68,4 +68,38 @@ test.describe("Vault E2E", () => {
     await page.keyboard.press("c");
     await expect(page.getByText("> SELECT SOURCE NODE")).toBeVisible();
   });
+
+  test("Toggle Node Labels Shortcut", async ({ page }) => {
+    // 1. Initial State: Labels should be shown by default
+    const isShownInitially = await page.evaluate(
+      () => (window as any).graph.showLabels,
+    );
+    expect(isShownInitially).toBe(true);
+
+    // 2. Toggle Off
+    await page.keyboard.press("l");
+    const isHiddenAfterPress = await page.evaluate(
+      () => (window as any).graph.showLabels,
+    );
+    expect(isHiddenAfterPress).toBe(false);
+
+    // 3. Toggle On
+    await page.keyboard.press("l");
+    const isShownAfterSecondPress = await page.evaluate(
+      () => (window as any).graph.showLabels,
+    );
+    expect(isShownAfterSecondPress).toBe(true);
+
+    // 4. Verify blocked when typing in input
+    await page.getByTestId("new-entity-button").click();
+    const titleInput = page.getByPlaceholder("Entry Title...");
+    await titleInput.focus();
+    await titleInput.fill("testing labels");
+    await page.keyboard.press("l");
+
+    const stillShownWhileTyping = await page.evaluate(
+      () => (window as any).graph.showLabels,
+    );
+    expect(stillShownWhileTyping).toBe(true);
+  });
 });

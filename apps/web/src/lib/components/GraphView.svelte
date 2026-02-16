@@ -312,7 +312,7 @@
       });
 
       // Expose for E2E testing
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || (window as any).__E2E__) {
         (window as any).cy = cy;
       }
 
