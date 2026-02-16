@@ -125,6 +125,14 @@
       (window as any).cloudConfig = cloudConfig;
       (window as any).workerBridge = workerBridge;
       (window as any).isEntityVisible = isEntityVisible;
+
+      // Eagerly load P2P services for E2E
+      import("$lib/cloud-bridge/p2p/host-service.svelte").then((m) => {
+        (window as any).p2pHostService = m.p2pHost;
+      });
+      import("$lib/cloud-bridge/p2p/guest-service").then((m) => {
+        (window as any).p2pGuestService = m.p2pGuestService;
+      });
     }
 
     return () => {

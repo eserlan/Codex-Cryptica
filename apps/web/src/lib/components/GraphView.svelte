@@ -4,6 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import type { Entity } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -214,11 +215,47 @@
             animationEasing: "ease-out-quad",
           }).run();
         }
+
+        // SYNC: Update vault with new positions
+        // We do this after the layout is calculated so guests get the data.
+        {
+          const updates: Record<string, Partial<Entity>> = {};
+          for (const [id, pos] of Object.entries(positions)) {
+            updates[id] = {
+              metadata: {
+                ...(vault.entities[id]?.metadata || {}),
+                coordinates: pos,
+              },
+            };
+          }
+          if (Object.keys(updates).length > 0) {
+            if (Object.keys(updates).length > 0) {
+              vault.batchUpdateEntities(updates as any);
+            }
+          }
+        }
       } catch (err) {
         console.error("Background layout failed:", err);
         // Fallback to main thread
         currentLayout = cy.layout({
           ...DEFAULT_LAYOUT_OPTIONS,
+          stop: () => {
+            // Sync fallback layout too
+            if (!vault.isGuest && cy) {
+              const updates: Record<string, Partial<Entity>> = {};
+              cy.nodes().forEach((node) => {
+                updates[node.id()] = {
+                  metadata: {
+                    ...(vault.entities[node.id()]?.metadata || {}),
+                    coordinates: node.position(),
+                  },
+                };
+              });
+              if (Object.keys(updates).length > 0) {
+                vault.batchUpdateEntities(updates as any);
+              }
+            }
+          },
         });
         currentLayout.run();
       } finally {
@@ -732,6 +769,18 @@
                   // Merge with existing data so we don't lose dynamic properties
                   // (e.g. resolvedImage, width, height set by async loaders)
                   node.data({ ...currentData, ...newData });
+                }
+
+                // Sync position for guests (Host relies on local layout)
+                if (vault.isGuest && el.group === "nodes" && el.position) {
+                  const currentPos = node.position();
+                  // Check if position changed significantly (> 1px) to avoid jitter
+                  if (
+                    Math.abs(currentPos.x - el.position.x) > 1 ||
+                    Math.abs(currentPos.y - el.position.y) > 1
+                  ) {
+                    node.position(el.position);
+                  }
                 }
               }
             }

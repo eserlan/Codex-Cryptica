@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
 
   let { close }: { close: () => void } = $props();
 

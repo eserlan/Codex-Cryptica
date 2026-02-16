@@ -138,6 +138,7 @@ export const getGraphStyle = (
 ): any[] => {
   const { tokens, graph } = template;
 
+  // Base styles (excluding revealed overrides which need to come last)
   const baseStyle = [
     {
       selector: "node",
@@ -170,17 +171,6 @@ export const getGraphStyle = (
         height: "data(height)",
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
-      },
-    },
-    {
-      // Revealed indicator - subtle white shine effect (doesn't override background-image)
-      selector: "node[isRevealed]",
-      style: {
-        "overlay-color": "#ffffff",
-        "overlay-opacity": 0.3,
-        "overlay-padding": 8,
-        "border-color": "#d4d4d4",
-        "border-width": graph.nodeBorderWidth + 3,
       },
     },
     {
@@ -283,5 +273,28 @@ export const getGraphStyle = (
     },
   }));
 
-  return [...baseStyle, ...categoryStyles];
+  // Revealed styles come LAST to override category borders,
+  // but we DO NOT set border-color so it inherits from category/base.
+  const revealedStyles = [
+    {
+      selector: "node[isRevealed]",
+      style: {
+        "border-width": graph.nodeBorderWidth + 4,
+        "background-clip": "none",
+        "overlay-opacity": 0,
+      },
+    },
+    {
+      selector: "node[isRevealed][resolvedImage]",
+      style: {
+        "background-image": "data(resolvedImage)",
+        "background-clip": "node",
+        "background-fit": "cover",
+        "background-position-y": "50%",
+        "border-width": graph.nodeBorderWidth + 4,
+      },
+    },
+  ];
+
+  return [...baseStyle, ...categoryStyles, ...revealedStyles];
 };

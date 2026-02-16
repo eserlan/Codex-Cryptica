@@ -48,6 +48,9 @@ class VaultStore {
   // Real-time update hooks
   onEntityUpdate: ((entity: LocalEntity) => void) | null = null;
   onEntityDelete: ((id: string) => void) | null = null;
+  onBatchUpdate:
+    | ((updates: Record<string, Partial<LocalEntity>>) => void)
+    | null = null;
 
   // Services (Injected)
   private services: IVaultServices | null = null;
@@ -82,7 +85,7 @@ class VaultStore {
     return Object.values(this.entities);
   }
 
-  private async getActiveVaultHandle(): Promise<
+  public async getActiveVaultHandle(): Promise<
     FileSystemDirectoryHandle | undefined
   > {
     if (!vaultRegistry.rootHandle || !this.activeVaultId) return undefined;
@@ -410,6 +413,39 @@ class VaultStore {
     return true;
   }
 
+  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>): boolean {
+    let hasChanges = false;
+    const currentEntities = this.entities; // Ref for read
+    const newEntities = { ...currentEntities }; // Shallow copy for potential write
+
+    const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
+
+    for (const [id, patch] of Object.entries(updates)) {
+      if (!currentEntities[id]) continue;
+
+      const current = currentEntities[id];
+      const merged = { ...current, ...patch, updatedAt: Date.now() };
+
+      // Simple equality check to avoid unnecessary updates
+      // Note: This is a shallow check, deep objects might still trigger
+      if (JSON.stringify(current) !== JSON.stringify(merged)) {
+        newEntities[id] = merged;
+        appliedUpdates[id] = patch; // Store what actually changed
+        hasChanges = true;
+        this.scheduleSave(merged);
+      }
+    }
+
+    if (hasChanges) {
+      this.entities = newEntities;
+      if (this.onBatchUpdate) {
+        this.onBatchUpdate(appliedUpdates);
+      }
+      return true;
+    }
+    return false;
+  }
+
   async deleteEntity(id: string): Promise<void> {
     if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
     const vaultDir = await this.getActiveVaultHandle();
@@ -565,6 +601,17 @@ class VaultStore {
 
   async resolveImageUrl(path: string): Promise<string> {
     const vaultDir = await this.getActiveVaultHandle();
+
+    if (this.isGuest) {
+      // Lazy import to avoid circular dependency since guest-service imports vault types or vault?
+      // Actually guest-service likely imports vault, so circular is real.
+      const { p2pGuestService } =
+        await import("$lib/cloud-bridge/p2p/guest-service");
+      return await vaultAssets.resolveImageUrl(vaultDir, path, (p) =>
+        p2pGuestService.getFile(p),
+      );
+    }
+
     return await vaultAssets.resolveImageUrl(vaultDir, path);
   }
 
