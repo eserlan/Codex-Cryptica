@@ -87,7 +87,13 @@
     <p class="text-xs text-theme-muted leading-relaxed max-w-[280px]">
       To consult the archives, please provide a <strong
         class="text-theme-primary">Google Gemini API Key</strong
-      > in the Settings panel.
+      >
+      in the Settings panel.
+      {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}
+        <br /><span class="text-[10px] opacity-50"
+          >(Shared key not detected on localhost)</span
+        >
+      {/if}
     </p>
 
     <button
@@ -196,7 +202,9 @@
   </div>
 
   <!-- Input -->
-  <div class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0">
+  <div
+    class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0 relative"
+  >
     {#if showCommandMenu}
       <CommandMenu
         bind:this={commandMenu}
@@ -233,7 +241,7 @@
             handleSubmit();
           }
         }}
-        placeholder="Ask the archives..."
+        placeholder="Ask the archives or type "/" for commands..."
         class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-mono resize-none overflow-hidden no-scrollbar shadow-inner"
         disabled={oracle.isLoading}
         rows="1"
