@@ -1,9 +1,13 @@
 name: Auto Bump Web Version After Merge
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches: [main]
+
+concurrency:
+  group: version-bump-main
+  cancel-in-progress: false
 
 permissions:
   contents: write
