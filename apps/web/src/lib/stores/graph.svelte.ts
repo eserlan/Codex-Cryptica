@@ -39,6 +39,9 @@ class GraphStore {
 
   fitRequest = $state(0);
 
+  // Labels state
+  showLabels = $state(true);
+
   // Timeline State
   timelineMode = $state(false);
   timelineAxis = $state<"x" | "y">("x");
@@ -103,6 +106,10 @@ class GraphStore {
 
   clearLabelFilters() {
     this.activeLabels = new Set();
+  }
+
+  toggleLabels() {
+    this.showLabels = !this.showLabels;
   }
 
   toggleTimeline() {

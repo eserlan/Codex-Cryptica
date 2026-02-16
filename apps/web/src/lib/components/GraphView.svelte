@@ -51,12 +51,12 @@
         display: "none",
       },
     },
-    ...(graph.timelineMode
+    ...(graph.timelineMode || !graph.showLabels
       ? [
           {
             selector: "node",
             style: {
-              label: "", // Labels handled by TimelineOverlay
+              label: "", // Labels handled by TimelineOverlay or toggled off
             },
           },
         ]
@@ -289,6 +289,14 @@
       )
         return;
       toggleConnectMode();
+    }
+    if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      )
+        return;
+      graph.toggleLabels();
     }
     if (e.key === "Escape" && connectMode) {
       toggleConnectMode();
