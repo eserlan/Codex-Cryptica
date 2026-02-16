@@ -12,6 +12,7 @@ The graph is your primary way to navigate.
 ### Shortcuts
 
 - `C`: Toggle Connect Mode.
+- `L`: Toggle Node Labels.
 - `Scroll`: Zoom in/out.
 - `Drag`: Pan the view.
 - `Click Node`: Focus entity and open detail panel.

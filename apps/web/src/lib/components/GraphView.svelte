@@ -51,12 +51,12 @@
         display: "none",
       },
     },
-    ...(graph.timelineMode
+    ...(graph.timelineMode || !graph.showLabels
       ? [
           {
             selector: "node",
             style: {
-              label: "", // Labels handled by TimelineOverlay
+              label: "", // Labels handled by TimelineOverlay or toggled off
             },
           },
         ]
@@ -273,9 +273,11 @@
   const handleKeyDown = (e: KeyboardEvent) => {
     if (vault.isGuest) return;
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const target = document.activeElement;
       if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        (target as HTMLElement)?.isContentEditable
       )
         return;
       graph.toggleTimeline();
@@ -283,12 +285,24 @@
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       // Don't toggle if user is typing in an input (though we don't have many here yet)
+      const target = document.activeElement;
       if (
-        document.activeElement?.tagName === "INPUT" ||
-        document.activeElement?.tagName === "TEXTAREA"
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        (target as HTMLElement)?.isContentEditable
       )
         return;
       toggleConnectMode();
+    }
+    if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const target = document.activeElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        (target as HTMLElement)?.isContentEditable
+      )
+        return;
+      graph.toggleLabels();
     }
     if (e.key === "Escape" && connectMode) {
       toggleConnectMode();
@@ -304,7 +318,7 @@
       });
 
       // Expose for E2E testing
-      if (import.meta.env.DEV) {
+      if (import.meta.env.DEV || (window as any).__E2E__) {
         (window as any).cy = cy;
       }
 

@@ -39,6 +39,9 @@ class GraphStore {
 
   fitRequest = $state(0);
 
+  // Labels state
+  showLabels = $state(true);
+
   // Timeline State
   timelineMode = $state(false);
   timelineAxis = $state<"x" | "y">("x");
@@ -68,6 +71,11 @@ class GraphStore {
     const savedEras = await db.getAll("world_eras");
     if (savedEras) {
       this.eras = savedEras;
+    }
+
+    const savedShowLabels = await db.get("settings", "graphShowLabels");
+    if (savedShowLabels !== undefined) {
+      this.showLabels = savedShowLabels;
     }
   }
 
@@ -103,6 +111,12 @@ class GraphStore {
 
   clearLabelFilters() {
     this.activeLabels = new Set();
+  }
+
+  async toggleLabels() {
+    this.showLabels = !this.showLabels;
+    const db = await getDB();
+    await db.put("settings", this.showLabels, "graphShowLabels");
   }
 
   toggleTimeline() {
