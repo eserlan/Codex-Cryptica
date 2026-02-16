@@ -11,16 +11,20 @@
   let { entities = [], onSave, onCancel }: Props = $props();
 
   let _selectedIds = $state(new Set<string>());
+  let _lastEntities = $state<DiscoveredEntity[]>([]);
 
   $effect(() => {
-    // Default select only those that DON'T exist
-    const initialSelection = new Set<string>();
-    for (const entity of entities) {
-      if (!entity.matchedEntityId) {
-        initialSelection.add(entity.id);
+    // Only re-initialize if the entities ARRAY identity has changed
+    if (entities !== _lastEntities) {
+      const initialSelection = new Set<string>();
+      for (const entity of entities) {
+        if (!entity.matchedEntityId) {
+          initialSelection.add(entity.id);
+        }
       }
+      _selectedIds = initialSelection;
+      _lastEntities = entities;
     }
-    _selectedIds = initialSelection;
   });
 
   const isExisting = (entity: DiscoveredEntity) => {

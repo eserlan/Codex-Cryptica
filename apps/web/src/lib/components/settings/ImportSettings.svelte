@@ -91,7 +91,7 @@
 
         // Lenient identification of existing entities
         for (const entity of analysis.entities) {
-          const id = sanitizeId(entity.suggestedTitle);
+          const id = sanitizeId(entity.suggestedTitle) || "untitled";
           if (vault.entities[id]) {
             entity.matchedEntityId = id;
           } else {
@@ -158,7 +158,7 @@
       if (signal.aborted) break;
 
       const title = entity.suggestedTitle;
-      const entityId = sanitizeId(title);
+      const entityId = sanitizeId(title) || "untitled";
       const type = mapType(entity.suggestedType) as any;
 
       const existingId =
@@ -171,7 +171,7 @@
           const targetName = typeof link === "string" ? link : link.target;
           const label =
             typeof link === "string" ? link : link.label || link.target;
-          const targetId = sanitizeId(targetName);
+          const targetId = sanitizeId(targetName) || "untitled";
 
           // Add connection to the existing entity
           vault.addConnection(existing.id, targetId, "related_to", label);
@@ -220,7 +220,7 @@
             const label =
               typeof link === "string" ? link : link.label || link.target;
             return {
-              target: sanitizeId(targetName),
+              target: sanitizeId(targetName) || "untitled",
               label: label,
               type: "related_to",
               strength: 1,
