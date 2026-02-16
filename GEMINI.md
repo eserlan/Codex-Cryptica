@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine) (044-oracle-chat-commands)
+- OPFS (Vault Files), IndexedDB (Chat History, Search Index) (044-oracle-chat-commands)
+
 - OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache) (041-node-merging)
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native) (039-multi-campaign-switch)
@@ -79,10 +82,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 042-improve-help-structure: Migrated help content to Markdown files with frontmatter and implemented direct help linking.
-- 041-node-merging: Added TypeScript 5.x / Node.js 20+
-- 041-node-merging: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 044-oracle-chat-commands: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine)
+- 044-oracle-chat-commands: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
-- 040-connections-proposer: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB)
+- 042-improve-help-structure: Migrated help content to Markdown files with frontmatter and implemented direct help linking.
 
 <!-- MANUAL ADDITIONS START -->

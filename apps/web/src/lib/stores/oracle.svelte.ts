@@ -7,7 +7,8 @@ export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "text" | "image";
+  type?: "text" | "image" | "wizard";
+  wizardType?: "connection";
   imageUrl?: string; // temporary blob: URL or local path
   imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
@@ -328,6 +329,29 @@ class OracleStore {
     return false;
   }
 
+  startWizard(type: "connection") {
+    this.messages = [
+      ...this.messages,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: "Starting connection wizard...",
+        type: "wizard",
+        wizardType: type,
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
+  removeMessage(id: string) {
+    this.messages = this.messages.filter((m) => m.id !== id);
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
   async ask(query: string) {
     const key = this.effectiveApiKey;
     if (!query.trim() || !key) return;
@@ -350,7 +374,9 @@ class OracleStore {
     }
 
     const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
-    const isImageRequest = !isCreateRequest && this.detectImageIntent(query);
+    const isConnectRequest = query.toLowerCase().trim().startsWith("/connect");
+    const isImageRequest =
+      !isCreateRequest && !isConnectRequest && this.detectImageIntent(query);
 
     this.messages = [
       ...this.messages,
@@ -360,6 +386,123 @@ class OracleStore {
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /connect request
+    if (isConnectRequest) {
+      try {
+        // 1. Deterministic Quoted Parsing (Zero Latency Path)
+        // Matches: /connect "Entity A" label text "Entity B"
+        const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
+        const match = query.match(quotedRegex);
+
+        let sourceName = "";
+        let targetName = "";
+        let label = "";
+        let type = "related_to";
+
+        if (match) {
+          sourceName = match[1];
+          label = match[2].trim();
+          targetName = match[3];
+          console.log(
+            `[Oracle] Deterministic parse: "${sourceName}" -> "${label}" -> "${targetName}"`,
+          );
+        } else {
+          // 2. AI Fallback for natural language without strict quotes
+          const modelName = TIER_MODES[this.tier];
+          const intent = await aiService.parseConnectionIntent(
+            key,
+            modelName,
+            query,
+          );
+          sourceName = intent.sourceName;
+          targetName = intent.targetName;
+          label = intent.label || "";
+          type = (intent.type as any) || "related_to";
+        }
+
+        // Try to resolve entities via search
+        const { searchService } = await import("../services/search");
+        const sourceRes = await searchService.search(sourceName, {
+          limit: 1,
+        });
+        const targetRes = await searchService.search(targetName, {
+          limit: 1,
+        });
+
+        if (sourceRes[0] && targetRes[0]) {
+          const sourceId = sourceRes[0].id;
+          const targetId = targetRes[0].id;
+          const source = vault.entities[sourceId];
+          const target = vault.entities[targetId];
+
+          if (source && target) {
+            // Direct Creation
+            const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
+            const typeToUse = allowedTypes.includes(type)
+              ? (type as any)
+              : "related_to";
+
+            const success = vault.addConnection(
+              source.id,
+              target.id,
+              typeToUse,
+              label,
+            );
+
+            if (success) {
+              this.messages = [
+                ...this.messages,
+                {
+                  id: crypto.randomUUID(),
+                  role: "assistant",
+                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
+                },
+              ];
+
+              // Push Undo
+              this.pushUndoAction(
+                `Connect ${source.title} to ${target.title}`,
+                async () => {
+                  vault.removeConnection(source.id, target.id, typeToUse);
+                },
+              );
+
+              this.lastUpdated = Date.now();
+              this.isLoading = false;
+              this.broadcast();
+              this.saveToDB();
+              return;
+            } else {
+              throw new Error("Vault refused to create connection.");
+            }
+          } else {
+            const missingName = !source ? sourceName : targetName;
+            throw new Error(
+              `Entity "${missingName}" was found in search but is missing from the active vault.`,
+            );
+          }
+        }
+
+        throw new Error(
+          "Could not identify both entities. Try using the guided wizard with `/connect oracle`.",
+        );
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
