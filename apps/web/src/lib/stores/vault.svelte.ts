@@ -424,16 +424,33 @@ class VaultStore {
       if (!currentEntities[id]) continue;
 
       const current = currentEntities[id];
+
+      // Shallow equality check: only compare fields present in the patch
+      let entityHasChanges = false;
+      for (const [key, value] of Object.entries(patch)) {
+        const currentValue = (current as any)[key];
+        if (key === "metadata" && typeof value === "object" && value !== null) {
+          // Simple nested check for metadata (like coordinates) to avoid redundant layout syncs
+          if (JSON.stringify(currentValue) !== JSON.stringify(value)) {
+            entityHasChanges = true;
+            break;
+          }
+        } else if (currentValue !== value) {
+          entityHasChanges = true;
+          break;
+        }
+      }
+
+      if (!entityHasChanges) {
+        continue;
+      }
+
       const merged = { ...current, ...patch, updatedAt: Date.now() };
 
-      // Simple equality check to avoid unnecessary updates
-      // Note: This is a shallow check, deep objects might still trigger
-      if (JSON.stringify(current) !== JSON.stringify(merged)) {
-        newEntities[id] = merged;
-        appliedUpdates[id] = patch; // Store what actually changed
-        hasChanges = true;
-        this.scheduleSave(merged);
-      }
+      newEntities[id] = merged;
+      appliedUpdates[id] = patch; // Store what actually changed
+      hasChanges = true;
+      this.scheduleSave(merged);
     }
 
     if (hasChanges) {

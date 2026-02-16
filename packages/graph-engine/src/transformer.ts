@@ -275,7 +275,6 @@ export const getGraphStyle = (
   }));
 
   // Revealed styles come LAST to override category borders,
-  // but we DO NOT set border-color so it inherits from category/base.
   const revealedStyles = [
     {
       selector: "node[isRevealed]",

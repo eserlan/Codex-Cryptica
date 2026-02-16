@@ -34,6 +34,7 @@ export class P2PGuestService {
     this.isConnecting = true;
     this.dataCallback = onGraphData;
 
+    let timeoutHandle: any = null;
     const connectionPromise = new Promise<void>((resolve, reject) => {
       const startConnection = () => {
         console.log("[P2P Guest] Initiating connection to:", hostId);
@@ -47,6 +48,7 @@ export class P2PGuestService {
         this.connection.on("open", () => {
           console.log(`[P2P Guest] Connected to host: ${hostId}`);
           this.isConnecting = false;
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           resolve();
         });
 
@@ -79,6 +81,7 @@ export class P2PGuestService {
           console.error("[P2P Guest] Connection error:", err);
           this.isConnecting = false;
           this.disconnect();
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           reject(err);
         });
       };
@@ -92,13 +95,14 @@ export class P2PGuestService {
         });
         this.peer.on("error", (err: any) => {
           console.error("[P2P Guest] Peer initialization error:", err);
+          if (timeoutHandle) clearTimeout(timeoutHandle);
           reject(err);
         });
       }
     });
 
     const timeoutPromise = new Promise<void>((_, reject) => {
-      setTimeout(() => {
+      timeoutHandle = setTimeout(() => {
         if (this.isConnecting) {
           console.error("[P2P Guest] Connection timed out after 15s");
           this.disconnect();
@@ -130,8 +134,14 @@ export class P2PGuestService {
     const requestId = crypto.randomUUID();
 
     return new Promise((resolve, reject) => {
+      const timeoutHandle = setTimeout(() => {
+        this.connection.off("data", handler);
+        reject(new Error("File request timed out"));
+      }, 15000);
+
       const handler = (data: any) => {
         if (data.type === "FILE_RESPONSE" && data.requestId === requestId) {
+          clearTimeout(timeoutHandle);
           this.connection.off("data", handler);
           if (data.found) {
             resolve(new Blob([data.data], { type: data.mime }));
@@ -148,12 +158,6 @@ export class P2PGuestService {
         path,
         requestId,
       });
-
-      // Timeout after 30s
-      setTimeout(() => {
-        this.connection.off("data", handler);
-        reject(new Error("File request timed out"));
-      }, 30000);
     });
   }
 }

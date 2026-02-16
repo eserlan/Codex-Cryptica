@@ -154,34 +154,32 @@ export class P2PHostService {
           try {
             fileHandle = await imgDir.getFileHandle(parts[1]);
           } catch {
-            // Check for near matches
+            // 1. Quick extension swap check (avoid full scan if possible)
             const requestedName = parts[1];
-            const requestedBase =
-              requestedName.substring(0, requestedName.lastIndexOf(".")) ||
-              requestedName;
-
-            // List contents and look for fuzzy match
-            const files = [];
-            for await (const [name] of imgDir.entries()) files.push(name);
-
-            console.log(
-              `[P2P Host] Image '${requestedName}' not found. scanning ${files.length} files for fuzzy match...`,
-            );
-
-            // 1. Try exact extension swap (fastest)
             if (requestedName.match(/\.(jpg|jpeg|png)$/i)) {
               const webpName = requestedName.replace(
                 /\.(jpg|jpeg|png)$/i,
                 ".webp",
               );
-              if (files.includes(webpName)) {
-                console.log(`[P2P Host] Found WebP alternative: ${webpName}`);
-                fileHandle = await imgDir.getFileHandle(webpName);
-              }
+              fileHandle = await imgDir
+                .getFileHandle(webpName)
+                .catch(() => undefined);
             }
 
-            // 2. Try base name match (slower but robust)
             if (!fileHandle) {
+              // 2. Fallback to full scan for robust fuzzy match
+              const requestedBase =
+                requestedName.substring(0, requestedName.lastIndexOf(".")) ||
+                requestedName;
+
+              // List contents and look for fuzzy match
+              const files = [];
+              for await (const [name] of imgDir.entries()) files.push(name);
+
+              console.log(
+                `[P2P Host] Image '${requestedName}' not found. scanning ${files.length} files for fuzzy match...`,
+              );
+
               const fuzzyMatch = files.find(
                 (f) =>
                   f.startsWith(requestedBase) &&
@@ -196,18 +194,7 @@ export class P2PHostService {
             }
 
             if (!fileHandle) {
-              console.warn(
-                `[P2P Host] File definitely not found: ${requestedName}`,
-              );
-              // Debug logs
-              const candidates = files.filter((f) =>
-                f.includes(requestedBase.substring(0, 10)),
-              ); // Show relevant files
-              console.log(
-                `[P2P Host] Candidates for '${requestedBase}':`,
-                candidates,
-              );
-
+              console.warn(`[P2P Host] File definitely not found: ${parts[1]}`);
               conn.send({ type: "FILE_RESPONSE", requestId, found: false });
               return;
             }

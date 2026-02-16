@@ -224,14 +224,12 @@
             updates[id] = {
               metadata: {
                 ...(vault.entities[id]?.metadata || {}),
-                coordinates: pos,
+                coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
               },
             };
           }
           if (Object.keys(updates).length > 0) {
-            if (Object.keys(updates).length > 0) {
-              vault.batchUpdateEntities(updates as any);
-            }
+            vault.batchUpdateEntities(updates as any);
           }
         }
       } catch (err) {
