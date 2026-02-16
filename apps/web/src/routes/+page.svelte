@@ -24,6 +24,10 @@
         await p2pGuestService.connectToHost(
           peerId,
           (graph) => {
+            console.log("[Guest Page] Received graph data:", {
+              entityCount: Object.keys(graph.entities).length,
+              defaultVisibility: graph.defaultVisibility,
+            });
             // Update vault entities with received data
             // Note: This needs to handle potential merge/replacement strategies
             // For now, simply replace current entities.
@@ -62,6 +66,10 @@
           (deletedId) => {
             // Real-time delete from host
             delete vault.entities[deletedId];
+          },
+          (batchUpdates) => {
+            // Real-time batch update from host
+            vault.batchUpdateEntities(batchUpdates);
           },
         );
       } catch (err) {

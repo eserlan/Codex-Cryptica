@@ -9,9 +9,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "comlink": "^4.4.1",
     "cytoscape": "^3.28.0",
     "cytoscape-fcose": "^2.2.0",
-    "comlink": "^4.4.1",
     "schema": "*"
   },
   "devDependencies": {
