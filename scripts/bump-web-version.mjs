@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 const repoRoot = process.cwd();
 const webPackagePath = resolve(repoRoot, 'apps/web/package.json');
-const configPath = resolve(repoRoot, 'apps/web/src/lib/config.ts');
+const configPath = resolve(repoRoot, 'apps/web/src/lib/config/index.ts');
 const serviceWorkerPath = resolve(repoRoot, 'apps/web/src/service-worker.ts');
 
 const pkg = JSON.parse(readFileSync(webPackagePath, 'utf8'));
@@ -21,11 +21,11 @@ writeFileSync(webPackagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
 const config = readFileSync(configPath, 'utf8');
 const updatedConfig = config.replace(
-  /versionFromBuild \?\? "\d+\.\d+\.\d+";/,
-  `versionFromBuild ?? "${nextVersion}";`,
+  /versionFromBuild \?\? "\d+\.\d+\.\d+"/,
+  `versionFromBuild ?? "${nextVersion}"`,
 );
 if (updatedConfig === config) {
-  throw new Error('Failed to update VERSION fallback in apps/web/src/lib/config.ts');
+  throw new Error('Failed to update VERSION fallback in apps/web/src/lib/config/index.ts');
 }
 writeFileSync(configPath, updatedConfig);
 
