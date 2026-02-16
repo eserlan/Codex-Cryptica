@@ -8,10 +8,7 @@ test.describe("Sync Fidelity & Binary Safety", () => {
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
   });
 
-  test("should handle offline mode gracefully", async ({
-    page,
-    context,
-  }) => {
+  test("should handle offline mode gracefully", async ({ page, context }) => {
     test.setTimeout(60000);
     await page.evaluate(() => {
       (window as any).TEST_FORCE_CONFIGURED = true;

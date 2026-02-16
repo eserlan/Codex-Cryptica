@@ -136,7 +136,9 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     await expect(page.getByText("Chronicle:")).toBeVisible();
     await expect(smartApplyBtn.getByText("A short summary.")).toBeVisible();
     await expect(page.getByText("Lore:")).toBeVisible();
-    await expect(smartApplyBtn.getByText("Detailed background info.")).toBeVisible();
+    await expect(
+      smartApplyBtn.getByText("Detailed background info."),
+    ).toBeVisible();
 
     // 6. Click Apply and verify vault update
     await smartApplyBtn.click();

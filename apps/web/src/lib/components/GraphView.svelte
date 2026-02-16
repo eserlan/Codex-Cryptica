@@ -408,6 +408,24 @@
       cy.on("select unselect", "node", () => {
         selectionCount = cy?.$("node:selected").length || 0;
       });
+
+      // Save position on drag end
+      cy.on("dragfree", "node", (evt) => {
+        if (vault.isGuest) return;
+        const node = evt.target;
+        const id = node.id();
+        const pos = node.position();
+
+        const entity = vault.entities[id];
+        if (entity) {
+          vault.updateEntity(id, {
+            metadata: {
+              ...(entity.metadata || {}),
+              coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+            },
+          });
+        }
+      });
     }
   });
 

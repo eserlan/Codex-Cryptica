@@ -16,16 +16,18 @@
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (!oracle.isOpen) return;
-    
+
     // Check for Ctrl+Z (Undo)
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
       const target = e.target as HTMLElement;
-      const isInput = target.matches('input, textarea, [contenteditable="true"]');
-      
+      const isInput = target.matches(
+        'input, textarea, [contenteditable="true"]',
+      );
+
       if (!isInput) {
-        // Ensure the event target is within the Oracle container to avoid intercepting 
+        // Ensure the event target is within the Oracle container to avoid intercepting
         // global undo shortcuts meant for other parts of the app (like the main editor)
-        const container = document.querySelector('.oracle-window-container');
+        const container = document.querySelector(".oracle-window-container");
         if (container && !container.contains(target)) return;
 
         e.preventDefault();
@@ -79,7 +81,11 @@
           <button
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
             onclick={() => {
-              if (confirm("Are you sure you want to clear the conversation history?")) {
+              if (
+                confirm(
+                  "Are you sure you want to clear the conversation history?",
+                )
+              ) {
                 oracle.clearMessages();
               }
             }}
