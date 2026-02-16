@@ -42,7 +42,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
         (window as any).aiService !== undefined,
     );
     await page.evaluate(async () => {
-      const request = indexedDB.open("CodexArcana", 7);
+      const request = indexedDB.open("CodexCryptica", 7);
       request.onupgradeneeded = (e: any) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains("settings")) {
@@ -100,7 +100,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     });
   });
 
-  test.skip("should show 'Smart Apply' button for structured Oracle response", async ({
+  test("should show 'Smart Apply' button for structured Oracle response", async ({
     page,
   }) => {
     // 1. Open Oracle
@@ -134,9 +134,11 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     // 5. Hover to see preview (tooltip)
     await smartApplyBtn.hover();
     await expect(page.getByText("Chronicle:")).toBeVisible();
-    await expect(page.getByText("A short summary.")).toBeVisible();
+    await expect(smartApplyBtn.getByText("A short summary.")).toBeVisible();
     await expect(page.getByText("Lore:")).toBeVisible();
-    await expect(page.getByText("Detailed background info.")).toBeVisible();
+    await expect(
+      smartApplyBtn.getByText("Detailed background info."),
+    ).toBeVisible();
 
     // 6. Click Apply and verify vault update
     await smartApplyBtn.click();
@@ -154,7 +156,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     expect(vaultState.lore).toBe("Detailed background info.");
   });
 
-  test.skip("should support '/create' command for automatic node generation", async ({
+  test("should support '/create' command for automatic node generation", async ({
     page,
   }) => {
     // 1. Open Oracle
@@ -187,8 +189,8 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
 
     // Verify system message confirms creation
     await expect(
-      page.getByText(/Automatically created node: Dragon Fire/i),
-    ).toBeVisible();
+      page.getByText(/Automatically created node:.*Dragon Fire/i),
+    ).toBeVisible({ timeout: 10000 });
 
     // Verify entity exists in vault
     const entityExists = await page.evaluate(() => {

@@ -15,6 +15,21 @@ class GraphStore {
       defaultVisibility: vault.defaultVisibility,
     };
 
+    // DEBUG VISIBILITY
+    if (vault.isGuest) {
+      console.log("[GraphStore] Visibility Check:", {
+        settings,
+        totalEntities: allEntities.length,
+        sampleEntity: allEntities[0]
+          ? {
+              id: allEntities[0].id,
+              tags: allEntities[0].tags,
+              visible: isEntityVisible(allEntities[0], settings),
+            }
+          : "none",
+      });
+    }
+
     const visibleEntities = allEntities.filter((entity) =>
       isEntityVisible(entity, settings),
     );

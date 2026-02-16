@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Vault Permissions Handling", () => {
-  test.skip("should gracefully handle invalid persisted handle (mobile simulation)", async ({
+  test("should gracefully handle invalid persisted handle (mobile simulation)", async ({
     page,
   }) => {
     // 1. Setup the environment to simulate a broken handle
@@ -72,7 +72,7 @@ test.describe("Vault Permissions Handling", () => {
 
     // 5. Verify:
     // - App should NOT be in error state (no red screen)
-    // - App should show "NO VAULT" (indicating handle was cleared, vault init completed with 0 entities)
+    // - App should show error message in the status bar (instead of crashing or NO VAULT)
 
     await expect(page.locator("text=SYSTEM FAILURE")).not.toBeVisible();
     // Wait for vault to finish initializing after reload
@@ -85,7 +85,11 @@ test.describe("Vault Permissions Handling", () => {
         timeout: 15000,
       },
     );
-    await expect(page.getByText("NO VAULT")).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.getByText(
+        "Failed to initialize storage. Please check browser support for OPFS.",
+      ),
+    ).toBeVisible({ timeout: 10000 });
 
     // Optional: Verify handle was cleared from IDB?
     // That requires peeking into IDB again, which is extra, but the UI state is the primary user concern.

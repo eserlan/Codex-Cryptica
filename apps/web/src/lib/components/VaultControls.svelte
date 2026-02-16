@@ -163,78 +163,96 @@
     </div>
 
     {#if vault.isInitialized}
-      <!-- Main Actions -->
-      <button
-        class={isVertical
-          ? `${btnGhost} py-3 text-sm justify-center`
-          : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
-        onclick={() => {
-          showForm = !showForm;
-          if (showForm) createError = null;
-        }}
-        data-testid="new-entity-button"
-      >
-        <span
-          class={showForm
-            ? "icon-[heroicons--x-mark] w-3 h-3"
-            : "icon-[heroicons--plus] w-3 h-3"}
-        ></span>
-        {showForm ? "CANCEL" : "NEW ENTITY"}
-      </button>
-
-      <div
-        class="flex {isVertical
-          ? 'flex-col gap-3'
-          : 'gap-1.5 md:gap-3 items-center'}"
-      >
+      {#if vault.isGuest}
         <button
-          class="{btnAccent} {layoutClasses}"
-          onclick={() => vault.syncToLocal()}
-          title="Export all OPFS data to a local folder for safety."
-          aria-label={isVertical
-            ? "SYNC TO FOLDER - Export all OPFS data to a local folder for safety."
-            : "SYNC - Export all OPFS data to a local folder for safety."}
+          class={isVertical
+            ? `${btnAccent} py-3 text-sm justify-center`
+            : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          onclick={() => {
+            window.location.href =
+              window.location.origin + window.location.pathname;
+          }}
+          data-testid="exit-guest-mode-button"
         >
-          <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
-          {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+          <span class="icon-[lucide--log-out] w-3 h-3"></span>
+          EXIT GUEST MODE
         </button>
+      {:else}
+        <!-- Main Actions -->
         <button
-          class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
-          onclick={() => (showShare = true)}
-          title="Share Campaign"
-          aria-label={isVertical ? "SHARE - Share Campaign" : "Share Campaign"}
-        >
-          <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
-          {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
-            >{/if}
-        </button>
-        <button
-          class="{iconOnlyClasses} {btnGhost} {ui.sharedMode
-            ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-            : ''}"
-          onclick={() => (ui.sharedMode = !ui.sharedMode)}
-          title={ui.sharedMode
-            ? "Exit Shared Mode (Admin View)"
-            : "Enter Shared Mode (Player Preview)"}
-          aria-label={isVertical
-            ? ui.sharedMode
-              ? "EXIT PLAYER VIEW - Exit Shared Mode (Admin View)"
-              : "PLAYER VIEW - Enter Shared Mode (Player Preview)"
-            : ui.sharedMode
-              ? "Exit Shared Mode (Admin View)"
-              : "Enter Shared Mode (Player Preview)"}
-          data-testid="shared-mode-toggle"
+          class={isVertical
+            ? `${btnGhost} py-3 text-sm justify-center`
+            : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          onclick={() => {
+            showForm = !showForm;
+            if (showForm) createError = null;
+          }}
+          data-testid="new-entity-button"
         >
           <span
-            class={ui.sharedMode
-              ? "icon-[lucide--eye] w-3.5 h-3.5"
-              : "icon-[lucide--eye-off] w-3.5 h-3.5"}
+            class={showForm
+              ? "icon-[heroicons--x-mark] w-3 h-3"
+              : "icon-[heroicons--plus] w-3 h-3"}
           ></span>
-          {#if isVertical}<span class="font-bold tracking-widest"
-              >{ui.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}</span
-            >{/if}
+          {showForm ? "CANCEL" : "NEW ENTITY"}
         </button>
-      </div>
+
+        <div
+          class="flex {isVertical
+            ? 'flex-col gap-3'
+            : 'gap-1.5 md:gap-3 items-center'}"
+        >
+          <button
+            class="{btnAccent} {layoutClasses}"
+            onclick={() => vault.syncToLocal()}
+            title="Export all OPFS data to a local folder for safety."
+            aria-label={isVertical
+              ? "SYNC TO FOLDER - Export all OPFS data to a local folder for safety."
+              : "SYNC - Export all OPFS data to a local folder for safety."}
+          >
+            <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
+            {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+          </button>
+          <button
+            class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
+            onclick={() => (showShare = true)}
+            title="Share Campaign"
+            aria-label={isVertical
+              ? "SHARE - Share Campaign"
+              : "Share Campaign"}
+          >
+            <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
+            {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
+              >{/if}
+          </button>
+          <button
+            class="{iconOnlyClasses} {btnGhost} {ui.sharedMode
+              ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+              : ''}"
+            onclick={() => (ui.sharedMode = !ui.sharedMode)}
+            title={ui.sharedMode
+              ? "Exit Shared Mode (Admin View)"
+              : "Enter Shared Mode (Player Preview)"}
+            aria-label={isVertical
+              ? ui.sharedMode
+                ? "EXIT PLAYER VIEW - Exit Shared Mode (Admin View)"
+                : "PLAYER VIEW - Enter Shared Mode (Player Preview)"
+              : ui.sharedMode
+                ? "Exit Shared Mode (Admin View)"
+                : "Enter Shared Mode (Player Preview)"}
+            data-testid="shared-mode-toggle"
+          >
+            <span
+              class={ui.sharedMode
+                ? "icon-[lucide--eye] w-3.5 h-3.5"
+                : "icon-[lucide--eye-off] w-3.5 h-3.5"}
+            ></span>
+            {#if isVertical}<span class="font-bold tracking-widest"
+                >{ui.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}</span
+              >{/if}
+          </button>
+        </div>
+      {/if}
     {/if}
   </div>
 

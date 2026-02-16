@@ -6,6 +6,9 @@ export interface SerializedGraph {
   assets?: Record<string, string>; // filename/path -> fileId or URL
   deferredAssets?: Promise<void>;
   totalFiles?: number;
+  // Visibility Settings
+  defaultVisibility?: "visible" | "hidden";
+  sharedMode?: boolean;
 }
 
 export interface IStorageAdapter {

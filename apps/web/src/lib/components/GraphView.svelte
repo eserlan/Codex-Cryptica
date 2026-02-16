@@ -4,6 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import type { Entity } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -123,6 +124,16 @@
       }
     }
 
+    if (vault.isGuest) {
+      // For guests, we rely entirely on synced positions.
+      // Simply fit to view initially if needed.
+      if (isInitial) {
+        cy.fit(cy.elements(), 40);
+      }
+      isLayoutRunning = false;
+      return;
+    }
+
     if (graph.timelineMode) {
       isLayoutRunning = true;
       try {
@@ -130,11 +141,14 @@
           (e) => e.group === "nodes",
         ) as any[];
 
-        const positions = await layoutService.runTimeline($state.snapshot(nodes), {
-          axis: graph.timelineAxis,
-          scale: graph.timelineScale,
-          jitter: 150,
-        });
+        const positions = await layoutService.runTimeline(
+          $state.snapshot(nodes),
+          {
+            axis: graph.timelineAxis,
+            scale: graph.timelineScale,
+            jitter: 150,
+          },
+        );
 
         cy.layout({
           name: "preset",
@@ -162,8 +176,26 @@
       // Background FCOSE Layout
       isLayoutRunning = true;
       try {
-        const elements = graph.elements;
-        const positions = await layoutService.runFcose($state.snapshot(elements), {
+        // Use live dimensions from Cytoscape if available, otherwise fallback to store
+        // This ensures the layout accounts for resolved image sizes
+        const elements = $state.snapshot(graph.elements).map((el: any) => {
+          if (el.group === "nodes" && cy) {
+            const cyNode = cy.$id(el.data.id);
+            if (cyNode && cyNode.length > 0) {
+              return {
+                ...el,
+                data: {
+                  ...el.data,
+                  width: cyNode.data("width") || el.data.width,
+                  height: cyNode.data("height") || el.data.height,
+                },
+              };
+            }
+          }
+          return el;
+        });
+
+        const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
           animate: false, // Math only in worker
         });
@@ -183,11 +215,45 @@
             animationEasing: "ease-out-quad",
           }).run();
         }
+
+        // SYNC: Update vault with new positions
+        // We do this after the layout is calculated so guests get the data.
+        {
+          const updates: Record<string, Partial<Entity>> = {};
+          for (const [id, pos] of Object.entries(positions)) {
+            updates[id] = {
+              metadata: {
+                ...(vault.entities[id]?.metadata || {}),
+                coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+              },
+            };
+          }
+          if (Object.keys(updates).length > 0) {
+            vault.batchUpdateEntities(updates as any);
+          }
+        }
       } catch (err) {
         console.error("Background layout failed:", err);
         // Fallback to main thread
         currentLayout = cy.layout({
           ...DEFAULT_LAYOUT_OPTIONS,
+          stop: () => {
+            // Sync fallback layout too
+            if (!vault.isGuest && cy) {
+              const updates: Record<string, Partial<Entity>> = {};
+              cy.nodes().forEach((node) => {
+                updates[node.id()] = {
+                  metadata: {
+                    ...(vault.entities[node.id()]?.metadata || {}),
+                    coordinates: node.position(),
+                  },
+                };
+              });
+              if (Object.keys(updates).length > 0) {
+                vault.batchUpdateEntities(updates as any);
+              }
+            }
+          },
         });
         currentLayout.run();
       } finally {
@@ -342,6 +408,24 @@
       cy.on("select unselect", "node", () => {
         selectionCount = cy?.$("node:selected").length || 0;
       });
+
+      // Save position on drag end
+      cy.on("dragfree", "node", (evt) => {
+        if (vault.isGuest) return;
+        const node = evt.target;
+        const id = node.id();
+        const pos = node.position();
+
+        const entity = vault.entities[id];
+        if (entity) {
+          vault.updateEntity(id, {
+            metadata: {
+              ...(entity.metadata || {}),
+              coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+            },
+          });
+        }
+      });
     }
   });
 
@@ -450,6 +534,7 @@
 
           // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
+          let hasUpdates = false;
           for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
             const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
             await Promise.all(
@@ -523,10 +608,19 @@
                       width: Math.round(w),
                       height: Math.round(h),
                     });
+                    hasUpdates = true;
                   });
                 }
               }),
             );
+          }
+
+          if (hasUpdates) {
+            // Re-run layout now that node dimensions are accurate
+            // Use a slight delay to allow batching if multiple chunks finish close together
+            setTimeout(() => {
+              applyCurrentLayout(false);
+            }, 200);
           }
         } catch (error) {
           console.error("Failed to resolve node images", error);
@@ -692,6 +786,18 @@
                   // (e.g. resolvedImage, width, height set by async loaders)
                   node.data({ ...currentData, ...newData });
                 }
+
+                // Sync position for guests (Host relies on local layout)
+                if (vault.isGuest && el.group === "nodes" && el.position) {
+                  const currentPos = node.position();
+                  // Check if position changed significantly (> 1px) to avoid jitter
+                  if (
+                    Math.abs(currentPos.x - el.position.x) > 1 ||
+                    Math.abs(currentPos.y - el.position.y) > 1
+                  ) {
+                    node.position(el.position);
+                  }
+                }
               }
             }
           });
@@ -767,8 +873,8 @@
     hoveredEntityId ? vault.entities[hoveredEntityId] : null,
   );
 
-  // Memoize markdown parsing to avoid re-parsing on every render (e.g. when tooltip position updates)
-  let hoveredEntityHtml = $derived(
+  // Memoize markdown parsing to prevent re-computation on every render (e.g. tooltip position updates)
+  let tooltipContent = $derived(
     hoveredEntity?.content
       ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
       : '<span class="italic text-theme-muted">No data available</span>',
@@ -891,6 +997,18 @@
       >
         <span class="icon-[lucide--maximize] w-4 h-4"></span>
       </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => applyCurrentLayout(true)}
+        title="Redraw Layout"
+        aria-label="Redraw Layout"
+      >
+        <span
+          class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+            ? 'animate-spin'
+            : ''}"
+        ></span>
+      </button>
 
       <!-- Connect Mode Toggle -->
       {#if !vault.isGuest}
@@ -942,7 +1060,7 @@
         <div
           class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
         >
-          {@html hoveredEntityHtml}
+          {@html tooltipContent}
         </div>
 
         <!-- Decorative corner bits -->
