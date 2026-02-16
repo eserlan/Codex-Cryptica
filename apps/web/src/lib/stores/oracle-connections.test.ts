@@ -53,8 +53,10 @@ describe("OracleStore - /connect parsing", () => {
 
     await oracle.ask("/connect Eldrin is the master of Tower");
 
-    const systemMsg = oracle.messages.find((m) => m.role === "system");
-    expect(systemMsg?.content).toContain("Connected **Eldrin** to **Tower**");
+    const assistantMsg = oracle.messages.find((m) => m.role === "assistant");
+    expect(assistantMsg?.content).toContain(
+      "Connected **Eldrin** to **Tower**",
+    );
     expect(vault.addConnection).toHaveBeenCalledWith(
       "eldrin",
       "tower",

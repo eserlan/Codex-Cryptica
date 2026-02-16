@@ -19,8 +19,7 @@ test.describe("Oracle Chat Commands", () => {
     await input.click();
     await input.fill("/");
 
-    const menu = page.locator("text=Oracle Commands");
-    await expect(menu).toBeVisible();
+    await expect(page.getByText("FROM", { exact: true })).toBeVisible();
 
     await expect(page.locator("text=/draw")).toBeVisible();
     await expect(page.locator("text=/create")).toBeVisible();

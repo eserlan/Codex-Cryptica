@@ -83,7 +83,10 @@
 
       // Only apply if the user hasn't typed their own label yet
       if (!label) {
-        type = proposal.type;
+        const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
+        type = allowedTypes.includes(proposal.type)
+          ? proposal.type
+          : "related_to";
         label = proposal.label;
       }
       explanation = proposal.explanation;
@@ -102,6 +105,8 @@
       step = "DONE";
       // Update message content for history
       message.content = `Connected **${vault.entities[sourceId].title}** to **${vault.entities[targetId].title}** as *${label || type}*.`;
+      // Convert wizard message to a normal text message so history renders as a stable transcript entry
+      message.type = "text";
     } else {
       error = "Failed to create connection in vault.";
     }

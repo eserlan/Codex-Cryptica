@@ -250,7 +250,19 @@ Output JSON:
 }`;
 
     const result = await model.generateContent(prompt);
-    return JSON.parse(result.response.text());
+    const text = result.response.text();
+    try {
+      const cleanedText = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleanedText);
+    } catch {
+      console.warn("Proposer: Failed to parse proposal JSON", text);
+      return {
+        type: "related_to",
+        label: "Related",
+        explanation:
+          "AI detected a potential link but failed to format the response.",
+      };
+    }
   }
 
   async parseConnectionIntent(
@@ -287,7 +299,14 @@ Output JSON:
 }`;
 
     const result = await model.generateContent(prompt);
-    return JSON.parse(result.response.text());
+    const text = result.response.text();
+    try {
+      const cleanedText = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleanedText);
+    } catch {
+      console.warn("Proposer: Failed to parse intent JSON", text);
+      return { sourceName: "", targetName: "" };
+    }
   }
 
   async reEvaluateProposal(proposalId: string): Promise<void> {

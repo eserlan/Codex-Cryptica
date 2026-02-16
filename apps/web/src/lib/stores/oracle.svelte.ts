@@ -355,7 +355,6 @@ class OracleStore {
   async ask(query: string) {
     const key = this.effectiveApiKey;
     if (!query.trim() || !key) return;
-    // ... rest of implementation (omitted for brevity in replace, but I must keep it)
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.messages = [
@@ -439,10 +438,15 @@ class OracleStore {
 
           if (source && target) {
             // Direct Creation
+            const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
+            const typeToUse = allowedTypes.includes(type)
+              ? (type as any)
+              : "related_to";
+
             const success = vault.addConnection(
               source.id,
               target.id,
-              type,
+              typeToUse,
               label,
             );
 
@@ -451,8 +455,8 @@ class OracleStore {
                 ...this.messages,
                 {
                   id: crypto.randomUUID(),
-                  role: "system",
-                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || type}*.`,
+                  role: "assistant",
+                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
                 },
               ];
 
@@ -460,7 +464,7 @@ class OracleStore {
               this.pushUndoAction(
                 `Connect ${source.title} to ${target.title}`,
                 async () => {
-                  vault.removeConnection(source.id, target.id, type);
+                  vault.removeConnection(source.id, target.id, typeToUse);
                 },
               );
 

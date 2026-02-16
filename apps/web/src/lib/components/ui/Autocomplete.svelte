@@ -6,6 +6,7 @@
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
+  import { onDestroy } from "svelte";
 
   let {
     value = $bindable(""),
@@ -23,7 +24,11 @@
   let selectedIndex = $state(0);
   let showResults = $state(false);
   let isLoading = $state(false);
-  let debounceTimer: ReturnType<typeof setTimeout>;
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  onDestroy(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
 
   const handleInput = async (e: Event) => {
     const target = e.target as HTMLInputElement;

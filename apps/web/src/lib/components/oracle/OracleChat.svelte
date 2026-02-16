@@ -27,7 +27,13 @@
     adjustHeight();
 
     if (input.startsWith("/")) {
-      showCommandMenu = true;
+      // Keep menu open if we haven't typed a space yet (command selection)
+      // OR if it's the /connect command (wizard flow)
+      if (!input.includes(" ") || input.startsWith("/connect")) {
+        showCommandMenu = true;
+      } else {
+        showCommandMenu = false;
+      }
     } else {
       showCommandMenu = false;
     }
@@ -198,6 +204,7 @@
         anchorEl={textArea || null}
         onSelect={(cmd) => {
           input = cmd.name + " ";
+          showCommandMenu = false;
           tick().then(() => textArea?.focus());
         }}
         onClose={() => {

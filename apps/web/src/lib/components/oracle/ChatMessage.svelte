@@ -293,7 +293,7 @@
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
-    {#if message.role === "assistant"}
+    {#if message.role === "assistant" || message.role === "system"}
       {#if message.type === "image"}
         <ImageMessage {message} />
       {:else if message.type === "wizard"}

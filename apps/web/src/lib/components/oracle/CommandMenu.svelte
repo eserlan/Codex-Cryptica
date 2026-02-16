@@ -4,6 +4,9 @@
   import { searchService } from "../../services/search";
   import { categories } from "../../stores/categories.svelte";
   import { getIconClass } from "../../utils/icon";
+  import { ui } from "../../stores/ui.svelte";
+  import { vault } from "../../stores/vault.svelte";
+  import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
 
   let {
@@ -89,10 +92,20 @@
       term = parts[parts.length - 1].trim();
     }
 
-    if (term.length >= 2) {
+    if (term.length >= 3) {
       isSearchingEntities = true;
       searchService.search(term, { limit: 5 }).then((res) => {
-        entityResults = res;
+        // Filter results based on visibility settings (same as searchStore and Autocomplete)
+        const settings = {
+          sharedMode: ui.sharedMode,
+          defaultVisibility: vault.defaultVisibility,
+        };
+
+        entityResults = res.filter((result) => {
+          const entity = vault.entities[result.id];
+          if (!entity) return false;
+          return isEntityVisible(entity, settings);
+        });
         isSearchingEntities = false;
       });
     } else {
@@ -107,7 +120,11 @@
 
   // Position the menu
   $effect(() => {
-    if (anchorEl && menuEl && displayList.length > 0) {
+    if (
+      anchorEl &&
+      menuEl &&
+      (displayList.length > 0 || activeStep !== "COMMAND")
+    ) {
       computePosition(anchorEl, menuEl, {
         placement: "top-start",
         middleware: [offset(8), flip(), shift({ padding: 8 })],
@@ -121,11 +138,6 @@
   });
 
   // Reset selection when list changes
-  $effect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    displayList;
-    selectedIndex = 0;
-  });
 
   const handleEntitySelect = (result: any) => {
     // Sanitize title to prevent breaking wizard input logic
@@ -189,15 +201,22 @@
       if (displayList.length > 0) {
         e.preventDefault();
         const selected = displayList[selectedIndex];
-        if ("name" in selected) onSelect(selected as ChatCommand);
+        if ("name" in selected) {
+          onSelect(selected as ChatCommand);
+          onClose();
+        }
         return true;
       }
     } else if (e.key === "Enter") {
       if (displayList.length > 0) {
         e.preventDefault();
         const selected = displayList[selectedIndex];
-        if ("name" in selected) onSelect(selected as ChatCommand);
-        else handleEntitySelect(selected);
+        if ("name" in selected) {
+          onSelect(selected as ChatCommand);
+          onClose();
+        } else {
+          handleEntitySelect(selected);
+        }
         return true;
       }
     } else if (e.key === "Escape") {
@@ -244,6 +263,7 @@
           onclick={() => {
             if ("name" in item) {
               onSelect(item as ChatCommand);
+              onClose();
             } else {
               handleEntitySelect(item);
             }
