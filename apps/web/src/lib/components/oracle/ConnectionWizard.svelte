@@ -55,16 +55,21 @@
         error = "Source and Target cannot be the same entity.";
         return;
       }
-      step = "PROPOSING";
-      await generateProposal();
+
+      // Fast path: Go to review immediately
+      step = "REVIEW";
+      // Trigger AI proposal in background
+      generateProposal();
     }
   };
 
+  let isProposing = $state(false);
   const generateProposal = async () => {
     try {
       const key = oracle.effectiveApiKey;
-      if (!key) throw new Error("API Key required for proposals.");
+      if (!key) return;
 
+      isProposing = true;
       const source = vault.entities[sourceId!];
       const target = vault.entities[targetId!];
 
@@ -76,14 +81,16 @@
         target,
       );
 
-      type = proposal.type;
-      label = proposal.label;
+      // Only apply if the user hasn't typed their own label yet
+      if (!label) {
+        type = proposal.type;
+        label = proposal.label;
+      }
       explanation = proposal.explanation;
-      step = "REVIEW";
     } catch (err: any) {
       console.error("Proposal failed:", err);
-      error = "AI Proposal failed. You can still set the connection manually.";
-      step = "REVIEW";
+    } finally {
+      isProposing = false;
     }
   };
 
@@ -178,6 +185,18 @@
           class="p-2 bg-theme-primary/5 border-l-2 border-theme-primary italic text-xs text-theme-text/80 leading-relaxed"
         >
           "{explanation}"
+        </div>
+      {:else if isProposing}
+        <div
+          class="flex items-center gap-2 px-2 py-1.5 bg-theme-primary/5 rounded border border-theme-primary/10 animate-pulse"
+        >
+          <div
+            class="w-2.5 h-2.5 border border-theme-primary/30 border-t-theme-primary rounded-full animate-spin"
+          ></div>
+          <span
+            class="text-[10px] font-mono text-theme-primary uppercase tracking-widest"
+            >Oracle is weaving suggestions...</span
+          >
         </div>
       {/if}
 

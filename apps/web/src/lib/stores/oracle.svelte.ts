@@ -391,25 +391,45 @@ class OracleStore {
     // Handle Direct /connect request
     if (isConnectRequest) {
       try {
-        const modelName = TIER_MODES[this.tier];
-        const intent = await aiService.parseConnectionIntent(
-          key,
-          modelName,
-          query,
-        );
+        // 1. Deterministic Quoted Parsing (Zero Latency Path)
+        // Matches: /connect "Entity A" label text "Entity B"
+        const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
+        const match = query.match(quotedRegex);
+
+        let sourceName = "";
+        let targetName = "";
+        let label = "";
+        let type = "related_to";
+
+        if (match) {
+          sourceName = match[1];
+          label = match[2].trim();
+          targetName = match[3];
+          console.log(
+            `[Oracle] Deterministic parse: "${sourceName}" -> "${label}" -> "${targetName}"`,
+          );
+        } else {
+          // 2. AI Fallback for natural language without strict quotes
+          const modelName = TIER_MODES[this.tier];
+          const intent = await aiService.parseConnectionIntent(
+            key,
+            modelName,
+            query,
+          );
+          sourceName = intent.sourceName;
+          targetName = intent.targetName;
+          label = intent.label || "";
+          type = (intent.type as any) || "related_to";
+        }
 
         // Try to resolve entities via search
         const { searchService } = await import("../services/search");
-        const sourceRes = await searchService.search(intent.sourceName, {
+        const sourceRes = await searchService.search(sourceName, {
           limit: 1,
         });
-        const targetRes = await searchService.search(intent.targetName, {
+        const targetRes = await searchService.search(targetName, {
           limit: 1,
         });
-
-        console.log(
-          `[Oracle] Direct Resolve: "${intent.sourceName}" -> ${sourceRes[0]?.id}, "${intent.targetName}" -> ${targetRes[0]?.id}`,
-        );
 
         if (sourceRes[0] && targetRes[0]) {
           const sourceId = sourceRes[0].id;
@@ -419,8 +439,6 @@ class OracleStore {
 
           if (source && target) {
             // Direct Creation
-            const type = intent.type || "related_to";
-            const label = intent.label || "";
             const success = vault.addConnection(
               source.id,
               target.id,
@@ -455,7 +473,7 @@ class OracleStore {
               throw new Error("Vault refused to create connection.");
             }
           } else {
-            const missingName = !source ? intent.sourceName : intent.targetName;
+            const missingName = !source ? sourceName : targetName;
             throw new Error(
               `Entity "${missingName}" was found in search but is missing from the active vault.`,
             );
