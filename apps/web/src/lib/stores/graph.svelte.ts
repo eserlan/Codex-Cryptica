@@ -72,6 +72,11 @@ class GraphStore {
     if (savedEras) {
       this.eras = savedEras;
     }
+
+    const savedShowLabels = await db.get("settings", "graphShowLabels");
+    if (savedShowLabels !== undefined) {
+      this.showLabels = savedShowLabels;
+    }
   }
 
   async saveEras() {
@@ -108,8 +113,10 @@ class GraphStore {
     this.activeLabels = new Set();
   }
 
-  toggleLabels() {
+  async toggleLabels() {
     this.showLabels = !this.showLabels;
+    const db = await getDB();
+    await db.put("settings", this.showLabels, "graphShowLabels");
   }
 
   toggleTimeline() {

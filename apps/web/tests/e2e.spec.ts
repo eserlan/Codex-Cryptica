@@ -83,12 +83,41 @@ test.describe("Vault E2E", () => {
     );
     expect(isHiddenAfterPress).toBe(false);
 
+    // Verify Cytoscape style reflects this
+    const _labelStyle = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      return cy.nodes()[0]?.style("label");
+    });
+    // For 0 entities, this might skip, but Vault E2E beforeEach ensures some state if we added nodes.
+    // However, the base e2e.spec.ts starts with NO VAULT.
+    // Let's create a node first to be sure we can check style.
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Entry Title...").fill("Test Node");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    // Toggle off again (since we just refreshed state potentially)
+    if (await page.evaluate(() => (window as any).graph.showLabels)) {
+      await page.keyboard.press("l");
+    }
+
+    const currentLabelStyle = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      return cy.nodes()[0]?.style("label");
+    });
+    expect(currentLabelStyle).toBe("");
+
     // 3. Toggle On
     await page.keyboard.press("l");
     const isShownAfterSecondPress = await page.evaluate(
       () => (window as any).graph.showLabels,
     );
     expect(isShownAfterSecondPress).toBe(true);
+
+    const restoredLabelStyle = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      return cy.nodes()[0]?.style("label");
+    });
+    expect(restoredLabelStyle).not.toBe("");
 
     // 4. Verify blocked when typing in input
     await page.getByTestId("new-entity-button").click();
