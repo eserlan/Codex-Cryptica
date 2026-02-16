@@ -56,11 +56,17 @@ const formatDate = (date?: TemporalMetadata) => {
 export class GraphTransformer {
   static entitiesToElements(entities: Entity[]): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
-    const validIds = new Set(entities.map((e) => e.id));
+    // OPTIMIZATION: Use a loop instead of map to avoid array allocation
+    const validIds = new Set<string>();
+    const entityCount = entities.length;
+    for (let i = 0; i < entityCount; i++) {
+      validIds.add(entities[i].id);
+    }
 
-    return entities.flatMap((entity) => {
-      const elements: GraphElement[] = [];
+    const elements: GraphElement[] = [];
 
+    // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
+    for (const entity of entities) {
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
@@ -114,9 +120,9 @@ export class GraphTransformer {
           },
         });
       }
+    }
 
-      return elements;
-    });
+    return elements;
   }
 }
 
