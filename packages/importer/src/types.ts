@@ -42,6 +42,7 @@ export interface DiscoveredEntity {
   frontmatter: Record<string, any>;
   confidence: number; // 0-1
   suggestedFilename: string; // Added for persistence
+  matchedEntityId?: string; // ID of a high-confidence match in the vault
 
   // Relationships
   detectedLinks: (string | DiscoveredLink)[]; // Support both for transition/flexibility
