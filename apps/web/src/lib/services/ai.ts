@@ -251,15 +251,18 @@ Extract the distilled visual prompt:`;
     apiKey: string,
     modelName: string,
     target: any,
-    sources: any[]
+    sources: any[],
   ): Promise<{ body: string; lore?: string }> {
     this.init(apiKey, modelName);
     if (!this.model) throw new Error("AI Model not initialized");
 
     const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.getConsolidatedContext(target)}`;
-    const sourceContext = sources.map((s, i) => 
-        `--- SOURCE ${i+1}: ${s.title} (${s.type}) ---\n${this.getConsolidatedContext(s)}`
-    ).join("\n\n");
+    const sourceContext = sources
+      .map(
+        (s, i) =>
+          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.getConsolidatedContext(s)}`,
+      )
+      .join("\n\n");
 
     const prompt = `You are a master archivist. Merge the following records into a single cohesive entry.
     
@@ -279,18 +282,18 @@ INSTRUCTIONS:
 `;
 
     try {
-        const result = await this.model.generateContent(prompt);
-        const text = result.response.text();
-        // Attempt to parse JSON. If it fails, fallback to raw text as body.
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        } else {
-            return { body: text };
-        }
+      const result = await this.model.generateContent(prompt);
+      const text = result.response.text();
+      // Attempt to parse JSON. If it fails, fallback to raw text as body.
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      } else {
+        return { body: text };
+      }
     } catch (err: any) {
-        console.error("[AIService] Merge generation failed:", err);
-        throw new Error(`Merge failed: ${err.message}`);
+      console.error("[AIService] Merge generation failed:", err);
+      throw new Error(`Merge failed: ${err.message}`);
     }
   }
 

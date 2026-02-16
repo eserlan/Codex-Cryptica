@@ -15,8 +15,8 @@ Describes the user's intent to merge nodes.
 ```typescript
 export interface IMergeRequest {
   sourceNodeIds: string[]; // IDs of nodes to be merged (will be deleted)
-  targetNodeId: string;    // ID of the primary node (will be updated)
-  strategy: 'ai' | 'concat'; // How to generate content
+  targetNodeId: string; // ID of the primary node (will be updated)
+  strategy: "ai" | "concat"; // How to generate content
 }
 ```
 
@@ -28,8 +28,8 @@ Structure representing the content of a single node.
 export interface INodeContent {
   id: string;
   frontmatter: Record<string, any>; // Parsed YAML
-  body: string;                     // Markdown content
-  connections: IConnection[];       // List of edges
+  body: string; // Markdown content
+  connections: IConnection[]; // List of edges
 }
 ```
 
@@ -62,6 +62,7 @@ export interface IConnection {
 ## State Transitions
 
 ### User Action: Select Nodes -> Initiate Merge
+
 - **Input**: User selects multiple nodes.
 - **System**:
   1. Validates selection (> 1 node).
@@ -69,6 +70,7 @@ export interface IConnection {
   3. Fetches `INodeContent` for all selected nodes.
 
 ### System Action: Generate Proposal (AI)
+
 - **Input**: `INodeContent[]`
 - **Processing**:
   1. Sends content to LLM with prompt: "Merge these entities into one coherent description...".
@@ -76,6 +78,7 @@ export interface IConnection {
 - **Output**: `IMergedContentProposal` displayed in Dialog.
 
 ### User Action: Confirm Merge
+
 - **Input**: Edited `IMergedContentProposal`.
 - **System**:
   1. **Write**: Updates `targetNodeId` file with new content.

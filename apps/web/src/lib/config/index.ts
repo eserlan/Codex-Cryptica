@@ -2,7 +2,13 @@
  * Application-wide configuration and metadata
  */
 
-export const VERSION = import.meta.env.VITE_APP_VERSION ?? "0.8.7";
+const versionFromBuild =
+  typeof __APP_VERSION__ === "string"
+    ? __APP_VERSION__.split("+")[0]
+    : undefined;
+
+export const VERSION =
+  import.meta.env.VITE_APP_VERSION ?? versionFromBuild ?? "0.8.11";
 export const CODENAME = import.meta.env.VITE_APP_CODENAME ?? "Cryptica";
 
 export const APP_NAME = "Codex Cryptica";

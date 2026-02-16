@@ -16,15 +16,15 @@
         const node = evt.target;
         targetId = node.id();
         position = { x: evt.renderedPosition.x, y: evt.renderedPosition.y };
-        
+
         // Check selection
         const selection = cy.$("node:selected");
         if (node.selected()) {
-            selectedNodes = selection.map((n: NodeSingular) => n.id());
+          selectedNodes = selection.map((n: NodeSingular) => n.id());
         } else {
-            selectedNodes = [targetId!];
+          selectedNodes = [targetId!];
         }
-        
+
         contextMenuOpen = true;
       };
 

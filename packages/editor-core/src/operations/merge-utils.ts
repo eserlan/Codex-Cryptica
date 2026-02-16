@@ -27,7 +27,7 @@ export interface IMergedContentProposal {
  */
 export function mergeFrontmatter(
   targetContent: INodeContent,
-  sourceContents: INodeContent[]
+  sourceContents: INodeContent[],
 ): Record<string, any> {
   const merged = { ...targetContent.frontmatter };
 
@@ -58,7 +58,7 @@ export function mergeFrontmatter(
  */
 export function concatenateBody(
   targetContent: INodeContent,
-  sourceContents: INodeContent[]
+  sourceContents: INodeContent[],
 ): string {
   const bodies = [targetContent.body];
   for (const source of sourceContents) {
@@ -66,5 +66,5 @@ export function concatenateBody(
       bodies.push(source.body);
     }
   }
-  return bodies.join('\n\n---\n\n');
+  return bodies.join("\n\n---\n\n");
 }

@@ -1,7 +1,7 @@
 export interface IMergeRequest {
   sourceNodeIds: string[]; // IDs of nodes to be merged (will be deleted)
-  targetNodeId: string;    // ID of the primary node (will be updated)
-  strategy: 'ai' | 'concat'; // AI generation or simple concatenation
+  targetNodeId: string; // ID of the primary node (will be updated)
+  strategy: "ai" | "concat"; // AI generation or simple concatenation
 }
 
 export interface IMergedContent {
@@ -30,5 +30,8 @@ export interface INodeMergeService {
    * 3. Updates backlinks in other files.
    * 4. Deletes source nodes.
    */
-  executeMerge(finalContent: IMergedContent, sourceIds: string[]): Promise<void>;
+  executeMerge(
+    finalContent: IMergedContent,
+    sourceIds: string[],
+  ): Promise<void>;
 }
