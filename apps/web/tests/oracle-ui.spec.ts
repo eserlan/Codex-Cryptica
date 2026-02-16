@@ -2,39 +2,11 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Oracle UI - Elastic Input", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
-    await page.goto("/");
-    // removed eval
-
-    // Enable Oracle by adding a dummy API key to IndexedDB
-    await page.evaluate(async () => {
-      // Create/open DB
-      const request = indexedDB.open("CodexArcana", 2);
-      request.onupgradeneeded = (e: any) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains("settings")) {
-          db.createObjectStore("settings");
-        }
-        if (!db.objectStoreNames.contains("vault_cache")) {
-          db.createObjectStore("vault_cache", { keyPath: "path" });
-        }
-      };
-
-      const db: IDBDatabase = await new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      const tx = db.transaction("settings", "readwrite");
-      const store = tx.objectStore("settings");
-      store.put("fake-key", "ai_api_key");
-
-      await new Promise((resolve) => {
-        tx.oncomplete = () => resolve(true);
-      });
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
-
-    await page.reload();
+    await page.goto("http://localhost:5173/");
   });
 
   test("should expand textarea when typing multi-line text and reset on submit", async ({

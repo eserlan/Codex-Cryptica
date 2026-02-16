@@ -16,16 +16,18 @@
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (!oracle.isOpen) return;
-    
+
     // Check for Ctrl+Z (Undo)
     if ((e.ctrlKey || e.metaKey) && e.key === "z") {
       const target = e.target as HTMLElement;
-      const isInput = target.matches('input, textarea, [contenteditable="true"]');
-      
+      const isInput = target.matches(
+        'input, textarea, [contenteditable="true"]',
+      );
+
       if (!isInput) {
-        // Ensure the event target is within the Oracle container to avoid intercepting 
+        // Ensure the event target is within the Oracle container to avoid intercepting
         // global undo shortcuts meant for other parts of the app (like the main editor)
-        const container = document.querySelector('.oracle-window-container');
+        const container = document.querySelector(".oracle-window-container");
         if (container && !container.contains(target)) return;
 
         e.preventDefault();
@@ -54,6 +56,9 @@
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
       : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-full max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
     transition:fly={{ y: 50, duration: 300 }}
+    role={oracle.isModal ? "dialog" : "region"}
+    aria-modal={oracle.isModal ? "true" : undefined}
+    aria-label="Lore Oracle"
   >
     <!-- Header -->
     <div
@@ -76,7 +81,11 @@
           <button
             class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
             onclick={() => {
-              if (confirm("Are you sure you want to clear the conversation history?")) {
+              if (
+                confirm(
+                  "Are you sure you want to clear the conversation history?",
+                )
+              ) {
                 oracle.clearMessages();
               }
             }}
@@ -92,6 +101,7 @@
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={popOut}
           title="Pop out to new window"
+          aria-label="Pop out to new window"
         >
           <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
           ></span>
@@ -102,6 +112,7 @@
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={() => oracle.toggleModal()}
           title={oracle.isModal ? "Minimize to side" : "Pop out to center"}
+          aria-label={oracle.isModal ? "Minimize to side" : "Pop out to center"}
         >
           <span
             class="w-4 h-4 transition-transform duration-300 {oracle.isModal
@@ -135,6 +146,7 @@
     onclick={() => oracle.toggle()}
     transition:fade
     title="Open Lore Oracle"
+    aria-label="Open Lore Oracle"
     data-testid="oracle-orb"
   >
     <!-- Internal Orb Content -->

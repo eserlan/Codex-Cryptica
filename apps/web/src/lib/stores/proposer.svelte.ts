@@ -4,11 +4,12 @@ import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
-import { getDB } from "../utils/idb";
+import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
   isAnalyzing = $state(false);
+  isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
@@ -29,21 +30,28 @@ class ProposerStore {
 
   private getService(): ProposerService {
     if (!this.service) {
-      this.service = new ProposerService("CodexCryptica", 6, getDB());
+      this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
     }
     return this.service;
   }
 
   async loadProposals(entityId: string) {
-    const service = this.getService();
-    const p = await service.getProposals(entityId);
-    const h = await service.getHistory(entityId);
+    if (this.isLoadingProposals) return;
 
-    // Guard against stale updates if navigation happened
-    if (vault.selectedEntityId !== entityId) return;
+    this.isLoadingProposals = true;
+    try {
+      const service = this.getService();
+      const p = await service.getProposals(entityId);
+      const h = await service.getHistory(entityId);
 
-    this.proposals[entityId] = p;
-    this.history[entityId] = h;
+      // Guard against stale updates if navigation happened
+      if (vault.selectedEntityId !== entityId) return;
+
+      this.proposals[entityId] = p;
+      this.history[entityId] = h;
+    } finally {
+      this.isLoadingProposals = false;
+    }
   }
 
   async analyzeCurrentEntity() {
@@ -69,12 +77,16 @@ class ProposerStore {
     try {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
-      const existingTargetIds = new Set(
+      // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
+      const existingConnectedIds = new Set(
         entity.connections.map((c) => c.target),
       );
+      for (const inbound of vault.inboundConnections[entityId] || []) {
+        existingConnectedIds.add(inbound.sourceId);
+      }
 
       const targets = Object.values(vault.entities)
-        .filter((e) => e.id !== entityId && !existingTargetIds.has(e.id))
+        .filter((e) => e.id !== entityId && !existingConnectedIds.has(e.id))
         .map((e) => ({ id: e.id, name: e.title }));
 
       // Use the lite model for background tasks to save cost/latency

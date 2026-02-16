@@ -36,7 +36,7 @@ export function createEntity(
 export function updateEntity(
   entities: Record<string, LocalEntity>,
   id: string,
-  updates: Partial<Entity>,
+  updates: Partial<LocalEntity>,
 ): { entities: Record<string, LocalEntity>; updated: LocalEntity | null } {
   const entity = entities[id];
   if (!entity) return { entities, updated: null };

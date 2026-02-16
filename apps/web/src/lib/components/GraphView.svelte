@@ -4,6 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import type { Entity } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -28,11 +29,13 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
+  import { layoutService } from "$lib/services/layout";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
+  let isLayoutRunning = $state(false);
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list),
@@ -98,6 +101,7 @@
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
   let hoverTimeout: number | undefined;
+  let selectionCount = $state(0);
   const HOVER_DELAY = 800; // ms
 
   // Edge editing state
@@ -110,7 +114,7 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = (isInitial = false) => {
+  const applyCurrentLayout = async (isInitial = false) => {
     if (!cy) return;
     if (currentLayout) {
       try {
@@ -120,8 +124,44 @@
       }
     }
 
+    if (vault.isGuest) {
+      // For guests, we rely entirely on synced positions.
+      // Simply fit to view initially if needed.
+      if (isInitial) {
+        cy.fit(cy.elements(), 40);
+      }
+      isLayoutRunning = false;
+      return;
+    }
+
     if (graph.timelineMode) {
-      graph.applyTimelineLayout(cy);
+      isLayoutRunning = true;
+      try {
+        const nodes = graph.elements.filter(
+          (e) => e.group === "nodes",
+        ) as any[];
+
+        const positions = await layoutService.runTimeline(
+          $state.snapshot(nodes),
+          {
+            axis: graph.timelineAxis,
+            scale: graph.timelineScale,
+            jitter: 150,
+          },
+        );
+
+        cy.layout({
+          name: "preset",
+          positions: positions,
+          animate: true,
+          animationDuration: 500,
+          animationEasing: "ease-out-cubic",
+        }).run();
+      } catch (err) {
+        console.error("Timeline layout failed:", err);
+      } finally {
+        isLayoutRunning = false;
+      }
     } else if (graph.orbitMode && graph.centralNodeId) {
       setCentralNode(cy, graph.centralNodeId);
       if (isInitial) {
@@ -133,31 +173,92 @@
         });
       }
     } else {
-      // Not in timeline or orbit mode: intentionally reset to a fresh 'cose' layout,
-      // which also replaces any previous orbit layout. We do not call clearOrbit(cy)
-      // here, because its effect is equivalent to re-running 'cose' with these options.
-      currentLayout = cy.layout({
-        ...DEFAULT_LAYOUT_OPTIONS,
-      });
+      // Background FCOSE Layout
+      isLayoutRunning = true;
+      try {
+        // Use live dimensions from Cytoscape if available, otherwise fallback to store
+        // This ensures the layout accounts for resolved image sizes
+        const elements = $state.snapshot(graph.elements).map((el: any) => {
+          if (el.group === "nodes" && cy) {
+            const cyNode = cy.$id(el.data.id);
+            if (cyNode && cyNode.length > 0) {
+              return {
+                ...el,
+                data: {
+                  ...el.data,
+                  width: cyNode.data("width") || el.data.width,
+                  height: cyNode.data("height") || el.data.height,
+                },
+              };
+            }
+          }
+          return el;
+        });
 
-      currentLayout.one("layoutstop", () => {
-        if (isInitial && cy) {
-          cy.resize();
-          // Snap fit immediately to ensure visibility
+        const positions = await layoutService.runFcose(elements, {
+          ...DEFAULT_LAYOUT_OPTIONS,
+          animate: false, // Math only in worker
+        });
+
+        if (isInitial) {
+          cy.nodes().forEach((n) => {
+            const pos = positions[n.id()];
+            if (pos) n.position(pos);
+          });
           cy.fit(cy.elements(), 40);
-
-          setTimeout(() => {
-            if (!cy) return;
-            cy.animate({
-              fit: { eles: cy.elements(), padding: 40 },
-              duration: 800,
-              easing: "ease-out-cubic",
-            });
-          }, 50);
+        } else {
+          cy.layout({
+            name: "preset",
+            positions: positions,
+            animate: true,
+            animationDuration: 1000,
+            animationEasing: "ease-out-quad",
+          }).run();
         }
-        currentLayout = undefined;
-      });
-      currentLayout.run();
+
+        // SYNC: Update vault with new positions
+        // We do this after the layout is calculated so guests get the data.
+        {
+          const updates: Record<string, Partial<Entity>> = {};
+          for (const [id, pos] of Object.entries(positions)) {
+            updates[id] = {
+              metadata: {
+                ...(vault.entities[id]?.metadata || {}),
+                coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+              },
+            };
+          }
+          if (Object.keys(updates).length > 0) {
+            vault.batchUpdateEntities(updates as any);
+          }
+        }
+      } catch (err) {
+        console.error("Background layout failed:", err);
+        // Fallback to main thread
+        currentLayout = cy.layout({
+          ...DEFAULT_LAYOUT_OPTIONS,
+          stop: () => {
+            // Sync fallback layout too
+            if (!vault.isGuest && cy) {
+              const updates: Record<string, Partial<Entity>> = {};
+              cy.nodes().forEach((node) => {
+                updates[node.id()] = {
+                  metadata: {
+                    ...(vault.entities[node.id()]?.metadata || {}),
+                    coordinates: node.position(),
+                  },
+                };
+              });
+              if (Object.keys(updates).length > 0) {
+                vault.batchUpdateEntities(updates as any);
+              }
+            }
+          },
+        });
+        currentLayout.run();
+      } finally {
+        isLayoutRunning = false;
+      }
     }
   };
 
@@ -303,6 +404,28 @@
           editingEdge = null;
         }
       });
+
+      cy.on("select unselect", "node", () => {
+        selectionCount = cy?.$("node:selected").length || 0;
+      });
+
+      // Save position on drag end
+      cy.on("dragfree", "node", (evt) => {
+        if (vault.isGuest) return;
+        const node = evt.target;
+        const id = node.id();
+        const pos = node.position();
+
+        const entity = vault.entities[id];
+        if (entity) {
+          vault.updateEntity(id, {
+            metadata: {
+              ...(entity.metadata || {}),
+              coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+            },
+          });
+        }
+      });
     }
   });
 
@@ -411,6 +534,7 @@
 
           // CHUNK_SIZE processing
           const CHUNK_SIZE = 20;
+          let hasUpdates = false;
           for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
             const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
             await Promise.all(
@@ -484,10 +608,19 @@
                       width: Math.round(w),
                       height: Math.round(h),
                     });
+                    hasUpdates = true;
                   });
                 }
               }),
             );
+          }
+
+          if (hasUpdates) {
+            // Re-run layout now that node dimensions are accurate
+            // Use a slight delay to allow batching if multiple chunks finish close together
+            setTimeout(() => {
+              applyCurrentLayout(false);
+            }, 200);
           }
         } catch (error) {
           console.error("Failed to resolve node images", error);
@@ -504,8 +637,10 @@
       // Re-apply orbit layout if params change
       const _orbit = graph.orbitMode;
       const _center = graph.centralNodeId;
+      const _timeline = graph.timelineMode;
 
       untrack(() => {
+        if (!initialLoaded) return;
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
         setTimeout(() => {
@@ -629,11 +764,40 @@
           graph.elements.forEach((el) => {
             if (currentIds.has(el.data.id)) {
               const node = currentCy.$id(el.data.id);
-              if (node) {
-                // Only update if data actually changed to avoid style recalc?
-                // Cytoscape handles this reasonably well, but we can be explicit if needed.
-                // For now, blind update is cheap enough compared to layout.
-                node.data(el.data);
+              if (node.length > 0) {
+                const currentData = node.data();
+                const newData = el.data;
+
+                // Shallow equality check to prevent unnecessary style recalculations
+                let changed = false;
+                for (const key in newData) {
+                  // Skip ID as it's the lookup key
+                  if (key === "id") continue;
+
+                  const k = key as keyof typeof newData;
+                  if (currentData[k] !== newData[k]) {
+                    changed = true;
+                    break;
+                  }
+                }
+
+                if (changed) {
+                  // Merge with existing data so we don't lose dynamic properties
+                  // (e.g. resolvedImage, width, height set by async loaders)
+                  node.data({ ...currentData, ...newData });
+                }
+
+                // Sync position for guests (Host relies on local layout)
+                if (vault.isGuest && el.group === "nodes" && el.position) {
+                  const currentPos = node.position();
+                  // Check if position changed significantly (> 1px) to avoid jitter
+                  if (
+                    Math.abs(currentPos.x - el.position.x) > 1 ||
+                    Math.abs(currentPos.y - el.position.y) > 1
+                  ) {
+                    node.position(el.position);
+                  }
+                }
               }
             }
           });
@@ -707,6 +871,13 @@
   // Derived state for tooltip
   let hoveredEntity = $derived(
     hoveredEntityId ? vault.entities[hoveredEntityId] : null,
+  );
+
+  // Memoize markdown parsing to prevent re-computation on every render (e.g. tooltip position updates)
+  let tooltipContent = $derived(
+    hoveredEntity?.content
+      ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
+      : '<span class="italic text-theme-muted">No data available</span>',
   );
 </script>
 
@@ -785,6 +956,16 @@
         Shared Mode Active (Player Preview)
       </div>
     {/if}
+
+    {#if isLayoutRunning}
+      <div
+        class="bg-blue-900/40 backdrop-blur border border-blue-500/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
+        transition:fade
+      >
+        <span class="icon-[lucide--cpu] w-3 h-3 animate-spin"></span>
+        Neural Layout Synthesis Processing...
+      </div>
+    {/if}
   </div>
 
   <!-- Zoom Controls (Bottom Left) -->
@@ -815,6 +996,18 @@
         aria-label="Fit to Screen"
       >
         <span class="icon-[lucide--maximize] w-4 h-4"></span>
+      </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => applyCurrentLayout(true)}
+        title="Redraw Layout"
+        aria-label="Redraw Layout"
+      >
+        <span
+          class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
+            ? 'animate-spin'
+            : ''}"
+        ></span>
       </button>
 
       <!-- Connect Mode Toggle -->
@@ -867,9 +1060,7 @@
         <div
           class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
         >
-          {@html hoveredEntity.content
-            ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
-            : '<span class="italic text-theme-muted">No data available</span>'}
+          {@html tooltipContent}
         </div>
 
         <!-- Decorative corner bits -->
@@ -907,6 +1098,15 @@
       {/if}
 
       <FeatureHint hintId="connect-mode" />
+    </div>
+  {/if}
+
+  <!-- Merge Hint -->
+  {#if selectionCount >= 2 && !connectMode}
+    <div
+      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
+    >
+      <FeatureHint hintId="node-merging" />
     </div>
   {/if}
 

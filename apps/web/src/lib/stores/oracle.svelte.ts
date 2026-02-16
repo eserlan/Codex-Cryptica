@@ -562,6 +562,30 @@ class OracleStore {
     }
   }
 
+  // For E2E tests: add a mock image message directly
+  addTestImageMessage(
+    content: string,
+    imageUrl: string,
+    imageBlob: Blob,
+    entityId?: string,
+  ) {
+    this.messages = [
+      ...this.messages,
+      {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content,
+        type: "image",
+        imageUrl,
+        imageBlob,
+        entityId,
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
   private getSentTitles(): Set<string> {
     const titles = new Set<string>();
     this.messages.forEach((m) => {

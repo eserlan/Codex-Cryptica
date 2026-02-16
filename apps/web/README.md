@@ -40,3 +40,30 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Help & Documentation
+
+Help articles are managed as Markdown files in `src/lib/content/help/`.
+To add a new article:
+
+1. Create a `.md` file in that directory.
+2. Add frontmatter:
+   ```yaml
+   ---
+   id: unique-id
+   title: Article Title
+   tags: [tag1, tag2]
+   rank: 10
+   ---
+   ```
+3. Write content in Markdown.
+
+### Article Sorting (Rank)
+
+The `rank` field in the frontmatter determines the order of articles in the help system.
+
+- Articles are sorted by `rank` (ascending), then by `title`.
+- Use spaced values (e.g., 10, 20, 30) to allow for future insertions without renumbering all articles.
+- If `rank` is missing, the article defaults to the end of the list.
+
+4. Verify by running `npm test`.

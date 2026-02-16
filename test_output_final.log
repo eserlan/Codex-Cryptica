@@ -1,0 +1,263 @@
+
+> test:e2e
+> npm run test:e2e --workspace=web
+
+
+> web@0.8.8 test:e2e
+> playwright test --reporter=list
+
+[2m[WebServer] [22mnpm warn config ignoring workspace config at /app/apps/web/.npmrc
+
+Running 106 tests using 2 workers
+
+  ✓    2 [chromium] › tests/categories.spec.ts:62:3 › Category Architecture Modal › should add a new category in session (8.8s)
+  ✓    1 [chromium] › tests/categories.spec.ts:26:3 › Category Architecture Modal › should open Category Architecture modal and display default categories (9.5s)
+  ✓    4 [chromium] › tests/categories.spec.ts:130:3 › Category Architecture Modal › should reset categories to defaults (2.7s)
+  ✓    3 [chromium] › tests/categories.spec.ts:106:3 › Category Architecture Modal › should open and close glyph library picker (3.4s)
+  ✓    5 [chromium] › tests/categories.spec.ts:154:3 › Category Architecture Modal › should update graph node border color when category color changes (3.3s)
+  ✓    6 [chromium] › tests/cloud-sync.spec.ts:9:3 › Cloud Sync UI › should open and close the cloud sync menu (3.3s)
+  ✓    7 [chromium] › tests/cloud-sync.spec.ts:28:3 › Cloud Sync UI › should not close when clicking inside the menu (2.4s)
+[BROWSER]: [vite] connecting...
+[BROWSER]: [vite] connected.
+[BROWSER]: [VaultStore] New Instance Created 1771035151771
+[BROWSER]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+  ✓    8 [chromium] › tests/cloud-sync.spec.ts:42:3 › Cloud Sync UI › should close when clicking the backdrop (3.4s)
+[TEST] Expecting vault name: Temp-1771035153102
+  ✓    9 [chromium] › tests/debug-vault.spec.ts:17:3 › Vault Management Debug › should create and switch a vault (2.2s)
+  ✓   10 [chromium] › tests/e2e.spec.ts:19:3 › Vault E2E › Auto-initializes Default Vault (1.5s)
+  ✓   12 [chromium] › tests/e2e.spec.ts:49:3 › Vault E2E › Connect Mode UI (2.0s)
+  ✓   11 [chromium] › tests/e2e.spec.ts:27:3 › Vault E2E › Create Entity Updates Graph (2.4s)
+  ✓   13 [chromium] › tests/fog-of-war.spec.ts:60:3 › Fog of War › Selective hiding with 'hidden' tag (2.2s)
+  ✓   14 [chromium] › tests/fog-of-war.spec.ts:103:3 › Fog of War › Global Fog / Hidden by Default (2.2s)
+  ✓   16 [chromium] › tests/footer.spec.ts:10:3 › Footer › should display Patreon support link in the footer (1.6s)
+  ✓   15 [chromium] › tests/fog-of-war.spec.ts:125:3 › Fog of War › Real-time revealing of content (2.6s)
+  -   18 [chromium] › tests/footer.spec.ts:37:8 › Footer › Patreon link should persist in offline mode
+  ✓   17 [chromium] › tests/footer.spec.ts:25:3 › Footer › should have correct styling classes on Patreon link (1.3s)
+  ✓   19 [chromium] › tests/graph-connections.spec.ts:4:3 › Graph Connection Labels & Colors › should allow changing connection type and see color indication (indirectly via label) (3.1s)
+  ✓   20 [chromium] › tests/graph-fit.spec.ts:11:3 › Graph Fit to Screen › should reset graph zoom and pan when fit button is clicked (2.7s)
+  ✓   21 [chromium] › tests/graph-focus.spec.ts:43:3 › Graph Focus Mode › should highlight neighborhood and dim others on node click (2.9s)
+  ✓   22 [chromium] › tests/graph-focus.spec.ts:81:3 › Graph Focus Mode › should shift focus when clicking a neighbor (3.3s)
+  ✓   23 [chromium] › tests/graph-focus.spec.ts:113:3 › Graph Focus Mode › should work correctly for island nodes (no connections) (2.8s)
+  -   25 [chromium] › tests/guest-mode.spec.ts:16:3 › Guest Mode › should enter guest mode and then exit correctly
+  -   26 [chromium] › tests/guest-mode.spec.ts:47:3 › Guest Mode › should show exit guest mode button in mobile menu
+  ✓   24 [chromium] › tests/graph-focus.spec.ts:140:3 › Graph Focus Mode › should clear focus when clicking background (3.0s)
+  ✓   27 [chromium] › tests/help-links.spec.ts:14:3 › Direct Help Links › should open help center to specific article when hash is present (1.4s)
+  ✓   29 [chromium] › tests/help-links.spec.ts:54:3 › Direct Help Links › should handle invalid help article ID gracefully (258ms)
+  ✓   30 [chromium] › tests/help-links.spec.ts:62:3 › Direct Help Links › should handle malformed help hash gracefully (277ms)
+  ✓   28 [chromium] › tests/help-links.spec.ts:33:3 › Direct Help Links › should update help article when hash changes (2.2s)
+  ✓   31 [chromium] › tests/help-links.spec.ts:70:3 › Direct Help Links › should copy direct link to clipboard when link button is clicked (2.5s)
+  ✓   33 [chromium] › tests/help-onboarding.spec.ts:51:3 › Help Onboarding Walkthrough › should NOT dim the screen on welcome step (body target) (1.4s)
+  ✓   32 [chromium] › tests/help-onboarding.spec.ts:17:3 › Help Onboarding Walkthrough › should automatically start onboarding for new users (3.6s)
+  ✓   34 [chromium] › tests/help-onboarding.spec.ts:69:3 › Help Onboarding Walkthrough › should allow skipping the tour (2.5s)
+  ✓   35 [chromium] › tests/help-onboarding.spec.ts:79:3 › Help Onboarding Walkthrough › should show contextual hints for advanced features (2.9s)
+  ✓   36 [chromium] › tests/help-system.spec.ts:12:3 › Help Center System › should open help center and display articles list (1.9s)
+  ✓   37 [chromium] › tests/help-system.spec.ts:32:3 › Help Center System › should allow searching for help articles (2.3s)
+  ✓   38 [chromium] › tests/help-system.spec.ts:51:3 › Help Center System › should display article content when clicked (2.4s)
+  ✓   39 [chromium] › tests/image-gen.spec.ts:52:3 › Oracle Image Generation › should trigger image generation and display the result (2.4s)
+  ✓   40 [chromium] › tests/image-gen.spec.ts:101:3 › Oracle Image Generation › should allow dragging an image to the detail panel (3.0s)
+  ✓   41 [chromium] › tests/importer-e2e.spec.ts:57:3 › Intelligent Importer E2E › should block modal exit during active import and allow abort (2.3s)
+TEST: Waiting for vault.isInitialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035186987
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+  ✓   42 [chromium] › tests/importer-e2e.spec.ts:151:3 › Intelligent Importer E2E › should map chronicle and lore fields correctly to vault (2.1s)
+TEST: Waiting for vault.isInitialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035188248
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035189369
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+  ✓   44 [chromium] › tests/labels.spec.ts:131:3 › Entity Labeling System › Filter graph by labels and clear filter (2.4s)
+  ✓   43 [chromium] › tests/labels.spec.ts:83:3 › Entity Labeling System › Add and remove labels from an entity (4.2s)
+  ✓   45 [chromium] › tests/markdown-editor.spec.ts:9:3 › MarkdownEditor › initializes with content and updates output (1.7s)
+  ✓   46 [chromium] › tests/markdown-editor.spec.ts:28:3 › MarkdownEditor › renders and serializes bullet lists correctly (1.6s)
+  ✓   47 [chromium] › tests/markdown-editor.spec.ts:58:3 › MarkdownEditor › renders and serializes ordered lists correctly (1.8s)
+  ✓   48 [chromium] › tests/markdown-editor.spec.ts:82:3 › MarkdownEditor › renders and serializes blockquotes correctly (1.7s)
+  ✓   49 [chromium] › tests/markdown-editor.spec.ts:109:3 › MarkdownEditor › inserts embed widget via exposed method (1.3s)
+  ✓   50 [chromium] › tests/minimap.spec.ts:32:3 › Minimap Navigation › should render the minimap container and canvas (1.6s)
+  ✓   52 [chromium] › tests/minimap.spec.ts:88:3 › Minimap Navigation › should center graph when clicking minimap background (1.8s)
+  ✓   53 [chromium] › tests/minimap.spec.ts:119:3 › Minimap Navigation › should toggle minimap visibility (1.7s)
+  ✘   51 [chromium] › tests/minimap.spec.ts:48:3 › Minimap Navigation › should pan graph when dragging viewport rect (4.6s)
+  ✓   54 [chromium] › tests/mobile-ux-009.spec.ts:78:5 › Mobile UX - 009 Feature Requirements › FR-004: Entity detail full-width on mobile › entity detail panel area should be full-width on mobile viewport (1.2s)
+  ✓   55 [chromium] › tests/mobile-ux-009.spec.ts:140:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › search button should have adequate touch height (1.2s)
+  ✓   56 [chromium] › tests/mobile-ux-009.spec.ts:157:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › cloud status button (in menu) should meet touch target requirements (1.5s)
+  ✓   57 [chromium] › tests/mobile-ux-009.spec.ts:109:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › primary action buttons should have minimum 44x44px touch target (1.7s)
+  ✓   58 [chromium] › tests/mobile-ux-fixes.spec.ts:16:3 › Mobile UX Fixes › Entity Detail Panel should have solid background and high z-index (1.8s)
+  ✓   59 [chromium] › tests/node-merging.spec.ts:14:3 › Node Merging › should merge two nodes and preserve content and links (2.3s)
+  ✓   60 [chromium] › tests/node-merging.spec.ts:69:3 › Node Merging › should update backlinks when merging nodes (2.0s)
+  ✓   61 [chromium] › tests/node-merging.spec.ts:112:3 › Node Merging › should preserve connections when merging nodes (2.2s)
+  ✓   62 [chromium] › tests/node-merging.spec.ts:197:5 › Node Merging › Documentation & Hints › should show the node merging help article (5.7s)
+  ✓   63 [chromium] › tests/node-merging.spec.ts:215:5 › Node Merging › Documentation & Hints › should trigger node-merging feature hint when 2 nodes are selected (5.2s)
+  ✓   65 [chromium] › tests/node-read-mode.spec.ts:127:3 › Node Read Mode › Open Zen Mode via Keyboard Shortcut (Alt+Z) (2.6s)
+  ✓   64 [chromium] › tests/node-read-mode.spec.ts:66:3 › Node Read Mode › Open Read Mode, Copy, Navigate, and Close (4.0s)
+  ✓   67 [chromium] › tests/oracle-clear.spec.ts:12:3 › Oracle Clear Chat › should show clear chat button only when messages exist and clear history on click (docked) (1.8s)
+  ✓   66 [chromium] › tests/node-read-mode.spec.ts:160:3 › Node Read Mode › Open Zen Mode via Keyboard Shortcut (Ctrl+ArrowUp) (3.0s)
+  ✓   68 [chromium] › tests/oracle-clear.spec.ts:45:3 › Oracle Clear Chat › should show clear chat button and clear history on standalone page (1.4s)
+  -   70 [chromium] › tests/oracle-parsing.spec.ts:103:8 › Oracle Response Parsing & Smart Apply › should show 'Smart Apply' button for structured Oracle response
+  -   71 [chromium] › tests/oracle-parsing.spec.ts:157:8 › Oracle Response Parsing & Smart Apply › should support '/create' command for automatic node generation
+  ✓   69 [chromium] › tests/oracle-image-save.spec.ts:19:3 › Oracle Image Save to Entity › should save generated image to selected entity and update thumbnail (2.3s)
+  ✓   72 [chromium] › tests/oracle-refinement.spec.ts:73:3 › Oracle UI Refinement › should not display 'user' or 'assistant' labels in chat messages (3.2s)
+Initial Height: 40
+Expanded Height: 100
+Reset Height: 40
+  ✓   74 [chromium] › tests/oracle-ui.spec.ts:12:3 › Oracle UI - Elastic Input › should expand textarea when typing multi-line text and reset on submit (2.2s)
+Oracle messages length after switch: [33m3[39m
+Oracle messages content: [
+  [32m'Persistent Message'[39m,
+  [32m''[39m,
+  [32m'Lore Oracle Error: [GoogleGenerativeAI Error]: Failed to parse stream'[39m
+]
+  ✓   73 [chromium] › tests/oracle-refinement.spec.ts:98:3 › Oracle UI Refinement › should clear chat history when vault is closed (4.3s)
+Undo stack length before click: [33m1[39m
+  ✓   76 [chromium] › tests/oracle-undo.spec.ts:140:3 › Oracle Undo › can undo a create node action (2.4s)
+Oracle messages after undo: [
+  {
+    id: [32m'msg-assistant-1'[39m,
+    role: [32m'assistant'[39m,
+    content: [32m'Title: Eldrin\nChronicle: New content\nLore: New lore'[39m,
+    entityId: [32m'eldrin'[39m
+  },
+  {
+    id: [32m'ff031aa6-a408-4123-81e0-7318103627ef'[39m,
+    role: [32m'system'[39m,
+    content: [32m'↩️ Undid action: **Smart Apply to Eldrin**'[39m
+  }
+]
+Chat container text: NO IMAGE
+CHARACTER
+STATUS
+LORE & NOTES
+INVENTORY
+Chronicle
+
+Original content
+
+Gossip & Secrets
+No known connections.
+  ✓   75 [chromium] › tests/oracle-undo.spec.ts:72:3 › Oracle Undo › can undo a smart apply action (3.4s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035229592
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+  ✓   77 [chromium] › tests/orbit.spec.ts:11:3 › Orbit Layout › should activate orbit mode, switch center, and show detail panel (2.7s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035231741
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+MOCKING AI RESPONSE for URL: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent
+  ✓   78 [chromium] › tests/proposer-e2e.spec.ts:69:3 › Connections Proposer E2E › Should suggest and apply a semantic connection (4.9s)
+MOCKING AI RESPONSE for URL: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent
+  ✓   80 [chromium] › tests/responsive-header.spec.ts:4:3 › Mobile Header Responsiveness › should show mobile logo and optimize header on small screens (1.2s)
+  ✓   81 [chromium] › tests/responsive-header.spec.ts:32:3 › Mobile Header Responsiveness › should hide entity labels on small screens (173ms)
+  ✓   79 [chromium] › tests/proposer-e2e.spec.ts:120:3 › Connections Proposer E2E › Should dismiss a suggestion and show it in history (4.9s)
+  ✓   82 [chromium] › tests/rich-text.spec.ts:10:3 › Rich Text Editor › Editor loads and updates content (1.6s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+  ✓   83 [chromium] › tests/rich-text.spec.ts:31:3 › Rich Text Editor › Zen Mode toggles correctly (1.4s)
+PAGE LOG: [VaultStore] New Instance Created 1771035237358
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771035238037
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: Search result missing ID, falling back to path lookup: {id: undefined, title: The Crone, path: the-crone.md, matchType: content, score: 0.9}
+  ✓   85 [chromium] › tests/search.spec.ts:143:3 › Fuzzy Search › handles search results with missing IDs via path fallback (2.3s)
+  ✓   84 [chromium] › tests/search.spec.ts:93:3 › Fuzzy Search › Search works offline (3.1s)
+  ✓   87 [chromium] › tests/search.spec.ts:244:3 › Fuzzy Search › shows recent searches from localStorage when opening with empty query (1.6s)
+  ✓   86 [chromium] › tests/search.spec.ts:201:3 › Fuzzy Search › selecting search result does not add redundant URL parameters (3.1s)
+  ✓   89 [chromium] › tests/settings.spec.ts:49:3 › Settings Modal › should open directly to sync tab from cloud button (2.0s)
+  ✓   88 [chromium] › tests/settings.spec.ts:12:3 › Settings Modal › should open settings modal and switch tabs (3.8s)
+  ✓   90 [chromium] › tests/settings.spec.ts:62:3 › Settings Modal › should function correctly in offline mode (2.0s)
+  ✓   91 [chromium] › tests/sync-feedback.spec.ts:39:3 › Sync Visual Feedback › should show flash effect when sync button is clicked (3.3s)
+  -   93 [chromium] › tests/sync-fidelity.spec.ts:11:8 › Sync Fidelity & Binary Safety › should handle offline mode gracefully
+  ✓   92 [chromium] › tests/sync-feedback.spec.ts:62:3 › Sync Visual Feedback › should display SYNCING state when sync is triggered (2.2s)
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/parchment.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/rust.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/parchment.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/parchment.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/rust.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/parchment.png[0m
+  ✓   95 [chromium] › tests/themes.spec.ts:30:3 › Visual Styling Templates › Switch to Blood & Noir theme and verify visual changes (2.4s)
+  ✓   94 [chromium] › tests/themes.spec.ts:13:3 › Visual Styling Templates › Switch to Fantasy theme and verify visual changes (3.2s)
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/parchment.png[0m
+[2m[WebServer] [22m
+[2m[WebServer] [22m[1;31m[404] GET /themes/rust.png[0m
+  ✘   96 [chromium] › tests/themes.spec.ts:55:3 › Visual Styling Templates › Theme selection persists across reloads (3.5s)
+  ✓   97 [chromium] › tests/timeline.spec.ts:73:3 › World Timeline - Graph Integration › should toggle timeline mode (3.9s)
+  ✓   98 [chromium] › tests/vault-delete.spec.ts:50:3 › Vault Node Deletion › should delete a node and its file (1.9s)
+  ✓   99 [chromium] › tests/timeline.spec.ts:131:3 › World Timeline - Graph Integration › should hide undated nodes in timeline mode (2.5s)
+  ✓  100 [chromium] › tests/vault-delete.spec.ts:78:3 › Vault Node Deletion › should cancel deletion (2.0s)
+  ✓  101 [chromium] › tests/vault-import.spec.ts:84:3 › Vault Import E2E › should import recursive files and non-markdown assets from a local folder (3.2s)
+  -  103 [chromium] › tests/vault-permissions.spec.ts:4:8 › Vault Permissions Handling › should gracefully handle invalid persisted handle (mobile simulation)
+  ✓  104 [chromium] › tests/vault-switch.spec.ts:15:3 › Vault Switching › should display current vault name in header (1.3s)
+  ✓  102 [chromium] › tests/vault-management.spec.ts:14:3 › Vault Management › should rename and delete a vault (4.9s)
+  ✓  105 [chromium] › tests/vault-switch.spec.ts:24:3 › Vault Switching › should open vault switcher modal (1.5s)
+  ✓  106 [chromium] › tests/vault-switch.spec.ts:36:3 › Vault Switching › should create and switch to a new vault (2.6s)
+
+
+  1) [chromium] › tests/minimap.spec.ts:48:3 › Minimap Navigation › should pan graph when dragging viewport rect
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBeCloseTo[2m([22m[32mexpected[39m[2m, [22mprecision[2m)[22m
+
+    Expected: not [32m72.375[39m
+    Received:     [31m71.9375[39m
+
+    Expected precision:        0
+    Expected difference: not < [32m0.5[39m
+    Received difference:       [31m0.4375[39m
+
+    Call Log:
+    - Timeout 2000ms exceeded while waiting on the predicate
+
+      75 |     // The component uses RAF, so it should be within a frame or two.
+      76 |
+    > 77 |     await expect
+         |     ^
+      78 |       .poll(
+      79 |         async () => {
+      80 |           const boxAfter = await viewportRect.boundingBox();
+        at /app/apps/web/tests/minimap.spec.ts:77:5
+
+    Error Context: test-results/minimap-Minimap-Navigation-eb3ff-when-dragging-viewport-rect-chromium/error-context.md
+
+  2) [chromium] › tests/themes.spec.ts:55:3 › Visual Styling Templates › Theme selection persists across reloads
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m"#[7mf472b6[27m"[39m
+    Received: [31m"#[7m4ade80[27m"[39m
+
+      83 |         .trim(),
+      84 |     );
+    > 85 |     expect(primary).toBe("#f472b6");
+         |                     ^
+      86 |   });
+      87 | });
+      88 |
+        at /app/apps/web/tests/themes.spec.ts:85:21
+
+    Error Context: test-results/themes-Visual-Styling-Temp-09d0f-ion-persists-across-reloads-chromium/error-context.md
+
+  2 failed
+    [chromium] › tests/minimap.spec.ts:48:3 › Minimap Navigation › should pan graph when dragging viewport rect
+    [chromium] › tests/themes.spec.ts:55:3 › Visual Styling Templates › Theme selection persists across reloads
+  7 skipped
+  97 passed (2.3m)
+npm error Lifecycle script `test:e2e` failed with error:
+npm error code 1
+npm error path /app/apps/web
+npm error workspace web@0.8.8
+npm error location /app/apps/web
+npm error command failed
+npm error command sh -c playwright test --reporter=list

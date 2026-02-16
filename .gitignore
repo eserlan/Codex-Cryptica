@@ -32,6 +32,14 @@ out/
 *.swp
 *.swo
 
+# Gemini
+.gemini/skills/
+
 # OS
 .DS_Store
 Thumbs.db
+node_modules
+
+# Test Data
+vault-5k/
+apps/web/test-results.json

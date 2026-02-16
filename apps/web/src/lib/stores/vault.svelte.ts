@@ -15,10 +15,12 @@ import * as vaultRelationships from "./vault/relationships";
 import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
 
+import type { SearchEntry } from "schema";
+
 // Service Interfaces for Dependency Injection
 export interface IVaultServices {
   search: {
-    index: (data: any) => Promise<void>;
+    index: (data: SearchEntry) => Promise<void>;
     remove: (id: string) => Promise<void>;
     clear: () => Promise<void>;
   };
@@ -42,6 +44,13 @@ class VaultStore {
   isOpfs = $state(true);
   isGuest = $state(false);
   storageAdapter: IStorageAdapter | null = null;
+
+  // Real-time update hooks
+  onEntityUpdate: ((entity: LocalEntity) => void) | null = null;
+  onEntityDelete: ((id: string) => void) | null = null;
+  onBatchUpdate:
+    | ((updates: Record<string, Partial<LocalEntity>>) => void)
+    | null = null;
 
   // Services (Injected)
   private services: IVaultServices | null = null;
@@ -76,9 +85,7 @@ class VaultStore {
     return Object.values(this.entities);
   }
 
-  #legacyFSAHandle: FileSystemDirectoryHandle | undefined = undefined;
-
-  private async getActiveVaultHandle(): Promise<
+  public async getActiveVaultHandle(): Promise<
     FileSystemDirectoryHandle | undefined
   > {
     if (!vaultRegistry.rootHandle || !this.activeVaultId) return undefined;
@@ -305,7 +312,10 @@ class VaultStore {
     }
   }
 
-  async saveToDisk(entity: Entity, targetVaultId?: string | null) {
+  async saveToDisk(
+    entity: LocalEntity | Entity,
+    targetVaultId?: string | null,
+  ) {
     const vid = targetVaultId || this.activeVaultId;
     if (!vid || !vaultRegistry.rootHandle) return;
     const vaultDir = await getVaultDir(vaultRegistry.rootHandle, vid);
@@ -342,8 +352,9 @@ class VaultStore {
     }
   }
 
-  scheduleSave(entity: Entity) {
+  scheduleSave(entity: LocalEntity | Entity) {
     this.status = "saving";
+    if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
     const targetVaultId = this.activeVaultId;
     this.saveQueue
       .enqueue(entity.id, async () => {
@@ -372,7 +383,7 @@ class VaultStore {
     return newEntity.id;
   }
 
-  updateEntity(id: string, updates: Partial<Entity>): boolean {
+  updateEntity(id: string, updates: Partial<LocalEntity>): boolean {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -402,6 +413,56 @@ class VaultStore {
     return true;
   }
 
+  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>): boolean {
+    let hasChanges = false;
+    const currentEntities = this.entities; // Ref for read
+    const newEntities = { ...currentEntities }; // Shallow copy for potential write
+
+    const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
+
+    for (const [id, patch] of Object.entries(updates)) {
+      if (!currentEntities[id]) continue;
+
+      const current = currentEntities[id];
+
+      // Shallow equality check: only compare fields present in the patch
+      let entityHasChanges = false;
+      for (const [key, value] of Object.entries(patch)) {
+        const currentValue = (current as any)[key];
+        if (key === "metadata" && typeof value === "object" && value !== null) {
+          // Simple nested check for metadata (like coordinates) to avoid redundant layout syncs
+          if (JSON.stringify(currentValue) !== JSON.stringify(value)) {
+            entityHasChanges = true;
+            break;
+          }
+        } else if (currentValue !== value) {
+          entityHasChanges = true;
+          break;
+        }
+      }
+
+      if (!entityHasChanges) {
+        continue;
+      }
+
+      const merged = { ...current, ...patch, updatedAt: Date.now() };
+
+      newEntities[id] = merged;
+      appliedUpdates[id] = patch; // Store what actually changed
+      hasChanges = true;
+      this.scheduleSave(merged);
+    }
+
+    if (hasChanges) {
+      this.entities = newEntities;
+      if (this.onBatchUpdate) {
+        this.onBatchUpdate(appliedUpdates);
+      }
+      return true;
+    }
+    return false;
+  }
+
   async deleteEntity(id: string): Promise<void> {
     if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
     const vaultDir = await this.getActiveVaultHandle();
@@ -411,9 +472,13 @@ class VaultStore {
       await vaultEntities.deleteEntity(vaultDir, this.entities, id);
     if (deletedEntity) {
       this.entities = entities;
+      if (this.onEntityDelete) this.onEntityDelete(id);
       modifiedIds.forEach((mId) => {
         const entity = this.entities[mId];
-        if (entity) this.scheduleSave(entity);
+        if (entity) {
+          this.scheduleSave(entity);
+          if (this.onEntityUpdate) this.onEntityUpdate(entity);
+        }
       });
       if (this.services) await this.services.search.remove(id);
     }
@@ -553,6 +618,17 @@ class VaultStore {
 
   async resolveImageUrl(path: string): Promise<string> {
     const vaultDir = await this.getActiveVaultHandle();
+
+    if (this.isGuest) {
+      // Lazy import to avoid circular dependency since guest-service imports vault types or vault?
+      // Actually guest-service likely imports vault, so circular is real.
+      const { p2pGuestService } =
+        await import("$lib/cloud-bridge/p2p/guest-service");
+      return await vaultAssets.resolveImageUrl(vaultDir, path, (p) =>
+        p2pGuestService.getFile(p),
+      );
+    }
+
     return await vaultAssets.resolveImageUrl(vaultDir, path);
   }
 
@@ -566,11 +642,11 @@ class VaultStore {
 const VAULT_KEY = "__codex_vault_instance__";
 
 function getVaultSingleton(): VaultStore {
-  const globalObj = globalThis as any;
+  const globalObj = globalThis as unknown as Record<string, VaultStore>;
   if (!globalObj[VAULT_KEY]) {
     globalObj[VAULT_KEY] = new VaultStore();
   }
-  return globalObj[VAULT_KEY] as VaultStore;
+  return globalObj[VAULT_KEY];
 }
 
 export const vault: VaultStore = getVaultSingleton();

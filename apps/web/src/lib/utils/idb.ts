@@ -54,35 +54,47 @@ interface CodexDB extends DBSchema {
   };
 }
 
-const DB_NAME = "CodexCryptica";
-const DB_VERSION = 6;
+export const DB_NAME = "CodexCryptica";
+export const DB_VERSION = 7;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 1 && !db.objectStoreNames.contains("settings")) {
+      upgrade(db, _oldVersion, _newVersion) {
+        if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings");
         }
-        if (oldVersion < 2 && !db.objectStoreNames.contains("vault_cache")) {
+        if (!db.objectStoreNames.contains("vault_cache")) {
           db.createObjectStore("vault_cache", { keyPath: "path" });
         }
-        if (oldVersion < 3 && !db.objectStoreNames.contains("chat_history")) {
+        if (!db.objectStoreNames.contains("chat_history")) {
           db.createObjectStore("chat_history", { keyPath: "id" });
         }
-        if (oldVersion < 4 && !db.objectStoreNames.contains("world_eras")) {
+        if (!db.objectStoreNames.contains("world_eras")) {
           db.createObjectStore("world_eras", { keyPath: "id" });
         }
-        if (oldVersion < 5 && !db.objectStoreNames.contains("vaults")) {
+        if (!db.objectStoreNames.contains("vaults")) {
           db.createObjectStore("vaults", { keyPath: "id" });
         }
-        if (oldVersion < 6 && !db.objectStoreNames.contains("proposals")) {
+        if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");
         }
+      },
+      blocked() {
+        console.warn("[IDB] Database Open Blocked");
+      },
+      blocking() {
+        console.warn("[IDB] Database Open Blocking - closing older connection");
+        if (dbPromise) {
+          dbPromise.then((db) => db.close());
+        }
+      },
+      terminated() {
+        console.error("[IDB] Database Connection Terminated");
       },
     });
   }

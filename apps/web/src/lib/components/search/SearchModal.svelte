@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tick } from "svelte";
-  import { searchStore } from "$lib/stores/search";
+  import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -8,14 +8,16 @@
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
 
-  let inputElement: HTMLInputElement;
-  let resultsContainer: HTMLDivElement;
+  let inputElement = $state<HTMLInputElement>();
+  let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
   // Auto-focus input when modal opens
-  $: if ($searchStore.isOpen && inputElement) {
-    tick().then(() => inputElement.focus());
-  }
+  $effect(() => {
+    if (searchStore.isOpen && inputElement) {
+      tick().then(() => inputElement?.focus());
+    }
+  });
 
   const handleInput = (event: Event) => {
     const target = event.target as HTMLInputElement;
@@ -28,7 +30,7 @@
   };
 
   const handleKeydown = (event: KeyboardEvent) => {
-    if (!$searchStore.isOpen) return;
+    if (!searchStore.isOpen) return;
 
     if (event.key === "Escape") {
       searchStore.close();
@@ -37,14 +39,14 @@
     }
 
     if (event.key === "ArrowDown") {
-      searchStore.setSelectedIndex($searchStore.selectedIndex + 1);
+      searchStore.setSelectedIndex(searchStore.selectedIndex + 1);
       scrollToSelected();
       event.preventDefault();
       return;
     }
 
     if (event.key === "ArrowUp") {
-      searchStore.setSelectedIndex($searchStore.selectedIndex - 1);
+      searchStore.setSelectedIndex(searchStore.selectedIndex - 1);
       scrollToSelected();
       event.preventDefault();
       return;
@@ -90,7 +92,7 @@
   const scrollToSelected = () => {
     if (!resultsContainer) return;
     const selectedEl = resultsContainer.children[
-      $searchStore.selectedIndex
+      searchStore.selectedIndex
     ] as HTMLElement;
     if (selectedEl) {
       selectedEl.scrollIntoView({ block: "nearest" });
@@ -134,12 +136,12 @@
   };
 </script>
 
-{#if $searchStore.isOpen}
+{#if searchStore.isOpen}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm"
-    on:click={handleBackdropClick}
-    on:keydown={(e) => e.key === "Escape" && searchStore.close()}
+    onclick={handleBackdropClick}
+    onkeydown={(e) => e.key === "Escape" && searchStore.close()}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
@@ -156,65 +158,96 @@
           <input
             bind:this={inputElement}
             type="text"
-            value={$searchStore.query}
-            on:input={handleInput}
-            on:keydown={handleKeydown}
+            value={searchStore.query}
+            oninput={handleInput}
+            onkeydown={handleKeydown}
             placeholder="Search notes..."
             class="w-full pl-10 pr-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-none rounded-md focus:ring-2 focus:ring-blue-500 text-zinc-900 dark:text-zinc-100 placeholder-zinc-500"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            aria-controls={searchStore.results.length > 0
+              ? "search-results-list"
+              : undefined}
+            aria-label="Search notes"
+            aria-activedescendant={searchStore.results.length > 0
+              ? `search-result-${searchStore.selectedIndex}`
+              : undefined}
           />
         </div>
       </div>
 
       <!-- Results List -->
-      <div
-        bind:this={resultsContainer}
-        class="flex-1 overflow-y-auto p-2 space-y-1"
-      >
-        {#if $searchStore.results.length === 0 && $searchStore.query}
-          <div class="p-8 text-center text-zinc-500">
-            No results found for "{$searchStore.query}"
+      <div class="flex-1 overflow-y-auto p-2">
+        {#if searchStore.results.length === 0 && searchStore.query}
+          <div
+            class="p-12 flex flex-col items-center justify-center gap-3 text-zinc-500"
+            role="status"
+          >
+            <span
+              class="icon-[heroicons--magnifying-glass-minus] w-12 h-12 opacity-50"
+            ></span>
+            <div class="text-sm">
+              We couldn't find any notes matching "<span
+                class="font-medium text-zinc-900 dark:text-zinc-100"
+                >{searchStore.query}</span
+              >"
+            </div>
           </div>
-        {:else if $searchStore.results.length > 0}
-          {#each $searchStore.results as result, index (result.id || `fallback-${index}`)}
-            <button
-              class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
-                {index === $searchStore.selectedIndex
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
-                : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
-              on:click={(e) => selectResult(result, e)}
-              data-testid="search-result"
-            >
-              <span class="font-medium truncate flex items-center gap-2">
-                {#if result.type}
-                  <span
-                    class="{getIconClass(
-                      categories.getCategory(result.type)?.icon,
-                    )} w-3.5 h-3.5 shrink-0"
-                    style="color: {categories.getColor(result.type)}"
-                  ></span>
-                {/if}
-                {@html renderMarkdown(result.title, $searchStore.query)}
-              </span>
-              <div class="flex items-center gap-2 text-xs text-zinc-500">
-                {#if result.type}
-                  <span
-                    class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
-                    style="color: {categories.getColor(result.type)}"
+        {:else if searchStore.results.length > 0}
+          <div
+            bind:this={resultsContainer}
+            class="space-y-1"
+            role="listbox"
+            id="search-results-list"
+            aria-label="Search results"
+          >
+            {#each searchStore.results as result, index (result.id || `fallback-${index}`)}
+              <button
+                id="search-result-{index}"
+                role="option"
+                tabindex="-1"
+                aria-selected={index === searchStore.selectedIndex}
+                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
+                  {index === searchStore.selectedIndex
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
+                  : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
+                onclick={(e) => selectResult(result, e)}
+                data-testid="search-result"
+              >
+                <span class="font-medium truncate flex items-center gap-2">
+                  {#if result.type}
+                    <span
+                      class="{getIconClass(
+                        categories.getCategory(result.type)?.icon,
+                      )} w-3.5 h-3.5 shrink-0"
+                      style="color: {categories.getColor(result.type)}"
+                    ></span>
+                  {/if}
+                  {@html renderMarkdown(result.title, searchStore.query)}
+                </span>
+                <div class="flex items-center gap-2 text-xs text-zinc-500">
+                  {#if result.type}
+                    <span
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      style="color: {categories.getColor(result.type)}"
+                    >
+                      {categories.getCategory(result.type)?.label ||
+                        result.type}
+                    </span>
+                  {/if}
+                  <span class="truncate">{result.path}</span>
+                </div>
+                {#if result.excerpt}
+                  <p
+                    class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
                   >
-                    {categories.getCategory(result.type)?.label || result.type}
-                  </span>
+                    {@html renderMarkdown(result.excerpt, searchStore.query)}
+                  </p>
                 {/if}
-                <span class="truncate">{result.path}</span>
-              </div>
-              {#if result.excerpt}
-                <p
-                  class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
-                >
-                  {@html renderMarkdown(result.excerpt, $searchStore.query)}
-                </p>
-              {/if}
-            </button>
-          {/each}
+              </button>
+            {/each}
+          </div>
         {/if}
       </div>
 

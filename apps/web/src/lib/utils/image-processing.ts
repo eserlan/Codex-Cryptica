@@ -85,3 +85,57 @@ function drawOnCanvas(
     })
     .catch(reject);
 }
+
+export async function convertToWebP(
+  blob: Blob,
+  quality: number = 0.8,
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas =
+        typeof OffscreenCanvas !== "undefined"
+          ? new OffscreenCanvas(img.width, img.height)
+          : document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        reject(
+          new Error("Failed to initialize canvas context for WebP conversion"),
+        );
+        return;
+      }
+
+      canvas.width = img.width;
+      canvas.height = img.height;
+      (ctx as CanvasRenderingContext2D).drawImage(img, 0, 0);
+
+      const blobPromise =
+        "toBlob" in canvas
+          ? new Promise<Blob | null>((r) =>
+              (canvas as HTMLCanvasElement).toBlob(r, "image/webp", quality),
+            )
+          : (canvas as OffscreenCanvas).convertToBlob({
+              type: "image/webp",
+              quality: quality,
+            });
+
+      blobPromise
+        .then((result) => {
+          if (result) resolve(result);
+          else reject(new Error("Canvas toBlob failed during WebP conversion"));
+        })
+        .catch(reject);
+    };
+
+    img.onerror = (err) => {
+      URL.revokeObjectURL(url);
+      reject(err);
+    };
+
+    img.src = url;
+  });
+}

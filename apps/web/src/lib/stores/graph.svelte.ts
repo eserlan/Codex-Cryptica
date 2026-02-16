@@ -1,11 +1,6 @@
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
-import {
-  GraphTransformer,
-  getTimelineLayout,
-  type GraphNode,
-} from "graph-engine";
-import type { Core } from "cytoscape";
+import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era } from "schema";
 import { getDB } from "../utils/idb";
 
@@ -19,6 +14,21 @@ class GraphStore {
       sharedMode: ui.sharedMode,
       defaultVisibility: vault.defaultVisibility,
     };
+
+    // DEBUG VISIBILITY
+    if (vault.isGuest) {
+      console.log("[GraphStore] Visibility Check:", {
+        settings,
+        totalEntities: allEntities.length,
+        sampleEntity: allEntities[0]
+          ? {
+              id: allEntities[0].id,
+              tags: allEntities[0].tags,
+              visible: isEntityVisible(allEntities[0], settings),
+            }
+          : "none",
+      });
+    }
 
     const visibleEntities = allEntities.filter((entity) =>
       isEntityVisible(entity, settings),
@@ -114,25 +124,6 @@ class GraphStore {
     this.centralNodeId = nodeId;
     this.orbitMode = true;
     this.timelineMode = false; // Disable timeline mode if active
-  }
-
-  applyTimelineLayout(cy: Core) {
-    const nodes = this.elements.filter(
-      (e) => e.group === "nodes",
-    ) as unknown as GraphNode[];
-    const positions = getTimelineLayout(nodes, {
-      axis: this.timelineAxis,
-      scale: this.timelineScale,
-      jitter: 150, // Standard separation for concurrent events
-    });
-
-    cy.layout({
-      name: "preset",
-      positions: positions,
-      animate: true,
-      animationDuration: 500,
-      padding: 100,
-    }).run();
   }
 }
 

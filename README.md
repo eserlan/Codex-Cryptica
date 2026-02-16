@@ -38,9 +38,13 @@ Open [http://localhost:5173](http://localhost:5173) to view the application.
 
 This project uses **Husky** and **lint-staged** to ensure code quality before every commit.
 
+- **Commit Messages**: We use [gitmoji](https://gitmoji.dev/) for consistent and descriptive commit messages. Every commit message must start with a gitmoji (either the emoji character or the `:code:`).
+  - Example: `:sparkles: Add new feature` or `✨ Add new feature`
+  - You can use the `gitmoji-cli` to help you choose the right emoji: `npx gitmoji -c`
 - **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
-- **Why?**: This prevents linting and formatting errors from reaching the repository and failing CI builds.
-- **Manual Bypass**: If you absolutely need to bypass the hook (not recommended), you can use the `--no-verify` flag:
+- **Commit-msg Hooks**: A hook validates that your commit message follows the gitmoji convention using `commitlint`.
+- **Why?**: This prevents linting and formatting errors from reaching the repository and ensures a readable, searchable commit history.
+- **Manual Bypass**: If you absolutely need to bypass the hooks (not recommended), you can use the `--no-verify` flag:
   ```bash
   git commit -m "your message" --no-verify
   ```

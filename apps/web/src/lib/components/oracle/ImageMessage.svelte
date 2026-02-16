@@ -14,13 +14,12 @@
   );
 
   const handleSave = async () => {
-    if (!message.imageBlob || !activeEntity) return;
+    if (!message.imageBlob || !activeEntity || vault.isGuest) return;
 
     isArchiving = true;
     archiveError = null;
-    // Image archiving logic temporarily disabled
     try {
-      // await vault.saveImageToVault(message.imageBlob, activeEntity.id);
+      await vault.saveImageToVault(message.imageBlob, activeEntity.id);
     } catch (err: any) {
       console.error("Failed to archive image", err);
       archiveError = err.message || "Failed to save image.";
@@ -76,7 +75,7 @@
     </div>
 
     <!-- Actions -->
-    {#if activeEntity}
+    {#if activeEntity && !vault.isGuest}
       <div class="flex flex-col gap-2 items-end" transition:fade>
         <button
           onclick={handleSave}

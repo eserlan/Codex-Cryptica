@@ -296,7 +296,8 @@ function normalizeType(raw?: string): string | undefined {
     t.includes("item") ||
     t.includes("artifact") ||
     t.includes("weapon") ||
-    t.includes("object")
+    t.includes("object") ||
+    t.includes("spell")
   )
     return "item";
   if (t.includes("event") || t.includes("history") || t.includes("war"))

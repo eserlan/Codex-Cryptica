@@ -32,17 +32,6 @@ vi.mock("./ui.svelte", () => ({
   },
 }));
 
-const getState = (store: {
-  subscribe: (run: (value: any) => void) => () => void;
-}) => {
-  let value: any;
-  const unsubscribe = store.subscribe((current: any) => {
-    value = current;
-  });
-  unsubscribe();
-  return value;
-};
-
 describe("searchStore", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -69,32 +58,31 @@ describe("searchStore", () => {
 
     vi.mocked(localStorage.getItem).mockReturnValue(JSON.stringify(recents));
 
-    const { searchStore } = await import("./search");
+    const { searchStore } = await import("./search.svelte");
     searchStore.open();
 
-    const state = getState(searchStore);
-    expect(state.recents).toHaveLength(1);
-    expect(state.results).toHaveLength(1);
-    expect(state.results[0].id).toBe("alpha");
+    expect(searchStore.recents).toHaveLength(1);
+    expect(searchStore.results).toHaveLength(1);
+    expect(searchStore.results[0].id).toBe("alpha");
   });
 
   it("normalizes selected results missing IDs before saving recents", async () => {
     vi.mocked(localStorage.getItem).mockReturnValue(null);
 
-    const { searchStore } = await import("./search");
-    searchStore.update((state: any) => ({
-      ...state,
-      results: [
-        {
-          id: undefined,
-          title: "Alpha",
-          path: "alpha.md",
-          score: 0.5,
-          matchType: "title",
-        } as any,
-      ],
-      selectedIndex: 0,
-    }));
+    const { searchStore } = await import("./search.svelte");
+
+    // Manual setup since results is raw state
+    searchStore.isOpen = true;
+    (searchStore as any).results = [
+      {
+        id: undefined,
+        title: "Alpha",
+        path: "alpha.md",
+        score: 0.5,
+        matchType: "title",
+      } as any,
+    ];
+    searchStore.selectedIndex = 0;
 
     searchStore.selectCurrent();
 
