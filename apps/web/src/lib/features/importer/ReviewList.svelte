@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { DiscoveredEntity } from "@codex/importer";
   import { vault } from "$lib/stores/vault.svelte";
-  import { sanitizeId } from "../../utils/markdown";
 
   interface Props {
     entities: DiscoveredEntity[];
@@ -17,17 +16,20 @@
     // Default select only those that DON'T exist
     const initialSelection = new Set<string>();
     for (const entity of entities) {
-      const id = sanitizeId(entity.suggestedTitle);
-      if (!vault.entities[id]) {
+      if (!entity.matchedEntityId) {
         initialSelection.add(entity.id);
       }
     }
     _selectedIds = initialSelection;
   });
 
-  const isExisting = (title: string) => {
-    const id = sanitizeId(title);
-    return !!vault.entities[id];
+  const isExisting = (entity: DiscoveredEntity) => {
+    return !!entity.matchedEntityId;
+  };
+
+  const getExistingTitle = (entity: DiscoveredEntity) => {
+    if (!entity.matchedEntityId) return "";
+    return vault.entities[entity.matchedEntityId]?.title || "";
   };
 
   const toggleSelection = (id: string) => {
@@ -63,26 +65,33 @@
 
   <div class="entities">
     {#each entities as entity}
-      <div
-        class="entity-card"
-        class:existing={isExisting(entity.suggestedTitle)}
-      >
+      <div class="entity-card" class:existing={isExisting(entity)}>
         <label>
           <input
             type="checkbox"
             checked={_selectedIds.has(entity.id)}
             onchange={() => toggleSelection(entity.id)}
           />
+
           <div class="info">
             <div class="title-group">
               <strong>{entity.suggestedTitle}</strong>
-              {#if isExisting(entity.suggestedTitle)}
-                <span class="existing-badge">Already in Vault</span>
+
+              {#if isExisting(entity)}
+                <span
+                  class="existing-badge"
+                  title="Matching entity found in vault"
+                >
+                  Already in Vault{#if getExistingTitle(entity) && getExistingTitle(entity).toLowerCase() !== entity.suggestedTitle.toLowerCase()}:
+                    {getExistingTitle(entity)}{/if}
+                </span>
               {/if}
             </div>
+
             <span class="badge">{entity.suggestedType}</span>
           </div>
         </label>
+
         <div class="preview">
           {(entity.chronicle || entity.content || "").slice(0, 100)}...
         </div>
