@@ -124,6 +124,8 @@
       onclick={() => (showVaultSwitcher = true)}
       title="Switch Vault"
       data-testid="open-vault-button"
+      aria-haspopup="dialog"
+      aria-expanded={showVaultSwitcher}
     >
       <span
         class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
@@ -142,6 +144,8 @@
       class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical
         ? 'text-center'
         : 'hidden sm:block'}"
+      role="status"
+      aria-live="polite"
     >
       {#if vault.status === "loading"}
         <span class="animate-pulse text-theme-primary">LOADING...</span>
@@ -188,6 +192,7 @@
             if (showForm) createError = null;
           }}
           data-testid="new-entity-button"
+          aria-expanded={showForm}
         >
           <span
             class={showForm
@@ -240,6 +245,7 @@
               : ui.sharedMode
                 ? "Exit Shared Mode (Admin View)"
                 : "Enter Shared Mode (Player Preview)"}
+            aria-pressed={ui.sharedMode}
             data-testid="shared-mode-toggle"
           >
             <span
