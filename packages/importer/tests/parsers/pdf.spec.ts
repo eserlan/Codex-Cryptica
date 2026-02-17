@@ -4,6 +4,10 @@ import * as pdfjs from "pdfjs-dist";
 
 vi.mock("pdfjs-dist", () => ({
   getDocument: vi.fn(),
+  GlobalWorkerOptions: {
+    workerSrc: "",
+  },
+  version: "4.0.0",
 }));
 
 describe("PdfParser", () => {

@@ -10,6 +10,7 @@
     TextParser,
     DocxParser,
     JsonParser,
+    PdfParser,
     OracleAnalyzer,
     calculateFileHash,
     getRegistry,
@@ -51,7 +52,7 @@
     new TextParser(),
     new DocxParser(),
     new JsonParser(),
-    // new PdfParser()
+    new PdfParser(),
   ];
 
   const handleFiles = async (files: File[]) => {
