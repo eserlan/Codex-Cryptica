@@ -9,6 +9,8 @@
   import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
 
+  import { onMount } from "svelte";
+
   let {
     input = $bindable(""),
     anchorEl,
@@ -20,6 +22,10 @@
     onSelect: (command: ChatCommand) => void;
     onClose: () => void;
   }>();
+
+  onMount(() => {
+    console.log("[CommandMenu] Mounted. Input:", input);
+  });
 
   let menuEl = $state<HTMLDivElement>();
   let selectedIndex = $state(0);
@@ -101,11 +107,16 @@
           defaultVisibility: vault.defaultVisibility,
         };
 
-        entityResults = res.filter((result) => {
+        const filtered = res.filter((result) => {
           const entity = vault.entities[result.id];
           if (!entity) return false;
           return isEntityVisible(entity, settings);
         });
+
+        console.log(
+          `[CommandMenu] Search for "${term}" returned ${filtered.length} visible entities`,
+        );
+        entityResults = filtered;
         isSearchingEntities = false;
       });
     } else {
@@ -118,6 +129,13 @@
     filteredCommands.length > 0 ? filteredCommands : entityResults,
   );
 
+  // Reset selection when list changes
+  $effect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    displayList;
+    selectedIndex = 0;
+  });
+
   // Position the menu
   $effect(() => {
     if (
@@ -126,20 +144,21 @@
       (displayList.length > 0 || activeStep !== "COMMAND")
     ) {
       computePosition(anchorEl, menuEl, {
+        strategy: "absolute",
         placement: "top-start",
-        middleware: [offset(8), flip(), shift({ padding: 8 })],
+        middleware: [offset(12), flip(), shift({ padding: 12 })],
       }).then(({ x, y }) => {
         if (menuEl) {
           menuEl.style.left = `${x}px`;
           menuEl.style.top = `${y}px`;
+          menuEl.style.opacity = "1";
         }
       });
     }
   });
 
-  // Reset selection when list changes
-
   const handleEntitySelect = (result: any) => {
+    console.log("[CommandMenu] Selecting entity:", result.title);
     // Sanitize title to prevent breaking wizard input logic
     const safeTitle = result.title.replace(/"/g, "'");
 
@@ -231,7 +250,7 @@
 {#if displayList.length > 0 || input.startsWith("/connect")}
   <div
     bind:this={menuEl}
-    class="fixed z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col"
+    class="absolute z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col opacity-0 transition-opacity duration-150"
   >
     <div
       class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-[9px] uppercase tracking-widest font-bold text-theme-muted flex justify-between items-center"
@@ -292,23 +311,27 @@
             </div>
           {:else}
             <!-- Entity Item -->
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 w-full overflow-hidden">
               {#if item.type}
                 <span
                   class="{getIconClass(
                     categories.getCategory(item.type)?.icon,
-                  )} w-3 h-3 shrink-0"
+                  )} w-3.5 h-3.5 shrink-0"
                   style="color: {categories.getColor(item.type)}"
                 ></span>
               {/if}
-              <span class="text-xs font-bold truncate">{item.title}</span>
-              {#if item.type}
-                <span
-                  class="ml-auto text-[8px] uppercase opacity-50 font-bold tracking-widest"
+              <div class="flex flex-col min-w-0 flex-1">
+                <span class="text-xs font-bold truncate text-theme-text"
+                  >{item.title}</span
                 >
-                  {categories.getCategory(item.type)?.label || item.type}
-                </span>
-              {/if}
+                {#if item.type}
+                  <span
+                    class="text-[8px] uppercase opacity-50 font-bold tracking-widest text-theme-muted"
+                  >
+                    {categories.getCategory(item.type)?.label || item.type}
+                  </span>
+                {/if}
+              </div>
             </div>
           {/if}
         </button>

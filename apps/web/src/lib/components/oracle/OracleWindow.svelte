@@ -51,7 +51,7 @@
   ></div>
 
   <div
-    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 overflow-hidden flex flex-col bg-theme-surface border border-theme-border shadow-2xl
+    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
       : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-full max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
@@ -62,7 +62,7 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+      class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
     >
       <div class="flex items-center gap-2">
         <div
