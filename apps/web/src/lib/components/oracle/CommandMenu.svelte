@@ -162,7 +162,7 @@
       input = `${cmd} "${safeTitle}" `;
     } else if (activeStep === "LABEL") {
       const parts = input.split('"');
-      input = `${cmd} "${parts[1]}" ${result.title} "`;
+      input = `${cmd} "${parts[1]}" ${safeTitle} "`;
     } else if (activeStep === "TO") {
       const parts = input.split('"');
       const label = (parts[2] || "").trim();
