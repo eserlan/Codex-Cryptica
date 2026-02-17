@@ -1,7 +1,7 @@
 <script lang="ts">
   import ImportDropzone from "./ImportDropzone.svelte";
   import ReviewList from "./ReviewList.svelte";
-  import ImportProgress from "./ImportProgress.svelte";
+  import ImportProgress from "../../components/import/ImportProgress.svelte";
   import { importQueue } from "$lib/stores/import-queue.svelte";
   import {
     TextParser,
