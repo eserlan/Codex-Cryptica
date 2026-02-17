@@ -91,7 +91,7 @@ export interface OracleAnalyzerEngine {
 
 export interface AnalysisOptions {
   batchContext?: string[];
-  knownEntities?: string[];
+  knownEntities?: Record<string, string>; // Mapping of title -> id
   completedIndices?: number[];
   signal?: AbortSignal;
   onProgress?: (current: number, total: number) => void;

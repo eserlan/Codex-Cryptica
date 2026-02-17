@@ -3,6 +3,7 @@
   import ReviewList from "./ReviewList.svelte";
   import ImportProgress from "../../components/import/ImportProgress.svelte";
   import { importQueue } from "$lib/stores/import-queue.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import {
     TextParser,
     DocxParser,
@@ -108,8 +109,16 @@
 
         statusMessage = `Analyzing content with Oracle...`;
         const fileEntities: DiscoveredEntity[] = [];
+
+        // Build known entities map for reconciliation
+        const knownEntities: Record<string, string> = {};
+        Object.values(vault.entities).forEach((e) => {
+          knownEntities[e.title] = e.id;
+        });
+
         await analyzer.analyze(result.text, {
           signal,
+          knownEntities,
           completedIndices: registry.completedIndices,
           onChunkActive: (idx) => {
             importQueue.updateChunkStatus(idx, "active");

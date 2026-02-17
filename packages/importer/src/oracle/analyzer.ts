@@ -59,7 +59,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
         options.onProgress(i + 1, chunks.length);
       }
 
-      const result = await this.processChunk(chunk);
+      const result = await this.processChunk(chunk, options);
       allEntities.push(...result.entities);
 
       if (options?.onChunkProcessed) {
@@ -70,8 +70,19 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     return this.mergeDuplicates(allEntities);
   }
 
-  private async processChunk(text: string): Promise<AnalysisResult> {
-    const prompt = `${EXTRACTION_PROMPT}\n\nInput Text:\n${text}`;
+  private async processChunk(
+    text: string,
+    options?: AnalysisOptions,
+  ): Promise<AnalysisResult> {
+    const knownEntityList = options?.knownEntities
+      ? Object.keys(options.knownEntities)
+      : [];
+    const contextStr =
+      knownEntityList.length > 0
+        ? `\n\nKnown Entities in Vault (try to match these if they appear): ${knownEntityList.join(", ")}`
+        : "";
+
+    const prompt = `${EXTRACTION_PROMPT}${contextStr}\n\nInput Text:\n${text}`;
 
     // Attempt models in order of strength/preference, aligned with app configuration
     const models = [
@@ -104,9 +115,23 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
             typeof rawImage === "string" &&
             (rawImage.startsWith("http://") || rawImage.startsWith("https://"));
 
+          const title = item.title;
+          let matchedEntityId: string | undefined = undefined;
+
+          if (options?.knownEntities) {
+            // Case-insensitive exact title match
+            const normalizedTitle = title.toLowerCase().trim();
+            const match = Object.entries(options.knownEntities).find(
+              ([t]) => t.toLowerCase().trim() === normalizedTitle,
+            );
+            if (match) {
+              matchedEntityId = match[1];
+            }
+          }
+
           return {
             id: crypto.randomUUID(),
-            suggestedTitle: item.title,
+            suggestedTitle: title,
             suggestedType: item.type,
             chronicle: item.chronicle || item.content || "",
             lore: item.lore || "",
@@ -119,7 +144,8 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
               image: isValidUrl ? rawImage : undefined,
             },
             confidence: 1, // Placeholder
-            suggestedFilename: this.slugify(item.title),
+            suggestedFilename: this.slugify(title),
+            matchedEntityId,
             detectedLinks: (item.detectedLinks || []).map((link: any) => {
               if (typeof link === "string") return { target: link };
               return {
