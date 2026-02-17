@@ -32,11 +32,21 @@ class CalendarStore {
   }
 
   async setConfig(newConfig: CampaignCalendar) {
+    const previousConfig = this.config;
     this.config = newConfig;
-    const db = await getDB();
-    const activeVaultId = vault.activeVaultId;
-    if (activeVaultId) {
-      await db.put("settings", newConfig, `calendar_${activeVaultId}`);
+    try {
+      const db = await getDB();
+      const activeVaultId = vault.activeVaultId;
+      if (activeVaultId) {
+        await db.put(
+          "settings",
+          $state.snapshot(newConfig),
+          `calendar_${activeVaultId}`,
+        );
+      }
+    } catch (err) {
+      console.error("[CalendarStore] Failed to persist calendar config:", err);
+      this.config = previousConfig;
     }
   }
 }

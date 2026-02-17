@@ -28,8 +28,12 @@
   };
 
   const removeMonth = (id: string) => {
-    const months = calendarStore.config.months.filter((m) => m.id !== id);
-    calendarStore.setConfig({ ...calendarStore.config, months });
+    const { config } = calendarStore;
+    if (!config.useGregorian && config.months.length <= 1) {
+      return;
+    }
+    const months = config.months.filter((m) => m.id !== id);
+    calendarStore.setConfig({ ...config, months });
   };
 
   const updateMonth = (id: string, patch: any) => {
@@ -39,7 +43,10 @@
     calendarStore.setConfig({ ...calendarStore.config, months });
   };
 
-  const updateConfigField = (field: string, value: any) => {
+  const updateConfigField = <K extends keyof typeof calendarStore.config>(
+    field: K,
+    value: (typeof calendarStore.config)[K],
+  ) => {
     calendarStore.setConfig({ ...calendarStore.config, [field]: value });
   };
 </script>
@@ -124,6 +131,7 @@
         </div>
         <input
           type="checkbox"
+          data-testid="gregorian-toggle"
           checked={calendarStore.config.useGregorian}
           onchange={toggleGregorian}
           class="w-4 h-4 accent-theme-primary"
@@ -155,8 +163,12 @@
             id="present-year"
             type="number"
             value={calendarStore.config.presentYear || 0}
-            oninput={(e) =>
-              updateConfigField("presentYear", parseInt(e.currentTarget.value))}
+            oninput={(e) => {
+              const parsed = parseInt(e.currentTarget.value, 10);
+              if (!isNaN(parsed)) {
+                updateConfigField("presentYear", parsed);
+              }
+            }}
             class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text font-mono focus:border-theme-primary outline-none"
           />
         </div>

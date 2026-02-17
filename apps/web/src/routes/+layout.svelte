@@ -46,6 +46,7 @@
     themeStore.init();
     timelineStore.init();
     graph.init();
+    calendarStore.init();
 
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {

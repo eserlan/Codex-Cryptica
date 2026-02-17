@@ -96,13 +96,13 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.click("text=Age of Myth");
 
     // 5. Verify Year snapped to 1000 in Detail tab
-    await expect(page.locator('label:has-text("Year") + input')).toHaveValue(
-      "1000",
-    );
+    await expect(page.locator("#picker-year")).toHaveValue("1000");
 
     // 6. Apply
     await page.click('button:has-text("Apply")');
-    await expect(page.locator('button:has-text("1000")')).toBeVisible();
+    await expect(page.locator('button:has-text("1000")')).toHaveText(
+      /^1000(\s+\S+)?\s*$/,
+    );
   });
 
   test("should support custom month names", async ({ page }) => {
@@ -111,7 +111,7 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByRole("tab", { name: "Vault" }).click();
 
     // Toggle Gregorian off
-    const gregorianToggle = page.locator('input[type="checkbox"]');
+    const gregorianToggle = page.getByTestId("gregorian-toggle");
     await gregorianToggle.uncheck();
 
     // Add custom month
@@ -136,7 +136,12 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByTestId("month-selector").selectOption({ label: "Hammer" });
     await page.click('button:has-text("Apply")');
 
-    // 4. Verify formatting
+    // 4. Verify formatting: default year is 0 when only a month is selected.
     await expect(page.locator('button:has-text("Hammer 0")')).toBeVisible();
+
+    // 5. Verify the underlying year value is explicitly set to 0 in the Detail tab.
+    await page.click('button:has-text("Hammer 0")');
+    await page.click('button:has-text("Detail")');
+    await expect(page.locator("#picker-year")).toHaveValue("0");
   });
 });

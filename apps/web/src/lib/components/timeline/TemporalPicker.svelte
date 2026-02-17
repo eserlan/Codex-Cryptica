@@ -36,6 +36,20 @@
   );
 
   let activeTab = $state<"era" | "manual">("era");
+  let selectedEraId = $state<string | null>(null);
+
+  $effect(() => {
+    if (precision === "year") {
+      selectedMonth = undefined;
+      selectedDay = undefined;
+    } else if (precision === "month") {
+      selectedDay = undefined;
+      if (selectedMonth === undefined) selectedMonth = 1;
+    } else if (precision === "day") {
+      if (selectedMonth === undefined) selectedMonth = 1;
+      if (selectedDay === undefined) selectedDay = 1;
+    }
+  });
 
   const updatePosition = async () => {
     if (!trigger || !pickerElement) return;
@@ -50,7 +64,18 @@
   onMount(() => {
     updatePosition();
     pickerElement?.focus();
-    const handleScroll = () => updatePosition();
+
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          updatePosition();
+          ticking = false;
+        });
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   });
@@ -67,21 +92,67 @@
 
   const selectEra = (era: any) => {
     selectedYear = era.start_year;
+    selectedEraId = era.id;
     activeTab = "manual";
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
     if (e.key === "Enter") save();
+
+    // Simple Focus Trap
+    if (e.key === "Tab") {
+      const focusableElements = pickerElement?.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusableElements) return;
+
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement.focus();
+        }
+      }
+    }
   };
+
+  const selectedEra = $derived(
+    graph.eras.find((e) => e.id === selectedEraId) ||
+      graph.eras.find(
+        (e) =>
+          selectedYear >= e.start_year &&
+          (!e.end_year || selectedYear <= e.end_year),
+      ),
+  );
+
+  const isYearOutOfRange = $derived.by(() => {
+    if (!selectedEraId) return false;
+    const era = graph.eras.find((e) => e.id === selectedEraId);
+    if (!era) return false;
+    return (
+      selectedYear < era.start_year ||
+      (era.end_year !== null && selectedYear > era.end_year)
+    );
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
   bind:this={pickerElement}
   role="dialog"
+  aria-modal="true"
   aria-label="Date Picker"
-  class="fixed z-[1000] w-72 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-sans outline-none"
+  class="fixed z-[1000] w-[90vw] max-w-sm md:w-80 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-sans outline-none"
   style:left="{x}px"
   style:top="{y}px"
   tabindex="0"
@@ -89,8 +160,12 @@
   transition:scale={{ start: 0.95, duration: 150 }}
 >
   <!-- Header / Tabs -->
-  <div class="flex border-b border-theme-border bg-theme-bg/50">
+  <div class="flex border-b border-theme-border bg-theme-bg/50" role="tablist">
     <button
+      role="tab"
+      aria-selected={activeTab === "era"}
+      aria-controls="era-panel"
+      id="era-tab"
       class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {activeTab ===
       'era'
         ? 'text-theme-primary bg-theme-primary/10'
@@ -100,6 +175,10 @@
       Eras
     </button>
     <button
+      role="tab"
+      aria-selected={activeTab === "manual"}
+      aria-controls="manual-panel"
+      id="manual-tab"
       class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {activeTab ===
       'manual'
         ? 'text-theme-primary bg-theme-primary/10'
@@ -113,7 +192,12 @@
   <!-- Content -->
   <div class="p-4 max-h-80 overflow-y-auto custom-scrollbar">
     {#if activeTab === "era"}
-      <div class="space-y-1">
+      <div
+        id="era-panel"
+        role="tabpanel"
+        aria-labelledby="era-tab"
+        class="space-y-1"
+      >
         {#each graph.eras as era}
           <button
             class="w-full text-left p-2 rounded hover:bg-theme-primary/10 border border-transparent hover:border-theme-primary/20 transition-all group"
@@ -143,7 +227,12 @@
         {/each}
       </div>
     {:else}
-      <div class="space-y-4">
+      <div
+        id="manual-panel"
+        role="tabpanel"
+        aria-labelledby="manual-tab"
+        class="space-y-4"
+      >
         <!-- Precision Toggle -->
         <div
           class="flex bg-theme-bg p-0.5 rounded-md border border-theme-border/30"
@@ -163,16 +252,34 @@
 
         <!-- Year Selection -->
         <div class="space-y-1">
-          <label
-            class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
-            for="picker-year">Year</label
-          >
+          <div class="flex justify-between items-center">
+            <label
+              class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
+              for="picker-year">Year</label
+            >
+            {#if isYearOutOfRange}
+              <span class="text-[8px] text-red-500 font-bold uppercase"
+                >Out of Era Range</span
+              >
+            {/if}
+          </div>
           <input
             id="picker-year"
             type="number"
             bind:value={selectedYear}
-            class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
+            class="w-full bg-theme-bg border {isYearOutOfRange
+              ? 'border-red-500/50'
+              : 'border-theme-border'} rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
           />
+          {#if selectedEra && !isYearOutOfRange}
+            <div
+              class="text-[8px] text-theme-primary/70 font-bold uppercase flex items-center gap-1"
+            >
+              <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
+              ></span>
+              Within {selectedEra.name}
+            </div>
+          {/if}
         </div>
 
         <!-- Month Selection -->
@@ -188,6 +295,11 @@
               class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
               data-testid="month-selector"
             >
+              <option
+                value={undefined}
+                disabled
+                selected={selectedMonth === undefined}>Select month...</option
+              >
               {#each calendarEngine.getMonths(calendarStore.config) as month, i}
                 <option value={i + 1}>{month.name}</option>
               {/each}
@@ -208,7 +320,7 @@
               min="1"
               max={calendarEngine.getMonths(calendarStore.config)[
                 selectedMonth - 1
-              ].days}
+              ]?.days || 31}
               bind:value={selectedDay}
               class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
             />

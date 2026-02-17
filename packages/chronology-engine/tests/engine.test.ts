@@ -112,5 +112,14 @@ describe("CalendarEngine", () => {
       );
       expect(v2 - v1).toBe(20);
     });
+
+    it("should handle negative years for linear timeline", () => {
+      const v1 = calendarEngine.getTimelineValue(
+        { year: -1, month: 1, day: 1 },
+        DEFAULT_CALENDAR,
+      );
+      const daysInYear = calendarEngine.getDaysInYear(DEFAULT_CALENDAR);
+      expect(v1).toBe(-daysInYear);
+    });
   });
 });
