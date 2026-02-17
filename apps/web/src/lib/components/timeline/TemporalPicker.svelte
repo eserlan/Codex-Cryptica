@@ -5,7 +5,7 @@
   import { calendarEngine } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import { onMount } from "svelte";
-  import { fade, scale } from "svelte/transition";
+  import { fade, scale, slide } from "svelte/transition";
 
   let {
     value = $bindable(),
@@ -35,8 +35,12 @@
     })(),
   );
 
-  let activeTab = $state<"era" | "manual">("era");
+  let activeTab = $state<"era" | "manual">("manual");
   let selectedEraId = $state<string | null>(null);
+
+  // Year Picker Navigation State
+  let yearPickerView = $state<"years" | "decades" | "centuries">("years");
+  let viewBaseYear = $state(Math.floor((value?.year || 0) / 10) * 10);
 
   $effect(() => {
     if (precision === "year") {
@@ -92,8 +96,10 @@
 
   const selectEra = (era: any) => {
     selectedYear = era.start_year;
+    viewBaseYear = Math.floor(era.start_year / 10) * 10;
     selectedEraId = era.id;
     activeTab = "manual";
+    yearPickerView = "years";
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
@@ -146,6 +152,57 @@
         selectedYear > era.end_year)
     );
   });
+
+  // Pure UI Year Picker Helpers
+  const navigateView = (direction: number) => {
+    const step =
+      yearPickerView === "years"
+        ? 10
+        : yearPickerView === "decades"
+          ? 100
+          : 1000;
+    viewBaseYear += direction * step;
+  };
+
+  const zoomOut = () => {
+    if (yearPickerView === "years") {
+      yearPickerView = "decades";
+      viewBaseYear = Math.floor(viewBaseYear / 100) * 100;
+    } else if (yearPickerView === "decades") {
+      yearPickerView = "centuries";
+      viewBaseYear = Math.floor(viewBaseYear / 1000) * 1000;
+    }
+  };
+
+  const selectInGrid = (val: number) => {
+    if (yearPickerView === "centuries") {
+      viewBaseYear = val;
+      yearPickerView = "decades";
+    } else if (yearPickerView === "decades") {
+      viewBaseYear = val;
+      yearPickerView = "years";
+    } else {
+      selectedYear = val;
+    }
+  };
+
+  const gridItems = $derived.by(() => {
+    const items = [];
+    const step =
+      yearPickerView === "years" ? 1 : yearPickerView === "decades" ? 10 : 100;
+    for (let i = 0; i < 12; i++) {
+      items.push(viewBaseYear + i * step);
+    }
+    return items;
+  });
+
+  const viewTitle = $derived.by(() => {
+    if (yearPickerView === "years")
+      return `${viewBaseYear} - ${viewBaseYear + 11}`;
+    if (yearPickerView === "decades")
+      return `${viewBaseYear} - ${viewBaseYear + 119}`;
+    return `${viewBaseYear} - ${viewBaseYear + 1199}`;
+  });
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
@@ -192,7 +249,7 @@
   </div>
 
   <!-- Content -->
-  <div class="p-4 max-h-80 overflow-y-auto custom-scrollbar">
+  <div class="p-3 max-h-[300px] overflow-y-auto custom-scrollbar">
     {#if activeTab === "era"}
       <div
         id="era-panel"
@@ -203,6 +260,7 @@
         {#each graph.eras as era}
           <button
             class="w-full text-left p-2 rounded hover:bg-theme-primary/10 border border-transparent hover:border-theme-primary/20 transition-all group"
+            data-testid="era-select-button"
             onclick={() => selectEra(era)}
           >
             <div class="flex items-center gap-2">
@@ -233,7 +291,7 @@
         id="manual-panel"
         role="tabpanel"
         aria-labelledby="manual-tab"
-        class="space-y-4"
+        class="space-y-3"
       >
         <!-- Precision Toggle -->
         <div
@@ -252,40 +310,64 @@
           {/each}
         </div>
 
-        <!-- Year Selection -->
-        <div class="space-y-1">
-          <div class="flex justify-between items-center">
-            <label
-              class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
-              for="picker-year">Year</label
+        <!-- Pure UI Year Picker -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <button
+              onclick={() => navigateView(-1)}
+              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
             >
-            {#if isYearOutOfRange}
-              <span class="text-[8px] text-red-500 font-bold uppercase"
-                >Out of Era Range</span
-              >
-            {/if}
+              <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
+            </button>
+            <button
+              onclick={zoomOut}
+              class="text-[10px] font-bold text-theme-text uppercase tracking-widest hover:text-theme-primary transition-colors"
+            >
+              {viewTitle}
+            </button>
+            <button
+              onclick={() => navigateView(1)}
+              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
+            >
+              <span class="icon-[lucide--chevron-right] w-4 h-4"></span>
+            </button>
           </div>
-          <input
-            id="picker-year"
-            type="number"
-            bind:value={selectedYear}
-            class="w-full bg-theme-bg border {isYearOutOfRange
-              ? 'border-red-500/50'
-              : 'border-theme-border'} rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
-          />
-          {#if selectedEra && !isYearOutOfRange}
+
+          <div class="grid grid-cols-3 gap-1">
+            {#each gridItems as item}
+              <button
+                onclick={() => selectInGrid(item)}
+                class="py-2 text-[11px] font-mono rounded border transition-all {selectedYear ===
+                  item && yearPickerView === 'years'
+                  ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-[0_0_10px_rgba(var(--color-primary),0.3)]'
+                  : 'bg-theme-bg/50 border-theme-border/30 text-theme-text hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+              >
+                {item}
+              </button>
+            {/each}
+          </div>
+
+          {#if isYearOutOfRange}
             <div
-              class="text-[8px] text-theme-primary/70 font-bold uppercase flex items-center gap-1"
+              transition:slide
+              class="text-[8px] text-red-500 font-bold uppercase text-center py-1 bg-red-500/5 rounded border border-red-500/20"
+            >
+              Year {selectedYear} is outside {selectedEra?.name}
+            </div>
+          {:else if selectedEra}
+            <div
+              transition:slide
+              class="text-[8px] text-theme-primary/70 font-bold uppercase flex items-center justify-center gap-1 py-1"
             >
               <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
               ></span>
-              Within {selectedEra.name}
+              Part of {selectedEra.name}
             </div>
           {/if}
         </div>
 
-        <!-- Month Selection -->
         {#if precision !== "year"}
+          <!-- Month Selection -->
           <div class="space-y-1" transition:fade>
             <label
               class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
@@ -309,8 +391,8 @@
           </div>
         {/if}
 
-        <!-- Day Selection -->
         {#if precision === "day" && selectedMonth}
+          <!-- Day Selection -->
           <div class="space-y-1" transition:fade>
             <label
               class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
@@ -333,7 +415,9 @@
   </div>
 
   <!-- Footer Actions -->
-  <div class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30">
+  <div
+    class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30 shrink-0"
+  >
     <button
       class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
       onclick={onClose}
@@ -342,6 +426,7 @@
     </button>
     <button
       class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
+      data-testid="apply-date-button"
       onclick={save}
     >
       Apply

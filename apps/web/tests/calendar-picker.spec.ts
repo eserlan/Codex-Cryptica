@@ -1,24 +1,32 @@
 import { test, expect, type Page } from "@playwright/test";
 
 const clickNodeOnCanvas = async (page: Page, label: string) => {
+  // Wait for the node to exist in Cytoscape
+  await page.waitForFunction(
+    (label: string) => {
+      const cy = (window as any).cy;
+      if (!cy) return false;
+      return (
+        cy.nodes().filter((n: any) => n.data("label") === label).length > 0
+      );
+    },
+    label,
+    { timeout: 10000 },
+  );
+
   const position = await page.evaluate((label: string) => {
     const cy = (window as any).cy;
-    if (!cy) return null;
     const node = cy.nodes().filter((n: any) => n.data("label") === label);
-    if (node.length === 0) return null;
     const pos = node.renderedPosition();
     return { x: pos.x, y: pos.y };
   }, label);
-
-  if (!position)
-    throw new Error(
-      `Node with label "${label}" not found or cy instance missing`,
-    );
 
   const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
   if (!canvasBox) throw new Error("Graph canvas not found");
 
   await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
+  // Wait for the panel to transition in
+  await page.waitForTimeout(500);
 };
 
 test.describe("Campaign Date Picker E2E", () => {
@@ -93,14 +101,20 @@ test.describe("Campaign Date Picker E2E", () => {
     await expect(page.locator("text=Eras")).toBeVisible();
 
     // 4. Select Era
-    await page.click("text=Age of Myth");
+    await page.getByRole("tab", { name: "Eras" }).click();
+    await page
+      .getByTestId("era-select-button")
+      .filter({ hasText: "Age of Myth" })
+      .click();
 
-    // 5. Verify Year snapped to 1000 in Detail tab
-    await expect(page.locator("#picker-year")).toHaveValue("1000");
+    // 5. Verify Year grid highlights 1000
+    await expect(
+      page.getByRole("button", { name: "1000", exact: true }),
+    ).toHaveClass(/bg-theme-primary/);
 
     // 6. Apply
-    await page.click('button:has-text("Apply")');
-    await expect(page.locator('button:has-text("1000")')).toHaveText(
+    await page.getByTestId("apply-date-button").click();
+    await expect(page.locator('button:has-text("1000")').first()).toHaveText(
       /^1000(\s+\S+)?\s*$/,
     );
   });
@@ -134,14 +148,59 @@ test.describe("Campaign Date Picker E2E", () => {
     // 3. Verify custom month appears in dropdown
     await page.getByRole("button", { name: "month" }).click();
     await page.getByTestId("month-selector").selectOption({ label: "Hammer" });
-    await page.click('button:has-text("Apply")');
+    await page.getByTestId("apply-date-button").click();
 
     // 4. Verify formatting: default year is 0 when only a month is selected.
-    await expect(page.locator('button:has-text("Hammer 0")')).toBeVisible();
+    await expect(
+      page.locator('button:has-text("Hammer 0")').first(),
+    ).toBeVisible();
 
-    // 5. Verify the underlying year value is explicitly set to 0 in the Detail tab.
+    // 5. Verify the underlying year value is explicitly set to 0 in the grid view.
     await page.click('button:has-text("Hammer 0")');
     await page.click('button:has-text("Detail")');
-    await expect(page.locator("#picker-year")).toHaveValue("0");
+    await expect(
+      page.getByRole("button", { name: "0", exact: true }),
+    ).toHaveClass(/bg-theme-primary/);
+  });
+
+  test("should allow navigating years via pure UI grid", async ({ page }) => {
+    await clickNodeOnCanvas(page, "Test Event");
+    await expect(page.getByTestId("enter-zen-mode-button")).toBeVisible();
+    await page.getByTestId("enter-zen-mode-button").click();
+    await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
+    await page.getByTestId("edit-entity-button").click();
+    await page.click('button:has-text("No date set...")');
+    await page.click('button:has-text("Detail")');
+
+    // 1. Initial view should show 0-11
+    await expect(
+      page.getByRole("button", { name: "0", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "11", exact: true }),
+    ).toBeVisible();
+
+    // 2. Zoom out to decades
+    await page.click('button:has-text("0 - 11")');
+    await expect(
+      page.getByRole("button", { name: "0", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "110", exact: true }),
+    ).toBeVisible();
+
+    // 3. Select decade 100
+    await page.click('button:has-text("100")');
+    await expect(
+      page.getByRole("button", { name: "100", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "111", exact: true }),
+    ).toBeVisible();
+
+    // 4. Select year 105
+    await page.click('button:has-text("105")');
+    await page.getByTestId("apply-date-button").click();
+    await expect(page.locator('button:has-text("105")').first()).toBeVisible();
   });
 });
