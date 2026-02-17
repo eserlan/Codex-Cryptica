@@ -190,8 +190,8 @@
       </div>
     {/if}
 
-    {#each oracle.messages as msg}
-      <ChatMessage message={msg} />
+    {#each oracle.messages as _msg, i}
+      <ChatMessage bind:message={oracle.messages[i]} />
     {/each}
 
     {#if oracle.isLoading}

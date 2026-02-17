@@ -149,14 +149,16 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 6. Review and Confirm
     await expect(page.locator("text=Merge Strategy")).toBeVisible();
-    // Wait for proposal preview
-    await expect(page.locator(".max-h-32")).not.toBeEmpty();
+    // Wait for proposal preview and verify it contains content from both entities
+    const preview = page.locator(".max-h-32");
+    await expect(preview).toContainText("Source content");
+    await expect(preview).toContainText("Target content");
     await page.click('button:has-text("Confirm Merge")');
 
     // 7. Success - The wizard converts itself to a normal message, so we look for the transcript text
     const SLOW_TIMEOUT = 10000;
     await expect(
-      page.locator("text=Merged Source Node into Target Node"),
+      page.getByText(/Merged Source Node into Target Node/),
     ).toBeVisible({ timeout: SLOW_TIMEOUT });
     await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
       timeout: SLOW_TIMEOUT,

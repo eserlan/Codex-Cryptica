@@ -73,16 +73,15 @@
       // Capture state for Undo (optional but good practice for Oracle)
       const sId = sourceId;
       const tId = targetId;
-      const sourceEntity = vault.entities[sId];
-      const targetEntity = vault.entities[tId];
-      const beforeTarget = $state.snapshot(targetEntity);
-      const beforeSource = $state.snapshot(sourceEntity);
+      const entitiesSnapshot = $state.snapshot(vault.entities);
+      const beforeTarget = entitiesSnapshot[tId];
+      const beforeSource = entitiesSnapshot[sId];
 
       await nodeMergeService.executeMerge(proposal, [sId, tId]);
 
       // Push Undo
       oracle.pushUndoAction(
-        `Merge ${sourceEntity.title} into ${targetEntity.title}`,
+        `Merge ${beforeSource.title} into ${beforeTarget.title}`,
         async () => {
           await vault.createEntity(beforeSource.type, beforeSource.title, {
             ...beforeSource,
@@ -94,7 +93,7 @@
       );
 
       step = "DONE";
-      message.content = `Merged **${sourceEntity.title}** into **${targetEntity.title}**.`;
+      message.content = `Merged **${beforeSource.title}** into **${beforeTarget.title}**.`;
       message.type = "text";
     } catch (err: any) {
       error = err.message;

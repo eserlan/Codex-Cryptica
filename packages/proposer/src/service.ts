@@ -329,7 +329,7 @@ USER INPUT: "${input}"
 
 INSTRUCTIONS:
 1. Identify the "Source" entity (the one being absorbed/deleted) and the "Target" entity (the one being kept/updated). 
-2. The user often uses patterns like "merge A into B" (Source=A, Target=B) or "combine A and B" (Source=A, Target=B).
+2. The user often uses patterns like "merge A into B" (Source=A, Target=B) or "combine A and B" (Source=A, Target=B). If order is ambiguous, prioritize the entity that appears first as the Source.
 
 Output JSON:
 {

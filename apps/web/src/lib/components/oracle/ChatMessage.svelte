@@ -14,7 +14,7 @@
 
   import { onMount } from "svelte";
 
-  let { message }: { message: ChatMessage } = $props();
+  let { message = $bindable() }: { message: ChatMessage } = $props();
 
   let targetEntity = $derived(
     message.archiveTargetId || message.entityId

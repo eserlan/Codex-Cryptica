@@ -455,8 +455,8 @@ class OracleStore {
             });
 
             // 2. Capture state for Undo (Immediately before execution)
-            const beforeTarget = $state.snapshot(targetEntity);
-            const beforeSource = $state.snapshot(sourceEntity);
+            const beforeTarget = $state.snapshot(vault.entities[targetId]);
+            const beforeSource = $state.snapshot(vault.entities[sourceId]);
 
             // 3. Execute
             await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
