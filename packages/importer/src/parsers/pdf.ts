@@ -5,6 +5,14 @@ import type { FileParser, ParseResult } from "../types";
 // pdfjs.GlobalWorkerOptions.workerSrc = '...';
 
 export class PdfParser implements FileParser {
+  private workerSrc: string;
+
+  constructor(workerSrc?: string) {
+    // Default to a local path that the app should provide.
+    // If not provided, we expect it to be set globally or via this property.
+    this.workerSrc = workerSrc || "";
+  }
+
   accepts(file: File): boolean {
     return file.type === "application/pdf" || file.name.endsWith(".pdf");
   }
@@ -12,9 +20,13 @@ export class PdfParser implements FileParser {
   async parse(file: File): Promise<ParseResult> {
     const pdfjs = await import("pdfjs-dist");
 
-    // Set worker source for browser environment
-    if (typeof window !== "undefined" && !pdfjs.GlobalWorkerOptions.workerSrc) {
-      pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+    if (typeof window !== "undefined") {
+      if (this.workerSrc) {
+        pdfjs.GlobalWorkerOptions.workerSrc = this.workerSrc;
+      } else if (!pdfjs.GlobalWorkerOptions.workerSrc) {
+        // Fallback to a standard local path if nothing is set
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      }
     }
 
     const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {

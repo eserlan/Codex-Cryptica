@@ -22,6 +22,7 @@
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
+  import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
 
   let step = $state<"upload" | "processing" | "review" | "complete">("upload");
   let statusMessage = $state("");
@@ -52,7 +53,7 @@
     new TextParser(),
     new DocxParser(),
     new JsonParser(),
-    new PdfParser(),
+    new PdfParser(pdfWorker),
   ];
 
   const handleFiles = async (files: File[]) => {
