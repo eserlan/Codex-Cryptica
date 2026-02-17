@@ -100,7 +100,7 @@
 
   <div
     bind:this={modalElement}
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] md:max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101]"
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-heading"
