@@ -200,6 +200,24 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with Google Gemini."
+  />
+  <meta
+    property="og:title"
+    content="Codex Cryptica | AI RPG Campaign Manager"
+  />
+  <meta
+    property="og:description"
+    content="Local-first RPG campaign manager with graph visualization and AI intelligence."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+</svelte:head>
+
 <div class="app-layout min-h-screen bg-black flex flex-col">
   {#if !isPopup}
     <header
@@ -301,6 +319,11 @@
             >Support on Patreon</a
           >
         {/if}
+        <a
+          href="{base}/features"
+          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          >Features</a
+        >
         <a
           href="{base}/privacy"
           target="_blank"

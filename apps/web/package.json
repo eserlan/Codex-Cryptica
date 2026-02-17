@@ -11,6 +11,8 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test --reporter=list",
+    "audit": "unlighthouse --site localhost:4173",
+    "build:audit": "npm run build && vite preview & sleep 5 && unlighthouse --site http://localhost:4173 --ci && kill $!",
     "lint": "svelte-check --tsconfig ./tsconfig.json && eslint .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
@@ -73,6 +75,7 @@
     "@types/google.accounts": "^0.0.18",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^25.2.3",
+    "@unlighthouse/core": "^0.17.4",
     "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.24",
     "fake-indexeddb": "^6.2.5",
@@ -82,6 +85,7 @@
     "svelte-check": "^4.3.6",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
+    "unlighthouse": "^0.17.4",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
   }

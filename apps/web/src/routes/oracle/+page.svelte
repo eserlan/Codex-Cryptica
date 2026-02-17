@@ -1,64 +1,75 @@
 <script lang="ts">
-    import OracleChat from "$lib/components/oracle/OracleChat.svelte";
-    import { oracle } from "$lib/stores/oracle.svelte";
-    import { onMount } from "svelte";
+  import OracleChat from "$lib/components/oracle/OracleChat.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { onMount } from "svelte";
 
-    onMount(() => {
-        oracle.init();
-        document.title = "Lore Oracle | Codex Cryptica";
-    });
+  onMount(() => {
+    oracle.init();
+  });
 </script>
 
-<div class="fixed inset-0 bg-[#050505] flex flex-col overflow-hidden">
-    <!-- Standalone Header -->
-    <div
-        class="px-4 py-3 border-b border-purple-900/30 bg-purple-900/20 flex justify-between items-center shrink-0"
-    >
-        <div class="flex items-center gap-2">
-            <div
-                class="w-2 h-2 bg-purple-500 rounded-full {oracle.isLoading
-                    ? 'animate-pulse'
-                    : ''}"
-            ></div>
-            <span
-                class="text-[10px] font-bold text-purple-300 tracking-[0.2em] uppercase"
-                >Lore Oracle Standalone</span
-            >
-        </div>
-        <div class="flex items-center gap-2">
-            {#if oracle.messages.length > 0}
-                <button
-                    class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-purple-400 hover:text-red-400 border border-purple-500/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-purple-900/20"
-                    onclick={() => {
-                        if (confirm("Are you sure you want to clear the conversation history?")) {
-                            oracle.clearMessages();
-                        }
-                    }}
-                    aria-label="Clear conversation history"
-                >
-                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-                    Clear Chat
-                </button>
-            {/if}
-            <div
-                class="text-[9px] font-mono text-purple-700 uppercase tracking-widest hidden sm:block"
-            >
-                Multi-Window Sync Active
-            </div>
-        </div>
-    </div>
+<svelte:head>
+  <title>Lore Oracle | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="Ask questions about your RPG campaign world and generate new lore using the AI-powered Oracle."
+  />
+</svelte:head>
 
-    <OracleChat
-        onOpenSettings={() => {
-            alert("Please update settings in the main Codex Cryptica window.");
-        }}
-    />
+<div class="fixed inset-0 bg-[#050505] flex flex-col overflow-hidden">
+  <!-- Standalone Header -->
+  <div
+    class="px-4 py-3 border-b border-purple-900/30 bg-purple-900/20 flex justify-between items-center shrink-0"
+  >
+    <div class="flex items-center gap-2">
+      <div
+        class="w-2 h-2 bg-purple-500 rounded-full {oracle.isLoading
+          ? 'animate-pulse'
+          : ''}"
+      ></div>
+      <span
+        class="text-[10px] font-bold text-purple-300 tracking-[0.2em] uppercase"
+        >Lore Oracle Standalone</span
+      >
+    </div>
+    <div class="flex items-center gap-2">
+      {#if oracle.messages.length > 0}
+        <button
+          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-purple-400 hover:text-red-400 border border-purple-500/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-purple-900/20"
+          onclick={() => {
+            if (
+              confirm(
+                "Are you sure you want to clear the conversation history?",
+              )
+            ) {
+              oracle.clearMessages();
+            }
+          }}
+          aria-label="Clear conversation history"
+        >
+          <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+          Clear Chat
+        </button>
+      {/if}
+      <div
+        class="text-[9px] font-mono text-purple-700 uppercase tracking-widest hidden sm:block"
+      >
+        Multi-Window Sync Active
+      </div>
+    </div>
+  </div>
+
+  <OracleChat
+    onOpenSettings={() => {
+      alert("Please update settings in the main Codex Cryptica window.");
+    }}
+  />
 </div>
 
 <style>
-    :global(body) {
-        background: #050505;
-        margin: 0;
-        padding: 0;
-    }
+  :global(body) {
+    background: #050505;
+    margin: 0;
+    padding: 0;
+  }
 </style>
