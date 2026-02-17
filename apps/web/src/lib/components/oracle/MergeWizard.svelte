@@ -75,12 +75,8 @@
       const tId = targetId;
       const sourceEntity = vault.entities[sId];
       const targetEntity = vault.entities[tId];
-      const beforeTarget = JSON.parse(
-        JSON.stringify($state.snapshot(targetEntity)),
-      );
-      const beforeSource = JSON.parse(
-        JSON.stringify($state.snapshot(sourceEntity)),
-      );
+      const beforeTarget = $state.snapshot(targetEntity);
+      const beforeSource = $state.snapshot(sourceEntity);
 
       await nodeMergeService.executeMerge(proposal, [sId, tId]);
 

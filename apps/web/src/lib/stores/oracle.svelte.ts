@@ -454,13 +454,9 @@ class OracleStore {
               strategy: "concat",
             });
 
-            // 2. Capture state for Undo
-            const beforeTarget = JSON.parse(
-              JSON.stringify($state.snapshot(targetEntity)),
-            );
-            const beforeSource = JSON.parse(
-              JSON.stringify($state.snapshot(sourceEntity)),
-            );
+            // 2. Capture state for Undo (Immediately before execution)
+            const beforeTarget = $state.snapshot(targetEntity);
+            const beforeSource = $state.snapshot(sourceEntity);
 
             // 3. Execute
             await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
@@ -482,10 +478,7 @@ class OracleStore {
                 await vault.createEntity(
                   beforeSource.type,
                   beforeSource.title,
-                  {
-                    ...beforeSource,
-                    id: beforeSource.id,
-                  },
+                  { ...beforeSource },
                 );
                 // Restore target
                 vault.updateEntity(targetId, beforeTarget);

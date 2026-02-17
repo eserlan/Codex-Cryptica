@@ -154,11 +154,12 @@ test.describe("Oracle Merge Command E2E", () => {
     await page.click('button:has-text("Confirm Merge")');
 
     // 7. Success - The wizard converts itself to a normal message, so we look for the transcript text
+    const SLOW_TIMEOUT = 10000;
     await expect(
       page.locator("text=Merged Source Node into Target Node"),
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible({ timeout: SLOW_TIMEOUT });
     await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
-      timeout: 10000,
+      timeout: SLOW_TIMEOUT,
     });
   });
 
