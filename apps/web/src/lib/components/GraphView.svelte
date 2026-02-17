@@ -178,22 +178,44 @@
       try {
         // Use live dimensions from Cytoscape if available, otherwise fallback to store
         // This ensures the layout accounts for resolved image sizes
-        const elements = $state.snapshot(graph.elements).map((el: any) => {
-          if (el.group === "nodes" && cy) {
-            const cyNode = cy.$id(el.data.id);
-            if (cyNode && cyNode.length > 0) {
-              return {
-                ...el,
-                data: {
-                  ...el.data,
-                  width: cyNode.data("width") || el.data.width,
-                  height: cyNode.data("height") || el.data.height,
-                },
-              };
+        const snapshotElements = $state.snapshot(graph.elements);
+        let elements = snapshotElements;
+
+        if (cy) {
+          // Optimization: Create a map of node dimensions to avoid repetitive cy.$id() calls
+          // This reduces complexity from O(N*logN) to O(N) for dimension sync
+          const nodeDimensions = new Map<
+            string,
+            { width: number; height: number }
+          >();
+
+          cy.nodes().forEach((node) => {
+            const w = node.data("width");
+            const h = node.data("height");
+            if (w !== undefined || h !== undefined) {
+              nodeDimensions.set(node.id(), { width: w, height: h });
             }
+          });
+
+          if (nodeDimensions.size > 0) {
+            elements = snapshotElements.map((el: any) => {
+              if (el.group === "nodes") {
+                const dims = nodeDimensions.get(el.data.id);
+                if (dims) {
+                  return {
+                    ...el,
+                    data: {
+                      ...el.data,
+                      width: dims.width || el.data.width,
+                      height: dims.height || el.data.height,
+                    },
+                  };
+                }
+              }
+              return el;
+            });
           }
-          return el;
-        });
+        }
 
         const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
@@ -525,22 +547,23 @@
       const currentElements = graph.elements;
       const timeout = setTimeout(async () => {
         try {
+          // Optimization: Pre-calculate resolved images map for O(1) lookups
+          const resolvedImages = new Map<string, string>();
+          if (currentCy) {
+            currentCy.nodes("[resolvedImage]").forEach((node) => {
+              resolvedImages.set(node.id(), node.data("resolvedImagePath"));
+            });
+          }
+
           const nodesToResolve = currentElements.filter((el): el is any => {
             if (el.group !== "nodes") return false;
             const imagePath = el.data.thumbnail || el.data.image;
             if (!imagePath) return false;
 
             // Check if already resolved in Cytoscape
-            if (currentCy) {
-              const node = currentCy.$id(el.data.id);
-              if (node.length > 0) {
-                const currentData = node.data();
-                if (
-                  currentData.resolvedImage &&
-                  currentData.resolvedImagePath === imagePath
-                ) {
-                  return false;
-                }
+            if (resolvedImages.has(el.data.id)) {
+              if (resolvedImages.get(el.data.id) === imagePath) {
+                return false;
               }
             }
             return true;
