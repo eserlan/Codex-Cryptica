@@ -157,8 +157,6 @@
     }
   });
 
-  // Reset selection when list changes
-
   const handleEntitySelect = (result: any) => {
     console.log("[CommandMenu] Selecting entity:", result.title);
     // Sanitize title to prevent breaking wizard input logic
