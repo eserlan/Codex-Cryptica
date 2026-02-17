@@ -137,7 +137,7 @@
   .text-link {
     background: none;
     border: none;
-    color: var(--theme-primary, #3b82f6);
+    color: var(--color-theme-primary, #3b82f6);
     font-size: 0.65rem;
     padding: 0;
     cursor: pointer;
@@ -155,16 +155,16 @@
   }
 
   .entity-card {
-    border: 1px solid var(--theme-border, #ccc);
+    border: 1px solid var(--color-theme-border, #ccc);
     padding: 1rem;
     border-radius: 4px;
-    background: var(--theme-surface, #fff);
+    background: var(--color-theme-surface, #fff);
     transition: opacity 0.2s;
   }
 
   .entity-card.existing {
-    border-color: var(--theme-primary, #3b82f6);
-    background: var(--theme-primary-transparent, rgba(59, 130, 246, 0.05));
+    border-color: var(--color-theme-primary, #3b82f6);
+    background: color-mix(in srgb, var(--color-theme-primary), transparent 95%);
   }
 
   label {
@@ -188,8 +188,8 @@
 
   .existing-badge {
     font-size: 0.6rem;
-    background: var(--theme-primary, #3b82f6);
-    color: var(--theme-bg, #fff);
+    background: var(--color-theme-primary, #3b82f6);
+    color: var(--color-theme-bg, #fff);
     padding: 0.1rem 0.4rem;
     border-radius: 10px;
     font-weight: bold;
@@ -197,9 +197,9 @@
   }
 
   .badge {
-    background: var(--theme-bg, #f3f4f6);
-    color: var(--theme-text, #1f2937);
-    border: 1px solid var(--theme-border, #d1d5db);
+    background: var(--color-theme-bg, #f3f4f6);
+    color: var(--color-theme-text, #1f2937);
+    border: 1px solid var(--color-theme-border, #d1d5db);
     padding: 0.1rem 0.5rem;
     border-radius: 4px;
     font-size: 0.7rem;
@@ -210,7 +210,7 @@
   .preview {
     margin-top: 0.5rem;
     font-size: 0.8rem;
-    color: var(--theme-muted, #666);
+    color: var(--color-theme-muted, #666);
     font-family: var(--font-mono, monospace);
   }
 
@@ -219,13 +219,13 @@
     justify-content: flex-end;
     gap: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid var(--theme-border, #eee);
+    border-top: 1px solid var(--color-theme-border, #eee);
   }
 
   button {
-    background: var(--theme-surface);
-    border: 1px solid var(--theme-border);
-    color: var(--theme-text);
+    background: var(--color-theme-surface);
+    border: 1px solid var(--color-theme-border);
+    color: var(--color-theme-text);
     padding: 0.5rem 1rem;
     border-radius: 4px;
     cursor: pointer;
@@ -236,8 +236,8 @@
   }
 
   button.primary {
-    background: var(--theme-primary, #3b82f6);
-    color: var(--theme-bg, #fff);
+    background: var(--color-theme-primary, #3b82f6);
+    color: var(--color-theme-bg, #fff);
     border: none;
   }
 
