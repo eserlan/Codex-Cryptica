@@ -1,7 +1,7 @@
 ---
 id: chronology
 title: Custom Chronology
-description: Master the sands of time with era-aware date pickers and custom campaign calendars.
+description: Master the sands of time with tactile grid pickers and custom campaign calendars.
 icon: icon-[lucide--history]
 tags: ["time", "timeline", "calendar", "eras"]
 ---
@@ -12,27 +12,35 @@ Codex Arcana allows you to define the very structure of time for your campaign w
 
 ## The Date Picker
 
-When editing an entity's date, start date, or end date, you will now see a theme-aware **Date Picker**.
+When editing an entity's temporal data (Date, Start Date, or End Date), you will use the tactile **Date Picker**.
 
-### Era-Centric Navigation
+### Tactile Year Selection
 
-Instead of scrolling through thousands of years, you can select an **Era** (defined in your Vault Settings). Selecting an Era will automatically snap the year input to the beginning of that period, allowing for rapid narrative-based data entry.
+The year picker uses a grid-based navigation system designed for fast, non-keyboard entry across vast timelines:
+
+1. **Drill Down**: Click a Century to see its Decades, then click a Decade to select a specific Year.
+2. **Zoom Out**: Click the header (e.g., "1200 - 1211") to jump back up to the Decade or Century view.
+3. **Navigate**: Use the left/right arrows to slide the current grid forward or backward in time.
+
+### Era-Centric Snapping
+
+If you have defined **Eras** in your Vault Settings, you can use the "Eras" tab to instantly snap the picker to the beginning of a historical period. This is the fastest way to navigate across millennia.
 
 ### Precision Levels
 
-Not every event needs a specific day. The picker allows you to choose your granularity:
+The picker allows you to choose your granularity using the toggle at the top:
 
-- **Year**: Just the big picture.
-- **Month**: For seasonal events.
-- **Day**: For specific historical moments.
+- **Year**: For broad historical events.
+- **Month**: For seasonal occurrences.
+- **Day**: For specific, high-precision moments.
 
 ## Campaign Calendars
 
 In the **Vault Settings**, you can fully customize your world's calendar:
 
-1. **Standard Gregorian**: Keep this enabled to use the standard 12-month calendar we all know.
-2. **Custom Months**: Disable Gregorian mode to define your own months. You can rename them (e.g., "Hammer", "Alturiak") and even change how many days each month has.
-3. **Epoch Suffixes**: Add suffixes like "AF" (After Fall) or "BCE" to your years for better immersion.
+1. **Standard Gregorian**: Keep this enabled to use the standard 12-month calendar.
+2. **Custom Months**: Disable Gregorian mode to define your own months. You can rename them (e.g., "Hammer", "Alturiak") and set custom lengths.
+3. **Epoch Suffixes**: Add suffixes like "AF" (After Fall) or "BCE" to your years for immersion.
 4. **Present Year**: Set a "Present" marker to anchor your narrative timeline.
 
 ## Linear Time Mapping

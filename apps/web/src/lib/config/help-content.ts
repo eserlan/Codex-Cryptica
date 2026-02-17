@@ -111,9 +111,9 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "era-date-picker": {
     id: "era-date-picker",
-    title: "Era-Aware Selection",
+    title: "Tactile Year Picker",
     content:
-      "Use the 'Eras' tab in the date picker to quickly snap to historical periods instead of typing long years.",
+      "Click the year grid to drill down from Centuries to Decades and specific Years. Faster than typing!",
   },
 };
 
