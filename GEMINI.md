@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x, Node.js 20+ + `idb` (IndexedDB wrapper), Web Crypto API (for hashing), Svelte 5 (Runes) (046-import-state-management)
+- IndexedDB (new `import_registry` store) (046-import-state-management)
+
 - IndexedDB (via `idb`) for campaign settings, OPFS for vault metadata (045-campaign-date-picker)
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine) (044-oracle-chat-commands)
@@ -84,9 +87,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 046-import-state-management: Added TypeScript 5.x, Node.js 20+ + `idb` (IndexedDB wrapper), Web Crypto API (for hashing), Svelte 5 (Runes)
+
 - 045-campaign-date-picker: Added TypeScript 5.x, Node.js 20+
 
 - 044-oracle-chat-commands: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine)
-- 044-oracle-chat-commands: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 <!-- MANUAL ADDITIONS START -->

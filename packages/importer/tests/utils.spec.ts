@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { htmlToMarkdown } from "../src/utils";
+import { htmlToMarkdown, calculateFileHash } from "../src/utils";
 
 describe("htmlToMarkdown", () => {
   it("converts basic HTML to markdown", () => {
@@ -52,5 +52,28 @@ describe("htmlToMarkdown", () => {
     const html =
       "<div><p>Paragraph with <em>italic <strong>bold</strong></em></p></div>";
     expect(htmlToMarkdown(html)).toBe("Paragraph with *italic **bold***");
+  });
+});
+
+describe("calculateFileHash", () => {
+  it("generates a consistent SHA-256 hash for a blob", async () => {
+    const content = "Hello World";
+    const blob = new Blob([content], { type: "text/plain" });
+    const hash = await calculateFileHash(blob);
+
+    // sha256("Hello World")
+    expect(hash).toBe(
+      "a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e",
+    );
+  });
+
+  it("generates different hashes for different content", async () => {
+    const blob1 = new Blob(["Content 1"]);
+    const blob2 = new Blob(["Content 2"]);
+
+    const hash1 = await calculateFileHash(blob1);
+    const hash2 = await calculateFileHash(blob2);
+
+    expect(hash1).not.toBe(hash2);
   });
 });

@@ -6,6 +6,7 @@ import type {
   AnalysisOptions,
 } from "../types";
 import { EXTRACTION_PROMPT } from "./prompt-factory";
+import { splitTextIntoChunks } from "../utils";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
@@ -21,42 +22,49 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     text: string,
     options?: AnalysisOptions,
   ): Promise<AnalysisResult> {
-    if (text.length <= CHUNK_SIZE) {
-      return this.processChunk(text);
-    }
-
-    // Chunking Logic
-    const chunks: string[] = [];
-    let start = 0;
-    while (start < text.length) {
-      let end = start + CHUNK_SIZE;
-      if (end < text.length) {
-        // Try to find a paragraph break to split cleanly
-        const lastNewline = text.lastIndexOf("\n", end);
-        if (lastNewline > start + CHUNK_SIZE / 2) {
-          end = lastNewline;
-        }
-      }
-      chunks.push(text.slice(start, end));
-      start = end - OVERLAP_SIZE; // Overlap for context continuity
-    }
+    const chunks = splitTextIntoChunks(text, CHUNK_SIZE, OVERLAP_SIZE);
 
     console.log(`[OracleAnalyzer] Split text into ${chunks.length} chunks.`);
 
     // Process all chunks
     const allEntities: DiscoveredEntity[] = [];
-    let processed = 0;
+    const completedSet = new Set(options?.completedIndices || []);
 
-    for (const chunk of chunks) {
-      processed++;
-      console.log(
-        `[OracleAnalyzer] Processing chunk ${processed}/${chunks.length}...`,
-      );
-      if (options?.onProgress) {
-        options.onProgress(processed, chunks.length);
+    for (let i = 0; i < chunks.length; i++) {
+      if (options?.signal?.aborted) {
+        console.log("[OracleAnalyzer] Analysis aborted by user.");
+        throw new Error("Analysis Aborted");
       }
+      const chunk = chunks[i];
+
+      if (completedSet.has(i)) {
+        console.log(
+          `[OracleAnalyzer] Skipping chunk ${i + 1}/${chunks.length} (Already completed)`,
+        );
+        if (options?.onProgress) {
+          options.onProgress(i + 1, chunks.length);
+        }
+        continue;
+      }
+
+      console.log(
+        `[OracleAnalyzer] Processing chunk ${i + 1}/${chunks.length}...`,
+      );
+
+      if (options?.onChunkActive) {
+        options.onChunkActive(i);
+      }
+
+      if (options?.onProgress) {
+        options.onProgress(i + 1, chunks.length);
+      }
+
       const result = await this.processChunk(chunk);
       allEntities.push(...result.entities);
+
+      if (options?.onChunkProcessed) {
+        options.onChunkProcessed(i, result);
+      }
     }
 
     return this.mergeDuplicates(allEntities);
