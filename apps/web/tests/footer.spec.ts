@@ -41,7 +41,7 @@ test.describe("Footer", () => {
     // Wait for Service Worker to be ready
     await page.evaluate(async () => {
       if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.ready;
+        await navigator.serviceWorker.ready;
       }
     });
 
