@@ -109,6 +109,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Click your Vault's name at the top to switch to a different campaign folder.",
   },
+  "era-date-picker": {
+    id: "era-date-picker",
+    title: "Era-Aware Selection",
+    content:
+      "Use the 'Eras' tab in the date picker to quickly snap to historical periods instead of typing long years.",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

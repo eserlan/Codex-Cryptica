@@ -39,6 +39,7 @@
     "@types/gapi": "^0.0.47",
     "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client.drive": "^3.0.15",
+    "chronology-engine": "*",
     "comlink": "^4.4.2",
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",

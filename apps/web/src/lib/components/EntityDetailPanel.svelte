@@ -98,6 +98,7 @@
     class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
     ontouchmove={(e) => e.stopPropagation()}
     onwheel={(e) => e.stopPropagation()}
+    data-testid="entity-detail-panel"
   >
     <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
 

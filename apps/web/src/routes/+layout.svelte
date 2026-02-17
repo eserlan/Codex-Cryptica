@@ -20,6 +20,7 @@
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
   import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
   import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
@@ -120,12 +121,16 @@
 
     window.addEventListener("error", handleGlobalError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
+    window.addEventListener("vault-switched", () => {
+      calendarStore.init();
+    });
 
     // Expose for E2E testing
     if (import.meta.env.DEV || (window as any).__E2E__) {
       (window as any).searchStore = searchStore;
       (window as any).vault = vault;
       (window as any).graph = graph;
+      (window as any).calendarStore = calendarStore;
       (window as any).oracle = oracle;
       (window as any).aiService = aiService;
       (window as any).categories = categories;

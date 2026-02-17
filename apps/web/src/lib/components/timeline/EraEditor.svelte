@@ -45,6 +45,7 @@
           type="text"
           bind:value={newEraName}
           placeholder="e.g. The Age of Myth"
+          data-testid="era-name-input"
           class="w-full bg-black border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
@@ -57,6 +58,7 @@
           id="era-start-input"
           type="number"
           bind:value={newEraStart}
+          data-testid="era-start-input"
           class="w-full bg-black border border-purple-900/30 rounded px-3 py-1.5 text-xs text-purple-100 outline-none focus:border-purple-500 transition-all font-mono"
         />
       </div>
@@ -70,6 +72,7 @@
           type="number"
           bind:value={newEraEnd}
           placeholder="Present"
+          data-testid="era-end-input"
           class="w-full bg-black border border-purple-900/30 rounded px-3 py-1.5 text-xs text-purple-100 outline-none focus:border-purple-500 transition-all font-mono"
         />
       </div>
@@ -77,19 +80,22 @@
 
     <div class="mt-4 flex items-center gap-4">
       <div class="flex items-center gap-2">
-        <label class="text-xs text-theme-text/70 uppercase font-bold"
+        <label
+          class="text-xs text-theme-text/70 uppercase font-bold"
           for="era-color-input">Color</label
         >
         <input
           id="era-color-input"
           type="color"
           bind:value={newEraColor}
+          data-testid="era-color-input"
           class="w-6 h-6 bg-transparent border-none cursor-pointer"
         />
       </div>
       <button
         onclick={handleAdd}
         disabled={!newEraName.trim()}
+        data-testid="initialize-era-button"
         class="flex-1 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-xs font-bold tracking-widest uppercase disabled:opacity-30"
       >
         Initialize Era
