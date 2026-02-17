@@ -64,10 +64,22 @@ export function splitTextIntoChunks(
   while (start < text.length) {
     let end = start + chunkSize;
     if (end < text.length) {
-      // Try to find a paragraph break to split cleanly
+      // Try to find a paragraph break to split cleanly, falling back to a space
+      const minSplit = start + chunkSize / 2;
+      let splitPos = -1;
+
       const lastNewline = text.lastIndexOf("\n", end);
-      if (lastNewline > start + chunkSize / 2) {
-        end = lastNewline;
+      if (lastNewline >= minSplit) {
+        splitPos = lastNewline;
+      } else {
+        const lastSpace = text.lastIndexOf(" ", end);
+        if (lastSpace >= minSplit) {
+          splitPos = lastSpace;
+        }
+      }
+
+      if (splitPos !== -1) {
+        end = splitPos;
       }
     }
     chunks.push(text.slice(start, end));

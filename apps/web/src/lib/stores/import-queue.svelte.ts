@@ -46,10 +46,11 @@ class ImportQueueStore {
     }
 
     this.activeItemId = nextItem.id;
+    this.activeItemChunks = {}; // Reset progress state for new item
     nextItem.status = "processing";
 
-    // Process the file (this logic will be integrated into vault store / io)
-    // For now, we manage the queue state
+    // NOTE: Actual file processing logic is managed by the UI component (ImportSettings)
+    // for now to maintain proximity to analyzer/vault stores.
   }
 
   updateChunkStatus(

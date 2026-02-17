@@ -31,8 +31,10 @@ export async function getRegistry(
   const store = tx.objectStore(STORE_NAME);
 
   let record = await store.get(hash);
+  let isNew = false;
 
   if (!record) {
+    isNew = true;
     record = {
       hash,
       fileName,
@@ -49,8 +51,10 @@ export async function getRegistry(
   await store.put(record);
   await tx.done;
 
-  // Prune registry after adding/updating
-  await pruneRegistry();
+  // Prune registry only after adding a NEW file to minimize transaction conflicts
+  if (isNew) {
+    await pruneRegistry();
+  }
 
   return record;
 }
@@ -94,6 +98,7 @@ export async function pruneRegistry(): Promise<void> {
   const store = tx.objectStore(STORE_NAME);
   const index = store.index("by-last-used");
 
+  // Traversal from newest to oldest ("prev") to keep the 10 most recent
   const cursor = await index.openCursor(null, "prev");
   let count = 0;
 
@@ -129,7 +134,7 @@ export function generateMarkdownFile(entity: DiscoveredEntity): string {
         if (typeof v === "object" && v !== null) {
           // Simple key-value pairing for connection objects
           return `{ ${Object.entries(v)
-            .map(([sk, sv]) => `${sk}: "${String(sv).replace(/"/g, '\\"')}"`)
+            .map(([sk, sv]) => `${sk}: "${String(sv).replace(/"/g, '"')}"`)
             .join(", ")} }`;
         }
         return `"${v}"`;
@@ -140,7 +145,7 @@ export function generateMarkdownFile(entity: DiscoveredEntity): string {
       typeof value === "string" &&
       (value.includes(":") || value.includes("\n"))
     ) {
-      return `${key}: "${value.replace(/"/g, '\\"')}"`;
+      return `${key}: "${value.replace(/"/g, '"')}"`;
     }
     return `${key}: ${value}`;
   });

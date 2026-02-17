@@ -28,4 +28,50 @@ test.describe("Import Progress Management E2E", () => {
       page.getByText(/drag files here or paste content/i),
     ).toBeVisible();
   });
+
+  test("should import a file and update progress indicators", async ({
+    page,
+  }) => {
+    // 1. Open Settings
+    await page.getByTestId("settings-button").click();
+
+    // 2. Go to Vault Tab
+    await page.getByRole("tab", { name: "Vault" }).click();
+
+    // 3. Upload an archive file
+    const fileInput = page.locator("#file-input");
+    await fileInput.setInputFiles("apps/web/tests/fixtures/sample-import.json");
+
+    // 4. Verify that import progress indicators appear
+    // We expect the "Analyzing" text to appear
+    await expect(page.getByText(/analyzing/i)).toBeVisible();
+    await expect(page.locator(".animate-spin")).toBeVisible();
+  });
+
+  test("should resume import progress after page reload", async ({ page }) => {
+    // 1. Open Settings
+    await page.getByTestId("settings-button").click();
+
+    // 2. Go to Vault Tab
+    await page.getByRole("tab", { name: "Vault" }).click();
+
+    // 3. Start an import
+    const fileInput = page.locator("#file-input");
+    await fileInput.setInputFiles("apps/web/tests/fixtures/sample-import.json");
+    await expect(page.getByText(/analyzing/i)).toBeVisible();
+
+    // 4. Simulate a user refreshing the page
+    await page.reload();
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+
+    // 5. Navigate back to the Vault settings tab
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: "Vault" }).click();
+
+    // 6. Verify that "Already processed" or progress is remembered
+    // If it was small, it might already be done.
+    // Given the resume logic, it should show either the progress bar or the resume toast
+    // for identical files.
+    await expect(page.getByText(/already processed|resuming/i)).toBeVisible();
+  });
 });

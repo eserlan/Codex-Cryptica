@@ -100,18 +100,25 @@
         totalChunks = chunks.length;
 
         // Check Registry
+
         const registry = await getRegistry(hash, file.name, totalChunks);
+
         if (registry.completedIndices.length > 0) {
           if (registry.completedIndices.length === totalChunks) {
-            statusMessage = "Already processed. Click Restart to re-analyze.";
+            statusMessage = `Already processed: ${file.name}.`;
+
+            continue; // Skip to next file
           } else {
             showResumeToast = true;
+
             setTimeout(() => (showResumeToast = false), 5000);
           }
         }
 
         // Initialize progress UI state
+
         importQueue.activeItemChunks = {};
+
         registry.completedIndices.forEach((idx) => {
           importQueue.updateChunkStatus(idx, "skipped");
         });
@@ -119,20 +126,25 @@
         if (signal.aborted) break;
 
         statusMessage = `Analyzing ${file.name} with Oracle...`;
-        const fileEntities: DiscoveredEntity[] = [];
 
         await analyzer.analyze(result.text, {
           signal,
+
           knownEntities,
+
           completedIndices: registry.completedIndices,
+
           onChunkActive: (idx) => {
             importQueue.updateChunkStatus(idx, "active");
+
             statusMessage = `Analyzing chunk ${idx + 1}/${totalChunks}...`;
           },
+
           onChunkProcessed: async (idx, res) => {
             await markChunkComplete(hash, idx);
+
             importQueue.updateChunkStatus(idx, "completed");
-            fileEntities.push(...res.entities);
+
             discoveredEntities = [...discoveredEntities, ...res.entities];
           },
         });
@@ -141,15 +153,31 @@
       } catch (err: any) {
         if (err.message === "Analysis Aborted") {
           console.log("Analysis aborted gracefully.");
+
           return;
         }
+
         console.error(`Failed to process ${file.name}:`, err);
+
+        // On unexpected errors, clear any partial registry state for this file
+
+        try {
+          await clearRegistryEntry(hash);
+        } catch (cleanupErr) {
+          console.error(
+            `Failed to clear analysis progress for ${file.name}:`,
+
+            cleanupErr,
+          );
+        }
       }
     }
 
     if (signal.aborted) {
       step = "upload";
+
       discoveredEntities = [];
+
       return;
     }
 
@@ -159,22 +187,28 @@
   const handleRestart = async () => {
     if (currentFileHash) {
       await clearRegistryEntry(currentFileHash);
+
       step = "upload";
+
       statusMessage = "Progress cleared. Please select the file again.";
     }
   };
 
   const handleSave = async (toSave: DiscoveredEntity[]) => {
     step = "processing";
+
     statusMessage = `Finalizing ${toSave.length} entities...`;
 
     const signal = uiStore.abortSignal;
 
     const mapType = (type: string) => {
       const t = type.toLowerCase();
+
       if (t === "character") return "character";
+
       if (["location", "item", "event", "faction", "note"].includes(t))
         return t;
+
       return "note";
     };
 
@@ -184,27 +218,38 @@
       if (signal.aborted) break;
 
       const title = entity.suggestedTitle;
+
       const entityId = sanitizeId(title) || "untitled";
+
       const type = mapType(entity.suggestedType) as any;
 
       const existingId =
         entity.matchedEntityId || (vault.entities[entityId] ? entityId : null);
+
       if (existingId && vault.entities[existingId]) {
         const existing = vault.entities[existingId];
+
         statusMessage = `Updating connections for existing entity: ${existing.title}...`;
 
         const newConnections = (entity.detectedLinks || [])
+
           .map((link) => {
             const targetName = typeof link === "string" ? link : link.target;
+
             const label =
               typeof link === "string" ? link : link.label || link.target;
+
             return {
               target: sanitizeId(targetName) || "untitled",
+
               label,
+
               type: "related_to",
+
               strength: 1,
             };
           })
+
           .filter(
             (newConn) =>
               !existing.connections.some(
@@ -217,25 +262,35 @@
             connections: [...existing.connections, ...newConnections],
           });
         }
+
         continue;
       }
 
       // Check for image metadata in extracted assets
+
       const imgRef = entity.frontmatter.image;
+
       let width = entity.frontmatter.width;
+
       let height = entity.frontmatter.height;
+
       let imagePath = entity.frontmatter.image;
+
       let thumbnailPath = entity.frontmatter.thumbnail;
 
       if (imgRef && extractedAssets.has(imgRef)) {
         const asset = extractedAssets.get(imgRef);
+
         width = width || asset.width;
+
         height = height || asset.height;
 
         try {
           imagePath = await vault.saveImageToVault(
             asset.blob,
+
             entityId,
+
             asset.originalName,
           );
         } catch (err) {
@@ -245,25 +300,39 @@
 
       batchData.push({
         type,
+
         title,
+
         initialData: {
           content: entity.chronicle || entity.content,
+
           lore: entity.lore,
+
           labels: entity.frontmatter.labels || [],
+
           metadata: {
             width: typeof width === "number" ? width : undefined,
+
             height: typeof height === "number" ? height : undefined,
           },
+
           image: imagePath,
+
           thumbnail: thumbnailPath,
+
           connections: (entity.detectedLinks || []).map((link) => {
             const targetName = typeof link === "string" ? link : link.target;
+
             const label =
               typeof link === "string" ? link : link.label || link.target;
+
             return {
               target: sanitizeId(targetName) || "untitled",
+
               label: label,
+
               type: "related_to",
+
               strength: 1,
             };
           }),
@@ -273,6 +342,7 @@
 
     if (signal.aborted) {
       step = "review";
+
       return;
     }
 
@@ -280,16 +350,21 @@
       if (batchData.length > 0) {
         await vault.batchCreateEntities(batchData);
       }
+
       step = "complete";
     } catch (err) {
       console.error("Batch import failed:", err);
+
       alert("Failed to save imported entities. Check console for details.");
+
       step = "review";
+
       return;
     }
 
     setTimeout(() => {
       step = "upload";
+
       discoveredEntities = [];
     }, 3000);
   };
@@ -299,6 +374,7 @@
   <h3 class="text-xs font-bold text-theme-primary uppercase tracking-widest">
     Archive Ingestion
   </h3>
+
   <p class="text-[13px] text-theme-text/70 leading-relaxed">
     Import existing documents, lore bibles, or JSON data. The Oracle will
     automatically fragment monolithic files into distinct entities and extract
@@ -312,13 +388,16 @@
       <span
         class="icon-[lucide--alert-triangle] w-5 h-5 text-red-400 shrink-0 mt-0.5"
       ></span>
+
       <div class="flex flex-col gap-1">
         <span class="text-xs font-bold text-red-400 uppercase tracking-wider"
           >Oracle Connection Required</span
         >
+
         <p class="text-[11px] text-red-400/80 leading-tight">
           Intelligent ingestion requires an active Gemini API key. Please
           configure your access in the
+
           <button
             class="underline hover:text-red-300"
             onclick={() => (uiStore.activeSettingsTab = "intelligence")}
@@ -338,8 +417,10 @@
         class="flex items-center gap-2 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
       >
         <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+
         Resuming previous import
       </div>
+
       <button
         onclick={handleRestart}
         class="text-[9px] font-bold underline hover:text-theme-text"
@@ -360,6 +441,7 @@
           <div
             class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
           ></div>
+
           <div class="absolute inset-0 flex items-center justify-center">
             <span
               class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
@@ -373,6 +455,7 @@
           >
             {statusMessage}
           </p>
+
           <p class="text-[9px] text-theme-muted uppercase tracking-[0.2em]">
             Oracle is interpreting your notes
           </p>
@@ -388,7 +471,7 @@
           onclick={() => uiStore.abortActiveOperations()}
           class="text-[9px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase tracking-widest"
         >
-          Cancel & Clear Progress
+          Cancel Import
         </button>
       </div>
     {:else if step === "review"}
