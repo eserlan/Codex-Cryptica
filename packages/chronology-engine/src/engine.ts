@@ -25,12 +25,27 @@ export const DEFAULT_CALENDAR: CampaignCalendar = {
   daysPerWeek: 7,
 };
 
+const daysInYearCache = new WeakMap<CampaignCalendar, number>();
+
 export class CalendarEngine {
   /**
    * Get the active month list for a configuration.
    */
   getMonths(config: CampaignCalendar): CalendarMonth[] {
     return config.useGregorian ? GREGORIAN_MONTHS : config.months;
+  }
+
+  /**
+   * Get the total days in a year for the given configuration.
+   * Results are cached to avoid redundant reductions in performance-critical loops.
+   */
+  getDaysInYear(config: CampaignCalendar): number {
+    if (daysInYearCache.has(config)) {
+      return daysInYearCache.get(config)!;
+    }
+    const total = this.getMonths(config).reduce((acc, m) => acc + m.days, 0);
+    daysInYearCache.set(config, total);
+    return total;
   }
 
   /**
@@ -84,15 +99,10 @@ export class CalendarEngine {
   }
 
   /**
-   * Get the total days in a year for the given configuration.
-   */
-  getDaysInYear(config: CampaignCalendar): number {
-    return this.getMonths(config).reduce((acc, m) => acc + m.days, 0);
-  }
-
-  /**
    * Convert a date to a linear numeric value for sorting and positioning.
    * This handles custom month lengths to ensure correct spacing.
+   *
+   * Note: This uses ISO 8601 style numbering (including Year 0).
    */
   getTimelineValue(date: TemporalMetadata, config: CampaignCalendar): number {
     const months = this.getMonths(config);

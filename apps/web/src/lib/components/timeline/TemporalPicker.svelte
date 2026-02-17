@@ -69,6 +69,16 @@
     updatePosition();
     pickerElement?.focus();
 
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        pickerElement &&
+        !pickerElement.contains(e.target as Node) &&
+        !trigger.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
     let ticking = false;
     const handleScroll = () => {
       if (!ticking) {
@@ -80,8 +90,12 @@
       }
     };
 
+    window.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+    };
   });
 
   const save = () => {
@@ -102,21 +116,25 @@
     yearPickerView = "years";
   };
 
+  const focusableElements = $derived.by(() => {
+    if (!pickerElement) return [];
+    return Array.from(
+      pickerElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ),
+    ) as HTMLElement[];
+  });
+
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
     if (e.key === "Enter") save();
 
     // Simple Focus Trap
     if (e.key === "Tab") {
-      const focusableElements = pickerElement?.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (!focusableElements) return;
+      if (focusableElements.length === 0) return;
 
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[
-        focusableElements.length - 1
-      ] as HTMLElement;
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -157,10 +175,10 @@
   const navigateView = (direction: number) => {
     const step =
       yearPickerView === "years"
-        ? 10
+        ? 12
         : yearPickerView === "decades"
-          ? 100
-          : 1000;
+          ? 120
+          : 1200;
     viewBaseYear += direction * step;
   };
 
@@ -315,6 +333,7 @@
           <div class="flex items-center justify-between">
             <button
               onclick={() => navigateView(-1)}
+              aria-label="Navigate Previous"
               class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
             >
               <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
@@ -327,6 +346,7 @@
             </button>
             <button
               onclick={() => navigateView(1)}
+              aria-label="Navigate Next"
               class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
             >
               <span class="icon-[lucide--chevron-right] w-4 h-4"></span>
