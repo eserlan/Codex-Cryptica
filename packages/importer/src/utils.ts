@@ -9,6 +9,60 @@ export function htmlToMarkdown(html: string): string {
   return turndownService.turndown(html);
 }
 
+import type { DiscoveredEntity } from "./types";
+
+/**
+ * Merges a list of discovered entities by title, deduplicating them and combining their lore/chronicle.
+ */
+export function mergeEntities(
+  entities: DiscoveredEntity[],
+): DiscoveredEntity[] {
+  const map = new Map<string, DiscoveredEntity>();
+
+  for (const entity of entities) {
+    const key = entity.suggestedTitle.toLowerCase().trim();
+    if (!map.has(key)) {
+      map.set(key, { ...entity });
+    } else {
+      const existing = map.get(key)!;
+      // Merge Content
+      if (entity.chronicle) {
+        existing.chronicle = [existing.chronicle, entity.chronicle]
+          .filter(Boolean)
+          .join("\n\n");
+      }
+      if (entity.lore) {
+        existing.lore = [existing.lore, entity.lore]
+          .filter(Boolean)
+          .join("\n\n");
+      }
+      if (entity.content) {
+        existing.content = [existing.content, entity.content]
+          .filter(Boolean)
+          .join("\n\n");
+      }
+      // Merge Image
+      existing.frontmatter.image =
+        existing.frontmatter.image || entity.frontmatter.image;
+      // Merge Links
+      const existingLinks = new Map<string, any>();
+      [...existing.detectedLinks, ...entity.detectedLinks].forEach((link) => {
+        const l = typeof link === "string" ? { target: link } : link;
+        const targetKey = l.target.toLowerCase().trim();
+        if (
+          !existingLinks.has(targetKey) ||
+          (!existingLinks.get(targetKey).label && l.label)
+        ) {
+          existingLinks.set(targetKey, l);
+        }
+      });
+      existing.detectedLinks = Array.from(existingLinks.values());
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 /**
  * Generates a SHA-256 hash for a file blob to uniquely identify content.
  */

@@ -6,7 +6,7 @@ import type {
   AnalysisOptions,
 } from "../types";
 import { EXTRACTION_PROMPT } from "./prompt-factory";
-import { splitTextIntoChunks } from "../utils";
+import { splitTextIntoChunks, mergeEntities } from "../utils";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
@@ -67,7 +67,7 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
       }
     }
 
-    return this.mergeDuplicates(allEntities);
+    return { entities: mergeEntities(allEntities) };
   }
 
   private async processChunk(
@@ -165,53 +165,6 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     console.error("Oracle Analysis failed with all available models.");
     return { entities: [] };
-  }
-
-  private mergeDuplicates(entities: DiscoveredEntity[]): AnalysisResult {
-    const map = new Map<string, DiscoveredEntity>();
-
-    for (const entity of entities) {
-      const key = entity.suggestedTitle.toLowerCase().trim();
-      if (!map.has(key)) {
-        map.set(key, entity);
-      } else {
-        const existing = map.get(key)!;
-        // Merge Content
-        if (entity.chronicle) {
-          existing.chronicle = [existing.chronicle, entity.chronicle]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        if (entity.lore) {
-          existing.lore = [existing.lore, entity.lore]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        if (entity.content) {
-          existing.content = [existing.content, entity.content]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        // Merge Image
-        existing.frontmatter.image =
-          existing.frontmatter.image || entity.frontmatter.image;
-        // Merge Links
-        const existingLinks = new Map<string, any>();
-        [...existing.detectedLinks, ...entity.detectedLinks].forEach((link) => {
-          const l = typeof link === "string" ? { target: link } : link;
-          const targetKey = l.target.toLowerCase().trim();
-          if (
-            !existingLinks.has(targetKey) ||
-            (!existingLinks.get(targetKey).label && l.label)
-          ) {
-            existingLinks.set(targetKey, l);
-          }
-        });
-        existing.detectedLinks = Array.from(existingLinks.values());
-      }
-    }
-
-    return { entities: Array.from(map.values()) };
   }
 
   private slugify(text: string): string {

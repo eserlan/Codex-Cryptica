@@ -16,6 +16,7 @@
     markChunkComplete,
     clearRegistryEntry,
     splitTextIntoChunks,
+    mergeEntities,
   } from "@codex/importer";
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
@@ -145,7 +146,11 @@
 
             importQueue.updateChunkStatus(idx, "completed");
 
-            discoveredEntities = [...discoveredEntities, ...res.entities];
+            discoveredEntities = mergeEntities([
+              ...discoveredEntities,
+
+              ...res.entities,
+            ]);
           },
         });
 

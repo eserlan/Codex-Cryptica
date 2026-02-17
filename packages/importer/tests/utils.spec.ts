@@ -3,7 +3,9 @@ import {
   htmlToMarkdown,
   calculateFileHash,
   splitTextIntoChunks,
+  mergeEntities,
 } from "../src/utils";
+import { DiscoveredEntity } from "../src/types";
 
 describe("htmlToMarkdown", () => {
   it("converts basic HTML to markdown", () => {
@@ -116,5 +118,50 @@ describe("splitTextIntoChunks", () => {
     const chunks = splitTextIntoChunks(text, 10, 10);
     expect(chunks).toBeDefined();
     expect(chunks.length).toBeGreaterThan(0);
+  });
+});
+
+describe("mergeEntities", () => {
+  it("merges entities with the same title", () => {
+    const entities: DiscoveredEntity[] = [
+      {
+        id: "1",
+        suggestedTitle: "Eldrin",
+        suggestedType: "NPC",
+        chronicle: "First part.",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "Sword", label: "weapon" }],
+        suggestedFilename: "eldrin.md",
+      },
+      {
+        id: "2",
+        suggestedTitle: "eldrin ", // Case and whitespace variation
+        suggestedType: "Character",
+        chronicle: "Second part.",
+        lore: "More lore.",
+        content: "",
+        frontmatter: { image: "eldrin.png" },
+        confidence: 1,
+        detectedLinks: [{ target: "Sword" }, { target: "Magic" }],
+        suggestedFilename: "eldrin.md",
+      },
+    ];
+
+    const merged = mergeEntities(entities);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0].suggestedTitle).toBe("Eldrin");
+    expect(merged[0].chronicle).toBe("First part.\n\nSecond part.");
+    expect(merged[0].lore).toBe("More lore.");
+    expect(merged[0].frontmatter.image).toBe("eldrin.png");
+    // Links should be deduplicated by target, favoring those with labels
+    expect(merged[0].detectedLinks).toHaveLength(2);
+    expect(
+      merged[0].detectedLinks.find((l) => l.target.toLowerCase() === "sword")
+        ?.label,
+    ).toBe("weapon");
   });
 });
