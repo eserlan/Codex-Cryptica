@@ -380,6 +380,10 @@
                   <div class="text-theme-text">Codex Cryptica</div>
                 </div>
                 <div>
+                  <div class="text-theme-muted uppercase mb-1">Version</div>
+                  <div class="text-theme-text">{VERSION}</div>
+                </div>
+                <div>
                   <div class="text-theme-muted uppercase mb-1">Codename</div>
                   <div class="text-theme-text">
                     {CODENAME}
