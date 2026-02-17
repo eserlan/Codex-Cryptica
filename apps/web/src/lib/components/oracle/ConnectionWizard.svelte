@@ -134,6 +134,8 @@
         bind:value={sourceName}
         bind:selectedId={sourceId}
         placeholder="Type entity name..."
+        id="wizard-source-search"
+        ariaLabel="Search source entity"
       />
     </div>
   {:else if step === "SELECT_TARGET"}
@@ -153,6 +155,8 @@
         bind:value={targetName}
         bind:selectedId={targetId}
         placeholder="Type entity name..."
+        id="wizard-target-search"
+        ariaLabel="Search target entity"
       />
     </div>
   {:else if step === "PROPOSING"}
@@ -208,10 +212,12 @@
       <div class="grid grid-cols-2 gap-2">
         <div class="flex flex-col gap-1">
           <label
+            for="wizard-connection-type"
             class="text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
             >Base Type</label
           >
           <select
+            id="wizard-connection-type"
             bind:value={type}
             class="bg-theme-surface text-theme-text border border-theme-border rounded px-2 py-1 text-xs focus:outline-none focus:border-theme-primary"
           >
@@ -222,10 +228,12 @@
         </div>
         <div class="flex flex-col gap-1">
           <label
+            for="wizard-connection-label"
             class="text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
             >Label (Custom)</label
           >
           <input
+            id="wizard-connection-label"
             type="text"
             bind:value={label}
             placeholder="e.g. Rival"

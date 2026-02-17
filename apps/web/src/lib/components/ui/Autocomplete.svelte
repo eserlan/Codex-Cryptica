@@ -13,11 +13,17 @@
     selectedId = $bindable<string | null>(null),
     placeholder = "Search entities...",
     minChars = 3,
+    id,
+    ariaLabel,
+    ariaLabelledBy,
   } = $props<{
     value?: string;
     selectedId?: string | null;
     placeholder?: string;
     minChars?: number;
+    id?: string;
+    ariaLabel?: string;
+    ariaLabelledBy?: string;
   }>();
 
   let results = $state<SearchResult[]>([]);
@@ -25,6 +31,15 @@
   let showResults = $state(false);
   let isLoading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+  // Generate a stable ID if none is provided
+  let generatedId = $state("");
+  $effect(() => {
+    if (!id && !generatedId) {
+      generatedId = "autocomplete-" + Math.random().toString(36).substring(2, 9);
+    }
+  });
+  let finalId = $derived(id || generatedId);
 
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -99,8 +114,18 @@
 <div class="relative w-full">
   <input
     type="text"
+    id={finalId}
     {value}
     {placeholder}
+    role="combobox"
+    aria-autocomplete="list"
+    aria-expanded={showResults}
+    aria-controls={showResults ? `${finalId}-listbox` : undefined}
+    aria-activedescendant={showResults && selectedIndex >= 0
+      ? `${finalId}-option-${selectedIndex}`
+      : undefined}
+    aria-label={ariaLabel}
+    aria-labelledby={ariaLabelledBy}
     oninput={handleInput}
     onkeydown={handleKeyDown}
     onblur={() => setTimeout(() => (showResults = false), 200)}
@@ -112,10 +137,16 @@
 
   {#if showResults}
     <div
+      id="{finalId}-listbox"
+      role="listbox"
+      aria-label="Search results"
       class="absolute z-50 w-full mt-1 bg-theme-surface border border-theme-border rounded shadow-xl max-h-60 overflow-y-auto"
     >
       {#each results as result, i}
         <button
+          id="{finalId}-option-{i}"
+          role="option"
+          aria-selected={i === selectedIndex}
           class="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors
             {i === selectedIndex
             ? 'bg-theme-primary/20 text-theme-primary'
