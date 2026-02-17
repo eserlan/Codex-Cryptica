@@ -46,6 +46,15 @@
     timelineStore.init();
     graph.init();
 
+    // Register Service Worker for PWA/Offline support
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register(`${base}/service-worker.js`)
+        .catch((error) => {
+          console.warn("Service Worker registration failed:", error);
+        });
+    }
+
     // Standard Initialization
     vault
       .init()

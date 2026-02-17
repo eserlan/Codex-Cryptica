@@ -34,10 +34,21 @@ test.describe("Footer", () => {
     expect(classes).toContain("tracking-widest");
   });
 
-  test.skip("Patreon link should persist in offline mode", async ({
+  test("Patreon link should persist in offline mode", async ({
     context,
     page,
   }) => {
+    // Wait for Service Worker to be ready
+    await page.evaluate(async () => {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.active;
+      }
+    });
+
+    // Reload page to ensure SW controls it and caches resources
+    await page.reload();
+
     // Go offline
     await context.setOffline(true);
     await page.reload();

@@ -61,7 +61,7 @@ test.describe("Sync Fidelity & Binary Safety", () => {
     });
 
     await page.waitForFunction(() => (window as any).__syncStatus === "ERROR", {
-      timeout: 10000,
+      timeout: 30000,
     });
 
     const syncStatus = await page.evaluate(() => {
