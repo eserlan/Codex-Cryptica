@@ -40,6 +40,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ["graph-engine", "editor-core", "schema"],
+    exclude: ["graph-engine", "editor-core", "schema", "chronology-engine"],
   },
 });

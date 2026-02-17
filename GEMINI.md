@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- IndexedDB (via `idb`) for campaign settings, OPFS for vault metadata (045-campaign-date-picker)
+
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine) (044-oracle-chat-commands)
 - OPFS (Vault Files), IndexedDB (Chat History, Search Index) (044-oracle-chat-commands)
 
@@ -82,9 +84,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 045-campaign-date-picker: Added TypeScript 5.x, Node.js 20+
+
 - 044-oracle-chat-commands: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine)
 - 044-oracle-chat-commands: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-
-- 042-improve-help-structure: Migrated help content to Markdown files with frontmatter and implemented direct help linking.
 
 <!-- MANUAL ADDITIONS START -->

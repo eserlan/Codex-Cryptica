@@ -323,6 +323,7 @@
     class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md"
     transition:fade={{ duration: 200 }}
     onclick={handleClose}
+    data-testid="zen-mode-modal"
   >
     <div
       role="dialog"
@@ -417,6 +418,7 @@
             <button
               onclick={startEditing}
               class="px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              data-testid="edit-entity-button"
             >
               <span class="icon-[lucide--edit-2] w-3 h-3"></span>
               EDIT

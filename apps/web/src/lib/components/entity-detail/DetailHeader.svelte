@@ -81,6 +81,7 @@
           class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
           aria-label="Enter Zen Mode"
           title="Zen Mode (Full Screen)"
+          data-testid="enter-zen-mode-button"
         >
           <span class="icon-[lucide--maximize-2] w-5 h-5"></span>
         </button>

@@ -109,6 +109,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Click your Vault's name at the top to switch to a different campaign folder.",
   },
+  "era-date-picker": {
+    id: "era-date-picker",
+    title: "Tactile Year Picker",
+    content:
+      "Click the year grid to drill down from Centuries to Decades and specific Years. Faster than typing!",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
