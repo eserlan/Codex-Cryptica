@@ -55,7 +55,7 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-export const DB_VERSION = 7;
+export const DB_VERSION = 8;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
