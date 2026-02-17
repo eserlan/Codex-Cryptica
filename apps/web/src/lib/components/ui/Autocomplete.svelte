@@ -1,3 +1,7 @@
+<script lang="ts" module>
+  let nextId = 0;
+</script>
+
 <script lang="ts">
   import { searchService } from "$lib/services/search";
   import { vault } from "$lib/stores/vault.svelte";
@@ -6,7 +10,7 @@
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   let {
     value = $bindable(""),
@@ -34,12 +38,18 @@
 
   // Generate a stable ID if none is provided
   let generatedId = $state("");
-  $effect(() => {
-    if (!id && !generatedId) {
-      generatedId = "autocomplete-" + Math.random().toString(36).substring(2, 9);
+  onMount(() => {
+    if (!id) {
+      generatedId = `autocomplete-${nextId++}`;
     }
   });
   let finalId = $derived(id || generatedId);
+
+  let ariaAttributes = $derived.by(() => {
+    if (ariaLabelledBy) return { "aria-labelledby": ariaLabelledBy };
+    if (ariaLabel) return { "aria-label": ariaLabel };
+    return {};
+  });
 
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
@@ -124,8 +134,7 @@
     aria-activedescendant={showResults && selectedIndex >= 0
       ? `${finalId}-option-${selectedIndex}`
       : undefined}
-    aria-label={ariaLabel}
-    aria-labelledby={ariaLabelledBy}
+    {...ariaAttributes}
     oninput={handleInput}
     onkeydown={handleKeyDown}
     onblur={() => setTimeout(() => (showResults = false), 200)}
