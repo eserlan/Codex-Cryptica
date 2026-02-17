@@ -115,6 +115,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Click the year grid to drill down from Centuries to Decades and specific Years. Faster than typing!",
   },
+  "import-resume": {
+    id: "import-resume",
+    title: "Resilient Imports",
+    content:
+      "Large file imports are now saved automatically. If interrupted, just re-select the file to resume.",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

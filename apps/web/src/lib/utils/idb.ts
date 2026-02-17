@@ -55,7 +55,9 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-export const DB_VERSION = 7;
+// DB_VERSION was bumped to 8 to accommodate temporary schema changes in feature branch 046.
+// Reverting to 7 would cause VersionErrors for users who accessed the branch.
+export const DB_VERSION = 8;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 

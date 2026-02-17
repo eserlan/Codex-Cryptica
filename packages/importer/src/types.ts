@@ -1,3 +1,19 @@
+export interface ImportRegistry {
+  hash: string;
+  fileName: string;
+  totalChunks: number;
+  completedIndices: number[];
+  createdAt: number;
+  lastUsedAt: number;
+}
+
+export interface ImportQueueItem {
+  id: string;
+  hash: string;
+  status: "pending" | "processing" | "completed";
+  progress: number;
+}
+
 export interface ImportSession {
   id: string; // UUID
   timestamp: number;
@@ -75,8 +91,12 @@ export interface OracleAnalyzerEngine {
 
 export interface AnalysisOptions {
   batchContext?: string[];
-  knownEntities?: string[];
+  knownEntities?: Record<string, string>; // Mapping of title -> id
+  completedIndices?: number[];
+  signal?: AbortSignal;
   onProgress?: (current: number, total: number) => void;
+  onChunkActive?: (index: number) => void;
+  onChunkProcessed?: (index: number, result: AnalysisResult) => void;
 }
 
 export interface AnalysisResult {

@@ -6,6 +6,7 @@ import type {
   AnalysisOptions,
 } from "../types";
 import { EXTRACTION_PROMPT } from "./prompt-factory";
+import { splitTextIntoChunks, mergeEntities } from "../utils";
 
 const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
@@ -21,49 +22,67 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
     text: string,
     options?: AnalysisOptions,
   ): Promise<AnalysisResult> {
-    if (text.length <= CHUNK_SIZE) {
-      return this.processChunk(text);
-    }
-
-    // Chunking Logic
-    const chunks: string[] = [];
-    let start = 0;
-    while (start < text.length) {
-      let end = start + CHUNK_SIZE;
-      if (end < text.length) {
-        // Try to find a paragraph break to split cleanly
-        const lastNewline = text.lastIndexOf("\n", end);
-        if (lastNewline > start + CHUNK_SIZE / 2) {
-          end = lastNewline;
-        }
-      }
-      chunks.push(text.slice(start, end));
-      start = end - OVERLAP_SIZE; // Overlap for context continuity
-    }
+    const chunks = splitTextIntoChunks(text, CHUNK_SIZE, OVERLAP_SIZE);
 
     console.log(`[OracleAnalyzer] Split text into ${chunks.length} chunks.`);
 
     // Process all chunks
     const allEntities: DiscoveredEntity[] = [];
-    let processed = 0;
+    const completedSet = new Set(options?.completedIndices || []);
 
-    for (const chunk of chunks) {
-      processed++;
-      console.log(
-        `[OracleAnalyzer] Processing chunk ${processed}/${chunks.length}...`,
-      );
-      if (options?.onProgress) {
-        options.onProgress(processed, chunks.length);
+    for (let i = 0; i < chunks.length; i++) {
+      if (options?.signal?.aborted) {
+        console.log("[OracleAnalyzer] Analysis aborted by user.");
+        throw new Error("Analysis Aborted");
       }
-      const result = await this.processChunk(chunk);
+      const chunk = chunks[i];
+
+      if (completedSet.has(i)) {
+        console.log(
+          `[OracleAnalyzer] Skipping chunk ${i + 1}/${chunks.length} (Already completed)`,
+        );
+        if (options?.onProgress) {
+          options.onProgress(i + 1, chunks.length);
+        }
+        continue;
+      }
+
+      console.log(
+        `[OracleAnalyzer] Processing chunk ${i + 1}/${chunks.length}...`,
+      );
+
+      if (options?.onChunkActive) {
+        options.onChunkActive(i);
+      }
+
+      if (options?.onProgress) {
+        options.onProgress(i + 1, chunks.length);
+      }
+
+      const result = await this.processChunk(chunk, options);
       allEntities.push(...result.entities);
+
+      if (options?.onChunkProcessed) {
+        options.onChunkProcessed(i, result);
+      }
     }
 
-    return this.mergeDuplicates(allEntities);
+    return { entities: mergeEntities(allEntities) };
   }
 
-  private async processChunk(text: string): Promise<AnalysisResult> {
-    const prompt = `${EXTRACTION_PROMPT}\n\nInput Text:\n${text}`;
+  private async processChunk(
+    text: string,
+    options?: AnalysisOptions,
+  ): Promise<AnalysisResult> {
+    const knownEntityList = options?.knownEntities
+      ? Object.keys(options.knownEntities)
+      : [];
+    const contextStr =
+      knownEntityList.length > 0
+        ? `\n\nKnown Entities in Vault (try to match these if they appear): ${knownEntityList.join(", ")}`
+        : "";
+
+    const prompt = `${EXTRACTION_PROMPT}${contextStr}\n\nInput Text:\n${text}`;
 
     // Attempt models in order of strength/preference, aligned with app configuration
     const models = [
@@ -96,9 +115,23 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
             typeof rawImage === "string" &&
             (rawImage.startsWith("http://") || rawImage.startsWith("https://"));
 
+          const title = item.title;
+          let matchedEntityId: string | undefined = undefined;
+
+          if (options?.knownEntities) {
+            // Case-insensitive exact title match
+            const normalizedTitle = title.toLowerCase().trim();
+            const match = Object.entries(options.knownEntities).find(
+              ([t]) => t.toLowerCase().trim() === normalizedTitle,
+            );
+            if (match) {
+              matchedEntityId = match[1];
+            }
+          }
+
           return {
             id: crypto.randomUUID(),
-            suggestedTitle: item.title,
+            suggestedTitle: title,
             suggestedType: item.type,
             chronicle: item.chronicle || item.content || "",
             lore: item.lore || "",
@@ -111,7 +144,8 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
               image: isValidUrl ? rawImage : undefined,
             },
             confidence: 1, // Placeholder
-            suggestedFilename: this.slugify(item.title),
+            suggestedFilename: this.slugify(title),
+            matchedEntityId,
             detectedLinks: (item.detectedLinks || []).map((link: any) => {
               if (typeof link === "string") return { target: link };
               return {
@@ -131,53 +165,6 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
 
     console.error("Oracle Analysis failed with all available models.");
     return { entities: [] };
-  }
-
-  private mergeDuplicates(entities: DiscoveredEntity[]): AnalysisResult {
-    const map = new Map<string, DiscoveredEntity>();
-
-    for (const entity of entities) {
-      const key = entity.suggestedTitle.toLowerCase().trim();
-      if (!map.has(key)) {
-        map.set(key, entity);
-      } else {
-        const existing = map.get(key)!;
-        // Merge Content
-        if (entity.chronicle) {
-          existing.chronicle = [existing.chronicle, entity.chronicle]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        if (entity.lore) {
-          existing.lore = [existing.lore, entity.lore]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        if (entity.content) {
-          existing.content = [existing.content, entity.content]
-            .filter(Boolean)
-            .join("\n\n");
-        }
-        // Merge Image
-        existing.frontmatter.image =
-          existing.frontmatter.image || entity.frontmatter.image;
-        // Merge Links
-        const existingLinks = new Map<string, any>();
-        [...existing.detectedLinks, ...entity.detectedLinks].forEach((link) => {
-          const l = typeof link === "string" ? { target: link } : link;
-          const targetKey = l.target.toLowerCase().trim();
-          if (
-            !existingLinks.has(targetKey) ||
-            (!existingLinks.get(targetKey).label && l.label)
-          ) {
-            existingLinks.set(targetKey, l);
-          }
-        });
-        existing.detectedLinks = Array.from(existingLinks.values());
-      }
-    }
-
-    return { entities: Array.from(map.values()) };
   }
 
   private slugify(text: string): string {
