@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test.describe("Import Progress Management E2E", () => {
   test.beforeEach(async ({ page }) => {
@@ -11,16 +11,21 @@ test.describe("Import Progress Management E2E", () => {
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
   });
 
-  test("should detect and display resume state for previously processed files", async ({
-    page,
-  }) => {
-    // This test would ideally mock the IndexedDB state and file selection
-    // Given the complexity of mocking FileSystem API and Oracle in E2E,
-    // we verify the UI components are present.
-
-    // 1. Open Import Modal
+  test("should show the import section in vault settings", async ({ page }) => {
+    // 1. Open Settings
     await page.getByTestId("settings-button").click();
+
+    // 2. Go to Vault Tab
     await page.getByRole("tab", { name: "Vault" }).click();
-    // Assuming there's an import button in settings or similar
+
+    // 3. Verify Archive Ingestion section
+    await expect(
+      page.getByRole("heading", { name: /archive ingestion/i }),
+    ).toBeVisible();
+
+    // 4. Verify Dropzone presence
+    await expect(
+      page.getByText(/drag files here or paste content/i),
+    ).toBeVisible();
   });
 });

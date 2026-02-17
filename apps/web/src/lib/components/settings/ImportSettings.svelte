@@ -2,19 +2,32 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { importQueue } from "$lib/stores/import-queue.svelte";
   import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
   import ReviewList from "$lib/features/importer/ReviewList.svelte";
+  import ImportProgress from "../import/ImportProgress.svelte";
   import {
     TextParser,
     DocxParser,
     JsonParser,
     OracleAnalyzer,
+    calculateFileHash,
+    getRegistry,
+    markChunkComplete,
+    clearRegistryEntry,
+    splitTextIntoChunks,
   } from "@codex/importer";
   import type { DiscoveredEntity } from "@codex/importer";
   import { sanitizeId } from "$lib/utils/markdown";
-  import { searchService } from "$lib/services/search";
+  import { slide, fade } from "svelte/transition";
 
   let step = $state<"upload" | "processing" | "review" | "complete">("upload");
+  let statusMessage = $state("");
+  let discoveredEntities = $state<DiscoveredEntity[]>([]);
+  let extractedAssets = new Map<string, any>(); // filename -> asset
+  let totalChunks = $state(0);
+  let showResumeToast = $state(false);
+  let currentFileHash = $state("");
 
   $effect(() => {
     uiStore.isImporting = step === "processing" || step === "review";
@@ -33,10 +46,6 @@
     };
   });
 
-  let statusMessage = $state("");
-  let discoveredEntities = $state<DiscoveredEntity[]>([]);
-  let extractedAssets = new Map<string, any>(); // filename -> asset
-
   const parsers = [
     new TextParser(),
     new DocxParser(),
@@ -45,23 +54,32 @@
   ];
 
   const handleFiles = async (files: File[]) => {
-    if (!oracle.apiKey && !import.meta.env.VITE_SHARED_GEMINI_KEY) {
+    const apiKey = oracle.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    if (!apiKey) {
       alert("Oracle API Key required for intelligent import.");
       return;
     }
 
     step = "processing";
-    const analyzer = new OracleAnalyzer(
-      oracle.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY,
-    );
+    const analyzer = new OracleAnalyzer(apiKey);
 
     discoveredEntities = [];
     extractedAssets.clear();
 
     const signal = uiStore.abortSignal;
 
+    // Build known entities map for reconciliation
+    const knownEntities: Record<string, string> = {};
+    Object.values(vault.entities).forEach((e) => {
+      knownEntities[e.title] = e.id;
+    });
+
     for (const file of files) {
       if (signal.aborted) break;
+
+      statusMessage = `Hashing ${file.name}...`;
+      const hash = await calculateFileHash(file);
+      currentFileHash = hash;
 
       const parser = parsers.find((p) => p.accepts(file));
       if (!parser) {
@@ -78,58 +96,53 @@
           extractedAssets.set(asset.placementRef, asset);
         });
 
-        if (signal.aborted) break;
+        const chunks = splitTextIntoChunks(result.text);
+        totalChunks = chunks.length;
 
-        statusMessage = `Analyzing ${file.name} with Oracle...`;
-        const analysis = await analyzer.analyze(result.text, {
-          onProgress: (current, total) => {
-            statusMessage = `Analyzing ${file.name} with Oracle (Chunk ${current}/${total})...`;
-          },
+        // Check Registry
+        const registry = await getRegistry(hash, file.name, totalChunks);
+        if (registry.completedIndices.length > 0) {
+          if (registry.completedIndices.length === totalChunks) {
+            statusMessage = "Already processed. Click Restart to re-analyze.";
+          } else {
+            showResumeToast = true;
+            setTimeout(() => (showResumeToast = false), 5000);
+          }
+        }
+
+        // Initialize progress UI state
+        importQueue.activeItemChunks = {};
+        registry.completedIndices.forEach((idx) => {
+          importQueue.updateChunkStatus(idx, "skipped");
         });
 
         if (signal.aborted) break;
 
-        // Lenient identification of existing entities in parallel
-        await Promise.all(
-          analysis.entities.map(async (entity) => {
-            const id = sanitizeId(entity.suggestedTitle) || "untitled";
-            if (vault.entities[id]) {
-              entity.matchedEntityId = id;
-            } else {
-              // Fuzzy search for "somewhat" match
-              const results = await searchService.search(
-                entity.suggestedTitle,
-                {
-                  limit: 1,
-                },
-              );
-              if (results.length > 0 && results[0].score > 0.9) {
-                const matchedEntity = vault.entities[results[0].id];
-                if (matchedEntity) {
-                  // Double check: titles should share at least one significant word to avoid false positives
-                  const suggestedWords = entity.suggestedTitle
-                    .toLowerCase()
-                    .split(/\s+/)
-                    .filter((w) => w.length > 3);
-                  const matchedWords = matchedEntity.title
-                    .toLowerCase()
-                    .split(/\s+/)
-                    .filter((w) => w.length > 3);
-                  const hasWordMatch = suggestedWords.some((w) =>
-                    matchedWords.includes(w),
-                  );
+        statusMessage = `Analyzing ${file.name} with Oracle...`;
+        const fileEntities: DiscoveredEntity[] = [];
 
-                  if (hasWordMatch) {
-                    entity.matchedEntityId = results[0].id;
-                  }
-                }
-              }
-            }
-          }),
-        );
+        await analyzer.analyze(result.text, {
+          signal,
+          knownEntities,
+          completedIndices: registry.completedIndices,
+          onChunkActive: (idx) => {
+            importQueue.updateChunkStatus(idx, "active");
+            statusMessage = `Analyzing chunk ${idx + 1}/${totalChunks}...`;
+          },
+          onChunkProcessed: async (idx, res) => {
+            await markChunkComplete(hash, idx);
+            importQueue.updateChunkStatus(idx, "completed");
+            fileEntities.push(...res.entities);
+            discoveredEntities = [...discoveredEntities, ...res.entities];
+          },
+        });
 
-        discoveredEntities = [...discoveredEntities, ...analysis.entities];
+        if (signal.aborted) break;
       } catch (err: any) {
+        if (err.message === "Analysis Aborted") {
+          console.log("Analysis aborted gracefully.");
+          return;
+        }
         console.error(`Failed to process ${file.name}:`, err);
       }
     }
@@ -141,6 +154,14 @@
     }
 
     step = "review";
+  };
+
+  const handleRestart = async () => {
+    if (currentFileHash) {
+      await clearRegistryEntry(currentFileHash);
+      step = "upload";
+      statusMessage = "Progress cleared. Please select the file again.";
+    }
   };
 
   const handleSave = async (toSave: DiscoveredEntity[]) => {
@@ -169,7 +190,6 @@
       const existingId =
         entity.matchedEntityId || (vault.entities[entityId] ? entityId : null);
       if (existingId && vault.entities[existingId]) {
-        // ISSUE #149: Don't import existing nodes, just connect to them.
         const existing = vault.entities[existingId];
         statusMessage = `Updating connections for existing entity: ${existing.title}...`;
 
@@ -197,7 +217,7 @@
             connections: [...existing.connections, ...newConnections],
           });
         }
-        continue; // Skip creation
+        continue;
       }
 
       // Check for image metadata in extracted assets
@@ -309,19 +329,67 @@
     </div>
   {/if}
 
+  {#if showResumeToast}
+    <div
+      transition:slide
+      class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
+    >
+      <div
+        class="flex items-center gap-2 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+      >
+        <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+        Resuming previous import
+      </div>
+      <button
+        onclick={handleRestart}
+        class="text-[9px] font-bold underline hover:text-theme-text"
+      >
+        START OVER
+      </button>
+    </div>
+  {/if}
+
   <div
-    class="bg-theme-surface border border-theme-border p-4 rounded-lg min-h-[200px] flex flex-col justify-center"
+    class="bg-theme-surface border border-theme-border p-4 rounded-lg min-h-[200px] flex flex-col justify-center relative overflow-hidden"
   >
     {#if step === "upload"}
       <ImportDropzone onFileSelect={handleFiles} />
     {:else if step === "processing"}
-      <div class="flex flex-col items-center gap-4 py-8">
-        <div
-          class="w-8 h-8 border-2 border-theme-primary border-t-transparent rounded-full animate-spin"
-        ></div>
-        <p class="text-xs font-mono text-theme-primary uppercase animate-pulse">
-          {statusMessage}
-        </p>
+      <div class="flex flex-col items-center gap-6 py-8">
+        <div class="relative">
+          <div
+            class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
+          ></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <span
+              class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
+            ></span>
+          </div>
+        </div>
+
+        <div class="text-center space-y-1">
+          <p
+            class="text-xs font-mono text-theme-primary uppercase tracking-tight"
+          >
+            {statusMessage}
+          </p>
+          <p class="text-[9px] text-theme-muted uppercase tracking-[0.2em]">
+            Oracle is interpreting your notes
+          </p>
+        </div>
+
+        {#if totalChunks > 0}
+          <div transition:fade class="w-full max-w-md px-4">
+            <ImportProgress {totalChunks} />
+          </div>
+        {/if}
+
+        <button
+          onclick={() => uiStore.abortActiveOperations()}
+          class="text-[9px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase tracking-widest"
+        >
+          Cancel & Clear Progress
+        </button>
       </div>
     {:else if step === "review"}
       <ReviewList
@@ -330,13 +398,20 @@
         onCancel={() => (step = "upload")}
       />
     {:else if step === "complete"}
-      <div class="flex flex-col items-center gap-2 py-8 text-theme-primary">
-        <span class="icon-[lucide--check-circle] w-12 h-12"></span>
-        <p class="text-xs font-bold uppercase tracking-widest">
+      <div
+        class="flex flex-col items-center gap-2 py-8 text-theme-primary"
+        transition:fade
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
+        >
+          <span class="icon-[lucide--check-circle] w-8 h-8"></span>
+        </div>
+        <p class="text-sm font-bold uppercase tracking-widest">
           Import Successful
         </p>
-        <p class="text-[11px] text-theme-muted uppercase font-mono">
-          Archive updated
+        <p class="text-[10px] text-theme-muted uppercase font-mono">
+          Archive updated with {discoveredEntities.length} records
         </p>
       </div>
     {/if}

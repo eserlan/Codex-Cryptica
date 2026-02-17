@@ -36,7 +36,22 @@ As a user who occasionally re-imports updated versions of my notes, I want the s
 
 ---
 
-### User Story 3 - Visual Progress Tracking (Priority: P3)
+### User Story 3 - Automatic Entity Reconciliation (Priority: P2)
+
+As a user with an established vault, I want the Oracle to automatically recognize when discovered text refers to an existing entity so that I can merge new information into my current records rather than creating duplicates.
+
+**Why this priority**: Prevents vault fragmentation and ensures the Knowledge Graph remains the "single source of truth".
+
+**Independent Test**: Can be tested by importing a document containing a character name that already exists in the vault. The system should mark the discovered entity as "Linked" or "Existing" during the review phase.
+
+**Acceptance Scenarios**:
+
+1. **Given** an entity "Eldrin" exists in the vault, **When** a document mentioning "Eldrin" is imported, **Then** the discovered entity should have its `matchedEntityId` populated with Eldrin's ID.
+2. **Given** multiple matches, **When** the Oracle performs analysis, **Then** it should prioritize titles provided in the analysis context.
+
+---
+
+### User Story 4 - Visual Progress Tracking (Priority: P3)
 
 As a user, I want to see a detailed progress indicator for my imports so that I understand how much work remains and can see which parts of my file are being analyzed.
 
@@ -69,6 +84,8 @@ As a user, I want to see a detailed progress indicator for my imports so that I 
 - **FR-005**: System MUST provide a user interface that displays segmented progress, distinguishing between skipped, completed, and pending chunks.
 - **FR-006**: System MUST allow the user to manually "Restart" an import, ignoring any saved progress in the registry.
 - **FR-007**: System MUST limit the size of the progress registry to a maximum of 10 unique file signatures, purging the oldest records to prevent excessive local storage growth.
+- **FR-008**: System MUST perform a case-insensitive title match between discovered entities and existing vault records to populate the `matchedEntityId`.
+- **FR-009**: System MUST include existing vault titles in the Oracle's analysis context to improve entity resolution accuracy.
 
 ### Key Entities
 
@@ -83,3 +100,4 @@ As a user, I want to see a detailed progress indicator for my imports so that I 
 - **SC-002**: The system identifies a resuming file and restores its state in under 500ms after selection.
 - **SC-003**: The progress UI accurately reflects the real-time state of the background worker with less than 100ms latency.
 - **SC-004**: System demonstrates a >90% reduction in redundant AI token consumption when re-importing identical files by skipping previously completed chunks.
+- **SC-005**: 100% of exact-title matches with existing vault entities are correctly identified and resolved with `matchedEntityId` before the review stage.

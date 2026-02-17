@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleAnalyzer } from "../../src/oracle/analyzer";
 
 // Mock GoogleGenerativeAI
@@ -16,6 +16,13 @@ vi.mock("@google/generative-ai", () => ({
 describe("OracleAnalyzer", () => {
   const apiKey = "test-key";
   const analyzer = new OracleAnalyzer(apiKey);
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockGetGenerativeModel.mockReturnValue({
+      generateContent: mockGenerateContent,
+    });
+  });
 
   it("analyzes text and returns entities", async () => {
     const mockResponse = JSON.stringify([
@@ -124,5 +131,50 @@ describe("OracleAnalyzer", () => {
 
     expect(result.entities).toHaveLength(1);
     expect(result.entities[0].suggestedTitle).toBe("Noise Test");
+  });
+
+  it("skips completed chunks based on options", async () => {
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => '[{"title":"Test","type":"Character"}]' },
+    });
+
+    // 100k chars / 50k chunk size = ~3 chunks with 2k overlap
+    const text = "A".repeat(100000);
+    const options = {
+      completedIndices: [0, 1], // Skip first two
+    };
+
+    await analyzer.analyze(text, options);
+
+    // Should only process the last chunk once
+    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("reconciles entities against knownEntities map", async () => {
+    const mockResponse = JSON.stringify([{ title: "Eldrin", type: "NPC" }]);
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => mockResponse },
+    });
+
+    const result = await analyzer.analyze("Eldrin appears.", {
+      knownEntities: { Eldrin: "existing-uuid-123" },
+    });
+
+    expect(result.entities[0].matchedEntityId).toBe("existing-uuid-123");
+  });
+
+  it("aborts analysis when AbortSignal is triggered", async () => {
+    const controller = new AbortController();
+    const text = "A".repeat(100000);
+
+    // Abort after first chunk starts
+    const options = {
+      signal: controller.signal,
+      onChunkActive: () => controller.abort(),
+    };
+
+    await expect(analyzer.analyze(text, options)).rejects.toThrow(
+      "Analysis Aborted",
+    );
   });
 });

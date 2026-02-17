@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { htmlToMarkdown, calculateFileHash } from "../src/utils";
+import {
+  htmlToMarkdown,
+  calculateFileHash,
+  splitTextIntoChunks,
+} from "../src/utils";
 
 describe("htmlToMarkdown", () => {
   it("converts basic HTML to markdown", () => {
@@ -75,5 +79,42 @@ describe("calculateFileHash", () => {
     const hash2 = await calculateFileHash(blob2);
 
     expect(hash1).not.toBe(hash2);
+  });
+});
+
+describe("splitTextIntoChunks", () => {
+  it("splits text into chunks with overlap", () => {
+    const text = "A".repeat(100);
+    const chunks = splitTextIntoChunks(text, 50, 10);
+    // Chunk 1: 0-50
+    // Chunk 2: (50-10)-100 -> 40-90
+    // Chunk 3: (90-10)-100 -> 80-100
+    expect(chunks).toHaveLength(3);
+    expect(chunks[0].length).toBe(50);
+    expect(chunks[1].length).toBe(50);
+    expect(chunks[2].length).toBe(20);
+  });
+
+  it("splits cleanly at paragraph breaks when available", () => {
+    const text = "First Paragraph\n\nSecond Paragraph\n\nThird Paragraph";
+    // Force a split in the middle of the second paragraph
+    const chunks = splitTextIntoChunks(text, 25, 5);
+    // Should favor the \n\n breaks
+    expect(chunks[0]).toContain("First Paragraph");
+    expect(chunks[1]).toContain("Second Paragraph");
+    expect(chunks[2]).toContain("Third Paragraph");
+  });
+
+  it("handles empty or small strings", () => {
+    expect(splitTextIntoChunks("", 50)).toEqual([""]);
+    expect(splitTextIntoChunks("Short", 50)).toEqual(["Short"]);
+  });
+
+  it("guards against infinite loop with invalid overlap", () => {
+    const text = "Test Content";
+    // overlap >= chunkSize would normally cause an infinite loop
+    const chunks = splitTextIntoChunks(text, 10, 10);
+    expect(chunks).toBeDefined();
+    expect(chunks.length).toBeGreaterThan(0);
   });
 });
