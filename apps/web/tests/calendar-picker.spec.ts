@@ -25,8 +25,9 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
   if (!canvasBox) throw new Error("Graph canvas not found");
 
   await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
-  // Wait for the panel to transition in
-  await page.waitForTimeout(500);
+
+  // Wait for the panel to transition in and be stable
+  await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
 };
 
 test.describe("Campaign Date Picker E2E", () => {
@@ -91,7 +92,6 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 2. Open Zen Mode for the entity
     await clickNodeOnCanvas(page, "Test Event");
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
@@ -138,7 +138,6 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 2. Open Zen Mode and Date Picker
     await clickNodeOnCanvas(page, "Test Event");
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
@@ -165,7 +164,6 @@ test.describe("Campaign Date Picker E2E", () => {
 
   test("should allow navigating years via pure UI grid", async ({ page }) => {
     await clickNodeOnCanvas(page, "Test Event");
-    await expect(page.getByTestId("enter-zen-mode-button")).toBeVisible();
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
@@ -202,5 +200,27 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.click('button:has-text("105")');
     await page.getByTestId("apply-date-button").click();
     await expect(page.locator('button:has-text("105")').first()).toBeVisible();
+  });
+
+  test("should allow manual year entry via keyboard toggle", async ({
+    page,
+  }) => {
+    await clickNodeOnCanvas(page, "Test Event");
+    await page.getByTestId("enter-zen-mode-button").click();
+    await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
+    await page.getByTestId("edit-entity-button").click();
+    await page.click('button:has-text("No date set...")');
+    await page.click('button:has-text("Detail")');
+
+    // 1. Toggle manual entry
+    await page.getByLabel("Toggle Manual Entry").click();
+    await expect(page.locator("#manual-year-input")).toBeFocused();
+
+    // 2. Type a year
+    await page.locator("#manual-year-input").fill("2026");
+    await page.getByTestId("apply-date-button").click();
+
+    // 3. Verify
+    await expect(page.locator('button:has-text("2026")').first()).toBeVisible();
   });
 });

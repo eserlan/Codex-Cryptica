@@ -4,7 +4,7 @@
   import type { TemporalMetadata } from "chronology-engine";
   import { calendarEngine } from "chronology-engine";
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { fade, scale, slide } from "svelte/transition";
 
   let {
@@ -18,6 +18,7 @@
   } = $props();
 
   let pickerElement = $state<HTMLElement>();
+  let manualInputRef = $state<HTMLInputElement>();
   let x = $state(0);
   let y = $state(0);
 
@@ -37,6 +38,7 @@
 
   let activeTab = $state<"era" | "manual">("manual");
   let selectedEraId = $state<string | null>(null);
+  let isManualYearEntry = $state(false);
 
   // Year Picker Navigation State
   let yearPickerView = $state<"years" | "decades" | "centuries">("years");
@@ -114,6 +116,16 @@
     selectedEraId = era.id;
     activeTab = "manual";
     yearPickerView = "years";
+    isManualYearEntry = false;
+  };
+
+  const toggleManualEntry = async () => {
+    isManualYearEntry = !isManualYearEntry;
+    if (isManualYearEntry) {
+      await tick();
+      manualInputRef?.focus();
+      manualInputRef?.select();
+    }
   };
 
   const focusableElements = $derived.by(() => {
@@ -127,7 +139,8 @@
 
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
-    if (e.key === "Enter") save();
+    if (e.key === "Enter" && document.activeElement?.tagName !== "BUTTON")
+      save();
 
     // Simple Focus Trap
     if (e.key === "Tab") {
@@ -328,44 +341,76 @@
           {/each}
         </div>
 
-        <!-- Pure UI Year Picker -->
+        <!-- Pure UI Year Picker / Manual Entry -->
         <div class="space-y-2">
           <div class="flex items-center justify-between">
             <button
               onclick={() => navigateView(-1)}
               aria-label="Navigate Previous"
-              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
+              disabled={isManualYearEntry}
+              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors disabled:opacity-0"
             >
               <span class="icon-[lucide--chevron-left] w-4 h-4"></span>
             </button>
             <button
               onclick={zoomOut}
-              class="text-[10px] font-bold text-theme-text uppercase tracking-widest hover:text-theme-primary transition-colors"
+              disabled={isManualYearEntry}
+              class="text-[10px] font-bold text-theme-text uppercase tracking-widest hover:text-theme-primary transition-colors disabled:pointer-events-none"
             >
-              {viewTitle}
+              {isManualYearEntry ? "Manual Entry" : viewTitle}
             </button>
-            <button
-              onclick={() => navigateView(1)}
-              aria-label="Navigate Next"
-              class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors"
-            >
-              <span class="icon-[lucide--chevron-right] w-4 h-4"></span>
-            </button>
+            <div class="flex items-center gap-1">
+              <button
+                onclick={toggleManualEntry}
+                aria-label="Toggle Manual Entry"
+                class="p-1 hover:bg-theme-primary/10 rounded {isManualYearEntry
+                  ? 'text-theme-primary'
+                  : 'text-theme-muted'} hover:text-theme-primary transition-colors"
+              >
+                <span class="icon-[lucide--keyboard] w-4 h-4"></span>
+              </button>
+              <button
+                onclick={() => navigateView(1)}
+                aria-label="Navigate Next"
+                disabled={isManualYearEntry}
+                class="p-1 hover:bg-theme-primary/10 rounded text-theme-muted hover:text-theme-primary transition-colors disabled:opacity-0"
+              >
+                <span class="icon-[lucide--chevron-right] w-4 h-4"></span>
+              </button>
+            </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-1">
-            {#each gridItems as item}
-              <button
-                onclick={() => selectInGrid(item)}
-                class="py-2 text-[11px] font-mono rounded border transition-all {selectedYear ===
-                  item && yearPickerView === 'years'
-                  ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-[0_0_10px_rgba(var(--color-primary),0.3)]'
-                  : 'bg-theme-bg/50 border-theme-border/30 text-theme-text hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+          {#if isManualYearEntry}
+            <div transition:fade class="space-y-1">
+              <label
+                for="manual-year-input"
+                class="text-[9px] font-bold text-theme-muted uppercase tracking-widest"
+                >Year</label
               >
-                {item}
-              </button>
-            {/each}
-          </div>
+              <input
+                id="manual-year-input"
+                bind:this={manualInputRef}
+                type="number"
+                bind:value={selectedYear}
+                class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
+                placeholder="Enter Year..."
+              />
+            </div>
+          {:else}
+            <div class="grid grid-cols-3 gap-1" transition:fade>
+              {#each gridItems as item}
+                <button
+                  onclick={() => selectInGrid(item)}
+                  class="py-2 text-[11px] font-mono rounded border transition-all {selectedYear ===
+                    item && yearPickerView === 'years'
+                    ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-[0_0_10px_rgba(var(--color-primary),0.3)]'
+                    : 'bg-theme-bg/50 border-theme-border/30 text-theme-text hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+                >
+                  {item}
+                </button>
+              {/each}
+            </div>
+          {/if}
 
           {#if isYearOutOfRange}
             <div
