@@ -28,8 +28,12 @@
 
     if (input.startsWith("/")) {
       // Keep menu open if we haven't typed a space yet (command selection)
-      // OR if it's the /connect command (wizard flow)
-      if (!input.includes(" ") || input.startsWith("/connect")) {
+      // OR if it's the /connect or /merge command (wizard flow)
+      if (
+        !input.includes(" ") ||
+        input.startsWith("/connect") ||
+        input.startsWith("/merge")
+      ) {
         showCommandMenu = true;
       } else {
         showCommandMenu = false;

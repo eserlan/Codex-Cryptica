@@ -32,4 +32,16 @@ export const chatCommands: ChatCommand[] = [
       }
     },
   },
+  {
+    name: "/merge",
+    description: "Merge entities with AI guidance",
+    parameters: ["source", "into", "target"],
+    handler: (args) => {
+      if (args.trim().toLowerCase() === "oracle") {
+        oracle.startWizard("merge");
+      } else {
+        oracle.ask(`/merge ${args}`);
+      }
+    },
+  },
 ];

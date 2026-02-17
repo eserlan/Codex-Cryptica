@@ -309,6 +309,45 @@ Output JSON:
     }
   }
 
+  async parseMergeIntent(
+    apiKey: string,
+    modelName: string,
+    input: string,
+  ): Promise<{
+    sourceName: string;
+    targetName: string;
+  }> {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: { responseMimeType: "application/json" },
+    });
+
+    const prompt = `Extract the source entity and the target entity from the following natural language merge request.
+    
+USER INPUT: "${input}"
+
+INSTRUCTIONS:
+1. Identify the "Source" entity (the one being absorbed/deleted) and the "Target" entity (the one being kept/updated). 
+2. The user often uses patterns like "merge A into B" (Source=A, Target=B) or "combine A and B" (Source=A, Target=B).
+
+Output JSON:
+{
+  "sourceName": "string",
+  "targetName": "string"
+}`;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    try {
+      const cleanedText = text.replace(/```json|```/g, "").trim();
+      return JSON.parse(cleanedText);
+    } catch {
+      console.warn("Proposer: Failed to parse merge intent JSON", text);
+      return { sourceName: "", targetName: "" };
+    }
+  }
+
   async reEvaluateProposal(proposalId: string): Promise<void> {
     const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);

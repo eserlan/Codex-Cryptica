@@ -57,6 +57,18 @@ export interface IProposerService {
     label?: string;
   }>;
 
+  /**
+   * Parses a natural language string into merge components (source and target).
+   */
+  parseMergeIntent(
+    apiKey: string,
+    modelName: string,
+    input: string,
+  ): Promise<{
+    sourceName: string;
+    targetName: string;
+  }>;
+
   getProposals(entityId: string): Promise<Proposal[]>;
   getHistory(entityId: string): Promise<Proposal[]>;
 

@@ -5,7 +5,7 @@
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
 
-  let { message }: { message: ChatMessage } = $props();
+  let { message = $bindable() }: { message: ChatMessage } = $props();
 
   type Step =
     | "SELECT_SOURCE"

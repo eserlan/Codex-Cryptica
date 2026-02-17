@@ -307,6 +307,12 @@ INSTRUCTIONS:
     return proposer.parseConnectionIntent(apiKey, modelName, input);
   }
 
+  async parseMergeIntent(apiKey: string, modelName: string, input: string) {
+    const { ProposerService } = await import("@codex/proposer");
+    const proposer = new ProposerService();
+    return proposer.parseMergeIntent(apiKey, modelName, input);
+  }
+
   async generateConnectionProposal(
     apiKey: string,
     modelName: string,

@@ -7,6 +7,7 @@
   import DOMPurify from "isomorphic-dompurify";
   import ImageMessage from "./ImageMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
+  import MergeWizard from "./MergeWizard.svelte";
   import { parseOracleResponse } from "editor-core";
   import { sanitizeId } from "$lib/utils/markdown";
   import { graph } from "$lib/stores/graph.svelte";
@@ -298,7 +299,9 @@
         <ImageMessage {message} />
       {:else if message.type === "wizard"}
         {#if message.wizardType === "connection"}
-          <ConnectionWizard {message} />
+          <ConnectionWizard bind:message />
+        {:else if message.wizardType === "merge"}
+          <MergeWizard bind:message />
         {/if}
       {:else}
         <div class="prose prose-sm">
