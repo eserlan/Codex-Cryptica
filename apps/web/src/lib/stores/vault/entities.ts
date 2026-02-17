@@ -9,14 +9,16 @@ export function createEntity(
   initialData: Partial<Entity> = {},
   existingEntities: Record<string, LocalEntity>,
 ): LocalEntity {
-  const baseId = sanitizeId(title) || "untitled";
+  const baseId = initialData.id || sanitizeId(title) || "untitled";
 
-  // Ensure unique ID
+  // Ensure unique ID if not explicitly requested via initialData or if requested ID is already taken
   let id = baseId;
-  let counter = 1;
-  while (existingEntities[id]) {
-    id = `${baseId}-${counter}`;
-    counter++;
+  if (!initialData.id || existingEntities[id]) {
+    let counter = 1;
+    while (existingEntities[id]) {
+      id = `${baseId}-${counter}`;
+      counter++;
+    }
   }
 
   return {

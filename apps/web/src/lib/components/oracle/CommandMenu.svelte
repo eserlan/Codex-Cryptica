@@ -9,8 +9,6 @@
   import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
 
-  import { onMount } from "svelte";
-
   let {
     input = $bindable(""),
     anchorEl,
@@ -22,10 +20,6 @@
     onSelect: (command: ChatCommand) => void;
     onClose: () => void;
   }>();
-
-  onMount(() => {
-    console.log("[CommandMenu] Mounted. Input:", input);
-  });
 
   let menuEl = $state<HTMLDivElement>();
   let selectedIndex = $state(0);
@@ -47,7 +41,7 @@
 
   // Derive step from input content if changed manually
   $effect(() => {
-    if (!input.startsWith("/connect")) {
+    if (!input.startsWith("/connect") && !input.startsWith("/merge")) {
       activeStep = "COMMAND";
       return;
     }
@@ -79,6 +73,10 @@
     }
 
     if (activeStep === "LABEL") {
+      if (input.startsWith("/merge")) {
+        entityResults = [];
+        return;
+      }
       // Show standard suggestions for relationships
       const parts = input.split('"');
       const term = (parts[2] || "").trim().toLowerCase();
@@ -92,7 +90,7 @@
     const parts = input.split('"');
     let term = "";
     if (activeStep === "FROM") {
-      term = parts[0].replace("/connect", "").trim();
+      term = parts[0].replace("/connect", "").replace("/merge", "").trim();
       if (parts.length > 1) term = parts[1].trim();
     } else {
       term = parts[parts.length - 1].trim();
@@ -113,9 +111,6 @@
           return isEntityVisible(entity, settings);
         });
 
-        console.log(
-          `[CommandMenu] Search for "${term}" returned ${filtered.length} visible entities`,
-        );
         entityResults = filtered;
         isSearchingEntities = false;
       });
@@ -158,36 +153,45 @@
   });
 
   const handleEntitySelect = (result: any) => {
-    console.log("[CommandMenu] Selecting entity:", result.title);
     // Sanitize title to prevent breaking wizard input logic
     const safeTitle = result.title.replace(/"/g, "'");
+    const isMerge = input.startsWith("/merge");
+    const cmd = isMerge ? "/merge" : "/connect";
 
     if (activeStep === "FROM") {
-      input = `/connect "${safeTitle}" `;
+      input = `${cmd} "${safeTitle}" `;
     } else if (activeStep === "LABEL") {
       const parts = input.split('"');
-      input = `/connect "${parts[1]}" ${result.title} "`;
+      input = `${cmd} "${parts[1]}" ${safeTitle} "`;
     } else if (activeStep === "TO") {
       const parts = input.split('"');
       const label = (parts[2] || "").trim();
-      input = `/connect "${parts[1]}" ${label} "${safeTitle}" `;
+      input = `${cmd} "${parts[1]}" ${label} "${safeTitle}" `;
       onClose(); // Wizard complete
     }
   };
 
   const advanceStep = () => {
+    const isMerge = input.startsWith("/merge");
+    const cmd = isMerge ? "/merge" : "/connect";
+
     if (activeStep === "FROM") {
-      const term = input.replace("/connect", "").trim();
+      const term = input.replace(cmd, "").trim();
       if (term && !input.includes('"')) {
-        input = `/connect "${term}" `;
+        input = `${cmd} "${term}" `;
       } else if (!input.endsWith(" ")) {
         input += " ";
       }
       return true;
     }
     if (activeStep === "LABEL") {
+      const parts = input.split('"');
+      let label = (parts[2] || "").trim();
+      if (isMerge && !label) {
+        label = "into";
+      }
       if (!input.endsWith(" ")) input += " ";
-      input += '"'; // Start the target quote
+      input = `${cmd} "${parts[1]}" ${label} "`;
       return true;
     }
     return false;
@@ -206,7 +210,7 @@
         (selectedIndex - 1 + displayList.length) % displayList.length;
       return true;
     } else if (e.key === "Tab") {
-      if (input.startsWith("/connect")) {
+      if (input.startsWith("/connect") || input.startsWith("/merge")) {
         e.preventDefault();
         if (displayList.length > 0) {
           const selected = displayList[selectedIndex];
@@ -247,7 +251,7 @@
   };
 </script>
 
-{#if displayList.length > 0 || input.startsWith("/connect")}
+{#if displayList.length > 0 || input.startsWith("/connect") || input.startsWith("/merge")}
   <div
     bind:this={menuEl}
     class="absolute z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col opacity-0 transition-opacity duration-150"
@@ -257,14 +261,16 @@
     >
       <div class="flex gap-1 items-center">
         <span class={activeStep === "FROM" ? "text-theme-primary" : ""}
-          >FROM</span
+          >{input.startsWith("/merge") ? "SOURCE" : "FROM"}</span
         >
         <span class="opacity-30">/</span>
         <span class={activeStep === "LABEL" ? "text-theme-primary" : ""}
-          >LABEL</span
+          >{input.startsWith("/merge") ? "INTO" : "LABEL"}</span
         >
         <span class="opacity-30">/</span>
-        <span class={activeStep === "TO" ? "text-theme-primary" : ""}>TO</span>
+        <span class={activeStep === "TO" ? "text-theme-primary" : ""}
+          >{input.startsWith("/merge") ? "TARGET" : "TO"}</span
+        >
       </div>
       {#if isSearchingEntities}
         <div

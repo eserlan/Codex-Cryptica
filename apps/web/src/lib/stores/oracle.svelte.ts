@@ -8,7 +8,7 @@ export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   type?: "text" | "image" | "wizard";
-  wizardType?: "connection";
+  wizardType?: "connection" | "merge";
   imageUrl?: string; // temporary blob: URL or local path
   imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
@@ -329,13 +329,13 @@ class OracleStore {
     return false;
   }
 
-  startWizard(type: "connection") {
+  startWizard(type: "connection" | "merge") {
     this.messages = [
       ...this.messages,
       {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Starting connection wizard...",
+        content: `Starting ${type} wizard...`,
         type: "wizard",
         wizardType: type,
       },
@@ -375,8 +375,12 @@ class OracleStore {
 
     const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
     const isConnectRequest = query.toLowerCase().trim().startsWith("/connect");
+    const isMergeRequest = query.toLowerCase().trim().startsWith("/merge");
     const isImageRequest =
-      !isCreateRequest && !isConnectRequest && this.detectImageIntent(query);
+      !isCreateRequest &&
+      !isConnectRequest &&
+      !isMergeRequest &&
+      this.detectImageIntent(query);
 
     this.messages = [
       ...this.messages,
@@ -386,6 +390,128 @@ class OracleStore {
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /merge request
+    if (isMergeRequest) {
+      try {
+        // 1. Deterministic Quoted Parsing
+        // Matches: /merge "Source" into "Target"
+        const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"/i;
+        const match = query.match(quotedRegex);
+
+        let sourceName = "";
+        let targetName = "";
+
+        if (match) {
+          sourceName = match[1];
+          targetName = match[2];
+          console.log(
+            `[Oracle] Deterministic merge parse: "${sourceName}" -> "${targetName}"`,
+          );
+        } else {
+          // 2. AI Fallback
+          const modelName = TIER_MODES[this.tier];
+          const intent = await aiService.parseMergeIntent(
+            key,
+            modelName,
+            query,
+          );
+          sourceName = intent.sourceName;
+          targetName = intent.targetName;
+        }
+
+        if (!sourceName || !targetName) {
+          throw new Error(
+            'Could not identify both entities. Try using `/merge "Source" into "Target"`.',
+          );
+        }
+
+        // Resolve entities
+        const { searchService } = await import("../services/search");
+        const sourceRes = await searchService.search(sourceName, { limit: 1 });
+        const targetRes = await searchService.search(targetName, { limit: 1 });
+
+        if (sourceRes[0] && targetRes[0]) {
+          const sourceId = sourceRes[0].id;
+          const targetId = targetRes[0].id;
+
+          if (sourceId === targetId) {
+            throw new Error("Cannot merge an entity into itself.");
+          }
+
+          const sourceEntity = vault.entities[sourceId];
+          const targetEntity = vault.entities[targetId];
+
+          if (sourceEntity && targetEntity) {
+            // Execute Merge via nodeMergeService
+            const { nodeMergeService } =
+              await import("../services/node-merge.service");
+
+            // 1. Propose (Concat strategy for speed/safety in direct command)
+            const proposal = await nodeMergeService.proposeMerge({
+              sourceNodeIds: [sourceId, targetId],
+              targetNodeId: targetId,
+              strategy: "concat",
+            });
+
+            // 2. Capture state for Undo (Immediately before execution)
+            const beforeTarget = $state.snapshot(vault.entities[targetId]);
+            const beforeSource = $state.snapshot(vault.entities[sourceId]);
+
+            // 3. Execute
+            await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
+
+            this.messages = [
+              ...this.messages,
+              {
+                id: crypto.randomUUID(),
+                role: "assistant",
+                content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
+              },
+            ];
+
+            // Push Undo
+            this.pushUndoAction(
+              `Merge ${sourceEntity.title} into ${targetEntity.title}`,
+              async () => {
+                // Re-create source
+                await vault.createEntity(
+                  beforeSource.type,
+                  beforeSource.title,
+                  { ...beforeSource },
+                );
+                // Restore target
+                vault.updateEntity(targetId, beforeTarget);
+              },
+            );
+
+            this.lastUpdated = Date.now();
+            this.isLoading = false;
+            this.broadcast();
+            this.saveToDB();
+            return;
+          }
+        }
+
+        throw new Error(
+          `Could not find one or both entities: "${sourceName}" or "${targetName}".`,
+        );
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Handle Direct /connect request
     if (isConnectRequest) {
