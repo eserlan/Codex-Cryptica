@@ -4,10 +4,14 @@ import * as pdfjs from "pdfjs-dist";
 
 vi.mock("pdfjs-dist", () => ({
   getDocument: vi.fn(),
+  GlobalWorkerOptions: {
+    workerSrc: "",
+  },
+  version: "mock-version",
 }));
 
 describe("PdfParser", () => {
-  const parser = new PdfParser();
+  const parser = new PdfParser("/mock/worker.js");
 
   it("accepts pdf files", () => {
     const file = new File([""], "test.pdf", { type: "application/pdf" });
