@@ -186,7 +186,7 @@
           // This reduces complexity from O(N*logN) to O(N) for dimension sync
           const nodeDimensions = new Map<
             string,
-            { width: number; height: number }
+            { width: number | undefined; height: number | undefined }
           >();
 
           cy.nodes().forEach((node) => {
@@ -206,8 +206,8 @@
                     ...el,
                     data: {
                       ...el.data,
-                      width: dims.width || el.data.width,
-                      height: dims.height || el.data.height,
+                      width: dims.width ?? el.data.width,
+                      height: dims.height ?? el.data.height,
                     },
                   };
                 }
@@ -551,7 +551,10 @@
           const resolvedImages = new Map<string, string>();
           if (currentCy) {
             currentCy.nodes("[resolvedImage]").forEach((node) => {
-              resolvedImages.set(node.id(), node.data("resolvedImagePath"));
+              const resolvedImagePath = node.data("resolvedImagePath");
+              if (typeof resolvedImagePath === "string") {
+                resolvedImages.set(node.id(), resolvedImagePath);
+              }
             });
           }
 
@@ -561,10 +564,9 @@
             if (!imagePath) return false;
 
             // Check if already resolved in Cytoscape
-            if (resolvedImages.has(el.data.id)) {
-              if (resolvedImages.get(el.data.id) === imagePath) {
-                return false;
-              }
+            const resolvedPath = resolvedImages.get(el.data.id);
+            if (resolvedPath === imagePath) {
+              return false;
             }
             return true;
           });
