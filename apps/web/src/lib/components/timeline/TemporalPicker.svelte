@@ -141,7 +141,9 @@
     if (!era) return false;
     return (
       selectedYear < era.start_year ||
-      (era.end_year !== null && selectedYear > era.end_year)
+      (era.end_year !== null &&
+        era.end_year !== undefined &&
+        selectedYear > era.end_year)
     );
   });
 </script>
