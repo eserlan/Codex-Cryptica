@@ -90,8 +90,8 @@
       >
       in the Settings panel.
       {#if !import.meta.env.VITE_SHARED_GEMINI_KEY}
-        <br /><span class="text-[10px] opacity-50"
-          >(Shared key not detected on localhost)</span
+        <br /><span class="text-[10px] opacity-50">
+          (Shared key not detected on localhost)</span
         >
       {/if}
     </p>

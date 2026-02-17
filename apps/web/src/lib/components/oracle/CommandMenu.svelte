@@ -9,8 +9,6 @@
   import { isEntityVisible } from "schema";
   import type { SearchResult } from "schema";
 
-  import { onMount } from "svelte";
-
   let {
     input = $bindable(""),
     anchorEl,
@@ -22,10 +20,6 @@
     onSelect: (command: ChatCommand) => void;
     onClose: () => void;
   }>();
-
-  onMount(() => {
-    console.log("[CommandMenu] Mounted. Input:", input);
-  });
 
   let menuEl = $state<HTMLDivElement>();
   let selectedIndex = $state(0);
@@ -113,9 +107,6 @@
           return isEntityVisible(entity, settings);
         });
 
-        console.log(
-          `[CommandMenu] Search for "${term}" returned ${filtered.length} visible entities`,
-        );
         entityResults = filtered;
         isSearchingEntities = false;
       });
@@ -158,7 +149,6 @@
   });
 
   const handleEntitySelect = (result: any) => {
-    console.log("[CommandMenu] Selecting entity:", result.title);
     // Sanitize title to prevent breaking wizard input logic
     const safeTitle = result.title.replace(/"/g, "'");
 
