@@ -13,7 +13,7 @@ As a lore keeper using the chat, I want to see a list of available commands as s
 
 **Why this priority**: High discovery value. Essential for improving the usability of existing and new chat commands.
 
-**Independent Test**: Can be tested by focusing the chat input and typing "/". A menu should appear listing `/draw`, `/create`, and `/connect`.
+**Independent Test**: Can be tested by focusing the chat input and typing "/". A menu should appear listing `/draw`, `/create`, `/connect`, and `/merge`.
 
 **Acceptance Scenarios**:
 
@@ -40,32 +40,48 @@ As a lore keeper, I want to link entities using natural language or a guided wiz
 
 ---
 
-### User Story 3 - Customizing Oracle Connections (Priority: P2)
+### User Story 3 - Customizing Oracle Proposals (Priority: P2)
 
-As a lore keeper, I want to be able to override the Oracle's suggestion or provide my own connection type, so that I maintain full control over my world's data.
+As a lore keeper, I want to be able to override the Oracle's suggestion or provide my own input, so that I maintain full control over my world's data.
 
 **Why this priority**: Necessary for flexibility and handling AI inaccuracies.
 
-**Independent Test**: Can be tested by running the oracle connection flow and editing the suggested type before clicking "Connect".
+**Independent Test**: Can be tested by running an oracle proposal flow and editing the suggested values before clicking "Confirm".
 
 **Acceptance Scenarios**:
 
-1. **Given** an AI-proposed connection type, **When** the user selects the type field, **Then** they can edit the text to a custom value.
-2. **Given** an AI proposal, **When** the user rejects it, **Then** they can return to the entity selection or cancel the command.
+1. **Given** an AI-proposed value, **When** the user selects the field, **Then** they can edit the text to a custom value.
+2. **Given** an AI proposal, **When** the user rejects it, **Then** they can return to selection or cancel the command.
+
+---
+
+### User Story 4 - Merging Entities with Oracle Assistance (Priority: P1)
+
+As a lore keeper, I want to merge two entities using natural language or a guided wizard, where the system handles the content synthesis and relationship re-mapping.
+
+**Why this priority**: High utility for world cleanup. Simplifies the process of combining duplicate or overlapping entries by leveraging AI to synthesize content.
+
+**Independent Test**: Can be tested by running `/merge oracle` for a wizard or `/merge A into B` for direct parsing.
+
+**Acceptance Scenarios**:
+
+1. **Given** the `/merge oracle` command is active, **When** the user selects a source and target, **Then** the system provides a preview of the merged content.
+2. **Given** a merge request, **When** the user confirms, **Then** the source entity is absorbed into the target, connections are re-mapped, and the source is deleted.
+3. **Given** a natural language input like `/merge the village notes into the kingdom entry`, **When** the command is submitted, **Then** the Lore Oracle identifies the source and target entities.
 
 ---
 
 ### Edge Cases
 
-- **Missing Descriptions**: What happens if one or both entities have no content for the AI to analyze? (Fallback: Propose a generic "related" connection or ask for manual type).
+- **Missing Descriptions**: What happens if one or both entities have no content for the AI to analyze? (Fallback: Propose a generic "related" connection or ask for manual merge preview).
 - **Existing Connections**: How does the system handle attempts to connect entities that are already linked? (System should notify user and show the existing link type).
-- **Keyboard Navigation**: Can the slash menu and oracle flow be completed entirely via keyboard? (Accessibility requirement).
+- **Keyboard Navigation**: Can the slash menu and oracle flows be completed entirely via keyboard? (Accessibility requirement).
 
 ## Assumptions
 
-- **Lore Oracle Integration**: The Lore Oracle (AI) has access to the semantic content of vault entities (stored in OPFS) to generate meaningful connection proposals.
+- **Lore Oracle Integration**: The Lore Oracle (AI) has access to the semantic content of vault entities (stored in OPFS) to generate meaningful proposals.
 - **Interactive Chat Context**: The existing chat interface supports rendering interactive, multi-step components for command execution.
-- **Vault Access**: The system can perform entity lookups and write connection data to local persistent storage (OPFS for files, IndexedDB for graph metadata) without conflicts with other background processes.
+- **Vault Access**: The system can perform entity lookups and write changes to local persistent storage (OPFS for files, IndexedDB for graph metadata).
 
 ## Requirements _(mandatory)_
 
@@ -73,18 +89,19 @@ As a lore keeper, I want to be able to override the Oracle's suggestion or provi
 
 - **FR-001**: System MUST show a command discovery menu when the user types "/" as the first character in the chat input.
 - **FR-002**: Slash menu MUST support keyboard navigation (Up/Down arrows) and selection (Enter/Tab).
-- **FR-003**: System MUST implement the `/connect oracle` command as an interactive multi-step flow.
-- **FR-004**: System MUST provide entity name autocomplete that triggers after at least 3 characters are typed in the "from" or "to" fields.
-- **FR-005**: System MUST fetch the full content (Lore and Chronicle) of both selected entities and provide them as context to the Lore Oracle (AI) to generate a connection type proposal.
-- **FR-006**: System MUST allow the user to accept, edit, or reject the AI-suggested connection type.
-- **FR-007**: System MUST persist the connection to the vault immediately upon user confirmation.
+- **FR-003**: System MUST implement the `/connect oracle` and `/merge oracle` commands as interactive multi-step flows.
+- **FR-004**: System MUST provide entity name autocomplete that triggers after at least 3 characters are typed in selection fields.
+- **FR-005**: System MUST fetch the full content (Lore and Chronicle) of both selected entities and provide them as context to the Lore Oracle (AI) to generate proposals (connection type or merged content).
+- **FR-006**: System MUST allow the user to accept, edit, or reject AI-generated proposals.
+- **FR-007**: System MUST persist changes to the vault immediately upon user confirmation.
 - **FR-008**: System MUST prevent selecting the same entity as both source and target.
-- **FR-009**: System MUST support natural language parsing for `/connect` commands, extracting source, target, and relationship type from a single string.
+- **FR-009**: System MUST support natural language parsing for `/connect` and `/merge` commands.
 
 ### Key Entities _(include if feature involves data)_
 
 - **ChatCommand**: Represents a registered command available in the chat (e.g., name, description, parameters).
-- **EntityConnection**: The resulting link created between two entities (Source ID, Target ID, Type).
+- **EntityConnection**: The resulting link created between two entities.
+- **MergeProposal**: The synthesized content proposed when combining entities.
 
 ## Success Criteria _(mandatory)_
 
@@ -92,6 +109,6 @@ As a lore keeper, I want to be able to override the Oracle's suggestion or provi
 
 - **SC-001**: The slash command menu appears in under 200ms after the "/" character is typed.
 - **SC-002**: Entity autocomplete results are returned in under 300ms.
-- **SC-003**: AI connection proposals are generated and displayed in under 5 seconds after entity selection.
-- **SC-004**: Users successfully complete a connection flow in under 20 seconds on average.
+- **SC-003**: AI proposals are generated and displayed in under 5 seconds after entity selection.
+- **SC-004**: Users successfully complete a wizard flow in under 30 seconds on average.
 - **SC-005**: 100% of interactive steps are navigable via keyboard.

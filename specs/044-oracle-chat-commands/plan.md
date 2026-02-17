@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement a discoverable command system for the Lore Oracle chat, including a slash command menu UI and an interactive `/connect oracle` wizard. The system will leverage the Lore Oracle (AI) to analyze the full content of two selected entities (Source and Target) to propose thematic connection types, facilitating rapid graph building. Supports natural language parsing for direct connection commands.
+Implement a discoverable command system for the Lore Oracle chat, including a slash command menu UI and interactive wizards for `/connect oracle` and `/merge oracle`. The system will leverage the Lore Oracle (AI) to analyze entity content for relationship proposals and synthesized merges, facilitating rapid graph building and vault organization. Supports natural language parsing for direct commands.
 
 ## Technical Context
 
@@ -23,13 +23,13 @@ Implement a discoverable command system for the Lore Oracle chat, including a sl
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-- [x] **Library-First**: Interactive components and command logic will be part of the `oracle` domain in `apps/web`.
-- [x] **TDD**: Tests for AI connection proposals and command filtering.
+- [x] **Library-First**: Interactive components and command logic are part of the `oracle` domain in `apps/web`.
+- [x] **TDD**: Tests for AI connection proposals, command filtering, and merging logic.
 - [x] **Simplicity**: Reuses `searchStore` for autocomplete instead of custom logic.
-- [x] **AI-First**: Connections are proposed by Gemini based on semantic content.
+- [x] **AI-First**: Connections and merges are proposed by Gemini based on semantic content.
 - [x] **Privacy**: All processing remains local; only entity descriptions are sent for inference.
 - [x] **Clean Implementation**: Svelte 5 runes used for wizard state.
-- [x] **User Documentation**: Will add a guide for chat commands in `apps/web/src/lib/content/help/chat-commands.md`.
+- [x] **User Documentation**: Added a guide for chat commands in `apps/web/src/lib/content/help/chat-commands.md`.
 
 ## Project Structure
 
@@ -53,46 +53,44 @@ apps/web/src/
 │   ├── components/
 │   │   ├── oracle/
 │   │   │   ├── CommandMenu.svelte       # NEW: Floating slash menu
-│   │   │   ├── ConnectionWizard.svelte  # NEW: Interactive wizard
+│   │   │   ├── ConnectionWizard.svelte  # NEW: Interactive link wizard
+│   │   │   ├── MergeWizard.svelte       # NEW: Interactive merge wizard
 │   │   │   └── OracleChat.svelte        # MOD: Integrate menu/wizard
 │   │   └── ui/
 │   │       └── Autocomplete.svelte      # NEW: Reusable input
 │   ├── config/
 │   │   └── chat-commands.ts             # NEW: Command registry
 │   ├── stores/
-│   │   └── oracle.svelte.ts             # MOD: Support wizards
+│   │   └── oracle.svelte.ts             # MOD: Support wizards & commands
 │   └── services/
 │       └── ai.ts                        # MOD: Bridge to proposer package
+│       └── node-merge.service.ts        # MOD: Support for merge execution
 
 packages/proposer/src/
-├── service.ts                           # MOD: Add parseConnectionIntent & generateConnectionProposal
-└── types.ts                             # MOD: Add connection types
+├── service.ts                           # MOD: Add intent parsing & proposals
+└── types.ts                             # MOD: Add connection & merge types
 ```
 
 **Structure Decision**: Web application (SvelteKit).
 
-## Phase 1: Implementation Phases
+## Phase 1: Foundation & Menu (P1)
 
-### Phase 1: Foundation & Menu (P1)
+- [x] Task: Create `chat-commands.ts` registry.
+- [x] Task: Implement `CommandMenu.svelte` with floating positioning.
+- [x] Task: Integrate `CommandMenu` into `OracleChat.svelte`.
 
-- [ ] Task: Create `chat-commands.ts` registry.
-- [ ] Task: Implement `CommandMenu.svelte` with floating positioning.
-- [ ] Task: Integrate `CommandMenu` into `OracleChat.svelte`.
-- [ ] Task: Conductor - User Manual Verification 'Foundation & Menu' (Protocol in workflow.md)
+## Phase 2: Wizards (P1)
 
-### Phase 2: Connection Wizard (P1)
+- [x] Task: Implement `ConnectionWizard.svelte` UI.
+- [x] Task: Implement `MergeWizard.svelte` UI.
+- [x] Task: Add `parseConnectionIntent` and `parseMergeIntent` to `AIService`.
+- [x] Task: Implement step-by-step wizard logic in `OracleStore`.
 
-- [ ] Task: Implement `ConnectionWizard.svelte` UI with entity selection.
-- [ ] Task: Add `generateConnectionProposal` to `AIService`.
-- [ ] Task: Implement step-by-step wizard logic in `OracleStore`.
-- [ ] Task: Conductor - User Manual Verification 'Connection Wizard' (Protocol in workflow.md)
+## Phase 3: Polish & Documentation (P2)
 
-### Phase 3: Polish & Documentation (P2)
-
-- [ ] Task: Add keyboard navigation to all wizard steps.
-- [ ] Task: Create `apps/web/src/lib/content/help/chat-commands.md` with documentation.
-- [ ] Task: Add E2E tests for the full connection flow.
-- [ ] Task: Conductor - User Manual Verification 'Polish & Documentation' (Protocol in workflow.md)
+- [x] Task: Add keyboard navigation to all wizard steps.
+- [x] Task: Update `apps/web/src/lib/content/help/chat-commands.md` with documentation.
+- [x] Task: Add E2E tests for the connection and merge flows.
 
 ## Complexity Tracking
 
