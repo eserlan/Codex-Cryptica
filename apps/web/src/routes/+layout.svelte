@@ -211,6 +211,7 @@
           class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
           onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
           aria-label="Toggle menu"
+          aria-expanded={isMobileMenuOpen}
         >
           <span class="icon-[lucide--menu] w-6 h-6"></span>
         </button>
@@ -233,6 +234,7 @@
           ></span>
           <input
             type="text"
+            aria-label="Search"
             placeholder="Search (Cmd+K)..."
             class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-theme-text transition-all placeholder:text-theme-muted/50"
             onfocus={() => searchStore.open()}
@@ -260,6 +262,8 @@
             : 'border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary'} relative"
           onclick={() => uiStore.toggleSettings("vault")}
           title="Application Settings"
+          aria-label="Application Settings"
+          aria-haspopup="dialog"
           data-testid="settings-button"
         >
           <span
