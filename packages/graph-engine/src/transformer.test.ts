@@ -179,12 +179,22 @@ describe("GraphTransformer", () => {
 
     const elements = GraphTransformer.entitiesToElements(entities);
 
-    const node1 = elements.find((e) => e.data.id === "n1") as any;
-    const node2 = elements.find((e) => e.data.id === "n2") as any;
-    const node3 = elements.find((e) => e.data.id === "n3") as any;
+    const node1 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n1",
+    );
+    const node2 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n2",
+    );
+    const node3 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n3",
+    );
 
-    expect(node1.data.isRevealed).toBe(true);
-    expect(node2.data.isRevealed).toBe(true);
-    expect(node3.data.isRevealed).toBeUndefined();
+    expect(node1).toBeDefined();
+    expect(node2).toBeDefined();
+    expect(node3).toBeDefined();
+
+    expect(node1?.data.isRevealed).toBe(true);
+    expect(node2?.data.isRevealed).toBe(true);
+    expect(node3?.data.isRevealed).toBeUndefined();
   });
 });
