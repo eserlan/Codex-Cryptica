@@ -5,7 +5,6 @@
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
-  import { base } from "$app/paths";
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -125,7 +124,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !vault.isInitialized && !isGuestMode && uiStore.showLandingPage}
+  {#if !vault.isInitialized && !isGuestMode && uiStore.showLandingPage && !uiStore.dismissedLandingPage}
     <div
       class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md overflow-y-auto custom-scrollbar"
       transition:fade
@@ -157,12 +156,29 @@
             >
               Initialize Archive
             </button>
-            <a
-              href="{base}/features"
+            <button
+              onclick={() => (uiStore.dismissedLandingPage = true)}
               class="px-8 py-4 border border-theme-border text-theme-text font-bold uppercase tracking-widest text-xs rounded hover:border-theme-primary transition-all"
             >
-              Explore Protocols
-            </a>
+              Enter Workspace
+            </button>
+          </div>
+
+          <div class="mt-8 flex items-center justify-center gap-2">
+            <input
+              type="checkbox"
+              id="show-welcome"
+              checked={uiStore.showLandingPage}
+              onchange={(e) =>
+                uiStore.toggleLandingPage(e.currentTarget.checked)}
+              class="w-3.5 h-3.5 accent-theme-primary cursor-pointer"
+            />
+            <label
+              for="show-welcome"
+              class="text-[10px] font-mono text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors"
+            >
+              Show welcome screen on startup
+            </label>
           </div>
         </header>
 

@@ -12,6 +12,7 @@ class UIStore {
   activeSettingsTab = $state<SettingsTab>("vault");
   isImporting = $state(false);
   showLandingPage = $state(true);
+  dismissedLandingPage = $state(false);
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
 
