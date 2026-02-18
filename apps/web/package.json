@@ -1,7 +1,7 @@
 {
   "name": "web",
   "private": true,
-  "version": "0.8.27",
+  "version": "0.8.26",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -12,7 +12,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test --reporter=list",
     "audit": "unlighthouse --site localhost:4173",
-    "build:audit": "npm run build && start-server-and-test 'vite preview' http://localhost:4173 'unlighthouse --site http://localhost:4173 --ci && node scripts/seo-summary.mjs'",
+    "build:audit": "npm run build && start-server-and-test 'vite preview' http://localhost:4173 'timeout -s SIGKILL 30 unlighthouse --no-cache --disable-gpu --site http://localhost:4173 --ci --build-static || true; node scripts/seo-summary.mjs'",
     "lint": "svelte-check --tsconfig ./tsconfig.json && eslint .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"

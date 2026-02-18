@@ -102,7 +102,7 @@
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
-    {:else}
+    {:else if !uiStore.isLandingPageVisible}
       <div
         class="absolute inset-0 bg-black flex items-center justify-center"
         aria-hidden="true"
@@ -124,7 +124,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !vault.isInitialized && !isGuestMode && !uiStore.skipWelcomeScreen && !uiStore.dismissedLandingPage}
+  {#if !isGuestMode && uiStore.isLandingPageVisible}
     <div
       class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md overflow-y-auto custom-scrollbar"
       transition:fade
@@ -137,28 +137,23 @@
             System Online // Local-First Intelligence
           </div>
           <h2
-            class="text-4xl md:text-7xl font-bold text-theme-text font-serif tracking-tight mb-8"
+            class="text-4xl md:text-7xl font-bold text-theme-text font-header tracking-tight mb-8"
           >
-            Forge Your World <br />
-            <span class="text-theme-primary">In the Knowledge Graph.</span>
+            Build Your World. <br />
+            <span class="text-theme-primary">Map Your Lore.</span>
           </h2>
           <p
-            class="text-lg md:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-12"
+            class="text-lg md:text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-12 font-body"
           >
-            Codex Cryptica is an AI-assisted RPG campaign manager built for lore
-            keepers who demand privacy, speed, and deep interconnectedness.
+            Codex Cryptica is a private RPG campaign manager built for lore
+            keepers who want total privacy, instant speed, and a visual way to
+            connect every detail.
           </p>
 
           <div class="flex flex-wrap justify-center gap-4">
             <button
-              onclick={() => uiStore.toggleSettings("vault")}
-              class="px-8 py-4 bg-theme-primary text-black font-bold uppercase tracking-widest text-xs rounded hover:shadow-[0_0_20px_var(--color-accent-primary)] transition-all active:scale-95"
-            >
-              Initialize Archive
-            </button>
-            <button
               onclick={() => (uiStore.dismissedLandingPage = true)}
-              class="px-8 py-4 border border-theme-border text-theme-text font-bold uppercase tracking-widest text-xs rounded hover:border-theme-primary transition-all"
+              class="px-10 py-5 bg-theme-primary text-black font-bold uppercase tracking-[0.2em] text-xs rounded hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
             >
               Enter Workspace
             </button>
@@ -175,7 +170,7 @@
             />
             <label
               for="skip-welcome"
-              class="text-[10px] font-mono text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors"
+              class="text-[10px] font-body text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors"
             >
               Hide welcome screen on startup
             </label>
@@ -183,7 +178,7 @@
         </header>
 
         <section id="features" class="grid md:grid-cols-3 gap-8 mb-24">
-          <!-- Feature 1: Local-First -->
+          <!-- Feature 1: Privacy -->
           <div
             class="p-8 bg-theme-surface border border-theme-border rounded hover:border-theme-primary/50 transition-colors group"
           >
@@ -195,18 +190,18 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-mono"
+              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-header"
             >
-              Privacy First
+              Total Privacy
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
-              Your lore belongs to you. Data is stored locally in your browser's
-              Origin Private File System (OPFS). No cloud accounts required
+            <p class="text-sm text-theme-muted leading-relaxed font-body">
+              Your notes never leave your computer. We use your browser's
+              private storage for total security. No cloud accounts required
               unless you choose to sync.
             </p>
           </div>
 
-          <!-- Feature 2: AI Oracle -->
+          <!-- Feature 2: AI -->
           <div
             class="p-8 bg-theme-surface border border-theme-border rounded hover:border-theme-primary/50 transition-colors group"
           >
@@ -217,18 +212,17 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-mono"
+              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-header"
             >
-              Oracle Intelligence
+              AI Intelligence
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
-              Leverage Google Gemini to analyze your notes, propose connections,
-              and generate immersive lore content that respects your existing
-              world context.
+            <p class="text-sm text-theme-muted leading-relaxed font-body">
+              Discover hidden links in your notes and write immersive lore
+              faster while keeping your world's unique feel.
             </p>
           </div>
 
-          <!-- Feature 3: Graph Visualization -->
+          <!-- Feature 3: Visual Links -->
           <div
             class="p-8 bg-theme-surface border border-theme-border rounded hover:border-theme-primary/50 transition-colors group"
           >
@@ -239,26 +233,24 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-mono"
+              class="text-xl font-bold text-theme-text mb-4 uppercase tracking-wider font-header"
             >
-              Neural Network
+              Visual Links
             </h3>
-            <p class="text-sm text-theme-muted leading-relaxed">
-              Visualize your campaign as a dynamic knowledge graph. Discover
-              hidden relationships and navigate your lore through spatial
-              interconnectedness.
+            <p class="text-sm text-theme-muted leading-relaxed font-body">
+              See how characters and locations link together at a glance.
+              Navigate your world through a dynamic map of connections.
             </p>
           </div>
         </section>
-
         <footer class="text-center border-t border-theme-border/30 pt-16">
           <div
-            class="text-[10px] font-mono text-theme-muted/40 uppercase tracking-[0.5em] mb-4"
+            class="text-[10px] font-header text-theme-muted/40 uppercase tracking-[0.5em] mb-4"
           >
             Technical Specification
           </div>
           <div
-            class="flex justify-center gap-8 text-[9px] font-mono text-theme-muted/60 uppercase"
+            class="flex justify-center gap-8 text-[9px] font-body text-theme-muted/60 uppercase"
           >
             <span>Svelte 5 Runes</span>
             <span>Tailwind 4.0</span>

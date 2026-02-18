@@ -111,6 +111,12 @@ class HelpStore {
   startTour(id: string) {
     if (browser && (window as any).DISABLE_ONBOARDING) return;
 
+    // Prevent starting tours while the landing page is visible
+    if (uiStore.isLandingPageVisible) {
+      console.log("[HelpStore] Tour deferred: Landing page is active.");
+      return;
+    }
+
     if (id === "initial-onboarding") {
       this.activeTour = {
         id,

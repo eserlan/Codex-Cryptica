@@ -1,3 +1,6 @@
-# allow crawling everything by default
+# Allow all crawlers, including Google's AI agent.
 User-agent: *
-Disallow:
+Allow: /
+
+User-agent: Google-Extended
+Allow: /

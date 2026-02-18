@@ -130,6 +130,10 @@ class UIStore {
   closeReadMode() {
     this.closeZenMode();
   }
+
+  get isLandingPageVisible() {
+    return !this.skipWelcomeScreen && !this.dismissedLandingPage;
+  }
 }
 
 export const uiStore = new UIStore();
