@@ -1,13 +1,15 @@
-<script>
-  import GraphView from "$lib/components/GraphView.svelte";
-  import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
+<script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
   import { onMount } from "svelte";
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
   import { uiStore } from "$lib/stores/ui.svelte";
-  import { base } from "$app/paths";
   import { fade } from "svelte/transition";
+  import { base } from "$app/paths";
+
+  // Dynamic imports for heavy components
+  let GraphView = $state<any>(null);
+  let EntityDetailPanel = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
@@ -17,6 +19,18 @@
   // Check if we're in guest/share mode
   const shareId = $derived(page.url.searchParams.get("shareId"));
   const isGuestMode = $derived(!!shareId);
+
+  // Lazy load components when needed using relative paths for reliable resolution
+  $effect(() => {
+    if ((vault.isInitialized || isGuestMode) && !GraphView) {
+      import("../lib/components/GraphView.svelte").then((m) => {
+        GraphView = m.default;
+      });
+      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
+        EntityDetailPanel = m.default;
+      });
+    }
+  });
 
   onMount(async () => {
     if (isGuestMode && shareId && shareId.startsWith("p2p-")) {
@@ -33,16 +47,18 @@
             });
             // Update vault entities with received data
             vault.entities = Object.fromEntries(
-              Object.entries(graph.entities).map(([id, entity]) => [
-                id,
-                {
-                  ...entity,
-                  _path:
-                    typeof entity._path === "string"
-                      ? [entity._path]
-                      : entity._path,
-                },
-              ]),
+              Object.entries(graph.entities).map(
+                ([id, entity]: [string, any]) => [
+                  id,
+                  {
+                    ...entity,
+                    _path:
+                      typeof entity._path === "string"
+                        ? [entity._path]
+                        : entity._path,
+                  },
+                ],
+              ),
             );
             if (graph.defaultVisibility) {
               vault.defaultVisibility = graph.defaultVisibility;
@@ -85,10 +101,23 @@
 
 <div class="h-[calc(100vh-65px)] flex bg-black overflow-hidden relative">
   <div class="flex-1 relative overflow-hidden">
-    <GraphView bind:selectedId={vault.selectedEntityId} />
+    {#if GraphView && (vault.isInitialized || isGuestMode)}
+      <GraphView bind:selectedId={vault.selectedEntityId} />
+    {:else}
+      <div
+        class="absolute inset-0 bg-black flex items-center justify-center"
+        aria-hidden="true"
+      >
+        <div
+          class="text-theme-muted font-mono text-xs animate-pulse uppercase tracking-widest"
+        >
+          Initiating Neural Interface...
+        </div>
+      </div>
+    {/if}
   </div>
 
-  {#if selectedEntity}
+  {#if selectedEntity && EntityDetailPanel}
     <EntityDetailPanel
       entity={selectedEntity}
       onClose={() => (vault.selectedEntityId = null)}
@@ -96,7 +125,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !vault.isInitialized && !isGuestMode}
+  {#if !vault.isInitialized && !isGuestMode && uiStore.showLandingPage}
     <div
       class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md overflow-y-auto custom-scrollbar"
       transition:fade

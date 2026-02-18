@@ -11,8 +11,23 @@ class UIStore {
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
   isImporting = $state(false);
+  showLandingPage = $state(true);
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("codex_show_landing");
+      if (saved !== null) {
+        this.showLandingPage = saved === "true";
+      }
+    }
+  }
+
+  toggleLandingPage(show: boolean) {
+    this.showLandingPage = show;
+    localStorage.setItem("codex_show_landing", String(show));
+  }
 
   get abortSignal() {
     if (!this.abortController || this.abortController.signal.aborted) {
