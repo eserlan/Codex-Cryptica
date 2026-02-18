@@ -126,13 +126,15 @@
   <!-- Landing Page / Marketing Layer -->
   {#if !isGuestMode && uiStore.isLandingPageVisible}
     <div
-      class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md overflow-y-auto custom-scrollbar"
+      class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md"
       transition:fade
     >
-      <div class="max-w-5xl mx-auto px-6 py-20 md:py-32">
-        <header class="mb-16 md:mb-24 text-center">
+      <div
+        class="max-w-5xl mx-auto px-6 py-12 md:py-16 flex flex-col h-full justify-center"
+      >
+        <header class="mb-8 text-center">
           <div
-            class="inline-block px-3 py-1 mb-6 border border-theme-primary/30 bg-theme-primary/5 rounded text-[10px] font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+            class="inline-block px-3 py-1 mb-4 border border-theme-primary/30 bg-theme-primary/5 rounded text-[10px] font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
           >
             System Online // Local-First Intelligence
           </div>
@@ -243,21 +245,6 @@
             </p>
           </div>
         </section>
-        <footer class="text-center border-t border-theme-border/30 pt-16">
-          <div
-            class="text-[10px] font-header text-theme-muted/40 uppercase tracking-[0.5em] mb-4"
-          >
-            Technical Specification
-          </div>
-          <div
-            class="flex justify-center gap-8 text-[9px] font-body text-theme-muted/60 uppercase"
-          >
-            <span>Svelte 5 Runes</span>
-            <span>Tailwind 4.0</span>
-            <span>Local-First Arch</span>
-            <span>Web Workers</span>
-          </div>
-        </footer>
       </div>
     </div>
   {/if}
