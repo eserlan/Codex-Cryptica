@@ -340,13 +340,46 @@
             role="tabpanel"
             id="settings-panel-aesthetics"
             aria-labelledby="settings-tab-aesthetics"
-            class="space-y-6 max-w-3xl mx-auto"
+            class="space-y-10 max-w-3xl mx-auto"
           >
-            <p class="text-[13px] text-theme-text/70 leading-relaxed">
-              Shift the visual dimension of your workspace. Zen Templates
-              redefine the interface aesthetic to match your world's genre.
-            </p>
-            <ThemeSelector />
+            <section>
+              <h3
+                class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4"
+              >
+                Interface Configuration
+              </h3>
+              <div
+                class="bg-theme-bg/50 border border-theme-border p-6 rounded-lg space-y-6"
+              >
+                <div class="flex items-center justify-between pb-4">
+                  <div>
+                    <span
+                      class="block text-xs font-bold text-theme-text uppercase"
+                      >Skip Welcome Screen</span
+                    >
+                    <p class="text-[10px] text-theme-muted">
+                      Hide the marketing landing page on startup even when no
+                      vault is initialized.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={uiStore.skipWelcomeScreen}
+                    onchange={(e) =>
+                      uiStore.toggleWelcomeScreen(e.currentTarget.checked)}
+                    class="w-4 h-4 accent-theme-primary cursor-pointer"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <p class="text-[13px] text-theme-text/70 leading-relaxed">
+                Shift the visual dimension of your workspace. Zen Templates
+                redefine the interface aesthetic to match your world's genre.
+              </p>
+              <ThemeSelector />
+            </section>
           </div>
         {:else if uiStore.activeSettingsTab === "help"}
           <div
