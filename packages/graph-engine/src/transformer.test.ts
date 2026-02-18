@@ -148,4 +148,53 @@ describe("GraphTransformer", () => {
     expect(edge.data.label).toBe("related_to"); // Falls back to type
     expect(edge.data.connectionType).toBe("related_to");
   });
+
+  it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
+    const entities: any[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: ["REVEALED"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n2",
+        type: "npc",
+        title: "Node 2",
+        labels: ["visible"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n3",
+        type: "npc",
+        title: "Node 3",
+        tags: ["hidden"],
+        connections: [],
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+
+    const node1 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n1",
+    );
+    const node2 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n2",
+    );
+    const node3 = elements.find(
+      (e) => e.group === "nodes" && e.data.id === "n3",
+    );
+
+    expect(node1).toBeDefined();
+    expect(node2).toBeDefined();
+    expect(node3).toBeDefined();
+
+    expect(node1?.data.isRevealed).toBe(true);
+    expect(node2?.data.isRevealed).toBe(true);
+    expect(node3?.data.isRevealed).toBeUndefined();
+  });
 });

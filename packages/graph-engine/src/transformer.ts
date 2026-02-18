@@ -72,12 +72,27 @@ export class GraphTransformer {
       );
 
       // Visibility markers for Admin visual cues
-      const markers = [...(entity.tags || []), ...(entity.labels || [])].map(
-        (m) => m.toLowerCase(),
-      );
-      const isRevealed =
-        markers.includes("revealed") || markers.includes("visible");
-      const _isHidden = markers.includes("hidden");
+      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly
+      let isRevealed = false;
+      const tags = entity.tags || [];
+      for (const tag of tags) {
+        const lower = tag.toLowerCase();
+        if (lower === "revealed" || lower === "visible") {
+          isRevealed = true;
+          break;
+        }
+      }
+      if (!isRevealed) {
+        const labels = entity.labels || [];
+        for (const label of labels) {
+          const lower = label.toLowerCase();
+          if (lower === "revealed" || lower === "visible") {
+            isRevealed = true;
+            break;
+          }
+        }
+      }
+      // _isHidden was unused and removed
 
       // Create Node
       const nodeData: GraphNode["data"] = {
