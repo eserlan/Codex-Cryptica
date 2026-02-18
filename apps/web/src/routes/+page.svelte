@@ -124,7 +124,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !vault.isInitialized && !isGuestMode && uiStore.showLandingPage && !uiStore.dismissedLandingPage}
+  {#if !vault.isInitialized && !isGuestMode && !uiStore.skipWelcomeScreen && !uiStore.dismissedLandingPage}
     <div
       class="absolute inset-0 z-30 bg-black/60 backdrop-blur-md overflow-y-auto custom-scrollbar"
       transition:fade
@@ -167,17 +167,17 @@
           <div class="mt-8 flex items-center justify-center gap-2">
             <input
               type="checkbox"
-              id="show-welcome"
-              checked={uiStore.showLandingPage}
+              id="skip-welcome"
+              checked={uiStore.skipWelcomeScreen}
               onchange={(e) =>
-                uiStore.toggleLandingPage(e.currentTarget.checked)}
+                uiStore.toggleWelcomeScreen(e.currentTarget.checked)}
               class="w-3.5 h-3.5 accent-theme-primary cursor-pointer"
             />
             <label
-              for="show-welcome"
+              for="skip-welcome"
               class="text-[10px] font-mono text-theme-muted uppercase tracking-widest cursor-pointer hover:text-theme-primary transition-colors"
             >
-              Show welcome screen on startup
+              Hide welcome screen on startup
             </label>
           </div>
         </header>

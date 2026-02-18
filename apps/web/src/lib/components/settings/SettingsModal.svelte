@@ -355,18 +355,18 @@
                   <div>
                     <span
                       class="block text-xs font-bold text-theme-text uppercase"
-                      >Welcome Interface</span
+                      >Skip Welcome Screen</span
                     >
                     <p class="text-[10px] text-theme-muted">
-                      Show the marketing landing page when no vault is
-                      initialized.
+                      Hide the marketing landing page on startup even when no
+                      vault is initialized.
                     </p>
                   </div>
                   <input
                     type="checkbox"
-                    checked={uiStore.showLandingPage}
+                    checked={uiStore.skipWelcomeScreen}
                     onchange={(e) =>
-                      uiStore.toggleLandingPage(e.currentTarget.checked)}
+                      uiStore.toggleWelcomeScreen(e.currentTarget.checked)}
                     class="w-4 h-4 accent-theme-primary cursor-pointer"
                   />
                 </div>
