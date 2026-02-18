@@ -17,6 +17,7 @@
   import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
   import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
   import { page } from "$app/state";
@@ -71,13 +72,34 @@
     }
   });
 
-  onMount(() => {
+  let hasBooted = $state(false);
+
+  function bootSystem() {
+    if (hasBooted) return;
+    hasBooted = true;
+
+    debugStore.log("System booting: Initializing heavy stores...");
     categories.init();
-    helpStore.init();
-    themeStore.init();
     timelineStore.init();
     graph.init();
     calendarStore.init();
+
+    vault.init().catch((error) => {
+      console.error("Vault initialization failed", error);
+    });
+  }
+
+  // Reactive boot trigger
+  $effect(() => {
+    if (!uiStore.isLandingPageVisible && !hasBooted) {
+      bootSystem();
+    }
+  });
+
+  onMount(() => {
+    // Light initializations required for the landing page/shell
+    helpStore.init();
+    themeStore.init();
 
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {
@@ -87,22 +109,6 @@
           console.warn("Service Worker registration failed:", error);
         });
     }
-
-    // Standard Initialization
-    vault
-      .init()
-      .then(() => {
-        // Trigger onboarding for new users after vault has initialized
-        if (
-          !helpStore.hasSeen("initial-onboarding") &&
-          !(window as any).DISABLE_ONBOARDING
-        ) {
-          helpStore.startTour("initial-onboarding");
-        }
-      })
-      .catch((error) => {
-        console.error("Vault initialization failed", error);
-      });
 
     const handleGlobalError = (event: ErrorEvent) => {
       // Ignore non-fatal script/asset load failures (common when offline)
@@ -214,6 +220,18 @@
     }
   });
 
+  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
+  $effect(() => {
+    if (
+      vault.isInitialized &&
+      !uiStore.isLandingPageVisible &&
+      !helpStore.hasSeen("initial-onboarding") &&
+      !(window as any).DISABLE_ONBOARDING
+    ) {
+      helpStore.startTour("initial-onboarding");
+    }
+  });
+
   const handleKeydown = (event: KeyboardEvent) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "k") {
       event.preventDefault();
@@ -250,6 +268,12 @@
   />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
+  <link
+    rel="sitemap"
+    type="application/xml"
+    title="Sitemap"
+    href="/sitemap.xml"
+  />
 </svelte:head>
 
 <div class="app-layout min-h-screen bg-black flex flex-col font-sans">

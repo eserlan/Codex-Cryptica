@@ -1,7 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const baseDir = path.resolve('apps/web/audit-report');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const baseDir = path.resolve(__dirname, '../audit-report');
 
 if (!fs.existsSync(baseDir)) {
   console.error('❌ Audit report directory not found at: ' + baseDir);
