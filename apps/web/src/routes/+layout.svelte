@@ -264,6 +264,7 @@
           title="Application Settings"
           aria-label="Application Settings"
           aria-haspopup="dialog"
+          aria-expanded={uiStore.showSettings}
           data-testid="settings-button"
         >
           <span
