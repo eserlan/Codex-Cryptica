@@ -93,4 +93,6 @@ TypeScript: Follow standard conventions
 
 - 044-oracle-chat-commands: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine)
 
+- 047-seo-performance-optimization: Added Unlighthouse auditing, Marketing Landing Page, and SEO metadata improvements.
+
 <!-- MANUAL ADDITIONS START -->

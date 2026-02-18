@@ -1,18 +1,11 @@
 <script lang="ts">
   import "../app.css";
-  import { aiService } from "$lib/services/ai";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import SearchModal from "$lib/components/search/SearchModal.svelte";
-  import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
-  import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
-  import ZenModeModal from "$lib/components/modals/ZenModeModal.svelte";
-  import TourOverlay from "$lib/components/help/TourOverlay.svelte";
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
-  import DebugConsole from "$lib/components/debug/DebugConsole.svelte";
-  import MergeNodesDialog from "$lib/components/dialogs/MergeNodesDialog.svelte";
+  import SearchModal from "$lib/components/search/SearchModal.svelte";
+  import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { graph } from "$lib/stores/graph.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
@@ -24,29 +17,89 @@
   import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
   import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
   import { PATREON_URL } from "$lib/config";
+
   let { children } = $props();
 
-  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  // Dynamic Component Loading for specialized/heavy UI elements
+  // Use any to bypass strict prop validation for lazy components in the shell
+  let OracleWindow = $state<any>(null);
+  let ZenModeModal = $state<any>(null);
+  let TourOverlay = $state<any>(null);
+  let DebugConsole = $state<any>(null);
+  let MergeNodesDialog = $state<any>(null);
 
+  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
   let isMobileMenuOpen = $state(false);
 
-  const _handleJoin = async (_username: string) => {
-    // Guest mode temporarily disabled
-  };
+  // Lazy load components when needed
+  $effect(() => {
+    if (uiStore.showZenMode && !ZenModeModal) {
+      import("../lib/components/modals/ZenModeModal.svelte").then(
+        (m) => (ZenModeModal = m.default),
+      );
+    }
+    if (helpStore.activeTour && !TourOverlay) {
+      import("../lib/components/help/TourOverlay.svelte").then(
+        (m) => (TourOverlay = m.default),
+      );
+    }
+    if (uiStore.mergeDialog.open && !MergeNodesDialog) {
+      import("../lib/components/dialogs/MergeNodesDialog.svelte").then(
+        (m) => (MergeNodesDialog = m.default),
+      );
+    }
+    if (!isPopup && !OracleWindow) {
+      import("../lib/components/oracle/OracleWindow.svelte").then(
+        (m) => (OracleWindow = m.default),
+      );
+    }
+    if (
+      (import.meta.env.DEV ||
+        (typeof window !== "undefined" && (window as any).__E2E__) ||
+        import.meta.env.VITE_STAGING === "true") &&
+      !DebugConsole
+    ) {
+      import("../lib/components/debug/DebugConsole.svelte").then(
+        (m) => (DebugConsole = m.default),
+      );
+    }
+  });
 
-  onMount(() => {
+  let hasBooted = $state(false);
+
+  function bootSystem() {
+    if (hasBooted) return;
+    hasBooted = true;
+
+    debugStore.log("System booting: Initializing heavy stores...");
     categories.init();
-    helpStore.init();
-    themeStore.init();
     timelineStore.init();
     graph.init();
     calendarStore.init();
+
+    vault.init().catch((error) => {
+      console.error("Vault initialization failed", error);
+    });
+  }
+
+  // Reactive boot trigger
+  $effect(() => {
+    if (!uiStore.isLandingPageVisible && !hasBooted) {
+      bootSystem();
+    }
+  });
+
+  onMount(() => {
+    // Light initializations required for the landing page/shell
+    helpStore.init();
+    themeStore.init();
 
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {
@@ -56,22 +109,6 @@
           console.warn("Service Worker registration failed:", error);
         });
     }
-
-    // Standard Initialization
-    vault
-      .init()
-      .then(() => {
-        // Trigger onboarding for new users after vault has initialized
-        if (
-          !helpStore.hasSeen("initial-onboarding") &&
-          !(window as any).DISABLE_ONBOARDING
-        ) {
-          helpStore.startTour("initial-onboarding");
-        }
-      })
-      .catch((error) => {
-        console.error("Vault initialization failed", error);
-      });
 
     const handleGlobalError = (event: ErrorEvent) => {
       // Ignore non-fatal script/asset load failures (common when offline)
@@ -103,7 +140,6 @@
       const reason = event.reason;
       const message = reason?.message || "";
 
-      // Filter out common network errors that aren't fatal to the app logic
       if (
         message.includes("Failed to fetch") ||
         message.includes("NetworkError") ||
@@ -132,8 +168,14 @@
       (window as any).vault = vault;
       (window as any).graph = graph;
       (window as any).calendarStore = calendarStore;
-      (window as any).oracle = oracle;
-      (window as any).aiService = aiService;
+
+      import("$lib/stores/oracle.svelte").then((m) => {
+        (window as any).oracle = m.oracle;
+      });
+      import("$lib/services/ai").then((m) => {
+        (window as any).aiService = m.aiService;
+      });
+
       (window as any).categories = categories;
       (window as any).uiStore = uiStore;
       (window as any).syncStats = syncStats;
@@ -167,16 +209,26 @@
     if (hash && hash.startsWith("#help/")) {
       const articleId = hash.replace("#help/", "");
       if (articleId) {
-        // Validate article exists
         const exists = HELP_ARTICLES.some((a) => a.id === articleId);
         if (exists) {
-          // Small delay to ensure UI components are ready to receive state changes
           const timer = setTimeout(() => {
             helpStore.openHelpToArticle(articleId);
           }, 100);
           return () => clearTimeout(timer);
         }
       }
+    }
+  });
+
+  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
+  $effect(() => {
+    if (
+      vault.isInitialized &&
+      !uiStore.isLandingPageVisible &&
+      !helpStore.hasSeen("initial-onboarding") &&
+      !(window as any).DISABLE_ONBOARDING
+    ) {
+      helpStore.startTour("initial-onboarding");
     }
   });
 
@@ -200,7 +252,31 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="app-layout min-h-screen bg-black flex flex-col">
+<svelte:head>
+  <title>Codex Cryptica | AI RPG Campaign Manager</title>
+  <meta
+    name="description"
+    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with Google Gemini."
+  />
+  <meta
+    property="og:title"
+    content="Codex Cryptica | AI RPG Campaign Manager"
+  />
+  <meta
+    property="og:description"
+    content="Local-first RPG campaign manager with graph visualization and AI intelligence."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link
+    rel="sitemap"
+    type="application/xml"
+    title="Sitemap"
+    href="/sitemap.xml"
+  />
+</svelte:head>
+
+<div class="app-layout min-h-screen bg-black flex flex-col font-sans">
   {#if !isPopup}
     <header
       class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
@@ -211,7 +287,6 @@
           class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
           onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
           aria-label="Toggle menu"
-          aria-expanded={isMobileMenuOpen}
         >
           <span class="icon-[lucide--menu] w-6 h-6"></span>
         </button>
@@ -234,7 +309,6 @@
           ></span>
           <input
             type="text"
-            aria-label="Search"
             placeholder="Search (Cmd+K)..."
             class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-theme-text transition-all placeholder:text-theme-muted/50"
             onfocus={() => searchStore.open()}
@@ -262,9 +336,7 @@
             : 'border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary'} relative"
           onclick={() => uiStore.toggleSettings("vault")}
           title="Application Settings"
-          aria-label="Application Settings"
-          aria-haspopup="dialog"
-          aria-expanded={uiStore.showSettings}
+          aria-label="Open Application Settings"
           data-testid="settings-button"
         >
           <span
@@ -307,6 +379,11 @@
           >
         {/if}
         <a
+          href="{base}/features"
+          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          >Features</a
+        >
+        <a
           href="{base}/privacy"
           target="_blank"
           rel="noopener noreferrer"
@@ -322,20 +399,30 @@
         >
       </div>
     </footer>
+
     <SearchModal />
+
     {#if (page.url.pathname as string) !== `${base}/login`}
-      <OracleWindow />
+      {#if OracleWindow}
+        <OracleWindow />
+      {/if}
       {#if browser}
         <SettingsModal />
-        <ZenModeModal />
-        <TourOverlay />
+        {#if ZenModeModal}
+          <ZenModeModal />
+        {/if}
+        {#if TourOverlay}
+          <TourOverlay />
+        {/if}
         <MobileMenu bind:isOpen={isMobileMenuOpen} />
-        <MergeNodesDialog
-          isOpen={uiStore.mergeDialog.open}
-          sourceNodeIds={uiStore.mergeDialog.sourceIds}
-          onClose={() => uiStore.closeMergeDialog()}
-        />
-        {#if import.meta.env.DEV || (typeof window !== "undefined" && (window as any).__E2E__) || import.meta.env.VITE_STAGING === "true"}
+        {#if MergeNodesDialog}
+          <MergeNodesDialog
+            isOpen={uiStore.mergeDialog.open}
+            sourceNodeIds={uiStore.mergeDialog.sourceIds}
+            onClose={() => uiStore.closeMergeDialog()}
+          />
+        {/if}
+        {#if DebugConsole}
           <DebugConsole />
         {/if}
       {/if}
@@ -386,3 +473,9 @@
     </div>
   </div>
 {/if}
+
+<style>
+  .app-layout {
+    font-family: var(--theme-font-sans, ui-sans-serif);
+  }
+</style>

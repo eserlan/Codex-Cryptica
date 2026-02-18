@@ -11,8 +11,24 @@ class UIStore {
   showSettings = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
   isImporting = $state(false);
+  skipWelcomeScreen = $state(false);
+  dismissedLandingPage = $state(false);
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
+
+  constructor() {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("codex_skip_landing");
+      if (saved !== null) {
+        this.skipWelcomeScreen = saved === "true";
+      }
+    }
+  }
+
+  toggleWelcomeScreen(skip: boolean) {
+    this.skipWelcomeScreen = skip;
+    localStorage.setItem("codex_skip_landing", String(skip));
+  }
 
   get abortSignal() {
     if (!this.abortController || this.abortController.signal.aborted) {
@@ -113,6 +129,10 @@ class UIStore {
 
   closeReadMode() {
     this.closeZenMode();
+  }
+
+  get isLandingPageVisible() {
+    return !this.skipWelcomeScreen && !this.dismissedLandingPage;
   }
 }
 

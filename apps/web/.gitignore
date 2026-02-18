@@ -27,3 +27,5 @@ vite.config.ts.timestamp-*
 /playwright-report/
 /blob-report/
 /test-results.json
+audit-report/
+.unlighthouse/
