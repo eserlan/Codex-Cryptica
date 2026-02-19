@@ -59,22 +59,22 @@ export const THEMES: Record<string, StylingTemplate> = {
     id: "fantasy",
     name: "Ancient Parchment",
     tokens: {
-      primary: "#78350f",
-      secondary: "#451a03",
-      background: "#fdf6e3",
-      surface: "#eee8d5",
-      text: "#2d241e",
+      primary: "#78350f", // Burnt Umber
+      secondary: "#451a03", // Deep Brown
+      background: "#fdf6e3", // Parchment
+      surface: "#eee8d5", // Aged Paper
+      text: "#2d241e", // Inked Text
       border: "rgba(120, 53, 15, 0.3)",
-      accent: "#991b1b",
+      accent: "#991b1b", // Dried Blood / Crimson
       fontHeader: "'Cinzel', serif",
       fontBody: "'Spectral', serif",
-      texture: "parchment.png",
+      texture: "parchment.svg",
     },
     graph: {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeColor: "#78350f",
+      edgeColor: "#5F4B3B", // Sepia Ink
     },
   },
   modern: {
@@ -164,4 +164,4 @@ export const THEMES: Record<string, StylingTemplate> = {
   },
 };
 
-export const DEFAULT_THEME = THEMES.scifi;
+export const DEFAULT_THEME = THEMES.fantasy;

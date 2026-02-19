@@ -2,6 +2,7 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   // Sub-components
   import DetailHeader from "./entity-detail/DetailHeader.svelte";
@@ -95,7 +96,11 @@
 {#if entity}
   <aside
     transition:fade={{ duration: 200 }}
-    class="h-full w-full md:w-[400px] lg:w-[450px] bg-theme-surface border-l border-theme-border flex flex-col shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
+    class="pointer-events-auto flex h-full w-full md:w-[400px] lg:w-[450px] flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
+    style:background-image={themeStore.activeTheme.id === "fantasy"
+      ? "var(--bg-theme-surface)"
+      : "none"}
+    style:background-size="cover"
     ontouchmove={(e) => e.stopPropagation()}
     onwheel={(e) => e.stopPropagation()}
     data-testid="entity-detail-panel"
@@ -104,8 +109,14 @@
 
     <div
       class="flex-1 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
+      style:background-image={themeStore.activeTheme.id === "fantasy"
+        ? "var(--bg-texture-overlay)"
+        : "none"}
     >
-      <div class="bg-theme-surface">
+      <div
+        style="background-image: var(--bg-texture-overlay)"
+        class="bg-theme-surface"
+      >
         <DetailImage {entity} {isEditing} bind:editImage />
 
         <DetailTabs {entity} bind:activeTab {isEditing} bind:editType />

@@ -121,6 +121,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Large file imports are now saved automatically. If interrupted, just re-select the file to resume.",
   },
+  "zen-templates": {
+    id: "zen-templates",
+    title: "Aesthetic Shift",
+    content:
+      "Change the entire look of your workspace instantly. Switch between Sci-Fi, Fantasy, and more in Settings > Aesthetics.",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
