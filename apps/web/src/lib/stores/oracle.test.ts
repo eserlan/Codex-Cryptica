@@ -533,6 +533,7 @@ describe("OracleStore", () => {
 
     it("should abort if key is missing or already loading", async () => {
       const { aiService } = await import("../services/ai");
+<<<<<<< HEAD
       const { vault } = await import("./vault.svelte");
 
       (vault as any).entities = {
@@ -545,13 +546,23 @@ describe("OracleStore", () => {
       oracle.tier = "advanced"; // Ensure apiKey is required
       oracle.apiKey = null;
       await oracle.drawEntity("abort-1");
+=======
+      vi.mocked(aiService.retrieveContext).mockClear();
+
+      oracle.apiKey = null;
+      await oracle.drawEntity("e1");
+>>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
       expect(oracle.isLoading).toBe(false);
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
 
       oracle.apiKey = "key";
       oracle.isLoading = true;
+<<<<<<< HEAD
       vi.mocked(aiService.retrieveContext).mockClear();
       await oracle.drawEntity("abort-2");
+=======
+      await oracle.drawEntity("e1");
+>>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
     });
   });
