@@ -6,6 +6,7 @@
   import { fade } from "svelte/transition";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
     entity,
@@ -43,8 +44,9 @@
       Protocol Redacted
     </h3>
     <p class="text-xs text-theme-muted leading-relaxed max-w-xs">
-      This archive entry is currently obscured by Fog of War. Switch to Admin
-      Mode or remove the <code class="text-amber-500">hidden</code> tag to decrypt.
+      This {themeStore.jargon.entity.toLowerCase()} is currently obscured by Fog of
+      War. Switch to Admin Mode or remove the
+      <code class="text-amber-500">hidden</code> tag to decrypt.
     </p>
     <button
       onclick={onClose}

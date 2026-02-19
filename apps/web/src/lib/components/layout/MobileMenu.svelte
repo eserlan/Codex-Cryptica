@@ -4,6 +4,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { PATREON_URL } from "$lib/config";
   import VaultControls from "$lib/components/VaultControls.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { isOpen = $bindable(false) } = $props();
 
@@ -80,7 +81,7 @@
         <h3
           class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
         >
-          Campaign Controls
+          {themeStore.jargon.vault} Controls
         </h3>
         <VaultControls orientation="vertical" />
       </div>

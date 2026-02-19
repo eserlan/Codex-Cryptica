@@ -1,5 +1,5 @@
-import { THEMES, DEFAULT_THEME } from "schema";
-import type { StylingTemplate } from "schema";
+import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
+import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
@@ -13,6 +13,25 @@ class ThemeStore {
       ? THEMES[this.previewThemeId]
       : THEMES[this.currentThemeId] || DEFAULT_THEME,
   );
+
+  /**
+   * Resolved jargon for the active theme, falling back to defaults.
+   */
+  jargon = $derived({
+    ...DEFAULT_JARGON,
+    ...(this.activeTheme.jargon || {}),
+  } as JargonMap);
+
+  /**
+   * Helper to resolve a specific jargon key with optional pluralization.
+   */
+  resolveJargon(key: keyof JargonMap, count?: number): string {
+    if (count !== undefined && count !== 1) {
+      const pluralKey = `${String(key)}_plural`;
+      if (this.jargon[pluralKey]) return this.jargon[pluralKey];
+    }
+    return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
+  }
 
   constructor() {
     $effect.root(() => {

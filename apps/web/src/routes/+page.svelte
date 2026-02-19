@@ -5,6 +5,7 @@
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -202,8 +203,9 @@
               Total Privacy
             </h3>
             <p class="text-theme-muted leading-relaxed font-body">
-              Your notes never leave your device. We use local storage for
-              maximum security. No cloud accounts required.
+              Your {themeStore.resolveJargon("entity", 2).toLowerCase()} never leave
+              your device. We use local storage for maximum security. No cloud accounts
+              required.
             </p>
           </div>
 

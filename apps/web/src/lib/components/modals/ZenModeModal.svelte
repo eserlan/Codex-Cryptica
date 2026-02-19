@@ -10,6 +10,7 @@
   import type { Entity } from "schema";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -658,7 +659,7 @@
                   class="text-xl font-serif font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
                 >
                   <span class="icon-[lucide--book-open] w-5 h-5"></span>
-                  Chronicle
+                  {themeStore.jargon.chronicle_header}
                 </h2>
                 {#if isEditing}
                   <MarkdownEditor
@@ -682,7 +683,7 @@
                   class="text-xl font-serif font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
                 >
                   <span class="icon-[lucide--scroll] w-5 h-5"></span>
-                  Deep Lore & Secrets
+                  {themeStore.jargon.lore_secrets}
                 </h2>
                 {#if isEditing}
                   <MarkdownEditor

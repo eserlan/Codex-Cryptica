@@ -1,5 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { isEditing, onCancel, onSave, onDelete, onStartEdit } = $props<{
     isEditing: boolean;
@@ -25,7 +26,7 @@
         onclick={onSave}
         class="bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold px-6 py-2 rounded tracking-widest transition"
       >
-        SAVE CHANGES
+        {themeStore.jargon.save.toUpperCase()} CHANGES
       </button>
     </div>
   {:else}
@@ -37,7 +38,7 @@
           onclick={onDelete}
           class="border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-[10px] font-bold px-3 py-2 rounded tracking-widest transition"
         >
-          DELETE
+          {themeStore.jargon.delete.toUpperCase()}
         </button>
         <button
           onclick={onStartEdit}

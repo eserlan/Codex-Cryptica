@@ -49,6 +49,11 @@ test.describe("Visual Styling Templates", () => {
         .trim(),
     );
     expect(borderRadius).toBe("6px");
+
+    // 8. Verify jargon (Archive instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText(
+      "Archive",
+    );
   });
 
   test("Welcome page uses theme-aware styling", async ({ page }) => {
@@ -128,6 +133,9 @@ test.describe("Visual Styling Templates", () => {
         .trim(),
     );
     expect(secondaryColor).toBe("#ef4444");
+
+    // 7. Verify jargon (Crypt instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText("Crypt");
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
     entity,
@@ -47,7 +48,8 @@
       class={activeTab === "status"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
-      onclick={() => (activeTab = "status")}>STATUS</button
+      onclick={() => (activeTab = "status")}
+      >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
     <button
       class={activeTab === "lore"
@@ -55,13 +57,14 @@
         : "hover:text-theme-text transition"}
       onclick={() => {
         activeTab = "lore";
-      }}>LORE & NOTES</button
+      }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
     >
     <button
       class={activeTab === "inventory"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
-      onclick={() => (activeTab = "inventory")}>INVENTORY</button
+      onclick={() => (activeTab = "inventory")}
+      >{themeStore.jargon.tab_inventory.toUpperCase()}</button
     >
   </div>
 </div>

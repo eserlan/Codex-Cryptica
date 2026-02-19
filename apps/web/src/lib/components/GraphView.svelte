@@ -974,7 +974,9 @@
           >{selectedEntity.title || selectedEntity.id}</span
         >
       {:else}
-        <span class="text-theme-muted">SYSTEM</span>
+        <span class="text-theme-muted"
+          >{themeStore.jargon.vault.toUpperCase()}</span
+        >
         <span class="text-theme-muted">/</span>
         <span class="font-bold text-theme-primary">OVERVIEW</span>
       {/if}

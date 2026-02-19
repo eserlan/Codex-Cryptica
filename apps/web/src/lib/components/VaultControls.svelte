@@ -5,6 +5,7 @@
   import { cloudConfig } from "$stores/cloud-config";
   import ShareModal from "$lib/components/ShareModal.svelte";
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -133,7 +134,7 @@
       <span
         class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[120px] truncate"
       >
-        {vault.vaultName}
+        {themeStore.jargon.vault}: {vault.vaultName}
       </span>
       <span
         class="icon-[lucide--chevron-down] w-3 h-3 text-theme-muted/50 group-hover:text-theme-primary"
@@ -159,10 +160,15 @@
         </span>
       {:else if vault.allEntities.length > 0}
         <span class="text-theme-secondary" data-testid="entity-count"
-          >{vault.allEntities.length} ENTITIES</span
+          >{vault.allEntities.length}
+          {themeStore
+            .resolveJargon("entity", vault.allEntities.length)
+            .toUpperCase()}</span
         >
       {:else}
-        <span class="text-theme-muted">NO VAULT</span>
+        <span class="text-theme-muted"
+          >NO {themeStore.jargon.vault.toUpperCase()}</span
+        >
       {/if}
     </div>
 
@@ -199,7 +205,9 @@
               ? "icon-[heroicons--x-mark] w-3 h-3"
               : "icon-[heroicons--plus] w-3 h-3"}
           ></span>
-          {showForm ? "CANCEL" : "NEW ENTITY"}
+          {showForm
+            ? "CANCEL"
+            : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
         </button>
 
         <div
@@ -282,8 +290,8 @@
     >
       <input
         bind:value={newTitle}
-        aria-label="New Entity Title"
-        placeholder="Entry Title..."
+        aria-label={`New ${themeStore.jargon.entity} Title`}
+        placeholder={`${themeStore.jargon.entity} Title...`}
         class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical
           ? 'py-3 text-sm'
           : ''}"
