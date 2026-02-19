@@ -11,7 +11,8 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     # Skip if the commit was made by the bot itself to prevent loops
-    if: github.actor != 'github-actions[bot]'
+    # Also skip forked PRs, which do not have contents: write or github.head_ref in the base repo
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: write
 
@@ -26,8 +27,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install
+      - name: Update lockfile without running scripts
+        run: |
+          HUSKY=0 npm install --package-lock-only --ignore-scripts
 
       - name: Commit and push changes
         run: |
