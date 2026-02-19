@@ -7,6 +7,7 @@
   } from "$lib/services/node-merge.service";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
 
@@ -117,18 +118,19 @@
   {#if step === "SELECT_SOURCE"}
     <div in:fade>
       <p class="text-xs text-theme-muted mb-2 font-mono">
-        1. Select the entity to ABSORB (will be deleted):
+        1. Select the {themeStore.jargon.entity.toLowerCase()} to ABSORB (will be
+        deleted):
       </p>
       <Autocomplete
         bind:value={sourceName}
         bind:selectedId={sourceId}
-        placeholder="Type source entity name..."
+        placeholder={`Type source ${themeStore.jargon.entity.toLowerCase()} name...`}
       />
     </div>
   {:else if step === "SELECT_TARGET"}
     <div in:fade>
       <p class="text-xs text-theme-muted mb-2 font-mono">
-        2. Select the entity to KEEP (will be updated):
+        2. Select the {themeStore.jargon.entity.toLowerCase()} to KEEP (will be updated):
       </p>
       <div
         class="flex items-center gap-2 mb-2 px-2 py-1 bg-theme-accent/10 rounded border border-theme-accent/20"
@@ -245,7 +247,7 @@
         class="text-green-400 font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
       >
         <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
-        Entities Merged
+        {themeStore.resolveJargon("entity", 2)} Merged
       </span>
     </div>
   {/if}

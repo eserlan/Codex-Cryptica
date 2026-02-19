@@ -1,6 +1,8 @@
-import { THEMES, DEFAULT_THEME } from "schema";
-import type { StylingTemplate } from "schema";
+import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
+import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
+import { getDB } from "../utils/idb";
+import { vault } from "./vault.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
@@ -14,6 +16,25 @@ class ThemeStore {
       : THEMES[this.currentThemeId] || DEFAULT_THEME,
   );
 
+  /**
+   * Resolved jargon for the active theme, falling back to defaults.
+   */
+  jargon = $derived({
+    ...DEFAULT_JARGON,
+    ...(this.activeTheme.jargon || {}),
+  } as JargonMap);
+
+  /**
+   * Helper to resolve a specific jargon key with optional pluralization.
+   */
+  resolveJargon(key: keyof JargonMap, count?: number): string {
+    if (count !== undefined && count !== 1) {
+      const pluralKey = `${String(key)}_plural`;
+      if (this.jargon[pluralKey]) return this.jargon[pluralKey];
+    }
+    return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
+  }
+
   constructor() {
     $effect.root(() => {
       $effect(() => {
@@ -22,8 +43,14 @@ class ThemeStore {
     });
   }
 
-  init() {
-    if (browser) {
+  async init() {
+    if (!browser) return;
+
+    // If we have an active vault ID already (from registry init), use it.
+    // Otherwise, fall back to global selection until a vault is explicitly switched.
+    if (vault.activeVaultId) {
+      await this.loadForVault(vault.activeVaultId);
+    } else {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && THEMES[stored]) {
         this.currentThemeId = stored;
@@ -31,11 +58,37 @@ class ThemeStore {
     }
   }
 
-  setTheme(id: string) {
-    if (THEMES[id]) {
-      this.currentThemeId = id;
-      if (browser) {
-        localStorage.setItem(STORAGE_KEY, id);
+  async loadForVault(vaultId: string) {
+    if (!browser) return;
+    try {
+      const db = await getDB();
+      const stored = await db.get("settings", `theme_${vaultId}`);
+      if (stored && THEMES[stored]) {
+        this.currentThemeId = stored;
+      } else {
+        // For new vaults, we want to start with default
+        // instead of inheriting whatever was in localStorage/global state
+        this.currentThemeId = DEFAULT_THEME.id;
+      }
+    } catch (e) {
+      console.warn("[ThemeStore] Failed to load vault-specific theme", e);
+    }
+  }
+
+  async setTheme(id: string) {
+    if (!THEMES[id]) return;
+
+    this.currentThemeId = id;
+    if (browser) {
+      localStorage.setItem(STORAGE_KEY, id);
+      const activeVaultId = vault.activeVaultId;
+      if (activeVaultId) {
+        try {
+          const db = await getDB();
+          await db.put("settings", id, `theme_${activeVaultId}`);
+        } catch (e) {
+          console.warn("[ThemeStore] Failed to save vault-specific theme", e);
+        }
       }
     }
   }

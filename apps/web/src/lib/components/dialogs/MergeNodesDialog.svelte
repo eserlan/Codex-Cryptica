@@ -3,6 +3,8 @@
     nodeMergeService,
     type IMergedContentProposal,
   } from "$lib/services/node-merge.service";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
     isOpen = false,
@@ -97,7 +99,8 @@
         class="p-6 border-b border-theme-border flex justify-between items-center"
       >
         <h2 class="text-xl font-bold text-theme-text">
-          Merge {sourceNodeIds.length} Nodes
+          Merge {sourceNodeIds.length}
+          {themeStore.resolveJargon("entity", sourceNodeIds.length)}
         </h2>
         <button
           onclick={() => onClose()}
@@ -121,7 +124,7 @@
             class="block text-sm font-medium text-theme-muted mb-2"
             for="target-node"
           >
-            Target Node (Primary)
+            Target {themeStore.resolveJargon("entity", 1)} (Primary)
           </label>
           <select
             id="target-node"
@@ -131,11 +134,12 @@
             disabled={isLoading}
           >
             {#each sourceNodeIds as id}
-              <option value={id}>{id}</option>
+              <option value={id}>{vault.entities[id]?.title || id}</option>
             {/each}
           </select>
           <p class="text-xs text-theme-muted mt-1">
-            This node will be updated. All others will be deleted.
+            This {themeStore.jargon.entity.toLowerCase()} will be updated. All others
+            will be deleted.
           </p>
         </div>
 

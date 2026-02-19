@@ -5,6 +5,7 @@
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
   import DetailProposals from "./proposals/DetailProposals.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
     entity,
@@ -138,7 +139,7 @@
     <h3
       class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
     >
-      Chronicle
+      {themeStore.jargon.chronicle_header}
     </h3>
     <div class="prose-content">
       <MarkdownEditor
@@ -156,7 +157,7 @@
     <h3
       class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
     >
-      Gossip & Secrets
+      {themeStore.jargon.connections_header}
     </h3>
     <ul class="space-y-3">
       {#each allConnections as conn}

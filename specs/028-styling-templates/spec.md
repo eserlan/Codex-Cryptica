@@ -37,17 +37,18 @@ As a World Builder, I want to see a preview of how a styling template looks befo
 
 ---
 
-### User Story 3 - Graph-Level Stylistic Cohesion (Priority: P1)
+### User Story 4 - Campaign-Specific Theme Persistence (Priority: P1)
 
-As a User, I want the Knowledge Graph to adopt the stylistic cues of the selected template (e.g., node shapes, edge colors), so that the relational visualization feels like a natural extension of the world's genre.
+As a Game Master managing multiple campaigns, I want the theme selection to be saved individually for each campaign so that my "Dark Fantasy" world always opens with the "Blood & Noir" theme, while my "Cyberpunk" campaign retains its "Neon Night" aesthetic.
 
-**Why this priority**: The graph is the primary interface; if it doesn't match the theme, the "Zen" experience is broken.
+**Why this priority**: Essential for multi-campaign support and maintaining immersion across different settings.
 
-**Independent Test**: Verify that in "Cyberpunk" mode, nodes use neon glows and digital-glitch style borders, while in "Post-Apocalyptic" mode, they appear rusted or weathered.
+**Independent Test**:
 
-**Acceptance Scenarios**:
-
-1. **Given** "Modern" mode is selected, **When** I view the graph, **Then** nodes use clean, minimalist shapes and edges use neutral, subtle colors.
+1. Open Campaign A and set theme to "Fantasy".
+2. Open Campaign B and set theme to "Sci-Fi".
+3. Switch back to Campaign A and verify it is still "Fantasy".
+4. Switch back to Campaign B and verify it is still "Sci-Fi".
 
 ---
 

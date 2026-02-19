@@ -38,13 +38,15 @@
 - [x] T013 [US3] Update `GraphView.svelte` to reactive re-apply styles when the theme store updates
 - [x] T014 [US3] Implement genre-specific node shapes and edge styles in `graph-theme.ts` for all 5 templates
 
-## Phase 5: User Story 2 - Real-time Theme Preview (Priority: P2)
+## Phase 6: User Story 4 - Campaign-Specific Persistence (Priority: P1)
 
-**Goal**: Provide visual feedback before committing to a theme change.
-**Independent Test**: Hovering over "Modern" in the selector temporarily changes the UI tokens without saving.
+**Goal**: Store theme selection in IndexedDB per vault ID, similar to the calendar config.
+**Independent Test**: Switching vaults automatically loads the correct theme.
 
-- [x] T015 [US2] Implement `previewTemplate(templateId)` method in `theme.svelte.ts`
-- [x] T016 [US2] Add hover listeners to `ThemeSelector.svelte` to trigger temporary preview state
+- [x] T017 [US4] Update `ThemeStore.setTheme` to persist theme ID to IndexedDB with a vault-specific key (`theme_{vaultId}`)
+- [x] T018 [US4] Implement `ThemeStore.loadForVault(vaultId)` to fetch and apply the theme from IDB
+- [x] T019 [US4] Update `VaultStore.switchVault` to trigger `themeStore.loadForVault`
+- [x] T020 [US4] Add E2E test verifying theme persistence across multiple campaigns
 
 ## Phase 7: Verification
 

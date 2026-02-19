@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type JargonMap } from "./jargon";
 
 export const ThemeTokensSchema = z.object({
   primary: z.string(),
@@ -25,14 +26,35 @@ export const GraphStyleConfigSchema = z.object({
 
 export type GraphStyleConfig = z.infer<typeof GraphStyleConfigSchema>;
 
+export const JargonMapSchema = z.record(z.string(), z.string());
+
 export const StylingTemplateSchema = z.object({
   id: z.string(),
   name: z.string(),
   tokens: ThemeTokensSchema,
   graph: GraphStyleConfigSchema,
+  jargon: JargonMapSchema.optional(),
 });
 
 export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
+
+export const DEFAULT_JARGON: JargonMap = {
+  vault: "Vault",
+  entity: "Note",
+  entity_plural: "Notes",
+  save: "Save",
+  delete: "Delete",
+  search: "Search",
+  new: "New",
+  syncing: "Syncing",
+  lore_header: "Detailed Records",
+  lore_secrets: "Deep Lore & Secrets",
+  chronicle_header: "Chronicle",
+  connections_header: "Connections",
+  tab_status: "Status",
+  tab_lore: "Lore & Notes",
+  tab_inventory: "Inventory",
+};
 
 export const THEMES: Record<string, StylingTemplate> = {
   scifi: {
@@ -56,6 +78,23 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeWidth: 1,
       edgeColor: "#14532d",
     },
+    jargon: {
+      vault: "Data Bank",
+      entity: "Data Node",
+      entity_plural: "Data Nodes",
+      save: "Upload",
+      delete: "Purge",
+      new: "Initialize",
+      syncing: "Transmitting",
+      search: "Query",
+      lore_header: "Intelligence Feed",
+      lore_secrets: "Classified Data & Encryption",
+      chronicle_header: "System Summary",
+      connections_header: "Relational Map",
+      tab_status: "Diagnostics",
+      tab_lore: "Data Streams",
+      tab_inventory: "Cargo",
+    },
   },
   fantasy: {
     id: "fantasy",
@@ -78,6 +117,23 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeBorderWidth: 2,
       edgeWidth: 2,
       edgeColor: "#5F4B3B", // Sepia Ink
+    },
+    jargon: {
+      vault: "Archive",
+      entity: "Chronicle",
+      entity_plural: "Chronicles",
+      save: "Inscribe",
+      delete: "Burn",
+      new: "Forge",
+      syncing: "Preserving",
+      search: "Divine",
+      lore_header: "Ancient Inscription",
+      lore_secrets: "Forgotten Prophecies & Hidden Runes",
+      chronicle_header: "Tome",
+      connections_header: "Bonds",
+      tab_status: "Attributes",
+      tab_lore: "Mythos",
+      tab_inventory: "Possessions",
     },
   },
   modern: {
@@ -123,6 +179,23 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeWidth: 1,
       edgeColor: "#db2777",
     },
+    jargon: {
+      vault: "Mainframe",
+      entity: "Neural Trace",
+      entity_plural: "Neural Traces",
+      save: "Hack",
+      delete: "Derez",
+      new: "Jack In",
+      syncing: "Uplinking",
+      search: "Scan",
+      lore_header: "Active Uplink",
+      lore_secrets: "Black Projects & Corrupted Nodes",
+      chronicle_header: "Neural Record",
+      connections_header: "Network",
+      tab_status: "Biometrics",
+      tab_lore: "Neural Feed",
+      tab_inventory: "Hardware",
+    },
   },
   apocalyptic: {
     id: "apocalyptic",
@@ -146,6 +219,23 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeWidth: 1,
       edgeColor: "#78716c",
     },
+    jargon: {
+      vault: "Bunker",
+      entity: "Scrap",
+      entity_plural: "Scraps",
+      save: "Salvage",
+      delete: "Scuttle",
+      new: "Scavenge",
+      syncing: "Patching",
+      search: "Scout",
+      lore_header: "Salvaged Log",
+      lore_secrets: "Radioactive Files & Buried Rumors",
+      chronicle_header: "Fragment",
+      connections_header: "Ties",
+      tab_status: "Vitals",
+      tab_lore: "Memories",
+      tab_inventory: "Stash",
+    },
   },
   horror: {
     id: "horror",
@@ -167,6 +257,23 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeBorderWidth: 2,
       edgeWidth: 1,
       edgeColor: "#991b1b",
+    },
+    jargon: {
+      vault: "Crypt",
+      entity: "Victim",
+      entity_plural: "Victims",
+      save: "Seal",
+      delete: "Banish",
+      new: "Exhume",
+      syncing: "Bleeding",
+      search: "Hunt",
+      lore_header: "Forbidden Knowledge",
+      lore_secrets: "Unspeakable Horrors & Eldritch Truths",
+      chronicle_header: "Last Will",
+      connections_header: "Chains",
+      tab_status: "Condition",
+      tab_lore: "Whispers",
+      tab_inventory: "Remains",
     },
   },
 };

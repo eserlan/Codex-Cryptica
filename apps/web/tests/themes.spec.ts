@@ -4,6 +4,7 @@ test.describe("Visual Styling Templates", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      localStorage.setItem("codex_skip_landing", "true");
     });
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
@@ -49,6 +50,11 @@ test.describe("Visual Styling Templates", () => {
         .trim(),
     );
     expect(borderRadius).toBe("6px");
+
+    // 8. Verify jargon (Archive instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText(
+      "Archive",
+    );
   });
 
   test("Welcome page uses theme-aware styling", async ({ page }) => {
@@ -59,18 +65,12 @@ test.describe("Visual Styling Templates", () => {
     // uiStore.isLandingPageVisible depends on skipWelcomeScreen and dismissedLandingPage.
     // We need to ensure we haven't set 'codex_skip_landing' in localStorage.
 
-    await page.evaluate(() => {
-      localStorage.removeItem("codex_skip_landing");
-      (window as any).uiStore?.toggleWelcomeScreen(false); // Reset store if exposed, or just rely on reload
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_skip_landing", "false");
     });
     await page.reload();
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-
-    // 2. Verify the landing page container exists and has correct background
-    // We changed it to bg-theme-bg/95.
-    // In Fantasy theme (default), theme-bg is #fdf6e3 (rgb(253, 246, 227))
-    // /95 opacity is approx 0.95 alpha.
-
+    // In landing page mode, vault might not be idle if it doesn't boot.
+    // Let's just wait for the landing page to be visible.
     const landingPage = page.locator(".absolute.inset-0.z-30");
     await expect(landingPage).toBeVisible();
 
@@ -128,6 +128,9 @@ test.describe("Visual Styling Templates", () => {
         .trim(),
     );
     expect(secondaryColor).toBe("#ef4444");
+
+    // 7. Verify jargon (Crypt instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText("Crypt");
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {

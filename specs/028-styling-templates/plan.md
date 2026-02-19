@@ -46,3 +46,9 @@ Implement a multi-genre theming system ("Zen Templates") that allows users to sh
 2. Implement Template Selection UI in Settings.
 3. Update Cytoscape renderer to respect active template.
 4. Implement specific styles for the 5 requested genres.
+
+## Phase 6: Campaign-Specific Persistence
+
+1. **Vault Integration**: Connect `ThemeStore` to `VaultStore` lifecycle.
+2. **IndexedDB Storage**: Implement vault-prefixed keys in IDB `settings` store for theme persistence.
+3. **Multi-Campaign Validation**: Add E2E tests for theme isolation between vaults.
