@@ -31,14 +31,13 @@
       <h1
         class="text-5xl md:text-7xl font-bold font-header tracking-tight mb-6"
       >
-        Operational <span class="text-theme-primary">Protocols</span>
+        Core <span class="text-theme-primary">Features</span>
       </h1>
       <p
         class="text-xl text-theme-muted max-w-2xl mx-auto leading-relaxed font-light"
       >
-        Codex Cryptica is built on a foundation of privacy and intelligence.
-        Explore the features that make it the ultimate choice for professional
-        lore keepers.
+        Codex Cryptica is built to keep your notes private and easy to manage.
+        Explore the tools that help you build your story.
       </p>
     </header>
 
@@ -60,7 +59,9 @@
               <div
                 class="w-12 h-12 rounded-2xl bg-theme-primary/10 flex items-center justify-center border border-theme-primary/20 group-hover:scale-110 transition-transform duration-300"
               >
-                <span class="icon-[lucide--zap] text-theme-primary w-6 h-6"
+                <span
+                  class="{feature.icon ||
+                    'icon-[lucide--zap]'} text-theme-primary w-6 h-6"
                 ></span>
               </div>
               <h2
@@ -77,81 +78,6 @@
       {/each}
     </div>
 
-    <!-- Technical Specs Section -->
-    <section class="border-t border-theme-border/30 pt-24 mb-24">
-      <div class="grid md:grid-cols-3 gap-16">
-        <div>
-          <h3
-            class="text-[10px] font-black text-theme-primary uppercase tracking-[0.4em] mb-8"
-          >
-            Architecture
-          </h3>
-          <ul
-            class="space-y-5 font-mono text-[11px] text-theme-muted uppercase tracking-wider"
-          >
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Local-First (OPFS)
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Svelte 5 Runes
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Multi-Threaded
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h3
-            class="text-[10px] font-black text-theme-primary uppercase tracking-[0.4em] mb-8"
-          >
-            Intelligence
-          </h3>
-          <ul
-            class="space-y-5 font-mono text-[11px] text-theme-muted uppercase tracking-wider"
-          >
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Google Gemini Pro
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Context-Aware RAG
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Lore Grounding
-            </li>
-          </ul>
-        </div>
-        <div>
-          <h3
-            class="text-[10px] font-black text-theme-primary uppercase tracking-[0.4em] mb-8"
-          >
-            Security
-          </h3>
-          <ul
-            class="space-y-5 font-mono text-[11px] text-theme-muted uppercase tracking-wider"
-          >
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Full E2E Privacy
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Zero-Cloud Default
-            </li>
-            <li class="flex items-center gap-4">
-              <span class="w-2 h-2 bg-theme-primary/40 rounded-full"></span>
-              Transparent Source
-            </li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
     <!-- CTA -->
     <section
       class="bg-theme-surface/30 border border-theme-border/20 rounded-3xl p-16 text-center relative overflow-hidden"
@@ -162,19 +88,19 @@
       ></div>
       <div class="relative z-10">
         <h2 class="text-4xl font-header font-bold mb-6 text-theme-text">
-          Ready to initiate?
+          Ready to start?
         </h2>
         <p
           class="text-theme-muted mb-12 max-w-xl mx-auto text-lg leading-relaxed"
         >
-          Join the next generation of DMs. Start building your world with
-          absolute privacy and unparalleled intelligence.
+          Join the next generation of storytellers. Start building your world
+          with absolute privacy and smart tools.
         </p>
         <a
           href="{base}/"
           class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
         >
-          Enter Workspace
+          Open the Codex
         </a>
       </div>
     </section>
