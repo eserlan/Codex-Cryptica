@@ -738,13 +738,6 @@
 
         const currentElements = currentCy.elements();
 
-        // Optimization: Create a Map for O(1) lookups of existing elements
-        // This avoids creating a Set of IDs and repeated cy.$id() calls in the loop
-        const elementMap = new Map<string, any>();
-        currentElements.forEach((el) => {
-          elementMap.set(el.id(), el);
-        });
-
         const targetIds = new Set(graph.elements.map((el) => el.data.id));
 
         // 1. Remove elements no longer in the store
@@ -806,6 +799,14 @@
             }
           }
         }
+
+        // Optimization: Create a Map for O(1) lookups of existing elements
+        // This avoids repeated cy.$id() calls in the loop
+        // IMPORTANT: Must be done AFTER adding new elements so they are included in the map
+        const elementMap = new Map<string, any>();
+        currentCy.elements().forEach((el) => {
+          elementMap.set(el.id(), el);
+        });
 
         // 3. Update existing elements (labels, etc) - Data Sync only
         currentCy.batch(() => {
