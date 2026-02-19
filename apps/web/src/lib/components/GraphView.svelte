@@ -756,7 +756,9 @@
         }
 
         // 2. Add new elements safely
-        const newElements = graph.elements.filter(
+        // Take a snapshot to break reactivity and prevent infinite loops/DataCloneErrors
+        const snapshotElements = $state.snapshot(graph.elements);
+        const newElements = snapshotElements.filter(
           (el) => !elementMap.has(el.data.id),
         );
 
@@ -813,27 +815,39 @@
               const currentData = node.data();
               const newData = el.data;
 
-              // Shallow equality check to prevent unnecessary style recalculations
+              // Robust equality check to prevent unnecessary style recalculations
               let changed = false;
               for (const key in newData) {
                 // Skip ID as it's the lookup key
                 if (key === "id") continue;
 
                 const k = key as keyof typeof newData;
-                if (currentData[k] !== newData[k]) {
+                const newVal = newData[k];
+                const curVal = currentData[k];
+
+                // Handle primitive vs object comparison (e.g. for TemporalMetadata)
+                const isMatch =
+                  typeof newVal === "object" && newVal !== null
+                    ? JSON.stringify(newVal) === JSON.stringify(curVal)
+                    : curVal === newVal;
+
+                if (!isMatch) {
                   changed = true;
                   break;
                 }
               }
 
               if (changed) {
-                // Merge with existing data so we don't lose dynamic properties
-                // (e.g. resolvedImage, width, height set by async loaders)
-                node.data({ ...currentData, ...newData });
+                // Cytoscape merges data objects automatically
+                node.data(newData);
               }
 
               // Sync position for guests (Host relies on local layout)
-              if (vault.isGuest && el.group === "nodes" && el.position) {
+              if (
+                vault.isGuest &&
+                el.group === "nodes" &&
+                el.position?.x !== undefined
+              ) {
                 const currentPos = node.position();
                 // Check if position changed significantly (> 1px) to avoid jitter
                 if (
