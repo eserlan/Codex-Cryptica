@@ -10,7 +10,7 @@
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
 
   let {
     value = $bindable(""),
@@ -35,6 +35,17 @@
   let showResults = $state(false);
   let isLoading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  let statusMessage = $state("");
+
+  $effect(() => {
+    if (isLoading) {
+      statusMessage = "Loading results...";
+    } else if (showResults) {
+      statusMessage = `${results.length} results found. Use up and down arrows to navigate.`;
+    } else {
+      statusMessage = "";
+    }
+  });
 
   // Generate a stable ID if none is provided
   let generatedId = $state("");
@@ -103,15 +114,23 @@
     results = [];
   };
 
+  const scrollToSelected = async () => {
+    await tick();
+    const el = document.getElementById(`${finalId}-option-${selectedIndex}`);
+    el?.scrollIntoView({ block: "nearest" });
+  };
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!showResults) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       selectedIndex = (selectedIndex + 1) % results.length;
+      scrollToSelected();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       selectedIndex = (selectedIndex - 1 + results.length) % results.length;
+      scrollToSelected();
     } else if (e.key === "Enter") {
       e.preventDefault();
       selectResult(results[selectedIndex]);
@@ -122,12 +141,16 @@
 </script>
 
 <div class="relative w-full">
+  <div class="sr-only" role="status" aria-live="polite">
+    {statusMessage}
+  </div>
   <input
     type="text"
     id={finalId}
     {value}
     {placeholder}
     role="combobox"
+    aria-busy={isLoading}
     aria-autocomplete="list"
     aria-expanded={showResults}
     aria-controls={showResults ? `${finalId}-listbox` : undefined}
