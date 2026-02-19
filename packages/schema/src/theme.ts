@@ -19,6 +19,7 @@ export const GraphStyleConfigSchema = z.object({
   nodeShape: z.string(),
   edgeStyle: z.enum(["solid", "dashed", "dotted"]),
   nodeBorderWidth: z.number(),
+  edgeWidth: z.number().default(1),
   edgeColor: z.string(),
 });
 
@@ -52,6 +53,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
+      edgeWidth: 1,
       edgeColor: "#14532d",
     },
   },
@@ -59,22 +61,23 @@ export const THEMES: Record<string, StylingTemplate> = {
     id: "fantasy",
     name: "Ancient Parchment",
     tokens: {
-      primary: "#78350f",
-      secondary: "#451a03",
-      background: "#fdf6e3",
-      surface: "#eee8d5",
-      text: "#2d241e",
+      primary: "#78350f", // Burnt Umber
+      secondary: "#451a03", // Deep Brown
+      background: "#fdf6e3", // Parchment
+      surface: "#eee8d5", // Aged Paper
+      text: "#2d241e", // Inked Text
       border: "rgba(120, 53, 15, 0.3)",
-      accent: "#991b1b",
+      accent: "#991b1b", // Dried Blood / Crimson
       fontHeader: "'Cinzel', serif",
       fontBody: "'Spectral', serif",
-      texture: "parchment.png",
+      texture: "parchment.svg",
     },
     graph: {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeColor: "#78350f",
+      edgeWidth: 2,
+      edgeColor: "#5F4B3B", // Sepia Ink
     },
   },
   modern: {
@@ -95,6 +98,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
+      edgeWidth: 1,
       edgeColor: "#cbd5e1",
     },
   },
@@ -116,6 +120,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "dashed",
       nodeBorderWidth: 2,
+      edgeWidth: 1,
       edgeColor: "#db2777",
     },
   },
@@ -138,6 +143,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "dotted",
       nodeBorderWidth: 1,
+      edgeWidth: 1,
       edgeColor: "#78716c",
     },
   },
@@ -159,9 +165,10 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
+      edgeWidth: 1,
       edgeColor: "#7f1d1d",
     },
   },
 };
 
-export const DEFAULT_THEME = THEMES.scifi;
+export const DEFAULT_THEME = THEMES.fantasy;

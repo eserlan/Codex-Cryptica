@@ -219,7 +219,7 @@ export const getGraphStyle = (
     {
       selector: "edge",
       style: {
-        width: 1,
+        width: graph.edgeWidth ?? 1,
         "line-color": graph.edgeColor,
         "line-style": graph.edgeStyle,
         "target-arrow-color": graph.edgeColor,

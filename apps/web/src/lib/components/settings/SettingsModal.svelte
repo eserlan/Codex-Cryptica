@@ -110,6 +110,7 @@
   >
     <!-- Sidebar Navigation -->
     <div
+      style="background-image: var(--bg-texture-overlay)"
       class="w-16 md:w-48 bg-theme-surface border-r border-theme-border flex flex-col pt-6"
       role="tablist"
       aria-label="Settings Categories"
@@ -164,7 +165,10 @@
     </div>
 
     <!-- Content Area -->
-    <div class="flex-1 flex flex-col min-w-0 bg-theme-bg">
+    <div
+      style="background-image: var(--bg-texture-overlay)"
+      class="flex-1 flex flex-col min-w-0 bg-theme-bg"
+    >
       <!-- Header -->
       <div
         class="px-8 py-6 flex justify-between items-center border-b border-theme-border"

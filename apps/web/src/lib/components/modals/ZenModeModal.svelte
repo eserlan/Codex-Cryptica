@@ -334,6 +334,7 @@
       style:border-radius="var(--theme-border-radius)"
       style:border-width="var(--theme-border-width)"
       style:box-shadow="var(--theme-glow)"
+      style="background-image: var(--bg-texture-overlay)"
       transition:fly={{ y: 20, duration: 300 }}
       onclick={(e) => e.stopPropagation()}
     >
@@ -353,6 +354,7 @@
 
       <!-- Header -->
       <header
+        style="background-image: var(--bg-texture-overlay)"
         class="px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
       >
         <div class="flex-1 mr-8">
@@ -453,6 +455,7 @@
 
       <!-- Navigation Tabs -->
       <div
+        style="background-image: var(--bg-texture-overlay)"
         class="flex gap-8 px-8 border-b border-theme-border bg-theme-surface shrink-0"
       >
         <button
@@ -480,6 +483,7 @@
         {#if activeTab === "overview"}
           <!-- Left Sidebar (Image & Meta) -->
           <div
+            style="background-image: var(--bg-texture-overlay)"
             class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
           >
             <!-- Labels -->
@@ -595,6 +599,7 @@
           <div
             bind:this={scrollContainer}
             class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+            style="background-image: var(--bg-texture-overlay)"
           >
             <div class="max-w-3xl mx-auto space-y-12">
               <!-- Temporal Data -->

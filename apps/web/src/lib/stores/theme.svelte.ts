@@ -90,6 +90,7 @@ class ThemeStore {
 
     let radius = "2px"; // Gothic/Terminal default
     if (theme.id === "modern") radius = "12px";
+    if (theme.id === "fantasy") radius = "6px"; // Softer look for fantasy
     if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
     root.style.setProperty("--theme-border-radius", radius);
 
@@ -98,8 +99,13 @@ class ThemeStore {
         "--bg-texture",
         `url('/themes/${tokens.texture}')`,
       );
+      root.style.setProperty(
+        "--bg-texture-overlay",
+        `linear-gradient(${tokens.background}80, ${tokens.background}80), url('/themes/${tokens.texture}')`,
+      );
     } else {
       root.style.setProperty("--bg-texture", "none");
+      root.style.setProperty("--bg-texture-overlay", "none");
     }
   }
 }
