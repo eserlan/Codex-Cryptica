@@ -32,7 +32,8 @@
       if (
         !input.includes(" ") ||
         input.startsWith("/connect") ||
-        input.startsWith("/merge")
+        input.startsWith("/merge") ||
+        input.startsWith("/draw")
       ) {
         showCommandMenu = true;
       } else {

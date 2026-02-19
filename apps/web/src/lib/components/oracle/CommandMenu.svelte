@@ -41,8 +41,17 @@
 
   // Derive step from input content if changed manually
   $effect(() => {
-    if (!input.startsWith("/connect") && !input.startsWith("/merge")) {
+    if (
+      !input.startsWith("/connect") &&
+      !input.startsWith("/merge") &&
+      !input.startsWith("/draw")
+    ) {
       activeStep = "COMMAND";
+      return;
+    }
+
+    if (input.startsWith("/draw")) {
+      activeStep = "FROM"; // Use FROM step for the single subject
       return;
     }
 
@@ -92,7 +101,7 @@
       activeStep === "FROM"
         ? parts.length > 1
           ? parts[1].trim()
-          : parts[0].replace(/\/connect|\/merge/, "").trim()
+          : parts[0].replace(/\/connect|\/merge|\/draw/, "").trim()
         : parts[parts.length - 1].trim();
 
     if (term.length >= 3) {
@@ -155,7 +164,14 @@
     // Sanitize title to prevent breaking wizard input logic
     const safeTitle = result.title.replace(/"/g, "'");
     const isMerge = input.startsWith("/merge");
-    const cmd = isMerge ? "/merge" : "/connect";
+    const isDraw = input.startsWith("/draw");
+    const cmd = isMerge ? "/merge" : isDraw ? "/draw" : "/connect";
+
+    if (isDraw) {
+      input = `/draw "${safeTitle}" `;
+      onClose(); // Wizard complete
+      return;
+    }
 
     if (activeStep === "FROM") {
       input = `${cmd} "${safeTitle}" `;
@@ -172,7 +188,10 @@
 
   const advanceStep = () => {
     const isMerge = input.startsWith("/merge");
-    const cmd = isMerge ? "/merge" : "/connect";
+    const isDraw = input.startsWith("/draw");
+    const cmd = isMerge ? "/merge" : isDraw ? "/draw" : "/connect";
+
+    if (isDraw) return false;
 
     if (activeStep === "FROM") {
       const term = input.replace(cmd, "").trim();
@@ -209,7 +228,11 @@
         (selectedIndex - 1 + displayList.length) % displayList.length;
       return true;
     } else if (e.key === "Tab") {
-      if (input.startsWith("/connect") || input.startsWith("/merge")) {
+      if (
+        input.startsWith("/connect") ||
+        input.startsWith("/merge") ||
+        input.startsWith("/draw")
+      ) {
         e.preventDefault();
         if (displayList.length > 0) {
           const selected = displayList[selectedIndex];
@@ -250,7 +273,7 @@
   };
 </script>
 
-{#if displayList.length > 0 || input.startsWith("/connect") || input.startsWith("/merge")}
+{#if displayList.length > 0 || input.startsWith("/connect") || input.startsWith("/merge") || input.startsWith("/draw")}
   <div
     bind:this={menuEl}
     class="absolute z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col opacity-0 transition-opacity duration-150"
@@ -259,17 +282,21 @@
       class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-[9px] uppercase tracking-widest font-bold text-theme-muted flex justify-between items-center"
     >
       <div class="flex gap-1 items-center">
-        <span class={activeStep === "FROM" ? "text-theme-primary" : ""}
-          >{input.startsWith("/merge") ? "SOURCE" : "FROM"}</span
-        >
-        <span class="opacity-30">/</span>
-        <span class={activeStep === "LABEL" ? "text-theme-primary" : ""}
-          >{input.startsWith("/merge") ? "INTO" : "LABEL"}</span
-        >
-        <span class="opacity-30">/</span>
-        <span class={activeStep === "TO" ? "text-theme-primary" : ""}
-          >{input.startsWith("/merge") ? "TARGET" : "TO"}</span
-        >
+        {#if input.startsWith("/draw")}
+          <span class="text-theme-primary">SUBJECT</span>
+        {:else}
+          <span class={activeStep === "FROM" ? "text-theme-primary" : ""}
+            >{input.startsWith("/merge") ? "SOURCE" : "FROM"}</span
+          >
+          <span class="opacity-30">/</span>
+          <span class={activeStep === "LABEL" ? "text-theme-primary" : ""}
+            >{input.startsWith("/merge") ? "INTO" : "LABEL"}</span
+          >
+          <span class="opacity-30">/</span>
+          <span class={activeStep === "TO" ? "text-theme-primary" : ""}
+            >{input.startsWith("/merge") ? "TARGET" : "TO"}</span
+          >
+        {/if}
       </div>
       {#if isSearchingEntities}
         <div
