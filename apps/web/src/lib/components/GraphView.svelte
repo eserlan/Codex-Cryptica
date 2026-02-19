@@ -736,14 +736,19 @@
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
-        const currentElements = currentCy.elements();
+        // Build a snapshot of current cy elements for O(1) lookups
+        // This is used to identify NEW elements (not yet in cy) and for removal detection
+        const existingMap = new Map<string, any>();
+        currentCy.elements().forEach((el) => {
+          existingMap.set(el.id(), el);
+        });
 
         const targetIds = new Set(graph.elements.map((el) => el.data.id));
 
         // 1. Remove elements no longer in the store
-        const removedElements = currentElements.filter(
-          (el) => !targetIds.has(el.id()),
-        );
+        const removedElements = currentCy
+          .elements()
+          .filter((el) => !targetIds.has(el.id()));
         if (removedElements.length > 0) {
           currentCy.remove(removedElements);
         }
@@ -752,7 +757,7 @@
         // Take a snapshot to break reactivity and prevent infinite loops/DataCloneErrors
         const snapshotElements = $state.snapshot(graph.elements);
         const newElements = snapshotElements.filter(
-          (el) => !elementMap.has(el.data.id),
+          (el) => !existingMap.has(el.data.id),
         );
 
         if (newElements.length > 0) {
@@ -800,9 +805,9 @@
           }
         }
 
-        // Optimization: Create a Map for O(1) lookups of existing elements
-        // This avoids repeated cy.$id() calls in the loop
-        // IMPORTANT: Must be done AFTER adding new elements so they are included in the map
+        // Rebuild the elementMap AFTER adding new elements so they are included.
+        // This is the critical fix: elementMap must contain newly added elements
+        // so the data-sync loop below can update their data in the same pass.
         const elementMap = new Map<string, any>();
         currentCy.elements().forEach((el) => {
           elementMap.set(el.id(), el);
