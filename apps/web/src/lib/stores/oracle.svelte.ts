@@ -837,6 +837,9 @@ class OracleStore {
     const entity = vault.entities[entityId];
     if (!entity) return;
 
+    if (this.isLoading) {
+      return;
+    }
     try {
       this.isLoading = true;
       this.broadcast();
