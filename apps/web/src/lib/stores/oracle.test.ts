@@ -542,6 +542,7 @@ describe("OracleStore", () => {
 
       vi.mocked(aiService.retrieveContext).mockClear();
 
+      oracle.tier = "advanced"; // Ensure apiKey is required
       oracle.apiKey = null;
       await oracle.drawEntity("abort-1");
       expect(oracle.isLoading).toBe(false);

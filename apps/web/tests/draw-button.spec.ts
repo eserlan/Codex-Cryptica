@@ -26,7 +26,7 @@ test.describe("Advanced Draw Button", () => {
 
     await expect(page.getByText("No Image")).toBeVisible();
     await expect(
-      page.locator('button:has-text("DRAW VISUAL")'),
+      page.getByRole("button", { name: "DRAW VISUAL", exact: true }),
     ).not.toBeVisible();
 
     // 2. Check Oracle Chat
@@ -40,7 +40,9 @@ test.describe("Advanced Draw Button", () => {
     await expect(page.getByText("Consulting archives...")).not.toBeVisible();
 
     // Verify button absent
-    await expect(page.locator('button:has-text("DRAW")')).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "DRAW", exact: true }),
+    ).not.toBeVisible();
   });
 
   test("Advanced tier shows and triggers draw buttons in Sidepanel and Chat", async ({
@@ -66,7 +68,6 @@ test.describe("Advanced Draw Button", () => {
       page.locator("h2", { hasText: "Ancient Dragon" }),
     ).toBeVisible();
 
-<<<<<<< HEAD
     // Button should be in the DOM
     const sidepanelDraw = page.getByLabel(
       "Draw visualization for Ancient Dragon",
@@ -76,11 +77,6 @@ test.describe("Advanced Draw Button", () => {
     // Click it and verify loading state appears
     await sidepanelDraw.click({ force: true });
     await expect(page.getByText("VISUALIZING...")).toBeVisible();
-=======
-    // Button should be in the DOM even if obscured/low-opacity
-    const sidepanelDraw = page.locator('button:has-text("DRAW VISUAL")');
-    await expect(sidepanelDraw).toBeAttached();
->>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
 
     // 3. Check Oracle Chat
     await page.getByTitle("Open Lore Oracle").click();
@@ -98,7 +94,6 @@ test.describe("Advanced Draw Button", () => {
       oracle.lastUpdated = Date.now();
     });
 
-<<<<<<< HEAD
     // Verify button exists in chat and click it
     const chatDraw = page.getByRole("button", { name: "DRAW", exact: true });
     await expect(chatDraw).toBeVisible();
@@ -141,10 +136,5 @@ test.describe("Advanced Draw Button", () => {
     // Click it and verify loading state appears
     await zenDraw.click({ force: true });
     await expect(zenModal.getByText("VISUALIZING...")).toBeVisible();
-=======
-    // Verify button exists in chat
-    const chatDraw = page.locator('button:has-text("DRAW")').last();
-    await expect(chatDraw).toBeVisible();
->>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
   });
 });
