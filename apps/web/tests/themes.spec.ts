@@ -119,7 +119,7 @@ test.describe("Visual Styling Templates", () => {
         .getPropertyValue("--color-accent-primary")
         .trim(),
     );
-    expect(primaryColor).toBe("#991b1b");
+    expect(primaryColor).toBe("#dc2626");
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {

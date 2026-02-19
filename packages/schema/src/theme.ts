@@ -151,13 +151,13 @@ export const THEMES: Record<string, StylingTemplate> = {
     id: "horror",
     name: "Blood & Noir",
     tokens: {
-      primary: "#991b1b",
-      secondary: "#7f1d1d",
+      primary: "#dc2626", // Blood Red (Vibrant)
+      secondary: "#d1d5db", // Light Grey (Muted labels)
       background: "#050505",
-      surface: "#171717",
-      text: "#e5e5e5",
-      border: "rgba(153, 27, 27, 0.4)",
-      accent: "#a3a3a3",
+      surface: "#121212",
+      text: "#f3f4f6", // Off-white (Body)
+      border: "rgba(220, 38, 38, 0.3)",
+      accent: "#991b1b", // Crimson (Deep accent)
       fontHeader: "'Spectral', serif",
       fontBody: "'Inter', sans-serif",
     },
@@ -166,7 +166,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeStyle: "solid",
       nodeBorderWidth: 2,
       edgeWidth: 1,
-      edgeColor: "#7f1d1d",
+      edgeColor: "#991b1b",
     },
   },
 };
