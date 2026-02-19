@@ -2,6 +2,7 @@ import { aiService, TIER_MODES } from "../services/ai";
 import { getDB } from "../utils/idb";
 import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
+import { uiStore } from "./ui.svelte";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
@@ -705,6 +706,7 @@ class OracleStore {
           query,
           context,
           textModelName,
+          uiStore.isDemoMode,
         );
         const imageModelName = "gemini-2.5-flash-image";
 
@@ -739,6 +741,7 @@ class OracleStore {
             this.lastUpdated = Date.now();
             this.broadcastThrottle();
           },
+          uiStore.isDemoMode,
         );
 
         // Auto-Creation Flow for /create
@@ -834,9 +837,6 @@ class OracleStore {
     const entity = vault.entities[entityId];
     if (!entity) return;
 
-    if (this.isLoading) {
-      return;
-    }
     try {
       this.isLoading = true;
       this.broadcast();
@@ -859,6 +859,7 @@ class OracleStore {
         `A visualization of ${entity.title}`,
         context,
         textModelName,
+        uiStore.isDemoMode,
       );
 
       const imageModelName = "gemini-2.5-flash-image";
@@ -923,6 +924,7 @@ class OracleStore {
         message.content,
         context,
         textModelName,
+        uiStore.isDemoMode,
       );
 
       const imageModelName = "gemini-2.5-flash-image";

@@ -11,7 +11,7 @@ test.describe("Advanced Draw Button", () => {
 
     // Create an entity to test sidepanel/zen mode
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Ancient Dragon");
+    await page.getByPlaceholder(/Title.../i).fill("Ancient Dragon");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for indexing
@@ -21,12 +21,12 @@ test.describe("Advanced Draw Button", () => {
   test("Lite tier does NOT show draw buttons", async ({ page }) => {
     // 1. Check Sidepanel via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     await expect(page.getByText("No Image")).toBeVisible();
     await expect(
-      page.locator('button:has-text("DRAW VISUAL")'),
+      page.getByRole("button", { name: "DRAW VISUAL", exact: true }),
     ).not.toBeVisible();
 
     // 2. Check Oracle Chat
@@ -40,7 +40,9 @@ test.describe("Advanced Draw Button", () => {
     await expect(page.getByText("Consulting archives...")).not.toBeVisible();
 
     // Verify button absent
-    await expect(page.locator('button:has-text("DRAW")')).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "DRAW", exact: true }),
+    ).not.toBeVisible();
   });
 
   test("Advanced tier shows and triggers draw buttons in Sidepanel and Chat", async ({
@@ -58,7 +60,7 @@ test.describe("Advanced Draw Button", () => {
 
     // 2. Check Sidepanel via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     // Wait for sidepanel transition and ensure heading is visible
@@ -66,7 +68,7 @@ test.describe("Advanced Draw Button", () => {
       page.locator("h2", { hasText: "Ancient Dragon" }),
     ).toBeVisible();
 
-    // Button should be in the DOM even if obscured/low-opacity
+    // Button should be in the DOM
     const sidepanelDraw = page.getByLabel(
       "Draw visualization for Ancient Dragon",
     );
@@ -93,7 +95,7 @@ test.describe("Advanced Draw Button", () => {
     });
 
     // Verify button exists in chat and click it
-    const chatDraw = page.locator('button:has-text("DRAW")').last();
+    const chatDraw = page.getByRole("button", { name: "DRAW", exact: true });
     await expect(chatDraw).toBeVisible();
   });
 
@@ -112,7 +114,7 @@ test.describe("Advanced Draw Button", () => {
 
     // 2. Check Zen Mode via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     // Open Zen Mode

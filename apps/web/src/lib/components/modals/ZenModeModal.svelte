@@ -531,6 +531,7 @@
                 </button>
               {:else}
                 <div
+<<<<<<< HEAD
                   class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
                 >
                   <div class="flex flex-col items-center justify-center gap-2">
@@ -539,11 +540,19 @@
                     <span class="text-[10px] font-bold uppercase">No Image</span
                     >
                   </div>
+=======
+                  class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted bg-theme-primary/5 relative group overflow-hidden"
+                >
+                  <span class="icon-[lucide--image] w-12 h-12 opacity-50"
+                  ></span>
+                  <span class="text-[10px] font-bold uppercase">No Image</span>
+>>>>>>> c8d6cc1 (:sparkles: feat(oracle): one-click draw button for advanced tier visualization)
 
                   {#if oracle.tier === "advanced"}
                     <button
                       onclick={() => oracle.drawEntity(entity.id)}
                       disabled={oracle.isLoading}
+<<<<<<< HEAD
                       class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-4 py-2 rounded shadow-sm group/btn relative overflow-hidden"
                       aria-label="Draw visualization for {entity.title}"
                       aria-busy={oracle.isLoading}
@@ -556,6 +565,16 @@
                         <span
                           class="text-[10px] font-bold tracking-widest text-theme-primary text-center"
                           aria-live="polite"
+=======
+                      class="absolute inset-0 bg-theme-surface/20 hover:bg-theme-surface/80 transition-all flex flex-col items-center justify-center gap-2 backdrop-blur-[1px] hover:backdrop-blur-sm group/btn"
+                    >
+                      {#if oracle.isLoading}
+                        <span
+                          class="icon-[lucide--loader-2] w-8 h-8 animate-spin text-theme-primary"
+                        ></span>
+                        <span
+                          class="text-[10px] font-bold tracking-widest text-theme-primary text-center px-6"
+>>>>>>> c8d6cc1 (:sparkles: feat(oracle): one-click draw button for advanced tier visualization)
                         >
                           {#if oracle.activeStyleTitle}
                             STYLE: {oracle.activeStyleTitle.toUpperCase()}
@@ -564,6 +583,7 @@
                           {/if}
                         </span>
                       {:else}
+<<<<<<< HEAD
                         <div
                           class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
                         ></div>
@@ -573,6 +593,13 @@
                         ></span>
                         <span
                           class="text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
+=======
+                        <span
+                          class="icon-[lucide--palette] w-8 h-8 text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
+                        ></span>
+                        <span
+                          class="text-xs font-bold tracking-widest text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
+>>>>>>> c8d6cc1 (:sparkles: feat(oracle): one-click draw button for advanced tier visualization)
                           >DRAW VISUAL</span
                         >
                       {/if}
