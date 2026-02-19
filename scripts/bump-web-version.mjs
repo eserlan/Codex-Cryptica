@@ -20,14 +20,20 @@ pkg.version = nextVersion;
 writeFileSync(webPackagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
 const config = readFileSync(configPath, 'utf8');
+const configRegex = /versionFromBuild \?\? "\d+\.\d+\.\d+"/;
+
+if (!configRegex.test(config)) {
+  throw new Error('Could not find VERSION fallback pattern in apps/web/src/lib/config/index.ts');
+}
+
 const updatedConfig = config.replace(
-  /versionFromBuild \?\? "\d+\.\d+\.\d+"/,
+  configRegex,
   `versionFromBuild ?? "${nextVersion}"`,
 );
-if (updatedConfig === config) {
-  throw new Error('Failed to update VERSION fallback in apps/web/src/lib/config/index.ts');
+
+if (updatedConfig !== config) {
+  writeFileSync(configPath, updatedConfig);
 }
-writeFileSync(configPath, updatedConfig);
 
 const sw = readFileSync(serviceWorkerPath, 'utf8');
 const swMatch = /const CACHE_VERSION = "(\d+)";/.exec(sw);
