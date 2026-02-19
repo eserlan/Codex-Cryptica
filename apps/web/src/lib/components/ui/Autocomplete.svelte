@@ -10,7 +10,7 @@
   import type { SearchResult } from "schema";
   import { isEntityVisible } from "schema";
   import { ui } from "$lib/stores/ui.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, tick } from "svelte";
 
   let {
     value = $bindable(""),
@@ -35,6 +35,33 @@
   let showResults = $state(false);
   let isLoading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  let statusMessage = $state("");
+  let hasAnnouncedNavigationHelp = $state(false);
+
+  $effect(() => {
+    if (isLoading) {
+      statusMessage = "Loading results...";
+    } else if (showResults) {
+      const count = results.length;
+
+      if (count === 0) {
+        statusMessage = "No results found.";
+      } else {
+        const resultLabel =
+          count === 1 ? "1 result found." : `${count} results found.`;
+
+        if (!hasAnnouncedNavigationHelp) {
+          statusMessage = `${resultLabel} Use up and down arrows to navigate.`;
+          hasAnnouncedNavigationHelp = true;
+        } else {
+          statusMessage = resultLabel;
+        }
+      }
+    } else {
+      statusMessage = "";
+      hasAnnouncedNavigationHelp = false;
+    }
+  });
 
   // Generate a stable ID if none is provided
   let generatedId = $state("");
@@ -103,15 +130,37 @@
     results = [];
   };
 
+  const scrollToSelected = async () => {
+    // Ensure there are results and the selectedIndex is within bounds
+    if (
+      !results.length ||
+      selectedIndex < 0 ||
+      selectedIndex >= results.length
+    ) {
+      return;
+    }
+
+    await tick();
+    const el = document.getElementById(`${finalId}-option-${selectedIndex}`);
+    if (!el) {
+      return;
+    }
+
+    el.scrollIntoView({ block: "nearest" });
+  };
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!showResults) return;
+    if (!results.length) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
       selectedIndex = (selectedIndex + 1) % results.length;
+      scrollToSelected();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       selectedIndex = (selectedIndex - 1 + results.length) % results.length;
+      scrollToSelected();
     } else if (e.key === "Enter") {
       e.preventDefault();
       selectResult(results[selectedIndex]);
@@ -122,12 +171,16 @@
 </script>
 
 <div class="relative w-full">
+  <div class="sr-only" role="status" aria-live="polite">
+    {statusMessage}
+  </div>
   <input
     type="text"
     id={finalId}
     {value}
     {placeholder}
     role="combobox"
+    aria-busy={isLoading}
     aria-autocomplete="list"
     aria-expanded={showResults}
     aria-controls={showResults ? `${finalId}-listbox` : undefined}
