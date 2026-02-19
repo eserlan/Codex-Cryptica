@@ -36,6 +36,13 @@ export const JargonMapSchema = z
     search: z.string(),
     new: z.string(),
     syncing: z.string(),
+    lore_header: z.string(),
+    lore_secrets: z.string(),
+    chronicle_header: z.string(),
+    connections_header: z.string(),
+    tab_status: z.string(),
+    tab_lore: z.string(),
+    tab_inventory: z.string(),
   })
   .catchall(z.string());
 
