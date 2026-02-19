@@ -8,7 +8,6 @@ test.describe("Campaign-Specific Theme Persistence", () => {
       localStorage.setItem("codex_skip_landing", "true");
     });
     await page.goto("http://localhost:5173/");
-    await page.waitForLoadState("networkidle");
     await page.waitForFunction(() => (window as any).vault?.isInitialized);
   });
 

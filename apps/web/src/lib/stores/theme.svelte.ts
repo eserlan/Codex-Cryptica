@@ -44,15 +44,16 @@ class ThemeStore {
   }
 
   async init() {
-    if (browser) {
-      const activeVaultId = vault.activeVaultId;
-      if (activeVaultId) {
-        await this.loadForVault(activeVaultId);
-      } else {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored && THEMES[stored]) {
-          this.currentThemeId = stored;
-        }
+    if (!browser) return;
+
+    // If we have an active vault ID already (from registry init), use it.
+    // Otherwise, fall back to global selection until a vault is explicitly switched.
+    if (vault.activeVaultId) {
+      await this.loadForVault(vault.activeVaultId);
+    } else {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored && THEMES[stored]) {
+        this.currentThemeId = stored;
       }
     }
   }
@@ -75,18 +76,18 @@ class ThemeStore {
   }
 
   async setTheme(id: string) {
-    if (THEMES[id]) {
-      this.currentThemeId = id;
-      if (browser) {
-        localStorage.setItem(STORAGE_KEY, id);
-        const activeVaultId = vault.activeVaultId;
-        if (activeVaultId) {
-          try {
-            const db = await getDB();
-            await db.put("settings", id, `theme_${activeVaultId}`);
-          } catch (e) {
-            console.warn("[ThemeStore] Failed to save vault-specific theme", e);
-          }
+    if (!THEMES[id]) return;
+
+    this.currentThemeId = id;
+    if (browser) {
+      localStorage.setItem(STORAGE_KEY, id);
+      const activeVaultId = vault.activeVaultId;
+      if (activeVaultId) {
+        try {
+          const db = await getDB();
+          await db.put("settings", id, `theme_${activeVaultId}`);
+        } catch (e) {
+          console.warn("[ThemeStore] Failed to save vault-specific theme", e);
         }
       }
     }
