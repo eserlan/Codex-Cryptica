@@ -27,12 +27,15 @@
     adjustHeight();
 
     if (input.startsWith("/")) {
+      const isCmd = (cmd: string) =>
+        input === cmd || input.startsWith(cmd + " ");
       // Keep menu open if we haven't typed a space yet (command selection)
-      // OR if it's the /connect or /merge command (wizard flow)
+      // OR if it's a wizard-style command
       if (
         !input.includes(" ") ||
-        input.startsWith("/connect") ||
-        input.startsWith("/merge")
+        isCmd("/connect") ||
+        isCmd("/merge") ||
+        isCmd("/draw")
       ) {
         showCommandMenu = true;
       } else {
