@@ -36,14 +36,30 @@
   let isLoading = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
   let statusMessage = $state("");
+  let hasAnnouncedNavigationHelp = $state(false);
 
   $effect(() => {
     if (isLoading) {
       statusMessage = "Loading results...";
     } else if (showResults) {
-      statusMessage = `${results.length} results found. Use up and down arrows to navigate.`;
+      const count = results.length;
+
+      if (count === 0) {
+        statusMessage = "No results found.";
+      } else {
+        const resultLabel =
+          count === 1 ? "1 result found." : `${count} results found.`;
+
+        if (!hasAnnouncedNavigationHelp) {
+          statusMessage = `${resultLabel} Use up and down arrows to navigate.`;
+          hasAnnouncedNavigationHelp = true;
+        } else {
+          statusMessage = resultLabel;
+        }
+      }
     } else {
       statusMessage = "";
+      hasAnnouncedNavigationHelp = false;
     }
   });
 
@@ -115,13 +131,27 @@
   };
 
   const scrollToSelected = async () => {
+    // Ensure there are results and the selectedIndex is within bounds
+    if (
+      !results.length ||
+      selectedIndex < 0 ||
+      selectedIndex >= results.length
+    ) {
+      return;
+    }
+
     await tick();
     const el = document.getElementById(`${finalId}-option-${selectedIndex}`);
-    el?.scrollIntoView({ block: "nearest" });
+    if (!el) {
+      return;
+    }
+
+    el.scrollIntoView({ block: "nearest" });
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!showResults) return;
+    if (!results.length) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
