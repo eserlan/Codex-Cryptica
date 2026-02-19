@@ -19,6 +19,7 @@ export interface FeatureHint {
   id: string;
   title: string;
   content: string;
+  icon?: string;
 }
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -73,59 +74,89 @@ export const ONBOARDING_TOUR: GuideStep[] = [
 ];
 
 export const FEATURE_HINTS: Record<string, FeatureHint> = {
+  "lore-oracle": {
+    id: "lore-oracle",
+    title: "AI Oracle",
+    content:
+      "Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes.",
+    icon: "icon-[lucide--sparkles]",
+  },
+  "visual-graph": {
+    id: "visual-graph",
+    title: "Visual Graph",
+    content:
+      "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
+    icon: "icon-[lucide--share-2]",
+  },
+  "total-privacy": {
+    id: "total-privacy",
+    title: "Total Privacy",
+    content:
+      "Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.",
+    icon: "icon-[lucide--shield-check]",
+  },
   "connect-mode": {
     id: "connect-mode",
-    title: "Linking Nodes",
+    title: "Linking Notes",
     content:
-      "Click one node and then another to create a relationship between them.",
+      "Connect people and locations. Click one item then another to link them together.",
+    icon: "icon-[lucide--link]",
   },
   "oracle-image": {
     id: "oracle-image",
-    title: "Saving Art",
+    title: "AI Generated Art",
     content:
-      "You can drag any AI-generated image onto an entry in the sidebar to save it as their portrait.",
+      "Save art made by the Artificial Intelligence (AI). You can drag any image created by the AI onto an entry to save it as their portrait.",
+    icon: "icon-[lucide--image]",
   },
   "proposer-discovery": {
     id: "proposer-discovery",
-    title: "New Connection Found",
+    title: "AI Suggestions",
     content:
-      "The AI found a potential link in your notes. Check 'Oracle Suggestions' to review it.",
+      "The AI finds new links in your notes and suggests connections you might have missed.",
+    icon: "icon-[lucide--lightbulb]",
   },
   "node-merging": {
     id: "node-merging",
-    title: "Merging Nodes",
+    title: "Combine Entries",
     content:
-      "You can combine duplicates. Select two or more nodes, right-click, and choose 'Merge Nodes'.",
+      "Merge duplicate notes. Pick two or more items to combine them into one.",
+    icon: "icon-[lucide--git-merge]",
   },
   "fog-of-war": {
     id: "fog-of-war",
-    title: "Hiding Spoilers",
+    title: "Hide Secrets",
     content:
-      "Right-click a node to hide it from the graph. Great for keeping secrets during a session!",
+      "Keep secrets hidden. Hide items from your map so players don't see them during a session.",
+    icon: "icon-[lucide--eye-off]",
   },
   "vault-switcher": {
     id: "vault-switcher",
-    title: "Switching Campaigns",
+    title: "Switching Stories",
     content:
-      "Click your Vault's name at the top to switch to a different campaign folder.",
+      "Change your campaign. Click the folder name at the top to switch to a different story.",
+    icon: "icon-[lucide--folder-sync]",
   },
   "era-date-picker": {
     id: "era-date-picker",
-    title: "Tactile Year Picker",
+    title: "Pick Dates",
     content:
-      "Click the year grid to drill down from Centuries to Decades and specific Years. Faster than typing!",
+      "Pick years quickly without typing. Click the grid to zoom into specific decades and years.",
+    icon: "icon-[lucide--calendar]",
   },
   "import-resume": {
     id: "import-resume",
-    title: "Resilient Imports",
+    title: "Smart Importing",
     content:
-      "Large file imports are now saved automatically. If interrupted, just re-select the file to resume.",
+      "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
+    icon: "icon-[lucide--file-up]",
   },
   "zen-templates": {
     id: "zen-templates",
-    title: "Aesthetic Shift",
+    title: "Change the Look",
     content:
-      "Change the entire look of your workspace instantly. Switch between Sci-Fi, Fantasy, and more in Settings > Aesthetics.",
+      "Instantly change the way the app looks. Pick a new style like Fantasy or Sci-Fi in the settings menu.",
+    icon: "icon-[lucide--palette]",
   },
 };
 
