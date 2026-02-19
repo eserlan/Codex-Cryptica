@@ -321,7 +321,7 @@
               {#if message.hasDrawAction}
                 <button
                   onclick={() => oracle.drawMessage(message.id)}
-                  disabled={message.isDrawing}
+                  disabled={message.isDrawing || oracle.isLoading}
                   class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black group relative disabled:opacity-50"
                   aria-label="Draw visualization for this message"
                   aria-busy={message.isDrawing}

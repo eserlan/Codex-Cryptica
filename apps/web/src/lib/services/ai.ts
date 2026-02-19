@@ -489,7 +489,7 @@ INSTRUCTIONS:
         activeStyleTitle = this.styleTitleCache || undefined;
       } else {
         const styleResults = await searchService.search(
-          "art style visual aesthetic world guide",
+          "art style visual aesthetic",
           { limit: 1 },
         );
         if (styleResults.length > 0 && styleResults[0].score > 0.5) {

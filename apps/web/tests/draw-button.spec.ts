@@ -43,7 +43,9 @@ test.describe("Advanced Draw Button", () => {
     await expect(page.locator('button:has-text("DRAW")')).not.toBeVisible();
   });
 
-  test("Advanced tier shows and triggers draw buttons", async ({ page }) => {
+  test("Advanced tier shows and triggers draw buttons in Sidepanel and Chat", async ({
+    page,
+  }) => {
     // 1. Force Advanced Tier via evaluate
     await page.evaluate(async () => {
       while (!(window as any).oracle) {
@@ -65,8 +67,14 @@ test.describe("Advanced Draw Button", () => {
     ).toBeVisible();
 
     // Button should be in the DOM even if obscured/low-opacity
-    const sidepanelDraw = page.locator('button:has-text("DRAW VISUAL")');
+    const sidepanelDraw = page.getByLabel(
+      "Draw visualization for Ancient Dragon",
+    );
     await expect(sidepanelDraw).toBeAttached();
+
+    // Click it and verify loading state appears
+    await sidepanelDraw.click({ force: true });
+    await expect(page.getByText("VISUALIZING...")).toBeVisible();
 
     // 3. Check Oracle Chat
     await page.getByTitle("Open Lore Oracle").click();
@@ -84,8 +92,47 @@ test.describe("Advanced Draw Button", () => {
       oracle.lastUpdated = Date.now();
     });
 
-    // Verify button exists in chat
+    // Verify button exists in chat and click it
     const chatDraw = page.locator('button:has-text("DRAW")').last();
     await expect(chatDraw).toBeVisible();
+  });
+
+  test("Advanced tier shows and triggers draw buttons in Zen Mode", async ({
+    page,
+  }) => {
+    // 1. Force Advanced Tier via evaluate
+    await page.evaluate(async () => {
+      while (!(window as any).oracle) {
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      const oracle = (window as any).oracle;
+      await oracle.setTier("advanced");
+      await oracle.setKey("fake-key");
+    });
+
+    // 2. Check Zen Mode via Search
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByTestId("search-result").first().click();
+
+    // Open Zen Mode
+    await page.keyboard.press("Alt+z");
+
+    // Wait for Zen Mode transition and ensure heading is visible
+    const zenModal = page.getByTestId("zen-mode-modal");
+    await expect(zenModal).toBeVisible();
+    await expect(
+      zenModal.locator("h1", { hasText: "Ancient Dragon" }),
+    ).toBeVisible();
+
+    // Button should be in the DOM
+    const zenDraw = zenModal.getByLabel(
+      "Draw visualization for Ancient Dragon",
+    );
+    await expect(zenDraw).toBeVisible();
+
+    // Click it and verify loading state appears
+    await zenDraw.click({ force: true });
+    await expect(zenModal.getByText("VISUALIZING...")).toBeVisible();
   });
 });

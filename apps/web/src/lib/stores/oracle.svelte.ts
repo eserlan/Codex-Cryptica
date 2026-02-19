@@ -349,6 +349,10 @@ class OracleStore {
   }
 
   removeMessage(id: string) {
+    const msg = this.messages.find((m) => m.id === id);
+    if (msg?.imageUrl && msg.imageUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(msg.imageUrl);
+    }
     this.messages = this.messages.filter((m) => m.id !== id);
     this.lastUpdated = Date.now();
     this.broadcast();
@@ -898,9 +902,12 @@ class OracleStore {
       this.isLoading = true;
       this.broadcast();
 
+      const entity = message.entityId ? vault.entities[message.entityId] : null;
+      const searchQuery = entity ? entity.title : message.content.slice(0, 100);
+
       const { content: context, activeStyleTitle } =
         await aiService.retrieveContext(
-          message.content,
+          searchQuery,
           new Set(),
           vault,
           message.entityId,
