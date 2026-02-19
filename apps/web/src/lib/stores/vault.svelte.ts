@@ -14,6 +14,7 @@ import * as vaultMigration from "./vault/migration";
 import * as vaultRelationships from "./vault/relationships";
 import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
+import { themeStore } from "./theme.svelte";
 
 import type { SearchEntry } from "schema";
 
@@ -128,6 +129,7 @@ class VaultStore {
     this.errorMessage = null;
 
     await vaultRegistry.setActiveVault(id);
+    await themeStore.loadForVault(id);
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(

@@ -121,7 +121,7 @@
     <button
       class="flex items-center gap-2 rounded transition-colors group {isVertical
         ? 'justify-center w-full py-3 min-h-[44px]'
-        : 'px-2 py-1 hover:bg-theme-surface/50'}"
+        : 'px-3 py-2 hover:bg-theme-surface/50'}"
       onclick={() => (showVaultSwitcher = true)}
       title="Switch Vault"
       data-testid="open-vault-button"
@@ -132,7 +132,7 @@
         class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
       ></span>
       <span
-        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[120px] truncate"
+        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[240px] truncate"
       >
         {themeStore.jargon.vault}: {vault.vaultName}
       </span>

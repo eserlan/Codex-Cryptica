@@ -1,6 +1,8 @@
 import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
+import { getDB } from "../utils/idb";
+import { vault } from "./vault.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
@@ -41,20 +43,51 @@ class ThemeStore {
     });
   }
 
-  init() {
+  async init() {
     if (browser) {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && THEMES[stored]) {
-        this.currentThemeId = stored;
+      const activeVaultId = vault.activeVaultId;
+      if (activeVaultId) {
+        await this.loadForVault(activeVaultId);
+      } else {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored && THEMES[stored]) {
+          this.currentThemeId = stored;
+        }
       }
     }
   }
 
-  setTheme(id: string) {
+  async loadForVault(vaultId: string) {
+    if (!browser) return;
+    try {
+      const db = await getDB();
+      const stored = await db.get("settings", `theme_${vaultId}`);
+      if (stored && THEMES[stored]) {
+        this.currentThemeId = stored;
+      } else {
+        // For new vaults, we want to start with default
+        // instead of inheriting whatever was in localStorage/global state
+        this.currentThemeId = DEFAULT_THEME.id;
+      }
+    } catch (e) {
+      console.warn("[ThemeStore] Failed to load vault-specific theme", e);
+    }
+  }
+
+  async setTheme(id: string) {
     if (THEMES[id]) {
       this.currentThemeId = id;
       if (browser) {
         localStorage.setItem(STORAGE_KEY, id);
+        const activeVaultId = vault.activeVaultId;
+        if (activeVaultId) {
+          try {
+            const db = await getDB();
+            await db.put("settings", id, `theme_${activeVaultId}`);
+          } catch (e) {
+            console.warn("[ThemeStore] Failed to save vault-specific theme", e);
+          }
+        }
       }
     }
   }
