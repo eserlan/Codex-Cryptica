@@ -1,7 +1,8 @@
 import type { ICloudAdapter, RemoteFileMeta } from "../index";
+import { GOOGLE_DRIVE_CONFIG } from "./config";
 
-const API_BASE = "https://www.googleapis.com/drive/v3/files";
-const UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3/files";
+const API_BASE = GOOGLE_DRIVE_CONFIG.API_BASE;
+const UPLOAD_BASE = GOOGLE_DRIVE_CONFIG.UPLOAD_BASE;
 
 export class WorkerDriveAdapter implements ICloudAdapter {
   constructor(

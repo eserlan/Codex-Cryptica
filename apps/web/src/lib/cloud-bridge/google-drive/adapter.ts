@@ -1,10 +1,5 @@
 import type { ICloudAdapter, RemoteFileMeta } from "../index";
-
-const getGoogleConfig = () => ({
-  CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-  SCOPES: "https://www.googleapis.com/auth/drive.file",
-  DISCOVERY_DOC: "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
-});
+import { GOOGLE_DRIVE_CONFIG } from "./config";
 
 const TOKEN_STORAGE_KEY = "codex-cryptica-gdrive-token";
 
@@ -52,7 +47,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       }
 
       if (typeof google !== "undefined" && google.accounts) {
-        const { CLIENT_ID, SCOPES } = getGoogleConfig();
+        const { CLIENT_ID, SCOPES } = GOOGLE_DRIVE_CONFIG;
         if (!CLIENT_ID) {
           console.warn(
             "VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.",
@@ -76,7 +71,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   }
 
   isConfigured(): boolean {
-    return !!getGoogleConfig().CLIENT_ID;
+    return !!GOOGLE_DRIVE_CONFIG.CLIENT_ID;
   }
 
   private getGapi(): Promise<void> {
@@ -94,7 +89,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       if (typeof gapi !== "undefined") {
         await new Promise<void>((resolve) => gapi.load("client", resolve));
         await gapi.client.init({
-          discoveryDocs: [getGoogleConfig().DISCOVERY_DOC],
+          discoveryDocs: [GOOGLE_DRIVE_CONFIG.DISCOVERY_DOC],
         });
         this.gapiInited = true;
 
@@ -337,8 +332,8 @@ export class GoogleDriveAdapter implements ICloudAdapter {
 
     const method = existingId ? "PATCH" : "POST";
     const url = existingId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=multipart`
-      : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart";
+      ? `${GOOGLE_DRIVE_CONFIG.UPLOAD_BASE}/${existingId}?uploadType=multipart`
+      : `${GOOGLE_DRIVE_CONFIG.UPLOAD_BASE}?uploadType=multipart`;
 
     const res = await fetch(url, {
       method,
@@ -367,7 +362,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     if (!this.accessToken) throw new Error("Not authenticated");
 
     // Using fetch() instead of gapi.client.drive.files.get to avoid body mangling
-    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const url = `${GOOGLE_DRIVE_CONFIG.API_BASE}/${fileId}?alt=media`;
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
