@@ -41,16 +41,20 @@
 
   // Derive step from input content if changed manually
   $effect(() => {
-    if (
-      !input.startsWith("/connect") &&
-      !input.startsWith("/merge") &&
-      !input.startsWith("/draw")
-    ) {
+    const isCmd = (cmd: string) => input === cmd || input.startsWith(cmd + " ");
+    if (!isCmd("/connect") && !isCmd("/merge") && !isCmd("/draw")) {
       activeStep = "COMMAND";
       return;
     }
 
     if (input.startsWith("/draw")) {
+      const parts = input.split('"');
+      // Close menu/stop searching if the subject is already quoted and followed by a space
+      if (parts.length >= 3 && parts[2].includes(" ")) {
+        activeStep = "COMMAND";
+        entityResults = [];
+        return;
+      }
       activeStep = "FROM"; // Use FROM step for the single subject
       return;
     }
@@ -101,7 +105,7 @@
       activeStep === "FROM"
         ? parts.length > 1
           ? parts[1].trim()
-          : parts[0].replace(/\/connect|\/merge|\/draw/, "").trim()
+          : parts[0].replace(/^\/(connect|merge|draw)\s*/, "").trim()
         : parts[parts.length - 1].trim();
 
     if (term.length >= 3) {
