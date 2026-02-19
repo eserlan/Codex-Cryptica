@@ -85,7 +85,7 @@ class ThemeStore {
     // Theme specific visual behaviors
     let glow = "none";
     if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
-    if (theme.id === "horror") glow = `0 0 20px ${tokens.secondary}33`;
+    if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
     root.style.setProperty("--theme-glow", glow);
 
     let radius = "2px"; // Gothic/Terminal default
