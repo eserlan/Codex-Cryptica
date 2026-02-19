@@ -295,27 +295,62 @@
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
     {#if message.role === "assistant" || message.role === "system"}
-      {#if message.type === "image"}
-        <ImageMessage {message} />
-      {:else if message.type === "wizard"}
+      {#if message.type === "wizard"}
         {#if message.wizardType === "connection"}
           <ConnectionWizard bind:message />
         {:else if message.wizardType === "merge"}
           <MergeWizard bind:message />
         {/if}
       {:else}
-        <div class="prose prose-sm">
+        {#if message.type === "image"}
+          <ImageMessage {message} />
+        {/if}
+
+        <div class="prose prose-sm {message.type === 'image' ? 'mt-4' : ''}">
           {#await parserService.parse(message.content || "") then html}
             {@html DOMPurify.sanitize(html)}
           {/await}
         </div>
 
-        {#if (targetEntity || activeEntity || showCreate) && message.content.length > 20}
+        {#if message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20)}
           {#if !isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"
               transition:fade
             >
+              {#if message.hasDrawAction}
+                <button
+                  onclick={() => oracle.drawMessage(message.id)}
+                  disabled={message.isDrawing || oracle.isLoading}
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all bg-theme-accent/10 text-theme-accent border border-theme-accent/30 hover:bg-theme-accent hover:text-black group relative disabled:opacity-50"
+                  aria-label="Draw visualization for this message"
+                  aria-busy={message.isDrawing}
+                >
+                  {#if message.isDrawing}
+                    <span
+                      class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                      aria-hidden="true"
+                    ></span>
+                    <span>DRAWING...</span>
+                  {:else}
+                    <span
+                      class="icon-[lucide--palette] w-3.5 h-3.5 shrink-0"
+                      aria-hidden="true"
+                    ></span>
+                    <span>DRAW</span>
+                  {/if}
+
+                  {#if message.isDrawing && oracle.activeStyleTitle}
+                    <div
+                      class="absolute bottom-full right-0 mb-2 w-48 bg-theme-surface border border-theme-border rounded shadow-xl p-2 z-50 text-[9px] font-bold tracking-widest uppercase text-theme-primary animate-pulse"
+                      aria-live="polite"
+                    >
+                      Style: {oracle.activeStyleTitle}
+                    </div>
+                  {/if}
+                </button>
+              {/if}
+
               {#if showCreate}
                 <button
                   onclick={createAsNode}

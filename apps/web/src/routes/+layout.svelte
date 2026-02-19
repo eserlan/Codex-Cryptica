@@ -13,6 +13,7 @@
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
@@ -101,6 +102,7 @@
     if (typeof window !== "undefined" && (window as any).__E2E__) {
       (window as any).vault = vault;
       (window as any).graph = graph;
+      (window as any).oracle = oracle;
     }
   });
 
@@ -108,6 +110,7 @@
     // Light initializations required for the landing page/shell
     helpStore.init();
     themeStore.init();
+    oracle.init();
 
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {

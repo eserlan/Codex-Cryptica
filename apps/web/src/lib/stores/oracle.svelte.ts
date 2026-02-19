@@ -14,6 +14,8 @@ export interface ChatMessage {
   entityId?: string; // ID of the entity used for generation context
   archiveTargetId?: string; // ID of the entity where the user wants to archive this message
   sources?: string[]; // IDs of entities consulted for this message (FR-001)
+  isDrawing?: boolean; // Indicates if this message is currently triggering an image generation
+  hasDrawAction?: boolean; // Whether this message provides a "Draw" button
 }
 
 export interface UndoableAction {
@@ -33,6 +35,7 @@ class OracleStore {
   apiKey = $state<string | null>(null);
   tier = $state<"lite" | "advanced">("lite");
   isModal = $state(false);
+  activeStyleTitle = $state<string | null>(null);
 
   // Undo Stack (Transient, not persisted to DB)
   undoStack = $state<UndoableAction[]>([]);
@@ -346,6 +349,10 @@ class OracleStore {
   }
 
   removeMessage(id: string) {
+    const msg = this.messages.find((m) => m.id === id);
+    if (msg?.imageUrl && msg.imageUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(msg.imageUrl);
+    }
     this.messages = this.messages.filter((m) => m.id !== id);
     this.lastUpdated = Date.now();
     this.broadcast();
@@ -669,6 +676,7 @@ class OracleStore {
         content: context,
         primaryEntityId,
         sourceIds,
+        activeStyleTitle,
       } = await aiService.retrieveContext(
         searchQuery,
         alreadySentTitles,
@@ -677,10 +685,17 @@ class OracleStore {
         isImageRequest,
       );
 
+      this.activeStyleTitle = activeStyleTitle || null;
+      this.broadcast();
+
       // Store the primary entity ID in both the user message (for context) and the assistant message (for the button target)
       this.messages[assistantMsgIndex - 1].entityId = primaryEntityId;
       this.messages[assistantMsgIndex].entityId = primaryEntityId;
       this.messages[assistantMsgIndex].sources = sourceIds;
+      if (!isImageRequest) {
+        this.messages[assistantMsgIndex].hasDrawAction =
+          this.tier === "advanced";
+      }
 
       if (isImageRequest) {
         // Image Generation Flow
@@ -804,6 +819,148 @@ class OracleStore {
       this.lastUpdated = Date.now();
       this.broadcast();
     } finally {
+      this.activeStyleTitle = null;
+      this.isLoading = false;
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+    }
+  }
+
+  async drawEntity(entityId: string) {
+    const key = this.effectiveApiKey;
+    if (!key || this.isLoading) return;
+
+    const entity = vault.entities[entityId];
+    if (!entity) return;
+
+    if (this.isLoading) {
+      return;
+    }
+    try {
+      this.isLoading = true;
+      this.broadcast();
+
+      const { content: context, activeStyleTitle } =
+        await aiService.retrieveContext(
+          entity.title,
+          new Set(),
+          vault,
+          entityId,
+          true, // isImage
+        );
+
+      this.activeStyleTitle = activeStyleTitle || null;
+      this.broadcast();
+
+      const textModelName = TIER_MODES[this.tier];
+      const visualPrompt = await aiService.distillVisualPrompt(
+        key,
+        `A visualization of ${entity.title}`,
+        context,
+        textModelName,
+      );
+
+      const imageModelName = "gemini-2.5-flash-image";
+      const blob = await aiService.generateImage(
+        key,
+        visualPrompt,
+        imageModelName,
+      );
+
+      await vault.saveImageToVault(blob, entityId);
+    } catch (err: any) {
+      console.error("[OracleStore] drawEntity failed:", err);
+      this.messages = [
+        ...this.messages,
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: `❌ Image generation failed for **${entity.title}**: ${err.message}`,
+        },
+      ];
+    } finally {
+      this.activeStyleTitle = null;
+      this.isLoading = false;
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+    }
+  }
+
+  async drawMessage(messageId: string) {
+    const key = this.effectiveApiKey;
+    if (!key || this.isLoading) return;
+
+    const msgIndex = this.messages.findIndex((m) => m.id === messageId);
+    if (msgIndex === -1) return;
+
+    const message = this.messages[msgIndex];
+
+    try {
+      message.isDrawing = true;
+      this.isLoading = true;
+      this.broadcast();
+
+      const entity = message.entityId ? vault.entities[message.entityId] : null;
+      const searchQuery = entity ? entity.title : message.content.slice(0, 100);
+
+      const { content: context, activeStyleTitle } =
+        await aiService.retrieveContext(
+          searchQuery,
+          new Set(),
+          vault,
+          message.entityId,
+          true, // isImage
+        );
+
+      this.activeStyleTitle = activeStyleTitle || null;
+      this.broadcast();
+
+      const textModelName = TIER_MODES[this.tier];
+      const visualPrompt = await aiService.distillVisualPrompt(
+        key,
+        message.content,
+        context,
+        textModelName,
+      );
+
+      const imageModelName = "gemini-2.5-flash-image";
+      const blob = await aiService.generateImage(
+        key,
+        visualPrompt,
+        imageModelName,
+      );
+
+      const imageUrl = URL.createObjectURL(blob);
+      const oldUrl = message.imageUrl;
+
+      // Update message in place
+      this.messages[msgIndex] = {
+        ...message,
+        type: "image",
+        imageUrl,
+        imageBlob: blob,
+        isDrawing: false,
+        hasDrawAction: false, // Hide button after use
+      };
+
+      if (oldUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(oldUrl);
+      }
+    } catch (err: any) {
+      console.error("[OracleStore] drawMessage failed:", err);
+      message.isDrawing = false;
+      this.messages = [
+        ...this.messages,
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: `❌ Image generation failed: ${err.message}`,
+        },
+      ];
+    } finally {
+      this.activeStyleTitle = null;
       this.isLoading = false;
       this.lastUpdated = Date.now();
       this.broadcast();

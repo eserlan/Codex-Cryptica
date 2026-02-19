@@ -139,11 +139,55 @@
   {:else}
     <div class="px-4 md:px-6">
       <div
-        class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted hover:border-theme-primary transition"
+        class="mb-4 w-full h-32 md:h-40 py-4 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
       >
-        <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
-        ></span>
-        <span class="text-[9px] font-bold uppercase opacity-40">No Image</span>
+        <div class="flex flex-col items-center justify-center gap-2 mt-2">
+          <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
+          ></span>
+          <span class="text-[9px] font-bold uppercase opacity-40">No Image</span
+          >
+        </div>
+
+        {#if oracle.tier === "advanced"}
+          <div class="mb-2">
+            <button
+              onclick={() => oracle.drawEntity(entity.id)}
+              disabled={oracle.isLoading}
+              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
+              aria-label="Draw visualization for {entity.title}"
+              aria-busy={oracle.isLoading}
+            >
+              {#if oracle.isLoading}
+                <span
+                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="text-[8px] font-bold tracking-widest text-theme-primary text-center px-2"
+                  aria-live="polite"
+                >
+                  {#if oracle.activeStyleTitle}
+                    STYLE: {oracle.activeStyleTitle.toUpperCase()}
+                  {:else}
+                    VISUALIZING...
+                  {/if}
+                </span>
+              {:else}
+                <div
+                  class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
+                ></div>
+                <span
+                  class="icon-[lucide--palette] w-3.5 h-3.5 text-theme-primary opacity-80"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
+                  >DRAW VISUAL</span
+                >
+              {/if}
+            </button>
+          </div>
+        {/if}
       </div>
     </div>
   {/if}

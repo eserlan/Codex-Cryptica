@@ -15,6 +15,7 @@ export class AIService {
   private currentApiKey: string | null = null;
   private currentModelName: string | null = null;
   private styleCache: string | null = null;
+  private styleTitleCache: string | null = null;
 
   /**
    * Transforms a conversational query into a standalone search term using the Lite model (FR-004).
@@ -476,25 +477,32 @@ INSTRUCTIONS:
     content: string;
     primaryEntityId?: string;
     sourceIds: string[];
+    activeStyleTitle?: string;
   }> {
     // 1. Style Search: If this is an image request, look for a style guide or aesthetic note
     let styleContext = "";
+    let activeStyleTitle: string | undefined;
+
     if (isImage) {
       if (this.styleCache !== null) {
         styleContext = this.styleCache;
+        activeStyleTitle = this.styleTitleCache || undefined;
       } else {
         const styleResults = await searchService.search(
-          "art style visual aesthetic world guide",
+          "art style visual aesthetic",
           { limit: 1 },
         );
         if (styleResults.length > 0 && styleResults[0].score > 0.5) {
           const styleEntity = vault.entities[styleResults[0].id];
           if (styleEntity) {
             styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
+            activeStyleTitle = styleEntity.title;
             this.styleCache = styleContext;
+            this.styleTitleCache = activeStyleTitle || "";
           }
         } else {
           this.styleCache = ""; // Mark as searched but not found
+          this.styleTitleCache = "";
         }
       }
     }
@@ -678,11 +686,13 @@ INSTRUCTIONS:
       content: styleContext + finalContent,
       primaryEntityId: primaryEntityId || undefined,
       sourceIds,
+      activeStyleTitle,
     };
   }
 
   clearStyleCache() {
     this.styleCache = null;
+    this.styleTitleCache = null;
   }
 }
 

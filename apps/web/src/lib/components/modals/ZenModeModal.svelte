@@ -11,6 +11,7 @@
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
 
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -530,11 +531,53 @@
                 </button>
               {:else}
                 <div
-                  class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted bg-theme-primary/5"
+                  class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
                 >
-                  <span class="icon-[lucide--image] w-12 h-12 opacity-50"
-                  ></span>
-                  <span class="text-[10px] font-bold uppercase">No Image</span>
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <span class="icon-[lucide--image] w-12 h-12 opacity-50"
+                    ></span>
+                    <span class="text-[10px] font-bold uppercase">No Image</span
+                    >
+                  </div>
+
+                  {#if oracle.tier === "advanced"}
+                    <button
+                      onclick={() => oracle.drawEntity(entity.id)}
+                      disabled={oracle.isLoading}
+                      class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-4 py-2 rounded shadow-sm group/btn relative overflow-hidden"
+                      aria-label="Draw visualization for {entity.title}"
+                      aria-busy={oracle.isLoading}
+                    >
+                      {#if oracle.isLoading}
+                        <span
+                          class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+                          aria-hidden="true"
+                        ></span>
+                        <span
+                          class="text-[10px] font-bold tracking-widest text-theme-primary text-center"
+                          aria-live="polite"
+                        >
+                          {#if oracle.activeStyleTitle}
+                            STYLE: {oracle.activeStyleTitle.toUpperCase()}
+                          {:else}
+                            VISUALIZING...
+                          {/if}
+                        </span>
+                      {:else}
+                        <div
+                          class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
+                        ></div>
+                        <span
+                          class="icon-[lucide--palette] w-4 h-4 text-theme-primary"
+                          aria-hidden="true"
+                        ></span>
+                        <span
+                          class="text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
+                          >DRAW VISUAL</span
+                        >
+                      {/if}
+                    </button>
+                  {/if}
                 </div>
               {/if}
             </div>
