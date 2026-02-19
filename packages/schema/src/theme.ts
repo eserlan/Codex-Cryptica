@@ -25,7 +25,7 @@ export const GraphStyleConfigSchema = z.object({
 
 export type GraphStyleConfig = z.infer<typeof GraphStyleConfigSchema>;
 
-export const JargonMapSchema = z.record(z.string());
+export const JargonMapSchema = z.record(z.string(), z.string());
 
 export const StylingTemplateSchema = z.object({
   id: z.string(),
@@ -37,7 +37,9 @@ export const StylingTemplateSchema = z.object({
 
 export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
 
-export const DEFAULT_JARGON = {
+import { type JargonMap } from "./jargon";
+
+export const DEFAULT_JARGON: JargonMap = {
   vault: "Vault",
   entity: "Note",
   entity_plural: "Notes",
