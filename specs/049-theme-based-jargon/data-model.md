@@ -16,6 +16,13 @@ Represented as a record of terminology tokens to their atmospheric display strin
 - `search`: Search action or placeholder text.
 - `new`: Label for creation (e.g. "Forge", "Initialize").
 - `syncing`: Status for background operations.
+- `lore_header`: Heading label for the lore section (e.g. "Lore", "World Notes").
+- `lore_secrets`: Label for hidden or spoiler lore content (e.g. "Secrets", "Classified").
+- `chronicle_header`: Heading label for the main chronicle or timeline section (e.g. "Chronicle", "Log").
+- `connections_header`: Heading label for relationships or links between entities (e.g. "Connections", "Network").
+- `tab_status`: Label for the status/overview tab in the UI.
+- `tab_lore`: Label for the lore-focused tab in the UI.
+- `tab_inventory`: Label for the inventory/resources tab in the UI.
 
 ### StylingTemplate (Updated)
 

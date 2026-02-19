@@ -11,6 +11,13 @@ export interface JargonMap {
   search: string;
   new: string;
   syncing: string;
+  lore_header: string;
+  lore_secrets: string;
+  chronicle_header: string;
+  connections_header: string;
+  tab_status: string;
+  tab_lore: string;
+  tab_inventory: string;
   [key: string]: string; // Allow for extensibility
 }
 

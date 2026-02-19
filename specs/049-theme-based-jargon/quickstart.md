@@ -14,7 +14,7 @@ fantasy: {
     entity: "Chronicle",
     entity_plural: "Chronicles",
     save: "Inscribe",
-    new: "Transcribe",
+    new: "Forge",
     syncing: "Preserving"
   }
 }

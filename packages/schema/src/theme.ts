@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { type JargonMap } from "./jargon";
 
 export const ThemeTokensSchema = z.object({
   primary: z.string(),
@@ -36,8 +37,6 @@ export const StylingTemplateSchema = z.object({
 });
 
 export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
-
-import { type JargonMap } from "./jargon";
 
 export const DEFAULT_JARGON: JargonMap = {
   vault: "Vault",
