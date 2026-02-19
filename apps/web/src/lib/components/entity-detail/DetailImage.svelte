@@ -139,11 +139,42 @@
   {:else}
     <div class="px-4 md:px-6">
       <div
-        class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted hover:border-theme-primary transition"
+        class="mb-4 w-full h-24 md:h-32 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 text-theme-muted hover:border-theme-primary transition relative group overflow-hidden"
       >
         <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
         ></span>
         <span class="text-[9px] font-bold uppercase opacity-40">No Image</span>
+
+        {#if oracle.tier === "advanced"}
+          <button
+            onclick={() => oracle.drawEntity(entity.id)}
+            disabled={oracle.isLoading}
+            class="absolute inset-0 bg-theme-surface/20 hover:bg-theme-surface/80 transition-all flex flex-col items-center justify-center gap-1 backdrop-blur-[1px] hover:backdrop-blur-sm group/btn"
+          >
+            {#if oracle.isLoading}
+              <span
+                class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+              ></span>
+              <span
+                class="text-[8px] font-bold tracking-widest text-theme-primary text-center px-4"
+              >
+                {#if oracle.activeStyleTitle}
+                  STYLE: {oracle.activeStyleTitle.toUpperCase()}
+                {:else}
+                  VISUALIZING...
+                {/if}
+              </span>
+            {:else}
+              <span
+                class="icon-[lucide--palette] w-5 h-5 text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
+              ></span>
+              <span
+                class="text-[10px] font-bold tracking-widest text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
+                >DRAW VISUAL</span
+              >
+            {/if}
+          </button>
+        {/if}
       </div>
     </div>
   {/if}

@@ -7,6 +7,10 @@ vi.hoisted(() => {
     removeItem: vi.fn(),
     clear: vi.fn(),
   };
+
+  // Mock Svelte 5 Runes
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.raw = (v: any) => v;
 });
 
 vi.mock("$lib/services/search", () => ({

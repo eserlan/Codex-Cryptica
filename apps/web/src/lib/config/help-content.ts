@@ -158,6 +158,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Instantly change the way the app looks and speaks. Pick a new style like Fantasy or Sci-Fi to change colors, fonts, and even the words used in the buttons.",
     icon: "icon-[lucide--palette]",
   },
+  "draw-button": {
+    id: "draw-button",
+    title: "Instant Visualization",
+    content:
+      "For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.",
+    icon: "icon-[lucide--brush]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

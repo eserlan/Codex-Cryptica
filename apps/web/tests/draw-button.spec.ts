@@ -1,0 +1,98 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("Advanced Draw Button", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
+      localStorage.setItem("codex_skip_landing", "true");
+    });
+    await page.goto("http://localhost:5173/");
+
+    // Create an entity to test sidepanel/zen mode
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("Ancient Dragon");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    // Wait for indexing
+    await expect(page.getByTestId("entity-count")).toHaveText(/1\s+CHRONICLE/);
+  });
+
+  test("Lite tier does NOT show draw buttons", async ({ page }) => {
+    // 1. Check Sidepanel via Search
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByTestId("search-result").first().click();
+
+    await expect(page.getByText("No Image")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "DRAW VISUAL", exact: true }),
+    ).not.toBeVisible();
+
+    // 2. Check Oracle Chat
+    await page.getByTitle("Open Lore Oracle").click();
+    const input = page.getByTestId("oracle-input");
+    await input.fill("Tell me about the dragon");
+    await input.press("Enter");
+
+    // Wait for generation placeholder
+    await expect(page.getByText("Consulting archives...")).toBeVisible();
+    await expect(page.getByText("Consulting archives...")).not.toBeVisible();
+
+    // Verify button absent
+    await expect(
+      page.getByRole("button", { name: "DRAW", exact: true }),
+    ).not.toBeVisible();
+  });
+
+  test("Advanced tier shows and triggers draw buttons", async ({ page }) => {
+    // 1. Force Advanced Tier via evaluate
+    await page.evaluate(async () => {
+      while (!(window as any).oracle) {
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      const oracle = (window as any).oracle;
+      await oracle.setTier("advanced");
+      await oracle.setKey("fake-key");
+    });
+
+    // 2. Check Sidepanel via Search
+    await page.keyboard.press("Control+k");
+    await page.getByPlaceholder("Search notes...").fill("Ancient Dragon");
+    await page.getByTestId("search-result").first().click();
+
+    // Wait for sidepanel transition
+    await expect(
+      page.getByRole("heading", { name: "Ancient Dragon" }),
+    ).toBeVisible();
+
+    const sidepanelDraw = page.getByRole("button", {
+      name: "DRAW VISUAL",
+      exact: true,
+    });
+
+    // Button is now always visible at subtle opacity in advanced tier
+    await expect(sidepanelDraw).toBeVisible();
+
+    // 3. Check Oracle Chat
+    await page.getByTitle("Open Lore Oracle").click();
+
+    // Inject a mock assistant message directly into the store to test the button logic
+    await page.evaluate(async () => {
+      const oracle = (window as any).oracle;
+      const newMsg = {
+        id: "mock-msg-" + Date.now(),
+        role: "assistant" as const,
+        content: "I can visualize this dragon for you.",
+        hasDrawAction: true,
+      };
+      oracle.messages = [...oracle.messages, newMsg];
+      oracle.lastUpdated = Date.now();
+    });
+
+    // Verify button exists in chat
+    await expect(
+      page.getByRole("button", { name: "DRAW", exact: true }),
+    ).toBeVisible();
+  });
+});

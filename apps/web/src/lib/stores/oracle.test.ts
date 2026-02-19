@@ -3,7 +3,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // Hoist mocks to run before imports
 vi.hoisted(() => {
   if (typeof window === "undefined") {
-    (global as any).window = {};
+    (global as any).window = {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+  } else {
+    (window as any).addEventListener = vi.fn();
+    (window as any).removeEventListener = vi.fn();
   }
 
   // Mock Svelte 5 Runes
@@ -42,6 +48,19 @@ vi.hoisted(() => {
 
   (global as any).BroadcastChannel = MockBroadcastChannel;
   (global as any).Worker = MockWorker;
+
+  if (typeof (global as any).URL === "undefined") {
+    (global as any).URL = class {
+      static createObjectURL = vi.fn().mockReturnValue("blob:mock-url");
+      static revokeObjectURL = vi.fn();
+    };
+  } else {
+    (global as any).URL.createObjectURL = vi
+      .fn()
+      .mockReturnValue("blob:mock-url");
+    (global as any).URL.revokeObjectURL = vi.fn();
+  }
+
   return { MockBroadcastChannel, MockWorker };
 });
 
@@ -56,6 +75,7 @@ vi.mock("../cloud-bridge/worker-bridge", () => ({
 vi.mock("./vault.svelte", () => ({
   vault: {
     createEntity: vi.fn(),
+    saveImageToVault: vi.fn(),
     allEntities: [],
     entities: {},
     inboundConnections: {},
@@ -388,6 +408,86 @@ describe("OracleStore", () => {
       expect(oracle.undoStack.length).toBe(50);
       expect(oracle.undoStack[0].description).toBe("Action 5"); // First 5 should be shifted out
       expect(oracle.undoStack[49].description).toBe("Action 54");
+    });
+  });
+
+  describe("Draw Button Logic", () => {
+    it("should set hasDrawAction for assistant messages in advanced tier", async () => {
+      oracle.apiKey = "test-key";
+      oracle.tier = "advanced";
+
+      await oracle.ask("Tell me about a sword");
+
+      const assistantMsg = oracle.messages[oracle.messages.length - 1];
+      expect(assistantMsg.hasDrawAction).toBe(true);
+    });
+
+    it("should NOT set hasDrawAction for assistant messages in lite tier", async () => {
+      oracle.apiKey = "test-key";
+      oracle.tier = "lite";
+
+      await oracle.ask("Tell me about a sword");
+
+      const assistantMsg = oracle.messages[oracle.messages.length - 1];
+      expect(assistantMsg.hasDrawAction).toBe(false);
+    });
+
+    it("should perform drawMessage and update message state", async () => {
+      oracle.apiKey = "test-key";
+      oracle.messages = [
+        {
+          id: "msg-1",
+          role: "assistant",
+          content: "Lore description",
+          hasDrawAction: true,
+        },
+      ];
+
+      const { aiService } = await import("../services/ai");
+      const mockBlob = new Blob(["image"], { type: "image/png" });
+      vi.mocked(aiService.generateImage).mockResolvedValue(mockBlob);
+
+      await oracle.drawMessage("msg-1");
+
+      expect(oracle.messages[0].type).toBe("image");
+      expect(oracle.messages[0].imageUrl).toBeDefined();
+      expect(oracle.messages[0].hasDrawAction).toBe(false);
+      expect(oracle.messages[0].isDrawing).toBe(false);
+    });
+
+    it("should perform drawEntity and save to vault", async () => {
+      oracle.apiKey = "test-key";
+      const { vault } = await import("./vault.svelte");
+      (vault as any).entities = {
+        "entity-1": { id: "entity-1", title: "Dragon", content: "Big dragon" },
+      };
+
+      await oracle.drawEntity("entity-1");
+
+      expect(vault.saveImageToVault).toHaveBeenCalled();
+    });
+
+    it("should handle art style grounding in activeStyleTitle", async () => {
+      oracle.apiKey = "test-key";
+      const { aiService } = await import("../services/ai");
+      vi.mocked(aiService.retrieveContext).mockResolvedValue({
+        content: "context",
+        sourceIds: [],
+        activeStyleTitle: "Oil Painting Style",
+      });
+
+      // Test via drawEntity
+      const drawPromise = oracle.drawEntity("entity-1");
+
+      // Check middle of execution if possible, but let's just check final or mock call
+      await drawPromise;
+      expect(aiService.retrieveContext).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(Object),
+        expect.any(Object),
+        expect.any(String),
+        true, // isImage: true
+      );
     });
   });
 });

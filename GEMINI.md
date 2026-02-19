@@ -90,10 +90,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 050-oracle-draw-button: Added one-click "Draw" button for Advanced Tier lore visualization across Chat, Sidepanel, and Zen Mode.
+
 - 049-theme-based-jargon: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation)
 
 - 046-import-state-management: Added TypeScript 5.x, Node.js 20+ + `idb` (IndexedDB wrapper), Web Crypto API (for hashing), Svelte 5 (Runes)
-
-- 045-campaign-date-picker: Added TypeScript 5.x, Node.js 20+
 
 <!-- MANUAL ADDITIONS START -->
