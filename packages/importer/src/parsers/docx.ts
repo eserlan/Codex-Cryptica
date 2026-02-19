@@ -1,5 +1,7 @@
 import type { FileParser, ParseResult, ImportAsset } from "../types";
 
+const IMAGE_LOAD_TIMEOUT = 1000;
+
 export class DocxParser implements FileParser {
   // private turndown: TurndownService; // Remove static type dependency if possible, or use 'any' for lazy
 
@@ -64,7 +66,9 @@ export class DocxParser implements FileParser {
                     img.onload = resolve;
                     img.onerror = resolve;
                   }),
-                  new Promise((resolve) => setTimeout(resolve, 1000)),
+                  new Promise((resolve) =>
+                    setTimeout(resolve, IMAGE_LOAD_TIMEOUT),
+                  ),
                 ]);
                 width = img.naturalWidth || undefined;
                 height = img.naturalHeight || undefined;
