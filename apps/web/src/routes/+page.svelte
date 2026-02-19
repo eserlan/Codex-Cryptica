@@ -141,12 +141,12 @@
             ></span>
             System Online
           </div>
-          <h1
+          <h2
             class="text-5xl md:text-8xl font-bold text-theme-text font-header tracking-tight mb-6 leading-tight"
           >
             Build Your World. <br />
             <span class="text-theme-primary/90">Map Your Lore.</span>
-          </h1>
+          </h2>
           <p
             class="text-xl md:text-2xl text-theme-muted max-w-2xl mx-auto leading-relaxed mb-12 font-body font-light"
           >

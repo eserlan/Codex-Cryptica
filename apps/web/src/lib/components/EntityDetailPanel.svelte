@@ -109,7 +109,7 @@
       style:background-image="var(--bg-texture-overlay)"
     >
       <div
-        style="background-image: var(--bg-texture-overlay)"
+        style:background-image="var(--bg-texture-overlay)"
         class="bg-theme-surface"
       >
         <DetailImage {entity} {isEditing} bind:editImage />
