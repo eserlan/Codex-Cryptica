@@ -26,7 +26,25 @@ export const GraphStyleConfigSchema = z.object({
 
 export type GraphStyleConfig = z.infer<typeof GraphStyleConfigSchema>;
 
-export const JargonMapSchema = z.record(z.string(), z.string());
+export const JargonMapSchema = z
+  .object({
+    vault: z.string(),
+    entity: z.string(),
+    entity_plural: z.string(),
+    save: z.string(),
+    delete: z.string(),
+    search: z.string(),
+    new: z.string(),
+    syncing: z.string(),
+    lore_header: z.string(),
+    lore_secrets: z.string(),
+    chronicle_header: z.string(),
+    connections_header: z.string(),
+    tab_status: z.string(),
+    tab_lore: z.string(),
+    tab_inventory: z.string(),
+  })
+  .catchall(z.string());
 
 export const StylingTemplateSchema = z.object({
   id: z.string(),

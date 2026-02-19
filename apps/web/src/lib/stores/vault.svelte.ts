@@ -199,6 +199,7 @@ class VaultStore {
 
       // If we have an active vault from registry, load it
       if (this.activeVaultId) {
+        await themeStore.loadForVault(this.activeVaultId);
         await this.loadFiles();
       }
     } catch (err) {
