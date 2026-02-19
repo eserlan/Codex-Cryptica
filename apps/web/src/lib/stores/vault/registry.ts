@@ -64,7 +64,9 @@ export async function deleteVault(
     await db.delete("vaults", id);
   } catch (e) {
     console.warn("Failed to delete vault dir", e);
-    throw new Error("Filesystem lock prevented deletion. Please try again.");
+    throw new Error("Filesystem lock prevented deletion. Please try again.", {
+      cause: e,
+    });
   }
 }
 

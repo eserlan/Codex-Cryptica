@@ -14,6 +14,7 @@
 
   let {
     value = $bindable(""),
+    // eslint-disable-next-line no-useless-assignment
     selectedId = $bindable<string | null>(null),
     placeholder = "Search entities...",
     minChars = 3,

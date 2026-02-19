@@ -3,45 +3,43 @@ import { ProposerService } from "../src/service";
 
 // Mock GoogleGenerativeAI
 vi.mock("@google/generative-ai", () => {
-  return {
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => {
+  const generateContent = vi.fn().mockImplementation(async (prompt: string) => {
+    if (prompt.includes("Analyze the following two entities")) {
       return {
-        getGenerativeModel: vi.fn().mockImplementation(() => {
-          return {
-            generateContent: vi
-              .fn()
-              .mockImplementation(async (prompt: string) => {
-                if (prompt.includes("Analyze the following two entities")) {
-                  return {
-                    response: {
-                      text: () =>
-                        JSON.stringify({
-                          type: "friendly",
-                          label: "Allies",
-                          explanation: "Both entities share a common goal.",
-                        }),
-                    },
-                  };
-                }
-                if (prompt.includes("Extract the source entity")) {
-                  return {
-                    response: {
-                      text: () =>
-                        JSON.stringify({
-                          sourceName: "Eldrin",
-                          targetName: "The Tower",
-                          type: "friendly",
-                          label: "master of",
-                        }),
-                    },
-                  };
-                }
-                return { response: { text: () => "{}" } };
-              }),
-          };
-        }),
+        response: {
+          text: () =>
+            JSON.stringify({
+              type: "friendly",
+              label: "Allies",
+              explanation: "Both entities share a common goal.",
+            }),
+        },
       };
-    }),
+    }
+    if (prompt.includes("Extract the source entity")) {
+      return {
+        response: {
+          text: () =>
+            JSON.stringify({
+              sourceName: "Eldrin",
+              targetName: "The Tower",
+              type: "friendly",
+              label: "master of",
+            }),
+        },
+      };
+    }
+    return { response: { text: () => "{}" } };
+  });
+
+  return {
+    GoogleGenerativeAI: class {
+      getGenerativeModel() {
+        return {
+          generateContent,
+        };
+      }
+    },
   };
 });
 

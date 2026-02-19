@@ -97,9 +97,6 @@ export function parseOracleResponse(text: string): OracleParseResult {
     [];
 
   if (hasChronicle || hasLore) {
-    let chronicle = "";
-    let lore = "";
-
     const lines = text.split("\n");
     let currentSection: "chronicle" | "lore" | "preamble" | "title" | "type" =
       "preamble";
@@ -169,17 +166,14 @@ export function parseOracleResponse(text: string): OracleParseResult {
     // Preamble handling:
     // If we have preamble and a lore section but no chronicle section,
     // preamble is likely intended as the chronicle.
-    if (
+    const chronicle =
       preambleBuffer.length > 0 &&
       loreBuffer.length > 0 &&
       chronicleBuffer.length === 0
-    ) {
-      chronicle = preambleBuffer.join("\n").trim();
-    } else {
-      chronicle = chronicleBuffer.join("\n").trim();
-    }
+        ? preambleBuffer.join("\n").trim()
+        : chronicleBuffer.join("\n").trim();
 
-    lore = loreBuffer.join("\n").trim();
+    const lore = loreBuffer.join("\n").trim();
 
     // If no explicit title found, try to use preamble if it's very short (1 line)
     // OR if it's the chronicle's first line.

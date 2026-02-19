@@ -49,19 +49,29 @@ export class DocxParser implements FileParser {
             // Detect dimensions
             let width: number | undefined;
             let height: number | undefined;
-            try {
-              const url = URL.createObjectURL(blob);
-              const img = new Image();
-              img.src = url;
-              await new Promise((resolve) => {
-                img.onload = resolve;
-                img.onerror = resolve;
-              });
-              width = img.naturalWidth;
-              height = img.naturalHeight;
-              URL.revokeObjectURL(url);
-            } catch (e) {
-              console.warn("Failed to detect image dimensions", e);
+            if (
+              typeof URL !== "undefined" &&
+              typeof URL.createObjectURL === "function" &&
+              typeof Image !== "undefined"
+            ) {
+              try {
+                const url = URL.createObjectURL(blob);
+                const img = new Image();
+                img.src = url;
+                // Wait for load with a safety timeout
+                await Promise.race([
+                  new Promise((resolve) => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                  }),
+                  new Promise((resolve) => setTimeout(resolve, 1000)),
+                ]);
+                width = img.naturalWidth || undefined;
+                height = img.naturalHeight || undefined;
+                URL.revokeObjectURL(url);
+              } catch (e) {
+                console.warn("Failed to detect image dimensions", e);
+              }
             }
 
             assets.push({

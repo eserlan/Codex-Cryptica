@@ -293,7 +293,7 @@ INSTRUCTIONS:
       }
     } catch (err: any) {
       console.error("[AIService] Merge generation failed:", err);
-      throw new Error(`Merge failed: ${err.message}`);
+      throw new Error(`Merge failed: ${err.message}`, { cause: err });
     }
   }
 
@@ -404,9 +404,13 @@ INSTRUCTIONS:
     } catch (err: any) {
       console.error("Gemini API Error:", err);
       if (err.message?.includes("429")) {
-        throw new Error("API rate limit exceeded. Please wait a moment.");
+        throw new Error("API rate limit exceeded. Please wait a moment.", {
+          cause: err,
+        });
       }
-      throw new Error(`Lore Oracle Error: ${err.message || "Unknown error"}`);
+      throw new Error(`Lore Oracle Error: ${err.message || "Unknown error"}`, {
+        cause: err,
+      });
     }
   }
 

@@ -71,7 +71,7 @@ export async function calculateFileHash(file: Blob): Promise<string> {
 
   if (typeof file.arrayBuffer === "function") {
     try {
-      data = await file.arrayBuffer();
+      data = new Uint8Array(await file.arrayBuffer());
     } catch {
       // Fallback for some JSDOM/Node environments
       const text = await file.text();

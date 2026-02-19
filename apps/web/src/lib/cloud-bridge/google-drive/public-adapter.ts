@@ -108,7 +108,8 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
             `[PublicGDriveAdapter] GAPI Content access failed for ${fileId}. Status: ${err.status}`,
           );
           // If it's a 404, we can stop immediately
-          if (err.status === 404) throw new Error("File Not Found");
+          if (err.status === 404)
+            throw new Error("File Not Found", { cause: err });
 
           // If it's a 403, it might be bot detection or missing permissions.
           // We'll let it fall through to the fetch Phase 2.
@@ -135,6 +136,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
         if (err.message?.includes("Access Denied")) throw err;
         throw new Error(
           `Fetch failed: ${err.message || "Unknown Network Error"}`,
+          { cause: err },
         );
       }
     });

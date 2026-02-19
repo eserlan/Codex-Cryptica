@@ -88,10 +88,13 @@
 
     // Entity search for FROM and TO
     const parts = input.split('"');
-    let term = "";
+    let term: string;
     if (activeStep === "FROM") {
-      term = parts[0].replace("/connect", "").replace("/merge", "").trim();
-      if (parts.length > 1) term = parts[1].trim();
+      const baseTerm = parts[0]
+        .replace("/connect", "")
+        .replace("/merge", "")
+        .trim();
+      term = parts.length > 1 ? parts[1].trim() : baseTerm;
     } else {
       term = parts[parts.length - 1].trim();
     }
