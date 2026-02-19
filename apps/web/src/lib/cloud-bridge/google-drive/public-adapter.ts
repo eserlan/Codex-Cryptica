@@ -1,5 +1,6 @@
 import type { ICloudShareProvider, SerializedGraph } from "../types";
 import { parseMarkdown, sanitizeId } from "../../utils/markdown";
+import { GOOGLE_DRIVE_CONFIG } from "./config";
 
 export class PublicGDriveAdapter implements ICloudShareProvider {
   async shareFilePublicly(_fileId: string): Promise<string> {
@@ -25,9 +26,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
       if (!(gapi.client as any).drive) {
         await gapi.client.init({
           apiKey: apiKey,
-          discoveryDocs: [
-            "https://www.googleapis.com/discovery/v1/apis/drive/v3/rest",
-          ],
+          discoveryDocs: [GOOGLE_DRIVE_CONFIG.DISCOVERY_DOC],
         });
       } else if (apiKey) {
         // If already inited but we have a new key, we can't easily re-init,
@@ -86,7 +85,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
           console.log(`[PublicGDriveAdapter] Requesting content: ${fileId}`);
           // Use low-level request for media content to avoid body parsing issues
           const response = await (gapi.client as any).request({
-            path: `https://www.googleapis.com/drive/v3/files/${fileId}`,
+            path: `${GOOGLE_DRIVE_CONFIG.API_BASE}/${fileId}`,
             params: {
               alt: "media",
               key: apiKey,
@@ -118,7 +117,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
 
       // Phase 2: Fallback to direct Fetch
       // This sometimes works if GAPI's postMessage bridge is being flagged
-      const url = `https://www.googleapis.com/drive/v3/files/${fileId}?key=${apiKey}&alt=media&acknowledgeAbuse=true`;
+      const url = `${GOOGLE_DRIVE_CONFIG.API_BASE}/${fileId}?key=${apiKey}&alt=media&acknowledgeAbuse=true`;
       try {
         const response = await fetch(url);
         if (response.ok) return await response.blob();
@@ -336,7 +335,7 @@ export class PublicGDriveAdapter implements ICloudShareProvider {
     apiKey: string,
   ): Promise<SerializedGraph> {
     const encodedFolderId = encodeURIComponent(folderId);
-    const listUrl = `https://www.googleapis.com/drive/v3/files?q='${encodedFolderId}' in parents and trashed = false&fields=files(id, name, thumbnailLink, webContentLink, mimeType)&key=${apiKey}`;
+    const listUrl = `${GOOGLE_DRIVE_CONFIG.API_BASE}?q='${encodedFolderId}' in parents and trashed = false&fields=files(id, name, thumbnailLink, webContentLink, mimeType)&key=${apiKey}`;
 
     const listResponse = await fetch(listUrl);
     if (!listResponse.ok) {
