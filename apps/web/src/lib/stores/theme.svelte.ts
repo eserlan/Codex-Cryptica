@@ -100,31 +100,8 @@ class ThemeStore {
         `url('/themes/${tokens.texture}')`,
       );
       root.style.setProperty(
-        "--bg-texture",
-        `url('/themes/${tokens.texture}')`,
-      );
-      root.style.setProperty(
-        "--bg-texture",
-        `url('/themes/${tokens.texture}')`,
-      );
-      // Reduced overlay opacity from 0.9 to 0.7 to let texture show through (100% - 30% = 70% opacity mask)
-      // Actually, let's use a lower opacity for the solid color covering the texture.
-      // 0.9 covers 90%. We want maybe 70% coverage max?
-      // But the background color is the parchment color.
-      // If we want the texture (which is dark grain) to show on top of background,
-      // we should probably layer it: Background Color -> Texture Image -> Slight Gradient Tint?
-      // Current implementation: background-image = --bg-texture (which is just the SVG).
-      // Body has background-color (solid).
-      // So Body = Solid Color + SVG.
-      //
-      // But 'surface' elements usually have their own background-color (tokens.surface), which sits ON TOP of body.
-      // So panels are opaque.
-
-      // We need panels to ALSO have the texture if we want them to look like paper.
-      // Let's first fix the overlay variable to be more transparent so it doesn't wash things out if used.
-      root.style.setProperty(
         "--bg-texture-overlay",
-        `linear-gradient(rgba(253, 246, 227, 0.5), rgba(253, 246, 227, 0.5)), url('/themes/${tokens.texture}')`,
+        `linear-gradient(${tokens.background}80, ${tokens.background}80), url('/themes/${tokens.texture}')`,
       );
     } else {
       root.style.setProperty("--bg-texture", "none");

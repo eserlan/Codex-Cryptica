@@ -4,7 +4,6 @@
   import { onMount } from "svelte";
   import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
   import { uiStore } from "$lib/stores/ui.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
   import { fade } from "svelte/transition";
 
   // Dynamic imports for heavy components
@@ -128,9 +127,7 @@
   {#if !isGuestMode && uiStore.isLandingPageVisible}
     <div
       class="absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
-      style:background-image={themeStore.activeTheme.id === "fantasy"
-        ? "var(--bg-texture-overlay)"
-        : "none"}
+      style:background-image="var(--bg-texture-overlay)"
       transition:fade
     >
       <div

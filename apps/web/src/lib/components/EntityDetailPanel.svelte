@@ -2,7 +2,6 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
 
   // Sub-components
   import DetailHeader from "./entity-detail/DetailHeader.svelte";
@@ -97,9 +96,7 @@
   <aside
     transition:fade={{ duration: 200 }}
     class="pointer-events-auto flex h-full w-full md:w-[400px] lg:w-[450px] flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
-    style:background-image={themeStore.activeTheme.id === "fantasy"
-      ? "var(--bg-theme-surface)"
-      : "none"}
+    style:background-image="var(--bg-theme-surface)"
     style:background-size="cover"
     ontouchmove={(e) => e.stopPropagation()}
     onwheel={(e) => e.stopPropagation()}
@@ -109,9 +106,7 @@
 
     <div
       class="flex-1 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
-      style:background-image={themeStore.activeTheme.id === "fantasy"
-        ? "var(--bg-texture-overlay)"
-        : "none"}
+      style:background-image="var(--bg-texture-overlay)"
     >
       <div
         style="background-image: var(--bg-texture-overlay)"

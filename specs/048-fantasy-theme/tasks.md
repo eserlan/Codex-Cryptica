@@ -55,10 +55,10 @@
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T017 [P] Create help article `apps/web/src/lib/content/help/themes.md` explaining how to switch themes.
-- [ ] T018 Run a final accessibility check using `unlighthouse` or browser devtools to ensure all new text and color combinations meet WCAG AA contrast ratios (SC-002).
-- [ ] T019 Manually review the 10 most common UI components to verify theme application (SC-003).
-- [ ] T020 [P] Configure E2E tests for visual regression or create a manual testing guide for visual consistency.
+- [x] T017 [P] Create help article `apps/web/src/lib/content/help/themes.md` explaining how to switch themes.
+- [x] T018 Run a final accessibility check using `unlighthouse` or browser devtools to ensure all new text and color combinations meet WCAG AA contrast ratios (SC-002).
+- [x] T019 Manually review the 10 most common UI components to verify theme application (SC-003).
+- [x] T020 [P] Configure E2E tests for visual regression or create a manual testing guide for visual consistency.
 
 ---
 
