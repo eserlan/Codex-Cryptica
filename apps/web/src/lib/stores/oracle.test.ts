@@ -204,7 +204,7 @@ describe("OracleStore", () => {
     expect(oracle.tier).toBe("advanced");
   });
 
-  it("should save tier to database", async () => {
+  it("should save tier to database", async ({}) => {
     const mockDB = await idbUtils.getDB();
 
     await oracle.setTier("advanced");
@@ -533,36 +533,24 @@ describe("OracleStore", () => {
 
     it("should abort if key is missing or already loading", async () => {
       const { aiService } = await import("../services/ai");
-<<<<<<< HEAD
+      // Use different titles so store doesn't match cached entities if clearing fails
       const { vault } = await import("./vault.svelte");
-
       (vault as any).entities = {
-        "abort-1": { title: "AbortTest1" },
-        "abort-2": { title: "AbortTest2" },
+        e1: { title: "AbortTest1" },
+        e2: { title: "AbortTest2" },
       };
 
       vi.mocked(aiService.retrieveContext).mockClear();
 
-      oracle.tier = "advanced"; // Ensure apiKey is required
-      oracle.apiKey = null;
-      await oracle.drawEntity("abort-1");
-=======
-      vi.mocked(aiService.retrieveContext).mockClear();
-
       oracle.apiKey = null;
       await oracle.drawEntity("e1");
->>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
       expect(oracle.isLoading).toBe(false);
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
 
       oracle.apiKey = "key";
       oracle.isLoading = true;
-<<<<<<< HEAD
       vi.mocked(aiService.retrieveContext).mockClear();
-      await oracle.drawEntity("abort-2");
-=======
-      await oracle.drawEntity("e1");
->>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
+      await oracle.drawEntity("e2");
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
     });
   });

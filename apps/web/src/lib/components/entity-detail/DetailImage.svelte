@@ -149,7 +149,6 @@
         </div>
 
         {#if oracle.tier === "advanced"}
-<<<<<<< HEAD
           <div class="mb-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
@@ -188,41 +187,6 @@
               {/if}
             </button>
           </div>
-=======
-          <button
-            onclick={() => oracle.drawEntity(entity.id)}
-            disabled={oracle.isLoading}
-            class="absolute inset-0 bg-theme-surface/20 hover:bg-theme-surface/80 transition-all flex flex-col items-center justify-center gap-1 backdrop-blur-[1px] hover:backdrop-blur-sm group/btn"
-            aria-label="Draw visualization for {entity.title}"
-            aria-busy={oracle.isLoading}
-          >
-            {#if oracle.isLoading}
-              <span
-                class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
-                aria-hidden="true"
-              ></span>
-              <span
-                class="text-[8px] font-bold tracking-widest text-theme-primary text-center px-4"
-                aria-live="polite"
-              >
-                {#if oracle.activeStyleTitle}
-                  STYLE: {oracle.activeStyleTitle.toUpperCase()}
-                {:else}
-                  VISUALIZING...
-                {/if}
-              </span>
-            {:else}
-              <span
-                class="icon-[lucide--palette] w-5 h-5 text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
-                aria-hidden="true"
-              ></span>
-              <span
-                class="text-[10px] font-bold tracking-widest text-theme-primary opacity-40 group-hover/btn:opacity-100 transition-opacity"
-                >DRAW VISUAL</span
-              >
-            {/if}
-          </button>
->>>>>>> 2b53171 (:wheelchair: chore: address PR feedback for draw button feature)
         {/if}
       </div>
     </div>
