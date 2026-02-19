@@ -102,6 +102,7 @@
     if (typeof window !== "undefined" && (window as any).__E2E__) {
       (window as any).vault = vault;
       (window as any).graph = graph;
+      (window as any).oracle = oracle;
     }
   });
 

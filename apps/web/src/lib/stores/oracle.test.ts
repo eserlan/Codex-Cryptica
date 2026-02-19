@@ -489,5 +489,61 @@ describe("OracleStore", () => {
         true, // isImage: true
       );
     });
+
+    it("should handle errors in drawMessage", async () => {
+      oracle.apiKey = "test-key";
+      oracle.messages = [
+        {
+          id: "msg-err",
+          role: "assistant",
+          content: "...",
+          hasDrawAction: true,
+        },
+      ];
+      const { aiService } = await import("../services/ai");
+      vi.mocked(aiService.generateImage).mockRejectedValue(
+        new Error("Generation Failed"),
+      );
+
+      await oracle.drawMessage("msg-err");
+
+      const errorMsg = oracle.messages[oracle.messages.length - 1];
+      expect(errorMsg.role).toBe("system");
+      expect(errorMsg.content).toContain("Generation Failed");
+      expect(oracle.isLoading).toBe(false);
+    });
+
+    it("should handle errors in drawEntity", async () => {
+      oracle.apiKey = "test-key";
+      const { vault } = await import("./vault.svelte");
+      (vault as any).entities = { e1: { title: "T" } };
+      // Make generateImage fail to trigger the catch block before saveImageToVault
+      const { aiService } = await import("../services/ai");
+      vi.mocked(aiService.generateImage).mockRejectedValue(
+        new Error("Save Failed"),
+      );
+
+      await oracle.drawEntity("e1");
+
+      const errorMsg = oracle.messages[oracle.messages.length - 1];
+      expect(errorMsg.role).toBe("system");
+      expect(errorMsg.content).toContain("Save Failed");
+      expect(oracle.isLoading).toBe(false);
+    });
+
+    it("should abort if key is missing or already loading", async () => {
+      const { aiService } = await import("../services/ai");
+      vi.mocked(aiService.retrieveContext).mockClear();
+
+      oracle.apiKey = null;
+      await oracle.drawEntity("e1");
+      expect(oracle.isLoading).toBe(false);
+      expect(aiService.retrieveContext).not.toHaveBeenCalled();
+
+      oracle.apiKey = "key";
+      oracle.isLoading = true;
+      await oracle.drawEntity("e1");
+      expect(aiService.retrieveContext).not.toHaveBeenCalled();
+    });
   });
 });

@@ -825,7 +825,7 @@ class OracleStore {
 
   async drawEntity(entityId: string) {
     const key = this.effectiveApiKey;
-    if (!key) return;
+    if (!key || this.isLoading) return;
 
     const entity = vault.entities[entityId];
     if (!entity) return;
@@ -886,7 +886,7 @@ class OracleStore {
 
   async drawMessage(messageId: string) {
     const key = this.effectiveApiKey;
-    if (!key) return;
+    if (!key || this.isLoading) return;
 
     const msgIndex = this.messages.findIndex((m) => m.id === messageId);
     if (msgIndex === -1) return;
@@ -954,6 +954,7 @@ class OracleStore {
       ];
     } finally {
       this.activeStyleTitle = null;
+      this.isLoading = false;
       this.lastUpdated = Date.now();
       this.broadcast();
       this.saveToDB();
