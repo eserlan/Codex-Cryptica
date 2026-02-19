@@ -736,21 +736,32 @@
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
-        const currentElements = currentCy.elements();
-        const currentIds = new Set(currentElements.map((el) => el.id()));
-        const targetIds = new Set(graph.elements.map((el) => el.data.id));
+        // 0. Take a consistent snapshot of the entire elements array
+        // This breaks reactivity and prevents infinite loops/DataCloneErrors
+        const snapshotElements = $state.snapshot(graph.elements);
 
-        // 1. Remove elements no longer in the store
-        const removedElements = currentElements.filter(
+        // 1. Build a map of current cy elements for O(1) lookups
+        const elementMap = new Map<string, any>();
+        currentCy.elements().forEach((el) => {
+          elementMap.set(el.id(), el);
+        });
+
+        const targetIds = new Set(snapshotElements.map((el) => el.data.id));
+
+        // 2. Remove elements no longer in the store
+        const removedElements = Array.from(elementMap.values()).filter(
           (el) => !targetIds.has(el.id()),
         );
         if (removedElements.length > 0) {
-          currentCy.remove(removedElements);
+          // Cytoscape remove() accepts a collection or selector string
+          currentCy.remove(currentCy.collection(removedElements));
+          // Sync map after removal
+          removedElements.forEach((el) => elementMap.delete(el.id()));
         }
 
-        // 2. Add new elements safely
-        const newElements = graph.elements.filter(
-          (el) => !currentIds.has(el.data.id),
+        // 3. Add new elements safely
+        const newElements = snapshotElements.filter(
+          (el) => !elementMap.has(el.data.id),
         );
 
         if (newElements.length > 0) {
@@ -764,9 +775,7 @@
           }
 
           // Then add edges, but ONLY if both source and target exist in the graph
-          // (either they were already there, or we just added them)
           const validEdges = newEdges.filter((edge) => {
-            // Force type check or cast to access source/target safely
             const edgeData = edge.data as {
               source?: string;
               target?: string;
@@ -796,46 +805,64 @@
               console.warn("Failed to add some edges to graph", e);
             }
           }
+
+          // Hydrate elementMap with newly added elements so they are synchronized in the same pass
+          currentCy.nodes().forEach((n) => {
+            if (!elementMap.has(n.id())) elementMap.set(n.id(), n);
+          });
+          currentCy.edges().forEach((e) => {
+            if (!elementMap.has(e.id())) elementMap.set(e.id(), e);
+          });
         }
 
-        // 3. Update existing elements (labels, etc) - Data Sync only
+        // 4. Update existing elements (labels, etc) - Data Sync only
         currentCy.batch(() => {
-          graph.elements.forEach((el) => {
-            if (currentIds.has(el.data.id)) {
-              const node = currentCy.$id(el.data.id);
-              if (node.length > 0) {
-                const currentData = node.data();
-                const newData = el.data;
+          snapshotElements.forEach((el) => {
+            const node = elementMap.get(el.data.id);
+            if (node) {
+              const currentData = node.data();
+              const newData = el.data;
 
-                // Shallow equality check to prevent unnecessary style recalculations
-                let changed = false;
-                for (const key in newData) {
-                  // Skip ID as it's the lookup key
-                  if (key === "id") continue;
+              // Robust equality check to prevent unnecessary style recalculations
+              let changed = false;
+              for (const key in newData) {
+                // Skip ID as it's the lookup key
+                if (key === "id") continue;
 
-                  const k = key as keyof typeof newData;
-                  if (currentData[k] !== newData[k]) {
-                    changed = true;
-                    break;
-                  }
+                const k = key as keyof typeof newData;
+                const newVal = newData[k];
+                const curVal = currentData[k];
+
+                // Performance optimized check for TemporalMetadata objects
+                const isMatch =
+                  typeof newVal === "object" && newVal !== null
+                    ? JSON.stringify(newVal) === JSON.stringify(curVal)
+                    : curVal === newVal;
+
+                if (!isMatch) {
+                  changed = true;
+                  break;
                 }
+              }
 
-                if (changed) {
-                  // Merge with existing data so we don't lose dynamic properties
-                  // (e.g. resolvedImage, width, height set by async loaders)
-                  node.data({ ...currentData, ...newData });
-                }
+              if (changed) {
+                // Cytoscape merges data objects automatically
+                node.data(newData);
+              }
 
-                // Sync position for guests (Host relies on local layout)
-                if (vault.isGuest && el.group === "nodes" && el.position) {
-                  const currentPos = node.position();
-                  // Check if position changed significantly (> 1px) to avoid jitter
-                  if (
-                    Math.abs(currentPos.x - el.position.x) > 1 ||
-                    Math.abs(currentPos.y - el.position.y) > 1
-                  ) {
-                    node.position(el.position);
-                  }
+              // Sync position for guests (Host relies on local layout)
+              if (
+                vault.isGuest &&
+                el.group === "nodes" &&
+                el.position?.x !== undefined
+              ) {
+                const currentPos = node.position();
+                // Check if position changed significantly (> 1px) to avoid jitter
+                if (
+                  Math.abs(currentPos.x - el.position.x) > 1 ||
+                  Math.abs(currentPos.y - el.position.y) > 1
+                ) {
+                  node.position(el.position);
                 }
               }
             }

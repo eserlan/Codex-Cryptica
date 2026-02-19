@@ -96,6 +96,14 @@
     }
   });
 
+  // E2E test helpers: Expose stores globally for Playwright evaluate() calls
+  $effect(() => {
+    if (typeof window !== "undefined" && (window as any).__E2E__) {
+      (window as any).vault = vault;
+      (window as any).graph = graph;
+    }
+  });
+
   onMount(() => {
     // Light initializations required for the landing page/shell
     helpStore.init();

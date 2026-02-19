@@ -5,6 +5,7 @@ test.describe("Vault E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
     });
     await page.goto("/");
     // Wait for vault initialization (OPFS auto-load)
@@ -100,9 +101,19 @@ test.describe("Vault E2E", () => {
       await page.keyboard.press("l");
     }
 
+    // Wait for the node to appear in cy graph
+    await page.waitForFunction(
+      () => {
+        const cy = (window as any).cy;
+        return cy.nodes().nonempty();
+      },
+      { timeout: 5000 },
+    );
+
+    // Now check the label style (returns "" when labels are hidden)
     const currentLabelStyle = await page.evaluate(() => {
       const cy = (window as any).cy;
-      return cy.nodes()[0]?.style("label");
+      return cy.nodes().first().style("label");
     });
     expect(currentLabelStyle).toBe("");
 
@@ -115,7 +126,7 @@ test.describe("Vault E2E", () => {
 
     const restoredLabelStyle = await page.evaluate(() => {
       const cy = (window as any).cy;
-      return cy.nodes()[0]?.style("label");
+      return cy.nodes().first()?.style("label");
     });
     expect(restoredLabelStyle).not.toBe("");
 
