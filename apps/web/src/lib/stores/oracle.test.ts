@@ -535,7 +535,6 @@ describe("OracleStore", () => {
       const { aiService } = await import("../services/ai");
       const { vault } = await import("./vault.svelte");
 
-      // Use titles that won't match previous calls even if mocks aren't cleared
       (vault as any).entities = {
         "abort-1": { title: "AbortTest1" },
         "abort-2": { title: "AbortTest2" },
