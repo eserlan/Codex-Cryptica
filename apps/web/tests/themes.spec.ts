@@ -120,6 +120,14 @@ test.describe("Visual Styling Templates", () => {
         .trim(),
     );
     expect(primaryColor).toBe("#dc2626");
+
+    // 6. Verify secondary color (Readable Muted Red)
+    const secondaryColor = await page.evaluate(() =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--color-accent-dim")
+        .trim(),
+    );
+    expect(secondaryColor).toBe("#ef4444");
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {

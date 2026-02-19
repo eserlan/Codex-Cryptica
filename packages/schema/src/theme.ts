@@ -152,7 +152,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Blood & Noir",
     tokens: {
       primary: "#dc2626", // Blood Red (Vibrant)
-      secondary: "#7f1d1d", // Dark Red (Dim accents & muted text)
+      secondary: "#ef4444", // Bright Red (Readable muted labels)
       background: "#050505",
       surface: "#121212",
       text: "#f3f4f6", // Off-white (Body)
