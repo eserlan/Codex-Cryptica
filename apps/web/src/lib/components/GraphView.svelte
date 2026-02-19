@@ -737,7 +737,14 @@
         currentCy.resize(); // Ensure viewport is up to date
 
         const currentElements = currentCy.elements();
-        const currentIds = new Set(currentElements.map((el) => el.id()));
+
+        // Optimization: Create a Map for O(1) lookups of existing elements
+        // This avoids creating a Set of IDs and repeated cy.$id() calls in the loop
+        const elementMap = new Map<string, any>();
+        currentElements.forEach((el) => {
+          elementMap.set(el.id(), el);
+        });
+
         const targetIds = new Set(graph.elements.map((el) => el.data.id));
 
         // 1. Remove elements no longer in the store
@@ -750,7 +757,7 @@
 
         // 2. Add new elements safely
         const newElements = graph.elements.filter(
-          (el) => !currentIds.has(el.data.id),
+          (el) => !elementMap.has(el.data.id),
         );
 
         if (newElements.length > 0) {
@@ -801,41 +808,39 @@
         // 3. Update existing elements (labels, etc) - Data Sync only
         currentCy.batch(() => {
           graph.elements.forEach((el) => {
-            if (currentIds.has(el.data.id)) {
-              const node = currentCy.$id(el.data.id);
-              if (node.length > 0) {
-                const currentData = node.data();
-                const newData = el.data;
+            const node = elementMap.get(el.data.id);
+            if (node) {
+              const currentData = node.data();
+              const newData = el.data;
 
-                // Shallow equality check to prevent unnecessary style recalculations
-                let changed = false;
-                for (const key in newData) {
-                  // Skip ID as it's the lookup key
-                  if (key === "id") continue;
+              // Shallow equality check to prevent unnecessary style recalculations
+              let changed = false;
+              for (const key in newData) {
+                // Skip ID as it's the lookup key
+                if (key === "id") continue;
 
-                  const k = key as keyof typeof newData;
-                  if (currentData[k] !== newData[k]) {
-                    changed = true;
-                    break;
-                  }
+                const k = key as keyof typeof newData;
+                if (currentData[k] !== newData[k]) {
+                  changed = true;
+                  break;
                 }
+              }
 
-                if (changed) {
-                  // Merge with existing data so we don't lose dynamic properties
-                  // (e.g. resolvedImage, width, height set by async loaders)
-                  node.data({ ...currentData, ...newData });
-                }
+              if (changed) {
+                // Merge with existing data so we don't lose dynamic properties
+                // (e.g. resolvedImage, width, height set by async loaders)
+                node.data({ ...currentData, ...newData });
+              }
 
-                // Sync position for guests (Host relies on local layout)
-                if (vault.isGuest && el.group === "nodes" && el.position) {
-                  const currentPos = node.position();
-                  // Check if position changed significantly (> 1px) to avoid jitter
-                  if (
-                    Math.abs(currentPos.x - el.position.x) > 1 ||
-                    Math.abs(currentPos.y - el.position.y) > 1
-                  ) {
-                    node.position(el.position);
-                  }
+              // Sync position for guests (Host relies on local layout)
+              if (vault.isGuest && el.group === "nodes" && el.position) {
+                const currentPos = node.position();
+                // Check if position changed significantly (> 1px) to avoid jitter
+                if (
+                  Math.abs(currentPos.x - el.position.x) > 1 ||
+                  Math.abs(currentPos.y - el.position.y) > 1
+                ) {
+                  node.position(el.position);
                 }
               }
             }
