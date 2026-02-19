@@ -736,28 +736,32 @@
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
-        // Build a snapshot of current cy elements for O(1) lookups
-        // This is used to identify NEW elements (not yet in cy) and for removal detection
-        const existingMap = new Map<string, any>();
+        // 0. Take a consistent snapshot of the entire elements array
+        // This breaks reactivity and prevents infinite loops/DataCloneErrors
+        const snapshotElements = $state.snapshot(graph.elements);
+
+        // 1. Build a map of current cy elements for O(1) lookups
+        const elementMap = new Map<string, any>();
         currentCy.elements().forEach((el) => {
-          existingMap.set(el.id(), el);
+          elementMap.set(el.id(), el);
         });
 
-        const targetIds = new Set(graph.elements.map((el) => el.data.id));
+        const targetIds = new Set(snapshotElements.map((el) => el.data.id));
 
-        // 1. Remove elements no longer in the store
-        const removedElements = currentCy
-          .elements()
-          .filter((el) => !targetIds.has(el.id()));
+        // 2. Remove elements no longer in the store
+        const removedElements = Array.from(elementMap.values()).filter(
+          (el) => !targetIds.has(el.id()),
+        );
         if (removedElements.length > 0) {
-          currentCy.remove(removedElements);
+          // Cytoscape remove() accepts a collection or selector string
+          currentCy.remove(currentCy.collection(removedElements));
+          // Sync map after removal
+          removedElements.forEach((el) => elementMap.delete(el.id()));
         }
 
-        // 2. Add new elements safely
-        // Take a snapshot to break reactivity and prevent infinite loops/DataCloneErrors
-        const snapshotElements = $state.snapshot(graph.elements);
+        // 3. Add new elements safely
         const newElements = snapshotElements.filter(
-          (el) => !existingMap.has(el.data.id),
+          (el) => !elementMap.has(el.data.id),
         );
 
         if (newElements.length > 0) {
@@ -771,9 +775,7 @@
           }
 
           // Then add edges, but ONLY if both source and target exist in the graph
-          // (either they were already there, or we just added them)
           const validEdges = newEdges.filter((edge) => {
-            // Force type check or cast to access source/target safely
             const edgeData = edge.data as {
               source?: string;
               target?: string;
@@ -803,19 +805,19 @@
               console.warn("Failed to add some edges to graph", e);
             }
           }
+
+          // Hydrate elementMap with newly added elements so they are synchronized in the same pass
+          currentCy.nodes().forEach((n) => {
+            if (!elementMap.has(n.id())) elementMap.set(n.id(), n);
+          });
+          currentCy.edges().forEach((e) => {
+            if (!elementMap.has(e.id())) elementMap.set(e.id(), e);
+          });
         }
 
-        // Rebuild the elementMap AFTER adding new elements so they are included.
-        // This is the critical fix: elementMap must contain newly added elements
-        // so the data-sync loop below can update their data in the same pass.
-        const elementMap = new Map<string, any>();
-        currentCy.elements().forEach((el) => {
-          elementMap.set(el.id(), el);
-        });
-
-        // 3. Update existing elements (labels, etc) - Data Sync only
+        // 4. Update existing elements (labels, etc) - Data Sync only
         currentCy.batch(() => {
-          graph.elements.forEach((el) => {
+          snapshotElements.forEach((el) => {
             const node = elementMap.get(el.data.id);
             if (node) {
               const currentData = node.data();
@@ -831,7 +833,7 @@
                 const newVal = newData[k];
                 const curVal = currentData[k];
 
-                // Handle primitive vs object comparison (e.g. for TemporalMetadata)
+                // Performance optimized check for TemporalMetadata objects
                 const isMatch =
                   typeof newVal === "object" && newVal !== null
                     ? JSON.stringify(newVal) === JSON.stringify(curVal)

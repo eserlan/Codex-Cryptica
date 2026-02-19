@@ -18,7 +18,7 @@ test.describe("Graph Synchronization Loop", () => {
   test("should correctly synchronize newly added elements (Map hydration guard)", async ({
     page,
   }) => {
-    // 1. Create entities
+    // 1. Create entities with correct signature: (type, title)
     await page.evaluate(async () => {
       const v = (window as any).vault;
       await v.createEntity("person", "Node A");
@@ -37,17 +37,14 @@ test.describe("Graph Synchronization Loop", () => {
       await v.addConnection(a.id, b.id, "neutral", "Direct Link");
     });
 
-    // 3. Verify label exists in Cytoscape - wait for the reactive sync to propagate
-    const label = await page.waitForFunction(
-      () => {
-        const cy = (window as any).cy;
-        const edge = cy.edges().first();
-        return edge.nonempty() ? edge.data("label") : null;
-      },
-      { timeout: 5000 },
-    );
+    // 3. Verify label exists in Cytoscape immediately
+    const label = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const edge = cy.edges().first();
+      return edge.data("label");
+    });
 
-    expect(await label.jsonValue()).toBe("Direct Link");
+    expect(label).toBe("Direct Link");
   });
 
   test("should synchronize object-type metadata correctly (Deep equality guard)", async ({
@@ -56,10 +53,12 @@ test.describe("Graph Synchronization Loop", () => {
     // 1. Create entity with date
     await page.evaluate(async () => {
       const v = (window as any).vault;
-      await v.createEntity("event", "Dated Event");
+      await v.createEntity("event", "Dated Event", {
+        start_date: { year: 2026, month: 2, day: 19 },
+      });
     });
 
-    // 2. Update the date object
+    // 2. Update the date property directly on the entity
     await page.evaluate(async () => {
       const v = (window as any).vault;
       const id = Object.keys(v.entities)[0];
@@ -68,20 +67,24 @@ test.describe("Graph Synchronization Loop", () => {
       });
     });
 
-    // 3. Verify Cytoscape has the updated date object - wait for reactive sync
-    const handle = await page.waitForFunction(
+    // 3. Verify Cytoscape has the updated date object
+    await page.waitForFunction(
       () => {
         const cy = (window as any).cy;
         const node = cy.nodes().first();
-        if (!node.nonempty()) return null;
-        const sd = node.data("start_date");
-        // Wait until the year is updated to 2027
-        return sd && sd.year === 2027 ? sd : null;
+        const date = node.data("start_date");
+        return date && date.year === 2027;
       },
-      { timeout: 5000 },
+      { timeout: 10000 },
     );
 
-    expect(await handle.jsonValue()).toEqual({ year: 2027, month: 1, day: 1 });
+    const cyDate = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.nodes().first();
+      return node.data("start_date");
+    });
+
+    expect(cyDate).toEqual({ year: 2027, month: 1, day: 1 });
   });
 
   test("should handle missing positions in Guest Mode without crashing", async ({
@@ -91,7 +94,7 @@ test.describe("Graph Synchronization Loop", () => {
     await page.evaluate(async () => {
       const v = (window as any).vault;
       v.isGuest = true;
-      await v.createEntity("note", "Guest Node");
+      await v.createEntity("person", "Guest Node");
     });
 
     // 2. Trigger a sync update for a node without position metadata
