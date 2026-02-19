@@ -533,24 +533,25 @@ describe("OracleStore", () => {
 
     it("should abort if key is missing or already loading", async () => {
       const { aiService } = await import("../services/ai");
-      // Use different titles so store doesn't match cached entities if clearing fails
       const { vault } = await import("./vault.svelte");
+
+      // Use titles that won't match previous calls even if mocks aren't cleared
       (vault as any).entities = {
-        e1: { title: "AbortTest1" },
-        e2: { title: "AbortTest2" },
+        "abort-1": { title: "AbortTest1" },
+        "abort-2": { title: "AbortTest2" },
       };
 
       vi.mocked(aiService.retrieveContext).mockClear();
 
       oracle.apiKey = null;
-      await oracle.drawEntity("e1");
+      await oracle.drawEntity("abort-1");
       expect(oracle.isLoading).toBe(false);
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
 
       oracle.apiKey = "key";
       oracle.isLoading = true;
       vi.mocked(aiService.retrieveContext).mockClear();
-      await oracle.drawEntity("e2");
+      await oracle.drawEntity("abort-2");
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
     });
   });
