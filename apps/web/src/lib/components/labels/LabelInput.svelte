@@ -95,7 +95,9 @@
       if (showSuggestions && suggestions.length > 0) {
         e.preventDefault();
         selectedIndex =
-          (selectedIndex - 1 + suggestions.length) % suggestions.length;
+          selectedIndex === -1
+            ? suggestions.length - 1
+            : (selectedIndex - 1 + suggestions.length) % suggestions.length;
       }
     } else if (e.key === "Escape") {
       showSuggestions = false;
@@ -144,6 +146,7 @@
     >
       {#each suggestions as _label, i}
         <button
+          type="button"
           id="{id}-option-{i}"
           role="option"
           aria-selected={i === selectedIndex}
