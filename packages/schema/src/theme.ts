@@ -268,6 +268,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       accent: "#991b1b", // Crimson (Deep accent)
       fontHeader: "'Spectral', serif",
       fontBody: "'Inter', sans-serif",
+      texture: "blood.svg",
     },
     graph: {
       nodeShape: "round-rectangle",
