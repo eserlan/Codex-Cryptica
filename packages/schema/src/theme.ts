@@ -228,7 +228,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       accent: "#f87171",
       fontHeader: "'Courier Prime', monospace",
       fontBody: "'Courier Prime', monospace",
-      texture: "rust.png",
+      texture: "rust.svg",
     },
     graph: {
       nodeShape: "round-rectangle",
@@ -268,6 +268,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       accent: "#991b1b", // Crimson (Deep accent)
       fontHeader: "'Spectral', serif",
       fontBody: "'Inter', sans-serif",
+      texture: "blood.svg",
     },
     graph: {
       nodeShape: "round-rectangle",
