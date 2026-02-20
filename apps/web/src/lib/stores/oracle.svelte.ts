@@ -49,7 +49,14 @@ class OracleStore {
       this.channel.onmessage = (event) => {
         const { type, data } = event.data;
         if (type === "SYNC_STATE") {
-          // Optimization: Cheap timestamp check before deep JSON serialization
+          // Sync transient UI states immediately, independent of the message history timestamp
+          this.isLoading = data.isLoading;
+          this.isUndoing = data.isUndoing;
+          this.apiKey = data.apiKey;
+          this.tier = data.tier || "lite";
+          this.activeStyleTitle = data.activeStyleTitle || null;
+
+          // Optimization: Cheap timestamp check before deep JSON serialization array diffing
           if (this.lastUpdated === data.lastUpdated) return;
 
           // Fallback to content check if timestamps differ
@@ -57,10 +64,6 @@ class OracleStore {
             this.messages = data.messages;
             this.lastUpdated = data.lastUpdated;
           }
-          this.isLoading = data.isLoading;
-          this.isUndoing = data.isUndoing;
-          this.apiKey = data.apiKey;
-          this.tier = data.tier || "lite";
         } else if (type === "REQUEST_STATE") {
           this.broadcast();
         }
@@ -164,6 +167,7 @@ class OracleStore {
         isUndoing: this.isUndoing,
         apiKey: this.apiKey,
         tier: this.tier,
+        activeStyleTitle: this.activeStyleTitle,
       },
     });
   }
