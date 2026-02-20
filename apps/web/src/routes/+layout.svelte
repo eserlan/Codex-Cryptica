@@ -236,8 +236,14 @@
   // Handle Demo Mode Deep Linking (?demo=theme)
   $effect(() => {
     const demoTheme = page.url.searchParams.get("demo");
-    if (demoTheme && uiStore.activeDemoTheme !== demoTheme) {
-      demoService.startDemo(demoTheme);
+    if (demoTheme && !uiStore.wasConverted) {
+      if (!uiStore.isDemoMode && uiStore.activeDemoTheme === null) {
+        // Initial entry
+        demoService.startDemo(demoTheme);
+      } else if (uiStore.isDemoMode && uiStore.activeDemoTheme !== demoTheme) {
+        // Theme switch
+        demoService.startDemo(demoTheme);
+      }
     }
   });
 

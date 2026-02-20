@@ -5,6 +5,8 @@
   import OracleChat from "./OracleChat.svelte";
   import { fly, fade } from "svelte/transition";
   import { demoService } from "$lib/services/demo";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
 
   const popOut = () => {
     window.open(
@@ -150,6 +152,9 @@
         <button
           onclick={() => {
             demoService.convertToCampaign().then((_id) => {
+              const url = new URL(page.url.href);
+              url.searchParams.delete("demo");
+              goto(url.toString(), { replaceState: true });
               oracle.toggle();
               uiStore.openSettings("vault");
             });

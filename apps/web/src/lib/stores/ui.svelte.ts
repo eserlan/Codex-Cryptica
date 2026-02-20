@@ -18,6 +18,7 @@ class UIStore {
   isDemoMode = $state(false);
   activeDemoTheme = $state<string | null>(null);
   hasPromptedSave = $state(false);
+  wasConverted = $state(false);
 
   notification = $state<{ message: string; type: "success" | "info" } | null>(
     null,

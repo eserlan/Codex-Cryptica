@@ -95,7 +95,7 @@ test.describe("Advanced Draw Button", () => {
     });
 
     // Verify button exists in chat and click it
-    const chatDraw = page.getByRole("button", { name: "DRAW", exact: true });
+    const chatDraw = page.locator('button:has-text("DRAW")').last();
     await expect(chatDraw).toBeVisible();
   });
 

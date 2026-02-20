@@ -25,6 +25,7 @@ class DemoService implements IDemoActions {
       uiStore.isDemoMode = true;
       uiStore.activeDemoTheme = actualTheme;
       uiStore.dismissedLandingPage = true;
+      uiStore.wasConverted = false;
 
       // 3. Set Theme
       await themeStore.setTheme(actualTheme as any);
@@ -53,6 +54,14 @@ class DemoService implements IDemoActions {
       uiStore.isDemoMode = false;
       const activeTheme = uiStore.activeDemoTheme;
       uiStore.activeDemoTheme = null;
+      uiStore.wasConverted = true;
+
+      // Clear URL parameter to prevent re-triggering
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("demo");
+        window.history.replaceState({}, "", url.toString());
+      }
 
       // 4. Re-apply theme while NOT in demo mode to ensure it persists to IndexedDB
       if (activeTheme) {

@@ -4,6 +4,8 @@
   import { slide } from "svelte/transition";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { demoService } from "$lib/services/demo";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -75,6 +77,9 @@
       <button
         onclick={() => {
           demoService.convertToCampaign().then(() => {
+            const url = new URL(page.url.href);
+            url.searchParams.delete("demo");
+            goto(url.toString(), { replaceState: true });
             uiStore.closeSettings();
           });
         }}

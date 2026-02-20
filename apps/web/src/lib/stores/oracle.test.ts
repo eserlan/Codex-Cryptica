@@ -204,7 +204,7 @@ describe("OracleStore", () => {
     expect(oracle.tier).toBe("advanced");
   });
 
-  it("should save tier to database", async ({}) => {
+  it("should save tier to database", async () => {
     const mockDB = await idbUtils.getDB();
 
     await oracle.setTier("advanced");
