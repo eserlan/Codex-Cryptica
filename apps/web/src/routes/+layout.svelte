@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import VaultControls from "$lib/components/VaultControls.svelte";
+  import SyncReminder from "$lib/components/notifications/SyncReminder.svelte";
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
@@ -477,6 +478,7 @@
     </footer>
 
     <SearchModal />
+    <SyncReminder />
 
     {#if (page.url.pathname as string) !== `${base}/login`}
       {#if OracleWindow}
