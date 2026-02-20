@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "scrap-fortress": {
+      "id": "scrap-fortress",
+      "title": "Scrap Fortress",
+      "type": "location",
+      "tags": ["fort", "rust", "survivors"],
+      "connections": [],
+      "content": "A makeshift citadel built from airplane wings and shipping containers. It stands as a bastion of order in the lawless wastes.",
+      "lore": "A makeshift citadel built from airplane wings and shipping containers. It stands as a bastion of order in the lawless wastes.",
+      "image": "/vault-samples/images/wasteland-fort.png",
+      "_path": ["locations", "scrap-fortress.md"],
+      "lastModified": 1700000000000
+    },
+    "scavenger-jax": {
+      "id": "scavenger-jax",
+      "title": "Scavenger Jax",
+      "type": "npc",
+      "tags": ["scavenger", "survivalist", "rugged"],
+      "connections": [
+        {
+          "target": "scrap-fortress",
+          "type": "member_of",
+          "label": "Chief Scout"
+        },
+        {
+          "target": "dust-raiders",
+          "type": "former_member",
+          "label": "Escaped years ago"
+        }
+      ],
+      "content": "A seasoned survivalist who knows every inch of the Deadlands. Jax can find water in a stone and scrap in a graveyard.\n\nJax is leading the search for a solution to [[The Great Drought]].",
+      "lore": "A seasoned survivalist who knows every inch of the Deadlands. Jax can find water in a stone and scrap in a graveyard.\n\nJax is leading the search for a solution to [[The Great Drought]].",
+      "image": "/vault-samples/images/wasteland-hero.png",
+      "_path": ["npcs", "scavenger-jax.md"],
+      "lastModified": 1700000000000
+    },
+    "mama-rust": {
+      "id": "mama-rust",
+      "title": "Mama Rust",
+      "type": "npc",
+      "tags": ["mechanic", "expert", "wise"],
+      "connections": [
+        {
+          "target": "scrap-fortress",
+          "type": "works_at",
+          "label": "The Workshop"
+        }
+      ],
+      "content": "An elderly mechanic who can fix anything with a piece of wire and a hammer. She maintains the fortress's generator.",
+      "lore": "An elderly mechanic who can fix anything with a piece of wire and a hammer. She maintains the fortress's generator.",
+      "image": "/vault-samples/images/wasteland-npc2.png",
+      "_path": ["npcs", "mama-rust.md"],
+      "lastModified": 1700000000000
+    },
+    "dust-raiders": {
+      "id": "dust-raiders",
+      "title": "The Dust-Raiders",
+      "type": "faction",
+      "tags": ["raiders", "aggressive", "chaos"],
+      "connections": [
+        {
+          "target": "scrap-fortress",
+          "type": "enemy_of",
+          "label": "Constant harassment"
+        }
+      ],
+      "content": "A brutal gang of scavengers who prey on the weak. They value strength and gasoline above all else.",
+      "lore": "A brutal gang of scavengers who prey on the weak. They value strength and gasoline above all else.",
+      "image": "/vault-samples/images/wasteland-faction.png",
+      "_path": ["factions", "dust-raiders.md"],
+      "lastModified": 1700000000000
+    },
+    "sand-stinger": {
+      "id": "sand-stinger",
+      "title": "Sand Stinger",
+      "type": "creature",
+      "tags": ["mutant", "desert", "venomous"],
+      "connections": [
+        {
+          "target": "scrap-fortress",
+          "type": "related_to",
+          "label": "Nests nearby"
+        }
+      ],
+      "content": "A house-sized scorpion with a glowing green stinger. Its venom is highly prized but extremely difficult to extract.",
+      "lore": "A house-sized scorpion with a glowing green stinger. Its venom is highly prized but extremely difficult to extract.",
+      "image": "/vault-samples/images/wasteland-creature.png",
+      "_path": ["creatures", "sand-stinger.md"],
+      "lastModified": 1700000000000
+    },
+    "hidden-vault-map": {
+      "id": "hidden-vault-map",
+      "title": "Map to the Hidden Vault",
+      "type": "item",
+      "tags": ["map", "treasure", "mystery"],
+      "connections": [
+        {
+          "target": "scavenger-jax",
+          "type": "related_to",
+          "label": "Jax's prize possession"
+        }
+      ],
+      "content": "A tattered piece of leather with hand-drawn landmarks leading to a legendary pre-war bunker filled with supplies.",
+      "lore": "A tattered piece of leather with hand-drawn landmarks leading to a legendary pre-war bunker filled with supplies.",
+      "image": "/vault-samples/images/wasteland-note.png",
+      "_path": ["notes", "hidden-vault-map.md"],
+      "lastModified": 1700000000000
+    },
+    "the-great-drought": {
+      "id": "the-great-drought",
+      "title": "The Great Drought",
+      "type": "event",
+      "tags": ["crisis", "environmental"],
+      "connections": [
+        {
+          "target": "scrap-fortress",
+          "type": "threatens",
+          "label": "Water supplies low"
+        }
+      ],
+      "content": "A catastrophic lack of rainfall that has lasted for three years, drying up the last remaining oases in the sector.",
+      "lore": "A catastrophic lack of rainfall that has lasted for three years, drying up the last remaining oases in the sector.",
+      "image": "/vault-samples/images/wasteland-fort.png",
+      "_path": ["events", "the-great-drought.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

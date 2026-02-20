@@ -2,6 +2,8 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { slide } from "svelte/transition";
+  import { uiStore } from "$lib/stores/ui.svelte";
+  import { demoService } from "$lib/services/demo";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -52,6 +54,37 @@
 </script>
 
 <div class="space-y-10">
+  {#if uiStore.isDemoMode}
+    <div
+      class="bg-theme-primary/10 border border-theme-primary/30 p-6 rounded-lg text-center space-y-4 animate-in fade-in slide-in-from-top-4"
+    >
+      <div
+        class="w-12 h-12 bg-theme-primary/20 rounded-full flex items-center justify-center mx-auto"
+      >
+        <span class="icon-[lucide--sparkles] text-theme-primary w-6 h-6"></span>
+      </div>
+      <div>
+        <h3 class="text-sm font-bold text-theme-text uppercase tracking-widest">
+          Transmuting Exploration into Reality
+        </h3>
+        <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
+          You are currently in **Demo Mode**. All changes are transient. <br />
+          Save this dataset as a new campaign to begin your permanent chronicle.
+        </p>
+      </div>
+      <button
+        onclick={() => {
+          demoService.convertToCampaign().then(() => {
+            uiStore.closeSettings();
+          });
+        }}
+        class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-[10px] rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
+      >
+        Save as Campaign
+      </button>
+    </div>
+  {/if}
+
   <!-- Fog of War -->
   <div>
     <h3

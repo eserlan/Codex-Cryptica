@@ -13,3 +13,4 @@ The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves
 
 - **Context Fusion**: Combines visible chronicles and hidden lore.
 - **Image Generation**: Type `/draw [description]` to visualize your world.
+- **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.

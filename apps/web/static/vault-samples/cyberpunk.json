@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "sector-7-slums": {
+      "id": "sector-7-slums",
+      "title": "Sector 7 Slums",
+      "type": "location",
+      "tags": ["urban", "neon", "crowded"],
+      "connections": [],
+      "content": "A dense sprawl of neon-lit alleys and vertical housing. Home to hackers, hustlers, and those the corporations forgot.",
+      "lore": "A dense sprawl of neon-lit alleys and vertical housing. Home to hackers, hustlers, and those the corporations forgot.",
+      "image": "/vault-samples/images/cyberpunk-city.png",
+      "_path": ["locations", "sector-7-slums.md"],
+      "lastModified": 1700000000000
+    },
+    "glitch": {
+      "id": "glitch",
+      "title": "Glitch",
+      "type": "npc",
+      "tags": ["hacker", "netrunner", "rebel"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "operates_in",
+          "label": "Shadow Hideout"
+        },
+        {
+          "target": "net-ghosts",
+          "type": "member_of",
+          "label": "Field Operative"
+        }
+      ],
+      "content": "A legendary netrunner with a cybernetic eye and a vendetta against Arasaka. They can bypass almost any ICE.\n\nCurrently planning [[The Arasaka Data Heist]].",
+      "lore": "A legendary netrunner with a cybernetic eye and a vendetta against Arasaka. They can bypass almost any ICE.\n\nCurrently planning [[The Arasaka Data Heist]].",
+      "image": "/vault-samples/images/cyberpunk-hacker.png",
+      "_path": ["npcs", "glitch.md"],
+      "lastModified": 1700000000000
+    },
+    "chrome-eyes": {
+      "id": "chrome-eyes",
+      "title": "Chrome-Eyes",
+      "type": "npc",
+      "tags": ["doctor", "expert", "underground"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "works_at",
+          "label": "Hidden Clinic"
+        }
+      ],
+      "content": "A back-alley street doc who specializes in high-end cybernetics. He knows the medical history of every runner in the slums.",
+      "lore": "A back-alley street doc who specializes in high-end cybernetics. He knows the medical history of every runner in the slums.",
+      "image": "/vault-samples/images/cyberpunk-npc2.png",
+      "_path": ["npcs", "chrome-eyes.md"],
+      "lastModified": 1700000000000
+    },
+    "net-ghosts": {
+      "id": "net-ghosts",
+      "title": "The Net-Ghosts",
+      "type": "faction",
+      "tags": ["hackers", "collective", "anonymous"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "related_to",
+          "label": "Local cell"
+        }
+      ],
+      "content": "A global collective of netrunners fighting for data sovereignty and corporate transparency.",
+      "lore": "A global collective of netrunners fighting for data sovereignty and corporate transparency.",
+      "image": "/vault-samples/images/cyberpunk-faction.png",
+      "_path": ["factions", "net-ghosts.md"],
+      "lastModified": 1700000000000
+    },
+    "cyber-hound": {
+      "id": "cyber-hound",
+      "title": "K9-Cyber Hound",
+      "type": "creature",
+      "tags": ["machine", "combat", "guard"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "patrols",
+          "label": "Corporate perimeters"
+        }
+      ],
+      "content": "A high-speed mechanical predator equipped with scent-tracking sensors and shock-jaws.",
+      "lore": "A high-speed mechanical predator equipped with scent-tracking sensors and shock-jaws.",
+      "image": "/vault-samples/images/cyberpunk-creature.png",
+      "_path": ["creatures", "cyber-hound.md"],
+      "lastModified": 1700000000000
+    },
+    "cyberdeck-blueprint": {
+      "id": "cyberdeck-blueprint",
+      "title": "Blueprint: Mark IV Cyberdeck",
+      "type": "item",
+      "tags": ["tech", "schematic", "prototype"],
+      "connections": [
+        {
+          "target": "glitch",
+          "type": "related_to",
+          "label": "Glitch's personal build"
+        }
+      ],
+      "content": "Detailed schematics for a custom netrunning rig featuring multi-core processing and specialized ICE-breakers.",
+      "lore": "Detailed schematics for a custom netrunning rig featuring multi-core processing and specialized ICE-breakers.",
+      "image": "/vault-samples/images/cyberpunk-note.png",
+      "_path": ["notes", "cyberdeck-blueprint.md"],
+      "lastModified": 1700000000000
+    },
+    "the-arasaka-data-heist": {
+      "id": "the-arasaka-data-heist",
+      "title": "The Arasaka Data Heist",
+      "type": "event",
+      "tags": ["mission", "high-stakes"],
+      "connections": [
+        {
+          "target": "sector-7-slums",
+          "type": "planned_at",
+          "label": "The Glitch Den"
+        }
+      ],
+      "content": "A high-risk operation to infiltrate the Arasaka mainframe and steal classified neural mapping data.",
+      "lore": "A high-risk operation to infiltrate the Arasaka mainframe and steal classified neural mapping data.",
+      "image": "/vault-samples/images/cyberpunk-city.png",
+      "_path": ["events", "the-arasaka-data-heist.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

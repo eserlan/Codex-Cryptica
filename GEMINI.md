@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK (051-demo-mode)
+- Transient (In-memory) for demo session; IndexedDB for conversion (051-demo-mode)
+
 - TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation) (049-theme-based-jargon)
 - N/A (Transient UI state derived from active theme) (049-theme-based-jargon)
 
@@ -90,10 +93,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 051-demo-mode: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK
+
 - 050-oracle-draw-button: Added one-click "Draw" button for Advanced Tier lore visualization across Chat, Sidepanel, and Zen Mode.
 
 - 049-theme-based-jargon: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation)
-
-- 046-import-state-management: Added TypeScript 5.x, Node.js 20+ + `idb` (IndexedDB wrapper), Web Crypto API (for hashing), Svelte 5 (Runes)
 
 <!-- MANUAL ADDITIONS START -->

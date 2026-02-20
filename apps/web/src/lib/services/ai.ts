@@ -14,6 +14,7 @@ export class AIService {
   private model: GenerativeModel | null = null;
   private currentApiKey: string | null = null;
   private currentModelName: string | null = null;
+  private currentDemoMode: boolean | null = null;
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
 
@@ -71,8 +72,8 @@ STANDALONE SEARCH QUERY:`;
     return parts.join("\n\n");
   }
 
-  init(apiKey: string, modelName: string) {
-    // Re-initialize if key or model has changed
+  init(apiKey: string, modelName: string, demoMode = false) {
+    // Re-initialize if key, model, or demo status has changed
     const currentModelName = (this.model as any)?.modelName;
     const matchesModel =
       currentModelName === modelName ||
@@ -82,17 +83,17 @@ STANDALONE SEARCH QUERY:`;
       this.genAI &&
       this.model &&
       this.currentApiKey === apiKey &&
-      matchesModel
+      matchesModel &&
+      this.currentDemoMode === demoMode
     )
       return;
 
-    console.log(`[AIService] Initializing model: ${modelName}`);
+    this.currentDemoMode = demoMode;
     this.clearStyleCache();
     this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({
-      model: modelName,
-      systemInstruction: `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 
-Your primary goal is to provide information from the provided context or conversation history. 
+
+    const isDemoMarker = "DEMO_MODE_ACTIVE";
+    let systemInstruction = `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 
 
 If the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
 
@@ -112,7 +113,18 @@ Only if you have NO information about the subject in either the new context bloc
 
 If the user asks for a visual, image, portrait, or to see what something looks like, inform them that they can use the "/draw" command to have you visualize it.
 
-      Always prioritize the vault context as the absolute truth.`,
+      Always prioritize the vault context as the absolute truth.`;
+
+    if (demoMode) {
+      systemInstruction += `\n\n--- ${isDemoMarker} ---\nNOTE: You are currently in DEMO MODE. Your task is to guide the user through the capabilities of Codex Cryptica. 
+Suggest things they can try, like asking for a detailed description of a tavern, or creating a new character using the /create command. 
+Mention that any changes they make are transient and won't be saved unless they click 'Save as Campaign'.
+Be exceptionally helpful and encouraging.`;
+    }
+
+    this.model = this.genAI.getGenerativeModel({
+      model: modelName,
+      systemInstruction,
     });
     this.currentApiKey = apiKey;
     this.currentModelName = modelName;
@@ -139,9 +151,10 @@ User visualization request: ${query}`;
     query: string,
     context: string,
     modelName: string,
+    _demoMode = false,
   ): Promise<string> {
     if (!context) return query;
-    this.init(apiKey, modelName);
+    this.init(apiKey, modelName, false); // Always use standard persona for distillation
     if (!this.model) throw new Error("AI Model not initialized");
 
     console.log(`[AIService] Distilling visual prompt using: ${modelName}`);
@@ -339,8 +352,9 @@ INSTRUCTIONS:
     context: string,
     modelName: string,
     onUpdate: (partial: string) => void,
+    demoMode = false,
   ) {
-    this.init(apiKey, modelName);
+    this.init(apiKey, modelName, demoMode);
     if (!this.model) throw new Error("AI Model not initialized");
 
     // Create a sanitized history that alternating between user and model, starting with user.

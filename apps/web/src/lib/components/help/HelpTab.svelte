@@ -81,7 +81,7 @@
             transition:slide
           >
             <div
-              class="text-[13px] text-theme-text/80 leading-relaxed prose prose-theme prose-p:my-2 prose-headings:text-theme-primary prose-headings:text-xs prose-headings:font-bold prose-headings:uppercase prose-headings:tracking-widest prose-headings:mt-4 prose-headings:mb-2 prose-strong:text-theme-primary prose-code:text-theme-primary"
+              class="text-sm text-theme-text/90 leading-relaxed prose prose-theme prose-p:my-3 prose-headings:text-theme-primary prose-headings:text-sm prose-headings:font-bold prose-headings:uppercase prose-headings:tracking-widest prose-headings:mt-6 prose-headings:mb-3 prose-strong:text-theme-primary prose-code:text-theme-primary prose-li:my-1"
             >
               {#await parseContent(article.content) then html}
                 {@html html}

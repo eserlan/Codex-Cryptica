@@ -59,7 +59,7 @@ class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser) return;
+    if (!browser || uiStore.isDemoMode) return;
     try {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);

@@ -2,6 +2,7 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   // Sub-components
   import DetailHeader from "./entity-detail/DetailHeader.svelte";
@@ -108,6 +109,13 @@
       class="flex-1 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
       style:background-image="var(--bg-texture-overlay)"
     >
+      {#if uiStore.isDemoMode}
+        <div
+          class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-[9px] font-bold text-theme-primary tracking-widest text-center animate-pulse"
+        >
+          TRANSIENT MODE: CHANGES WILL NOT BE SAVED
+        </div>
+      {/if}
       <div
         style:background-image="var(--bg-texture-overlay)"
         class="bg-theme-surface"

@@ -6,6 +6,7 @@
   import ShareModal from "$lib/components/ShareModal.svelte";
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { demoService } from "$lib/services/demo";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -98,6 +99,23 @@
       ? 'flex-col items-stretch gap-3'
       : 'gap-1.5 md:gap-3 items-center'}"
   >
+    {#if ui.isDemoMode}
+      <div
+        class="flex items-center gap-1.5 px-2 py-1 border border-theme-primary bg-theme-primary/10 text-theme-primary rounded text-[9px] font-bold tracking-tighter"
+      >
+        DEMO MODE
+      </div>
+      <button
+        class={isVertical
+          ? `${btnGhost} py-3 text-sm justify-center`
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+        onclick={() => demoService.exitDemo()}
+      >
+        <span class="icon-[lucide--log-out] w-3 h-3"></span>
+        EXIT DEMO
+      </button>
+    {/if}
+
     {#if isOffline}
       <div
         class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"

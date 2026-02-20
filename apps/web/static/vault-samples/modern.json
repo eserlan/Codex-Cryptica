@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "police-hq": {
+      "id": "police-hq",
+      "title": "Metropolitan Police HQ",
+      "type": "location",
+      "tags": ["city", "law", "central"],
+      "connections": [],
+      "content": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
+      "lore": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
+      "image": "/vault-samples/images/modern-hq.png",
+      "_path": ["locations", "police-hq.md"],
+      "lastModified": 1700000000000
+    },
+    "sarah-miller": {
+      "id": "sarah-miller",
+      "title": "Detective Sarah Miller",
+      "type": "npc",
+      "tags": ["detective", "focused", "expert"],
+      "connections": [
+        {
+          "target": "police-hq",
+          "type": "works_at",
+          "label": "Lead Investigator"
+        },
+        {
+          "target": "agent-cooper",
+          "type": "related_to",
+          "label": "Secret contact"
+        }
+      ],
+      "content": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
+      "lore": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
+      "image": "/vault-samples/images/modern-detective.png",
+      "_path": ["npcs", "sarah-miller.md"],
+      "lastModified": 1700000000000
+    },
+    "agent-cooper": {
+      "id": "agent-cooper",
+      "title": "Agent Cooper",
+      "type": "npc",
+      "tags": ["informant", "mysterious", "tech-expert"],
+      "connections": [
+        {
+          "target": "police-hq",
+          "type": "related_to",
+          "label": "Frequent 'visitor'"
+        }
+      ],
+      "content": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
+      "lore": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
+      "image": "/vault-samples/images/modern-npc2.png",
+      "_path": ["npcs", "agent-cooper.md"],
+      "lastModified": 1700000000000
+    },
+    "the-syndicate": {
+      "id": "the-syndicate",
+      "title": "The Syndicate",
+      "type": "faction",
+      "tags": ["crime", "international", "dangerous"],
+      "connections": [
+        {
+          "target": "the-diamond-heist",
+          "type": "related_to",
+          "label": "Primary suspects"
+        }
+      ],
+      "content": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
+      "lore": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
+      "image": "/vault-samples/images/modern-faction.png",
+      "_path": ["factions", "the-syndicate.md"],
+      "lastModified": 1700000000000
+    },
+    "attack-doberman": {
+      "id": "attack-doberman",
+      "title": "Trained Doberman",
+      "type": "creature",
+      "tags": ["animal", "guard", "fierce"],
+      "connections": [
+        { "target": "police-hq", "type": "related_to", "label": "K9 Unit" }
+      ],
+      "content": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
+      "lore": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
+      "image": "/vault-samples/images/modern-creature.png",
+      "_path": ["creatures", "attack-doberman.md"],
+      "lastModified": 1700000000000
+    },
+    "diamond-case-file": {
+      "id": "diamond-case-file",
+      "title": "Case File: The Star of the East",
+      "type": "item",
+      "tags": ["evidence", "confidential", "investigation"],
+      "connections": [
+        {
+          "target": "sarah-miller",
+          "type": "related_to",
+          "label": "Miller's focus"
+        }
+      ],
+      "content": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
+      "lore": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
+      "image": "/vault-samples/images/modern-note.png",
+      "_path": ["notes", "diamond-case-file.md"],
+      "lastModified": 1700000000000
+    },
+    "the-diamond-heist": {
+      "id": "the-diamond-heist",
+      "title": "The Diamond Heist",
+      "type": "event",
+      "tags": ["crime", "mystery"],
+      "connections": [
+        {
+          "target": "police-hq",
+          "type": "investigated_at",
+          "label": "Case File 402"
+        }
+      ],
+      "content": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
+      "lore": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
+      "image": "/vault-samples/images/modern-hq.png",
+      "_path": ["events", "the-diamond-heist.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

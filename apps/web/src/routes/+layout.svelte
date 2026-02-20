@@ -14,6 +14,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { demoService } from "$lib/services/demo";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
@@ -21,6 +22,7 @@
   import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
@@ -231,15 +233,32 @@
     }
   });
 
-  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
+  // Handle Demo Mode Deep Linking (?demo=theme)
   $effect(() => {
-    if (
-      vault.isInitialized &&
-      !uiStore.isLandingPageVisible &&
-      !helpStore.hasSeen("initial-onboarding") &&
-      !(window as any).DISABLE_ONBOARDING
-    ) {
-      helpStore.startTour("initial-onboarding");
+    const demoTheme = page.url.searchParams.get("demo");
+    if (demoTheme && uiStore.activeDemoTheme !== demoTheme) {
+      demoService.startDemo(demoTheme);
+    }
+  });
+
+  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
+  // OR Auto-start demo if first visit and vault is empty
+  $effect(() => {
+    if (vault.isInitialized && !uiStore.isLandingPageVisible) {
+      const demoParam = page.url.searchParams.get("demo");
+
+      if (
+        !helpStore.hasSeen("initial-onboarding") &&
+        !(window as any).DISABLE_ONBOARDING &&
+        !demoParam // Only auto-start fantasy if no specific demo requested
+      ) {
+        // If vault is empty, start demo instead of tour
+        if (vault.allEntities.length === 0 && !uiStore.isDemoMode) {
+          demoService.startDemo("fantasy");
+        } else {
+          helpStore.startTour("initial-onboarding");
+        }
+      }
     }
   });
 
@@ -288,6 +307,32 @@
 </svelte:head>
 
 <div class="app-layout min-h-screen bg-black flex flex-col font-sans">
+  <!-- Notifications -->
+  {#if uiStore.notification}
+    <div
+      class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-2xl border flex items-center gap-3 animate-in slide-in-from-top-4 fade-in"
+      class:bg-green-950={uiStore.notification.type === "success"}
+      class:border-green-500={uiStore.notification.type === "success"}
+      class:text-green-100={uiStore.notification.type === "success"}
+      class:bg-blue-950={uiStore.notification.type === "info"}
+      class:border-blue-500={uiStore.notification.type === "info"}
+      class:text-blue-100={uiStore.notification.type === "info"}
+      transition:fade
+    >
+      <span
+        class="icon-[lucide--check-circle] w-5 h-5"
+        class:hidden={uiStore.notification.type !== "success"}
+      ></span>
+      <span
+        class="icon-[lucide--info] w-5 h-5"
+        class:hidden={uiStore.notification.type !== "info"}
+      ></span>
+      <span class="font-mono text-xs font-bold tracking-widest uppercase"
+        >{uiStore.notification.message}</span
+      >
+    </div>
+  {/if}
+
   {#if !isPopup}
     <header
       class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"

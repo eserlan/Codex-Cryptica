@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "manor-of-whispers": {
+      "id": "manor-of-whispers",
+      "title": "Manor of Whispers",
+      "type": "location",
+      "tags": ["cursed", "manor", "spooky"],
+      "connections": [],
+      "content": "A decaying Victorian estate on the edge of the Blackwood Forest. Locals claim to hear voices coming from the walls at night.",
+      "lore": "A decaying Victorian estate on the edge of the Blackwood Forest. Locals claim to hear voices coming from the walls at night.",
+      "image": "/vault-samples/images/vampire-manor.png",
+      "_path": ["locations", "manor-of-whispers.md"],
+      "lastModified": 1700000000000
+    },
+    "lord-julian-thorne": {
+      "id": "lord-julian-thorne",
+      "title": "Lord Julian Thorne",
+      "type": "npc",
+      "tags": ["vampire", "noble", "predator"],
+      "connections": [
+        {
+          "target": "manor-of-whispers",
+          "type": "lives_at",
+          "label": "Rules the estate"
+        },
+        {
+          "target": "crimson-court",
+          "type": "member_of",
+          "label": "Grand Architect"
+        }
+      ],
+      "content": "A high-born vampire who has resided in the Manor for centuries. He is elegant, charming, and utterly ruthless.\n\nHe is obsessed with completing [[The Sanguine Ritual]].",
+      "lore": "A high-born vampire who has resided in the Manor for centuries. He is elegant, charming, and utterly ruthless.\n\nHe is obsessed with completing [[The Sanguine Ritual]].",
+      "image": "/vault-samples/images/vampire-lord.png",
+      "_path": ["npcs", "lord-julian-thorne.md"],
+      "lastModified": 1700000000000
+    },
+    "seraphina-vane": {
+      "id": "seraphina-vane",
+      "title": "Seraphina Vane",
+      "type": "npc",
+      "tags": ["dhampir", "hunter", "vengeful"],
+      "connections": [
+        {
+          "target": "lord-julian-thorne",
+          "type": "related_to",
+          "label": "Sworn enemy"
+        }
+      ],
+      "content": "A half-vampire hunter who tracks Julian's lineage. She uses a silver-tipped crossbow and ancient alchemy.",
+      "lore": "A half-vampire hunter who tracks Julian's lineage. She uses a silver-tipped crossbow and ancient alchemy.",
+      "image": "/vault-samples/images/vampire-npc2.png",
+      "_path": ["npcs", "seraphina-vane.md"],
+      "lastModified": 1700000000000
+    },
+    "crimson-court": {
+      "id": "crimson-court",
+      "title": "The Crimson Court",
+      "type": "faction",
+      "tags": ["vampires", "secret", "aristocracy"],
+      "connections": [
+        {
+          "target": "manor-of-whispers",
+          "type": "related_to",
+          "label": "Secret meeting place"
+        }
+      ],
+      "content": "A clandestine organization of vampire nobles who pull the strings of mortal society from the shadows.",
+      "lore": "A clandestine organization of vampire nobles who pull the strings of mortal society from the shadows.",
+      "image": "/vault-samples/images/vampire-faction.png",
+      "_path": ["factions", "crimson-court.md"],
+      "lastModified": 1700000000000
+    },
+    "dire-bat": {
+      "id": "dire-bat",
+      "title": "Cave Dire Bat",
+      "type": "creature",
+      "tags": ["beast", "horror", "flying"],
+      "connections": [
+        {
+          "target": "manor-of-whispers",
+          "type": "related_to",
+          "label": "Infest the attics"
+        }
+      ],
+      "content": "A monstrous bat with a six-foot wingspan and a taste for human blood. They serve as Julian's eyes in the sky.",
+      "lore": "A monstrous bat with a six-foot wingspan and a taste for human blood. They serve as Julian's eyes in the sky.",
+      "image": "/vault-samples/images/vampire-creature.png",
+      "_path": ["creatures", "dire-bat.md"],
+      "lastModified": 1700000000000
+    },
+    "eclipse-ritual-note": {
+      "id": "eclipse-ritual-note",
+      "title": "Notes on the Eternal Eclipse",
+      "type": "item",
+      "tags": ["ritual", "occult", "guide"],
+      "connections": [
+        {
+          "target": "the-sanguine-ritual",
+          "type": "related_to",
+          "label": "Essential component"
+        }
+      ],
+      "content": "A series of blood-stained sketches and incantations detailing the astronomical alignment required for Julian's ritual.",
+      "lore": "A series of blood-stained sketches and incantations detailing the astronomical alignment required for Julian's ritual.",
+      "image": "/vault-samples/images/vampire-note.png",
+      "_path": ["notes", "eclipse-ritual-note.md"],
+      "lastModified": 1700000000000
+    },
+    "the-sanguine-ritual": {
+      "id": "the-sanguine-ritual",
+      "title": "The Sanguine Ritual",
+      "type": "event",
+      "tags": ["dark-magic", "doom"],
+      "connections": [
+        {
+          "target": "manor-of-whispers",
+          "type": "occurs_at",
+          "label": "Scheduled for the next Eclipse"
+        }
+      ],
+      "content": "An ancient ceremony designed to grant its caster total immunity to sunlight. It requires the essence of three pure souls.",
+      "lore": "An ancient ceremony designed to grant its caster total immunity to sunlight. It requires the essence of three pure souls.",
+      "image": "/vault-samples/images/vampire-manor.png",
+      "_path": ["events", "the-sanguine-ritual.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

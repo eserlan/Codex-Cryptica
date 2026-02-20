@@ -6,6 +6,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { demoService } from "$lib/services/demo";
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -103,7 +104,7 @@
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
-    {:else if !uiStore.isLandingPageVisible}
+    {:else if !uiStore.isLandingPageVisible || page.url.searchParams.has("demo")}
       <div
         class="absolute inset-0 bg-black flex items-center justify-center"
         aria-hidden="true"
@@ -125,7 +126,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !isGuestMode && uiStore.isLandingPageVisible}
+  {#if !isGuestMode && uiStore.isLandingPageVisible && !page.url.searchParams.has("demo")}
     <div
       class="absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
       style:background-image="var(--bg-texture-overlay)"
@@ -163,6 +164,12 @@
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
             >
               Enter Workspace
+            </button>
+            <button
+              onclick={() => demoService.startDemo("fantasy")}
+              class="px-12 py-5 border border-theme-primary/50 text-theme-primary font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 font-header"
+            >
+              Try Demo
             </button>
             <div
               class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
@@ -245,10 +252,28 @@
             >
               Visual Graph
             </h3>
-            <p class="text-theme-muted leading-relaxed font-body">
+            <p class="text-theme-muted leading-relaxed font-body mb-4">
               Navigate your lore through a dynamic, interactive map. See exactly
               how characters, locations, and events intertwine.
             </p>
+          </div>
+        </section>
+
+        <section class="text-center mb-12">
+          <h3
+            class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em] mb-6"
+          >
+            Try it as:
+          </h3>
+          <div class="flex flex-wrap justify-center gap-4">
+            {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern"] as theme}
+              <button
+                onclick={() => demoService.startDemo(theme)}
+                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase tracking-widest transition-all"
+              >
+                {theme}
+              </button>
+            {/each}
           </div>
         </section>
       </div>

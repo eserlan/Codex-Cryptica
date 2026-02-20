@@ -165,6 +165,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.",
     icon: "icon-[lucide--brush]",
   },
+  "demo-mode": {
+    id: "demo-mode",
+    title: "Demo Mode",
+    content:
+      "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
+    icon: "icon-[lucide--play-circle]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
