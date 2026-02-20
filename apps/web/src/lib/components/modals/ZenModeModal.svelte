@@ -20,6 +20,8 @@
   let activeTab = $state<"overview" | "inventory">("overview");
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
+  let tabOverview = $state<HTMLButtonElement>();
+  let tabInventory = $state<HTMLButtonElement>();
 
   // Edit State
   let editTitle = $state("");
@@ -230,6 +232,20 @@
     uiStore.zenModeEntityId = id;
   };
 
+  const handleTabKeydown = (
+    e: KeyboardEvent,
+    targetTab: "overview" | "inventory",
+  ) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      activeTab = targetTab;
+      setTimeout(() => {
+        if (targetTab === "overview") tabOverview?.focus();
+        else tabInventory?.focus();
+      }, 0);
+    }
+  };
+
   const getTemporalLabel = (type: string, field: "start" | "end") => {
     const t = (type || "").toLowerCase();
     if (field === "start") {
@@ -369,6 +385,7 @@
             {#if isEditing}
               <select
                 bind:value={editType}
+                aria-label="Entity Type"
                 class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase focus:outline-none rounded ml-2"
               >
                 {#each categories.list as cat}
@@ -388,6 +405,7 @@
             <input
               type="text"
               bind:value={editTitle}
+              aria-label="Entity Title"
               class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-3xl w-full placeholder-theme-muted rounded"
               placeholder="Entity Title"
             />
@@ -457,24 +475,40 @@
 
       <!-- Navigation Tabs -->
       <div
+        role="tablist"
+        aria-label="Entity Sections"
         style="background-image: var(--bg-texture-overlay)"
         class="flex gap-8 px-8 border-b border-theme-border bg-theme-surface shrink-0"
       >
         <button
+          bind:this={tabOverview}
+          role="tab"
+          id="tab-overview"
+          aria-selected={activeTab === "overview"}
+          aria-controls="panel-overview"
+          tabindex={activeTab === "overview" ? 0 : -1}
           class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
           'overview'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (activeTab = "overview")}
+          onkeydown={(e) => handleTabKeydown(e, "inventory")}
         >
           OVERVIEW
         </button>
         <button
+          bind:this={tabInventory}
+          role="tab"
+          id="tab-inventory"
+          aria-selected={activeTab === "inventory"}
+          aria-controls="panel-inventory"
+          tabindex={activeTab === "inventory" ? 0 : -1}
           class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
           'inventory'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (activeTab = "inventory")}
+          onkeydown={(e) => handleTabKeydown(e, "overview")}
         >
           INVENTORY
         </button>
@@ -483,9 +517,15 @@
       <!-- Main Body -->
       <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
         {#if activeTab === "overview"}
-          <!-- Left Sidebar (Image & Meta) -->
           <div
-            style="background-image: var(--bg-texture-overlay)"
+            role="tabpanel"
+            id="panel-overview"
+            aria-labelledby="tab-overview"
+            class="contents"
+          >
+            <!-- Left Sidebar (Image & Meta) -->
+            <div
+              style="background-image: var(--bg-texture-overlay)"
             class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
           >
             <!-- Labels -->
@@ -639,15 +679,15 @@
             {/if}
           </div>
 
-          <!-- Right Content (Temporal & Chronicle & Lore) -->
-          <div
-            bind:this={scrollContainer}
-            class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
-            style="background-image: var(--bg-texture-overlay)"
-          >
-            <div class="max-w-3xl mx-auto space-y-12">
-              <!-- Temporal Data -->
-              {#if isEditing}
+            <!-- Right Content (Temporal & Chronicle & Lore) -->
+            <div
+              bind:this={scrollContainer}
+              class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+              style="background-image: var(--bg-texture-overlay)"
+            >
+              <div class="max-w-3xl mx-auto space-y-12">
+                <!-- Temporal Data -->
+                {#if isEditing}
                 <div
                   class="bg-theme-surface p-4 rounded border border-theme-border"
                 >
@@ -745,10 +785,14 @@
                   </div>
                 {/if}
               </div>
+              </div>
             </div>
           </div>
         {:else if activeTab === "inventory"}
           <div
+            role="tabpanel"
+            id="panel-inventory"
+            aria-labelledby="tab-inventory"
             class="flex-1 p-8 flex items-center justify-center text-theme-muted font-mono text-sm italic"
           >
             Inventory system initialization pending...
