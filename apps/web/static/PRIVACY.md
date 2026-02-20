@@ -23,7 +23,7 @@ If you choose to enable Cloud Sync, Codex Cryptica will request access to your G
 
 **Codex Cryptica's** use and transfer of information received from Google APIs to any other app will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
-We only access your Google Drive to store and retrieve campaign files (lore, images, and configuration) that you explicitly create or select within the app. We do not share, sell, or use this data for any purpose other than providing the Campaign Assistant functionality.
+We only access your Google Drive to store and retrieve campaign files (lore, images, and configuration) that you explicitly create or select within the app. We do not share, sell, or use this data for any purpose other than providing the Cloud Sync functionality.
 
 ## 3. Google Gemini AI Usage
 
