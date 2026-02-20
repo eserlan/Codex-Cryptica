@@ -3,6 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Entity Labeling System", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
+      window.localStorage.setItem("codex_skip_landing", "true");
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).showDirectoryPicker = async () => {
@@ -83,7 +84,7 @@ test.describe("Entity Labeling System", () => {
   test("Add and remove labels from an entity", async ({ page }) => {
     // 1. Create a new entity
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Test Hero");
+    await page.getByPlaceholder(/Title\.\.\./).fill("Test Hero");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Select the entity to open Detail Panel
@@ -131,14 +132,14 @@ test.describe("Entity Labeling System", () => {
   test("Filter graph by labels and clear filter", async ({ page }) => {
     // 1. Create two entities with different labels
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Alpha");
+    await page.getByPlaceholder(/Title\.\.\./).fill("Alpha");
     await page.getByRole("button", { name: "ADD" }).click();
     await page.locator("aside").getByText("Alpha").click();
     await page.getByPlaceholder("Add label...").fill("Group A");
     await page.getByPlaceholder("Add label...").press("Enter");
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Beta");
+    await page.getByPlaceholder(/Title\.\.\./).fill("Beta");
     await page.getByRole("button", { name: "ADD" }).click();
     await page.locator("aside").getByText("Beta").click();
     await page.getByPlaceholder("Add label...").fill("Group B");
@@ -160,5 +161,58 @@ test.describe("Entity Labeling System", () => {
     await expect(
       page.getByRole("button", { name: "Labels (0)" }),
     ).toBeVisible();
+  });
+
+  test("Autocomplete and keyboard navigation for labels", async ({ page }) => {
+    // 1. Create two entities and give them labels to populate labelIndex
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Subject 1");
+    await page.getByRole("button", { name: "ADD" }).click();
+    await page.locator("aside").getByText("Subject 1").click();
+    await page.getByPlaceholder("Add label...").fill("important");
+    await page.getByPlaceholder("Add label...").press("Enter");
+    await expect(page.getByText("important", { exact: true })).toBeVisible();
+    await page.getByPlaceholder("Add label...").fill("internal");
+    await page.getByPlaceholder("Add label...").press("Enter");
+    await expect(page.getByText("internal", { exact: true })).toBeVisible();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Subject 2");
+    await page.getByRole("button", { name: "ADD" }).click();
+    await page.locator("aside").getByText("Subject 2").click();
+
+    const labelInput = page.getByPlaceholder("Add label...");
+
+    // 2. Type prefix of existing labels
+    await labelInput.fill("imp");
+
+    // 3. Verify suggestion list appears
+    await expect(page.getByRole("option", { name: "important" })).toBeVisible();
+
+    // 4. Use ArrowDown to select (highlight) the suggestion
+    await page.keyboard.press("ArrowDown");
+
+    // 5. Press Enter to select the highlighted suggestion
+    await page.keyboard.press("Enter");
+    await expect(labelInput).toHaveValue("");
+    // Wait for suggestions to close so getByText becomes unambiguous
+    await expect(
+      page.getByRole("option", { name: "important", exact: true }),
+    ).not.toBeVisible();
+    await expect(page.getByText("important", { exact: true })).toBeVisible();
+
+    // 6. Test Tab completion
+    await labelInput.click();
+    await labelInput.pressSequentially("int");
+    await expect(
+      page.getByRole("option", { name: "internal", exact: true }),
+    ).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(labelInput).toHaveValue("");
+    // Wait for suggestions to close
+    await expect(
+      page.getByRole("option", { name: "internal", exact: true }),
+    ).not.toBeVisible();
+    await expect(page.getByText("internal", { exact: true })).toBeVisible();
   });
 });
