@@ -19,6 +19,12 @@ If you choose to enable Cloud Sync, Codex Cryptica will request access to your G
 - **Usage**: The app mirrors your local vault to a folder in your Google Drive to provide backup and multi-device synchronization.
 - **Data Sharing**: We do not share your Google Drive data with any third parties.
 
+### Use of Google User Data
+
+**Codex Cryptica's** use and transfer of information received from Google APIs to any other app will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
+
+We only access your Google Drive to store and retrieve campaign files (lore, images, and configuration) that you explicitly create or select within the app. We do not share, sell, or use this data for any purpose other than providing the Campaign Assistant functionality.
+
 ## 3. Google Gemini AI Usage
 
 Codex Cryptica integrates with Google Gemini API for features like "Lore Oracle" (AI analysis) and Image Generation.
@@ -28,7 +34,11 @@ Codex Cryptica integrates with Google Gemini API for features like "Lore Oracle"
 
 ## 4. No Tracking
 
-Codex Cryptica does not use advertising cookies, tracking scripts, analytics packages, or server-side logging. All application state is maintained locally in your browser. When hosted as a static site, no data about your usage is collected or stored by the application.
+Codex Cryptica does not use advertising cookies, tracking scripts, or server-side logging. All application state is maintained locally in your browser. When hosted as a static site, no data about your usage is collected or stored by the application itself.
+
+### Analytics & Privacy
+
+We use **Cloudflare Web Analytics** to understand site traffic and improve performance. This service is privacy-first and does not use cookies, local storage, or any form of visitor tracking. All data is anonymous and used for technical optimization only.
 
 ## 5. Changes to This Policy
 
