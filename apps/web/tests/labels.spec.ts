@@ -187,7 +187,7 @@ test.describe("Entity Labeling System", () => {
     await labelInput.fill("imp");
 
     // 3. Verify suggestion list appears
-    await expect(page.getByRole("button", { name: "important" })).toBeVisible();
+    await expect(page.getByRole("option", { name: "important" })).toBeVisible();
 
     // 4. Use ArrowDown to select (highlight) the suggestion
     await page.keyboard.press("ArrowDown");
@@ -197,7 +197,7 @@ test.describe("Entity Labeling System", () => {
     await expect(labelInput).toHaveValue("");
     // Wait for suggestions to close so getByText becomes unambiguous
     await expect(
-      page.getByRole("button", { name: "important", exact: true }),
+      page.getByRole("option", { name: "important", exact: true }),
     ).not.toBeVisible();
     await expect(page.getByText("important", { exact: true })).toBeVisible();
 
@@ -205,13 +205,13 @@ test.describe("Entity Labeling System", () => {
     await labelInput.click();
     await labelInput.pressSequentially("int");
     await expect(
-      page.getByRole("button", { name: "internal", exact: true }),
+      page.getByRole("option", { name: "internal", exact: true }),
     ).toBeVisible();
     await page.keyboard.press("Tab");
     await expect(labelInput).toHaveValue("");
     // Wait for suggestions to close
     await expect(
-      page.getByRole("button", { name: "internal", exact: true }),
+      page.getByRole("option", { name: "internal", exact: true }),
     ).not.toBeVisible();
     await expect(page.getByText("internal", { exact: true })).toBeVisible();
   });
