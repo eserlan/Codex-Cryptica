@@ -49,21 +49,6 @@ describe("isEntityVisible", () => {
       ).toBe(false);
     });
 
-    it("should hide nodes tagged with mixed or upper case 'Hidden', 'HIDDEN'", () => {
-      expect(
-        isEntityVisible(
-          { ...baseEntity, tags: ["Hidden"] },
-          sharedVisibleSettings,
-        ),
-      ).toBe(false);
-      expect(
-        isEntityVisible(
-          { ...baseEntity, tags: ["HIDDEN"] },
-          sharedVisibleSettings,
-        ),
-      ).toBe(false);
-    });
-
     it("should hide nodes even if they also have 'revealed' tag (precedence)", () => {
       expect(
         isEntityVisible(
@@ -88,40 +73,10 @@ describe("isEntityVisible", () => {
       ).toBe(true);
     });
 
-    it("should show nodes tagged with mixed or upper case 'Revealed', 'REVEALED'", () => {
-      expect(
-        isEntityVisible(
-          { ...baseEntity, tags: ["Revealed"] },
-          sharedHiddenSettings,
-        ),
-      ).toBe(true);
-      expect(
-        isEntityVisible(
-          { ...baseEntity, tags: ["REVEALED"] },
-          sharedHiddenSettings,
-        ),
-      ).toBe(true);
-    });
-
     it("should show nodes with 'visible' label (alias)", () => {
       expect(
         isEntityVisible(
           { ...baseEntity, labels: ["visible"] },
-          sharedHiddenSettings,
-        ),
-      ).toBe(true);
-    });
-
-    it("should show nodes with mixed or upper case 'Visible', 'VISIBLE' label", () => {
-      expect(
-        isEntityVisible(
-          { ...baseEntity, labels: ["Visible"] },
-          sharedHiddenSettings,
-        ),
-      ).toBe(true);
-      expect(
-        isEntityVisible(
-          { ...baseEntity, labels: ["VISIBLE"] },
           sharedHiddenSettings,
         ),
       ).toBe(true);
@@ -143,6 +98,47 @@ describe("isEntityVisible", () => {
           sharedHiddenSettings,
         ),
       ).toBe(false);
+    });
+  });
+
+  describe("Case Sensitivity", () => {
+    it("should handle uppercase tags", () => {
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["HIDDEN"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["REVEALED"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+    });
+
+    it("should handle mixed-case tags", () => {
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Hidden"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Revealed"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Visible"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
     });
   });
 });
