@@ -88,6 +88,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
     icon: "icon-[lucide--share-2]",
   },
+  "sync-reminders": {
+    id: "sync-reminders",
+    title: "Sync Reminders",
+    content:
+      "Stay safe by persisting your changes. The app will remind you to sync when you have unsaved notes, ensuring your data is always backed up to your local folder.",
+    icon: "icon-[lucide--save]",
+  },
   "total-privacy": {
     id: "total-privacy",
     title: "Total Privacy",

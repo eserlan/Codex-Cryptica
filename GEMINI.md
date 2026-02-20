@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- IndexedDB (Metadata), OPFS (Files), LocalStorage (UI State/Last Reminded) (052-sync-reminder)
+
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK (051-demo-mode)
 - Transient (In-memory) for demo session; IndexedDB for conversion (051-demo-mode)
 
@@ -93,10 +95,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 052-sync-reminder: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper)
+
 - 051-demo-mode: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK
 
 - 050-oracle-draw-button: Added one-click "Draw" button for Advanced Tier lore visualization across Chat, Sidepanel, and Zen Mode.
-
-- 049-theme-based-jargon: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation)
 
 <!-- MANUAL ADDITIONS START -->

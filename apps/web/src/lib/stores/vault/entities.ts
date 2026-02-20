@@ -3,6 +3,12 @@ import { sanitizeId } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 import { deleteOpfsEntry } from "../../utils/opfs";
 
+/**
+ * ENTITY MUTATION GUARDRAIL:
+ * All functions that modify an entity MUST set `synced: false` to ensure
+ * the Sync Reminder system correctly tracks unsaved changes.
+ */
+
 export function createEntity(
   title: string,
   type: Entity["type"] = "note",
@@ -31,6 +37,7 @@ export function createEntity(
     content: "",
     lore: "",
     metadata: {},
+    synced: false,
     ...initialData,
   } as LocalEntity;
 }
@@ -43,7 +50,7 @@ export function updateEntity(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
-  const updated = { ...entity, ...updates } as LocalEntity;
+  const updated = { ...entity, ...updates, synced: false } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
     updated,
@@ -123,7 +130,11 @@ export function addLabel(
   const labels = entity.labels || [];
   if (labels.includes(label)) return { entities, updated: null };
 
-  const updated = { ...entity, labels: [...labels, label] } as LocalEntity;
+  const updated = {
+    ...entity,
+    labels: [...labels, label],
+    synced: false,
+  } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
     updated,
@@ -144,6 +155,7 @@ export function removeLabel(
   const updated = {
     ...entity,
     labels: labels.filter((l) => l !== label),
+    synced: false,
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -174,6 +186,7 @@ export function addConnection(
   const updatedSource = {
     ...source,
     connections: [...source.connections, connection],
+    synced: false,
   } as LocalEntity;
 
   return {
@@ -203,7 +216,11 @@ export function updateConnection(
     return c;
   });
 
-  const updatedSource = { ...source, connections } as LocalEntity;
+  const updatedSource = {
+    ...source,
+    connections,
+    synced: false,
+  } as LocalEntity;
 
   return {
     entities: { ...entities, [sourceId]: updatedSource },
@@ -227,7 +244,11 @@ export function removeConnection(
     (c) => !(c.target === targetId && c.type === type),
   );
 
-  const updatedSource = { ...source, connections } as LocalEntity;
+  const updatedSource = {
+    ...source,
+    connections,
+    synced: false,
+  } as LocalEntity;
 
   return {
     entities: { ...entities, [sourceId]: updatedSource },

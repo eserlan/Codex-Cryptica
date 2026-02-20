@@ -194,7 +194,7 @@ export async function loadVaultFiles(
     let entity: LocalEntity;
 
     if (cached && cached.lastModified === lastModified) {
-      entity = { ...cached.entity, _path: fileEntry.path };
+      entity = { ...cached.entity, _path: fileEntry.path, synced: true };
     } else {
       const text = await file.text();
       const { metadata, content, wikiLinks } = parseMarkdown(text || "");
@@ -224,6 +224,7 @@ export async function loadVaultFiles(
         end_date: metadata.end_date,
         metadata: metadata.metadata,
         _path: fileEntry.path,
+        synced: true,
       };
       const cacheKey = `${activeVaultId}:${filePath}`;
       await cacheService.set(cacheKey, lastModified, entity);
