@@ -5,6 +5,7 @@ import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
+import { uiStore } from "./ui.svelte";
 import type { LocalEntity } from "./vault/types";
 export type { LocalEntity };
 
@@ -162,7 +163,9 @@ class VaultStore {
           title: entity.title,
           content: entity.content,
           type: entity.type,
-          tags: entity.tags,
+          path: entity._path?.join("/") || `${entity.id}.md`,
+          keywords: (entity.tags || []).join(" "),
+          updatedAt: Date.now(),
         });
       }
     }

@@ -3,6 +3,7 @@ import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { vault } from "./vault.svelte";
+import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
