@@ -92,7 +92,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "sync-reminders",
     title: "Sync Reminders",
     content:
-      "Stay safe by persisting your changes. The app will remind you to sync when you have unsaved notes, ensuring your data is always backed up to your local folder.",
+      "Stay safe by persisting your changes. The app will remind you to sync when you have unsynced notes, ensuring your data is always backed up to your local folder.",
     icon: "icon-[lucide--save]",
   },
   "total-privacy": {

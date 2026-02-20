@@ -15,7 +15,8 @@ test.describe("Sync Reminder System", () => {
       () => (window as any).vault?.isInitialized === true,
     );
 
-    // Set sync folder as configured
+    // Simulate a configured sync folder in tests without requiring the real
+    // File System Access API or running through the actual sync folder setup UI.
     await page.evaluate(() => {
       (window as any).vault.hasSyncFolder = true;
     });

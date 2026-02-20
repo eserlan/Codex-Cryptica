@@ -18,8 +18,11 @@
 
 {#if vault.shouldShowReminder}
   <div
-    class="fixed bottom-6 right-6 z-50 max-w-sm w-full"
+    class="fixed bottom-20 right-6 z-50 max-w-sm w-full"
     transition:slide={{ axis: "y", duration: 300 }}
+    role="status"
+    aria-live="polite"
+    aria-labelledby="sync-reminder-title"
   >
     <div
       class="bg-theme-surface border border-theme-border rounded-lg shadow-2xl p-4 flex flex-col gap-3 font-mono"
@@ -31,6 +34,7 @@
         </div>
         <div class="flex-1">
           <h3
+            id="sync-reminder-title"
             class="text-xs font-bold tracking-widest text-theme-text uppercase"
           >
             Unsynced Changes
@@ -49,6 +53,7 @@
 
       <div class="flex flex-col gap-2 mt-1">
         <button
+          type="button"
           onclick={handleSync}
           class="w-full px-3 py-2 bg-theme-accent hover:bg-theme-accent/80 text-theme-bg text-[10px] font-bold tracking-widest rounded transition-colors flex items-center justify-center gap-2"
         >
@@ -57,6 +62,7 @@
         </button>
         <div class="flex gap-2">
           <button
+            type="button"
             onclick={handleSnooze}
             class="flex-1 px-3 py-2 border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary text-[10px] font-bold tracking-widest rounded transition-colors flex items-center justify-center gap-2"
             title="Remind me again in 1 hour"
@@ -65,6 +71,7 @@
             SNOOZE (1H)
           </button>
           <button
+            type="button"
             onclick={handleDismiss}
             class="flex-1 px-3 py-2 border border-theme-border text-theme-muted hover:text-theme-text hover:border-theme-muted text-[10px] font-bold tracking-widest rounded transition-colors"
           >

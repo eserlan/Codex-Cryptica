@@ -174,7 +174,18 @@ class VaultStore {
     this.lastRemindedDirtyCount = lastCount ? parseInt(lastCount, 10) : 0;
 
     const snoozed = localStorage.getItem(`sync_snoozed_until_${vaultId}`);
-    this.snoozedUntil = snoozed ? parseInt(snoozed, 10) : 0;
+    if (snoozed) {
+      const snoozedUntil = parseInt(snoozed, 10);
+      if (!Number.isNaN(snoozedUntil) && snoozedUntil > Date.now()) {
+        this.snoozedUntil = snoozedUntil;
+      } else {
+        // Snooze has expired or is invalid; clear stored value to keep state consistent
+        this.snoozedUntil = 0;
+        localStorage.removeItem(`sync_snoozed_until_${vaultId}`);
+      }
+    } else {
+      this.snoozedUntil = 0;
+    }
   }
 
   dismissSyncReminder() {
@@ -217,7 +228,14 @@ class VaultStore {
   async loadDemoData(data: { entities: Record<string, any> }, name?: string) {
     await this.saveQueue.waitForAll();
     this.selectedEntityId = null;
-    this.entities = data.entities as Record<string, LocalEntity>;
+
+    // Mark demo entities as synced initially (they are transient)
+    const entities = data.entities as Record<string, LocalEntity>;
+    for (const id in entities) {
+      entities[id].synced = true;
+    }
+
+    this.entities = entities;
     this.demoVaultName = name || null;
     this.isInitialized = true;
     this.status = "idle";
