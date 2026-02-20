@@ -100,4 +100,45 @@ describe("isEntityVisible", () => {
       ).toBe(false);
     });
   });
+
+  describe("Case Sensitivity", () => {
+    it("should handle uppercase tags", () => {
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["HIDDEN"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["REVEALED"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+    });
+
+    it("should handle mixed-case tags", () => {
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Hidden"] },
+          sharedVisibleSettings,
+        ),
+      ).toBe(false);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Revealed"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+
+      expect(
+        isEntityVisible(
+          { ...baseEntity, tags: ["Visible"] },
+          sharedHiddenSettings,
+        ),
+      ).toBe(true);
+    });
+  });
 });

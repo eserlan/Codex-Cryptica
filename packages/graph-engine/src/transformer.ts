@@ -53,6 +53,9 @@ const formatDate = (date?: TemporalMetadata) => {
   return str;
 };
 
+// Pre-compiled regex for performance (avoids allocation)
+const REVEALED_REGEX = /^(revealed|visible)$/i;
+
 export class GraphTransformer {
   static entitiesToElements(entities: Entity[]): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
@@ -76,8 +79,7 @@ export class GraphTransformer {
       let isRevealed = false;
       const tags = entity.tags || [];
       for (const tag of tags) {
-        const lower = tag.toLowerCase();
-        if (lower === "revealed" || lower === "visible") {
+        if (REVEALED_REGEX.test(tag)) {
           isRevealed = true;
           break;
         }
@@ -85,8 +87,7 @@ export class GraphTransformer {
       if (!isRevealed) {
         const labels = entity.labels || [];
         for (const label of labels) {
-          const lower = label.toLowerCase();
-          if (lower === "revealed" || lower === "visible") {
+          if (REVEALED_REGEX.test(label)) {
             isRevealed = true;
             break;
           }
