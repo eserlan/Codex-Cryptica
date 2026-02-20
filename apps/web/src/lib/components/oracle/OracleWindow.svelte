@@ -4,6 +4,9 @@
   import { base } from "$app/paths";
   import OracleChat from "./OracleChat.svelte";
   import { fly, fade } from "svelte/transition";
+  import { demoService } from "$lib/services/demo";
+  import { goto } from "$app/navigation";
+  import { page } from "$app/state";
 
   const popOut = () => {
     window.open(
@@ -136,6 +139,36 @@
         oracle.toggle();
       }}
     />
+
+    {#if uiStore.isDemoMode}
+      <div
+        class="p-4 bg-theme-primary/5 border-t border-theme-border flex flex-col gap-3 rounded-b-xl md:rounded-b-lg"
+      >
+        <p
+          class="text-[10px] text-theme-muted italic text-center leading-relaxed"
+        >
+          {demoService.marketingPrompt}
+        </p>
+        <button
+          onclick={async () => {
+            try {
+              const _id = await demoService.convertToCampaign();
+              const url = new URL(page.url.href);
+              url.searchParams.delete("demo");
+              goto(url.toString(), { replaceState: true });
+              oracle.toggle();
+              uiStore.openSettings("vault");
+            } catch (error) {
+              console.error("Failed to convert demo to campaign", error);
+              window.alert("Failed to save campaign. Please try again.");
+            }
+          }}
+          class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest rounded hover:bg-theme-secondary transition-colors"
+        >
+          Save as Campaign
+        </button>
+      </div>
+    {/if}
   </div>
 {/if}
 

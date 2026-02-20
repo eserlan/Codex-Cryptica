@@ -3,6 +3,7 @@ import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { vault } from "./vault.svelte";
+import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
@@ -59,7 +60,7 @@ class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser) return;
+    if (!browser || uiStore.isDemoMode) return;
     try {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
@@ -80,6 +81,9 @@ class ThemeStore {
 
     this.currentThemeId = id;
     if (browser) {
+      // Don't persist theme if in demo mode
+      if (uiStore.isDemoMode) return;
+
       localStorage.setItem(STORAGE_KEY, id);
       const activeVaultId = vault.activeVaultId;
       if (activeVaultId) {

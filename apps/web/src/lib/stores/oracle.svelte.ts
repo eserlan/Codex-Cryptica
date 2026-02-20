@@ -2,6 +2,7 @@ import { aiService, TIER_MODES } from "../services/ai";
 import { getDB } from "../utils/idb";
 import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
+import { uiStore } from "./ui.svelte";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
@@ -705,6 +706,7 @@ class OracleStore {
           query,
           context,
           textModelName,
+          uiStore.isDemoMode,
         );
         const imageModelName = "gemini-2.5-flash-image";
 
@@ -739,6 +741,7 @@ class OracleStore {
             this.lastUpdated = Date.now();
             this.broadcastThrottle();
           },
+          uiStore.isDemoMode,
         );
 
         // Auto-Creation Flow for /create
@@ -859,6 +862,7 @@ class OracleStore {
         `A visualization of ${entity.title}`,
         context,
         textModelName,
+        uiStore.isDemoMode,
       );
 
       const imageModelName = "gemini-2.5-flash-image";
@@ -868,7 +872,24 @@ class OracleStore {
         imageModelName,
       );
 
-      await vault.saveImageToVault(blob, entityId);
+      if (uiStore.isDemoMode) {
+        // In demo mode, avoid persisting to OPFS/IndexedDB. Keep the image in-memory.
+        const imageUrl = URL.createObjectURL(blob);
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "",
+            type: "image",
+            imageUrl,
+            imageBlob: blob,
+            entityId,
+          },
+        ];
+      } else {
+        await vault.saveImageToVault(blob, entityId);
+      }
     } catch (err: any) {
       console.error("[OracleStore] drawEntity failed:", err);
       this.messages = [
@@ -923,6 +944,7 @@ class OracleStore {
         message.content,
         context,
         textModelName,
+        uiStore.isDemoMode,
       );
 
       const imageModelName = "gemini-2.5-flash-image";

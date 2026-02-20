@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "aegis-prime-station": {
+      "id": "aegis-prime-station",
+      "title": "Aegis Prime Station",
+      "type": "location",
+      "tags": ["outpost", "space", "frontier"],
+      "connections": [],
+      "content": "The largest research station in the Ophiuchus Sector. It serves as a vital refueling hub for long-range explorers.",
+      "lore": "The largest research station in the Ophiuchus Sector. It serves as a vital refueling hub for long-range explorers.",
+      "image": "/vault-samples/images/scifi-station.png",
+      "_path": ["locations", "aegis-prime-station.md"],
+      "lastModified": 1700000000000
+    },
+    "unit-x99": {
+      "id": "unit-x99",
+      "title": "Unit X-99",
+      "type": "npc",
+      "tags": ["android", "combat", "logical"],
+      "connections": [
+        {
+          "target": "aegis-prime-station",
+          "type": "assigned_to",
+          "label": "Security Protocol Override"
+        },
+        {
+          "target": "mining-corp",
+          "type": "property_of",
+          "label": "Serial #A-442"
+        }
+      ],
+      "content": "A high-performance security android with a glitch in its behavioral subroutines. It shows a curious interest in human poetry.\n\nIt was the sole survivor of [[The Void Breach]].",
+      "lore": "A high-performance security android with a glitch in its behavioral subroutines. It shows a curious interest in human poetry.\n\nIt was the sole survivor of [[The Void Breach]].",
+      "image": "/vault-samples/images/scifi-android.png",
+      "_path": ["npcs", "unit-x99.md"],
+      "lastModified": 1700000000000
+    },
+    "dr-aris-vance": {
+      "id": "dr-aris-vance",
+      "title": "Dr. Aris Vance",
+      "type": "npc",
+      "tags": ["scientist", "expert", "eccentric"],
+      "connections": [
+        {
+          "target": "aegis-prime-station",
+          "type": "works_at",
+          "label": "Chief Researcher"
+        }
+      ],
+      "content": "A brilliant astrophysicist who was the first to detect the anomaly. He spent most of his life studying the Void.",
+      "lore": "A brilliant astrophysicist who was the first to detect the anomaly. He spent most of his life studying the Void.",
+      "image": "/vault-samples/images/scifi-npc2.png",
+      "_path": ["npcs", "dr-aris-vance.md"],
+      "lastModified": 1700000000000
+    },
+    "mining-corp": {
+      "id": "mining-corp",
+      "title": "Interstellar Mining Corp",
+      "type": "faction",
+      "tags": ["corporation", "mining", "powerful"],
+      "connections": [
+        {
+          "target": "aegis-prime-station",
+          "type": "funds",
+          "label": "Primary sponsor"
+        }
+      ],
+      "content": "A massive conglomerate that owns the mining rights to the sector. They value efficiency over human life.",
+      "lore": "A massive conglomerate that owns the mining rights to the sector. They value efficiency over human life.",
+      "image": "/vault-samples/images/scifi-faction.png",
+      "_path": ["factions", "mining-corp.md"],
+      "lastModified": 1700000000000
+    },
+    "void-stalker": {
+      "id": "void-stalker",
+      "title": "Void Stalker",
+      "type": "creature",
+      "tags": ["alien", "predator", "deadly"],
+      "connections": [
+        {
+          "target": "the-void-breach",
+          "type": "emerged_from",
+          "label": "Detected during event"
+        }
+      ],
+      "content": "A multi-limbed nightmare that feeds on thermal energy. It is nearly invisible in the vacuum of space.",
+      "lore": "A multi-limbed nightmare that feeds on thermal energy. It is nearly invisible in the vacuum of space.",
+      "image": "/vault-samples/images/scifi-creature.png",
+      "_path": ["creatures", "void-stalker.md"],
+      "lastModified": 1700000000000
+    },
+    "belt-signal-log": {
+      "id": "belt-signal-log",
+      "title": "Signal from the Orion Belt",
+      "type": "item",
+      "tags": ["data", "mystery", "signal"],
+      "connections": [
+        {
+          "target": "dr-aris-vance",
+          "type": "studied_by",
+          "label": "Analyzed for years"
+        }
+      ],
+      "content": "A high-frequency digital signal received from deep space. Its patterns seem to be a primitive countdown.",
+      "lore": "A high-frequency digital signal received from deep space. Its patterns seem to be a primitive countdown.",
+      "image": "/vault-samples/images/scifi-note.png",
+      "_path": ["notes", "belt-signal-log.md"],
+      "lastModified": 1700000000000
+    },
+    "the-void-breach": {
+      "id": "the-void-breach",
+      "title": "The Void Breach",
+      "type": "event",
+      "tags": ["disaster", "anomaly"],
+      "connections": [
+        {
+          "target": "aegis-prime-station",
+          "type": "occurred_at",
+          "label": "Near Hangar 4"
+        }
+      ],
+      "content": "A spontaneous rupture in the space-time continuum that nearly swallowed the station. Its origin remains unknown.",
+      "lore": "A spontaneous rupture in the space-time continuum that nearly swallowed the station. Its origin remains unknown.",
+      "image": "/vault-samples/images/scifi-station.png",
+      "_path": ["events", "the-void-breach.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

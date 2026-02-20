@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "black-iron-tavern": {
+      "id": "black-iron-tavern",
+      "title": "Black Iron Tavern",
+      "type": "location",
+      "tags": ["hub", "city", "safe-zone"],
+      "connections": [],
+      "content": "The most popular tavern in the Lower District. Known for its bitter ale and loud patrons.",
+      "lore": "The most popular tavern in the Lower District. Known for its bitter ale and loud patrons.",
+      "image": "/vault-samples/images/fantasy-tavern.png",
+      "_path": ["locations", "black-iron-tavern.md"],
+      "lastModified": 1700000000000
+    },
+    "eldrin-the-wise": {
+      "id": "eldrin-the-wise",
+      "title": "Eldrin the Wise",
+      "type": "npc",
+      "tags": ["mage", "guide", "mysterious"],
+      "connections": [
+        {
+          "target": "black-iron-tavern",
+          "type": "located_in",
+          "label": "Often found at the corner table"
+        },
+        {
+          "target": "gilded-hand",
+          "type": "member_of",
+          "label": "Occasional consultant"
+        }
+      ],
+      "content": "An elderly mage who knows more than he lets on. He spends most of his time reading dusty scrolls.\n\nHe is currently investigating the [[The Missing Heirloom]].",
+      "lore": "An elderly mage who knows more than he lets on. He spends most of his time reading dusty scrolls.\n\nHe is currently investigating the [[The Missing Heirloom]].",
+      "image": "/vault-samples/images/fantasy-mage.png",
+      "_path": ["npcs", "eldrin-the-wise.md"],
+      "lastModified": 1700000000000
+    },
+    "vaelen-the-stern": {
+      "id": "vaelen-the-stern",
+      "title": "Captain Vaelen",
+      "type": "npc",
+      "tags": ["soldier", "leader", "stern"],
+      "connections": [
+        {
+          "target": "black-iron-tavern",
+          "type": "related_to",
+          "label": "Enforces order"
+        }
+      ],
+      "content": "A highly disciplined guard captain with a scar across her left eye. She has no patience for tavern brawls.",
+      "lore": "A highly disciplined guard captain with a scar across her left eye. She has no patience for tavern brawls.",
+      "image": "/vault-samples/images/fantasy-npc2.png",
+      "_path": ["npcs", "vaelen-the-stern.md"],
+      "lastModified": 1700000000000
+    },
+    "gilded-hand": {
+      "id": "gilded-hand",
+      "title": "The Gilded Hand",
+      "type": "faction",
+      "tags": ["merchants", "wealthy", "influential"],
+      "connections": [
+        {
+          "target": "black-iron-tavern",
+          "type": "related_to",
+          "label": "Secretly funds expansion"
+        }
+      ],
+      "content": "The most powerful merchant guild in the realm. They control the flow of gold and secrets.",
+      "lore": "The most powerful merchant guild in the realm. They control the flow of gold and secrets.",
+      "image": "/vault-samples/images/fantasy-faction.png",
+      "_path": ["factions", "gilded-hand.md"],
+      "lastModified": 1700000000000
+    },
+    "forest-dragon": {
+      "id": "forest-dragon",
+      "title": "Ancient Forest Dragon",
+      "type": "creature",
+      "tags": ["dragon", "nature", "mythical"],
+      "connections": [
+        {
+          "target": "eldrin-the-wise",
+          "type": "related_to",
+          "label": "Eldrin speaks its language"
+        }
+      ],
+      "content": "A massive beast whose scales are indistinguishable from moss and leaves. It protects the heart of the woods.",
+      "lore": "A massive beast whose scales are indistinguishable from moss and leaves. It protects the heart of the woods.",
+      "image": "/vault-samples/images/fantasy-creature.png",
+      "_path": ["creatures", "forest-dragon.md"],
+      "lastModified": 1700000000000
+    },
+    "sky-prophecy": {
+      "id": "sky-prophecy",
+      "title": "Prophecy of the Shattered Sky",
+      "type": "concept",
+      "tags": ["myth", "omen", "doom"],
+      "connections": [
+        {
+          "target": "eldrin-the-wise",
+          "type": "related_to",
+          "label": "Eldrin's primary study"
+        }
+      ],
+      "content": "An ancient text predicting a time when the stars will fall and the heavens will break apart.",
+      "lore": "An ancient text predicting a time when the stars will fall and the heavens will break apart.",
+      "image": "/vault-samples/images/fantasy-note.png",
+      "_path": ["notes", "sky-prophecy.md"],
+      "lastModified": 1700000000000
+    },
+    "the-missing-heirloom": {
+      "id": "the-missing-heirloom",
+      "title": "The Missing Heirloom",
+      "type": "event",
+      "tags": ["quest", "mystery"],
+      "connections": [
+        {
+          "target": "black-iron-tavern",
+          "type": "related_to",
+          "label": "Suspects seen nearby"
+        }
+      ],
+      "content": "A valuable family ring has gone missing from the Mayor's estate.\n\nRumor has it that someone from the [[Black Iron Tavern]] was seen near the estate that night.",
+      "lore": "A valuable family ring has gone missing from the Mayor's estate.\n\nRumor has it that someone from the [[Black Iron Tavern]] was seen near the estate that night.",
+      "image": "/vault-samples/images/fantasy-tavern.png",
+      "_path": ["events", "the-missing-heirloom.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

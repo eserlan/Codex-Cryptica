@@ -5,6 +5,7 @@ import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
+import { uiStore } from "./ui.svelte";
 import type { LocalEntity } from "./vault/types";
 export type { LocalEntity };
 
@@ -37,6 +38,7 @@ class VaultStore {
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
   migrationRequired = $state(false);
+  demoVaultName = $state<string | null>(null);
 
   // Fog of War Settings
   defaultVisibility = $state<"visible" | "hidden">("visible");
@@ -61,7 +63,7 @@ class VaultStore {
     return vaultRegistry.activeVaultId;
   }
   get vaultName() {
-    return vaultRegistry.vaultName;
+    return this.demoVaultName || vaultRegistry.vaultName;
   }
   get availableVaults() {
     return vaultRegistry.availableVaults;
@@ -140,6 +142,60 @@ class VaultStore {
     await this.loadFiles();
   }
 
+  /**
+   * Loads sample data into the vault for transient demo exploration.
+   * Bypasses IndexedDB and OPFS.
+   */
+  async loadDemoData(data: { entities: Record<string, any> }, name?: string) {
+    await this.saveQueue.waitForAll();
+    this.selectedEntityId = null;
+    this.entities = data.entities as Record<string, LocalEntity>;
+    this.demoVaultName = name || null;
+    this.isInitialized = true;
+    this.status = "idle";
+
+    // Index everything for search
+    if (this.services?.search) {
+      await this.services.search.clear();
+      for (const entity of Object.values(this.entities)) {
+        await this.services.search.index({
+          id: entity.id,
+          title: entity.title,
+          content: entity.content,
+          type: entity.type,
+          path: entity._path?.join("/") || `${entity.id}.md`,
+          keywords: (entity.tags || []).join(" "),
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  }
+
+  /**
+   * Persists the current transient state to a new IndexedDB vault.
+   */
+  async persistToIndexedDB(vaultId: string) {
+    this.status = "saving";
+    try {
+      // 1. Set as active vault in registry
+      await vaultRegistry.setActiveVault(vaultId);
+
+      // 2. Save all entities to OPFS
+      for (const entity of Object.values(this.entities)) {
+        await this.saveToDisk(entity, vaultId);
+      }
+
+      // 3. Clear transient flags and finish
+      this.demoVaultName = null;
+      this.status = "idle";
+    } catch (err: any) {
+      console.error("[VaultStore] Persistence failed:", err);
+      this.status = "error";
+      this.errorMessage = "Failed to persist demo data.";
+      throw err;
+    }
+  }
+
   async init(injectedServices?: IVaultServices) {
     this.isInitialized = false;
     this.status = "loading";
@@ -156,23 +212,21 @@ class VaultStore {
         search: searchService,
         ai: aiService,
       };
-    } else {
-      // Non-browser / SSR environment without injected services:
-      // search indexing and AI features will be disabled.
-      this.services = null;
-      console.warn(
-        "[VaultStore] Services are not available (likely SSR/non-browser environment). " +
-          "Search indexing and AI features are disabled.",
-      );
-      debugStore.log(
-        "Vault services unavailable: running without search indexing or AI features (SSR/non-browser).",
-      );
     }
 
     try {
       await vaultRegistry.init();
       const opfsRoot = vaultRegistry.rootHandle;
       if (!opfsRoot) throw new Error("OPFS Root failed to initialize");
+
+      if (uiStore.isDemoMode) {
+        debugStore.log(
+          "Vault init: Demo mode active, skipping further initialization.",
+        );
+        this.isInitialized = true;
+        this.status = "idle";
+        return;
+      }
 
       const db = await getDB();
       const savedVisibility = await db.get("settings", "defaultVisibility");
@@ -356,8 +410,39 @@ class VaultStore {
   }
 
   scheduleSave(entity: LocalEntity | Entity) {
-    this.status = "saving";
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
+
+    if (uiStore.isDemoMode) {
+      // In Demo Mode, we only update search index, no disk save
+      if (this.services) {
+        const path =
+          (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`;
+        const keywords = [
+          ...(entity.tags || []),
+          entity.lore || "",
+          ...Object.values(entity.metadata || {}).flat(),
+        ].join(" ");
+        void this.services.search
+          .index({
+            id: entity.id,
+            title: entity.title,
+            content: entity.content,
+            type: entity.type,
+            path,
+            keywords,
+            updatedAt: Date.now(),
+          })
+          .catch((err) => {
+            debugStore.error(
+              `Search index update failed in demo mode for ${entity.id}`,
+              err,
+            );
+          });
+      }
+      return;
+    }
+
+    this.status = "saving";
     const targetVaultId = this.activeVaultId;
     this.saveQueue
       .enqueue(entity.id, async () => {
@@ -468,6 +553,10 @@ class VaultStore {
 
   async deleteEntity(id: string): Promise<void> {
     if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
+    if (uiStore.isDemoMode) {
+      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
+      return;
+    }
     const vaultDir = await this.getActiveVaultHandle();
     if (!vaultDir) return;
 
@@ -620,6 +709,16 @@ class VaultStore {
   }
 
   async resolveImageUrl(path: string): Promise<string> {
+    if (
+      path.startsWith("/") ||
+      path.startsWith("http://") ||
+      path.startsWith("https://") ||
+      path.startsWith("blob:") ||
+      path.startsWith("data:")
+    ) {
+      return path;
+    }
+
     const vaultDir = await this.getActiveVaultHandle();
 
     if (this.isGuest) {

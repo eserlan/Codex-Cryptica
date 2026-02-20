@@ -13,6 +13,17 @@ class UIStore {
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
+
+  // Demo Mode State
+  isDemoMode = $state(false);
+  activeDemoTheme = $state<string | null>(null);
+  hasPromptedSave = $state(false);
+  wasConverted = $state(false);
+
+  notification = $state<{ message: string; type: "success" | "info" } | null>(
+    null,
+  );
+
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
 
@@ -21,6 +32,12 @@ class UIStore {
       const saved = localStorage.getItem("codex_skip_landing");
       if (saved !== null) {
         this.skipWelcomeScreen = saved === "true";
+      }
+
+      // Proactively dismiss landing page if a demo is requested via URL
+      // This prevents the "flash" of the landing page before DemoService.startDemo runs.
+      if (new URLSearchParams(window.location.search).has("demo")) {
+        this.dismissedLandingPage = true;
       }
     }
   }
@@ -84,6 +101,13 @@ class UIStore {
 
   clearGlobalError() {
     this.globalError = null;
+  }
+
+  notify(message: string, type: "success" | "info" = "success") {
+    this.notification = { message, type };
+    setTimeout(() => {
+      this.notification = null;
+    }, 5000);
   }
 
   openSettings(tab: SettingsTab = "vault") {
