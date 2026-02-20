@@ -75,13 +75,17 @@
         </p>
       </div>
       <button
-        onclick={() => {
-          demoService.convertToCampaign().then(() => {
+        onclick={async () => {
+          try {
+            await demoService.convertToCampaign();
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });
             uiStore.closeSettings();
-          });
+          } catch (error) {
+            console.error("Failed to convert demo to campaign:", error);
+            window.alert("Failed to save campaign. Please try again.");
+          }
         }}
         class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-[10px] rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
       >

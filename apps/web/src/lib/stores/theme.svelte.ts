@@ -81,6 +81,9 @@ class ThemeStore {
 
     this.currentThemeId = id;
     if (browser) {
+      // Don't persist theme if in demo mode
+      if (uiStore.isDemoMode) return;
+
       localStorage.setItem(STORAGE_KEY, id);
       const activeVaultId = vault.activeVaultId;
       if (activeVaultId) {

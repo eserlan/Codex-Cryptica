@@ -81,12 +81,14 @@ test.describe("Interactive Demo Mode", () => {
     // Reload page
     await page.reload();
 
-    // Should return to landing or restart demo (if auto-start triggers)
-    // Since we cleared skip_landing, it should show landing if not in demo
-    // But auto-start demo triggers if vault is empty.
-    // In our test environment, we need to check the outcome.
+    // Should return to demo start or landing
+    // Verify "New Transient Node" is gone
+    await page.keyboard.press("Control+k");
+    const searchInput2 = page.locator('input[placeholder$="..."]').first();
+    await expect(searchInput2).toBeVisible();
+    await searchInput2.fill("New Transient Node");
+    await expect(page.getByTestId("search-result")).not.toBeVisible();
   });
-
   test("should convert demo to real campaign", async ({ page }) => {
     await page.goto("http://localhost:5173/?demo=fantasy");
 

@@ -233,17 +233,31 @@
     }
   });
 
+  let lastDemoQueryParam: string | null = null;
+
   // Handle Demo Mode Deep Linking (?demo=theme)
   $effect(() => {
     const demoTheme = page.url.searchParams.get("demo");
-    if (demoTheme && !uiStore.wasConverted) {
-      if (!uiStore.isDemoMode && uiStore.activeDemoTheme === null) {
-        // Initial entry
-        demoService.startDemo(demoTheme);
-      } else if (uiStore.isDemoMode && uiStore.activeDemoTheme !== demoTheme) {
-        // Theme switch
-        demoService.startDemo(demoTheme);
-      }
+
+    // If there is no demo param, reset our tracking state and exit.
+    if (!demoTheme) {
+      lastDemoQueryParam = null;
+      return;
+    }
+
+    // If we've already handled this exact query param value, do nothing.
+    if (demoTheme === lastDemoQueryParam) {
+      return;
+    }
+
+    // Record that we've now handled this query param value.
+    lastDemoQueryParam = demoTheme;
+
+    // Suppression of auto-start check
+    if (!uiStore.wasConverted) {
+      // We only start if it's actually different from what we think we are showing,
+      // but DemoService.startDemo is the ultimate source of truth for loading data.
+      demoService.startDemo(demoTheme);
     }
   });
 

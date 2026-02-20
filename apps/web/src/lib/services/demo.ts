@@ -8,29 +8,43 @@ import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
 class DemoService implements IDemoActions {
   async startDemo(theme: string): Promise<void> {
     try {
-      // Map theme aliases
+      // 1. Map theme aliases
       const themeMap: Record<string, string> = {
         vampire: "horror",
         wasteland: "apocalyptic",
       };
       const actualTheme = themeMap[theme] || theme;
 
-      // 1. Fetch sample data
-      const response = await fetch(`${base}/vault-samples/${theme}.json`);
-      if (!response.ok)
-        throw new Error(`Failed to load demo data for ${theme}`);
-      const data = await response.json();
+      // Allowlist of supported demo themes (after alias mapping)
+      const allowedThemes = new Set([
+        "fantasy",
+        "horror",
+        "apocalyptic",
+        "scifi",
+        "cyberpunk",
+        "modern",
+      ]);
 
-      // 2. Set UI State
+      if (!allowedThemes.has(actualTheme)) {
+        throw new Error(`Unsupported demo theme: ${theme}`);
+      }
+
+      // 2. Set UI State synchronously to lock out persistent init
       uiStore.isDemoMode = true;
       uiStore.activeDemoTheme = actualTheme;
       uiStore.dismissedLandingPage = true;
       uiStore.wasConverted = false;
 
-      // 3. Set Theme
+      // 3. Fetch sample data
+      const response = await fetch(`${base}/vault-samples/${theme}.json`);
+      if (!response.ok)
+        throw new Error(`Failed to load demo data for ${theme}`);
+      const data = await response.json();
+
+      // 4. Set Theme (Note: themeStore.setTheme will check isDemoMode)
       await themeStore.setTheme(actualTheme as any);
 
-      // 4. Load into Vault
+      // 5. Load into Vault
       const demoName = `${actualTheme.charAt(0).toUpperCase() + actualTheme.slice(1)} Demo`;
       await vault.loadDemoData(data, demoName);
     } catch (err) {
@@ -94,9 +108,11 @@ class DemoService implements IDemoActions {
     const prompts: Record<string, string> = {
       fantasy: "Ready to build your own epic world? Start your journey here.",
       vampire: "Crave a world of darkness? Build your Vampire campaign now.",
+      horror: "Crave a world of darkness? Build your Vampire campaign now.",
       scifi: "The future is yours to write. Launch your Sci-Fi universe.",
       cyberpunk: "Neon lights, dark secrets. Engineer your Cyberpunk city.",
       wasteland: "Survive and thrive. Document your post-apocalyptic saga.",
+      apocalyptic: "Survive and thrive. Document your post-apocalyptic saga.",
       modern: "Capture the present. Map your modern thriller or drama.",
     };
     return prompts[theme] || prompts.fantasy;

@@ -872,7 +872,24 @@ class OracleStore {
         imageModelName,
       );
 
-      await vault.saveImageToVault(blob, entityId);
+      if (uiStore.isDemoMode) {
+        // In demo mode, avoid persisting to OPFS/IndexedDB. Keep the image in-memory.
+        const imageUrl = URL.createObjectURL(blob);
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "",
+            type: "image",
+            imageUrl,
+            imageBlob: blob,
+            entityId,
+          },
+        ];
+      } else {
+        await vault.saveImageToVault(blob, entityId);
+      }
     } catch (err: any) {
       console.error("[OracleStore] drawEntity failed:", err);
       this.messages = [

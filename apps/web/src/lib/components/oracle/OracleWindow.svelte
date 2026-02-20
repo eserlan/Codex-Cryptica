@@ -150,14 +150,18 @@
           {demoService.marketingPrompt}
         </p>
         <button
-          onclick={() => {
-            demoService.convertToCampaign().then((_id) => {
+          onclick={async () => {
+            try {
+              const _id = await demoService.convertToCampaign();
               const url = new URL(page.url.href);
               url.searchParams.delete("demo");
               goto(url.toString(), { replaceState: true });
               oracle.toggle();
               uiStore.openSettings("vault");
-            });
+            } catch (error) {
+              console.error("Failed to convert demo to campaign", error);
+              window.alert("Failed to save campaign. Please try again.");
+            }
           }}
           class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest rounded hover:bg-theme-secondary transition-colors"
         >

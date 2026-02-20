@@ -422,15 +422,22 @@ class VaultStore {
           entity.lore || "",
           ...Object.values(entity.metadata || {}).flat(),
         ].join(" ");
-        this.services.search.index({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content,
-          type: entity.type,
-          path,
-          keywords,
-          updatedAt: Date.now(),
-        });
+        void this.services.search
+          .index({
+            id: entity.id,
+            title: entity.title,
+            content: entity.content,
+            type: entity.type,
+            path,
+            keywords,
+            updatedAt: Date.now(),
+          })
+          .catch((err) => {
+            debugStore.error(
+              `Search index update failed in demo mode for ${entity.id}`,
+              err,
+            );
+          });
       }
       return;
     }
@@ -702,7 +709,15 @@ class VaultStore {
   }
 
   async resolveImageUrl(path: string): Promise<string> {
-    if (path.startsWith("/") || path.startsWith("http")) return path;
+    if (
+      path.startsWith("/") ||
+      path.startsWith("http://") ||
+      path.startsWith("https://") ||
+      path.startsWith("blob:") ||
+      path.startsWith("data:")
+    ) {
+      return path;
+    }
 
     const vaultDir = await this.getActiveVaultHandle();
 
