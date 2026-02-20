@@ -5,7 +5,7 @@
 
 import { build, files, version } from "$service-worker";
 
-const CACHE_VERSION = "49";
+const CACHE_VERSION = "50";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
