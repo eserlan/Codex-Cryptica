@@ -40,7 +40,7 @@
     </a>
   </div>
 
-  <div class="legal-content font-mono text-theme-text opacity-90">
+  <div class="legal-content font-mono text-theme-text/90">
     {@html content}
   </div>
 </div>
