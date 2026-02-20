@@ -26,7 +26,10 @@
   });
 </script>
 
-<div class="max-w-3xl mx-auto px-6 py-12 bg-theme-bg min-h-screen">
+<div
+  class="max-w-3xl mx-auto px-6 py-12 bg-theme-bg min-h-screen"
+  style:background-image="var(--bg-texture-overlay)"
+>
   <div class="mb-8 border-b border-theme-border/30 pb-4">
     <a
       href="{base}/"
