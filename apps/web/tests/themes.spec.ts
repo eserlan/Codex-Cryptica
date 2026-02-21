@@ -27,6 +27,9 @@ test.describe("Visual Styling Templates", () => {
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(253, 246, 227)");
 
+    // Close settings via explicit button
+    await page.getByLabel("Close Settings").click();
+
     // 5. Verify typography overhaul (Cinzel header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
@@ -113,6 +116,9 @@ test.describe("Visual Styling Templates", () => {
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(5, 5, 5)");
 
+    // Close settings via explicit button
+    await page.getByLabel("Close Settings").click();
+
     // 5. Verify primary color (Deep Crimson) is correctly applied to CSS variable
     const primaryColor = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
@@ -140,7 +146,14 @@ test.describe("Visual Styling Templates", () => {
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: "Aesthetics" }).click();
     await page.getByRole("button", { name: "Neon Night" }).click();
-    await page.keyboard.press("Escape"); // Close settings
+
+    // Wait for the accent color to update to cyberpunk yellow (#facc15)
+    await expect(page.locator("html")).toHaveCSS(
+      "--color-theme-accent",
+      "#facc15",
+    );
+
+    await page.getByLabel("Close Settings").click();
 
     // 2. Click TIMELINE button
     const timelineBtn = page.getByRole("button", { name: "TIMELINE" });

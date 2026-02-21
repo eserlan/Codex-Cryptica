@@ -80,8 +80,8 @@
 
   /* Timeline colors */
   --color-timeline-primary: var(--color-theme-accent);
-  --color-timeline-dim: var(--color-oracle-dim);
-  --color-timeline-dark: var(--color-oracle-dark);
+  --color-timeline-dim: color-mix(in srgb, var(--color-timeline-primary), black 25%);
+  --color-timeline-dark: color-mix(in srgb, var(--color-timeline-primary), black 45%);
 
   --font-header: var(--font-header);
   --font-body: var(--font-body);
