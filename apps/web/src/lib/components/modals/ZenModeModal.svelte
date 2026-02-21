@@ -235,10 +235,16 @@
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const targetTab = activeTab === "overview" ? "inventory" : "overview";
-      activeTab = targetTab;
-      if (targetTab === "overview") tabOverview?.focus();
-      else tabInventory?.focus();
+      const tabs: ("overview" | "inventory")[] = ["overview", "inventory"];
+      const currentIndex = tabs.indexOf(activeTab);
+      const nextIndex =
+        e.key === "ArrowRight"
+          ? (currentIndex + 1) % tabs.length
+          : (currentIndex - 1 + tabs.length) % tabs.length;
+
+      activeTab = tabs[nextIndex];
+      if (activeTab === "overview") tabOverview?.focus();
+      else if (activeTab === "inventory") tabInventory?.focus();
     }
   };
 
