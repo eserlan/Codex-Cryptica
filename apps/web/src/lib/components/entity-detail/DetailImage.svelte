@@ -96,7 +96,7 @@
 
 <div
   class="relative {isDraggingOver
-    ? 'ring-2 ring-purple-500 ring-offset-4 ring-offset-black bg-purple-500/10'
+    ? 'ring-2 ring-oracle-primary ring-offset-4 ring-offset-black bg-oracle-primary/10'
     : ''} transition-all rounded-lg"
   ondragover={handleDragOver}
   ondragleave={handleDragLeave}
@@ -194,15 +194,16 @@
 
   {#if isDraggingOver}
     <div
-      class="absolute inset-0 bg-purple-600/20 backdrop-blur-sm flex items-center justify-center rounded-lg pointer-events-none"
+      class="absolute inset-0 bg-oracle-dim/20 backdrop-blur-sm flex items-center justify-center rounded-lg pointer-events-none"
       transition:fade
     >
       <div class="flex flex-col items-center gap-2">
         <span
-          class="icon-[lucide--download-cloud] w-8 h-8 text-purple-400 animate-bounce"
+          class="icon-[lucide--download-cloud] w-8 h-8 text-oracle-primary animate-bounce"
         ></span>
-        <span class="text-[10px] font-bold text-purple-300 tracking-widest"
-          >DROP TO ARCHIVE</span
+        <span
+          class="text-[10px] font-bold text-oracle-primary tracking-widest uppercase"
+          >Drop to Archive</span
         >
       </div>
     </div>

@@ -129,8 +129,27 @@ test.describe("Visual Styling Templates", () => {
     );
     expect(secondaryColor).toBe("#ef4444");
 
-    // 7. Verify jargon (Crypt instead of Vault)
-    await expect(page.getByTestId("open-vault-button")).toContainText("Crypt");
+    // 7. Verify jargon (Archive instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText(
+      "Archive",
+    );
+  });
+
+  test("Timeline button is theme-aware", async ({ page }) => {
+    // 1. Open Settings and select Cyberpunk (Neon Night)
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("button", { name: "Neon Night" }).click();
+    await page.keyboard.press("Escape"); // Close settings
+
+    // 2. Click TIMELINE button
+    const timelineBtn = page.getByRole("button", { name: "TIMELINE" });
+    await timelineBtn.click();
+
+    // 3. Verify it has the cyberpunk accent color (#facc15)
+    // The button should have the color from --color-timeline-primary which is var(--color-theme-accent)
+    // which for cyberpunk is #facc15 (yellow)
+    await expect(timelineBtn).toHaveCSS("color", "rgb(250, 204, 21)"); // #facc15
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {
