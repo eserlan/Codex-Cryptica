@@ -69,7 +69,10 @@ export class GraphTransformer {
     const elements: GraphElement[] = [];
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
-    for (const entity of entities) {
+    // Performance: Imperative loop to avoid iterator allocation on hot path
+    const len = entities.length;
+    for (let i = 0; i < len; i++) {
+      const entity = entities[i];
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
@@ -77,19 +80,24 @@ export class GraphTransformer {
       // Visibility markers for Admin visual cues
       // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly
       let isRevealed = false;
-      const tags = entity.tags || [];
-      for (const tag of tags) {
-        if (REVEALED_REGEX.test(tag)) {
-          isRevealed = true;
-          break;
-        }
-      }
-      if (!isRevealed) {
-        const labels = entity.labels || [];
-        for (const label of labels) {
-          if (REVEALED_REGEX.test(label)) {
+      const tags = entity.tags;
+      if (tags) {
+        for (let j = 0; j < tags.length; j++) {
+          if (REVEALED_REGEX.test(tags[j])) {
             isRevealed = true;
             break;
+          }
+        }
+      }
+
+      if (!isRevealed) {
+        const labels = entity.labels;
+        if (labels) {
+          for (let k = 0; k < labels.length; k++) {
+            if (REVEALED_REGEX.test(labels[k])) {
+              isRevealed = true;
+              break;
+            }
           }
         }
       }
@@ -117,24 +125,28 @@ export class GraphTransformer {
       });
 
       // Create Edges
-      for (const conn of entity.connections || []) {
-        // Skip edges to non-existent targets
-        if (!validIds.has(conn.target)) continue;
+      const connections = entity.connections;
+      if (connections) {
+        for (let l = 0; l < connections.length; l++) {
+          const conn = connections[l];
+          // Skip edges to non-existent targets
+          if (!validIds.has(conn.target)) continue;
 
-        // Construct a unique edge ID: source-target-type
-        const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
+          // Construct a unique edge ID: source-target-type
+          const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
 
-        elements.push({
-          group: "edges",
-          data: {
-            id: edgeId,
-            source: entity.id,
-            target: conn.target,
-            label: conn.label || conn.type,
-            connectionType: conn.type,
-            strength: conn.strength,
-          },
-        });
+          elements.push({
+            group: "edges",
+            data: {
+              id: edgeId,
+              source: entity.id,
+              target: conn.target,
+              label: conn.label || conn.type,
+              connectionType: conn.type,
+              strength: conn.strength,
+            },
+          });
+        }
       }
     }
 
