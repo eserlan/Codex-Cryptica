@@ -645,5 +645,16 @@ describe("OracleStore", () => {
       expect(lastMsg.role).toBe("system");
       expect(lastMsg.content).toContain("❌ Invalid format");
     });
+
+    it("should provide specific error message when entity is not found", async () => {
+      const { searchService } = await import("../services/search");
+      vi.mocked(searchService.search).mockResolvedValue([]); // No matches found
+
+      await oracle.ask('/connect "Unknown" label "Missing"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        'Could not find source entity: "Unknown"',
+      );
+    });
   });
 });

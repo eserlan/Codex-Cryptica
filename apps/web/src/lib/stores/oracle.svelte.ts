@@ -442,7 +442,23 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return false; // Let the existing ask() logic handle the deterministic regex path
     }
 
-    // If it's natural language, reject it
+    if (q.startsWith("/draw") || q.startsWith("/create")) {
+      const cmd = q.startsWith("/draw") ? "/draw" : "/create";
+      this.messages = [
+        ...this.messages,
+        {
+          id: this.generateId(),
+          role: "system",
+          content: `❌ The \`${cmd}\` command is powered by AI and is disabled in Lite Mode. Use standard slash commands like \`/connect\` or \`/merge\`, or disable Lite Mode in settings.`,
+        },
+      ];
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+      return true;
+    }
+
+    // If it's natural language or an unknown command, reject it
     this.messages = [
       ...this.messages,
       {
@@ -560,70 +576,73 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         const sourceRes = await searchService.search(sourceName, { limit: 1 });
         const targetRes = await searchService.search(targetName, { limit: 1 });
 
-        if (sourceRes[0] && targetRes[0]) {
-          const sourceId = sourceRes[0].id;
-          const targetId = targetRes[0].id;
+        if (!sourceRes[0]) {
+          throw new Error(`Could not find source entity: "${sourceName}"`);
+        }
+        if (!targetRes[0]) {
+          throw new Error(`Could not find target entity: "${targetName}"`);
+        }
 
-          if (sourceId === targetId) {
-            throw new Error("Cannot merge an entity into itself.");
-          }
+        const sourceId = sourceRes[0].id;
+        const targetId = targetRes[0].id;
 
-          const sourceEntity = vault.entities[sourceId];
-          const targetEntity = vault.entities[targetId];
+        if (sourceId === targetId) {
+          throw new Error("Cannot merge an entity into itself.");
+        }
 
-          if (sourceEntity && targetEntity) {
-            // Execute Merge via nodeMergeService
-            const { nodeMergeService } =
-              await import("../services/node-merge.service");
+        const sourceEntity = vault.entities[sourceId];
+        const targetEntity = vault.entities[targetId];
 
-            // 1. Propose (Concat strategy for speed/safety in direct command)
-            const proposal = await nodeMergeService.proposeMerge({
-              sourceNodeIds: [sourceId, targetId],
-              targetNodeId: targetId,
-              strategy: "concat",
-            });
+        if (sourceEntity && targetEntity) {
+          // Execute Merge via nodeMergeService
+          const { nodeMergeService } =
+            await import("../services/node-merge.service");
 
-            // 2. Capture state for Undo (Immediately before execution)
-            const beforeTarget = $state.snapshot(vault.entities[targetId]);
-            const beforeSource = $state.snapshot(vault.entities[sourceId]);
+          // 1. Propose (Concat strategy for speed/safety in direct command)
+          const proposal = await nodeMergeService.proposeMerge({
+            sourceNodeIds: [sourceId, targetId],
+            targetNodeId: targetId,
+            strategy: "concat",
+          });
 
-            // 3. Execute
-            await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
+          // 2. Capture state for Undo (Immediately before execution)
+          const beforeTarget = $state.snapshot(vault.entities[targetId]);
+          const beforeSource = $state.snapshot(vault.entities[sourceId]);
 
-            this.messages = [
-              ...this.messages,
-              {
-                id: this.generateId(),
-                role: "assistant",
-                content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
-              },
-            ];
+          // 3. Execute
+          await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
 
-            // Push Undo
-            this.pushUndoAction(
-              `Merge ${sourceEntity.title} into ${targetEntity.title}`,
-              async () => {
-                // Re-create source
-                await vault.createEntity(
-                  beforeSource.type,
-                  beforeSource.title,
-                  { ...beforeSource },
-                );
-                // Restore target
-                vault.updateEntity(targetId, beforeTarget);
-              },
-            );
+          this.messages = [
+            ...this.messages,
+            {
+              id: this.generateId(),
+              role: "assistant",
+              content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
+            },
+          ];
 
-            this.lastUpdated = Date.now();
-            this.isLoading = false;
-            this.broadcast();
-            this.saveToDB();
-            return;
-          }
+          // Push Undo
+          this.pushUndoAction(
+            `Merge ${sourceEntity.title} into ${targetEntity.title}`,
+            async () => {
+              // Re-create source
+              await vault.createEntity(beforeSource.type, beforeSource.title, {
+                ...beforeSource,
+              });
+              // Restore target
+              vault.updateEntity(targetId, beforeTarget);
+            },
+          );
+
+          this.lastUpdated = Date.now();
+          this.isLoading = false;
+          this.broadcast();
+          this.saveToDB();
+          return;
         }
 
         throw new Error(
-          `Could not find one or both entities: "${sourceName}" or "${targetName}".`,
+          `Entity resolution failed for "${sourceName}" or "${targetName}".`,
         );
       } catch (err: any) {
         this.messages = [
@@ -685,63 +704,64 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           limit: 1,
         });
 
-        if (sourceRes[0] && targetRes[0]) {
-          const sourceId = sourceRes[0].id;
-          const targetId = targetRes[0].id;
-          const source = vault.entities[sourceId];
-          const target = vault.entities[targetId];
-
-          if (source && target) {
-            // Direct Creation
-            const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
-            const typeToUse = allowedTypes.includes(type)
-              ? (type as any)
-              : "related_to";
-
-            const success = vault.addConnection(
-              source.id,
-              target.id,
-              typeToUse,
-              label,
-            );
-
-            if (success) {
-              this.messages = [
-                ...this.messages,
-                {
-                  id: this.generateId(),
-                  role: "assistant",
-                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
-                },
-              ];
-
-              // Push Undo
-              this.pushUndoAction(
-                `Connect ${source.title} to ${target.title}`,
-                async () => {
-                  vault.removeConnection(source.id, target.id, typeToUse);
-                },
-              );
-
-              this.lastUpdated = Date.now();
-              this.isLoading = false;
-              this.broadcast();
-              this.saveToDB();
-              return;
-            } else {
-              throw new Error("Vault refused to create connection.");
-            }
-          } else {
-            const missingName = !source ? sourceName : targetName;
-            throw new Error(
-              `Entity "${missingName}" was found in search but is missing from the active vault.`,
-            );
-          }
+        if (!sourceRes[0]) {
+          throw new Error(`Could not find source entity: "${sourceName}"`);
+        }
+        if (!targetRes[0]) {
+          throw new Error(`Could not find target entity: "${targetName}"`);
         }
 
-        throw new Error(
-          "Could not identify both entities. Try using the guided wizard with `/connect oracle`.",
-        );
+        const sourceId = sourceRes[0].id;
+        const targetId = targetRes[0].id;
+        const source = vault.entities[sourceId];
+        const target = vault.entities[targetId];
+
+        if (source && target) {
+          // Direct Creation
+          const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
+          const typeToUse = allowedTypes.includes(type)
+            ? (type as any)
+            : "related_to";
+
+          const success = vault.addConnection(
+            source.id,
+            target.id,
+            typeToUse,
+            label,
+          );
+
+          if (success) {
+            this.messages = [
+              ...this.messages,
+              {
+                id: this.generateId(),
+                role: "assistant",
+                content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
+              },
+            ];
+
+            // Push Undo
+            this.pushUndoAction(
+              `Connect ${source.title} to ${target.title}`,
+              async () => {
+                vault.removeConnection(source.id, target.id, typeToUse);
+              },
+            );
+
+            this.lastUpdated = Date.now();
+            this.isLoading = false;
+            this.broadcast();
+            this.saveToDB();
+            return;
+          } else {
+            throw new Error("Vault refused to create connection.");
+          }
+        } else {
+          const missingName = !source ? sourceName : targetName;
+          throw new Error(
+            `Entity "${missingName}" was found in search but is missing from the active vault.`,
+          );
+        }
       } catch (err: any) {
         this.messages = [
           ...this.messages,
