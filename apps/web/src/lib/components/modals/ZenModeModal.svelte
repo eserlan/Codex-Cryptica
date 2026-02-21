@@ -312,7 +312,16 @@
 
 <svelte:window
   onkeydown={(e) => {
-    if (!uiStore.showZenMode || showLightbox) return;
+    if (!uiStore.showZenMode) return;
+
+    if (showLightbox) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        showLightbox = false;
+      }
+      return;
+    }
 
     // Don't intercept if focus is in an input, textarea, or other interactive elements
     if (
@@ -809,17 +818,32 @@
 
   <!-- Lightbox -->
   {#if showLightbox && entity.image}
-    <button
-      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out"
+    <!-- Backdrop (non-interactive wrapper, but handles clicks to close) -->
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full"
       onclick={() => (showLightbox = false)}
       transition:fade={{ duration: 200 }}
     >
+      <!-- Explicit Close Button -->
+      <button
+        class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition"
+        onclick={(e) => {
+          e.stopPropagation();
+          showLightbox = false;
+        }}
+        aria-label="Close image view"
+      >
+        <span class="icon-[lucide--x] w-8 h-8"></span>
+      </button>
+
       <img
         src={resolvedImageUrl}
         alt={entity.title}
-        class="max-w-full max-h-full object-contain shadow-2xl rounded"
+        class="max-w-full max-h-full object-contain shadow-2xl rounded pointer-events-none"
       />
-    </button>
+    </div>
   {/if}
 {/if}
 
