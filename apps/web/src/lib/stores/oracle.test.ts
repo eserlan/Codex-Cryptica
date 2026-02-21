@@ -656,5 +656,56 @@ describe("OracleStore", () => {
         'Could not find source entity: "Unknown"',
       );
     });
+
+    it("should allow /create with valid quoted arguments", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id");
+
+      await oracle.ask('/create "New Hero" as "npc"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain("Created node: **New Hero** (NPC)");
+      expect(vault.createEntity).toHaveBeenCalledWith("npc", "New Hero", {
+        content: "",
+        lore: "",
+      });
+    });
+
+    it("should allow /create with unquoted type", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id-2");
+
+      await oracle.ask('/create "New Location" as location');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        "Created node: **New Location** (LOCATION)",
+      );
+      expect(vault.createEntity).toHaveBeenCalledWith(
+        "location",
+        "New Location",
+        {
+          content: "",
+          lore: "",
+        },
+      );
+    });
+
+    it("should fallback to character for invalid type in /create", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id-3");
+
+      await oracle.ask('/create "Unknown Thing" as nonsense');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        "Created node: **Unknown Thing** (CHARACTER)",
+      );
+      expect(vault.createEntity).toHaveBeenCalledWith(
+        "character",
+        "Unknown Thing",
+        {
+          content: "",
+          lore: "",
+        },
+      );
+    });
   });
 });

@@ -16,7 +16,7 @@ export const chatCommands: ChatCommand[] = [
   },
   {
     name: "/create",
-    description: "Create a new record with AI",
+    description: 'Create record (AI) or /create "Name" [as "Type"]',
     parameters: ["[description]"],
     handler: (desc) => oracle.ask(`/create ${desc}`),
   },

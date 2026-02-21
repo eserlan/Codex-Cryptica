@@ -384,6 +384,7 @@ class OracleStore {
 In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
 **Available Commands:**
+- \`/create "Name" [as "Type"]\`: Create a new record.
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
 - \`/clear\`: Clear chat history.
@@ -398,6 +399,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`/merge oracle\`: Start the guided merge wizard.
 
 **Utility:**
+- \`/create "Name" [as "Type"]\`: Quick deterministic creation.
 - \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
 - \`/merge "Source" into "Target"\`: Quick deterministic merge.
 - \`/clear\`: Clear conversation history.
@@ -422,6 +424,17 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return true;
     }
 
+    if (q.startsWith("/create")) {
+      const quotedRegex = /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
+      const match = query.match(quotedRegex);
+      if (!match) {
+        throw new Error(
+          'Invalid format. Use: `/create "Entity Name"` or `/create "Entity Name" as "Type"`',
+        );
+      }
+      return false; // Let the existing ask() logic handle the deterministic path
+    }
+
     if (q.startsWith("/connect")) {
       const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
       const match = query.match(quotedRegex);
@@ -442,14 +455,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return false; // Let the existing ask() logic handle the deterministic regex path
     }
 
-    if (q.startsWith("/draw") || q.startsWith("/create")) {
-      const cmd = q.startsWith("/draw") ? "/draw" : "/create";
+    if (q.startsWith("/draw")) {
       this.messages = [
         ...this.messages,
         {
           id: this.generateId(),
           role: "system",
-          content: `❌ The \`${cmd}\` command is powered by AI and is disabled in Lite Mode. Use standard slash commands like \`/connect\` or \`/merge\`, or disable Lite Mode in settings.`,
+          content: `❌ The \`/draw\` command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use image generation.`,
         },
       ];
       this.lastUpdated = Date.now();
@@ -535,6 +547,72 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /create request
+    if (isCreateRequest) {
+      try {
+        // 1. Deterministic Quoted Parsing
+        // Matches: /create "Name" [as "Type" or as Type]
+        const quotedRegex =
+          /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
+        const match = query.match(quotedRegex);
+
+        if (match) {
+          const name = match[1];
+          const rawType = (match[3] || match[4] || "character").toLowerCase();
+          const allowedTypes = [
+            "character",
+            "npc",
+            "faction",
+            "location",
+            "item",
+            "event",
+            "concept",
+          ];
+          const type = allowedTypes.includes(rawType) ? rawType : "character";
+
+          if (vault.isGuest)
+            throw new Error("Guest users cannot create nodes.");
+
+          const id = await vault.createEntity(type as any, name, {
+            content: "",
+            lore: "",
+          });
+
+          this.messages = [
+            ...this.messages,
+            {
+              id: this.generateId(),
+              role: "system",
+              content: `✅ Created node: **${name}** (${type.toUpperCase()})`,
+            },
+          ];
+
+          vault.selectedEntityId = id;
+          graph.requestFit();
+
+          this.lastUpdated = Date.now();
+          this.isLoading = false;
+          this.broadcast();
+          this.saveToDB();
+          return;
+        }
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Handle Direct /merge request
     if (isMergeRequest) {
