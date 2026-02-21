@@ -30,12 +30,13 @@
       const isCmd = (cmd: string) =>
         input === cmd || input.startsWith(cmd + " ");
       // Keep menu open if we haven't typed a space yet (command selection)
-      // OR if it's a wizard-style command
+      // OR if it's a command that can have arguments
       if (
         !input.includes(" ") ||
         isCmd("/connect") ||
         isCmd("/merge") ||
-        isCmd("/draw")
+        isCmd("/draw") ||
+        isCmd("/create")
       ) {
         showCommandMenu = true;
       } else {

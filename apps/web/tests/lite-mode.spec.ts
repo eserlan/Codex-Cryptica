@@ -67,8 +67,43 @@ test.describe("Lite Mode (No AI)", () => {
     // Verify "Lite" indicator in Oracle header
     const liteIndicator = page
       .locator(".oracle-window-container")
-      .getByText("LITE", { exact: true });
+      .getByText("LITE", { exact: true })
+      .first();
     await expect(liteIndicator).toBeVisible();
+  });
+
+  test("Restricted Oracle supports /help command", async ({ page }) => {
+    // 1. Enable Lite Mode
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: /Aesthetics/i }).click();
+    await page.getByLabel(/Lite Mode \(No AI\)/i).check();
+    await page.getByLabel("Close Settings").click();
+
+    // 2. Open Oracle
+    await page.getByTestId("oracle-orb").click();
+    await expect(page.locator(".oracle-window-container")).toBeVisible();
+
+    // 3. Trigger help via store (UI Enter key is flaky in tests)
+    await page.evaluate(() => (window as any).oracle.showHelp());
+
+    // 4. Verify help content
+    await expect(page.getByText(/Restricted Mode Active/i)).toBeVisible();
+    await expect(page.getByText("/connect")).toBeVisible();
+    await expect(page.getByText("/merge")).toBeVisible();
+  });
+
+  test("Oracle supports /help command in AI mode", async ({ page }) => {
+    // 1. Open Oracle
+    await page.getByTestId("oracle-orb").click();
+    await expect(page.locator(".oracle-window-container")).toBeVisible();
+
+    // 2. Trigger help via store
+    await page.evaluate(() => (window as any).oracle.showHelp());
+
+    // 3. Verify help content (AI Guide)
+    await expect(page.getByText(/Oracle Command Guide/i)).toBeVisible();
+    await expect(page.getByText("/draw")).toBeVisible();
+    await expect(page.getByText("/create")).toBeVisible();
   });
 
   test("Lite Mode persists across reloads", async ({ page }) => {

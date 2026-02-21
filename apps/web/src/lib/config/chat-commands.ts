@@ -44,4 +44,18 @@ export const chatCommands: ChatCommand[] = [
       }
     },
   },
+  {
+    name: "/help",
+    description: "Show available commands",
+    handler: () => oracle.showHelp(),
+  },
+  {
+    name: "/clear",
+    description: "Clear conversation history",
+    handler: () => {
+      if (confirm("Are you sure you want to clear the conversation history?")) {
+        oracle.clearMessages();
+      }
+    },
+  },
 ];

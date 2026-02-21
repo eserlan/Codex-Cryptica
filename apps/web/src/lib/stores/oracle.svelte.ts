@@ -85,7 +85,7 @@ class OracleStore {
     messageId?: string,
   ) {
     this.undoStack.push({
-      id: crypto.randomUUID(),
+      id: this.generateId(),
       messageId,
       description,
       revert,
@@ -122,7 +122,7 @@ class OracleStore {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `↩️ Undid action: **${action.description}**`,
           },
@@ -140,7 +140,7 @@ class OracleStore {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ Undo failed: ${err.message}. You can try again.`,
           },
@@ -254,6 +254,7 @@ class OracleStore {
   }
 
   get isEnabled() {
+    if (uiStore.liteMode) return true;
     const sharedKey =
       (typeof window !== "undefined" &&
         (window as any).__SHARED_GEMINI_KEY__) ||
@@ -341,7 +342,7 @@ class OracleStore {
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content: `Starting ${type} wizard...`,
         type: "wizard",
@@ -364,28 +365,55 @@ class OracleStore {
     this.saveToDB();
   }
 
-  private async handleRestrictedCommand(query: string): Promise<boolean> {
-    const q = query.toLowerCase().trim();
+  private generateId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return Math.random().toString(36).substring(2, 15);
+  }
 
-    if (q === "/help") {
-      this.messages = [
-        ...this.messages,
-        {
-          id: crypto.randomUUID(),
-          role: "system",
-          content: `### Restricted Mode Active
+  showHelp() {
+    const isLite = uiStore.liteMode;
+    this.messages = [
+      ...this.messages,
+      {
+        id: this.generateId(),
+        role: "system",
+        content: isLite
+          ? `### Restricted Mode Active
 In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
 **Available Commands:**
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
 - \`/clear\`: Clear chat history.
-- \`/help\`: Show this message.`,
-        },
-      ];
-      this.lastUpdated = Date.now();
-      this.broadcast();
-      this.saveToDB();
+- \`/help\`: Show this message.`
+          : `### Oracle Command Guide
+The Lore Oracle supports several slash commands to help you manage your vault:
+
+**AI Powered:**
+- \`/draw [subject]\`: Visualize an entity or scene.
+- \`/create [description]\`: Automatically create a new entity from a text description.
+- \`/connect oracle\`: Start the guided connection wizard.
+- \`/merge oracle\`: Start the guided merge wizard.
+
+**Utility:**
+- \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
+- \`/merge "Source" into "Target"\`: Quick deterministic merge.
+- \`/clear\`: Clear conversation history.
+- \`/help\`: Show this guide.`,
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
+  private async handleRestrictedCommand(query: string): Promise<boolean> {
+    const q = query.toLowerCase().trim();
+
+    if (q === "/help") {
+      this.showHelp();
       return true;
     }
 
@@ -418,7 +446,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "system",
         content:
           "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type `/help` for a list of available commands.",
@@ -439,7 +467,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ ${err.message}`,
           },
@@ -460,9 +488,9 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.messages = [
         ...this.messages,
-        { id: crypto.randomUUID(), role: "user", content: query },
+        { id: this.generateId(), role: "user", content: query },
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content:
             "The Oracle is currently offline. Conversational expansion and AI generation are suspended, but local retrieval will attempt to find matches for your raw query.",
@@ -485,7 +513,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 
     this.messages = [
       ...this.messages,
-      { id: crypto.randomUUID(), role: "user", content: query },
+      { id: this.generateId(), role: "user", content: query },
     ];
     this.lastUpdated = Date.now();
     this.isLoading = true;
@@ -565,7 +593,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
             this.messages = [
               ...this.messages,
               {
-                id: crypto.randomUUID(),
+                id: this.generateId(),
                 role: "assistant",
                 content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
               },
@@ -601,7 +629,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ ${err.message}`,
           },
@@ -681,7 +709,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
               this.messages = [
                 ...this.messages,
                 {
-                  id: crypto.randomUUID(),
+                  id: this.generateId(),
                   role: "assistant",
                   content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
                 },
@@ -718,7 +746,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ ${err.message}`,
           },
@@ -736,7 +764,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content: "",
         type: isImageRequest ? "image" : "text",
@@ -874,7 +902,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
               this.messages = [
                 ...this.messages,
                 {
-                  id: crypto.randomUUID(),
+                  id: this.generateId(),
                   role: "system",
                   content: `✅ Automatically created node: **${parsed.title}** (${type.toUpperCase()})`,
                 },
@@ -891,7 +919,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
               this.messages = [
                 ...this.messages,
                 {
-                  id: crypto.randomUUID(),
+                  id: this.generateId(),
                   role: "system",
                   content: errorMsg,
                 },
@@ -907,7 +935,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: err.message || "Error generating response.",
         },
@@ -971,7 +999,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "assistant",
             content: "",
             type: "image",
@@ -988,7 +1016,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: `❌ Image generation failed for **${entity.title}**: ${err.message}`,
         },
@@ -1069,7 +1097,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: `❌ Image generation failed: ${err.message}`,
         },
@@ -1113,7 +1141,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content,
         type: "image",
