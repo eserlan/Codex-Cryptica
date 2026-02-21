@@ -193,6 +193,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.",
     icon: "icon-[lucide--zap-off]",
   },
+  "seo-prerendering": {
+    id: "seo-prerendering",
+    title: "SEO Prerendering",
+    content:
+      "Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.",
+    icon: "icon-[lucide--search]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

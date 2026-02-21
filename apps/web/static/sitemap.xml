@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>/</loc>
-    <lastmod>2026-02-18</lastmod>
-    <priority>1.00</priority>
+    <loc>https://codexcryptica.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
   </url>
   <url>
-    <loc>/features</loc>
-    <lastmod>2026-02-18</lastmod>
-    <priority>0.80</priority>
+    <loc>https://codexcryptica.com/features</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>/privacy</loc>
-    <lastmod>2026-02-18</lastmod>
-    <priority>0.50</priority>
+    <loc>https://codexcryptica.com/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
   <url>
-    <loc>/terms</loc>
-    <lastmod>2026-02-18</lastmod>
-    <priority>0.50</priority>
+    <loc>https://codexcryptica.com/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>
