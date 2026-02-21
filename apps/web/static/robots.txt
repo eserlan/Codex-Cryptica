@@ -1,6 +1,3 @@
-# Allow all crawlers, including Google's AI agent.
 User-agent: *
 Allow: /
-
-User-agent: Google-Extended
-Allow: /
+Sitemap: https://codexcryptica.com/sitemap.xml

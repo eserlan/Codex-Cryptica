@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Node.js 20+ / Svelte 5 + SvelteKit, `@sveltejs/adapter-static` (055-prerender-marketing)
+- N/A (Static files) (055-prerender-marketing)
+
 - TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai` (054-lite-no-ai)
 - LocalStorage (for persistent setting `liteMode`) (054-lite-no-ai)
 
@@ -98,10 +101,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 055-prerender-marketing: Added TypeScript 5.x / Node.js 20+ / Svelte 5 + SvelteKit, `@sveltejs/adapter-static`
+
 - 054-lite-no-ai: Added TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai`
-
-- 053-gdrive-multi-vault: Added multi-vault support for GDrive sync
-
-- 052-sync-reminder: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper)
 
 <!-- MANUAL ADDITIONS START -->

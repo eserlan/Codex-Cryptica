@@ -3,28 +3,51 @@
   import { parse } from "marked";
   import { base } from "$app/paths";
 
-  let { fileName, title } = $props<{ fileName: string; title: string }>();
+  let {
+    fileName,
+    title,
+    initialContent = "",
+  } = $props<{ fileName: string; title: string; initialContent?: string }>();
   let content = $state("");
 
+  function updateContent(text: string) {
+    content = parse(text) as string;
+  }
+
+  // Pre-parse if initial content is provided (for SSR/Prerender)
+  $effect.pre(() => {
+    if (initialContent && !content) {
+      updateContent(initialContent);
+    }
+  });
+
   onMount(async () => {
-    try {
-      const res = await fetch(`${base}/${fileName}`);
-      if (!res.ok)
-        throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
-      const text = await res.text();
-      content = await parse(text);
-      if (title) {
-        document.title = `${title} | Codex Cryptica`;
-      }
-    } catch (err) {
-      console.error("LegalDocument error:", err);
-      content = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
+    // If no initial content (e.g. client-side navigation or hydration mismatch), fetch it
+    if (!initialContent) {
+      try {
+        const res = await fetch(`${base}/${fileName}`);
+        if (!res.ok)
+          throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
+        const text = await res.text();
+        await updateContent(text);
+      } catch (err) {
+        console.error("LegalDocument error:", err);
+        content = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
                 <h3 class="text-red-500! mt-0!">OFFLINE ERROR</h3>
                 <p class="mb-0!">Could not retrieve document. Please check your connection.</p>
             </div>`;
+      }
     }
   });
 </script>
+
+<svelte:head>
+  <title>{title} | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="{title} for Codex Cryptica RPG Campaign Manager."
+  />
+</svelte:head>
 
 <div
   class="max-w-3xl mx-auto px-6 py-12 bg-theme-bg min-h-screen"

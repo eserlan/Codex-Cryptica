@@ -7,6 +7,7 @@
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
+  import { building } from "$app/environment";
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -17,8 +18,10 @@
     return id ? vault.entities[id] : null;
   });
 
-  // Check if we're in guest/share mode
-  const shareId = $derived(page.url.searchParams.get("shareId"));
+  // Check if we're in guest/share mode - guard for prerendering
+  const shareId = $derived(
+    building ? null : page.url.searchParams.get("shareId"),
+  );
   const isGuestMode = $derived(!!shareId);
 
   // Lazy load components when needed using relative paths for reliable resolution
@@ -104,7 +107,7 @@
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
-    {:else if !uiStore.isLandingPageVisible || page.url.searchParams.has("demo")}
+    {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
         class="absolute inset-0 bg-black flex items-center justify-center"
         aria-hidden="true"
@@ -126,7 +129,7 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !isGuestMode && uiStore.isLandingPageVisible && !page.url.searchParams.has("demo")}
+  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
       class="absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
       style:background-image="var(--bg-texture-overlay)"
