@@ -425,40 +425,14 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     }
 
     if (q.startsWith("/create")) {
-      const quotedRegex = /\/create\s+"([^"]+)"(?:\s+as\s+"([^"]+)")?/i;
+      const quotedRegex = /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
       const match = query.match(quotedRegex);
       if (!match) {
         throw new Error(
           'Invalid format. Use: `/create "Entity Name"` or `/create "Entity Name" as "Type"`',
         );
       }
-
-      const name = match[1];
-      const type = (match[2]?.toLowerCase() || "character") as any;
-
-      if (vault.isGuest) throw new Error("Guest users cannot create nodes.");
-
-      const id = await vault.createEntity(type, name, {
-        content: "",
-        lore: "",
-      });
-
-      this.messages = [
-        ...this.messages,
-        {
-          id: this.generateId(),
-          role: "system",
-          content: `✅ Created node: **${name}** (${type.toUpperCase()})`,
-        },
-      ];
-
-      vault.selectedEntityId = id;
-      graph.requestFit();
-
-      this.lastUpdated = Date.now();
-      this.broadcast();
-      this.saveToDB();
-      return true;
+      return false; // Let the existing ask() logic handle the deterministic path
     }
 
     if (q.startsWith("/connect")) {
@@ -573,6 +547,72 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /create request
+    if (isCreateRequest) {
+      try {
+        // 1. Deterministic Quoted Parsing
+        // Matches: /create "Name" [as "Type" or as Type]
+        const quotedRegex =
+          /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
+        const match = query.match(quotedRegex);
+
+        if (match) {
+          const name = match[1];
+          const rawType = (match[3] || match[4] || "character").toLowerCase();
+          const allowedTypes = [
+            "character",
+            "npc",
+            "faction",
+            "location",
+            "item",
+            "event",
+            "concept",
+          ];
+          const type = allowedTypes.includes(rawType) ? rawType : "character";
+
+          if (vault.isGuest)
+            throw new Error("Guest users cannot create nodes.");
+
+          const id = await vault.createEntity(type as any, name, {
+            content: "",
+            lore: "",
+          });
+
+          this.messages = [
+            ...this.messages,
+            {
+              id: this.generateId(),
+              role: "system",
+              content: `✅ Created node: **${name}** (${type.toUpperCase()})`,
+            },
+          ];
+
+          vault.selectedEntityId = id;
+          graph.requestFit();
+
+          this.lastUpdated = Date.now();
+          this.isLoading = false;
+          this.broadcast();
+          this.saveToDB();
+          return;
+        }
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Handle Direct /merge request
     if (isMergeRequest) {

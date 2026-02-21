@@ -103,7 +103,7 @@ test.describe("Lite Mode (No AI)", () => {
     // 3. Verify help content (AI Guide)
     await expect(page.getByText(/Oracle Command Guide/i)).toBeVisible();
     await expect(page.getByText("/draw")).toBeVisible();
-    await expect(page.getByText("/create").first()).toBeVisible();
+    await expect(page.locator('code:has-text("/create")')).toHaveCount(2);
   });
 
   test("Lite Mode persists across reloads", async ({ page }) => {
