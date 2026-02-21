@@ -4,7 +4,7 @@ test.describe("GDrive Multi-Vault Sync", () => {
   test("Linking multiple vaults to GDrive", async ({ page }) => {
     // Basic scaffold for E2E test
     // Will fail/skip until UI is fully implemented
-    test.skip();
+    test.fixme();
     await page.goto("/");
 
     // Create Vault 1
@@ -17,7 +17,7 @@ test.describe("GDrive Multi-Vault Sync", () => {
   });
 
   test("Automated sync folder switching", async ({ page }) => {
-    test.skip();
+    test.fixme();
     await page.goto("/");
 
     const startTime = Date.now();

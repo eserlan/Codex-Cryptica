@@ -21,12 +21,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     setRoot: vi.fn(),
   };
   const mockMetadata = {
-    getAll: vi.fn(),
+    getAllForVault: vi.fn(),
     put: vi.fn(),
     bulkPut: vi.fn(),
     get: vi.fn(),
     delete: vi.fn(),
-    clear: vi.fn(),
+    clearForVault: vi.fn(),
   };
 
   const engine = new SyncEngine(
@@ -54,6 +54,7 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
     const metadata: SyncMetadata[] = [
       {
+        vaultId: "vault-1",
         filePath: "images/hero.png",
         remoteId: "rem1",
         localModified: 1000,
@@ -62,7 +63,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
       },
     ];
 
-    const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
+    const plan = engine.calculateDiff(
+      "vault-1",
+      localFiles,
+      remoteFiles,
+      metadata,
+    );
 
     // images/hero.png should be ignored (synced)
     // lore/main.md should be uploaded
@@ -89,6 +95,7 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
     const metadata: SyncMetadata[] = [
       {
+        vaultId: "vault-1",
         filePath: "images/hero.png",
         remoteId: "rem1",
         localModified: 1000,
@@ -97,7 +104,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
       },
     ];
 
-    const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
+    const plan = engine.calculateDiff(
+      "vault-1",
+      localFiles,
+      remoteFiles,
+      metadata,
+    );
 
     expect(plan.uploads.length).toBe(1);
     expect(plan.uploads[0].path).toBe("images/hero.png");
@@ -130,7 +142,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
     const metadata: SyncMetadata[] = [];
 
-    const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
+    const plan = engine.calculateDiff(
+      "vault-1",
+      localFiles,
+      remoteFiles,
+      metadata,
+    );
 
     // rem2 is newer, should be kept. rem1 should be added to deletes.
     expect(plan.deletes.length).toBe(1);
@@ -158,6 +175,7 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
     const metadata: SyncMetadata[] = [
       {
+        vaultId: "vault-1",
         filePath: "images/hero.png",
         remoteId: "rem1",
         localModified: 1000,
@@ -166,7 +184,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
       },
     ];
 
-    const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
+    const plan = engine.calculateDiff(
+      "vault-1",
+      localFiles,
+      remoteFiles,
+      metadata,
+    );
 
     expect(plan.deletes.length).toBe(1);
     expect(plan.deletes[0].id).toBe("rem1");
@@ -191,6 +214,7 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
     const metadata: SyncMetadata[] = [
       {
+        vaultId: "vault-1",
         filePath: "images/hero.png",
         remoteId: "rem1",
         localModified: 1000,
@@ -199,7 +223,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
       },
     ];
 
-    const plan = engine.calculateDiff(localFiles, remoteFiles, metadata);
+    const plan = engine.calculateDiff(
+      "vault-1",
+      localFiles,
+      remoteFiles,
+      metadata,
+    );
 
     // Remote modifiedTime (Jan 5) != metadata.remoteModified (Jan 1) -> RESTORE
     expect(plan.downloads.length).toBe(1);
@@ -225,12 +254,12 @@ describe("GDrive Multi-Vault Sync Operations", () => {
     setRoot: vi.fn(),
   };
   const mockMetadata = {
-    getAll: vi.fn(),
+    getAllForVault: vi.fn(),
     put: vi.fn(),
     bulkPut: vi.fn(),
     get: vi.fn(),
     delete: vi.fn(),
-    clear: vi.fn(),
+    clearForVault: vi.fn(),
   };
 
   const mockRegistry = {
@@ -259,27 +288,6 @@ describe("GDrive Multi-Vault Sync Operations", () => {
     await expect(
       engine.unlinkVaultFromDrive("vault-1", mockRegistry),
     ).rejects.toThrow("Vault not found");
-  });
-
-  it("should throw 'Hash calculation not implemented' when synchronize is called", async () => {
-    mockFs.listAllFiles.mockResolvedValue([]);
-    mockCloud.listFiles.mockResolvedValue([]);
-    mockMetadata.getAll.mockResolvedValue([]);
-
-    // override navigator.onLine for test
-    Object.defineProperty(navigator, "onLine", {
-      value: true,
-      configurable: true,
-    });
-
-    const engine = new SyncEngine(
-      mockCloud as any,
-      mockFs as any,
-      mockMetadata as any,
-    );
-    await expect(
-      engine.synchronize({ vaultId: "vault-1", gdriveFolderId: "folder-1" }),
-    ).rejects.toThrow("Hash calculation not implemented");
   });
 
   it("should throw ConflictError if gdriveFolderId is already claimed by another vault", async () => {

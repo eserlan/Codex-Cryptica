@@ -214,6 +214,7 @@
                   <span
                     class="icon-[lucide--cloud] w-3.5 h-3.5 text-theme-primary"
                     title="Synced to GDrive"
+                    aria-label="Synced to Google Drive"
                   ></span>
                 {/if}
               </div>

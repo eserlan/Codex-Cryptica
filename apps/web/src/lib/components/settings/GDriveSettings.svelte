@@ -39,7 +39,7 @@
         },
         getVault: async (id: string) => {
           const db = await getDB();
-          return db.get("vaults", id);
+          return (await db.get("vaults", id)) || null;
         },
         updateVault: async (vault: any) => {
           const db = await getDB();
@@ -60,6 +60,11 @@
           folderId,
           registryAdapter,
         );
+      } else if (enabled && activeVault.gdriveFolderId) {
+        await registryAdapter.updateVault({
+          ...activeVault,
+          gdriveSyncEnabled: true,
+        });
       } else if (!enabled) {
         await syncEngine.unlinkVaultFromDrive(activeVault.id, registryAdapter);
       }
@@ -69,6 +74,17 @@
       // Ensure global config is also enabled so the Sync engine starts
       if (enabled && !$cloudConfig.enabled) {
         cloudConfig.setEnabled(true);
+      }
+
+      // If sync was disabled for this vault, and no vaults remain linked, disable global sync
+      if (!enabled) {
+        const anyLinked = vaultRegistry.availableVaults.some(
+          (vault) => vault.gdriveSyncEnabled,
+        );
+
+        if (!anyLinked && $cloudConfig.enabled) {
+          cloudConfig.setEnabled(false);
+        }
       }
     } catch (e: any) {
       console.error("Failed to toggle vault sync:", e);

@@ -69,14 +69,6 @@ export async function deleteVault(
     await deleteVaultDir(opfsRoot, id);
     const db = await getDB();
 
-    // GDrive metadata cleanup
-    const vault = await db.get("vaults", id);
-    if (vault?.gdriveFolderId) {
-      // NOTE: We do not delete the remote Google Drive folder here by default to prevent accidental data loss.
-      // We just clean up local links. The metadata is inherently cleaned when the vault record is deleted.
-      // TODO: Provide an optional checkbox in the delete prompt to allow users to permanently delete the remote folder via gdriveAdapter.
-    }
-
     await db.delete("vaults", id);
   } catch (e) {
     console.warn("Failed to delete vault dir", e);
@@ -85,7 +77,6 @@ export async function deleteVault(
     });
   }
 }
-
 export async function getVault(id: string): Promise<VaultRecord | undefined> {
   const db = await getDB();
   return await db.get("vaults", id);
