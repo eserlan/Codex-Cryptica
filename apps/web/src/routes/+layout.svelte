@@ -323,7 +323,7 @@
     rel="sitemap"
     type="application/xml"
     title="Sitemap"
-    href="/sitemap.xml"
+    href="{base}/sitemap.xml"
   />
 </svelte:head>
 
