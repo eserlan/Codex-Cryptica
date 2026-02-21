@@ -179,6 +179,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
+  "multi-vault-sync": {
+    id: "multi-vault-sync",
+    title: "Multi-Vault Sync",
+    content:
+      "Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.",
+    icon: "icon-[lucide--cloud]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

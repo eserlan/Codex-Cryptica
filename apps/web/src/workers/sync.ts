@@ -6,6 +6,7 @@ import { WorkerDriveAdapter } from "$lib/cloud-bridge/google-drive/worker-adapte
 const metadataStore = new MetadataStore();
 const fsAdapter = new FileSystemAdapter();
 let engine: SyncEngine | null = null;
+let currentVaultId: string | null = null;
 
 self.onmessage = async (event) => {
   const { type, payload } = event.data;
@@ -21,6 +22,7 @@ self.onmessage = async (event) => {
           payload.accessToken,
           payload.folderId,
         );
+        currentVaultId = payload.vaultId;
 
         engine = new SyncEngine(cloudAdapter, fsAdapter, metadataStore);
         console.log("SyncWorker: Engine ready");
@@ -28,16 +30,16 @@ self.onmessage = async (event) => {
       }
 
       case "START_SYNC": {
-        if (!engine) {
+        if (!engine || !currentVaultId) {
           console.error(
-            "SyncWorker: Cannot start sync - Engine not initialized",
+            "SyncWorker: Cannot start sync - Engine or vaultId not initialized",
           );
           throw new Error("Sync Engine not initialized");
         }
         console.log("SyncWorker: Starting scan...");
         self.postMessage({ type: "SYNC_STATUS", payload: "SCANNING" });
 
-        const { local, remote, metadata } = await engine.scan();
+        const { local, remote, metadata } = await engine.scan(currentVaultId);
         console.log(
           `SyncWorker: Scan complete. Local: ${local.length}, Remote: ${remote.length}, Metadata: ${metadata.length}`,
         );
@@ -51,7 +53,12 @@ self.onmessage = async (event) => {
           );
 
         // Calculate Diff
-        const plan = engine.calculateDiff(local, remote, metadata);
+        const plan = engine.calculateDiff(
+          currentVaultId,
+          local,
+          remote,
+          metadata,
+        );
         console.log(
           `SyncWorker: Plan calculated. Uploads: ${plan.uploads.length}, Downloads: ${plan.downloads.length}, Deletions: ${plan.deletes.length}`,
         );
@@ -62,12 +69,16 @@ self.onmessage = async (event) => {
           plan.deletes.length > 0
         ) {
           self.postMessage({ type: "SYNC_STATUS", payload: "SYNCING" });
-          await engine.applyPlan(plan, (phase, current, total) => {
-            self.postMessage({
-              type: "SYNC_PROGRESS",
-              payload: { phase, current, total },
-            });
-          });
+          await engine.applyPlan(
+            currentVaultId,
+            plan,
+            (phase, current, total) => {
+              self.postMessage({
+                type: "SYNC_PROGRESS",
+                payload: { phase, current, total },
+              });
+            },
+          );
 
           // If downloads occurred, notify main thread to update Graph/Vault
           if (plan.downloads.length > 0) {

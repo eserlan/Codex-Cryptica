@@ -32,6 +32,13 @@ export async function createVault(
     createdAt: Date.now(),
     lastOpenedAt: Date.now(),
     entityCount: 0,
+    gdriveSyncEnabled: false,
+    gdriveFolderId: null,
+    syncState: {
+      lastSyncMs: null,
+      remoteHash: null,
+      status: "idle",
+    },
   };
   await db.put("vaults", record);
 
@@ -61,6 +68,7 @@ export async function deleteVault(
   try {
     await deleteVaultDir(opfsRoot, id);
     const db = await getDB();
+
     await db.delete("vaults", id);
   } catch (e) {
     console.warn("Failed to delete vault dir", e);
@@ -69,7 +77,6 @@ export async function deleteVault(
     });
   }
 }
-
 export async function getVault(id: string): Promise<VaultRecord | undefined> {
   const db = await getDB();
   return await db.get("vaults", id);

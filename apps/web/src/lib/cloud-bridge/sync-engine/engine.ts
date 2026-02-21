@@ -3,11 +3,36 @@ import type { FileSystemAdapter, FileEntry } from "./fs-adapter";
 import type { MetadataStore, SyncMetadata } from "./metadata-store";
 import { resolveConflict, SYNC_SKEW_MS } from "./conflict";
 
+export interface SyncEngineContext {
+  vaultId: string;
+  gdriveFolderId: string;
+}
+
 interface SyncPlan {
   uploads: (FileEntry & { remoteId?: string })[];
   downloads: RemoteFileMeta[];
   deletes: { id: string; path: string }[];
   metadataUpdates: SyncMetadata[];
+}
+
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+export interface VaultRecord {
+  id: string;
+  name: string;
+  gdriveFolderId?: string | null;
+  gdriveSyncEnabled?: boolean;
+}
+
+export interface IVaultRegistryAdapter {
+  getAllVaults(): Promise<VaultRecord[]>;
+  getVault(id: string): Promise<VaultRecord | null>;
+  updateVault(vault: Partial<VaultRecord> & { id: string }): Promise<void>;
 }
 
 export class SyncEngine {
@@ -17,7 +42,47 @@ export class SyncEngine {
     private metadataStore: MetadataStore,
   ) {}
 
-  async scan(): Promise<{
+  async linkVaultToDrive(
+    vaultId: string,
+    folderId: string,
+    registry: IVaultRegistryAdapter,
+  ): Promise<void> {
+    const allVaults = await registry.getAllVaults();
+    const conflictingVault = allVaults.find(
+      (v) => v.gdriveFolderId === folderId && v.id !== vaultId,
+    );
+
+    if (conflictingVault) {
+      throw new ConflictError(
+        `Folder is already linked to vault: ${conflictingVault.name}`,
+      );
+    }
+
+    const vault = await registry.getVault(vaultId);
+    if (!vault) throw new Error("Vault not found");
+
+    await registry.updateVault({
+      ...vault,
+      gdriveFolderId: folderId,
+      gdriveSyncEnabled: true,
+    });
+  }
+
+  async unlinkVaultFromDrive(
+    vaultId: string,
+    registry: IVaultRegistryAdapter,
+  ): Promise<void> {
+    const vault = await registry.getVault(vaultId);
+    if (!vault) throw new Error("Vault not found");
+
+    await registry.updateVault({
+      ...vault,
+      gdriveFolderId: null,
+      gdriveSyncEnabled: false,
+    });
+  }
+
+  async scan(vaultId: string): Promise<{
     local: FileEntry[];
     remote: RemoteFileMeta[];
     metadata: SyncMetadata[];
@@ -29,13 +94,14 @@ export class SyncEngine {
     const [local, remote, metadata] = await Promise.all([
       this.fsAdapter.listAllFiles(),
       this.cloudAdapter.listFiles(),
-      this.metadataStore.getAll(),
+      this.metadataStore.getAllForVault(vaultId),
     ]);
 
     return { local, remote, metadata };
   }
 
   calculateDiff(
+    vaultId: string,
     localFiles: FileEntry[],
     remoteFilesRaw: RemoteFileMeta[],
     metadataList: SyncMetadata[],
@@ -147,6 +213,7 @@ export class SyncEngine {
           } else if (decision === "SKIP") {
             // Even if we SKIP transfer, we should establish/update metadata to record this successful match
             plan.metadataUpdates.push({
+              vaultId,
               filePath: local.path,
               remoteId: remote.id,
               localModified: local.lastModified,
@@ -183,6 +250,7 @@ export class SyncEngine {
   }
 
   async applyPlan(
+    vaultId: string,
     plan: SyncPlan,
     onProgress?: (phase: string, current: number, total: number) => void,
   ) {
@@ -234,7 +302,7 @@ export class SyncEngine {
 
       if (metadataDeletes.length > 0) {
         await Promise.all(
-          metadataDeletes.map((p) => this.metadataStore.delete(p)),
+          metadataDeletes.map((p) => this.metadataStore.delete(vaultId, p)),
         );
         metadataDeletes.length = 0;
       }
@@ -269,6 +337,7 @@ export class SyncEngine {
           file.remoteId,
         );
         metadataUpdates.push({
+          vaultId,
           filePath: file.path,
           remoteId: meta.id,
           localModified: file.lastModified,
@@ -285,6 +354,7 @@ export class SyncEngine {
         const localPath = file.appProperties?.vault_path || file.name;
         await this.fsAdapter.writeFile(localPath, content);
         metadataUpdates.push({
+          vaultId,
           filePath: localPath,
           remoteId: file.id,
           localModified: Date.now(),
@@ -311,11 +381,13 @@ export class SyncEngine {
   }
 
   private async updateMetadata(
+    vaultId: string,
     path: string,
     remote: RemoteFileMeta,
     localTime: number,
   ) {
     await this.metadataStore.put({
+      vaultId,
       filePath: path,
       remoteId: remote.id,
       localModified: localTime,

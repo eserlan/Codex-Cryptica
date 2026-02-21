@@ -7,6 +7,7 @@
   import { uiStore } from "$stores/ui.svelte";
   import { base } from "$app/paths";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import GDriveSettings from "./GDriveSettings.svelte";
 
   let { embedMode = false } = $props<{ embedMode?: boolean }>();
 
@@ -53,11 +54,6 @@
     workerBridge.startSync();
     setTimeout(() => (isFlashing = false), 500);
     console.groupEnd();
-  };
-
-  const toggleSync = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    cloudConfig.setEnabled(target.checked);
   };
 
   // Check if gapi token exists - adapter now caches and restores tokens automatically
@@ -187,18 +183,9 @@
                   >{$cloudConfig.connectedEmail}</span
                 >
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={$cloudConfig.enabled}
-                  onchange={toggleSync}
-                  class="sr-only peer"
-                />
-                <div
-                  class="w-8 h-4 bg-theme-bg border border-theme-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-theme-muted after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-theme-primary/20 peer-checked:after:bg-theme-primary"
-                ></div>
-              </label>
             </div>
+
+            <GDriveSettings />
 
             <div
               class="p-2 bg-theme-surface border border-theme-border rounded"

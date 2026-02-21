@@ -3,6 +3,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 export type SyncStatus = "SYNCED" | "DIRTY" | "CONFLICT";
 
 export interface SyncMetadata {
+  vaultId: string;
   filePath: string;
   remoteId: string;
   localModified: number;
@@ -13,9 +14,12 @@ export interface SyncMetadata {
 
 interface SyncDB extends DBSchema {
   sync_metadata: {
-    key: string; // filePath
+    key: [string, string]; // [vaultId, filePath]
     value: SyncMetadata;
-    indexes: { "by-remote-id": string };
+    indexes: {
+      "by-remote-id": string;
+      "by-vault-id": string;
+    };
   };
 }
 
@@ -26,17 +30,33 @@ export class MetadataStore {
   private dbPromise: Promise<IDBPDatabase<SyncDB>>;
 
   constructor() {
-    this.dbPromise = openDB<SyncDB>(DB_NAME, 1, {
-      upgrade(db) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: "filePath" });
-        store.createIndex("by-remote-id", "remoteId");
+    this.dbPromise = openDB<SyncDB>(DB_NAME, 2, {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 2) {
+          if (db.objectStoreNames.contains(STORE_NAME)) {
+            // TODO: Migrate version 1 entries (no vaultId) to the correct vault
+            // instead of wholesale deletion. Wholesale deletion is currently
+            // used because the primary key format changed to a composite key.
+            db.deleteObjectStore(STORE_NAME);
+          }
+        }
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, {
+            keyPath: ["vaultId", "filePath"],
+          });
+          store.createIndex("by-remote-id", "remoteId");
+          store.createIndex("by-vault-id", "vaultId");
+        }
       },
     });
   }
 
-  async get(filePath: string): Promise<SyncMetadata | undefined> {
+  async get(
+    vaultId: string,
+    filePath: string,
+  ): Promise<SyncMetadata | undefined> {
     const db = await this.dbPromise;
-    return db.get(STORE_NAME, filePath);
+    return db.get(STORE_NAME, [vaultId, filePath]);
   }
 
   async getByRemoteId(remoteId: string): Promise<SyncMetadata | undefined> {
@@ -44,12 +64,12 @@ export class MetadataStore {
     return db.getFromIndex(STORE_NAME, "by-remote-id", remoteId);
   }
 
-  async getAll(): Promise<SyncMetadata[]> {
+  async getAllForVault(vaultId: string): Promise<SyncMetadata[]> {
     const db = await this.dbPromise;
-    return db.getAll(STORE_NAME);
+    return db.getAllFromIndex(STORE_NAME, "by-vault-id", vaultId);
   }
 
-  async put(metadata: SyncMetadata): Promise<string> {
+  async put(metadata: SyncMetadata): Promise<[string, string]> {
     const db = await this.dbPromise;
     return db.put(STORE_NAME, metadata);
   }
@@ -66,14 +86,22 @@ export class MetadataStore {
     await tx.done;
   }
 
-  async delete(filePath: string): Promise<void> {
+  async delete(vaultId: string, filePath: string): Promise<void> {
     const db = await this.dbPromise;
-    await db.delete(STORE_NAME, filePath);
+    await db.delete(STORE_NAME, [vaultId, filePath]);
   }
 
-  async clear(): Promise<void> {
+  async clearForVault(vaultId: string): Promise<void> {
     const db = await this.dbPromise;
-    await db.clear(STORE_NAME);
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    const store = tx.objectStore(STORE_NAME);
+    const index = store.index("by-vault-id");
+    let cursor = await index.openCursor(IDBKeyRange.only(vaultId));
+    while (cursor) {
+      await cursor.delete();
+      cursor = await cursor.continue();
+    }
+    await tx.done;
   }
 }
 

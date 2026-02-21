@@ -95,6 +95,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 053-gdrive-multi-vault: Added multi-vault support for GDrive sync
+
 - 052-sync-reminder: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper)
 
 - 051-demo-mode: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK
