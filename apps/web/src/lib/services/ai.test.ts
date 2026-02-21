@@ -2,12 +2,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { aiService } from "./ai";
 import { vault } from "../stores/vault.svelte";
 import { searchService } from "./search";
+import { uiStore } from "../stores/ui.svelte";
 
 vi.mock("../stores/vault.svelte", () => ({
   vault: {
     entities: {},
     selectedEntityId: null,
     inboundConnections: {},
+  },
+}));
+
+vi.mock("../stores/ui.svelte", () => ({
+  uiStore: {
+    liteMode: false,
   },
 }));
 
@@ -524,5 +531,41 @@ describe("AIService Style Caching", () => {
     );
     const calls2 = vi.mocked(searchService.search).mock.calls.length;
     expect(calls2).toBeGreaterThan(calls1 + 1); // +1 for main search, +1 for style search
+  });
+});
+
+describe("AIService Lite Mode Gating", () => {
+  beforeEach(() => {
+    (uiStore as any).liteMode = true;
+  });
+
+  it("should return original query in expandQuery when Lite Mode is ON", async () => {
+    const result = await aiService.expandQuery("key", "test query", []);
+    expect(result).toBe("test query");
+  });
+
+  it("should throw error in generateImage when Lite Mode is ON", async () => {
+    await expect(
+      aiService.generateImage("key", "prompt", "model"),
+    ).rejects.toThrow("AI features are disabled in Lite Mode.");
+  });
+
+  it("should throw error in generateResponse when Lite Mode is ON", async () => {
+    await expect(
+      aiService.generateResponse(
+        "key",
+        "query",
+        [],
+        "context",
+        "model",
+        () => {},
+      ),
+    ).rejects.toThrow("AI features are disabled in Lite Mode.");
+  });
+
+  it("should throw error in generateMergeProposal when Lite Mode is ON", async () => {
+    await expect(
+      aiService.generateMergeProposal("key", "model", {}, []),
+    ).rejects.toThrow("AI features are disabled in Lite Mode.");
   });
 });

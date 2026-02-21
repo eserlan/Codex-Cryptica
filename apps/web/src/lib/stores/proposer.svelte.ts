@@ -1,5 +1,6 @@
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
+import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
@@ -55,6 +56,7 @@ class ProposerStore {
   }
 
   async analyzeCurrentEntity() {
+    if (uiStore.liteMode) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
 

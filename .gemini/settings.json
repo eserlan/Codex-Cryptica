@@ -2,7 +2,7 @@
   "hooks": {
     "AfterAgent": [
       {
-        "matcher": "<!-- GEMINI_CMD: specify.implement -->",
+        "matcher": "<!-- GEMINI_CMD: speckit.implement -->",
         "hooks": [
           {
             "name": "speckit-completion-discord",

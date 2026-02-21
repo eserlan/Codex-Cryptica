@@ -374,6 +374,27 @@
                     class="w-4 h-4 accent-theme-primary cursor-pointer"
                   />
                 </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <label
+                      class="block text-xs font-bold text-theme-text uppercase cursor-pointer"
+                      for="lite-mode-toggle">Lite Mode (No AI)</label
+                    >
+                    <p class="text-[10px] text-theme-muted">
+                      Disable all AI-powered features (Oracle chat, image
+                      generation, tag suggestions).
+                    </p>
+                  </div>
+                  <input
+                    id="lite-mode-toggle"
+                    type="checkbox"
+                    checked={uiStore.liteMode}
+                    onchange={(e) =>
+                      uiStore.toggleLiteMode(e.currentTarget.checked)}
+                    class="w-4 h-4 accent-theme-primary cursor-pointer"
+                  />
+                </div>
               </div>
             </section>
 

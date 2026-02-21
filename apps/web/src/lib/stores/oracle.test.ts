@@ -75,6 +75,7 @@ vi.mock("../cloud-bridge/worker-bridge", () => ({
 vi.mock("./vault.svelte", () => ({
   vault: {
     createEntity: vi.fn(),
+    addConnection: vi.fn(),
     saveImageToVault: vi.fn(),
     allEntities: [],
     entities: {},
@@ -89,7 +90,16 @@ vi.mock("./graph.svelte", () => ({
 }));
 
 import { oracle } from "./oracle.svelte";
+import { uiStore } from "./ui.svelte";
 import * as idbUtils from "../utils/idb";
+
+// Mock uiStore
+vi.mock("./ui.svelte", () => ({
+  uiStore: {
+    liteMode: false,
+    openSettings: vi.fn(),
+  },
+}));
 
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
@@ -553,6 +563,87 @@ describe("OracleStore", () => {
       vi.mocked(aiService.retrieveContext).mockClear();
       await oracle.drawEntity("abort-2");
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Restricted Mode (Lite Mode)", () => {
+    beforeEach(() => {
+      (uiStore as any).liteMode = true;
+      oracle.apiKey = "mock-key"; // Gated by AIService, but OracleStore still needs it to proceed
+    });
+
+    it("should handle /help command deterministically", async () => {
+      await oracle.ask("/help");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain("Restricted Mode Active");
+    });
+
+    it("should handle /clear command", async () => {
+      oracle.messages = [{ id: "1", role: "user", content: "hello" }];
+      await oracle.ask("/clear");
+      expect(oracle.messages).toHaveLength(0);
+    });
+
+    it("should reject natural language input", async () => {
+      await oracle.ask("Hello Oracle");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain(
+        "AI features are disabled in Lite Mode",
+      );
+    });
+
+    it("should allow /connect with valid quoted arguments", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).entities = {
+        a: { id: "a", title: "A", connections: [] },
+        b: { id: "b", title: "B", connections: [] },
+      };
+      (vault as any).addConnection.mockReturnValue(true);
+
+      // Search mock needs to return these entities
+      const { searchService } = await import("../services/search");
+      vi.mocked(searchService.search).mockImplementation(async (q) => {
+        if (q === "A")
+          return [
+            {
+              id: "a",
+              title: "A",
+              score: 1,
+              path: "",
+              matchType: "title" as const,
+            },
+          ];
+        if (q === "B")
+          return [
+            {
+              id: "b",
+              title: "B",
+              score: 1,
+              path: "",
+              matchType: "title" as const,
+            },
+          ];
+        return [];
+      });
+
+      await oracle.ask('/connect "A" label "B"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain("Connected **A** to **B**");
+      expect(vault.addConnection).toHaveBeenCalledWith(
+        "a",
+        "b",
+        "related_to",
+        "label",
+      );
+    });
+
+    it("should throw error for /connect with invalid format", async () => {
+      await oracle.ask("/connect A to B");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain("❌ Invalid format");
     });
   });
 });

@@ -13,6 +13,7 @@ class UIStore {
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
+  liteMode = $state(false);
 
   // Demo Mode State
   isDemoMode = $state(false);
@@ -34,6 +35,11 @@ class UIStore {
         this.skipWelcomeScreen = saved === "true";
       }
 
+      const lite = localStorage.getItem("codex_lite_mode");
+      if (lite !== null) {
+        this.liteMode = lite === "true";
+      }
+
       // Proactively dismiss landing page if a demo is requested via URL
       // This prevents the "flash" of the landing page before DemoService.startDemo runs.
       if (new URLSearchParams(window.location.search).has("demo")) {
@@ -45,6 +51,13 @@ class UIStore {
   toggleWelcomeScreen(skip: boolean) {
     this.skipWelcomeScreen = skip;
     localStorage.setItem("codex_skip_landing", String(skip));
+  }
+
+  toggleLiteMode(enabled: boolean) {
+    this.liteMode = enabled;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_lite_mode", String(enabled));
+    }
   }
 
   get abortSignal() {

@@ -364,9 +364,98 @@ class OracleStore {
     this.saveToDB();
   }
 
+  private async handleRestrictedCommand(query: string): Promise<boolean> {
+    const q = query.toLowerCase().trim();
+
+    if (q === "/help") {
+      this.messages = [
+        ...this.messages,
+        {
+          id: crypto.randomUUID(),
+          role: "system",
+          content: `### Restricted Mode Active
+In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
+
+**Available Commands:**
+- \`/connect "Entity A" label "Entity B"\`: Create a connection.
+- \`/merge "Source" into "Target"\`: Merge two entities.
+- \`/clear\`: Clear chat history.
+- \`/help\`: Show this message.`,
+        },
+      ];
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+      return true;
+    }
+
+    if (q === "/clear") {
+      this.clearMessages();
+      return true;
+    }
+
+    if (q.startsWith("/connect")) {
+      const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
+      const match = query.match(quotedRegex);
+      if (!match) {
+        throw new Error(
+          'Invalid format. Use: `/connect "Entity A" label "Entity B"`',
+        );
+      }
+      return false; // Let the existing ask() logic handle the deterministic regex path
+    }
+
+    if (q.startsWith("/merge")) {
+      const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"/i;
+      const match = query.match(quotedRegex);
+      if (!match) {
+        throw new Error('Invalid format. Use: `/merge "Source" into "Target"`');
+      }
+      return false; // Let the existing ask() logic handle the deterministic regex path
+    }
+
+    // If it's natural language, reject it
+    this.messages = [
+      ...this.messages,
+      {
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type `/help` for a list of available commands.",
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+    return true;
+  }
+
   async ask(query: string) {
+    if (uiStore.liteMode) {
+      try {
+        const handled = await this.handleRestrictedCommand(query);
+        if (handled) return;
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: crypto.randomUUID(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
+
+    if (!query.trim()) return;
     const key = this.effectiveApiKey;
-    if (!query.trim() || !key) return;
+
+    // Only require a key if we aren't in Lite Mode OR if we're doing natural language (which is rejected later anyway)
+    if (!key && !uiStore.liteMode) return;
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.messages = [
@@ -420,7 +509,7 @@ class OracleStore {
           console.log(
             `[Oracle] Deterministic merge parse: "${sourceName}" -> "${targetName}"`,
           );
-        } else {
+        } else if (!uiStore.liteMode) {
           // 2. AI Fallback
           const modelName = TIER_MODES[this.tier];
           const intent = await aiService.parseMergeIntent(
@@ -545,7 +634,7 @@ class OracleStore {
           console.log(
             `[Oracle] Deterministic parse: "${sourceName}" -> "${label}" -> "${targetName}"`,
           );
-        } else {
+        } else if (!uiStore.liteMode) {
           // 2. AI Fallback for natural language without strict quotes
           const modelName = TIER_MODES[this.tier];
           const intent = await aiService.parseConnectionIntent(
