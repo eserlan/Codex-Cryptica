@@ -224,7 +224,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     return files[0].id!;
   }
 
-  private async createFolder(name: string): Promise<string> {
+  public async createFolder(name: string): Promise<string> {
     const response = await gapi.client.drive.files.create({
       resource: {
         name: name,

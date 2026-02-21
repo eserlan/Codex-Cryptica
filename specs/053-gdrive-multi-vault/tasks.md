@@ -21,7 +21,7 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Project initialization and basic structure verification
 
-- [ ] T001 Verify monorepo structure and Svelte 5 / Vitest / Playwright configuration in `apps/web/package.json`
+- [x] T001 Verify monorepo structure and Svelte 5 / Vitest / Playwright configuration in `apps/web/package.json`
 
 ---
 
@@ -31,9 +31,9 @@ description: "Task list template for feature implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Update `VaultMetadata` schema to include `gdriveSyncEnabled`, `gdriveFolderId`, and `syncState` in `packages/schema/src/vault.ts`
-- [ ] T003 Update IndexedDB registry store schema/types to support new fields in `packages/editor-core/src/storage/registry.ts`
-- [ ] T004 Define `SyncEngineContext` and update `SyncEngine` interface in `packages/editor-core/src/sync/engine.ts`
+- [x] T002 Update `VaultMetadata` schema to include `gdriveSyncEnabled`, `gdriveFolderId`, and `syncState` in `packages/schema/src/vault.ts`
+- [x] T003 Update IndexedDB registry store schema/types to support new fields in `packages/editor-core/src/storage/registry.ts`
+- [x] T004 Define `SyncEngineContext` and update `SyncEngine` interface in `packages/editor-core/src/sync/engine.ts`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -49,14 +49,14 @@ description: "Task list template for feature implementation"
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T005 [P] [US1] Create unit tests for `linkVaultToDrive` and `unlinkVaultFromDrive` in `packages/editor-core/tests/sync/engine.test.ts`
-- [ ] T006 [P] [US1] Create E2E test for linking a vault to GDrive in `apps/web/tests/gdrive-multi-vault.spec.ts`
+- [x] T005 [P] [US1] Create unit tests for `linkVaultToDrive` and `unlinkVaultFromDrive` in `packages/editor-core/tests/sync/engine.test.ts`
+- [x] T006 [P] [US1] Create E2E test for linking a vault to GDrive in `apps/web/tests/gdrive-multi-vault.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement `linkVaultToDrive` and `unlinkVaultFromDrive` methods in `packages/editor-core/src/sync/engine.ts`
-- [ ] T008 [US1] Update Settings Panel UI for per-vault GDrive authentication and folder selection in `apps/web/src/lib/components/settings/GDriveSettings.svelte`
-- [ ] T009 [US1] Add GDrive sync status indicator to Vault Manager UI in `apps/web/src/lib/components/vault/VaultList.svelte`
+- [x] T007 [US1] Implement `linkVaultToDrive` and `unlinkVaultFromDrive` methods in `packages/editor-core/src/sync/engine.ts`
+- [x] T008 [US1] Update Settings Panel UI for per-vault GDrive authentication and folder selection in `apps/web/src/lib/components/settings/GDriveSettings.svelte`
+- [x] T009 [US1] Add GDrive sync status indicator to Vault Manager UI in `apps/web/src/lib/components/vault/VaultList.svelte`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -70,13 +70,13 @@ description: "Task list template for feature implementation"
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T010 [P] [US2] Create unit tests for `synchronize` using `SyncEngineContext` in `packages/editor-core/tests/sync/engine.test.ts`
-- [ ] T011 [P] [US2] Create E2E test for automated sync folder switching (including <2s performance assertion for switching) in `apps/web/tests/gdrive-multi-vault.spec.ts`
+- [x] T010 [P] [US2] Create unit tests for `synchronize` using `SyncEngineContext` in `packages/editor-core/tests/sync/engine.test.ts`
+- [x] T011 [P] [US2] Create E2E test for automated sync folder switching (including <2s performance assertion for switching) in `apps/web/tests/gdrive-multi-vault.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T012 [US2] Implement `synchronize` operation isolated to the active `gdriveFolderId` in `packages/editor-core/src/sync/engine.ts`
-- [ ] T013 [US2] Update app sync orchestration to pass the active vault's context to the sync engine in `apps/web/src/lib/stores/sync.ts`
+- [x] T012 [US2] Implement `synchronize` operation isolated to the active `gdriveFolderId` in `packages/editor-core/src/sync/engine.ts`
+- [x] T013 [US2] Update app sync orchestration to pass the active vault's context to the sync engine in `apps/web/src/lib/stores/sync.ts`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -90,12 +90,12 @@ description: "Task list template for feature implementation"
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T014 [P] [US3] Create unit test for duplicate `gdriveFolderId` conflict detection in `packages/editor-core/tests/sync/engine.test.ts`
+- [x] T014 [P] [US3] Create unit test for duplicate `gdriveFolderId` conflict detection in `packages/editor-core/tests/sync/engine.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] Update `linkVaultToDrive` to query local registry and throw `ConflictError` in `packages/editor-core/src/sync/engine.ts`
-- [ ] T016 [US3] Implement conflict warning UI in the GDrive settings panel in `apps/web/src/lib/components/settings/GDriveSettings.svelte`
+- [x] T015 [US3] Update `linkVaultToDrive` to query local registry and throw `ConflictError` in `packages/editor-core/src/sync/engine.ts`
+- [x] T016 [US3] Implement conflict warning UI in the GDrive settings panel in `apps/web/src/lib/components/settings/GDriveSettings.svelte`
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -105,10 +105,10 @@ description: "Task list template for feature implementation"
 
 **Purpose**: Improvements that affect multiple user stories and edge case coverage
 
-- [ ] T017 [P] Add user-facing help description for multi-vault sync in `apps/web/src/lib/config/help-content.ts`
-- [ ] T018 Handle GDrive 401/403 errors across all active vault contexts and trigger re-authorization UI flow in `apps/web/src/lib/stores/sync.ts` and `apps/web/src/lib/components/settings/GDriveSettings.svelte`
-- [ ] T019 Implement GDrive metadata cleanup upon local vault deletion in `packages/editor-core/src/storage/registry.ts`
-- [ ] T020 Run all Vitest and Playwright test suites (e.g., `npm run test` in repository root) to ensure full coverage and no regressions
+- [x] T017 [P] Add user-facing help description for multi-vault sync in `apps/web/src/lib/config/help-content.ts`
+- [x] T018 Handle GDrive 401/403 errors across all active vault contexts and trigger re-authorization UI flow in `apps/web/src/lib/stores/sync.ts` and `apps/web/src/lib/components/settings/GDriveSettings.svelte`
+- [x] T019 Implement GDrive metadata cleanup upon local vault deletion in `packages/editor-core/src/storage/registry.ts`
+- [x] T020 Run all Vitest and Playwright test suites (e.g., `npm run test` in repository root) to ensure full coverage and no regressions
 
 ---
 

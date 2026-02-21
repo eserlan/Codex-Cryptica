@@ -210,6 +210,12 @@
                     >ACTIVE</span
                   >
                 {/if}
+                {#if v.gdriveSyncEnabled}
+                  <span
+                    class="icon-[lucide--cloud] w-3.5 h-3.5 text-theme-primary"
+                    title="Synced to GDrive"
+                  ></span>
+                {/if}
               </div>
               <div class="text-xs text-theme-muted mt-1 font-mono">
                 Last opened: {formatDate(v.lastOpenedAt)}

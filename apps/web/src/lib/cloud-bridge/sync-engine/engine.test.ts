@@ -207,3 +207,100 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
     expect(plan.deletes.length).toBe(0);
   });
 });
+
+describe("GDrive Multi-Vault Sync Operations", () => {
+  const mockCloud = {
+    listFiles: vi.fn(),
+    uploadFile: vi.fn(),
+    downloadFile: vi.fn(),
+    deleteFile: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  };
+  const mockFs = {
+    listAllFiles: vi.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    init: vi.fn(),
+    setRoot: vi.fn(),
+  };
+  const mockMetadata = {
+    getAll: vi.fn(),
+    put: vi.fn(),
+    bulkPut: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+    clear: vi.fn(),
+  };
+
+  const mockRegistry = {
+    getAllVaults: vi.fn().mockResolvedValue([]),
+    getVault: vi.fn().mockResolvedValue(null),
+    updateVault: vi.fn().mockResolvedValue(undefined),
+  };
+
+  it("should throw 'Vault not found' when linking non-existent vault", async () => {
+    const engine = new SyncEngine(
+      mockCloud as any,
+      mockFs as any,
+      mockMetadata as any,
+    );
+    await expect(
+      engine.linkVaultToDrive("vault-1", "folder-1", mockRegistry),
+    ).rejects.toThrow("Vault not found");
+  });
+
+  it("should attempt to unlink vault", async () => {
+    const engine = new SyncEngine(
+      mockCloud as any,
+      mockFs as any,
+      mockMetadata as any,
+    );
+    await expect(
+      engine.unlinkVaultFromDrive("vault-1", mockRegistry),
+    ).rejects.toThrow("Vault not found");
+  });
+
+  it("should throw 'Hash calculation not implemented' when synchronize is called", async () => {
+    mockFs.listAllFiles.mockResolvedValue([]);
+    mockCloud.listFiles.mockResolvedValue([]);
+    mockMetadata.getAll.mockResolvedValue([]);
+
+    // override navigator.onLine for test
+    Object.defineProperty(navigator, "onLine", {
+      value: true,
+      configurable: true,
+    });
+
+    const engine = new SyncEngine(
+      mockCloud as any,
+      mockFs as any,
+      mockMetadata as any,
+    );
+    await expect(
+      engine.synchronize({ vaultId: "vault-1", gdriveFolderId: "folder-1" }),
+    ).rejects.toThrow("Hash calculation not implemented");
+  });
+
+  it("should throw ConflictError if gdriveFolderId is already claimed by another vault", async () => {
+    const engine = new SyncEngine(
+      mockCloud as any,
+      mockFs as any,
+      mockMetadata as any,
+    );
+
+    const conflictRegistry = {
+      getAllVaults: vi
+        .fn()
+        .mockResolvedValue([
+          { id: "vault-2", name: "Other Vault", gdriveFolderId: "folder-1" },
+        ]),
+      getVault: vi.fn().mockResolvedValue(null),
+      updateVault: vi.fn().mockResolvedValue(undefined),
+    };
+
+    await expect(
+      engine.linkVaultToDrive("vault-1", "folder-1", conflictRegistry),
+    ).rejects.toThrow("Folder is already linked to vault: Other Vault");
+  });
+});

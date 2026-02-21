@@ -80,6 +80,17 @@ export class WorkerBridge {
             break;
           case "SYNC_ERROR":
             syncStats.setError(payload);
+            if (
+              typeof payload === "string" &&
+              (payload.includes("401") ||
+                payload.includes("403") ||
+                payload.includes("Not authenticated"))
+            ) {
+              cloudConfig.setEnabled(false);
+              import("$stores/ui.svelte").then(({ uiStore }) => {
+                uiStore.toggleSettings("sync");
+              });
+            }
             break;
           case "REMOTE_UPDATES_DOWNLOADED":
             // Critical step: tell the vault to re-read from OPFS
@@ -124,13 +135,28 @@ export class WorkerBridge {
       return;
     }
 
-    const email = config.connectedEmail;
-    const storageKey = `gdrive_folder_id:${email}`;
-    const folderId = localStorage.getItem(storageKey);
+    const activeVaultId = vaultRegistry.activeVaultId;
+    const currentVault = vaultRegistry.availableVaults.find(
+      (v) => v.id === activeVaultId,
+    );
+
+    if (
+      !currentVault ||
+      !currentVault.gdriveSyncEnabled ||
+      !currentVault.gdriveFolderId
+    ) {
+      console.warn(
+        "Sync aborted: active vault does not have GDrive sync enabled or missing folder ID",
+      );
+      console.groupEnd();
+      return;
+    }
+
+    const folderId = currentVault.gdriveFolderId;
     const rootHandle = vaultRegistry.rootHandle;
 
     console.log("[WorkerBridge] Sync Parameters:", {
-      email,
+      vaultId: currentVault.id,
       folderId,
       hasRootHandle: !!rootHandle,
     });
@@ -141,7 +167,7 @@ export class WorkerBridge {
       type: "INIT_SYNC",
       payload: {
         accessToken: token,
-        folderId: folderId || undefined,
+        folderId: folderId,
         rootHandle: rootHandle,
       },
     });

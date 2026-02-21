@@ -7,6 +7,13 @@ export interface VaultRecord {
   createdAt: number;
   lastOpenedAt: number;
   entityCount: number;
+  gdriveSyncEnabled?: boolean;
+  gdriveFolderId?: string | null;
+  syncState?: {
+    lastSyncMs: number | null;
+    remoteHash: string | null;
+    status: "idle" | "syncing" | "error";
+  };
 }
 
 interface CodexDB extends DBSchema {

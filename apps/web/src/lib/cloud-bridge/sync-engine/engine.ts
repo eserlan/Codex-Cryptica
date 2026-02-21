@@ -3,11 +3,31 @@ import type { FileSystemAdapter, FileEntry } from "./fs-adapter";
 import type { MetadataStore, SyncMetadata } from "./metadata-store";
 import { resolveConflict, SYNC_SKEW_MS } from "./conflict";
 
+export interface SyncEngineContext {
+  vaultId: string;
+  gdriveFolderId: string;
+}
+
 interface SyncPlan {
   uploads: (FileEntry & { remoteId?: string })[];
   downloads: RemoteFileMeta[];
   deletes: { id: string; path: string }[];
   metadataUpdates: SyncMetadata[];
+}
+
+export class ConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConflictError";
+  }
+}
+
+export interface IVaultRegistryAdapter {
+  getAllVaults(): Promise<
+    { id: string; name: string; gdriveFolderId?: string | null }[]
+  >;
+  getVault(id: string): Promise<any>;
+  updateVault(vault: any): Promise<void>;
 }
 
 export class SyncEngine {
@@ -16,6 +36,61 @@ export class SyncEngine {
     private fsAdapter: FileSystemAdapter,
     private metadataStore: MetadataStore,
   ) {}
+
+  async linkVaultToDrive(
+    vaultId: string,
+    folderId: string,
+    registry: IVaultRegistryAdapter,
+  ): Promise<void> {
+    const allVaults = await registry.getAllVaults();
+    const conflictingVault = allVaults.find(
+      (v) => v.gdriveFolderId === folderId && v.id !== vaultId,
+    );
+
+    if (conflictingVault) {
+      throw new ConflictError(
+        `Folder is already linked to vault: ${conflictingVault.name}`,
+      );
+    }
+
+    const vault = await registry.getVault(vaultId);
+    if (!vault) throw new Error("Vault not found");
+
+    vault.gdriveFolderId = folderId;
+    vault.gdriveSyncEnabled = true;
+    await registry.updateVault(vault);
+  }
+
+  async unlinkVaultFromDrive(
+    vaultId: string,
+    registry: IVaultRegistryAdapter,
+  ): Promise<void> {
+    const vault = await registry.getVault(vaultId);
+    if (!vault) throw new Error("Vault not found");
+
+    vault.gdriveFolderId = null;
+    vault.gdriveSyncEnabled = false;
+    await registry.updateVault(vault);
+  }
+
+  async synchronize(
+    context: SyncEngineContext,
+    onProgress?: (phase: string, current: number, total: number) => void,
+  ): Promise<any> {
+    const { local, remote, metadata } = await this.scan();
+    const plan = this.calculateDiff(local, remote, metadata);
+
+    if (
+      plan.uploads.length > 0 ||
+      plan.downloads.length > 0 ||
+      plan.deletes.length > 0
+    ) {
+      await this.applyPlan(plan, onProgress);
+    }
+
+    // Implementation should calculate actual remote state hash or retrieve from adapter
+    throw new Error("Hash calculation not implemented");
+  }
 
   async scan(): Promise<{
     local: FileEntry[];
