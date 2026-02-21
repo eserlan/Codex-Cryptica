@@ -19,7 +19,7 @@ if [ ! -t 0 ]; then
     RESPONSE=$(echo "$EVENT_DATA" | jq -r '.prompt_response // empty')
     
     # ONLY notify if the special speckit.implement marker is present
-    if [[ "$PROMPT" == *"GEMINI_CMD: specify.implement"* ]]; then
+    if [[ "$PROMPT" == *"GEMINI_CMD: speckit.implement"* ]] || [[ "$RESPONSE" == *"GEMINI_CMD: speckit.implement"* ]]; then
       # Try to find the feature name from the implementation plan matching current branch
       BRANCH=$(git branch --show-current)
       FEATURE_NAME=$(grep -h "^# Implementation Plan:" "specs/${BRANCH}/plan.md" 2>/dev/null | head -n 1 | sed 's/# Implementation Plan: //')

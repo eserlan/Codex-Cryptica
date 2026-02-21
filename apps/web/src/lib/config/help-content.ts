@@ -186,6 +186,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.",
     icon: "icon-[lucide--cloud]",
   },
+  "lite-mode": {
+    id: "lite-mode",
+    title: "Lite Mode (No AI)",
+    content:
+      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.",
+    icon: "icon-[lucide--zap-off]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

@@ -85,7 +85,7 @@ class OracleStore {
     messageId?: string,
   ) {
     this.undoStack.push({
-      id: crypto.randomUUID(),
+      id: this.generateId(),
       messageId,
       description,
       revert,
@@ -122,7 +122,7 @@ class OracleStore {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `↩️ Undid action: **${action.description}**`,
           },
@@ -140,7 +140,7 @@ class OracleStore {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ Undo failed: ${err.message}. You can try again.`,
           },
@@ -254,6 +254,7 @@ class OracleStore {
   }
 
   get isEnabled() {
+    if (uiStore.liteMode) return true;
     const sharedKey =
       (typeof window !== "undefined" &&
         (window as any).__SHARED_GEMINI_KEY__) ||
@@ -341,7 +342,7 @@ class OracleStore {
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content: `Starting ${type} wizard...`,
         type: "wizard",
@@ -364,16 +365,148 @@ class OracleStore {
     this.saveToDB();
   }
 
+  private generateId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return Math.random().toString(36).substring(2, 15);
+  }
+
+  showHelp() {
+    const isLite = uiStore.liteMode;
+    this.messages = [
+      ...this.messages,
+      {
+        id: this.generateId(),
+        role: "system",
+        content: isLite
+          ? `### Restricted Mode Active
+In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
+
+**Available Commands:**
+- \`/connect "Entity A" label "Entity B"\`: Create a connection.
+- \`/merge "Source" into "Target"\`: Merge two entities.
+- \`/clear\`: Clear chat history.
+- \`/help\`: Show this message.`
+          : `### Oracle Command Guide
+The Lore Oracle supports several slash commands to help you manage your vault:
+
+**AI Powered:**
+- \`/draw [subject]\`: Visualize an entity or scene.
+- \`/create [description]\`: Automatically create a new entity from a text description.
+- \`/connect oracle\`: Start the guided connection wizard.
+- \`/merge oracle\`: Start the guided merge wizard.
+
+**Utility:**
+- \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
+- \`/merge "Source" into "Target"\`: Quick deterministic merge.
+- \`/clear\`: Clear conversation history.
+- \`/help\`: Show this guide.`,
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+  }
+
+  private async handleRestrictedCommand(query: string): Promise<boolean> {
+    const q = query.toLowerCase().trim();
+
+    if (q === "/help") {
+      this.showHelp();
+      return true;
+    }
+
+    if (q === "/clear") {
+      this.clearMessages();
+      return true;
+    }
+
+    if (q.startsWith("/connect")) {
+      const quotedRegex = /\/connect\s+"([^"]+)"\s+(.+?)\s+"([^"]+)"/i;
+      const match = query.match(quotedRegex);
+      if (!match) {
+        throw new Error(
+          'Invalid format. Use: `/connect "Entity A" label "Entity B"`',
+        );
+      }
+      return false; // Let the existing ask() logic handle the deterministic regex path
+    }
+
+    if (q.startsWith("/merge")) {
+      const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"/i;
+      const match = query.match(quotedRegex);
+      if (!match) {
+        throw new Error('Invalid format. Use: `/merge "Source" into "Target"`');
+      }
+      return false; // Let the existing ask() logic handle the deterministic regex path
+    }
+
+    if (q.startsWith("/draw") || q.startsWith("/create")) {
+      const cmd = q.startsWith("/draw") ? "/draw" : "/create";
+      this.messages = [
+        ...this.messages,
+        {
+          id: this.generateId(),
+          role: "system",
+          content: `❌ The \`${cmd}\` command is powered by AI and is disabled in Lite Mode. Use standard slash commands like \`/connect\` or \`/merge\`, or disable Lite Mode in settings.`,
+        },
+      ];
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+      return true;
+    }
+
+    // If it's natural language or an unknown command, reject it
+    this.messages = [
+      ...this.messages,
+      {
+        id: this.generateId(),
+        role: "system",
+        content:
+          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type `/help` for a list of available commands.",
+      },
+    ];
+    this.lastUpdated = Date.now();
+    this.broadcast();
+    this.saveToDB();
+    return true;
+  }
+
   async ask(query: string) {
+    if (uiStore.liteMode) {
+      try {
+        const handled = await this.handleRestrictedCommand(query);
+        if (handled) return;
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
+
+    if (!query.trim()) return;
     const key = this.effectiveApiKey;
-    if (!query.trim() || !key) return;
+
+    // Only require a key if we aren't in Lite Mode OR if we're doing natural language (which is rejected later anyway)
+    if (!key && !uiStore.liteMode) return;
 
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.messages = [
         ...this.messages,
-        { id: crypto.randomUUID(), role: "user", content: query },
+        { id: this.generateId(), role: "user", content: query },
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content:
             "The Oracle is currently offline. Conversational expansion and AI generation are suspended, but local retrieval will attempt to find matches for your raw query.",
@@ -396,7 +529,7 @@ class OracleStore {
 
     this.messages = [
       ...this.messages,
-      { id: crypto.randomUUID(), role: "user", content: query },
+      { id: this.generateId(), role: "user", content: query },
     ];
     this.lastUpdated = Date.now();
     this.isLoading = true;
@@ -420,7 +553,7 @@ class OracleStore {
           console.log(
             `[Oracle] Deterministic merge parse: "${sourceName}" -> "${targetName}"`,
           );
-        } else {
+        } else if (!uiStore.liteMode) {
           // 2. AI Fallback
           const modelName = TIER_MODES[this.tier];
           const intent = await aiService.parseMergeIntent(
@@ -443,76 +576,79 @@ class OracleStore {
         const sourceRes = await searchService.search(sourceName, { limit: 1 });
         const targetRes = await searchService.search(targetName, { limit: 1 });
 
-        if (sourceRes[0] && targetRes[0]) {
-          const sourceId = sourceRes[0].id;
-          const targetId = targetRes[0].id;
+        if (!sourceRes[0]) {
+          throw new Error(`Could not find source entity: "${sourceName}"`);
+        }
+        if (!targetRes[0]) {
+          throw new Error(`Could not find target entity: "${targetName}"`);
+        }
 
-          if (sourceId === targetId) {
-            throw new Error("Cannot merge an entity into itself.");
-          }
+        const sourceId = sourceRes[0].id;
+        const targetId = targetRes[0].id;
 
-          const sourceEntity = vault.entities[sourceId];
-          const targetEntity = vault.entities[targetId];
+        if (sourceId === targetId) {
+          throw new Error("Cannot merge an entity into itself.");
+        }
 
-          if (sourceEntity && targetEntity) {
-            // Execute Merge via nodeMergeService
-            const { nodeMergeService } =
-              await import("../services/node-merge.service");
+        const sourceEntity = vault.entities[sourceId];
+        const targetEntity = vault.entities[targetId];
 
-            // 1. Propose (Concat strategy for speed/safety in direct command)
-            const proposal = await nodeMergeService.proposeMerge({
-              sourceNodeIds: [sourceId, targetId],
-              targetNodeId: targetId,
-              strategy: "concat",
-            });
+        if (sourceEntity && targetEntity) {
+          // Execute Merge via nodeMergeService
+          const { nodeMergeService } =
+            await import("../services/node-merge.service");
 
-            // 2. Capture state for Undo (Immediately before execution)
-            const beforeTarget = $state.snapshot(vault.entities[targetId]);
-            const beforeSource = $state.snapshot(vault.entities[sourceId]);
+          // 1. Propose (Concat strategy for speed/safety in direct command)
+          const proposal = await nodeMergeService.proposeMerge({
+            sourceNodeIds: [sourceId, targetId],
+            targetNodeId: targetId,
+            strategy: "concat",
+          });
 
-            // 3. Execute
-            await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
+          // 2. Capture state for Undo (Immediately before execution)
+          const beforeTarget = $state.snapshot(vault.entities[targetId]);
+          const beforeSource = $state.snapshot(vault.entities[sourceId]);
 
-            this.messages = [
-              ...this.messages,
-              {
-                id: crypto.randomUUID(),
-                role: "assistant",
-                content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
-              },
-            ];
+          // 3. Execute
+          await nodeMergeService.executeMerge(proposal, [sourceId, targetId]);
 
-            // Push Undo
-            this.pushUndoAction(
-              `Merge ${sourceEntity.title} into ${targetEntity.title}`,
-              async () => {
-                // Re-create source
-                await vault.createEntity(
-                  beforeSource.type,
-                  beforeSource.title,
-                  { ...beforeSource },
-                );
-                // Restore target
-                vault.updateEntity(targetId, beforeTarget);
-              },
-            );
+          this.messages = [
+            ...this.messages,
+            {
+              id: this.generateId(),
+              role: "assistant",
+              content: `✅ Merged **${sourceEntity.title}** into **${targetEntity.title}**.`,
+            },
+          ];
 
-            this.lastUpdated = Date.now();
-            this.isLoading = false;
-            this.broadcast();
-            this.saveToDB();
-            return;
-          }
+          // Push Undo
+          this.pushUndoAction(
+            `Merge ${sourceEntity.title} into ${targetEntity.title}`,
+            async () => {
+              // Re-create source
+              await vault.createEntity(beforeSource.type, beforeSource.title, {
+                ...beforeSource,
+              });
+              // Restore target
+              vault.updateEntity(targetId, beforeTarget);
+            },
+          );
+
+          this.lastUpdated = Date.now();
+          this.isLoading = false;
+          this.broadcast();
+          this.saveToDB();
+          return;
         }
 
         throw new Error(
-          `Could not find one or both entities: "${sourceName}" or "${targetName}".`,
+          `Entity resolution failed for "${sourceName}" or "${targetName}".`,
         );
       } catch (err: any) {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ ${err.message}`,
           },
@@ -545,7 +681,7 @@ class OracleStore {
           console.log(
             `[Oracle] Deterministic parse: "${sourceName}" -> "${label}" -> "${targetName}"`,
           );
-        } else {
+        } else if (!uiStore.liteMode) {
           // 2. AI Fallback for natural language without strict quotes
           const modelName = TIER_MODES[this.tier];
           const intent = await aiService.parseConnectionIntent(
@@ -568,68 +704,69 @@ class OracleStore {
           limit: 1,
         });
 
-        if (sourceRes[0] && targetRes[0]) {
-          const sourceId = sourceRes[0].id;
-          const targetId = targetRes[0].id;
-          const source = vault.entities[sourceId];
-          const target = vault.entities[targetId];
-
-          if (source && target) {
-            // Direct Creation
-            const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
-            const typeToUse = allowedTypes.includes(type)
-              ? (type as any)
-              : "related_to";
-
-            const success = vault.addConnection(
-              source.id,
-              target.id,
-              typeToUse,
-              label,
-            );
-
-            if (success) {
-              this.messages = [
-                ...this.messages,
-                {
-                  id: crypto.randomUUID(),
-                  role: "assistant",
-                  content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
-                },
-              ];
-
-              // Push Undo
-              this.pushUndoAction(
-                `Connect ${source.title} to ${target.title}`,
-                async () => {
-                  vault.removeConnection(source.id, target.id, typeToUse);
-                },
-              );
-
-              this.lastUpdated = Date.now();
-              this.isLoading = false;
-              this.broadcast();
-              this.saveToDB();
-              return;
-            } else {
-              throw new Error("Vault refused to create connection.");
-            }
-          } else {
-            const missingName = !source ? sourceName : targetName;
-            throw new Error(
-              `Entity "${missingName}" was found in search but is missing from the active vault.`,
-            );
-          }
+        if (!sourceRes[0]) {
+          throw new Error(`Could not find source entity: "${sourceName}"`);
+        }
+        if (!targetRes[0]) {
+          throw new Error(`Could not find target entity: "${targetName}"`);
         }
 
-        throw new Error(
-          "Could not identify both entities. Try using the guided wizard with `/connect oracle`.",
-        );
+        const sourceId = sourceRes[0].id;
+        const targetId = targetRes[0].id;
+        const source = vault.entities[sourceId];
+        const target = vault.entities[targetId];
+
+        if (source && target) {
+          // Direct Creation
+          const allowedTypes = ["related_to", "neutral", "friendly", "enemy"];
+          const typeToUse = allowedTypes.includes(type)
+            ? (type as any)
+            : "related_to";
+
+          const success = vault.addConnection(
+            source.id,
+            target.id,
+            typeToUse,
+            label,
+          );
+
+          if (success) {
+            this.messages = [
+              ...this.messages,
+              {
+                id: this.generateId(),
+                role: "assistant",
+                content: `✅ Connected **${source.title}** to **${target.title}** as *${label || typeToUse}*.`,
+              },
+            ];
+
+            // Push Undo
+            this.pushUndoAction(
+              `Connect ${source.title} to ${target.title}`,
+              async () => {
+                vault.removeConnection(source.id, target.id, typeToUse);
+              },
+            );
+
+            this.lastUpdated = Date.now();
+            this.isLoading = false;
+            this.broadcast();
+            this.saveToDB();
+            return;
+          } else {
+            throw new Error("Vault refused to create connection.");
+          }
+        } else {
+          const missingName = !source ? sourceName : targetName;
+          throw new Error(
+            `Entity "${missingName}" was found in search but is missing from the active vault.`,
+          );
+        }
       } catch (err: any) {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "system",
             content: `❌ ${err.message}`,
           },
@@ -647,7 +784,7 @@ class OracleStore {
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content: "",
         type: isImageRequest ? "image" : "text",
@@ -785,7 +922,7 @@ class OracleStore {
               this.messages = [
                 ...this.messages,
                 {
-                  id: crypto.randomUUID(),
+                  id: this.generateId(),
                   role: "system",
                   content: `✅ Automatically created node: **${parsed.title}** (${type.toUpperCase()})`,
                 },
@@ -802,7 +939,7 @@ class OracleStore {
               this.messages = [
                 ...this.messages,
                 {
-                  id: crypto.randomUUID(),
+                  id: this.generateId(),
                   role: "system",
                   content: errorMsg,
                 },
@@ -818,7 +955,7 @@ class OracleStore {
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: err.message || "Error generating response.",
         },
@@ -882,7 +1019,7 @@ class OracleStore {
         this.messages = [
           ...this.messages,
           {
-            id: crypto.randomUUID(),
+            id: this.generateId(),
             role: "assistant",
             content: "",
             type: "image",
@@ -899,7 +1036,7 @@ class OracleStore {
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: `❌ Image generation failed for **${entity.title}**: ${err.message}`,
         },
@@ -980,7 +1117,7 @@ class OracleStore {
       this.messages = [
         ...this.messages,
         {
-          id: crypto.randomUUID(),
+          id: this.generateId(),
           role: "system",
           content: `❌ Image generation failed: ${err.message}`,
         },
@@ -1024,7 +1161,7 @@ class OracleStore {
     this.messages = [
       ...this.messages,
       {
-        id: crypto.randomUUID(),
+        id: this.generateId(),
         role: "assistant",
         content,
         type: "image",

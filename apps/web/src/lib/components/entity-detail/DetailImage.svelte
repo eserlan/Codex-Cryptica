@@ -2,6 +2,7 @@
   import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
 
   let {
@@ -148,7 +149,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced"}
+        {#if oracle.tier === "advanced" && !uiStore.liteMode}
           <div class="mb-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}

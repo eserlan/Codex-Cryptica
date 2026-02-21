@@ -289,12 +289,41 @@
             class="space-y-8 max-w-3xl mx-auto"
           >
             <section>
-              <p class="text-[13px] text-theme-text/70 leading-relaxed">
-                Manage AI integration settings. Codex Cryptica uses Google
-                Gemini to provide context-aware reasoning, automated tagging,
-                and image generation.
-              </p>
-              <AISettings />
+              <div
+                class="bg-theme-surface border border-theme-border p-6 rounded-lg mb-8 flex items-center justify-between shadow-sm"
+              >
+                <div>
+                  <label
+                    class="block text-xs font-bold text-theme-text uppercase cursor-pointer"
+                    for="lite-mode-toggle">Lite Mode (No AI)</label
+                  >
+                  <p class="text-[10px] text-theme-muted">
+                    Disable all AI-powered features (Oracle chat, image
+                    generation, tag suggestions).
+                  </p>
+                </div>
+                <input
+                  id="lite-mode-toggle"
+                  type="checkbox"
+                  checked={uiStore.liteMode}
+                  onchange={(e) =>
+                    uiStore.toggleLiteMode(e.currentTarget.checked)}
+                  class="w-4 h-4 accent-theme-primary cursor-pointer"
+                />
+              </div>
+
+              <div
+                class="transition-all duration-300 {uiStore.liteMode
+                  ? 'opacity-40 grayscale pointer-events-none select-none'
+                  : ''}"
+              >
+                <p class="text-[13px] text-theme-text/70 leading-relaxed">
+                  Manage AI integration settings. Codex Cryptica uses Google
+                  Gemini to provide context-aware reasoning, automated tagging,
+                  and image generation.
+                </p>
+                <AISettings />
+              </div>
             </section>
 
             <section>

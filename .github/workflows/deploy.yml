@@ -81,3 +81,13 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Notify Staging
+        if: success()
+        run: |
+          ./scripts/discord-deploy.sh "staging" "https://discord.com/api/webhooks/1474849321433174250/2Zc786bX-z8WX-HOh9y4ng_ThRH08vyHjiEVp3AgdkLQmiTVVWzSuvuybz46IlVovamU" "${{ steps.deployment.outputs.page_url }}staging"
+
+      - name: Notify Production
+        if: success()
+        run: |
+          ./scripts/discord-deploy.sh "production" "https://discord.com/api/webhooks/1474849546210115654/cd5PD5CPTH3cV8DxbV9FCgqRqQUUJm_jF0Ovo0H-3FqcxzVcx0t7bethsoCYI36Lw7He" "${{ steps.deployment.outputs.page_url }}"
