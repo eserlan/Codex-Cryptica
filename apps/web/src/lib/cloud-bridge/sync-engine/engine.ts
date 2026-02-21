@@ -62,7 +62,7 @@ export class SyncEngine {
     if (!vault) throw new Error("Vault not found");
 
     await registry.updateVault({
-      id: vaultId,
+      ...vault,
       gdriveFolderId: folderId,
       gdriveSyncEnabled: true,
     });
@@ -76,7 +76,7 @@ export class SyncEngine {
     if (!vault) throw new Error("Vault not found");
 
     await registry.updateVault({
-      id: vaultId,
+      ...vault,
       gdriveFolderId: null,
       gdriveSyncEnabled: false,
     });

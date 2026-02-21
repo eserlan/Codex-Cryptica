@@ -34,6 +34,9 @@ export class MetadataStore {
       upgrade(db, oldVersion) {
         if (oldVersion < 2) {
           if (db.objectStoreNames.contains(STORE_NAME)) {
+            // TODO: Migrate version 1 entries (no vaultId) to the correct vault
+            // instead of wholesale deletion. Wholesale deletion is currently
+            // used because the primary key format changed to a composite key.
             db.deleteObjectStore(STORE_NAME);
           }
         }
