@@ -135,10 +135,24 @@ export class WorkerBridge {
       return;
     }
 
+    // Ensure registry is initialized before checking state
+    if (!vaultRegistry.isInitialized) {
+      console.log("[WorkerBridge] Registry not ready, awaiting init...");
+      await vaultRegistry.init();
+    }
+
     const activeVaultId = vaultRegistry.activeVaultId;
     const currentVault = vaultRegistry.availableVaults.find(
       (v) => v.id === activeVaultId,
     );
+
+    console.log("[WorkerBridge] Registry State:", {
+      isInitialized: vaultRegistry.isInitialized,
+      activeVaultId,
+      vaultFound: !!currentVault,
+      syncEnabled: currentVault?.gdriveSyncEnabled,
+      hasFolderId: !!currentVault?.gdriveFolderId,
+    });
 
     if (
       !currentVault ||
