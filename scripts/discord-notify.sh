@@ -39,12 +39,21 @@ if [ ! -t 0 ]; then
       fi
 
       if [ -n "$SUMMARY" ]; then
-        DETAILS="\n\n**Changes:**\n${SUMMARY}"
+        # Use literal newlines in the string
+        DETAILS="
+
+**Changes:**
+${SUMMARY}"
       else
-        DETAILS="\n\nThe implementation of **${FEATURE_NAME}** has finished. All systems are operational."
+        DETAILS="
+
+The implementation of **${FEATURE_NAME}** has finished. All systems are operational."
       fi
 
       MESSAGE="🚀 **Implementation Complete: ${FEATURE_NAME}**${DETAILS}"
+      
+      # Strip the internal completion marker if it's in the message
+      MESSAGE=$(echo "$MESSAGE" | sed 's/<!-- GEMINI_CMD: speckit.implement -->//g')
       
       # Truncate if too long for Discord (2000 chars)
       if [ ${#MESSAGE} -gt 1900 ]; then
