@@ -69,16 +69,17 @@ export class GraphTransformer {
     const elements: GraphElement[] = [];
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
-    // Performance: Imperative loop to avoid iterator allocation on hot path
-    const len = entities.length;
-    for (let i = 0; i < len; i++) {
+    // Performance: Imperative loop to avoid iterator allocation on hot path.
+    // Length is accessed directly as modern engines optimize this and it avoids inconsistent local caching.
+    for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
 
       // Visibility markers for Admin visual cues
-      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly
+      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly.
+      // We check for existence first to avoid '|| []' allocation.
       let isRevealed = false;
       const tags = entity.tags;
       if (tags) {
