@@ -1,0 +1,17 @@
+
+> web@0.8.52 dev
+> vite dev --port 5173
+
+
+  VITE v7.3.1  ready in 1168 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+10:10:47 AM [vite-plugin-svelte] src/routes/+page.svelte:285:2 Unused CSS selector ".custom-scrollbar::-webkit-scrollbar"
+https://svelte.dev/e/css_unused_selector
+10:10:47 AM [vite-plugin-svelte] src/routes/+page.svelte:288:2 Unused CSS selector ".custom-scrollbar::-webkit-scrollbar-track"
+https://svelte.dev/e/css_unused_selector
+10:10:47 AM [vite-plugin-svelte] src/routes/+page.svelte:291:2 Unused CSS selector ".custom-scrollbar::-webkit-scrollbar-thumb"
+https://svelte.dev/e/css_unused_selector
+10:10:47 AM [vite-plugin-svelte] src/lib/components/settings/VaultSettings.svelte:267:16 Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label

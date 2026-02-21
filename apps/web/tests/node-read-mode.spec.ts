@@ -80,7 +80,7 @@ Villain is bad.`;
       await (window as any).vault.addConnection("hero", "villain", "enemy");
     });
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+CHRONICLES/i, {
       timeout: 20000,
     });
 
@@ -136,7 +136,7 @@ Villain is bad.`;
     await page.getByPlaceholder("Entry Title...").fill("Villain");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+CHRONICLES/i, {
       timeout: 20000,
     });
 
@@ -171,7 +171,7 @@ Villain is bad.`;
     await page.getByPlaceholder("Entry Title...").fill("Villain");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText(/2\s+CHRONICLES/i, {
       timeout: 20000,
     });
 
@@ -190,5 +190,56 @@ Villain is bad.`;
     const modal = page.locator('[role="dialog"]');
     await expect(modal).toBeVisible();
     await expect(modal.getByTestId("entity-title")).toHaveText("Hero");
+  });
+
+  test("Open Lightbox and Close with Escape", async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto("http://localhost:5173/");
+
+    // Wait for vault to be ready
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
+    // Create test entity with image
+    await page.evaluate(async () => {
+      await (window as any).vault.createEntity("character", "Hero", {
+        content: "# Hero Content\nHero is bold.",
+        image: "https://via.placeholder.com/150", // Use a placeholder or just a string, resolver handles it
+      });
+    });
+
+    await expect(page.getByTestId("entity-count")).toHaveText(/1\s+CHRONICLE/i, {
+      timeout: 20000,
+    });
+
+    // 1. Open Zen Mode directly via store (bypass search flake)
+    await page.evaluate(() => {
+        (window as any).uiStore.openZenMode("hero");
+    });
+    const modal = page.locator('[data-testid="zen-mode-modal"]');
+    await expect(modal).toBeVisible();
+
+    // 3. Click Image to Open Lightbox
+    // Need to wait for image to be "resolved" (even if mock) or at least the element to appear
+    const imageBtn = modal.locator("button:has(img)");
+    await expect(imageBtn).toBeVisible();
+    await imageBtn.click();
+
+    // 4. Verify Lightbox Open
+    // Lightbox has aria-label "Close image view" as per my change
+    const lightbox = page.locator('[aria-label="Close image view"]');
+    await expect(lightbox).toBeVisible();
+
+    // 5. Press Escape
+    await page.keyboard.press("Escape");
+
+    // 6. Verify Lightbox Closed but Zen Mode Open
+    await expect(lightbox).not.toBeVisible();
+    await expect(modal).toBeVisible();
+
+    // 7. Press Escape again
+    await page.keyboard.press("Escape");
+
+    // 8. Verify Zen Mode Closed
+    await expect(modal).not.toBeVisible();
   });
 });

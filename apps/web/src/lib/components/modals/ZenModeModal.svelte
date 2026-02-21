@@ -306,7 +306,16 @@
 
 <svelte:window
   onkeydown={(e) => {
-    if (!uiStore.showZenMode || showLightbox) return;
+    if (!uiStore.showZenMode) return;
+
+    if (showLightbox) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        showLightbox = false;
+      }
+      return;
+    }
 
     // Don't intercept if focus is in an input, textarea, or other interactive elements
     if (
@@ -804,10 +813,17 @@
   <!-- Lightbox -->
   {#if showLightbox && entity.image}
     <button
-      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out"
+      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full border-none"
       onclick={() => (showLightbox = false)}
       transition:fade={{ duration: 200 }}
+      aria-label="Close image view"
     >
+      <!-- Explicit Close Icon -->
+      <div class="absolute top-4 right-4 text-white/70">
+        <span class="icon-[lucide--x] w-8 h-8"></span>
+        <span class="sr-only">Close</span>
+      </div>
+
       <img
         src={resolvedImageUrl}
         alt={entity.title}
