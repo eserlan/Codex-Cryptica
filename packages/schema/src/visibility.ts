@@ -5,6 +5,10 @@ export type VisibilitySettings = {
   defaultVisibility: "visible" | "hidden";
 };
 
+// Pre-compiled regex for performance (avoids allocation)
+const HIDDEN_REGEX = /^(hidden)$/i;
+const REVEALED_REGEX = /^(revealed|visible)$/i;
+
 /**
  * Core visibility check logic for Fog of War.
  * Precedence Rule: 'hidden' tag > 'revealed' tag > defaultVisibility.
@@ -22,19 +26,26 @@ export function isEntityVisible(
     return true;
   }
 
-  const tags = (entity.tags || []).map((t) => t.toLowerCase());
-  const labels = (entity.labels || []).map((l) => l.toLowerCase());
-  const allMarkers = [...tags, ...labels];
+  // Optimization: Use imperative loops and regex to avoid array allocation/mapping
+  let explicitlyRevealed = false;
 
-  // 1. Force Hidden always takes precedence
-  if (allMarkers.includes("hidden")) {
-    return false;
+  // Check Tags
+  if (entity.tags) {
+    for (const tag of entity.tags) {
+      if (HIDDEN_REGEX.test(tag)) return false; // Early exit: Hidden overrides everything
+      if (REVEALED_REGEX.test(tag)) explicitlyRevealed = true;
+    }
   }
 
-  // 2. Force Revealed/Visible shows it even if world is hidden
-  if (allMarkers.includes("revealed") || allMarkers.includes("visible")) {
-    return true;
+  // Check Labels
+  if (entity.labels) {
+    for (const label of entity.labels) {
+      if (HIDDEN_REGEX.test(label)) return false; // Early exit
+      if (REVEALED_REGEX.test(label)) explicitlyRevealed = true;
+    }
   }
+
+  if (explicitlyRevealed) return true;
 
   // 3. Fallback to global setting
   return settings.defaultVisibility === "visible";
