@@ -201,7 +201,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       vault: "Grid",
       entity: "Node",
       entity_plural: "Nodes",
-      save: "Commit",
+      save: "Hack",
       delete: "Flatline",
       new: "Boot",
       syncing: "Uplinking",

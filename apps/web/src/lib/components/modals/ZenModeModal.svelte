@@ -235,10 +235,16 @@
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const targetTab = activeTab === "overview" ? "inventory" : "overview";
-      activeTab = targetTab;
-      if (targetTab === "overview") tabOverview?.focus();
-      else tabInventory?.focus();
+      const tabs: ("overview" | "inventory")[] = ["overview", "inventory"];
+      const currentIndex = tabs.indexOf(activeTab);
+      const nextIndex =
+        e.key === "ArrowRight"
+          ? (currentIndex + 1) % tabs.length
+          : (currentIndex - 1 + tabs.length) % tabs.length;
+
+      activeTab = tabs[nextIndex];
+      if (activeTab === "overview") tabOverview?.focus();
+      else if (activeTab === "inventory") tabInventory?.focus();
     }
   };
 
@@ -471,18 +477,11 @@
 
       <!-- Navigation Tabs -->
       <div
-        role="tablist"
-        aria-label="Entity Sections"
         style="background-image: var(--bg-texture-overlay)"
         class="flex gap-8 px-8 border-b border-theme-border bg-theme-surface shrink-0"
       >
         <button
           bind:this={tabOverview}
-          role="tab"
-          id="tab-overview"
-          aria-selected={activeTab === "overview"}
-          aria-controls="panel-overview"
-          tabindex={activeTab === "overview" ? 0 : -1}
           class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
           'overview'
             ? 'text-theme-primary border-theme-primary'
@@ -494,11 +493,6 @@
         </button>
         <button
           bind:this={tabInventory}
-          role="tab"
-          id="tab-inventory"
-          aria-selected={activeTab === "inventory"}
-          aria-controls="panel-inventory"
-          tabindex={activeTab === "inventory" ? 0 : -1}
           class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
           'inventory'
             ? 'text-theme-primary border-theme-primary'
@@ -513,285 +507,272 @@
       <!-- Main Body -->
       <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
         {#if activeTab === "overview"}
+          <!-- Left Sidebar (Image & Meta) -->
           <div
-            role="tabpanel"
-            id="panel-overview"
-            aria-labelledby="tab-overview"
-            class="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full"
+            style="background-image: var(--bg-texture-overlay)"
+            class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
           >
-            <!-- Left Sidebar (Image & Meta) -->
-            <div
-              style="background-image: var(--bg-texture-overlay)"
-              class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
-            >
-              <!-- Labels -->
-              {#if entity.labels && entity.labels.length > 0}
-                <div class="flex flex-wrap gap-1.5 mb-6">
-                  {#each entity.labels as label}
-                    <LabelBadge {label} />
-                  {/each}
+            <!-- Labels -->
+            {#if entity.labels && entity.labels.length > 0}
+              <div class="flex flex-wrap gap-1.5 mb-6">
+                {#each entity.labels as label}
+                  <LabelBadge {label} />
+                {/each}
+              </div>
+            {/if}
+
+            <!-- Image -->
+            <div class="mb-6">
+              {#if isEditing}
+                <div class="mb-4">
+                  <label
+                    class="block text-[10px] text-theme-secondary font-bold mb-1"
+                    for="zen-entity-image-url">IMAGE URL</label
+                  >
+                  <input
+                    id="zen-entity-image-url"
+                    type="text"
+                    bind:value={editImage}
+                    class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full placeholder-theme-muted rounded"
+                    placeholder="https://..."
+                  />
                 </div>
-              {/if}
-
-              <!-- Image -->
-              <div class="mb-6">
-                {#if isEditing}
-                  <div class="mb-4">
-                    <label
-                      class="block text-[10px] text-theme-secondary font-bold mb-1"
-                      for="zen-entity-image-url">IMAGE URL</label
-                    >
-                    <input
-                      id="zen-entity-image-url"
-                      type="text"
-                      bind:value={editImage}
-                      class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full placeholder-theme-muted rounded"
-                      placeholder="https://..."
-                    />
-                  </div>
-                {:else if entity.image}
-                  <button
-                    onclick={() => (showLightbox = true)}
-                    class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50"
-                  >
-                    <img
-                      src={resolvedImageUrl}
-                      alt={entity.title}
-                      class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
-                    />
-                    <div
-                      class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
-                    >
-                      Zoom
-                    </div>
-                  </button>
-                {:else}
-                  <div
-                    class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
-                  >
-                    <div
-                      class="flex flex-col items-center justify-center gap-2"
-                    >
-                      <span class="icon-[lucide--image] w-12 h-12 opacity-50"
-                      ></span>
-                      <span class="text-[10px] font-bold uppercase"
-                        >No Image</span
-                      >
-                    </div>
-
-                    {#if oracle.tier === "advanced"}
-                      <button
-                        onclick={() => oracle.drawEntity(entity.id)}
-                        disabled={oracle.isLoading}
-                        class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-4 py-2 rounded shadow-sm group/btn relative overflow-hidden"
-                        aria-label="Draw visualization for {entity.title}"
-                        aria-busy={oracle.isLoading}
-                      >
-                        {#if oracle.isLoading}
-                          <span
-                            class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
-                            aria-hidden="true"
-                          ></span>
-                          <span
-                            class="text-[10px] font-bold tracking-widest text-theme-primary text-center"
-                            aria-live="polite"
-                          >
-                            {#if oracle.activeStyleTitle}
-                              STYLE: {oracle.activeStyleTitle.toUpperCase()}
-                            {:else}
-                              VISUALIZING...
-                            {/if}
-                          </span>
-                        {:else}
-                          <div
-                            class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
-                          ></div>
-                          <span
-                            class="icon-[lucide--palette] w-4 h-4 text-theme-primary"
-                            aria-hidden="true"
-                          ></span>
-                          <span
-                            class="text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
-                            >DRAW VISUAL</span
-                          >
-                        {/if}
-                      </button>
-                    {/if}
-                  </div>
-                {/if}
-              </div>
-
-              <!-- Connections List -->
-              <div class="space-y-4">
-                <h3
-                  class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+              {:else if entity.image}
+                <button
+                  onclick={() => (showLightbox = true)}
+                  class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50"
                 >
-                  Connections
-                </h3>
-                {#if allConnections.length > 0}
-                  <div class="space-y-2">
-                    {#each allConnections as conn}
-                      <button
-                        onclick={() => navigateTo(conn.id)}
-                        class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-                      >
-                        <span
-                          class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                            ? 'bg-theme-primary'
-                            : 'bg-blue-500'}"
-                        ></span>
-                        <div class="flex-1 min-w-0">
-                          <div
-                            class="text-[11px] text-theme-muted uppercase font-mono"
-                          >
-                            {conn.label}
-                          </div>
-                          <div
-                            class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
-                          >
-                            {conn.title}
-                          </div>
-                        </div>
-                        <span
-                          class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-                        ></span>
-                      </button>
-                    {/each}
-                  </div>
-                {:else}
-                  <p class="text-xs text-theme-muted italic">
-                    No known connections.
-                  </p>
-                {/if}
-              </div>
-
-              {#if isEditing && !vault.isGuest}
-                <div class="mt-8 pt-8 border-t border-theme-border">
-                  <button
-                    onclick={handleDelete}
-                    class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
+                  <img
+                    src={resolvedImageUrl}
+                    alt={entity.title}
+                    class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
+                  />
+                  <div
+                    class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
                   >
-                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-                    DELETE ENTITY
-                  </button>
+                    Zoom
+                  </div>
+                </button>
+              {:else}
+                <div
+                  class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
+                >
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <span class="icon-[lucide--image] w-12 h-12 opacity-50"
+                    ></span>
+                    <span class="text-[10px] font-bold uppercase">No Image</span
+                    >
+                  </div>
+
+                  {#if oracle.tier === "advanced"}
+                    <button
+                      onclick={() => oracle.drawEntity(entity.id)}
+                      disabled={oracle.isLoading}
+                      class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-4 py-2 rounded shadow-sm group/btn relative overflow-hidden"
+                      aria-label="Draw visualization for {entity.title}"
+                      aria-busy={oracle.isLoading}
+                    >
+                      {#if oracle.isLoading}
+                        <span
+                          class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+                          aria-hidden="true"
+                        ></span>
+                        <span
+                          class="text-[10px] font-bold tracking-widest text-theme-primary text-center"
+                          aria-live="polite"
+                        >
+                          {#if oracle.activeStyleTitle}
+                            STYLE: {oracle.activeStyleTitle.toUpperCase()}
+                          {:else}
+                            VISUALIZING...
+                          {/if}
+                        </span>
+                      {:else}
+                        <div
+                          class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
+                        ></div>
+                        <span
+                          class="icon-[lucide--palette] w-4 h-4 text-theme-primary"
+                          aria-hidden="true"
+                        ></span>
+                        <span
+                          class="text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
+                          >DRAW VISUAL</span
+                        >
+                      {/if}
+                    </button>
+                  {/if}
                 </div>
               {/if}
             </div>
 
-            <!-- Right Content (Temporal & Chronicle & Lore) -->
-            <div
-              bind:this={scrollContainer}
-              class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
-              style="background-image: var(--bg-texture-overlay)"
-            >
-              <div class="max-w-3xl mx-auto space-y-12">
-                <!-- Temporal Data -->
-                {#if isEditing}
-                  <div
-                    class="bg-theme-surface p-4 rounded border border-theme-border"
-                  >
-                    <h3
-                      class="text-xs font-bold text-theme-secondary uppercase tracking-widest mb-4"
+            <!-- Connections List -->
+            <div class="space-y-4">
+              <h3
+                class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+              >
+                Connections
+              </h3>
+              {#if allConnections.length > 0}
+                <div class="space-y-2">
+                  {#each allConnections as conn}
+                    <button
+                      onclick={() => navigateTo(conn.id)}
+                      class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
                     >
-                      Timeline Configuration
-                    </h3>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <TemporalEditor
-                        bind:value={editStartDate}
-                        label={getTemporalLabel(entity.type, "start")}
-                      />
-                      <TemporalEditor
-                        bind:value={editEndDate}
-                        label={getTemporalLabel(entity.type, "end")}
-                      />
-                    </div>
-                  </div>
-                {:else if entity.start_date || entity.end_date}
-                  <div
-                    class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
+                      <span
+                        class="w-1.5 h-1.5 rounded-full {conn.isOutbound
+                          ? 'bg-theme-primary'
+                          : 'bg-blue-500'}"
+                      ></span>
+                      <div class="flex-1 min-w-0">
+                        <div
+                          class="text-[11px] text-theme-muted uppercase font-mono"
+                        >
+                          {conn.label}
+                        </div>
+                        <div
+                          class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+                        >
+                          {conn.title}
+                        </div>
+                      </div>
+                      <span
+                        class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
+                      ></span>
+                    </button>
+                  {/each}
+                </div>
+              {:else}
+                <p class="text-xs text-theme-muted italic">
+                  No known connections.
+                </p>
+              {/if}
+            </div>
+
+            {#if isEditing && !vault.isGuest}
+              <div class="mt-8 pt-8 border-t border-theme-border">
+                <button
+                  onclick={handleDelete}
+                  class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
+                >
+                  <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                  DELETE ENTITY
+                </button>
+              </div>
+            {/if}
+          </div>
+
+          <!-- Right Content (Temporal & Chronicle & Lore) -->
+          <div
+            bind:this={scrollContainer}
+            class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+            style="background-image: var(--bg-texture-overlay)"
+          >
+            <div class="max-w-3xl mx-auto space-y-12">
+              <!-- Temporal Data -->
+              {#if isEditing}
+                <div
+                  class="bg-theme-surface p-4 rounded border border-theme-border"
+                >
+                  <h3
+                    class="text-xs font-bold text-theme-secondary uppercase tracking-widest mb-4"
                   >
-                    {#if entity.start_date}
-                      <div class="flex flex-col">
-                        <span
-                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
-                          >{getTemporalLabel(entity.type, "start")}</span
-                        >
-                        <span class="text-lg font-mono text-theme-primary"
-                          >{formatDate(entity.start_date)}</span
-                        >
-                      </div>
-                    {/if}
-                    {#if entity.end_date}
-                      <div class="flex flex-col">
-                        <span
-                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
-                          >{getTemporalLabel(entity.type, "end")}</span
-                        >
-                        <span class="text-lg font-mono text-theme-primary"
-                          >{formatDate(entity.end_date)}</span
-                        >
-                      </div>
-                    {/if}
+                    Timeline Configuration
+                  </h3>
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <TemporalEditor
+                      bind:value={editStartDate}
+                      label={getTemporalLabel(entity.type, "start")}
+                    />
+                    <TemporalEditor
+                      bind:value={editEndDate}
+                      label={getTemporalLabel(entity.type, "end")}
+                    />
+                  </div>
+                </div>
+              {:else if entity.start_date || entity.end_date}
+                <div
+                  class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
+                >
+                  {#if entity.start_date}
+                    <div class="flex flex-col">
+                      <span
+                        class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
+                        >{getTemporalLabel(entity.type, "start")}</span
+                      >
+                      <span class="text-lg font-mono text-theme-primary"
+                        >{formatDate(entity.start_date)}</span
+                      >
+                    </div>
+                  {/if}
+                  {#if entity.end_date}
+                    <div class="flex flex-col">
+                      <span
+                        class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
+                        >{getTemporalLabel(entity.type, "end")}</span
+                      >
+                      <span class="text-lg font-mono text-theme-primary"
+                        >{formatDate(entity.end_date)}</span
+                      >
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+
+              <!-- Chronicle -->
+              <div>
+                <h2
+                  class="text-xl font-serif font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+                >
+                  <span class="icon-[lucide--book-open] w-5 h-5"></span>
+                  {themeStore.jargon.chronicle_header}
+                </h2>
+                {#if isEditing}
+                  <MarkdownEditor
+                    content={editContent}
+                    editable={true}
+                    onUpdate={(md) => (editContent = md)}
+                  />
+                {:else}
+                  <div class="prose-container">
+                    <MarkdownEditor
+                      content={entity.content || "No records found."}
+                      editable={false}
+                    />
                   </div>
                 {/if}
+              </div>
 
-                <!-- Chronicle -->
-                <div>
-                  <h2
-                    class="text-xl font-serif font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+              <!-- Deep Lore -->
+              <div>
+                <h2
+                  class="text-xl font-serif font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+                >
+                  <span class="icon-[lucide--scroll] w-5 h-5"></span>
+                  {themeStore.jargon.lore_secrets}
+                </h2>
+                {#if isEditing}
+                  <MarkdownEditor
+                    content={editLore}
+                    editable={true}
+                    onUpdate={(md) => (editLore = md)}
+                  />
+                {:else}
+                  <div
+                    class="bg-theme-accent/5 border border-theme-border p-6 rounded-lg min-h-[100px] prose-container"
                   >
-                    <span class="icon-[lucide--book-open] w-5 h-5"></span>
-                    {themeStore.jargon.chronicle_header}
-                  </h2>
-                  {#if isEditing}
                     <MarkdownEditor
-                      content={editContent}
-                      editable={true}
-                      onUpdate={(md) => (editContent = md)}
+                      content={entity.lore || "No deep lore recorded."}
+                      editable={false}
                     />
-                  {:else}
-                    <div class="prose-container">
-                      <MarkdownEditor
-                        content={entity.content || "No records found."}
-                        editable={false}
-                      />
-                    </div>
-                  {/if}
-                </div>
-
-                <!-- Deep Lore -->
-                <div>
-                  <h2
-                    class="text-xl font-serif font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
-                  >
-                    <span class="icon-[lucide--scroll] w-5 h-5"></span>
-                    {themeStore.jargon.lore_secrets}
-                  </h2>
-                  {#if isEditing}
-                    <MarkdownEditor
-                      content={editLore}
-                      editable={true}
-                      onUpdate={(md) => (editLore = md)}
-                    />
-                  {:else}
-                    <div
-                      class="bg-theme-accent/5 border border-theme-border p-6 rounded-lg min-h-[100px] prose-container"
-                    >
-                      <MarkdownEditor
-                        content={entity.lore || "No deep lore recorded."}
-                        editable={false}
-                      />
-                    </div>
-                  {/if}
-                </div>
+                  </div>
+                {/if}
               </div>
             </div>
           </div>
         {:else if activeTab === "inventory"}
           <div
-            role="tabpanel"
-            id="panel-inventory"
-            aria-labelledby="tab-inventory"
             class="flex-1 p-8 flex items-center justify-center text-theme-muted font-mono text-sm italic"
           >
             Inventory system initialization pending...

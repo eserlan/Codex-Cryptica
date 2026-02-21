@@ -75,7 +75,10 @@
   .menu-btn {
     padding: 0.375rem; /* p-1.5 */
     border-radius: 0.25rem; /* rounded */
-    color: color-mix(in srgb, var(--color-theme-text) 70%, transparent);
+    color: var(
+      --color-theme-text-muted,
+      color-mix(in srgb, var(--color-theme-text) 75%, transparent)
+    );
     display: flex;
     align-items: center;
     justify-content: center;
