@@ -1005,7 +1005,7 @@
 
     {#if graph.timelineMode}
       <div
-        class="bg-purple-900/40 backdrop-blur border border-purple-500/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-purple-300 shadow-lg uppercase pointer-events-auto"
+        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>

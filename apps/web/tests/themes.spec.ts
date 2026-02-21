@@ -27,6 +27,9 @@ test.describe("Visual Styling Templates", () => {
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(253, 246, 227)");
 
+    // Close settings via explicit button
+    await page.getByLabel("Close Settings").click();
+
     // 5. Verify typography overhaul (Cinzel header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
@@ -113,6 +116,9 @@ test.describe("Visual Styling Templates", () => {
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(5, 5, 5)");
 
+    // Close settings via explicit button
+    await page.getByLabel("Close Settings").click();
+
     // 5. Verify primary color (Deep Crimson) is correctly applied to CSS variable
     const primaryColor = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
@@ -129,8 +135,34 @@ test.describe("Visual Styling Templates", () => {
     );
     expect(secondaryColor).toBe("#ef4444");
 
-    // 7. Verify jargon (Crypt instead of Vault)
-    await expect(page.getByTestId("open-vault-button")).toContainText("Crypt");
+    // 7. Verify jargon (Archive instead of Vault)
+    await expect(page.getByTestId("open-vault-button")).toContainText(
+      "Archive",
+    );
+  });
+
+  test("Timeline button is theme-aware", async ({ page }) => {
+    // 1. Open Settings and select Cyberpunk (Neon Night)
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("button", { name: "Neon Night" }).click();
+
+    // Wait for the accent color to update to cyberpunk yellow (#facc15)
+    await expect(page.locator("html")).toHaveCSS(
+      "--color-theme-accent",
+      "#facc15",
+    );
+
+    await page.getByLabel("Close Settings").click();
+
+    // 2. Click TIMELINE button
+    const timelineBtn = page.getByRole("button", { name: "TIMELINE" });
+    await timelineBtn.click();
+
+    // 3. Verify it has the cyberpunk accent color (#facc15)
+    // The button should have the color from --color-timeline-primary which is var(--color-theme-accent)
+    // which for cyberpunk is #facc15 (yellow)
+    await expect(timelineBtn).toHaveCSS("color", "rgb(250, 204, 21)"); // #facc15
   });
 
   test("Theme selection persists across reloads", async ({ page }) => {
