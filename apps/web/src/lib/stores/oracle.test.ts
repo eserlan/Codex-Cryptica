@@ -656,5 +656,18 @@ describe("OracleStore", () => {
         'Could not find source entity: "Unknown"',
       );
     });
+
+    it("should allow /create with valid quoted arguments", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id");
+
+      await oracle.ask('/create "New Hero" as "npc"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain("Created node: **New Hero** (NPC)");
+      expect(vault.createEntity).toHaveBeenCalledWith("npc", "New Hero", {
+        content: "",
+        lore: "",
+      });
+    });
   });
 });
