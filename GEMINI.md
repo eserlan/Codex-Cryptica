@@ -95,10 +95,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 053-gdrive-multi-vault: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
 - 052-sync-reminder: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper)
 
 - 051-demo-mode: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK
-
-- 050-oracle-draw-button: Added one-click "Draw" button for Advanced Tier lore visualization across Chat, Sidepanel, and Zen Mode.
 
 <!-- MANUAL ADDITIONS START -->
