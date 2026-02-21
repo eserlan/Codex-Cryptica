@@ -28,7 +28,7 @@ MESSAGE="${EMOJI} **${TITLE}**
 
 **Environment:** ${TYPE}
 **URL:** ${PAGE_URL:-"https://eserlan.github.io/Codex-Cryptica/"}
-**Commit:** `${COMMIT_HASH}` by **${COMMIT_AUTHOR}**
+**Commit:** \`${COMMIT_HASH}\` by **${COMMIT_AUTHOR}**
 **Message:** ${COMMIT_MSG}
 
 ${DESCRIPTION}"
@@ -36,7 +36,7 @@ ${DESCRIPTION}"
 # Use jq -c to safely construct compact JSON payload
 PAYLOAD=$(jq -nc --arg content "$MESSAGE" '{content: $content}')
 
-curl -s -H "Content-Type: application/json" 
-     -X POST 
-     --data-binary "$PAYLOAD" 
+curl -s -H "Content-Type: application/json" \
+     -X POST \
+     --data-binary "$PAYLOAD" \
      "$WEBHOOK_URL"
