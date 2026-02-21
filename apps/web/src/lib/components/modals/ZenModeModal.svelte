@@ -812,24 +812,31 @@
 
   <!-- Lightbox -->
   {#if showLightbox && entity.image}
-    <button
-      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full border-none"
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out"
       onclick={() => (showLightbox = false)}
       transition:fade={{ duration: 200 }}
-      aria-label="Close image view"
     >
-      <!-- Explicit Close Icon -->
-      <div class="absolute top-4 right-4 text-white/70">
+      <button
+        onclick={(e) => {
+          e.stopPropagation();
+          showLightbox = false;
+        }}
+        class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+        aria-label="Close image view"
+      >
         <span class="icon-[lucide--x] w-8 h-8"></span>
-        <span class="sr-only">Close</span>
-      </div>
+      </button>
 
       <img
         src={resolvedImageUrl}
         alt={entity.title}
         class="max-w-full max-h-full object-contain shadow-2xl rounded"
+        onclick={(e) => e.stopPropagation()}
       />
-    </button>
+    </div>
   {/if}
 {/if}
 
