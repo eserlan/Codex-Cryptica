@@ -6,9 +6,9 @@ export const ssr = true;
 
 export const load: PageLoad = async ({ fetch }) => {
   const res = await fetch(`${base}/TERMS.md`);
-  if (res.ok) {
-    const content = await res.text();
-    return { content };
+  if (!res.ok) {
+    throw new Error(`Failed to load TERMS.md: ${res.statusText}`);
   }
-  return { content: "" };
+  const content = await res.text();
+  return { content };
 };

@@ -29,7 +29,7 @@
         if (!res.ok)
           throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
         const text = await res.text();
-        await updateContent(text);
+        updateContent(text);
       } catch (err) {
         console.error("LegalDocument error:", err);
         content = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">

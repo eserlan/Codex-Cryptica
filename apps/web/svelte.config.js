@@ -12,7 +12,6 @@ const config = {
     }),
     prerender: {
       entries: ["/", "/features", "/terms", "/privacy"],
-      handleHttpError: "warn",
     },
     alias: {
       $stores: "src/lib/stores",
