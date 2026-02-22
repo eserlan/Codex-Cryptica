@@ -27,8 +27,8 @@
     { value: "enemy", label: "Enemy (Red)" },
   ];
 
-  const handleSave = () => {
-    vault.updateConnection(sourceId, connection.target, connection.type, type, label);
+  const handleSave = async () => {
+    await vault.updateConnection(sourceId, connection.target, connection.type, type, label);
     onSave();
   };
 </script>

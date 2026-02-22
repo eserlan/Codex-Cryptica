@@ -17,6 +17,7 @@
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
   let isEditing = $state(false);
+  let isSaving = $state(false);
   let activeTab = $state<"overview" | "inventory">("overview");
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
@@ -181,6 +182,7 @@
 
   const saveChanges = async () => {
     if (!entity) return;
+    isSaving = true;
     try {
       await vault.updateEntity(entity.id, {
         title: editTitle,
@@ -195,6 +197,8 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
+    } finally {
+      isSaving = false;
     }
   };
 
@@ -465,10 +469,16 @@
             </button>
             <button
               onclick={saveChanges}
-              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              disabled={isSaving}
+              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             >
-              <span class="icon-[lucide--save] w-3 h-3"></span>
-              SAVE
+              {#if isSaving}
+                <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+                SAVING...
+              {:else}
+                <span class="icon-[lucide--save] w-3 h-3"></span>
+                SAVE
+              {/if}
             </button>
           {/if}
 

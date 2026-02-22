@@ -131,7 +131,7 @@ class ProposerStore {
 
   async apply(proposal: Proposal) {
     // Create actual connection in vault first; only proceed if successful
-    const connectionCreated = vault.addConnection(
+    const connectionCreated = await vault.addConnection(
       proposal.sourceId,
       proposal.targetId,
       proposal.type,

@@ -60,7 +60,7 @@
     });
   });
 
-  const handleKeydown = (e: KeyboardEvent) => {
+  const handleKeydown = async (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const label =
@@ -68,7 +68,7 @@
           ? suggestions[selectedIndex]
           : inputValue.trim();
       if (label) {
-        vault.addLabel(entityId, label);
+        await vault.addLabel(entityId, label);
         inputValue = "";
         showSuggestions = false;
         selectedIndex = -1;
@@ -81,7 +81,7 @@
           selectedIndex >= 0 && selectedIndex < suggestions.length
             ? suggestions[selectedIndex]
             : suggestions[0];
-        vault.addLabel(entityId, label);
+        await vault.addLabel(entityId, label);
         inputValue = "";
         showSuggestions = false;
         selectedIndex = -1;
@@ -105,8 +105,8 @@
     }
   };
 
-  const selectSuggestion = (label: string) => {
-    vault.addLabel(entityId, label);
+  const selectSuggestion = async (label: string) => {
+    await vault.addLabel(entityId, label);
     inputValue = "";
     showSuggestions = false;
     selectedIndex = -1;

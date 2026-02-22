@@ -11,7 +11,7 @@
 
 ## Technical Documentation
 
-- [Full Knowledge Base](/llms-full.txt): Concatenated technical documentation including schemas, ADRs, and implementation notes.
+- [Full Knowledge Base](llms-full.txt): Concatenated technical documentation including schemas, ADRs, and implementation notes.
 - [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.
 - [Entity Schema Definitions](https://github.com/eserlan/Codex-Cryptica/tree/main/packages/schema): Core TypeScript interfaces for Character, Location, Item, and Event models.
 - [Graph Visualization Engine](https://github.com/eserlan/Codex-Cryptica/tree/main/packages/graph-engine): Documentation for the Cytoscape-based visualization logic and layout worker.

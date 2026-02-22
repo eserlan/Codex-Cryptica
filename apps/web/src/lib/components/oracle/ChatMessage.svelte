@@ -102,7 +102,7 @@
     }
   };
 
-  const applySmart = () => {
+  const applySmart = async () => {
     const finalTargetId =
       message.archiveTargetId ||
       message.entityId ||
@@ -141,7 +141,7 @@
       const beforeState = captureState(finalTargetId);
 
       vault.selectedEntityId = finalTargetId;
-      vault.updateEntity(finalTargetId, updates);
+      await vault.updateEntity(finalTargetId, updates);
       isSaved = true;
 
       // 2. Push Undo
@@ -153,7 +153,7 @@
             const undoUpdates: any = {};
             if (parsed.chronicle) undoUpdates.content = beforeState.content;
             if (parsed.lore) undoUpdates.lore = beforeState.lore;
-            vault.updateEntity(beforeState.id, undoUpdates);
+            await vault.updateEntity(beforeState.id, undoUpdates);
             isSaved = false;
           },
           message.id,
@@ -216,7 +216,7 @@
     }
   };
 
-  const copyToChronicle = () => {
+  const copyToChronicle = async () => {
     const finalTargetId =
       message.archiveTargetId ||
       message.entityId ||
@@ -228,7 +228,7 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.updateEntity(finalTargetId, { content: newContent });
+    await vault.updateEntity(finalTargetId, { content: newContent });
     isSaved = true;
 
     // 2. Push Undo
@@ -236,7 +236,7 @@
       oracle.pushUndoAction(
         `Update Chronicle: ${beforeState.title}`,
         async () => {
-          vault.updateEntity(beforeState.id, { content: beforeState.content });
+          await vault.updateEntity(beforeState.id, { content: beforeState.content });
           isSaved = false;
         },
         message.id,
@@ -244,7 +244,7 @@
     }
   };
 
-  const copyToLore = () => {
+  const copyToLore = async () => {
     const finalTargetId =
       message.archiveTargetId ||
       message.entityId ||
@@ -256,7 +256,7 @@
     const beforeState = captureState(finalTargetId);
 
     vault.selectedEntityId = finalTargetId;
-    vault.updateEntity(finalTargetId, { lore: newContent });
+    await vault.updateEntity(finalTargetId, { lore: newContent });
     isSaved = true;
 
     // 2. Push Undo
@@ -264,7 +264,7 @@
       oracle.pushUndoAction(
         `Update Lore: ${beforeState.title}`,
         async () => {
-          vault.updateEntity(beforeState.id, { lore: beforeState.lore });
+          await vault.updateEntity(beforeState.id, { lore: beforeState.lore });
           isSaved = false;
         },
         message.id,
