@@ -206,27 +206,20 @@ export class GoogleDriveAdapter implements ICloudAdapter {
   }
 
   public async getOrCreateCodexRoot(): Promise<string> {
-    let folderId = await this.getFolderId();
-    if (!folderId) {
-      folderId = await this.createFolder("CodexCryptica");
-    }
-    return folderId;
+    return this.getOrCreateFolder("CodexCryptica");
+  }
+
+  public async getOrCreateFolder(
+    name: string,
+    parentId?: string,
+  ): Promise<string> {
+    const existingId = await this.findFolder(name, parentId);
+    if (existingId) return existingId;
+    return this.createFolder(name, parentId);
   }
 
   private async getFolderId(): Promise<string | null> {
-    const response = await gapi.client.drive.files.list({
-      q: "name = 'CodexCryptica' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
-      fields: "files(id)",
-    });
-    const files = response.result.files || [];
-
-    if (files.length === 0) return null;
-    if (files.length === 1) return files[0].id!;
-
-    console.warn(
-      `Multiple "CodexCryptica" folders found (${files.length}). Using the first one found.`,
-    );
-    return files[0].id!;
+    return this.findFolder("CodexCryptica");
   }
 
   public async createFolder(name: string, parentId?: string): Promise<string> {

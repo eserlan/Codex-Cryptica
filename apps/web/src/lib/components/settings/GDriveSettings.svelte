@@ -55,21 +55,15 @@
         const rootFolderId = await adapter.getOrCreateCodexRoot();
         const expectedFolderName = `Codex - ${activeVault.name}`;
 
-        let folderId = await adapter.findFolder(
+        // Use atomic(ish) helper to find or create the folder, handling duplicates by name
+        const folderId = await adapter.getOrCreateFolder(
           expectedFolderName,
           rootFolderId,
         );
 
-        if (!folderId) {
-          folderId = await adapter.createFolder(
-            expectedFolderName,
-            rootFolderId,
-          );
-        } else {
-          console.log(
-            `[GDriveSettings] Found existing folder '${expectedFolderName}', linking to it.`,
-          );
-        }
+        console.log(
+          `[GDriveSettings] Using folder '${expectedFolderName}' (${folderId})`,
+        );
 
         await syncEngine.linkVaultToDrive(
           activeVault.id,
