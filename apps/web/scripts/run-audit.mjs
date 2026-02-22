@@ -23,7 +23,7 @@ if (!chromePath) {
     try {
       const findChrome = execSync(`find ${pwCache} -name chrome | grep chromium | head -n 1`).toString().trim();
       if (findChrome) chromePath = findChrome;
-    } catch (_e) {
+    } catch (__e) {
       // Fallback to system chrome
     }
   }
