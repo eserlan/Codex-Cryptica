@@ -1,452 +1,488 @@
-# Codex Cryptica Full Knowledge Base
+# Codex Cryptica - User Guide & Features
 
-This file contains concatenated technical documentation for the Codex Cryptica project.
+This file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.
+
+## Core Features
+
+### Welcome to Codex Cryptica
+This tool gives you absolute control over your campaign notes. Everything stays on your computer for total privacy.
+
+### Open a Vault
+Choose a folder on your computer to store your files. Your lore is saved as standard Markdown files.
+
+### Quick Search
+Press `Cmd+K` to search everything. Find NPCs, locations, and events instantly.
+
+### Knowledge Graph
+See how everything connects. Press `C` to start linking people and places together.
+
+### Lore Oracle
+Ask the AI questions about your world or type `/draw` to generate character art.
+
+### Settings
+Manage your AI keys, change NPC categories, or set up Google Drive syncing.
+
+### AI Oracle
+Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes.
+
+### Visual Graph
+Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
+
+### Sync Reminders
+Stay safe by persisting your changes. The app will remind you to sync when you have unsynced notes, ensuring your data is always backed up to your local folder.
+
+### Total Privacy
+Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
+
+### Linking Notes
+Connect people and locations. Click one item then another to link them together.
+
+### AI Generated Art
+Save art made by the Artificial Intelligence (AI). You can drag any image created by the AI onto an entry to save it as their portrait.
+
+### AI Suggestions
+The AI finds new links in your notes and suggests connections you might have missed.
+
+### Combine Entries
+Merge duplicate notes. Pick two or more items to combine them into one.
+
+### Hide Secrets
+Keep secrets hidden. Hide items from your map so players don't see them during a session.
+
+### Switching Stories
+Change your campaign. Click the folder name at the top to switch to a different story.
+
+### Pick Dates
+Pick years quickly without typing. Click the grid to zoom into specific decades and years.
+
+### Smart Importing
+Safe file loading. If a file import stops, just pick the file again to finish where you left off.
+
+### Change the Look
+Instantly change the way the app looks and speaks. Pick a new style like Fantasy or Sci-Fi to change colors, fonts, and even the words used in the buttons.
+
+### Instant Visualization
+For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.
+
+### Demo Mode
+Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.
+
+### Multi-Vault Sync
+Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.
+
+### Lite Mode (No AI)
+Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.
+
+### SEO Prerendering
+Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.
 
 
---- START OF Root README ---
+## Help Documentation
 
-# Codex Cryptica
+### CHAT COMMANDS
 
-## Getting Started
+## Command Discovery
 
-### Prerequisites
+The Lore Oracle supports several interactive commands to help you manage your world. To discover available commands, simply type a forward slash (`/`) in the chat input.
 
-- Node.js 18+
-- npm or pnpm
+### Available Commands
 
-### Installation
+- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject.
+- `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
+- `/connect`: The primary tool for building relationships.
+- `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+## Efficient Linking with /connect
 
-### Running the App
+The `/connect` command is designed for high-speed world building. You can use the **Tab** key to navigate through a structured sequence without leaving your keyboard.
 
-Start the development server:
+### The Tab Sequence
 
-```bash
-npm run dev
-# or
-turbo run dev
-```
+1. Type `/con` and press **Enter** or **Tab** to start the command.
+2. **From**: Start typing the first entity name. Select a suggestion with **Tab**.
+3. **Relationship**: Type the connection label (e.g., `is the mentor of`) or pick a suggested one, then press **Tab**.
+4. **To**: Type the second entity name and select it with **Tab** or **Enter**.
 
-Open [http://localhost:5173](http://localhost:5173) to view the application.
+### Direct Commands (Instant)
 
-### Architecture
+For power users, you can create connections instantly by wrapping entity names in quotes. This bypasses the AI parser for zero-latency execution:
+`/connect "Eldrin" is the mentor of "Kaelen"`
 
-- **apps/web**: SvelteKit application with Tailwind CSS (Migrated from Next.js)
-- **packages/schema**: Shared Zod schemas for data validation
-- **packages/graph-engine**: Cytoscape.js core logic for graph visualization
-- **packages/editor-core**: Framework-agnostic Tiptap extensions and core
+## Merging Entities with /merge
 
-### Development Workflow
+The `/merge` command allows you to consolidate duplicate entries or combine related notes into a single cohesive record.
 
-This project uses **Husky** and **lint-staged** to ensure code quality before every commit.
+### Direct Merge
 
-- **Commit Messages**: We use [gitmoji](https://gitmoji.dev/) for consistent and descriptive commit messages. Every commit message must start with a gitmoji (either the emoji character or the `:code:`).
-  - Example: `:sparkles: Add new feature` or `✨ Add new feature`
-  - You can use the `gitmoji-cli` to help you choose the right emoji: `npx gitmoji -c`
-- **Pre-commit Hooks**: When you run `git commit`, Husky runs `lint-staged`, which executes `eslint --fix` and `prettier --write` on the modified files.
-- **Commit-msg Hooks**: A hook validates that your commit message follows the gitmoji convention using `commitlint`.
-- **Why?**: This prevents linting and formatting errors from reaching the repository and ensures a readable, searchable commit history.
-- **Manual Bypass**: If you absolutely need to bypass the hooks (not recommended), you can use the `--no-verify` flag:
-  ```bash
-  git commit -m "your message" --no-verify
-  ```
+You can trigger an immediate merge by specifying the source and target:
+`/merge "Old Notes" into "Kingdom of Aethel"`
 
-### CI/CD
+The "Source" (Old Notes) will be deleted, and its content will be appended to the "Target" (Kingdom of Aethel). All inbound and outbound connections will be automatically updated to point to the Target.
 
-This project uses **GitHub Actions** for continuous integration. Every push and pull request to the `main` branch triggers:
+### Guided Merge Wizard
 
-1.  **Dependency Installation**: Ensuring the environment is reproducible.
-2.  **Linting**: Verifying code style and potential errors.
-3.  **Testing**: Running unit and integration tests across all packages.
-4.  **Building**: Ensuring the production build succeeds.
+Type `/merge oracle` to open the interactive **Merge Wizard**. This tool provides:
 
-### Tech Stack
+- **Entity Selection**: Guided lookup for source and target.
+- **Merge Strategy**: Choose between simple **Concatenation** or **AI Synthesis** (where the Oracle rewrites the combined content into a single cohesive narrative).
+- **Preview**: View the resulting content before finalizing the merge.
 
-- **Framework**: [SvelteKit](https://kit.svelte.dev/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Build System**: [Turborepo](https://turbo.build/repo)
-- **Runtime**: Node.js
-- **State Management**: Svelte Stores (Frontend)
-- **Local-first database**: Native File System Access API with OPFS
-- **Graph Visualization**: [Cytoscape.js](https://js.cytoscape.org/)
-- **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
+## Guided Oracle Assistance
 
-### Security & Lore Oracle
+If you are unsure how two entities should be related or how they should be combined, add `oracle` to your command:
 
-The Lore Oracle (AI Assistant) uses Google Gemini. It can be used in two modes:
+- `/connect oracle`: Analyzes lore to propose thematic relationship types.
+- `/merge oracle`: Opens the step-by-step consolidation wizard with content preview.
 
-1.  **User Provided Key**: Users enter their own API key in the settings. This is stored securely in their local browser (IndexedDB).
-2.  **Lite Mode (Shared Key)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" tier.
+---
 
-**Important for Developers:** Because this is a static frontend application, any shared key provided at build time is **publicly visible** in the compiled JavaScript. To prevent abuse, you **must** restrict your API key in the [Google Cloud Console](https://console.cloud.google.com/):
+### CHRONOLOGY
 
-- Go to **APIs & Services > Credentials**.
-- Select your API Key.
-- Under **Application restrictions**, choose **Websites (HTTP referrers)**.
-- Add your deployment domain (e.g., `https://your-username.github.io/*`).
+# Custom Chronology
+
+Codex Arcana allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+
+## The Date Picker
+
+When editing an entity's temporal data (Date, Start Date, or End Date), you will use the tactile **Date Picker**.
+
+### Tactile Year Selection
+
+The year picker uses a grid-based navigation system designed for fast, non-keyboard entry across vast timelines:
+
+1. **Drill Down**: Click a Century to see its Decades, then click a Decade to select a specific Year.
+2. **Zoom Out**: Click the header (e.g., "1200 - 1211") to jump back up to the Decade or Century view.
+3. **Navigate**: Use the left/right arrows to slide the current grid forward or backward in time.
+
+### Era-Centric Snapping
+
+If you have defined **Eras** in your Vault Settings, you can use the "Eras" tab to instantly snap the picker to the beginning of a historical period. This is the fastest way to navigate across millennia.
+
+### Precision Levels
+
+The picker allows you to choose your granularity using the toggle at the top:
+
+- **Year**: For broad historical events.
+- **Month**: For seasonal occurrences.
+- **Day**: For specific, high-precision moments.
+
+## Campaign Calendars
+
+In the **Vault Settings**, you can fully customize your world's calendar:
+
+1. **Standard Gregorian**: Keep this enabled to use the standard 12-month calendar.
+2. **Custom Months**: Disable Gregorian mode to define your own months. You can rename them (e.g., "Hammer", "Alturiak") and set custom lengths.
+3. **Epoch Suffixes**: Add suffixes like "AF" (After Fall) or "BCE" to your years for immersion.
+4. **Present Year**: Set a "Present" marker to anchor your narrative timeline.
+
+## Linear Time Mapping
+
+Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly on the **World Timeline**.
+
+---
+
+### CONNECTION LABELS
+
+## Labeling Your Links
+
+Not every connection is the same. You can add labels to the lines in your graph to show _how_ people or places are related.
+
+### How to Add Labels
+
+1. **Connect Nodes**: Press `C`, click the first node, then the second.
+2. **Type the Label**: A small box will appear. Type things like "Enemy," "Child of," or "Home Town."
+3. **Hide Labels**: If your graph gets too cluttered, press `L` to hide the text on the lines.
+
+### AI Context
+
+The Lore Oracle understands these labels. If you label someone as a "Rival," the AI will remember that conflict when you ask for plot ideas!
+
+---
+
+### FOG OF WAR
+
+## Hiding Information
+
+The **Fog of War** system lets you track what your players have discovered. You can hide nodes on the graph so they don't see spoilers during a session.
+
+### Visibility States
+
+- **Revealed**: Everyone can see this node and its links.
+- **Hidden**: Only you (the GM) can see this entry in the list, but it's gone from the graph.
+- **Rumor (Link Only)**: A "ghost" node that appears when an entry is mentioned but not yet fully discovered.
+
+### How to Reveal
+
+1. **Right-Click**: Tap a node and look for the Visibility menu.
+2. **Toggle Reveal**: Click to show or hide it from the graph.
+3. **GM View**: Click the **Eye Icon** in the bottom controls to see everything at once, regardless of Fog of War.
+
+---
+
+### GEMINI API KEY
+
+## How to get your Gemini API Key
+
+Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:
+
+1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).
+2. **Sign In**: Use your standard Google Account.
+3. **Create API Key**: Click on 'Get API key' in the sidebar, then click 'Create API key in new project'.
+4. **Copy & Paste**: Copy the generated key and paste it into the **Intelligence** tab in Settings.
+
+### Why do I need this?
+
+Using your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.
+
+---
+
+### GRAPH BASICS
+
+## Quick Guide
+
+The graph is your primary way to navigate.
+
+### Shortcuts
+
+- `C`: Toggle Connect Mode.
+- `L`: Toggle Node Labels.
+- `Scroll`: Zoom in/out.
+- `Drag`: Pan the view.
+- `Click Node`: Focus entity and open detail panel.
+
+---
+
+### IMPORTING
+
+# Importing Content
+
+Codex Arcana can transform your unstructured notes into a structured Knowledge Graph using the Lore Oracle.
+
+## How it Works
+
+1. **Upload**: Drag and drop your `.txt`, `.docx`, or `.json` files.
+2. **Analysis**: The Oracle breaks your documents into chunks and analyzes them to find characters, locations, and items.
+3. **Review**: You review the discovered entities and their relationships before adding them to your vault.
+
+## Resilient Imports
+
+Large documents can take time to process. The system automatically tracks your progress:
+
+- **Automatic Resume**: If you close the app or lose connection, re-selecting the same file will resume exactly where you left off.
+- **Content-Aware**: We use unique file fingerprints (hashes) to remember progress even if you rename your files.
+- **Visual Tracking**: The segmented progress bar shows you exactly which parts of your file have been analyzed, skipped, or are currently active.
+
+## Manual Restart
+
+If you want to re-analyze a file from scratch, click the **Restart** button in the import dialog to clear its saved progress.
+
+---
+
+### INTRO
+
+## Welcome to the Archive
+
+Codex Cryptica is designed to give you **absolute sovereignty** over your lore. Everything you write is saved as a Markdown file in your local vault.
+
+### Core Concepts
+
+- **Entities**: The building blocks of your world (NPCs, Locations, Items).
+- **Chronicles**: The main text content of an entity.
+- **Lore**: Hidden attributes and meta-data used by the Oracle for context.
+
+---
+
+### LANDING PAGE
+
+# Terminal Landing Page
+
+The Terminal Landing Page serves as the initial entry point for Codex Cryptica, designed to introduce users to the core operational protocols while maintaining a high-performance, SEO-friendly surface for search engines.
+
+## Operational Protocols
+
+The landing page highlights several key "Protocols" that define the application:
+
+- **Local-First Architecture**: Your data is stored in the Origin Private File System (OPFS) and remains strictly on your local machine.
+- **Privacy-Centric Intelligence**: All AI processing via the Oracle respects your privacy and data sovereignty.
+- **Zero-Cloud Dependency**: The core application functions entirely without external cloud requirements, ensuring 100% offline availability.
+
+## Navigating the Terminal
+
+- **Enter Workspace**: Click this button to transition from the public landing page into your private workspace.
+- **Hide Welcome Screen**: You can choose to skip the landing page on future visits by checking this box on the terminal or toggling it in **Settings > Aesthetics**.
+- **Features Index**: Visit `/features` at any time for a deep dive into the technical specifications and capabilities of the system.
+
+## Performance & SEO
+
+The landing page is optimized for near-instant load times (LCP < 1.2s) and provides crawlable metadata for search engines, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+
+---
+
+### MULTI CAMPAIGN
+
+## Switch Between Campaigns
+
+Codex Cryptica lets you manage multiple "Vaults" (folders). Each vault is completely separate, so your sci-fi notes won't mix with your fantasy ones.
+
+### How to Switch
+
+1. **Vault Name**: Look at the top-left of the screen.
+2. **Click Name**: This opens the Vault Switcher.
+3. **Add or Switch**: You can jump to a vault you've used before or "Add Archive" to link a new folder.
+
+> [!NOTE]
+> Your AI API Key works for all vaults, but things like NPC categories and tags are unique to each campaign.
+
+---
+
+### NODE MERGING
+
+## Consolidation Power
+
+Sometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.
+
+### How to Merge
+
+1. **Select Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.
+2. **Right-Click**: Open the context menu on one of the selected nodes.
+3. **Select 'Merge Nodes'**: This opens the merge dialog.
+
+### Merge Strategies
+
+- **Concatenate**: Simply appends the content of all source nodes into the target node.
+- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.
+
+**Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.
+
+---
+
+### OFFLINE SYNC
+
+## Local-First Always
+
+Your data is yours.
+
+### Cloud Sync
+
+You can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server.
+
+---
+
+### ORACLE GUIDE
+
+## AI Intelligence
+
+The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
 
 ### Features
 
-- Local-first storage (OPFS)
-- Bidirectional text-to-graph sync
-- Offline capability
-
-
---- END OF Root README ---
-
---- START OF Web App README ---
-
-# sv
-
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
-
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --no-install ./
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
-## Static Build & Prerendering
-
-This project uses a hybrid SPA/SSG (Static Site Generation) approach:
-
-- **Marketing Routes**: Pages like `/`, `/features`, `/privacy`, and `/terms` are prerendered as static HTML files during the build process. This ensures optimal SEO indexability and fast initial loads.
-- **Application Routes**: The main workspace remains an SPA (Single Page Application) using the `fallback: 'index.html'` setting in `adapter-static`.
-
-### Prerender Safety
-
-When working on components used in marketing routes, avoid using browser-only globals (`window`, `document`, `localStorage`) at the top level of your scripts. Use the `browser` check from `$app/environment` if necessary:
-
-```typescript
-import { browser } from "$app/environment";
-if (browser) {
-  // Client-only logic
-}
-```
-
-### Crawl Configuration
-
-Static crawl assets like `robots.txt` and `sitemap.xml` are located in the `static/` directory and should be updated whenever new public routes are added.
-
-## Help & Documentation
-
-Help articles are managed as Markdown files in `src/lib/content/help/`.
-To add a new article:
-
-1. Create a `.md` file in that directory.
-2. Add frontmatter:
-   ```yaml
-   ---
-   id: unique-id
-   title: Article Title
-   tags: [tag1, tag2]
-   rank: 10
-   ---
-   ```
-3. Write content in Markdown.
-
-### Article Sorting (Rank)
-
-The `rank` field in the frontmatter determines the order of articles in the help system.
-
-- Articles are sorted by `rank` (ascending), then by `title`.
-- Use spaced values (e.g., 10, 20, 30) to allow for future insertions without renumbering all articles.
-- If `rank` is missing, the article defaults to the end of the list.
-
-4. Verify by running `npm test`.
-
-
---- END OF Web App README ---
-
-## Architecture Decision Records (ADRs)
-
-### 001-fs-handle-storage.md
-
-# ADR 001: Local-First Storage Strategy
-
-- **Status:** Superseded by OPFS-first architecture
-- **Date:** 2026-02-11
+- **Context Fusion**: Combines visible chronicles and hidden lore.
+- **Image Generation**: Type `/draw [description]` to visualize your world.
+- **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.
 
 ---
 
-## Original Problem Statement (Pre-OPFS)
+### PERFORMANCE
 
-This ADR originally addressed a conflict between Svelte 5's Proxy-based reactivity and the brand checks performed by the File System Access API (FSA). The initial decision was to store FSA handles in private, non-reactive class fields to prevent them from being proxied.
+## Scaling Your Archives
 
-### Limitations of the Original Solution
+Codex Cryptica is designed to handle massive world-building projects. To keep your experience smooth even with thousands of entities, we employ several advanced background technologies.
 
-While storing handles non-reactively solved the Svelte Proxy issue on desktop, it did not resolve a more fundamental problem on mobile devices (Chrome on Android) and in sandboxed environments. FSA handles on these platforms can have their write permissions silently revoked by the OS, leading to a `NoModificationAllowedError` that is difficult to recover from without a fresh user gesture (re-picking the folder). This made the application unreliable for mobile users.
+### The Background Engine (Web Workers)
+
+The app uses "Web Workers" to offload heavy computations from the main interface thread. This prevents the UI from stuttering during:
+
+- **Search Indexing**: Your vault is indexed in the background.
+- **Graph Layouts**: Complex relationship maps are calculated off-thread.
+- **Markdown Parsing**: Large chronicles are parsed efficiently in parallel.
+
+### Data Sovereignty & Performance
+
+By processing everything in your browser using local workers, we ensure:
+
+1. **Privacy**: Your data never leaves your device for processing.
+2. **Responsiveness**: The UI remains at 60fps even during complex operations.
+3. **Efficiency**: We use "Transferables" to move data between threads without the overhead of copying.
+
+### Tips for Large Vaults
+
+- **Use Keywords**: Add specific tags to your entities to help the search engine filter results faster.
+- **Granular Chronicles**: While the system can handle large files, breaking your lore into smaller, linked entities improves graph readability and AI grounding.
 
 ---
 
-## New Architecture: OPFS-First with FSA for Export
+### PROPOSER GUIDE
 
-- **Status:** Active
-- **Date:** 2026-02-11
+## Automated Discovery
 
-## Context and Problem Statement
+The **Connections Proposer** works in the background to find hidden links between your entities. It uses the Lore Oracle to analyze your writing and suggest relationships you might have missed.
 
-The application requires a robust, local-first storage solution that works reliably across desktop and mobile, without requiring constant permission prompts. The `NoModificationAllowedError` with the File System Access API on mobile makes it unsuitable for primary "working" storage.
+### How it Works
 
-## Decision
+1. **Background Scan**: When you view an entity, the system silently checks for potential links to other records.
+2. **Review**: Suggestions appear at the bottom of the detail panel.
+3. **Apply**: Click the checkmark to create a real connection.
+4. **Dismiss**: Click 'X' to ignore. Dismissed suggestions are saved in history just in case.
 
-We have adopted a hybrid storage architecture:
+---
 
-1.  **Primary Storage (Working Memory):** The **Origin Private File System (OPFS)** is now the primary storage location for the vault.
-    - **Pros:**
-      - **High-Performance:** Optimized for frequent read/write operations.
-      - **No Prompts:** Once initialized, it does not require user permission prompts for access.
-      - **Reliable:** Not subject to the same silent permission revocation as FSA handles on mobile.
-      - **Solves Brand-Check:** As it's a separate file system managed by the browser, the handle management is simpler and not exposed to the same Svelte reactivity issues.
-    - **Cons:**
-      - **Opaque to User:** The file system is a black box managed by the browser. Users cannot easily access or manipulate their files with external editors.
+### THEMES
 
-2.  **User-Directed Sync (Long-Term Storage):** The **File System Access API (FSA)** is retained for a user-initiated "Sync to Local Folder" feature.
-    - **Pros:**
-      - **User Sovereignty:** Provides a mechanism for users to export their entire vault to a visible, durable location on their disk. This serves as a backup and allows for external editing.
-    - **Cons:**
-      - Subject to the permission issues that make it unsuitable for primary storage, but acceptable for a manual, user-triggered export process.
+# Zen Templates
 
-## Decision Outcome
+Codex Cryptica allows you to shift the visual dimension of your workspace using **Zen Templates**. These themes redefine the entire interface aesthetic to match your world's genre, ensuring a more immersive experience for lore keepers.
 
-This hybrid approach provides the best of both worlds: the reliability and performance of OPFS for the core application experience, and the user control and data portability of FSA for backups and external access. All core application logic now exclusively targets OPFS.
+## Changing Themes
 
-### Implementation Details
+You can switch between available templates at any time:
 
-1.  **`VaultStore` Refactor:** The store was refactored to use OPFS handles for all file operations.
-2.  **`Sync to Local` Feature:** A new UI control was added to allow users to trigger a full sync from OPFS to a user-selected local directory.
-3.  **Migration Path:** A one-time, automatic migration was created to move existing FSA-based vaults into the OPFS on first launch.
+1.  Open **Settings** (click the gear icon or press `S`).
+2.  Navigate to the **Aesthetics** tab.
+3.  Select a theme from the **Zen Templates** list.
 
+The changes will be applied instantly across the entire application, including the knowledge graph and all detail panels.
 
-### 002-vault-store-modularization.md
+## Available Themes
 
-# Modularization of Vault Storage Layer
+- **Ancient Parchment**: Our flagship fantasy theme, designed to feel like an enchanted magic tome with parchment textures and inked typography.
+- **Sci-Fi Terminal**: A high-contrast, neon-green terminal aesthetic for futuristic settings.
+- **Blood & Noir**: A dark, moody theme with crimson accents, ideal for horror or investigative campaigns.
+- **Neon Night**: A vibrant, cyberpunk-inspired palette with high-energy colors.
+- **Wasteland**: A rugged, textured theme for post-apocalyptic or industrial worlds.
+- **Clean Modern**: A minimalist, distraction-free aesthetic for general-purpose world-building.
 
-- Status: accepted
-- Deciders: Espen, Gemini CLI
-- Date: 2026-02-12
+## Persistence
 
-## Context and Problem Statement
+Your selected theme is saved to your local browser storage and will be automatically applied every time you return to the workspace.
 
-The original `VaultStore` in `vault.svelte.ts` had evolved into a "God Object," accumulating responsibilities for:
+---
 
-1.  **Active Data Management**: Entity CRUD, labels, and connections.
-2.  **Global Registry**: Managing the list of available vaults and switching between them.
-3.  **File I/O**: Direct interaction with OPFS and FSA APIs.
-4.  **Relationship Adjacency**: Manually synchronizing a stateful `inboundConnections` map.
-5.  **Service Integration**: Tight coupling with Search and AI services.
+### VAULT METADATA
 
-This complexity made the store difficult to maintain, prone to state-sync bugs (especially in connections), and extremely hard to unit test reliably.
+## How Files are Stored
 
-## Decision Outcome
+Codex Cryptica uses standard Markdown files. You can even open your vault folder in other apps like Obsidian or VS Code.
 
-Chosen option: **Modular Domain-Driven Refactor**, because it cleanly separates concerns, guarantees state consistency through Svelte 5 runes, and enables robust testing via dependency injection.
+### File Format
 
-### Key Changes
+Each file has a simple "header" (called YAML frontmatter) followed by your writing:
 
-- **Split Logic**: Moved core logic into specialized modules (`registry.ts`, `entities.ts`, `relationships.ts`, `io.ts`, `assets.ts`, `migration.ts`).
-- **Dedicated Registry**: Created `VaultRegistryStore` to handle vault-level metadata separately from entity-level data.
-- **Derived Adjacency**: Converted `inboundConnections` to a `$derived` state, eliminating manual sync logic and associated bugs.
-- **Dependency Injection**: Refactored `init()` to accept optional injected services, allowing for side-effect-free unit tests.
-- **Standardized Mocks**: Implemented `createMockOpfs` and `createMockIDB` utilities for consistent test environments.
+```markdown
+---
+id: unique-id
+type: npc
+tags: [noble, ally]
+status: alive
+---
 
-## Pros and Cons of the Options
+# Character Name
 
-### Modular Domain-Driven Refactor
-
-- **Good**, because each file now adheres to the Single Responsibility Principle (SRP).
-- **Good**, because `$derived` relationships ensure the graph adjacency map is always a "source of truth" calculation of the current entities.
-- **Good**, because unit tests can now mock the filesystem and IndexedDB layers without "noisy" console errors or flaky timeouts.
-- **Good**, because it decouples the "Active Vault" UI state from the "Vault List" management state.
-- **Bad**, because it increases the total number of files in the project.
-- **Bad**, because developers must now manage imports across multiple domain files rather than one central store.
-
-
-### 003-entity-detail-panel-refactor.md
-
-# Refactoring and Modularization of EntityDetailPanel
-
-- Status: accepted
-- Deciders: Espen, Gemini CLI
-- Date: 2026-02-12
-
-## Context and Problem Statement
-
-The `EntityDetailPanel.svelte` component has become a "God Component," accumulating too many responsibilities in a single 500+ line file. It currently manages:
-
-1.  **View/Edit State**: Complex logic for toggling between read and write modes.
-2.  **Image Processing**: Lightbox logic, Drag-and-Drop archival, and URL resolution.
-3.  **Content Editing**: Integration with multiple Markdown and Temporal editors.
-4.  **Relationship Management**: Complex derived lookups for inbound and outbound connections.
-5.  **UI Layout**: Managing tabs (Status, Lore, Inventory) and redacted states (Fog of War).
-
-This complexity makes the component difficult to modify without side effects, hinders reusability, and slows down developer onboarding.
-
-## Decision Outcome
-
-Chosen option: **Component-Based Decomposition**, because it isolates domain logic into specialized sub-components, making the code more maintainable, testable, and aligned with Svelte 5's modular philosophy.
-
-### Key Changes
-
-- **Logical Extraction**: Split the panel into atomic sub-components within `src/lib/components/entity-detail/`.
-  - `DetailHeader`: Title, Zen Mode, and Redaction UI.
-  - `DetailImage`: Image rendering, Lightbox, and Drag-and-Drop archival.
-  - `DetailTabs`: Tab navigation state.
-  - `DetailStatusTab`: Temporal metadata and Connections/Gossip.
-  - `DetailLoreTab`: Primary lore/notes editing.
-  - `DetailFooter`: Persistence actions (Save/Delete/Cancel).
-- **Prop-Driven State**: Pass reactive `$state` and callback handlers from the parent `EntityDetailPanel` to maintain a single source of truth while keeping sub-components focused on rendering.
-
-## Pros and Cons of the Options
-
-### Component-Based Decomposition
-
-- **Good**, because it follows the Single Responsibility Principle.
-- **Good**, because it allows for independent testing of complex sections like the Image Lightbox or Connection list.
-- **Good**, because sub-components (like `DetailHeader` or `DetailImage`) can be reused in other views (e.g., Zen Mode).
-- **Bad**, because it introduces more files and requires careful prop drilling or context usage for shared state.
-- **Bad**, because cross-component communication (e.g., footer triggering a save of data held in a tab) requires clear handler interfaces.
-
-
-## Core Schema Interfaces
-
-### connection.ts
-
-```typescript
-export type Connection = z.infer<typeof ConnectionSchema>;
+Your story starts here...
 ```
 
-### entity.ts
+### Tips for Advanced Users
 
-```typescript
-export type Category = z.infer<typeof CategorySchema>;
+- **Metadata**: You can add your own fields to the header (like `age: 45`). The AI Oracle will see these and use them for extra context.
+- **Syncing**: Because these are just files, you can use any cloud service (Dropbox, OneDrive, etc.) to keep them synced across devices.
 
-export type TemporalMetadata = z.infer<typeof TemporalMetadataSchema>;
-
-export type Era = z.infer<typeof EraSchema>;
-
-export type Entity = z.infer<typeof EntitySchema>;
-
-export type EntityType = z.infer<typeof EntityTypeSchema>;
-```
-
-### graph.ts
-
-```typescript
-export type GraphNode = z.infer<typeof GraphNodeSchema>;
-
-export type GraphEdge = z.infer<typeof GraphEdgeSchema>;
-```
-
-### jargon.ts
-
-```typescript
-export interface JargonMap {
-  vault: string;
-  entity: string;
-  entity_plural: string;
-  save: string;
-  delete: string;
-  search: string;
-  new: string;
-  syncing: string;
-  lore_header: string;
-  lore_secrets: string;
-  chronicle_header: string;
-  connections_header: string;
-  tab_status: string;
-  tab_lore: string;
-  tab_inventory: string;
-  [key: string]: string; // Allow for extensibility
-}
-
-export type JargonResolver = (key: keyof JargonMap, count?: number) => string;
-```
-
-### search.ts
-
-```typescript
-export interface SearchEntry {
-  id: string;
-  title: string;
-  content: string;
-  type?: string; // Entity category ID
-  keywords?: string;
-  path: string;
-  updatedAt: number;
-}
-
-export interface SearchResult {
-  id: string;
-  title: string;
-  type?: string; // Entity category ID
-  imageUrl?: string; // Local OPFS path or temporary blob URL
-  path: string;
-  excerpt?: string;
-  score: number;
-  matchType: "title" | "content";
-  highlights?: Array<{ start: number; length: number }>;
-}
-
-export interface SearchOptions {
-  limit?: number;
-  threshold?: number;
-}
-```
-
-### theme.ts
-
-```typescript
-export type ThemeTokens = z.infer<typeof ThemeTokensSchema>;
-
-export type GraphStyleConfig = z.infer<typeof GraphStyleConfigSchema>;
-
-export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
-```
-
-### visibility.ts
-
-```typescript
-export type VisibilitySettings = {
-  sharedMode: boolean;
-  defaultVisibility: "visible" | "hidden";
-};
-```
+---
