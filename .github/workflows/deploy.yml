@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, 'feat/*', 'fix/*' ]
   workflow_dispatch:
 
 concurrency:
@@ -60,6 +60,12 @@ jobs:
           VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
           BASE_PATH: ''
         run: |
+          # If we are on a branch, we must switch to main to build the prod version
+          # to ensure the root site doesn't reflect experimental branch code.
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            git checkout main --force
+            npm ci # Refresh main dependencies
+          fi
           npm run build --workspace=web
           cp -r apps/web/build/* dist/
           cp apps/web/build/index.html dist/404.html
