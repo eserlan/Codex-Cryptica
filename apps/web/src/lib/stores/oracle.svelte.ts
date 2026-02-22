@@ -801,7 +801,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             ? (type as any)
             : "related_to";
 
-          const success = vault.addConnection(
+          const success = await vault.addConnection(
             source.id,
             target.id,
             typeToUse,
@@ -822,7 +822,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             this.pushUndoAction(
               `Connect ${source.title} to ${target.title}`,
               async () => {
-                vault.removeConnection(source.id, target.id, typeToUse);
+                await vault.removeConnection(source.id, target.id, typeToUse);
               },
             );
 

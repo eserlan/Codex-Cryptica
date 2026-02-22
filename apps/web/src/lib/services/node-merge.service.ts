@@ -203,7 +203,7 @@ export class NodeMergeService {
     updates.connections = finalConnections;
 
     // Apply Update
-    vault.updateEntity(targetId, updates);
+    await vault.updateEntity(targetId, updates);
 
     // 2. Determine Source Nodes to Delete
     const toDelete = sourceIds.filter((id) => id !== targetId);
@@ -290,7 +290,7 @@ export class NodeMergeService {
       }
 
       if (contentModified || connectionsModified) {
-        vault.updateEntity(entity.id, {
+        await vault.updateEntity(entity.id, {
           content: newContent,
           lore: newLore,
           connections: newConnections,

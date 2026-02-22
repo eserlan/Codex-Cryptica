@@ -38,6 +38,7 @@
   let editEndDate = $state<Entity["end_date"]>();
 
   let activeTab = $state<"status" | "lore" | "inventory">("status");
+  let isSaving = $state(false);
 
   const startEditing = () => {
     if (!entity) return;
@@ -58,6 +59,7 @@
 
   const saveChanges = async () => {
     if (!entity) return;
+    isSaving = true;
     try {
       await vault.updateEntity(entity.id, {
         title: editTitle,
@@ -72,6 +74,8 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
+    } finally {
+      isSaving = false;
     }
   };
 
@@ -147,6 +151,7 @@
 
     <DetailFooter
       {isEditing}
+      {isSaving}
       onCancel={cancelEditing}
       onSave={saveChanges}
       onDelete={handleDelete}
