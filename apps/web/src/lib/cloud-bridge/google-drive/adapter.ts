@@ -245,7 +245,8 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     name: string,
     parentId?: string,
   ): Promise<string | null> {
-    let q = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+    const escapedName = name.replace(/'/g, "\\'");
+    let q = `name = '${escapedName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
     if (parentId) {
       q += ` and '${parentId}' in parents`;
     }

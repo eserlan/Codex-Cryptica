@@ -4,7 +4,7 @@ export interface FileEntry {
   handle: FileSystemFileHandle;
 }
 
-const VAULTS_DIR = "vaults";
+import { VAULTS_DIR } from "$lib/utils/opfs";
 
 export class FileSystemAdapter {
   private async _getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
