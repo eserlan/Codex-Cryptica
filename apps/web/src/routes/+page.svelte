@@ -7,7 +7,7 @@
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
-  import { building } from "$app/environment";
+  import { building, browser } from "$app/environment";
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -25,14 +25,31 @@
   const isGuestMode = $derived(!!shareId);
 
   // Lazy load components when needed using relative paths for reliable resolution
-  $effect(() => {
-    if ((vault.isInitialized || isGuestMode) && !GraphView) {
+  function loadHeavyComponents() {
+    if (!GraphView) {
       import("../lib/components/GraphView.svelte").then((m) => {
         GraphView = m.default;
       });
+    }
+    if (!EntityDetailPanel) {
       import("../lib/components/EntityDetailPanel.svelte").then((m) => {
         EntityDetailPanel = m.default;
       });
+    }
+  }
+
+  // Pre-load components in parallel with vault/DB boot if landing page is skipped
+  if (browser && (!uiStore.isLandingPageVisible || isGuestMode)) {
+    loadHeavyComponents();
+  }
+
+  // Reactive fallback for when user clicks "Enter Workspace"
+  $effect(() => {
+    if (
+      (vault.isInitialized || isGuestMode) &&
+      (!GraphView || !EntityDetailPanel)
+    ) {
+      loadHeavyComponents();
     }
   });
 
@@ -131,7 +148,7 @@
   <!-- Landing Page / Marketing Layer -->
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
-      class="absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
+      class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
       style:background-image="var(--bg-texture-overlay)"
       transition:fade
     >
