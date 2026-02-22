@@ -27,7 +27,7 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
-  import { PATREON_URL, APP_NAME, VERSION } from "$lib/config";
+  import { PATREON_URL, DISCORD_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
@@ -462,6 +462,15 @@
             rel="noopener noreferrer"
             class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
             >Support on Patreon</a
+          >
+        {/if}
+        {#if DISCORD_URL}
+          <a
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+            >Discord</a
           >
         {/if}
         <a
