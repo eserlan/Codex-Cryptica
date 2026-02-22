@@ -22,6 +22,7 @@ self.onmessage = async (event) => {
           console.error(
             "SyncWorker: INIT_SYNC failed - Missing vaultId in payload",
           );
+          throw new Error("SyncWorker: INIT_SYNC failed - Missing vaultId in payload");
         }
         const cloudAdapter = new WorkerDriveAdapter(
           payload.accessToken,
