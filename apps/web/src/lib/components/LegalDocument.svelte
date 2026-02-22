@@ -8,18 +8,20 @@
     title,
     initialContent = "",
   } = $props<{ fileName: string; title: string; initialContent?: string }>();
-  let content = $state("");
+
+  // Local state for client-side fetching fallback
+  let fetchedContent = $state("");
+
+  // Derived content: prefers prop (SSR/Hydration), falls back to fetched, defaults to empty
+  let content = $derived.by(() => {
+    if (initialContent) return parse(initialContent) as string;
+    if (fetchedContent) return parse(fetchedContent) as string;
+    return "";
+  });
 
   function updateContent(text: string) {
-    content = parse(text) as string;
+    fetchedContent = text;
   }
-
-  // Pre-parse if initial content is provided (for SSR/Prerender)
-  $effect.pre(() => {
-    if (initialContent && !content) {
-      updateContent(initialContent);
-    }
-  });
 
   onMount(async () => {
     // If no initial content (e.g. client-side navigation or hydration mismatch), fetch it
