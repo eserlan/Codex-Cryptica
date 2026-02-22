@@ -180,10 +180,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
           const email = about.result.user?.emailAddress || "connected-user";
 
           // 2. Ensure CodexCryptica folder exists
-          let folderId = await this.getFolderId();
-          if (!folderId) {
-            folderId = await this.createFolder("CodexCryptica");
-          }
+          const folderId = await this.getOrCreateCodexRoot();
 
           // Store folder ID in localStorage scoped to the current user
           const storageKey = `gdrive_folder_id:${email}`;
@@ -208,6 +205,14 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     });
   }
 
+  public async getOrCreateCodexRoot(): Promise<string> {
+    let folderId = await this.getFolderId();
+    if (!folderId) {
+      folderId = await this.createFolder("CodexCryptica");
+    }
+    return folderId;
+  }
+
   private async getFolderId(): Promise<string | null> {
     const response = await gapi.client.drive.files.list({
       q: "name = 'CodexCryptica' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
@@ -224,11 +229,12 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     return files[0].id!;
   }
 
-  public async createFolder(name: string): Promise<string> {
+  public async createFolder(name: string, parentId?: string): Promise<string> {
     const response = await gapi.client.drive.files.create({
       resource: {
         name: name,
         mimeType: "application/vnd.google-apps.folder",
+        parents: parentId ? [parentId] : undefined,
       },
       fields: "id",
     });

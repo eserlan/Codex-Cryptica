@@ -52,8 +52,10 @@
           throw new Error("Must connect to Google Drive first.");
         }
 
+        const rootFolderId = await adapter.getOrCreateCodexRoot();
         const folderId = await adapter.createFolder(
           `Codex - ${activeVault.name}`,
+          rootFolderId,
         );
         await syncEngine.linkVaultToDrive(
           activeVault.id,
