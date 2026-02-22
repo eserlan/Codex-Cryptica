@@ -7,7 +7,10 @@ vi.hoisted(() => {
   (global as any).$state.snapshot = (v: any) => v;
   (global as any).$derived = (v: any) => v;
   (global as any).$derived.by = (v: any) => v;
-  (global as any).$effect = (v: any) => v;
+  (global as any).$effect = (fn: () => void | (() => void)) => {
+    const cleanup = fn();
+    return typeof cleanup === "function" ? cleanup : () => {};
+  };
   (global as any).__APP_VERSION__ = "0.0.0-test";
 
   (global as any).localStorage = {
