@@ -138,7 +138,24 @@ export class WorkerBridge {
     // Ensure registry is initialized before checking state
     if (!vaultRegistry.isInitialized) {
       console.log("[WorkerBridge] Registry not ready, awaiting init...");
-      await vaultRegistry.init();
+      try {
+        await vaultRegistry.init();
+      } catch (err) {
+        console.error(
+          "[WorkerBridge] Sync aborted: vault registry init() threw an error",
+          err,
+        );
+        console.groupEnd();
+        return;
+      }
+
+      if (!vaultRegistry.isInitialized) {
+        console.warn(
+          "[WorkerBridge] Sync aborted: vault registry failed to initialize",
+        );
+        console.groupEnd();
+        return;
+      }
     }
 
     const activeVaultId = vaultRegistry.activeVaultId;

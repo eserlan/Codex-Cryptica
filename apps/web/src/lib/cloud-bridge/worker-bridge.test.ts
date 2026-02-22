@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// Mock Svelte 5 Runes (Global)
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = vi.fn((fn) => fn());
+  (global as any).$effect = (v: any) => v;
+});
+
 // Mock $app/environment BEFORE importing WorkerBridge
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -62,7 +71,10 @@ describe("WorkerBridge", () => {
     (vaultRegistry as any).availableVaults = [
       { id: "vault-1", gdriveSyncEnabled: true, gdriveFolderId: "folder-1" },
     ];
-    (vaultRegistry as any).init.mockResolvedValue(undefined);
+    // Default success behavior: init sets initialized to true
+    (vaultRegistry as any).init.mockImplementation(async () => {
+      (vaultRegistry as any).isInitialized = true;
+    });
 
     bridge = new WorkerBridge();
   });
@@ -101,6 +113,25 @@ describe("WorkerBridge", () => {
         type: "INIT_SYNC",
         payload: expect.objectContaining({ vaultId: "vault-1" }),
       }),
+    );
+  });
+
+  it("should not start sync if registry initialization fails", async () => {
+    // Setup: Registry NOT initialized and init fails internally
+    (vaultRegistry as any).isInitialized = false;
+    (vaultRegistry as any).init.mockImplementation(async () => {
+      // Simulate internal failure: init completes but registry stays uninitialized
+      (vaultRegistry as any).isInitialized = false;
+    });
+
+    // Act
+    await bridge.startSync();
+
+    // Assert
+    expect(vaultRegistry.init).toHaveBeenCalled();
+    const workerInstance = (bridge as any).worker;
+    expect(workerInstance.postMessage).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "INIT_SYNC" }),
     );
   });
 });
