@@ -41,14 +41,16 @@ const formatDate = (date?: TemporalMetadata) => {
   if (!date || date.year === undefined) return "";
   if (date.label) return date.label;
 
-  const y = String(date.year);
-  const m = date.month !== undefined ? String(date.month).padStart(2, "0") : "";
-  const d = date.day !== undefined ? String(date.day).padStart(2, "0") : "";
+  // Optimization: Manual string construction is faster than template literals or padStart
+  // for this specific case in hot loops.
+  const { year, month, day } = date;
+  let str = "" + year;
 
-  let str = y;
-  if (m) {
-    str += `-${m}`;
-    if (d) str += `-${d}`;
+  if (month !== undefined) {
+    str += month < 10 ? "-0" + month : "-" + month;
+    if (day !== undefined) {
+      str += day < 10 ? "-0" + day : "-" + day;
+    }
   }
   return str;
 };

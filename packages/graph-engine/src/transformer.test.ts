@@ -197,4 +197,71 @@ describe("GraphTransformer", () => {
     expect(node2?.data.isRevealed).toBe(true);
     expect(node3?.data.isRevealed).toBeUndefined();
   });
+
+  it("should format dates correctly", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "event",
+        title: "Year Only",
+        date: { year: 2026 },
+        content: "",
+      } as any,
+      {
+        id: "n2",
+        type: "event",
+        title: "Year Month",
+        date: { year: 2026, month: 2 },
+        content: "",
+      } as any,
+      {
+        id: "n3",
+        type: "event",
+        title: "Full Date",
+        date: { year: 2026, month: 2, day: 12 },
+        content: "",
+      } as any,
+      {
+        id: "n4",
+        type: "event",
+        title: "With Label",
+        date: { year: 1000, label: "Ancient Era" },
+        content: "",
+      } as any,
+      {
+        id: "n5",
+        type: "event",
+        title: "Invalid Date",
+        date: {} as any, // Missing year
+        content: "",
+      } as any,
+      {
+        id: "n6",
+        type: "event",
+        title: "Single Digit Day",
+        date: { year: 2026, month: 12, day: 5 },
+        content: "",
+      } as any,
+      {
+        id: "n7",
+        type: "event",
+        title: "Double Digit Month",
+        date: { year: 2026, month: 12 },
+        content: "",
+      } as any,
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+
+    const getNode = (id: string) =>
+      elements.find((e) => e.group === "nodes" && e.data.id === id);
+
+    expect(getNode("n1")?.data.dateLabel).toBe("2026");
+    expect(getNode("n2")?.data.dateLabel).toBe("2026-02");
+    expect(getNode("n3")?.data.dateLabel).toBe("2026-02-12");
+    expect(getNode("n4")?.data.dateLabel).toBe("Ancient Era");
+    expect(getNode("n5")?.data.dateLabel).toBe("");
+    expect(getNode("n6")?.data.dateLabel).toBe("2026-12-05");
+    expect(getNode("n7")?.data.dateLabel).toBe("2026-12");
+  });
 });
