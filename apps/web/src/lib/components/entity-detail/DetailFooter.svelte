@@ -37,7 +37,8 @@
         disabled={isSaving}
       >
         {#if isSaving}
-          <span class="animate-pulse">SAVING...</span>
+          <span class="icon-[lucide--loader-2] animate-spin w-4 h-4" aria-hidden="true"></span>
+          <span>SAVING...</span>
         {:else}
           {themeStore.jargon.save.toUpperCase()} CHANGES
         {/if}
