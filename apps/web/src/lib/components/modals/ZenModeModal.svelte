@@ -470,7 +470,7 @@
             <button
               onclick={saveChanges}
               disabled={isSaving}
-              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:hover:bg-theme-primary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             >
               {#if isSaving}
                 <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
