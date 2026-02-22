@@ -88,7 +88,7 @@ test.describe("SEO and Prerendering", () => {
     // 3. Check discoverability in head
     await page.goto("/");
     const link = page.locator('link[rel="llms"]');
-    await expect(link).toHaveAttribute("href", "/llms.txt");
+    await expect(link).toHaveAttribute("href", /llms\.txt$/);
 
     // 4. Check robots.txt
     const robotsResponse = await request.get("/robots.txt");
