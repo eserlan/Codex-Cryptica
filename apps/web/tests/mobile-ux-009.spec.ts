@@ -10,6 +10,8 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
     // Mock File System Access API for vault
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       const files = [
         {
           name: "TestEntity.md",

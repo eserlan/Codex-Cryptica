@@ -1,8 +1,3 @@
-import cytoscape from "cytoscape";
-import fcose from "cytoscape-fcose";
-
-cytoscape.use(fcose);
-
 export * from "./transformer";
 export * from "./layouts/timeline";
 export * from "./layouts/orbit";
@@ -18,8 +13,33 @@ export interface GraphOptions {
   headless?: boolean;
 }
 
-export const initGraph = (options: GraphOptions) => {
-  return cytoscape({
+// Cache the imported modules so we don't re-register plugins
+let corePromise: Promise<any> | null = null;
+
+export const initGraph = async (options: GraphOptions) => {
+  if (!corePromise) {
+    corePromise = (async () => {
+      try {
+        const [cytoscapeModule, fcoseModule] = await Promise.all([
+          import("cytoscape"),
+          import("cytoscape-fcose"),
+        ]);
+
+        const cytoscape = cytoscapeModule.default;
+        const fcose = fcoseModule.default;
+
+        cytoscape.use(fcose);
+        return cytoscape;
+      } catch (err) {
+        corePromise = null;
+        throw err;
+      }
+    })();
+  }
+
+  const cytoscape = await corePromise;
+
+  return (cytoscape as any)({
     container: options.container,
     headless: options.headless,
     elements: options.elements || [],

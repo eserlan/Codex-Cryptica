@@ -331,137 +331,159 @@
     }
   };
 
+  let initTimer: ReturnType<typeof setTimeout> | null = null;
+
   onMount(() => {
     if (container) {
-      cy = initGraph({
-        container,
-        elements: graph.elements,
-        style: graphStyle,
-      });
+      // Defer graph initialization to next task queue tick.
+      // This yields the main thread back to the browser so Svelte can completely
+      // remove the "Initiating Neural Interface..." screen and paint the empty frame
+      // BEFORE Cytoscape synchronously locks up the main thread with 1000s of elements.
+      initTimer = setTimeout(async () => {
+        if (!container) return; // Guard against rapid unmounts
 
-      // Expose for E2E testing
-      if (import.meta.env.DEV || (window as any).__E2E__) {
-        (window as any).cy = cy;
-      }
+        try {
+          const instance = (await initGraph({
+            container,
+            elements: untrack(() => graph.elements), // Initialize with current elements
+            style: untrack(() => graphStyle),
+          })) as any;
 
-      // Hover events
-      cy.on("mouseover", "node", (evt) => {
-        const node = evt.target;
-        clearTimeout(hoverTimeout);
-        hoverTimeout = window.setTimeout(() => {
-          const renderedPos = node.renderedPosition();
-          hoverPosition = {
-            x: renderedPos.x,
-            y: renderedPos.y,
-          };
-          hoveredEntityId = node.id();
-        }, HOVER_DELAY);
-      });
-
-      cy.on("mouseout", "node", (_evt) => {
-        clearTimeout(hoverTimeout);
-        hoveredEntityId = null;
-        hoverPosition = null;
-      });
-
-      // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
-      cy.on("position", "node", (evt) => {
-        if (hoveredEntityId === evt.target.id()) {
-          const renderedPos = evt.target.renderedPosition();
-          hoverPosition = { x: renderedPos.x, y: renderedPos.y };
-        }
-      });
-      cy.on("pan zoom", () => {
-        if (hoveredEntityId && cy) {
-          const node = cy.$id(hoveredEntityId);
-          if (node.length > 0) {
-            const renderedPos = node.renderedPosition();
-            hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+          // If the timer was cleared by onDestroy, cleanup the orphan instance
+          if (initTimer === null) {
+            instance.destroy();
+            return;
           }
-        }
-      });
 
-      cy.on("tap", "node", (evt) => {
-        const targetNode = evt.target as NodeSingular;
-        const targetId = targetNode.id();
+          cy = instance;
 
-        if (connectMode) {
-          if (!sourceId) {
-            sourceId = targetId;
-            targetNode.addClass("selected-source");
-          } else if (sourceId === targetId) {
-            sourceId = null;
-            targetNode.removeClass("selected-source");
-          } else {
-            // Create the connection in the store
-            vault.addConnection(sourceId, targetId, "neutral");
-
-            cy?.$(".selected-source").removeClass("selected-source");
-            sourceId = null;
-            connectMode = false; // Auto exit connect mode
+          // Expose for E2E testing
+          if (import.meta.env.DEV || (window as any).__E2E__) {
+            (window as any).cy = instance;
           }
-        } else if (graph.orbitMode) {
-          // US2: Switch center if clicked in orbit mode
-          graph.setCentralNode(targetId);
-          // Also show the detail panel for the node
-          selectedId = targetId;
-        } else {
-          // Selection Logic for Detail Panel
-          selectedId = targetId;
-        }
-      });
 
-      // Right-click on edge to edit label
-      cy.on("cxttap", "edge", (evt) => {
-        if (vault.isGuest) return;
-        const edge = evt.target;
-        const sourceId = edge.data("source");
-        const targetId = edge.data("target");
-        const currentLabel = edge.data("label") || "";
-        const currentType = edge.data("connectionType") || "neutral";
-
-        editingEdge = {
-          source: sourceId,
-          target: targetId,
-          label: currentLabel,
-          type: currentType,
-        };
-        edgeEditInput = currentLabel;
-        edgeEditType = currentType;
-      });
-
-      cy.on("tap", (evt) => {
-        if (evt.target === cy) {
-          // Only clear selection if we clicked strictly on background, not on node
-          if (!connectMode) {
-            selectedId = null;
-          }
-          // Close edge editor on background tap
-          editingEdge = null;
-        }
-      });
-
-      cy.on("select unselect", "node", () => {
-        selectionCount = cy?.$("node:selected").length || 0;
-      });
-
-      // Save position on drag end
-      cy.on("dragfree", "node", (evt) => {
-        if (vault.isGuest) return;
-        const node = evt.target;
-        const id = node.id();
-        const pos = node.position();
-
-        const entity = vault.entities[id];
-        if (entity) {
-          vault.updateEntity(id, {
-            metadata: {
-              ...(entity.metadata || {}),
-              coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
-            },
+          // Hover events
+          instance.on("mouseover", "node", (evt: any) => {
+            const node = evt.target;
+            clearTimeout(hoverTimeout);
+            hoverTimeout = window.setTimeout(() => {
+              const renderedPos = node.renderedPosition();
+              hoverPosition = {
+                x: renderedPos.x,
+                y: renderedPos.y,
+              };
+              hoveredEntityId = node.id();
+            }, HOVER_DELAY);
           });
+
+          instance.on("mouseout", "node", (_evt: any) => {
+            clearTimeout(hoverTimeout);
+            hoveredEntityId = null;
+            hoverPosition = null;
+          });
+
+          // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
+          instance.on("position", "node", (evt: any) => {
+            if (hoveredEntityId === evt.target.id()) {
+              const renderedPos = evt.target.renderedPosition();
+              hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+            }
+          });
+          instance.on("pan zoom", () => {
+            if (hoveredEntityId && instance) {
+              const node = instance.$id(hoveredEntityId);
+              if (node.length > 0) {
+                const renderedPos = node.renderedPosition();
+                hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+              }
+            }
+          });
+
+          instance.on("tap", "node", (evt: any) => {
+            const targetNode = evt.target as NodeSingular;
+            const targetId = targetNode.id();
+
+            if (connectMode) {
+              if (!sourceId) {
+                sourceId = targetId;
+                targetNode.addClass("selected-source");
+              } else if (sourceId === targetId) {
+                sourceId = null;
+                targetNode.removeClass("selected-source");
+              } else {
+                // Create the connection in the store
+                vault.addConnection(sourceId, targetId, "neutral");
+
+                instance?.$(".selected-source").removeClass("selected-source");
+                sourceId = null;
+                connectMode = false; // Auto exit connect mode
+              }
+            } else if (graph.orbitMode) {
+              // US2: Switch center if clicked in orbit mode
+              graph.setCentralNode(targetId);
+              // Also show the detail panel for the node
+              selectedId = targetId;
+            } else {
+              // Selection Logic for Detail Panel
+              selectedId = targetId;
+            }
+          });
+
+          // Right-click on edge to edit label
+          instance.on("cxttap", "edge", (evt: any) => {
+            if (vault.isGuest) return;
+            const edge = evt.target;
+            const sourceId = edge.data("source");
+            const targetId = edge.data("target");
+            const currentLabel = edge.data("label") || "";
+            const currentType = edge.data("connectionType") || "neutral";
+
+            editingEdge = {
+              source: sourceId,
+              target: targetId,
+              label: currentLabel,
+              type: currentType,
+            };
+            edgeEditInput = currentLabel;
+            edgeEditType = currentType;
+          });
+
+          instance.on("tap", (evt: any) => {
+            if (evt.target === instance) {
+              // Only clear selection if we clicked strictly on background, not on node
+              if (!connectMode) {
+                selectedId = null;
+              }
+              // Close edge editor on background tap
+              editingEdge = null;
+            }
+          });
+
+          instance.on("select unselect", "node", () => {
+            selectionCount = instance?.$("node:selected").length || 0;
+          });
+
+          // Save position on drag end
+          instance.on("dragfree", "node", (evt: any) => {
+            if (vault.isGuest) return;
+            const node = evt.target;
+            const id = node.id();
+            const pos = node.position();
+
+            const entity = vault.entities[id];
+            if (entity) {
+              vault.updateEntity(id, {
+                metadata: {
+                  ...(entity.metadata || {}),
+                  coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+                },
+              });
+            }
+          });
+        } catch (error) {
+          console.error("Failed to initialize graph:", error);
         }
-      });
+      }, 0);
     }
   });
 
@@ -476,6 +498,10 @@
     if (cy) {
       cy.destroy();
       cy = undefined;
+    }
+    if (initTimer) {
+      clearTimeout(initTimer);
+      initTimer = null;
     }
     if (import.meta.env.DEV) {
       delete (window as any).cy;

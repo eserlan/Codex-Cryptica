@@ -4,6 +4,8 @@ test.describe("World Timeline - Graph Integration", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
 
       // Mock IDB to prevent errors
       const originalPut = IDBObjectStore.prototype.put;
@@ -73,15 +75,15 @@ test.describe("World Timeline - Graph Integration", () => {
   test("should toggle timeline mode", async ({ page }) => {
     // 1. Create entities via UI
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Event 1");
+    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Event 2");
+    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Undated Event");
+    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Set dates via store for speed/stability in test
@@ -91,9 +93,12 @@ test.describe("World Timeline - Graph Integration", () => {
     });
 
     // Wait for entities to load/update
-    await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", {
-      timeout: 15000,
-    });
+    await expect(page.getByTestId("entity-count")).toContainText(
+      "3 CHRONICLES",
+      {
+        timeout: 15000,
+      },
+    );
 
     // 3. Toggle Timeline
     const timelineBtn = page.getByTitle("Toggle Chronological Timeline Mode");
@@ -131,15 +136,15 @@ test.describe("World Timeline - Graph Integration", () => {
   test("should hide undated nodes in timeline mode", async ({ page }) => {
     // Create entities via UI
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Event 1");
+    await page.getByPlaceholder("Chronicle Title...").fill("Event 1");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Event 2");
+    await page.getByPlaceholder("Chronicle Title...").fill("Event 2");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Undated Event");
+    await page.getByPlaceholder("Chronicle Title...").fill("Undated Event");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.evaluate(() => {
@@ -147,9 +152,12 @@ test.describe("World Timeline - Graph Integration", () => {
       (window as any).vault.updateEntity("event-2", { date: { year: 2000 } });
     });
 
-    await expect(page.getByTestId("entity-count")).toContainText("3 ENTITIES", {
-      timeout: 15000,
-    });
+    await expect(page.getByTestId("entity-count")).toContainText(
+      "3 CHRONICLES",
+      {
+        timeout: 15000,
+      },
+    );
 
     // Verify undated node (undated-event) is visible before toggling timeline mode
     await page.waitForFunction(() => {

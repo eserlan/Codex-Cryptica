@@ -11,8 +11,8 @@
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "playwright test --reporter=list",
-    "audit": "unlighthouse --site localhost:4173",
-    "build:audit": "npm run build && start-server-and-test 'vite preview' http://localhost:4173 'timeout -s SIGKILL 30 unlighthouse --no-cache --disable-gpu --site http://localhost:4173 --ci --build-static || true; node scripts/seo-summary.mjs'",
+    "audit": "node scripts/run-audit.mjs",
+    "build:audit": "npm run build && start-server-and-test 'vite preview' http://localhost:4173 'npm run audit'",
     "lint": "svelte-check --tsconfig ./tsconfig.json && eslint .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"

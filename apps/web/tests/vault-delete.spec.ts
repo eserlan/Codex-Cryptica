@@ -5,6 +5,8 @@ test.describe("Vault Node Deletion", () => {
     // Mock window.showDirectoryPicker
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       // @ts-expect-error - Mock browser API
       window.showDirectoryPicker = async () => {
         return {
@@ -52,7 +54,9 @@ test.describe("Vault Node Deletion", () => {
     const newButton = page.getByTestId("new-entity-button");
     await newButton.click();
 
-    await page.locator('input[placeholder="Entry Title..."]').fill("Delete Me");
+    await page
+      .locator('input[placeholder="Chronicle Title..."]')
+      .fill("Delete Me");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Open the node
@@ -79,7 +83,9 @@ test.describe("Vault Node Deletion", () => {
     // 1. Create a node
     const newButton = page.getByTestId("new-entity-button");
     await newButton.click();
-    await page.locator('input[placeholder="Entry Title..."]').fill("Keep Me");
+    await page
+      .locator('input[placeholder="Chronicle Title..."]')
+      .fill("Keep Me");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Open the node

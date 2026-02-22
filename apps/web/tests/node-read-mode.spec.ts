@@ -5,6 +5,8 @@ test.describe("Node Read Mode", () => {
     // Disable onboarding to avoid popup interference
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
     });
     await page.goto("http://localhost:5173/");
     // Wait for vault to be ready
@@ -14,12 +16,20 @@ test.describe("Node Read Mode", () => {
   test("Open Read Mode, Copy, Navigate, and Close", async ({ page }) => {
     // 1. Setup Data
     await page.evaluate(async () => {
-      const heroId = await (window as any).vault.createEntity("character", "Hero", {
-        content: "# Hero Content\nHero is bold.",
-      });
-      const villainId = await (window as any).vault.createEntity("character", "Villain", {
-        content: "# Villain Content\nVillain is bad.",
-      });
+      const heroId = await (window as any).vault.createEntity(
+        "character",
+        "Hero",
+        {
+          content: "# Hero Content\nHero is bold.",
+        },
+      );
+      const villainId = await (window as any).vault.createEntity(
+        "character",
+        "Villain",
+        {
+          content: "# Villain Content\nVillain is bad.",
+        },
+      );
 
       await (window as any).vault.addConnection(heroId, villainId, "enemy");
 
@@ -28,8 +38,8 @@ test.describe("Node Read Mode", () => {
 
     // 2. Open Zen Mode for "Hero" directly
     await page.evaluate(() => {
-        const { heroId } = (window as any).__TEST_IDS__;
-        (window as any).uiStore.openZenMode(heroId);
+      const { heroId } = (window as any).__TEST_IDS__;
+      (window as any).uiStore.openZenMode(heroId);
     });
 
     const modal = page.locator('[role="dialog"]'); // Zen Mode Modal
@@ -42,7 +52,7 @@ test.describe("Node Read Mode", () => {
     await page.context().grantPermissions(["clipboard-write"]);
     const copyBtn = modal.getByTitle("Copy Content");
     if (await copyBtn.isVisible()) {
-        await copyBtn.click();
+      await copyBtn.click();
     }
 
     // 4. Navigate to Villain
@@ -77,18 +87,23 @@ test.describe("Node Read Mode", () => {
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
     await page.evaluate(async () => {
-      const base64Image = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-      const id = await (window as any).vault.createEntity("character", "HeroImg", {
-        content: "# Hero Content",
-        image: base64Image,
-      });
+      const base64Image =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+      const id = await (window as any).vault.createEntity(
+        "character",
+        "HeroImg",
+        {
+          content: "# Hero Content",
+          image: base64Image,
+        },
+      );
       (window as any).__TEST_IDS__ = { id };
     });
 
     // 2. Open Zen Mode
     await page.evaluate(() => {
-        const { id } = (window as any).__TEST_IDS__;
-        (window as any).uiStore.openZenMode(id);
+      const { id } = (window as any).__TEST_IDS__;
+      (window as any).uiStore.openZenMode(id);
     });
 
     const modal = page.locator('[role="dialog"]');
@@ -101,7 +116,9 @@ test.describe("Node Read Mode", () => {
     await imageBtn.click();
 
     // 4. Verify Lightbox Open
-    const closeLightboxBtn = page.locator('button[aria-label="Close image view"]');
+    const closeLightboxBtn = page.locator(
+      'button[aria-label="Close image view"]',
+    );
     await expect(closeLightboxBtn).toBeVisible();
 
     // 5. Press Escape
