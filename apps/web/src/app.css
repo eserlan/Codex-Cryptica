@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Inter:wght@300;400;700&family=Orbitron:wght@400;700&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap');
 @plugin "@iconify/tailwind4";
 
 @theme {
