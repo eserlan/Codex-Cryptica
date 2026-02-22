@@ -1,23 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 const outputPath = path.join(rootDir, 'apps/web/static/llms-full.txt');
 
-const filesToConcatenate = [
-  // Core project READMEs that currently exist and should always be included.
-  { name: 'Root README', path: 'README.md' },
-  { name: 'Web App README', path: 'apps/web/README.md' },
-  // NOTE: Package READMEs for editor-core, graph-engine, importer, and schema
-  // are not included here because they do not currently exist in the repository.
-  // If/when those packages gain README files, add them to this list to include
-  // their documentation in the generated llms-full.txt file.
-];
-
-const adrDir = path.join(rootDir, 'docs/adr');
-const schemaDir = path.join(rootDir, 'packages/schema/src');
+const helpDir = path.join(rootDir, 'apps/web/src/lib/content/help');
+const helpContentFile = path.join(rootDir, 'apps/web/src/lib/config/help-content.ts');
 
 function getFiles(dir, extension) {
   if (!fs.existsSync(dir)) return [];
@@ -26,84 +17,80 @@ function getFiles(dir, extension) {
     .map(file => path.join(dir, file));
 }
 
-let fullContent = `# Codex Cryptica Full Knowledge Base\n\nThis file contains concatenated technical documentation for the Codex Cryptica project.\n\n`;
+let fullContent = `# Codex Cryptica - User Guide & Features\n\nThis file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.\n\n`;
 
-for (const file of filesToConcatenate) {
-  const absolutePath = path.join(rootDir, file.path);
-  if (fs.existsSync(absolutePath)) {
-    console.log(`Adding ${file.name}...`);
-    const content = fs.readFileSync(absolutePath, 'utf8');
-    fullContent += `\n--- START OF ${file.name} ---\n\n${content}\n\n--- END OF ${file.name} ---\n`;
+// 1. Extract Features from help-content.ts
+if (fs.existsSync(helpContentFile)) {
+  console.log('Extracting Features...');
+  const content = fs.readFileSync(helpContentFile, 'utf8');
+  
+  // Restrict extraction to the FEATURE_HINTS object to avoid picking up onboarding hints
+  const featureHintsMatch = content.match(/export const FEATURE_HINTS: Record<string, FeatureHint> = {([\s\S]*?)};/);
+  
+  if (featureHintsMatch) {
+    fullContent += `## Core Features\n\n`;
+    const featureHintsSection = featureHintsMatch[1];
+    
+    // Use a more robust regex with /s flag for multi-line support
+    const featureRegex = /title:\s*"(.*?)",\s*content:\s*"(.*?)"/gs;
+    let match;
+    while ((match = featureRegex.exec(featureHintsSection)) !== null) {
+      const title = match[1];
+      const description = match[2].replace(/\\n/g, '\n'); // Handle escaped newlines
+      fullContent += `### ${title}\n${description}\n\n`;
+    }
   }
 }
 
-// Add ADRs
-const adrFiles = getFiles(adrDir, '.md');
-if (adrFiles.length > 0) {
-  fullContent += `\n## Architecture Decision Records (ADRs)\n`;
-  for (const file of adrFiles) {
-    console.log(`Adding ADR: ${path.basename(file)}...`);
-    const content = fs.readFileSync(file, 'utf8');
-    fullContent += `\n### ${path.basename(file)}\n\n${content}\n`;
-  }
-}
-
-// Add Schema Interfaces
-const schemaFiles = getFiles(schemaDir, '.ts').filter(f => !f.endsWith('.test.ts'));
-if (schemaFiles.length > 0) {
-  fullContent += `\n## Core Schema Interfaces\n`;
-  for (const file of schemaFiles) {
-    console.log(`Adding Schema: ${path.basename(file)}...`);
-    const content = fs.readFileSync(file, 'utf8');
-    // Only include interfaces, types, and enums exports to keep it focused,
-    // but capture complete multi-line declarations instead of just the first line.
-    const allLines = content.split('\n');
-    const exportedBlocks = [];
-    const exportDeclRegex = /^\s*export\s+(interface|type|enum)\b/;
-
-    let collecting = false;
-    let currentBlock = [];
-    let braceDepth = 0;
-
-    const countChar = (line, ch) => (line.match(new RegExp(`\\${ch}`, 'g')) || []).length;
-
-    for (const line of allLines) {
-      if (!collecting) {
-        if (exportDeclRegex.test(line)) {
-          collecting = true;
-          currentBlock.push(line);
-          braceDepth += countChar(line, '{');
-          braceDepth -= countChar(line, '}');
-
-          // Handle single-line type/interface/enum declarations that end immediately.
-          if (braceDepth === 0 && line.includes(';')) {
-            exportedBlocks.push(currentBlock.join('\n'));
-            currentBlock = [];
-            collecting = false;
-          }
-        }
-      } else {
-        currentBlock.push(line);
-        braceDepth += countChar(line, '{');
-        braceDepth -= countChar(line, '}');
-
-        // End the block when we've closed all braces (for interfaces/enums)
-        // or reached a terminating semicolon for types with no braces.
-        const trimmed = line.trim();
-        if (
-          braceDepth === 0 &&
-          (trimmed.endsWith('}') || trimmed.endsWith(';'))
-        ) {
-          exportedBlocks.push(currentBlock.join('\n'));
-          currentBlock = [];
-          collecting = false;
-        }
+// 2. Add Help Articles
+const helpFiles = getFiles(helpDir, '.md');
+if (helpFiles.length > 0) {
+  console.log('Processing Help Articles...');
+  
+  const helpArticles = helpFiles.map(file => {
+    const rawContent = fs.readFileSync(file, 'utf8');
+    const filename = path.basename(file, '.md');
+    
+    // Use a bounded regex for frontmatter to avoid performance issues
+    const frontmatterMatch = rawContent.match(/^---\r?\n([\s\S]{0,10000}?)\r?\n---\r?\n?/);
+    
+    let content = rawContent;
+    let metadata = {};
+    
+    if (frontmatterMatch) {
+      try {
+        metadata = yaml.load(frontmatterMatch[1]);
+        content = rawContent.slice(frontmatterMatch[0].length).trim();
+      } catch (e) {
+        console.warn(`Failed to parse YAML in ${filename}:`, e.message);
+        content = rawContent.replace(/^---[\s\S]*?---/, '').trim();
       }
     }
-
-    if (exportedBlocks.length > 0) {
-      fullContent += `\n### ${path.basename(file)}\n\n\`\`\`typescript\n${exportedBlocks.join('\n\n')}\n\`\`\`\n`;
-    }
+    
+    // Strip leading H1/H2 headings from the article content to avoid heading level conflicts
+    content = content.replace(/^#{1,2}\s.*\n?/, '').trimStart();
+    
+    const title = (metadata.title || filename.replace(/-/g, ' ')).toUpperCase();
+    const rank = metadata.rank !== undefined ? metadata.rank : 999;
+    
+    return {
+      title,
+      content,
+      rank,
+      filename
+    };
+  });
+  
+  // Sort by rank (ascending), then by title
+  helpArticles.sort((a, b) => {
+    if (a.rank !== b.rank) return a.rank - b.rank;
+    return a.title.localeCompare(b.title);
+  });
+  
+  fullContent += `\n## Help Documentation\n`;
+  for (const article of helpArticles) {
+    console.log(`Adding Help Article: ${article.filename} (Rank: ${article.rank})`);
+    fullContent += `\n### ${article.title}\n\n${article.content}\n\n---\n`;
   }
 }
 

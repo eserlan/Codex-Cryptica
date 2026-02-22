@@ -78,12 +78,12 @@ test.describe("SEO and Prerendering", () => {
     const fullContent = await fullResponse.text();
     // Ensure the file is non-trivially large
     expect(fullContent.length).toBeGreaterThan(5000);
-    // Ensure it contains TypeScript-like schema definitions (e.g., complete interfaces)
-    expect(/interface\s+\w+\s*{[\s\S]*?}/.test(fullContent)).toBe(true);
-    // Ensure schema sections are formatted as TypeScript code blocks
-    expect(fullContent).toMatch(/```(ts|typescript)[\s\S]*?```/);
-    // Ensure referenced README content is included
-    expect(fullContent).toMatch(/START OF .* README/i);
+    // Ensure it contains core feature summaries
+    expect(fullContent).toContain("## Core Features");
+    // Ensure it contains help documentation
+    expect(fullContent).toContain("## Help Documentation");
+    // Ensure specific known articles are present
+    expect(fullContent).toContain("CHAT COMMANDS");
 
     // 3. Check discoverability in head
     await page.goto("/");
