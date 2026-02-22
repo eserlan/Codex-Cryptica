@@ -27,7 +27,7 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
-  import { PATREON_URL } from "$lib/config";
+  import { PATREON_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
@@ -110,6 +110,8 @@
   });
 
   onMount(() => {
+    console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
+
     // Light initializations required for the landing page/shell
     helpStore.init();
     themeStore.init();
@@ -118,7 +120,9 @@
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register(`${base}/service-worker.js`)
+        .register(`${base}/service-worker.js`, {
+          type: import.meta.env.DEV ? "module" : "classic",
+        })
         .catch((error) => {
           console.warn("Service Worker registration failed:", error);
         });

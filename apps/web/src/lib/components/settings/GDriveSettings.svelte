@@ -52,9 +52,19 @@
           throw new Error("Must connect to Google Drive first.");
         }
 
-        const folderId = await adapter.createFolder(
-          `Codex - ${activeVault.name}`,
+        const rootFolderId = await adapter.getOrCreateCodexRoot();
+        const expectedFolderName = `Codex - ${activeVault.name}`;
+
+        // Use atomic(ish) helper to find or create the folder, handling duplicates by name
+        const folderId = await adapter.getOrCreateFolder(
+          expectedFolderName,
+          rootFolderId,
         );
+
+        console.log(
+          `[GDriveSettings] Using folder '${expectedFolderName}' (${folderId})`,
+        );
+
         await syncEngine.linkVaultToDrive(
           activeVault.id,
           folderId,
@@ -105,9 +115,20 @@
         {activeVault?.name || "No Vault Selected"}
       </span>
       {#if gdriveFolderId}
-        <span class="text-[10px] text-theme-muted font-mono mt-1">
-          Folder ID: {gdriveFolderId}
-        </span>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-[10px] text-theme-muted font-mono">
+            Folder ID: {gdriveFolderId}
+          </span>
+          <a
+            href="https://drive.google.com/drive/u/0/folders/{gdriveFolderId}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-theme-secondary hover:text-theme-primary flex items-center gap-1 hover:underline"
+            title="Open in Google Drive"
+          >
+            Open <span class="icon-[lucide--external-link] w-3 h-3"></span>
+          </a>
+        </div>
       {/if}
     </div>
 

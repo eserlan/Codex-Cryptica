@@ -135,18 +135,61 @@ export class WorkerBridge {
       return;
     }
 
+    // Ensure registry is initialized before checking state
+    if (!vaultRegistry.isInitialized) {
+      console.log("[WorkerBridge] Registry not ready, awaiting init...");
+      try {
+        await vaultRegistry.init();
+      } catch (err) {
+        console.error(
+          "[WorkerBridge] Sync aborted: vault registry init() threw an error",
+          err,
+        );
+        console.groupEnd();
+        return;
+      }
+
+      if (!vaultRegistry.isInitialized) {
+        console.warn(
+          "[WorkerBridge] Sync aborted: vault registry failed to initialize",
+        );
+        console.groupEnd();
+        return;
+      }
+    }
+
     const activeVaultId = vaultRegistry.activeVaultId;
     const currentVault = vaultRegistry.availableVaults.find(
       (v) => v.id === activeVaultId,
     );
 
-    if (
-      !currentVault ||
-      !currentVault.gdriveSyncEnabled ||
-      !currentVault.gdriveFolderId
-    ) {
+    console.log("[WorkerBridge] Registry State:", {
+      isInitialized: vaultRegistry.isInitialized,
+      activeVaultId,
+      vaultFound: !!currentVault,
+      syncEnabled: currentVault?.gdriveSyncEnabled,
+      hasFolderId: !!currentVault?.gdriveFolderId,
+    });
+
+    if (!currentVault) {
       console.warn(
-        "Sync aborted: active vault does not have GDrive sync enabled or missing folder ID",
+        `Sync aborted: active vault '${activeVaultId}' not found in registry`,
+      );
+      console.groupEnd();
+      return;
+    }
+
+    if (!currentVault.gdriveSyncEnabled) {
+      console.warn(
+        `Sync aborted: GDrive sync is disabled for vault '${currentVault.name}' (${currentVault.id})`,
+      );
+      console.groupEnd();
+      return;
+    }
+
+    if (!currentVault.gdriveFolderId) {
+      console.warn(
+        `Sync aborted: GDrive folder ID missing for vault '${currentVault.name}' (${currentVault.id})`,
       );
       console.groupEnd();
       return;
@@ -168,6 +211,7 @@ export class WorkerBridge {
       payload: {
         accessToken: token,
         folderId: folderId,
+        vaultId: currentVault.id,
         rootHandle: rootHandle,
       },
     });

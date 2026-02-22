@@ -180,10 +180,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
           const email = about.result.user?.emailAddress || "connected-user";
 
           // 2. Ensure CodexCryptica folder exists
-          let folderId = await this.getFolderId();
-          if (!folderId) {
-            folderId = await this.createFolder("CodexCryptica");
-          }
+          const folderId = await this.getOrCreateCodexRoot();
 
           // Store folder ID in localStorage scoped to the current user
           const storageKey = `gdrive_folder_id:${email}`;
@@ -208,31 +205,51 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     });
   }
 
-  private async getFolderId(): Promise<string | null> {
-    const response = await gapi.client.drive.files.list({
-      q: "name = 'CodexCryptica' and mimeType = 'application/vnd.google-apps.folder' and trashed = false",
-      fields: "files(id)",
-    });
-    const files = response.result.files || [];
-
-    if (files.length === 0) return null;
-    if (files.length === 1) return files[0].id!;
-
-    console.warn(
-      `Multiple "CodexCryptica" folders found (${files.length}). Using the first one found.`,
-    );
-    return files[0].id!;
+  public async getOrCreateCodexRoot(): Promise<string> {
+    return this.getOrCreateFolder("CodexCryptica");
   }
 
-  public async createFolder(name: string): Promise<string> {
+  public async getOrCreateFolder(
+    name: string,
+    parentId?: string,
+  ): Promise<string> {
+    const existingId = await this.findFolder(name, parentId);
+    if (existingId) return existingId;
+    return this.createFolder(name, parentId);
+  }
+
+  private async getFolderId(): Promise<string | null> {
+    return this.findFolder("CodexCryptica");
+  }
+
+  public async createFolder(name: string, parentId?: string): Promise<string> {
     const response = await gapi.client.drive.files.create({
       resource: {
         name: name,
         mimeType: "application/vnd.google-apps.folder",
+        parents: parentId ? [parentId] : undefined,
       },
       fields: "id",
     });
     return response.result.id!;
+  }
+
+  public async findFolder(
+    name: string,
+    parentId?: string,
+  ): Promise<string | null> {
+    const escapedName = name.replace(/'/g, "\\'");
+    let q = `name = '${escapedName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+    if (parentId) {
+      q += ` and '${parentId}' in parents`;
+    }
+
+    const response = await gapi.client.drive.files.list({
+      q,
+      fields: "files(id)",
+    });
+    const files = response.result.files || [];
+    return files.length > 0 ? files[0].id! : null;
   }
 
   getAccessToken(): string | null {

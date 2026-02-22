@@ -18,6 +18,12 @@ self.onmessage = async (event) => {
     switch (type) {
       case "INIT_SYNC": {
         console.log("SyncWorker: Initializing engine...");
+        if (!payload.vaultId) {
+          console.error(
+            "SyncWorker: INIT_SYNC failed - Missing vaultId in payload",
+          );
+          throw new Error("SyncWorker: INIT_SYNC failed - Missing vaultId in payload");
+        }
         const cloudAdapter = new WorkerDriveAdapter(
           payload.accessToken,
           payload.folderId,
