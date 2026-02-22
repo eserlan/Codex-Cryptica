@@ -33,12 +33,11 @@
       </button>
       <button
         onclick={onSave}
-        class="bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold px-6 py-2 rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-theme-primary"
+        class="bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold px-6 py-2 rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={isSaving}
       >
         {#if isSaving}
-          <span class="icon-[lucide--loader-2] animate-spin w-4 h-4" aria-hidden="true"></span>
-          <span>SAVING...</span>
+          <span class="animate-pulse">SAVING...</span>
         {:else}
           {themeStore.jargon.save.toUpperCase()} CHANGES
         {/if}

@@ -74,10 +74,10 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
-      uiStore.notify?.({
-        type: "error",
-        message: "Failed to save changes. Your latest edits were not saved.",
-      });
+      uiStore.notify(
+        "Failed to save changes. Your latest edits were not saved.",
+        "info",
+      );
     } finally {
       isSaving = false;
     }
