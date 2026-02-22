@@ -194,6 +194,7 @@ export class WorkerBridge {
       payload: {
         accessToken: token,
         folderId: folderId,
+        vaultId: currentVault.id,
         rootHandle: rootHandle,
       },
     });

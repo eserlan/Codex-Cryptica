@@ -79,7 +79,10 @@ describe("WorkerBridge", () => {
     // Verify it proceeded to post message (meaning it waited successfully)
     const workerInstance = (bridge as any).worker;
     expect(workerInstance.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "INIT_SYNC" }),
+      expect.objectContaining({
+        type: "INIT_SYNC",
+        payload: expect.objectContaining({ vaultId: "vault-1" }),
+      }),
     );
   });
 
@@ -94,7 +97,10 @@ describe("WorkerBridge", () => {
     expect(vaultRegistry.init).not.toHaveBeenCalled();
     const workerInstance = (bridge as any).worker;
     expect(workerInstance.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "INIT_SYNC" }),
+      expect.objectContaining({
+        type: "INIT_SYNC",
+        payload: expect.objectContaining({ vaultId: "vault-1" }),
+      }),
     );
   });
 });
