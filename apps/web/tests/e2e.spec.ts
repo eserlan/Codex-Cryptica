@@ -21,22 +21,22 @@ test.describe("Vault E2E", () => {
     await expect(page.getByTitle("Switch Vault")).toContainText(
       /Default Vault|Local Vault/,
     );
-    // Should be empty initially — when 0 entities, the UI shows "NO VAULT" instead of entity-count
-    await expect(page.getByText("NO VAULT")).toBeVisible();
+    // Should be empty initially — when 0 entities, the UI shows "NO ARCHIVE" instead of entity-count
+    await expect(page.getByText("NO ARCHIVE")).toBeVisible();
   });
 
   test("Create Entity Updates Graph", async ({ page }) => {
     // Create Node A
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Node A");
+    await page.getByPlaceholder("Chronicle Title...").fill("Node A");
     await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES");
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE");
 
     // Create Node B
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Node B");
+    await page.getByPlaceholder("Chronicle Title...").fill("Node B");
     await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES");
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES");
 
     // Verify Search
     await page.keyboard.press("Control+k");
@@ -50,7 +50,7 @@ test.describe("Vault E2E", () => {
   test("Connect Mode UI", async ({ page }) => {
     // Need at least one node to connect
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Source Node");
+    await page.getByPlaceholder("Chronicle Title...").fill("Source Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // 1. Toggle via Button
@@ -93,7 +93,7 @@ test.describe("Vault E2E", () => {
     // However, the base e2e.spec.ts starts with NO VAULT.
     // Let's create a node first to be sure we can check style.
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Test Node");
+    await page.getByPlaceholder("Chronicle Title...").fill("Test Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Toggle off again (since we just refreshed state potentially)
@@ -132,7 +132,7 @@ test.describe("Vault E2E", () => {
 
     // 4. Verify blocked when typing in input
     await page.getByTestId("new-entity-button").click();
-    const titleInput = page.getByPlaceholder("Entry Title...");
+    const titleInput = page.getByPlaceholder("Chronicle Title...");
     await titleInput.focus();
     await titleInput.fill("testing labels");
     await page.keyboard.press("l");

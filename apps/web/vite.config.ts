@@ -22,6 +22,9 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
   },
+  worker: {
+    format: "es",
+  },
   build: {
     minify: "esbuild",
     target: "es2020",

@@ -35,6 +35,8 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.addInitScript(() => {
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       (window as any).DISABLE_ERROR_OVERLAY = true;
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
@@ -75,7 +77,7 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // Setup: Create a test entity
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Test Event");
+    await page.getByPlaceholder("Chronicle Title...").fill("Test Event");
     await page.getByRole("button", { name: "ADD" }).click();
   });
 

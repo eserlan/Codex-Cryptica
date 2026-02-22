@@ -37,6 +37,8 @@ test.describe("Guest Mode (P2P Share)", () => {
     await page.addInitScript((data) => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      (window as any).__E2E__ = true;
 
       // Mock the PeerJS constructor and its methods
       (window as any).Peer = class MockPeer {

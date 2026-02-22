@@ -4,25 +4,35 @@ test.describe("Graph Focus Mode", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
     });
 
     await page.goto("http://localhost:5173/");
 
+    // Wait for vault initialization (OPFS auto-load)
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
+
     // Create nodes via UI for clean state
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Node 1");
+    await page.getByPlaceholder("Chronicle Title...").fill("Node 1");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Node 2");
+    await page.getByPlaceholder("Chronicle Title...").fill("Node 2");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Node 3");
+    await page.getByPlaceholder("Chronicle Title...").fill("Node 3");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("island");
+    await page.getByPlaceholder("Chronicle Title...").fill("island");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Link Node 1 to Node 2

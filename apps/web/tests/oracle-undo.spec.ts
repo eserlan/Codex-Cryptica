@@ -5,6 +5,8 @@ test.describe("Oracle Undo", () => {
     await page.addInitScript(() => {
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
 
       // Mock File System Access API
       (window as any).showDirectoryPicker = async () => {

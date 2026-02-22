@@ -10,17 +10,19 @@ describe("GraphTransformer", () => {
         type: "npc",
         title: "Node 1",
         tags: [],
+        labels: [],
         connections: [{ target: "n2", type: "knows", strength: 0.5 }],
         content: "",
-      },
+      } as any,
       {
         id: "n2",
         type: "location",
         title: "Node 2",
         tags: [],
+        labels: [],
         connections: [],
         content: "",
-      },
+      } as any,
     ];
 
     const elements = GraphTransformer.entitiesToElements(entities);
@@ -34,11 +36,11 @@ describe("GraphTransformer", () => {
     expect(node1?.data.label).toBe("Node 1");
 
     const edge = elements.find(
-      (e) => e.group === "edges" && e.data.source === "n1",
+      (e) => e.group === "edges" && (e.data as any).source === "n1",
     );
     expect(edge).toBeDefined();
-    expect(edge?.data.target).toBe("n2");
-    expect(edge?.data.strength).toBe(0.5);
+    expect((edge?.data as any).target).toBe("n2");
+    expect((edge?.data as any).strength).toBe(0.5);
   });
 
   it("should handle entities with missing connections", () => {
@@ -79,17 +81,18 @@ describe("GraphTransformer", () => {
         type: "npc",
         title: "Node 1",
         tags: [],
+        labels: [],
         connections: [],
         content: "",
         image: "http://example.com/img.png",
-      },
+      } as any,
     ];
 
     const elements = GraphTransformer.entitiesToElements(entities);
     const node = elements.find(
       (e) => e.group === "nodes" && e.data.id === "n1",
     );
-    expect(node?.data.image).toBe("http://example.com/img.png");
+    expect((node?.data as any).image).toBe("http://example.com/img.png");
   });
 
   it("should use custom label on edges when provided", () => {
@@ -99,19 +102,21 @@ describe("GraphTransformer", () => {
         type: "npc",
         title: "Node 1",
         tags: [],
+        labels: [],
         connections: [
           { target: "n2", type: "knows", strength: 1, label: "Best Friends" },
         ],
         content: "",
-      },
+      } as any,
       {
         id: "n2",
         type: "npc",
         title: "Node 2",
         tags: [],
+        labels: [],
         connections: [],
         content: "",
-      },
+      } as any,
     ];
 
     const elements = GraphTransformer.entitiesToElements(entities);
@@ -129,17 +134,19 @@ describe("GraphTransformer", () => {
         type: "npc",
         title: "Node 1",
         tags: [],
+        labels: [],
         connections: [{ target: "n2", type: "related_to", strength: 1 }],
         content: "",
-      },
+      } as any,
       {
         id: "n2",
         type: "npc",
         title: "Node 2",
         tags: [],
+        labels: [],
         connections: [],
         content: "",
-      },
+      } as any,
     ];
 
     const elements = GraphTransformer.entitiesToElements(entities);
@@ -193,9 +200,9 @@ describe("GraphTransformer", () => {
     expect(node2).toBeDefined();
     expect(node3).toBeDefined();
 
-    expect(node1?.data.isRevealed).toBe(true);
-    expect(node2?.data.isRevealed).toBe(true);
-    expect(node3?.data.isRevealed).toBeUndefined();
+    expect((node1?.data as any).isRevealed).toBe(true);
+    expect((node2?.data as any).isRevealed).toBe(true);
+    expect((node3?.data as any).isRevealed).toBeUndefined();
   });
 
   it("should format dates correctly", () => {
@@ -256,12 +263,12 @@ describe("GraphTransformer", () => {
     const getNode = (id: string) =>
       elements.find((e) => e.group === "nodes" && e.data.id === id);
 
-    expect(getNode("n1")?.data.dateLabel).toBe("2026");
-    expect(getNode("n2")?.data.dateLabel).toBe("2026-02");
-    expect(getNode("n3")?.data.dateLabel).toBe("2026-02-12");
-    expect(getNode("n4")?.data.dateLabel).toBe("Ancient Era");
-    expect(getNode("n5")?.data.dateLabel).toBe("");
-    expect(getNode("n6")?.data.dateLabel).toBe("2026-12-05");
-    expect(getNode("n7")?.data.dateLabel).toBe("2026-12");
+    expect((getNode("n1")?.data as any).dateLabel).toBe("2026");
+    expect((getNode("n2")?.data as any).dateLabel).toBe("2026-02");
+    expect((getNode("n3")?.data as any).dateLabel).toBe("2026-02-12");
+    expect((getNode("n4")?.data as any).dateLabel).toBe("Ancient Era");
+    expect((getNode("n5")?.data as any).dateLabel).toBe("");
+    expect((getNode("n6")?.data as any).dateLabel).toBe("2026-12-05");
+    expect((getNode("n7")?.data as any).dateLabel).toBe("2026-12");
   });
 });

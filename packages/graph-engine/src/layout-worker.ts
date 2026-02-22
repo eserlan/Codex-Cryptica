@@ -1,23 +1,35 @@
-import cytoscape from "cytoscape";
-import fcose from "cytoscape-fcose";
 import * as Comlink from "comlink";
 import {
   getTimelineLayout,
   type TimelineLayoutOptions,
 } from "./layouts/timeline";
 
-// Register fcose
-if (typeof cytoscape !== "undefined") {
-  cytoscape.use(fcose);
-}
-
 export type LayoutResult = Record<string, { x: number; y: number }>;
+
+let workerCyPromise: Promise<any> | null = null;
 
 export class LayoutEngine {
   /**
    * Run a force-directed layout (fcose) in the background.
    */
   async runFcose(elements: any[], options: any = {}): Promise<LayoutResult> {
+    if (!workerCyPromise) {
+      workerCyPromise = (async () => {
+        const [cytoscapeModule, fcoseModule] = await Promise.all([
+          import("cytoscape"),
+          import("cytoscape-fcose"),
+        ]);
+
+        const cytoscape = cytoscapeModule.default;
+        const fcose = fcoseModule.default;
+
+        cytoscape.use(fcose);
+        return cytoscape;
+      })();
+    }
+
+    const cytoscape = await workerCyPromise;
+
     const cy = cytoscape({
       headless: true,
       elements,
@@ -39,7 +51,7 @@ export class LayoutEngine {
           ...options,
           stop: () => {
             const positions: LayoutResult = {};
-            cy.nodes().forEach((node) => {
+            cy.nodes().forEach((node: any) => {
               positions[node.id()] = node.position();
             });
             cy.destroy();

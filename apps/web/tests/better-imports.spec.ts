@@ -4,6 +4,8 @@ test.describe("Better Imports E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
         name: "test-vault",
@@ -74,11 +76,11 @@ test.describe("Better Imports E2E", () => {
   }) => {
     // 1. Pre-populate vault with an entity via UI
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Existing Dragon");
+    await page.getByPlaceholder("Chronicle Title...").fill("Existing Dragon");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for indexing/state update
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 
@@ -186,9 +188,9 @@ test.describe("Better Imports E2E", () => {
   }) => {
     // 1. Pre-populate vault with "Eldrin"
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Eldrin");
+    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin");
     await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 

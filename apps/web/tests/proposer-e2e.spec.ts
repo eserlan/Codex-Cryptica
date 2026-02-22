@@ -51,6 +51,8 @@ test.describe("Connections Proposer E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "mock-api-key";
     });
 
@@ -71,11 +73,11 @@ test.describe("Connections Proposer E2E", () => {
 
     // 1. Create two entities
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Eldrin the Wise");
+    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin the Wise");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("The Broken Tower");
+    await page.getByPlaceholder("Chronicle Title...").fill("The Broken Tower");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for vault to be idle
@@ -124,11 +126,11 @@ test.describe("Connections Proposer E2E", () => {
 
     // Setup
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Alaric");
+    await page.getByPlaceholder("Chronicle Title...").fill("Alaric");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("The Broken Tower");
+    await page.getByPlaceholder("Chronicle Title...").fill("The Broken Tower");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for vault to be idle

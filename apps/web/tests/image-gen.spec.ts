@@ -5,6 +5,8 @@ test.describe("Oracle Image Generation", () => {
     // Inject mocks and keep them persistent
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       const applyMocks = () => {
         if ((window as any).oracle) {
           (window as any).oracle.apiKey = "fake-key";
@@ -133,7 +135,7 @@ test.describe("Oracle Image Generation", () => {
     await newBtn.waitFor({ state: "visible", timeout: 15000 });
     await newBtn.click();
 
-    await page.getByPlaceholder("Entry Title...").fill("Test Drag Entity");
+    await page.getByPlaceholder("Chronicle Title...").fill("Test Drag Entity");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for detail panel to open

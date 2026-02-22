@@ -339,14 +339,22 @@
       // This yields the main thread back to the browser so Svelte can completely
       // remove the "Initiating Neural Interface..." screen and paint the empty frame
       // BEFORE Cytoscape synchronously locks up the main thread with 1000s of elements.
-      initTimer = setTimeout(() => {
+      initTimer = setTimeout(async () => {
         if (!container) return; // Guard against rapid unmounts
 
-        cy = initGraph({
+        const instance = (await initGraph({
           container,
           elements: untrack(() => graph.elements), // Initialize with current elements
           style: untrack(() => graphStyle),
-        });
+        })) as any;
+
+        // If the timer was cleared by onDestroy, cleanup the orphan instance
+        if (!initTimer) {
+          instance.destroy();
+          return;
+        }
+
+        cy = instance;
 
         // Expose for E2E testing
         if (import.meta.env.DEV || (window as any).__E2E__) {
@@ -487,7 +495,10 @@
       cy.destroy();
       cy = undefined;
     }
-    clearTimeout(initTimer);
+    if (initTimer) {
+      clearTimeout(initTimer);
+      initTimer = undefined as any;
+    }
     if (import.meta.env.DEV) {
       delete (window as any).cy;
     }

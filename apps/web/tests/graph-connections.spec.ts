@@ -7,6 +7,8 @@ test.describe("Graph Connection Labels & Colors", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+      (window as any).__E2E__ = true;
     });
 
     await page.goto("/");
@@ -16,15 +18,15 @@ test.describe("Graph Connection Labels & Colors", () => {
 
     // Create two entities using the correct UI flow
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Test Source");
+    await page.getByPlaceholder("Chronicle Title...").fill("Test Source");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Test Target");
+    await page.getByPlaceholder("Chronicle Title...").fill("Test Target");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for entities to be created
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 10000,
     });
 
