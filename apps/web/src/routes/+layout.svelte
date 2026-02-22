@@ -27,7 +27,7 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
-  import { PATREON_URL } from "$lib/config";
+  import { PATREON_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
@@ -110,6 +110,8 @@
   });
 
   onMount(() => {
+    console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
+
     // Light initializations required for the landing page/shell
     helpStore.init();
     themeStore.init();
