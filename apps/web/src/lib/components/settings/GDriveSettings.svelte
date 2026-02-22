@@ -121,9 +121,20 @@
         {activeVault?.name || "No Vault Selected"}
       </span>
       {#if gdriveFolderId}
-        <span class="text-[10px] text-theme-muted font-mono mt-1">
-          Folder ID: {gdriveFolderId}
-        </span>
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-[10px] text-theme-muted font-mono">
+            Folder ID: {gdriveFolderId}
+          </span>
+          <a
+            href="https://drive.google.com/drive/u/0/folders/{gdriveFolderId}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] text-theme-secondary hover:text-theme-primary flex items-center gap-1 hover:underline"
+            title="Open in Google Drive"
+          >
+            Open <span class="icon-[lucide--external-link] w-3 h-3"></span>
+          </a>
+        </div>
       {/if}
     </div>
 
