@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -40,8 +40,19 @@ function runLighthouse(route) {
   if (chromePath) env.CHROME_PATH = chromePath;
 
   try {
-    execSync(
-      `npx lighthouse ${url} --quiet --chrome-flags="--headless --no-sandbox" --output json --output-path ${outputPath} --no-enable-error-reporting`,
+    execFileSync(
+      'npx',
+      [
+        'lighthouse',
+        url,
+        '--quiet',
+        '--chrome-flags=--headless --no-sandbox',
+        '--output',
+        'json',
+        '--output-path',
+        outputPath,
+        '--no-enable-error-reporting'
+      ],
       { stdio: 'inherit', env }
     );
     return JSON.parse(fs.readFileSync(outputPath, 'utf8'));

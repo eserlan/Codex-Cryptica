@@ -15,16 +15,21 @@ export class LayoutEngine {
   async runFcose(elements: any[], options: any = {}): Promise<LayoutResult> {
     if (!workerCyPromise) {
       workerCyPromise = (async () => {
-        const [cytoscapeModule, fcoseModule] = await Promise.all([
-          import("cytoscape"),
-          import("cytoscape-fcose"),
-        ]);
+        try {
+          const [cytoscapeModule, fcoseModule] = await Promise.all([
+            import("cytoscape"),
+            import("cytoscape-fcose"),
+          ]);
 
-        const cytoscape = cytoscapeModule.default;
-        const fcose = fcoseModule.default;
+          const cytoscape = cytoscapeModule.default;
+          const fcose = fcoseModule.default;
 
-        cytoscape.use(fcose);
-        return cytoscape;
+          cytoscape.use(fcose);
+          return cytoscape;
+        } catch (err) {
+          workerCyPromise = null;
+          throw err;
+        }
       })();
     }
 

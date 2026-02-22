@@ -19,16 +19,21 @@ let corePromise: Promise<any> | null = null;
 export const initGraph = async (options: GraphOptions) => {
   if (!corePromise) {
     corePromise = (async () => {
-      const [cytoscapeModule, fcoseModule] = await Promise.all([
-        import("cytoscape"),
-        import("cytoscape-fcose"),
-      ]);
+      try {
+        const [cytoscapeModule, fcoseModule] = await Promise.all([
+          import("cytoscape"),
+          import("cytoscape-fcose"),
+        ]);
 
-      const cytoscape = cytoscapeModule.default;
-      const fcose = fcoseModule.default;
+        const cytoscape = cytoscapeModule.default;
+        const fcose = fcoseModule.default;
 
-      cytoscape.use(fcose);
-      return cytoscape;
+        cytoscape.use(fcose);
+        return cytoscape;
+      } catch (err) {
+        corePromise = null;
+        throw err;
+      }
     })();
   }
 

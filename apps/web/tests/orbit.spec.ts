@@ -6,7 +6,6 @@ test.describe("Orbit Layout", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
-      (window as any).__E2E__ = true;
     });
   });
 

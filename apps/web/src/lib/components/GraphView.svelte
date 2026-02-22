@@ -331,7 +331,7 @@
     }
   };
 
-  let initTimer: number | ReturnType<typeof setTimeout>;
+  let initTimer: ReturnType<typeof setTimeout> | null = null;
 
   onMount(() => {
     if (container) {
@@ -342,143 +342,147 @@
       initTimer = setTimeout(async () => {
         if (!container) return; // Guard against rapid unmounts
 
-        const instance = (await initGraph({
-          container,
-          elements: untrack(() => graph.elements), // Initialize with current elements
-          style: untrack(() => graphStyle),
-        })) as any;
+        try {
+          const instance = (await initGraph({
+            container,
+            elements: untrack(() => graph.elements), // Initialize with current elements
+            style: untrack(() => graphStyle),
+          })) as any;
 
-        // If the timer was cleared by onDestroy, cleanup the orphan instance
-        if (!initTimer) {
-          instance.destroy();
-          return;
-        }
-
-        cy = instance;
-
-        // Expose for E2E testing
-        if (import.meta.env.DEV || (window as any).__E2E__) {
-          (window as any).cy = instance;
-        }
-
-        // Hover events
-        instance.on("mouseover", "node", (evt: any) => {
-          const node = evt.target;
-          clearTimeout(hoverTimeout);
-          hoverTimeout = window.setTimeout(() => {
-            const renderedPos = node.renderedPosition();
-            hoverPosition = {
-              x: renderedPos.x,
-              y: renderedPos.y,
-            };
-            hoveredEntityId = node.id();
-          }, HOVER_DELAY);
-        });
-
-        instance.on("mouseout", "node", (_evt: any) => {
-          clearTimeout(hoverTimeout);
-          hoveredEntityId = null;
-          hoverPosition = null;
-        });
-
-        // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
-        instance.on("position", "node", (evt: any) => {
-          if (hoveredEntityId === evt.target.id()) {
-            const renderedPos = evt.target.renderedPosition();
-            hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+          // If the timer was cleared by onDestroy, cleanup the orphan instance
+          if (initTimer === null) {
+            instance.destroy();
+            return;
           }
-        });
-        instance.on("pan zoom", () => {
-          if (hoveredEntityId && instance) {
-            const node = instance.$id(hoveredEntityId);
-            if (node.length > 0) {
+
+          cy = instance;
+
+          // Expose for E2E testing
+          if (import.meta.env.DEV || (window as any).__E2E__) {
+            (window as any).cy = instance;
+          }
+
+          // Hover events
+          instance.on("mouseover", "node", (evt: any) => {
+            const node = evt.target;
+            clearTimeout(hoverTimeout);
+            hoverTimeout = window.setTimeout(() => {
               const renderedPos = node.renderedPosition();
+              hoverPosition = {
+                x: renderedPos.x,
+                y: renderedPos.y,
+              };
+              hoveredEntityId = node.id();
+            }, HOVER_DELAY);
+          });
+
+          instance.on("mouseout", "node", (_evt: any) => {
+            clearTimeout(hoverTimeout);
+            hoveredEntityId = null;
+            hoverPosition = null;
+          });
+
+          // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
+          instance.on("position", "node", (evt: any) => {
+            if (hoveredEntityId === evt.target.id()) {
+              const renderedPos = evt.target.renderedPosition();
               hoverPosition = { x: renderedPos.x, y: renderedPos.y };
             }
-          }
-        });
+          });
+          instance.on("pan zoom", () => {
+            if (hoveredEntityId && instance) {
+              const node = instance.$id(hoveredEntityId);
+              if (node.length > 0) {
+                const renderedPos = node.renderedPosition();
+                hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+              }
+            }
+          });
 
-        instance.on("tap", "node", (evt: any) => {
-          const targetNode = evt.target as NodeSingular;
-          const targetId = targetNode.id();
+          instance.on("tap", "node", (evt: any) => {
+            const targetNode = evt.target as NodeSingular;
+            const targetId = targetNode.id();
 
-          if (connectMode) {
-            if (!sourceId) {
-              sourceId = targetId;
-              targetNode.addClass("selected-source");
-            } else if (sourceId === targetId) {
-              sourceId = null;
-              targetNode.removeClass("selected-source");
+            if (connectMode) {
+              if (!sourceId) {
+                sourceId = targetId;
+                targetNode.addClass("selected-source");
+              } else if (sourceId === targetId) {
+                sourceId = null;
+                targetNode.removeClass("selected-source");
+              } else {
+                // Create the connection in the store
+                vault.addConnection(sourceId, targetId, "neutral");
+
+                instance?.$(".selected-source").removeClass("selected-source");
+                sourceId = null;
+                connectMode = false; // Auto exit connect mode
+              }
+            } else if (graph.orbitMode) {
+              // US2: Switch center if clicked in orbit mode
+              graph.setCentralNode(targetId);
+              // Also show the detail panel for the node
+              selectedId = targetId;
             } else {
-              // Create the connection in the store
-              vault.addConnection(sourceId, targetId, "neutral");
-
-              instance?.$(".selected-source").removeClass("selected-source");
-              sourceId = null;
-              connectMode = false; // Auto exit connect mode
+              // Selection Logic for Detail Panel
+              selectedId = targetId;
             }
-          } else if (graph.orbitMode) {
-            // US2: Switch center if clicked in orbit mode
-            graph.setCentralNode(targetId);
-            // Also show the detail panel for the node
-            selectedId = targetId;
-          } else {
-            // Selection Logic for Detail Panel
-            selectedId = targetId;
-          }
-        });
+          });
 
-        // Right-click on edge to edit label
-        instance.on("cxttap", "edge", (evt: any) => {
-          if (vault.isGuest) return;
-          const edge = evt.target;
-          const sourceId = edge.data("source");
-          const targetId = edge.data("target");
-          const currentLabel = edge.data("label") || "";
-          const currentType = edge.data("connectionType") || "neutral";
+          // Right-click on edge to edit label
+          instance.on("cxttap", "edge", (evt: any) => {
+            if (vault.isGuest) return;
+            const edge = evt.target;
+            const sourceId = edge.data("source");
+            const targetId = edge.data("target");
+            const currentLabel = edge.data("label") || "";
+            const currentType = edge.data("connectionType") || "neutral";
 
-          editingEdge = {
-            source: sourceId,
-            target: targetId,
-            label: currentLabel,
-            type: currentType,
-          };
-          edgeEditInput = currentLabel;
-          edgeEditType = currentType;
-        });
+            editingEdge = {
+              source: sourceId,
+              target: targetId,
+              label: currentLabel,
+              type: currentType,
+            };
+            edgeEditInput = currentLabel;
+            edgeEditType = currentType;
+          });
 
-        instance.on("tap", (evt: any) => {
-          if (evt.target === instance) {
-            // Only clear selection if we clicked strictly on background, not on node
-            if (!connectMode) {
-              selectedId = null;
+          instance.on("tap", (evt: any) => {
+            if (evt.target === instance) {
+              // Only clear selection if we clicked strictly on background, not on node
+              if (!connectMode) {
+                selectedId = null;
+              }
+              // Close edge editor on background tap
+              editingEdge = null;
             }
-            // Close edge editor on background tap
-            editingEdge = null;
-          }
-        });
+          });
 
-        instance.on("select unselect", "node", () => {
-          selectionCount = instance?.$("node:selected").length || 0;
-        });
+          instance.on("select unselect", "node", () => {
+            selectionCount = instance?.$("node:selected").length || 0;
+          });
 
-        // Save position on drag end
-        instance.on("dragfree", "node", (evt: any) => {
-          if (vault.isGuest) return;
-          const node = evt.target;
-          const id = node.id();
-          const pos = node.position();
+          // Save position on drag end
+          instance.on("dragfree", "node", (evt: any) => {
+            if (vault.isGuest) return;
+            const node = evt.target;
+            const id = node.id();
+            const pos = node.position();
 
-          const entity = vault.entities[id];
-          if (entity) {
-            vault.updateEntity(id, {
-              metadata: {
-                ...(entity.metadata || {}),
-                coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
-              },
-            });
-          }
-        });
+            const entity = vault.entities[id];
+            if (entity) {
+              vault.updateEntity(id, {
+                metadata: {
+                  ...(entity.metadata || {}),
+                  coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+                },
+              });
+            }
+          });
+        } catch (error) {
+          console.error("Failed to initialize graph:", error);
+        }
       }, 0);
     }
   });
@@ -497,7 +501,7 @@
     }
     if (initTimer) {
       clearTimeout(initTimer);
-      initTimer = undefined as any;
+      initTimer = null;
     }
     if (import.meta.env.DEV) {
       delete (window as any).cy;

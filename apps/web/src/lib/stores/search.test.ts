@@ -37,8 +37,9 @@ vi.mock("./ui.svelte", () => ({
 }));
 
 describe("searchStore", () => {
+  vi.setConfig({ testTimeout: 10000 });
+
   beforeEach(() => {
-    vi.setConfig({ testTimeout: 10000 });
     vi.resetModules();
     vi.clearAllMocks();
   });
