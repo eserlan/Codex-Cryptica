@@ -1,0 +1,19 @@
+# Codex Cryptica
+
+> A private, local-first campaign manager for lore keepers who value total privacy, speed, and visual organization. Built with Svelte 5 and Google Gemini.
+
+## Features
+
+- **Knowledge Graph**: Visualize and navigate your world's knowledge through an interactive graph.
+- **AI Oracle**: Use Google Gemini to discover hidden connections and generate immersive descriptions.
+- **Total Privacy**: Your data never leaves your device. We use browser-native storage (OPFS) for maximum security.
+- **Local-First**: Works offline and syncs directly between your devices without centralized servers.
+
+## Technical Documentation
+
+- [Full Knowledge Base](/llms-full.txt): Concatenated technical documentation including schemas, ADRs, and implementation notes.
+- [Project Architecture](https://github.com/eserlan/Codex-Cryptica/blob/main/README.md): High-level overview of the system design and monorepo structure.
+- [Entity Schema Definitions](https://github.com/eserlan/Codex-Cryptica/blob/main/packages/schema/README.md): Core TypeScript interfaces for Character, Location, Item, and Event models.
+- [Graph Visualization Engine](https://github.com/eserlan/Codex-Cryptica/blob/main/packages/graph-engine/README.md): Documentation for the Cytoscape-based visualization logic and layout worker.
+- [Reactive State logic](https://github.com/eserlan/Codex-Cryptica/blob/main/apps/web/src/lib/stores/README.md): Implementation details of Svelte 5 Runes usage for the vault and graph state.
+- [Local-First Persistence (ADR 001)](https://github.com/eserlan/Codex-Cryptica/blob/main/docs/adr/001-fs-handle-storage.md): Decision record for using the File System Access API and OPFS.

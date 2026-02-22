@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "node ../../scripts/generate-llms-full.mjs",
     "build": "vite build && cp build/index.html build/404.html",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
