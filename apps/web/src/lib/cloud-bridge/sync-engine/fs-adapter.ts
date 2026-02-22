@@ -4,6 +4,8 @@ export interface FileEntry {
   handle: FileSystemFileHandle;
 }
 
+const VAULTS_DIR = "vaults";
+
 export class FileSystemAdapter {
   private async _getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
     return navigator.storage.getDirectory();
@@ -12,7 +14,8 @@ export class FileSystemAdapter {
   async listAllFiles(vaultId: string): Promise<FileEntry[]> {
     const root = await this._getOpfsRoot();
     try {
-      const vaultRoot = await root.getDirectoryHandle(vaultId);
+      const vaultsDir = await root.getDirectoryHandle(VAULTS_DIR);
+      const vaultRoot = await vaultsDir.getDirectoryHandle(vaultId);
       const files: FileEntry[] = [];
       await this.scanDirectory(vaultRoot, "", files);
       return files;
@@ -73,7 +76,8 @@ export class FileSystemAdapter {
     create = false,
   ): Promise<FileSystemFileHandle> {
     const root = await this._getOpfsRoot();
-    const vaultRoot = await root.getDirectoryHandle(vaultId, { create });
+    const vaultsDir = await root.getDirectoryHandle(VAULTS_DIR, { create });
+    const vaultRoot = await vaultsDir.getDirectoryHandle(vaultId, { create });
 
     const parts = path.split("/");
     const fileName = parts.pop()!;
