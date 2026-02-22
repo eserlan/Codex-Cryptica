@@ -8,7 +8,6 @@
     title,
     initialContent = "",
   } = $props<{ fileName: string; title: string; initialContent?: string }>();
-
   // Local state for client-side fetching fallback
   let fetchedContent = $state("");
 
@@ -19,26 +18,21 @@
     return "";
   });
 
-  function updateContent(text: string) {
-    fetchedContent = text;
-  }
-
   onMount(async () => {
-    // If no initial content (e.g. client-side navigation or hydration mismatch), fetch it
-    if (!initialContent) {
-      try {
-        const res = await fetch(`${base}/${fileName}`);
-        if (!res.ok)
-          throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
-        const text = await res.text();
-        updateContent(text);
-      } catch (err) {
-        console.error("LegalDocument error:", err);
-        content = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
+    // Only fetch client-side when there was no server-provided content.
+    if (initialContent) return;
+    try {
+      const res = await fetch(`${base}/${fileName}`);
+      if (!res.ok)
+        throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
+      const text = await res.text();
+      fetchedContent = parse(text) as string;
+    } catch (err) {
+      console.error("LegalDocument error:", err);
+      fetchedContent = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
                 <h3 class="text-red-500! mt-0!">OFFLINE ERROR</h3>
                 <p class="mb-0!">Could not retrieve document. Please check your connection.</p>
             </div>`;
-      }
     }
   });
 </script>
