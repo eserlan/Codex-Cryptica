@@ -504,7 +504,7 @@ class VaultStore {
     }
   }
 
-  scheduleSave(entity: LocalEntity | Entity) {
+  scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
     if (uiStore.isDemoMode) {
@@ -534,12 +534,12 @@ class VaultStore {
             );
           });
       }
-      return;
+      return Promise.resolve();
     }
 
     this.status = "saving";
     const targetVaultId = this.activeVaultId;
-    this.saveQueue
+    return this.saveQueue
       .enqueue(entity.id, async () => {
         await this.saveToDisk(entity, targetVaultId);
         this.status = "idle";
@@ -566,7 +566,7 @@ class VaultStore {
     return newEntity.id;
   }
 
-  updateEntity(id: string, updates: Partial<LocalEntity>): boolean {
+  async updateEntity(id: string, updates: Partial<LocalEntity>): Promise<boolean> {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -592,7 +592,7 @@ class VaultStore {
       if (this.services) this.services.ai.clearStyleCache();
     }
 
-    this.scheduleSave(updated);
+    await this.scheduleSave(updated);
     return true;
   }
 
@@ -671,7 +671,7 @@ class VaultStore {
     }
   }
 
-  addLabel(id: string, label: string): boolean {
+  async addLabel(id: string, label: string): Promise<boolean> {
     const { entities, updated } = vaultEntities.addLabel(
       this.entities,
       id,
@@ -679,13 +679,13 @@ class VaultStore {
     );
     if (updated) {
       this.entities = entities;
-      this.scheduleSave(updated);
+      await this.scheduleSave(updated);
       return true;
     }
     return false;
   }
 
-  removeLabel(id: string, label: string): boolean {
+  async removeLabel(id: string, label: string): Promise<boolean> {
     const { entities, updated } = vaultEntities.removeLabel(
       this.entities,
       id,
@@ -693,18 +693,18 @@ class VaultStore {
     );
     if (updated) {
       this.entities = entities;
-      this.scheduleSave(updated);
+      await this.scheduleSave(updated);
       return true;
     }
     return false;
   }
 
-  addConnection(
+  async addConnection(
     sourceId: string,
     targetId: string,
     type: string,
     label?: string,
-  ): boolean {
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.addConnection(
       this.entities,
       sourceId,
@@ -714,19 +714,19 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
   }
 
-  updateConnection(
+  async updateConnection(
     sourceId: string,
     targetId: string,
     oldType: string,
     newType: string,
     newLabel?: string,
-  ): boolean {
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.updateConnection(
       this.entities,
       sourceId,
@@ -737,13 +737,13 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
   }
 
-  removeConnection(sourceId: string, targetId: string, type: string): boolean {
+  async removeConnection(sourceId: string, targetId: string, type: string): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,
@@ -752,7 +752,7 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
@@ -776,7 +776,7 @@ class VaultStore {
       entityId,
       originalName,
     );
-    this.updateEntity(entityId, { image, thumbnail });
+    await this.updateEntity(entityId, { image, thumbnail });
     return image;
   }
 

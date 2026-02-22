@@ -1,6 +1,63 @@
 // apps/web/src/lib/stores/vault.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock Svelte 5 Runes
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = (v: any) => v;
+  (global as any).$effect = (v: any) => v;
+  (global as any).__APP_VERSION__ = "0.0.0-test";
+
+  (global as any).localStorage = {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+  };
+});
+
 import { vault } from "./vault.svelte";
+
+vi.mock("./ui.svelte", () => ({
+  uiStore: {
+    isDemoMode: false,
+    notify: vi.fn(),
+  },
+}));
+
+vi.mock("$lib/stores/debug.svelte", () => ({
+  debugStore: {
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
+vi.mock("./theme.svelte", () => ({
+  themeStore: {
+    loadForVault: vi.fn(),
+  },
+}));
+
+vi.mock("../utils/idb", () => ({
+  getDB: vi.fn().mockResolvedValue({
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn().mockResolvedValue([]),
+    transaction: vi.fn().mockReturnValue({
+      store: {
+        clear: vi.fn(),
+        put: vi.fn(),
+      },
+      done: Promise.resolve(),
+    }),
+  }),
+  getPersistedHandle: vi.fn().mockResolvedValue(null),
+  persistHandle: vi.fn(),
+  clearPersistedHandle: vi.fn(),
+}));
 
 vi.mock("../utils/opfs", () => {
   const mockDir = {

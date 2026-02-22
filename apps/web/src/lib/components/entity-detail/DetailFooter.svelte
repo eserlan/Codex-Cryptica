@@ -2,8 +2,16 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
 
-  let { isEditing, onCancel, onSave, onDelete, onStartEdit } = $props<{
+  let {
+    isEditing,
+    isSaving = false,
+    onCancel,
+    onSave,
+    onDelete,
+    onStartEdit,
+  } = $props<{
     isEditing: boolean;
+    isSaving?: boolean;
     onCancel: () => void;
     onSave: () => void;
     onDelete: () => void;
@@ -18,15 +26,21 @@
     <div class="flex gap-2 w-full justify-end">
       <button
         onclick={onCancel}
-        class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded tracking-widest transition"
+        class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded tracking-widest transition disabled:opacity-50"
+        disabled={isSaving}
       >
         CANCEL
       </button>
       <button
         onclick={onSave}
-        class="bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold px-6 py-2 rounded tracking-widest transition"
+        class="bg-theme-primary hover:bg-theme-secondary text-theme-bg text-xs font-bold px-6 py-2 rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isSaving}
       >
-        {themeStore.jargon.save.toUpperCase()} CHANGES
+        {#if isSaving}
+          <span class="animate-pulse">SAVING...</span>
+        {:else}
+          {themeStore.jargon.save.toUpperCase()} CHANGES
+        {/if}
       </button>
     </div>
   {:else}
