@@ -6,6 +6,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
 
@@ -191,6 +192,17 @@
             >
               Try Demo
             </button>
+          </div>
+
+          <div class="mt-8 flex flex-col items-center gap-4">
+            <a
+              href="{base}/features"
+              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--zap] w-3 h-3"></span>
+              View Features Overview
+            </a>
+
             <div
               class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
             >
