@@ -562,7 +562,7 @@ class VaultStore {
       this.entities,
     );
     this.entities[newEntity.id] = newEntity;
-    this.scheduleSave(newEntity);
+    await this.scheduleSave(newEntity);
     return newEntity.id;
   }
 

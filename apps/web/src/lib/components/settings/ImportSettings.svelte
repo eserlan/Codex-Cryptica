@@ -265,7 +265,7 @@
           );
 
         if (newConnections.length > 0) {
-          vault.updateEntity(existing.id, {
+          await vault.updateEntity(existing.id, {
             connections: [...existing.connections, ...newConnections],
           });
         }
