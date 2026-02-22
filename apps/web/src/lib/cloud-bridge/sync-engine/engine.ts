@@ -92,7 +92,7 @@ export class SyncEngine {
     }
 
     const [local, remote, metadata] = await Promise.all([
-      this.fsAdapter.listAllFiles(),
+      this.fsAdapter.listAllFiles(vaultId),
       this.cloudAdapter.listFiles(),
       this.metadataStore.getAllForVault(vaultId),
     ]);
@@ -330,7 +330,7 @@ export class SyncEngine {
     if (plan.uploads.length > 0) {
       console.log(`[SyncEngine] Uploading ${plan.uploads.length} files...`);
       await runParallel(plan.uploads, "UPLOADING", async (file) => {
-        const content = await this.fsAdapter.readFile(file.path);
+        const content = await this.fsAdapter.readFile(vaultId, file.path);
         const meta = await this.cloudAdapter.uploadFile(
           file.path,
           content,
@@ -352,7 +352,7 @@ export class SyncEngine {
       await runParallel(plan.downloads, "DOWNLOADING", async (file) => {
         const content = await this.cloudAdapter.downloadFile(file.id);
         const localPath = file.appProperties?.vault_path || file.name;
-        await this.fsAdapter.writeFile(localPath, content);
+        await this.fsAdapter.writeFile(vaultId, localPath, content);
         metadataUpdates.push({
           vaultId,
           filePath: localPath,
