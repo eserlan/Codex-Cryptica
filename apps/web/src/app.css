@@ -118,6 +118,10 @@
     --color-oracle-dark: #581c87;
   }
 
+  html.skip-landing .marketing-layer {
+    display: none !important;
+  }
+
   body {
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);

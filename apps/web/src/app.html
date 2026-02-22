@@ -18,6 +18,27 @@
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<script src="https://apis.google.com/js/api.js" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
+	<script>
+		// Prevent FOUC for Skip Welcome and Theme
+		try {
+			if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
+				document.documentElement.classList.add("skip-landing");
+			}
+			const theme = localStorage.getItem("codex-cryptica-active-theme");
+			const bgColors = {
+				scifi: "#050505",
+				fantasy: "#fdf6e3",
+				modern: "#f8fafc",
+				cyberpunk: "#020617",
+				apocalyptic: "#1c1917",
+				horror: "#050505"
+			};
+			if (theme && bgColors[theme]) {
+				document.documentElement.style.setProperty("--color-bg-primary", bgColors[theme]);
+				document.documentElement.style.backgroundColor = bgColors[theme];
+			}
+		} catch (e) { }
+	</script>
 	%sveltekit.head%
 </head>
 
