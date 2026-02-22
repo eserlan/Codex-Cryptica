@@ -358,11 +358,11 @@
 
         // Expose for E2E testing
         if (import.meta.env.DEV || (window as any).__E2E__) {
-          (window as any).cy = cy;
+          (window as any).cy = instance;
         }
 
         // Hover events
-        cy.on("mouseover", "node", (evt) => {
+        instance.on("mouseover", "node", (evt: any) => {
           const node = evt.target;
           clearTimeout(hoverTimeout);
           hoverTimeout = window.setTimeout(() => {
@@ -375,22 +375,22 @@
           }, HOVER_DELAY);
         });
 
-        cy.on("mouseout", "node", (_evt) => {
+        instance.on("mouseout", "node", (_evt: any) => {
           clearTimeout(hoverTimeout);
           hoveredEntityId = null;
           hoverPosition = null;
         });
 
         // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
-        cy.on("position", "node", (evt) => {
+        instance.on("position", "node", (evt: any) => {
           if (hoveredEntityId === evt.target.id()) {
             const renderedPos = evt.target.renderedPosition();
             hoverPosition = { x: renderedPos.x, y: renderedPos.y };
           }
         });
-        cy.on("pan zoom", () => {
-          if (hoveredEntityId && cy) {
-            const node = cy.$id(hoveredEntityId);
+        instance.on("pan zoom", () => {
+          if (hoveredEntityId && instance) {
+            const node = instance.$id(hoveredEntityId);
             if (node.length > 0) {
               const renderedPos = node.renderedPosition();
               hoverPosition = { x: renderedPos.x, y: renderedPos.y };
@@ -398,7 +398,7 @@
           }
         });
 
-        cy.on("tap", "node", (evt) => {
+        instance.on("tap", "node", (evt: any) => {
           const targetNode = evt.target as NodeSingular;
           const targetId = targetNode.id();
 
@@ -413,7 +413,7 @@
               // Create the connection in the store
               vault.addConnection(sourceId, targetId, "neutral");
 
-              cy?.$(".selected-source").removeClass("selected-source");
+              instance?.$(".selected-source").removeClass("selected-source");
               sourceId = null;
               connectMode = false; // Auto exit connect mode
             }
@@ -429,7 +429,7 @@
         });
 
         // Right-click on edge to edit label
-        cy.on("cxttap", "edge", (evt) => {
+        instance.on("cxttap", "edge", (evt: any) => {
           if (vault.isGuest) return;
           const edge = evt.target;
           const sourceId = edge.data("source");
@@ -447,8 +447,8 @@
           edgeEditType = currentType;
         });
 
-        cy.on("tap", (evt) => {
-          if (evt.target === cy) {
+        instance.on("tap", (evt: any) => {
+          if (evt.target === instance) {
             // Only clear selection if we clicked strictly on background, not on node
             if (!connectMode) {
               selectedId = null;
@@ -458,12 +458,12 @@
           }
         });
 
-        cy.on("select unselect", "node", () => {
-          selectionCount = cy?.$("node:selected").length || 0;
+        instance.on("select unselect", "node", () => {
+          selectionCount = instance?.$("node:selected").length || 0;
         });
 
         // Save position on drag end
-        cy.on("dragfree", "node", (evt) => {
+        instance.on("dragfree", "node", (evt: any) => {
           if (vault.isGuest) return;
           const node = evt.target;
           const id = node.id();
