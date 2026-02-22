@@ -154,13 +154,25 @@ export class WorkerBridge {
       hasFolderId: !!currentVault?.gdriveFolderId,
     });
 
-    if (
-      !currentVault ||
-      !currentVault.gdriveSyncEnabled ||
-      !currentVault.gdriveFolderId
-    ) {
+    if (!currentVault) {
       console.warn(
-        "Sync aborted: active vault does not have GDrive sync enabled or missing folder ID",
+        `Sync aborted: active vault '${activeVaultId}' not found in registry`,
+      );
+      console.groupEnd();
+      return;
+    }
+
+    if (!currentVault.gdriveSyncEnabled) {
+      console.warn(
+        `Sync aborted: GDrive sync is disabled for vault '${currentVault.name}' (${currentVault.id})`,
+      );
+      console.groupEnd();
+      return;
+    }
+
+    if (!currentVault.gdriveFolderId) {
+      console.warn(
+        `Sync aborted: GDrive folder ID missing for vault '${currentVault.name}' (${currentVault.id})`,
       );
       console.groupEnd();
       return;

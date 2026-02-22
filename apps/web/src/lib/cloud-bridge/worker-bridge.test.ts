@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock $app/environment BEFORE importing WorkerBridge
+vi.mock("$app/environment", () => ({
+  browser: true,
+}));
+
 import { WorkerBridge } from "./worker-bridge";
 import { vaultRegistry } from "../stores/vault-registry.svelte";
 
@@ -25,7 +31,10 @@ vi.mock("../stores/vault-registry.svelte", () => ({
 
 vi.mock("../stores/cloud-config", () => ({
   cloudConfig: {
-    subscribe: vi.fn(),
+    subscribe: vi.fn((run) => {
+      run({ enabled: true, syncInterval: 1000 });
+      return () => {};
+    }),
   },
 }));
 
