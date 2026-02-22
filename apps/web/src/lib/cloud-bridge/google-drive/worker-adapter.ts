@@ -71,13 +71,13 @@ export class WorkerDriveAdapter implements ICloudAdapter {
         }
       }
 
-      // Recursively fetch subfolders (specifically 'images' for now to keep it efficient)
-      // In a real app we might want a full tree, but for Codex Cryptica, one level is enough.
+      // Recursively fetch from all subfolders to ensure complete vault synchronization
       for (const folder of folders) {
-        if (folder.name === "images") {
-          const subFiles = await fetchFromFolder(folder.id, `${folder.name}/`);
-          remoteFiles.push(...subFiles);
-        }
+        const subFiles = await fetchFromFolder(
+          folder.id,
+          `${_prefix}${folder.name}/`,
+        );
+        remoteFiles.push(...subFiles);
       }
 
       return remoteFiles;
