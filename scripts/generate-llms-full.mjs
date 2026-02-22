@@ -7,12 +7,13 @@ const rootDir = path.resolve(__dirname, '..');
 const outputPath = path.join(rootDir, 'apps/web/static/llms-full.txt');
 
 const filesToConcatenate = [
+  // Core project READMEs that currently exist and should always be included.
   { name: 'Root README', path: 'README.md' },
   { name: 'Web App README', path: 'apps/web/README.md' },
-  { name: 'Editor Core README', path: 'packages/editor-core/README.md' },
-  { name: 'Graph Engine README', path: 'packages/graph-engine/README.md' },
-  { name: 'Importer README', path: 'packages/importer/README.md' },
-  { name: 'Schema README', path: 'packages/schema/README.md' },
+  // NOTE: Package READMEs for editor-core, graph-engine, importer, and schema
+  // are not included here because they do not currently exist in the repository.
+  // If/when those packages gain README files, add them to this list to include
+  // their documentation in the generated llms-full.txt file.
 ];
 
 const adrDir = path.join(rootDir, 'docs/adr');
@@ -54,14 +55,54 @@ if (schemaFiles.length > 0) {
   for (const file of schemaFiles) {
     console.log(`Adding Schema: ${path.basename(file)}...`);
     const content = fs.readFileSync(file, 'utf8');
-    // Only include interfaces and type exports to keep it focused
-    const lines = content.split('\n').filter(line => 
-      line.startsWith('export interface') || 
-      line.startsWith('export type') || 
-      line.startsWith('export enum')
-    );
-    if (lines.length > 0) {
-      fullContent += `\n### ${path.basename(file)}\n\n\`\`\`typescript\n${lines.join('\n')}\n\`\`\`\n`;
+    // Only include interfaces, types, and enums exports to keep it focused,
+    // but capture complete multi-line declarations instead of just the first line.
+    const allLines = content.split('\n');
+    const exportedBlocks = [];
+    const exportDeclRegex = /^\s*export\s+(interface|type|enum)\b/;
+
+    let collecting = false;
+    let currentBlock = [];
+    let braceDepth = 0;
+
+    const countChar = (line, ch) => (line.match(new RegExp(`\\${ch}`, 'g')) || []).length;
+
+    for (const line of allLines) {
+      if (!collecting) {
+        if (exportDeclRegex.test(line)) {
+          collecting = true;
+          currentBlock.push(line);
+          braceDepth += countChar(line, '{');
+          braceDepth -= countChar(line, '}');
+
+          // Handle single-line type/interface/enum declarations that end immediately.
+          if (braceDepth === 0 && line.includes(';')) {
+            exportedBlocks.push(currentBlock.join('\n'));
+            currentBlock = [];
+            collecting = false;
+          }
+        }
+      } else {
+        currentBlock.push(line);
+        braceDepth += countChar(line, '{');
+        braceDepth -= countChar(line, '}');
+
+        // End the block when we've closed all braces (for interfaces/enums)
+        // or reached a terminating semicolon for types with no braces.
+        const trimmed = line.trim();
+        if (
+          braceDepth === 0 &&
+          (trimmed.endsWith('}') || trimmed.endsWith(';'))
+        ) {
+          exportedBlocks.push(currentBlock.join('\n'));
+          currentBlock = [];
+          collecting = false;
+        }
+      }
+    }
+
+    if (exportedBlocks.length > 0) {
+      fullContent += `\n### ${path.basename(file)}\n\n\`\`\`typescript\n${exportedBlocks.join('\n\n')}\n\`\`\`\n`;
     }
   }
 }

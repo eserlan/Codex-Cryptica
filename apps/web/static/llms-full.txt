@@ -358,9 +358,13 @@ export type Connection = z.infer<typeof ConnectionSchema>;
 
 ```typescript
 export type Category = z.infer<typeof CategorySchema>;
+
 export type TemporalMetadata = z.infer<typeof TemporalMetadataSchema>;
+
 export type Era = z.infer<typeof EraSchema>;
+
 export type Entity = z.infer<typeof EntitySchema>;
+
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 ```
 
@@ -368,6 +372,7 @@ export type EntityType = z.infer<typeof EntityTypeSchema>;
 
 ```typescript
 export type GraphNode = z.infer<typeof GraphNodeSchema>;
+
 export type GraphEdge = z.infer<typeof GraphEdgeSchema>;
 ```
 
@@ -375,6 +380,24 @@ export type GraphEdge = z.infer<typeof GraphEdgeSchema>;
 
 ```typescript
 export interface JargonMap {
+  vault: string;
+  entity: string;
+  entity_plural: string;
+  save: string;
+  delete: string;
+  search: string;
+  new: string;
+  syncing: string;
+  lore_header: string;
+  lore_secrets: string;
+  chronicle_header: string;
+  connections_header: string;
+  tab_status: string;
+  tab_lore: string;
+  tab_inventory: string;
+  [key: string]: string; // Allow for extensibility
+}
+
 export type JargonResolver = (key: keyof JargonMap, count?: number) => string;
 ```
 
@@ -382,15 +405,40 @@ export type JargonResolver = (key: keyof JargonMap, count?: number) => string;
 
 ```typescript
 export interface SearchEntry {
+  id: string;
+  title: string;
+  content: string;
+  type?: string; // Entity category ID
+  keywords?: string;
+  path: string;
+  updatedAt: number;
+}
+
 export interface SearchResult {
+  id: string;
+  title: string;
+  type?: string; // Entity category ID
+  imageUrl?: string; // Local OPFS path or temporary blob URL
+  path: string;
+  excerpt?: string;
+  score: number;
+  matchType: "title" | "content";
+  highlights?: Array<{ start: number; length: number }>;
+}
+
 export interface SearchOptions {
+  limit?: number;
+  threshold?: number;
+}
 ```
 
 ### theme.ts
 
 ```typescript
 export type ThemeTokens = z.infer<typeof ThemeTokensSchema>;
+
 export type GraphStyleConfig = z.infer<typeof GraphStyleConfigSchema>;
+
 export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
 ```
 
@@ -398,4 +446,7 @@ export type StylingTemplate = z.infer<typeof StylingTemplateSchema>;
 
 ```typescript
 export type VisibilitySettings = {
+  sharedMode: boolean;
+  defaultVisibility: "visible" | "hidden";
+};
 ```
