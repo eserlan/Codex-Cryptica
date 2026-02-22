@@ -59,4 +59,41 @@ test.describe("SEO and Prerendering", () => {
     const oracleIndicator = page.getByText(/Lore Oracle/i).first();
     await expect(oracleIndicator).toBeVisible();
   });
+
+  test("llms.txt standard files exist and are discoverable", async ({
+    page,
+    request,
+  }) => {
+    // 1. Check llms.txt
+    const llmsResponse = await request.get("/llms.txt");
+    expect(llmsResponse.ok()).toBe(true);
+    expect(llmsResponse.headers()["content-type"]).toContain("text/plain");
+    const llmsContent = await llmsResponse.text();
+    expect(llmsContent).toContain("# Codex Cryptica");
+
+    // 2. Check llms-full.txt
+    const fullResponse = await request.get("/llms-full.txt");
+    expect(fullResponse.ok()).toBe(true);
+    expect(fullResponse.headers()["content-type"]).toContain("text/plain");
+    const fullContent = await fullResponse.text();
+    // Ensure the file is non-trivially large
+    expect(fullContent.length).toBeGreaterThan(5000);
+    // Ensure it contains TypeScript-like schema definitions (e.g., complete interfaces)
+    expect(/interface\s+\w+\s*{[\s\S]*?}/.test(fullContent)).toBe(true);
+    // Ensure schema sections are formatted as TypeScript code blocks
+    expect(fullContent).toMatch(/```(ts|typescript)[\s\S]*?```/);
+    // Ensure referenced README content is included
+    expect(fullContent).toMatch(/START OF .* README/i);
+
+    // 3. Check discoverability in head
+    await page.goto("/");
+    const link = page.locator('link[rel="llms"]');
+    await expect(link).toHaveAttribute("href", "/llms.txt");
+
+    // 4. Check robots.txt
+    const robotsResponse = await request.get("/robots.txt");
+    const robotsText = await robotsResponse.text();
+    expect(robotsText).toContain("Allow: /llms.txt");
+    expect(robotsText).toContain("Allow: /llms-full.txt");
+  });
 });

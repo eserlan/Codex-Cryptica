@@ -101,6 +101,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 057-add-llms-txt: Added llms.txt standard support for AI agent accessibility
+
 - 055-prerender-marketing: Added TypeScript 5.x / Node.js 20+ / Svelte 5 + SvelteKit, `@sveltejs/adapter-static`
 
 - 054-lite-no-ai: Added TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai`
