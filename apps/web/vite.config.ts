@@ -22,6 +22,10 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
   },
+  build: {
+    minify: "esbuild",
+    target: "es2020",
+  },
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
     environment: "jsdom",
