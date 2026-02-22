@@ -120,7 +120,9 @@
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register(`${base}/service-worker.js`)
+        .register(`${base}/service-worker.js`, {
+          type: import.meta.env.DEV ? "module" : "classic",
+        })
         .catch((error) => {
           console.warn("Service Worker registration failed:", error);
         });
