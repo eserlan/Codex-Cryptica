@@ -25,15 +25,6 @@ export default defineConfig({
   build: {
     minify: "esbuild",
     target: "es2020",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Isolate Cytoscape into its own chunk so it's never loaded by
-          // lightweight pages (marketing, legal) that don't use the graph.
-          cytoscape: ["cytoscape"],
-        },
-      },
-    },
   },
   test: {
     include: ["src/**/*.{test,spec}.{js,ts}"],
