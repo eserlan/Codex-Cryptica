@@ -241,6 +241,23 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     return response.result.id!;
   }
 
+  public async findFolder(
+    name: string,
+    parentId?: string,
+  ): Promise<string | null> {
+    let q = `name = '${name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+    if (parentId) {
+      q += ` and '${parentId}' in parents`;
+    }
+
+    const response = await gapi.client.drive.files.list({
+      q,
+      fields: "files(id)",
+    });
+    const files = response.result.files || [];
+    return files.length > 0 ? files[0].id! : null;
+  }
+
   getAccessToken(): string | null {
     return this.accessToken || gapi.client.getToken()?.access_token || null;
   }
