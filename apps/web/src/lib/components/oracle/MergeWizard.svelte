@@ -88,7 +88,7 @@
             ...beforeSource,
             id: beforeSource.id,
           });
-          vault.updateEntity(tId, beforeTarget);
+          await vault.updateEntity(tId, beforeTarget);
         },
         message.id,
       );

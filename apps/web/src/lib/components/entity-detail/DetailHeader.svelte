@@ -106,7 +106,7 @@
         <LabelBadge
           {label}
           removable={!vault.isGuest}
-          onRemove={() => vault.removeLabel(entity.id, label)}
+          onRemove={async () => await vault.removeLabel(entity.id, label)}
         />
       {/each}
       {#if !entity.labels?.length && vault.isGuest}

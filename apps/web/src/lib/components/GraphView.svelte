@@ -399,7 +399,7 @@
             }
           });
 
-          instance.on("tap", "node", (evt: any) => {
+          instance.on("tap", "node", async (evt: any) => {
             const targetNode = evt.target as NodeSingular;
             const targetId = targetNode.id();
 
@@ -412,7 +412,7 @@
                 targetNode.removeClass("selected-source");
               } else {
                 // Create the connection in the store
-                vault.addConnection(sourceId, targetId, "neutral");
+                await vault.addConnection(sourceId, targetId, "neutral");
 
                 instance?.$(".selected-source").removeClass("selected-source");
                 sourceId = null;
@@ -464,7 +464,7 @@
           });
 
           // Save position on drag end
-          instance.on("dragfree", "node", (evt: any) => {
+          instance.on("dragfree", "node", async (evt: any) => {
             if (vault.isGuest) return;
             const node = evt.target;
             const id = node.id();
@@ -472,7 +472,7 @@
 
             const entity = vault.entities[id];
             if (entity) {
-              vault.updateEntity(id, {
+              await vault.updateEntity(id, {
                 metadata: {
                   ...(entity.metadata || {}),
                   coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
@@ -937,9 +937,9 @@
   });
 
   // Save edge label logic
-  const saveEdgeLabel = () => {
+  const saveEdgeLabel = async () => {
     if (editingEdge) {
-      vault.updateConnection(
+      await vault.updateConnection(
         editingEdge.source,
         editingEdge.target,
         editingEdge.type,
@@ -1254,9 +1254,9 @@
         </div>
         <button
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
-          onclick={() => {
+          onclick={async () => {
             if (editingEdge) {
-              vault.removeConnection(
+              await vault.removeConnection(
                 editingEdge.source,
                 editingEdge.target,
                 editingEdge.type,
