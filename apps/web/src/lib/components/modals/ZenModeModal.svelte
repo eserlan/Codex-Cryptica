@@ -197,6 +197,7 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
+      uiStore.notify("Failed to save changes. Please try again.");
     } finally {
       isSaving = false;
     }
