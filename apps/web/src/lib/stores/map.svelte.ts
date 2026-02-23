@@ -172,6 +172,9 @@ class MapStore {
       if (e.name !== "NotFoundError") {
         console.error("[MapStore] Failed to load mask:", e);
       }
+      // No saved mask: start fully revealed (white = no fog)
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, width, height);
     }
 
     return canvas;
