@@ -22,6 +22,10 @@ class MapStore {
     return this.activeMapId ? vault.maps[this.activeMapId] : null;
   });
 
+  worldMap = $derived.by(() => {
+    return Object.values(vault.maps).find((m) => m.isWorldMap) || null;
+  });
+
   canGoBack = $derived(this.navigationStack.length > 0);
 
   pins = $derived.by(() => {
@@ -29,12 +33,37 @@ class MapStore {
   });
 
   constructor() {
-    // Clear stack on vault switch
+    // Clear stack on vault switch and handle auto-selection
     if (typeof window !== "undefined") {
       window.addEventListener("vault-switched", () => {
         this.navigationStack = [];
         this.activeMapId = null;
       });
+
+      // Reactive auto-selection when maps are loaded or activeMapId is lost/invalid
+      $effect.root(() => {
+        $effect(() => {
+          const isInvalid = this.activeMapId && !vault.maps[this.activeMapId];
+          if ((!this.activeMapId || isInvalid) && this.worldMap) {
+            this.selectMap(this.worldMap.id);
+          }
+        });
+      });
+    }
+  }
+
+  async setAsWorldMap(id: string) {
+    // 1. Clear existing world map flag
+    for (const mapId of Object.keys(vault.maps)) {
+      if (vault.maps[mapId].isWorldMap) {
+        vault.maps[mapId] = { ...vault.maps[mapId], isWorldMap: false };
+      }
+    }
+
+    // 2. Set new world map
+    if (vault.maps[id]) {
+      vault.maps[id] = { ...vault.maps[id], isWorldMap: true };
+      await vault.saveMaps();
     }
   }
 

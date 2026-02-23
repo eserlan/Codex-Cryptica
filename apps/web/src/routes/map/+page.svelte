@@ -80,9 +80,29 @@
           onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
         >
           {#each Object.values(vault.maps) as map}
-            <option value={map.id}>{map.name}</option>
+            <option value={map.id}>
+              {map.isWorldMap ? "★ " : ""}{map.name}
+            </option>
           {/each}
         </select>
+
+        {#if mapStore.activeMap && !mapStore.activeMap.isWorldMap}
+          <button
+            class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-muted text-[10px] font-bold rounded-lg hover:text-theme-primary hover:border-theme-primary transition-colors flex items-center gap-2"
+            onclick={() => mapStore.setAsWorldMap(mapStore.activeMapId!)}
+            title="Set as World Map"
+          >
+            <span class="icon-[lucide--star] w-3 h-3"></span>
+            SET WORLD
+          </button>
+        {:else if mapStore.activeMap?.isWorldMap}
+          <div
+            class="px-3 py-1.5 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold rounded-lg flex items-center gap-2"
+          >
+            <span class="icon-[lucide--star] w-3 h-3 fill-theme-primary"></span>
+            WORLD MAP
+          </div>
+        {/if}
 
         <button
           class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase tracking-wider"

@@ -37,6 +37,7 @@ export const MapSchema = z.object({
     height: z.number(),
   }),
   parentEntityId: z.string().optional(), // Link to a "Container" entity for hierarchy
+  isWorldMap: z.boolean().optional(), // If true, this is the default map for the campaign
   pins: z.array(MapPinSchema),
   fogOfWar: MapMaskSchema.optional(),
 });

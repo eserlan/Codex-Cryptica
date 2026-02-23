@@ -108,6 +108,57 @@ test.describe("Map Mode", () => {
     expect(pinCount).toBe(0);
   });
 
+  test("should allow tagging a map as 'World Map' and auto-loading it", async ({
+    page,
+  }) => {
+    // 1. Skip landing page via localStorage to trigger immediate vault boot
+    await page.addInitScript(() => {
+      window.localStorage.setItem("codex_skip_landing", "true");
+    });
+
+    await page.goto("/");
+    await page.waitForFunction(
+      () => (window as any).vault?.isInitialized === true,
+      { timeout: 20000 },
+    );
+
+    // 2. Go to map and upload
+    await page.goto("/map");
+    await expect(page.getByText("No active map")).toBeVisible({
+      timeout: 10000,
+    });
+
+    const testImagePath = path.join(process.cwd(), "static/favicon.png");
+    await page.click('button:has-text("Upload World Image")');
+    await page.fill('input[id="map-name"]', "Persistent Map");
+    const fileChooserPromise = page.waitForEvent("filechooser");
+    await page.locator('input[type="file"]').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(testImagePath);
+    await page.getByRole("button", { name: "Upload", exact: true }).click();
+
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
+
+    // 3. Mark as world map
+    await expect(page.getByText("SET WORLD")).toBeVisible();
+    await page.click('button:has-text("SET WORLD")');
+    await expect(page.getByText("WORLD MAP")).toBeVisible();
+
+    // Ensure save is complete
+    await page.waitForFunction(
+      () => (window as any).vault?.pendingSaveCount === 0,
+    );
+
+    // 4. Reload the page (direct to /map)
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+
+    // 5. Verify it auto-loaded the tagged map from OPFS/Metadata
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText("WORLD MAP")).toBeVisible();
+    await expect(page.locator("select")).toContainText("★ Persistent Map");
+  });
+
   test("should toggle Fog of War and GM Mode when a map is active", async ({
     page,
   }) => {
