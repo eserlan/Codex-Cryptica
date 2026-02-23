@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, type Snippet } from "svelte";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
+
+  let { children }: { children?: Snippet } = $props();
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let container = $state<HTMLDivElement | null>(null);
@@ -347,9 +349,9 @@
 <div
   bind:this={container}
   class="w-full h-full bg-theme-bg overflow-hidden relative select-none"
-  role="application"
+  role="region"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
-  tabindex="0"
+  tabindex="-1"
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
@@ -409,5 +411,5 @@
     </div>
   {/if}
 
-  <slot />
+  {@render children?.()}
 </div>
