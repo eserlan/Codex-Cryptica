@@ -33,6 +33,16 @@ test.describe("Map Mode", () => {
   test("should allow uploading a map image and rendering it", async ({
     page,
   }) => {
+    // Check for error boundary first
+    const errorOverlay = page.locator(".z-\\[1000\\]");
+    if (await errorOverlay.isVisible({ timeout: 2000 }).catch(() => false)) {
+      throw new Error(
+        "\n\nRED BOX ERROR IN TEST 1: " +
+          (await errorOverlay.innerText()) +
+          "\n\n",
+      );
+    }
+
     // 1. Initial state check
     await expect(page.getByText("No active map")).toBeVisible({
       timeout: 15000,
@@ -95,6 +105,16 @@ test.describe("Map Mode", () => {
 });
 
 async function ensureTestMap(page: Page) {
+  // Check for the error boundary overlay
+  const errorOverlay = page.locator(".z-\\[1000\\]");
+  if (await errorOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+    throw new Error(
+      "\n\nRED BOX DETECTED IN ensureTestMap: " +
+        (await errorOverlay.innerText()) +
+        "\n\n",
+    );
+  }
+
   const noMapText = page.getByText("No active map");
   if (await noMapText.isVisible()) {
     const testImagePath = path.join(process.cwd(), "static/favicon.png");

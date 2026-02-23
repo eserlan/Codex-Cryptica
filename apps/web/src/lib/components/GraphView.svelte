@@ -151,6 +151,8 @@
           },
         );
 
+        if (!cy || currentCy.destroyed()) return;
+
         currentCy
           .layout({
             name: "preset",
@@ -225,6 +227,8 @@
           animate: false, // Math only in worker
         });
 
+        if (!cy || currentCy.destroyed()) return;
+
         if (isInitial) {
           currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
@@ -262,7 +266,7 @@
       } catch (err) {
         console.error("Background layout failed:", err);
         // Fallback to main thread
-        if (currentCy) {
+        if (cy && !currentCy.destroyed()) {
           currentLayout = currentCy.layout({
             ...DEFAULT_LAYOUT_OPTIONS,
             stop: () => {
@@ -687,11 +691,11 @@
             );
           }
 
-          if (hasUpdates) {
+          if (hasUpdates && cy && !cy.destroyed()) {
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              applyCurrentLayout(false);
+              if (cy && !cy.destroyed()) applyCurrentLayout(false);
             }, 200);
           }
         } catch (error) {
