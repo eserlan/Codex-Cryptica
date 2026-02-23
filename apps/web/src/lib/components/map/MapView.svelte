@@ -43,17 +43,23 @@
           if (canceled) return;
           mapImage = img;
           maskCanvas = await mapStore.loadMask(img.width, img.height);
+          if (canceled) return; // guard after await
 
-          // Persist dimensions if not set
+          // Persist dimensions if not set, deferred so it doesn't
+          // re-trigger $effect (vault.maps mutation invalidates activeMap derived)
           if (
             activeMap.id === mapStore.activeMapId &&
             activeMap.dimensions.width === 0
           ) {
-            vault.maps[activeMap.id].dimensions = {
-              width: img.width,
-              height: img.height,
-            };
-            await vault.saveMaps();
+            setTimeout(async () => {
+              if (!canceled && mapStore.activeMapId === activeMap.id) {
+                vault.maps[activeMap.id].dimensions = {
+                  width: img.width,
+                  height: img.height,
+                };
+                await vault.saveMaps();
+              }
+            }, 500);
           }
         };
         img.onerror = () => {
