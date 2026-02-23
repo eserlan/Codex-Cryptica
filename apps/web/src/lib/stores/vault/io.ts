@@ -104,8 +104,12 @@ export async function syncToLocal(
         ) {
           shouldWrite = false;
         }
-      } catch {
-        // File doesn't exist or is inaccessible, proceed with write
+      } catch (e: any) {
+        if (e.name !== "NotFoundError") {
+          debugStore.warn(
+            `Pre-sync check failed for ${fileEntry.path.join("/")}: ${e.message}`,
+          );
+        }
       }
 
       if (shouldWrite) {
@@ -166,6 +170,7 @@ export async function importFromFolder(
     let successCount = 0;
     let errorCount = 0;
     let processedCount = 0;
+    const dirCache = new Map<string, FileSystemDirectoryHandle>();
 
     for (const { path, handle } of allFiles) {
       try {
@@ -176,21 +181,33 @@ export async function importFromFolder(
           // Check if file already exists in OPFS and is up to date
           const fileName = path[path.length - 1];
           const dirPath = path.slice(0, -1);
-          const dirHandle =
-            dirPath.length > 0
-              ? await getDirHandle(vaultHandle, dirPath, false)
-              : vaultHandle;
-          const opfsFileHandle = await dirHandle.getFileHandle(fileName);
-          const opfsFile = await opfsFileHandle.getFile();
+          const dirPathStr = dirPath.join("/");
 
-          if (
-            opfsFile.size === localFile.size &&
-            opfsFile.lastModified >= localFile.lastModified - SKEW_MS
-          ) {
-            shouldWrite = false;
+          let dirHandle =
+            dirPath.length > 0 ? dirCache.get(dirPathStr) : vaultHandle;
+
+          if (!dirHandle && dirPath.length > 0) {
+            dirHandle = await getDirHandle(vaultHandle, dirPath, false);
+            dirCache.set(dirPathStr, dirHandle);
           }
-        } catch {
-          // File doesn't exist in OPFS, proceed with import
+
+          if (dirHandle) {
+            const opfsFileHandle = await dirHandle.getFileHandle(fileName);
+            const opfsFile = await opfsFileHandle.getFile();
+
+            if (
+              opfsFile.size === localFile.size &&
+              opfsFile.lastModified >= localFile.lastModified - SKEW_MS
+            ) {
+              shouldWrite = false;
+            }
+          }
+        } catch (e: any) {
+          if (e.name !== "NotFoundError") {
+            debugStore.warn(
+              `Pre-import check failed for ${path.join("/")}: ${e.message}`,
+            );
+          }
         }
 
         if (shouldWrite) {
