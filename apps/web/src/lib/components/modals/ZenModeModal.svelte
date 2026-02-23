@@ -39,6 +39,13 @@
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
 
+  // Reset to overview when switching entities
+  $effect(() => {
+    if (entityId) {
+      activeTab = "overview";
+    }
+  });
+
   $effect(() => {
     let isStale = false;
     if (entity?.image) {
