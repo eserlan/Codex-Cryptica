@@ -56,25 +56,35 @@ export function renderMap(options: RenderOptions) {
     drawGrid(ctx, transform, canvasSize, grid);
   }
 
-  // 3. Draw Fog of War
+  // 3. Draw Fog of War using an off-screen canvas to isolate the compositing.
+  // Applying destination-out directly on the main canvas would erase the map
+  // image itself, not just the fog layer on top of it.
   if (showFog && maskCanvas) {
-    ctx.save();
-    // Fill with black fog first
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+    const fog = getFogCanvas(canvasSize.width, canvasSize.height);
+    const fogCtx = fog.getContext("2d")!;
 
-    // Cut out revealed areas
-    ctx.globalCompositeOperation = "destination-out";
-    ctx.translate(center.x, center.y);
-    ctx.scale(transform.zoom, transform.zoom);
-    ctx.drawImage(
+    // Fill fog layer with opaque black
+    fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+    fogCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    fogCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+
+    // Punch holes where map is revealed (white = revealed in mask)
+    fogCtx.globalCompositeOperation = "destination-out";
+    fogCtx.save();
+    fogCtx.translate(center.x, center.y);
+    fogCtx.scale(transform.zoom, transform.zoom);
+    fogCtx.drawImage(
       maskCanvas,
       -image.width / 2,
       -image.height / 2,
       image.width,
       image.height,
     );
-    ctx.restore();
+    fogCtx.restore();
+    fogCtx.globalCompositeOperation = "source-over";
+
+    // Overlay fog (with holes) on the main canvas using normal compositing
+    ctx.drawImage(fog, 0, 0);
   }
 
   // 4. Draw pins
@@ -107,6 +117,22 @@ let cachedPattern: {
   color: string;
   opacity: number;
 } | null = null;
+
+// Cached off-screen canvas for fog-of-war rendering (avoid per-frame DOM allocation)
+let fogCanvas: HTMLCanvasElement | null = null;
+let fogCanvasW = 0;
+let fogCanvasH = 0;
+
+function getFogCanvas(width: number, height: number): HTMLCanvasElement {
+  if (!fogCanvas || fogCanvasW !== width || fogCanvasH !== height) {
+    fogCanvas = document.createElement("canvas");
+    fogCanvas.width = width;
+    fogCanvas.height = height;
+    fogCanvasW = width;
+    fogCanvasH = height;
+  }
+  return fogCanvas;
+}
 
 function drawGrid(
   ctx: CanvasRenderingContext2D,
