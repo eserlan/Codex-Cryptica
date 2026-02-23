@@ -1,6 +1,7 @@
 import { vault } from "./vault.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import { imageToViewport, viewportToImage } from "map-engine";
+import { convertToWebP } from "../utils/image-processing";
 
 class MapStore {
   activeMapId = $state<string | null>(null);
@@ -77,16 +78,13 @@ class MapStore {
     }
 
     const id = crypto.randomUUID();
-    const rawExtension = file.name.split(".").pop() ?? "";
-    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
-    const normalizedExtension = rawExtension.toLowerCase();
-    const fileExtension = allowedExtensions.includes(normalizedExtension)
-      ? normalizedExtension
-      : "png";
-    const storageName = `${id}.${fileExtension}`;
+    const storageName = `${id}.webp`;
 
-    // 1. Save file to OPFS
+    // 1. Convert to WebP and Save to OPFS
     try {
+      // Compress the image. WebP conversion also safely normalizes DataTransfer File objects
+      const webpBlob = await convertToWebP(file, 0.85);
+
       const mapsDir = await vaultDir.getDirectoryHandle("maps", {
         create: true,
       });
@@ -94,7 +92,7 @@ class MapStore {
         create: true,
       });
       const writable = await fileHandle.createWritable();
-      await writable.write(file);
+      await writable.write(webpBlob);
       await writable.close();
     } catch (err) {
       console.error("[MapStore] Map upload failed", err);
