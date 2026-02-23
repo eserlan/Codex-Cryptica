@@ -116,7 +116,7 @@ class VaultStore {
     return await getVaultDir(vaultRegistry.rootHandle, this.activeVaultId);
   }
 
-  private saveQueue = new KeyedTaskQueue();
+  public saveQueue = new KeyedTaskQueue();
 
   get pendingSaveCount() {
     return this.saveQueue.totalPendingCount;

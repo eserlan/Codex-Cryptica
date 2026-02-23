@@ -21,9 +21,10 @@ class UIStore {
   hasPromptedSave = $state(false);
   wasConverted = $state(false);
 
-  notification = $state<{ message: string; type: "success" | "info" } | null>(
-    null,
-  );
+  notification = $state<{
+    message: string;
+    type: "success" | "info" | "error";
+  } | null>(null);
 
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
@@ -116,7 +117,7 @@ class UIStore {
     this.globalError = null;
   }
 
-  notify(message: string, type: "success" | "info" = "success") {
+  notify(message: string, type: "success" | "info" | "error" = "success") {
     this.notification = { message, type };
     setTimeout(() => {
       this.notification = null;
