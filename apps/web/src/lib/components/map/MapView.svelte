@@ -458,7 +458,7 @@
 
         {#if subMapForSelected}
           <button
-            class="w-7 h-7 flex items-center justify-center bg-theme-primary text-theme-bg rounded-full transition-all active:scale-90 group/map mx-1"
+            class="p-1.5 text-theme-primary hover:text-theme-text transition-colors rounded-md hover:bg-theme-primary/10 group/map mx-0.5"
             onclick={() => mapStore.selectMap(subMapForSelected!.id, true)}
             title="Enter Sub-map"
           >
