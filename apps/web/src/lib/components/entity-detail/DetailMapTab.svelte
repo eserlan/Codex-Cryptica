@@ -39,6 +39,23 @@
     }
   }
 
+  async function handleDeleteMap() {
+    if (!linkedMap) return;
+    if (
+      confirm(
+        "Are you sure you want to delete this map? This action cannot be undone.",
+      )
+    ) {
+      try {
+        await vault.deleteMap(linkedMap.id);
+      } catch (err: any) {
+        if (typeof window !== "undefined") {
+          alert(`Error deleting map: ${err.message}`);
+        }
+      }
+    }
+  }
+
   let isDragging = $state(false);
 
   function handleDrop(e: DragEvent) {
@@ -72,15 +89,29 @@
         >
           Linked Sub-Map
         </h4>
-        <button
-          class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase tracking-widest"
-          onclick={() => {
-            mapStore.selectMap(linkedMap!.id, true);
-            goto("/map");
-          }}
-        >
-          View Map
-        </button>
+        <div class="flex items-center gap-3">
+          <button
+            class="text-[10px] font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase tracking-widest flex items-center gap-1.5"
+            onclick={handleDeleteMap}
+            title="Delete this map"
+          >
+            <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+            DELETE
+          </button>
+
+          <div class="w-px h-3 bg-theme-border"></div>
+
+          <button
+            class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase tracking-widest flex items-center gap-1.5"
+            onclick={() => {
+              mapStore.selectMap(linkedMap!.id, true);
+              goto("/map");
+            }}
+          >
+            <span class="icon-[lucide--map] w-3 h-3"></span>
+            VIEW MAP
+          </button>
+        </div>
       </div>
 
       <div

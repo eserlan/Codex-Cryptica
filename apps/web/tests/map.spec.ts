@@ -102,6 +102,50 @@ test.describe("Map Mode", () => {
     });
     await expect(page.getByText("FOG: OFF")).toBeVisible();
   });
+
+  test("should allow deleting a map via Zen Mode", async ({ page }) => {
+    await ensureTestMap(page);
+
+    // Navigate to the overview map first to ensure an entity can be selected
+    await page.goto("/?demo=fantasy");
+    await page.waitForFunction(
+      () => (window as any).vault?.isInitialized === true,
+      { timeout: 20000 },
+    );
+    // Select the first available entity and open Zen Mode programmatically
+    await page.evaluate(() => {
+      const entityId = Object.keys((window as any).vault.entities)[0];
+      (window as any).uiStore.openZenMode(entityId);
+    });
+
+    // Verify Zen Mode is open
+    await expect(page.locator("#tab-map")).toBeVisible({ timeout: 5000 });
+
+    // Click the Map Tab
+    await page.click("#tab-map");
+
+    // Confirm that the map is empty initially for this character
+    const uploadLabel = page.getByText("Upload Map", { exact: true });
+    await expect(uploadLabel).toBeVisible({ timeout: 5000 });
+
+    // Upload a test image as a sub-map
+    const testImagePath = path.join(process.cwd(), "static/favicon.png");
+    const fileChooserPromise = page.waitForEvent("filechooser");
+    await uploadLabel.click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(testImagePath);
+
+    // Verify the map was uploaded and the delete button is visible
+    const deleteBtn = page.getByRole("button", { name: "DELETE", exact: true });
+    await expect(deleteBtn).toBeVisible({ timeout: 15000 });
+
+    // Click delete and handle the confirm dialog
+    page.once("dialog", (dialog) => dialog.accept());
+    await deleteBtn.click();
+
+    // Verify the map was deleted and the upload button is back
+    await expect(uploadLabel).toBeVisible({ timeout: 15000 });
+  });
 });
 
 async function ensureTestMap(page: Page) {

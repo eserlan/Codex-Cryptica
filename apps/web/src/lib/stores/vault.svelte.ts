@@ -1,6 +1,6 @@
 // apps/web/src/lib/stores/vault.svelte.ts
 import { getDB } from "../utils/idb";
-import { getVaultDir } from "../utils/opfs";
+import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
@@ -529,6 +529,52 @@ class VaultStore {
           "Failed to save map data. Please check your storage quota.",
           "error",
         );
+      }
+    });
+  }
+
+  async deleteMap(id: string): Promise<void> {
+    if (this.isGuest) throw new Error("Cannot delete maps in Guest Mode");
+    if (
+      uiStore.isDemoMode &&
+      !(typeof window !== "undefined" && (window as any).__E2E__)
+    ) {
+      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
+      return;
+    }
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    const map = this.maps[id];
+    if (!map) return;
+
+    // Remove from in-memory state (reassign to trigger reactivity)
+    const newMaps = { ...this.maps };
+    delete newMaps[id];
+    this.maps = newMaps;
+
+    // Async OPFS cleanup
+    return this.saveQueue.enqueue(`delete-map-${id}`, async () => {
+      try {
+        if (map.assetPath) {
+          const pathSegments = map.assetPath.split("/");
+          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        if (map.fogOfWar?.maskPath) {
+          const maskSegments = map.fogOfWar.maskPath.split("/");
+          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+      } catch (err: any) {
+        console.error("[VaultStore] Failed to delete map files", err);
+        this.status = "error";
+        uiStore.notify(`Failed to fully delete map: ${err.message}`, "error");
       }
     });
   }
