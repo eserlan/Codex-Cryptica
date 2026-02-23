@@ -10,7 +10,7 @@
     editType = $bindable(),
   } = $props<{
     entity: Entity;
-    activeTab: "status" | "lore" | "inventory";
+    activeTab: "status" | "lore" | "inventory" | "map";
     isEditing: boolean;
     editType: string;
   }>();
@@ -65,6 +65,12 @@
         : "hover:text-theme-text transition"}
       onclick={() => (activeTab = "inventory")}
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
+    >
+    <button
+      class={activeTab === "map"
+        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : "hover:text-theme-text transition"}
+      onclick={() => (activeTab = "map")}>MAP</button
     >
   </div>
 </div>

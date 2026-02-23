@@ -385,6 +385,30 @@
           <span class="hidden sm:inline">Codex Cryptica</span>
           <span class="sm:hidden text-theme-primary">CC</span>
         </h1>
+
+        <nav
+          class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4"
+        >
+          <a
+            href="{base}/"
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page
+              .url.pathname === `${base}/`
+              ? 'bg-theme-primary/10 text-theme-primary'
+              : 'text-theme-muted hover:text-theme-text'}"
+          >
+            GRAPH
+          </a>
+          <a
+            href="{base}/map"
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page.url.pathname.startsWith(
+              `${base}/map`,
+            )
+              ? 'bg-theme-primary/10 text-theme-primary'
+              : 'text-theme-muted hover:text-theme-text'}"
+          >
+            MAP
+          </a>
+        </nav>
       </div>
 
       <!-- Search (Desktop: Input, Mobile: Button) -->

@@ -2,7 +2,7 @@
 import { getDB } from "../utils/idb";
 import { getVaultDir } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
-import type { Entity } from "schema";
+import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
 import { uiStore } from "./ui.svelte";
@@ -33,6 +33,7 @@ export interface IVaultServices {
 
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
+  maps = $state<Record<string, Map>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
@@ -136,6 +137,7 @@ class VaultStore {
 
     await this.saveQueue.waitForAll();
     this.entities = {};
+    this.maps = {};
 
     // Clear chat history in DB before switching
     const db = await getDB();
@@ -431,6 +433,7 @@ class VaultStore {
         vaultDir,
       );
       this.entities = entities;
+      this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
 
       // Repopulate search index
       if (this.services) {
@@ -504,6 +507,26 @@ class VaultStore {
     }
   }
 
+  async saveMaps() {
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    this.status = "saving";
+    return this.saveQueue.enqueue("maps-metadata", async () => {
+      try {
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+        this.status = "idle";
+      } catch (err) {
+        console.error("[VaultStore] Failed to save maps", err);
+        this.status = "error";
+        uiStore.notify(
+          "Failed to save map data. Please check your storage quota.",
+          "error",
+        );
+      }
+    });
+  }
+
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
@@ -566,7 +589,10 @@ class VaultStore {
     return newEntity.id;
   }
 
-  async updateEntity(id: string, updates: Partial<LocalEntity>): Promise<boolean> {
+  async updateEntity(
+    id: string,
+    updates: Partial<LocalEntity>,
+  ): Promise<boolean> {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -743,7 +769,11 @@ class VaultStore {
     return false;
   }
 
-  async removeConnection(sourceId: string, targetId: string, type: string): Promise<boolean> {
+  async removeConnection(
+    sourceId: string,
+    targetId: string,
+    type: string,
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,

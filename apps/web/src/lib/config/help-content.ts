@@ -200,6 +200,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.",
     icon: "icon-[lucide--search]",
   },
+  "map-mode": {
+    id: "map-mode",
+    title: "Map Mode",
+    content:
+      "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
+    icon: "icon-[lucide--map]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
