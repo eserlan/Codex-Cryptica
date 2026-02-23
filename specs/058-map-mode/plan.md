@@ -7,6 +7,12 @@
 
 Transform Codex Cryptica into a spatial lore experience by implementing a custom "Map Mode" powered by a high-performance **HTML5 Canvas** engine. This mode provides pixel-locked pin placement, hierarchical navigation (World -> City), and a persistent Fog of War masking system, all while maintaining absolute privacy.
 
+### Key Technical Integrations
+
+- **Deep Linking**: Pins utilize `uiStore.openZenMode(entityId, tab)` to allow instant jumping to an entity's Overview or its associated Map.
+- **Hierarchical Navigation**: Map pins for entities with their own maps surface a direct "Enter" action, updating the `MapStore` navigation stack.
+- **Resource Cleanup**: `vault.deleteMap(id)` implements recursive deletion of metadata and OPFS-stored binary files (WebP assets and PNG masks).
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x / Node.js 20+

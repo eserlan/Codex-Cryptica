@@ -85,6 +85,9 @@ description: "Task list for Interactive Campaign Mapping & Spatial Lore"
 - [x] T024 [US4] Add map attachment UI to `EntityDetailPanel.svelte` (Sub-map tab)
 - [x] T025 [US4] Implement map switching logic (navigation stack) in `MapStore` to support "Diving"
 - [x] T026 [US4] Add "Enter Location" action to pins linked to entities that have their own sub-maps
+- [x] T031 [US2] Implement Zen Mode deep-linking from pins (Overview vs Map tabs)
+- [x] T032 [US1] Implement map asset and metadata deletion with OPFS cleanup
+- [x] T033 [US4] Add direct sub-map link icon to pins for multi-level mapping
 
 ---
 

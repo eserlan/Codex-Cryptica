@@ -93,6 +93,9 @@ As a Lore Keeper, I want to attach maps to specific entities (like a city or a t
 - **FR-006**: System MUST support "Jump to Location" search that pans/zooms to a specific pin.
 - **FR-007**: System MUST provide a mechanism to mask/unmask portions of the map (Fog of War) with full persistence.
 - **FR-008**: System MUST allow entities to serve as "Containers" for sub-maps, enabling hierarchical navigation.
+- **FR-009**: System MUST support deep-linking from map pins to specific entity detail tabs (Overview vs Map) via Zen Mode.
+- **FR-010**: System MUST provide a mechanism to permanently delete map assets and their associated metadata.
+- **FR-011**: System MUST show a direct "Enter Sub-map" action on pins linked to entities that contain their own map assets.
 
 ### Key Entities _(include if feature involves data)_
 

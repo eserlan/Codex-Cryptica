@@ -6,6 +6,8 @@ export interface FileEntry {
 
 import { VAULTS_DIR } from "$lib/utils/opfs";
 
+const WHITELISTED_SYSTEM_DIRS = [".codex"];
+
 export class FileSystemAdapter {
   private async _getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
     return navigator.storage.getDirectory();
@@ -34,8 +36,9 @@ export class FileSystemAdapter {
     files: FileEntry[],
   ) {
     for await (const [name, handle] of dirHandle.entries()) {
-      // Skip .trash folder or other system folders, but allow .codex for metadata
-      if (name.startsWith(".") && name !== ".codex") continue;
+      // Skip hidden/system folders unless explicitly whitelisted for metadata
+      const isWhitelisted = WHITELISTED_SYSTEM_DIRS.includes(name);
+      if (name.startsWith(".") && !isWhitelisted) continue;
 
       const path = parentPath ? `${parentPath}/${name}` : name;
 

@@ -217,7 +217,7 @@
         handleClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
-        alert(`Error: ${err.message}`);
+        uiStore.notify(`Error: ${err.message}`, "error");
       }
     }
   };

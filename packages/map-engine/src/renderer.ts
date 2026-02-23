@@ -130,7 +130,7 @@ export function renderMap(options: RenderOptions) {
 
     ctx.beginPath();
     ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = pin.visuals.color || "#3b82f6"; // Fallback to blue-500
+    ctx.fillStyle = pin.visuals.color || "#4ade80"; // Fallback to theme-primary
     ctx.fill();
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
