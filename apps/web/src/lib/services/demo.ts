@@ -46,6 +46,10 @@ class DemoService implements IDemoActions {
 
       // 5. Load into Vault
       const demoName = `${actualTheme.charAt(0).toUpperCase() + actualTheme.slice(1)} Demo`;
+
+      // Ensure registry is initialized so we have rootHandle for OPFS operations (e.g. Map uploads)
+      await vaultRegistry.init();
+
       await vault.loadDemoData(data, demoName);
     } catch (err) {
       console.error("[DemoService] Failed to start demo:", err);

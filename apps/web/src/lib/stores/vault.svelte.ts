@@ -1,8 +1,8 @@
 // apps/web/src/lib/stores/vault.svelte.ts
 import { getDB } from "../utils/idb";
-import { getVaultDir } from "../utils/opfs";
+import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
-import type { Entity } from "schema";
+import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
 import { uiStore } from "./ui.svelte";
@@ -33,6 +33,7 @@ export interface IVaultServices {
 
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
+  maps = $state<Record<string, Map>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
@@ -115,7 +116,13 @@ class VaultStore {
     return await getVaultDir(vaultRegistry.rootHandle, this.activeVaultId);
   }
 
-  private saveQueue = new KeyedTaskQueue();
+  /**
+   * Internal save queue for coordinating OPFS writes.
+   * NOTE: This queue is public so that MapStore (see map.svelte.ts) can enqueue
+   * map-related save operations to ensure data consistency.
+   * External code should avoid manipulating it directly.
+   */
+  public saveQueue = new KeyedTaskQueue();
 
   get pendingSaveCount() {
     return this.saveQueue.totalPendingCount;
@@ -136,6 +143,7 @@ class VaultStore {
 
     await this.saveQueue.waitForAll();
     this.entities = {};
+    this.maps = {};
 
     // Clear chat history in DB before switching
     const db = await getDB();
@@ -431,6 +439,7 @@ class VaultStore {
         vaultDir,
       );
       this.entities = entities;
+      this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
 
       // Repopulate search index
       if (this.services) {
@@ -504,6 +513,72 @@ class VaultStore {
     }
   }
 
+  async saveMaps() {
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    this.status = "saving";
+    return this.saveQueue.enqueue("maps-metadata", async () => {
+      try {
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+        this.status = "idle";
+      } catch (err) {
+        console.error("[VaultStore] Failed to save maps", err);
+        this.status = "error";
+        uiStore.notify(
+          "Failed to save map data. Please check your storage quota.",
+          "error",
+        );
+      }
+    });
+  }
+
+  async deleteMap(id: string): Promise<void> {
+    if (this.isGuest) throw new Error("Cannot delete maps in Guest Mode");
+    if (
+      uiStore.isDemoMode &&
+      !(typeof window !== "undefined" && (window as any).__E2E__)
+    ) {
+      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
+      return;
+    }
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    const map = this.maps[id];
+    if (!map) return;
+
+    // Remove from in-memory state (reassign to trigger reactivity)
+    const newMaps = { ...this.maps };
+    delete newMaps[id];
+    this.maps = newMaps;
+
+    // Async OPFS cleanup
+    return this.saveQueue.enqueue(`delete-map-${id}`, async () => {
+      try {
+        if (map.assetPath) {
+          const pathSegments = map.assetPath.split("/");
+          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        if (map.fogOfWar?.maskPath) {
+          const maskSegments = map.fogOfWar.maskPath.split("/");
+          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+      } catch (err: any) {
+        console.error("[VaultStore] Failed to delete map files", err);
+        this.status = "error";
+        uiStore.notify(`Failed to fully delete map: ${err.message}`, "error");
+      }
+    });
+  }
+
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
@@ -566,7 +641,10 @@ class VaultStore {
     return newEntity.id;
   }
 
-  async updateEntity(id: string, updates: Partial<LocalEntity>): Promise<boolean> {
+  async updateEntity(
+    id: string,
+    updates: Partial<LocalEntity>,
+  ): Promise<boolean> {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -743,7 +821,11 @@ class VaultStore {
     return false;
   }
 
-  async removeConnection(sourceId: string, targetId: string, type: string): Promise<boolean> {
+  async removeConnection(
+    sourceId: string,
+    targetId: string,
+    type: string,
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,

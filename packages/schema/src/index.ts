@@ -5,3 +5,4 @@ export * from "./search";
 export * from "./theme";
 export * from "./visibility";
 export * from "./jargon";
+export * from "./map";

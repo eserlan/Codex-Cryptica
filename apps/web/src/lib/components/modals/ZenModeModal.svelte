@@ -7,6 +7,7 @@
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
+  import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
   import type { Entity } from "schema";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
@@ -18,11 +19,12 @@
 
   let isEditing = $state(false);
   let isSaving = $state(false);
-  let activeTab = $state<"overview" | "inventory">("overview");
+  let activeTab = $derived(uiStore.zenModeActiveTab);
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
   let tabInventory = $state<HTMLButtonElement>();
+  let tabMap = $state<HTMLButtonElement>();
 
   // Edit State
   let editTitle = $state("");
@@ -215,7 +217,7 @@
         handleClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
-        alert(`Error: ${err.message}`);
+        uiStore.notify(`Error: ${err.message}`, "error");
       }
     }
   };
@@ -239,16 +241,22 @@
   const handleTabKeydown = (e: KeyboardEvent) => {
     if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
       e.preventDefault();
-      const tabs: ("overview" | "inventory")[] = ["overview", "inventory"];
+      const tabs: ("overview" | "inventory" | "map")[] = [
+        "overview",
+        "inventory",
+        "map",
+      ];
       const currentIndex = tabs.indexOf(activeTab);
       const nextIndex =
         e.key === "ArrowRight"
           ? (currentIndex + 1) % tabs.length
           : (currentIndex - 1 + tabs.length) % tabs.length;
 
-      activeTab = tabs[nextIndex];
-      if (activeTab === "overview") tabOverview?.focus();
-      else if (activeTab === "inventory") tabInventory?.focus();
+      uiStore.zenModeActiveTab = tabs[nextIndex];
+      const nextTab = uiStore.zenModeActiveTab;
+      if (nextTab === "overview") tabOverview?.focus();
+      else if (nextTab === "inventory") tabInventory?.focus();
+      else if (nextTab === "map") tabMap?.focus();
     }
   };
 
@@ -473,7 +481,8 @@
               class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             >
               {#if isSaving}
-                <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
+                <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
+                ></span>
                 SAVING...
               {:else}
                 <span class="icon-[lucide--save] w-3 h-3"></span>
@@ -512,7 +521,7 @@
           'overview'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (activeTab = "overview")}
+          onclick={() => (uiStore.zenModeActiveTab = "overview")}
           onkeydown={handleTabKeydown}
         >
           OVERVIEW
@@ -528,10 +537,26 @@
           'inventory'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (activeTab = "inventory")}
+          onclick={() => (uiStore.zenModeActiveTab = "inventory")}
           onkeydown={handleTabKeydown}
         >
           INVENTORY
+        </button>
+        <button
+          bind:this={tabMap}
+          role="tab"
+          id="tab-map"
+          aria-selected={activeTab === "map"}
+          aria-controls="panel-map"
+          tabindex={activeTab === "map" ? 0 : -1}
+          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+          'map'
+            ? 'text-theme-primary border-theme-primary'
+            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          onclick={() => (uiStore.zenModeActiveTab = "map")}
+          onkeydown={handleTabKeydown}
+        >
+          MAP
         </button>
       </div>
 
@@ -810,6 +835,20 @@
                   {/if}
                 </div>
               </div>
+            </div>
+          </div>
+        {:else if activeTab === "map"}
+          <div
+            role="tabpanel"
+            id="panel-map"
+            aria-labelledby="tab-map"
+            class="flex-1 w-full h-full p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+            style="background-image: var(--bg-texture-overlay)"
+          >
+            <div
+              class="max-w-4xl mx-auto h-full min-h-[500px] border border-theme-border rounded bg-theme-surface/50"
+            >
+              <DetailMapTab {entity} />
             </div>
           </div>
         {:else if activeTab === "inventory"}

@@ -115,7 +115,8 @@
   let edgeEditType = $state("neutral");
 
   const applyCurrentLayout = async (isInitial = false) => {
-    if (!cy) return;
+    const currentCy = cy;
+    if (!currentCy) return;
     if (currentLayout) {
       try {
         currentLayout.stop();
@@ -128,7 +129,7 @@
       // For guests, we rely entirely on synced positions.
       // Simply fit to view initially if needed.
       if (isInitial) {
-        cy.fit(cy.elements(), 40);
+        currentCy.fit(currentCy.elements(), 40);
       }
       isLayoutRunning = false;
       return;
@@ -150,24 +151,28 @@
           },
         );
 
-        cy.layout({
-          name: "preset",
-          positions: positions,
-          animate: true,
-          animationDuration: 500,
-          animationEasing: "ease-out-cubic",
-        }).run();
+        if (!cy || currentCy.destroyed()) return;
+
+        currentCy
+          .layout({
+            name: "preset",
+            positions: positions,
+            animate: true,
+            animationDuration: 500,
+            animationEasing: "ease-out-cubic",
+          })
+          .run();
       } catch (err) {
         console.error("Timeline layout failed:", err);
       } finally {
         isLayoutRunning = false;
       }
     } else if (graph.orbitMode && graph.centralNodeId) {
-      setCentralNode(cy, graph.centralNodeId);
+      setCentralNode(currentCy, graph.centralNodeId);
       if (isInitial) {
-        cy.resize();
-        cy.animate({
-          fit: { eles: cy.elements(), padding: 40 },
+        currentCy.resize();
+        currentCy.animate({
+          fit: { eles: currentCy.elements(), padding: 40 },
           duration: 800,
           easing: "ease-out-cubic",
         });
@@ -181,7 +186,7 @@
         const snapshotElements = $state.snapshot(graph.elements);
         let elements = snapshotElements;
 
-        if (cy) {
+        if (currentCy) {
           // Optimization: Create a map of node dimensions to avoid repetitive cy.$id() calls
           // This reduces complexity from O(N*logN) to O(N) for dimension sync
           const nodeDimensions = new Map<
@@ -189,7 +194,7 @@
             { width: number | undefined; height: number | undefined }
           >();
 
-          cy.nodes().forEach((node) => {
+          currentCy.nodes().forEach((node) => {
             const w = node.data("width");
             const h = node.data("height");
             if (w !== undefined || h !== undefined) {
@@ -222,20 +227,24 @@
           animate: false, // Math only in worker
         });
 
+        if (!cy || currentCy.destroyed()) return;
+
         if (isInitial) {
-          cy.nodes().forEach((n) => {
+          currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
             if (pos) n.position(pos);
           });
-          cy.fit(cy.elements(), 40);
+          currentCy.fit(currentCy.elements(), 40);
         } else {
-          cy.layout({
-            name: "preset",
-            positions: positions,
-            animate: true,
-            animationDuration: 1000,
-            animationEasing: "ease-out-quad",
-          }).run();
+          currentCy
+            .layout({
+              name: "preset",
+              positions: positions,
+              animate: true,
+              animationDuration: 1000,
+              animationEasing: "ease-out-quad",
+            })
+            .run();
         }
 
         // SYNC: Update vault with new positions
@@ -257,27 +266,29 @@
       } catch (err) {
         console.error("Background layout failed:", err);
         // Fallback to main thread
-        currentLayout = cy.layout({
-          ...DEFAULT_LAYOUT_OPTIONS,
-          stop: () => {
-            // Sync fallback layout too
-            if (!vault.isGuest && cy) {
-              const updates: Record<string, Partial<Entity>> = {};
-              cy.nodes().forEach((node) => {
-                updates[node.id()] = {
-                  metadata: {
-                    ...(vault.entities[node.id()]?.metadata || {}),
-                    coordinates: node.position(),
-                  },
-                };
-              });
-              if (Object.keys(updates).length > 0) {
-                vault.batchUpdateEntities(updates as any);
+        if (cy && !currentCy.destroyed()) {
+          currentLayout = currentCy.layout({
+            ...DEFAULT_LAYOUT_OPTIONS,
+            stop: () => {
+              // Sync fallback layout too
+              if (!vault.isGuest && currentCy) {
+                const updates: Record<string, Partial<Entity>> = {};
+                currentCy.nodes().forEach((node) => {
+                  updates[node.id()] = {
+                    metadata: {
+                      ...(vault.entities[node.id()]?.metadata || {}),
+                      coordinates: node.position(),
+                    },
+                  };
+                });
+                if (Object.keys(updates).length > 0) {
+                  vault.batchUpdateEntities(updates as any);
+                }
               }
-            }
-          },
-        });
-        currentLayout.run();
+            },
+          });
+          currentLayout.run();
+        }
       } finally {
         isLayoutRunning = false;
       }
@@ -680,11 +691,11 @@
             );
           }
 
-          if (hasUpdates) {
+          if (hasUpdates && cy && !cy.destroyed()) {
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              applyCurrentLayout(false);
+              if (cy && !cy.destroyed()) applyCurrentLayout(false);
             }, 200);
           }
         } catch (error) {

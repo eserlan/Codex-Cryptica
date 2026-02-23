@@ -10,7 +10,7 @@
     editType = $bindable(),
   } = $props<{
     entity: Entity;
-    activeTab: "status" | "lore" | "inventory";
+    activeTab: "status" | "lore" | "inventory" | "map";
     isEditing: boolean;
     editType: string;
   }>();
@@ -42,7 +42,7 @@
   {/if}
 
   <div
-    class="flex gap-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
+    class="flex flex-wrap md:flex-nowrap gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
   >
     <button
       class={activeTab === "status"
@@ -65,6 +65,12 @@
         : "hover:text-theme-text transition"}
       onclick={() => (activeTab = "inventory")}
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
+    >
+    <button
+      class={activeTab === "map"
+        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : "hover:text-theme-text transition"}
+      onclick={() => (activeTab = "map")}>MAP</button
     >
   </div>
 </div>

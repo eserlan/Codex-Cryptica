@@ -14,6 +14,34 @@ import {
 } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 
+import type { Map } from "schema";
+
+export async function saveMapsToDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  maps: Record<string, Map>,
+) {
+  if (!vaultHandle) return;
+  const content = JSON.stringify(maps, null, 2);
+  await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
+}
+
+export async function loadMapsFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+): Promise<Record<string, Map>> {
+  if (!vaultHandle) return {};
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const fileHandle = await codexDir.getFileHandle("maps.json");
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
 export async function syncToLocal(
   activeVaultId: string,
   vaultHandle: FileSystemDirectoryHandle,

@@ -21,9 +21,10 @@ class UIStore {
   hasPromptedSave = $state(false);
   wasConverted = $state(false);
 
-  notification = $state<{ message: string; type: "success" | "info" } | null>(
-    null,
-  );
+  notification = $state<{
+    message: string;
+    type: "success" | "info" | "error";
+  } | null>(null);
 
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
@@ -77,6 +78,7 @@ class UIStore {
   // Zen Mode State
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
+  zenModeActiveTab = $state<"overview" | "inventory" | "map">("overview");
 
   // Fog of War State
   sharedMode = $state(false);
@@ -116,7 +118,7 @@ class UIStore {
     this.globalError = null;
   }
 
-  notify(message: string, type: "success" | "info" = "success") {
+  notify(message: string, type: "success" | "info" | "error" = "success") {
     this.notification = { message, type };
     setTimeout(() => {
       this.notification = null;
@@ -141,14 +143,19 @@ class UIStore {
     }
   }
 
-  openZenMode(entityId: string) {
+  openZenMode(
+    entityId: string,
+    tab: "overview" | "inventory" | "map" = "overview",
+  ) {
     this.zenModeEntityId = entityId;
+    this.zenModeActiveTab = tab;
     this.showZenMode = true;
   }
 
   closeZenMode() {
     this.showZenMode = false;
     this.zenModeEntityId = null;
+    this.zenModeActiveTab = "overview";
   }
 
   // Compatibility methods
