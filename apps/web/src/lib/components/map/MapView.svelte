@@ -18,7 +18,6 @@
   // signals may not be reliably readable from requestAnimationFrame callbacks.
   let _drawImage: HTMLImageElement | null = null;
   let _drawMask: HTMLCanvasElement | null = null;
-  let rawCanvas: HTMLCanvasElement | null = null;
 
   let selectedPin = $derived(mapStore.pins.find((p) => p.id === selectedPinId));
   let subMapForSelected = $derived(
@@ -92,11 +91,10 @@
   }
 
   function draw() {
-    const targetCanvas = rawCanvas || canvas;
-    if (targetCanvas) {
+    if (canvas) {
       const canvasSize = {
-        width: targetCanvas.width || 1,
-        height: targetCanvas.height || 1,
+        width: canvas.width || 1,
+        height: canvas.height || 1,
       };
 
       // Keep mapStore in sync so project/unproject calls stay accurate
@@ -108,7 +106,7 @@
       }
 
       renderMap({
-        canvas: targetCanvas,
+        canvas: canvas,
         image: _drawImage,
         transform: mapStore.viewport,
         canvasSize,
@@ -367,13 +365,7 @@
   onwheel={onWheel}
   onkeydown={onKeyDown}
 >
-  <canvas
-    use={(node) => {
-      rawCanvas = node;
-    }}
-    bind:this={canvas}
-    class="absolute inset-0"
-  ></canvas>
+  <canvas bind:this={canvas} class="absolute inset-0"></canvas>
 
   <div aria-live="polite" aria-atomic="true" class="sr-only">
     {mapAnnouncement}
