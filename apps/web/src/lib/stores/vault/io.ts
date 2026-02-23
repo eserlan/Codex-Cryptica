@@ -17,6 +17,9 @@ import type { LocalEntity } from "./types";
 
 import type { Map } from "schema";
 
+// Clock skew tolerance for comparing timestamps across different filesystems
+const SKEW_MS = 2000;
+
 export async function saveMapsToDisk(
   vaultHandle: FileSystemDirectoryHandle,
   maps: Record<string, Map>,
@@ -94,8 +97,7 @@ export async function syncToLocal(
         const localFile = await existingHandle.getFile();
 
         // If size matches and local file is newer or same age as OPFS, skip.
-        // We use a 2s skew to account for filesystem precision differences.
-        const SKEW_MS = 2000;
+        // We use a skew to account for filesystem precision differences.
         if (
           localFile.size === opfsFile.size &&
           localFile.lastModified >= opfsFile.lastModified - SKEW_MS
@@ -163,6 +165,7 @@ export async function importFromFolder(
 
     let successCount = 0;
     let errorCount = 0;
+    let processedCount = 0;
 
     for (const { path, handle } of allFiles) {
       try {
@@ -180,7 +183,6 @@ export async function importFromFolder(
           const opfsFileHandle = await dirHandle.getFileHandle(fileName);
           const opfsFile = await opfsFileHandle.getFile();
 
-          const SKEW_MS = 2000;
           if (
             opfsFile.size === localFile.size &&
             opfsFile.lastModified >= localFile.lastModified - SKEW_MS
@@ -201,13 +203,14 @@ export async function importFromFolder(
           }
           successCount++;
         }
+        processedCount++;
       } catch (fileErr) {
         console.error(`Failed to import ${path.join("/")}:`, fileErr);
         errorCount++;
       }
     }
 
-    if (errorCount > 0 && successCount === 0) {
+    if (errorCount > 0 && successCount === 0 && processedCount === 0) {
       throw new Error("No files were successfully imported.");
     }
 

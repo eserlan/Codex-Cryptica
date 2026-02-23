@@ -91,7 +91,10 @@ describe("syncToLocal Optimization", () => {
     expect(vaultIoUtils.writeWithRetry).not.toHaveBeenCalled();
 
     // Scenario 2: Local file exists but is OLDER
-    vi.clearAllMocks();
+    vi.mocked(vaultIoUtils.writeWithRetry).mockClear();
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockClear();
+    vi.mocked(opfsUtils.walkOpfsDirectory).mockClear();
+
     mockOpfsFileHandle.getFile.mockResolvedValue({
       size: 100,
       lastModified: 20000, // Newer than local
@@ -121,7 +124,10 @@ describe("syncToLocal Optimization", () => {
     expect(vaultIoUtils.writeWithRetry).toHaveBeenCalled();
 
     // Scenario 3: Local file exists but SIZE differs
-    vi.clearAllMocks();
+    vi.mocked(vaultIoUtils.writeWithRetry).mockClear();
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockClear();
+    vi.mocked(opfsUtils.walkOpfsDirectory).mockClear();
+
     mockOpfsFileHandle.getFile.mockResolvedValue({
       size: 200, // Different size
       lastModified: 10000,
@@ -198,7 +204,7 @@ describe("syncToLocal Optimization", () => {
     expect(opfsUtils.writeOpfsFile).not.toHaveBeenCalled();
 
     // Scenario 2: Local file is NEWER than OPFS
-    vi.clearAllMocks();
+    vi.mocked(opfsUtils.writeOpfsFile).mockClear();
     mockVaultHandle.getFileHandle.mockResolvedValue({
       getFile: vi.fn().mockResolvedValue({
         size: 100,
