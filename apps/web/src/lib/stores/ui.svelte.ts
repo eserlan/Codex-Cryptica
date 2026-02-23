@@ -78,6 +78,7 @@ class UIStore {
   // Zen Mode State
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
+  zenModeActiveTab = $state<"overview" | "inventory" | "map">("overview");
 
   // Fog of War State
   sharedMode = $state(false);
@@ -142,14 +143,19 @@ class UIStore {
     }
   }
 
-  openZenMode(entityId: string) {
+  openZenMode(
+    entityId: string,
+    tab: "overview" | "inventory" | "map" = "overview",
+  ) {
     this.zenModeEntityId = entityId;
+    this.zenModeActiveTab = tab;
     this.showZenMode = true;
   }
 
   closeZenMode() {
     this.showZenMode = false;
     this.zenModeEntityId = null;
+    this.zenModeActiveTab = "overview";
   }
 
   // Compatibility methods

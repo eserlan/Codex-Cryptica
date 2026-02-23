@@ -19,7 +19,7 @@
 
   let isEditing = $state(false);
   let isSaving = $state(false);
-  let activeTab = $state<"overview" | "inventory" | "map">("overview");
+  let activeTab = $derived(uiStore.zenModeActiveTab);
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
@@ -38,13 +38,6 @@
 
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
-
-  // Reset to overview when switching entities
-  $effect(() => {
-    if (entityId) {
-      activeTab = "overview";
-    }
-  });
 
   $effect(() => {
     let isStale = false;
@@ -259,10 +252,11 @@
           ? (currentIndex + 1) % tabs.length
           : (currentIndex - 1 + tabs.length) % tabs.length;
 
-      activeTab = tabs[nextIndex];
-      if (activeTab === "overview") tabOverview?.focus();
-      else if (activeTab === "inventory") tabInventory?.focus();
-      else if (activeTab === "map") tabMap?.focus();
+      uiStore.zenModeActiveTab = tabs[nextIndex];
+      const nextTab = uiStore.zenModeActiveTab;
+      if (nextTab === "overview") tabOverview?.focus();
+      else if (nextTab === "inventory") tabInventory?.focus();
+      else if (nextTab === "map") tabMap?.focus();
     }
   };
 
@@ -527,7 +521,7 @@
           'overview'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (activeTab = "overview")}
+          onclick={() => (uiStore.zenModeActiveTab = "overview")}
           onkeydown={handleTabKeydown}
         >
           OVERVIEW
@@ -543,7 +537,7 @@
           'inventory'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (activeTab = "inventory")}
+          onclick={() => (uiStore.zenModeActiveTab = "inventory")}
           onkeydown={handleTabKeydown}
         >
           INVENTORY
@@ -559,7 +553,7 @@
           'map'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (activeTab = "map")}
+          onclick={() => (uiStore.zenModeActiveTab = "map")}
           onkeydown={handleTabKeydown}
         >
           MAP
