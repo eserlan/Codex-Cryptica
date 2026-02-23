@@ -20,9 +20,10 @@
       try {
         const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
         if (!mapId) {
-          if (typeof window !== "undefined") {
-            alert("Failed to upload map. Please ensure your vault is active.");
-          }
+          uiStore.notify(
+            "Failed to upload map. Please ensure your vault is active.",
+            "error",
+          );
           return;
         }
 
@@ -34,9 +35,7 @@
         files = null;
       } catch (err) {
         console.error("[DetailMapTab] Error during handleUpload:", err);
-        if (typeof window !== "undefined") {
-          alert("An unexpected error occurred during upload.");
-        }
+        uiStore.notify("An unexpected error occurred during upload.", "error");
       }
     }
   }
@@ -51,9 +50,7 @@
       try {
         await vault.deleteMap(linkedMap.id);
       } catch (err: any) {
-        if (typeof window !== "undefined") {
-          alert(`Error deleting map: ${err.message}`);
-        }
+        uiStore.notify(`Error deleting map: ${err.message}`, "error");
       }
     }
   }

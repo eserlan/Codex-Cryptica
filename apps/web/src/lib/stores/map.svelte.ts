@@ -241,7 +241,7 @@ class MapStore {
 
     const map = vault.maps[this.activeMapId];
     if (map) {
-      map.pins.push(newPin);
+      map.pins = [...map.pins, newPin];
       await vault.saveMaps();
     }
   }

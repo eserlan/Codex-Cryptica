@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, type Snippet } from "svelte";
+  import { onMount, untrack, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
@@ -71,16 +71,18 @@
             _drawMask = loadedMask;
 
             // Persist dimensions if not set (first load of this asset)
-            if (
-              activeMap.id === mapStore.activeMapId &&
-              activeMap.dimensions.width === 0
-            ) {
-              vault.maps[activeMap.id].dimensions = {
-                width: img.width,
-                height: img.height,
-              };
-              await vault.saveMaps();
-            }
+            untrack(() => {
+              if (
+                activeMap.id === mapStore.activeMapId &&
+                activeMap.dimensions.width === 0
+              ) {
+                vault.maps[activeMap.id].dimensions = {
+                  width: img.width,
+                  height: img.height,
+                };
+                vault.saveMaps();
+              }
+            });
           };
           img.onerror = (err) => {
             console.error("[MapView] Image load failed:", url, err);

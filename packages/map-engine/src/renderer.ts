@@ -17,6 +17,29 @@ export interface RenderOptions {
   };
 }
 
+interface CanvasCache {
+  fogCanvas?: HTMLCanvasElement;
+  fogCanvasW?: number;
+  fogCanvasH?: number;
+  cachedPattern?: {
+    pattern: CanvasPattern;
+    size: number;
+    color: string;
+    opacity: number;
+  };
+}
+
+const canvasCaches = new WeakMap<HTMLCanvasElement, CanvasCache>();
+
+function getCache(canvas: HTMLCanvasElement): CanvasCache {
+  let cache = canvasCaches.get(canvas);
+  if (!cache) {
+    cache = {};
+    canvasCaches.set(canvas, cache);
+  }
+  return cache;
+}
+
 export function renderMap(options: RenderOptions) {
   const {
     canvas,
@@ -30,6 +53,8 @@ export function renderMap(options: RenderOptions) {
   } = options;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+
+  const cache = getCache(canvas);
 
   // Clear canvas
   ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
@@ -53,38 +78,40 @@ export function renderMap(options: RenderOptions) {
 
   // 2. Draw Grid
   if (grid && grid.type !== "none") {
-    drawGrid(ctx, transform, canvasSize, grid);
+    drawGrid(ctx, transform, canvasSize, grid, cache);
   }
 
   // 3. Draw Fog of War using an off-screen canvas to isolate the compositing.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
   if (showFog && maskCanvas) {
-    const fog = getFogCanvas(canvasSize.width, canvasSize.height);
-    const fogCtx = fog.getContext("2d")!;
+    const fog = getFogCanvas(canvasSize.width, canvasSize.height, cache);
+    const fogCtx = fog.getContext("2d");
 
-    // Fill fog layer with opaque black
-    fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-    fogCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    fogCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+    if (fogCtx) {
+      // Fill fog layer with opaque black
+      fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+      fogCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      fogCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-    // Punch holes where map is revealed (white = revealed in mask)
-    fogCtx.globalCompositeOperation = "destination-out";
-    fogCtx.save();
-    fogCtx.translate(center.x, center.y);
-    fogCtx.scale(transform.zoom, transform.zoom);
-    fogCtx.drawImage(
-      maskCanvas,
-      -image.width / 2,
-      -image.height / 2,
-      image.width,
-      image.height,
-    );
-    fogCtx.restore();
-    fogCtx.globalCompositeOperation = "source-over";
+      // Punch holes where map is revealed (white = revealed in mask)
+      fogCtx.globalCompositeOperation = "destination-out";
+      fogCtx.save();
+      fogCtx.translate(center.x, center.y);
+      fogCtx.scale(transform.zoom, transform.zoom);
+      fogCtx.drawImage(
+        maskCanvas,
+        -image.width / 2,
+        -image.height / 2,
+        image.width,
+        image.height,
+      );
+      fogCtx.restore();
+      fogCtx.globalCompositeOperation = "source-over";
 
-    // Overlay fog (with holes) on the main canvas using normal compositing
-    ctx.drawImage(fog, 0, 0);
+      // Overlay fog (with holes) on the main canvas using normal compositing
+      ctx.drawImage(fog, 0, 0);
+    }
   }
 
   // 4. Draw pins
@@ -111,27 +138,23 @@ export function renderMap(options: RenderOptions) {
   }
 }
 
-let cachedPattern: {
-  pattern: CanvasPattern;
-  size: number;
-  color: string;
-  opacity: number;
-} | null = null;
-
-// Cached off-screen canvas for fog-of-war rendering (avoid per-frame DOM allocation)
-let fogCanvas: HTMLCanvasElement | null = null;
-let fogCanvasW = 0;
-let fogCanvasH = 0;
-
-function getFogCanvas(width: number, height: number): HTMLCanvasElement {
-  if (!fogCanvas || fogCanvasW !== width || fogCanvasH !== height) {
-    fogCanvas = document.createElement("canvas");
-    fogCanvas.width = width;
-    fogCanvas.height = height;
-    fogCanvasW = width;
-    fogCanvasH = height;
+function getFogCanvas(
+  width: number,
+  height: number,
+  cache: CanvasCache,
+): HTMLCanvasElement {
+  if (
+    !cache.fogCanvas ||
+    cache.fogCanvasW !== width ||
+    cache.fogCanvasH !== height
+  ) {
+    cache.fogCanvas = document.createElement("canvas");
+    cache.fogCanvas.width = width;
+    cache.fogCanvas.height = height;
+    cache.fogCanvasW = width;
+    cache.fogCanvasH = height;
   }
-  return fogCanvas;
+  return cache.fogCanvas;
 }
 
 function drawGrid(
@@ -139,27 +162,33 @@ function drawGrid(
   transform: ViewportTransform,
   canvasSize: { width: number; height: number },
   grid: NonNullable<RenderOptions["grid"]>,
+  cache: CanvasCache,
 ) {
   if (grid.type === "square") {
     const size = grid.size * transform.zoom;
     if (size < 2) return; // Prevent infinite loops or invisible patterns
 
     if (
-      !cachedPattern ||
-      cachedPattern.size !== size ||
-      cachedPattern.color !== grid.color ||
-      cachedPattern.opacity !== grid.opacity
+      !cache.cachedPattern ||
+      cache.cachedPattern.size !== size ||
+      cache.cachedPattern.color !== grid.color ||
+      cache.cachedPattern.opacity !== grid.opacity
     ) {
       const patternCanvas = document.createElement("canvas");
-      const pCtx = patternCanvas.getContext("2d")!;
+      const pCtx = patternCanvas.getContext("2d");
+      if (!pCtx) return;
+
       patternCanvas.width = size;
       patternCanvas.height = size;
       pCtx.strokeStyle = grid.color;
       pCtx.globalAlpha = grid.opacity;
       pCtx.strokeRect(0, 0, size, size);
 
-      cachedPattern = {
-        pattern: ctx.createPattern(patternCanvas, "repeat")!,
+      const pattern = ctx.createPattern(patternCanvas, "repeat");
+      if (!pattern) return;
+
+      cache.cachedPattern = {
+        pattern,
         size,
         color: grid.color,
         opacity: grid.opacity,
@@ -167,7 +196,7 @@ function drawGrid(
     }
 
     ctx.save();
-    ctx.fillStyle = cachedPattern.pattern;
+    ctx.fillStyle = cache.cachedPattern.pattern;
 
     const offsetX = (transform.pan.x + canvasSize.width / 2) % size;
     const offsetY = (transform.pan.y + canvasSize.height / 2) % size;

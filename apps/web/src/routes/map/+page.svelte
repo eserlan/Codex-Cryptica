@@ -2,6 +2,7 @@
   import MapView from "$lib/components/map/MapView.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   let showUpload = $state(false);
   let mapName = $state("");
@@ -15,9 +16,10 @@
           mapName || files[0].name,
         );
         if (result === undefined) {
-          if (typeof window !== "undefined") {
-            alert("Failed to upload map. Please ensure your vault is active.");
-          }
+          uiStore.notify(
+            "Failed to upload map. Please ensure your vault is active.",
+            "error",
+          );
           return;
         }
         showUpload = false;
@@ -25,9 +27,7 @@
         files = null;
       } catch (err) {
         console.error("[MapPage] Error during handleUpload:", err);
-        if (typeof window !== "undefined") {
-          alert("An unexpected error occurred during upload.");
-        }
+        uiStore.notify("An unexpected error occurred during upload.", "error");
       }
     }
   }
