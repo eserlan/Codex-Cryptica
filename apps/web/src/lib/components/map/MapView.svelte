@@ -447,30 +447,18 @@
         {#if selectedPin.entityId}
           {@const entity = vault.entities[selectedPin.entityId]}
           {#if entity}
-            <div class="flex items-center border-r border-theme-border mr-1">
-              <button
-                class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase tracking-widest whitespace-nowrap"
-                onclick={() => uiStore.openZenMode(entity.id)}
-              >
-                {entity.title}
-              </button>
-
-              {#if mapStore.getEntitySubMap(entity.id)}
-                <button
-                  class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors border-l border-theme-border"
-                  onclick={() => uiStore.openZenMode(entity.id, "map")}
-                  title="Open Entity Map Tab"
-                >
-                  <span class="icon-[lucide--map-pinned] w-3.5 h-3.5"></span>
-                </button>
-              {/if}
-            </div>
+            <button
+              class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase tracking-widest whitespace-nowrap border-r border-theme-border mr-1"
+              onclick={() => uiStore.openZenMode(entity.id)}
+            >
+              {entity.title}
+            </button>
           {/if}
         {/if}
 
         {#if subMapForSelected}
           <button
-            class="w-7 h-7 flex items-center justify-center bg-theme-primary text-theme-bg rounded-full hover:shadow-[0_0_15px_rgba(74,222,128,0.4)] transition-all active:scale-90 shadow-lg group/map mx-1"
+            class="w-7 h-7 flex items-center justify-center bg-theme-primary text-theme-bg rounded-full transition-all active:scale-90 group/map mx-1"
             onclick={() => mapStore.selectMap(subMapForSelected!.id, true)}
             title="Enter Sub-map"
           >
