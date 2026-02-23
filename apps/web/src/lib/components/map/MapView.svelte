@@ -23,11 +23,19 @@
   $effect(() => {
     const activeMap = mapStore.activeMap;
     if (activeMap) {
+      // Immediately clear stale image and resize so draw loop has correct dims
+      mapImage = null;
+      maskCanvas = null;
+      handleResize();
+
       selectedPinId = null;
       let canceled = false;
       const img = new Image();
+      let blobUrl = "";
+
       vault.resolveImageUrl(activeMap.assetPath).then((url) => {
         if (canceled) return;
+        blobUrl = url;
         img.src = url;
         img.onload = async () => {
           if (canceled) return;
@@ -46,10 +54,16 @@
             await vault.saveMaps();
           }
         };
+        img.onerror = () => {
+          if (!canceled)
+            console.error("[MapView] Failed to load map image:", url);
+        };
       });
       return () => {
         canceled = true;
+        mapImage = null;
         maskCanvas = null;
+        if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
       };
     } else {
       mapImage = null;
@@ -70,11 +84,25 @@
 
   function draw() {
     if (canvas) {
+      // Use the canvas's physical dimensions directly — mapStore.canvasSize
+      // may still be zero on the first frames after navigation, which would
+      // cause imageToViewport to place the image off-screen.
+      const canvasSize = {
+        width: canvas.width || canvas.offsetWidth || window.innerWidth,
+        height: canvas.height || canvas.offsetHeight || window.innerHeight,
+      };
+      // Keep mapStore in sync so project/unproject calls stay accurate
+      if (
+        canvasSize.width !== mapStore.canvasSize.width ||
+        canvasSize.height !== mapStore.canvasSize.height
+      ) {
+        mapStore.setCanvasSize(canvasSize.width, canvasSize.height);
+      }
       renderMap({
         canvas,
         image: mapImage,
         transform: mapStore.viewport,
-        canvasSize: mapStore.canvasSize,
+        canvasSize,
         pins: mapStore.pins,
         maskCanvas,
         showFog: mapStore.showFog,
