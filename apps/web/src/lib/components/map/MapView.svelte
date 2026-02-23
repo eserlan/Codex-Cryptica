@@ -403,6 +403,18 @@
           </button>
         {/if}
         <button
+          class="px-2 py-1.5 text-theme-muted hover:text-red-500 transition-colors"
+          onclick={() => {
+            if (selectedPinId) {
+              mapStore.removePin(selectedPinId);
+              selectedPinId = null;
+            }
+          }}
+          aria-label="Delete pin"
+        >
+          <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+        </button>
+        <button
           class="px-2 py-1.5 text-theme-muted hover:text-theme-text transition-colors"
           onclick={() => (selectedPinId = null)}
           aria-label="Close pin details"

@@ -210,6 +210,15 @@ class MapStore {
     }
   }
 
+  async removePin(pinId: string) {
+    if (!this.activeMapId || !vault.maps[this.activeMapId]) return;
+    const map = vault.maps[this.activeMapId];
+    if (map) {
+      map.pins = map.pins.filter((p) => p.id !== pinId);
+      await vault.saveMaps();
+    }
+  }
+
   jumpToPin(pinId: string) {
     const pin = this.pins.find((p) => p.id === pinId);
     if (pin) {
