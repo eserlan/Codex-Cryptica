@@ -231,18 +231,20 @@
               </div>
 
               <button
-                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => handleImportToVault(v)}
                 title="Restore from Folder"
+                aria-label="Restore from Folder"
                 disabled={isLoading || !!deletingId || !!editingId}
               >
                 <span class="icon-[lucide--folder-up] w-3.5 h-3.5"></span>
               </button>
 
               <button
-                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => startRename(v)}
                 title="Rename"
+                aria-label="Rename"
                 disabled={isLoading || !!deletingId || !!editingId}
               >
                 <span class="icon-[lucide--edit-2] w-3.5 h-3.5"></span>
@@ -250,9 +252,10 @@
 
               {#if v.id !== vaultRegistry.activeVaultId}
                 <button
-                  class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => (deletingId = v.id)}
                   title="Delete"
+                  aria-label="Delete"
                   disabled={isLoading || !!deletingId || !!editingId}
                 >
                   <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
@@ -313,6 +316,7 @@
         >
           <input
             bind:value={newVaultName}
+            aria-label="New Vault Name"
             placeholder="Vault Name..."
             class="border border-theme-border rounded px-3 py-1.5 text-sm flex-1 bg-theme-bg text-theme-text focus:outline-none focus:border-theme-primary"
           />
