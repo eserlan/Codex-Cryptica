@@ -32,15 +32,34 @@ vi.mock("../../utils/idb", () => ({
 }));
 
 describe("syncToLocal Optimization", () => {
-  beforeEach(() => {
+  const mockLocalHandle = {
+    name: "Local Folder",
+    queryPermission: vi.fn().mockResolvedValue("granted"),
+  } as any;
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Setup default getDB behavior
+    const db = await getDB();
+    vi.mocked(db.get).mockResolvedValue(mockLocalHandle);
+
+    // Mock showDirectoryPicker
+    if (typeof window !== "undefined") {
+      (window as any).showDirectoryPicker = vi
+        .fn()
+        .mockResolvedValue(mockLocalHandle);
+    } else {
+      (global as any).window = {
+        showDirectoryPicker: vi.fn().mockResolvedValue(mockLocalHandle),
+      };
+    }
   });
 
-  it("should only sync files that have changed", async () => {
+  it("should SKIP sync if local file is up to date", async () => {
     const activeVaultId = "test-vault";
     const updateStatus = vi.fn();
 
-    // Mock OPFS handles
     const mockOpfsFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         size: 100,
@@ -48,24 +67,6 @@ describe("syncToLocal Optimization", () => {
       }),
     };
 
-    const mockVaultHandle = {} as any;
-    const mockLocalHandle = {
-      name: "Local Folder",
-      queryPermission: vi.fn().mockResolvedValue("granted"),
-    } as any;
-
-    // Ensure getDB returns our mockLocalHandle
-    vi.mocked(getDB).mockResolvedValue({
-      get: vi.fn().mockResolvedValue(mockLocalHandle),
-      put: vi.fn(),
-    } as any);
-
-    // Mock showDirectoryPicker just in case
-    (global as any).window.showDirectoryPicker = vi
-      .fn()
-      .mockResolvedValue(mockLocalHandle);
-
-    // Mock walkOpfsDirectory to return one file
     vi.mocked(opfsUtils.walkOpfsDirectory).mockResolvedValue([
       {
         handle: mockOpfsFileHandle as any,
@@ -73,7 +74,6 @@ describe("syncToLocal Optimization", () => {
       },
     ]);
 
-    // Scenario 1: Local file exists and is UP TO DATE
     const mockExistingLocalFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         size: 100,
@@ -81,24 +81,32 @@ describe("syncToLocal Optimization", () => {
       }),
     };
 
-    vi.mocked(vaultIoUtils.reResolveFileHandle)
-      .mockResolvedValueOnce(mockExistingLocalFileHandle as any) // first call for existence check
-      .mockResolvedValueOnce({} as any); // second call for write (should not happen in this case)
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockResolvedValue(
+      mockExistingLocalFileHandle as any,
+    );
 
-    await syncToLocal(activeVaultId, mockVaultHandle, updateStatus);
+    await syncToLocal(activeVaultId, {} as any, updateStatus);
 
-    // Verify: writeWithRetry should NOT be called
     expect(vaultIoUtils.writeWithRetry).not.toHaveBeenCalled();
+  });
 
-    // Scenario 2: Local file exists but is OLDER
-    vi.mocked(vaultIoUtils.writeWithRetry).mockClear();
-    vi.mocked(vaultIoUtils.reResolveFileHandle).mockClear();
-    vi.mocked(opfsUtils.walkOpfsDirectory).mockClear();
+  it("should PERFORM sync if local file is older", async () => {
+    const activeVaultId = "test-vault";
+    const updateStatus = vi.fn();
 
-    mockOpfsFileHandle.getFile.mockResolvedValue({
-      size: 100,
-      lastModified: 20000, // Newer than local
-    });
+    const mockOpfsFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 100,
+        lastModified: 20000,
+      }),
+    };
+
+    vi.mocked(opfsUtils.walkOpfsDirectory).mockResolvedValue([
+      {
+        handle: mockOpfsFileHandle as any,
+        path: ["test.md"],
+      },
+    ]);
 
     const mockOldLocalFileHandle = {
       getFile: vi.fn().mockResolvedValue({
@@ -107,6 +115,26 @@ describe("syncToLocal Optimization", () => {
       }),
     };
 
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockResolvedValue(
+      mockOldLocalFileHandle as any,
+    );
+
+    await syncToLocal(activeVaultId, {} as any, updateStatus);
+
+    expect(vaultIoUtils.writeWithRetry).toHaveBeenCalled();
+  });
+
+  it("should PERFORM sync if local file size differs", async () => {
+    const activeVaultId = "test-vault";
+    const updateStatus = vi.fn();
+
+    const mockOpfsFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 200, // Different size
+        lastModified: 10000,
+      }),
+    };
+
     vi.mocked(opfsUtils.walkOpfsDirectory).mockResolvedValue([
       {
         handle: mockOpfsFileHandle as any,
@@ -114,26 +142,27 @@ describe("syncToLocal Optimization", () => {
       },
     ]);
 
-    vi.mocked(vaultIoUtils.reResolveFileHandle)
-      .mockResolvedValueOnce(mockOldLocalFileHandle as any) // check
-      .mockResolvedValueOnce({} as any); // write
-
-    await syncToLocal(activeVaultId, mockVaultHandle, updateStatus);
-
-    // Verify: writeWithRetry SHOULD be called
-    expect(vaultIoUtils.writeWithRetry).toHaveBeenCalled();
-
-    // Scenario 3: Local file exists but SIZE differs
-    vi.mocked(vaultIoUtils.writeWithRetry).mockClear();
-    vi.mocked(vaultIoUtils.reResolveFileHandle).mockClear();
-    vi.mocked(opfsUtils.walkOpfsDirectory).mockClear();
-
-    mockOpfsFileHandle.getFile.mockResolvedValue({
-      size: 200, // Different size
-      lastModified: 10000,
-    });
-
     const mockDifferentSizeLocalFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 100,
+        lastModified: 10000,
+      }),
+    };
+
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockResolvedValue(
+      mockDifferentSizeLocalFileHandle as any,
+    );
+
+    await syncToLocal(activeVaultId, {} as any, updateStatus);
+
+    expect(vaultIoUtils.writeWithRetry).toHaveBeenCalled();
+  });
+
+  it("should respect clock skew tolerance when syncing", async () => {
+    const activeVaultId = "test-vault";
+    const updateStatus = vi.fn();
+
+    const mockOpfsFileHandle = {
       getFile: vi.fn().mockResolvedValue({
         size: 100,
         lastModified: 10000,
@@ -147,14 +176,22 @@ describe("syncToLocal Optimization", () => {
       },
     ]);
 
-    vi.mocked(vaultIoUtils.reResolveFileHandle)
-      .mockResolvedValueOnce(mockDifferentSizeLocalFileHandle as any) // check
-      .mockResolvedValueOnce({} as any); // write
+    // Local file is slightly OLDER but within 2s skew
+    const mockSkewedLocalFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 100,
+        lastModified: 9500, // 500ms difference, well within 2s skew
+      }),
+    };
 
-    await syncToLocal(activeVaultId, mockVaultHandle, updateStatus);
+    vi.mocked(vaultIoUtils.reResolveFileHandle).mockResolvedValue(
+      mockSkewedLocalFileHandle as any,
+    );
 
-    // Verify: writeWithRetry SHOULD be called
-    expect(vaultIoUtils.writeWithRetry).toHaveBeenCalled();
+    await syncToLocal(activeVaultId, {} as any, updateStatus);
+
+    // Should SKIP write because it's within skew
+    expect(vaultIoUtils.writeWithRetry).not.toHaveBeenCalled();
   });
 
   it("should only import files from local system if they are newer or different size", async () => {
@@ -172,7 +209,7 @@ describe("syncToLocal Optimization", () => {
       }),
     };
 
-    const mockLocalHandle = {
+    const mockLocalHandleWithEntries = {
       entries: async function* () {
         yield [
           "test.md",
@@ -184,9 +221,15 @@ describe("syncToLocal Optimization", () => {
       },
     } as any;
 
-    (global as any).window.showDirectoryPicker = vi
-      .fn()
-      .mockResolvedValue(mockLocalHandle);
+    if (typeof window !== "undefined") {
+      (window as any).showDirectoryPicker = vi
+        .fn()
+        .mockResolvedValue(mockLocalHandleWithEntries);
+    } else {
+      (global as any).window.showDirectoryPicker = vi
+        .fn()
+        .mockResolvedValue(mockLocalHandleWithEntries);
+    }
 
     // Scenario 1: Local file is SAME as OPFS
     mockVaultHandle.getFileHandle.mockResolvedValue({
@@ -215,5 +258,70 @@ describe("syncToLocal Optimization", () => {
     const result2 = await importFromFolder(activeVaultId, mockVaultHandle);
     expect(result2.count).toBe(1);
     expect(opfsUtils.writeOpfsFile).toHaveBeenCalled();
+  });
+
+  it("should use getDirHandle and handle nested paths when importing from a folder", async () => {
+    const activeVaultId = "test-vault";
+    const mockVaultHandle = {} as any;
+
+    const mockLocalFileHandle = {
+      getFile: vi.fn().mockResolvedValue({
+        size: 50,
+        lastModified: 30000,
+        text: vi.fn().mockResolvedValue("nested local content"),
+      }),
+    };
+
+    const mockSubdirHandle = {
+      entries: async function* () {
+        yield [
+          "test.md",
+          {
+            kind: "file",
+            ...mockLocalFileHandle,
+          },
+        ];
+      },
+    } as any;
+
+    const mockLocalHandleWithSubdir = {
+      entries: async function* () {
+        yield [
+          "subdir",
+          {
+            kind: "directory",
+            ...mockSubdirHandle,
+          },
+        ];
+      },
+    } as any;
+
+    if (typeof window !== "undefined") {
+      (window as any).showDirectoryPicker = vi
+        .fn()
+        .mockResolvedValue(mockLocalHandleWithSubdir);
+    } else {
+      (global as any).window.showDirectoryPicker = vi
+        .fn()
+        .mockResolvedValue(mockLocalHandleWithSubdir);
+    }
+
+    const mockOpfsDirHandle = {
+      getFileHandle: vi.fn().mockRejectedValue({ name: "NotFoundError" }),
+    } as any;
+
+    vi.mocked(opfsUtils.getDirHandle).mockResolvedValue(mockOpfsDirHandle);
+    vi.mocked(opfsUtils.writeOpfsFile).mockResolvedValue(undefined as any);
+
+    const result = await importFromFolder(activeVaultId, mockVaultHandle);
+
+    expect(result.success).toBe(true);
+    expect(result.count).toBe(1);
+    expect(opfsUtils.getDirHandle).toHaveBeenCalled();
+    expect(opfsUtils.getDirHandle).toHaveBeenCalledWith(
+      mockVaultHandle,
+      ["subdir"],
+      false,
+    );
   });
 });

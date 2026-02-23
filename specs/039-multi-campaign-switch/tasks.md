@@ -100,7 +100,7 @@
 
 ### Implementation for User Story 4
 
-- [x] T024 [US4] Implement `syncToFolder()` in `vault.svelte.ts`: `showDirectoryPicker()`, write all OPFS files to FSA directory
+- [x] T024 [US4] Implement `syncToLocal()` in `vault.svelte.ts`: `showDirectoryPicker()`, write all OPFS files to FSA directory
 - [x] T025 [US4] Implement `importFromFolder()` in `vault.svelte.ts`: read FSA directory, write files into current OPFS vault
 - [x] T026 [US4] Optimize local sync (import/export) to only transfer files that have changed (size or timestamp) with clock skew tolerance.
 - [x] T027 [US4] Add "Sync to Folder" and "Import from Folder" buttons to vault settings or switcher modal

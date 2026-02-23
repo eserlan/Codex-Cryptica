@@ -169,7 +169,6 @@ export async function importFromFolder(
 
     let successCount = 0;
     let errorCount = 0;
-    let processedCount = 0;
     const dirCache = new Map<string, FileSystemDirectoryHandle>();
 
     for (const { path, handle } of allFiles) {
@@ -220,14 +219,13 @@ export async function importFromFolder(
           }
           successCount++;
         }
-        processedCount++;
       } catch (fileErr) {
         console.error(`Failed to import ${path.join("/")}:`, fileErr);
         errorCount++;
       }
     }
 
-    if (errorCount > 0 && successCount === 0 && processedCount === 0) {
+    if (errorCount > 0 && successCount === 0) {
       throw new Error("No files were successfully imported.");
     }
 
