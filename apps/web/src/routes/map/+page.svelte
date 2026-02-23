@@ -9,10 +9,53 @@
 
   async function handleUpload() {
     if (files && files[0]) {
-      await mapStore.uploadMap(files[0], mapName || files[0].name);
-      showUpload = false;
-      mapName = "";
+      try {
+        const result = await mapStore.uploadMap(
+          files[0],
+          mapName || files[0].name,
+        );
+        if (result === undefined) {
+          if (typeof window !== "undefined") {
+            alert("Failed to upload map. Please ensure your vault is active.");
+          }
+          return;
+        }
+        showUpload = false;
+        mapName = "";
+        files = null;
+      } catch (err) {
+        console.error("Error uploading map:", err);
+        if (typeof window !== "undefined") {
+          alert("An unexpected error occurred during upload.");
+        }
+      }
     }
+  }
+
+  let isDragging = $state(false);
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    isDragging = false;
+
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length > 0) {
+      files = dt.files;
+      // If dropping while modal is closed, open it to confirm name/upload
+      if (!showUpload) {
+        showUpload = true;
+      }
+    }
+  }
+
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    isDragging = true;
+  }
+
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    isDragging = false;
   }
 </script>
 
@@ -133,8 +176,14 @@
       </div>
     </MapView>
   {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="flex-1 flex flex-col items-center justify-center p-8 text-center"
+      class="flex-1 flex flex-col items-center justify-center p-8 text-center transition-colors duration-200 {isDragging
+        ? 'bg-theme-primary/10'
+        : ''}"
+      ondragover={handleDragOver}
+      ondragleave={handleDragLeave}
+      ondrop={handleDrop}
     >
       <div
         class="w-24 h-24 mb-8 rounded-full bg-theme-primary/10 flex items-center justify-center"
@@ -149,8 +198,8 @@
       <p
         class="text-theme-muted max-w-md mb-12 font-body font-light leading-relaxed"
       >
-        Upload a world image or tactical layout to start mapping your lore
-        spatially.
+        Drag and drop a world image or tactical layout here, or click to upload
+        and start mapping your lore spatially.
       </p>
 
       <button
@@ -163,11 +212,17 @@
   {/if}
 
   {#if showUpload}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+      ondragover={handleDragOver}
+      ondragleave={handleDragLeave}
+      ondrop={handleDrop}
     >
       <div
-        class="w-full max-w-md bg-theme-surface border border-theme-border rounded-xl p-8 shadow-2xl"
+        class="w-full max-w-md bg-theme-surface border rounded-xl p-8 shadow-2xl transition-colors duration-200 {isDragging
+          ? 'border-theme-primary'
+          : 'border-theme-border'}"
       >
         <h3
           class="text-xl font-bold text-theme-text mb-6 uppercase tracking-wider font-header"

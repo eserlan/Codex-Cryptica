@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Entity } from "schema";
+  import { goto } from "$app/navigation";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
 
@@ -15,13 +16,50 @@
 
   async function handleUpload() {
     if (files && files[0]) {
-      const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
-      // Link the new map to this entity
-      if (mapId && vault.maps[mapId]) {
-        vault.maps[mapId].parentEntityId = entity.id;
-        await vault.saveMaps();
+      try {
+        const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
+        if (!mapId) {
+          if (typeof window !== "undefined") {
+            alert("Failed to upload map. Please ensure your vault is active.");
+          }
+          return;
+        }
+        // Link the new map to this entity
+        if (vault.maps[mapId]) {
+          vault.maps[mapId].parentEntityId = entity.id;
+          await vault.saveMaps();
+        }
+        files = null;
+      } catch (err) {
+        console.error("Error uploading sub-map:", err);
+        if (typeof window !== "undefined") {
+          alert("An unexpected error occurred during upload.");
+        }
       }
     }
+  }
+
+  let isDragging = $state(false);
+
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    isDragging = false;
+
+    const dt = e.dataTransfer;
+    if (dt && dt.files && dt.files.length > 0) {
+      files = dt.files;
+      handleUpload();
+    }
+  }
+
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    isDragging = true;
+  }
+
+  function handleDragLeave(e: DragEvent) {
+    e.preventDefault();
+    isDragging = false;
   }
 </script>
 
@@ -36,7 +74,10 @@
         </h4>
         <button
           class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase tracking-widest"
-          onclick={() => mapStore.selectMap(linkedMap!.id, true)}
+          onclick={() => {
+            mapStore.selectMap(linkedMap!.id, true);
+            goto("/map");
+          }}
         >
           View Map
         </button>
@@ -52,8 +93,14 @@
             class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
           />
         {/await}
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40"
+          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 cursor-pointer"
+          onclick={() => {
+            mapStore.selectMap(linkedMap!.id, true);
+            goto("/map");
+          }}
         >
           <span
             class="px-4 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase tracking-widest shadow-xl"
@@ -64,8 +111,14 @@
       </div>
     </div>
   {:else}
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="text-center py-12 border-2 border-dashed border-theme-border rounded-xl"
+      class="text-center py-12 border-2 border-dashed rounded-xl transition-colors duration-200 {isDragging
+        ? 'border-theme-primary bg-theme-primary/5'
+        : 'border-theme-border'}"
+      ondragover={handleDragOver}
+      ondragleave={handleDragLeave}
+      ondrop={handleDrop}
     >
       <div
         class="w-12 h-12 rounded-full bg-theme-primary/10 flex items-center justify-center mx-auto mb-4"
@@ -80,7 +133,7 @@
       <p
         class="text-[10px] text-theme-muted max-w-[200px] mx-auto mb-6 leading-relaxed"
       >
-        Attach a floor plan or local map to this {entity.type} for spatial organization.
+        Drag and drop a floor plan or local map here, or click to upload.
       </p>
 
       <label

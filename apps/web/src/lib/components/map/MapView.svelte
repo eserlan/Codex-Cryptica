@@ -10,6 +10,8 @@
   let mapImage = $state<HTMLImageElement | null>(null);
   let maskCanvas = $state<HTMLCanvasElement | null>(null);
   let selectedPinId = $state<string | null>(null);
+  let animationFrameId: number;
+  let mapAnnouncement = $state("");
 
   let selectedPin = $derived(mapStore.pins.find((p) => p.id === selectedPinId));
   let subMapForSelected = $derived(
@@ -37,13 +39,17 @@
             activeMap.id === mapStore.activeMapId &&
             activeMap.dimensions.width === 0
           ) {
-            activeMap.dimensions = { width: img.width, height: img.height };
-            vault.saveMaps();
+            vault.maps[activeMap.id].dimensions = {
+              width: img.width,
+              height: img.height,
+            };
+            await vault.saveMaps();
           }
         };
       });
       return () => {
         canceled = true;
+        maskCanvas = null;
       };
     } else {
       mapImage = null;
@@ -53,8 +59,11 @@
 
   function handleResize() {
     if (container && canvas) {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
+      // In tests, container might initially report 0 if flex hasn't resolved
+      const w = container.clientWidth || window.innerWidth;
+      const h = container.clientHeight || window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
       mapStore.setCanvasSize(canvas.width, canvas.height);
     }
   }
@@ -77,27 +86,88 @@
         },
       });
     }
-    requestAnimationFrame(draw);
+    animationFrameId = requestAnimationFrame(draw);
   }
 
   onMount(() => {
-    handleResize();
+    // Initial resize, delayed slightly to ensure DOM is painted
+    setTimeout(handleResize, 10);
     const resizeObserver = new ResizeObserver(handleResize);
     if (container) resizeObserver.observe(container);
 
-    requestAnimationFrame(draw);
+    animationFrameId = requestAnimationFrame(draw);
 
     return () => {
       resizeObserver.disconnect();
+      cancelAnimationFrame(animationFrameId);
     };
   });
 
   // Interaction handlers
+  const KEYBOARD_PAN_STEP = 50;
+  const KEYBOARD_ZOOM_STEP = 0.1;
   let isPanning = false;
   let isPainting = false;
   let needsMaskUpdate = false;
   let lastMousePos = { x: 0, y: 0 };
   let mouseDownPos = { x: 0, y: 0 };
+
+  function onKeyDown(event: KeyboardEvent) {
+    const { key } = event;
+    const viewport = mapStore.viewport;
+    let handled = false;
+
+    if (!viewport) return;
+
+    let { pan, zoom } = viewport;
+
+    switch (key) {
+      case "ArrowUp":
+        pan = { x: pan.x, y: pan.y + KEYBOARD_PAN_STEP };
+        mapStore.updateViewport(pan, zoom);
+        mapAnnouncement = "Map panned up";
+        handled = true;
+        break;
+      case "ArrowDown":
+        pan = { x: pan.x, y: pan.y - KEYBOARD_PAN_STEP };
+        mapStore.updateViewport(pan, zoom);
+        mapAnnouncement = "Map panned down";
+        handled = true;
+        break;
+      case "ArrowLeft":
+        pan = { x: pan.x + KEYBOARD_PAN_STEP, y: pan.y };
+        mapStore.updateViewport(pan, zoom);
+        mapAnnouncement = "Map panned left";
+        handled = true;
+        break;
+      case "ArrowRight":
+        pan = { x: pan.x - KEYBOARD_PAN_STEP, y: pan.y };
+        mapStore.updateViewport(pan, zoom);
+        mapAnnouncement = "Map panned right";
+        handled = true;
+        break;
+      case "+":
+      case "=": {
+        const newZoom = Math.max(0.1, Math.min(10, zoom + KEYBOARD_ZOOM_STEP));
+        mapStore.updateViewport(pan, newZoom);
+        mapAnnouncement = `Zoom level ${newZoom.toFixed(2)}`;
+        handled = true;
+        break;
+      }
+      case "-": {
+        const newZoom = Math.max(0.1, Math.min(10, zoom - KEYBOARD_ZOOM_STEP));
+        mapStore.updateViewport(pan, newZoom);
+        mapAnnouncement = `Zoom level ${newZoom.toFixed(2)}`;
+        handled = true;
+        break;
+      }
+    }
+
+    if (handled) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
 
   function onMouseDown(e: MouseEvent) {
     mouseDownPos = { x: e.clientX, y: e.clientY };
@@ -196,9 +266,7 @@
     if (clickedPin) {
       selectedPinId = clickedPin.id;
       if (clickedPin.entityId) {
-        import("../../stores/vault.svelte").then(({ vault }) => {
-          vault.selectedEntityId = clickedPin.entityId!;
-        });
+        vault.selectedEntityId = clickedPin.entityId;
       }
     } else {
       selectedPinId = null;
@@ -244,20 +312,29 @@
     const newPanY = panY - relY * newZoom;
 
     mapStore.updateViewport({ x: newPanX, y: newPanY }, newZoom);
+    mapAnnouncement = `Zoom level ${newZoom.toFixed(2)}`;
   }
 </script>
 
 <div
   bind:this={container}
   class="w-full h-full bg-theme-bg overflow-hidden relative select-none"
+  role="application"
+  aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
+  tabindex="0"
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
   onmouseleave={onMouseUp}
   ondblclick={onDoubleClick}
   onwheel={onWheel}
+  onkeydown={onKeyDown}
 >
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
+
+  <div aria-live="polite" aria-atomic="true" class="sr-only">
+    {mapAnnouncement}
+  </div>
 
   {#if mapStore.pendingPinCoords}
     <PinLinker
@@ -293,6 +370,7 @@
         <button
           class="px-2 py-1.5 text-theme-muted hover:text-theme-text transition-colors"
           onclick={() => (selectedPinId = null)}
+          aria-label="Close pin details"
         >
           <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
         </button>

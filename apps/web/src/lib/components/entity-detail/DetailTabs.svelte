@@ -42,7 +42,7 @@
   {/if}
 
   <div
-    class="flex gap-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
+    class="flex flex-wrap md:flex-nowrap gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2"
   >
     <button
       class={activeTab === "status"

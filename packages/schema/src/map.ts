@@ -7,7 +7,7 @@ export const PointSchema = z.object({
 
 export const ViewportTransformSchema = z.object({
   pan: PointSchema,
-  zoom: z.number(),
+  zoom: z.number().min(0.1).max(10),
 });
 
 export type Point = z.infer<typeof PointSchema>;

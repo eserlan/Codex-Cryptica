@@ -116,6 +116,12 @@ class VaultStore {
     return await getVaultDir(vaultRegistry.rootHandle, this.activeVaultId);
   }
 
+  /**
+   * Internal save queue for coordinating OPFS writes.
+   * NOTE: This queue is public so that MapStore (see map.svelte.ts) can enqueue
+   * map-related save operations to ensure data consistency.
+   * External code should avoid manipulating it directly.
+   */
   public saveQueue = new KeyedTaskQueue();
 
   get pendingSaveCount() {

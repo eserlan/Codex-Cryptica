@@ -72,10 +72,17 @@ class MapStore {
 
   async uploadMap(file: File, name: string): Promise<string | undefined> {
     const vaultDir = await vault.getActiveVaultHandle();
-    if (!vaultDir) return undefined;
+    if (!vaultDir) {
+      return undefined;
+    }
 
     const id = crypto.randomUUID();
-    const fileExtension = file.name.split(".").pop();
+    const rawExtension = file.name.split(".").pop() ?? "";
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp"];
+    const normalizedExtension = rawExtension.toLowerCase();
+    const fileExtension = allowedExtensions.includes(normalizedExtension)
+      ? normalizedExtension
+      : "png";
     const storageName = `${id}.${fileExtension}`;
 
     // 1. Save file to OPFS
@@ -90,7 +97,7 @@ class MapStore {
       await writable.write(file);
       await writable.close();
     } catch (err) {
-      console.error("Map upload failed", err);
+      console.error("[MapStore] Map upload failed", err);
       return undefined;
     }
 
@@ -127,9 +134,15 @@ class MapStore {
       );
       const writable = await fileHandle.createWritable();
 
-      const blob = await new Promise<Blob>((resolve) =>
-        canvas.toBlob((b) => resolve(b!), "image/png"),
-      );
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (b) =>
+            b
+              ? resolve(b)
+              : reject(new Error("Failed to create blob from canvas")),
+          "image/png",
+        );
+      });
       await writable.write(blob);
       await writable.close();
     });
@@ -217,3 +230,7 @@ class MapStore {
 }
 
 export const mapStore = new MapStore();
+
+if (typeof window !== "undefined") {
+  (window as any).__mapStore = mapStore;
+}
