@@ -72,17 +72,8 @@ class MapStore {
   }
 
   async uploadMap(file: File, name: string): Promise<string | undefined> {
-    console.log(
-      "[MapStore] Uploading map:",
-      name,
-      "Size:",
-      file.size,
-      "Type:",
-      file.type,
-    );
     const vaultDir = await vault.getActiveVaultHandle();
     if (!vaultDir) {
-      console.warn("[MapStore] No active vault handle found for upload");
       return undefined;
     }
 
@@ -91,9 +82,7 @@ class MapStore {
 
     // 1. Convert to WebP and Save to OPFS
     try {
-      console.log("[MapStore] Converting to WebP...");
       const webpBlob = await convertToWebP(file, 0.85);
-      console.log("[MapStore] WebP conversion complete. Size:", webpBlob.size);
 
       const mapsDir = await vaultDir.getDirectoryHandle("maps", {
         create: true,
@@ -104,9 +93,8 @@ class MapStore {
       const writable = await fileHandle.createWritable();
       await writable.write(webpBlob);
       await writable.close();
-      console.log("[MapStore] File written to OPFS:", storageName);
     } catch (err) {
-      console.error("[MapStore] Map upload/conversion failed", err);
+      console.error("[MapStore] Map upload failed", err);
       return undefined;
     }
 
@@ -122,11 +110,9 @@ class MapStore {
       },
     };
 
-    console.log("[MapStore] Map entity created, saving to vault metadata");
     vault.maps[id] = map;
     await vault.saveMaps();
     this.selectMap(id);
-    console.log("[MapStore] Map selected:", id);
     return id;
   }
 
@@ -164,7 +150,6 @@ class MapStore {
   }
 
   async loadMask(width: number, height: number): Promise<HTMLCanvasElement> {
-    console.log("[MapStore] Loading mask for map:", this.activeMapId);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -174,13 +159,11 @@ class MapStore {
     ctx.clearRect(0, 0, width, height);
 
     if (!this.activeMap?.fogOfWar || !this.activeMapId) {
-      console.log("[MapStore] No fog of war configured for this map");
       return canvas;
     }
 
     const vaultDir = await vault.getActiveVaultHandle();
     if (!vaultDir) {
-      console.warn("[MapStore] No vault handle for loading mask");
       return canvas;
     }
 
@@ -192,14 +175,9 @@ class MapStore {
       const file = await fileHandle.getFile();
       const bitmap = await createImageBitmap(file);
       ctx.drawImage(bitmap, 0, 0, width, height);
-      console.log("[MapStore] Mask loaded successfully");
     } catch (e: any) {
       if (e.name !== "NotFoundError") {
         console.error("[MapStore] Failed to load mask from disk:", e);
-      } else {
-        console.log(
-          "[MapStore] No mask found on disk, initializing revealed mask",
-        );
       }
       // No saved mask or not found: start fully revealed (white = no fog)
       ctx.fillStyle = "white";

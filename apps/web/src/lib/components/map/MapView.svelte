@@ -29,12 +29,6 @@
 
   $effect(() => {
     const activeMap = mapStore.activeMap;
-    console.log(
-      "[MapView] Effect running. activeMap:",
-      activeMap?.name,
-      "ID:",
-      activeMap?.id,
-    );
 
     if (activeMap) {
       // Immediately clear stale state
@@ -48,7 +42,6 @@
       const img = new Image();
       let blobUrl = "";
 
-      console.log("[MapView] Resolving image URL for:", activeMap.assetPath);
       vault
         .resolveImageUrl(activeMap.assetPath)
         .then((url) => {
@@ -60,37 +53,27 @@
             );
             return;
           }
-          console.log("[MapView] URL resolved, loading image asset...");
           blobUrl = url;
           img.src = url;
 
           img.onload = async () => {
             if (canceled) return;
-            console.log(
-              "[MapView] Image asset loaded. Dims:",
-              img.width,
-              "x",
-              img.height,
-            );
 
             // Mirror to draw loop immediately
             _drawImage = img;
             mapImage = img;
 
-            console.log("[MapView] Loading mask...");
             const loadedMask = await mapStore.loadMask(img.width, img.height);
             if (canceled) return;
 
             maskCanvas = loadedMask;
             _drawMask = loadedMask;
-            console.log("[MapView] Mask ready.");
 
             // Persist dimensions if not set (first load of this asset)
             if (
               activeMap.id === mapStore.activeMapId &&
               activeMap.dimensions.width === 0
             ) {
-              console.log("[MapView] First load: persisting map dimensions");
               vault.maps[activeMap.id].dimensions = {
                 width: img.width,
                 height: img.height,
@@ -107,7 +90,6 @@
         });
 
       return () => {
-        console.log("[MapView] Cleaning up map effect for:", activeMap.name);
         canceled = true;
         mapImage = null;
         _drawImage = null;
@@ -118,7 +100,6 @@
         }
       };
     } else {
-      console.log("[MapView] No active map selected.");
       mapImage = null;
       _drawImage = null;
       maskCanvas = null;

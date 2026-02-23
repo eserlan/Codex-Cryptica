@@ -15,30 +15,20 @@
   let files = $state<FileList | null>(null);
 
   async function handleUpload() {
-    console.log("[DetailMapTab] handleUpload triggered. Files:", files?.length);
     if (files && files[0]) {
       try {
-        console.log("[DetailMapTab] Uploading sub-map for:", entity.title);
         const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
         if (!mapId) {
-          console.error("[DetailMapTab] Upload failed (returned undefined)");
           if (typeof window !== "undefined") {
             alert("Failed to upload map. Please ensure your vault is active.");
           }
           return;
         }
 
-        console.log(
-          "[DetailMapTab] Linking map",
-          mapId,
-          "to entity",
-          entity.id,
-        );
         // Link the new map to this entity
         if (vault.maps[mapId]) {
           vault.maps[mapId].parentEntityId = entity.id;
           await vault.saveMaps();
-          console.log("[DetailMapTab] Sub-map linked and saved.");
         }
         files = null;
       } catch (err) {
