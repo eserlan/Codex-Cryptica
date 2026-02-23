@@ -11,7 +11,7 @@ class MapStore {
   });
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
-  showFog = $state(true);
+  showFog = $state(false);
   isGMMode = $state(false);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);

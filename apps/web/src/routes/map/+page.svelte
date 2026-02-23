@@ -59,7 +59,7 @@
   }
 </script>
 
-<div class="h-full flex flex-col bg-black overflow-hidden relative">
+<div class="flex-1 flex flex-col bg-black overflow-hidden relative">
   {#if mapStore.activeMap}
     <MapView>
       <!-- HUD Overlay -->

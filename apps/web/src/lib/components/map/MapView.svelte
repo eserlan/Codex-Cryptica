@@ -4,7 +4,6 @@
   import { vault } from "../../stores/vault.svelte";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
-  import { debugStore } from "../../stores/debug.svelte";
 
   let { children }: { children?: Snippet } = $props();
 
@@ -19,6 +18,7 @@
   // signals may not be reliably readable from requestAnimationFrame callbacks.
   let _drawImage: HTMLImageElement | null = null;
   let _drawMask: HTMLCanvasElement | null = null;
+  let rawCanvas: HTMLCanvasElement | null = null;
 
   let selectedPin = $derived(mapStore.pins.find((p) => p.id === selectedPinId));
   let subMapForSelected = $derived(
@@ -30,19 +30,10 @@
   $effect(() => {
     const activeMap = mapStore.activeMap;
     if (activeMap) {
-      const logCtx = { id: activeMap.id, assetPath: activeMap.assetPath };
-      console.log("[MapView] $effect: activeMap changed", logCtx);
-      debugStore.log("[MapView] activeMap changed", logCtx);
-
       // Immediately clear stale image and resize so draw loop has correct dims
       mapImage = null;
       maskCanvas = null;
       handleResize();
-
-      const cw = canvas?.width ?? 0;
-      const ch = canvas?.height ?? 0;
-      console.log(`[MapView] canvas after handleResize: ${cw}x${ch}`);
-      debugStore.log(`[MapView] canvas after resize: ${cw}x${ch}`);
 
       selectedPinId = null;
       let canceled = false;
@@ -52,79 +43,28 @@
       vault
         .resolveImageUrl(activeMap.assetPath)
         .then((url) => {
-          console.log(
-            `[MapView] resolveImageUrl returned: "${url?.slice(0, 60)}…" canceled=${canceled}`,
-          );
-          debugStore.log("[MapView] resolveImageUrl resolved", {
-            urlPrefix: url?.slice(0, 60),
-            isEmpty: !url,
-            canceled,
-          });
-
           if (canceled) return;
           blobUrl = url;
           img.src = url;
 
           img.onload = async () => {
-            console.log(
-              `[MapView] img.onload fired ${img.width}x${img.height} canceled=${canceled}`,
-            );
-            debugStore.log("[MapView] img.onload", {
-              w: img.width,
-              h: img.height,
-              canceled,
-            });
-
             if (canceled) return;
             mapImage = img;
             _drawImage = img; // mirror for rAF draw loop
-            console.log("[MapView] mapImage assigned, loading mask…");
-            debugStore.log("[MapView] mapImage set, loading mask");
 
             maskCanvas = await mapStore.loadMask(img.width, img.height);
             _drawMask = maskCanvas; // mirror for rAF draw loop
-            console.log(`[MapView] maskCanvas ready canceled=${canceled}`);
-            debugStore.log("[MapView] maskCanvas ready", { canceled });
             if (canceled) return; // guard after await
-
-            // Persist dimensions if not set, deferred so it doesn't
-            // re-trigger $effect (vault.maps mutation invalidates activeMap derived)
-            if (
-              activeMap.id === mapStore.activeMapId &&
-              activeMap.dimensions.width === 0
-            ) {
-              setTimeout(async () => {
-                if (!canceled && mapStore.activeMapId === activeMap.id) {
-                  vault.maps[activeMap.id].dimensions = {
-                    width: img.width,
-                    height: img.height,
-                  };
-                  debugStore.log("[MapView] dimensions persisted", {
-                    w: img.width,
-                    h: img.height,
-                  });
-                  await vault.saveMaps();
-                }
-              }, 500);
-            }
           };
           img.onerror = () => {
             console.error("[MapView] img.onerror — failed to load:", url);
-            debugStore.error("[MapView] img.onerror", {
-              url: url?.slice(0, 80),
-            });
           };
         })
         .catch((err) => {
           console.error("[MapView] resolveImageUrl threw", err);
-          debugStore.error("[MapView] resolveImageUrl threw", {
-            err: String(err),
-          });
         });
 
       return () => {
-        console.log(`[MapView] $effect cleanup for map ${activeMap.id}`);
-        debugStore.warn("[MapView] $effect cleanup", { mapId: activeMap.id });
         canceled = true;
         mapImage = null;
         _drawImage = null;
@@ -133,8 +73,6 @@
         if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
       };
     } else {
-      console.log("[MapView] $effect: no activeMap");
-      debugStore.warn("[MapView] no activeMap");
       mapImage = null;
       _drawImage = null;
       maskCanvas = null;
@@ -144,23 +82,23 @@
 
   function handleResize() {
     if (container && canvas) {
-      // In tests, container might initially report 0 if flex hasn't resolved
-      const w = container.clientWidth || window.innerWidth;
-      const h = container.clientHeight || window.innerHeight;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+
       canvas.width = w;
       canvas.height = h;
-      mapStore.setCanvasSize(canvas.width, canvas.height);
+      mapStore.setCanvasSize(w, h);
     }
   }
 
   function draw() {
-    if (canvas) {
-      // Use the canvas's physical dimensions directly — mapStore.canvasSize
-      // may still be zero on the first frames after navigation.
+    const targetCanvas = rawCanvas || canvas;
+    if (targetCanvas) {
       const canvasSize = {
-        width: canvas.width || canvas.offsetWidth || window.innerWidth,
-        height: canvas.height || canvas.offsetHeight || window.innerHeight,
+        width: targetCanvas.width || 1,
+        height: targetCanvas.height || 1,
       };
+
       // Keep mapStore in sync so project/unproject calls stay accurate
       if (
         canvasSize.width !== mapStore.canvasSize.width ||
@@ -168,8 +106,9 @@
       ) {
         mapStore.setCanvasSize(canvasSize.width, canvasSize.height);
       }
+
       renderMap({
-        canvas,
+        canvas: targetCanvas,
         image: _drawImage,
         transform: mapStore.viewport,
         canvasSize,
@@ -416,7 +355,7 @@
 
 <div
   bind:this={container}
-  class="w-full h-full bg-theme-bg overflow-hidden relative select-none"
+  class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   role="region"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="-1"
@@ -428,7 +367,13 @@
   onwheel={onWheel}
   onkeydown={onKeyDown}
 >
-  <canvas bind:this={canvas} class="absolute inset-0"></canvas>
+  <canvas
+    use={(node) => {
+      rawCanvas = node;
+    }}
+    bind:this={canvas}
+    class="absolute inset-0"
+  ></canvas>
 
   <div aria-live="polite" aria-atomic="true" class="sr-only">
     {mapAnnouncement}

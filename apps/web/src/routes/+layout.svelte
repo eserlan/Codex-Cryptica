@@ -465,7 +465,7 @@
     </header>
   {/if}
 
-  <main class="flex-1 relative">
+  <main class="flex-1 relative flex flex-col min-h-0">
     {@render children()}
   </main>
 
