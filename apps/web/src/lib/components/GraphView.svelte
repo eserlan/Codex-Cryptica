@@ -766,23 +766,32 @@
         // This breaks reactivity and prevents infinite loops/DataCloneErrors
         const snapshotElements = $state.snapshot(graph.elements);
 
-        // 1. Build a map of current cy elements for O(1) lookups
+        // 1. Build Set of target IDs (avoiding map allocation)
+        const targetIds = new Set<string>();
+        const snapshotLength = snapshotElements.length;
+        for (let i = 0; i < snapshotLength; i++) {
+          targetIds.add(snapshotElements[i].data.id);
+        }
+
+        // 2. Build map of current elements AND identify removals in one pass
         const elementMap = new Map<string, any>();
-        currentCy.elements().forEach((el) => {
-          elementMap.set(el.id(), el);
-        });
+        const elementsToRemove: any[] = [];
 
-        const targetIds = new Set(snapshotElements.map((el) => el.data.id));
+        // Iterating cy.elements() directly avoids Array.from overhead
+        const currentElements = currentCy.elements();
+        const currentLength = currentElements.length;
+        for (let i = 0; i < currentLength; i++) {
+          const el = currentElements[i];
+          const id = el.id();
+          if (!targetIds.has(id)) {
+            elementsToRemove.push(el);
+          } else {
+            elementMap.set(id, el);
+          }
+        }
 
-        // 2. Remove elements no longer in the store
-        const removedElements = Array.from(elementMap.values()).filter(
-          (el) => !targetIds.has(el.id()),
-        );
-        if (removedElements.length > 0) {
-          // Cytoscape remove() accepts a collection or selector string
-          currentCy.remove(currentCy.collection(removedElements));
-          // Sync map after removal
-          removedElements.forEach((el) => elementMap.delete(el.id()));
+        if (elementsToRemove.length > 0) {
+          currentCy.remove(currentCy.collection(elementsToRemove));
         }
 
         // 3. Add new elements safely
