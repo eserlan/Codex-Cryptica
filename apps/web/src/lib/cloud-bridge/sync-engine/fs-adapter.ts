@@ -34,8 +34,8 @@ export class FileSystemAdapter {
     files: FileEntry[],
   ) {
     for await (const [name, handle] of dirHandle.entries()) {
-      // Skip .trash folder or other system folders if any
-      if (name.startsWith(".")) continue;
+      // Skip .trash folder or other system folders, but allow .codex for metadata
+      if (name.startsWith(".") && name !== ".codex") continue;
 
       const path = parentPath ? `${parentPath}/${name}` : name;
 
