@@ -3,6 +3,7 @@
   import { goto } from "$app/navigation";
   import { mapStore } from "$lib/stores/map.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   let { entity } = $props<{ entity: Entity }>();
 
@@ -106,6 +107,7 @@
             class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase tracking-widest flex items-center gap-1.5"
             onclick={() => {
               mapStore.selectMap(linkedMap!.id, true);
+              uiStore.closeZenMode();
               goto("/map");
             }}
           >
@@ -131,6 +133,7 @@
           class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 cursor-pointer"
           onclick={() => {
             mapStore.selectMap(linkedMap!.id, true);
+            uiStore.closeZenMode();
             goto("/map");
           }}
         >

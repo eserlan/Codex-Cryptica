@@ -3,6 +3,7 @@
   import { fade } from "svelte/transition";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
+  import { uiStore } from "../../stores/ui.svelte";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
 
@@ -443,6 +444,18 @@
       <div
         class="bg-theme-surface border border-theme-border rounded-lg shadow-2xl p-1 flex gap-1 min-w-[120px]"
       >
+        {#if selectedPin.entityId}
+          {@const entity = vault.entities[selectedPin.entityId]}
+          {#if entity}
+            <button
+              class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase tracking-widest border-r border-theme-border whitespace-nowrap"
+              onclick={() => uiStore.openZenMode(entity.id)}
+            >
+              {entity.title}
+            </button>
+          {/if}
+        {/if}
+
         {#if subMapForSelected}
           <button
             class="flex-1 px-3 py-1.5 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase tracking-widest hover:opacity-90 transition-opacity"

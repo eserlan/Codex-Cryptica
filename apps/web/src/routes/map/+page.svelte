@@ -105,6 +105,23 @@
         {/if}
 
         <button
+          class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-[10px] font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2"
+          onclick={async () => {
+            if (
+              confirm(
+                "Are you sure you want to delete this map? This action cannot be undone.",
+              )
+            ) {
+              await vault.deleteMap(mapStore.activeMapId!);
+            }
+          }}
+          title="Delete Map"
+        >
+          <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+          DELETE
+        </button>
+
+        <button
           class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase tracking-wider"
           onclick={() => (showUpload = true)}
         >
