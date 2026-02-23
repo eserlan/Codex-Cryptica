@@ -390,6 +390,9 @@
       class="absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+12px)] pointer-events-auto"
       style:left="{pos.x}px"
       style:top="{pos.y}px"
+      onmousedown={(e) => e.stopPropagation()}
+      onmouseup={(e) => e.stopPropagation()}
+      onclick={(e) => e.stopPropagation()}
     >
       <div
         class="bg-theme-surface border border-theme-border rounded-lg shadow-2xl p-1 flex gap-1 min-w-[120px]"

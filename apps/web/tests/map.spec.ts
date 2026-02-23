@@ -73,6 +73,41 @@ test.describe("Map Mode", () => {
     await expect(page.locator("select")).toContainText("E2E Test Map");
   });
 
+  test("should allow adding and then deleting a pin", async ({ page }) => {
+    await ensureTestMap(page);
+
+    // 1. Add a pin via double click
+    const canvas = page.locator("canvas");
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error("Canvas box not found");
+
+    // Double click in the center
+    await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
+
+    // 2. Link it (Skip linking for now to keep it simple)
+    await page.getByRole("button", { name: "Skip Linking" }).click();
+
+    // 3. Select the pin (it should be selected automatically or clickable)
+    // Pins are rendered on canvas, so we click the same spot to select it
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+
+    // 4. Verify popover and delete button
+    const deleteButton = page.getByRole("button", { name: "Delete pin" });
+    await expect(deleteButton).toBeVisible();
+
+    // 5. Click delete
+    await deleteButton.click();
+
+    // 6. Verify popover is gone
+    await expect(deleteButton).not.toBeVisible();
+
+    // 7. Verify pin count in store (via evaluate)
+    const pinCount = await page.evaluate(() => {
+      return (window as any).__mapStore.pins.length;
+    });
+    expect(pinCount).toBe(0);
+  });
+
   test("should toggle Fog of War and GM Mode when a map is active", async ({
     page,
   }) => {

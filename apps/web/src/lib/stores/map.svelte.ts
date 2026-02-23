@@ -11,7 +11,7 @@ class MapStore {
   });
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
-  showFog = $state(false);
+  showFog = $state(true);
   isGMMode = $state(false);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
@@ -211,7 +211,10 @@ class MapStore {
   }
 
   async removePin(pinId: string) {
-    if (!this.activeMapId || !vault.maps[this.activeMapId]) return;
+    if (!this.activeMapId || !vault.maps[this.activeMapId]) {
+      return;
+    }
+
     const map = vault.maps[this.activeMapId];
     if (map) {
       map.pins = map.pins.filter((p) => p.id !== pinId);
