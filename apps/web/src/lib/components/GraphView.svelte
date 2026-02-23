@@ -906,7 +906,7 @@
 
         // 4. Force layout ONLY if structural changes occurred OR if first load
         const structuralChange =
-          newElements.length > 0 || removedElements.length > 0;
+          newElements.length > 0 || elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         const shouldRunLayout = structuralChange || isFirstElements;
 
