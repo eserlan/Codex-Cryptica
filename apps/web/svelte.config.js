@@ -12,6 +12,12 @@ const config = {
     }),
     prerender: {
       entries: ["/", "/features", "/terms", "/privacy"],
+      handleHttpError: ({ path, message }) => {
+        // llms.txt is a static file served at the domain root; ignore 404s
+        // that arise when prerendering under a non-root base path (e.g. /staging).
+        if (path.endsWith("/llms.txt")) return;
+        throw new Error(message);
+      },
     },
     alias: {
       $stores: "src/lib/stores",
