@@ -1,6 +1,7 @@
 import {
   writeOpfsFile,
   walkOpfsDirectory,
+  getDirHandle,
   type FileEntry,
 } from "../../utils/opfs";
 import { reResolveFileHandle, writeWithRetry } from "../../utils/vault-io";
@@ -15,6 +16,9 @@ import {
 import type { LocalEntity } from "./types";
 
 import type { Map } from "schema";
+
+// Clock skew tolerance for comparing timestamps across different filesystems
+const SKEW_MS = 2000;
 
 export async function saveMapsToDisk(
   vaultHandle: FileSystemDirectoryHandle,
@@ -80,18 +84,47 @@ export async function syncToLocal(
 
     const opfsFiles = await walkOpfsDirectory(vaultHandle);
     for (const fileEntry of opfsFiles) {
-      const blob = await fileEntry.handle.getFile();
-      const localFileHandle = await reResolveFileHandle(
-        localHandle,
-        fileEntry.path,
-        true,
-      );
-      await writeWithRetry(
-        localHandle,
-        localFileHandle,
-        blob,
-        fileEntry.path.join("/"),
-      );
+      const opfsFile = await fileEntry.handle.getFile();
+
+      let shouldWrite = true;
+      try {
+        // Try to get existing local file to check if it's already up to date
+        const existingHandle = await reResolveFileHandle(
+          localHandle,
+          fileEntry.path,
+          false,
+        );
+        const localFile = await existingHandle.getFile();
+
+        // If size matches and local file is newer or same age as OPFS, skip.
+        // We use a skew to account for filesystem precision differences.
+        if (
+          localFile.size === opfsFile.size &&
+          localFile.lastModified >= opfsFile.lastModified - SKEW_MS
+        ) {
+          shouldWrite = false;
+        }
+      } catch (e: any) {
+        if (e.name !== "NotFoundError") {
+          debugStore.warn(
+            `Pre-sync check failed for ${fileEntry.path.join("/")}: ${e.message}`,
+          );
+        }
+      }
+
+      if (shouldWrite) {
+        const localFileHandle = await reResolveFileHandle(
+          localHandle,
+          fileEntry.path,
+          true,
+        );
+        await writeWithRetry(
+          localHandle,
+          localFileHandle,
+          opfsFile,
+          fileEntry.path.join("/"),
+        );
+      }
     }
 
     debugStore.log("Sync to local folder complete.");
@@ -136,18 +169,56 @@ export async function importFromFolder(
 
     let successCount = 0;
     let errorCount = 0;
+    const dirCache = new Map<string, FileSystemDirectoryHandle>();
 
     for (const { path, handle } of allFiles) {
       try {
-        const file = await handle.getFile();
-        const name = path[path.length - 1].toLowerCase();
-        if (name.endsWith(".md") || name.endsWith(".markdown")) {
-          const content = await file.text();
-          await writeOpfsFile(path, content, vaultHandle);
-        } else {
-          await writeOpfsFile(path, file, vaultHandle);
+        const localFile = await handle.getFile();
+
+        let shouldWrite = true;
+        try {
+          // Check if file already exists in OPFS and is up to date
+          const fileName = path[path.length - 1];
+          const dirPath = path.slice(0, -1);
+          const dirPathStr = dirPath.join("/");
+
+          let dirHandle =
+            dirPath.length > 0 ? dirCache.get(dirPathStr) : vaultHandle;
+
+          if (!dirHandle && dirPath.length > 0) {
+            dirHandle = await getDirHandle(vaultHandle, dirPath, false);
+            dirCache.set(dirPathStr, dirHandle);
+          }
+
+          if (dirHandle) {
+            const opfsFileHandle = await dirHandle.getFileHandle(fileName);
+            const opfsFile = await opfsFileHandle.getFile();
+
+            if (
+              opfsFile.size === localFile.size &&
+              opfsFile.lastModified >= localFile.lastModified - SKEW_MS
+            ) {
+              shouldWrite = false;
+            }
+          }
+        } catch (e: any) {
+          if (e.name !== "NotFoundError") {
+            debugStore.warn(
+              `Pre-import check failed for ${path.join("/")}: ${e.message}`,
+            );
+          }
         }
-        successCount++;
+
+        if (shouldWrite) {
+          const name = path[path.length - 1].toLowerCase();
+          if (name.endsWith(".md") || name.endsWith(".markdown")) {
+            const content = await localFile.text();
+            await writeOpfsFile(path, content, vaultHandle);
+          } else {
+            await writeOpfsFile(path, localFile, vaultHandle);
+          }
+          successCount++;
+        }
       } catch (fileErr) {
         console.error(`Failed to import ${path.join("/")}:`, fileErr);
         errorCount++;

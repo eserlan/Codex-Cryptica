@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, 'feat/*', 'fix/*' ]
+    branches: [ main, '**' ]
   workflow_dispatch:
 
 concurrency:
@@ -48,6 +48,7 @@ jobs:
           VITE_STAGING: true
           BASE_PATH: /staging
         run: |
+          # Build the current branch code for staging
           npm run build --workspace=web
           mkdir -p dist/staging
           cp -r apps/web/build/* dist/staging/
@@ -62,6 +63,7 @@ jobs:
         run: |
           # If we are on a branch, we must switch to main to build the prod version
           # to ensure the root site doesn't reflect experimental branch code.
+          # If we are already on main, this is a direct build.
           if [ "${{ github.ref }}" != "refs/heads/main" ]; then
             git checkout main --force
             npm ci # Refresh main dependencies
@@ -97,6 +99,6 @@ jobs:
           ./scripts/discord-deploy.sh "staging" "https://discord.com/api/webhooks/1474849321433174250/2Zc786bX-z8WX-HOh9y4ng_ThRH08vyHjiEVp3AgdkLQmiTVVWzSuvuybz46IlVovamU" "${{ steps.deployment.outputs.page_url }}staging"
 
       - name: Notify Production
-        if: success()
+        if: success() && github.ref == 'refs/heads/main'
         run: |
           ./scripts/discord-deploy.sh "production" "https://discord.com/api/webhooks/1474849546210115654/cd5PD5CPTH3cV8DxbV9FCgqRqQUUJm_jF0Ovo0H-3FqcxzVcx0t7bethsoCYI36Lw7He" "${{ steps.deployment.outputs.page_url }}"

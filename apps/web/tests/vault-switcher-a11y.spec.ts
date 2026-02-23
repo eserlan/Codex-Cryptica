@@ -13,7 +13,9 @@ test.describe("Vault Switching Accessibility", () => {
     });
   });
 
-  test("action buttons should be accessible via keyboard and have proper labels", async ({ page }) => {
+  test("action buttons should be accessible via keyboard and have proper labels", async ({
+    page,
+  }) => {
     // Create a second vault so the original vault becomes non-active and exposes its Delete button
     await page.getByTestId("open-vault-button").click();
     await expect(page.getByText("VAULT SELECTOR")).toBeVisible();
@@ -29,7 +31,9 @@ test.describe("Vault Switching Accessibility", () => {
 
     // Check that buttons are discoverable by role + accessible name (confirms aria-label)
     const renameButtons = modal.getByRole("button", { name: "Rename" });
-    const restoreButtons = modal.getByRole("button", { name: "Restore from Folder" });
+    const restoreButtons = modal.getByRole("button", {
+      name: "Restore from Folder",
+    });
     const deleteButtons = modal.getByRole("button", { name: "Delete" });
 
     await expect(renameButtons.first()).toBeAttached();
@@ -42,7 +46,9 @@ test.describe("Vault Switching Accessibility", () => {
       .filter({ has: modal.getByRole("button", { name: "Delete" }) })
       .first();
 
-    const restoreBtn = nonActiveRow.getByRole("button", { name: "Restore from Folder" });
+    const restoreBtn = nonActiveRow.getByRole("button", {
+      name: "Restore from Folder",
+    });
     const renameBtn = nonActiveRow.getByRole("button", { name: "Rename" });
     const deleteBtn = nonActiveRow.getByRole("button", { name: "Delete" });
 

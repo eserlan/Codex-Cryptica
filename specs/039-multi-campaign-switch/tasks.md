@@ -92,7 +92,7 @@
 
 ---
 
-## Phase 6: User Story 4 - Sync to Filesystem (Priority: P3)
+## Phase 6: User Story 4 - Optimized Sync to Filesystem (Priority: P3)
 
 **Goal**: Optional export/import between OPFS vault and a local folder.
 
@@ -100,10 +100,11 @@
 
 ### Implementation for User Story 4
 
-- [x] T024 [US4] Implement `syncToFolder()` in `vault.svelte.ts`: `showDirectoryPicker()`, write all OPFS files to FSA directory
+- [x] T024 [US4] Implement `syncToLocal()` in `vault.svelte.ts`: `showDirectoryPicker()`, write all OPFS files to FSA directory
 - [x] T025 [US4] Implement `importFromFolder()` in `vault.svelte.ts`: read FSA directory, write files into current OPFS vault
-- [x] T026 [US4] Add "Sync to Folder" and "Import from Folder" buttons to vault settings or switcher modal
-- [x] T027 [US4] Add progress indicator and error handling for sync operations
+- [x] T026 [US4] Optimize local sync (import/export) to only transfer files that have changed (size or timestamp) with clock skew tolerance.
+- [x] T027 [US4] Add "Sync to Folder" and "Import from Folder" buttons to vault settings or switcher modal
+- [x] T028 [US4] Add progress indicator and error handling for sync operations
 
 ---
 
@@ -115,7 +116,7 @@
 - [x] T021 Add loading states to `VaultSwitcherModal.svelte` while switching vaults
 - [x] T022 Final run of `npm run check` and `npm test` to ensure no regressions
 - [x] T023 Verify `SC-001` (switch time < 500ms) using Chrome DevTools Performance tab
-- [x] T028 Update broken E2E tests that expect the old "OPEN VAULT" button to use the new vault picker flow
+- [x] T029 Update broken E2E tests that expect the old "OPEN VAULT" button to use the new vault picker flow
 
 ---
 
@@ -133,7 +134,7 @@
 - T000 and T000.1 can be done in parallel initially (utility file vs store refactor), but T000.1 depends on T000 completing.
 - T001 and T002 can be done in parallel (IDB schema vs OPFS utilities).
 - T009 can be done in parallel with T008 (UI trigger vs Modal implementation).
-- T024-T027 (US4) can be done independently from US3.
+- T024-T028 (US4) can be done independently from US3.
 
 ## Implementation Strategy
 
