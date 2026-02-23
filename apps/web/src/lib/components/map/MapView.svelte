@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
+  import { fade } from "svelte/transition";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { renderMap } from "map-engine";
@@ -28,50 +29,96 @@
 
   $effect(() => {
     const activeMap = mapStore.activeMap;
+    console.log(
+      "[MapView] Effect running. activeMap:",
+      activeMap?.name,
+      "ID:",
+      activeMap?.id,
+    );
+
     if (activeMap) {
-      // Immediately clear stale image and resize so draw loop has correct dims
+      // Immediately clear stale state
       mapImage = null;
+      _drawImage = null;
       maskCanvas = null;
+      _drawMask = null;
       handleResize();
 
-      selectedPinId = null;
       let canceled = false;
       const img = new Image();
       let blobUrl = "";
 
+      console.log("[MapView] Resolving image URL for:", activeMap.assetPath);
       vault
         .resolveImageUrl(activeMap.assetPath)
         .then((url) => {
           if (canceled) return;
+          if (!url) {
+            console.error(
+              "[MapView] Failed to resolve image URL for:",
+              activeMap.assetPath,
+            );
+            return;
+          }
+          console.log("[MapView] URL resolved, loading image asset...");
           blobUrl = url;
           img.src = url;
 
           img.onload = async () => {
             if (canceled) return;
-            mapImage = img;
-            _drawImage = img; // mirror for rAF draw loop
+            console.log(
+              "[MapView] Image asset loaded. Dims:",
+              img.width,
+              "x",
+              img.height,
+            );
 
-            maskCanvas = await mapStore.loadMask(img.width, img.height);
-            _drawMask = maskCanvas; // mirror for rAF draw loop
-            if (canceled) return; // guard after await
+            // Mirror to draw loop immediately
+            _drawImage = img;
+            mapImage = img;
+
+            console.log("[MapView] Loading mask...");
+            const loadedMask = await mapStore.loadMask(img.width, img.height);
+            if (canceled) return;
+
+            maskCanvas = loadedMask;
+            _drawMask = loadedMask;
+            console.log("[MapView] Mask ready.");
+
+            // Persist dimensions if not set (first load of this asset)
+            if (
+              activeMap.id === mapStore.activeMapId &&
+              activeMap.dimensions.width === 0
+            ) {
+              console.log("[MapView] First load: persisting map dimensions");
+              vault.maps[activeMap.id].dimensions = {
+                width: img.width,
+                height: img.height,
+              };
+              await vault.saveMaps();
+            }
           };
-          img.onerror = () => {
-            console.error("[MapView] img.onerror — failed to load:", url);
+          img.onerror = (err) => {
+            console.error("[MapView] Image load failed:", url, err);
           };
         })
         .catch((err) => {
-          console.error("[MapView] resolveImageUrl threw", err);
+          console.error("[MapView] Error during resolveImageUrl:", err);
         });
 
       return () => {
+        console.log("[MapView] Cleaning up map effect for:", activeMap.name);
         canceled = true;
         mapImage = null;
         _drawImage = null;
         maskCanvas = null;
         _drawMask = null;
-        if (blobUrl.startsWith("blob:")) URL.revokeObjectURL(blobUrl);
+        if (blobUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(blobUrl);
+        }
       };
     } else {
+      console.log("[MapView] No active map selected.");
       mapImage = null;
       _drawImage = null;
       maskCanvas = null;
@@ -366,6 +413,24 @@
   onkeydown={onKeyDown}
 >
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
+
+  {#if !mapImage}
+    <div
+      class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+      transition:fade
+    >
+      <div class="flex flex-col items-center gap-4">
+        <div
+          class="w-12 h-12 border-4 border-theme-primary border-t-transparent rounded-full animate-spin"
+        ></div>
+        <div
+          class="text-[10px] font-mono text-theme-primary uppercase tracking-[0.3em] animate-pulse"
+        >
+          Synthesizing Spatial Asset...
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <div aria-live="polite" aria-atomic="true" class="sr-only">
     {mapAnnouncement}

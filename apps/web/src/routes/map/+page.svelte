@@ -8,27 +8,33 @@
   let files = $state<FileList | null>(null);
 
   async function handleUpload() {
+    console.log("[MapPage] handleUpload triggered. Files:", files?.length);
     if (files && files[0]) {
       try {
+        console.log("[MapPage] Starting upload for:", files[0].name);
         const result = await mapStore.uploadMap(
           files[0],
           mapName || files[0].name,
         );
         if (result === undefined) {
+          console.error("[MapPage] Upload returned undefined (failure)");
           if (typeof window !== "undefined") {
             alert("Failed to upload map. Please ensure your vault is active.");
           }
           return;
         }
+        console.log("[MapPage] Upload successful. ID:", result);
         showUpload = false;
         mapName = "";
         files = null;
       } catch (err) {
-        console.error("Error uploading map:", err);
+        console.error("[MapPage] Error during handleUpload:", err);
         if (typeof window !== "undefined") {
           alert("An unexpected error occurred during upload.");
         }
       }
+    } else {
+      console.warn("[MapPage] handleUpload called but no files staged");
     }
   }
 
@@ -39,10 +45,13 @@
     isDragging = false;
 
     const dt = e.dataTransfer;
+    console.log("[MapPage] File dropped. Item count:", dt?.items.length);
     if (dt && dt.files && dt.files.length > 0) {
       files = dt.files;
+      console.log("[MapPage] Staged file:", files[0].name);
       // If dropping while modal is closed, open it to confirm name/upload
       if (!showUpload) {
+        console.log("[MapPage] Opening upload modal");
         showUpload = true;
       }
     }
