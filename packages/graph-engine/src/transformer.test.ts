@@ -277,4 +277,30 @@ describe("GraphTransformer", () => {
     expect(getNode("n6")?.data.dateLabel).toBe("2026-12-05");
     expect(getNode("n7")?.data.dateLabel).toBe("2026-12");
   });
+
+  it("should respect provided validIds set", () => {
+    const entities: Entity[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: [],
+        labels: [],
+        connections: [{ target: "n2", type: "knows", strength: 1 }],
+        content: "",
+      },
+    ];
+
+    // Case 1: n2 is NOT in validIds
+    const validIds1 = new Set(["n1"]);
+    const elements1 = GraphTransformer.entitiesToElements(entities, validIds1);
+    const edge1 = elements1.find((e) => e.group === "edges");
+    expect(edge1).toBeUndefined(); // Edge should be filtered out because target n2 is not in validIds
+
+    // Case 2: n2 IS in validIds (simulating it existing elsewhere)
+    const validIds2 = new Set(["n1", "n2"]);
+    const elements2 = GraphTransformer.entitiesToElements(entities, validIds2);
+    const edge2 = elements2.find((e) => e.group === "edges");
+    expect(edge2).toBeDefined(); // Edge should exist
+  });
 });
