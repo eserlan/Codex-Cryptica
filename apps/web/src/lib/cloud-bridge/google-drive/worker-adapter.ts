@@ -86,6 +86,45 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     return fetchFromFolder(this.folderId);
   }
 
+  async listFolders(parentId?: string): Promise<RemoteFileMeta[]> {
+    const id = parentId || this.folderId;
+    if (!id)
+      throw new Error("WorkerDriveAdapter: parentId or folderId required");
+
+    const url = new URL(API_BASE);
+    url.searchParams.append(
+      "q",
+      `'${id}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    );
+    url.searchParams.append(
+      "fields",
+      "files(id, name, mimeType, modifiedTime, parents, appProperties)",
+    );
+
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${this.accessToken}` },
+    });
+
+    if (!res.ok)
+      throw new Error(`GDrive List Folders Error: ${res.statusText}`);
+    const data = await res.json();
+
+    const folders: RemoteFileMeta[] = [];
+    if (data.files) {
+      for (const file of data.files) {
+        folders.push({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType || "",
+          modifiedTime: file.modifiedTime || "",
+          parents: file.parents || [],
+          appProperties: file.appProperties,
+        });
+      }
+    }
+    return folders;
+  }
+
   private async ensureFolder(name: string): Promise<string> {
     if (!this.folderId)
       throw new Error("WorkerDriveAdapter: folderId is required");
@@ -177,6 +216,7 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     path: string,
     content: string | Blob,
     existingId?: string,
+    logicalUpdatedAt?: number,
   ): Promise<RemoteFileMeta> {
     if (!this.folderId)
       throw new Error("WorkerDriveAdapter: folderId is required");
@@ -191,12 +231,21 @@ export class WorkerDriveAdapter implements ICloudAdapter {
       parentId = await this.ensureFolder(subfolderName);
     }
 
+    const contentBlob =
+      content instanceof Blob
+        ? content
+        : new Blob([content], { type: mimeType });
+
     const metadata = {
       name: fileName,
       mimeType: mimeType,
       parents: existingId ? undefined : [parentId],
       appProperties: {
         vault_path: path,
+        size: contentBlob.size.toString(),
+        ...(logicalUpdatedAt !== undefined
+          ? { updatedAt: logicalUpdatedAt.toString() }
+          : {}),
       },
     };
 
@@ -231,11 +280,6 @@ export class WorkerDriveAdapter implements ICloudAdapter {
     }
 
     // Step 2: Upload the actual content to the session URI
-    const contentBlob =
-      content instanceof Blob
-        ? content
-        : new Blob([content], { type: mimeType });
-
     const uploadRes = await fetch(sessionUri, {
       method: "PUT",
       body: contentBlob,

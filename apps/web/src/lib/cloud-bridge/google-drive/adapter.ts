@@ -252,6 +252,57 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     return files.length > 0 ? files[0].id! : null;
   }
 
+  async listFolders(parentId?: string): Promise<RemoteFileMeta[]> {
+    if (!this.accessToken) throw new Error("Not authenticated");
+
+    let folderId = parentId;
+    if (!folderId) {
+      try {
+        const about = await gapi.client.drive.about.get({
+          fields: "user(emailAddress)",
+        });
+        const email = about.result.user?.emailAddress;
+        const storageKey = `gdrive_folder_id:${email}`;
+        folderId = localStorage.getItem(storageKey) || undefined;
+      } catch (e) {
+        console.warn(
+          "[GDriveAdapter] Could not retrieve user info for folder lookup",
+          e,
+        );
+      }
+    }
+
+    if (!folderId) {
+      // Fallback: try to find root
+      folderId = (await this.findFolder("CodexCryptica")) || undefined;
+    }
+
+    if (!folderId) return [];
+
+    const response = await gapi.client.drive.files.list({
+      q: `'${folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+      fields: "files(id, name, mimeType, modifiedTime, parents, appProperties)",
+    });
+
+    const folders: RemoteFileMeta[] = [];
+    const files = response.result.files || [];
+
+    for (const file of files) {
+      if (file.name && file.id) {
+        folders.push({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType || "",
+          modifiedTime: file.modifiedTime || "",
+          parents: file.parents || [],
+          appProperties: file.appProperties,
+        });
+      }
+    }
+
+    return folders;
+  }
+
   getAccessToken(): string | null {
     return this.accessToken || gapi.client.getToken()?.access_token || null;
   }
@@ -315,6 +366,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
     path: string,
     content: string | Blob,
     existingId?: string,
+    logicalUpdatedAt?: number,
   ): Promise<RemoteFileMeta> {
     if (!this.accessToken) throw new Error("Not authenticated");
 
@@ -329,10 +381,16 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       throw new Error("No sync folder found. Reconnect requested.");
 
     const fileName = path.split("/").pop() || "Untitled.md";
+    const contentBlob = content instanceof Blob ? content : new Blob([content]);
+
     const metadata = {
       name: fileName,
       appProperties: {
-        path, // Store the full relative path
+        vault_path: path, // Store the full relative path
+        size: contentBlob.size.toString(), // Store size for efficient diffing
+        ...(logicalUpdatedAt !== undefined
+          ? { updatedAt: logicalUpdatedAt.toString() }
+          : {}),
       },
       parents: existingId ? undefined : [folderId],
     };
@@ -342,10 +400,7 @@ export class GoogleDriveAdapter implements ICloudAdapter {
       "metadata",
       new Blob([JSON.stringify(metadata)], { type: "application/json" }),
     );
-    form.append(
-      "file",
-      content instanceof Blob ? content : new Blob([content]),
-    );
+    form.append("file", contentBlob);
 
     const method = existingId ? "PATCH" : "POST";
     const url = existingId
