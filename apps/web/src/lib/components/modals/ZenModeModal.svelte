@@ -449,6 +449,7 @@
               onclick={handleCopy}
               class="px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
               title="Copy Content"
+              aria-label="Copy Content"
             >
               {#if isCopied}
                 <span class="icon-[lucide--check] w-4 h-4 text-theme-primary"
