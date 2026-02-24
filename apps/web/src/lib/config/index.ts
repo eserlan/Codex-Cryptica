@@ -8,7 +8,7 @@ const versionFromBuild =
     : undefined;
 
 export const VERSION =
-  import.meta.env.VITE_APP_VERSION ?? versionFromBuild ?? "0.9.1";
+  import.meta.env.VITE_APP_VERSION ?? versionFromBuild ?? "0.9.2";
 export const CODENAME = import.meta.env.VITE_APP_CODENAME ?? "Cryptica";
 
 export const APP_NAME = "Codex Cryptica";
