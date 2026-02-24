@@ -47,8 +47,8 @@
     onclick={toggle}
     class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all
     {graph.timelineMode
-      ? 'bg-timeline-dark/40 text-timeline-primary border border-timeline-primary/50 shadow-[0_0_15px_var(--color-timeline-primary)]'
-      : 'bg-black/80 text-zinc-500 border border-green-900/30 hover:border-green-500/50 hover:text-green-500'}"
+      ? 'bg-timeline-primary/20 text-timeline-primary border border-timeline-primary/50 shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
+      : 'bg-theme-surface/90 text-theme-muted border border-theme-border hover:border-theme-primary hover:text-theme-primary'}"
     title="Toggle Chronological Timeline Mode"
   >
     <span class="flex items-center gap-2">
@@ -59,7 +59,7 @@
 
   {#if graph.timelineMode}
     <div
-      class="flex items-center gap-1 bg-black/80 border border-timeline-dark/30 rounded p-0.5"
+      class="flex items-center gap-1 bg-theme-surface/95 border border-theme-border rounded p-0.5 backdrop-blur-sm"
       transition:fade
     >
       <button
@@ -67,7 +67,7 @@
         class="px-3 py-1 rounded text-[9px] font-bold transition-all {graph.timelineAxis ===
         'x'
           ? 'bg-timeline-primary text-theme-bg'
-          : 'text-timeline-dark hover:text-timeline-primary'}"
+          : 'text-theme-muted hover:text-timeline-primary'}"
         title="Horizontal Axis"
       >
         X-AXIS
@@ -77,7 +77,7 @@
         class="px-3 py-1 rounded text-[9px] font-bold transition-all {graph.timelineAxis ===
         'y'
           ? 'bg-timeline-primary text-theme-bg'
-          : 'text-timeline-dark hover:text-timeline-primary'}"
+          : 'text-theme-muted hover:text-timeline-primary'}"
         title="Vertical Axis"
       >
         Y-AXIS
@@ -85,11 +85,11 @@
     </div>
 
     <div
-      class="flex items-center gap-2 ml-2 bg-black/80 border border-timeline-dark/30 rounded px-3 py-1"
+      class="flex items-center gap-2 ml-2 bg-theme-surface/95 border border-theme-border rounded px-3 py-1 backdrop-blur-sm"
       transition:fade
     >
       <span
-        class="text-[9px] text-timeline-dark font-bold uppercase tracking-tighter"
+        class="text-[9px] text-theme-muted font-bold uppercase tracking-tighter"
         >Scale</span
       >
       <input
@@ -99,32 +99,32 @@
         step="50"
         bind:value={graph.timelineScale}
         onchange={onApply}
-        class="w-20 h-1 bg-timeline-dark/50 rounded-lg appearance-none cursor-pointer accent-timeline-primary"
+        class="w-20 h-1 bg-theme-border rounded-lg appearance-none cursor-pointer accent-timeline-primary"
       />
     </div>
 
     <!-- Range Sliders -->
     <div
-      class="flex items-center gap-3 ml-2 bg-black/80 border border-timeline-dark/30 rounded px-3 py-1"
+      class="flex items-center gap-3 ml-2 bg-theme-surface/95 border border-theme-border rounded px-3 py-1 backdrop-blur-sm"
       transition:fade
     >
       <div class="flex items-center gap-2">
         <span
-          class="text-[9px] text-timeline-dark font-bold uppercase tracking-tighter"
+          class="text-[9px] text-theme-muted font-bold uppercase tracking-tighter"
           >Range</span
         >
         <input
           type="number"
           bind:value={filterStart}
           onchange={applyRange}
-          class="w-12 bg-black border border-timeline-dark/30 rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
+          class="w-12 bg-theme-bg border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
         />
-        <span class="text-timeline-dark text-[10px]">to</span>
+        <span class="text-theme-muted text-[10px]">to</span>
         <input
           type="number"
           bind:value={filterEnd}
           onchange={applyRange}
-          class="w-12 bg-black border border-timeline-dark/30 rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
+          class="w-12 bg-theme-bg border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
         />
       </div>
     </div>
