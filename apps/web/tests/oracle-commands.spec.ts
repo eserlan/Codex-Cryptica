@@ -23,14 +23,14 @@ test.describe("Oracle Chat Commands", () => {
 
     await expect(page.getByText("FROM", { exact: true })).toBeVisible();
 
-    await expect(page.locator("text=/draw")).toBeVisible();
-    await expect(page.locator("text=/create")).toBeVisible();
-    await expect(page.locator("text=/connect")).toBeVisible();
+    await expect(page.locator("text=/draw").first()).toBeVisible();
+    await expect(page.locator("text=/create").first()).toBeVisible();
+    await expect(page.locator("text=/connect").first()).toBeVisible();
 
     // Test filtering
     await input.type("con");
-    await expect(page.locator("text=/draw")).not.toBeVisible();
-    await expect(page.locator("text=/connect")).toBeVisible();
+    await expect(page.locator("text=/draw").first()).not.toBeVisible();
+    await expect(page.locator("text=/connect").first()).toBeVisible();
 
     // Test selection
     await page.keyboard.press("Enter");

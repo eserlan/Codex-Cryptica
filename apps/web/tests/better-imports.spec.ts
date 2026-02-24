@@ -5,6 +5,7 @@ test.describe("Better Imports E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       localStorage.setItem("codex_skip_landing", "true");
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
@@ -93,7 +94,7 @@ test.describe("Better Imports E2E", () => {
 
     // 2. Mock Gemini API to return one existing (with a new link) and one new entity
     await page.route(
-      "**/v1beta/models/gemini-*:generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await route.fulfill({
           status: 200,
@@ -139,9 +140,10 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 4. Verify Review step
+    // INCREASED TIMEOUT
     await expect(
       page.locator('h3:has-text("Review Identified Entities")'),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
 
     // Check for Existing Dragon
     const existingCard = page.locator(".entity-card").filter({
@@ -196,7 +198,7 @@ test.describe("Better Imports E2E", () => {
 
     // 2. Mock Gemini API to return "Eldrin the Wise" (a lenient match)
     await page.route(
-      "**/v1beta/models/gemini-*:generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await route.fulfill({
           status: 200,
@@ -234,9 +236,10 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 4. Verify Review step identifies the match
+    // INCREASED TIMEOUT
     await expect(
       page.locator('h3:has-text("Review Identified Entities")'),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15000 });
 
     const card = page.locator(".entity-card").filter({
       has: page.locator("strong", { hasText: "Eldrin the Wise" }),

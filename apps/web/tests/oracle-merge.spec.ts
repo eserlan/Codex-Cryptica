@@ -5,6 +5,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       localStorage.setItem("codex_skip_landing", "true");
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
@@ -140,12 +141,12 @@ test.describe("Oracle Merge Command E2E", () => {
     await expect(page.locator("text=Merge Wizard")).toBeVisible();
 
     // 4. Select Source
-    await page.getByPlaceholder("Type source entity name...").type("Source");
+    await page.getByPlaceholder(/Type source .* name/i).type("Source");
     await page.locator('button:has-text("Source Node")').click();
     await page.click('button:has-text("Next")');
 
     // 5. Select Target
-    await page.getByPlaceholder("Type target entity name...").type("Target");
+    await page.getByPlaceholder(/Type target .* name/i).type("Target");
     await page.locator('button:has-text("Target Node")').click();
     await page.click('button:has-text("Next")');
 
