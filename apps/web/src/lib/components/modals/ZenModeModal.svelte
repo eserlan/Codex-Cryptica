@@ -568,12 +568,12 @@
             role="tabpanel"
             id="panel-overview"
             aria-labelledby="tab-overview"
-            class="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full"
+            class="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden w-full h-full custom-scrollbar"
           >
             <!-- Left Sidebar (Image & Meta) -->
             <div
               style="background-image: var(--bg-texture-overlay)"
-              class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
+              class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
             >
               <!-- Labels -->
               {#if entity.labels && entity.labels.length > 0}
@@ -672,8 +672,8 @@
                 {/if}
               </div>
 
-              <!-- Connections List -->
-              <div class="space-y-4">
+              <!-- Connections List (Desktop only) -->
+              <div class="hidden md:block space-y-4">
                 <h3
                   class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
                 >
@@ -717,7 +717,9 @@
               </div>
 
               {#if isEditing && !vault.isGuest}
-                <div class="mt-8 pt-8 border-t border-theme-border">
+                <div
+                  class="mt-8 pt-8 border-t border-theme-border hidden md:block"
+                >
                   <button
                     onclick={handleDelete}
                     class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
@@ -732,7 +734,7 @@
             <!-- Right Content (Temporal & Chronicle & Lore) -->
             <div
               bind:this={scrollContainer}
-              class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+              class="flex-1 p-6 md:p-8 md:overflow-y-auto custom-scrollbar bg-theme-bg"
               style="background-image: var(--bg-texture-overlay)"
             >
               <div class="max-w-3xl mx-auto space-y-12">
@@ -835,6 +837,64 @@
                     </div>
                   {/if}
                 </div>
+
+                <!-- Connections List (Mobile only) -->
+                <div
+                  class="md:hidden space-y-4 pt-8 border-t border-theme-border"
+                >
+                  <h3
+                    class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+                  >
+                    Connections
+                  </h3>
+                  {#if allConnections.length > 0}
+                    <div class="grid grid-cols-1 gap-2">
+                      {#each allConnections as conn}
+                        <button
+                          onclick={() => navigateTo(conn.id)}
+                          class="w-full flex items-center gap-3 p-3 rounded-lg bg-theme-surface border border-theme-border transition text-left group"
+                        >
+                          <span
+                            class="w-1.5 h-1.5 rounded-full {conn.isOutbound
+                              ? 'bg-theme-primary'
+                              : 'bg-blue-500'}"
+                          ></span>
+                          <div class="flex-1 min-w-0">
+                            <div
+                              class="text-[10px] text-theme-muted uppercase font-mono"
+                            >
+                              {conn.label}
+                            </div>
+                            <div
+                              class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+                            >
+                              {conn.title}
+                            </div>
+                          </div>
+                          <span
+                            class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-50 transition"
+                          ></span>
+                        </button>
+                      {/each}
+                    </div>
+                  {:else}
+                    <p class="text-xs text-theme-muted italic">
+                      No known connections.
+                    </p>
+                  {/if}
+                </div>
+
+                {#if isEditing && !vault.isGuest}
+                  <div class="mt-8 pt-8 border-t border-theme-border md:hidden">
+                    <button
+                      onclick={handleDelete}
+                      class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
+                    >
+                      <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                      DELETE ENTITY
+                    </button>
+                  </div>
+                {/if}
               </div>
             </div>
           </div>
