@@ -21,8 +21,23 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
     cy.fit(node, 50); // Fit to node with padding
   }, label);
 
-  // Allow a moment for the fit animation/render to settle
-  await page.waitForTimeout(1000);
+  // Deterministic wait for node to be visible and stable within the viewport
+  await page.waitForFunction(
+    (label: string) => {
+      const cy = (window as any).cy;
+      const node = cy.nodes().filter((n: any) => n.data("label") === label);
+      if (node.length === 0) return false;
+      const pos = node.renderedPosition();
+      const container = document.querySelector('[data-testid="graph-canvas"]');
+      if (!container) return false;
+      const rect = container.getBoundingClientRect();
+      return (
+        pos.x > 0 && pos.x < rect.width && pos.y > 0 && pos.y < rect.height
+      );
+    },
+    label,
+    { timeout: 5000 },
+  );
 
   const position = await page.evaluate((label: string) => {
     const cy = (window as any).cy;

@@ -24,9 +24,7 @@ test.describe("Interactive Demo Mode", () => {
     await page.getByRole("button", { name: "Try Demo" }).click();
 
     // Landing page should be gone
-    await expect(page.getByText("Build Your World.")).not.toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByText("Build Your World.")).not.toBeVisible();
 
     // Demo mode badge should be visible
     await expect(page.getByText("DEMO MODE")).toBeVisible();
@@ -54,7 +52,7 @@ test.describe("Interactive Demo Mode", () => {
     // Verify theme jargon (Horror/Vampire theme uses 'Crypt' for vault)
     // Wait for vault initialization
     await expect(page.getByTestId("open-vault-button")).toContainText(
-      /Crypt|Archive/,
+      /\b(Crypt|Archive)\b/,
     );
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Horror Demo",
