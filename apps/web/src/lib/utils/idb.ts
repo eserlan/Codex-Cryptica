@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
+import type { SyncEntry } from "@codex/sync-engine";
 
 export interface VaultRecord {
   id: string;
@@ -41,6 +42,13 @@ interface CodexDB extends DBSchema {
     key: string; // id
     value: VaultRecord;
   };
+  sync_registry: {
+    key: [string, string]; // [vaultId, filePath]
+    value: SyncEntry;
+    indexes: {
+      "by-vault": string;
+    };
+  };
   proposals: {
     key: string; // composite key or auto-inc? Let's use id or [sourceId, targetId]
     value: {
@@ -62,16 +70,15 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 8 to accommodate temporary schema changes in feature branch 046.
-// Reverting to 7 would cause VersionErrors for users who accessed the branch.
-export const DB_VERSION = 8;
+// DB_VERSION was bumped to 10 to update sync_registry to a composite key.
+export const DB_VERSION = 10;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, _oldVersion, _newVersion) {
+      upgrade(db, oldVersion, _newVersion) {
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings");
         }
@@ -86,6 +93,18 @@ export function getDB() {
         }
         if (!db.objectStoreNames.contains("vaults")) {
           db.createObjectStore("vaults", { keyPath: "id" });
+        }
+
+        // Recreate sync_registry if schema changes
+        if (db.objectStoreNames.contains("sync_registry") && oldVersion < 10) {
+          db.deleteObjectStore("sync_registry");
+        }
+
+        if (!db.objectStoreNames.contains("sync_registry")) {
+          const store = db.createObjectStore("sync_registry", {
+            keyPath: ["vaultId", "filePath"],
+          });
+          store.createIndex("by-vault", "vaultId");
         }
         if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });

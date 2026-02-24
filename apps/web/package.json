@@ -22,6 +22,7 @@
     "@codex/importer": "*",
     "@codex/proposer": "*",
     "@codex/search-engine": "*",
+    "@codex/sync-engine": "^0.0.0",
     "@floating-ui/dom": "^1.7.5",
     "@google/generative-ai": "^0.24.1",
     "@milkdown/core": "^7.18.0",

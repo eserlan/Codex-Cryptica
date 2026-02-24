@@ -16,6 +16,8 @@ import * as vaultRelationships from "./vault/relationships";
 import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { themeStore } from "./theme.svelte";
+import { parseMarkdown } from "../utils/markdown";
+import { SyncRegistry, LocalSyncService } from "@codex/sync-engine";
 
 import type { SearchEntry } from "schema";
 
@@ -58,6 +60,7 @@ class VaultStore {
 
   // Services (Injected)
   private services: IVaultServices | null = null;
+  private syncService: LocalSyncService | null = null;
 
   // Registry Accessors
   get activeVaultId() {
@@ -246,6 +249,8 @@ class VaultStore {
       }
 
       const db = await getDB();
+      this.syncService = new LocalSyncService(new SyncRegistry(db));
+
       const savedVisibility = await db.get("settings", "defaultVisibility");
       if (savedVisibility) {
         this.defaultVisibility = savedVisibility;
@@ -283,6 +288,96 @@ class VaultStore {
     } finally {
       this.isInitialized = true;
       if (this.status !== "error") this.status = "idle";
+    }
+  }
+
+  async syncToLocal() {
+    if (!this.syncService || !this.activeVaultId) return;
+
+    // Ensure all pending application saves are flushed before starting sync
+    await this.saveQueue.waitForAll();
+
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    const db = await getDB();
+    let localHandle = await db.get(
+      "settings",
+      `syncHandle_${this.activeVaultId}`,
+    );
+
+    try {
+      if (localHandle) {
+        const permission = await localHandle.queryPermission({
+          mode: "readwrite",
+        });
+        if (permission !== "granted") {
+          const newPermission = await localHandle.requestPermission({
+            mode: "readwrite",
+          });
+          if (newPermission !== "granted") localHandle = null;
+        }
+      }
+
+      if (!localHandle) {
+        localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await db.put(
+          "settings",
+          localHandle,
+          `syncHandle_${this.activeVaultId}`,
+        );
+      }
+
+      this.status = "saving";
+
+      // Optimization: Create a lookup map once before the sync starts
+      const pathToEntity = new Map(
+        Object.values(this.entities).map((e) => [e._path?.join("/"), e]),
+      );
+
+      const result = await this.syncService.sync(
+        this.activeVaultId,
+        localHandle,
+        opfsHandle,
+        async (path, meta) => {
+          if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
+
+          // Use the optimized lookup map
+          const existing = pathToEntity.get(path);
+          if (existing) return true;
+
+          // Safety: If the file is unusually large (> 1MB), skip deep validation to avoid OOM
+          if (meta.size > 1024 * 1024) return true;
+
+          try {
+            const file = await meta.handle.getFile();
+            const text = await file.text();
+            const { metadata } = parseMarkdown(text);
+            return !!(metadata.id || metadata.title);
+          } catch {
+            return false;
+          }
+        },
+      );
+
+      if (result.error) {
+        this.status = "error";
+        this.errorMessage = result.error;
+      } else {
+        this.status = "idle";
+        uiStore.notify(
+          `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
+          "success",
+        );
+      }
+    } catch (e: any) {
+      if (e.name === "AbortError") {
+        this.status = "idle";
+        return;
+      }
+      this.status = "error";
+      this.errorMessage = e.message;
+      console.error("Sync failed", e);
     }
   }
 

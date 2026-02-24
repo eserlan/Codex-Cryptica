@@ -10,8 +10,8 @@ Chat with the AI about your world. Ask questions, brainstorm ideas, or get help 
 ### Visual Graph
 Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
 
-### Sync Reminders
-Stay safe by persisting your changes. The app will remind you to sync when you have unsynced notes, ensuring your data is always backed up to your local folder.
+### Local Folder Sync
+Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.
 
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
@@ -235,6 +235,16 @@ Dive deeper into your world:
 ### PRIVACY & SYNC
 
 Your data is yours.
+
+### Local Folder Sync
+
+Keep your internal archive in sync with a folder on your machine. This enables you to use external markdown editors (like Obsidian) or move assets manually. 
+
+Synchronization is **bidirectional**: 
+- **Internal → External**: Updates made in the app are mirrored to your folder.
+- **External → Internal**: Edits made in your folder are imported back into the app.
+
+The system automatically resolves conflicts using a "newest version wins" strategy.
 
 ### Cloud Sync
 

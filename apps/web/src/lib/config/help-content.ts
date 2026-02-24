@@ -88,12 +88,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
     icon: "icon-[lucide--share-2]",
   },
-  "sync-reminders": {
-    id: "sync-reminders",
-    title: "Sync Reminders",
+  "local-folder-sync": {
+    id: "local-folder-sync",
+    title: "Local Folder Sync",
     content:
-      "Stay safe by persisting your changes. The app will remind you to sync when you have unsynced notes, ensuring your data is always backed up to your local folder.",
-    icon: "icon-[lucide--save]",
+      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.",
+    icon: "icon-[lucide--folder-sync]",
   },
   "total-privacy": {
     id: "total-privacy",
