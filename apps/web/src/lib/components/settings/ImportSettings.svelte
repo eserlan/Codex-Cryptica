@@ -59,7 +59,10 @@
   const handleFiles = async (files: File[]) => {
     const apiKey = oracle.effectiveApiKey;
     if (!apiKey) {
-      alert("Oracle API Key required for intelligent import.");
+      uiStore.notify(
+        "Oracle API Key required for intelligent import.",
+        "error",
+      );
       return;
     }
 

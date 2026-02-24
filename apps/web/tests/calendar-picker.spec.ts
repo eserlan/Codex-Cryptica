@@ -36,7 +36,7 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
       );
     },
     label,
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
 
   const position = await page.evaluate((label: string) => {

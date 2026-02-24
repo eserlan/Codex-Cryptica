@@ -94,7 +94,7 @@ test.describe("Better Imports E2E", () => {
 
     // 2. Mock Gemini API to return one existing (with a new link) and one new entity
     await page.route(
-      "**/models/*generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await route.fulfill({
           status: 200,
@@ -198,7 +198,7 @@ test.describe("Better Imports E2E", () => {
 
     // 2. Mock Gemini API to return "Eldrin the Wise" (a lenient match)
     await page.route(
-      "**/models/*generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await route.fulfill({
           status: 200,

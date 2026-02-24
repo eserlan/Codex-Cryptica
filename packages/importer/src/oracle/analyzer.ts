@@ -121,33 +121,31 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
           if (options?.knownEntities) {
             // Case-insensitive matching
             const normalizedTitle = title.toLowerCase().trim();
+            const escape = (s: string) =>
+              s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+            // Compile discovered title pattern once
+            const titlePattern =
+              normalizedTitle.length >= 3
+                ? new RegExp(`\\b${escape(normalizedTitle)}\\b`, "i")
+                : null;
+
             const match = Object.entries(options.knownEntities).find(([t]) => {
               const known = t.toLowerCase().trim();
-              if (!known || !normalizedTitle) return false;
+              if (!known) return false;
 
               // 1. Exact match
               if (known === normalizedTitle) return true;
 
               // 2. Fuzzy match: bidirectional whole-word containment to avoid
               // cases like "Beldrinian" matching "Eldrin".
-              // We skip very short words (< 3 chars) for fuzzy matching to avoid noise.
               if (known.length < 3) return false;
 
-              const escapeRegex = (s: string) =>
-                s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-              const knownWordPattern = new RegExp(
-                `\\b${escapeRegex(known)}\\b`,
-                "i",
-              );
-              const titleWordPattern = new RegExp(
-                `\\b${escapeRegex(normalizedTitle)}\\b`,
-                "i",
-              );
-
               return (
-                knownWordPattern.test(normalizedTitle) ||
-                titleWordPattern.test(known)
+                new RegExp(`\\b${escape(known)}\\b`, "i").test(
+                  normalizedTitle,
+                ) ||
+                (titlePattern?.test(known) ?? false)
               );
             });
             if (match) {

@@ -69,7 +69,7 @@ test.describe("Intelligent Importer E2E", () => {
     const requestHold = new Promise((resolve) => (resolveRequest = resolve));
 
     await page.route(
-      "**/models/*generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await requestHold;
         await route.fulfill({
@@ -154,7 +154,7 @@ test.describe("Intelligent Importer E2E", () => {
   }) => {
     // 1. Mock Gemini API with split chronicle/lore
     await page.route(
-      "**/models/*generateContent*",
+      /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await route.fulfill({
           status: 200,
