@@ -22,6 +22,7 @@
   let activeTab = $derived(uiStore.zenModeActiveTab);
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
+  let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
   let tabInventory = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
@@ -322,6 +323,63 @@
   });
 </script>
 
+{#snippet connectionsList()}
+  <div
+    class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
+  >
+    <h3
+      class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+    >
+      Connections
+    </h3>
+    {#if allConnections.length > 0}
+      <div class="space-y-2">
+        {#each allConnections as conn}
+          <button
+            onclick={() => navigateTo(conn.id)}
+            class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+          >
+            <span
+              class="w-1.5 h-1.5 rounded-full {conn.isOutbound
+                ? 'bg-theme-primary'
+                : 'bg-blue-500'}"
+            ></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[11px] text-theme-muted uppercase font-mono">
+                {conn.label}
+              </div>
+              <div
+                class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+              >
+                {conn.title}
+              </div>
+            </div>
+            <span
+              class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
+            ></span>
+          </button>
+        {/each}
+      </div>
+    {:else}
+      <p class="text-xs text-theme-muted italic">No known connections.</p>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet deleteButton()}
+  {#if isEditing && !vault.isGuest}
+    <div class="mt-8 pt-8 border-t border-theme-border">
+      <button
+        onclick={handleDelete}
+        class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
+      >
+        <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+        DELETE ENTITY
+      </button>
+    </div>
+  {/if}
+{/snippet}
+
 <svelte:window
   onkeydown={(e) => {
     if (!uiStore.showZenMode) return;
@@ -345,13 +403,17 @@
 
     if (e.key === "Escape") {
       handleClose();
-    } else if (!isEditing && scrollContainer) {
+    } else if (!isEditing) {
+      const scroller =
+        window.innerWidth < 768 ? mobileScroller : scrollContainer;
+      if (!scroller) return;
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        scrollContainer.scrollBy({ top: 150, behavior: "auto" });
+        scroller.scrollBy({ top: 150, behavior: "auto" });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        scrollContainer.scrollBy({ top: -150, behavior: "auto" });
+        scroller.scrollBy({ top: -150, behavior: "auto" });
       }
     }
   }}
@@ -361,7 +423,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
     transition:fade={{ duration: 200 }}
     onclick={handleClose}
     data-testid="zen-mode-modal"
@@ -371,9 +433,9 @@
       aria-modal="true"
       aria-labelledby="entity-modal-title"
       tabindex="-1"
-      class="w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
-      style:border-radius="var(--theme-border-radius)"
-      style:border-width="var(--theme-border-width)"
+      class="zen-dialog w-full md:max-w-6xl h-full md:h-[90vh] bg-theme-bg md:border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
+      style:--local-radius="var(--theme-border-radius)"
+      style:--local-width="var(--theme-border-width)"
       style:box-shadow="var(--theme-glow)"
       style="background-image: var(--bg-texture-overlay)"
       transition:fly={{ y: 20, duration: 300 }}
@@ -381,24 +443,24 @@
     >
       <!-- Decorative Corners -->
       <div
-        class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-theme-primary/30 rounded-tl-lg pointer-events-none"
+        class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-theme-primary/30 rounded-tl-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-theme-primary/30 rounded-tr-lg pointer-events-none"
+        class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-theme-primary/30 rounded-tr-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-theme-primary/30 rounded-bl-lg pointer-events-none"
+        class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-theme-primary/30 rounded-bl-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-theme-primary/30 rounded-br-lg pointer-events-none"
+        class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-theme-primary/30 rounded-br-lg pointer-events-none hidden md:block"
       ></div>
 
       <!-- Header -->
       <header
         style="background-image: var(--bg-texture-overlay)"
-        class="px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
+        class="px-4 md:px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
       >
-        <div class="flex-1 mr-8">
+        <div class="flex-1 mr-4 md:mr-8">
           <div class="flex items-center gap-3 mb-1">
             <span
               class="{getIconClass(
@@ -429,25 +491,25 @@
               type="text"
               bind:value={editTitle}
               aria-label="Entity Title"
-              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-3xl w-full placeholder-theme-muted rounded"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
               placeholder="Entity Title"
             />
           {:else}
             <h1
               id="entity-modal-title"
               data-testid="entity-title"
-              class="text-3xl md:text-4xl font-serif font-bold text-theme-text tracking-wide"
+              class="text-2xl md:text-4xl font-serif font-bold text-theme-text tracking-wide"
             >
               {entity.title}
             </h1>
           {/if}
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 md:gap-3">
           {#if !isEditing}
             <button
               onclick={handleCopy}
-              class="px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
+              class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
               title="Copy Content"
               aria-label="Copy Content"
             >
@@ -463,36 +525,36 @@
           {#if !isEditing && !vault.isGuest}
             <button
               onclick={startEditing}
-              class="px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              class="px-3 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
               data-testid="edit-entity-button"
             >
               <span class="icon-[lucide--edit-2] w-3 h-3"></span>
-              EDIT
+              <span class="hidden sm:inline">EDIT</span>
             </button>
           {:else if isEditing}
             <button
               onclick={cancelEditing}
-              class="px-4 py-1.5 text-theme-muted hover:text-theme-text text-xs font-bold rounded tracking-widest transition"
+              class="px-3 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-xs font-bold rounded tracking-widest transition"
             >
               CANCEL
             </button>
             <button
               onclick={saveChanges}
               disabled={isSaving}
-              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              class="px-3 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             >
               {#if isSaving}
                 <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                 ></span>
-                SAVING...
+                <span class="hidden sm:inline">SAVING...</span>
               {:else}
                 <span class="icon-[lucide--save] w-3 h-3"></span>
-                SAVE
+                <span class="hidden sm:inline">SAVE</span>
               {/if}
             </button>
           {/if}
 
-          <div class="w-px h-6 bg-theme-border mx-1"></div>
+          <div class="w-px h-6 bg-theme-border mx-0.5 md:mx-1"></div>
 
           <button
             onclick={handleClose}
@@ -509,7 +571,7 @@
         role="tablist"
         aria-label="Entity Sections"
         style="background-image: var(--bg-texture-overlay)"
-        class="flex gap-8 px-8 border-b border-theme-border bg-theme-surface shrink-0"
+        class="flex gap-4 md:gap-8 px-4 md:px-8 border-b border-theme-border bg-theme-surface shrink-0 overflow-x-auto no-scrollbar"
       >
         <button
           bind:this={tabOverview}
@@ -568,12 +630,13 @@
             role="tabpanel"
             id="panel-overview"
             aria-labelledby="tab-overview"
-            class="flex-1 flex flex-col md:flex-row overflow-hidden w-full h-full"
+            bind:this={mobileScroller}
+            class="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden w-full h-full custom-scrollbar"
           >
             <!-- Left Sidebar (Image & Meta) -->
             <div
               style="background-image: var(--bg-texture-overlay)"
-              class="w-full md:w-80 lg:w-96 border-r border-theme-border p-6 overflow-y-auto custom-scrollbar bg-theme-surface"
+              class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
             >
               <!-- Labels -->
               {#if entity.labels && entity.labels.length > 0}
@@ -672,67 +735,17 @@
                 {/if}
               </div>
 
-              <!-- Connections List -->
-              <div class="space-y-4">
-                <h3
-                  class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
-                >
-                  Connections
-                </h3>
-                {#if allConnections.length > 0}
-                  <div class="space-y-2">
-                    {#each allConnections as conn}
-                      <button
-                        onclick={() => navigateTo(conn.id)}
-                        class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-                      >
-                        <span
-                          class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                            ? 'bg-theme-primary'
-                            : 'bg-blue-500'}"
-                        ></span>
-                        <div class="flex-1 min-w-0">
-                          <div
-                            class="text-[11px] text-theme-muted uppercase font-mono"
-                          >
-                            {conn.label}
-                          </div>
-                          <div
-                            class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
-                          >
-                            {conn.title}
-                          </div>
-                        </div>
-                        <span
-                          class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-                        ></span>
-                      </button>
-                    {/each}
-                  </div>
-                {:else}
-                  <p class="text-xs text-theme-muted italic">
-                    No known connections.
-                  </p>
-                {/if}
+              <!-- Sidebar Content (Desktop) -->
+              <div class="hidden md:block space-y-6">
+                {@render connectionsList()}
+                {@render deleteButton()}
               </div>
-
-              {#if isEditing && !vault.isGuest}
-                <div class="mt-8 pt-8 border-t border-theme-border">
-                  <button
-                    onclick={handleDelete}
-                    class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
-                  >
-                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-                    DELETE ENTITY
-                  </button>
-                </div>
-              {/if}
             </div>
 
             <!-- Right Content (Temporal & Chronicle & Lore) -->
             <div
               bind:this={scrollContainer}
-              class="flex-1 p-8 overflow-y-auto custom-scrollbar bg-theme-bg"
+              class="flex-1 p-6 md:p-8 md:overflow-y-auto custom-scrollbar bg-theme-bg"
               style="background-image: var(--bg-texture-overlay)"
             >
               <div class="max-w-3xl mx-auto space-y-12">
@@ -835,6 +848,12 @@
                     </div>
                   {/if}
                 </div>
+
+                <!-- Footer Content (Mobile only) -->
+                <div class="md:hidden">
+                  {@render connectionsList()}
+                  {@render deleteButton()}
+                </div>
               </div>
             </div>
           </div>
@@ -910,5 +929,30 @@
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #15803d66;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Add affordance for horizontal scrolling */
+  div[role="tablist"].overflow-x-auto {
+    mask-image: linear-gradient(to right, black 90%, transparent);
+  }
+
+  .zen-dialog {
+    border-radius: var(--local-radius);
+    border-width: var(--local-width);
+  }
+
+  @media (max-width: 767px) {
+    .zen-dialog {
+      --local-radius: 0;
+      --local-width: 0;
+    }
   }
 </style>
