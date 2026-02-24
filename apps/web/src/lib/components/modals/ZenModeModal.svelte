@@ -22,6 +22,7 @@
   let activeTab = $derived(uiStore.zenModeActiveTab);
   let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
+  let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
   let tabInventory = $state<HTMLButtonElement>();
   let tabMap = $state<HTMLButtonElement>();
@@ -404,9 +405,7 @@
       handleClose();
     } else if (!isEditing) {
       const scroller =
-        window.innerWidth < 768
-          ? document.getElementById("panel-overview")
-          : scrollContainer;
+        window.innerWidth < 768 ? mobileScroller : scrollContainer;
       if (!scroller) return;
 
       if (e.key === "ArrowDown") {
@@ -631,6 +630,7 @@
             role="tabpanel"
             id="panel-overview"
             aria-labelledby="tab-overview"
+            bind:this={mobileScroller}
             class="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden w-full h-full custom-scrollbar"
           >
             <!-- Left Sidebar (Image & Meta) -->
@@ -937,6 +937,11 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Add affordance for horizontal scrolling */
+  div[role="tablist"].overflow-x-auto {
+    mask-image: linear-gradient(to right, black 90%, transparent);
   }
 
   .zen-dialog {
