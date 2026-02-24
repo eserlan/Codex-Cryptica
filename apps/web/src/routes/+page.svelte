@@ -10,10 +10,6 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
 
-  // Dynamic imports for heavy components
-  let GraphView = $state<any>(null);
-  let EntityDetailPanel = $state<any>(null);
-
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
     if (!GraphView) {
@@ -27,6 +23,10 @@
       });
     }
   }
+
+  // Dynamic imports for heavy components
+  let GraphView = $state<any>(null);
+  let EntityDetailPanel = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
