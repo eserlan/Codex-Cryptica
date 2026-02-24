@@ -322,6 +322,63 @@
   });
 </script>
 
+{#snippet connectionsList()}
+  <div
+    class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
+  >
+    <h3
+      class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+    >
+      Connections
+    </h3>
+    {#if allConnections.length > 0}
+      <div class="space-y-2">
+        {#each allConnections as conn}
+          <button
+            onclick={() => navigateTo(conn.id)}
+            class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+          >
+            <span
+              class="w-1.5 h-1.5 rounded-full {conn.isOutbound
+                ? 'bg-theme-primary'
+                : 'bg-blue-500'}"
+            ></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[11px] text-theme-muted uppercase font-mono">
+                {conn.label}
+              </div>
+              <div
+                class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+              >
+                {conn.title}
+              </div>
+            </div>
+            <span
+              class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
+            ></span>
+          </button>
+        {/each}
+      </div>
+    {:else}
+      <p class="text-xs text-theme-muted italic">No known connections.</p>
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet deleteButton()}
+  {#if isEditing && !vault.isGuest}
+    <div class="mt-8 pt-8 border-t border-theme-border">
+      <button
+        onclick={handleDelete}
+        class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
+      >
+        <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+        DELETE ENTITY
+      </button>
+    </div>
+  {/if}
+{/snippet}
+
 <svelte:window
   onkeydown={(e) => {
     if (!uiStore.showZenMode) return;
@@ -345,13 +402,19 @@
 
     if (e.key === "Escape") {
       handleClose();
-    } else if (!isEditing && scrollContainer) {
+    } else if (!isEditing) {
+      const scroller =
+        window.innerWidth < 768
+          ? document.getElementById("panel-overview")
+          : scrollContainer;
+      if (!scroller) return;
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        scrollContainer.scrollBy({ top: 150, behavior: "auto" });
+        scroller.scrollBy({ top: 150, behavior: "auto" });
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        scrollContainer.scrollBy({ top: -150, behavior: "auto" });
+        scroller.scrollBy({ top: -150, behavior: "auto" });
       }
     }
   }}
@@ -371,9 +434,9 @@
       aria-modal="true"
       aria-labelledby="entity-modal-title"
       tabindex="-1"
-      class="zen-dialog w-full md:max-w-6xl h-full md:h-[90vh] bg-theme-bg border-x-0 border-y-0 md:border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
-      style:border-radius="var(--theme-border-radius)"
-      style:border-width="var(--theme-border-width)"
+      class="zen-dialog w-full md:max-w-6xl h-full md:h-[90vh] bg-theme-bg md:border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
+      style:--local-radius="var(--theme-border-radius)"
+      style:--local-width="var(--theme-border-width)"
       style:box-shadow="var(--theme-glow)"
       style="background-image: var(--bg-texture-overlay)"
       transition:fly={{ y: 20, duration: 300 }}
@@ -672,63 +735,11 @@
                 {/if}
               </div>
 
-              <!-- Connections List (Desktop only) -->
-              <div class="hidden md:block space-y-4">
-                <h3
-                  class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
-                >
-                  Connections
-                </h3>
-                {#if allConnections.length > 0}
-                  <div class="space-y-2">
-                    {#each allConnections as conn}
-                      <button
-                        onclick={() => navigateTo(conn.id)}
-                        class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-                      >
-                        <span
-                          class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                            ? 'bg-theme-primary'
-                            : 'bg-blue-500'}"
-                        ></span>
-                        <div class="flex-1 min-w-0">
-                          <div
-                            class="text-[11px] text-theme-muted uppercase font-mono"
-                          >
-                            {conn.label}
-                          </div>
-                          <div
-                            class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
-                          >
-                            {conn.title}
-                          </div>
-                        </div>
-                        <span
-                          class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-                        ></span>
-                      </button>
-                    {/each}
-                  </div>
-                {:else}
-                  <p class="text-xs text-theme-muted italic">
-                    No known connections.
-                  </p>
-                {/if}
+              <!-- Sidebar Content (Desktop) -->
+              <div class="hidden md:block space-y-6">
+                {@render connectionsList()}
+                {@render deleteButton()}
               </div>
-
-              {#if isEditing && !vault.isGuest}
-                <div
-                  class="mt-8 pt-8 border-t border-theme-border hidden md:block"
-                >
-                  <button
-                    onclick={handleDelete}
-                    class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
-                  >
-                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-                    DELETE ENTITY
-                  </button>
-                </div>
-              {/if}
             </div>
 
             <!-- Right Content (Temporal & Chronicle & Lore) -->
@@ -838,63 +849,11 @@
                   {/if}
                 </div>
 
-                <!-- Connections List (Mobile only) -->
-                <div
-                  class="md:hidden space-y-4 pt-8 border-t border-theme-border"
-                >
-                  <h3
-                    class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
-                  >
-                    Connections
-                  </h3>
-                  {#if allConnections.length > 0}
-                    <div class="space-y-2">
-                      {#each allConnections as conn}
-                        <button
-                          onclick={() => navigateTo(conn.id)}
-                          class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-                        >
-                          <span
-                            class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                              ? 'bg-theme-primary'
-                              : 'bg-blue-500'}"
-                          ></span>
-                          <div class="flex-1 min-w-0">
-                            <div
-                              class="text-[11px] text-theme-muted uppercase font-mono"
-                            >
-                              {conn.label}
-                            </div>
-                            <div
-                              class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
-                            >
-                              {conn.title}
-                            </div>
-                          </div>
-                          <span
-                            class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-                          ></span>
-                        </button>
-                      {/each}
-                    </div>
-                  {:else}
-                    <p class="text-xs text-theme-muted italic">
-                      No known connections.
-                    </p>
-                  {/if}
+                <!-- Footer Content (Mobile only) -->
+                <div class="md:hidden">
+                  {@render connectionsList()}
+                  {@render deleteButton()}
                 </div>
-
-                {#if isEditing && !vault.isGuest}
-                  <div class="mt-8 pt-8 border-t border-theme-border md:hidden">
-                    <button
-                      onclick={handleDelete}
-                      class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
-                    >
-                      <span class="icon-[lucide--trash-2] w-3 h-3"></span>
-                      DELETE ENTITY
-                    </button>
-                  </div>
-                {/if}
               </div>
             </div>
           </div>
@@ -980,10 +939,15 @@
     scrollbar-width: none;
   }
 
+  .zen-dialog {
+    border-radius: var(--local-radius);
+    border-width: var(--local-width);
+  }
+
   @media (max-width: 767px) {
     .zen-dialog {
-      border-radius: 0 !important;
-      border-width: 0 !important;
+      --local-radius: 0;
+      --local-width: 0;
     }
   }
 </style>
