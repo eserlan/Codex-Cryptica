@@ -848,11 +848,11 @@
                     Connections
                   </h3>
                   {#if allConnections.length > 0}
-                    <div class="grid grid-cols-1 gap-2">
+                    <div class="space-y-2">
                       {#each allConnections as conn}
                         <button
                           onclick={() => navigateTo(conn.id)}
-                          class="w-full flex items-center gap-3 p-3 rounded-lg bg-theme-surface border border-theme-border transition text-left group"
+                          class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
                         >
                           <span
                             class="w-1.5 h-1.5 rounded-full {conn.isOutbound
@@ -861,7 +861,7 @@
                           ></span>
                           <div class="flex-1 min-w-0">
                             <div
-                              class="text-[10px] text-theme-muted uppercase font-mono"
+                              class="text-[11px] text-theme-muted uppercase font-mono"
                             >
                               {conn.label}
                             </div>
@@ -872,7 +872,7 @@
                             </div>
                           </div>
                           <span
-                            class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-50 transition"
+                            class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
                           ></span>
                         </button>
                       {/each}
