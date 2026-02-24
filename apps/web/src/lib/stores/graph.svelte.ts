@@ -1,7 +1,7 @@
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
 import { GraphTransformer } from "graph-engine";
-import { isEntityVisible, type Era } from "schema";
+import { isEntityVisible, type Era, type Entity } from "schema";
 import { getDB } from "../utils/idb";
 
 class GraphStore {
@@ -30,11 +30,22 @@ class GraphStore {
       });
     }
 
-    const visibleEntities = allEntities.filter((entity) =>
-      isEntityVisible(entity, settings),
-    );
+    // OPTIMIZATION: Build visible list and valid ID set in a single pass
+    // to avoid multiple iterations and array allocations.
+    // Also passes validIds to GraphTransformer to skip set reconstruction.
+    const visibleEntities: Entity[] = [];
+    const validIds = new Set<string>();
 
-    return GraphTransformer.entitiesToElements(visibleEntities);
+    const count = allEntities.length;
+    for (let i = 0; i < count; i++) {
+      const entity = allEntities[i];
+      if (isEntityVisible(entity, settings)) {
+        visibleEntities.push(entity);
+        validIds.add(entity.id);
+      }
+    }
+
+    return GraphTransformer.entitiesToElements(visibleEntities, validIds);
   });
 
   fitRequest = $state(0);

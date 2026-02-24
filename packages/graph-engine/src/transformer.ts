@@ -59,13 +59,18 @@ const formatDate = (date?: TemporalMetadata) => {
 const REVEALED_REGEX = /^(revealed|visible)$/i;
 
 export class GraphTransformer {
-  static entitiesToElements(entities: Entity[]): GraphElement[] {
+  static entitiesToElements(
+    entities: Entity[],
+    validIds?: Set<string>,
+  ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
-    // OPTIMIZATION: Use a loop instead of map to avoid array allocation
-    const validIds = new Set<string>();
-    const entityCount = entities.length;
-    for (let i = 0; i < entityCount; i++) {
-      validIds.add(entities[i].id);
+    if (!validIds) {
+      // OPTIMIZATION: Use a loop instead of map to avoid array allocation
+      validIds = new Set<string>();
+      const entityCount = entities.length;
+      for (let i = 0; i < entityCount; i++) {
+        validIds.add(entities[i].id);
+      }
     }
 
     const elements: GraphElement[] = [];
