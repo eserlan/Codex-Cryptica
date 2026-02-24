@@ -63,7 +63,7 @@
   });
 
   const handleCreate = async () => {
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || isCreating) return;
     isCreating = true;
     createError = null;
     try {
@@ -313,6 +313,8 @@
         class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical
           ? 'py-3 text-sm'
           : ''}"
+        aria-invalid={!!createError}
+        aria-describedby={createError ? "create-error" : undefined}
       />
       <select
         bind:value={newType}
@@ -329,17 +331,28 @@
         type="submit"
         class="{btnPrimary} {isVertical
           ? 'py-3 text-sm justify-center'
-          : 'px-4 py-1.5 text-xs'} disabled:opacity-50"
-        disabled={!newTitle.trim() || isCreating}
+          : 'px-4 py-1.5 text-xs'} {!newTitle.trim() || isCreating
+          ? 'opacity-50 cursor-not-allowed'
+          : ''}"
+        aria-disabled={!newTitle.trim() || isCreating}
+        title={!newTitle.trim() ? "Enter a title to create" : ""}
+        aria-busy={isCreating}
       >
         {#if isCreating}
-          <span class="animate-pulse">ADDING...</span>
+          <span
+            class="w-3 h-3 border-2 border-theme-bg/30 border-t-theme-bg rounded-full animate-spin mr-2"
+          ></span>
+          ADDING...
         {:else}
           ADD
         {/if}
       </button>
       {#if createError}
-        <div class="text-[10px] text-red-500 w-full text-center" role="alert">
+        <div
+          id="create-error"
+          class="text-[10px] text-red-500 w-full text-center"
+          role="alert"
+        >
           {createError}
         </div>
       {/if}
