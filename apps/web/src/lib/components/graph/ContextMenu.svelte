@@ -42,6 +42,44 @@
     }
   });
 
+  let menuEl = $state<HTMLDivElement>();
+
+  // Focus first menu item when menu opens
+  $effect(() => {
+    if (contextMenuOpen && menuEl) {
+      const firstItem =
+        menuEl.querySelector<HTMLButtonElement>('[role="menuitem"]');
+      firstItem?.focus();
+    }
+  });
+
+  const handleMenuKeydown = (e: KeyboardEvent) => {
+    if (!menuEl) return;
+    const items = Array.from(
+      menuEl.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
+    );
+    if (items.length === 0) return;
+
+    const current = document.activeElement as HTMLButtonElement;
+    const idx = items.indexOf(current);
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      contextMenuOpen = false;
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const nextIdx = (idx + 1) % items.length;
+      items[nextIdx]?.focus();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      // If nothing is focused (idx === -1), go to last item.
+      // Otherwise, cycle backwards.
+      const prevIdx = idx <= 0 ? items.length - 1 : idx - 1;
+      items[prevIdx]?.focus();
+    }
+  };
+
   const setCentralNode = () => {
     if (targetId) {
       graph.setCentralNode(targetId);
@@ -58,12 +96,19 @@
 </script>
 
 {#if contextMenuOpen}
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
+    bind:this={menuEl}
+    role="menu"
+    aria-label="Node actions"
+    tabindex="-1"
     class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[150px]"
     style:top="{position.y}px"
     style:left="{position.x}px"
+    onkeydown={handleMenuKeydown}
   >
     <button
+      role="menuitem"
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition"
       onclick={setCentralNode}
     >
@@ -71,6 +116,7 @@
     </button>
     {#if selectedNodes.length > 1}
       <button
+        role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
         onclick={handleMerge}
       >
