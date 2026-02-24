@@ -314,16 +314,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  :global(.custom-scrollbar::-webkit-scrollbar) {
-    width: 4px;
-  }
-  :global(.custom-scrollbar::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-  :global(.custom-scrollbar::-webkit-scrollbar-thumb) {
-    background: var(--color-accent-primary);
-    border-radius: 2px;
-  }
-</style>

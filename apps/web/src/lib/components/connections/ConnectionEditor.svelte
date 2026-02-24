@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Connection } from "schema";
 
@@ -9,8 +10,8 @@
     onCancel: () => void;
   }>();
 
-  let type = $state("");
-  let label = $state("");
+  let type = $state(untrack(() => connection.type));
+  let label = $state(untrack(() => connection.label || ""));
 
   // Sync state if connection changes (e.g. component reuse)
   $effect(() => {
