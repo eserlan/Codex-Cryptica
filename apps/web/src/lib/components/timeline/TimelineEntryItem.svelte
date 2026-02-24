@@ -21,7 +21,7 @@
 
 <button
   onclick={handleClick}
-  class="w-full text-left p-4 bg-theme-surface/50 border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/5 transition-all rounded group relative"
+  class="w-full text-left p-4 bg-theme-surface/50 border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 transition-all rounded group relative"
 >
   <div class="flex items-start justify-between gap-4">
     <div class="flex-1 min-w-0">

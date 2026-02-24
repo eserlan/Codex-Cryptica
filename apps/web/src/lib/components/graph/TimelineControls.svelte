@@ -117,14 +117,14 @@
           type="number"
           bind:value={filterStart}
           onchange={applyRange}
-          class="w-12 bg-theme-bg border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
+          class="w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
         <span class="text-theme-muted text-[10px]">to</span>
         <input
           type="number"
           bind:value={filterEnd}
           onchange={applyRange}
-          class="w-12 bg-theme-bg border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-timeline-primary outline-none"
+          class="w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
       </div>
     </div>
