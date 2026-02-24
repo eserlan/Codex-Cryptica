@@ -47,14 +47,19 @@
   // Focus first menu item when menu opens
   $effect(() => {
     if (contextMenuOpen && menuEl) {
-      const firstItem = menuEl.querySelector<HTMLButtonElement>('[role="menuitem"]');
+      const firstItem =
+        menuEl.querySelector<HTMLButtonElement>('[role="menuitem"]');
       firstItem?.focus();
     }
   });
 
   const handleMenuKeydown = (e: KeyboardEvent) => {
     if (!menuEl) return;
-    const items = Array.from(menuEl.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'));
+    const items = Array.from(
+      menuEl.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
+    );
+    if (items.length === 0) return;
+
     const current = document.activeElement as HTMLButtonElement;
     const idx = items.indexOf(current);
 
@@ -64,10 +69,14 @@
       contextMenuOpen = false;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      items[(idx + 1) % items.length]?.focus();
+      const nextIdx = (idx + 1) % items.length;
+      items[nextIdx]?.focus();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      items[(idx - 1 + items.length) % items.length]?.focus();
+      // If nothing is focused (idx === -1), go to last item.
+      // Otherwise, cycle backwards.
+      const prevIdx = idx <= 0 ? items.length - 1 : idx - 1;
+      items[prevIdx]?.focus();
     }
   };
 
