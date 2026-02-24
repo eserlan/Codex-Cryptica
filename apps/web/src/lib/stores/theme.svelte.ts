@@ -101,6 +101,14 @@ class ThemeStore {
     this.previewThemeId = id;
   }
 
+  private hexToRgb(hex: string): string {
+    // Basic hex to RGB converter
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+      : "0, 0, 0";
+  }
+
   private applyTheme(theme: StylingTemplate) {
     if (typeof document === "undefined") return;
 
@@ -114,6 +122,22 @@ class ThemeStore {
     root.style.setProperty("--color-accent-dark", tokens.secondary);
     root.style.setProperty("--color-accent-deep", tokens.background);
     root.style.setProperty("--color-border-primary", tokens.border);
+
+    // RGB versions for rgba() usage in shadows/overlays
+    root.style.setProperty(
+      "--color-accent-primary-rgb",
+      this.hexToRgb(tokens.primary),
+    );
+    root.style.setProperty(
+      "--color-theme-accent-rgb",
+      this.hexToRgb(tokens.accent),
+    );
+    // Compatibility aliases
+    root.style.setProperty(
+      "--theme-primary-rgb",
+      this.hexToRgb(tokens.primary),
+    );
+    root.style.setProperty("--theme-accent-rgb", this.hexToRgb(tokens.accent));
 
     root.style.setProperty("--color-text-primary", tokens.text);
     root.style.setProperty("--color-text-muted", tokens.secondary);

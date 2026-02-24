@@ -347,12 +347,14 @@
   {#if uiStore.notification}
     <div
       class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-2xl border flex items-center gap-3 animate-in slide-in-from-top-4 fade-in"
-      class:bg-green-950={uiStore.notification.type === "success"}
-      class:border-green-500={uiStore.notification.type === "success"}
-      class:text-green-100={uiStore.notification.type === "success"}
-      class:bg-blue-950={uiStore.notification.type === "info"}
+      class:bg-theme-surface={true}
+      class:border-theme-primary={uiStore.notification.type === "success"}
+      class:text-theme-primary={uiStore.notification.type === "success"}
       class:border-blue-500={uiStore.notification.type === "info"}
-      class:text-blue-100={uiStore.notification.type === "info"}
+      class:text-blue-400={uiStore.notification.type === "info"}
+      class:border-red-500={uiStore.notification.type === "error"}
+      class:text-red-500={uiStore.notification.type === "error"}
+      style:box-shadow="var(--theme-glow)"
       transition:fade
     >
       <span
@@ -362,6 +364,10 @@
       <span
         class="icon-[lucide--info] w-5 h-5"
         class:hidden={uiStore.notification.type !== "info"}
+      ></span>
+      <span
+        class="icon-[lucide--alert-circle] w-5 h-5"
+        class:hidden={uiStore.notification.type !== "error"}
       ></span>
       <span class="font-mono text-xs font-bold tracking-widest uppercase"
         >{uiStore.notification.message}</span
