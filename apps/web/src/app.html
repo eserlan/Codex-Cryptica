@@ -19,29 +19,37 @@
 	<script src="https://apis.google.com/js/api.js" async defer></script>
 	<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 	<link rel="llms" href="%sveltekit.assets%/llms.txt" />
-	<script>
-		// Prevent FOUC for Skip Welcome and Theme
-		try {
-			if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
-				document.documentElement.classList.add("skip-landing");
-			}
-			const theme = localStorage.getItem("codex-cryptica-active-theme");
-			const bgColors = {
-				scifi: "#050505",
-				fantasy: "#fdf6e3",
-				modern: "#f8fafc",
-				cyberpunk: "#020617",
-				apocalyptic: "#1c1917",
-				horror: "#050505"
-			};
-			if (theme && bgColors[theme]) {
-				document.documentElement.style.setProperty("--color-bg-primary", bgColors[theme]);
-				document.documentElement.style.backgroundColor = bgColors[theme];
-			}
-		} catch (e) { }
-	</script>
-	%sveltekit.head%
-</head>
+	        			<script>
+	        				// Prevent FOUC for Skip Welcome and Theme
+	        				try {
+	        					if (localStorage.getItem("codex_skip_landing") === "true" || new URLSearchParams(window.location.search).has("demo")) {
+	        						document.documentElement.classList.add("skip-landing");
+	        					}
+	        					const theme = localStorage.getItem("codex-cryptica-active-theme");
+	        					/** 
+	        					 * NOTE: Synchronize these tokens with THEMES in packages/schema/src/theme.ts
+	        					 * These are hardcoded here to ensure the fastest possible initial paint (blocking script).
+	        					 */
+	        					const themes = {
+	        						scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80" },
+	        						fantasy: { bg: "#fdf6e3", surface: "#eee8d5", text: "#2d241e", primary: "#78350f" },
+	        						modern: { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb" },
+	        						cyberpunk: { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6" },
+	        						apocalyptic: { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316" },
+	        						horror: { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626" }
+	        					};
+	        					if (theme && themes[theme]) {
+	        						const t = themes[theme];
+	        						const root = document.documentElement;
+	        						root.style.setProperty("--color-bg-primary", t.bg);
+	        						root.style.setProperty("--color-bg-surface", t.surface);
+	        						root.style.setProperty("--color-text-primary", t.text);
+	        						root.style.setProperty("--color-accent-primary", t.primary);
+	        						root.style.backgroundColor = t.bg;
+	        						root.style.color = t.text;
+	        					}
+	        				} catch (e) { }
+	        			</script>	        		%sveltekit.head%</head>
 
 <body data-sveltekit-preload-data="hover">
 	<div style="display: contents">%sveltekit.body%</div>

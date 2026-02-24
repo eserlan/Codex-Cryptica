@@ -2,13 +2,16 @@ import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
+import { hexToRgb } from "../utils/color";
 import { vault } from "./vault.svelte";
 import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
 class ThemeStore {
-  currentThemeId = $state(DEFAULT_THEME.id);
+  currentThemeId = $state<string>(
+    (browser && localStorage.getItem(STORAGE_KEY)) || DEFAULT_THEME.id,
+  );
   previewThemeId = $state<string | null>(null);
 
   activeTheme = $derived(
@@ -53,7 +56,7 @@ class ThemeStore {
       await this.loadForVault(vault.activeVaultId);
     } else {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && THEMES[stored]) {
+      if (stored && THEMES[stored] && this.currentThemeId !== stored) {
         this.currentThemeId = stored;
       }
     }
@@ -65,11 +68,16 @@ class ThemeStore {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
       if (stored && THEMES[stored]) {
-        this.currentThemeId = stored;
-      } else {
+        if (this.currentThemeId !== stored) {
+          this.currentThemeId = stored;
+        }
+        // Update global hint for the next reload's blocking script
+        localStorage.setItem(STORAGE_KEY, stored);
+      } else if (this.currentThemeId !== DEFAULT_THEME.id) {
         // For new vaults, we want to start with default
         // instead of inheriting whatever was in localStorage/global state
         this.currentThemeId = DEFAULT_THEME.id;
+        localStorage.setItem(STORAGE_KEY, DEFAULT_THEME.id);
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
@@ -101,14 +109,6 @@ class ThemeStore {
     this.previewThemeId = id;
   }
 
-  private hexToRgb(hex: string): string {
-    // Basic hex to RGB converter
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
-      : "0, 0, 0";
-  }
-
   private applyTheme(theme: StylingTemplate) {
     if (typeof document === "undefined") return;
 
@@ -126,18 +126,12 @@ class ThemeStore {
     // RGB versions for rgba() usage in shadows/overlays
     root.style.setProperty(
       "--color-accent-primary-rgb",
-      this.hexToRgb(tokens.primary),
+      hexToRgb(tokens.primary),
     );
-    root.style.setProperty(
-      "--color-theme-accent-rgb",
-      this.hexToRgb(tokens.accent),
-    );
+    root.style.setProperty("--color-theme-accent-rgb", hexToRgb(tokens.accent));
     // Compatibility aliases
-    root.style.setProperty(
-      "--theme-primary-rgb",
-      this.hexToRgb(tokens.primary),
-    );
-    root.style.setProperty("--theme-accent-rgb", this.hexToRgb(tokens.accent));
+    root.style.setProperty("--theme-primary-rgb", hexToRgb(tokens.primary));
+    root.style.setProperty("--theme-accent-rgb", hexToRgb(tokens.accent));
 
     root.style.setProperty("--color-text-primary", tokens.text);
     root.style.setProperty("--color-text-muted", tokens.secondary);

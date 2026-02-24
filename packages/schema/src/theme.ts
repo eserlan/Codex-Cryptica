@@ -43,7 +43,9 @@ export const JargonMapSchema = z
     tab_status: z.string(),
     tab_lore: z.string(),
     tab_inventory: z.string(),
+    graph_loading: z.string(),
   })
+  .partial()
   .catchall(z.string());
 
 export const StylingTemplateSchema = z.object({
@@ -72,6 +74,7 @@ export const DEFAULT_JARGON: JargonMap = {
   tab_status: "Status",
   tab_lore: "Lore & Notes",
   tab_inventory: "Inventory",
+  graph_loading: "Initializing...",
 };
 
 export const THEMES: Record<string, StylingTemplate> = {
@@ -112,6 +115,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Diagnostics",
       tab_lore: "Data Streams",
       tab_inventory: "Cargo",
+      graph_loading: "Initiating Neural Interface...",
     },
   },
   fantasy: {
@@ -152,6 +156,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Attributes",
       tab_lore: "Mythos",
       tab_inventory: "Possessions",
+      graph_loading: "Summoning Chronicles...",
     },
   },
   modern: {
@@ -174,6 +179,9 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeBorderWidth: 1,
       edgeWidth: 1,
       edgeColor: "#cbd5e1",
+    },
+    jargon: {
+      graph_loading: "Establishing Data Link...",
     },
   },
   cyberpunk: {
@@ -213,6 +221,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Neural Feed",
       tab_inventory: "Loadout",
+      graph_loading: "Uplinking to Grid...",
     },
   },
   apocalyptic: {
@@ -253,6 +262,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Memories",
       tab_inventory: "Stash",
+      graph_loading: "Scavenging Fragments...",
     },
   },
   horror: {
@@ -293,6 +303,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Condition",
       tab_lore: "Memoriam",
       tab_inventory: "Assets",
+      graph_loading: "Awakening Memories...",
     },
   },
 };

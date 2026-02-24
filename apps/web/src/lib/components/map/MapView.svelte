@@ -4,6 +4,8 @@
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { uiStore } from "../../stores/ui.svelte";
+  import { themeStore } from "../../stores/theme.svelte";
+  import { hexToRgb } from "../../utils/color";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
 
@@ -26,6 +28,13 @@
     selectedPin?.entityId
       ? mapStore.getEntitySubMap(selectedPin.entityId)
       : null,
+  );
+
+  const fogColor = $derived(
+    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, 0.8)`,
+  );
+  const gridColor = $derived(
+    `rgba(${hexToRgb(themeStore.activeTheme.tokens.primary)}, 0.2)`,
   );
 
   $effect(() => {
@@ -144,10 +153,11 @@
         pins: mapStore.pins,
         maskCanvas: _drawMask,
         showFog: mapStore.showFog,
+        fogColor,
         grid: {
           type: mapStore.showGrid ? "square" : "none",
           size: mapStore.gridSize,
-          color: "rgba(255, 255, 255, 0.2)",
+          color: gridColor,
           opacity: 0.5,
         },
       });
@@ -401,7 +411,7 @@
 
   {#if !mapImage}
     <div
-      class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+      class="absolute inset-0 flex items-center justify-center bg-theme-bg/40 backdrop-blur-sm z-50"
       transition:fade
     >
       <div class="flex flex-col items-center gap-4">

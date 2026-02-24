@@ -14,7 +14,7 @@
   />
 </svelte:head>
 
-<div class="h-full flex flex-col bg-black overflow-hidden">
+<div class="h-full flex flex-col bg-theme-bg overflow-hidden">
   <!-- Header / Controls -->
   <div
     class="p-4 border-b border-green-900/30 bg-[#0c0c0c] flex flex-wrap items-center justify-between gap-4"
@@ -39,7 +39,7 @@
   <div class="flex-1 overflow-hidden relative">
     {#if timelineStore.isLoading}
       <div
-        class="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10"
+        class="absolute inset-0 flex items-center justify-center bg-theme-bg/50 backdrop-blur-sm z-10"
       >
         <div class="flex flex-col items-center gap-3">
           <span
