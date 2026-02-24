@@ -388,7 +388,7 @@
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   role="application"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
-  tabindex="-1"
+  tabindex="0"
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
