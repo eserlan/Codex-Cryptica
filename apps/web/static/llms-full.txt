@@ -238,9 +238,10 @@ Your data is yours.
 
 ### Local Folder Sync
 
-Keep your internal archive in sync with a folder on your machine. This enables you to use external markdown editors (like Obsidian) or move assets manually. 
+Keep your internal archive in sync with a folder on your machine. This enables you to use external markdown editors (like Obsidian) or move assets manually.
 
-Synchronization is **bidirectional**: 
+Synchronization is **bidirectional**:
+
 - **Internal → External**: Updates made in the app are mirrored to your folder.
 - **External → Internal**: Edits made in your folder are imported back into the app.
 

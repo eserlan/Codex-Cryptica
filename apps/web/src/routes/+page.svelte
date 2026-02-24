@@ -10,6 +10,20 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
 
+  // Lazy load components when needed using relative paths for reliable resolution
+  function loadHeavyComponents() {
+    if (!GraphView) {
+      import("../lib/components/GraphView.svelte").then((m) => {
+        GraphView = m.default;
+      });
+    }
+    if (!EntityDetailPanel) {
+      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
+        EntityDetailPanel = m.default;
+      });
+    }
+  }
+
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
@@ -25,29 +39,15 @@
   );
   const isGuestMode = $derived(!!shareId);
 
-  // Lazy load components when needed using relative paths for reliable resolution
-  function loadHeavyComponents() {
-    if (!GraphView) {
-      import("../lib/components/GraphView.svelte").then((m) => {
-        GraphView = m.default;
-      });
-    }
-    if (!EntityDetailPanel) {
-      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
-        EntityDetailPanel = m.default;
-      });
-    }
-  }
-
-  // Pre-load components in parallel with vault/DB boot if landing page is skipped
-  if (browser && (!uiStore.isLandingPageVisible || isGuestMode)) {
-    loadHeavyComponents();
-  }
-
-  // Reactive fallback for when user clicks "Enter Workspace"
+  // Consolidate reactive pre-loading and fallback loading into a single effect
+  // to prevent race conditions during dynamic imports.
   $effect(() => {
+    const isSkippingLanding =
+      browser && (!uiStore.isLandingPageVisible || isGuestMode);
+    const isVaultReady = vault.isInitialized || isGuestMode;
+
     if (
-      (vault.isInitialized || isGuestMode) &&
+      (isSkippingLanding || isVaultReady) &&
       (!GraphView || !EntityDetailPanel)
     ) {
       loadHeavyComponents();
@@ -312,16 +312,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-accent-primary);
-    border-radius: 2px;
-  }
-</style>

@@ -100,11 +100,6 @@
     }
   });
 
-  // Eager parallel boot trigger for returning users missing the welcome screen
-  if (browser && !uiStore.isLandingPageVisible && !hasBooted) {
-    bootSystem();
-  }
-
   // E2E test helpers: Expose stores globally for Playwright evaluate() calls
   $effect(() => {
     if (typeof window !== "undefined" && (window as any).__E2E__) {

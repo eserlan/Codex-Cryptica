@@ -382,10 +382,11 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
-  role="region"
+  role="application"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="-1"
   onmousedown={onMouseDown}
@@ -442,6 +443,7 @@
       onmousedown={(e) => e.stopPropagation()}
       onmouseup={(e) => e.stopPropagation()}
       onclick={(e) => e.stopPropagation()}
+      role="none"
     >
       <div
         class="bg-theme-surface border border-theme-border rounded-lg shadow-2xl p-1 flex items-center gap-0.5"

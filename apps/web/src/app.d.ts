@@ -11,7 +11,6 @@ declare global {
     // interface PageData {}
     // interface Platform {}
   }
-  // eslint-disable-next-line no-var
   var gapi: typeof import("gapi");
   const __APP_VERSION__: string;
 }
