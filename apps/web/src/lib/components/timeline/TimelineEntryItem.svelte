@@ -63,7 +63,7 @@
   <!-- Selection Indicator -->
   {#if vault.selectedEntityId === entry.entityId}
     <div
-      class="absolute inset-y-0 left-0 w-1 bg-theme-primary shadow-[0_0_10px_var(--theme-glow)]"
+      class="absolute inset-y-0 left-0 w-1 bg-theme-primary [box-shadow:var(--theme-glow)]"
     ></div>
   {/if}
 </button>

@@ -67,8 +67,11 @@
     >
       <div
         class="absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-theme-muted transition-all {timelineStore.includeUndated
-          ? 'translate-x-4 bg-theme-primary shadow-[0_0_10px_var(--theme-glow)]'
+          ? 'translate-x-4 bg-theme-primary'
           : ''}"
+        style:box-shadow={timelineStore.includeUndated
+          ? "var(--theme-glow)"
+          : undefined}
       ></div>
     </div>
     <span
