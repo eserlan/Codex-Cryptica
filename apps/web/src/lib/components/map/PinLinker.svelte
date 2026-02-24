@@ -101,16 +101,3 @@
     </footer>
   </div>
 </div>
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-accent-primary);
-    border-radius: 2px;
-  }
-</style>

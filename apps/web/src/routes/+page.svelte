@@ -39,19 +39,17 @@
   );
   const isGuestMode = $derived(!!shareId);
 
-  // Reactive fallback for when user clicks "Enter Workspace"
+  // Consolidate reactive pre-loading and fallback loading into a single effect
+  // to prevent race conditions during dynamic imports.
   $effect(() => {
+    const isSkippingLanding =
+      browser && (!uiStore.isLandingPageVisible || isGuestMode);
+    const isVaultReady = vault.isInitialized || isGuestMode;
+
     if (
-      (vault.isInitialized || isGuestMode) &&
+      (isSkippingLanding || isVaultReady) &&
       (!GraphView || !EntityDetailPanel)
     ) {
-      loadHeavyComponents();
-    }
-  });
-
-  // Pre-load components in parallel if landing page is skipped
-  $effect(() => {
-    if (browser && (!uiStore.isLandingPageVisible || isGuestMode)) {
       loadHeavyComponents();
     }
   });
