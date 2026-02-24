@@ -22,16 +22,27 @@ export class MockDriveAdapter implements ICloudAdapter {
 
   async listFiles(): Promise<RemoteFileMeta[]> {
     this.checkConnected();
-    return Array.from(this.files.values());
+    return Array.from(this.files.values()).filter(
+      (f) => f.mimeType !== "application/vnd.google-apps.folder",
+    );
+  }
+
+  async listFolders(_parentId?: string): Promise<RemoteFileMeta[]> {
+    this.checkConnected();
+    return Array.from(this.files.values()).filter(
+      (f) => f.mimeType === "application/vnd.google-apps.folder",
+    );
   }
 
   async uploadFile(
     path: string,
     content: string | Blob,
     existingId?: string,
+    logicalUpdatedAt?: number,
   ): Promise<RemoteFileMeta> {
     this.checkConnected();
     const id = existingId || `mock-file-${Date.now()}`;
+
     const meta: RemoteFileMeta = {
       id,
       name: path.split("/").pop() || path,
@@ -41,6 +52,7 @@ export class MockDriveAdapter implements ICloudAdapter {
       parents: ["mock-folder-id"],
       appProperties: {
         vault_path: path,
+        ...(logicalUpdatedAt ? { updatedAt: logicalUpdatedAt.toString() } : {}),
       },
     };
     this.files.set(path, meta);

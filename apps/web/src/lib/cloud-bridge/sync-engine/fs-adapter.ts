@@ -1,7 +1,9 @@
 export interface FileEntry {
   path: string;
   lastModified: number;
+  logicalUpdatedAt?: number;
   handle: FileSystemFileHandle;
+  size: number;
 }
 
 import { VAULTS_DIR } from "$lib/utils/opfs";
@@ -45,10 +47,29 @@ export class FileSystemAdapter {
       if (handle.kind === "file") {
         const fileHandle = handle as FileSystemFileHandle;
         const file = await fileHandle.getFile();
+
+        let logicalUpdatedAt: number | undefined = undefined;
+
+        // Optimization: Read the first 8KB of markdown files to extract updatedAt
+        if (name.endsWith(".md") || name.endsWith(".markdown")) {
+          try {
+            const blob = file.slice(0, 8192);
+            const text = await blob.text();
+            const match = text.match(/^updatedAt:\s*(\d+)/m);
+            if (match) {
+              logicalUpdatedAt = parseInt(match[1], 10);
+            }
+          } catch (e) {
+            console.warn(`Failed to extract updatedAt from ${path}`, e);
+          }
+        }
+
         files.push({
           path,
           lastModified: file.lastModified,
+          logicalUpdatedAt,
           handle: fileHandle,
+          size: file.size,
         });
       } else if (handle.kind === "directory") {
         const subDir = handle as FileSystemDirectoryHandle;

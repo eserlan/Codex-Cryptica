@@ -173,15 +173,72 @@ export class SyncEngine {
         let remoteChanged = true;
 
         if (meta) {
-          if (
-            Math.abs(local.lastModified - meta.localModified) < SYNC_SKEW_MS
-          ) {
-            localChanged = false;
+          // 1. Check Logical Timestamp (Reliable for content changes)
+          if (local.logicalUpdatedAt && meta.logicalUpdatedAt) {
+            // "Stealth Edit" check: If filesystem time is significantly newer than the logical time,
+            // it means the file was touched by an external tool without updating the frontmatter.
+            const isStealthEdit =
+              local.lastModified > local.logicalUpdatedAt + 5000;
+
+            if (
+              !isStealthEdit &&
+              local.logicalUpdatedAt === meta.logicalUpdatedAt
+            ) {
+              localChanged = false;
+            }
+          } else {
+            // Fallback to Filesystem Timestamp
+            if (
+              Math.abs(local.lastModified - meta.localModified) < SYNC_SKEW_MS
+            ) {
+              localChanged = false;
+            }
           }
+
           const remoteTime = new Date(remote.modifiedTime).getTime();
           const lastSyncedRemoteTime = new Date(meta.remoteModified).getTime();
           if (Math.abs(remoteTime - lastSyncedRemoteTime) < SYNC_SKEW_MS) {
             remoteChanged = false;
+          }
+        } else {
+          // No sync metadata (first sync or database cleared).
+          // Perform a direct comparison between local and remote to avoid redundant transfers.
+          const remoteTime = new Date(remote.modifiedTime).getTime();
+          const remoteLogicalUpdatedAtStr = remote.appProperties?.updatedAt;
+          const remoteLogicalUpdatedAt = remoteLogicalUpdatedAtStr
+            ? parseInt(remoteLogicalUpdatedAtStr, 10)
+            : undefined;
+
+          const logicalMatch =
+            local.logicalUpdatedAt !== undefined &&
+            remoteLogicalUpdatedAt !== undefined &&
+            !isNaN(remoteLogicalUpdatedAt)
+              ? local.logicalUpdatedAt === remoteLogicalUpdatedAt
+              : false;
+
+          const sizeMatch = remote.appProperties?.size
+            ? parseInt(remote.appProperties.size, 10) === local.size
+            : true; // Fallback if size not in appProperties
+
+          if (
+            (logicalMatch && sizeMatch) ||
+            (!logicalMatch &&
+              sizeMatch &&
+              Math.abs(local.lastModified - remoteTime) < SYNC_SKEW_MS)
+          ) {
+            // Files are identical for all intents and purposes.
+            // Establish metadata without transferring.
+            plan.metadataUpdates.push({
+              vaultId,
+              filePath: local.path,
+              remoteId: remote.id,
+              localModified: local.lastModified,
+              logicalUpdatedAt:
+                local.logicalUpdatedAt || remoteLogicalUpdatedAt,
+              remoteModified: remote.modifiedTime,
+              syncStatus: "SYNCED",
+            });
+            continue;
           }
         }
 
@@ -335,12 +392,14 @@ export class SyncEngine {
           file.path,
           content,
           file.remoteId,
+          file.logicalUpdatedAt,
         );
         metadataUpdates.push({
           vaultId,
           filePath: file.path,
           remoteId: meta.id,
           localModified: file.lastModified,
+          logicalUpdatedAt: file.logicalUpdatedAt,
           remoteModified: meta.modifiedTime,
           syncStatus: "SYNCED",
         });
@@ -353,11 +412,16 @@ export class SyncEngine {
         const content = await this.cloudAdapter.downloadFile(file.id);
         const localPath = file.appProperties?.vault_path || file.name;
         await this.fsAdapter.writeFile(vaultId, localPath, content);
+        const remoteLogicalUpdatedAt = file.appProperties?.updatedAt
+          ? parseInt(file.appProperties.updatedAt, 10)
+          : undefined;
+
         metadataUpdates.push({
           vaultId,
           filePath: localPath,
           remoteId: file.id,
           localModified: Date.now(),
+          logicalUpdatedAt: remoteLogicalUpdatedAt,
           remoteModified: file.modifiedTime,
           syncStatus: "SYNCED",
         });

@@ -4,8 +4,6 @@ import {
   getDirHandle,
   type FileEntry,
 } from "../../utils/opfs";
-import { reResolveFileHandle, writeWithRetry } from "../../utils/vault-io";
-import { getDB } from "../../utils/idb";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache";
 import {
@@ -43,105 +41,6 @@ export async function loadMapsFromDisk(
     return JSON.parse(text);
   } catch {
     return {};
-  }
-}
-
-export async function syncToLocal(
-  activeVaultId: string,
-  vaultHandle: FileSystemDirectoryHandle,
-  updateStatus: (status: "saving" | "idle" | "error", msg?: string) => void,
-) {
-  if (!activeVaultId || !vaultHandle) {
-    updateStatus("error", "No active vault to sync.");
-    return;
-  }
-
-  let localHandle: FileSystemDirectoryHandle | null = null;
-  const handleKey = `syncHandle_${activeVaultId}`;
-
-  try {
-    const db = await getDB();
-    localHandle = await db.get("settings", handleKey);
-
-    if (localHandle) {
-      const permission = await localHandle.queryPermission({
-        mode: "readwrite",
-      });
-      if (permission !== "granted") {
-        await localHandle.requestPermission({ mode: "readwrite" });
-      }
-    }
-
-    if (!localHandle) {
-      localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-      await db.put("settings", localHandle, handleKey);
-    }
-
-    updateStatus("saving");
-    debugStore.log(
-      `Syncing Vault (${activeVaultId}) to local folder: ${localHandle.name}`,
-    );
-
-    const opfsFiles = await walkOpfsDirectory(vaultHandle);
-    for (const fileEntry of opfsFiles) {
-      const opfsFile = await fileEntry.handle.getFile();
-
-      let shouldWrite = true;
-      try {
-        // Try to get existing local file to check if it's already up to date
-        const existingHandle = await reResolveFileHandle(
-          localHandle,
-          fileEntry.path,
-          false,
-        );
-        const localFile = await existingHandle.getFile();
-
-        // If size matches and local file is newer or same age as OPFS, skip.
-        // We use a skew to account for filesystem precision differences.
-        if (
-          localFile.size === opfsFile.size &&
-          localFile.lastModified >= opfsFile.lastModified - SKEW_MS
-        ) {
-          shouldWrite = false;
-        }
-      } catch (e: any) {
-        if (e.name !== "NotFoundError") {
-          debugStore.warn(
-            `Pre-sync check failed for ${fileEntry.path.join("/")}: ${e.message}`,
-          );
-        }
-      }
-
-      if (shouldWrite) {
-        const localFileHandle = await reResolveFileHandle(
-          localHandle,
-          fileEntry.path,
-          true,
-        );
-        await writeWithRetry(
-          localHandle,
-          localFileHandle,
-          opfsFile,
-          fileEntry.path.join("/"),
-        );
-      }
-    }
-
-    debugStore.log("Sync to local folder complete.");
-    updateStatus("idle");
-  } catch (err: any) {
-    if (err.name === "NotFoundError" && localHandle) {
-      debugStore.error("Sync folder not found.", err);
-      const msg = `Sync folder "${localHandle.name}" not found. Please select it again.`;
-      const db = await getDB();
-      await db.delete("settings", handleKey);
-      updateStatus("error", msg);
-    } else if (err.name !== "AbortError") {
-      console.error("Sync failed", err);
-      updateStatus("error", `Sync failed: ${err.message}`);
-    } else {
-      updateStatus("idle");
-    }
   }
 }
 
@@ -293,7 +192,7 @@ export async function loadVaultFiles(
     let entity: LocalEntity;
 
     if (cached && cached.lastModified === lastModified) {
-      entity = { ...cached.entity, _path: fileEntry.path, synced: true };
+      entity = { ...cached.entity, _path: fileEntry.path };
     } else {
       const text = await file.text();
       const { metadata, content, wikiLinks } = parseMarkdown(text || "");
@@ -322,8 +221,8 @@ export async function loadVaultFiles(
         start_date: metadata.start_date,
         end_date: metadata.end_date,
         metadata: metadata.metadata,
+        updatedAt: metadata.updatedAt,
         _path: fileEntry.path,
-        synced: true,
       };
       const cacheKey = `${activeVaultId}:${filePath}`;
       await cacheService.set(cacheKey, lastModified, entity);

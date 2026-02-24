@@ -41,26 +41,6 @@ class VaultStore {
   migrationRequired = $state(false);
   demoVaultName = $state<string | null>(null);
 
-  // Sync Reminder State
-  hasSyncFolder = $state(false);
-  lastRemindedDirtyCount = $state(0);
-  snoozedUntil = $state(0);
-
-  dirtyEntitiesCount = $derived.by(() => {
-    return Object.values(this.entities).filter((e) => e.synced === false)
-      .length;
-  });
-
-  shouldShowReminder = $derived.by(() => {
-    if (!this.hasSyncFolder) return false;
-    if (Date.now() < this.snoozedUntil) return false;
-
-    return (
-      this.dirtyEntitiesCount >= 5 &&
-      this.dirtyEntitiesCount - this.lastRemindedDirtyCount >= 5
-    );
-  });
-
   // Fog of War Settings
   defaultVisibility = $state<"visible" | "hidden">("visible");
 
@@ -138,6 +118,12 @@ class VaultStore {
     return id;
   }
 
+  async createVaultFromDrive(name: string, folderId: string): Promise<string> {
+    const id = await vaultRegistry.createVaultFromDrive(name, folderId);
+    await this.switchVault(id);
+    return id;
+  }
+
   async switchVault(id: string): Promise<void> {
     if (this.activeVaultId === id && this.isInitialized) return;
 
@@ -161,72 +147,13 @@ class VaultStore {
     await vaultRegistry.setActiveVault(id);
     await themeStore.loadForVault(id);
 
-    // Load Sync Reminder state
     if (typeof window !== "undefined") {
-      await this.loadSyncReminderState(id);
-
       window.dispatchEvent(
         new CustomEvent("vault-switched", { detail: { id } }),
       );
     }
 
     await this.loadFiles();
-  }
-
-  private async loadSyncReminderState(vaultId: string) {
-    const db = await getDB();
-    const syncHandle = await db.get("settings", `syncHandle_${vaultId}`);
-    this.hasSyncFolder = !!syncHandle;
-
-    const lastCount = localStorage.getItem(`sync_last_reminded_${vaultId}`);
-    this.lastRemindedDirtyCount = lastCount ? parseInt(lastCount, 10) : 0;
-
-    const snoozed = localStorage.getItem(`sync_snoozed_until_${vaultId}`);
-    if (snoozed) {
-      const snoozedUntil = parseInt(snoozed, 10);
-      if (!Number.isNaN(snoozedUntil) && snoozedUntil > Date.now()) {
-        this.snoozedUntil = snoozedUntil;
-      } else {
-        // Snooze has expired or is invalid; clear stored value to keep state consistent
-        this.snoozedUntil = 0;
-        localStorage.removeItem(`sync_snoozed_until_${vaultId}`);
-      }
-    } else {
-      this.snoozedUntil = 0;
-    }
-  }
-
-  dismissSyncReminder() {
-    this.lastRemindedDirtyCount = this.dirtyEntitiesCount;
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.setItem(
-        `sync_last_reminded_${this.activeVaultId}`,
-        this.lastRemindedDirtyCount.toString(),
-      );
-    }
-  }
-
-  snoozeSyncReminder() {
-    this.snoozedUntil = Date.now() + 3600000; // 1 hour
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.setItem(
-        `sync_snoozed_until_${this.activeVaultId}`,
-        this.snoozedUntil.toString(),
-      );
-    }
-  }
-
-  resetSyncState() {
-    this.lastRemindedDirtyCount = 0;
-    this.snoozedUntil = 0;
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.removeItem(`sync_last_reminded_${this.activeVaultId}`);
-      localStorage.removeItem(`sync_snoozed_until_${this.activeVaultId}`);
-    }
-    // Mark all currently loaded entities as synced
-    for (const id in this.entities) {
-      this.entities[id].synced = true;
-    }
   }
 
   /**
@@ -237,11 +164,7 @@ class VaultStore {
     await this.saveQueue.waitForAll();
     this.selectedEntityId = null;
 
-    // Mark demo entities as synced initially (they are transient)
     const entities = data.entities as Record<string, LocalEntity>;
-    for (const id in entities) {
-      entities[id].synced = true;
-    }
 
     this.entities = entities;
     this.demoVaultName = name || null;
@@ -349,9 +272,6 @@ class VaultStore {
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
 
-        // Load Sync Reminder state
-        await this.loadSyncReminderState(this.activeVaultId);
-
         await this.loadFiles();
       }
     } catch (err) {
@@ -364,25 +284,6 @@ class VaultStore {
       this.isInitialized = true;
       if (this.status !== "error") this.status = "idle";
     }
-  }
-
-  async syncToLocal() {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!this.activeVaultId || !vaultDir) {
-      this.status = "error";
-      this.errorMessage = "No active vault to sync.";
-      return;
-    }
-
-    await vaultIO.syncToLocal(this.activeVaultId, vaultDir, (status, msg) => {
-      this.status = status;
-      if (status === "error") {
-        this.errorMessage = msg || "Sync failed";
-      } else if (status === "idle") {
-        this.hasSyncFolder = true;
-        this.resetSyncState();
-      }
-    });
   }
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {

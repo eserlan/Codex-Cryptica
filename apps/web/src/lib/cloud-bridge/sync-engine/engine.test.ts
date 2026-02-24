@@ -37,8 +37,18 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
   it("should match files using full relative paths", () => {
     const localFiles: FileEntry[] = [
-      { path: "images/hero.png", lastModified: 1000, handle: {} as any },
-      { path: "lore/main.md", lastModified: 1000, handle: {} as any },
+      {
+        path: "images/hero.png",
+        lastModified: 1000,
+        handle: {} as any,
+        size: 100,
+      },
+      {
+        path: "lore/main.md",
+        lastModified: 1000,
+        handle: {} as any,
+        size: 100,
+      },
     ];
 
     const remoteFiles: RemoteFileMeta[] = [
@@ -79,7 +89,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
   it("should detect local changes in subdirectories", () => {
     const localFiles: FileEntry[] = [
-      { path: "images/hero.png", lastModified: 10000, handle: {} as any },
+      {
+        path: "images/hero.png",
+        lastModified: 10000,
+        handle: {} as any,
+        size: 100,
+      },
     ];
 
     const remoteFiles: RemoteFileMeta[] = [
@@ -118,7 +133,12 @@ describe("SyncEngine Path-Aware Diff Logic", () => {
 
   it("should identify and clean up remote duplicates", () => {
     const localFiles: FileEntry[] = [
-      { path: "images/hero.png", lastModified: 1000, handle: {} as any },
+      {
+        path: "images/hero.png",
+        lastModified: 1000,
+        handle: {} as any,
+        size: 100,
+      },
     ];
 
     const remoteFiles: RemoteFileMeta[] = [

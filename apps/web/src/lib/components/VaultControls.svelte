@@ -41,12 +41,6 @@
     `${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`,
   );
 
-  const layoutClasses = $derived(
-    isVertical
-      ? "py-3 text-sm justify-center gap-2"
-      : "px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2",
-  );
-
   const iconOnlyClasses = $derived(
     isVertical
       ? "py-3 text-sm justify-start px-4 gap-3"
@@ -233,17 +227,6 @@
             ? 'flex-col gap-3'
             : 'gap-1.5 md:gap-3 items-center'}"
         >
-          <button
-            class="{btnAccent} {layoutClasses}"
-            onclick={() => vault.syncToLocal()}
-            title="Export all OPFS data to a local folder for safety."
-            aria-label={isVertical
-              ? "SYNC TO FOLDER - Export all OPFS data to a local folder for safety."
-              : "SYNC - Export all OPFS data to a local folder for safety."}
-          >
-            <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
-            {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
-          </button>
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
             onclick={() => (showShare = true)}

@@ -9,6 +9,7 @@ test.describe("Cloud Sync UI", () => {
     });
     await page.goto("/");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });
 
   test("should open and close the cloud sync menu", async ({ page }) => {

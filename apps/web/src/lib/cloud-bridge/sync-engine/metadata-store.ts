@@ -7,6 +7,7 @@ export interface SyncMetadata {
   filePath: string;
   remoteId: string;
   localModified: number;
+  logicalUpdatedAt?: number;
   remoteModified: string;
   etag?: string;
   syncStatus: SyncStatus;

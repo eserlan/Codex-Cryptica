@@ -57,6 +57,7 @@ export const EntitySchema = z.object({
       height: z.number().optional(),
     })
     .optional(),
+  updatedAt: z.number().optional(),
   _path: z.union([z.string(), z.array(z.string())]).optional(),
 });
 

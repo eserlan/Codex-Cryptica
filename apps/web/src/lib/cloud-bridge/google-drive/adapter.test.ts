@@ -138,4 +138,46 @@ describe("GoogleDriveAdapter Auth", () => {
 
     expect(adapter.getAccessToken()).toBe("concurrent-token");
   });
+
+  it("should list folders within the app root", async () => {
+    // 1. Authenticate first
+    const tokenClient = vi.mocked(google.accounts.oauth2.initTokenClient).mock
+      .results[0].value;
+    const connectPromise = adapter.connect();
+    await new Promise((r) => setTimeout(r, 0));
+    tokenClient.callback({ access_token: "fake-token" });
+    await connectPromise;
+
+    // 2. Setup mock response for list
+    const mockFolders = [
+      {
+        id: "f1",
+        name: "Folder 1",
+        mimeType: "application/vnd.google-apps.folder",
+      },
+      {
+        id: "f2",
+        name: "Folder 2",
+        mimeType: "application/vnd.google-apps.folder",
+      },
+    ];
+    vi.mocked(gapi.client.drive.files.list).mockResolvedValue({
+      result: { files: mockFolders },
+    } as any);
+
+    // 3. Call listFolders
+    const folders = await adapter.listFolders();
+
+    // 4. Verify
+    expect(folders).toHaveLength(2);
+    expect(folders[0].name).toBe("Folder 1");
+    expect(folders[1].id).toBe("f2");
+    expect(gapi.client.drive.files.list).toHaveBeenCalledWith(
+      expect.objectContaining({
+        q: expect.stringContaining(
+          "mimeType = 'application/vnd.google-apps.folder'",
+        ),
+      }),
+    );
+  });
 });

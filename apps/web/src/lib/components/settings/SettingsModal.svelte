@@ -232,29 +232,6 @@
               </div>
             </section>
 
-            <section>
-              <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
-              >
-                Maintenance
-              </h3>
-              <p class="text-[13px] text-theme-text/70 mb-4 leading-relaxed">
-                Keep your archive safe by periodically syncing your data to a
-                local folder.
-              </p>
-              <button
-                onclick={() => vault.syncToLocal()}
-                disabled={uiStore.isImporting}
-                aria-disabled={uiStore.isImporting ? "true" : "false"}
-                title={uiStore.isImporting
-                  ? "Disabled during active import"
-                  : "Sync to local folder"}
-                class="px-6 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-[10px] font-bold tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-primary/10 disabled:hover:text-theme-primary"
-              >
-                Sync to Local Folder
-              </button>
-            </section>
-
             <section class="border-t border-theme-border pt-6">
               <VaultSettings />
             </section>

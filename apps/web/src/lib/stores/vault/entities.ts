@@ -5,8 +5,7 @@ import { deleteOpfsEntry } from "../../utils/opfs";
 
 /**
  * ENTITY MUTATION GUARDRAIL:
- * All functions that modify an entity MUST set `synced: false` to ensure
- * the Sync Reminder system correctly tracks unsaved changes.
+ * Metadata updates and other modifications are tracked via updatedAt.
  */
 
 export function createEntity(
@@ -37,7 +36,7 @@ export function createEntity(
     content: "",
     lore: "",
     metadata: {},
-    synced: false,
+    updatedAt: Date.now(),
     ...initialData,
   } as LocalEntity;
 }
@@ -50,7 +49,11 @@ export function updateEntity(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
-  const updated = { ...entity, ...updates, synced: false } as LocalEntity;
+  const updated = {
+    ...entity,
+    ...updates,
+    updatedAt: Date.now(),
+  } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
     updated,
@@ -133,7 +136,7 @@ export function addLabel(
   const updated = {
     ...entity,
     labels: [...labels, label],
-    synced: false,
+    updatedAt: Date.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -155,7 +158,7 @@ export function removeLabel(
   const updated = {
     ...entity,
     labels: labels.filter((l) => l !== label),
-    synced: false,
+    updatedAt: Date.now(),
   } as LocalEntity;
   return {
     entities: { ...entities, [id]: updated },
@@ -186,7 +189,7 @@ export function addConnection(
   const updatedSource = {
     ...source,
     connections: [...source.connections, connection],
-    synced: false,
+    updatedAt: Date.now(),
   } as LocalEntity;
 
   return {
@@ -219,7 +222,7 @@ export function updateConnection(
   const updatedSource = {
     ...source,
     connections,
-    synced: false,
+    updatedAt: Date.now(),
   } as LocalEntity;
 
   return {
@@ -247,7 +250,7 @@ export function removeConnection(
   const updatedSource = {
     ...source,
     connections,
-    synced: false,
+    updatedAt: Date.now(),
   } as LocalEntity;
 
   return {

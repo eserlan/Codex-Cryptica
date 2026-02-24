@@ -1,11 +1,11 @@
 <script lang="ts">
   import "../app.css";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import SyncReminder from "$lib/components/notifications/SyncReminder.svelte";
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -109,8 +109,10 @@
   $effect(() => {
     if (typeof window !== "undefined" && (window as any).__E2E__) {
       (window as any).vault = vault;
+      (window as any).vaultRegistry = vaultRegistry;
       (window as any).graph = graph;
       (window as any).oracle = oracle;
+      (window as any).uiStore = uiStore;
     }
   });
 
@@ -191,6 +193,10 @@
       (window as any).vault = vault;
       (window as any).graph = graph;
       (window as any).calendarStore = calendarStore;
+
+      import("$lib/stores/gdrive.svelte").then((m) => {
+        (window as any).gdriveAdapter = m.gdriveAdapter;
+      });
 
       import("$lib/stores/oracle.svelte").then((m) => {
         (window as any).oracle = m.oracle;
@@ -520,7 +526,6 @@
     </footer>
 
     <SearchModal />
-    <SyncReminder />
 
     {#if (page.url.pathname as string) !== `${base}/login`}
       {#if OracleWindow}
