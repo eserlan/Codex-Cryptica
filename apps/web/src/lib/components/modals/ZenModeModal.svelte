@@ -361,7 +361,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-md"
+    class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
     transition:fade={{ duration: 200 }}
     onclick={handleClose}
     data-testid="zen-mode-modal"
@@ -371,7 +371,7 @@
       aria-modal="true"
       aria-labelledby="entity-modal-title"
       tabindex="-1"
-      class="w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
+      class="zen-dialog w-full md:max-w-6xl h-full md:h-[90vh] bg-theme-bg border-x-0 border-y-0 md:border border-theme-border shadow-2xl flex flex-col overflow-hidden relative"
       style:border-radius="var(--theme-border-radius)"
       style:border-width="var(--theme-border-width)"
       style:box-shadow="var(--theme-glow)"
@@ -381,24 +381,24 @@
     >
       <!-- Decorative Corners -->
       <div
-        class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-theme-primary/30 rounded-tl-lg pointer-events-none"
+        class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-theme-primary/30 rounded-tl-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-theme-primary/30 rounded-tr-lg pointer-events-none"
+        class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-theme-primary/30 rounded-tr-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-theme-primary/30 rounded-bl-lg pointer-events-none"
+        class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-theme-primary/30 rounded-bl-lg pointer-events-none hidden md:block"
       ></div>
       <div
-        class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-theme-primary/30 rounded-br-lg pointer-events-none"
+        class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-theme-primary/30 rounded-br-lg pointer-events-none hidden md:block"
       ></div>
 
       <!-- Header -->
       <header
         style="background-image: var(--bg-texture-overlay)"
-        class="px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
+        class="px-4 md:px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
       >
-        <div class="flex-1 mr-8">
+        <div class="flex-1 mr-4 md:mr-8">
           <div class="flex items-center gap-3 mb-1">
             <span
               class="{getIconClass(
@@ -429,25 +429,25 @@
               type="text"
               bind:value={editTitle}
               aria-label="Entity Title"
-              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-3xl w-full placeholder-theme-muted rounded"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
               placeholder="Entity Title"
             />
           {:else}
             <h1
               id="entity-modal-title"
               data-testid="entity-title"
-              class="text-3xl md:text-4xl font-serif font-bold text-theme-text tracking-wide"
+              class="text-2xl md:text-4xl font-serif font-bold text-theme-text tracking-wide"
             >
               {entity.title}
             </h1>
           {/if}
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 md:gap-3">
           {#if !isEditing}
             <button
               onclick={handleCopy}
-              class="px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
+              class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
               title="Copy Content"
               aria-label="Copy Content"
             >
@@ -463,36 +463,36 @@
           {#if !isEditing && !vault.isGuest}
             <button
               onclick={startEditing}
-              class="px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              class="px-3 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
               data-testid="edit-entity-button"
             >
               <span class="icon-[lucide--edit-2] w-3 h-3"></span>
-              EDIT
+              <span class="hidden sm:inline">EDIT</span>
             </button>
           {:else if isEditing}
             <button
               onclick={cancelEditing}
-              class="px-4 py-1.5 text-theme-muted hover:text-theme-text text-xs font-bold rounded tracking-widest transition"
+              class="px-3 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-xs font-bold rounded tracking-widest transition"
             >
               CANCEL
             </button>
             <button
               onclick={saveChanges}
               disabled={isSaving}
-              class="px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+              class="px-3 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
             >
               {#if isSaving}
                 <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"
                 ></span>
-                SAVING...
+                <span class="hidden sm:inline">SAVING...</span>
               {:else}
                 <span class="icon-[lucide--save] w-3 h-3"></span>
-                SAVE
+                <span class="hidden sm:inline">SAVE</span>
               {/if}
             </button>
           {/if}
 
-          <div class="w-px h-6 bg-theme-border mx-1"></div>
+          <div class="w-px h-6 bg-theme-border mx-0.5 md:mx-1"></div>
 
           <button
             onclick={handleClose}
@@ -509,7 +509,7 @@
         role="tablist"
         aria-label="Entity Sections"
         style="background-image: var(--bg-texture-overlay)"
-        class="flex gap-8 px-8 border-b border-theme-border bg-theme-surface shrink-0"
+        class="flex gap-4 md:gap-8 px-4 md:px-8 border-b border-theme-border bg-theme-surface shrink-0 overflow-x-auto no-scrollbar"
       >
         <button
           bind:this={tabOverview}
@@ -910,5 +910,20 @@
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #15803d66;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @media (max-width: 767px) {
+    .zen-dialog {
+      border-radius: 0 !important;
+      border-width: 0 !important;
+    }
   }
 </style>
