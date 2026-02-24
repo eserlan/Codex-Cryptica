@@ -340,7 +340,8 @@
       >
         {#if isCreating}
           <span
-            class="w-3 h-3 border-2 border-theme-bg/30 border-t-theme-bg rounded-full animate-spin mr-2"
+            class="icon-[lucide--loader-2] w-3 h-3 animate-spin mr-2"
+            aria-hidden="true"
           ></span>
           ADDING...
         {:else}
