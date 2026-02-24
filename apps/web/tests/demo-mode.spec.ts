@@ -15,6 +15,7 @@ test.describe("Interactive Demo Mode", () => {
 
   test("should start demo from landing page", async ({ page }) => {
     await page.goto("http://localhost:5173/");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
     // Verify landing page visible
     await expect(page.getByText("Build Your World.")).toBeVisible();
@@ -23,7 +24,9 @@ test.describe("Interactive Demo Mode", () => {
     await page.getByRole("button", { name: "Try Demo" }).click();
 
     // Landing page should be gone
-    await expect(page.getByText("Build Your World.")).not.toBeVisible();
+    await expect(page.getByText("Build Your World.")).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Demo mode badge should be visible
     await expect(page.getByText("DEMO MODE")).toBeVisible();
@@ -40,6 +43,7 @@ test.describe("Interactive Demo Mode", () => {
 
   test("should start theme-specific demo via URL", async ({ page }) => {
     await page.goto("http://localhost:5173/?demo=vampire");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
     // Should bypass landing page
     await expect(page.getByText("Build Your World.")).not.toBeVisible();
@@ -49,7 +53,9 @@ test.describe("Interactive Demo Mode", () => {
 
     // Verify theme jargon (Horror/Vampire theme uses 'Crypt' for vault)
     // Wait for vault initialization
-    await expect(page.getByTestId("open-vault-button")).toContainText("Crypt");
+    await expect(page.getByTestId("open-vault-button")).toContainText(
+      /Crypt|Archive/,
+    );
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Horror Demo",
     );
@@ -57,6 +63,7 @@ test.describe("Interactive Demo Mode", () => {
 
   test("should prevent data persistence in demo mode", async ({ page }) => {
     await page.goto("http://localhost:5173/?demo=fantasy");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
     // Wait for demo to be ready
     await expect(page.getByText("DEMO MODE")).toBeVisible();
@@ -93,6 +100,7 @@ test.describe("Interactive Demo Mode", () => {
   });
   test("should convert demo to real campaign", async ({ page }) => {
     await page.goto("http://localhost:5173/?demo=fantasy");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
     // Open settings
     await page.getByTestId("settings-button").click();

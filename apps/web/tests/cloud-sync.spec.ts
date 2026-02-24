@@ -2,8 +2,13 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Cloud Sync UI", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+    });
     await page.goto("/");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
   });
 
   test("should open and close the cloud sync menu", async ({ page }) => {
@@ -17,7 +22,7 @@ test.describe("Cloud Sync UI", () => {
     await settingsBtn.click();
 
     // 3. Switch to Sync tab
-    await page.click('[role="tab"]:has-text("Cloud Sync")');
+    await page.click("#settings-tab-sync");
     await expect(menu).toBeVisible();
 
     // 4. Close the modal using the close button
@@ -30,7 +35,7 @@ test.describe("Cloud Sync UI", () => {
     const menu = page.getByTestId("cloud-status-menu");
 
     await settingsBtn.click();
-    await page.click('[role="tab"]:has-text("Cloud Sync")');
+    await page.click("#settings-tab-sync");
     await expect(menu).toBeVisible();
 
     // Click inside the menu area (on an element inside the panel)
@@ -44,7 +49,7 @@ test.describe("Cloud Sync UI", () => {
     const dialog = page.locator('[role="dialog"]');
 
     await settingsBtn.click();
-    await page.click('[role="tab"]:has-text("Cloud Sync")');
+    await page.click("#settings-tab-sync");
     await expect(dialog).toBeVisible();
 
     // Click on the backdrop (role="presentation") to close

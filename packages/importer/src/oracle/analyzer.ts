@@ -119,11 +119,15 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
           let matchedEntityId: string | undefined = undefined;
 
           if (options?.knownEntities) {
-            // Case-insensitive exact title match
+            // Case-insensitive exact title match or fuzzy match
             const normalizedTitle = title.toLowerCase().trim();
-            const match = Object.entries(options.knownEntities).find(
-              ([t]) => t.toLowerCase().trim() === normalizedTitle,
-            );
+            const match = Object.entries(options.knownEntities).find(([t]) => {
+              const known = t.toLowerCase().trim();
+              return (
+                known === normalizedTitle ||
+                (known.length > 3 && normalizedTitle.includes(known))
+              );
+            });
             if (match) {
               matchedEntityId = match[1];
             }

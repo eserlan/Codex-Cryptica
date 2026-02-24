@@ -57,7 +57,7 @@
   ];
 
   const handleFiles = async (files: File[]) => {
-    const apiKey = oracle.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const apiKey = oracle.effectiveApiKey;
     if (!apiKey) {
       alert("Oracle API Key required for intelligent import.");
       return;

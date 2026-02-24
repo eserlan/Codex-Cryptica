@@ -14,6 +14,16 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
     { timeout: 10000 },
   );
 
+  // Ensure node is centered and visible
+  await page.evaluate((label) => {
+    const cy = (window as any).cy;
+    const node = cy.nodes().filter((n: any) => n.data("label") === label);
+    cy.fit(node, 50); // Fit to node with padding
+  }, label);
+
+  // Allow a moment for the fit animation/render to settle
+  await page.waitForTimeout(1000);
+
   const position = await page.evaluate((label: string) => {
     const cy = (window as any).cy;
     const node = cy.nodes().filter((n: any) => n.data("label") === label);
@@ -24,6 +34,7 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
   const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
   if (!canvasBox) throw new Error("Graph canvas not found");
 
+  // Use force click if necessary, but standard click is better if accurate
   await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
 
   // Wait for the panel to transition in and be stable

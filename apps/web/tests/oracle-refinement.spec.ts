@@ -37,22 +37,6 @@ test.describe("Oracle UI Refinement", () => {
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
 
-    // Enable Oracle by adding a dummy API key to IndexedDB
-    await page.evaluate(async () => {
-      const dbName = "CodexCryptica"; // Updated DB name
-      const request = indexedDB.open(dbName, 7); // Updated version
-
-      const db: IDBDatabase = await new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-      const tx = db.transaction("settings", "readwrite");
-      tx.objectStore("settings").put("fake-key", "ai_api_key");
-      await new Promise((resolve) => (tx.oncomplete = resolve));
-    });
-    await page.reload();
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-
     // Mock Gemini API for text generation
     await page.route(
       "**/models/gemini-*:streamGenerateContent**",
@@ -116,18 +100,6 @@ test.describe("Oracle UI Refinement", () => {
     await page.getByRole("button", { name: "NEW VAULT" }).click();
     await page.getByPlaceholder("Vault Name...").fill("Empty Vault");
     await page.getByRole("button", { name: "CREATE" }).click();
-
-    // Re-ensure API key exists (switch might have reset state in some edge cases)
-    await page.evaluate(async () => {
-      const dbName = "CodexCryptica";
-      const request = indexedDB.open(dbName, 7);
-      const db: IDBDatabase = await new Promise(
-        (r) => (request.onsuccess = () => r(request.result)),
-      );
-      const tx = db.transaction("settings", "readwrite");
-      tx.objectStore("settings").put("fake-key", "ai_api_key");
-      await new Promise((r) => (tx.oncomplete = r));
-    });
 
     // Oracle should still be open, so we don't need to click toggle
     // Verify message is gone from the chat container

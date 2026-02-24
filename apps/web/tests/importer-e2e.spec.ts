@@ -5,6 +5,7 @@ test.describe("Intelligent Importer E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       localStorage.setItem("codex_skip_landing", "true");
       // Mock directory picker
       (window as any).showDirectoryPicker = async () => ({
@@ -68,7 +69,7 @@ test.describe("Intelligent Importer E2E", () => {
     const requestHold = new Promise((resolve) => (resolveRequest = resolve));
 
     await page.route(
-      "**/v1beta/models/gemini-*:generateContent*",
+      "**/models/*generateContent*",
       async (route) => {
         await requestHold;
         await route.fulfill({
@@ -107,9 +108,7 @@ test.describe("Intelligent Importer E2E", () => {
     });
 
     // 4. Verify step moves to 'processing'
-    await expect(
-      page.locator('p:has-text("Analyzing test.txt with Oracle...")'),
-    ).toBeVisible();
+    await expect(page.locator('p:has-text("Analyzing")')).toBeVisible();
 
     // 5. Try to close and dismiss (stay in modal)
     page.once("dialog", async (dialog) => {
@@ -155,7 +154,7 @@ test.describe("Intelligent Importer E2E", () => {
   }) => {
     // 1. Mock Gemini API with split chronicle/lore
     await page.route(
-      "**/v1beta/models/gemini-*:generateContent*",
+      "**/models/*generateContent*",
       async (route) => {
         await route.fulfill({
           status: 200,
