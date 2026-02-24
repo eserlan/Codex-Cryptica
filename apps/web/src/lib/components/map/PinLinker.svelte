@@ -24,7 +24,7 @@
 </script>
 
 <div
-  class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+  class="fixed inset-0 z-[100] bg-theme-bg/60 backdrop-blur-sm flex items-center justify-center p-4"
   transition:fade
 >
   <div
@@ -32,7 +32,7 @@
     transition:scale
   >
     <header
-      class="p-4 border-b border-theme-border flex justify-between items-center bg-black/20"
+      class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg/20"
     >
       <h3
         class="text-sm font-bold text-theme-text uppercase tracking-widest font-mono"
@@ -91,7 +91,7 @@
       </div>
     </div>
 
-    <footer class="p-4 bg-black/10 flex justify-end gap-3">
+    <footer class="p-4 bg-theme-bg/10 flex justify-end gap-3">
       <button
         class="px-4 py-2 text-xs font-bold text-theme-muted hover:text-theme-text transition-colors uppercase tracking-widest"
         onclick={onCancel}

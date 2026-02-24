@@ -147,8 +147,9 @@ class VaultStore {
     this.status = "loading";
     this.errorMessage = null;
 
-    await vaultRegistry.setActiveVault(id);
+    // Load theme for the new vault as early as possible to avoid FOUC/flicker
     await themeStore.loadForVault(id);
+    await vaultRegistry.setActiveVault(id);
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(

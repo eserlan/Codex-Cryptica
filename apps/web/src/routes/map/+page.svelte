@@ -59,7 +59,7 @@
   }
 </script>
 
-<div class="flex-1 flex flex-col bg-black overflow-hidden relative">
+<div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
   {#if mapStore.activeMap}
     <MapView>
       <!-- HUD Overlay -->
@@ -251,7 +251,7 @@
   {#if showUpload}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6"
+      class="absolute inset-0 z-50 bg-theme-bg/80 backdrop-blur-sm flex items-center justify-center p-6"
       ondragover={handleDragOver}
       ondragleave={handleDragLeave}
       ondrop={handleDrop}
@@ -280,7 +280,7 @@
               type="text"
               bind:value={mapName}
               placeholder="World Map, City Plan, etc."
-              class="w-full bg-black/50 border border-theme-border text-theme-text px-4 py-3 rounded-lg focus:border-theme-primary outline-none transition-colors"
+              class="w-full bg-theme-surface/50 border border-theme-border text-theme-text px-4 py-3 rounded-lg focus:border-theme-primary outline-none transition-colors"
             />
           </div>
 

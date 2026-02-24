@@ -9,6 +9,7 @@ export interface RenderOptions {
   pins: MapPin[];
   maskCanvas: HTMLCanvasElement | null;
   showFog: boolean;
+  fogColor?: string;
   grid?: {
     type: "none" | "square" | "hex";
     size: number;
@@ -89,9 +90,9 @@ export function renderMap(options: RenderOptions) {
     const fogCtx = fog.getContext("2d");
 
     if (fogCtx) {
-      // Fill fog layer with opaque black
+      // Fill fog layer with provided color or fallback to opaque black
       fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-      fogCtx.fillStyle = "rgba(0, 0, 0, 0.8)";
+      fogCtx.fillStyle = options.fogColor || "rgba(0, 0, 0, 0.8)";
       fogCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
       // Punch holes where map is revealed (white = revealed in mask)

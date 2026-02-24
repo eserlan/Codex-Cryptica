@@ -121,19 +121,19 @@
   });
 </script>
 
-<div class="h-[calc(100vh-65px)] flex bg-black overflow-hidden relative">
+<div class="h-[calc(100vh-65px)] flex bg-theme-bg overflow-hidden relative">
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
-        class="absolute inset-0 bg-black flex items-center justify-center"
+        class="absolute inset-0 bg-theme-bg flex items-center justify-center"
         aria-hidden="true"
       >
         <div
           class="text-theme-muted font-mono text-xs animate-pulse uppercase tracking-widest"
         >
-          Initiating Neural Interface...
+          {themeStore.resolveJargon("graph_loading")}
         </div>
       </div>
     {/if}

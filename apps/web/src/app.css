@@ -89,33 +89,33 @@
 @layer base {
   :root {
     --header-height: 65px;
-    --color-bg-primary: #050505;
-    --color-bg-surface: #0c0c0c;
-    --color-accent-primary: #4ade80;
-    --color-accent-dim: #16a34a;
-    --color-accent-dark: #15803d;
-    --color-accent-deep: #14532d;
-    --color-border-primary: rgba(22, 163, 74, 0.5);
+    --color-bg-primary: #fdf6e3;
+    --color-bg-surface: #eee8d5;
+    --color-accent-primary: #78350f;
+    --color-accent-dim: #451a03;
+    --color-accent-dark: #451a03;
+    --color-accent-deep: #fdf6e3;
+    --color-border-primary: rgba(120, 53, 15, 0.3);
 
-    --color-text-primary: #4ade80;
-    --color-text-muted: #4ade80;
-    /* Match primary for better visibility when muted */
-    --color-text-dim: #16a34a;
+    --color-text-primary: #2d241e;
+    --color-text-muted: #451a03;
+    /* Match secondary for better visibility when muted */
+    --color-text-dim: #451a03;
     /* Slightly darker than muted but still readable */
 
-    --color-theme-accent: #facc15;
+    --color-theme-accent: #991b1b;
 
-    --font-header: 'Inter', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --font-header: 'Cinzel', serif;
+    --font-body: 'Spectral', serif;
 
     --bg-texture: none;
 
     --color-warning: #eab308;
     --color-danger: #ef4444;
 
-    --color-oracle-primary: #a855f7;
-    --color-oracle-dim: #7e22ce;
-    --color-oracle-dark: #581c87;
+    --color-oracle-primary: #991b1b;
+    --color-oracle-dim: color-mix(in srgb, #991b1b, #fdf6e3 30%);
+    --color-oracle-dark: color-mix(in srgb, #991b1b, #fdf6e3 60%);
   }
 
   html.skip-landing .marketing-layer {
