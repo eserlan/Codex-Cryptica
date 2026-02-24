@@ -8,10 +8,18 @@ import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
+function getInitialTheme(): string {
+  if (!browser) return DEFAULT_THEME.id;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored && THEMES[stored] ? stored : DEFAULT_THEME.id;
+  } catch {
+    return DEFAULT_THEME.id;
+  }
+}
+
 class ThemeStore {
-  currentThemeId = $state<string>(
-    (browser && localStorage.getItem(STORAGE_KEY)) || DEFAULT_THEME.id,
-  );
+  currentThemeId = $state<string>(getInitialTheme());
   previewThemeId = $state<string | null>(null);
 
   activeTheme = $derived(
