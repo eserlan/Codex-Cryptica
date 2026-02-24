@@ -10,6 +10,20 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
 
+  // Lazy load components when needed using relative paths for reliable resolution
+  function loadHeavyComponents() {
+    if (!GraphView) {
+      import("../lib/components/GraphView.svelte").then((m) => {
+        GraphView = m.default;
+      });
+    }
+    if (!EntityDetailPanel) {
+      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
+        EntityDetailPanel = m.default;
+      });
+    }
+  }
+
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
@@ -25,31 +39,19 @@
   );
   const isGuestMode = $derived(!!shareId);
 
-  // Lazy load components when needed using relative paths for reliable resolution
-  function loadHeavyComponents() {
-    if (!GraphView) {
-      import("../lib/components/GraphView.svelte").then((m) => {
-        GraphView = m.default;
-      });
-    }
-    if (!EntityDetailPanel) {
-      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
-        EntityDetailPanel = m.default;
-      });
-    }
-  }
-
-  // Pre-load components in parallel with vault/DB boot if landing page is skipped
-  if (browser && (!uiStore.isLandingPageVisible || isGuestMode)) {
-    loadHeavyComponents();
-  }
-
   // Reactive fallback for when user clicks "Enter Workspace"
   $effect(() => {
     if (
       (vault.isInitialized || isGuestMode) &&
       (!GraphView || !EntityDetailPanel)
     ) {
+      loadHeavyComponents();
+    }
+  });
+
+  // Pre-load components in parallel if landing page is skipped
+  $effect(() => {
+    if (browser && (!uiStore.isLandingPageVisible || isGuestMode)) {
       loadHeavyComponents();
     }
   });
@@ -314,13 +316,13 @@
 </div>
 
 <style>
-  .custom-scrollbar::-webkit-scrollbar {
+  :global(.custom-scrollbar::-webkit-scrollbar) {
     width: 4px;
   }
-  .custom-scrollbar::-webkit-scrollbar-track {
+  :global(.custom-scrollbar::-webkit-scrollbar-track) {
     background: transparent;
   }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  :global(.custom-scrollbar::-webkit-scrollbar-thumb) {
     background: var(--color-accent-primary);
     border-radius: 2px;
   }

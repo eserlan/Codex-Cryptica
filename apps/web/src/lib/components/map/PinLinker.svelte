@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { vault } from "../../stores/vault.svelte";
   import { fade, scale } from "svelte/transition";
 
@@ -8,11 +9,17 @@
   }>();
 
   let query = $state("");
+  let inputEl = $state<HTMLInputElement | null>(null);
+
   let results = $derived.by(() => {
     if (!query) return vault.allEntities.slice(0, 10);
     return vault.allEntities
       .filter((e) => e.title.toLowerCase().includes(query.toLowerCase()))
       .slice(0, 10);
+  });
+
+  onMount(() => {
+    inputEl?.focus();
   });
 </script>
 
@@ -43,11 +50,11 @@
 
     <div class="p-4">
       <input
+        bind:this={inputEl}
         type="text"
         bind:value={query}
         placeholder="Search for an entity..."
         class="w-full bg-theme-bg border border-theme-border text-theme-text px-4 py-2 rounded-lg focus:border-theme-primary outline-none transition-colors mb-4 text-sm"
-        autofocus
       />
 
       <div class="space-y-1 max-h-[300px] overflow-y-auto custom-scrollbar">

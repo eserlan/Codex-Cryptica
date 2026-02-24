@@ -105,6 +105,7 @@
         <button
           onclick={() => onClose()}
           class="text-theme-muted hover:text-theme-text"
+          aria-label="Close"
         >
           <span class="icon-[lucide--x] w-6 h-6"></span>
         </button>
@@ -145,8 +146,9 @@
 
         <div>
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-sm font-medium text-theme-muted"
-              >Merged Content Preview</label
+            <label
+              class="block text-sm font-medium text-theme-muted"
+              for="merge-preview">Merged Content Preview</label
             >
             <div
               class="flex bg-theme-bg border border-theme-border rounded p-0.5"
@@ -175,7 +177,7 @@
                 }}
                 disabled={isLoading}
               >
-                <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+                <span class="icon-[lucide--sparkles] w-3.5 h-3.5"></span>
                 AI Merge
               </button>
             </div>
@@ -189,6 +191,7 @@
             </div>
           {:else}
             <textarea
+              id="merge-preview"
               class="w-full h-64 bg-theme-bg border border-theme-border rounded p-3 font-mono text-sm text-theme-text focus:border-theme-primary focus:ring-1 focus:ring-theme-primary resize-none"
               bind:value={previewContent}
             ></textarea>

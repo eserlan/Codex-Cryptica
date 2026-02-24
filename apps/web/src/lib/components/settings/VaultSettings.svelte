@@ -267,6 +267,7 @@
                 <button
                   onclick={() => removeMonth(month.id)}
                   class="p-1 text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove Month"
                 >
                   <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
                 </button>

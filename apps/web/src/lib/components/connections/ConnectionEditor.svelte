@@ -9,8 +9,8 @@
     onCancel: () => void;
   }>();
 
-  let type = $state(connection.type);
-  let label = $state(connection.label || "");
+  let type = $state("");
+  let label = $state("");
 
   // Sync state if connection changes (e.g. component reuse)
   $effect(() => {
@@ -18,7 +18,7 @@
     label = connection.label || "";
   });
 
-  // Note: These options are coupled with `packages/schema/src/connection.ts` and 
+  // Note: These options are coupled with `packages/schema/src/connection.ts` and
   // `packages/graph-engine/src/defaults.ts`. If types or colors change there, update here.
   const options = [
     { value: "related_to", label: "Default (Grey)" },
@@ -28,14 +28,24 @@
   ];
 
   const handleSave = async () => {
-    await vault.updateConnection(sourceId, connection.target, connection.type, type, label);
+    await vault.updateConnection(
+      sourceId,
+      connection.target,
+      connection.type,
+      type,
+      label,
+    );
     onSave();
   };
 </script>
 
 <div class="p-3 bg-theme-bg border border-theme-primary rounded-md space-y-3">
   <div>
-    <label for="relationship-type" class="block text-xs font-bold text-theme-secondary mb-1">RELATIONSHIP TYPE</label>
+    <label
+      for="relationship-type"
+      class="block text-xs font-bold text-theme-secondary mb-1"
+      >RELATIONSHIP TYPE</label
+    >
     <select
       id="relationship-type"
       bind:value={type}
@@ -48,7 +58,11 @@
   </div>
 
   <div>
-    <label for="custom-label" class="block text-xs font-bold text-theme-secondary mb-1">CUSTOM LABEL (Optional)</label>
+    <label
+      for="custom-label"
+      class="block text-xs font-bold text-theme-secondary mb-1"
+      >CUSTOM LABEL (Optional)</label
+    >
     <input
       id="custom-label"
       type="text"
