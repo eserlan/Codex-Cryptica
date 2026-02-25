@@ -477,6 +477,28 @@ class VaultStore {
         },
       );
 
+      // Refresh folder name and metadata
+      let folderName = "cloud";
+      const currentMeta = await db.get(
+        "cloud_sync_metadata",
+        this.activeVaultId,
+      );
+      if (currentMeta) {
+        try {
+          const folderMeta = await this.gdriveBackend.getFolderMetadata(
+            currentMeta.gdriveFolderId,
+          );
+          folderName = folderMeta.name;
+          await db.put("cloud_sync_metadata", {
+            ...currentMeta,
+            gdriveFolderName: folderMeta.name,
+            lastSyncTime: Date.now(),
+          });
+        } catch (err) {
+          console.warn("Failed to update sync metadata time", err);
+        }
+      }
+
       this.status = "idle";
       this.syncType = null;
       if (result.failed.length > 0) {
@@ -486,7 +508,7 @@ class VaultStore {
         );
       } else {
         uiStore.notify(
-          `Cloud sync complete: ${result.updated.length + result.created.length} synced.`,
+          `Sync complete: ${result.updated.length + result.created.length} mirrored to ${folderName}.`,
           "success",
         );
       }
@@ -521,16 +543,43 @@ class VaultStore {
   async getCloudMetadata() {
     if (!this.activeVaultId) return null;
     const db = await getDB();
-    return await db.get("cloud_sync_metadata", this.activeVaultId);
+    const meta = await db.get("cloud_sync_metadata", this.activeVaultId);
+
+    // Proactive name refresh if missing but backend is active
+    if (meta && !meta.gdriveFolderName && this.gdriveBackend?.isConnected) {
+      try {
+        const folderMeta = await this.gdriveBackend.getFolderMetadata(
+          meta.gdriveFolderId,
+        );
+        meta.gdriveFolderName = folderMeta.name;
+        await db.put("cloud_sync_metadata", meta);
+      } catch (err) {
+        console.warn("Failed to proactively fetch folder name", err);
+      }
+    }
+
+    return meta;
   }
 
   async updateCloudFolder(folderId: string) {
     if (!this.activeVaultId) return;
     const db = await getDB();
     const existing = await db.get("cloud_sync_metadata", this.activeVaultId);
+
+    let folderName = existing?.gdriveFolderName;
+    if (this.gdriveBackend) {
+      try {
+        const meta = await this.gdriveBackend.getFolderMetadata(folderId);
+        folderName = meta.name;
+      } catch (err) {
+        console.warn("Failed to fetch folder name, using existing", err);
+      }
+    }
+
     await db.put("cloud_sync_metadata", {
       vaultId: this.activeVaultId,
       gdriveFolderId: folderId,
+      gdriveFolderName: folderName,
       lastSyncToken: existing?.lastSyncToken || null,
       lastSyncTime: existing?.lastSyncTime || Date.now(),
     });

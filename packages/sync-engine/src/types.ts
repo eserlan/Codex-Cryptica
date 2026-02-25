@@ -90,6 +90,7 @@ export interface SyncEntry {
 export interface CloudSyncMetadata {
   vaultId: string;
   gdriveFolderId: string;
+  gdriveFolderName?: string;
   lastSyncToken: string | null;
   lastSyncTime: number;
 }

@@ -16,14 +16,22 @@ export class GDriveBackend implements ISyncBackend {
     prompt: string;
   } | null = null;
 
+  private unloadListener = () => {
+    this.accessToken = null;
+  };
+
   constructor(
     private clientId: string,
     private scope: string = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
   ) {
     if (typeof window !== "undefined") {
-      window.addEventListener("beforeunload", () => {
-        this.accessToken = null;
-      });
+      window.addEventListener("beforeunload", this.unloadListener);
+    }
+  }
+
+  destroy() {
+    if (typeof window !== "undefined") {
+      window.removeEventListener("beforeunload", this.unloadListener);
     }
   }
 
@@ -338,6 +346,17 @@ export class GDriveBackend implements ISyncBackend {
     if (!res.ok) throw new Error(`Failed to find folder ${name}`);
     const data: GDriveListResponse = await res.json();
     return data.files.length > 0 ? data.files[0].id : null;
+  }
+
+  async getFolderMetadata(
+    folderId: string,
+  ): Promise<{ id: string; name: string }> {
+    const res = await this.fetchWithRetry(
+      `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name`,
+    );
+    if (!res.ok)
+      throw new Error(`Failed to get folder metadata for ${folderId}`);
+    return await res.json();
   }
 
   async listFolders(

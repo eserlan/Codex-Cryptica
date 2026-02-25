@@ -123,7 +123,6 @@ export class SyncService {
       console.log(`[Sync] Calculated ${actions.length} actions to perform.`);
 
       const totalActions = actions.length;
-      let _completedActions = 0;
 
       const updateProgress = () => {
         if (onProgress) {
@@ -149,7 +148,6 @@ export class SyncService {
             } catch (err: any) {
               result.failed.push({ path: action.path, error: err.message });
             } finally {
-              _completedActions++;
               updateProgress();
             }
           }

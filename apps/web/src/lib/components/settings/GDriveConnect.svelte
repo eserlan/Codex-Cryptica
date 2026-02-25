@@ -9,9 +9,15 @@
 
   let isConnecting = $state(false);
   let connectedUser = $state<{ email: string; name: string } | null>(null);
-  let cloudMetadata = $state<{ gdriveFolderId: string } | null | undefined>(
-    null,
-  );
+  let cloudMetadata = $state<
+    | {
+        gdriveFolderId: string;
+        gdriveFolderName?: string;
+        lastSyncTime?: number;
+      }
+    | null
+    | undefined
+  >(null);
   let showPicker = $state(false);
 
   let error = $state<string | null>(null);
@@ -132,17 +138,22 @@
           </button>
         </div>
         {#if cloudMetadata?.gdriveFolderId}
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-xs font-mono truncate max-w-[200px]"
+          <div class="flex flex-col mt-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold truncate max-w-[200px]">
+                {cloudMetadata.gdriveFolderName || "Unknown Folder"}
+              </span>
+              <a
+                href="https://drive.google.com/drive/folders/{cloudMetadata.gdriveFolderId}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="icon-[lucide--external-link] w-3 h-3 text-theme-muted hover:text-accent-primary"
+                aria-label="Open folder in Google Drive"
+              ></a>
+            </div>
+            <span class="text-[9px] font-mono text-theme-muted truncate"
               >{cloudMetadata.gdriveFolderId}</span
             >
-            <a
-              href="https://drive.google.com/drive/folders/{cloudMetadata.gdriveFolderId}"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="icon-[lucide--external-link] w-3 h-3 text-theme-muted hover:text-accent-primary"
-              aria-label="Open folder in Google Drive"
-            ></a>
           </div>
         {:else}
           <span class="text-xs italic text-theme-muted mt-1"
@@ -150,6 +161,17 @@
           >
         {/if}
       </div>
+
+      {#if cloudMetadata?.lastSyncTime}
+        <div
+          class="flex items-center gap-2 px-1 text-[10px] text-theme-muted font-mono uppercase"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-theme-primary/50"></span>
+          Last Synchronized: {new Date(
+            cloudMetadata.lastSyncTime,
+          ).toLocaleString()}
+        </div>
+      {/if}
 
       <button
         class="w-full px-4 py-3 bg-accent-primary text-bg-primary font-bold rounded-md hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 shadow-lg shadow-accent-primary/10"

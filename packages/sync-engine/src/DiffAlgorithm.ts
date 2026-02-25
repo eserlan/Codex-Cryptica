@@ -108,6 +108,11 @@ export class DiffAlgorithm {
   ): SyncAction {
     // 0. Explicit Deletion Signals (Delta Sync)
     if (opfs?.isDeleted && local && registry) {
+      // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
+      // even if explicitly deleted on the remote side.
+      if (this.isProtectedPath(path)) {
+        return { type: "SKIP", path };
+      }
       return { type: "DELETE_LOCAL", path, registryEntry: registry };
     }
     if (local?.isDeleted && opfs && registry) {
@@ -148,6 +153,11 @@ export class DiffAlgorithm {
     // 2. Deletion Detection
     if (!local) {
       if (opfs) {
+        // SAFETY: Never automatically delete images or cache from OPFS during local sync
+        // if they are just missing from the local folder. These are app-managed assets.
+        if (path.startsWith("images/") || path.startsWith(".cache/")) {
+          return { type: "SKIP", path };
+        }
         return { type: "DELETE_OPFS", path, registryEntry: registry };
       }
       return { type: "SKIP", path };
@@ -155,6 +165,11 @@ export class DiffAlgorithm {
 
     if (!opfs) {
       if (local) {
+        // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
+        // if they are just missing from the remote side.
+        if (this.isProtectedPath(path)) {
+          return { type: "SKIP", path };
+        }
         return { type: "DELETE_LOCAL", path, registryEntry: registry };
       }
       return { type: "SKIP", path };
@@ -201,5 +216,9 @@ export class DiffAlgorithm {
     } else {
       return { type: "UPDATE_LOCAL", path, opfsMetadata: opfs };
     }
+  }
+
+  private static isProtectedPath(path: string): boolean {
+    return path.startsWith("images/") || path.startsWith(".cache/");
   }
 }

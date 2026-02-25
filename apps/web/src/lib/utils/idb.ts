@@ -55,6 +55,7 @@ interface CodexDB extends DBSchema {
     value: {
       vaultId: string;
       gdriveFolderId: string;
+      gdriveFolderName?: string;
       lastSyncToken: string | null;
       lastSyncTime: number;
     };
@@ -118,7 +119,9 @@ export function getDB() {
           store.createIndex("by-remote-id", "remoteId");
         } else if (oldVersion < 11) {
           const store = transaction.objectStore("sync_registry");
-          store.createIndex("by-remote-id", "remoteId");
+          if (!store.indexNames.contains("by-remote-id")) {
+            store.createIndex("by-remote-id", "remoteId");
+          }
         }
 
         if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
