@@ -37,14 +37,10 @@ export class SyncService {
     };
 
     try {
-      console.log(`[Sync] Starting sync cycle for vault: ${vaultId}`);
       const localScan = await local.scan(vaultId);
       const remoteScan = await remote.scan(vaultId, sinceToken);
       const registryEntries = await this.registry.getEntriesByVault(vaultId);
 
-      console.log(
-        `[Sync] Scan results: Local=${localScan.files.length}, Remote=${remoteScan.files.length}, Registry=${registryEntries.length}`,
-      );
       result.nextToken = remoteScan.nextToken;
 
       // 1. Deduplicate remote changes by handle if they are strings (Cloud IDs)
@@ -119,8 +115,6 @@ export class SyncService {
           actions.push(action);
         }
       }
-
-      console.log(`[Sync] Calculated ${actions.length} actions to perform.`);
 
       const totalActions = actions.length;
 

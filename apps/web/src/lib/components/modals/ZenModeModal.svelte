@@ -41,7 +41,6 @@
   let isCopied = $state(false);
 
   // Accessibility State
-  let lastFocusedElement = $state<HTMLElement | null>(null);
   let lightboxBackdrop = $state<HTMLDivElement>();
   let closeLightboxBtn = $state<HTMLButtonElement>();
 
@@ -62,16 +61,15 @@
   // Focus Management for Lightbox
   $effect(() => {
     if (showLightbox) {
-      lastFocusedElement = document.activeElement as HTMLElement;
+      const prevFocus = document.activeElement as HTMLElement;
       // Small delay to allow DOM to update
       setTimeout(() => {
         closeLightboxBtn?.focus();
       }, 0);
-    } else {
-      if (lastFocusedElement) {
-        lastFocusedElement.focus();
-        lastFocusedElement = null;
-      }
+
+      return () => {
+        prevFocus?.focus();
+      };
     }
   });
 

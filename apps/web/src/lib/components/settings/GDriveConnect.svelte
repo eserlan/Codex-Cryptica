@@ -39,20 +39,14 @@
 
     isConnecting = true;
     try {
-      console.log("[GDriveConnect] Initiating connection...");
       // If we already have a backend in vault, use it
       let backend = (vault as any).gdriveBackend;
       if (!backend) {
-        console.log("[GDriveConnect] No existing backend, creating new one...");
         backend = new GDriveBackend(CLIENT_ID);
         (vault as any).gdriveBackend = backend;
       }
 
-      console.log("[GDriveConnect] Calling connect('select_account')...");
       await backend.connect("select_account");
-      console.log(
-        "[GDriveConnect] Authentication successful, fetching profile...",
-      );
       const profile = await backend.getUserProfile();
 
       if (isMounted) {
