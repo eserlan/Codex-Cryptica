@@ -11,8 +11,13 @@ describe("GDriveBackend", () => {
       accounts: {
         oauth2: {
           initTokenClient: vi.fn().mockImplementation((config) => ({
-            requestAccessToken: vi.fn(() => {
-              config.callback({ access_token: "test-token" });
+            requestAccessToken: vi.fn(({ prompt }) => {
+              // Standard GIS behavior: callback is triggered after interaction or check
+              if (prompt === "none") {
+                config.callback({ access_token: "refreshed-token" } as any);
+              } else {
+                config.callback({ access_token: "test-token" } as any);
+              }
             }),
           })),
         },
@@ -27,7 +32,7 @@ describe("GDriveBackend", () => {
         Promise.resolve({ email: "test@example.com", name: "Test User" }),
     });
 
-    await backend.connect();
+    await backend.connect("");
     const profile = await backend.getUserProfile();
 
     expect(profile.email).toBe("test@example.com");
@@ -97,17 +102,23 @@ describe("GDriveBackend", () => {
   });
 
   it("should refresh token on 401 errors", async () => {
-    await backend.connect();
+    // Initial connect with explicit prompt to set access token
+    await backend.connect("");
+
     let calls = 0;
-    (fetch as any).mockImplementation(async () => {
-      calls++;
-      if (calls === 1) return { ok: false, status: 401 };
-      return { ok: true, json: async () => ({ email: "new@example.com" }) };
+    (fetch as any).mockImplementation(async (url: string) => {
+      if (url.includes("userinfo")) {
+        calls++;
+        if (calls === 1) return { ok: false, status: 401 };
+        return { ok: true, json: async () => ({ email: "new@example.com" }) };
+      }
+      return { ok: true, json: async () => ({}) };
     });
 
     const profile = await backend.getUserProfile();
     expect(profile.email).toBe("new@example.com");
-    expect(google.accounts.oauth2.initTokenClient).toHaveBeenCalledTimes(2);
+    // Only initialized once
+    expect(google.accounts.oauth2.initTokenClient).toHaveBeenCalledTimes(1);
   });
 
   it("should create nested folders recursively", async () => {

@@ -69,6 +69,7 @@
       <button
         class="text-theme-muted hover:text-theme-primary transition-colors"
         onclick={onCancel}
+        aria-label="Close folder picker"
       >
         <span class="icon-[lucide--x] w-5 h-5"></span>
       </button>

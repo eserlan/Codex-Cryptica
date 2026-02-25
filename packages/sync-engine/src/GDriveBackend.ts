@@ -10,6 +10,11 @@ export class GDriveBackend implements ISyncBackend {
   private vaultFolderId: string | null = null;
   private connectionPromise: Promise<void> | null = null;
   private activeVaultId: string | null = null;
+  private connectionResolvers: {
+    resolve: () => void;
+    reject: (reason?: any) => void;
+    prompt: string;
+  } | null = null;
 
   constructor(
     private clientId: string,
@@ -40,40 +45,42 @@ export class GDriveBackend implements ISyncBackend {
         return reject(new Error("Google Identity Services not loaded"));
       }
 
-      // Initialize the client only if it doesn't exist
+      this.connectionResolvers = { resolve, reject, prompt };
+
       if (!this.tokenClient) {
         this.tokenClient = google.accounts.oauth2.initTokenClient({
           client_id: this.clientId,
           scope: this.scope,
           callback: (response: any) => {
+            const resolvers = this.connectionResolvers;
+            if (!resolvers) return;
+
             if (response.error) {
-              if (prompt === "none") {
+              if (resolvers.prompt === "none") {
                 this.accessToken = null;
-                reject(new Error("SILENT_AUTH_FAILED"));
+                resolvers.reject(new Error("SILENT_AUTH_FAILED"));
               } else {
-                reject(response);
+                resolvers.reject(response);
               }
             } else {
               this.accessToken = response.access_token;
-              resolve();
+              resolvers.resolve();
             }
           },
-          error_callback: (error: any) => reject(error),
+          error_callback: (error: any) => {
+            this.connectionResolvers?.reject(error);
+          },
         });
       }
 
-      // If we are just resolving an existing client, the callback above won't trigger
-      // until requestAccessToken is called.
       this.tokenClient.requestAccessToken({ prompt });
-
-      // If prompt is none, and it fails, the callback triggers.
-      // If it succeeds, the callback triggers.
     });
 
     try {
       await this.connectionPromise;
     } finally {
       this.connectionPromise = null;
+      this.connectionResolvers = null;
     }
   }
 

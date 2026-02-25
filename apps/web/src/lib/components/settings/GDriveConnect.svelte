@@ -9,8 +9,11 @@
 
   let isConnecting = $state(false);
   let connectedUser = $state<{ email: string; name: string } | null>(null);
-  let cloudMetadata = $state<{ gdriveFolderId: string } | null>(null);
+  let cloudMetadata = $state<{ gdriveFolderId: string } | null | undefined>(
+    null,
+  );
   let showPicker = $state(false);
+
   let error = $state<string | null>(null);
   let isMounted = true;
 
@@ -49,7 +52,7 @@
       if (isMounted) {
         connectedUser = profile;
         cloudMetadata = await vault.getCloudMetadata();
-        uiStore.notify(`Connected as ${connectedUser.name}`, "success");
+        uiStore.notify(`Connected as ${profile.name}`, "success");
       }
     } catch (err: any) {
       console.error("GDrive connection failed", err);
@@ -138,6 +141,7 @@
               target="_blank"
               rel="noopener noreferrer"
               class="icon-[lucide--external-link] w-3 h-3 text-theme-muted hover:text-accent-primary"
+              aria-label="Open folder in Google Drive"
             ></a>
           </div>
         {:else}
