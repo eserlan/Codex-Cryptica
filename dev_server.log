@@ -1,0 +1,12 @@
+
+> web@0.9.12 dev
+> vite dev --port 5173
+
+
+  VITE v7.3.1  ready in 1224 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+[VaultStore] New Instance Created 1771987284747
+Google Identity Services script failed to load
+Google API script failed to load

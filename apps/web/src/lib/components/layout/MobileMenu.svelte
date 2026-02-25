@@ -67,7 +67,7 @@
       <button
         bind:this={closeButton}
         onclick={close}
-        class="p-2 text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary rounded"
+        class="p-3 text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary rounded min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Close menu"
       >
         <span class="icon-[heroicons--x-mark] w-6 h-6"></span>
@@ -94,7 +94,7 @@
           Application
         </h3>
         <button
-          class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary"
+          class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all text-left group focus:outline-none focus:ring-2 focus:ring-theme-primary min-h-[44px]"
           onclick={() => {
             uiStore.toggleSettings("vault");
             close();

@@ -1,0 +1,255 @@
+
+> test:e2e
+> npm run test:e2e --workspace=web --reporter=list
+
+npm warn Unknown cli config "--reporter". This will stop working in the next major version of npm.
+
+> web@0.9.12 test:e2e
+> playwright test --reporter=list
+
+[2m[WebServer] [22mnpm warn Unknown env config "reporter". This will stop working in the next major version of npm.
+[2m[WebServer] [22mnpm warn config ignoring workspace config at /app/apps/web/.npmrc
+
+Running 161 tests using 2 workers
+
+[2m[WebServer] [22mGoogle Identity Services script failed to load
+[2m[WebServer] [22mGoogle API script failed to load
+  ✓    2 [chromium] › tests/better-imports.spec.ts:188:3 › Better Imports E2E › should identify existing entities leniency (fuzzy match) (10.8s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985479906
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+  ✓    1 [chromium] › tests/better-imports.spec.ts:75:3 › Better Imports E2E › should identify existing entities and handle connections (12.0s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985481114
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+  ✓    3 [chromium] › tests/calendar-picker.spec.ts:109:3 › Campaign Date Picker E2E › should open date picker and select a year via Era (6.6s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985486543
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+  ✓    4 [chromium] › tests/calendar-picker.spec.ts:149:3 › Campaign Date Picker E2E › should support custom month names (6.3s)
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985487685
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+  ✓    6 [chromium] › tests/calendar-picker.spec.ts:232:3 › Campaign Date Picker E2E › should allow manual year entry via keyboard toggle (4.0s)
+  ✘    5 [chromium] › tests/calendar-picker.spec.ts:192:3 › Campaign Date Picker E2E › should allow navigating years via pure UI grid (7.8s)
+  ✓    7 [chromium] › tests/categories.spec.ts:26:3 › Category Architecture Modal › should open Category Architecture modal and display default categories (3.2s)
+  ✓    8 [chromium] › tests/categories.spec.ts:106:3 › Category Architecture Modal › should open and close glyph library picker (4.4s)
+  ✓    9 [chromium] › tests/categories.spec.ts:62:3 › Category Architecture Modal › should add a new category in session (3.5s)
+  ✓   10 [chromium] › tests/categories.spec.ts:130:3 › Category Architecture Modal › should reset categories to defaults (3.9s)
+  ✓   11 [chromium] › tests/categories.spec.ts:154:3 › Category Architecture Modal › should update graph node border color when category color changes (5.4s)
+  ✓   12 [chromium] › tests/cloud-sync.spec.ts:15:3 › Cloud Sync UI › should open and close the cloud sync menu (3.7s)
+  ✓   13 [chromium] › tests/cloud-sync.spec.ts:34:3 › Cloud Sync UI › should not close when clicking inside the menu (2.5s)
+[BROWSER]: [vite] connecting...
+[BROWSER]: [vite] connected.
+[BROWSER]: [VaultStore] New Instance Created 1771985508358
+[BROWSER]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+[BROWSER]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   14 [chromium] › tests/cloud-sync.spec.ts:48:3 › Cloud Sync UI › should close when clicking the backdrop (4.2s)
+[TEST] Expecting vault name: Temp-1771985510532
+  ✓   15 [chromium] › tests/debug-vault.spec.ts:19:3 › Vault Management Debug › should create and switch a vault (3.4s)
+  ✓   17 [chromium] › tests/demo-mode.spec.ts:42:3 › Interactive Demo Mode › should start theme-specific demo via URL (3.1s)
+  ✓   16 [chromium] › tests/demo-mode.spec.ts:16:3 › Interactive Demo Mode › should start demo from landing page (3.7s)
+  ✓   19 [chromium] › tests/demo-mode.spec.ts:99:3 › Interactive Demo Mode › should convert demo to real campaign (4.1s)
+  ✓   18 [chromium] › tests/demo-mode.spec.ts:62:3 › Interactive Demo Mode › should prevent data persistence in demo mode (4.8s)
+  ✓   20 [chromium] › tests/draw-autocomplete.spec.ts:36:3 › Draw Command Autocomplete › Autocompletes /draw command (4.1s)
+  ✓   21 [chromium] › tests/draw-button.spec.ts:22:3 › Advanced Draw Button › Lite tier does NOT show draw buttons (3.9s)
+  ✓   22 [chromium] › tests/draw-button.spec.ts:49:3 › Advanced Draw Button › Advanced tier shows and triggers draw buttons in Sidepanel and Chat (3.5s)
+  ✓   23 [chromium] › tests/draw-button.spec.ts:103:3 › Advanced Draw Button › Advanced tier shows and triggers draw buttons in Zen Mode (3.6s)
+  ✓   24 [chromium] › tests/e2e.spec.ts:20:3 › Vault E2E › Auto-initializes Default Vault (1.9s)
+  ✓   25 [chromium] › tests/e2e.spec.ts:28:3 › Vault E2E › Create Entity Updates Graph (4.1s)
+  ✓   26 [chromium] › tests/e2e.spec.ts:50:3 › Vault E2E › Connect Mode UI (3.0s)
+  ✓   28 [chromium] › tests/fog-of-war.spec.ts:61:3 › Fog of War › Selective hiding with 'hidden' tag (2.8s)
+  ✓   27 [chromium] › tests/e2e.spec.ts:73:3 › Vault E2E › Toggle Node Labels Shortcut (3.3s)
+  ✓   29 [chromium] › tests/fog-of-war.spec.ts:104:3 › Fog of War › Global Fog / Hidden by Default (2.8s)
+  ✓   31 [chromium] › tests/footer.spec.ts:10:3 › Footer › should display Patreon support link in the footer (490ms)
+  ✓   30 [chromium] › tests/fog-of-war.spec.ts:126:3 › Fog of War › Real-time revealing of content (3.4s)
+  ✓   32 [chromium] › tests/footer.spec.ts:25:3 › Footer › should display Discord link in the footer (501ms)
+  ✓   33 [chromium] › tests/footer.spec.ts:38:3 › Footer › should have correct styling classes on Patreon link (568ms)
+  -   35 [chromium] › tests/gdrive-multi-vault.spec.ts:4:3 › GDrive Multi-Vault Sync › Linking multiple vaults to GDrive
+  -   36 [chromium] › tests/gdrive-multi-vault.spec.ts:19:3 › GDrive Multi-Vault Sync › Automated sync folder switching
+  ✓   34 [chromium] › tests/footer.spec.ts:50:3 › Footer › Patreon link should persist in offline mode (3.2s)
+  ✓   37 [chromium] › tests/graph-connections.spec.ts:4:3 › Graph Connection Labels & Colors › should allow changing connection type and see color indication (indirectly via label) (5.1s)
+  ✓   38 [chromium] › tests/graph-fit.spec.ts:12:3 › Graph Fit to Screen › should reset graph zoom and pan when fit button is clicked (3.6s)
+  ✘   39 [chromium] › tests/graph-focus.spec.ts:53:3 › Graph Focus Mode › should highlight neighborhood and dim others on node click (4.8s)
+  ✓   40 [chromium] › tests/graph-focus.spec.ts:91:3 › Graph Focus Mode › should shift focus when clicking a neighbor (5.0s)
+  ✓   41 [chromium] › tests/graph-focus.spec.ts:150:3 › Graph Focus Mode › should clear focus when clicking background (5.8s)
+  ✓   42 [chromium] › tests/graph-focus.spec.ts:123:3 › Graph Focus Mode › should work correctly for island nodes (no connections) (5.8s)
+  ✓   43 [chromium] › tests/graph-sync.spec.ts:18:3 › Graph Synchronization Loop › should correctly synchronize newly added elements (Map hydration guard) (3.0s)
+  ✓   44 [chromium] › tests/graph-sync.spec.ts:50:3 › Graph Synchronization Loop › should synchronize object-type metadata correctly (Deep equality guard) (3.0s)
+  ✓   45 [chromium] › tests/graph-sync.spec.ts:90:3 › Graph Synchronization Loop › should handle missing positions in Guest Mode without crashing (2.3s)
+  ✓   46 [chromium] › tests/guest-mode.spec.ts:104:3 › Guest Mode (P2P Share) › should enter guest mode, load shared data, and disable editing (2.9s)
+  ✓   47 [chromium] › tests/help-links.spec.ts:16:3 › Direct Help Links › should open help center to specific article when hash is present (1.5s)
+  ✓   49 [chromium] › tests/help-links.spec.ts:56:3 › Direct Help Links › should handle invalid help article ID gracefully (404ms)
+  ✓   50 [chromium] › tests/help-links.spec.ts:64:3 › Direct Help Links › should handle malformed help hash gracefully (514ms)
+  ✓   48 [chromium] › tests/help-links.spec.ts:35:3 › Direct Help Links › should update help article when hash changes (2.6s)
+  ✘   52 [chromium] › tests/help-onboarding.spec.ts:17:3 › Help Onboarding Walkthrough › should automatically start onboarding for new users (5.5s)
+  ✘   53 [chromium] › tests/help-onboarding.spec.ts:51:3 › Help Onboarding Walkthrough › should NOT dim the screen on welcome step (body target) (5.4s)
+  ✘   54 [chromium] › tests/help-onboarding.spec.ts:69:3 › Help Onboarding Walkthrough › should allow skipping the tour (5.5s)
+  ✘   55 [chromium] › tests/help-onboarding.spec.ts:79:3 › Help Onboarding Walkthrough › should show contextual hints for advanced features (5.5s)
+  ✘   51 [chromium] › tests/help-links.spec.ts:72:3 › Direct Help Links › should copy direct link to clipboard when link button is clicked (30.0s)
+  ✘   56 [chromium] › tests/help-system.spec.ts:14:3 › Help Center System › should open help center and display articles list (30.1s)
+  ✘   57 [chromium] › tests/help-system.spec.ts:34:3 › Help Center System › should allow searching for help articles (30.1s)
+  ✓   59 [chromium] › tests/image-gen.spec.ts:54:3 › Oracle Image Generation › should trigger image generation and display the result (2.2s)
+  ✓   60 [chromium] › tests/image-gen.spec.ts:103:3 › Oracle Image Generation › should allow dragging an image to the detail panel (2.8s)
+  ✓   61 [chromium] › tests/import-progress.spec.ts:16:3 › Import Progress Management E2E › should show the import section in vault settings (1.8s)
+  ✘   62 [chromium] › tests/import-progress.spec.ts:34:3 › Import Progress Management E2E › should import a file and update progress indicators (1.7s)
+  ✘   63 [chromium] › tests/import-progress.spec.ts:53:3 › Import Progress Management E2E › should resume import progress after page reload (2.0s)
+  ✓   64 [chromium] › tests/importer-e2e.spec.ts:60:3 › Intelligent Importer E2E › should block modal exit during active import and allow abort (2.7s)
+  ✓   65 [chromium] › tests/importer-e2e.spec.ts:152:3 › Intelligent Importer E2E › should map chronicle and lore fields correctly to vault (1.9s)
+TEST: Waiting for vault.isInitialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985647085
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+  ✘   66 [chromium] › tests/labels.spec.ts:84:3 › Entity Labeling System › Add and remove labels from an entity (7.0s)
+  ✘   58 [chromium] › tests/help-system.spec.ts:53:3 › Help Center System › should display article content when clicked (30.1s)
+TEST: Waiting for vault.isInitialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985655976
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+TEST: Waiting for vault.isInitialized
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985658320
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+  ✓   67 [chromium] › tests/labels.spec.ts:132:3 › Entity Labeling System › Filter graph by labels and clear filter (3.4s)
+  ✓   69 [chromium] › tests/landing.spec.ts:4:3 › Landing Page › should have a link to the features page (1.3s)
+  ✓   70 [chromium] › tests/lite-mode.spec.ts:15:3 › Lite Mode (No AI) › Toggle Lite Mode ON removes AI entry points and silences network (4.2s)
+  ✘   68 [chromium] › tests/labels.spec.ts:166:3 › Entity Labeling System › Autocomplete and keyboard navigation for labels (8.2s)
+  ✓   71 [chromium] › tests/lite-mode.spec.ts:78:3 › Lite Mode (No AI) › Restricted Oracle supports /help command (2.5s)
+  ✓   73 [chromium] › tests/lite-mode.spec.ts:98:3 › Lite Mode (No AI) › Oracle supports /help command in AI mode (2.6s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985671408
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   72 [chromium] › tests/lite-mode.spec.ts:112:3 › Lite Mode (No AI) › Lite Mode persists across reloads (5.8s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985673592
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   74 [chromium] › tests/map.spec.ts:37:3 › Map Mode › should allow uploading a map image and rendering it (3.6s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985674919
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   75 [chromium] › tests/map.spec.ts:70:3 › Map Mode › should allow adding and then deleting a pin (4.2s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985677709
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   76 [chromium] › tests/map.spec.ts:105:3 › Map Mode › should allow tagging a map as 'World Map' and auto-loading it (3.9s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985679756
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   77 [chromium] › tests/map.spec.ts:138:3 › Map Mode › should toggle Fog of War and GM Mode when a map is active (5.6s)
+BROWSER [debug]: [vite] connecting...
+BROWSER [debug]: [vite] connected.
+BROWSER [log]: [VaultStore] New Instance Created 1771985683193
+BROWSER [warning]: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+BROWSER [log]: [App] Codex Cryptica v0.9.12 initialized
+  ✓   79 [chromium] › tests/markdown-editor.spec.ts:9:3 › MarkdownEditor › initializes with content and updates output (2.1s)
+  ✓   78 [chromium] › tests/map.spec.ts:168:3 › Map Mode › should allow deleting a map via Zen Mode (7.6s)
+  ✓   80 [chromium] › tests/markdown-editor.spec.ts:28:3 › MarkdownEditor › renders and serializes bullet lists correctly (2.0s)
+  ✓   81 [chromium] › tests/markdown-editor.spec.ts:58:3 › MarkdownEditor › renders and serializes ordered lists correctly (1.9s)
+  ✓   82 [chromium] › tests/markdown-editor.spec.ts:82:3 › MarkdownEditor › renders and serializes blockquotes correctly (2.1s)
+  ✓   83 [chromium] › tests/markdown-editor.spec.ts:109:3 › MarkdownEditor › inserts embed widget via exposed method (1.7s)
+  ✓   84 [chromium] › tests/minimap.spec.ts:34:3 › Minimap Navigation › should render the minimap container and canvas (2.5s)
+  ✓   85 [chromium] › tests/minimap.spec.ts:50:3 › Minimap Navigation › should pan graph when dragging viewport rect (3.4s)
+  ✓   86 [chromium] › tests/minimap.spec.ts:90:3 › Minimap Navigation › should center graph when clicking minimap background (2.5s)
+  ✓   88 [chromium] › tests/mobile-ux-009.spec.ts:80:5 › Mobile UX - 009 Feature Requirements › FR-004: Entity detail full-width on mobile › entity detail panel area should be full-width on mobile viewport (472ms)
+  ✓   87 [chromium] › tests/minimap.spec.ts:121:3 › Minimap Navigation › should toggle minimap visibility (3.0s)
+  ✓   90 [chromium] › tests/mobile-ux-009.spec.ts:142:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › search button should have adequate touch height (340ms)
+  ✘   89 [chromium] › tests/mobile-ux-009.spec.ts:111:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › primary action buttons should have minimum 44x44px touch target (5.5s)
+  ✘   91 [chromium] › tests/mobile-ux-009.spec.ts:159:5 › Mobile UX - 009 Feature Requirements › FR-005: Touch-friendly button sizes › cloud status button (in menu) should meet touch target requirements (5.3s)
+  ✓   92 [chromium] › tests/mobile-ux-fixes.spec.ts:17:3 › Mobile UX Fixes › Entity Detail Panel should have solid background and high z-index (2.2s)
+  ✘   93 [chromium] › tests/node-merging.spec.ts:14:3 › Node Merging › should merge two nodes and preserve content and links (30.1s)
+  ✘   94 [chromium] › tests/node-merging.spec.ts:69:3 › Node Merging › should update backlinks when merging nodes (30.1s)
+  ✘   95 [chromium] › tests/node-merging.spec.ts:112:3 › Node Merging › should preserve connections when merging nodes (30.1s)
+  ✘   96 [chromium] › tests/node-merging.spec.ts:197:5 › Node Merging › Documentation & Hints › should show the node merging help article (30.1s)
+  ✓   98 [chromium] › tests/node-read-mode.spec.ts:16:3 › Node Read Mode › Open Read Mode, Copy, Navigate, and Close (4.3s)
+  ✓   99 [chromium] › tests/node-read-mode.spec.ts:87:3 › Node Read Mode › Open Lightbox and Close with Escape (3.1s)
+  ✓  100 [chromium] › tests/oracle-clear.spec.ts:14:3 › Oracle Clear Chat › should show clear chat button only when messages exist and clear history on click (docked) (2.9s)
+  ✓  101 [chromium] › tests/oracle-clear.spec.ts:47:3 › Oracle Clear Chat › should show clear chat button and clear history on standalone page (1.4s)
+  ✓  102 [chromium] › tests/oracle-commands.spec.ts:18:3 › Oracle Chat Commands › Slash Command Menu discovery (1.9s)
+  ✓  103 [chromium] › tests/oracle-commands.spec.ts:40:3 › Oracle Chat Commands › Connection Wizard flow (1.7s)
+  ✓  104 [chromium] › tests/oracle-image-save.spec.ts:21:3 › Oracle Image Save to Entity › should save generated image to selected entity and update thumbnail (2.3s)
+  ✓  105 [chromium] › tests/oracle-merge.spec.ts:50:3 › Oracle Merge Command E2E › should merge two entities using guided sequence (3.5s)
+  ✓  106 [chromium] › tests/oracle-merge.spec.ts:117:3 › Oracle Merge Command E2E › should use the Merge Wizard via /merge oracle (3.9s)
+  ✓  107 [chromium] › tests/oracle-merge.spec.ts:171:3 › Oracle Merge Command E2E › should merge two entities using direct quoted command (3.2s)
+  ✘   97 [chromium] › tests/node-merging.spec.ts:215:5 › Node Merging › Documentation & Hints › should trigger node-merging feature hint when 2 nodes are selected (30.1s)
+  ✘  108 [chromium] › tests/oracle-merge.spec.ts:199:3 › Oracle Merge Command E2E › should undo a merge and restore source, target, and connections (3.5s)
+  ✓  109 [chromium] › tests/oracle-parsing.spec.ts:78:3 › Oracle Response Parsing & Smart Apply › should show 'Smart Apply' button for structured Oracle response (2.6s)
+  ✓  110 [chromium] › tests/oracle-refinement.spec.ts:59:3 › Oracle UI Refinement › should not display 'user' or 'assistant' labels in chat messages (3.3s)
+  ✓  111 [chromium] › tests/oracle-parsing.spec.ts:134:3 › Oracle Response Parsing & Smart Apply › should support '/create' command for automatic node generation (4.2s)
+Initial Height: 60
+Oracle messages length after switch: [33m3[39m
+Oracle messages content: [
+  [32m'Persistent Message'[39m,
+  [32m''[39m,
+  [32m'Lore Oracle Error: [GoogleGenerativeAI Error]: Failed to parse stream'[39m
+]
+  ✓  112 [chromium] › tests/oracle-refinement.spec.ts:84:3 › Oracle UI Refinement › should clear chat history when vault is closed (4.5s)
+Expanded Height: 100
+Reset Height: 60
+  ✓  113 [chromium] › tests/oracle-ui.spec.ts:14:3 › Oracle UI - Elastic Input › should expand textarea when typing multi-line text and reset on submit (3.7s)
+Undo stack length before click: [33m1[39m
+  ✓  115 [chromium] › tests/oracle-undo.spec.ts:141:3 › Oracle Undo › can undo a create node action (3.4s)
+Oracle messages after undo: [
+  {
+    id: [32m'msg-assistant-1'[39m,
+    role: [32m'assistant'[39m,
+    content: [32m'Title: Eldrin\nChronicle: New content\nLore: New lore'[39m,
+    entityId: [32m'eldrin'[39m
+  },
+  {
+    id: [32m'b6da7989-869d-4c57-9783-2bd712416650'[39m,
+    role: [32m'system'[39m,
+    content: [32m'↩️ Undid action: **Smart Apply to Eldrin**'[39m
+  }
+]
+Chat container text: NO IMAGE
+CHARACTER
+ATTRIBUTES
+MYTHOS
+POSSESSIONS
+MAP
+Tome
+
+Original content
+
+Bonds
+No known connections.
+  ✓  114 [chromium] › tests/oracle-undo.spec.ts:73:3 › Oracle Undo › can undo a smart apply action (4.5s)
+  ✓  116 [chromium] › tests/oracle-wizard.spec.ts:32:3 › Oracle Connection Wizard › Guided sequence: FROM -> LABEL -> TO (4.3s)
+  ✓  117 [chromium] › tests/oracle-wizard.spec.ts:82:3 › Oracle Connection Wizard › Using thematic suggestions for LABEL (3.8s)
+  ✓  119 [chromium] › tests/p2p-image-sync.spec.ts:49:3 › P2P Image Sync › Guest: should convert FILE_RESPONSE to Blob (1.5s)
+  ✓  118 [chromium] › tests/orbit.spec.ts:12:3 › Orbit Layout › should activate orbit mode, switch center, and show detail panel (3.7s)
+  ✓  120 [chromium] › tests/p2p-image-sync.spec.ts:99:3 › P2P Image Sync › Host: should serve file from OPFS (1.9s)
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [vite] connecting...
+PAGE LOG: [vite] connected.
+PAGE LOG: [VaultStore] New Instance Created 1771985822850
+PAGE LOG: [VaultStore] New Instance Created 1771985822935
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized
+PAGE LOG: VITE_GOOGLE_CLIENT_ID is missing. Google Drive integration disabled.
+PAGE LOG: [App] Codex Cryptica v0.9.12 initialized

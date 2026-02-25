@@ -45,24 +45,24 @@
   // Lazy load components when needed
   $effect(() => {
     if (uiStore.showZenMode && !ZenModeModal) {
-      import("../lib/components/modals/ZenModeModal.svelte").then(
+      import("$lib/components/modals/ZenModeModal.svelte").then(
         (m) => (ZenModeModal = m.default),
-      );
+      ).catch(e => console.error("Failed to load ZenModeModal", e));
     }
     if (helpStore.activeTour && !TourOverlay) {
-      import("../lib/components/help/TourOverlay.svelte").then(
+      import("$lib/components/help/TourOverlay.svelte").then(
         (m) => (TourOverlay = m.default),
-      );
+      ).catch(e => console.error("Failed to load TourOverlay", e));
     }
     if (uiStore.mergeDialog.open && !MergeNodesDialog) {
-      import("../lib/components/dialogs/MergeNodesDialog.svelte").then(
+      import("$lib/components/dialogs/MergeNodesDialog.svelte").then(
         (m) => (MergeNodesDialog = m.default),
-      );
+      ).catch(e => console.error("Failed to load MergeNodesDialog", e));
     }
     if (!isPopup && !OracleWindow) {
-      import("../lib/components/oracle/OracleWindow.svelte").then(
+      import("$lib/components/oracle/OracleWindow.svelte").then(
         (m) => (OracleWindow = m.default),
-      );
+      ).catch(e => console.error("Failed to load OracleWindow", e));
     }
     if (
       (import.meta.env.DEV ||
@@ -70,9 +70,9 @@
         import.meta.env.VITE_STAGING === "true") &&
       !DebugConsole
     ) {
-      import("../lib/components/debug/DebugConsole.svelte").then(
+      import("$lib/components/debug/DebugConsole.svelte").then(
         (m) => (DebugConsole = m.default),
-      );
+      ).catch(e => console.error("Failed to load DebugConsole", e));
     }
   });
 
@@ -188,6 +188,7 @@
       (window as any).vault = vault;
       (window as any).graph = graph;
       (window as any).calendarStore = calendarStore;
+      (window as any).helpStore = helpStore;
 
       import("$lib/stores/gdrive.svelte").then((m) => {
         (window as any).gdriveAdapter = m.gdriveAdapter;

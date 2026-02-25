@@ -2,6 +2,12 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Node Merging", () => {
   test.beforeEach(async ({ page }) => {
+    // Disable onboarding to access main UI
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+    });
     await page.goto("/");
     // Wait for vault to initialize
     await page.waitForFunction(
@@ -27,6 +33,7 @@ test.describe("Node Merging", () => {
         id: "node-b",
         content: "Content from B",
       });
+      v.selectedEntityId = null; // Clear selection to avoid unsaved changes warning
     });
 
     // 2. Open Merge Dialog
