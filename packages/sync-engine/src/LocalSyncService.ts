@@ -25,7 +25,7 @@ export class LocalSyncService implements ILocalSyncService {
   ): Promise<SyncResult> {
     const local = new FileSystemBackend(localHandle);
     const remote = new FileSystemBackend(opfsHandle);
-    return this.service.sync(vaultId, local, remote, validator);
+    return this.service.sync(vaultId, local, remote, null, validator);
   }
 
   async resetRegistry(vaultId: string): Promise<void> {

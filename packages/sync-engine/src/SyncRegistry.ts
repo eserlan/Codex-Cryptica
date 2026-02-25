@@ -1,8 +1,8 @@
 import { type IDBPDatabase } from "idb";
-import { type SyncEntry, type CloudSyncMetadata, type SyncDB } from "./types";
+import { type SyncEntry, type CloudSyncMetadata } from "./types";
 
 export class SyncRegistry {
-  constructor(private db: IDBPDatabase<SyncDB>) {}
+  constructor(private db: IDBPDatabase<any>) {}
 
   async getEntry(
     vaultId: string,

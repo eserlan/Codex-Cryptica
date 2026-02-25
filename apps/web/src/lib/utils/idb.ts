@@ -47,6 +47,7 @@ interface CodexDB extends DBSchema {
     value: SyncEntry;
     indexes: {
       "by-vault": string;
+      "by-remote-id": string;
     };
   };
   cloud_sync_metadata: {

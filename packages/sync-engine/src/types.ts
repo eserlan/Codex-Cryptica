@@ -1,3 +1,5 @@
+import { type DBSchema } from "idb";
+
 export interface FileMetadata {
   path: string;
   lastModified: number;
@@ -68,8 +70,6 @@ export interface ILocalSyncService {
   resetRegistry(vaultId: string): Promise<void>;
 }
 
-import { type DBSchema } from "idb";
-
 export interface SyncEntry {
   filePath: string;
   vaultId: string;
@@ -101,14 +101,6 @@ export interface SyncDB extends DBSchema {
     key: string;
     value: CloudSyncMetadata;
   };
-  [key: string]: any;
-}
-
-export interface FileMetadata {
-  path: string;
-  lastModified: number;
-  size: number;
-  handle: FileSystemFileHandle;
 }
 
 /** Google Drive API Types */

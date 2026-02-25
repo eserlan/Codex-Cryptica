@@ -143,6 +143,8 @@ export class SyncService {
           lastOpfsModified: action.opfsMetadata!.lastModified,
           size: action.localMetadata!.size,
           status: "SYNCED",
+          remoteId: this.getSerializableId(action.opfsMetadata!, remote),
+          remoteHash: action.opfsMetadata?.hash,
         });
         break;
       }
@@ -169,7 +171,7 @@ export class SyncService {
           remoteId: this.getSerializableId(
             updatedRemote,
             remote,
-            registryEntry,
+            action.registryEntry,
           ),
           remoteHash: updatedRemote.hash,
         });
@@ -201,7 +203,7 @@ export class SyncService {
           remoteId: this.getSerializableId(
             action.opfsMetadata!,
             remote,
-            registryEntry,
+            action.registryEntry,
           ),
           remoteHash: action.opfsMetadata?.hash,
         });
