@@ -1,8 +1,8 @@
 <script lang="ts">
   import { uiStore, type SettingsTab } from "$stores/ui.svelte";
   import { fly, fade } from "svelte/transition";
-  import CloudStatus from "./CloudStatus.svelte";
   import AISettings from "./AISettings.svelte";
+  import GDriveConnect from "./GDriveConnect.svelte";
   import EraEditor from "../timeline/EraEditor.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
@@ -255,7 +255,7 @@
             <div
               class="bg-theme-surface border border-theme-border p-6 rounded"
             >
-              <CloudStatus embedMode={true} />
+              <GDriveConnect />
             </div>
           </div>
         {:else if uiStore.activeSettingsTab === "intelligence"}

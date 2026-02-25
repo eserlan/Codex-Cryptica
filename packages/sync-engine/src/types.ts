@@ -50,6 +50,11 @@ export interface ISyncBackend {
    * Deletes a file.
    */
   delete(path: string, remoteId?: string): Promise<void>;
+
+  /**
+   * Manually sets the target folder ID for the vault.
+   */
+  setVaultFolderId?(folderId: string): void;
 }
 
 export interface ILocalSyncService {

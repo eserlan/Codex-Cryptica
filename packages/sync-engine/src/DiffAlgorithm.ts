@@ -57,17 +57,15 @@ export class DiffAlgorithm {
         : !!opfs;
 
     const validate = async () => {
-      // Validate LOCAL if it's new or changed and might be the source of an update
-      if (local && localChanged && (!opfs || !registry || opfsChanged)) {
-        if (validator) {
+      if (validator) {
+        // Validate LOCAL if it changed
+        if (local && localChanged && !local.isDeleted) {
           const isValid = await validator(path, local);
           if (!isValid) return { type: "SKIP" as const, path };
         }
-      }
 
-      // Validate OPFS if it's new or changed and might be the source of an update
-      if (opfs && opfsChanged && (!local || !registry || localChanged)) {
-        if (validator) {
+        // Validate OPFS if it changed
+        if (opfs && opfsChanged && !opfs.isDeleted) {
           const isValid = await validator(path, opfs);
           if (!isValid) return { type: "SKIP" as const, path };
         }

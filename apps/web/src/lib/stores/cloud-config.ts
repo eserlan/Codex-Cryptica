@@ -7,7 +7,7 @@ const STORAGE_KEY = "codex-cryptica-cloud-config";
 const defaultConfig: CloudConfig = {
   enabled: false,
   provider: "gdrive",
-  syncInterval: 300000, // 5 minutes
+  syncInterval: 0, // Manual sync only
 };
 
 function createCloudConfigStore() {

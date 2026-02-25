@@ -12,15 +12,15 @@ export class FileSystemBackend implements ISyncBackend {
       for await (const entry of (handle as any).values()) {
         const currentPath = [...path, entry.name];
         if (entry.kind === "file") {
-          const file = await entry.getFile();
+          const file = await (entry as FileSystemFileHandle).getFile();
           results.push({
             path: currentPath.join("/"),
             lastModified: file.lastModified,
             size: file.size,
-            handle: entry,
+            handle: entry as FileSystemFileHandle,
           });
         } else if (entry.kind === "directory") {
-          await scan(entry, currentPath);
+          await scan(entry as FileSystemDirectoryHandle, currentPath);
         }
       }
     };

@@ -37,23 +37,31 @@ export class SyncService {
     };
 
     try {
+      console.log(`[Sync] Starting sync cycle for vault: ${vaultId}`);
       const localScan = await local.scan(vaultId);
       const remoteScan = await remote.scan(vaultId, sinceToken);
       const registryEntries = await this.registry.getEntriesByVault(vaultId);
 
+      console.log(
+        `[Sync] Scan results: Local=${localScan.files.length}, Remote=${remoteScan.files.length}, Registry=${registryEntries.length}`,
+      );
       result.nextToken = remoteScan.nextToken;
 
-      // 1. Deduplicate remote changes by handle (latest wins)
-      const dedupedRemote = new Map<string, FileMetadata>();
+      // 1. Deduplicate remote changes by handle if they are strings (Cloud IDs)
+      const remoteFilesById = new Map<string, FileMetadata>();
+      const otherRemoteFiles: FileMetadata[] = [];
+
       for (const f of remoteScan.files) {
         if (typeof f.handle === "string") {
-          dedupedRemote.set(f.handle, f);
+          remoteFilesById.set(f.handle, f);
+        } else {
+          otherRemoteFiles.push(f);
         }
       }
 
       // 2. Resolve paths for "unknown" files (deletions)
-      const remoteFiles = await Promise.all(
-        Array.from(dedupedRemote.values()).map(async (f) => {
+      const resolvedRemoteFiles = await Promise.all(
+        Array.from(remoteFilesById.values()).map(async (f) => {
           if (f.path === "unknown" && typeof f.handle === "string") {
             const entry = await this.registry.getEntryByRemoteId(f.handle);
             if (entry) return { ...f, path: entry.filePath };
@@ -61,6 +69,8 @@ export class SyncService {
           return f;
         }),
       );
+
+      const remoteFiles = [...resolvedRemoteFiles, ...otherRemoteFiles];
 
       const localFiles = localScan.files;
       const localMap = new Map(localFiles.map((f) => [f.path, f]));
@@ -110,6 +120,8 @@ export class SyncService {
         }
       }
 
+      console.log(`[Sync] Calculated ${actions.length} actions to perform.`);
+
       const totalActions = actions.length;
       let _completedActions = 0;
 
@@ -135,10 +147,6 @@ export class SyncService {
             try {
               await this.executeAction(action, vaultId, local, remote, result);
             } catch (err: any) {
-              console.error(
-                `Failed to execute action for ${action.path}:`,
-                err,
-              );
               result.failed.push({ path: action.path, error: err.message });
             } finally {
               _completedActions++;
@@ -170,110 +178,115 @@ export class SyncService {
     remote: ISyncBackend,
     result: SyncResult,
   ) {
-    switch (action.type) {
-      case "MATCH_INITIAL": {
-        await this.registry.putEntry({
-          filePath: action.path,
-          vaultId,
-          lastLocalModified: action.localMetadata!.lastModified,
-          lastOpfsModified: action.opfsMetadata!.lastModified,
-          size: action.localMetadata!.size,
-          status: "SYNCED",
-          remoteId: this.getSerializableId(action.opfsMetadata!, remote),
-          remoteHash: action.opfsMetadata?.hash,
-        });
-        break;
+    try {
+      switch (action.type) {
+        case "MATCH_INITIAL": {
+          await this.registry.putEntry({
+            filePath: action.path,
+            vaultId,
+            lastLocalModified: action.localMetadata!.lastModified,
+            lastOpfsModified: action.opfsMetadata!.lastModified,
+            size: action.localMetadata!.size,
+            status: "SYNCED",
+            remoteId: this.getSerializableId(action.opfsMetadata!, remote),
+            remoteHash: action.opfsMetadata?.hash,
+          });
+          break;
+        }
+
+        case "CREATE_OPFS":
+        case "UPDATE_OPFS": {
+          const localContent = await local.download(
+            action.path,
+            typeof action.localMetadata?.handle === "string"
+              ? action.localMetadata.handle
+              : undefined,
+          );
+          const updatedRemote = await remote.upload(
+            action.path,
+            localContent,
+            typeof action.opfsMetadata?.handle === "string"
+              ? action.opfsMetadata.handle
+              : undefined,
+          );
+
+          await this.registry.putEntry({
+            filePath: action.path,
+            vaultId,
+            lastLocalModified: action.localMetadata!.lastModified,
+            lastOpfsModified: updatedRemote.lastModified,
+            size: updatedRemote.size,
+            status: "SYNCED",
+            remoteId: this.getSerializableId(
+              updatedRemote,
+              remote,
+              action.registryEntry,
+            ),
+            remoteHash: updatedRemote.hash,
+          });
+
+          if (action.type === "CREATE_OPFS") result.created.push(action.path);
+          else result.updated.push(action.path);
+          break;
+        }
+
+        case "CREATE_LOCAL":
+        case "UPDATE_LOCAL": {
+          const remoteContent = await remote.download(
+            action.path,
+            typeof action.opfsMetadata?.handle === "string"
+              ? action.opfsMetadata.handle
+              : undefined,
+          );
+          const updatedLocal = await local.upload(
+            action.path,
+            remoteContent,
+            typeof action.localMetadata?.handle === "string"
+              ? action.localMetadata.handle
+              : undefined,
+          );
+
+          await this.registry.putEntry({
+            filePath: action.path,
+            vaultId,
+            lastLocalModified: updatedLocal.lastModified,
+            lastOpfsModified: action.opfsMetadata!.lastModified,
+            size: updatedLocal.size,
+            status: "SYNCED",
+            remoteId: this.getSerializableId(
+              action.opfsMetadata!,
+              remote,
+              action.registryEntry,
+            ),
+            remoteHash: action.opfsMetadata?.hash,
+          });
+
+          if (action.type === "CREATE_LOCAL") result.created.push(action.path);
+          else result.updated.push(action.path);
+          break;
+        }
+
+        case "DELETE_OPFS": {
+          await remote.delete(action.path, action.registryEntry?.remoteId);
+          await this.registry.deleteEntry(vaultId, action.path);
+          result.deleted.push(action.path);
+          break;
+        }
+
+        case "DELETE_LOCAL": {
+          await local.delete(action.path, action.registryEntry?.remoteId);
+          await this.registry.deleteEntry(vaultId, action.path);
+          result.deleted.push(action.path);
+          break;
+        }
       }
 
-      case "CREATE_OPFS":
-      case "UPDATE_OPFS": {
-        const localContent = await local.download(
-          action.path,
-          typeof action.localMetadata?.handle === "string"
-            ? action.localMetadata.handle
-            : undefined,
-        );
-        const updatedRemote = await remote.upload(
-          action.path,
-          localContent,
-          typeof action.opfsMetadata?.handle === "string"
-            ? action.opfsMetadata.handle
-            : undefined,
-        );
-
-        await this.registry.putEntry({
-          filePath: action.path,
-          vaultId,
-          lastLocalModified: action.localMetadata!.lastModified,
-          lastOpfsModified: updatedRemote.lastModified,
-          size: updatedRemote.size,
-          status: "SYNCED",
-          remoteId: this.getSerializableId(
-            updatedRemote,
-            remote,
-            action.registryEntry,
-          ),
-          remoteHash: updatedRemote.hash,
-        });
-
-        if (action.type === "CREATE_OPFS") result.created.push(action.path);
-        else result.updated.push(action.path);
-        break;
+      if (action.isConflict) {
+        result.conflicts.push(action.path);
       }
-
-      case "CREATE_LOCAL":
-      case "UPDATE_LOCAL": {
-        const remoteContent = await remote.download(
-          action.path,
-          typeof action.opfsMetadata?.handle === "string"
-            ? action.opfsMetadata.handle
-            : undefined,
-        );
-        const updatedLocal = await local.upload(
-          action.path,
-          remoteContent,
-          typeof action.localMetadata?.handle === "string"
-            ? action.localMetadata.handle
-            : undefined,
-        );
-
-        await this.registry.putEntry({
-          filePath: action.path,
-          vaultId,
-          lastLocalModified: updatedLocal.lastModified,
-          lastOpfsModified: action.opfsMetadata!.lastModified,
-          size: updatedLocal.size,
-          status: "SYNCED",
-          remoteId: this.getSerializableId(
-            action.opfsMetadata!,
-            remote,
-            action.registryEntry,
-          ),
-          remoteHash: action.opfsMetadata?.hash,
-        });
-
-        if (action.type === "CREATE_LOCAL") result.created.push(action.path);
-        else result.updated.push(action.path);
-        break;
-      }
-
-      case "DELETE_OPFS": {
-        await remote.delete(action.path, action.registryEntry?.remoteId);
-        await this.registry.deleteEntry(vaultId, action.path);
-        result.deleted.push(action.path);
-        break;
-      }
-
-      case "DELETE_LOCAL": {
-        await local.delete(action.path, action.registryEntry?.remoteId);
-        await this.registry.deleteEntry(vaultId, action.path);
-        result.deleted.push(action.path);
-        break;
-      }
-    }
-
-    if (action.isConflict) {
-      result.conflicts.push(action.path);
+    } catch (err: any) {
+      console.error(`[Sync] Error processing ${action.path}:`, err);
+      throw err; // Re-throw to be caught by the orchestrator loop
     }
   }
 

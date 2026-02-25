@@ -34,6 +34,10 @@ export class CloudSyncService {
     const metadata = await this.registry.getCloudMetadata(vaultId);
     const sinceToken = metadata?.lastSyncToken;
 
+    if (metadata?.gdriveFolderId && this.gdrive.setVaultFolderId) {
+      this.gdrive.setVaultFolderId(metadata.gdriveFolderId);
+    }
+
     const result = await this.service.sync(
       vaultId,
       local,

@@ -37,6 +37,7 @@ class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
   maps = $state<Record<string, Map>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  syncType = $state<"local" | "cloud" | null>(null);
   syncStats = $state({
     updated: 0,
     created: 0,
@@ -77,6 +78,10 @@ class VaultStore {
   }
   get vaultName() {
     return this.demoVaultName || vaultRegistry.vaultName;
+  }
+
+  get isCloudConnected() {
+    return !!this.gdriveBackend?.isConnected;
   }
   get availableVaults() {
     return vaultRegistry.availableVaults;
@@ -304,8 +309,18 @@ class VaultStore {
   async syncToLocal() {
     if (!this.syncService || !this.activeVaultId) return;
 
-    // Ensure all pending application saves are flushed before starting sync
-    await this.saveQueue.waitForAll();
+    try {
+      // Ensure all pending application saves are flushed before starting sync
+      // We use a timeout to prevent hanging forever if a task is stuck
+      await Promise.race([
+        this.saveQueue.waitForAll(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+        ),
+      ]);
+    } catch (err) {
+      console.warn("Continuing sync despite save queue issues:", err);
+    }
 
     const opfsHandle = await this.getActiveVaultHandle();
     if (!opfsHandle) return;
@@ -339,6 +354,11 @@ class VaultStore {
       }
 
       this.status = "saving";
+      this.syncType = "local";
+      console.log(
+        "[VaultStore] Starting local sync with handle:",
+        localHandle.name,
+      );
 
       // Optimization: Create a lookup map once before the sync starts
       const pathToEntity = new Map(
@@ -376,6 +396,7 @@ class VaultStore {
         this.errorMessage = result.error;
       } else {
         this.status = "idle";
+        this.syncType = null;
         uiStore.notify(
           `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
           "success",
@@ -384,9 +405,11 @@ class VaultStore {
     } catch (e: any) {
       if (e.name === "AbortError") {
         this.status = "idle";
+        this.syncType = null;
         return;
       }
       this.status = "error";
+      this.syncType = null;
       this.errorMessage = e.message;
       console.error("Sync failed", e);
     }
@@ -399,6 +422,7 @@ class VaultStore {
     await this.saveQueue.waitForAll();
 
     this.status = "saving";
+    this.syncType = "cloud";
     try {
       console.log(
         `[Sync] Starting cloud sync for user: ${user.email} (${user.name})`,
@@ -454,16 +478,32 @@ class VaultStore {
       );
 
       this.status = "idle";
-
-      uiStore.notify(
-        `Cloud sync complete: ${result.updated.length + result.created.length} synced.`,
-        "success",
-      );
+      this.syncType = null;
+      if (result.failed.length > 0) {
+        uiStore.notify(
+          `Sync complete with ${result.failed.length} errors.`,
+          "error",
+        );
+      } else {
+        uiStore.notify(
+          `Cloud sync complete: ${result.updated.length + result.created.length} synced.`,
+          "success",
+        );
+      }
     } catch (err: any) {
       console.error("Cloud sync failed", err);
       this.status = "error";
+      this.syncType = null;
       this.errorMessage = err.message;
-      uiStore.notify("Cloud sync failed.", "error");
+
+      if (err.message === "AUTH_REQUIRED") {
+        uiStore.notify(
+          "Authentication expired. Please reconnect GDrive.",
+          "error",
+        );
+      } else {
+        uiStore.notify("Cloud sync failed.", "error");
+      }
     }
   }
 
@@ -476,6 +516,27 @@ class VaultStore {
       await db.delete("cloud_sync_metadata", this.activeVaultId);
     }
     uiStore.notify("Cloud storage disconnected.", "info");
+  }
+
+  async getCloudMetadata() {
+    if (!this.activeVaultId) return null;
+    const db = await getDB();
+    return await db.get("cloud_sync_metadata", this.activeVaultId);
+  }
+
+  async updateCloudFolder(folderId: string) {
+    if (!this.activeVaultId) return;
+    const db = await getDB();
+    const existing = await db.get("cloud_sync_metadata", this.activeVaultId);
+    await db.put("cloud_sync_metadata", {
+      vaultId: this.activeVaultId,
+      gdriveFolderId: folderId,
+      lastSyncToken: existing?.lastSyncToken || null,
+      lastSyncTime: existing?.lastSyncTime || Date.now(),
+    });
+    if (this.gdriveBackend) {
+      this.gdriveBackend.setVaultFolderId(folderId);
+    }
   }
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {

@@ -64,14 +64,7 @@ vi.hoisted(() => {
   return { MockBroadcastChannel, MockWorker };
 });
 
-// Mock worker and bridge to prevent alias resolution issues
-vi.mock("../cloud-bridge/worker-bridge", () => ({
-  workerBridge: {
-    reset: vi.fn(),
-    send: vi.fn(),
-  },
-}));
-
+// Mock vault to prevent circular dependencies or initialization issues in tests
 vi.mock("./vault.svelte", () => ({
   vault: {
     createEntity: vi.fn(),

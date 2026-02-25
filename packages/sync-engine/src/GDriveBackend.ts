@@ -22,7 +22,17 @@ export class GDriveBackend implements ISyncBackend {
     }
   }
 
-  async connect(): Promise<void> {
+  get isConnected(): boolean {
+    return !!this.accessToken;
+  }
+
+  setVaultFolderId(folderId: string): void {
+    this.vaultFolderId = folderId;
+  }
+
+  async connect(
+    prompt: "" | "none" | "select_account" = "none",
+  ): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
 
     this.connectionPromise = new Promise((resolve, reject) => {
@@ -30,21 +40,34 @@ export class GDriveBackend implements ISyncBackend {
         return reject(new Error("Google Identity Services not loaded"));
       }
 
-      this.tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: this.clientId,
-        scope: this.scope,
-        callback: (response: any) => {
-          if (response.error) {
-            reject(response);
-          } else {
-            this.accessToken = response.access_token;
-            resolve();
-          }
-        },
-        error_callback: (error: any) => reject(error),
-      });
+      // Initialize the client only if it doesn't exist
+      if (!this.tokenClient) {
+        this.tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: this.clientId,
+          scope: this.scope,
+          callback: (response: any) => {
+            if (response.error) {
+              if (prompt === "none") {
+                this.accessToken = null;
+                reject(new Error("SILENT_AUTH_FAILED"));
+              } else {
+                reject(response);
+              }
+            } else {
+              this.accessToken = response.access_token;
+              resolve();
+            }
+          },
+          error_callback: (error: any) => reject(error),
+        });
+      }
 
-      this.tokenClient.requestAccessToken({ prompt: "" });
+      // If we are just resolving an existing client, the callback above won't trigger
+      // until requestAccessToken is called.
+      this.tokenClient.requestAccessToken({ prompt });
+
+      // If prompt is none, and it fails, the callback triggers.
+      // If it succeeds, the callback triggers.
     });
 
     try {
@@ -88,8 +111,15 @@ export class GDriveBackend implements ISyncBackend {
       });
 
       if (response.status === 401) {
-        await this.connect(); // Attempt silent refresh
-        continue; // Retry with new token
+        try {
+          await this.connect("none"); // Attempt silent refresh
+          continue; // Retry with new token
+        } catch (err: any) {
+          if (err.message === "SILENT_AUTH_FAILED") {
+            throw new Error("AUTH_REQUIRED", { cause: err });
+          }
+          throw err;
+        }
       }
 
       if (
@@ -301,6 +331,23 @@ export class GDriveBackend implements ISyncBackend {
     if (!res.ok) throw new Error(`Failed to find folder ${name}`);
     const data: GDriveListResponse = await res.json();
     return data.files.length > 0 ? data.files[0].id : null;
+  }
+
+  async listFolders(
+    parentId?: string,
+  ): Promise<Array<{ id: string; name: string }>> {
+    let q =
+      "mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+    if (parentId) {
+      q += ` and '${parentId}' in parents`;
+    }
+
+    const res = await this.fetchWithRetry(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)&pageSize=1000`,
+    );
+    if (!res.ok) throw new Error("Failed to list folders");
+    const data = await res.json();
+    return data.files || [];
   }
 
   async createFolder(name: string, parentId?: string): Promise<string> {
