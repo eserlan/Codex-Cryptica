@@ -12,6 +12,7 @@ export function isTemporalMetadataEqual(
   if (!a || !b) return false;
 
   return (
+    // NOTE: If TemporalMetadata schema changes, update this comparison.
     a.year === b.year &&
     a.month === b.month &&
     a.day === b.day &&

@@ -4,7 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import type { Entity, TemporalMetadata } from "schema";
+  import type { Entity } from "schema";
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -867,26 +867,25 @@
           snapshotElements.forEach((el) => {
             const node = elementMap.get(el.data.id);
             if (node) {
-              const currentData = node.data();
-              const newData = el.data;
+              const currentData = node.data() as Record<string, any>;
+              const newData = el.data as Record<string, any>;
 
               // Robust equality check to prevent unnecessary style recalculations
               let changed = false;
-              for (const key in newData) {
+              for (const k in newData) {
                 // Skip ID as it's the lookup key
-                if (key === "id") continue;
+                if (k === "id" || !Object.hasOwn(newData, k)) continue;
 
-                const k = key;
-                const newVal = (newData as any)[k];
-                const curVal = (currentData as any)[k];
+                const newVal = newData[k];
+                const curVal = currentData[k];
 
                 // Performance optimized check for TemporalMetadata objects
                 let isMatch: boolean;
-                if (k === "date" || k === "start_date" || k === "end_date") {
-                  isMatch = isTemporalMetadataEqual(
-                    newVal as TemporalMetadata,
-                    curVal as TemporalMetadata,
-                  );
+                if (
+                  el.group === "nodes" &&
+                  (k === "date" || k === "start_date" || k === "end_date")
+                ) {
+                  isMatch = isTemporalMetadataEqual(newVal, curVal);
                 } else if (typeof newVal === "object" && newVal !== null) {
                   isMatch = JSON.stringify(newVal) === JSON.stringify(curVal);
                 } else {
