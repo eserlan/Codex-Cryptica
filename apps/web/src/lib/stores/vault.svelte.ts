@@ -382,6 +382,39 @@ class VaultStore {
     }
   }
 
+  async syncToCloud(_user: { email: string; name: string }) {
+    if (!this.activeVaultId) return;
+
+    // Ensure all pending application saves are flushed before starting sync
+    await this.saveQueue.waitForAll();
+
+    this.status = "saving";
+    try {
+      const opfsHandle = await this.getActiveVaultHandle();
+      if (!opfsHandle) throw new Error("OPFS handle missing");
+
+      const { CloudSyncService, GDriveBackend, SyncRegistry } =
+        await import("@codex/sync-engine");
+      const db = await getDB();
+      const gdrive = new GDriveBackend(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+      await gdrive.connect();
+
+      const cloudSync = new CloudSyncService(new SyncRegistry(db), gdrive);
+      const result = await cloudSync.sync(this.activeVaultId, opfsHandle);
+
+      this.status = "idle";
+      uiStore.notify(
+        `Cloud sync complete: ${result.updated.length + result.created.length} synced.`,
+        "success",
+      );
+    } catch (err: any) {
+      console.error("Cloud sync failed", err);
+      this.status = "error";
+      this.errorMessage = err.message;
+      uiStore.notify("Cloud sync failed.", "error");
+    }
+  }
+
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
     const vaultDir = await this.getActiveVaultHandle();
     if (!this.activeVaultId || !vaultDir) {

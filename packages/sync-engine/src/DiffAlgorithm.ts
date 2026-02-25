@@ -39,6 +39,8 @@ export class DiffAlgorithm {
             local.size,
             registry.lastLocalModified,
             registry.size,
+            local.hash,
+            undefined, // No registry local hash yet
           )
         : !!local;
 
@@ -49,6 +51,8 @@ export class DiffAlgorithm {
             opfs.size,
             registry.lastOpfsModified,
             registry.size,
+            opfs.hash,
+            registry.remoteHash,
           )
         : !!opfs;
 
@@ -104,15 +108,23 @@ export class DiffAlgorithm {
     localChanged: boolean,
     opfsChanged: boolean,
   ): SyncAction {
+    // 0. Explicit Deletion Signals (Delta Sync)
+    if (opfs?.isDeleted && local && registry) {
+      return { type: "DELETE_LOCAL", path, registryEntry: registry };
+    }
+    if (local?.isDeleted && opfs && registry) {
+      return { type: "DELETE_OPFS", path, registryEntry: registry };
+    }
+
     // 1. New File Case (Not in registry)
     if (!registry) {
-      if (local && !opfs) {
+      if (local && !local.isDeleted && (!opfs || opfs.isDeleted)) {
         return { type: "CREATE_OPFS", path, localMetadata: local };
       }
-      if (!local && opfs) {
+      if (opfs && !opfs.isDeleted && (!local || local.isDeleted)) {
         return { type: "CREATE_LOCAL", path, opfsMetadata: opfs };
       }
-      if (local && opfs) {
+      if (local && !local.isDeleted && opfs && !opfs.isDeleted) {
         // Exists in both but no record. Check if they are identical.
         const match = !this.hasChanged(
           local.lastModified,
@@ -173,7 +185,10 @@ export class DiffAlgorithm {
     currentSize: number,
     regMod: number,
     regSize: number,
+    currentHash?: string,
+    regHash?: string,
   ): boolean {
+    if (currentHash && regHash && currentHash === regHash) return false;
     if (currentSize !== regSize) return true;
     return Math.abs(currentMod - regMod) > this.SKEW_MS;
   }

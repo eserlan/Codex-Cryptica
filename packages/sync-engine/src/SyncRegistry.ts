@@ -1,8 +1,8 @@
 import { type IDBPDatabase } from "idb";
-import { type SyncEntry } from "./types";
+import { type SyncEntry, type CloudSyncMetadata, type SyncDB } from "./types";
 
 export class SyncRegistry {
-  constructor(private db: IDBPDatabase<any>) {}
+  constructor(private db: IDBPDatabase<SyncDB>) {}
 
   async getEntry(
     vaultId: string,
@@ -23,6 +23,10 @@ export class SyncRegistry {
     return this.db.getAllFromIndex("sync_registry", "by-vault", vaultId);
   }
 
+  async getEntryByRemoteId(remoteId: string): Promise<SyncEntry | undefined> {
+    return this.db.getFromIndex("sync_registry", "by-remote-id", remoteId);
+  }
+
   async clearVault(vaultId: string): Promise<void> {
     const entries = await this.getEntriesByVault(vaultId);
     if (entries.length === 0) return;
@@ -32,5 +36,15 @@ export class SyncRegistry {
       await tx.store.delete([entry.vaultId, entry.filePath]);
     }
     await tx.done;
+  }
+
+  async getCloudMetadata(
+    vaultId: string,
+  ): Promise<CloudSyncMetadata | undefined> {
+    return this.db.get("cloud_sync_metadata", vaultId);
+  }
+
+  async putCloudMetadata(metadata: CloudSyncMetadata): Promise<void> {
+    await this.db.put("cloud_sync_metadata", metadata);
   }
 }

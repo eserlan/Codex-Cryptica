@@ -1,0 +1,245 @@
+import {
+  type ISyncBackend,
+  type SyncResult,
+  type FileMetadata,
+  type SyncEntry,
+} from "./types";
+import { SyncRegistry } from "./SyncRegistry";
+import { DiffAlgorithm, type SyncAction } from "./DiffAlgorithm";
+import { FileSystemBackend } from "./FileSystemBackend";
+
+export class SyncService {
+  constructor(protected registry: SyncRegistry) {}
+
+  async sync(
+    vaultId: string,
+    local: ISyncBackend,
+    remote: ISyncBackend,
+    sinceToken?: string | null,
+    validator?: (
+      path: string,
+      metadata: FileMetadata,
+    ) => boolean | Promise<boolean>,
+  ): Promise<SyncResult & { nextToken?: string }> {
+    const result: SyncResult & { nextToken?: string } = {
+      updated: [],
+      created: [],
+      deleted: [],
+      conflicts: [],
+    };
+
+    try {
+      const localScan = await local.scan(vaultId);
+      const remoteScan = await remote.scan(vaultId, sinceToken);
+      const registryEntries = await this.registry.getEntriesByVault(vaultId);
+
+      result.nextToken = remoteScan.nextToken;
+
+      const localFiles = localScan.files;
+      const remoteFiles = await Promise.all(
+        remoteScan.files.map(async (f) => {
+          if (f.path === "unknown" && typeof f.handle === "string") {
+            const entry = await this.registry.getEntryByRemoteId(f.handle);
+            if (entry) return { ...f, path: entry.filePath };
+          }
+          return f;
+        }),
+      );
+
+      const localMap = new Map(localFiles.map((f) => [f.path, f]));
+      const remoteMap = new Map(remoteFiles.map((f) => [f.path, f]));
+      const registryMap = new Map(registryEntries.map((e) => [e.filePath, e]));
+
+      const isDeltaSync = sinceToken !== undefined && sinceToken !== null;
+      const allPaths = new Set([
+        ...localMap.keys(),
+        ...remoteMap.keys(),
+        ...registryMap.keys(),
+      ]);
+
+      const actions: SyncAction[] = [];
+      for (const path of allPaths) {
+        let remoteMetadata = remoteMap.get(path);
+        const registryEntry = registryMap.get(path);
+
+        const isRemoteDeleted = remoteMetadata?.isDeleted;
+
+        // In delta sync, if a file is missing from the remote scan but exists in our registry,
+        // it means the file has NOT changed on the remote side.
+        if (
+          isDeltaSync &&
+          !remoteMetadata &&
+          !isRemoteDeleted &&
+          registryEntry?.remoteId
+        ) {
+          remoteMetadata = {
+            path,
+            lastModified: registryEntry.lastOpfsModified,
+            size: registryEntry.size,
+            handle: registryEntry.remoteId,
+            hash: registryEntry.remoteHash,
+          };
+        }
+
+        const action = await DiffAlgorithm.calculateAction(
+          path,
+          localMap.get(path),
+          remoteMetadata,
+          registryEntry,
+          validator,
+        );
+        if (action.type !== "SKIP") {
+          actions.push(action);
+        }
+      }
+
+      const CONCURRENCY = 5;
+      let nextActionIndex = 0;
+      await Promise.all(
+        Array.from({ length: CONCURRENCY }).map(async () => {
+          while (nextActionIndex < actions.length) {
+            const action = actions[nextActionIndex++];
+            if (!action) continue;
+            try {
+              await this.executeAction(action, vaultId, local, remote, result);
+            } catch (err) {
+              console.error(
+                `Failed to execute action for ${action.path}:`,
+                err,
+              );
+            }
+          }
+        }),
+      );
+
+      // Cleanup registry for completely gone files (Only during full sync)
+      if (!isDeltaSync) {
+        for (const path of registryMap.keys()) {
+          if (!localMap.has(path) && !remoteMap.has(path)) {
+            await this.registry.deleteEntry(vaultId, path);
+          }
+        }
+      }
+    } catch (e: any) {
+      result.error = e.message;
+    }
+
+    return result;
+  }
+
+  protected async executeAction(
+    action: SyncAction,
+    vaultId: string,
+    local: ISyncBackend,
+    remote: ISyncBackend,
+    result: SyncResult,
+  ) {
+    switch (action.type) {
+      case "MATCH_INITIAL": {
+        await this.registry.putEntry({
+          filePath: action.path,
+          vaultId,
+          lastLocalModified: action.localMetadata!.lastModified,
+          lastOpfsModified: action.opfsMetadata!.lastModified,
+          size: action.localMetadata!.size,
+          status: "SYNCED",
+        });
+        break;
+      }
+
+      case "CREATE_OPFS":
+      case "UPDATE_OPFS": {
+        const localContent = await local.download(
+          action.path,
+          action.localMetadata?.handle,
+        );
+        const updatedRemote = await remote.upload(
+          action.path,
+          localContent,
+          action.opfsMetadata?.handle,
+        );
+
+        await this.registry.putEntry({
+          filePath: action.path,
+          vaultId,
+          lastLocalModified: action.localMetadata!.lastModified,
+          lastOpfsModified: updatedRemote.lastModified,
+          size: updatedRemote.size,
+          status: "SYNCED",
+          remoteId: this.getSerializableId(
+            updatedRemote,
+            remote,
+            registryEntry,
+          ),
+          remoteHash: updatedRemote.hash,
+        });
+
+        if (action.type === "CREATE_OPFS") result.created.push(action.path);
+        else result.updated.push(action.path);
+        break;
+      }
+
+      case "CREATE_LOCAL":
+      case "UPDATE_LOCAL": {
+        const remoteContent = await remote.download(
+          action.path,
+          action.opfsMetadata?.handle,
+        );
+        const updatedLocal = await local.upload(
+          action.path,
+          remoteContent,
+          action.localMetadata?.handle,
+        );
+
+        await this.registry.putEntry({
+          filePath: action.path,
+          vaultId,
+          lastLocalModified: updatedLocal.lastModified,
+          lastOpfsModified: action.opfsMetadata!.lastModified,
+          size: updatedLocal.size,
+          status: "SYNCED",
+          remoteId: this.getSerializableId(
+            action.opfsMetadata!,
+            remote,
+            registryEntry,
+          ),
+          remoteHash: action.opfsMetadata?.hash,
+        });
+
+        if (action.type === "CREATE_LOCAL") result.created.push(action.path);
+        else result.updated.push(action.path);
+        break;
+      }
+
+      case "DELETE_OPFS": {
+        await remote.delete(action.path, action.registryEntry?.remoteId);
+        await this.registry.deleteEntry(vaultId, action.path);
+        result.deleted.push(action.path);
+        break;
+      }
+
+      case "DELETE_LOCAL": {
+        await local.delete(action.path, action.registryEntry?.remoteId);
+        await this.registry.deleteEntry(vaultId, action.path);
+        result.deleted.push(action.path);
+        break;
+      }
+    }
+
+    if (action.isConflict) {
+      result.conflicts.push(action.path);
+    }
+  }
+
+  private getSerializableId(
+    metadata: FileMetadata,
+    backend: ISyncBackend,
+    registryEntry?: SyncEntry,
+  ): string | undefined {
+    return typeof metadata.handle === "string"
+      ? metadata.handle
+      : backend instanceof FileSystemBackend
+        ? undefined
+        : registryEntry?.remoteId;
+  }
+}
