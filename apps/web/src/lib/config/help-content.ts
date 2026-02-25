@@ -207,6 +207,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
     icon: "icon-[lucide--map]",
   },
+  "robust-gdrive-sync": {
+    id: "robust-gdrive-sync",
+    title: "Cloud Mirroring",
+    content:
+      "Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.",
+    icon: "icon-[lucide--cloud-sync]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

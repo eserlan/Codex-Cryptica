@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API (060-robust-gdrive-sync)
+- OPFS (Vault Data), IndexedDB via `idb` (Sync Registry metadata) (060-robust-gdrive-sync)
+
 - TypeScript 5.x + Svelte 5, `idb`, Web File System Access API (059-robust-local-sync)
 - IndexedDB (Metadata), OPFS (Internal Files), Local Filesystem (External Mirror) (059-robust-local-sync)
 
@@ -104,9 +107,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 060-robust-gdrive-sync: Added TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API
+
 - 059-robust-local-sync: Added TypeScript 5.x + Svelte 5, `idb`, Web File System Access API
 - 059-robust-local-sync: Added IndexedDB state registry for bidirectional file mirroring.
-
-- 058-map-mode: Added Interactive Map Mode with HTML5 Canvas rendering and spatial lore pins.
 
 <!-- MANUAL ADDITIONS START -->
