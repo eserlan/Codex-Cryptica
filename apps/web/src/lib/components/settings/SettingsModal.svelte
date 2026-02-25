@@ -1,8 +1,8 @@
 <script lang="ts">
   import { uiStore, type SettingsTab } from "$stores/ui.svelte";
   import { fly, fade } from "svelte/transition";
-  import CloudStatus from "./CloudStatus.svelte";
   import AISettings from "./AISettings.svelte";
+  import GDriveConnect from "./GDriveConnect.svelte";
   import EraEditor from "../timeline/EraEditor.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
@@ -232,29 +232,6 @@
               </div>
             </section>
 
-            <section>
-              <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
-              >
-                Maintenance
-              </h3>
-              <p class="text-[13px] text-theme-text/70 mb-4 leading-relaxed">
-                Keep your archive safe by periodically syncing your data to a
-                local folder.
-              </p>
-              <button
-                onclick={() => vault.syncToLocal()}
-                disabled={uiStore.isImporting}
-                aria-disabled={uiStore.isImporting ? "true" : "false"}
-                title={uiStore.isImporting
-                  ? "Disabled during active import"
-                  : "Sync to local folder"}
-                class="px-6 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-[10px] font-bold tracking-widest uppercase disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-theme-primary/10 disabled:hover:text-theme-primary"
-              >
-                Sync to Local Folder
-              </button>
-            </section>
-
             <section class="border-t border-theme-border pt-6">
               <VaultSettings />
             </section>
@@ -278,7 +255,7 @@
             <div
               class="bg-theme-surface border border-theme-border p-6 rounded"
             >
-              <CloudStatus embedMode={true} />
+              <GDriveConnect />
             </div>
           </div>
         {:else if uiStore.activeSettingsTab === "intelligence"}
@@ -289,12 +266,41 @@
             class="space-y-8 max-w-3xl mx-auto"
           >
             <section>
-              <p class="text-[13px] text-theme-text/70 leading-relaxed">
-                Manage AI integration settings. Codex Cryptica uses Google
-                Gemini to provide context-aware reasoning, automated tagging,
-                and image generation.
-              </p>
-              <AISettings />
+              <div
+                class="bg-theme-surface border border-theme-border p-6 rounded-lg mb-8 flex items-center justify-between shadow-sm"
+              >
+                <div>
+                  <label
+                    class="block text-xs font-bold text-theme-text uppercase cursor-pointer"
+                    for="lite-mode-toggle">Lite Mode (No AI)</label
+                  >
+                  <p class="text-[10px] text-theme-muted">
+                    Disable all AI-powered features (Oracle chat, image
+                    generation, tag suggestions).
+                  </p>
+                </div>
+                <input
+                  id="lite-mode-toggle"
+                  type="checkbox"
+                  checked={uiStore.liteMode}
+                  onchange={(e) =>
+                    uiStore.toggleLiteMode(e.currentTarget.checked)}
+                  class="w-4 h-4 accent-theme-primary cursor-pointer"
+                />
+              </div>
+
+              <div
+                class="transition-all duration-300 {uiStore.liteMode
+                  ? 'opacity-40 grayscale pointer-events-none select-none'
+                  : ''}"
+              >
+                <p class="text-[13px] text-theme-text/70 leading-relaxed">
+                  Manage AI integration settings. Codex Cryptica uses Google
+                  Gemini to provide context-aware reasoning, automated tagging,
+                  and image generation.
+                </p>
+                <AISettings />
+              </div>
             </section>
 
             <section>
@@ -493,16 +499,3 @@
     </div>
   </div>
 {/if}
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-accent-primary);
-    border-radius: 2px;
-  }
-</style>

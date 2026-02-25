@@ -1,8 +1,8 @@
 // apps/web/src/lib/stores/vault.svelte.ts
 import { getDB } from "../utils/idb";
-import { getVaultDir } from "../utils/opfs";
+import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
-import type { Entity } from "schema";
+import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
 import { debugStore } from "./debug.svelte";
 import { uiStore } from "./ui.svelte";
@@ -16,6 +16,8 @@ import * as vaultRelationships from "./vault/relationships";
 import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { themeStore } from "./theme.svelte";
+import { parseMarkdown } from "../utils/markdown";
+import { SyncRegistry, LocalSyncService } from "@codex/sync-engine";
 
 import type { SearchEntry } from "schema";
 
@@ -33,32 +35,22 @@ export interface IVaultServices {
 
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
+  maps = $state<Record<string, Map>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  syncType = $state<"local" | "cloud" | null>(null);
+  syncStats = $state({
+    updated: 0,
+    created: 0,
+    deleted: 0,
+    failed: 0,
+    total: 0,
+    progress: 0,
+  });
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
   migrationRequired = $state(false);
   demoVaultName = $state<string | null>(null);
-
-  // Sync Reminder State
-  hasSyncFolder = $state(false);
-  lastRemindedDirtyCount = $state(0);
-  snoozedUntil = $state(0);
-
-  dirtyEntitiesCount = $derived.by(() => {
-    return Object.values(this.entities).filter((e) => e.synced === false)
-      .length;
-  });
-
-  shouldShowReminder = $derived.by(() => {
-    if (!this.hasSyncFolder) return false;
-    if (Date.now() < this.snoozedUntil) return false;
-
-    return (
-      this.dirtyEntitiesCount >= 5 &&
-      this.dirtyEntitiesCount - this.lastRemindedDirtyCount >= 5
-    );
-  });
 
   // Fog of War Settings
   defaultVisibility = $state<"visible" | "hidden">("visible");
@@ -77,6 +69,8 @@ class VaultStore {
 
   // Services (Injected)
   private services: IVaultServices | null = null;
+  private syncService: LocalSyncService | null = null;
+  private gdriveBackend: any | null = null;
 
   // Registry Accessors
   get activeVaultId() {
@@ -84,6 +78,10 @@ class VaultStore {
   }
   get vaultName() {
     return this.demoVaultName || vaultRegistry.vaultName;
+  }
+
+  get isCloudConnected() {
+    return !!this.gdriveBackend?.isConnected;
   }
   get availableVaults() {
     return vaultRegistry.availableVaults;
@@ -115,7 +113,13 @@ class VaultStore {
     return await getVaultDir(vaultRegistry.rootHandle, this.activeVaultId);
   }
 
-  private saveQueue = new KeyedTaskQueue();
+  /**
+   * Internal save queue for coordinating OPFS writes.
+   * NOTE: This queue is public so that MapStore (see map.svelte.ts) can enqueue
+   * map-related save operations to ensure data consistency.
+   * External code should avoid manipulating it directly.
+   */
+  public saveQueue = new KeyedTaskQueue();
 
   get pendingSaveCount() {
     return this.saveQueue.totalPendingCount;
@@ -131,11 +135,18 @@ class VaultStore {
     return id;
   }
 
+  async createVaultFromDrive(name: string, folderId: string): Promise<string> {
+    const id = await vaultRegistry.createVaultFromDrive(name, folderId);
+    await this.switchVault(id);
+    return id;
+  }
+
   async switchVault(id: string): Promise<void> {
     if (this.activeVaultId === id && this.isInitialized) return;
 
     await this.saveQueue.waitForAll();
     this.entities = {};
+    this.maps = {};
 
     // Clear chat history in DB before switching
     const db = await getDB();
@@ -150,75 +161,17 @@ class VaultStore {
     this.status = "loading";
     this.errorMessage = null;
 
-    await vaultRegistry.setActiveVault(id);
+    // Load theme for the new vault as early as possible to avoid FOUC/flicker
     await themeStore.loadForVault(id);
+    await vaultRegistry.setActiveVault(id);
 
-    // Load Sync Reminder state
     if (typeof window !== "undefined") {
-      await this.loadSyncReminderState(id);
-
       window.dispatchEvent(
         new CustomEvent("vault-switched", { detail: { id } }),
       );
     }
 
     await this.loadFiles();
-  }
-
-  private async loadSyncReminderState(vaultId: string) {
-    const db = await getDB();
-    const syncHandle = await db.get("settings", `syncHandle_${vaultId}`);
-    this.hasSyncFolder = !!syncHandle;
-
-    const lastCount = localStorage.getItem(`sync_last_reminded_${vaultId}`);
-    this.lastRemindedDirtyCount = lastCount ? parseInt(lastCount, 10) : 0;
-
-    const snoozed = localStorage.getItem(`sync_snoozed_until_${vaultId}`);
-    if (snoozed) {
-      const snoozedUntil = parseInt(snoozed, 10);
-      if (!Number.isNaN(snoozedUntil) && snoozedUntil > Date.now()) {
-        this.snoozedUntil = snoozedUntil;
-      } else {
-        // Snooze has expired or is invalid; clear stored value to keep state consistent
-        this.snoozedUntil = 0;
-        localStorage.removeItem(`sync_snoozed_until_${vaultId}`);
-      }
-    } else {
-      this.snoozedUntil = 0;
-    }
-  }
-
-  dismissSyncReminder() {
-    this.lastRemindedDirtyCount = this.dirtyEntitiesCount;
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.setItem(
-        `sync_last_reminded_${this.activeVaultId}`,
-        this.lastRemindedDirtyCount.toString(),
-      );
-    }
-  }
-
-  snoozeSyncReminder() {
-    this.snoozedUntil = Date.now() + 3600000; // 1 hour
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.setItem(
-        `sync_snoozed_until_${this.activeVaultId}`,
-        this.snoozedUntil.toString(),
-      );
-    }
-  }
-
-  resetSyncState() {
-    this.lastRemindedDirtyCount = 0;
-    this.snoozedUntil = 0;
-    if (typeof window !== "undefined" && this.activeVaultId) {
-      localStorage.removeItem(`sync_last_reminded_${this.activeVaultId}`);
-      localStorage.removeItem(`sync_snoozed_until_${this.activeVaultId}`);
-    }
-    // Mark all currently loaded entities as synced
-    for (const id in this.entities) {
-      this.entities[id].synced = true;
-    }
   }
 
   /**
@@ -229,11 +182,7 @@ class VaultStore {
     await this.saveQueue.waitForAll();
     this.selectedEntityId = null;
 
-    // Mark demo entities as synced initially (they are transient)
     const entities = data.entities as Record<string, LocalEntity>;
-    for (const id in entities) {
-      entities[id].synced = true;
-    }
 
     this.entities = entities;
     this.demoVaultName = name || null;
@@ -315,6 +264,8 @@ class VaultStore {
       }
 
       const db = await getDB();
+      this.syncService = new LocalSyncService(new SyncRegistry(db));
+
       const savedVisibility = await db.get("settings", "defaultVisibility");
       if (savedVisibility) {
         this.defaultVisibility = savedVisibility;
@@ -341,9 +292,6 @@ class VaultStore {
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
 
-        // Load Sync Reminder state
-        await this.loadSyncReminderState(this.activeVaultId);
-
         await this.loadFiles();
       }
     } catch (err) {
@@ -359,22 +307,285 @@ class VaultStore {
   }
 
   async syncToLocal() {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!this.activeVaultId || !vaultDir) {
-      this.status = "error";
-      this.errorMessage = "No active vault to sync.";
-      return;
+    if (!this.syncService || !this.activeVaultId) return;
+
+    try {
+      // Ensure all pending application saves are flushed before starting sync
+      // We use a timeout to prevent hanging forever if a task is stuck
+      await Promise.race([
+        this.saveQueue.waitForAll(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+        ),
+      ]);
+    } catch (err) {
+      console.warn("Continuing sync despite save queue issues:", err);
     }
 
-    await vaultIO.syncToLocal(this.activeVaultId, vaultDir, (status, msg) => {
-      this.status = status;
-      if (status === "error") {
-        this.errorMessage = msg || "Sync failed";
-      } else if (status === "idle") {
-        this.hasSyncFolder = true;
-        this.resetSyncState();
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    const db = await getDB();
+    let localHandle = await db.get(
+      "settings",
+      `syncHandle_${this.activeVaultId}`,
+    );
+
+    try {
+      if (localHandle) {
+        const permission = await localHandle.queryPermission({
+          mode: "readwrite",
+        });
+        if (permission !== "granted") {
+          const newPermission = await localHandle.requestPermission({
+            mode: "readwrite",
+          });
+          if (newPermission !== "granted") localHandle = null;
+        }
       }
+
+      if (!localHandle) {
+        localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+        await db.put(
+          "settings",
+          localHandle,
+          `syncHandle_${this.activeVaultId}`,
+        );
+      }
+
+      this.status = "saving";
+      this.syncType = "local";
+      console.log(
+        "[VaultStore] Starting local sync with handle:",
+        localHandle.name,
+      );
+
+      // Optimization: Create a lookup map once before the sync starts
+      const pathToEntity = new Map(
+        Object.values(this.entities).map((e) => [e._path?.join("/"), e]),
+      );
+
+      const result = await this.syncService.sync(
+        this.activeVaultId,
+        localHandle,
+        opfsHandle,
+        async (path, meta) => {
+          if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
+
+          // Use the optimized lookup map
+          const existing = pathToEntity.get(path);
+          if (existing) return true;
+
+          // Safety: If the file is unusually large (> 1MB), skip deep validation to avoid OOM
+          if (meta.size > 1024 * 1024) return true;
+
+          try {
+            if (!(meta.handle instanceof FileSystemFileHandle)) return true;
+            const file = await meta.handle.getFile();
+            const text = await file.text();
+            const { metadata } = parseMarkdown(text);
+            return !!(metadata.id || metadata.title);
+          } catch {
+            return false;
+          }
+        },
+      );
+
+      if (result.error) {
+        this.status = "error";
+        this.errorMessage = result.error;
+      } else {
+        this.status = "idle";
+        this.syncType = null;
+        uiStore.notify(
+          `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
+          "success",
+        );
+      }
+    } catch (e: any) {
+      if (e.name === "AbortError") {
+        this.status = "idle";
+        this.syncType = null;
+        return;
+      }
+      this.status = "error";
+      this.syncType = null;
+      this.errorMessage = e.message;
+      console.error("Sync failed", e);
+    }
+  }
+
+  async syncToCloud(user: { email: string; name: string }) {
+    if (!this.activeVaultId) return;
+
+    // Ensure all pending application saves are flushed before starting sync
+    await this.saveQueue.waitForAll();
+
+    this.status = "saving";
+    this.syncType = "cloud";
+    try {
+      console.log(
+        `[Sync] Starting cloud sync for user: ${user.email} (${user.name})`,
+      );
+      const opfsHandle = await this.getActiveVaultHandle();
+      if (!opfsHandle) throw new Error("OPFS handle missing");
+
+      const { CloudSyncService, GDriveBackend, SyncRegistry } =
+        await import("@codex/sync-engine");
+      const db = await getDB();
+
+      // Reuse or initialize the GDrive backend
+      if (!this.gdriveBackend) {
+        this.gdriveBackend = new GDriveBackend(
+          import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        );
+      }
+      await this.gdriveBackend.connect();
+
+      this.syncStats = {
+        updated: 0,
+        created: 0,
+        deleted: 0,
+        failed: 0,
+        total: 0,
+        progress: 0,
+      };
+
+      const cloudSync = new CloudSyncService(
+        new SyncRegistry(db),
+        this.gdriveBackend,
+      );
+      const result = await cloudSync.sync(
+        this.activeVaultId,
+        opfsHandle,
+        undefined,
+        (stats) => {
+          this.syncStats = {
+            ...stats,
+            progress:
+              stats.total > 0
+                ? Math.round(
+                    ((stats.updated +
+                      stats.created +
+                      stats.deleted +
+                      stats.failed) /
+                      stats.total) *
+                      100,
+                  )
+                : 0,
+          };
+        },
+      );
+
+      // Refresh folder name and metadata
+      let folderName = "cloud";
+      const currentMeta = await db.get(
+        "cloud_sync_metadata",
+        this.activeVaultId,
+      );
+      if (currentMeta) {
+        try {
+          const folderMeta = await this.gdriveBackend.getFolderMetadata(
+            currentMeta.gdriveFolderId,
+          );
+          folderName = folderMeta.name;
+          await db.put("cloud_sync_metadata", {
+            ...currentMeta,
+            gdriveFolderName: folderMeta.name,
+            lastSyncTime: Date.now(),
+          });
+        } catch (err) {
+          console.warn("Failed to update sync metadata time", err);
+        }
+      }
+
+      this.status = "idle";
+      this.syncType = null;
+      if (result.failed.length > 0) {
+        uiStore.notify(
+          `Sync complete with ${result.failed.length} errors.`,
+          "error",
+        );
+      } else {
+        uiStore.notify(
+          `Sync complete: ${result.updated.length + result.created.length} mirrored to ${folderName}.`,
+          "success",
+        );
+      }
+    } catch (err: any) {
+      console.error("Cloud sync failed", err);
+      this.status = "error";
+      this.syncType = null;
+      this.errorMessage = err.message;
+
+      if (err.message === "AUTH_REQUIRED") {
+        uiStore.notify(
+          "Authentication expired. Please reconnect GDrive.",
+          "error",
+        );
+      } else {
+        uiStore.notify("Cloud sync failed.", "error");
+      }
+    }
+  }
+
+  async disconnectCloud() {
+    if (this.gdriveBackend) {
+      await this.gdriveBackend.disconnect();
+    }
+    if (this.activeVaultId) {
+      const db = await getDB();
+      await db.delete("cloud_sync_metadata", this.activeVaultId);
+    }
+    uiStore.notify("Cloud storage disconnected.", "info");
+  }
+
+  async getCloudMetadata() {
+    if (!this.activeVaultId) return null;
+    const db = await getDB();
+    const meta = await db.get("cloud_sync_metadata", this.activeVaultId);
+
+    // Proactive name refresh if missing but backend is active
+    if (meta && !meta.gdriveFolderName && this.gdriveBackend?.isConnected) {
+      try {
+        const folderMeta = await this.gdriveBackend.getFolderMetadata(
+          meta.gdriveFolderId,
+        );
+        meta.gdriveFolderName = folderMeta.name;
+        await db.put("cloud_sync_metadata", meta);
+      } catch (err) {
+        console.warn("Failed to proactively fetch folder name", err);
+      }
+    }
+
+    return meta;
+  }
+
+  async updateCloudFolder(folderId: string) {
+    if (!this.activeVaultId) return;
+    const db = await getDB();
+    const existing = await db.get("cloud_sync_metadata", this.activeVaultId);
+
+    let folderName = existing?.gdriveFolderName;
+    if (this.gdriveBackend) {
+      try {
+        const meta = await this.gdriveBackend.getFolderMetadata(folderId);
+        folderName = meta.name;
+      } catch (err) {
+        console.warn("Failed to fetch folder name, using existing", err);
+      }
+    }
+
+    await db.put("cloud_sync_metadata", {
+      vaultId: this.activeVaultId,
+      gdriveFolderId: folderId,
+      gdriveFolderName: folderName,
+      lastSyncToken: existing?.lastSyncToken || null,
+      lastSyncTime: existing?.lastSyncTime || Date.now(),
     });
+    if (this.gdriveBackend) {
+      this.gdriveBackend.setVaultFolderId(folderId);
+    }
   }
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
@@ -431,6 +642,7 @@ class VaultStore {
         vaultDir,
       );
       this.entities = entities;
+      this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
 
       // Repopulate search index
       if (this.services) {
@@ -504,7 +716,73 @@ class VaultStore {
     }
   }
 
-  scheduleSave(entity: LocalEntity | Entity) {
+  async saveMaps() {
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    this.status = "saving";
+    return this.saveQueue.enqueue("maps-metadata", async () => {
+      try {
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+        this.status = "idle";
+      } catch (err) {
+        console.error("[VaultStore] Failed to save maps", err);
+        this.status = "error";
+        uiStore.notify(
+          "Failed to save map data. Please check your storage quota.",
+          "error",
+        );
+      }
+    });
+  }
+
+  async deleteMap(id: string): Promise<void> {
+    if (this.isGuest) throw new Error("Cannot delete maps in Guest Mode");
+    if (
+      uiStore.isDemoMode &&
+      !(typeof window !== "undefined" && (window as any).__E2E__)
+    ) {
+      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
+      return;
+    }
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    const map = this.maps[id];
+    if (!map) return;
+
+    // Remove from in-memory state (reassign to trigger reactivity)
+    const newMaps = { ...this.maps };
+    delete newMaps[id];
+    this.maps = newMaps;
+
+    // Async OPFS cleanup
+    return this.saveQueue.enqueue(`delete-map-${id}`, async () => {
+      try {
+        if (map.assetPath) {
+          const pathSegments = map.assetPath.split("/");
+          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        if (map.fogOfWar?.maskPath) {
+          const maskSegments = map.fogOfWar.maskPath.split("/");
+          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+            if (e.name !== "NotFoundError") throw e;
+          });
+        }
+
+        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
+      } catch (err: any) {
+        console.error("[VaultStore] Failed to delete map files", err);
+        this.status = "error";
+        uiStore.notify(`Failed to fully delete map: ${err.message}`, "error");
+      }
+    });
+  }
+
+  scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
     if (uiStore.isDemoMode) {
@@ -534,12 +812,12 @@ class VaultStore {
             );
           });
       }
-      return;
+      return Promise.resolve();
     }
 
     this.status = "saving";
     const targetVaultId = this.activeVaultId;
-    this.saveQueue
+    return this.saveQueue
       .enqueue(entity.id, async () => {
         await this.saveToDisk(entity, targetVaultId);
         this.status = "idle";
@@ -562,11 +840,14 @@ class VaultStore {
       this.entities,
     );
     this.entities[newEntity.id] = newEntity;
-    this.scheduleSave(newEntity);
+    await this.scheduleSave(newEntity);
     return newEntity.id;
   }
 
-  updateEntity(id: string, updates: Partial<LocalEntity>): boolean {
+  async updateEntity(
+    id: string,
+    updates: Partial<LocalEntity>,
+  ): Promise<boolean> {
     const { entities, updated } = vaultEntities.updateEntity(
       this.entities,
       id,
@@ -592,7 +873,7 @@ class VaultStore {
       if (this.services) this.services.ai.clearStyleCache();
     }
 
-    this.scheduleSave(updated);
+    await this.scheduleSave(updated);
     return true;
   }
 
@@ -671,7 +952,7 @@ class VaultStore {
     }
   }
 
-  addLabel(id: string, label: string): boolean {
+  async addLabel(id: string, label: string): Promise<boolean> {
     const { entities, updated } = vaultEntities.addLabel(
       this.entities,
       id,
@@ -679,13 +960,13 @@ class VaultStore {
     );
     if (updated) {
       this.entities = entities;
-      this.scheduleSave(updated);
+      await this.scheduleSave(updated);
       return true;
     }
     return false;
   }
 
-  removeLabel(id: string, label: string): boolean {
+  async removeLabel(id: string, label: string): Promise<boolean> {
     const { entities, updated } = vaultEntities.removeLabel(
       this.entities,
       id,
@@ -693,18 +974,18 @@ class VaultStore {
     );
     if (updated) {
       this.entities = entities;
-      this.scheduleSave(updated);
+      await this.scheduleSave(updated);
       return true;
     }
     return false;
   }
 
-  addConnection(
+  async addConnection(
     sourceId: string,
     targetId: string,
     type: string,
     label?: string,
-  ): boolean {
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.addConnection(
       this.entities,
       sourceId,
@@ -714,19 +995,19 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
   }
 
-  updateConnection(
+  async updateConnection(
     sourceId: string,
     targetId: string,
     oldType: string,
     newType: string,
     newLabel?: string,
-  ): boolean {
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.updateConnection(
       this.entities,
       sourceId,
@@ -737,13 +1018,17 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
   }
 
-  removeConnection(sourceId: string, targetId: string, type: string): boolean {
+  async removeConnection(
+    sourceId: string,
+    targetId: string,
+    type: string,
+  ): Promise<boolean> {
     const { entities, updatedSource } = vaultEntities.removeConnection(
       this.entities,
       sourceId,
@@ -752,7 +1037,7 @@ class VaultStore {
     );
     if (updatedSource) {
       this.entities = entities;
-      this.scheduleSave(updatedSource);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
@@ -776,7 +1061,7 @@ class VaultStore {
       entityId,
       originalName,
     );
-    this.updateEntity(entityId, { image, thumbnail });
+    await this.updateEntity(entityId, { image, thumbnail });
     return image;
   }
 

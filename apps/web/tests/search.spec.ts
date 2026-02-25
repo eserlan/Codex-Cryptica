@@ -96,15 +96,15 @@ test.describe("Fuzzy Search", () => {
 
     // Create entities via UI to trigger indexing
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("My Note");
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("The Crone");
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 20000,
     });
 
@@ -148,14 +148,14 @@ test.describe("Fuzzy Search", () => {
 
     // Create entities via UI
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("My Note");
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("The Crone");
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 20000,
     });
 
@@ -205,14 +205,14 @@ test.describe("Fuzzy Search", () => {
 
     // Create entities via UI to trigger indexing
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("My Note");
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("The Crone");
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 20000,
     });
 

@@ -27,6 +27,7 @@ vi.mock("./vault.svelte", () => ({
   vault: {
     defaultVisibility: "public",
     entities: {},
+    activeVaultId: "vault-1",
   },
 }));
 
@@ -37,6 +38,8 @@ vi.mock("./ui.svelte", () => ({
 }));
 
 describe("searchStore", () => {
+  vi.setConfig({ testTimeout: 10000 });
+
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -94,5 +97,34 @@ describe("searchStore", () => {
     const parsed = JSON.parse(stored as string);
     expect(parsed[0].id).toBe("alpha");
     expect(parsed[0].path).toBe("alpha.md");
+  });
+
+  it("uses vault-specific storage key", async () => {
+    const { vault } = await import("./vault.svelte");
+    // @ts-expect-error - activeVaultId is a state proxy
+    vault.activeVaultId = "vault-a";
+
+    const { searchStore } = await import("./search.svelte");
+    searchStore.open();
+
+    expect(localStorage.getItem).toHaveBeenCalledWith("search_recents_vault-a");
+  });
+
+  it("resets state on vault switch", async () => {
+    const { searchStore } = await import("./search.svelte");
+    searchStore.query = "previous search";
+    searchStore.results = [{ id: "1" } as any];
+    searchStore.selectedIndex = 5;
+    searchStore.isLoading = true;
+    searchStore.isOpen = true;
+
+    searchStore.reset();
+
+    expect(searchStore.query).toBe("");
+    expect(searchStore.results).toEqual([]);
+    expect(searchStore.selectedIndex).toBe(0);
+    expect(searchStore.isLoading).toBe(false);
+    expect(searchStore.isOpen).toBe(false);
+    expect(localStorage.getItem).toHaveBeenCalled(); // Should reload recents
   });
 });

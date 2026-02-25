@@ -13,6 +13,7 @@ class UIStore {
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
+  liteMode = $state(false);
 
   // Demo Mode State
   isDemoMode = $state(false);
@@ -20,9 +21,10 @@ class UIStore {
   hasPromptedSave = $state(false);
   wasConverted = $state(false);
 
-  notification = $state<{ message: string; type: "success" | "info" } | null>(
-    null,
-  );
+  notification = $state<{
+    message: string;
+    type: "success" | "info" | "error";
+  } | null>(null);
 
   private abortController: AbortController | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
@@ -32,6 +34,11 @@ class UIStore {
       const saved = localStorage.getItem("codex_skip_landing");
       if (saved !== null) {
         this.skipWelcomeScreen = saved === "true";
+      }
+
+      const lite = localStorage.getItem("codex_lite_mode");
+      if (lite !== null) {
+        this.liteMode = lite === "true";
       }
 
       // Proactively dismiss landing page if a demo is requested via URL
@@ -45,6 +52,13 @@ class UIStore {
   toggleWelcomeScreen(skip: boolean) {
     this.skipWelcomeScreen = skip;
     localStorage.setItem("codex_skip_landing", String(skip));
+  }
+
+  toggleLiteMode(enabled: boolean) {
+    this.liteMode = enabled;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_lite_mode", String(enabled));
+    }
   }
 
   get abortSignal() {
@@ -64,6 +78,7 @@ class UIStore {
   // Zen Mode State
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
+  zenModeActiveTab = $state<"overview" | "inventory" | "map">("overview");
 
   // Fog of War State
   sharedMode = $state(false);
@@ -103,7 +118,7 @@ class UIStore {
     this.globalError = null;
   }
 
-  notify(message: string, type: "success" | "info" = "success") {
+  notify(message: string, type: "success" | "info" | "error" = "success") {
     this.notification = { message, type };
     setTimeout(() => {
       this.notification = null;
@@ -128,14 +143,19 @@ class UIStore {
     }
   }
 
-  openZenMode(entityId: string) {
+  openZenMode(
+    entityId: string,
+    tab: "overview" | "inventory" | "map" = "overview",
+  ) {
     this.zenModeEntityId = entityId;
+    this.zenModeActiveTab = tab;
     this.showZenMode = true;
   }
 
   closeZenMode() {
     this.showZenMode = false;
     this.zenModeEntityId = null;
+    this.zenModeActiveTab = "overview";
   }
 
   // Compatibility methods

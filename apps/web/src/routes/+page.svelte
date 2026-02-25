@@ -6,7 +6,23 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
+  import { building, browser } from "$app/environment";
+
+  // Lazy load components when needed using relative paths for reliable resolution
+  function loadHeavyComponents() {
+    if (!GraphView) {
+      import("../lib/components/GraphView.svelte").then((m) => {
+        GraphView = m.default;
+      });
+    }
+    if (!EntityDetailPanel) {
+      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
+        EntityDetailPanel = m.default;
+      });
+    }
+  }
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
@@ -17,19 +33,24 @@
     return id ? vault.entities[id] : null;
   });
 
-  // Check if we're in guest/share mode
-  const shareId = $derived(page.url.searchParams.get("shareId"));
+  // Check if we're in guest/share mode - guard for prerendering
+  const shareId = $derived(
+    building ? null : page.url.searchParams.get("shareId"),
+  );
   const isGuestMode = $derived(!!shareId);
 
-  // Lazy load components when needed using relative paths for reliable resolution
+  // Consolidate reactive pre-loading and fallback loading into a single effect
+  // to prevent race conditions during dynamic imports.
   $effect(() => {
-    if ((vault.isInitialized || isGuestMode) && !GraphView) {
-      import("../lib/components/GraphView.svelte").then((m) => {
-        GraphView = m.default;
-      });
-      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
-        EntityDetailPanel = m.default;
-      });
+    const isSkippingLanding =
+      browser && (!uiStore.isLandingPageVisible || isGuestMode);
+    const isVaultReady = vault.isInitialized || isGuestMode;
+
+    if (
+      (isSkippingLanding || isVaultReady) &&
+      (!GraphView || !EntityDetailPanel)
+    ) {
+      loadHeavyComponents();
     }
   });
 
@@ -100,19 +121,19 @@
   });
 </script>
 
-<div class="h-[calc(100vh-65px)] flex bg-black overflow-hidden relative">
+<div class="h-[calc(100vh-65px)] flex bg-theme-bg overflow-hidden relative">
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
-    {:else if !uiStore.isLandingPageVisible || page.url.searchParams.has("demo")}
+    {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
-        class="absolute inset-0 bg-black flex items-center justify-center"
+        class="absolute inset-0 bg-theme-bg flex items-center justify-center"
         aria-hidden="true"
       >
         <div
           class="text-theme-muted font-mono text-xs animate-pulse uppercase tracking-widest"
         >
-          Initiating Neural Interface...
+          {themeStore.resolveJargon("graph_loading")}
         </div>
       </div>
     {/if}
@@ -126,9 +147,9 @@
   {/if}
 
   <!-- Landing Page / Marketing Layer -->
-  {#if !isGuestMode && uiStore.isLandingPageVisible && !page.url.searchParams.has("demo")}
+  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
-      class="absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
+      class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
       style:background-image="var(--bg-texture-overlay)"
       transition:fade
     >
@@ -171,6 +192,17 @@
             >
               Try Demo
             </button>
+          </div>
+
+          <div class="mt-8 flex flex-col items-center gap-4">
+            <a
+              href="{base}/features"
+              class="inline-flex items-center gap-2 text-theme-primary hover:text-theme-primary/80 font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--zap] w-3 h-3"></span>
+              View Features Overview
+            </a>
+
             <div
               class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
             >
@@ -280,16 +312,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--color-accent-primary);
-    border-radius: 2px;
-  }
-</style>

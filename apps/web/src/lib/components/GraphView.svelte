@@ -5,6 +5,7 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Entity } from "schema";
+  import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -115,7 +116,8 @@
   let edgeEditType = $state("neutral");
 
   const applyCurrentLayout = async (isInitial = false) => {
-    if (!cy) return;
+    const currentCy = cy;
+    if (!currentCy) return;
     if (currentLayout) {
       try {
         currentLayout.stop();
@@ -128,7 +130,7 @@
       // For guests, we rely entirely on synced positions.
       // Simply fit to view initially if needed.
       if (isInitial) {
-        cy.fit(cy.elements(), 40);
+        currentCy.fit(currentCy.elements(), 40);
       }
       isLayoutRunning = false;
       return;
@@ -150,24 +152,28 @@
           },
         );
 
-        cy.layout({
-          name: "preset",
-          positions: positions,
-          animate: true,
-          animationDuration: 500,
-          animationEasing: "ease-out-cubic",
-        }).run();
+        if (!cy || currentCy.destroyed()) return;
+
+        currentCy
+          .layout({
+            name: "preset",
+            positions: positions,
+            animate: true,
+            animationDuration: 500,
+            animationEasing: "ease-out-cubic",
+          })
+          .run();
       } catch (err) {
         console.error("Timeline layout failed:", err);
       } finally {
         isLayoutRunning = false;
       }
     } else if (graph.orbitMode && graph.centralNodeId) {
-      setCentralNode(cy, graph.centralNodeId);
+      setCentralNode(currentCy, graph.centralNodeId);
       if (isInitial) {
-        cy.resize();
-        cy.animate({
-          fit: { eles: cy.elements(), padding: 40 },
+        currentCy.resize();
+        currentCy.animate({
+          fit: { eles: currentCy.elements(), padding: 40 },
           duration: 800,
           easing: "ease-out-cubic",
         });
@@ -181,7 +187,7 @@
         const snapshotElements = $state.snapshot(graph.elements);
         let elements = snapshotElements;
 
-        if (cy) {
+        if (currentCy) {
           // Optimization: Create a map of node dimensions to avoid repetitive cy.$id() calls
           // This reduces complexity from O(N*logN) to O(N) for dimension sync
           const nodeDimensions = new Map<
@@ -189,7 +195,7 @@
             { width: number | undefined; height: number | undefined }
           >();
 
-          cy.nodes().forEach((node) => {
+          currentCy.nodes().forEach((node) => {
             const w = node.data("width");
             const h = node.data("height");
             if (w !== undefined || h !== undefined) {
@@ -222,20 +228,24 @@
           animate: false, // Math only in worker
         });
 
+        if (!cy || currentCy.destroyed()) return;
+
         if (isInitial) {
-          cy.nodes().forEach((n) => {
+          currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
             if (pos) n.position(pos);
           });
-          cy.fit(cy.elements(), 40);
+          currentCy.fit(currentCy.elements(), 40);
         } else {
-          cy.layout({
-            name: "preset",
-            positions: positions,
-            animate: true,
-            animationDuration: 1000,
-            animationEasing: "ease-out-quad",
-          }).run();
+          currentCy
+            .layout({
+              name: "preset",
+              positions: positions,
+              animate: true,
+              animationDuration: 1000,
+              animationEasing: "ease-out-quad",
+            })
+            .run();
         }
 
         // SYNC: Update vault with new positions
@@ -257,27 +267,29 @@
       } catch (err) {
         console.error("Background layout failed:", err);
         // Fallback to main thread
-        currentLayout = cy.layout({
-          ...DEFAULT_LAYOUT_OPTIONS,
-          stop: () => {
-            // Sync fallback layout too
-            if (!vault.isGuest && cy) {
-              const updates: Record<string, Partial<Entity>> = {};
-              cy.nodes().forEach((node) => {
-                updates[node.id()] = {
-                  metadata: {
-                    ...(vault.entities[node.id()]?.metadata || {}),
-                    coordinates: node.position(),
-                  },
-                };
-              });
-              if (Object.keys(updates).length > 0) {
-                vault.batchUpdateEntities(updates as any);
+        if (cy && !currentCy.destroyed()) {
+          currentLayout = currentCy.layout({
+            ...DEFAULT_LAYOUT_OPTIONS,
+            stop: () => {
+              // Sync fallback layout too
+              if (!vault.isGuest && currentCy) {
+                const updates: Record<string, Partial<Entity>> = {};
+                currentCy.nodes().forEach((node) => {
+                  updates[node.id()] = {
+                    metadata: {
+                      ...(vault.entities[node.id()]?.metadata || {}),
+                      coordinates: node.position(),
+                    },
+                  };
+                });
+                if (Object.keys(updates).length > 0) {
+                  vault.batchUpdateEntities(updates as any);
+                }
               }
-            }
-          },
-        });
-        currentLayout.run();
+            },
+          });
+          currentLayout.run();
+        }
       } finally {
         isLayoutRunning = false;
       }
@@ -331,137 +343,159 @@
     }
   };
 
+  let initTimer: ReturnType<typeof setTimeout> | null = null;
+
   onMount(() => {
     if (container) {
-      cy = initGraph({
-        container,
-        elements: graph.elements,
-        style: graphStyle,
-      });
+      // Defer graph initialization to next task queue tick.
+      // This yields the main thread back to the browser so Svelte can completely
+      // remove the "Initiating Neural Interface..." screen and paint the empty frame
+      // BEFORE Cytoscape synchronously locks up the main thread with 1000s of elements.
+      initTimer = setTimeout(async () => {
+        if (!container) return; // Guard against rapid unmounts
 
-      // Expose for E2E testing
-      if (import.meta.env.DEV || (window as any).__E2E__) {
-        (window as any).cy = cy;
-      }
+        try {
+          const instance = (await initGraph({
+            container,
+            elements: untrack(() => graph.elements), // Initialize with current elements
+            style: untrack(() => graphStyle),
+          })) as any;
 
-      // Hover events
-      cy.on("mouseover", "node", (evt) => {
-        const node = evt.target;
-        clearTimeout(hoverTimeout);
-        hoverTimeout = window.setTimeout(() => {
-          const renderedPos = node.renderedPosition();
-          hoverPosition = {
-            x: renderedPos.x,
-            y: renderedPos.y,
-          };
-          hoveredEntityId = node.id();
-        }, HOVER_DELAY);
-      });
-
-      cy.on("mouseout", "node", (_evt) => {
-        clearTimeout(hoverTimeout);
-        hoveredEntityId = null;
-        hoverPosition = null;
-      });
-
-      // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
-      cy.on("position", "node", (evt) => {
-        if (hoveredEntityId === evt.target.id()) {
-          const renderedPos = evt.target.renderedPosition();
-          hoverPosition = { x: renderedPos.x, y: renderedPos.y };
-        }
-      });
-      cy.on("pan zoom", () => {
-        if (hoveredEntityId && cy) {
-          const node = cy.$id(hoveredEntityId);
-          if (node.length > 0) {
-            const renderedPos = node.renderedPosition();
-            hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+          // If the timer was cleared by onDestroy, cleanup the orphan instance
+          if (initTimer === null) {
+            instance.destroy();
+            return;
           }
-        }
-      });
 
-      cy.on("tap", "node", (evt) => {
-        const targetNode = evt.target as NodeSingular;
-        const targetId = targetNode.id();
+          cy = instance;
 
-        if (connectMode) {
-          if (!sourceId) {
-            sourceId = targetId;
-            targetNode.addClass("selected-source");
-          } else if (sourceId === targetId) {
-            sourceId = null;
-            targetNode.removeClass("selected-source");
-          } else {
-            // Create the connection in the store
-            vault.addConnection(sourceId, targetId, "neutral");
-
-            cy?.$(".selected-source").removeClass("selected-source");
-            sourceId = null;
-            connectMode = false; // Auto exit connect mode
+          // Expose for E2E testing
+          if (import.meta.env.DEV || (window as any).__E2E__) {
+            (window as any).cy = instance;
           }
-        } else if (graph.orbitMode) {
-          // US2: Switch center if clicked in orbit mode
-          graph.setCentralNode(targetId);
-          // Also show the detail panel for the node
-          selectedId = targetId;
-        } else {
-          // Selection Logic for Detail Panel
-          selectedId = targetId;
-        }
-      });
 
-      // Right-click on edge to edit label
-      cy.on("cxttap", "edge", (evt) => {
-        if (vault.isGuest) return;
-        const edge = evt.target;
-        const sourceId = edge.data("source");
-        const targetId = edge.data("target");
-        const currentLabel = edge.data("label") || "";
-        const currentType = edge.data("connectionType") || "neutral";
-
-        editingEdge = {
-          source: sourceId,
-          target: targetId,
-          label: currentLabel,
-          type: currentType,
-        };
-        edgeEditInput = currentLabel;
-        edgeEditType = currentType;
-      });
-
-      cy.on("tap", (evt) => {
-        if (evt.target === cy) {
-          // Only clear selection if we clicked strictly on background, not on node
-          if (!connectMode) {
-            selectedId = null;
-          }
-          // Close edge editor on background tap
-          editingEdge = null;
-        }
-      });
-
-      cy.on("select unselect", "node", () => {
-        selectionCount = cy?.$("node:selected").length || 0;
-      });
-
-      // Save position on drag end
-      cy.on("dragfree", "node", (evt) => {
-        if (vault.isGuest) return;
-        const node = evt.target;
-        const id = node.id();
-        const pos = node.position();
-
-        const entity = vault.entities[id];
-        if (entity) {
-          vault.updateEntity(id, {
-            metadata: {
-              ...(entity.metadata || {}),
-              coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
-            },
+          // Hover events
+          instance.on("mouseover", "node", (evt: any) => {
+            const node = evt.target;
+            clearTimeout(hoverTimeout);
+            hoverTimeout = window.setTimeout(() => {
+              const renderedPos = node.renderedPosition();
+              hoverPosition = {
+                x: renderedPos.x,
+                y: renderedPos.y,
+              };
+              hoveredEntityId = node.id();
+            }, HOVER_DELAY);
           });
+
+          instance.on("mouseout", "node", (_evt: any) => {
+            clearTimeout(hoverTimeout);
+            hoveredEntityId = null;
+            hoverPosition = null;
+          });
+
+          // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
+          instance.on("position", "node", (evt: any) => {
+            if (hoveredEntityId === evt.target.id()) {
+              const renderedPos = evt.target.renderedPosition();
+              hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+            }
+          });
+          instance.on("pan zoom", () => {
+            if (hoveredEntityId && instance) {
+              const node = instance.$id(hoveredEntityId);
+              if (node.length > 0) {
+                const renderedPos = node.renderedPosition();
+                hoverPosition = { x: renderedPos.x, y: renderedPos.y };
+              }
+            }
+          });
+
+          instance.on("tap", "node", async (evt: any) => {
+            const targetNode = evt.target as NodeSingular;
+            const targetId = targetNode.id();
+
+            if (connectMode) {
+              if (!sourceId) {
+                sourceId = targetId;
+                targetNode.addClass("selected-source");
+              } else if (sourceId === targetId) {
+                sourceId = null;
+                targetNode.removeClass("selected-source");
+              } else {
+                // Create the connection in the store
+                await vault.addConnection(sourceId, targetId, "neutral");
+
+                instance?.$(".selected-source").removeClass("selected-source");
+                sourceId = null;
+                connectMode = false; // Auto exit connect mode
+              }
+            } else if (graph.orbitMode) {
+              // US2: Switch center if clicked in orbit mode
+              graph.setCentralNode(targetId);
+              // Also show the detail panel for the node
+              selectedId = targetId;
+            } else {
+              // Selection Logic for Detail Panel
+              selectedId = targetId;
+            }
+          });
+
+          // Right-click on edge to edit label
+          instance.on("cxttap", "edge", (evt: any) => {
+            if (vault.isGuest) return;
+            const edge = evt.target;
+            const sourceId = edge.data("source");
+            const targetId = edge.data("target");
+            const currentLabel = edge.data("label") || "";
+            const currentType = edge.data("connectionType") || "neutral";
+
+            editingEdge = {
+              source: sourceId,
+              target: targetId,
+              label: currentLabel,
+              type: currentType,
+            };
+            edgeEditInput = currentLabel;
+            edgeEditType = currentType;
+          });
+
+          instance.on("tap", (evt: any) => {
+            if (evt.target === instance) {
+              // Only clear selection if we clicked strictly on background, not on node
+              if (!connectMode) {
+                selectedId = null;
+              }
+              // Close edge editor on background tap
+              editingEdge = null;
+            }
+          });
+
+          instance.on("select unselect", "node", () => {
+            selectionCount = instance?.$("node:selected").length || 0;
+          });
+
+          // Save position on drag end
+          instance.on("dragfree", "node", async (evt: any) => {
+            if (vault.isGuest) return;
+            const node = evt.target;
+            const id = node.id();
+            const pos = node.position();
+
+            const entity = vault.entities[id];
+            if (entity) {
+              await vault.updateEntity(id, {
+                metadata: {
+                  ...(entity.metadata || {}),
+                  coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
+                },
+              });
+            }
+          });
+        } catch (error) {
+          console.error("Failed to initialize graph:", error);
         }
-      });
+      }, 0);
     }
   });
 
@@ -476,6 +510,10 @@
     if (cy) {
       cy.destroy();
       cy = undefined;
+    }
+    if (initTimer) {
+      clearTimeout(initTimer);
+      initTimer = null;
     }
     if (import.meta.env.DEV) {
       delete (window as any).cy;
@@ -654,11 +692,11 @@
             );
           }
 
-          if (hasUpdates) {
+          if (hasUpdates && cy && !cy.destroyed()) {
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              applyCurrentLayout(false);
+              if (cy && !cy.destroyed()) applyCurrentLayout(false);
             }, 200);
           }
         } catch (error) {
@@ -740,23 +778,32 @@
         // This breaks reactivity and prevents infinite loops/DataCloneErrors
         const snapshotElements = $state.snapshot(graph.elements);
 
-        // 1. Build a map of current cy elements for O(1) lookups
+        // 1. Build Set of target IDs (avoiding map allocation)
+        const targetIds = new Set<string>();
+        const snapshotLength = snapshotElements.length;
+        for (let i = 0; i < snapshotLength; i++) {
+          targetIds.add(snapshotElements[i].data.id);
+        }
+
+        // 2. Build map of current elements AND identify removals in one pass
         const elementMap = new Map<string, any>();
-        currentCy.elements().forEach((el) => {
-          elementMap.set(el.id(), el);
-        });
+        const elementsToRemove: any[] = [];
 
-        const targetIds = new Set(snapshotElements.map((el) => el.data.id));
+        // Iterating cy.elements() directly avoids Array.from overhead
+        const currentElements = currentCy.elements();
+        const currentLength = currentElements.length;
+        for (let i = 0; i < currentLength; i++) {
+          const el = currentElements[i];
+          const id = el.id();
+          if (!targetIds.has(id)) {
+            elementsToRemove.push(el);
+          } else {
+            elementMap.set(id, el);
+          }
+        }
 
-        // 2. Remove elements no longer in the store
-        const removedElements = Array.from(elementMap.values()).filter(
-          (el) => !targetIds.has(el.id()),
-        );
-        if (removedElements.length > 0) {
-          // Cytoscape remove() accepts a collection or selector string
-          currentCy.remove(currentCy.collection(removedElements));
-          // Sync map after removal
-          removedElements.forEach((el) => elementMap.delete(el.id()));
+        if (elementsToRemove.length > 0) {
+          currentCy.remove(currentCy.collection(elementsToRemove));
         }
 
         // 3. Add new elements safely
@@ -820,24 +867,30 @@
           snapshotElements.forEach((el) => {
             const node = elementMap.get(el.data.id);
             if (node) {
-              const currentData = node.data();
-              const newData = el.data;
+              const currentData = node.data() as Record<string, any>;
+              const newData = el.data as Record<string, any>;
 
               // Robust equality check to prevent unnecessary style recalculations
               let changed = false;
-              for (const key in newData) {
+              for (const k in newData) {
                 // Skip ID as it's the lookup key
-                if (key === "id") continue;
+                if (k === "id" || !Object.hasOwn(newData, k)) continue;
 
-                const k = key as keyof typeof newData;
                 const newVal = newData[k];
                 const curVal = currentData[k];
 
                 // Performance optimized check for TemporalMetadata objects
-                const isMatch =
-                  typeof newVal === "object" && newVal !== null
-                    ? JSON.stringify(newVal) === JSON.stringify(curVal)
-                    : curVal === newVal;
+                let isMatch: boolean;
+                if (
+                  el.group === "nodes" &&
+                  (k === "date" || k === "start_date" || k === "end_date")
+                ) {
+                  isMatch = isTemporalMetadataEqual(newVal, curVal);
+                } else if (typeof newVal === "object" && newVal !== null) {
+                  isMatch = JSON.stringify(newVal) === JSON.stringify(curVal);
+                } else {
+                  isMatch = curVal === newVal;
+                }
 
                 if (!isMatch) {
                   changed = true;
@@ -871,7 +924,7 @@
 
         // 4. Force layout ONLY if structural changes occurred OR if first load
         const structuralChange =
-          newElements.length > 0 || removedElements.length > 0;
+          newElements.length > 0 || elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         const shouldRunLayout = structuralChange || isFirstElements;
 
@@ -911,9 +964,9 @@
   });
 
   // Save edge label logic
-  const saveEdgeLabel = () => {
+  const saveEdgeLabel = async () => {
     if (editingEdge) {
-      vault.updateConnection(
+      await vault.updateConnection(
         editingEdge.source,
         editingEdge.target,
         editingEdge.type,
@@ -1005,7 +1058,7 @@
 
     {#if graph.timelineMode}
       <div
-        class="bg-purple-900/40 backdrop-blur border border-purple-500/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-purple-300 shadow-lg uppercase pointer-events-auto"
+        class="bg-timeline-dark/40 backdrop-blur border border-timeline-primary/30 px-3 py-1 flex items-center gap-2 text-[9px] font-mono tracking-[0.2em] text-timeline-primary shadow-lg uppercase pointer-events-auto"
         transition:fade
       >
         <span class="icon-[lucide--history] w-3 h-3 animate-pulse"></span>
@@ -1228,9 +1281,9 @@
         </div>
         <button
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
-          onclick={() => {
+          onclick={async () => {
             if (editingEdge) {
-              vault.removeConnection(
+              await vault.removeConnection(
                 editingEdge.source,
                 editingEdge.target,
                 editingEdge.type,

@@ -1,6 +1,7 @@
 {
   "name": "codex-cryptica",
   "private": true,
+  "type": "module",
   "packageManager": "npm@11.10.0",
   "scripts": {
     "build": "turbo run build",

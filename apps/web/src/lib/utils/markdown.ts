@@ -65,15 +65,21 @@ export function sanitizeId(text: string): string {
 }
 
 export function stringifyEntity(entity: Entity): string {
-  const { content, ...metadata } = entity;
+  const { content, updatedAt, ...metadata } = entity;
+
+  // Ensure updatedAt is the FIRST property for optimized sync scanning
+  const orderedMetadata: any = { updatedAt };
+
   // Remove runtime-only fields if they crept in
-  const cleanMetadata = { ...metadata };
-  delete (cleanMetadata as any)._fsHandle;
-  delete (cleanMetadata as any)._lastModified;
-  delete (cleanMetadata as any).connections;
+  const cleanRest = { ...metadata };
+  delete (cleanRest as any)._fsHandle;
+  delete (cleanRest as any)._lastModified;
+  delete (cleanRest as any).connections;
 
-  (cleanMetadata as any).connections = entity.connections;
+  Object.assign(orderedMetadata, cleanRest);
+  orderedMetadata.connections = entity.connections;
 
-  const yamlStr = yaml.dump(cleanMetadata);
+  // Use sortKeys: false to preserve our specific order
+  const yamlStr = yaml.dump(orderedMetadata, { sortKeys: false });
   return `---\n${yamlStr}---\n${content || ""}`;
 }

@@ -12,10 +12,12 @@
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
-  // Auto-focus input when modal opens
+  // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
-    if (searchStore.isOpen && inputElement) {
+    if (searchStore.isOpen) {
       tick().then(() => inputElement?.focus());
+    } else {
+      clearTimeout(debounceTimer);
     }
   });
 
@@ -153,6 +155,7 @@
       <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
         <div class="relative">
           <span
+            aria-hidden="true"
             class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-5 h-5 text-zinc-400"
           ></span>
           <input
@@ -218,6 +221,7 @@
                 <span class="font-medium truncate flex items-center gap-2">
                   {#if result.type}
                     <span
+                      aria-hidden="true"
                       class="{getIconClass(
                         categories.getCategory(result.type)?.icon,
                       )} w-3.5 h-3.5 shrink-0"

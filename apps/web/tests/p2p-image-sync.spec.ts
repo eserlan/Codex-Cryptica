@@ -5,6 +5,7 @@ test.describe("P2P Image Sync", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
 
       // Mock Peer
       (window as any).Peer = class MockPeer {

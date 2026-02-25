@@ -4,6 +4,18 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API (060-robust-gdrive-sync)
+- OPFS (Vault Data), IndexedDB via `idb` (Sync Registry metadata) (060-robust-gdrive-sync)
+
+- TypeScript 5.x + Svelte 5, `idb`, Web File System Access API (059-robust-local-sync)
+- IndexedDB (Metadata), OPFS (Internal Files), Local Filesystem (External Mirror) (059-robust-local-sync)
+
+- TypeScript 5.x / Node.js 20+ / Svelte 5 + SvelteKit, `@sveltejs/adapter-static` (055-prerender-marketing)
+- N/A (Static files) (055-prerender-marketing)
+
+- TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai` (054-lite-no-ai)
+- LocalStorage (for persistent setting `liteMode`) (054-lite-no-ai)
+
 - IndexedDB (Metadata), OPFS (Files), LocalStorage (UI State/Last Reminded) (052-sync-reminder)
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK (051-demo-mode)
@@ -95,10 +107,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 052-sync-reminder: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper)
+- 060-robust-gdrive-sync: Added TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API
 
-- 051-demo-mode: Added TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK
-
-- 050-oracle-draw-button: Added one-click "Draw" button for Advanced Tier lore visualization across Chat, Sidepanel, and Zen Mode.
+- 059-robust-local-sync: Added TypeScript 5.x + Svelte 5, `idb`, Web File System Access API
+- 059-robust-local-sync: Added IndexedDB state registry for bidirectional file mirroring.
 
 <!-- MANUAL ADDITIONS START -->

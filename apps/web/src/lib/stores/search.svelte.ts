@@ -15,6 +15,9 @@ class SearchStore {
 
   constructor() {
     this.recents = this.loadRecents();
+    if (typeof window !== "undefined") {
+      window.addEventListener("vault-switched", () => this.reset());
+    }
   }
 
   private normalizeRecent(entry: SearchResult): SearchResult | null {
@@ -28,10 +31,14 @@ class SearchStore {
     return { ...entry, id: derivedId };
   }
 
+  private getStorageKey(): string {
+    return `search_recents_${vault.activeVaultId || "default"}`;
+  }
+
   private loadRecents(): SearchResult[] {
     if (typeof localStorage === "undefined") return [];
     try {
-      const raw = localStorage.getItem("search_recents");
+      const raw = localStorage.getItem(this.getStorageKey());
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
@@ -42,6 +49,15 @@ class SearchStore {
       console.warn("SearchStore: Failed to parse recent searches.", error);
       return [];
     }
+  }
+
+  reset() {
+    this.query = "";
+    this.results = [];
+    this.selectedIndex = 0;
+    this.isLoading = false;
+    this.isOpen = false;
+    this.recents = this.loadRecents();
   }
 
   open() {
@@ -114,7 +130,10 @@ class SearchStore {
       ].slice(0, 5);
 
       if (typeof localStorage !== "undefined") {
-        localStorage.setItem("search_recents", JSON.stringify(this.recents));
+        localStorage.setItem(
+          this.getStorageKey(),
+          JSON.stringify(this.recents),
+        );
       }
       return selected;
     }

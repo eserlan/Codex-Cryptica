@@ -1,0 +1,488 @@
+# Codex Cryptica - User Guide & Features
+
+This file contains an amalgamation of the user-facing help documentation and core features of Codex Cryptica.
+
+## Core Features
+
+### AI Oracle
+Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes.
+
+### Visual Graph
+Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
+
+### Local Folder Sync
+Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.
+
+### Total Privacy
+Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
+
+### Linking Notes
+Connect people and locations. Click one item then another to link them together.
+
+### AI Generated Art
+Save art made by the Artificial Intelligence (AI). You can drag any image created by the AI onto an entry to save it as their portrait.
+
+### AI Suggestions
+The AI finds new links in your notes and suggests connections you might have missed.
+
+### Combine Entries
+Merge duplicate notes. Pick two or more items to combine them into one.
+
+### Hide Secrets
+Keep secrets hidden. Hide items from your map so players don't see them during a session.
+
+### Switching Stories
+Change your campaign. Click the folder name at the top to switch to a different story.
+
+### Pick Dates
+Pick years quickly without typing. Click the grid to zoom into specific decades and years.
+
+### Smart Importing
+Safe file loading. If a file import stops, just pick the file again to finish where you left off.
+
+### Change the Look
+Instantly change the way the app looks and speaks. Pick a new style like Fantasy or Sci-Fi to change colors, fonts, and even the words used in the buttons.
+
+### Instant Visualization
+For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.
+
+### Demo Mode
+Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.
+
+### Multi-Vault Sync
+Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.
+
+### Lite Mode (No AI)
+Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.
+
+### SEO Prerendering
+Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.
+
+### Map Mode
+Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+
+
+## Help Documentation
+
+### GETTING STARTED
+
+Codex Cryptica is designed to give you **absolute sovereignty** over your lore. Everything you write is saved as a Markdown file in your local vault.
+
+### Core Concepts
+
+- **Entities**: The building blocks of your world (NPCs, Locations, Items).
+- **Chronicles**: The main text content of an entity.
+- **Lore**: Hidden attributes and meta-data used by the Oracle for context.
+
+---
+
+### CONNECTIONS PROPOSER
+
+The **Connections Proposer** works in the background to find hidden links between your entities. It uses the Lore Oracle to analyze your writing and suggest relationships you might have missed.
+
+### How it Works
+
+1. **Background Scan**: When you view an entity, the system silently checks for potential links to other records.
+2. **Review**: Suggestions appear at the bottom of the detail panel.
+3. **Apply**: Click the checkmark to create a real connection.
+4. **Dismiss**: Click 'X' to ignore. Dismissed suggestions are saved in history just in case.
+
+---
+
+### KNOWLEDGE GRAPH
+
+The graph is your primary way to navigate.
+
+### Shortcuts
+
+- `C`: Toggle Connect Mode.
+- `L`: Toggle Node Labels.
+- `Scroll`: Zoom in/out.
+- `Drag`: Pan the view.
+- `Click Node`: Focus entity and open detail panel.
+
+---
+
+### THE LORE ORACLE
+
+The Oracle is powered by **Google Gemini**. It doesn't just 'chat'; it retrieves relevant lore from your graph to provide context-aware answers.
+
+### Features
+
+- **Context Fusion**: Combines visible chronicles and hidden lore.
+- **Image Generation**: Type `/draw [description]` to visualize your world.
+- **Instant Visualization**: Advanced Tier users will see a "DRAW VISUAL" button on Oracle responses and empty Entity profiles to quickly generate images based on lore.
+
+---
+
+### CHAT COMMANDS
+
+The Lore Oracle supports several interactive commands to help you manage your world. To discover available commands, simply type a forward slash (`/`) in the chat input.
+
+### Available Commands
+
+- `/draw [subject]`: Triggers the AI to generate a visual representation of the subject.
+- `/create [description]`: Ask the Oracle to draft a new entity record based on your description.
+- `/connect`: The primary tool for building relationships.
+- `/merge`: Combine two entities into one, synthesizing their lore and re-mapping all connections.
+
+## Efficient Linking with /connect
+
+The `/connect` command is designed for high-speed world building. You can use the **Tab** key to navigate through a structured sequence without leaving your keyboard.
+
+### The Tab Sequence
+
+1. Type `/con` and press **Enter** or **Tab** to start the command.
+2. **From**: Start typing the first entity name. Select a suggestion with **Tab**.
+3. **Relationship**: Type the connection label (e.g., `is the mentor of`) or pick a suggested one, then press **Tab**.
+4. **To**: Type the second entity name and select it with **Tab** or **Enter**.
+
+### Direct Commands (Instant)
+
+For power users, you can create connections instantly by wrapping entity names in quotes. This bypasses the AI parser for zero-latency execution:
+`/connect "Eldrin" is the mentor of "Kaelen"`
+
+## Merging Entities with /merge
+
+The `/merge` command allows you to consolidate duplicate entries or combine related notes into a single cohesive record.
+
+### Direct Merge
+
+You can trigger an immediate merge by specifying the source and target:
+`/merge "Old Notes" into "Kingdom of Aethel"`
+
+The "Source" (Old Notes) will be deleted, and its content will be appended to the "Target" (Kingdom of Aethel). All inbound and outbound connections will be automatically updated to point to the Target.
+
+### Guided Merge Wizard
+
+Type `/merge oracle` to open the interactive **Merge Wizard**. This tool provides:
+
+- **Entity Selection**: Guided lookup for source and target.
+- **Merge Strategy**: Choose between simple **Concatenation** or **AI Synthesis** (where the Oracle rewrites the combined content into a single cohesive narrative).
+- **Preview**: View the resulting content before finalizing the merge.
+
+## Guided Oracle Assistance
+
+If you are unsure how two entities should be related or how they should be combined, add `oracle` to your command:
+
+- `/connect oracle`: Analyzes lore to propose thematic relationship types.
+- `/merge oracle`: Opens the step-by-step consolidation wizard with content preview.
+
+---
+
+### IMPORTING NOTES
+
+Codex Arcana can transform your unstructured notes into a structured Knowledge Graph using the Lore Oracle.
+
+## How it Works
+
+1. **Upload**: Drag and drop your `.txt`, `.docx`, or `.json` files.
+2. **Analysis**: The Oracle breaks your documents into chunks and analyzes them to find characters, locations, and items.
+3. **Review**: You review the discovered entities and their relationships before adding them to your vault.
+
+## Resilient Imports
+
+Large documents can take time to process. The system automatically tracks your progress:
+
+- **Automatic Resume**: If you close the app or lose connection, re-selecting the same file will resume exactly where you left off.
+- **Content-Aware**: We use unique file fingerprints (hashes) to remember progress even if you rename your files.
+- **Visual Tracking**: The segmented progress bar shows you exactly which parts of your file have been analyzed, skipped, or are currently active.
+
+## Manual Restart
+
+If you want to re-analyze a file from scratch, click the **Restart** button in the import dialog to clear its saved progress.
+
+---
+
+### MAP MODE
+
+**Map Mode** transitions Codex Cryptica from a document-heavy manager to a visual, spatial experience. You can plot your campaign data onto custom geographic or tactical canvases.
+
+### Getting Started
+
+1. Click the **MAP** tab in the top navigation bar.
+2. If no map exists, click **Upload World Image** to select a JPG or PNG from your device.
+3. Once uploaded, use your **Mouse Wheel** to zoom and **Click-Drag** to pan.
+
+### Placing Lore Pins
+
+Connect your geography directly to your notes:
+
+- **Double-Click** anywhere on the map to create a new pin.
+- Use the **Link Lore** search box to connect the pin to an existing NPC, Location, or Item.
+- **Click a Pin** to instantly open its associated chronicle in the side panel.
+
+### Fog of War (GM Only)
+
+Manage mystery and player progression:
+
+1. Toggle **GM MODE** in the bottom control bar.
+2. Ensure **FOG** is toggled ON.
+3. Hold the **Alt Key** and **Click-Drag** to "paint away" the fog and reveal areas of the map.
+4. Reveals are persistent and will be saved to your vault.
+
+### Hierarchical Maps
+
+Dive deeper into your world:
+
+- You can attach specific sub-maps to entities (e.g., a "Tavern" note can have its own floor plan).
+- In the **Entity Detail Panel**, go to the **MAP** tab to upload a sub-map.
+- Once attached, pins linked to that entity will show an **ENTER** button, allowing you to dive into the sub-map.
+- Use the breadcrumbs or "Go Back" logic to return to the parent map.
+
+---
+
+### PRIVACY & SYNC
+
+Your data is yours.
+
+### Local Folder Sync
+
+Keep your internal archive in sync with a folder on your machine. This enables you to use external markdown editors (like Obsidian) or move assets manually.
+
+Synchronization is **bidirectional**:
+
+- **Internal → External**: Updates made in the app are mirrored to your folder.
+- **External → Internal**: Edits made in your folder are imported back into the app.
+
+The system automatically resolves conflicts using a "newest version wins" strategy.
+
+### Cloud Sync
+
+You can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server.
+
+---
+
+### TERMINAL LANDING PAGE
+
+The Terminal Landing Page serves as the initial entry point for Codex Cryptica, designed to introduce users to the core operational protocols while maintaining a high-performance, SEO-friendly surface for search engines.
+
+## Operational Protocols
+
+The landing page highlights several key "Protocols" that define the application:
+
+- **Local-First Architecture**: Your data is stored in the Origin Private File System (OPFS) and remains strictly on your local machine.
+- **Privacy-Centric Intelligence**: All AI processing via the Oracle respects your privacy and data sovereignty.
+- **Zero-Cloud Dependency**: The core application functions entirely without external cloud requirements, ensuring 100% offline availability.
+
+## Navigating the Terminal
+
+- **Enter Workspace**: Click this button to transition from the public landing page into your private workspace.
+- **Hide Welcome Screen**: You can choose to skip the landing page on future visits by checking this box on the terminal or toggling it in **Settings > Aesthetics**.
+- **Features Index**: Visit `/features` at any time for a deep dive into the technical specifications and capabilities of the system.
+
+## Performance & SEO
+
+The landing page is optimized for near-instant load times (LCP < 1.2s) and provides crawlable metadata for search engines, ensuring that Codex Cryptica remains discoverable while your private notes stay hidden.
+
+---
+
+### ACQUIRING A GEMINI API KEY
+
+Codex Cryptica uses Google Gemini to power the Lore Oracle. Follow these steps to get a free key:
+
+1. **Visit Google AI Studio**: Go to [aistudio.google.com](https://aistudio.google.com/app/apikey).
+2. **Sign In**: Use your standard Google Account.
+3. **Create API Key**: Click on 'Get API key' in the sidebar, then click 'Create API key in new project'.
+4. **Copy & Paste**: Copy the generated key and paste it into the **Intelligence** tab in Settings.
+
+### Why do I need this?
+
+Using your own key ensures higher availability, faster response times, and access to the 'Advanced' tier for complex world-building tasks.
+
+---
+
+### MERGING NODES
+
+Sometimes duplicate entities appear, especially after importing content. The **Merge Nodes** feature allows you to combine them into a single, definitive record.
+
+### How to Merge
+
+1. **Select Nodes**: Hold `Shift` or `Ctrl` and click multiple nodes in the Graph View.
+2. **Right-Click**: Open the context menu on one of the selected nodes.
+3. **Select 'Merge Nodes'**: This opens the merge dialog.
+
+### Merge Strategies
+
+- **Concatenate**: Simply appends the content of all source nodes into the target node.
+- **AI Merge**: Uses the Oracle (Gemini) to intelligently rewrite and summarize the combined lore into a cohesive entry.
+
+**Warning**: The source nodes will be permanently deleted after merging. The target node will be updated.
+
+---
+
+### FOG OF WAR
+
+The **Fog of War** system lets you track what your players have discovered. You can hide nodes on the graph so they don't see spoilers during a session.
+
+### Visibility States
+
+- **Revealed**: Everyone can see this node and its links.
+- **Hidden**: Only you (the GM) can see this entry in the list, but it's gone from the graph.
+- **Rumor (Link Only)**: A "ghost" node that appears when an entry is mentioned but not yet fully discovered.
+
+### How to Reveal
+
+1. **Right-Click**: Tap a node and look for the Visibility menu.
+2. **Toggle Reveal**: Click to show or hide it from the graph.
+3. **GM View**: Click the **Eye Icon** in the bottom controls to see everything at once, regardless of Fog of War.
+
+---
+
+### MULTIPLE VAULTS
+
+Codex Cryptica lets you manage multiple "Vaults" (folders). Each vault is completely separate, so your sci-fi notes won't mix with your fantasy ones.
+
+### How to Switch
+
+1. **Vault Name**: Look at the top-left of the screen.
+2. **Click Name**: This opens the Vault Switcher.
+3. **Add or Switch**: You can jump to a vault you've used before or "Add Archive" to link a new folder.
+
+> [!NOTE]
+> Your AI API Key works for all vaults, but things like NPC categories and tags are unique to each campaign.
+
+---
+
+### RELATIONSHIP LABELS
+
+Not every connection is the same. You can add labels to the lines in your graph to show _how_ people or places are related.
+
+### How to Add Labels
+
+1. **Connect Nodes**: Press `C`, click the first node, then the second.
+2. **Type the Label**: A small box will appear. Type things like "Enemy," "Child of," or "Home Town."
+3. **Hide Labels**: If your graph gets too cluttered, press `L` to hide the text on the lines.
+
+### AI Context
+
+The Lore Oracle understands these labels. If you label someone as a "Rival," the AI will remember that conflict when you ask for plot ideas!
+
+---
+
+### ZEN TEMPLATES
+
+Codex Cryptica allows you to shift the visual dimension of your workspace using **Zen Templates**. These themes redefine the entire interface aesthetic to match your world's genre, ensuring a more immersive experience for lore keepers.
+
+## Changing Themes
+
+You can switch between available templates at any time:
+
+1.  Open **Settings** (click the gear icon or press `S`).
+2.  Navigate to the **Aesthetics** tab.
+3.  Select a theme from the **Zen Templates** list.
+
+The changes will be applied instantly across the entire application, including the knowledge graph and all detail panels.
+
+## Available Themes
+
+- **Ancient Parchment**: Our flagship fantasy theme, designed to feel like an enchanted magic tome with parchment textures and inked typography.
+- **Sci-Fi Terminal**: A high-contrast, neon-green terminal aesthetic for futuristic settings.
+- **Blood & Noir**: A dark, moody theme with crimson accents, ideal for horror or investigative campaigns.
+- **Neon Night**: A vibrant, cyberpunk-inspired palette with high-energy colors.
+- **Wasteland**: A rugged, textured theme for post-apocalyptic or industrial worlds.
+- **Clean Modern**: A minimalist, distraction-free aesthetic for general-purpose world-building.
+
+## Persistence
+
+Your selected theme is saved to your local browser storage and will be automatically applied every time you return to the workspace.
+
+---
+
+### VAULT STRUCTURE
+
+Codex Cryptica uses standard Markdown files. You can even open your vault folder in other apps like Obsidian or VS Code.
+
+### File Format
+
+Each file has a simple "header" (called YAML frontmatter) followed by your writing:
+
+```markdown
+---
+id: unique-id
+type: npc
+tags: [noble, ally]
+status: alive
+---
+
+# Character Name
+
+Your story starts here...
+```
+
+### Tips for Advanced Users
+
+- **Metadata**: You can add your own fields to the header (like `age: 45`). The AI Oracle will see these and use them for extra context.
+- **Syncing**: Because these are just files, you can use any cloud service (Dropbox, OneDrive, etc.) to keep them synced across devices.
+
+---
+
+### PERFORMANCE OPTIMIZATION
+
+Codex Cryptica is designed to handle massive world-building projects. To keep your experience smooth even with thousands of entities, we employ several advanced background technologies.
+
+### The Background Engine (Web Workers)
+
+The app uses "Web Workers" to offload heavy computations from the main interface thread. This prevents the UI from stuttering during:
+
+- **Search Indexing**: Your vault is indexed in the background.
+- **Graph Layouts**: Complex relationship maps are calculated off-thread.
+- **Markdown Parsing**: Large chronicles are parsed efficiently in parallel.
+
+### Data Sovereignty & Performance
+
+By processing everything in your browser using local workers, we ensure:
+
+1. **Privacy**: Your data never leaves your device for processing.
+2. **Responsiveness**: The UI remains at 60fps even during complex operations.
+3. **Efficiency**: We use "Transferables" to move data between threads without the overhead of copying.
+
+### Tips for Large Vaults
+
+- **Use Keywords**: Add specific tags to your entities to help the search engine filter results faster.
+- **Granular Chronicles**: While the system can handle large files, breaking your lore into smaller, linked entities improves graph readability and AI grounding.
+
+---
+
+### CUSTOM CHRONOLOGY
+
+Codex Arcana allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+
+## The Date Picker
+
+When editing an entity's temporal data (Date, Start Date, or End Date), you will use the tactile **Date Picker**.
+
+### Tactile Year Selection
+
+The year picker uses a grid-based navigation system designed for fast, non-keyboard entry across vast timelines:
+
+1. **Drill Down**: Click a Century to see its Decades, then click a Decade to select a specific Year.
+2. **Zoom Out**: Click the header (e.g., "1200 - 1211") to jump back up to the Decade or Century view.
+3. **Navigate**: Use the left/right arrows to slide the current grid forward or backward in time.
+
+### Era-Centric Snapping
+
+If you have defined **Eras** in your Vault Settings, you can use the "Eras" tab to instantly snap the picker to the beginning of a historical period. This is the fastest way to navigate across millennia.
+
+### Precision Levels
+
+The picker allows you to choose your granularity using the toggle at the top:
+
+- **Year**: For broad historical events.
+- **Month**: For seasonal occurrences.
+- **Day**: For specific, high-precision moments.
+
+## Campaign Calendars
+
+In the **Vault Settings**, you can fully customize your world's calendar:
+
+1. **Standard Gregorian**: Keep this enabled to use the standard 12-month calendar.
+2. **Custom Months**: Disable Gregorian mode to define your own months. You can rename them (e.g., "Hammer", "Alturiak") and set custom lengths.
+3. **Epoch Suffixes**: Add suffixes like "AF" (After Fall) or "BCE" to your years for immersion.
+4. **Present Year**: Set a "Present" marker to anchor your narrative timeline.
+
+## Linear Time Mapping
+
+Regardless of how many months or days you define, the Knowledge Graph automatically calculates a linear value for each date. This ensures that even the most complex custom calendars are visualized correctly on the **World Timeline**.
+
+---

@@ -57,9 +57,12 @@
   ];
 
   const handleFiles = async (files: File[]) => {
-    const apiKey = oracle.apiKey || import.meta.env.VITE_SHARED_GEMINI_KEY;
+    const apiKey = oracle.effectiveApiKey;
     if (!apiKey) {
-      alert("Oracle API Key required for intelligent import.");
+      uiStore.notify(
+        "Oracle API Key required for intelligent import.",
+        "error",
+      );
       return;
     }
 
@@ -265,7 +268,7 @@
           );
 
         if (newConnections.length > 0) {
-          vault.updateEntity(existing.id, {
+          await vault.updateEntity(existing.id, {
             connections: [...existing.connections, ...newConnections],
           });
         }
@@ -456,7 +459,12 @@
           </div>
         </div>
 
-        <div class="text-center space-y-1">
+        <div
+          class="text-center space-y-1"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <p
             class="text-xs font-mono text-theme-primary uppercase tracking-tight"
           >

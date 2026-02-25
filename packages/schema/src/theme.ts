@@ -43,7 +43,9 @@ export const JargonMapSchema = z
     tab_status: z.string(),
     tab_lore: z.string(),
     tab_inventory: z.string(),
+    graph_loading: z.string(),
   })
+  .partial()
   .catchall(z.string());
 
 export const StylingTemplateSchema = z.object({
@@ -72,6 +74,7 @@ export const DEFAULT_JARGON: JargonMap = {
   tab_status: "Status",
   tab_lore: "Lore & Notes",
   tab_inventory: "Inventory",
+  graph_loading: "Initializing...",
 };
 
 export const THEMES: Record<string, StylingTemplate> = {
@@ -112,6 +115,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Diagnostics",
       tab_lore: "Data Streams",
       tab_inventory: "Cargo",
+      graph_loading: "Initiating Neural Interface...",
     },
   },
   fantasy: {
@@ -152,6 +156,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Attributes",
       tab_lore: "Mythos",
       tab_inventory: "Possessions",
+      graph_loading: "Summoning Chronicles...",
     },
   },
   modern: {
@@ -174,6 +179,9 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeBorderWidth: 1,
       edgeWidth: 1,
       edgeColor: "#cbd5e1",
+    },
+    jargon: {
+      graph_loading: "Establishing Data Link...",
     },
   },
   cyberpunk: {
@@ -198,21 +206,22 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeColor: "#db2777",
     },
     jargon: {
-      vault: "Mainframe",
-      entity: "Neural Trace",
-      entity_plural: "Neural Traces",
+      vault: "Grid",
+      entity: "Node",
+      entity_plural: "Nodes",
       save: "Hack",
-      delete: "Derez",
-      new: "Jack In",
+      delete: "Flatline",
+      new: "Boot",
       syncing: "Uplinking",
       search: "Scan",
-      lore_header: "Active Uplink",
-      lore_secrets: "Black Projects & Corrupted Nodes",
-      chronicle_header: "Neural Record",
+      lore_header: "Databank",
+      lore_secrets: "Black ICE",
+      chronicle_header: "System Log",
       connections_header: "Network",
-      tab_status: "Biometrics",
+      tab_status: "Vitals",
       tab_lore: "Neural Feed",
-      tab_inventory: "Hardware",
+      tab_inventory: "Loadout",
+      graph_loading: "Uplinking to Grid...",
     },
   },
   apocalyptic: {
@@ -253,6 +262,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       tab_status: "Vitals",
       tab_lore: "Memories",
       tab_inventory: "Stash",
+      graph_loading: "Scavenging Fragments...",
     },
   },
   horror: {
@@ -278,21 +288,22 @@ export const THEMES: Record<string, StylingTemplate> = {
       edgeColor: "#991b1b",
     },
     jargon: {
-      vault: "Crypt",
-      entity: "Victim",
-      entity_plural: "Victims",
+      vault: "Archive",
+      entity: "Subject",
+      entity_plural: "Subjects",
       save: "Seal",
-      delete: "Banish",
-      new: "Exhume",
-      syncing: "Bleeding",
+      delete: "Ash",
+      new: "Embrace",
+      syncing: "Pulsing",
       search: "Hunt",
-      lore_header: "Forbidden Knowledge",
-      lore_secrets: "Unspeakable Horrors & Eldritch Truths",
-      chronicle_header: "Last Will",
-      connections_header: "Chains",
+      lore_header: "The Book of Nod",
+      lore_secrets: "The Gehenna Signs",
+      chronicle_header: "Elysium Records",
+      connections_header: "Blood Bonds",
       tab_status: "Condition",
-      tab_lore: "Whispers",
-      tab_inventory: "Remains",
+      tab_lore: "Memoriam",
+      tab_inventory: "Assets",
+      graph_loading: "Awakening Memories...",
     },
   },
 };

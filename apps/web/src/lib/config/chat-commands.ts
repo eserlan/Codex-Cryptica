@@ -16,7 +16,7 @@ export const chatCommands: ChatCommand[] = [
   },
   {
     name: "/create",
-    description: "Create a new record with AI",
+    description: 'Create record (AI) or /create "Name" [as "Type"]',
     parameters: ["[description]"],
     handler: (desc) => oracle.ask(`/create ${desc}`),
   },
@@ -41,6 +41,20 @@ export const chatCommands: ChatCommand[] = [
         oracle.startWizard("merge");
       } else {
         oracle.ask(`/merge ${args}`);
+      }
+    },
+  },
+  {
+    name: "/help",
+    description: "Show available commands",
+    handler: () => oracle.showHelp(),
+  },
+  {
+    name: "/clear",
+    description: "Clear conversation history",
+    handler: () => {
+      if (confirm("Are you sure you want to clear the conversation history?")) {
+        oracle.clearMessages();
       }
     },
   },

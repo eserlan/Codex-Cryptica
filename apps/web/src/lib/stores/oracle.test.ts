@@ -64,17 +64,11 @@ vi.hoisted(() => {
   return { MockBroadcastChannel, MockWorker };
 });
 
-// Mock worker and bridge to prevent alias resolution issues
-vi.mock("../cloud-bridge/worker-bridge", () => ({
-  workerBridge: {
-    reset: vi.fn(),
-    send: vi.fn(),
-  },
-}));
-
+// Mock vault to prevent circular dependencies or initialization issues in tests
 vi.mock("./vault.svelte", () => ({
   vault: {
     createEntity: vi.fn(),
+    addConnection: vi.fn(),
     saveImageToVault: vi.fn(),
     allEntities: [],
     entities: {},
@@ -89,7 +83,16 @@ vi.mock("./graph.svelte", () => ({
 }));
 
 import { oracle } from "./oracle.svelte";
+import { uiStore } from "./ui.svelte";
 import * as idbUtils from "../utils/idb";
+
+// Mock uiStore
+vi.mock("./ui.svelte", () => ({
+  uiStore: {
+    liteMode: false,
+    openSettings: vi.fn(),
+  },
+}));
 
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
@@ -553,6 +556,149 @@ describe("OracleStore", () => {
       vi.mocked(aiService.retrieveContext).mockClear();
       await oracle.drawEntity("abort-2");
       expect(aiService.retrieveContext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Restricted Mode (Lite Mode)", () => {
+    beforeEach(() => {
+      (uiStore as any).liteMode = true;
+      oracle.apiKey = "mock-key"; // Gated by AIService, but OracleStore still needs it to proceed
+    });
+
+    it("should handle /help command deterministically", async () => {
+      await oracle.ask("/help");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain("Restricted Mode Active");
+    });
+
+    it("should handle /clear command", async () => {
+      oracle.messages = [{ id: "1", role: "user", content: "hello" }];
+      await oracle.ask("/clear");
+      expect(oracle.messages).toHaveLength(0);
+    });
+
+    it("should reject natural language input", async () => {
+      await oracle.ask("Hello Oracle");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain(
+        "AI features are disabled in Lite Mode",
+      );
+    });
+
+    it("should allow /connect with valid quoted arguments", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).entities = {
+        a: { id: "a", title: "A", connections: [] },
+        b: { id: "b", title: "B", connections: [] },
+      };
+      (vault as any).addConnection.mockReturnValue(true);
+
+      // Search mock needs to return these entities
+      const { searchService } = await import("../services/search");
+      vi.mocked(searchService.search).mockImplementation(async (q) => {
+        if (q === "A")
+          return [
+            {
+              id: "a",
+              title: "A",
+              score: 1,
+              path: "",
+              matchType: "title" as const,
+            },
+          ];
+        if (q === "B")
+          return [
+            {
+              id: "b",
+              title: "B",
+              score: 1,
+              path: "",
+              matchType: "title" as const,
+            },
+          ];
+        return [];
+      });
+
+      await oracle.ask('/connect "A" label "B"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain("Connected **A** to **B**");
+      expect(vault.addConnection).toHaveBeenCalledWith(
+        "a",
+        "b",
+        "related_to",
+        "label",
+      );
+    });
+
+    it("should throw error for /connect with invalid format", async () => {
+      await oracle.ask("/connect A to B");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain("❌ Invalid format");
+    });
+
+    it("should provide specific error message when entity is not found", async () => {
+      const { searchService } = await import("../services/search");
+      vi.mocked(searchService.search).mockResolvedValue([]); // No matches found
+
+      await oracle.ask('/connect "Unknown" label "Missing"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        'Could not find source entity: "Unknown"',
+      );
+    });
+
+    it("should allow /create with valid quoted arguments", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id");
+
+      await oracle.ask('/create "New Hero" as "npc"');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain("Created node: **New Hero** (NPC)");
+      expect(vault.createEntity).toHaveBeenCalledWith("npc", "New Hero", {
+        content: "",
+        lore: "",
+      });
+    });
+
+    it("should allow /create with unquoted type", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id-2");
+
+      await oracle.ask('/create "New Location" as location');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        "Created node: **New Location** (LOCATION)",
+      );
+      expect(vault.createEntity).toHaveBeenCalledWith(
+        "location",
+        "New Location",
+        {
+          content: "",
+          lore: "",
+        },
+      );
+    });
+
+    it("should fallback to character for invalid type in /create", async () => {
+      const { vault } = await import("./vault.svelte");
+      (vault as any).createEntity.mockResolvedValue("new-id-3");
+
+      await oracle.ask('/create "Unknown Thing" as nonsense');
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.content).toContain(
+        "Created node: **Unknown Thing** (CHARACTER)",
+      );
+      expect(vault.createEntity).toHaveBeenCalledWith(
+        "character",
+        "Unknown Thing",
+        {
+          content: "",
+          lore: "",
+        },
+      );
     });
   });
 });

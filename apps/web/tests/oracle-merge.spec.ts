@@ -4,6 +4,9 @@ test.describe("Oracle Merge Command E2E", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
+      localStorage.setItem("codex_skip_landing", "true");
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
         name: "test-vault",
@@ -47,15 +50,15 @@ test.describe("Oracle Merge Command E2E", () => {
   test("should merge two entities using guided sequence", async ({ page }) => {
     // 1. Create two entities
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Old Hero");
+    await page.getByPlaceholder("Chronicle Title...").fill("Old Hero");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Legendary Hero");
+    await page.getByPlaceholder("Chronicle Title...").fill("Legendary Hero");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Wait for indexing to complete (2 entries)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 20000,
     });
 
@@ -100,7 +103,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await expect(
       page.locator("text=Merged Old Hero into Legendary Hero"),
     ).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 
@@ -114,11 +117,11 @@ test.describe("Oracle Merge Command E2E", () => {
   test("should use the Merge Wizard via /merge oracle", async ({ page }) => {
     // 1. Create two entities with content
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Source Node");
+    await page.getByPlaceholder("Chronicle Title...").fill("Source Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Target Node");
+    await page.getByPlaceholder("Chronicle Title...").fill("Target Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
     // Add content via evaluate to bypass editor interaction for speed
@@ -138,12 +141,12 @@ test.describe("Oracle Merge Command E2E", () => {
     await expect(page.locator("text=Merge Wizard")).toBeVisible();
 
     // 4. Select Source
-    await page.getByPlaceholder("Type source entity name...").type("Source");
+    await page.getByPlaceholder(/Type source .* name/i).type("Source");
     await page.locator('button:has-text("Source Node")').click();
     await page.click('button:has-text("Next")');
 
     // 5. Select Target
-    await page.getByPlaceholder("Type target entity name...").type("Target");
+    await page.getByPlaceholder(/Type target .* name/i).type("Target");
     await page.locator('button:has-text("Target Node")').click();
     await page.click('button:has-text("Next")');
 
@@ -160,7 +163,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await expect(
       page.getByText(/Merged Source Node into Target Node/),
     ).toBeVisible({ timeout: SLOW_TIMEOUT });
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: SLOW_TIMEOUT,
     });
   });
@@ -170,13 +173,13 @@ test.describe("Oracle Merge Command E2E", () => {
   }) => {
     // 1. Create two entities
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Minion");
+    await page.getByPlaceholder("Chronicle Title...").fill("Minion");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Boss");
+    await page.getByPlaceholder("Chronicle Title...").fill("Boss");
     await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 10000,
     });
 
@@ -188,7 +191,7 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 3. Verify success message
     await expect(page.locator("text=Merged Minion into Boss")).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
   });
@@ -198,14 +201,14 @@ test.describe("Oracle Merge Command E2E", () => {
   }) => {
     // 1. Create two entities to merge
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Minion");
+    await page.getByPlaceholder("Chronicle Title...").fill("Minion");
     await page.getByRole("button", { name: "ADD" }).click();
 
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Entry Title...").fill("Boss");
+    await page.getByPlaceholder("Chronicle Title...").fill("Boss");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 10000,
     });
 
@@ -233,7 +236,7 @@ test.describe("Oracle Merge Command E2E", () => {
     await page.keyboard.press("Enter");
 
     await expect(page.locator("text=Merged Minion into Boss")).toBeVisible();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 
@@ -258,7 +261,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // Wait for UI to reflect undo (entity count back to 2)
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES", {
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
       timeout: 10000,
     });
 

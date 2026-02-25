@@ -3,7 +3,7 @@ export interface FileEntry {
   path: string[];
 }
 
-const VAULTS_DIR = "vaults";
+export const VAULTS_DIR = "vaults";
 
 /**
  * Gets the root directory handle for the Origin Private File System.

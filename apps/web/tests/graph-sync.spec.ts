@@ -25,7 +25,7 @@ test.describe("Graph Synchronization Loop", () => {
       await v.createEntity("location", "Node B");
     });
 
-    await expect(page.getByTestId("entity-count")).toHaveText("2 ENTITIES");
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES");
 
     // 2. Add connection with label
     // This tests the hydration bug: if elementMap doesn't have the new edge, the label won't sync in the same pass

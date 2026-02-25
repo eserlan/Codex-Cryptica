@@ -119,11 +119,35 @@ export class OracleAnalyzer implements OracleAnalyzerEngine {
           let matchedEntityId: string | undefined = undefined;
 
           if (options?.knownEntities) {
-            // Case-insensitive exact title match
+            // Case-insensitive matching
             const normalizedTitle = title.toLowerCase().trim();
-            const match = Object.entries(options.knownEntities).find(
-              ([t]) => t.toLowerCase().trim() === normalizedTitle,
-            );
+            const escape = (s: string) =>
+              s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+            // Compile discovered title pattern once
+            const titlePattern =
+              normalizedTitle.length >= 3
+                ? new RegExp(`\\b${escape(normalizedTitle)}\\b`, "i")
+                : null;
+
+            const match = Object.entries(options.knownEntities).find(([t]) => {
+              const known = t.toLowerCase().trim();
+              if (!known) return false;
+
+              // 1. Exact match
+              if (known === normalizedTitle) return true;
+
+              // 2. Fuzzy match: bidirectional whole-word containment to avoid
+              // cases like "Beldrinian" matching "Eldrin".
+              if (known.length < 3) return false;
+
+              return (
+                new RegExp(`\\b${escape(known)}\\b`, "i").test(
+                  normalizedTitle,
+                ) ||
+                (titlePattern?.test(known) ?? false)
+              );
+            });
             if (match) {
               matchedEntityId = match[1];
             }

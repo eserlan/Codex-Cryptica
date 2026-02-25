@@ -3,6 +3,7 @@ import {
   type GenerativeModel,
 } from "@google/generative-ai";
 import { searchService } from "./search";
+import { uiStore } from "../stores/ui.svelte";
 
 export const TIER_MODES = {
   lite: "gemini-flash-lite-latest",
@@ -26,6 +27,7 @@ export class AIService {
     query: string,
     history: any[],
   ): Promise<string> {
+    if (uiStore.liteMode) return query;
     try {
       if (!this.genAI || this.currentApiKey !== apiKey) {
         this.genAI = new GoogleGenerativeAI(apiKey);
@@ -73,6 +75,12 @@ STANDALONE SEARCH QUERY:`;
   }
 
   init(apiKey: string, modelName: string, demoMode = false) {
+    // Allow state tracking but skip SDK instantiation
+    if (uiStore.liteMode) {
+      this.currentApiKey = apiKey;
+      this.currentModelName = modelName;
+      return;
+    }
     // Re-initialize if key, model, or demo status has changed
     const currentModelName = (this.model as any)?.modelName;
     const matchesModel =
@@ -153,6 +161,7 @@ User visualization request: ${query}`;
     modelName: string,
     _demoMode = false,
   ): Promise<string> {
+    if (uiStore.liteMode) return query;
     if (!context) return query;
     this.init(apiKey, modelName, false); // Always use standard persona for distillation
     if (!this.model) throw new Error("AI Model not initialized");
@@ -190,6 +199,8 @@ Extract the distilled visual prompt:`;
     prompt: string,
     modelName: string,
   ): Promise<Blob> {
+    if (uiStore.liteMode)
+      throw new Error("AI features are disabled in Lite Mode.");
     try {
       console.log(`[AIService] Generating image with model: ${modelName}`);
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
@@ -267,6 +278,8 @@ Extract the distilled visual prompt:`;
     target: any,
     sources: any[],
   ): Promise<{ body: string; lore?: string }> {
+    if (uiStore.liteMode)
+      throw new Error("AI features are disabled in Lite Mode.");
     this.init(apiKey, modelName);
     if (!this.model) throw new Error("AI Model not initialized");
 
@@ -333,6 +346,8 @@ INSTRUCTIONS:
     source: any,
     target: any,
   ) {
+    if (uiStore.liteMode)
+      throw new Error("AI features are disabled in Lite Mode.");
     const { ProposerService } = await import("@codex/proposer");
     const proposer = new ProposerService();
     return proposer.generateConnectionProposal(
@@ -354,6 +369,8 @@ INSTRUCTIONS:
     onUpdate: (partial: string) => void,
     demoMode = false,
   ) {
+    if (uiStore.liteMode)
+      throw new Error("AI features are disabled in Lite Mode.");
     this.init(apiKey, modelName, demoMode);
     if (!this.model) throw new Error("AI Model not initialized");
 

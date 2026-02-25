@@ -1,10 +1,9 @@
 import {
   writeOpfsFile,
   walkOpfsDirectory,
+  getDirHandle,
   type FileEntry,
 } from "../../utils/opfs";
-import { reResolveFileHandle, writeWithRetry } from "../../utils/vault-io";
-import { getDB } from "../../utils/idb";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache";
 import {
@@ -14,73 +13,34 @@ import {
 } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 
-export async function syncToLocal(
-  activeVaultId: string,
+import type { Map } from "schema";
+
+// Clock skew tolerance for comparing timestamps across different filesystems
+const SKEW_MS = 2000;
+
+export async function saveMapsToDisk(
   vaultHandle: FileSystemDirectoryHandle,
-  updateStatus: (status: "saving" | "idle" | "error", msg?: string) => void,
+  maps: Record<string, Map>,
 ) {
-  if (!activeVaultId || !vaultHandle) {
-    updateStatus("error", "No active vault to sync.");
-    return;
-  }
+  if (!vaultHandle) return;
+  const content = JSON.stringify(maps, null, 2);
+  await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
+}
 
-  let localHandle: FileSystemDirectoryHandle | null = null;
-  const handleKey = `syncHandle_${activeVaultId}`;
-
+export async function loadMapsFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+): Promise<Record<string, Map>> {
+  if (!vaultHandle) return {};
   try {
-    const db = await getDB();
-    localHandle = await db.get("settings", handleKey);
-
-    if (localHandle) {
-      const permission = await localHandle.queryPermission({
-        mode: "readwrite",
-      });
-      if (permission !== "granted") {
-        await localHandle.requestPermission({ mode: "readwrite" });
-      }
-    }
-
-    if (!localHandle) {
-      localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-      await db.put("settings", localHandle, handleKey);
-    }
-
-    updateStatus("saving");
-    debugStore.log(
-      `Syncing Vault (${activeVaultId}) to local folder: ${localHandle.name}`,
-    );
-
-    const opfsFiles = await walkOpfsDirectory(vaultHandle);
-    for (const fileEntry of opfsFiles) {
-      const blob = await fileEntry.handle.getFile();
-      const localFileHandle = await reResolveFileHandle(
-        localHandle,
-        fileEntry.path,
-        true,
-      );
-      await writeWithRetry(
-        localHandle,
-        localFileHandle,
-        blob,
-        fileEntry.path.join("/"),
-      );
-    }
-
-    debugStore.log("Sync to local folder complete.");
-    updateStatus("idle");
-  } catch (err: any) {
-    if (err.name === "NotFoundError" && localHandle) {
-      debugStore.error("Sync folder not found.", err);
-      const msg = `Sync folder "${localHandle.name}" not found. Please select it again.`;
-      const db = await getDB();
-      await db.delete("settings", handleKey);
-      updateStatus("error", msg);
-    } else if (err.name !== "AbortError") {
-      console.error("Sync failed", err);
-      updateStatus("error", `Sync failed: ${err.message}`);
-    } else {
-      updateStatus("idle");
-    }
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const fileHandle = await codexDir.getFileHandle("maps.json");
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    return JSON.parse(text);
+  } catch {
+    return {};
   }
 }
 
@@ -108,18 +68,56 @@ export async function importFromFolder(
 
     let successCount = 0;
     let errorCount = 0;
+    const dirCache = new Map<string, FileSystemDirectoryHandle>();
 
     for (const { path, handle } of allFiles) {
       try {
-        const file = await handle.getFile();
-        const name = path[path.length - 1].toLowerCase();
-        if (name.endsWith(".md") || name.endsWith(".markdown")) {
-          const content = await file.text();
-          await writeOpfsFile(path, content, vaultHandle);
-        } else {
-          await writeOpfsFile(path, file, vaultHandle);
+        const localFile = await handle.getFile();
+
+        let shouldWrite = true;
+        try {
+          // Check if file already exists in OPFS and is up to date
+          const fileName = path[path.length - 1];
+          const dirPath = path.slice(0, -1);
+          const dirPathStr = dirPath.join("/");
+
+          let dirHandle =
+            dirPath.length > 0 ? dirCache.get(dirPathStr) : vaultHandle;
+
+          if (!dirHandle && dirPath.length > 0) {
+            dirHandle = await getDirHandle(vaultHandle, dirPath, false);
+            dirCache.set(dirPathStr, dirHandle);
+          }
+
+          if (dirHandle) {
+            const opfsFileHandle = await dirHandle.getFileHandle(fileName);
+            const opfsFile = await opfsFileHandle.getFile();
+
+            if (
+              opfsFile.size === localFile.size &&
+              opfsFile.lastModified >= localFile.lastModified - SKEW_MS
+            ) {
+              shouldWrite = false;
+            }
+          }
+        } catch (e: any) {
+          if (e.name !== "NotFoundError") {
+            debugStore.warn(
+              `Pre-import check failed for ${path.join("/")}: ${e.message}`,
+            );
+          }
         }
-        successCount++;
+
+        if (shouldWrite) {
+          const name = path[path.length - 1].toLowerCase();
+          if (name.endsWith(".md") || name.endsWith(".markdown")) {
+            const content = await localFile.text();
+            await writeOpfsFile(path, content, vaultHandle);
+          } else {
+            await writeOpfsFile(path, localFile, vaultHandle);
+          }
+          successCount++;
+        }
       } catch (fileErr) {
         console.error(`Failed to import ${path.join("/")}:`, fileErr);
         errorCount++;
@@ -194,7 +192,7 @@ export async function loadVaultFiles(
     let entity: LocalEntity;
 
     if (cached && cached.lastModified === lastModified) {
-      entity = { ...cached.entity, _path: fileEntry.path, synced: true };
+      entity = { ...cached.entity, _path: fileEntry.path };
     } else {
       const text = await file.text();
       const { metadata, content, wikiLinks } = parseMarkdown(text || "");
@@ -223,8 +221,8 @@ export async function loadVaultFiles(
         start_date: metadata.start_date,
         end_date: metadata.end_date,
         metadata: metadata.metadata,
+        updatedAt: metadata.updatedAt,
         _path: fileEntry.path,
-        synced: true,
       };
       const cacheKey = `${activeVaultId}:${filePath}`;
       await cacheService.set(cacheKey, lastModified, entity);

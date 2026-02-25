@@ -1,5 +1,6 @@
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
+import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { TIER_MODES } from "../services/ai";
 import type { Proposal } from "@codex/proposer";
@@ -55,6 +56,7 @@ class ProposerStore {
   }
 
   async analyzeCurrentEntity() {
+    if (uiStore.liteMode) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
 
@@ -129,7 +131,7 @@ class ProposerStore {
 
   async apply(proposal: Proposal) {
     // Create actual connection in vault first; only proceed if successful
-    const connectionCreated = vault.addConnection(
+    const connectionCreated = await vault.addConnection(
       proposal.sourceId,
       proposal.targetId,
       proposal.type,

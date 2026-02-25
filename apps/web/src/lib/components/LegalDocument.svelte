@@ -3,28 +3,47 @@
   import { parse } from "marked";
   import { base } from "$app/paths";
 
-  let { fileName, title } = $props<{ fileName: string; title: string }>();
-  let content = $state("");
+  let {
+    fileName,
+    title,
+    initialContent = "",
+  } = $props<{ fileName: string; title: string; initialContent?: string }>();
+  // Local state for client-side fetching fallback
+  let fetchedContent = $state("");
+
+  // Derived content: prefers prop (SSR/Hydration), falls back to fetched, defaults to empty
+  let content = $derived.by(() => {
+    if (initialContent) return parse(initialContent) as string;
+    if (fetchedContent) return parse(fetchedContent) as string;
+    return "";
+  });
 
   onMount(async () => {
+    // Only fetch client-side when there was no server-provided content.
+    if (initialContent) return;
     try {
       const res = await fetch(`${base}/${fileName}`);
       if (!res.ok)
         throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
       const text = await res.text();
-      content = await parse(text);
-      if (title) {
-        document.title = `${title} | Codex Cryptica`;
-      }
+      fetchedContent = parse(text) as string;
     } catch (err) {
       console.error("LegalDocument error:", err);
-      content = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
+      fetchedContent = `<div class="p-4 border border-red-900/50 bg-red-900/10 text-red-400 font-mono">
                 <h3 class="text-red-500! mt-0!">OFFLINE ERROR</h3>
                 <p class="mb-0!">Could not retrieve document. Please check your connection.</p>
             </div>`;
     }
   });
 </script>
+
+<svelte:head>
+  <title>{title} | Codex Cryptica</title>
+  <meta
+    name="description"
+    content="{title} for Codex Cryptica RPG Campaign Manager."
+  />
+</svelte:head>
 
 <div
   class="max-w-3xl mx-auto px-6 py-12 bg-theme-bg min-h-screen"

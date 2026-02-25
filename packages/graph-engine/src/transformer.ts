@@ -41,14 +41,16 @@ const formatDate = (date?: TemporalMetadata) => {
   if (!date || date.year === undefined) return "";
   if (date.label) return date.label;
 
-  const y = String(date.year);
-  const m = date.month !== undefined ? String(date.month).padStart(2, "0") : "";
-  const d = date.day !== undefined ? String(date.day).padStart(2, "0") : "";
+  // Optimization: Manual string construction is faster than template literals or padStart
+  // for this specific case in hot loops.
+  const { year, month, day } = date;
+  let str = "" + year;
 
-  let str = y;
-  if (m) {
-    str += `-${m}`;
-    if (d) str += `-${d}`;
+  if (month !== undefined) {
+    str += month < 10 ? "-0" + month : "-" + month;
+    if (day !== undefined) {
+      str += day < 10 ? "-0" + day : "-" + day;
+    }
   }
   return str;
 };
@@ -57,39 +59,53 @@ const formatDate = (date?: TemporalMetadata) => {
 const REVEALED_REGEX = /^(revealed|visible)$/i;
 
 export class GraphTransformer {
-  static entitiesToElements(entities: Entity[]): GraphElement[] {
+  static entitiesToElements(
+    entities: Entity[],
+    validIds?: Set<string>,
+  ): GraphElement[] {
     // Create a Set of valid entity IDs for O(1) lookups
-    // OPTIMIZATION: Use a loop instead of map to avoid array allocation
-    const validIds = new Set<string>();
-    const entityCount = entities.length;
-    for (let i = 0; i < entityCount; i++) {
-      validIds.add(entities[i].id);
+    if (!validIds) {
+      // OPTIMIZATION: Use a loop instead of map to avoid array allocation
+      validIds = new Set<string>();
+      const entityCount = entities.length;
+      for (let i = 0; i < entityCount; i++) {
+        validIds.add(entities[i].id);
+      }
     }
 
     const elements: GraphElement[] = [];
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
-    for (const entity of entities) {
+    // Performance: Imperative loop to avoid iterator allocation on hot path.
+    // Length is accessed directly as modern engines optimize this and it avoids inconsistent local caching.
+    for (let i = 0; i < entities.length; i++) {
+      const entity = entities[i];
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
 
       // Visibility markers for Admin visual cues
-      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly
+      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly.
+      // We check for existence first to avoid '|| []' allocation.
       let isRevealed = false;
-      const tags = entity.tags || [];
-      for (const tag of tags) {
-        if (REVEALED_REGEX.test(tag)) {
-          isRevealed = true;
-          break;
-        }
-      }
-      if (!isRevealed) {
-        const labels = entity.labels || [];
-        for (const label of labels) {
-          if (REVEALED_REGEX.test(label)) {
+      const tags = entity.tags;
+      if (tags) {
+        for (let j = 0; j < tags.length; j++) {
+          if (REVEALED_REGEX.test(tags[j])) {
             isRevealed = true;
             break;
+          }
+        }
+      }
+
+      if (!isRevealed) {
+        const labels = entity.labels;
+        if (labels) {
+          for (let k = 0; k < labels.length; k++) {
+            if (REVEALED_REGEX.test(labels[k])) {
+              isRevealed = true;
+              break;
+            }
           }
         }
       }
@@ -117,24 +133,28 @@ export class GraphTransformer {
       });
 
       // Create Edges
-      for (const conn of entity.connections || []) {
-        // Skip edges to non-existent targets
-        if (!validIds.has(conn.target)) continue;
+      const connections = entity.connections;
+      if (connections) {
+        for (let l = 0; l < connections.length; l++) {
+          const conn = connections[l];
+          // Skip edges to non-existent targets
+          if (!validIds.has(conn.target)) continue;
 
-        // Construct a unique edge ID: source-target-type
-        const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
+          // Construct a unique edge ID: source-target-type
+          const edgeId = `${entity.id}-${conn.target}-${conn.type}`;
 
-        elements.push({
-          group: "edges",
-          data: {
-            id: edgeId,
-            source: entity.id,
-            target: conn.target,
-            label: conn.label || conn.type,
-            connectionType: conn.type,
-            strength: conn.strength,
-          },
-        });
+          elements.push({
+            group: "edges",
+            data: {
+              id: edgeId,
+              source: entity.id,
+              target: conn.target,
+              label: conn.label || conn.type,
+              connectionType: conn.type,
+              strength: conn.strength,
+            },
+          });
+        }
       }
     }
 

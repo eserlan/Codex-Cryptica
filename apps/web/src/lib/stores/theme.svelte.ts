@@ -2,13 +2,24 @@ import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
+import { hexToRgb } from "../utils/color";
 import { vault } from "./vault.svelte";
 import { uiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
+function getInitialTheme(): string {
+  if (!browser) return DEFAULT_THEME.id;
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored && THEMES[stored] ? stored : DEFAULT_THEME.id;
+  } catch {
+    return DEFAULT_THEME.id;
+  }
+}
+
 class ThemeStore {
-  currentThemeId = $state(DEFAULT_THEME.id);
+  currentThemeId = $state<string>(getInitialTheme());
   previewThemeId = $state<string | null>(null);
 
   activeTheme = $derived(
@@ -53,7 +64,7 @@ class ThemeStore {
       await this.loadForVault(vault.activeVaultId);
     } else {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored && THEMES[stored]) {
+      if (stored && THEMES[stored] && this.currentThemeId !== stored) {
         this.currentThemeId = stored;
       }
     }
@@ -65,11 +76,16 @@ class ThemeStore {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
       if (stored && THEMES[stored]) {
-        this.currentThemeId = stored;
-      } else {
+        if (this.currentThemeId !== stored) {
+          this.currentThemeId = stored;
+        }
+        // Update global hint for the next reload's blocking script
+        localStorage.setItem(STORAGE_KEY, stored);
+      } else if (this.currentThemeId !== DEFAULT_THEME.id) {
         // For new vaults, we want to start with default
         // instead of inheriting whatever was in localStorage/global state
         this.currentThemeId = DEFAULT_THEME.id;
+        localStorage.setItem(STORAGE_KEY, DEFAULT_THEME.id);
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
@@ -114,6 +130,16 @@ class ThemeStore {
     root.style.setProperty("--color-accent-dark", tokens.secondary);
     root.style.setProperty("--color-accent-deep", tokens.background);
     root.style.setProperty("--color-border-primary", tokens.border);
+
+    // RGB versions for rgba() usage in shadows/overlays
+    root.style.setProperty(
+      "--color-accent-primary-rgb",
+      hexToRgb(tokens.primary),
+    );
+    root.style.setProperty("--color-theme-accent-rgb", hexToRgb(tokens.accent));
+    // Compatibility aliases
+    root.style.setProperty("--theme-primary-rgb", hexToRgb(tokens.primary));
+    root.style.setProperty("--theme-accent-rgb", hexToRgb(tokens.accent));
 
     root.style.setProperty("--color-text-primary", tokens.text);
     root.style.setProperty("--color-text-muted", tokens.secondary);

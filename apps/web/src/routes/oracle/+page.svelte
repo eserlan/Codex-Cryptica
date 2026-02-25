@@ -16,26 +16,26 @@
   />
 </svelte:head>
 
-<div class="fixed inset-0 bg-[#050505] flex flex-col overflow-hidden">
+<div class="fixed inset-0 bg-theme-bg flex flex-col overflow-hidden">
   <!-- Standalone Header -->
   <div
-    class="px-4 py-3 border-b border-purple-900/30 bg-purple-900/20 flex justify-between items-center shrink-0"
+    class="px-4 py-3 border-b border-oracle-dim/30 bg-oracle-dark/20 flex justify-between items-center shrink-0"
   >
     <div class="flex items-center gap-2">
       <div
-        class="w-2 h-2 bg-purple-500 rounded-full {oracle.isLoading
+        class="w-2 h-2 bg-oracle-primary rounded-full {oracle.isLoading
           ? 'animate-pulse'
           : ''}"
       ></div>
       <span
-        class="text-[10px] font-bold text-purple-300 tracking-[0.2em] uppercase"
+        class="text-[10px] font-bold text-oracle-primary tracking-[0.2em] uppercase"
         >Lore Oracle Standalone</span
       >
     </div>
     <div class="flex items-center gap-2">
       {#if oracle.messages.length > 0}
         <button
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-purple-400 hover:text-red-400 border border-purple-500/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-purple-900/20"
+          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-oracle-dark/20"
           onclick={() => {
             if (
               confirm(
@@ -52,7 +52,7 @@
         </button>
       {/if}
       <div
-        class="text-[9px] font-mono text-purple-700 uppercase tracking-widest hidden sm:block"
+        class="text-[9px] font-mono text-oracle-dark/50 uppercase tracking-widest hidden sm:block"
       >
         Multi-Window Sync Active
       </div>
@@ -68,7 +68,7 @@
 
 <style>
   :global(body) {
-    background: #050505;
+    background: var(--color-bg-primary);
     margin: 0;
     padding: 0;
   }

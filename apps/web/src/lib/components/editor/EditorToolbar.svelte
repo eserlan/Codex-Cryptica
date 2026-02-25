@@ -116,7 +116,7 @@
 
 {#if editor}
   <div
-    class="editor-toolbar flex flex-wrap gap-1 p-2 bg-[#0a0a0a] border-b border-green-900/30 sticky top-0 z-40"
+    class="editor-toolbar flex flex-wrap gap-1 p-2 bg-theme-surface border-b border-theme-border sticky top-0 z-40"
   >
     <!-- Basic Formatting -->
     <div class="flex gap-0.5">
@@ -154,7 +154,7 @@
       </button>
     </div>
 
-    <div class="w-px bg-green-900/30 mx-1"></div>
+    <div class="w-px bg-theme-border/50 mx-1"></div>
 
     <!-- Headings -->
     <div class="flex gap-0.5">
@@ -184,7 +184,7 @@
       </button>
     </div>
 
-    <div class="w-px bg-green-900/30 mx-1"></div>
+    <div class="w-px bg-theme-border/50 mx-1"></div>
 
     <!-- Lists & Structure -->
     <div class="flex gap-0.5">
@@ -214,7 +214,7 @@
       </button>
     </div>
 
-    <div class="w-px bg-green-900/30 mx-1"></div>
+    <div class="w-px bg-theme-border/50 mx-1"></div>
 
     <!-- Insertions -->
     <div class="flex gap-0.5">
@@ -235,14 +235,14 @@
       {#if isZenMode}
         <button
           onclick={toggleZenMode}
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-red-900/10 rounded"
+          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase tracking-widest bg-theme-accent/10 rounded"
           title="Close Zen Mode"
           aria-label="Close Zen Mode"
         >
           <span class="icon-[lucide--x] w-3.5 h-3.5"></span>
           Close Zen Mode
         </button>
-        <div class="w-px bg-green-900/30 mx-1"></div>
+        <div class="w-px bg-theme-border/50 mx-1"></div>
       {/if}
 
       <button
@@ -267,7 +267,7 @@
   .toolbar-btn {
     padding: 0.375rem; /* p-1.5 */
     border-radius: 0.25rem; /* rounded */
-    color: rgba(21, 128, 61, 0.7); /* text-green-700/70 */
+    color: color-mix(in srgb, var(--color-theme-text) 70%, transparent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -275,12 +275,20 @@
   }
 
   .toolbar-btn:hover {
-    color: #4ade80; /* hover:text-green-400 */
-    background-color: rgba(20, 83, 45, 0.2); /* hover:bg-green-900/20 */
+    color: var(--color-theme-primary);
+    background-color: color-mix(
+      in srgb,
+      var(--color-theme-primary) 20%,
+      transparent
+    );
   }
 
   .toolbar-btn.active {
-    color: #4ade80; /* text-green-400 */
-    background-color: rgba(20, 83, 45, 0.4); /* bg-green-900/40 */
+    color: var(--color-theme-primary);
+    background-color: color-mix(
+      in srgb,
+      var(--color-theme-primary) 40%,
+      transparent
+    );
   }
 </style>

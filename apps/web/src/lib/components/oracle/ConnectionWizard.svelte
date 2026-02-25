@@ -97,10 +97,10 @@
     }
   };
 
-  const handleFinalize = () => {
+  const handleFinalize = async () => {
     if (!sourceId || !targetId) return;
 
-    const success = vault.addConnection(sourceId, targetId, type, label);
+    const success = await vault.addConnection(sourceId, targetId, type, label);
     if (success) {
       step = "DONE";
       // Update message content for history

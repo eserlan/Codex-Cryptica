@@ -41,6 +41,28 @@ You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
 
+## Static Build & Prerendering
+
+This project uses a hybrid SPA/SSG (Static Site Generation) approach:
+
+- **Marketing Routes**: Pages like `/`, `/features`, `/privacy`, and `/terms` are prerendered as static HTML files during the build process. This ensures optimal SEO indexability and fast initial loads.
+- **Application Routes**: The main workspace remains an SPA (Single Page Application) using the `fallback: 'index.html'` setting in `adapter-static`.
+
+### Prerender Safety
+
+When working on components used in marketing routes, avoid using browser-only globals (`window`, `document`, `localStorage`) at the top level of your scripts. Use the `browser` check from `$app/environment` if necessary:
+
+```typescript
+import { browser } from "$app/environment";
+if (browser) {
+  // Client-only logic
+}
+```
+
+### Crawl Configuration
+
+Static crawl assets like `robots.txt` and `sitemap.xml` are located in the `static/` directory and should be updated whenever new public routes are added.
+
 ## Help & Documentation
 
 Help articles are managed as Markdown files in `src/lib/content/help/`.

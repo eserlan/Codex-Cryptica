@@ -10,6 +10,7 @@
   import DetailTabs from "./entity-detail/DetailTabs.svelte";
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
+  import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
 
   let { entity, onClose } = $props<{
@@ -37,7 +38,8 @@
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
 
-  let activeTab = $state<"status" | "lore" | "inventory">("status");
+  let activeTab = $state<"status" | "lore" | "inventory" | "map">("status");
+  let isSaving = $state(false);
 
   const startEditing = () => {
     if (!entity) return;
@@ -58,6 +60,7 @@
 
   const saveChanges = async () => {
     if (!entity) return;
+    isSaving = true;
     try {
       await vault.updateEntity(entity.id, {
         title: editTitle,
@@ -72,6 +75,12 @@
       isEditing = false;
     } catch (err) {
       console.error("Failed to save changes", err);
+      uiStore.notify(
+        "Failed to save changes. Your latest edits were not saved.",
+        "info",
+      );
+    } finally {
+      isSaving = false;
     }
   };
 
@@ -87,7 +96,7 @@
         onClose();
       } catch (err: any) {
         console.error("Failed to delete entity", err);
-        alert(`Error: ${err.message}`);
+        uiStore.notify(`Error: ${err.message}`, "error");
       }
     }
   };
@@ -141,12 +150,15 @@
           <div class="text-theme-muted italic text-sm">
             Inventory coming soon...
           </div>
+        {:else if activeTab === "map"}
+          <DetailMapTab {entity} />
         {/if}
       </div>
     </div>
 
     <DetailFooter
       {isEditing}
+      {isSaving}
       onCancel={cancelEditing}
       onSave={saveChanges}
       onDelete={handleDelete}

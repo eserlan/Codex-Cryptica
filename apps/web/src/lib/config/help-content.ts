@@ -88,12 +88,12 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
     icon: "icon-[lucide--share-2]",
   },
-  "sync-reminders": {
-    id: "sync-reminders",
-    title: "Sync Reminders",
+  "local-folder-sync": {
+    id: "local-folder-sync",
+    title: "Local Folder Sync",
     content:
-      "Stay safe by persisting your changes. The app will remind you to sync when you have unsynced notes, ensuring your data is always backed up to your local folder.",
-    icon: "icon-[lucide--save]",
+      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.",
+    icon: "icon-[lucide--folder-sync]",
   },
   "total-privacy": {
     id: "total-privacy",
@@ -178,6 +178,41 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
+  },
+  "multi-vault-sync": {
+    id: "multi-vault-sync",
+    title: "Multi-Vault Sync",
+    content:
+      "Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.",
+    icon: "icon-[lucide--cloud]",
+  },
+  "lite-mode": {
+    id: "lite-mode",
+    title: "Lite Mode (No AI)",
+    content:
+      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.",
+    icon: "icon-[lucide--zap-off]",
+  },
+  "seo-prerendering": {
+    id: "seo-prerendering",
+    title: "SEO Prerendering",
+    content:
+      "Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.",
+    icon: "icon-[lucide--search]",
+  },
+  "map-mode": {
+    id: "map-mode",
+    title: "Map Mode",
+    content:
+      "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
+    icon: "icon-[lucide--map]",
+  },
+  "robust-gdrive-sync": {
+    id: "robust-gdrive-sync",
+    title: "Cloud Mirroring",
+    content:
+      "Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.",
+    icon: "icon-[lucide--cloud-sync]",
   },
 };
 

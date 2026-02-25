@@ -4,6 +4,8 @@ test.describe("Oracle Chat Commands", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("http://localhost:5173/");
@@ -21,14 +23,14 @@ test.describe("Oracle Chat Commands", () => {
 
     await expect(page.getByText("FROM", { exact: true })).toBeVisible();
 
-    await expect(page.locator("text=/draw")).toBeVisible();
-    await expect(page.locator("text=/create")).toBeVisible();
-    await expect(page.locator("text=/connect")).toBeVisible();
+    await expect(page.locator("text=/draw").first()).toBeVisible();
+    await expect(page.locator("text=/create").first()).toBeVisible();
+    await expect(page.locator("text=/connect").first()).toBeVisible();
 
     // Test filtering
     await input.type("con");
-    await expect(page.locator("text=/draw")).not.toBeVisible();
-    await expect(page.locator("text=/connect")).toBeVisible();
+    await expect(page.locator("text=/draw").first()).not.toBeVisible();
+    await expect(page.locator("text=/connect").first()).toBeVisible();
 
     // Test selection
     await page.keyboard.press("Enter");

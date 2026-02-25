@@ -45,6 +45,11 @@ export interface ICloudAdapter {
   listFiles(): Promise<RemoteFileMeta[]>;
 
   /**
+   * List all folders in a specific parent folder.
+   */
+  listFolders(parentId?: string): Promise<RemoteFileMeta[]>;
+
+  /**
    * Upload a file.
    * @param path Relative path
    * @param content File content (Blob/Text)
@@ -55,6 +60,7 @@ export interface ICloudAdapter {
     path: string,
     content: string | Blob,
     existingId?: string,
+    logicalUpdatedAt?: number,
   ): Promise<RemoteFileMeta>;
 
   /**

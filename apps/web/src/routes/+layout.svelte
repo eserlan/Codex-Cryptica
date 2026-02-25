@@ -1,11 +1,12 @@
 <script lang="ts">
   import "../app.css";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import SyncReminder from "$lib/components/notifications/SyncReminder.svelte";
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
+  import SyncDashboard from "$lib/components/settings/SyncDashboard.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -17,9 +18,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { demoService } from "$lib/services/demo";
   import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
-  import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
@@ -27,7 +26,7 @@
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import { browser } from "$app/environment";
-  import { PATREON_URL } from "$lib/config";
+  import { PATREON_URL, DISCORD_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
@@ -104,12 +103,16 @@
   $effect(() => {
     if (typeof window !== "undefined" && (window as any).__E2E__) {
       (window as any).vault = vault;
+      (window as any).vaultRegistry = vaultRegistry;
       (window as any).graph = graph;
       (window as any).oracle = oracle;
+      (window as any).uiStore = uiStore;
     }
   });
 
   onMount(() => {
+    console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
+
     // Light initializations required for the landing page/shell
     helpStore.init();
     themeStore.init();
@@ -118,7 +121,9 @@
     // Register Service Worker for PWA/Offline support
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
-        .register(`${base}/service-worker.js`)
+        .register(`${base}/service-worker.js`, {
+          type: import.meta.env.DEV ? "module" : "classic",
+        })
         .catch((error) => {
           console.warn("Service Worker registration failed:", error);
         });
@@ -192,9 +197,7 @@
 
       (window as any).categories = categories;
       (window as any).uiStore = uiStore;
-      (window as any).syncStats = syncStats;
       (window as any).cloudConfig = cloudConfig;
-      (window as any).workerBridge = workerBridge;
       (window as any).isEntityVisible = isEntityVisible;
 
       // Eagerly load P2P services for E2E
@@ -323,7 +326,7 @@
     rel="sitemap"
     type="application/xml"
     title="Sitemap"
-    href="/sitemap.xml"
+    href="{base}/sitemap.xml"
   />
 </svelte:head>
 
@@ -332,12 +335,14 @@
   {#if uiStore.notification}
     <div
       class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-2xl border flex items-center gap-3 animate-in slide-in-from-top-4 fade-in"
-      class:bg-green-950={uiStore.notification.type === "success"}
-      class:border-green-500={uiStore.notification.type === "success"}
-      class:text-green-100={uiStore.notification.type === "success"}
-      class:bg-blue-950={uiStore.notification.type === "info"}
+      class:bg-theme-surface={true}
+      class:border-theme-primary={uiStore.notification.type === "success"}
+      class:text-theme-primary={uiStore.notification.type === "success"}
       class:border-blue-500={uiStore.notification.type === "info"}
-      class:text-blue-100={uiStore.notification.type === "info"}
+      class:text-blue-400={uiStore.notification.type === "info"}
+      class:border-red-500={uiStore.notification.type === "error"}
+      class:text-red-500={uiStore.notification.type === "error"}
+      style:box-shadow="var(--theme-glow)"
       transition:fade
     >
       <span
@@ -347,6 +352,10 @@
       <span
         class="icon-[lucide--info] w-5 h-5"
         class:hidden={uiStore.notification.type !== "info"}
+      ></span>
+      <span
+        class="icon-[lucide--alert-circle] w-5 h-5"
+        class:hidden={uiStore.notification.type !== "error"}
       ></span>
       <span class="font-mono text-xs font-bold tracking-widest uppercase"
         >{uiStore.notification.message}</span
@@ -376,6 +385,30 @@
           <span class="hidden sm:inline">Codex Cryptica</span>
           <span class="sm:hidden text-theme-primary">CC</span>
         </h1>
+
+        <nav
+          class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4"
+        >
+          <a
+            href="{base}/"
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page
+              .url.pathname === `${base}/`
+              ? 'bg-theme-primary/10 text-theme-primary'
+              : 'text-theme-muted hover:text-theme-text'}"
+          >
+            GRAPH
+          </a>
+          <a
+            href="{base}/map"
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page.url.pathname.startsWith(
+              `${base}/map`,
+            )
+              ? 'bg-theme-primary/10 text-theme-primary'
+              : 'text-theme-muted hover:text-theme-text'}"
+          >
+            MAP
+          </a>
+        </nav>
       </div>
 
       <!-- Search (Desktop: Input, Mobile: Button) -->
@@ -416,23 +449,13 @@
           aria-label="Open Application Settings"
           data-testid="settings-button"
         >
-          <span
-            class="w-5 h-5 {$syncStats.status === 'SCANNING' ||
-            $syncStats.status === 'SYNCING'
-              ? 'icon-[lucide--zap] animate-pulse text-theme-primary'
-              : 'icon-[lucide--settings]'}"
-          ></span>
-          {#if $cloudConfig.enabled && $cloudConfig.connectedEmail && $syncStats.status === "IDLE"}
-            <span
-              class="absolute top-1 right-1 w-1.5 h-1.5 bg-theme-primary rounded-full border border-theme-bg animate-pulse"
-            ></span>
-          {/if}
+          <span class="w-5 h-5 icon-[lucide--settings]"></span>
         </button>
       </div>
     </header>
   {/if}
 
-  <main class="flex-1 relative">
+  <main class="flex-1 relative flex flex-col min-h-0">
     {@render children()}
   </main>
 
@@ -453,6 +476,15 @@
             rel="noopener noreferrer"
             class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
             >Support on Patreon</a
+          >
+        {/if}
+        {#if DISCORD_URL}
+          <a
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+            >Discord</a
           >
         {/if}
         <a
@@ -478,7 +510,6 @@
     </footer>
 
     <SearchModal />
-    <SyncReminder />
 
     {#if (page.url.pathname as string) !== `${base}/login`}
       {#if OracleWindow}
@@ -486,6 +517,8 @@
       {/if}
       {#if browser}
         <SettingsModal />
+        <SyncDashboard />
+
         {#if ZenModeModal}
           <ZenModeModal />
         {/if}

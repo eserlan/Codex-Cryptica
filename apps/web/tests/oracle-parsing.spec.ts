@@ -4,6 +4,9 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
+      localStorage.setItem("codex_skip_landing", "true");
       // Mock browser API
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
@@ -35,42 +38,14 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     });
     await page.goto("/");
 
-    // Enable Oracle by adding a dummy API key to IndexedDB
+    // Wait for app to be ready
     await page.waitForFunction(
       () =>
         (window as any).vault !== undefined &&
         (window as any).aiService !== undefined,
     );
-    await page.evaluate(async () => {
-      const request = indexedDB.open("CodexCryptica", 7);
-      request.onupgradeneeded = (e: any) => {
-        const db = e.target.result;
-        if (!db.objectStoreNames.contains("settings")) {
-          db.createObjectStore("settings");
-        }
-      };
 
-      const db: IDBDatabase = await new Promise((resolve, reject) => {
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-      });
-
-      const tx = db.transaction("settings", "readwrite");
-      const store = tx.objectStore("settings");
-      store.put("fake-key", "ai_api_key");
-      await new Promise((resolve) => {
-        tx.oncomplete = () => resolve(true);
-      });
-    });
-
-    await page.reload();
-
-    // After reload, apply the vault handle mock
-    await page.waitForFunction(
-      () =>
-        (window as any).vault !== undefined &&
-        (window as any).aiService !== undefined,
-    );
+    // After load, apply the vault handle mock
     await page.evaluate(async () => {
       const vault = (window as any).vault;
       vault.rootHandle = {

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
+import type { SyncEntry } from "@codex/sync-engine";
 
 export interface VaultRecord {
   id: string;
@@ -7,6 +8,13 @@ export interface VaultRecord {
   createdAt: number;
   lastOpenedAt: number;
   entityCount: number;
+  gdriveSyncEnabled?: boolean;
+  gdriveFolderId?: string | null;
+  syncState?: {
+    lastSyncMs: number | null;
+    remoteHash: string | null;
+    status: "idle" | "syncing" | "error";
+  };
 }
 
 interface CodexDB extends DBSchema {
@@ -34,6 +42,24 @@ interface CodexDB extends DBSchema {
     key: string; // id
     value: VaultRecord;
   };
+  sync_registry: {
+    key: [string, string]; // [vaultId, filePath]
+    value: SyncEntry;
+    indexes: {
+      "by-vault": string;
+      "by-remote-id": string;
+    };
+  };
+  cloud_sync_metadata: {
+    key: string; // vaultId
+    value: {
+      vaultId: string;
+      gdriveFolderId: string;
+      gdriveFolderName?: string;
+      lastSyncToken: string | null;
+      lastSyncTime: number;
+    };
+  };
   proposals: {
     key: string; // composite key or auto-inc? Let's use id or [sourceId, targetId]
     value: {
@@ -55,16 +81,15 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 8 to accommodate temporary schema changes in feature branch 046.
-// Reverting to 7 would cause VersionErrors for users who accessed the branch.
-export const DB_VERSION = 8;
+// DB_VERSION was bumped to 11 to add cloud sync stores and indexes.
+export const DB_VERSION = 11;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, _oldVersion, _newVersion) {
+      upgrade(db, oldVersion, _newVersion, transaction) {
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings");
         }
@@ -80,6 +105,29 @@ export function getDB() {
         if (!db.objectStoreNames.contains("vaults")) {
           db.createObjectStore("vaults", { keyPath: "id" });
         }
+
+        // Recreate sync_registry if schema changes
+        if (db.objectStoreNames.contains("sync_registry") && oldVersion < 10) {
+          db.deleteObjectStore("sync_registry");
+        }
+
+        if (!db.objectStoreNames.contains("sync_registry")) {
+          const store = db.createObjectStore("sync_registry", {
+            keyPath: ["vaultId", "filePath"],
+          });
+          store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-remote-id", "remoteId");
+        } else if (oldVersion < 11) {
+          const store = transaction.objectStore("sync_registry");
+          if (!store.indexNames.contains("by-remote-id")) {
+            store.createIndex("by-remote-id", "remoteId");
+          }
+        }
+
+        if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
+          db.createObjectStore("cloud_sync_metadata", { keyPath: "vaultId" });
+        }
+
         if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
@@ -118,23 +166,6 @@ export async function persistHandle(
 export async function clearPersistedHandle(): Promise<void> {
   const db = await getDB();
   await db.delete("settings", "lastVaultHandle");
-}
-
-export async function getPersistedSyncHandle(): Promise<FileSystemDirectoryHandle | null> {
-  const db = await getDB();
-  return (await db.get("settings", "lastSyncHandle")) || null;
-}
-
-export async function persistSyncHandle(
-  handle: FileSystemDirectoryHandle,
-): Promise<void> {
-  const db = await getDB();
-  await db.put("settings", handle, "lastSyncHandle");
-}
-
-export async function clearPersistedSyncHandle(): Promise<void> {
-  const db = await getDB();
-  await db.delete("settings", "lastSyncHandle");
 }
 
 // Cache Service methods

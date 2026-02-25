@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock Svelte 5 Runes
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = (v: any) => v;
+  (global as any).$effect = (v: any) => v;
+});
+
 import { oracle } from "./oracle.svelte";
 import { aiService } from "../services/ai";
 import { vault } from "./vault.svelte";
@@ -23,6 +33,39 @@ vi.mock("./vault.svelte", () => ({
     addConnection: vi.fn().mockReturnValue(true),
     removeConnection: vi.fn(),
   },
+}));
+
+// Mock Graph
+vi.mock("./graph.svelte", () => ({
+  graph: {
+    requestFit: vi.fn(),
+  },
+}));
+
+// Mock UI
+vi.mock("./ui.svelte", () => ({
+  uiStore: {
+    liteMode: false,
+  },
+}));
+
+// Mock IDB
+vi.mock("../utils/idb", () => ({
+  getDB: vi.fn().mockResolvedValue({
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    transaction: vi.fn().mockReturnValue({
+      store: {
+        clear: vi.fn().mockResolvedValue(undefined),
+        add: vi.fn().mockResolvedValue(undefined),
+        put: vi.fn().mockResolvedValue(undefined),
+      },
+      done: Promise.resolve(),
+    }),
+  }),
+  DB_NAME: "test-db",
+  DB_VERSION: 1,
 }));
 
 // Mock Search Service
@@ -74,6 +117,8 @@ describe("OracleStore - /connect parsing", () => {
     await oracle.ask("/connect Unknown to Tower");
 
     const errorMsg = oracle.messages.find((m) => m.role === "system");
-    expect(errorMsg?.content).toContain("Could not identify both entities");
+    expect(errorMsg?.content).toContain(
+      'Could not find source entity: "Unknown"',
+    );
   });
 });

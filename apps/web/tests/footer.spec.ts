@@ -22,6 +22,19 @@ test.describe("Footer", () => {
     await expect(patreonLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  test("should display Discord link in the footer", async ({ page }) => {
+    const footer = page.locator("footer");
+    const discordLink = footer.locator('a:has-text("Discord")');
+
+    await expect(discordLink).toBeVisible();
+    await expect(discordLink).toHaveAttribute(
+      "href",
+      "https://discord.gg/5UUMCChF2u",
+    );
+    await expect(discordLink).toHaveAttribute("target", "_blank");
+    await expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
   test("should have correct styling classes on Patreon link", async ({
     page,
   }) => {

@@ -21,10 +21,10 @@
 <div class="flex flex-wrap items-center gap-4 text-[10px] font-mono">
   <!-- Type Filter -->
   <div class="flex items-center gap-2">
-    <span class="text-zinc-600 uppercase tracking-widest">Filter:</span>
-    <select 
+    <span class="text-theme-muted uppercase tracking-widest">Filter:</span>
+    <select
       bind:value={timelineStore.filterType}
-      class="bg-black border border-green-900/30 rounded px-2 py-1 text-zinc-300 outline-none focus:border-green-500 transition-colors"
+      class="bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors"
     >
       <option value={null}>ALL TYPES</option>
       {#each categories.list as cat}
@@ -35,42 +35,56 @@
 
   <!-- Date Range -->
   <div class="flex items-center gap-2">
-    <span class="text-zinc-600 uppercase tracking-widest">Years:</span>
-    <input 
-      type="number" 
+    <span class="text-theme-muted uppercase tracking-widest">Years:</span>
+    <input
+      type="number"
       bind:value={startYear}
       onchange={applyRange}
       placeholder="Start"
-      class="w-16 bg-black border border-green-900/30 rounded px-2 py-1 text-zinc-300 outline-none focus:border-green-500 transition-colors"
+      class="w-16 bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors placeholder:text-theme-muted/50"
     />
-    <span class="text-zinc-800">→</span>
-    <input 
-      type="number" 
+    <span class="text-theme-muted">→</span>
+    <input
+      type="number"
       bind:value={endYear}
       onchange={applyRange}
       placeholder="End"
-      class="w-16 bg-black border border-green-900/30 rounded px-2 py-1 text-zinc-300 outline-none focus:border-green-500 transition-colors"
+      class="w-16 bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors placeholder:text-theme-muted/50"
     />
   </div>
 
   <!-- Undated Toggle -->
   <label class="flex items-center gap-2 cursor-pointer group">
-    <input 
-      type="checkbox" 
+    <input
+      type="checkbox"
       bind:checked={timelineStore.includeUndated}
       class="sr-only"
     />
-    <div class="w-8 h-4 bg-zinc-900 border border-zinc-800 rounded-full relative transition-colors {timelineStore.includeUndated ? 'bg-green-900/40 border-green-500/50' : ''}">
-      <div class="absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-zinc-700 transition-all {timelineStore.includeUndated ? 'translate-x-4 bg-green-400 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : ''}"></div>
+    <div
+      class="w-8 h-4 bg-theme-surface border border-theme-border rounded-full relative transition-colors {timelineStore.includeUndated
+        ? 'bg-theme-primary/20 border-theme-primary/50'
+        : ''}"
+    >
+      <div
+        class="absolute top-0.5 left-0.5 w-2.5 h-2.5 rounded-full bg-theme-muted transition-all {timelineStore.includeUndated
+          ? 'translate-x-4 bg-theme-primary'
+          : ''}"
+        style:box-shadow={timelineStore.includeUndated
+          ? "var(--theme-glow)"
+          : undefined}
+      ></div>
     </div>
-    <span class="uppercase tracking-widest text-zinc-600 group-hover:text-zinc-400 transition-colors">Undated</span>
+    <span
+      class="uppercase tracking-widest text-theme-muted group-hover:text-theme-text transition-colors"
+      >Undated</span
+    >
   </label>
 
   <!-- Clear -->
   {#if timelineStore.filterType || startYear !== null || endYear !== null || timelineStore.includeUndated}
-    <button 
+    <button
       onclick={clearFilters}
-      class="text-red-900 hover:text-red-500 uppercase tracking-widest transition-colors font-bold"
+      class="text-red-700 hover:text-red-500 uppercase tracking-widest transition-colors font-bold"
     >
       Clear All
     </button>

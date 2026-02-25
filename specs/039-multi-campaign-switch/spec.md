@@ -55,18 +55,19 @@ As my collection of vaults grows, I want to rename them for better organization 
 
 ---
 
-### User Story 4 - Sync Vault to Local Filesystem (Priority: P3)
+### User Story 4 - Optimized Sync to/from Local Filesystem (Priority: P3)
 
-As a user who wants to back up or externally edit my vault data, I want to sync my current vault to a local folder so I can access the files outside the browser.
+As a user who wants to back up or externally edit my vault data, I want to sync my current vault to a local folder efficiently, so that only modified files are transferred.
 
-**Why this priority**: Nice-to-have for power users; OPFS handles primary storage.
+**Why this priority**: Essential for large vaults; reduces disk I/O and potential conflicts.
 
-**Independent Test**: Click "Sync to Folder", select a directory, verify all vault files appear in the selected folder.
+**Independent Test**: Sync a vault; verify all files appear. Modify one file locally and one in OPFS. Run sync and import; verify only the two modified files were actually written to disk by checking timestamps.
 
 **Acceptance Scenarios**:
 
-1. **Given** a vault is active, **When** I click "Sync to Folder" and choose a directory, **Then** all `.md` files and images are written to that directory.
-2. **Given** I have edited files externally, **When** I click "Import from Folder", **Then** the changes are loaded back into the OPFS vault.
+1. **Given** a vault is active, **When** I click "Sync to Folder", **Then** the system compares OPFS files with local folder files and only writes those that are newer or have a different size in OPFS.
+2. **Given** I have edited files externally, **When** I click "Import from Folder", **Then** the system only overwrites OPFS files if the local version is newer or has a different size.
+3. **Given** a sync is performed, **Then** a 2-second clock skew MUST be tolerated to account for filesystem precision differences.
 
 ## Requirements _(mandatory)_
 

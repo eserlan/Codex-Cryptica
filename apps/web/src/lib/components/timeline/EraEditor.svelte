@@ -46,12 +46,12 @@
           bind:value={newEraName}
           placeholder="e.g. The Age of Myth"
           data-testid="era-name-input"
-          class="w-full bg-black border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
       <div>
         <label
-          class="block text-xs text-purple-400/70 mb-1.5 uppercase font-bold"
+          class="block text-xs text-theme-text/70 mb-1.5 uppercase font-bold"
           for="era-start-input">Start Year</label
         >
         <input
@@ -59,7 +59,7 @@
           type="number"
           bind:value={newEraStart}
           data-testid="era-start-input"
-          class="w-full bg-black border border-purple-900/30 rounded px-3 py-1.5 text-xs text-purple-100 outline-none focus:border-purple-500 transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
       <div>
@@ -73,7 +73,7 @@
           bind:value={newEraEnd}
           placeholder="Present"
           data-testid="era-end-input"
-          class="w-full bg-black border border-purple-900/30 rounded px-3 py-1.5 text-xs text-purple-100 outline-none focus:border-purple-500 transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
     </div>

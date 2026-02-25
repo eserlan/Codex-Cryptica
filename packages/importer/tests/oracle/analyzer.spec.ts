@@ -165,6 +165,48 @@ describe("OracleAnalyzer", () => {
     expect(result.entities[0].matchedEntityId).toBe("existing-uuid-123");
   });
 
+  it("performs fuzzy matching for known entities using whole-word bidirectional logic", async () => {
+    // 1. Matches "Eldrin" against "Eldrin the Wise"
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify([{ title: "Eldrin the Wise" }]) },
+    });
+
+    const result1 = await analyzer.analyze("...", {
+      knownEntities: { Eldrin: "uuid-eldrin" },
+    });
+    expect(result1.entities[0].matchedEntityId).toBe("uuid-eldrin");
+
+    // 2. Does NOT match "Eldrin" against "Beldrinian" (partial word)
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify([{ title: "Beldrinian" }]) },
+    });
+
+    const result2 = await analyzer.analyze("...", {
+      knownEntities: { Eldrin: "uuid-eldrin" },
+    });
+    expect(result2.entities[0].matchedEntityId).toBeUndefined();
+
+    // 3. Does NOT fuzzy match very short names (e.g. "Bob") to avoid noise
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify([{ title: "Bobby" }]) },
+    });
+
+    const result3 = await analyzer.analyze("...", {
+      knownEntities: { Bob: "uuid-bob" },
+    });
+    expect(result3.entities[0].matchedEntityId).toBeUndefined();
+
+    // 4. Exact match still works for short names
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify([{ title: "Bob" }]) },
+    });
+
+    const result4 = await analyzer.analyze("...", {
+      knownEntities: { Bob: "uuid-bob" },
+    });
+    expect(result4.entities[0].matchedEntityId).toBe("uuid-bob");
+  });
+
   it("aborts analysis when AbortSignal is triggered", async () => {
     const controller = new AbortController();
     const text = "A".repeat(100000);

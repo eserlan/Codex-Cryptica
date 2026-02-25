@@ -5,6 +5,8 @@ test.describe("Vault Import E2E", () => {
     // Mock the File System Access API
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
 
       // Mock directory structure
       const mockFiles = [
@@ -109,7 +111,9 @@ test.describe("Vault Import E2E", () => {
     await page.keyboard.press("Escape");
 
     // 5. Verify the main UI also shows the count
-    await expect(page.getByTestId("entity-count")).toContainText("2 ENTITIES");
+    await expect(page.getByTestId("entity-count")).toContainText(
+      "2 CHRONICLES",
+    );
 
     // 6. Verify search can find the imported entities
     await page.keyboard.press("Control+k");

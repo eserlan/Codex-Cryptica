@@ -41,12 +41,6 @@
     `${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`,
   );
 
-  const layoutClasses = $derived(
-    isVertical
-      ? "py-3 text-sm justify-center gap-2"
-      : "px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2",
-  );
-
   const iconOnlyClasses = $derived(
     isVertical
       ? "py-3 text-sm justify-start px-4 gap-3"
@@ -63,7 +57,7 @@
   });
 
   const handleCreate = async () => {
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || isCreating) return;
     isCreating = true;
     createError = null;
     try {
@@ -234,12 +228,14 @@
             : 'gap-1.5 md:gap-3 items-center'}"
         >
           <button
-            class="{btnAccent} {layoutClasses}"
+            class="{btnAccent} {isVertical
+              ? 'py-3 text-sm justify-center gap-2'
+              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'}"
             onclick={() => vault.syncToLocal()}
-            title="Export all OPFS data to a local folder for safety."
+            title="Mirror internal archive with a local folder."
             aria-label={isVertical
-              ? "SYNC TO FOLDER - Export all OPFS data to a local folder for safety."
-              : "SYNC - Export all OPFS data to a local folder for safety."}
+              ? "SYNC - Mirror internal archive with a local folder."
+              : "SYNC - Mirror internal archive with a local folder."}
           >
             <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
             {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
@@ -313,6 +309,8 @@
         class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical
           ? 'py-3 text-sm'
           : ''}"
+        aria-invalid={!!createError}
+        aria-describedby={createError ? "create-error" : undefined}
       />
       <select
         bind:value={newType}
@@ -329,17 +327,29 @@
         type="submit"
         class="{btnPrimary} {isVertical
           ? 'py-3 text-sm justify-center'
-          : 'px-4 py-1.5 text-xs'} disabled:opacity-50"
-        disabled={!newTitle.trim() || isCreating}
+          : 'px-4 py-1.5 text-xs'} {!newTitle.trim() || isCreating
+          ? 'opacity-50 cursor-not-allowed'
+          : ''}"
+        aria-disabled={!newTitle.trim() || isCreating}
+        title={!newTitle.trim() ? "Enter a title to create" : ""}
+        aria-busy={isCreating}
       >
         {#if isCreating}
-          <span class="animate-pulse">ADDING...</span>
+          <span
+            class="icon-[lucide--loader-2] w-3 h-3 animate-spin mr-2"
+            aria-hidden="true"
+          ></span>
+          ADDING...
         {:else}
           ADD
         {/if}
       </button>
       {#if createError}
-        <div class="text-[10px] text-red-500 w-full text-center" role="alert">
+        <div
+          id="create-error"
+          class="text-[10px] text-red-500 w-full text-center"
+          role="alert"
+        >
           {createError}
         </div>
       {/if}

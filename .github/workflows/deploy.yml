@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, 'feat/*', 'fix/*' ]
+    branches: [ main, '**' ]
   workflow_dispatch:
 
 concurrency:
@@ -48,8 +48,10 @@ jobs:
           VITE_STAGING: true
           BASE_PATH: /staging
         run: |
-          npm run build --workspace=web
+          # Build the current branch code for staging
+          rm -rf apps/web/.svelte-kit apps/web/build dist
           mkdir -p dist/staging
+          npm run build --workspace=web
           cp -r apps/web/build/* dist/staging/
           cp apps/web/build/index.html dist/staging/404.html
 
@@ -60,8 +62,15 @@ jobs:
           VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
           BASE_PATH: ''
         run: |
-          git checkout main --force
-          npm ci # Refresh main dependencies
+          # If we are on a branch, we must switch to main to build the prod version
+          # to ensure the root site doesn't reflect experimental branch code.
+          # If we are already on main, this is a direct build.
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            git fetch origin main:main
+            git checkout main --force
+            npm ci # Refresh main dependencies
+          fi
+          rm -rf apps/web/.svelte-kit apps/web/build
           npm run build --workspace=web
           cp -r apps/web/build/* dist/
           cp apps/web/build/index.html dist/404.html
@@ -73,11 +82,27 @@ jobs:
 
   deploy:
     needs: verify_and_build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Notify Staging
+        if: success()
+        run: |
+          ./scripts/discord-deploy.sh "staging" "https://discord.com/api/webhooks/1474849321433174250/2Zc786bX-z8WX-HOh9y4ng_ThRH08vyHjiEVp3AgdkLQmiTVVWzSuvuybz46IlVovamU" "${{ steps.deployment.outputs.page_url }}staging"
+
+      - name: Notify Production
+        if: success()
+        run: |
+          ./scripts/discord-deploy.sh "production" "https://discord.com/api/webhooks/1474849546210115654/cd5PD5CPTH3cV8DxbV9FCgqRqQUUJm_jF0Ovo0H-3FqcxzVcx0t7bethsoCYI36Lw7He" "${{ steps.deployment.outputs.page_url }}"

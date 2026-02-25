@@ -73,6 +73,12 @@ Current `main` uses FSA (File System Access API) as primary storage. This featur
 | Multi-vault      | Single `rootHandle`         | `vaults/{id}/` subdirectories      |
 | External access  | Direct file access          | Optional sync via FSA              |
 
+## Technical Implementation Details
+
+- **Sync Optimization**: Both `syncToLocal` and `importFromFolder` utilize a "Smart Diff" logic. Before writing any file, the system checks the destination for an existing version and compares `size` and `lastModified` timestamps. A 2-second clock skew is applied to handle filesystem precision differences. Files are only written if the source version is newer or has a different size.
+- **OPFS as Source of Truth**: All primary operations occur in OPFS; local folder sync is explicitly triggered by the user.
+- **Verification**: unit tests in `sync-to-local.test.ts` verify the avoid-redundant-write logic.
+
 ## Complexity Tracking
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
