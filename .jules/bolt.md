@@ -12,3 +12,8 @@
 
 **Learning:** `GraphTransformer.entitiesToElements` runs a loop for every entity. Using functional array methods (`.map`, `.includes` on spreads) inside this loop creates excessive short-lived allocations, increasing GC pressure for large graphs.
 **Action:** Use imperative loops for critical transformation paths where allocation overhead matters more than syntactic sugar.
+
+## 2026-02-23 - [Optimizing Object Comparison in Hot Loops]
+
+**Learning:** `JSON.stringify` for object equality checks in hot loops (e.g., graph sync) is significantly slower (~40x) than manual field comparison, even for small objects like `TemporalMetadata`.
+**Action:** Replace `JSON.stringify` with specialized equality functions for known object structures in performance-critical synchronization loops to reduce allocation overhead.
