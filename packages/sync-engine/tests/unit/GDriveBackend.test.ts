@@ -38,6 +38,26 @@ describe("GDriveBackend", () => {
   });
 
   it("should implement upload and download", async () => {
+    // Mock folder resolution
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ files: [{ id: "root-id" }] }),
+    });
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ files: [{ id: "vault-id" }] }),
+    });
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ files: [] }),
+    });
+    (fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ startPageToken: "token" }),
+    });
+
+    await backend.scan("test-vault");
+
     (fetch as any).mockResolvedValueOnce({
       ok: true,
       json: () =>
