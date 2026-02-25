@@ -4,7 +4,8 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import type { Entity } from "schema";
+  import type { Entity, TemporalMetadata } from "schema";
+  import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -875,15 +876,22 @@
                 // Skip ID as it's the lookup key
                 if (key === "id") continue;
 
-                const k = key as keyof typeof newData;
-                const newVal = newData[k];
-                const curVal = currentData[k];
+                const k = key;
+                const newVal = (newData as any)[k];
+                const curVal = (currentData as any)[k];
 
                 // Performance optimized check for TemporalMetadata objects
-                const isMatch =
-                  typeof newVal === "object" && newVal !== null
-                    ? JSON.stringify(newVal) === JSON.stringify(curVal)
-                    : curVal === newVal;
+                let isMatch: boolean;
+                if (k === "date" || k === "start_date" || k === "end_date") {
+                  isMatch = isTemporalMetadataEqual(
+                    newVal as TemporalMetadata,
+                    curVal as TemporalMetadata,
+                  );
+                } else if (typeof newVal === "object" && newVal !== null) {
+                  isMatch = JSON.stringify(newVal) === JSON.stringify(curVal);
+                } else {
+                  isMatch = curVal === newVal;
+                }
 
                 if (!isMatch) {
                   changed = true;
