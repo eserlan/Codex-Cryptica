@@ -189,12 +189,16 @@ export class SyncService {
       case "UPDATE_OPFS": {
         const localContent = await local.download(
           action.path,
-          action.localMetadata?.handle,
+          typeof action.localMetadata?.handle === "string"
+            ? action.localMetadata.handle
+            : undefined,
         );
         const updatedRemote = await remote.upload(
           action.path,
           localContent,
-          action.opfsMetadata?.handle,
+          typeof action.opfsMetadata?.handle === "string"
+            ? action.opfsMetadata.handle
+            : undefined,
         );
 
         await this.registry.putEntry({
@@ -221,12 +225,16 @@ export class SyncService {
       case "UPDATE_LOCAL": {
         const remoteContent = await remote.download(
           action.path,
-          action.opfsMetadata?.handle,
+          typeof action.opfsMetadata?.handle === "string"
+            ? action.opfsMetadata.handle
+            : undefined,
         );
         const updatedLocal = await local.upload(
           action.path,
           remoteContent,
-          action.localMetadata?.handle,
+          typeof action.localMetadata?.handle === "string"
+            ? action.localMetadata.handle
+            : undefined,
         );
 
         await this.registry.putEntry({

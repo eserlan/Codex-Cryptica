@@ -360,6 +360,7 @@ class VaultStore {
           if (meta.size > 1024 * 1024) return true;
 
           try {
+            if (!(meta.handle instanceof FileSystemFileHandle)) return true;
             const file = await meta.handle.getFile();
             const text = await file.text();
             const { metadata } = parseMarkdown(text);
