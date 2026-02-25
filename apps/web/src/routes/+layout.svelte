@@ -118,12 +118,10 @@
     themeStore.init();
     oracle.init();
 
-    // Register Service Worker for PWA/Offline support
-    if ("serviceWorker" in navigator) {
+    // Register Service Worker for PWA/Offline support (Production only)
+    if ("serviceWorker" in navigator && !import.meta.env.DEV) {
       navigator.serviceWorker
-        .register(`${base}/service-worker.js`, {
-          type: import.meta.env.DEV ? "module" : "classic",
-        })
+        .register(`${base}/service-worker.js`)
         .catch((error) => {
           console.warn("Service Worker registration failed:", error);
         });
