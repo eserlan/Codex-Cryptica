@@ -14,7 +14,13 @@ export class GDriveBackend implements ISyncBackend {
   constructor(
     private clientId: string,
     private scope: string = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
-  ) {}
+  ) {
+    if (typeof window !== "undefined") {
+      window.addEventListener("beforeunload", () => {
+        this.accessToken = null;
+      });
+    }
+  }
 
   async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
@@ -95,6 +101,10 @@ export class GDriveBackend implements ISyncBackend {
         continue;
       }
 
+      if (!response.ok) {
+        return response; // Fail fast for 400, 403, 404 etc.
+      }
+
       return response;
     }
     throw new Error(`Failed to fetch ${url} after ${retries} retries`);
@@ -130,7 +140,17 @@ export class GDriveBackend implements ISyncBackend {
 
         files = files.concat(
           data.changes
-            .filter((c: any) => c.file || c.removed)
+            .filter((c: any) => {
+              // Filter out files that don't belong to this vault.
+              // For deletions (c.removed), we rely on the registry lookup later,
+              // but we can at least filter by fileId if we had a cache.
+              // For now, if we have metadata, check parents or appProperties.
+              if (!c.file) return true; // Keep deletions for registry matching
+              return (
+                c.file.appProperties?.vault_path ||
+                c.file.parents?.includes(folderId)
+              );
+            })
             .map((c: any) => ({
               path:
                 c.file?.appProperties?.vault_path || c.file?.name || "unknown",
@@ -150,27 +170,40 @@ export class GDriveBackend implements ISyncBackend {
 
       return { files, nextToken: newStartPageToken };
     } else {
-      let files: FileMetadata[] = [];
-      let pageToken: string | undefined;
+      const files: FileMetadata[] = [];
 
-      do {
-        const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents+and+trashed=false&fields=nextPageToken,files(id,name,mimeType,modifiedTime,size,md5Checksum,appProperties)${pageToken ? `&pageToken=${pageToken}` : ""}`;
-        const res = await this.fetchWithRetry(url);
-        if (!res.ok) throw new Error("Failed to list files");
-        const data: any = await res.json();
+      const fetchAllInFolder = async (
+        folderId: string,
+        currentPath: string,
+      ) => {
+        let pageToken: string | undefined;
+        do {
+          const q = `'${folderId}' in parents and trashed = false`;
+          const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,modifiedTime,size,md5Checksum,appProperties)${pageToken ? `&pageToken=${pageToken}` : ""}`;
+          const res = await this.fetchWithRetry(url);
+          if (!res.ok)
+            throw new Error(`Failed to list files in ${currentPath}`);
+          const data: any = await res.json();
 
-        files = files.concat(
-          data.files.map((f: any) => ({
-            path: f.appProperties?.vault_path || f.name,
-            lastModified: new Date(f.modifiedTime).getTime(),
-            size: parseInt(f.size || "0"),
-            handle: f.id,
-            hash: f.md5Checksum,
-          })),
-        );
+          for (const f of data.files) {
+            const path = currentPath ? `${currentPath}/${f.name}` : f.name;
+            if (f.mimeType === "application/vnd.google-apps.folder") {
+              await fetchAllInFolder(f.id, path);
+            } else {
+              files.push({
+                path: f.appProperties?.vault_path || path,
+                lastModified: new Date(f.modifiedTime).getTime(),
+                size: parseInt(f.size || "0"),
+                handle: f.id,
+                hash: f.md5Checksum,
+              });
+            }
+          }
+          pageToken = data.nextPageToken;
+        } while (pageToken);
+      };
 
-        pageToken = data.nextPageToken;
-      } while (pageToken);
+      await fetchAllInFolder(folderId, "");
 
       const startTokenRes = await this.fetchWithRetry(
         "https://www.googleapis.com/drive/v3/changes/startPageToken",
@@ -256,7 +289,7 @@ export class GDriveBackend implements ISyncBackend {
   }
 
   async findFolder(name: string, parentId?: string): Promise<string | null> {
-    const escapedName = name.replace(/'/g, "\\'");
+    const escapedName = name.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
     let q = `name = '${escapedName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
     if (parentId) {
       q += ` and '${parentId}' in parents`;
@@ -317,5 +350,24 @@ export class GDriveBackend implements ISyncBackend {
     if (!res.ok && res.status !== 404) {
       throw new Error(`Failed to delete file ${remoteId}`);
     }
+  }
+
+  async disconnect(): Promise<void> {
+    if (this.accessToken) {
+      try {
+        await fetch(
+          `https://oauth2.googleapis.com/revoke?token=${this.accessToken}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          },
+        );
+      } catch (err) {
+        console.warn("Failed to revoke token during disconnect", err);
+      }
+    }
+    this.accessToken = null;
+    this.vaultFolderId = null;
+    this.activeVaultId = null;
   }
 }

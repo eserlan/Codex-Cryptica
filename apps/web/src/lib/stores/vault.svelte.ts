@@ -37,6 +37,14 @@ class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
   maps = $state<Record<string, Map>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  syncStats = $state({
+    updated: 0,
+    created: 0,
+    deleted: 0,
+    failed: 0,
+    total: 0,
+    progress: 0,
+  });
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
@@ -61,6 +69,7 @@ class VaultStore {
   // Services (Injected)
   private services: IVaultServices | null = null;
   private syncService: LocalSyncService | null = null;
+  private gdriveBackend: any | null = null;
 
   // Registry Accessors
   get activeVaultId() {
@@ -382,7 +391,7 @@ class VaultStore {
     }
   }
 
-  async syncToCloud(_user: { email: string; name: string }) {
+  async syncToCloud(user: { email: string; name: string }) {
     if (!this.activeVaultId) return;
 
     // Ensure all pending application saves are flushed before starting sync
@@ -390,19 +399,61 @@ class VaultStore {
 
     this.status = "saving";
     try {
+      console.log(
+        `[Sync] Starting cloud sync for user: ${user.email} (${user.name})`,
+      );
       const opfsHandle = await this.getActiveVaultHandle();
       if (!opfsHandle) throw new Error("OPFS handle missing");
 
       const { CloudSyncService, GDriveBackend, SyncRegistry } =
         await import("@codex/sync-engine");
       const db = await getDB();
-      const gdrive = new GDriveBackend(import.meta.env.VITE_GOOGLE_CLIENT_ID);
-      await gdrive.connect();
 
-      const cloudSync = new CloudSyncService(new SyncRegistry(db), gdrive);
-      const result = await cloudSync.sync(this.activeVaultId, opfsHandle);
+      // Reuse or initialize the GDrive backend
+      if (!this.gdriveBackend) {
+        this.gdriveBackend = new GDriveBackend(
+          import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        );
+      }
+      await this.gdriveBackend.connect();
+
+      this.syncStats = {
+        updated: 0,
+        created: 0,
+        deleted: 0,
+        failed: 0,
+        total: 0,
+        progress: 0,
+      };
+
+      const cloudSync = new CloudSyncService(
+        new SyncRegistry(db),
+        this.gdriveBackend,
+      );
+      const result = await cloudSync.sync(
+        this.activeVaultId,
+        opfsHandle,
+        undefined,
+        (stats) => {
+          this.syncStats = {
+            ...stats,
+            progress:
+              stats.total > 0
+                ? Math.round(
+                    ((stats.updated +
+                      stats.created +
+                      stats.deleted +
+                      stats.failed) /
+                      stats.total) *
+                      100,
+                  )
+                : 0,
+          };
+        },
+      );
 
       this.status = "idle";
+
       uiStore.notify(
         `Cloud sync complete: ${result.updated.length + result.created.length} synced.`,
         "success",
@@ -413,6 +464,17 @@ class VaultStore {
       this.errorMessage = err.message;
       uiStore.notify("Cloud sync failed.", "error");
     }
+  }
+
+  async disconnectCloud() {
+    if (this.gdriveBackend) {
+      await this.gdriveBackend.disconnect();
+    }
+    if (this.activeVaultId) {
+      const db = await getDB();
+      await db.delete("cloud_sync_metadata", this.activeVaultId);
+    }
+    uiStore.notify("Cloud storage disconnected.", "info");
   }
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {

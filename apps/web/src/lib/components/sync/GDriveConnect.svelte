@@ -58,7 +58,10 @@
       </div>
       <button
         class="text-sm underline opacity-60 hover:opacity-100"
-        onclick={() => (connectedUser = null)}
+        onclick={async () => {
+          await vault.disconnectCloud();
+          connectedUser = null;
+        }}
       >
         Disconnect
       </button>

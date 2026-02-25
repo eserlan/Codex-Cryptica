@@ -21,6 +21,13 @@ export class CloudSyncService {
       path: string,
       metadata: FileMetadata,
     ) => boolean | Promise<boolean>,
+    onProgress?: (stats: {
+      updated: number;
+      created: number;
+      deleted: number;
+      failed: number;
+      total: number;
+    }) => void,
   ): Promise<SyncResult> {
     const local = new FileSystemBackend(opfsHandle);
 
@@ -33,6 +40,7 @@ export class CloudSyncService {
       this.gdrive,
       sinceToken,
       validator,
+      onProgress,
     );
 
     if (result.nextToken) {

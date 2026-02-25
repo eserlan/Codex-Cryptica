@@ -38,44 +38,114 @@ describe("GDriveBackend", () => {
   });
 
   it("should implement upload and download", async () => {
-    // Mock folder resolution
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ files: [{ id: "root-id" }] }),
-    });
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ files: [{ id: "vault-id" }] }),
-    });
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ files: [] }),
-    });
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () => Promise.resolve({ startPageToken: "token" }),
+    (fetch as any).mockImplementation(async (url: string) => {
+      if (url.includes("files?q"))
+        return {
+          ok: true,
+          json: async () => ({ files: [{ id: "folder-id" }] }),
+        };
+      if (url.includes("changes/startPageToken"))
+        return { ok: true, json: async () => ({ startPageToken: "token" }) };
+      if (url.includes("upload"))
+        return {
+          ok: true,
+          json: async () => ({
+            id: "file-id",
+            modifiedTime: new Date().toISOString(),
+          }),
+        };
+      if (url.includes("alt=media"))
+        return { ok: true, blob: async () => new Blob(["hello"]) };
+      return { ok: true, json: async () => ({ files: [] }) };
     });
 
     await backend.scan("test-vault");
-
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          id: "file-id",
-          modifiedTime: new Date().toISOString(),
-        }),
-    });
-
     const metadata = await backend.upload("test.md", new Blob(["hello"]));
     expect(metadata.handle).toBe("file-id");
 
-    (fetch as any).mockResolvedValueOnce({
-      ok: true,
-      blob: () => Promise.resolve(new Blob(["hello"])),
-    });
-
     const blob = await backend.download("test.md", "file-id");
     expect(await blob.text()).toBe("hello");
+  });
+
+  it("should retry on transient 5xx errors", async () => {
+    vi.useFakeTimers();
+    let calls = 0;
+    (fetch as any).mockImplementation(async (url: string) => {
+      if (url.includes("upload")) {
+        calls++;
+        if (calls === 1) return { ok: false, status: 500 };
+        return { ok: true, json: async () => ({ id: "success-id" }) };
+      }
+      if (url.includes("files?q"))
+        return {
+          ok: true,
+          json: async () => ({ files: [{ id: "folder-id" }] }),
+        };
+      if (url.includes("changes/startPageToken"))
+        return { ok: true, json: async () => ({ startPageToken: "token" }) };
+      return { ok: true, json: async () => ({ files: [] }) };
+    });
+
+    await backend.scan("test-vault");
+    const promise = backend.upload("test.md", new Blob(["hello"]));
+
+    await vi.runAllTimersAsync();
+    const metadata = await promise;
+    expect(metadata.handle).toBe("success-id");
+    expect(calls).toBe(2);
+    vi.useRealTimers();
+  });
+
+  it("should refresh token on 401 errors", async () => {
+    await backend.connect();
+    let calls = 0;
+    (fetch as any).mockImplementation(async () => {
+      calls++;
+      if (calls === 1) return { ok: false, status: 401 };
+      return { ok: true, json: async () => ({ email: "new@example.com" }) };
+    });
+
+    const profile = await backend.getUserProfile();
+    expect(profile.email).toBe("new@example.com");
+    expect(google.accounts.oauth2.initTokenClient).toHaveBeenCalledTimes(2);
+  });
+
+  it("should create nested folders recursively", async () => {
+    (fetch as any).mockImplementation(async (url: string) => {
+      if (url.includes("files?q")) {
+        if (url.includes("CodexCryptica"))
+          return {
+            ok: true,
+            json: async () => ({ files: [{ id: "root-id" }] }),
+          };
+        if (url.includes("vault-1"))
+          return {
+            ok: true,
+            json: async () => ({ files: [{ id: "vault-id" }] }),
+          };
+        return { ok: true, json: async () => ({ files: [] }) }; // subfolder not found
+      }
+      if (url.includes("changes/startPageToken"))
+        return { ok: true, json: async () => ({ startPageToken: "token" }) };
+      return { ok: true, json: async () => ({ id: "new-id" }) }; // creation or upload
+    });
+
+    await backend.scan("vault-1");
+    await backend.upload("sub/file.md", new Blob(["content"]));
+
+    const uploadCall = vi
+      .mocked(fetch)
+      .mock.calls.find((c) => c[0].includes("upload"));
+    expect(uploadCall).toBeDefined();
+    // The parent folder creation should have happened
+    const folderCreationCall = vi
+      .mocked(fetch)
+      .mock.calls.find(
+        (c) =>
+          c[0].includes("files") &&
+          c[1]?.method === "POST" &&
+          JSON.parse(c[1]?.body as string).name === "sub",
+      );
+    expect(folderCreationCall).toBeDefined();
   });
 });

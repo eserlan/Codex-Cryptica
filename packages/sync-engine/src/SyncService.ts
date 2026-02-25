@@ -20,12 +20,20 @@ export class SyncService {
       path: string,
       metadata: FileMetadata,
     ) => boolean | Promise<boolean>,
+    onProgress?: (stats: {
+      updated: number;
+      created: number;
+      deleted: number;
+      failed: number;
+      total: number;
+    }) => void,
   ): Promise<SyncResult & { nextToken?: string }> {
     const result: SyncResult & { nextToken?: string } = {
       updated: [],
       created: [],
       deleted: [],
       conflicts: [],
+      failed: [],
     };
 
     try {
@@ -35,9 +43,17 @@ export class SyncService {
 
       result.nextToken = remoteScan.nextToken;
 
-      const localFiles = localScan.files;
+      // 1. Deduplicate remote changes by handle (latest wins)
+      const dedupedRemote = new Map<string, FileMetadata>();
+      for (const f of remoteScan.files) {
+        if (typeof f.handle === "string") {
+          dedupedRemote.set(f.handle, f);
+        }
+      }
+
+      // 2. Resolve paths for "unknown" files (deletions)
       const remoteFiles = await Promise.all(
-        remoteScan.files.map(async (f) => {
+        Array.from(dedupedRemote.values()).map(async (f) => {
           if (f.path === "unknown" && typeof f.handle === "string") {
             const entry = await this.registry.getEntryByRemoteId(f.handle);
             if (entry) return { ...f, path: entry.filePath };
@@ -46,6 +62,7 @@ export class SyncService {
         }),
       );
 
+      const localFiles = localScan.files;
       const localMap = new Map(localFiles.map((f) => [f.path, f]));
       const remoteMap = new Map(remoteFiles.map((f) => [f.path, f]));
       const registryMap = new Map(registryEntries.map((e) => [e.filePath, e]));
@@ -93,6 +110,21 @@ export class SyncService {
         }
       }
 
+      const totalActions = actions.length;
+      let _completedActions = 0;
+
+      const updateProgress = () => {
+        if (onProgress) {
+          onProgress({
+            updated: result.updated.length,
+            created: result.created.length,
+            deleted: result.deleted.length,
+            failed: result.failed.length,
+            total: totalActions,
+          });
+        }
+      };
+
       const CONCURRENCY = 5;
       let nextActionIndex = 0;
       await Promise.all(
@@ -102,11 +134,15 @@ export class SyncService {
             if (!action) continue;
             try {
               await this.executeAction(action, vaultId, local, remote, result);
-            } catch (err) {
+            } catch (err: any) {
               console.error(
                 `Failed to execute action for ${action.path}:`,
                 err,
               );
+              result.failed.push({ path: action.path, error: err.message });
+            } finally {
+              _completedActions++;
+              updateProgress();
             }
           }
         }),

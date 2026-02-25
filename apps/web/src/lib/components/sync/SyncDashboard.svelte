@@ -1,14 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
 
-  let stats = $state({
-    updated: 0,
-    created: 0,
-    deleted: 0,
-    total: 0,
-    progress: 0,
-  });
-
   let isSyncing = $derived(vault.status === "saving");
 </script>
 
@@ -26,22 +18,26 @@
     >
       <div
         class="bg-accent-primary h-full transition-all duration-300"
-        style="width: {stats.progress}%"
+        style="width: {vault.syncStats.progress}%"
       ></div>
     </div>
 
-    <div class="grid grid-cols-3 text-center text-xs opacity-80">
+    <div class="grid grid-cols-4 text-center text-xs opacity-80">
       <div class="flex flex-col">
-        <span class="font-bold">{stats.created}</span>
+        <span class="font-bold">{vault.syncStats.created}</span>
         <span>New</span>
       </div>
       <div class="flex flex-col">
-        <span class="font-bold">{stats.updated}</span>
+        <span class="font-bold">{vault.syncStats.updated}</span>
         <span>Updated</span>
       </div>
       <div class="flex flex-col">
-        <span class="font-bold">{stats.deleted}</span>
+        <span class="font-bold">{vault.syncStats.deleted}</span>
         <span>Deleted</span>
+      </div>
+      <div class="flex flex-col">
+        <span class="font-bold text-red-500">{vault.syncStats.failed}</span>
+        <span>Failed</span>
       </div>
     </div>
   </div>

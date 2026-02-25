@@ -4,7 +4,7 @@ export interface FileMetadata {
   path: string;
   lastModified: number;
   size: number;
-  handle?: any; // e.g. FileSystemFileHandle or remoteId
+  handle?: FileSystemFileHandle | string; // e.g. FileSystemFileHandle or remoteId
   hash?: string; // Content fingerprint
   isDeleted?: boolean;
 }
@@ -14,6 +14,7 @@ export interface SyncResult {
   created: string[];
   deleted: string[];
   conflicts: string[];
+  failed: Array<{ path: string; error: string }>;
   error?: string;
 }
 
