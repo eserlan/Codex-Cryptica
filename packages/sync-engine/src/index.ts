@@ -2,3 +2,7 @@ export * from "./types";
 export * from "./SyncRegistry";
 export * from "./DiffAlgorithm";
 export * from "./LocalSyncService";
+export * from "./SyncService";
+export * from "./FileSystemBackend";
+export * from "./GDriveBackend";
+export * from "./CloudSyncService";
