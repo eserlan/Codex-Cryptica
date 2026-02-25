@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GDriveBackend } from "../src/GDriveBackend";
+import { GDriveBackend } from "../../src/GDriveBackend";
 
 describe("GDriveBackend", () => {
   let backend: GDriveBackend;
