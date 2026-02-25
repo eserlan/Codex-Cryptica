@@ -196,7 +196,7 @@
     editImage = entity.image || "";
     editDate = entity.date;
     editStartDate = entity.start_date;
-    editEndDate = editEndDate;
+    editEndDate = entity.end_date;
     isEditing = true;
   };
 
@@ -346,9 +346,9 @@
   const handleLightboxKeydown = (e: KeyboardEvent) => {
     if (e.key === "Tab") {
       // Focus trap for lightbox
-      const focusable = lightboxBackdrop?.querySelectorAll(
-        'button, [href], input, [tabindex]:not([tabindex="-1"])',
-      );
+      const selector =
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusable = lightboxBackdrop?.querySelectorAll(selector);
       if (!focusable || focusable.length === 0) return;
 
       const first = focusable[0] as HTMLElement;

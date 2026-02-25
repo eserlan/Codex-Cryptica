@@ -42,7 +42,7 @@ test.describe("Node Read Mode", () => {
       (window as any).uiStore.openZenMode(heroId);
     });
 
-    const modal = page.locator('[role="dialog"]').first(); // Zen Mode Modal
+    const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
 
     // Use specific ID for title to avoid ambiguity
@@ -93,7 +93,7 @@ test.describe("Node Read Mode", () => {
       (window as any).uiStore.openZenMode(id);
     });
 
-    const modal = page.locator('[role="dialog"]').first();
+    const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
 
     // 3. Click Image to Open Lightbox
