@@ -117,7 +117,8 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       // 1. Check Header Buttons
       const menuBtn = page.getByLabel("Toggle menu");
       await expect(menuBtn).toBeVisible();
-      await page.waitForTimeout(500); // Wait for UI stability
+      // Ensure element is ready before taking bounding box
+      await menuBtn.waitFor({ state: "visible" });
       const menuBox = await menuBtn.boundingBox();
       if (menuBox) {
         expect(menuBox.width).toBeGreaterThanOrEqual(24); // Icon size, but click area is usually padded.
@@ -166,7 +167,6 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       // Open Mobile Menu
       const menuBtn = page.getByLabel("Toggle menu");
       await expect(menuBtn).toBeVisible();
-      await page.waitForTimeout(500); // Wait for UI stability
       await menuBtn.click();
 
       // Wait for drawer animation
