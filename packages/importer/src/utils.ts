@@ -60,7 +60,35 @@ export function mergeEntities(
     }
   }
 
-  return Array.from(map.values());
+  const result = Array.from(map.values());
+
+  // Final pass: Remove bidirectional links across different entities to prefer one-way connections.
+  // We use a set of sorted title pairs to identify and prune redundant reverse links.
+  const seenConnections = new Set<string>();
+
+  for (const entity of result) {
+    const sourceTitle = entity.suggestedTitle.toLowerCase().trim();
+
+    entity.detectedLinks = (entity.detectedLinks as any[]).filter((link) => {
+      const l = typeof link === "string" ? { target: link } : link;
+      const targetTitle = l.target.toLowerCase().trim();
+
+      // Ignore self-links
+      if (sourceTitle === targetTitle) return false;
+
+      // Create a unique key for this connection pair (sorted to be order-independent)
+      const pair = [sourceTitle, targetTitle].sort().join("<->");
+
+      if (seenConnections.has(pair)) {
+        return false;
+      }
+
+      seenConnections.add(pair);
+      return true;
+    });
+  }
+
+  return result;
 }
 
 /**
