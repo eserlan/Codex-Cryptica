@@ -139,7 +139,9 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
 
       await expect(async () => {
-        await menuBtn.click({ force: true });
+        if (!(await menu.isVisible())) {
+          await menuBtn.click({ force: true });
+        }
         await expect(menu).toBeVisible();
       }).toPass({ timeout: 10000 });
       const openVaultBtn = menu.getByTestId("open-vault-button");
@@ -182,7 +184,9 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
 
       await expect(async () => {
-        await menuBtn.click({ force: true });
+        if (!(await menu.isVisible())) {
+          await menuBtn.click({ force: true });
+        }
         await expect(menu).toBeVisible();
       }).toPass({ timeout: 10000 });
       // Find settings button inside menu (text might be different in menu, let's use the click handler target or text)

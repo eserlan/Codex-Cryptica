@@ -22,7 +22,9 @@ test.describe("Help Onboarding Walkthrough", () => {
     await expect(enterButton).toBeVisible({ timeout: 15000 });
 
     await expect(async () => {
-      await enterButton.click();
+      if (await enterButton.isVisible()) {
+        await enterButton.click({ force: true });
+      }
       const isDismissed = await page.evaluate(() => {
         const uiStore = (window as any).uiStore;
         return uiStore && !uiStore.isLandingPageVisible;
