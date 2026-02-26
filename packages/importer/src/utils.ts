@@ -82,8 +82,27 @@ export function mergeEntities(
           : `${targetTitle}<->${sourceTitle}`;
 
       const existing = bestLinks.get(pair);
-      // Keep the link if it's the first we've seen for this pair, or if it has a label and the existing one doesn't
-      if (!existing || (!existing.link.label && l.label)) {
+      const currentHasLabel = !!l.label;
+      const existingHasLabel = !!existing?.link.label;
+
+      let shouldReplace = false;
+      if (!existing) {
+        shouldReplace = true;
+      } else if (!existingHasLabel && currentHasLabel) {
+        shouldReplace = true;
+      } else if (existingHasLabel === currentHasLabel) {
+        if (sourceTitle < existing.source) {
+          shouldReplace = true;
+        } else if (sourceTitle === existing.source) {
+          const currentLabel = l.label || "";
+          const existingLabel = existing.link.label || "";
+          if (currentLabel < existingLabel) {
+            shouldReplace = true;
+          }
+        }
+      }
+
+      if (shouldReplace) {
         bestLinks.set(pair, { source: sourceTitle, link: l });
       }
     }

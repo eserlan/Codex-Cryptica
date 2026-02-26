@@ -159,4 +159,43 @@ describe("mergeEntities bidirectional links", () => {
       type: "special_type",
     });
   });
+
+  it("should collapse multiple links between the same entities to a single one", () => {
+    const entities: DiscoveredEntity[] = [
+      {
+        id: "1",
+        suggestedTitle: "A",
+        suggestedType: "Character",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [
+          { target: "B", label: "ally" } as any,
+          { target: "B", label: "rival" } as any,
+        ],
+        suggestedFilename: "a.md",
+      },
+      {
+        id: "2",
+        suggestedTitle: "B",
+        suggestedType: "Character",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [],
+        suggestedFilename: "b.md",
+      },
+    ];
+
+    const merged = mergeEntities(entities);
+    const a = merged.find((e) => e.suggestedTitle === "A")!;
+    const b = merged.find((e) => e.suggestedTitle === "B")!;
+
+    // Total links across both should be 1
+    expect(a.detectedLinks.length + b.detectedLinks.length).toBe(1);
+  });
 });
