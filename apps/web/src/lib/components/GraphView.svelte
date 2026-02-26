@@ -18,6 +18,7 @@
     DEFAULT_LAYOUT_OPTIONS,
     hasTimelineDate,
     type GraphNode,
+    type GraphEdge,
   } from "graph-engine";
 
   cytoscape.use(fcose);
@@ -809,18 +810,18 @@
         // 3. Add new elements safely
         // OPTIMIZATION: Single pass to filter and classify new elements
         // Avoids multiple filter passes and intermediate array allocations
-        const newNodes: any[] = [];
-        const newEdges: any[] = [];
+        const newNodes: GraphNode[] = [];
+        const newEdges: GraphEdge[] = [];
 
-        // Use direct length access to avoid variable hoisting/redeclaration issues
-        for (let i = 0; i < snapshotElements.length; i++) {
+        // Use cached snapshotLength for consistency and minor performance gains
+        for (let i = 0; i < snapshotLength; i++) {
           const el = snapshotElements[i];
           if (!elementMap.has(el.data.id)) {
             // Use 'in' check to match original behavior strictly
             if (!("source" in el.data)) {
-              newNodes.push(el);
+              newNodes.push(el as GraphNode);
             } else {
-              newEdges.push(el);
+              newEdges.push(el as GraphEdge);
             }
           }
         }
