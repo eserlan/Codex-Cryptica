@@ -82,4 +82,81 @@ describe("mergeEntities bidirectional links", () => {
     expect(b.detectedLinks).toHaveLength(1);
     expect((b.detectedLinks[0] as any).label).toBe("important relationship");
   });
+
+  it("should be case and whitespace insensitive when identifying bidirectional links", () => {
+    const entities: DiscoveredEntity[] = [
+      {
+        id: "1",
+        suggestedTitle: "Eldrin",
+        suggestedType: "Character",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "  Broken Tower  " }],
+        suggestedFilename: "eldrin.md",
+      },
+      {
+        id: "2",
+        suggestedTitle: "broken tower",
+        suggestedType: "Location",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "eldrin" }],
+        suggestedFilename: "broken-tower.md",
+      },
+    ];
+
+    const merged = mergeEntities(entities);
+    const totalLinks = merged.reduce(
+      (sum, e) => sum + e.detectedLinks.length,
+      0,
+    );
+
+    expect(totalLinks).toBe(1);
+  });
+
+  it("should preserve other metadata like 'type' on the kept link", () => {
+    const entities: DiscoveredEntity[] = [
+      {
+        id: "1",
+        suggestedTitle: "A",
+        suggestedType: "Character",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [{ target: "B" }],
+        suggestedFilename: "a.md",
+      },
+      {
+        id: "2",
+        suggestedTitle: "B",
+        suggestedType: "Character",
+        chronicle: "",
+        lore: "",
+        content: "",
+        frontmatter: {},
+        confidence: 1,
+        detectedLinks: [
+          { target: "A", label: "rel", type: "special_type" } as any,
+        ],
+        suggestedFilename: "b.md",
+      },
+    ];
+
+    const merged = mergeEntities(entities);
+    const b = merged.find((e) => e.suggestedTitle === "B")!;
+
+    expect(b.detectedLinks[0]).toMatchObject({
+      target: "A",
+      label: "rel",
+      type: "special_type",
+    });
+  });
 });
