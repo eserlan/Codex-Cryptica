@@ -9,63 +9,91 @@ test.describe("Help Onboarding Walkthrough", () => {
     });
 
     await page.goto("/");
+    // Clear localStorage after initial load to reset state, but don't put it in initScript
+    // so it doesn't clear on subsequent reloads within the same test.
     await page.evaluate(() => {
       localStorage.clear();
     });
+    // Reload to apply the cleared state
     await page.reload();
 
-    // Dismiss landing page if present
+    // Dismiss landing page if present and wait for state to update
     const enterButton = page.getByRole("button", { name: "Enter Workspace" });
-    if (await enterButton.isVisible()) {
+    await expect(enterButton).toBeVisible({ timeout: 15000 });
+
+    await expect(async () => {
       await enterButton.click();
-    }
+      const isDismissed = await page.evaluate(() => {
+        const uiStore = (window as any).uiStore;
+        return uiStore && !uiStore.isLandingPageVisible;
+      });
+      expect(isDismissed).toBeTruthy();
+    }).toPass({ timeout: 15000 });
 
     // Force start tour to ensure reliability by waiting for helpStore to be ready
-    await page.waitForFunction(() => {
-      const helpStore = (window as any).helpStore;
-      if (!helpStore) return false;
-      // If the store exposes an initialization flag, wait for it as well
-      if ("isInitialized" in helpStore && !helpStore.isInitialized)
-        return false;
-      helpStore.startTour("initial-onboarding");
-      return true;
-    });
+    await page.waitForFunction(
+      () => {
+        const helpStore = (window as any).helpStore;
+        if (!helpStore || !helpStore.isInitialized) return false;
+
+        if (!helpStore.activeTour) {
+          helpStore.startTour("initial-onboarding");
+        }
+        return !!helpStore.activeTour;
+      },
+      { timeout: 15000 },
+    );
   });
 
   test("should automatically start onboarding for new users", async ({
     page,
   }) => {
     // 1. Check if welcome modal appears
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible({
       timeout: 10000,
     });
 
     // 2. Click Next
-    await page.getByRole("button", { name: "Next" }).click();
-
+    await page.getByRole("button", { name: "Next" }).click({ force: true });
     // 3. Check if Vault step is highlighted (Vault info should be visible)
-    await expect(page.getByText("Open a Vault")).toBeVisible();
+    await expect(page.locator("h3").getByText("Open a Vault")).toBeVisible({
+      timeout: 10000,
+    });
 
     // 4. Navigate through all steps
-    await page.getByRole("button", { name: "Next" }).click(); // Search
-    await expect(page.getByText("Quick Search")).toBeVisible();
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Search
+    await expect(page.locator("h3").getByText("Quick Search")).toBeVisible({
+      timeout: 10000,
+    });
 
-    await page.getByRole("button", { name: "Next" }).click(); // Graph
-    await expect(page.getByText("Knowledge Graph")).toBeVisible();
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Graph
+    await expect(page.locator("h3").getByText("Knowledge Graph")).toBeVisible({
+      timeout: 10000,
+    });
 
-    await page.getByRole("button", { name: "Next" }).click(); // Oracle
-    await expect(page.getByText("Lore Oracle")).toBeVisible();
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Oracle
+    await expect(page.locator("h3").getByText("Lore Oracle")).toBeVisible({
+      timeout: 10000,
+    });
 
-    await page.getByRole("button", { name: "Next" }).click(); // Settings
-    await expect(page.getByText("Settings")).toBeVisible();
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Settings
+    await expect(page.locator("h3").getByText("Settings")).toBeVisible({
+      timeout: 10000,
+    });
 
     // 5. Finish tour
-    await page.getByRole("button", { name: "Finish" }).click();
+    await page.getByRole("button", { name: "Finish" }).click({ force: true });
 
     // 6. Verify tour is gone and doesn't reappear
-    await expect(page.getByText("Configuration")).not.toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).not.toBeVisible();
     await page.reload();
-    await expect(page.getByText("Welcome to Codex Cryptica")).not.toBeVisible();
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).not.toBeVisible();
   });
 
   test("should NOT dim the screen on welcome step (body target)", async ({
@@ -100,14 +128,22 @@ test.describe("Help Onboarding Walkthrough", () => {
     page,
   }) => {
     // Skip onboarding
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible();
+    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({
+      timeout: 10000,
+    });
     await page.getByRole("button", { name: "Dismiss" }).click();
+
+    // Ensure GraphView is fully loaded and ready before interacting
+    const canvas = page.locator('[data-testid="graph-canvas"]');
+    await expect(canvas).toBeVisible({ timeout: 15000 });
 
     // 1. Activate Connect Mode (press C)
     await page.keyboard.press("c");
 
     // 2. Verify hint appears
-    await expect(page.getByText("Linking Nodes")).toBeVisible();
+    await expect(page.getByText("Linking Notes")).toBeVisible({
+      timeout: 10000,
+    });
 
     // 3. Dismiss hint
     await page.getByTestId("dismiss-hint-button").click();

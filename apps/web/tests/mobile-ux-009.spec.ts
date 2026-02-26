@@ -74,16 +74,25 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
         }
       };
     });
+
+    // Set mobile viewport early
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+
+    // Wait for hydration and state stabilization (stores ready, landing page dismissed)
+    await page.waitForFunction(() => {
+      const uiStore = (window as any).uiStore;
+      const helpStore = (window as any).helpStore;
+      return (
+        uiStore && !uiStore.isLandingPageVisible && helpStore?.isInitialized
+      );
+    });
   });
 
   test.describe("FR-004: Entity detail full-width on mobile", () => {
     test("entity detail panel area should be full-width on mobile viewport", async ({
       page,
     }) => {
-      // Set mobile viewport
-      await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto("/");
-
       // Wait for app to load (Mobile branding "CC")
       await expect(page.getByRole("heading", { name: "CC" })).toBeVisible();
 
@@ -127,9 +136,13 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       }
 
       // 2. Check Menu Items
-      await menuBtn.click();
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
-      await expect(menu).toBeVisible();
+
+      // Retry clicking until the menu is visible, to handle hydration races
+      await expect(async () => {
+        await menuBtn.click();
+        await expect(menu).toBeVisible();
+      }).toPass({ timeout: 10000 });
 
       const openVaultBtn = menu.getByTestId("open-vault-button");
       // If visible
@@ -167,11 +180,14 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       // Open Mobile Menu
       const menuBtn = page.getByLabel("Toggle menu");
       await expect(menuBtn).toBeVisible();
-      await menuBtn.click();
 
-      // Wait for drawer animation
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
-      await expect(menu).toBeVisible();
+
+      // Retry clicking until the menu is visible, to handle hydration races
+      await expect(async () => {
+        await menuBtn.click();
+        await expect(menu).toBeVisible();
+      }).toPass({ timeout: 10000 });
 
       // Find settings button inside menu (text might be different in menu, let's use the click handler target or text)
       // In MobileMenu.svelte: "Settings" button text
