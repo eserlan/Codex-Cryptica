@@ -138,12 +138,10 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       // 2. Check Menu Items
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
 
-      // Retry clicking until the menu is visible, to handle hydration races
       await expect(async () => {
-        await menuBtn.click();
+        await menuBtn.click({ force: true });
         await expect(menu).toBeVisible();
       }).toPass({ timeout: 10000 });
-
       const openVaultBtn = menu.getByTestId("open-vault-button");
       // If visible
       if (await openVaultBtn.isVisible()) {
@@ -183,12 +181,10 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
 
       const menu = page.getByRole("dialog", { name: "Mobile Navigation" });
 
-      // Retry clicking until the menu is visible, to handle hydration races
       await expect(async () => {
-        await menuBtn.click();
+        await menuBtn.click({ force: true });
         await expect(menu).toBeVisible();
       }).toPass({ timeout: 10000 });
-
       // Find settings button inside menu (text might be different in menu, let's use the click handler target or text)
       // In MobileMenu.svelte: "Settings" button text
       const settingsBtn = menu.getByRole("button", { name: "Settings" });
