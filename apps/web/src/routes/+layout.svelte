@@ -31,6 +31,23 @@
 
   let { children } = $props();
 
+  /**
+   * Gates noisy console errors for lazy-load failures to DEV/E2E/Staging.
+   * In production, logs to internal debugStore instead of polluting the console.
+   */
+  const logChunkError = (name: string, error: any) => {
+    const isSpecialEnv =
+      import.meta.env.DEV ||
+      (typeof window !== "undefined" && (window as any).__E2E__) ||
+      import.meta.env.VITE_STAGING === "true";
+
+    if (isSpecialEnv) {
+      console.error(`Failed to load ${name}`, error);
+    } else {
+      debugStore.error(`Lazy load failed: ${name}`, error);
+    }
+  };
+
   // Dynamic Component Loading for specialized/heavy UI elements
   // Use any to bypass strict prop validation for lazy components in the shell
   let OracleWindow = $state<any>(null);
@@ -45,24 +62,24 @@
   // Lazy load components when needed
   $effect(() => {
     if (uiStore.showZenMode && !ZenModeModal) {
-      import("$lib/components/modals/ZenModeModal.svelte").then(
-        (m) => (ZenModeModal = m.default),
-      ).catch(e => console.error("Failed to load ZenModeModal", e));
+      import("$lib/components/modals/ZenModeModal.svelte")
+        .then((m) => (ZenModeModal = m.default))
+        .catch((e) => logChunkError("ZenModeModal", e));
     }
     if (helpStore.activeTour && !TourOverlay) {
-      import("$lib/components/help/TourOverlay.svelte").then(
-        (m) => (TourOverlay = m.default),
-      ).catch(e => console.error("Failed to load TourOverlay", e));
+      import("$lib/components/help/TourOverlay.svelte")
+        .then((m) => (TourOverlay = m.default))
+        .catch((e) => logChunkError("TourOverlay", e));
     }
     if (uiStore.mergeDialog.open && !MergeNodesDialog) {
-      import("$lib/components/dialogs/MergeNodesDialog.svelte").then(
-        (m) => (MergeNodesDialog = m.default),
-      ).catch(e => console.error("Failed to load MergeNodesDialog", e));
+      import("$lib/components/dialogs/MergeNodesDialog.svelte")
+        .then((m) => (MergeNodesDialog = m.default))
+        .catch((e) => logChunkError("MergeNodesDialog", e));
     }
     if (!isPopup && !OracleWindow) {
-      import("$lib/components/oracle/OracleWindow.svelte").then(
-        (m) => (OracleWindow = m.default),
-      ).catch(e => console.error("Failed to load OracleWindow", e));
+      import("$lib/components/oracle/OracleWindow.svelte")
+        .then((m) => (OracleWindow = m.default))
+        .catch((e) => logChunkError("OracleWindow", e));
     }
     if (
       (import.meta.env.DEV ||
@@ -70,9 +87,9 @@
         import.meta.env.VITE_STAGING === "true") &&
       !DebugConsole
     ) {
-      import("$lib/components/debug/DebugConsole.svelte").then(
-        (m) => (DebugConsole = m.default),
-      ).catch(e => console.error("Failed to load DebugConsole", e));
+      import("$lib/components/debug/DebugConsole.svelte")
+        .then((m) => (DebugConsole = m.default))
+        .catch((e) => logChunkError("DebugConsole", e));
     }
   });
 
