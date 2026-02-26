@@ -5,7 +5,7 @@
 
 import { build, files, version } from "$service-worker";
 
-const CACHE_VERSION = "88";
+const CACHE_VERSION = "92";
 const CACHE = `cache-${version}-${CACHE_VERSION}`;
 
 const ASSETS = [
@@ -48,7 +48,12 @@ sw.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url);
     const cache = await caches.open(CACHE);
 
-    // `build`/`files` can always be served from the cache
+    // Bypassing service worker for development server internals or non-http
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return fetch(event.request);
+    }
+
+    // build/files can always be served from the cache
     if (ASSETS.includes(url.pathname)) {
       const response = await cache.match(event.request);
       if (response) return response;
@@ -58,12 +63,13 @@ sw.addEventListener("fetch", (event) => {
     try {
       const response = await fetch(event.request);
 
-      if (response.status === 200) {
+      // Only cache valid successful responses from our own origin
+      if (response.status === 200 && url.origin === location.origin) {
         cache.put(event.request, response.clone());
       }
 
       return response;
-    } catch {
+    } catch (err) {
       const response = await cache.match(event.request);
       if (response) return response;
 
@@ -72,7 +78,9 @@ sw.addEventListener("fetch", (event) => {
         return (await cache.match("/")) || (await cache.match("index.html"));
       }
 
-      return new Response("Offline", { status: 503, statusText: "Offline" });
+      // If we are in development, don't return a 503, let the error bubble
+      // This helps diagnose real fetch errors instead of swallowing them in a "Offline" response
+      throw err;
     }
   }
 

@@ -40,6 +40,10 @@
   let resolvedImageUrl = $state("");
   let isCopied = $state(false);
 
+  // Accessibility State
+  let lightboxBackdrop = $state<HTMLDivElement>();
+  let closeLightboxBtn = $state<HTMLButtonElement>();
+
   $effect(() => {
     let isStale = false;
     if (entity?.image) {
@@ -52,6 +56,21 @@
     return () => {
       isStale = true;
     };
+  });
+
+  // Focus Management for Lightbox
+  $effect(() => {
+    if (showLightbox) {
+      const prevFocus = document.activeElement as HTMLElement;
+      // Small delay to allow DOM to update
+      setTimeout(() => {
+        closeLightboxBtn?.focus();
+      }, 0);
+
+      return () => {
+        prevFocus?.focus();
+      };
+    }
   });
 
   const handleCopy = async () => {
@@ -321,6 +340,31 @@
     }));
     return [...outbound, ...inbound];
   });
+
+  const handleLightboxKeydown = (e: KeyboardEvent) => {
+    if (e.key === "Tab") {
+      // Focus trap for lightbox
+      const selector =
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      const focusable = lightboxBackdrop?.querySelectorAll(selector);
+      if (!focusable || focusable.length === 0) return;
+
+      const first = focusable[0] as HTMLElement;
+      const last = focusable[focusable.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+  };
 </script>
 
 {#snippet connectionsList()}
@@ -666,7 +710,8 @@
                 {:else if entity.image}
                   <button
                     onclick={() => (showLightbox = true)}
-                    class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50"
+                    class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+                    aria-label="View full size image"
                   >
                     <img
                       src={resolvedImageUrl}
@@ -674,7 +719,7 @@
                       class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                     />
                     <div
-                      class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition"
+                      class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
                     >
                       Zoom
                     </div>
@@ -887,17 +932,24 @@
 
   <!-- Lightbox -->
   {#if showLightbox && entity.image}
-    <!-- Backdrop (non-interactive wrapper, but handles clicks to close) -->
+    <!-- Backdrop (handles clicks to close and focus trap) -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full"
+      bind:this={lightboxBackdrop}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Image View"
+      tabindex="-1"
+      class="fixed inset-0 bg-black/95 z-[200] flex items-center justify-center p-4 cursor-zoom-out w-full h-full outline-none"
       onclick={() => (showLightbox = false)}
+      onkeydown={handleLightboxKeydown}
       transition:fade={{ duration: 200 }}
     >
       <!-- Explicit Close Button -->
       <button
-        class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition"
+        bind:this={closeLightboxBtn}
+        class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
         onclick={(e) => {
           e.stopPropagation();
           showLightbox = false;
