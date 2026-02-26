@@ -42,7 +42,7 @@ test.describe("Import Progress Management E2E", () => {
 
     // 3. Upload an archive file
     const fileInput = page.locator("#file-input");
-    await fileInput.setInputFiles("apps/web/tests/fixtures/sample-import.json");
+    await fileInput.setInputFiles("tests/fixtures/sample-import.json");
 
     // 4. Verify that import progress indicators appear
     // We expect the "Analyzing" text to appear
@@ -59,7 +59,7 @@ test.describe("Import Progress Management E2E", () => {
 
     // 3. Start an import
     const fileInput = page.locator("#file-input");
-    await fileInput.setInputFiles("apps/web/tests/fixtures/sample-import.json");
+    await fileInput.setInputFiles("tests/fixtures/sample-import.json");
     await expect(page.getByText(/analyzing/i)).toBeVisible();
 
     // 4. Simulate a user refreshing the page
