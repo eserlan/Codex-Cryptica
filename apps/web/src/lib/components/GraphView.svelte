@@ -18,6 +18,7 @@
     DEFAULT_LAYOUT_OPTIONS,
     hasTimelineDate,
     type GraphNode,
+    type GraphEdge,
   } from "graph-engine";
 
   cytoscape.use(fcose);
@@ -807,15 +808,25 @@
         }
 
         // 3. Add new elements safely
-        const newElements = snapshotElements.filter(
-          (el) => !elementMap.has(el.data.id),
-        );
+        // OPTIMIZATION: Single pass to filter and classify new elements
+        // Avoids multiple filter passes and intermediate array allocations
+        const newNodes: GraphNode[] = [];
+        const newEdges: GraphEdge[] = [];
 
-        if (newElements.length > 0) {
-          // Split into nodes and edges
-          const newNodes = newElements.filter((el) => !("source" in el.data));
-          const newEdges = newElements.filter((el) => "source" in el.data);
+        // Use cached snapshotLength for consistency and minor performance gains
+        for (let i = 0; i < snapshotLength; i++) {
+          const el = snapshotElements[i];
+          if (!elementMap.has(el.data.id)) {
+            // Use 'in' check to match original behavior strictly
+            if (!("source" in el.data)) {
+              newNodes.push(el as GraphNode);
+            } else {
+              newEdges.push(el as GraphEdge);
+            }
+          }
+        }
 
+        if (newNodes.length > 0 || newEdges.length > 0) {
           // Always add nodes first
           if (newNodes.length > 0) {
             currentCy.add(newNodes);
@@ -924,7 +935,9 @@
 
         // 4. Force layout ONLY if structural changes occurred OR if first load
         const structuralChange =
-          newElements.length > 0 || elementsToRemove.length > 0;
+          newNodes.length > 0 ||
+          newEdges.length > 0 ||
+          elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         const shouldRunLayout = structuralChange || isFirstElements;
 
