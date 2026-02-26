@@ -63,29 +63,42 @@ export function mergeEntities(
   const result = Array.from(map.values());
 
   // Final pass: Remove bidirectional links across different entities to prefer one-way connections.
-  // We use a set of sorted title pairs to identify and prune redundant reverse links.
-  const seenConnections = new Set<string>();
+  // We prefer keeping links that have a descriptive label.
+  const bestLinks = new Map<string, { source: string; link: any }>();
 
   for (const entity of result) {
     const sourceTitle = entity.suggestedTitle.toLowerCase().trim();
-
-    entity.detectedLinks = (entity.detectedLinks as any[]).filter((link) => {
+    for (const link of entity.detectedLinks) {
       const l = typeof link === "string" ? { target: link } : link;
       const targetTitle = l.target.toLowerCase().trim();
 
       // Ignore self-links
-      if (sourceTitle === targetTitle) return false;
+      if (sourceTitle === targetTitle) continue;
 
-      // Create a unique key for this connection pair (sorted to be order-independent)
-      const pair = [sourceTitle, targetTitle].sort().join("<->");
+      // Create a unique key for this connection pair (order-independent)
+      const pair =
+        sourceTitle < targetTitle
+          ? `${sourceTitle}<->${targetTitle}`
+          : `${targetTitle}<->${sourceTitle}`;
 
-      if (seenConnections.has(pair)) {
-        return false;
+      const existing = bestLinks.get(pair);
+      // Keep the link if it's the first we've seen for this pair, or if it has a label and the existing one doesn't
+      if (!existing || (!existing.link.label && l.label)) {
+        bestLinks.set(pair, { source: sourceTitle, link: l });
       }
+    }
+  }
 
-      seenConnections.add(pair);
-      return true;
-    });
+  // Clear existing links and re-distribute the "best" one-way links
+  for (const entity of result) {
+    entity.detectedLinks = [];
+  }
+
+  for (const { source, link } of bestLinks.values()) {
+    const entity = map.get(source.toLowerCase().trim());
+    if (entity) {
+      entity.detectedLinks.push(link);
+    }
   }
 
   return result;
