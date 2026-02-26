@@ -4,6 +4,7 @@
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
+  import SyncDashboard from "$lib/components/settings/SyncDashboard.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
@@ -17,9 +18,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { demoService } from "$lib/services/demo";
   import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { syncStats } from "$lib/stores/sync-stats";
   import { cloudConfig } from "$lib/stores/cloud-config";
-  import { workerBridge } from "$lib/cloud-bridge/worker-bridge";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
@@ -136,12 +135,10 @@
     themeStore.init();
     oracle.init();
 
-    // Register Service Worker for PWA/Offline support
-    if ("serviceWorker" in navigator) {
+    // Register Service Worker for PWA/Offline support (Production only)
+    if ("serviceWorker" in navigator && !import.meta.env.DEV) {
       navigator.serviceWorker
-        .register(`${base}/service-worker.js`, {
-          type: import.meta.env.DEV ? "module" : "classic",
-        })
+        .register(`${base}/service-worker.js`)
         .catch((error) => {
           console.warn("Service Worker registration failed:", error);
         });
@@ -207,10 +204,6 @@
       (window as any).calendarStore = calendarStore;
       (window as any).helpStore = helpStore;
 
-      import("$lib/stores/gdrive.svelte").then((m) => {
-        (window as any).gdriveAdapter = m.gdriveAdapter;
-      });
-
       import("$lib/stores/oracle.svelte").then((m) => {
         (window as any).oracle = m.oracle;
       });
@@ -220,9 +213,7 @@
 
       (window as any).categories = categories;
       (window as any).uiStore = uiStore;
-      (window as any).syncStats = syncStats;
       (window as any).cloudConfig = cloudConfig;
-      (window as any).workerBridge = workerBridge;
       (window as any).isEntityVisible = isEntityVisible;
 
       // Eagerly load P2P services for E2E
@@ -474,17 +465,7 @@
           aria-label="Open Application Settings"
           data-testid="settings-button"
         >
-          <span
-            class="w-5 h-5 {$syncStats.status === 'SCANNING' ||
-            $syncStats.status === 'SYNCING'
-              ? 'icon-[lucide--zap] animate-pulse text-theme-primary'
-              : 'icon-[lucide--settings]'}"
-          ></span>
-          {#if $cloudConfig.enabled && $cloudConfig.connectedEmail && $syncStats.status === "IDLE"}
-            <span
-              class="absolute top-1 right-1 w-1.5 h-1.5 bg-theme-primary rounded-full border border-theme-bg animate-pulse"
-            ></span>
-          {/if}
+          <span class="w-5 h-5 icon-[lucide--settings]"></span>
         </button>
       </div>
     </header>
@@ -552,6 +533,8 @@
       {/if}
       {#if browser}
         <SettingsModal />
+        <SyncDashboard />
+
         {#if ZenModeModal}
           <ZenModeModal />
         {/if}

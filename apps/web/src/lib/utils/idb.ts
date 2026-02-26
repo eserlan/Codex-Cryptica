@@ -47,6 +47,17 @@ interface CodexDB extends DBSchema {
     value: SyncEntry;
     indexes: {
       "by-vault": string;
+      "by-remote-id": string;
+    };
+  };
+  cloud_sync_metadata: {
+    key: string; // vaultId
+    value: {
+      vaultId: string;
+      gdriveFolderId: string;
+      gdriveFolderName?: string;
+      lastSyncToken: string | null;
+      lastSyncTime: number;
     };
   };
   proposals: {
@@ -70,15 +81,15 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 10 to update sync_registry to a composite key.
-export const DB_VERSION = 10;
+// DB_VERSION was bumped to 11 to add cloud sync stores and indexes.
+export const DB_VERSION = 11;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<CodexDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, _newVersion) {
+      upgrade(db, oldVersion, _newVersion, transaction) {
         if (!db.objectStoreNames.contains("settings")) {
           db.createObjectStore("settings");
         }
@@ -105,7 +116,18 @@ export function getDB() {
             keyPath: ["vaultId", "filePath"],
           });
           store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-remote-id", "remoteId");
+        } else if (oldVersion < 11) {
+          const store = transaction.objectStore("sync_registry");
+          if (!store.indexNames.contains("by-remote-id")) {
+            store.createIndex("by-remote-id", "remoteId");
+          }
         }
+
+        if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
+          db.createObjectStore("cloud_sync_metadata", { keyPath: "vaultId" });
+        }
+
         if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");

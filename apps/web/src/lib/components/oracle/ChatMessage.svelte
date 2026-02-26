@@ -236,7 +236,9 @@
       oracle.pushUndoAction(
         `Update Chronicle: ${beforeState.title}`,
         async () => {
-          await vault.updateEntity(beforeState.id, { content: beforeState.content });
+          await vault.updateEntity(beforeState.id, {
+            content: beforeState.content,
+          });
           isSaved = false;
         },
         message.id,

@@ -39,6 +39,8 @@ export class DiffAlgorithm {
             local.size,
             registry.lastLocalModified,
             registry.size,
+            local.hash,
+            undefined, // No registry local hash yet
           )
         : !!local;
 
@@ -49,21 +51,21 @@ export class DiffAlgorithm {
             opfs.size,
             registry.lastOpfsModified,
             registry.size,
+            opfs.hash,
+            registry.remoteHash,
           )
         : !!opfs;
 
     const validate = async () => {
-      // Validate LOCAL if it's new or changed and might be the source of an update
-      if (local && localChanged && (!opfs || !registry || opfsChanged)) {
-        if (validator) {
+      if (validator) {
+        // Validate LOCAL if it changed
+        if (local && localChanged && !local.isDeleted) {
           const isValid = await validator(path, local);
           if (!isValid) return { type: "SKIP" as const, path };
         }
-      }
 
-      // Validate OPFS if it's new or changed and might be the source of an update
-      if (opfs && opfsChanged && (!local || !registry || localChanged)) {
-        if (validator) {
+        // Validate OPFS if it changed
+        if (opfs && opfsChanged && !opfs.isDeleted) {
           const isValid = await validator(path, opfs);
           if (!isValid) return { type: "SKIP" as const, path };
         }
@@ -104,15 +106,28 @@ export class DiffAlgorithm {
     localChanged: boolean,
     opfsChanged: boolean,
   ): SyncAction {
+    // 0. Explicit Deletion Signals (Delta Sync)
+    if (opfs?.isDeleted && local && registry) {
+      // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
+      // even if explicitly deleted on the remote side.
+      if (this.isProtectedPath(path)) {
+        return { type: "SKIP", path };
+      }
+      return { type: "DELETE_LOCAL", path, registryEntry: registry };
+    }
+    if (local?.isDeleted && opfs && registry) {
+      return { type: "DELETE_OPFS", path, registryEntry: registry };
+    }
+
     // 1. New File Case (Not in registry)
     if (!registry) {
-      if (local && !opfs) {
+      if (local && !local.isDeleted && (!opfs || opfs.isDeleted)) {
         return { type: "CREATE_OPFS", path, localMetadata: local };
       }
-      if (!local && opfs) {
+      if (opfs && !opfs.isDeleted && (!local || local.isDeleted)) {
         return { type: "CREATE_LOCAL", path, opfsMetadata: opfs };
       }
-      if (local && opfs) {
+      if (local && !local.isDeleted && opfs && !opfs.isDeleted) {
         // Exists in both but no record. Check if they are identical.
         const match = !this.hasChanged(
           local.lastModified,
@@ -138,6 +153,11 @@ export class DiffAlgorithm {
     // 2. Deletion Detection
     if (!local) {
       if (opfs) {
+        // SAFETY: Never automatically delete images or cache from OPFS during local sync
+        // if they are just missing from the local folder. These are app-managed assets.
+        if (path.startsWith("images/") || path.startsWith(".cache/")) {
+          return { type: "SKIP", path };
+        }
         return { type: "DELETE_OPFS", path, registryEntry: registry };
       }
       return { type: "SKIP", path };
@@ -145,6 +165,11 @@ export class DiffAlgorithm {
 
     if (!opfs) {
       if (local) {
+        // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
+        // if they are just missing from the remote side.
+        if (this.isProtectedPath(path)) {
+          return { type: "SKIP", path };
+        }
         return { type: "DELETE_LOCAL", path, registryEntry: registry };
       }
       return { type: "SKIP", path };
@@ -173,7 +198,10 @@ export class DiffAlgorithm {
     currentSize: number,
     regMod: number,
     regSize: number,
+    currentHash?: string,
+    regHash?: string,
   ): boolean {
+    if (currentHash && regHash && currentHash === regHash) return false;
     if (currentSize !== regSize) return true;
     return Math.abs(currentMod - regMod) > this.SKEW_MS;
   }
@@ -188,5 +216,9 @@ export class DiffAlgorithm {
     } else {
       return { type: "UPDATE_LOCAL", path, opfsMetadata: opfs };
     }
+  }
+
+  private static isProtectedPath(path: string): boolean {
+    return path.startsWith("images/") || path.startsWith(".cache/");
   }
 }

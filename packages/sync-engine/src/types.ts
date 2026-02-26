@@ -1,9 +1,60 @@
+import { type DBSchema } from "idb";
+
+export interface FileMetadata {
+  path: string;
+  lastModified: number;
+  size: number;
+  handle?: FileSystemFileHandle | string; // e.g. FileSystemFileHandle or remoteId
+  hash?: string; // Content fingerprint
+  isDeleted?: boolean;
+}
+
 export interface SyncResult {
   updated: string[];
   created: string[];
   deleted: string[];
   conflicts: string[];
+  failed: Array<{ path: string; error: string }>;
   error?: string;
+}
+
+export interface ISyncBackend {
+  /**
+   * Initializes the backend (auth, connection).
+   */
+  connect?(): Promise<void>;
+
+  /**
+   * Scans the backend for files.
+   * For cloud backends, this could use a changes feed.
+   */
+  scan(
+    vaultId: string,
+    sinceToken?: string | null,
+  ): Promise<{
+    files: FileMetadata[];
+    nextToken?: string;
+  }>;
+
+  /**
+   * Downloads a file content.
+   */
+  download(path: string, remoteId?: string): Promise<Blob>;
+
+  /**
+   * Uploads or updates a file.
+   */
+  upload(path: string, content: Blob, remoteId?: string): Promise<FileMetadata>;
+
+  /**
+   * Deletes a file.
+   */
+  delete(path: string, remoteId?: string): Promise<void>;
+
+  /**
+   * Manually sets the target folder ID for the vault.
+   */
+  setVaultFolderId?(folderId: string): void;
 }
 
 export interface ILocalSyncService {
@@ -25,8 +76,6 @@ export interface ILocalSyncService {
   resetRegistry(vaultId: string): Promise<void>;
 }
 
-import { type DBSchema } from "idb";
-
 export interface SyncEntry {
   filePath: string;
   vaultId: string;
@@ -34,6 +83,16 @@ export interface SyncEntry {
   lastOpfsModified: number;
   size: number;
   status: "SYNCED" | "DIRTY" | "CONFLICT";
+  remoteId?: string;
+  remoteHash?: string;
+}
+
+export interface CloudSyncMetadata {
+  vaultId: string;
+  gdriveFolderId: string;
+  gdriveFolderName?: string;
+  lastSyncToken: string | null;
+  lastSyncTime: number;
 }
 
 export interface SyncDB extends DBSchema {
@@ -42,14 +101,44 @@ export interface SyncDB extends DBSchema {
     value: SyncEntry;
     indexes: {
       "by-vault": string;
+      "by-remote-id": string;
     };
   };
-  [key: string]: any;
+  cloud_sync_metadata: {
+    key: string;
+    value: CloudSyncMetadata;
+  };
 }
 
-export interface FileMetadata {
-  path: string;
-  lastModified: number;
-  size: number;
-  handle: FileSystemFileHandle;
+/** Google Drive API Types */
+
+export interface GDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  modifiedTime: string;
+  size?: string;
+  md5Checksum?: string;
+  parents?: string[];
+}
+
+export interface GDriveChangesResponse {
+  kind: string;
+  newStartPageToken: string;
+  nextPageToken?: string;
+  changes: Array<{
+    kind: string;
+    type: string;
+    time: string;
+    removed: boolean;
+    fileId: string;
+    file?: GDriveFile;
+  }>;
+}
+
+export interface GDriveListResponse {
+  kind: string;
+  nextPageToken?: string;
+  incompleteSearch: boolean;
+  files: GDriveFile[];
 }

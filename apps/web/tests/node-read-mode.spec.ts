@@ -42,7 +42,7 @@ test.describe("Node Read Mode", () => {
       (window as any).uiStore.openZenMode(heroId);
     });
 
-    const modal = page.locator('[role="dialog"]'); // Zen Mode Modal
+    const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
 
     // Use specific ID for title to avoid ambiguity
@@ -71,19 +71,6 @@ test.describe("Node Read Mode", () => {
     await expect(modal).not.toBeVisible();
   });
 
-  /*
-  // Shortcut tests are currently flaky due to main view rendering issues in test environment.
-  // Skipping them as they are not related to the Lightbox UX improvements.
-
-  test("Open Zen Mode via Keyboard Shortcut (Alt+Z)", async ({ page }) => {
-    // ...
-  });
-
-  test("Open Zen Mode via Keyboard Shortcut (Ctrl+ArrowUp)", async ({ page }) => {
-    // ...
-  });
-  */
-
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
     await page.evaluate(async () => {
@@ -106,11 +93,13 @@ test.describe("Node Read Mode", () => {
       (window as any).uiStore.openZenMode(id);
     });
 
-    const modal = page.locator('[role="dialog"]');
+    const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
 
     // 3. Click Image to Open Lightbox
-    const imageBtn = modal.locator("button:has(img)");
+    const imageBtn = modal.getByRole("button", {
+      name: "View full size image",
+    });
     await expect(imageBtn).toBeVisible();
 
     await imageBtn.click();

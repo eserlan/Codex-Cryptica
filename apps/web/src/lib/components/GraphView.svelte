@@ -5,6 +5,7 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Entity } from "schema";
+  import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
@@ -17,6 +18,7 @@
     DEFAULT_LAYOUT_OPTIONS,
     hasTimelineDate,
     type GraphNode,
+    type GraphEdge,
   } from "graph-engine";
 
   cytoscape.use(fcose);
@@ -806,15 +808,25 @@
         }
 
         // 3. Add new elements safely
-        const newElements = snapshotElements.filter(
-          (el) => !elementMap.has(el.data.id),
-        );
+        // OPTIMIZATION: Single pass to filter and classify new elements
+        // Avoids multiple filter passes and intermediate array allocations
+        const newNodes: GraphNode[] = [];
+        const newEdges: GraphEdge[] = [];
 
-        if (newElements.length > 0) {
-          // Split into nodes and edges
-          const newNodes = newElements.filter((el) => !("source" in el.data));
-          const newEdges = newElements.filter((el) => "source" in el.data);
+        // Use cached snapshotLength for consistency and minor performance gains
+        for (let i = 0; i < snapshotLength; i++) {
+          const el = snapshotElements[i];
+          if (!elementMap.has(el.data.id)) {
+            // Use 'in' check to match original behavior strictly
+            if (!("source" in el.data)) {
+              newNodes.push(el as GraphNode);
+            } else {
+              newEdges.push(el as GraphEdge);
+            }
+          }
+        }
 
+        if (newNodes.length > 0 || newEdges.length > 0) {
           // Always add nodes first
           if (newNodes.length > 0) {
             currentCy.add(newNodes);
@@ -866,24 +878,30 @@
           snapshotElements.forEach((el) => {
             const node = elementMap.get(el.data.id);
             if (node) {
-              const currentData = node.data();
-              const newData = el.data;
+              const currentData = node.data() as Record<string, any>;
+              const newData = el.data as Record<string, any>;
 
               // Robust equality check to prevent unnecessary style recalculations
               let changed = false;
-              for (const key in newData) {
+              for (const k in newData) {
                 // Skip ID as it's the lookup key
-                if (key === "id") continue;
+                if (k === "id" || !Object.hasOwn(newData, k)) continue;
 
-                const k = key as keyof typeof newData;
                 const newVal = newData[k];
                 const curVal = currentData[k];
 
                 // Performance optimized check for TemporalMetadata objects
-                const isMatch =
-                  typeof newVal === "object" && newVal !== null
-                    ? JSON.stringify(newVal) === JSON.stringify(curVal)
-                    : curVal === newVal;
+                let isMatch: boolean;
+                if (
+                  el.group === "nodes" &&
+                  (k === "date" || k === "start_date" || k === "end_date")
+                ) {
+                  isMatch = isTemporalMetadataEqual(newVal, curVal);
+                } else if (typeof newVal === "object" && newVal !== null) {
+                  isMatch = JSON.stringify(newVal) === JSON.stringify(curVal);
+                } else {
+                  isMatch = curVal === newVal;
+                }
 
                 if (!isMatch) {
                   changed = true;
@@ -917,7 +935,9 @@
 
         // 4. Force layout ONLY if structural changes occurred OR if first load
         const structuralChange =
-          newElements.length > 0 || elementsToRemove.length > 0;
+          newNodes.length > 0 ||
+          newEdges.length > 0 ||
+          elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         const shouldRunLayout = structuralChange || isFirstElements;
 

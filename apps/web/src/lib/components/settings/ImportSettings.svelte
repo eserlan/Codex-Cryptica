@@ -459,7 +459,12 @@
           </div>
         </div>
 
-        <div class="text-center space-y-1" role="status" aria-live="polite" aria-atomic="true">
+        <div
+          class="text-center space-y-1"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           <p
             class="text-xs font-mono text-theme-primary uppercase tracking-tight"
           >
