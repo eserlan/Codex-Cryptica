@@ -20,11 +20,15 @@ test.describe("Help Onboarding Walkthrough", () => {
       await enterButton.click();
     }
 
-    // Force start tour to ensure reliability
-    await page.evaluate(() => {
-        if ((window as any).helpStore) {
-            (window as any).helpStore.startTour("initial-onboarding");
-        }
+    // Force start tour to ensure reliability by waiting for helpStore to be ready
+    await page.waitForFunction(() => {
+      const helpStore = (window as any).helpStore;
+      if (!helpStore) return false;
+      // If the store exposes an initialization flag, wait for it as well
+      if ("isInitialized" in helpStore && !helpStore.isInitialized)
+        return false;
+      helpStore.startTour("initial-onboarding");
+      return true;
     });
   });
 
@@ -32,7 +36,9 @@ test.describe("Help Onboarding Walkthrough", () => {
     page,
   }) => {
     // 1. Check if welcome modal appears
-    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({
+      timeout: 10000,
+    });
 
     // 2. Click Next
     await page.getByRole("button", { name: "Next" }).click();
