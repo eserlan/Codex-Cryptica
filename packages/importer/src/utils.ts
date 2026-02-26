@@ -60,7 +60,67 @@ export function mergeEntities(
     }
   }
 
-  return Array.from(map.values());
+  const result = Array.from(map.values());
+
+  // Final pass: Remove bidirectional links across different entities to prefer one-way connections.
+  // We prefer keeping links that have a descriptive label.
+  const bestLinks = new Map<string, { source: string; link: any }>();
+
+  for (const entity of result) {
+    const sourceTitle = entity.suggestedTitle.toLowerCase().trim();
+    for (const link of entity.detectedLinks) {
+      const l = typeof link === "string" ? { target: link } : link;
+      const targetTitle = l.target.toLowerCase().trim();
+
+      // Ignore self-links
+      if (sourceTitle === targetTitle) continue;
+
+      // Create a unique key for this connection pair (order-independent)
+      const pair =
+        sourceTitle < targetTitle
+          ? `${sourceTitle}<->${targetTitle}`
+          : `${targetTitle}<->${sourceTitle}`;
+
+      const existing = bestLinks.get(pair);
+      const currentHasLabel = !!l.label;
+      const existingHasLabel = !!existing?.link.label;
+
+      let shouldReplace = false;
+      if (!existing) {
+        shouldReplace = true;
+      } else if (!existingHasLabel && currentHasLabel) {
+        shouldReplace = true;
+      } else if (existingHasLabel === currentHasLabel) {
+        if (sourceTitle < existing.source) {
+          shouldReplace = true;
+        } else if (sourceTitle === existing.source) {
+          const currentLabel = l.label || "";
+          const existingLabel = existing.link.label || "";
+          if (currentLabel < existingLabel) {
+            shouldReplace = true;
+          }
+        }
+      }
+
+      if (shouldReplace) {
+        bestLinks.set(pair, { source: sourceTitle, link: l });
+      }
+    }
+  }
+
+  // Clear existing links and re-distribute the "best" one-way links
+  for (const entity of result) {
+    entity.detectedLinks = [];
+  }
+
+  for (const { source, link } of bestLinks.values()) {
+    const entity = map.get(source.toLowerCase().trim());
+    if (entity) {
+      entity.detectedLinks.push(link);
+    }
+  }
+
+  return result;
 }
 
 /**
