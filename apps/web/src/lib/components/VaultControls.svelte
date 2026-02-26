@@ -230,15 +230,28 @@
           <button
             class="{btnAccent} {isVertical
               ? 'py-3 text-sm justify-center gap-2'
-              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'}"
+              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.syncType ===
+            'local'
+              ? 'opacity-75 cursor-wait'
+              : ''}"
             onclick={() => vault.syncToLocal()}
             title="Mirror internal archive with a local folder."
             aria-label={isVertical
               ? "SYNC - Mirror internal archive with a local folder."
               : "SYNC - Mirror internal archive with a local folder."}
+            aria-busy={vault.syncType === "local"}
+            disabled={vault.syncType === "local"}
           >
-            <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
-            {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+            {#if vault.syncType === "local"}
+              <span
+                class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                aria-hidden="true"
+              ></span>
+              {#if isVertical}SYNCING...{:else}SYNCING...{/if}
+            {:else}
+              <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
+              {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+            {/if}
           </button>
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
