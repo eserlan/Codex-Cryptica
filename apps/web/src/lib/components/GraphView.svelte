@@ -829,7 +829,12 @@
         if (newNodes.length > 0 || newEdges.length > 0) {
           // Always add nodes first
           if (newNodes.length > 0) {
-            currentCy.add(newNodes);
+            const addedNodes = currentCy.add(newNodes);
+            // OPTIMIZATION: Hydrate elementMap with ONLY the newly added nodes
+            // Avoids O(N) full graph scan
+            addedNodes.forEach((n) => {
+              elementMap.set(n.id(), n);
+            });
           }
 
           // Then add edges, but ONLY if both source and target exist in the graph
@@ -858,19 +863,15 @@
 
           if (validEdges.length > 0) {
             try {
-              currentCy.add(validEdges);
+              const addedEdges = currentCy.add(validEdges);
+              // OPTIMIZATION: Hydrate elementMap with ONLY the newly added edges
+              addedEdges.forEach((e) => {
+                elementMap.set(e.id(), e);
+              });
             } catch (e) {
               console.warn("Failed to add some edges to graph", e);
             }
           }
-
-          // Hydrate elementMap with newly added elements so they are synchronized in the same pass
-          currentCy.nodes().forEach((n) => {
-            if (!elementMap.has(n.id())) elementMap.set(n.id(), n);
-          });
-          currentCy.edges().forEach((e) => {
-            if (!elementMap.has(e.id())) elementMap.set(e.id(), e);
-          });
         }
 
         // 4. Update existing elements (labels, etc) - Data Sync only
@@ -898,7 +899,9 @@
                 ) {
                   isMatch = isTemporalMetadataEqual(newVal, curVal);
                 } else if (typeof newVal === "object" && newVal !== null) {
-                  isMatch = JSON.stringify(newVal) === JSON.stringify(curVal);
+                  // OPTIMIZATION: Assume object inequality to avoid expensive JSON.stringify in hot loop.
+                  // Only TemporalMetadata (handled above) is expected to be an object in this context.
+                  isMatch = false;
                 } else {
                   isMatch = curVal === newVal;
                 }
