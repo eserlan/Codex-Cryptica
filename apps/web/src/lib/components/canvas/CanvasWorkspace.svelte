@@ -324,9 +324,18 @@
 
 <style>
   :global(.svelte-flow) {
-    background-color: var(--theme-bg);
+    background-color: var(--color-bg-primary);
+    background-image: var(--bg-texture);
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     font-family: var(--font-body), ui-sans-serif;
-    transition: font-family 0.3s ease;
+    transition:
+      font-family 0.3s ease,
+      background-color 0.3s ease;
+  }
+  :global(.svelte-flow__background-pattern) {
+    fill: var(--color-border-primary) !important;
   }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
@@ -351,27 +360,27 @@
     animation: svelte-flow__dashdraw 0.5s linear infinite;
   }
   :global(.svelte-flow__edge-textbg) {
-    fill: var(--theme-surface) !important;
+    fill: var(--color-bg-surface) !important;
     fill-opacity: 0.8 !important;
   }
   :global(.svelte-flow__edge-text) {
-    fill: var(--theme-text) !important;
+    fill: var(--color-text-primary) !important;
     font-size: 10px !important;
     font-weight: bold !important;
   }
   :global(.svelte-flow__controls) {
-    background: var(--theme-surface);
-    border: 1px solid var(--theme-border);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-primary);
     border-radius: 8px;
     overflow: hidden;
   }
   :global(.svelte-flow__controls-button) {
-    background: var(--theme-surface);
-    fill: var(--theme-text);
-    border-bottom: 1px solid var(--theme-border);
+    background: var(--color-bg-surface);
+    fill: var(--color-text-primary);
+    border-bottom: 1px solid var(--color-border-primary);
   }
   :global(.svelte-flow__controls-button:hover) {
-    background: var(--theme-bg);
+    background: var(--color-bg-primary);
   }
   @keyframes svelte-flow__dashdraw {
     from {
