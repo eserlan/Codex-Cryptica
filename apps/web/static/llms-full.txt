@@ -61,6 +61,9 @@ Our marketing and legal pages are pre-baked as static HTML for instant loading a
 ### Map Mode
 Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.
 
+### Cloud Mirroring
+Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.
+
 
 ## Help Documentation
 

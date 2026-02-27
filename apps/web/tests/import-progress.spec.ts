@@ -7,6 +7,8 @@ test.describe("Import Progress Management E2E", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
       (window as any).DISABLE_ERROR_OVERLAY = true;
+      // Mock the API key to allow import to proceed
+      (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";
     });
 
     await page.goto("http://localhost:5173/");
@@ -71,9 +73,6 @@ test.describe("Import Progress Management E2E", () => {
     await page.getByRole("tab", { name: "Vault" }).click();
 
     // 6. Verify that "Already processed" or progress is remembered
-    // If it was small, it might already be done.
-    // Given the resume logic, it should show either the progress bar or the resume toast
-    // for identical files.
     await expect(page.getByText(/already processed|resuming/i)).toBeVisible();
   });
 });
