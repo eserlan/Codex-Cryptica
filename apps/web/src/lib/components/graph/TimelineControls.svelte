@@ -99,6 +99,7 @@
         step="50"
         bind:value={graph.timelineScale}
         onchange={onApply}
+        aria-label="Timeline Scale"
         class="w-20 h-1 bg-theme-border rounded-lg appearance-none cursor-pointer accent-timeline-primary"
       />
     </div>
@@ -117,6 +118,7 @@
           type="number"
           bind:value={filterStart}
           onchange={applyRange}
+          aria-label="Filter Start Year"
           class="w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
         <span class="text-theme-muted text-[10px]">to</span>
@@ -124,6 +126,7 @@
           type="number"
           bind:value={filterEnd}
           onchange={applyRange}
+          aria-label="Filter End Year"
           class="w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
       </div>
