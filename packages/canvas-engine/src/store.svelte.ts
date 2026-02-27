@@ -65,7 +65,7 @@ export class CanvasStore {
       sourceHandle: sourceHandle || undefined,
       targetHandle: targetHandle || undefined,
       label,
-      type: "line",
+      type: "smoothstep",
     };
     this.edges = [...this.edges, newEdge];
     return newEdge.id;

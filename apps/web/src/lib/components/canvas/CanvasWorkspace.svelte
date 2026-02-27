@@ -66,10 +66,10 @@
           id: e.id,
           source: e.source,
           target: e.target,
-          sourceHandle: e.sourceHandle,
-          targetHandle: e.targetHandle,
+          sourceHandle: e.sourceHandle || null,
+          targetHandle: e.targetHandle || null,
           label: e.label,
-          type: e.type || "smoothstep",
+          type: e.type === "line" || !e.type ? "smoothstep" : (e.type as any),
           style: e.style,
         }));
       } else {
@@ -88,7 +88,7 @@
         id: edgeId,
         type: "smoothstep",
         animated: true,
-        style: { stroke: "var(--color-theme-primary)", strokeWidth: "2px" },
+        style: { stroke: "var(--color-theme-primary)", strokeWidth: "2" },
       },
       edges,
     );
@@ -156,7 +156,7 @@
           sourceHandle: e.sourceHandle || undefined,
           targetHandle: e.targetHandle || undefined,
           label: e.label as string,
-          type: e.type || "smoothstep",
+          type: "smoothstep",
           style: e.style as any,
         }));
         debouncedSave();

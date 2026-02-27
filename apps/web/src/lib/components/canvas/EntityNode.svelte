@@ -2,6 +2,7 @@
   import { Handle, Position, type NodeProps } from "@xyflow/svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { renderMarkdown } from "$lib/utils/markdown";
 
   let { data }: NodeProps = $props();
 
@@ -125,13 +126,12 @@
           {entity?.title || "Missing Entity"}
         </h3>
         {#if entity?.content}
-          <p
-            class="text-[11px] text-theme-muted mt-2 leading-relaxed line-clamp-6"
+          <div
+            class="text-[11px] text-theme-muted mt-2 leading-relaxed line-clamp-6 markdown-content prose prose-invert prose-xs"
           >
-            {entity.content}
-          </p>
+            {@html renderMarkdown(entity.content)}
+          </div>
         {/if}
-
         {#if entity?.tags && entity.tags.length > 0}
           <div class="flex flex-wrap gap-1 mt-3">
             {#each entity.tags.slice(0, 5) as tag}
@@ -162,5 +162,23 @@
     background: var(--theme-text);
     border-color: var(--theme-primary);
     cursor: crosshair;
+  }
+  .markdown-content :global(strong) {
+    font-weight: bold;
+    color: var(--theme-text);
+  }
+  .markdown-content :global(em) {
+    font-style: italic;
+  }
+  .markdown-content :global(p) {
+    margin-bottom: 0.5rem;
+  }
+  .markdown-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .markdown-content :global(ul),
+  .markdown-content :global(ol) {
+    margin-left: 1rem;
+    margin-bottom: 0.5rem;
   }
 </style>

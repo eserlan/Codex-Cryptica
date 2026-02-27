@@ -32,6 +32,7 @@
 <div
   bind:this={menuEl}
   role="menu"
+  tabindex="0"
   aria-label="Canvas Context Menu"
   class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded-lg overflow-hidden min-w-[160px] py-1 animate-in fade-in zoom-in-95 duration-100"
   style:top="{y}px"

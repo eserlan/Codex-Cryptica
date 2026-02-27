@@ -5,8 +5,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
-  import { marked } from "marked";
-  import DOMPurify from "isomorphic-dompurify";
+  import { renderMarkdown } from "$lib/utils/markdown";
   import { page } from "$app/state";
 
   let inputElement = $state<HTMLInputElement>();
@@ -109,36 +108,6 @@
       searchStore.close();
     }
   };
-
-  const highlightText = (text: string, query: string) => {
-    if (!query || !text) return text;
-    // Escape regex characters in query (canonical)
-    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${safeQuery})`, "gi");
-    // Note: We don't sanitize here yet, we sanitize the final HTML
-    return text.replace(
-      regex,
-      '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
-    );
-  };
-
-  const renderMarkdown = (text: string, query: string) => {
-    if (!text) return "";
-
-    // 1. Highlight matches (injects <mark> tags into raw text)
-    const highlighted = highlightText(text, query);
-
-    // 2. Parse markdown to HTML
-    const rawHtml = marked.parseInline(highlighted) as string;
-
-    // 3. Sanitize the resulting HTML, allowing <mark> tags
-    // we assume marked might return a promise if async, but parseInline is usually sync.
-    // Typescript might complain if marked.async is true, but standard usage is string.
-    return DOMPurify.sanitize(rawHtml, {
-      ADD_TAGS: ["mark"],
-      ADD_ATTR: ["class"],
-    });
-  };
 </script>
 
 {#if searchStore.isOpen}
@@ -233,7 +202,10 @@
                       style="color: {categories.getColor(result.type)}"
                     ></span>
                   {/if}
-                  {@html renderMarkdown(result.title, searchStore.query)}
+                  {@html renderMarkdown(result.title, {
+                    query: searchStore.query,
+                    inline: true,
+                  })}
 
                   {#if isCanvasPage}
                     <button
@@ -274,7 +246,10 @@
                   <p
                     class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
                   >
-                    {@html renderMarkdown(result.excerpt, searchStore.query)}
+                    {@html renderMarkdown(result.excerpt, {
+                      query: searchStore.query,
+                      inline: true,
+                    })}
                   </p>
                 {/if}
               </div>

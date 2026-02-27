@@ -1,10 +1,38 @@
 import yaml from "js-yaml";
 import type { Entity, Connection } from "schema";
+import { marked } from "marked";
+import DOMPurify from "isomorphic-dompurify";
 
 export interface ParseResult {
   metadata: Partial<Entity>;
   content: string;
   wikiLinks: Connection[];
+}
+
+export function renderMarkdown(
+  text: string,
+  options: { query?: string; inline?: boolean } = {},
+): string {
+  if (!text) return "";
+
+  let content = text;
+  if (options.query) {
+    const safeQuery = options.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = new RegExp(`(${safeQuery})`, "gi");
+    content = text.replace(
+      regex,
+      '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
+    );
+  }
+
+  const rawHtml = options.inline
+    ? (marked.parseInline(content) as string)
+    : (marked.parse(content) as string);
+
+  return DOMPurify.sanitize(rawHtml, {
+    ADD_TAGS: ["mark"],
+    ADD_ATTR: ["class"],
+  });
 }
 
 export function parseMarkdown(raw: string): ParseResult {
