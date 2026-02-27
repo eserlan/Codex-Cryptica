@@ -21,6 +21,7 @@
   import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
+  import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
   import { untrack } from "svelte";
@@ -30,6 +31,10 @@
 
   const nodeTypes = {
     entity: EntityNode,
+  };
+
+  const edgeTypes = {
+    smoothstep: CustomEdge,
   };
 
   let nodes = $state<Node[]>([]);
@@ -158,6 +163,18 @@
     contextMenu = null;
   }
 
+  function handleEditLabel(
+    event: CustomEvent<{ edgeId: string; currentLabel: string }>,
+  ) {
+    const { edgeId, currentLabel } = event.detail;
+    const newLabel = prompt("Connection Label", currentLabel || "");
+    if (newLabel !== null) {
+      edges = edges.map((e) =>
+        e.id === edgeId ? { ...e, label: newLabel } : e,
+      );
+    }
+  }
+
   function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
     if (event.detail === 2) {
       // Double click
@@ -281,8 +298,11 @@
 
   $effect(() => {
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
-    return () =>
+    window.addEventListener("edit-edge-label", handleEditLabel as any);
+    return () => {
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
+      window.removeEventListener("edit-edge-label", handleEditLabel as any);
+    };
   });
 
   $effect(() => {
@@ -308,11 +328,13 @@
       bind:nodes
       bind:edges
       {nodeTypes}
+      {edgeTypes}
       onconnect={onConnect}
       onnodecontextmenu={onNodeContextMenu}
       onedgecontextmenu={onEdgeContextMenu}
       onedgeclick={onEdgeClick}
       onpanecontextmenu={handlePaneContextMenu}
+      zoomOnDoubleClick={false}
       fitView
     >
       <Background gap={20} />
