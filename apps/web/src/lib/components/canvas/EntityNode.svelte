@@ -109,12 +109,20 @@
     <div class="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
       {#if imageUrl}
         <div
-          class="w-full h-40 overflow-hidden border-b border-theme-border bg-theme-bg/50"
+          class="w-full h-48 overflow-hidden border-b border-theme-border bg-theme-bg/80 relative group/img"
         >
+          <!-- Blurred Background Fill -->
+          <img
+            src={imageUrl}
+            alt=""
+            aria-hidden="true"
+            class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110"
+          />
+          <!-- Sharp Centered Subject -->
           <img
             src={imageUrl}
             alt={entity?.title}
-            class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+            class="relative w-full h-full object-contain transition-transform duration-500 group-hover/img:scale-105"
           />
         </div>
       {/if}
