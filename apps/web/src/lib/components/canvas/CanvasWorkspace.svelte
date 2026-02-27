@@ -16,12 +16,10 @@
   } from "@codex/canvas-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
-  import { Layout } from "lucide-svelte";
   import { page } from "$app/state";
   import { untrack } from "svelte";
 
@@ -187,23 +185,6 @@
 </script>
 
 <div class="flex h-screen w-full bg-theme-bg overflow-hidden relative">
-  <!-- Workspace Toggle (Fixed Top Left) -->
-  <div class="absolute top-4 left-4 z-20 flex flex-col gap-2">
-    <button
-      onclick={() => (uiStore.showCanvasSelector = true)}
-      class="p-3 bg-theme-surface border border-theme-border rounded-xl shadow-lg text-theme-primary hover:scale-105 active:scale-95 transition-all group flex items-center gap-3"
-      title="Switch Workspace"
-    >
-      <Layout class="w-5 h-5" />
-      <span
-        class="text-xs font-bold uppercase tracking-widest pr-2 hidden group-hover:inline-block animate-in fade-in slide-in-from-left-2"
-      >
-        {canvasRegistry.canvases.find((c) => c.id === canvasId)?.name ||
-          "Workspaces"}
-      </span>
-    </button>
-  </div>
-
   <EntityPalette />
 
   <div class="flex-1 relative" ondragover={onDragOver} ondrop={onDrop}>

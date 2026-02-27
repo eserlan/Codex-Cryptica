@@ -1,9 +1,17 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { Search, Filter } from "lucide-svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { Search, Filter, Layout, ChevronRight } from "lucide-svelte";
+  import { page } from "$app/state";
 
   let searchQuery = $state("");
   let typeFilter = $state<string>("all");
+
+  const canvasId = $derived(page.params.id);
+  const activeCanvasName = $derived(
+    canvasRegistry.canvases.find((c) => c.id === canvasId)?.name || "Workspace",
+  );
 
   const types = $derived([
     "all",
@@ -31,8 +39,36 @@
 </script>
 
 <div
-  class="w-72 h-full bg-theme-surface border-r border-theme-border flex flex-col"
+  class="w-72 h-full bg-theme-surface border-r border-theme-border flex flex-col z-10 shrink-0"
 >
+  <!-- Workspace Selector Header -->
+  <div class="p-4 border-b border-theme-border bg-theme-bg/30">
+    <button
+      onclick={() => (uiStore.showCanvasSelector = true)}
+      class="w-full p-3 rounded-xl border border-theme-border bg-theme-surface hover:border-theme-primary transition-all flex items-center gap-3 group text-left shadow-sm"
+      aria-label="Switch workspace"
+    >
+      <div
+        class="w-8 h-8 rounded-lg bg-theme-primary/10 flex items-center justify-center text-theme-primary group-hover:scale-110 transition-transform"
+      >
+        <Layout class="w-4 h-4" />
+      </div>
+      <div class="flex-1 min-w-0">
+        <div
+          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest leading-none mb-1"
+        >
+          Active View
+        </div>
+        <div class="text-xs font-bold text-theme-text truncate">
+          {activeCanvasName}
+        </div>
+      </div>
+      <ChevronRight
+        class="w-4 h-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+      />
+    </button>
+  </div>
+
   <div class="p-4 border-b border-theme-border">
     <h2
       class="text-xs font-bold text-theme-primary uppercase tracking-[0.2em] mb-4"
