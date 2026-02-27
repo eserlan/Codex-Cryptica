@@ -98,8 +98,6 @@
   });
 
   function onConnect(connection: Connection) {
-    console.log("[Canvas] Connection event triggered:", connection);
-
     if (connection.source && connection.target) {
       // Add to engine store
       const newEdgeId = engine.addEdge(
@@ -120,7 +118,6 @@
         animated: true, // Add animation for immediate visual feedback
       };
 
-      console.log("[Canvas] Adding new edge to state:", newEdge);
       edges = [...edges, newEdge];
       syncEngine();
     }
@@ -223,7 +220,7 @@
       onconnect={onConnect}
       onnodedragstop={syncEngine}
       onmoveend={syncEngine}
-      connectionMode="loose"
+      defaultEdgeOptions={{ type: "smoothstep", animated: true }}
       fitView
     >
       <Background gap={20} />
