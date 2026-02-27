@@ -40,65 +40,65 @@
   <!-- Top -->
   <Handle
     type="target"
-    id="top"
+    id="top-target"
     position={Position.Top}
-    class="!bg-theme-primary"
-    style="z-index: 50;"
+    class="!bg-theme-primary target"
+    style="left: 25%; z-index: 50;"
   />
   <Handle
     type="source"
-    id="top"
+    id="top-source"
     position={Position.Top}
-    class="!bg-theme-primary"
-    style="z-index: 51;"
+    class="!bg-theme-primary source"
+    style="left: 75%; z-index: 51;"
   />
 
   <!-- Bottom -->
   <Handle
     type="target"
-    id="bottom"
+    id="bottom-target"
     position={Position.Bottom}
-    class="!bg-theme-primary"
-    style="z-index: 50;"
+    class="!bg-theme-primary target"
+    style="left: 25%; z-index: 50;"
   />
   <Handle
     type="source"
-    id="bottom"
+    id="bottom-source"
     position={Position.Bottom}
-    class="!bg-theme-primary"
-    style="z-index: 51;"
+    class="!bg-theme-primary source"
+    style="left: 75%; z-index: 51;"
   />
 
   <!-- Left -->
   <Handle
     type="target"
-    id="left"
+    id="left-target"
     position={Position.Left}
-    class="!bg-theme-primary"
-    style="z-index: 50;"
+    class="!bg-theme-primary target"
+    style="top: 25%; z-index: 50;"
   />
   <Handle
     type="source"
-    id="left"
+    id="left-source"
     position={Position.Left}
-    class="!bg-theme-primary"
-    style="z-index: 51;"
+    class="!bg-theme-primary source"
+    style="top: 75%; z-index: 51;"
   />
 
   <!-- Right -->
   <Handle
     type="target"
-    id="right"
+    id="right-target"
     position={Position.Right}
-    class="!bg-theme-primary"
-    style="z-index: 50;"
+    class="!bg-theme-primary target"
+    style="top: 25%; z-index: 50;"
   />
   <Handle
     type="source"
-    id="right"
+    id="right-source"
     position={Position.Right}
-    class="!bg-theme-primary"
-    style="z-index: 51;"
+    class="!bg-theme-primary source"
+    style="top: 75%; z-index: 51;"
   />
 
   <div class="flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
@@ -150,15 +150,15 @@
 
 <style>
   :global(.svelte-flow__handle) {
-    width: 12px;
-    height: 12px;
+    width: 24px;
+    height: 24px;
     background: var(--theme-primary);
-    border: 2px solid var(--theme-surface);
+    border: 3px solid var(--theme-surface);
     transition: all 0.2s;
     z-index: 50; /* Ensure handles are above the node body content */
   }
   :global(.svelte-flow__handle:hover) {
-    transform: scale(1.5);
+    transform: scale(1.2);
     background: var(--theme-text);
     border-color: var(--theme-primary);
     cursor: crosshair;

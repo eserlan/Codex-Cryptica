@@ -97,31 +97,32 @@
     }
   });
 
-  function onConnect(connection: Connection) {
-    if (connection.source && connection.target) {
-      // Add to engine store
-      const newEdgeId = engine.addEdge(
-        connection.source,
-        connection.target,
-        connection.sourceHandle,
-        connection.targetHandle,
-      );
-
-      // Create the edge object correctly for Svelte Flow
-      const newEdge: Edge = {
-        id: newEdgeId,
-        source: connection.source,
-        target: connection.target,
-        sourceHandle: connection.sourceHandle,
-        targetHandle: connection.targetHandle,
-        type: "smoothstep",
-        animated: true, // Add animation for immediate visual feedback
-      };
-
-      edges = [...edges, newEdge];
-      syncEngine();
-    }
+  function onConnect(_connection: Connection) {
+    // @xyflow/svelte calls store.addEdge() automatically before firing this callback,
+    // so bind:edges already contains the new edge. We only trigger a debounced save;
+    // the $effect below will sync engine state from the updated edges.
+    debouncedSave();
   }
+
+  // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
+  // This is the idiomatic approach since onedgeschange is not a prop in this version.
+  $effect(() => {
+    // Reading edges here makes this effect re-run whenever edges is mutated by the library.
+    const snapshot = edges;
+    untrack(() => {
+      if (vault.isInitialized && canvasId) {
+        engine.edges = snapshot.map((e: Edge) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          sourceHandle: e.sourceHandle || undefined,
+          targetHandle: e.targetHandle || undefined,
+          label: e.label as string,
+          type: e.type || "smoothstep",
+        }));
+      }
+    });
+  });
 
   function onDragOver(event: DragEvent) {
     event.preventDefault();
@@ -156,14 +157,21 @@
     syncEngine();
   }
 
-  function handleQuickSpawn(event: CustomEvent<{ entityId: string }>) {
-    const { entityId } = event.detail;
+  function handleQuickSpawn(
+    event: CustomEvent<{
+      entityId: string;
+      position?: { x: number; y: number };
+    }>,
+  ) {
+    const { entityId, position: eventPosition } = event.detail;
 
-    // Center in flow coordinates
-    const position = screenToFlowPosition({
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2,
-    });
+    // Center in flow coordinates or use provided
+    const position =
+      eventPosition ||
+      screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
 
     const newNodeId = engine.addNode(entityId, position);
     // Manually add to nodes to trigger sync
