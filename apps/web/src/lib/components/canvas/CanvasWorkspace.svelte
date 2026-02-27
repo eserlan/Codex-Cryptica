@@ -368,12 +368,18 @@
   }
   :global(.svelte-flow__edge-textbg) {
     fill: var(--color-bg-surface) !important;
-    fill-opacity: 0.8 !important;
+    fill-opacity: 0.9 !important;
+    stroke: var(--color-border-primary) !important;
+    stroke-width: 1 !important;
+    rx: 4;
+    ry: 4;
   }
   :global(.svelte-flow__edge-text) {
     fill: var(--color-text-primary) !important;
-    font-size: 10px !important;
+    font-size: 9px !important;
     font-weight: bold !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
   :global(.svelte-flow__controls) {
     background: var(--color-bg-surface);
