@@ -158,6 +158,19 @@
     contextMenu = null;
   }
 
+  function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
+    if (event.detail === 2) {
+      // Double click
+      event.stopPropagation();
+      const newLabel = prompt("Connection Label", edge.label || "");
+      if (newLabel !== null) {
+        edges = edges.map((e) =>
+          e.id === edge.id ? { ...e, label: newLabel } : e,
+        );
+      }
+    }
+  }
+
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
   $effect(() => {
     const snapshot = edges;
@@ -298,6 +311,7 @@
       onconnect={onConnect}
       onnodecontextmenu={onNodeContextMenu}
       onedgecontextmenu={onEdgeContextMenu}
+      onedgeclick={onEdgeClick}
       onpanecontextmenu={handlePaneContextMenu}
       fitView
     >
@@ -365,6 +379,23 @@
   :global(.svelte-flow__edge.animated path) {
     stroke-dasharray: 5;
     animation: svelte-flow__dashdraw 0.5s linear infinite;
+  }
+  :global(.svelte-flow__edge-label) {
+    background: var(--color-bg-surface, #0c0c0c) !important;
+    color: var(--color-text-primary, #ffffff) !important;
+    border: 1px solid var(--color-border-primary, var(--color-theme-primary)) !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-family: var(--font-mono), monospace !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  }
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-label) {
+    border-color: var(--color-theme-primary) !important;
+    box-shadow: 0 0 8px var(--color-theme-primary) !important;
   }
   :global(.svelte-flow__edge-textwrapper rect),
   :global(.svelte-flow__edge-textbg),

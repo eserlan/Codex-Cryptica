@@ -183,4 +183,45 @@ test.describe("Spatial Canvas", () => {
     // Edge should be gone
     await expect(page.locator(".svelte-flow__edge")).toHaveCount(0);
   });
+
+  test("should rename an edge via double click", async ({ page }) => {
+    // Add two nodes and connect them
+    await page.evaluate(() => {
+      window.dispatchEvent(
+        new CustomEvent("add-to-canvas", {
+          detail: { entityId: "test-hero", position: { x: -200, y: 0 } },
+        }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("add-to-canvas", {
+          detail: { entityId: "eldrin-the-wise", position: { x: 200, y: 0 } },
+        }),
+      );
+    });
+
+    const nodes = page.locator(".svelte-flow__node");
+    const sourceHandle = nodes
+      .nth(0)
+      .locator('.svelte-flow__handle[data-handleid="right-source"]');
+    const targetHandle = nodes
+      .nth(1)
+      .locator('.svelte-flow__handle[data-handleid="left-target"]');
+
+    await sourceHandle.dragTo(targetHandle, { force: true });
+    await expect(page.locator(".svelte-flow__edge")).toHaveCount(1);
+
+    const edge = page.locator(".svelte-flow__edge").first();
+    const edgePath = edge.locator("path.svelte-flow__edge-path");
+
+    // Double click to rename
+    await Promise.all([
+      page
+        .waitForEvent("dialog")
+        .then((dialog) => dialog.accept("Renamed Connection")),
+      edgePath.dblclick({ force: true }),
+    ]);
+
+    // Check if label appears
+    await expect(page.locator("text=Renamed Connection")).toBeVisible();
+  });
 });
