@@ -5,7 +5,6 @@
     Controls,
     MiniMap,
     useSvelteFlow,
-    addEdge,
     type Node,
     type Edge,
     type Connection,
@@ -108,14 +107,17 @@
         connection.targetHandle,
       );
 
-      // Use Svelte Flow's helper to create the edge object correctly
-      const newEdge = {
-        ...connection,
+      // Create the edge object correctly for Svelte Flow
+      const newEdge: Edge = {
         id: newEdgeId,
+        source: connection.source,
+        target: connection.target,
+        sourceHandle: connection.sourceHandle,
+        targetHandle: connection.targetHandle,
         type: "smoothstep",
       };
 
-      edges = addEdge(newEdge, edges);
+      edges = [...edges, newEdge];
       syncEngine();
     }
   }
