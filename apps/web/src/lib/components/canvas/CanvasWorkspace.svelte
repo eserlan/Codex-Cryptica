@@ -281,14 +281,7 @@
   });
 </script>
 
-<div
-  class="flex h-screen w-full overflow-hidden relative"
-  style:background-color="var(--color-bg-primary)"
-  style:background-image="var(--bg-texture)"
-  style:background-size="cover"
-  style:background-repeat="no-repeat"
-  style:background-attachment="fixed"
->
+<div class="canvas-container flex h-screen w-full overflow-hidden relative">
   <EntityPalette />
 
   <div
@@ -330,6 +323,13 @@
 </div>
 
 <style>
+  .canvas-container {
+    background-color: var(--color-bg-primary);
+    background-image: var(--bg-texture-overlay);
+    background-repeat: repeat;
+    background-position: top left;
+    background-attachment: fixed;
+  }
   :global(.svelte-flow) {
     background-color: transparent !important;
     font-family: var(--font-body), ui-sans-serif;
@@ -342,7 +342,7 @@
   }
   :global(.svelte-flow__background-pattern) {
     fill: var(--color-border-primary) !important;
-    opacity: 0.3 !important;
+    opacity: 0.15 !important;
   }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
@@ -367,15 +367,15 @@
     animation: svelte-flow__dashdraw 0.5s linear infinite;
   }
   :global(.svelte-flow__edge-textbg) {
-    fill: var(--color-bg-surface) !important;
-    fill-opacity: 0.9 !important;
+    fill: var(--color-bg-surface, #121212) !important;
+    fill-opacity: 1 !important;
     stroke: var(--color-border-primary) !important;
     stroke-width: 1 !important;
     rx: 4;
     ry: 4;
   }
   :global(.svelte-flow__edge-text) {
-    fill: var(--color-text-primary) !important;
+    fill: var(--color-text-primary, #f3f4f6) !important;
     font-size: 9px !important;
     font-weight: bold !important;
     text-transform: uppercase;
