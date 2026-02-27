@@ -7,10 +7,13 @@
   import type { SearchResult } from "schema";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
+  import { page } from "$app/state";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
+
+  const isCanvasPage = $derived(page.url.pathname === "/canvas");
 
   // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
@@ -206,16 +209,18 @@
             aria-label="Search results"
           >
             {#each searchStore.results as result, index (result.id || `fallback-${index}`)}
-              <button
+              <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+              <div
                 id="search-result-{index}"
                 role="option"
                 tabindex="-1"
                 aria-selected={index === searchStore.selectedIndex}
-                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
+                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content cursor-pointer
                   {index === searchStore.selectedIndex
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
                   : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
                 onclick={(e) => selectResult(result, e)}
+                onkeydown={(e) => e.key === "Enter" && selectResult(result, e)}
                 data-testid="search-result"
               >
                 <span class="font-medium truncate flex items-center gap-2">
@@ -229,6 +234,28 @@
                     ></span>
                   {/if}
                   {@html renderMarkdown(result.title, searchStore.query)}
+
+                  {#if isCanvasPage}
+                    <button
+                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 group/btn"
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (result.id) {
+                          window.dispatchEvent(
+                            new CustomEvent("add-to-canvas", {
+                              detail: { entityId: result.id },
+                            }),
+                          );
+                          searchStore.close();
+                        }
+                      }}
+                    >
+                      <span class="icon-[heroicons--plus-circle] w-3 h-3"
+                      ></span>
+                      Add to Canvas
+                    </button>
+                  {/if}
                 </span>
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
                   {#if result.type}
@@ -249,7 +276,7 @@
                     {@html renderMarkdown(result.excerpt, searchStore.query)}
                   </p>
                 {/if}
-              </button>
+              </div>
             {/each}
           </div>
         {/if}

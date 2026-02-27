@@ -78,11 +78,24 @@ interface CodexDB extends DBSchema {
       "by-status": string;
     };
   };
+  canvases: {
+    key: string; // id
+    value: {
+      id: string;
+      vaultId: string;
+      name: string;
+      createdAt: number;
+      lastModified: number;
+    };
+    indexes: {
+      "by-vault": string;
+    };
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 11 to add cloud sync stores and indexes.
-export const DB_VERSION = 11;
+// DB_VERSION was bumped to 12 to add canvases store.
+export const DB_VERSION = 12;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -132,6 +145,11 @@ export function getDB() {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");
+        }
+
+        if (!db.objectStoreNames.contains("canvases")) {
+          const store = db.createObjectStore("canvases", { keyPath: "id" });
+          store.createIndex("by-vault", "vaultId");
         }
       },
       blocked() {

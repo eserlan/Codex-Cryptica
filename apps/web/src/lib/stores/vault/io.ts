@@ -27,6 +27,15 @@ export async function saveMapsToDisk(
   await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
 }
 
+export async function saveCanvasesToDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  canvases: Record<string, any>,
+) {
+  if (!vaultHandle) return;
+  const content = JSON.stringify(canvases, null, 2);
+  await writeOpfsFile([".codex", "canvases.json"], content, vaultHandle);
+}
+
 export async function loadMapsFromDisk(
   vaultHandle: FileSystemDirectoryHandle,
 ): Promise<Record<string, Map>> {
@@ -36,6 +45,23 @@ export async function loadMapsFromDisk(
       create: true,
     });
     const fileHandle = await codexDir.getFileHandle("maps.json");
+    const file = await fileHandle.getFile();
+    const text = await file.text();
+    return JSON.parse(text);
+  } catch {
+    return {};
+  }
+}
+
+export async function loadCanvasesFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+): Promise<Record<string, any>> {
+  if (!vaultHandle) return {};
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const fileHandle = await codexDir.getFileHandle("canvases.json");
     const file = await fileHandle.getFile();
     const text = await file.text();
     return JSON.parse(text);

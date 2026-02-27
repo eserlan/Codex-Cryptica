@@ -1,0 +1,194 @@
+<script lang="ts">
+  import {
+    SvelteFlow,
+    Background,
+    Controls,
+    MiniMap,
+    useSvelteFlow,
+    type Node,
+    type Edge,
+    type Connection,
+  } from "@xyflow/svelte";
+  import {
+    CanvasStore,
+    type CanvasNode,
+    type CanvasEdge,
+  } from "@codex/canvas-engine";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import EntityNode from "$lib/components/canvas/EntityNode.svelte";
+  import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
+  import CanvasSidebar from "$lib/components/canvas/CanvasSidebar.svelte";
+  import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
+  import { page } from "$app/state";
+  import "@xyflow/svelte/dist/style.css";
+
+  let engine = $state(new CanvasStore());
+  const canvasId = $derived(page.params.id);
+  const { screenToFlowPosition } = useSvelteFlow();
+
+  const nodeTypes = {
+    entity: EntityNode,
+  };
+
+  let nodes = $state<Node[]>([]);
+  let edges = $state<Edge[]>([]);
+
+  // Sync engine to local state
+  $effect(() => {
+    if (vault.isInitialized && canvasId) {
+      const data = vault.canvases[canvasId];
+      if (data) {
+        nodes = data.nodes.map((n: CanvasNode) => ({
+          id: n.id,
+          type: n.type,
+          position: { x: n.x, y: n.y },
+          data: { entityId: n.entityId, width: n.width, height: n.height },
+        }));
+        edges = data.edges.map((e: CanvasEdge) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          label: e.label,
+          type: e.type,
+        }));
+      } else {
+        nodes = [];
+        edges = [];
+      }
+    }
+  });
+
+  // Sync local state to engine and save
+  $effect(() => {
+    // This effect runs whenever nodes or edges change due to binding
+    if (nodes.length > 0 || edges.length > 0) {
+      engine.nodes = nodes.map((n) => ({
+        id: n.id,
+        type: n.type as "entity",
+        x: n.position.x,
+        y: n.position.y,
+        entityId: n.data.entityId as string,
+        width: n.data.width as number,
+        height: n.data.height as number,
+      }));
+      engine.edges = edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        label: e.label as string,
+        type: e.type || "line",
+      }));
+      saveCanvas();
+    }
+  });
+
+  function onConnect(connection: Connection) {
+    if (connection.source && connection.target) {
+      engine.addEdge(connection.source, connection.target);
+      // The second effect will handle the sync and save
+    }
+  }
+
+  function onDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "move";
+    }
+  }
+
+  function onDrop(event: DragEvent) {
+    event.preventDefault();
+
+    const entityId = event.dataTransfer?.getData("application/codex-entity");
+
+    if (!entityId) return;
+
+    const position = screenToFlowPosition({
+      x: event.clientX,
+      y: event.clientY,
+    });
+
+    const newNodeId = engine.addNode(entityId, position);
+    // Manually add to nodes to trigger sync
+    nodes = [
+      ...nodes,
+      {
+        id: newNodeId,
+        type: "entity",
+        position,
+        data: { entityId },
+      },
+    ];
+  }
+
+  function handleQuickSpawn(event: CustomEvent<{ entityId: string }>) {
+    const { entityId } = event.detail;
+    const position = { x: 0, y: 0 };
+    const newNodeId = engine.addNode(entityId, position);
+    nodes = [
+      ...nodes,
+      {
+        id: newNodeId,
+        type: "entity",
+        position,
+        data: { entityId },
+      },
+    ];
+  }
+
+  async function saveCanvas() {
+    if (!vault.activeVaultId || !canvasId) return;
+
+    const data = engine.export();
+    vault.canvases[canvasId] = data;
+    await vault.saveCanvases();
+    await canvasRegistry.touch(canvasId);
+  }
+
+  $effect(() => {
+    window.addEventListener("add-to-canvas", handleQuickSpawn as any);
+    return () =>
+      window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
+  });
+</script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="flex h-screen w-full bg-theme-bg overflow-hidden">
+  <CanvasSidebar />
+  <EntityPalette />
+
+  <div class="flex-1 relative" ondragover={onDragOver} ondrop={onDrop}>
+    <SvelteFlow bind:nodes bind:edges {nodeTypes} onconnect={onConnect} fitView>
+      <Background gap={20} />
+      <Controls />
+      <MiniMap />
+    </SvelteFlow>
+  </div>
+
+  <CanvasHint />
+</div>
+
+<style>
+  :global(.svelte-flow) {
+    background-color: var(--theme-bg);
+  }
+  :global(.svelte-flow__edge-path) {
+    stroke: var(--theme-primary);
+    stroke-width: 2;
+  }
+  :global(.svelte-flow__controls) {
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  :global(.svelte-flow__controls-button) {
+    background: var(--theme-surface);
+    fill: var(--theme-text);
+    border-bottom: 1px solid var(--theme-border);
+  }
+  :global(.svelte-flow__controls-button:hover) {
+    background: var(--theme-bg);
+  }
+</style>

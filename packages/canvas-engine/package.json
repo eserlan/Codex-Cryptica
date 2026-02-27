@@ -10,7 +10,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@xyflow/svelte": "^0.1.23",
+    "svelte": "^5.53.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
