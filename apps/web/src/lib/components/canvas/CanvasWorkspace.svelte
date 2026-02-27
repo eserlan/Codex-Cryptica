@@ -281,7 +281,14 @@
   });
 </script>
 
-<div class="flex h-screen w-full bg-theme-bg overflow-hidden relative">
+<div
+  class="flex h-screen w-full overflow-hidden relative"
+  style:background-color="var(--color-bg-primary)"
+  style:background-image="var(--bg-texture)"
+  style:background-size="cover"
+  style:background-repeat="no-repeat"
+  style:background-attachment="fixed"
+>
   <EntityPalette />
 
   <div
@@ -324,18 +331,18 @@
 
 <style>
   :global(.svelte-flow) {
-    background-color: var(--color-bg-primary);
-    background-image: var(--bg-texture);
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-color: transparent !important;
     font-family: var(--font-body), ui-sans-serif;
     transition:
       font-family 0.3s ease,
       background-color 0.3s ease;
   }
+  :global(.svelte-flow__pane) {
+    background-color: transparent !important;
+  }
   :global(.svelte-flow__background-pattern) {
     fill: var(--color-border-primary) !important;
+    opacity: 0.3 !important;
   }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
