@@ -4,11 +4,17 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
-  import { Search, Filter, Layout, ChevronRight } from "lucide-svelte";
+  import {
+    Search,
+    Filter,
+    Layout,
+    ChevronRight,
+    LayoutGrid,
+  } from "lucide-svelte";
   import { page } from "$app/state";
 
   let searchQuery = $state("");
-  let typeFilter = $state<string>("all");
+  let typeFilters = $state<string[]>(["all"]);
 
   const canvasId = $derived(page.params.id);
   const activeCanvasName = $derived(
@@ -26,7 +32,8 @@
         const matchesSearch =
           e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           e.content?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType = typeFilter === "all" || e.type === typeFilter;
+        const matchesType =
+          typeFilters.includes("all") || typeFilters.includes(e.type);
         return matchesSearch && matchesType;
       })
       .sort((a, b) => a.title.localeCompare(b.title)),
@@ -36,6 +43,36 @@
     if (event.dataTransfer) {
       event.dataTransfer.setData("application/codex-entity", entityId);
       event.dataTransfer.effectAllowed = "move";
+    }
+  }
+
+  function toggleTypeFilter(type: string, event: MouseEvent) {
+    const isMulti = event.ctrlKey || event.metaKey;
+
+    if (type === "all") {
+      typeFilters = ["all"];
+      return;
+    }
+
+    if (isMulti) {
+      // Remove 'all' if we're adding a specific filter
+      let newFilters = typeFilters.filter((f) => f !== "all");
+
+      if (newFilters.includes(type)) {
+        newFilters = newFilters.filter((f) => f !== type);
+      } else {
+        newFilters.push(type);
+      }
+
+      // If empty, revert to all
+      typeFilters = newFilters.length === 0 ? ["all"] : newFilters;
+    } else {
+      // Normal click: toggle single filter
+      if (typeFilters.length === 1 && typeFilters[0] === type) {
+        typeFilters = ["all"];
+      } else {
+        typeFilters = [type];
+      }
     }
   }
 </script>
@@ -97,16 +134,17 @@
       <Filter class="w-3 h-3 text-theme-muted shrink-0 mr-1" />
       {#each types as type}
         <button
-          onclick={() => (typeFilter = type)}
+          onclick={(e) => toggleTypeFilter(type, e)}
           aria-label={`Filter by ${type}`}
           title={type.toUpperCase()}
-          class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilter ===
-          type
+          class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.includes(
+            type,
+          )
             ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
             : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
         >
           {#if type === "all"}
-            <span class="text-[9px] font-bold uppercase px-1">All</span>
+            <LayoutGrid class="w-4 h-4" />
           {:else}
             {@const cat = categories.getCategory(type)}
             <span class="{getIconClass(cat?.icon)} w-4 h-4"></span>

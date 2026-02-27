@@ -145,6 +145,19 @@
     contextMenu = null;
   }
 
+  function handleRename() {
+    if (!contextMenu || contextMenu.type !== "edge") return;
+    const targetId = contextMenu.id;
+    const edge = edges.find((e) => e.id === targetId);
+    const newLabel = prompt("Connection Label", edge?.label || "");
+    if (newLabel !== null) {
+      edges = edges.map((e) =>
+        e.id === targetId ? { ...e, label: newLabel } : e,
+      );
+    }
+    contextMenu = null;
+  }
+
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
   $effect(() => {
     const snapshot = edges;
@@ -298,7 +311,9 @@
     <CanvasContextMenu
       x={contextMenu.x}
       y={contextMenu.y}
+      targetType={contextMenu.type}
       onDelete={handleDelete}
+      onRename={handleRename}
       onClose={() => (contextMenu = null)}
     />
   {/if}

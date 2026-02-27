@@ -1,10 +1,19 @@
 <script lang="ts">
-  import { Trash2 } from "lucide-svelte";
+  import { Trash2, Type } from "lucide-svelte";
 
-  let { x, y, onDelete, onClose } = $props<{
+  let {
+    x,
+    y,
+    targetType = "node",
+    onDelete,
+    onRename,
+    onClose,
+  } = $props<{
     x: number;
     y: number;
+    targetType?: "node" | "edge";
     onDelete: () => void;
+    onRename?: () => void;
     onClose: () => void;
   }>();
 
@@ -39,6 +48,21 @@
   style:left="{x}px"
   oncontextmenu={(e) => e.preventDefault()}
 >
+  {#if targetType === "edge"}
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase tracking-widest"
+      onclick={() => {
+        onRename?.();
+        onClose();
+      }}
+    >
+      <Type class="w-3.5 h-3.5" />
+      Edit Label
+    </button>
+    <div class="border-t border-theme-border/30 my-1"></div>
+  {/if}
+
   <button
     role="menuitem"
     class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase tracking-widest"
