@@ -42,29 +42,31 @@
   class="w-72 h-full bg-theme-surface border-r border-theme-border flex flex-col z-10 shrink-0"
 >
   <!-- Workspace Selector Header -->
-  <div class="p-4 border-b border-theme-border bg-theme-bg/30">
+  <div class="border-b border-theme-border">
     <button
       onclick={() => (uiStore.showCanvasSelector = true)}
-      class="w-full p-3 rounded-xl border border-theme-border bg-theme-surface hover:border-theme-primary transition-all flex items-center gap-3 group text-left shadow-sm"
+      class="w-full p-4 bg-theme-surface hover:bg-theme-bg/50 transition-all flex items-center gap-3 group text-left"
       aria-label="Switch workspace"
     >
       <div
-        class="w-8 h-8 rounded-lg bg-theme-primary/10 flex items-center justify-center text-theme-primary group-hover:scale-110 transition-transform"
+        class="w-8 h-8 rounded-lg bg-theme-primary/10 flex items-center justify-center text-theme-primary group-hover:scale-110 transition-transform shrink-0"
       >
         <Layout class="w-4 h-4" />
       </div>
       <div class="flex-1 min-w-0">
         <div
-          class="text-[10px] font-mono text-theme-muted uppercase tracking-widest leading-none mb-1"
+          class="text-[9px] font-mono text-theme-muted uppercase tracking-[0.2em] leading-none mb-1"
         >
           Active View
         </div>
-        <div class="text-xs font-bold text-theme-text truncate">
+        <div
+          class="text-xs font-bold text-theme-text truncate uppercase tracking-tight"
+        >
           {activeCanvasName}
         </div>
       </div>
       <ChevronRight
-        class="w-4 h-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+        class="w-4 h-4 text-theme-muted group-hover:text-theme-primary transition-colors shrink-0"
       />
     </button>
   </div>
