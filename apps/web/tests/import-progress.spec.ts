@@ -68,11 +68,6 @@ test.describe("Import Progress Management E2E", () => {
     await page.reload();
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
-    // Re-apply mock after reload (though addInitScript handles it usually, explicit is safer if store cached)
-    await page.addInitScript(() => {
-        (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";
-    });
-
     // 5. Navigate back to the Vault settings tab
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: "Vault" }).click();
