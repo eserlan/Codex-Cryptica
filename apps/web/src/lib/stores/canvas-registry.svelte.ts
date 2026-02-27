@@ -27,10 +27,27 @@ class CanvasRegistry {
   }
 
   async loadForVault(vaultId: string) {
-    const db = await getDB();
-    const all = await db.getAllFromIndex("canvases", "by-vault", vaultId);
-    this.canvases = all.sort((a, b) => b.lastModified - a.lastModified);
-    this.isLoaded = true;
+    if (!vaultId) return;
+    try {
+      const db = await getDB();
+      let all;
+      try {
+        all = await db.getAllFromIndex("canvases", "by-vault", vaultId);
+      } catch (idxErr) {
+        console.warn(
+          "[CanvasRegistry] Index 'by-vault' failed, falling back to manual filter",
+          idxErr,
+        );
+        const raw = await db.getAll("canvases");
+        all = raw.filter((c) => c.vaultId === vaultId);
+      }
+      this.canvases = all.sort((a, b) => b.lastModified - a.lastModified);
+      this.isLoaded = true;
+    } catch (err) {
+      console.error("[CanvasRegistry] Failed to load canvases", err);
+      // Ensure we don't stay stuck in loading state even on total failure
+      this.isLoaded = true;
+    }
   }
 
   async create(name: string) {

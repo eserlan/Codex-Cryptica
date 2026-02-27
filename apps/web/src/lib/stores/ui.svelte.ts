@@ -9,6 +9,7 @@ export type SettingsTab =
 
 class UIStore {
   showSettings = $state(false);
+  showCanvasSelector = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);

@@ -14,6 +14,7 @@
   import { helpStore } from "$lib/stores/help.svelte";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { demoService } from "$lib/services/demo";
@@ -111,7 +112,16 @@
 
   // Reactive boot trigger
   $effect(() => {
-    if (!uiStore.isLandingPageVisible && !hasBooted) {
+    const isWorkspaceRoute =
+      page.url.pathname === `${base}/` ||
+      page.url.pathname.startsWith(`${base}/map`) ||
+      page.url.pathname.startsWith(`${base}/canvas`);
+
+    if ((!uiStore.isLandingPageVisible || isWorkspaceRoute) && !hasBooted) {
+      // If we're on a workspace route, ensure the landing page is dismissed
+      if (isWorkspaceRoute && uiStore.isLandingPageVisible) {
+        uiStore.dismissedLandingPage = true;
+      }
       bootSystem();
     }
   });
@@ -121,6 +131,7 @@
     if (typeof window !== "undefined" && (window as any).__E2E__) {
       (window as any).vault = vault;
       (window as any).vaultRegistry = vaultRegistry;
+      (window as any).canvasRegistry = canvasRegistry;
       (window as any).graph = graph;
       (window as any).oracle = oracle;
       (window as any).uiStore = uiStore;
@@ -384,7 +395,7 @@
       class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
     >
       <!-- Mobile: Left (Menu + Brand) -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-3 shrink-0">
         <button
           class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
           onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
@@ -403,7 +414,7 @@
         </h1>
 
         <nav
-          class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4"
+          class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4 relative z-10"
         >
           <a
             href="{base}/"
