@@ -21,6 +21,9 @@ export const CanvasEdgeSchema = z.object({
   targetHandle: z.string().optional(),
   label: z.string().optional(),
   type: z.string().optional().default("line"),
+  style: z
+    .union([z.string(), z.record(z.union([z.string(), z.number()]))])
+    .optional(),
 });
 
 export const CanvasSchema = z.object({

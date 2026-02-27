@@ -5,6 +5,7 @@
     Controls,
     MiniMap,
     useSvelteFlow,
+    addEdge as addXyEdge,
     type Node,
     type Edge,
     type Connection,
@@ -19,6 +20,7 @@
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
+  import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
   import { untrack } from "svelte";
@@ -32,6 +34,12 @@
 
   let nodes = $state<Node[]>([]);
   let edges = $state<Edge[]>([]);
+  let contextMenu = $state<{
+    x: number;
+    y: number;
+    type: "node" | "edge";
+    id: string;
+  } | null>(null);
 
   const { screenToFlowPosition } = useSvelteFlow();
 
@@ -41,33 +49,6 @@
       clearTimeout(saveTimer);
     }
     saveTimer = setTimeout(saveCanvas, 1000);
-  }
-
-  function syncEngine() {
-    if (!vault.isInitialized || !canvasId) return;
-
-    // Sync nodes
-    engine.nodes = nodes.map((n) => ({
-      id: n.id,
-      type: n.type as "entity",
-      position: n.position,
-      entityId: n.data?.entityId as string,
-      width: n.data?.width as number,
-      height: n.data?.height as number,
-    }));
-
-    // Sync edges
-    engine.edges = edges.map((e) => ({
-      id: e.id,
-      source: e.source,
-      target: e.target,
-      sourceHandle: e.sourceHandle || undefined,
-      targetHandle: e.targetHandle || undefined,
-      label: e.label as string,
-      type: e.type || "smoothstep",
-    }));
-
-    debouncedSave();
   }
 
   // Sync engine to local state
@@ -89,6 +70,7 @@
           targetHandle: e.targetHandle,
           label: e.label,
           type: e.type || "smoothstep",
+          style: e.style,
         }));
       } else {
         nodes = [];
@@ -97,29 +79,105 @@
     }
   });
 
-  function onConnect(_connection: Connection) {
-    // @xyflow/svelte calls store.addEdge() automatically before firing this callback,
-    // so bind:edges already contains the new edge. We only trigger a debounced save;
-    // the $effect below will sync engine state from the updated edges.
-    debouncedSave();
+  function onConnect(connection: Connection) {
+    const edgeId = `edge-${crypto.randomUUID()}`;
+    // Explicitly add the edge to our state to ensure reactivity and sync
+    edges = addXyEdge(
+      {
+        ...connection,
+        id: edgeId,
+        type: "smoothstep",
+        animated: true,
+        style: { stroke: "var(--color-theme-primary)", strokeWidth: "2px" },
+      },
+      edges,
+    );
+  }
+
+  function onNodeContextMenu({
+    event,
+    node,
+  }: {
+    event: MouseEvent;
+    node: any;
+  }) {
+    event.preventDefault();
+    contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "node",
+      id: node.id,
+    };
+  }
+
+  function onEdgeContextMenu({
+    event,
+    edge,
+  }: {
+    event: MouseEvent;
+    edge: any;
+  }) {
+    event.preventDefault();
+    contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "edge",
+      id: edge.id,
+    };
+  }
+
+  function handlePaneContextMenu(event: MouseEvent) {
+    event.preventDefault();
+    contextMenu = null;
+  }
+
+  function handleDelete() {
+    if (!contextMenu) return;
+    if (contextMenu.type === "node") {
+      nodes = nodes.filter((n) => n.id !== contextMenu.id);
+      edges = edges.filter(
+        (e) => e.source !== contextMenu.id && e.target !== contextMenu.id,
+      );
+    } else {
+      edges = edges.filter((e) => e.id !== contextMenu.id);
+    }
+    contextMenu = null;
   }
 
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
-  // This is the idiomatic approach since onedgeschange is not a prop in this version.
   $effect(() => {
-    // Reading edges here makes this effect re-run whenever edges is mutated by the library.
     const snapshot = edges;
     untrack(() => {
       if (vault.isInitialized && canvasId) {
         engine.edges = snapshot.map((e: Edge) => ({
-          id: e.id,
+          id: e.id || `edge-${crypto.randomUUID()}`,
           source: e.source,
           target: e.target,
           sourceHandle: e.sourceHandle || undefined,
           targetHandle: e.targetHandle || undefined,
           label: e.label as string,
           type: e.type || "smoothstep",
+          style: e.style as any,
         }));
+        debouncedSave();
+      }
+    });
+  });
+
+  // Keep engine state in sync whenever SvelteFlow's nodes change (drag/add/remove).
+  $effect(() => {
+    const snapshot = nodes;
+    untrack(() => {
+      if (vault.isInitialized && canvasId) {
+        engine.nodes = snapshot.map((n: Node) => ({
+          id: n.id,
+          type: n.type as "entity",
+          position: n.position,
+          entityId: n.data?.entityId as string,
+          width: n.data?.width as number,
+          height: n.data?.height as number,
+        }));
+        debouncedSave();
       }
     });
   });
@@ -154,7 +212,6 @@
         data: { entityId },
       },
     ];
-    syncEngine();
   }
 
   function handleQuickSpawn(
@@ -184,7 +241,6 @@
         data: { entityId },
       },
     ];
-    syncEngine();
   }
 
   async function saveCanvas() {
@@ -226,17 +282,85 @@
       bind:edges
       {nodeTypes}
       onconnect={onConnect}
-      onnodedragstop={syncEngine}
-      onmoveend={syncEngine}
-      defaultEdgeOptions={{ type: "smoothstep", animated: true }}
+      onnodecontextmenu={onNodeContextMenu}
+      onedgecontextmenu={onEdgeContextMenu}
+      onpanecontextmenu={handlePaneContextMenu}
       fitView
     >
-      <Background gap={20} />
+      <Background color="var(--color-theme-border)" gap={20} />
       <Controls />
       <MiniMap />
     </SvelteFlow>
   </div>
 
+  {#if contextMenu}
+    <CanvasContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      onDelete={handleDelete}
+      onClose={() => (contextMenu = null)}
+    />
+  {/if}
+
   <CanvasHint />
   <CanvasSelectionModal />
 </div>
+
+<style>
+  :global(.svelte-flow) {
+    background-color: var(--theme-bg);
+  }
+  :global(.svelte-flow__edge-path) {
+    stroke: var(--color-theme-primary, #78350f) !important;
+    stroke-width: 2 !important;
+    stroke-opacity: 1 !important;
+    visibility: visible !important;
+    transition:
+      stroke-width 0.2s ease,
+      stroke 0.2s ease;
+  }
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-path) {
+    stroke-width: 4 !important;
+    stroke: var(--color-theme-primary) !important;
+    filter: drop-shadow(0 0 4px var(--color-theme-primary));
+  }
+  :global(.svelte-flow__edge.selected .svelte-flow__edge-path) {
+    stroke-width: 4 !important;
+    stroke: var(--color-theme-primary) !important;
+  }
+  :global(.svelte-flow__edge.animated path) {
+    stroke-dasharray: 5;
+    animation: svelte-flow__dashdraw 0.5s linear infinite;
+  }
+  :global(.svelte-flow__edge-textbg) {
+    fill: var(--theme-surface) !important;
+    fill-opacity: 0.8 !important;
+  }
+  :global(.svelte-flow__edge-text) {
+    fill: var(--theme-text) !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+  }
+  :global(.svelte-flow__controls) {
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  :global(.svelte-flow__controls-button) {
+    background: var(--theme-surface);
+    fill: var(--theme-text);
+    border-bottom: 1px solid var(--theme-border);
+  }
+  :global(.svelte-flow__controls-button:hover) {
+    background: var(--theme-bg);
+  }
+  @keyframes svelte-flow__dashdraw {
+    from {
+      stroke-dashoffset: 10;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+</style>

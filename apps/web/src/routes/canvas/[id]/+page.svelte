@@ -12,25 +12,5 @@
 </SvelteFlowProvider>
 
 <style>
-  :global(.svelte-flow) {
-    background-color: var(--theme-bg);
-  }
-  :global(.svelte-flow__edge-path) {
-    stroke: var(--theme-primary);
-    stroke-width: 2;
-  }
-  :global(.svelte-flow__controls) {
-    background: var(--theme-surface);
-    border: 1px solid var(--theme-border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  :global(.svelte-flow__controls-button) {
-    background: var(--theme-surface);
-    fill: var(--theme-text);
-    border-bottom: 1px solid var(--theme-border);
-  }
-  :global(.svelte-flow__controls-button:hover) {
-    background: var(--theme-bg);
-  }
+  /* Consolidated styles in CanvasWorkspace.svelte */
 </style>
