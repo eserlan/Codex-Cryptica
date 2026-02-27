@@ -27,13 +27,38 @@ export async function saveMapsToDisk(
   await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
 }
 
-export async function saveCanvasesToDisk(
+export async function saveCanvasToDisk(
   vaultHandle: FileSystemDirectoryHandle,
-  canvases: Record<string, any>,
+  id: string,
+  data: any,
 ) {
   if (!vaultHandle) return;
-  const content = JSON.stringify(canvases, null, 2);
-  await writeOpfsFile([".codex", "canvases.json"], content, vaultHandle);
+  const content = JSON.stringify(data, null, 2);
+  await writeOpfsFile(
+    [".codex", "canvases", `${id}.canvas`],
+    content,
+    vaultHandle,
+  );
+}
+
+export async function deleteCanvasFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  id: string,
+) {
+  if (!vaultHandle) return;
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const canvasesDir = await codexDir.getDirectoryHandle("canvases", {
+      create: true,
+    });
+    await canvasesDir.removeEntry(`${id}.canvas`);
+  } catch (err: any) {
+    if (err.name !== "NotFoundError") {
+      console.warn(`Failed to delete canvas file ${id}.canvas`, err);
+    }
+  }
 }
 
 export async function loadMapsFromDisk(
@@ -61,11 +86,23 @@ export async function loadCanvasesFromDisk(
     const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
       create: true,
     });
-    const fileHandle = await codexDir.getFileHandle("canvases.json");
-    const file = await fileHandle.getFile();
-    const text = await file.text();
-    return JSON.parse(text);
-  } catch {
+    const canvasesDir = await codexDir.getDirectoryHandle("canvases", {
+      create: true,
+    });
+
+    const canvases: Record<string, any> = {};
+    // @ts-expect-error - entries() exists on FileSystemDirectoryHandle in modern browsers
+    for await (const [name, handle] of canvasesDir.entries()) {
+      if (handle.kind === "file" && name.endsWith(".canvas")) {
+        const id = name.replace(".canvas", "");
+        const file = await (handle as FileSystemFileHandle).getFile();
+        const text = await file.text();
+        canvases[id] = JSON.parse(text);
+      }
+    }
+    return canvases;
+  } catch (err) {
+    console.warn("[VaultIO] Failed to load individual canvases", err);
     return {};
   }
 }

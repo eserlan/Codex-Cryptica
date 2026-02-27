@@ -738,17 +738,20 @@ class VaultStore {
     });
   }
 
-  async saveCanvases() {
+  async saveCanvas(id: string) {
     const vaultDir = await this.getActiveVaultHandle();
     if (!vaultDir) return;
 
+    const data = this.canvases[id];
+    if (!data) return;
+
     this.status = "saving";
-    return this.saveQueue.enqueue("canvases-metadata", async () => {
+    return this.saveQueue.enqueue(`canvas-${id}`, async () => {
       try {
-        await vaultIO.saveCanvasesToDisk(vaultDir, this.canvases);
+        await vaultIO.saveCanvasToDisk(vaultDir, id, data);
         this.status = "idle";
       } catch (err) {
-        console.error("[VaultStore] Failed to save canvases", err);
+        console.error("[VaultStore] Failed to save canvas", id, err);
         this.status = "error";
         uiStore.notify(
           "Failed to save canvas data. Please check your storage quota.",

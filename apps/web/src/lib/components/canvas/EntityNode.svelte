@@ -27,10 +27,12 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="bg-theme-surface border border-theme-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px] transition-all hover:border-theme-primary group select-none flex flex-col"
+  class="bg-theme-surface border border-theme-border rounded-lg shadow-lg overflow-hidden min-w-[200px] max-w-[300px] transition-all hover:border-theme-primary group select-none flex flex-col focus:ring-2 focus:ring-theme-primary focus:outline-none"
   style:width={data.width ? `${data.width}px` : "auto"}
   style:height={data.height ? `${data.height}px` : "auto"}
   ondblclick={onDoubleClick}
+  onkeydown={(e) => (e.key === "Enter" || e.key === " ") && onDoubleClick()}
+  tabindex="0"
 >
   <Handle type="target" position={Position.Top} class="!bg-theme-primary" />
 

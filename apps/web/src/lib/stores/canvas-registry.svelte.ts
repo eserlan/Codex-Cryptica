@@ -1,5 +1,6 @@
 import { getDB } from "../utils/idb";
 import { vault } from "./vault.svelte";
+import * as vaultIO from "./vault/io";
 
 export interface CanvasMetadata {
   id: string;
@@ -55,10 +56,17 @@ class CanvasRegistry {
     await db.delete("canvases", id);
     this.canvases = this.canvases.filter((c) => c.id !== id);
 
+    // Also remove from disk
+    const vaultDir = await vault.getActiveVaultHandle();
+    if (vaultDir) {
+      await vaultIO.deleteCanvasFromDisk(vaultDir, id);
+    }
+
     // Also remove from vault.canvases
     if (vault.canvases[id]) {
-      delete vault.canvases[id];
-      await vault.saveCanvases();
+      const newCanvases = { ...vault.canvases };
+      delete newCanvases[id];
+      vault.canvases = newCanvases;
     }
   }
 

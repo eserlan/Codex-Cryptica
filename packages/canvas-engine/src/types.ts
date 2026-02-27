@@ -3,8 +3,10 @@ import { z } from "zod";
 export const CanvasNodeSchema = z.object({
   id: z.string(),
   type: z.literal("entity"),
-  x: z.number(),
-  y: z.number(),
+  position: z.object({
+    x: z.number(),
+    y: z.number(),
+  }),
   entityId: z.string(),
   width: z.number().optional(),
   height: z.number().optional(),

@@ -16,8 +16,7 @@ export class CanvasStore {
       id: `node-${crypto.randomUUID()}`,
       type: "entity",
       entityId,
-      x: position.x,
-      y: position.y,
+      position,
     };
     this.nodes = [...this.nodes, newNode];
     return newNode.id;
@@ -32,7 +31,7 @@ export class CanvasStore {
 
   updateNode(
     nodeId: string,
-    updates: Partial<Pick<CanvasNode, "x" | "y" | "width" | "height">>,
+    updates: Partial<Pick<CanvasNode, "position" | "width" | "height">>,
   ) {
     this.nodes = this.nodes.map((n) =>
       n.id === nodeId ? { ...n, ...updates } : n,

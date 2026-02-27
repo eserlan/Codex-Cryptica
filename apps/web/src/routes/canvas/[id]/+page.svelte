@@ -21,11 +21,11 @@
   import CanvasSidebar from "$lib/components/canvas/CanvasSidebar.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
+  import { untrack } from "svelte";
   import "@xyflow/svelte/dist/style.css";
 
-  let engine = $state(new CanvasStore());
+  const engine = new CanvasStore();
   const canvasId = $derived(page.params.id);
-  const { screenToFlowPosition } = useSvelteFlow();
 
   const nodeTypes = {
     entity: EntityNode,
@@ -34,15 +34,43 @@
   let nodes = $state<Node[]>([]);
   let edges = $state<Edge[]>([]);
 
+  const { screenToFlowPosition } = useSvelteFlow();
+
+  let saveTimer: ReturnType<typeof setTimeout>;
+  function debouncedSave() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveCanvas, 1000);
+  }
+
+  function syncEngine() {
+    if (!vault.isInitialized || !canvasId) return;
+    engine.nodes = nodes.map((n) => ({
+      id: n.id,
+      type: n.type as "entity",
+      position: n.position,
+      entityId: n.data?.entityId as string,
+      width: n.data?.width as number,
+      height: n.data?.height as number,
+    }));
+    engine.edges = edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      label: e.label as string,
+      type: e.type || "line",
+    }));
+    debouncedSave();
+  }
+
   // Sync engine to local state
   $effect(() => {
     if (vault.isInitialized && canvasId) {
-      const data = vault.canvases[canvasId];
+      const data = untrack(() => vault.canvases[canvasId]);
       if (data) {
         nodes = data.nodes.map((n: CanvasNode) => ({
           id: n.id,
           type: n.type,
-          position: { x: n.x, y: n.y },
+          position: n.position,
           data: { entityId: n.entityId, width: n.width, height: n.height },
         }));
         edges = data.edges.map((e: CanvasEdge) => ({
@@ -59,34 +87,19 @@
     }
   });
 
-  // Sync local state to engine and save
-  $effect(() => {
-    // This effect runs whenever nodes or edges change due to binding
-    if (nodes.length > 0 || edges.length > 0) {
-      engine.nodes = nodes.map((n) => ({
-        id: n.id,
-        type: n.type as "entity",
-        x: n.position.x,
-        y: n.position.y,
-        entityId: n.data.entityId as string,
-        width: n.data.width as number,
-        height: n.data.height as number,
-      }));
-      engine.edges = edges.map((e) => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        label: e.label as string,
-        type: e.type || "line",
-      }));
-      saveCanvas();
-    }
-  });
-
   function onConnect(connection: Connection) {
     if (connection.source && connection.target) {
-      engine.addEdge(connection.source, connection.target);
-      // The second effect will handle the sync and save
+      const newEdgeId = engine.addEdge(connection.source, connection.target);
+      edges = [
+        ...edges,
+        {
+          id: newEdgeId,
+          source: connection.source,
+          target: connection.target,
+          type: "line",
+        },
+      ];
+      syncEngine();
     }
   }
 
@@ -120,12 +133,20 @@
         data: { entityId },
       },
     ];
+    syncEngine();
   }
 
   function handleQuickSpawn(event: CustomEvent<{ entityId: string }>) {
     const { entityId } = event.detail;
-    const position = { x: 0, y: 0 };
+
+    // Center in flow coordinates
+    const position = screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+
     const newNodeId = engine.addNode(entityId, position);
+    // Manually add to nodes to trigger sync
     nodes = [
       ...nodes,
       {
@@ -135,6 +156,7 @@
         data: { entityId },
       },
     ];
+    syncEngine();
   }
 
   async function saveCanvas() {
@@ -142,7 +164,7 @@
 
     const data = engine.export();
     vault.canvases[canvasId] = data;
-    await vault.saveCanvases();
+    await vault.saveCanvas(canvasId);
     await canvasRegistry.touch(canvasId);
   }
 
@@ -159,7 +181,16 @@
   <EntityPalette />
 
   <div class="flex-1 relative" ondragover={onDragOver} ondrop={onDrop}>
-    <SvelteFlow bind:nodes bind:edges {nodeTypes} onconnect={onConnect} fitView>
+    <SvelteFlow
+      bind:nodes
+      bind:edges
+      {nodeTypes}
+      onconnect={onConnect}
+      onnodeDragStop={syncEngine}
+      ontranslateEnd={syncEngine}
+      onzoomEnd={syncEngine}
+      fitView
+    >
       <Background gap={20} />
       <Controls />
       <MiniMap />

@@ -10,8 +10,7 @@ describe("CanvasStore", () => {
     expect(store.nodes[0]).toMatchObject({
       id: nodeId,
       entityId: "entity-1",
-      x: 100,
-      y: 200,
+      position: { x: 100, y: 200 },
     });
   });
 

@@ -62,6 +62,7 @@
         onclick={createNew}
         class="p-1.5 rounded-md bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg transition-all"
         title="New Canvas"
+        aria-label="Create new canvas"
       >
         <Plus class="w-3.5 h-3.5" />
       </button>
@@ -86,6 +87,9 @@
       <div
         onclick={() => goto(`/canvas/${canvas.id}`)}
         onkeydown={(e) => e.key === "Enter" && goto(`/canvas/${canvas.id}`)}
+        role="button"
+        tabindex="0"
+        aria-label="Open canvas {canvas.name}"
         class="w-full text-left p-3 rounded-lg border transition-all group flex items-center gap-3 cursor-pointer
           {activeCanvasId === canvas.id
           ? 'bg-theme-primary/10 border-theme-primary'
