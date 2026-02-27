@@ -98,6 +98,8 @@
   });
 
   function onConnect(connection: Connection) {
+    console.log("[Canvas] Connection event triggered:", connection);
+
     if (connection.source && connection.target) {
       // Add to engine store
       const newEdgeId = engine.addEdge(
@@ -115,8 +117,10 @@
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
         type: "smoothstep",
+        animated: true, // Add animation for immediate visual feedback
       };
 
+      console.log("[Canvas] Adding new edge to state:", newEdge);
       edges = [...edges, newEdge];
       syncEngine();
     }

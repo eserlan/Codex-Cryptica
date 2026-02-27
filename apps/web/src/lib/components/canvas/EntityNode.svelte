@@ -147,14 +147,17 @@
 
 <style>
   :global(.svelte-flow__handle) {
-    width: 10px;
-    height: 10px;
+    width: 12px;
+    height: 12px;
     background: var(--theme-primary);
     border: 2px solid var(--theme-surface);
     transition: all 0.2s;
+    z-index: 50; /* Ensure handles are above the node body content */
   }
   :global(.svelte-flow__handle:hover) {
-    transform: scale(1.4);
+    transform: scale(1.5);
     background: var(--theme-text);
+    border-color: var(--theme-primary);
+    cursor: crosshair;
   }
 </style>
