@@ -76,6 +76,7 @@
         type="text"
         bind:value={searchQuery}
         placeholder="Filter canvases..."
+        aria-label="Filter canvases"
         class="w-full bg-theme-bg border border-theme-border rounded-md pl-9 pr-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary transition-colors"
       />
     </div>
@@ -117,12 +118,14 @@
           <button
             onclick={(e) => renameCanvas(canvas.id, canvas.name, e)}
             class="p-1 rounded hover:bg-theme-surface text-theme-muted hover:text-theme-text"
+            aria-label={`Rename ${canvas.name}`}
           >
             <Edit2 class="w-3 h-3" />
           </button>
           <button
             onclick={(e) => deleteCanvas(canvas.id, e)}
             class="p-1 rounded hover:bg-red-500/10 text-theme-muted hover:text-red-500"
+            aria-label={`Delete ${canvas.name}`}
           >
             <Trash2 class="w-3 h-3" />
           </button>

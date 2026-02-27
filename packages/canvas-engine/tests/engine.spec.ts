@@ -36,4 +36,31 @@ describe("CanvasStore", () => {
     expect(data.nodes).toHaveLength(1);
     expect(data.nodes[0].entityId).toBe("e1");
   });
+
+  it("should update a node's position using updateNode", () => {
+    const store = new CanvasStore();
+    const nodeId = store.addNode("entity-1", { x: 0, y: 0 });
+
+    store.updateNode(nodeId, { position: { x: 50, y: 60 } });
+
+    expect(store.nodes).toHaveLength(1);
+    expect(store.nodes[0]).toMatchObject({
+      id: nodeId,
+      entityId: "entity-1",
+      position: { x: 50, y: 60 },
+    });
+  });
+
+  it("should remove an edge using removeEdge", () => {
+    const store = new CanvasStore();
+    const n1 = store.addNode("e1", { x: 0, y: 0 });
+    const n2 = store.addNode("e2", { x: 10, y: 10 });
+    const edgeId = store.addEdge(n1, n2);
+
+    expect(store.edges).toHaveLength(1);
+
+    store.removeEdge(edgeId);
+
+    expect(store.edges).toHaveLength(0);
+  });
 });

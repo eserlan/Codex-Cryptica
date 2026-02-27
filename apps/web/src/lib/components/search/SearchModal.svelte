@@ -13,7 +13,7 @@
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
 
-  const isCanvasPage = $derived(page.url.pathname === "/canvas");
+  const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
 
   // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
@@ -238,6 +238,7 @@
                   {#if isCanvasPage}
                     <button
                       class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 group/btn"
+                      aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
                         e.preventDefault();

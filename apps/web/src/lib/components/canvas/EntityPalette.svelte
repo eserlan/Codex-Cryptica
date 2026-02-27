@@ -48,6 +48,7 @@
         type="text"
         bind:value={searchQuery}
         placeholder="Search entities..."
+        aria-label="Search entities"
         class="w-full bg-theme-bg border border-theme-border rounded-md pl-9 pr-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary transition-colors"
       />
     </div>
@@ -57,6 +58,7 @@
       {#each types as type}
         <button
           onclick={() => (typeFilter = type)}
+          aria-label={`Filter by ${type}`}
           class="px-2 py-1 rounded text-[10px] whitespace-nowrap transition-colors {typeFilter ===
           type
             ? 'bg-theme-primary text-theme-bg font-bold'
@@ -73,7 +75,17 @@
       <div
         draggable="true"
         ondragstart={(e) => onDragStart(e, entity.id)}
-        class="p-3 bg-theme-bg border border-theme-border rounded-lg cursor-grab active:cursor-grabbing hover:border-theme-primary transition-all group"
+        role="button"
+        tabindex="0"
+        aria-label={`Drag ${entity.title} to canvas`}
+        onkeydown={(e) =>
+          e.key === "Enter" &&
+          window.dispatchEvent(
+            new CustomEvent("add-to-canvas", {
+              detail: { entityId: entity.id },
+            }),
+          )}
+        class="p-3 bg-theme-bg border border-theme-border rounded-lg cursor-grab active:cursor-grabbing hover:border-theme-primary transition-all group focus:ring-2 focus:ring-theme-primary focus:outline-none"
       >
         <div class="flex items-center justify-between mb-1">
           <span

@@ -36,11 +36,21 @@
 
   const { screenToFlowPosition } = useSvelteFlow();
 
-  let saveTimer: ReturnType<typeof setTimeout>;
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
   function debouncedSave() {
-    clearTimeout(saveTimer);
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+    }
     saveTimer = setTimeout(saveCanvas, 1000);
   }
+
+  $effect(() => {
+    return () => {
+      if (saveTimer !== null) {
+        clearTimeout(saveTimer);
+      }
+    };
+  });
 
   function syncEngine() {
     if (!vault.isInitialized || !canvasId) return;
@@ -186,9 +196,8 @@
       bind:edges
       {nodeTypes}
       onconnect={onConnect}
-      onnodeDragStop={syncEngine}
-      ontranslateEnd={syncEngine}
-      onzoomEnd={syncEngine}
+      onnodedragstop={syncEngine}
+      onmoveend={syncEngine}
       fitView
     >
       <Background gap={20} />

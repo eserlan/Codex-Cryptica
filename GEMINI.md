@@ -115,5 +115,6 @@ TypeScript: Follow standard conventions
 - 060-robust-gdrive-sync: Added TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API
 
 - 059-robust-local-sync: Added TypeScript 5.x + Svelte 5, `idb`, Web File System Access API
+- 059-robust-local-sync: Added IndexedDB state registry for bidirectional file mirroring
 
 <!-- MANUAL ADDITIONS START -->

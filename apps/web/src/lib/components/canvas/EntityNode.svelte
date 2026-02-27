@@ -33,6 +33,8 @@
   ondblclick={onDoubleClick}
   onkeydown={(e) => (e.key === "Enter" || e.key === " ") && onDoubleClick()}
   tabindex="0"
+  role="button"
+  aria-label={entity?.title || "Missing Entity"}
 >
   <Handle type="target" position={Position.Top} class="!bg-theme-primary" />
 

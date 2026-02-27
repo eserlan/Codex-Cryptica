@@ -4,6 +4,7 @@ import {
   getDirHandle,
   type FileEntry,
 } from "../../utils/opfs";
+import { CanvasSchema } from "@codex/canvas-engine";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache";
 import {
@@ -91,13 +92,17 @@ export async function loadCanvasesFromDisk(
     });
 
     const canvases: Record<string, any> = {};
-    // @ts-expect-error - entries() exists on FileSystemDirectoryHandle in modern browsers
     for await (const [name, handle] of canvasesDir.entries()) {
       if (handle.kind === "file" && name.endsWith(".canvas")) {
-        const id = name.replace(".canvas", "");
-        const file = await (handle as FileSystemFileHandle).getFile();
-        const text = await file.text();
-        canvases[id] = JSON.parse(text);
+        try {
+          const id = name.replace(".canvas", "");
+          const file = await (handle as FileSystemFileHandle).getFile();
+          const text = await file.text();
+          const raw = JSON.parse(text);
+          canvases[id] = CanvasSchema.parse(raw);
+        } catch (itemErr) {
+          console.error(`[VaultIO] Failed to load canvas ${name}`, itemErr);
+        }
       }
     }
     return canvases;

@@ -14,6 +14,18 @@ class CanvasRegistry {
   canvases = $state<CanvasMetadata[]>([]);
   isLoaded = $state(false);
 
+  constructor() {
+    if (typeof window !== "undefined") {
+      window.addEventListener("vault-switched", () => {
+        this.canvases = [];
+        this.isLoaded = false;
+        if (vault.activeVaultId) {
+          this.loadForVault(vault.activeVaultId);
+        }
+      });
+    }
+  }
+
   async loadForVault(vaultId: string) {
     const db = await getDB();
     const all = await db.getAllFromIndex("canvases", "by-vault", vaultId);

@@ -6,8 +6,21 @@ export class CanvasStore {
 
   constructor(initialData?: Canvas) {
     if (initialData) {
-      this.nodes = initialData.nodes;
-      this.edges = initialData.edges;
+      this.loadData(initialData);
+    }
+  }
+
+  loadData(data: Canvas) {
+    this.nodes = data.nodes;
+    this.edges = data.edges;
+  }
+
+  async load(json: string) {
+    try {
+      const data = JSON.parse(json);
+      this.loadData(data);
+    } catch (err) {
+      console.error("Failed to load canvas data", err);
     }
   }
 
@@ -50,8 +63,21 @@ export class CanvasStore {
     return newEdge.id;
   }
 
+  /** Alias for addEdge to satisfy contract */
+  addLink(sourceId: string, targetId: string, label?: string) {
+    return this.addEdge(sourceId, targetId, label);
+  }
+
   removeEdge(edgeId: string) {
     this.edges = this.edges.filter((e) => e.id !== edgeId);
+  }
+
+  undo() {
+    console.warn("Undo not implemented");
+  }
+
+  redo() {
+    console.warn("Redo not implemented");
   }
 
   export(): Canvas {

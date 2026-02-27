@@ -37,7 +37,11 @@ export interface CanvasService {
    */
   updateNode(
     nodeId: string,
-    updates: Partial<{ x: number; y: number; width: number; height: number }>,
+    updates: Partial<{
+      position: { x: number; y: number };
+      width: number;
+      height: number;
+    }>,
   ): void;
 
   /**

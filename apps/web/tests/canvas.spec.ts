@@ -14,11 +14,16 @@ test.describe("Spatial Canvas", () => {
   });
 
   test("should allow creating a new canvas", async ({ page }) => {
-    // Click new canvas button
+    // Handle the prompt that appears when creating a new canvas
+    page.once("dialog", async (dialog) => {
+      // Accept the dialog with a default canvas name
+      await dialog.accept("New Test Canvas");
+    });
+
+    // Click new canvas button, which should trigger the prompt
     await page.click('[title="New Canvas"]');
 
-    // We expect a prompt, but playwright handles it differently
-    // For this test we'll assume it works if we can see multiple items in sidebar
-    // Actually, handling prompts in playwright requires page.on('dialog')
+    // Wait for the new canvas to be active in the URL or sidebar
+    await expect(page.locator("text=New Test Canvas")).toBeVisible();
   });
 });
