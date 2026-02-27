@@ -2,6 +2,8 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
   import { Search, Filter, Layout, ChevronRight } from "lucide-svelte";
   import { page } from "$app/state";
 
@@ -91,18 +93,24 @@
       />
     </div>
 
-    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-      <Filter class="w-3 h-3 text-theme-muted shrink-0" />
+    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
+      <Filter class="w-3 h-3 text-theme-muted shrink-0 mr-1" />
       {#each types as type}
         <button
           onclick={() => (typeFilter = type)}
           aria-label={`Filter by ${type}`}
-          class="px-2 py-1 rounded text-[10px] whitespace-nowrap transition-colors {typeFilter ===
+          title={type.toUpperCase()}
+          class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilter ===
           type
-            ? 'bg-theme-primary text-theme-bg font-bold'
-            : 'text-theme-muted hover:text-theme-text'}"
+            ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
+            : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
         >
-          {type}
+          {#if type === "all"}
+            <span class="text-[9px] font-bold uppercase px-1">All</span>
+          {:else}
+            {@const cat = categories.getCategory(type)}
+            <span class="{getIconClass(cat?.icon)} w-4 h-4"></span>
+          {/if}
         </button>
       {/each}
     </div>

@@ -2,11 +2,14 @@
   import { Handle, Position, type NodeProps } from "@xyflow/svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
   import { renderMarkdown } from "$lib/utils/markdown";
 
   let { data }: NodeProps = $props();
 
   const entity = $derived(vault.entities[data.entityId as string]);
+  const category = $derived(categories.getCategory(entity?.type || ""));
   let imageUrl = $state<string | null>(null);
 
   $effect(() => {
@@ -116,11 +119,12 @@
 
       <div class="p-3">
         <div class="flex items-center justify-between mb-1">
-          <span
-            class="text-[10px] font-mono text-theme-primary uppercase tracking-widest"
-          >
-            {entity?.type || "Unknown"}
-          </span>
+          <div class="flex items-center gap-1.5 text-theme-primary">
+            <span class="{getIconClass(category?.icon)} w-3 h-3"></span>
+            <span class="text-[10px] font-mono uppercase tracking-widest">
+              {entity?.type || "Unknown"}
+            </span>
+          </div>
         </div>
         <h3 class="text-sm font-bold text-theme-text truncate font-header">
           {entity?.title || "Missing Entity"}
