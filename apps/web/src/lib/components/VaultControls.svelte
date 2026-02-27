@@ -101,8 +101,25 @@
       </div>
       <button
         class={isVertical
-          ? `${btnGhost} py-3 text-sm justify-center`
-          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          ? `${btnPrimary} py-3 text-sm justify-center gap-2`
+          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+        onclick={async () => {
+          try {
+            await demoService.convertToCampaign();
+          } catch (error) {
+            console.error("Failed to save campaign:", error);
+            ui.notify("Failed to save campaign. Please try again.", "error");
+          }
+        }}
+        data-testid="save-as-campaign-button"
+      >
+        <span class="icon-[lucide--save] w-3 h-3"></span>
+        SAVE AS CAMPAIGN
+      </button>
+      <button
+        class={isVertical
+          ? `${btnGhost} py-3 text-sm justify-center gap-2`
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={() => demoService.exitDemo()}
       >
         <span class="icon-[lucide--log-out] w-3 h-3"></span>
