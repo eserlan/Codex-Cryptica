@@ -367,19 +367,29 @@
     animation: svelte-flow__dashdraw 0.5s linear infinite;
   }
   :global(.svelte-flow__edge-textbg) {
-    fill: var(--color-bg-surface, #121212) !important;
-    fill-opacity: 1 !important;
-    stroke: var(--color-border-primary) !important;
-    stroke-width: 1 !important;
-    rx: 4;
-    ry: 4;
+    fill: var(--color-bg-surface, #0c0c0c) !important;
+    fill-opacity: 0.95 !important;
+    stroke: var(--color-border-primary, var(--color-theme-primary)) !important;
+    stroke-width: 1.5 !important;
+    rx: 6;
+    ry: 6;
   }
   :global(.svelte-flow__edge-text) {
-    fill: var(--color-text-primary, #f3f4f6) !important;
-    font-size: 9px !important;
-    font-weight: bold !important;
+    fill: var(--color-text-primary, #ffffff) !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.05em;
+    font-family: var(--font-mono), monospace !important;
+    transition: fill 0.2s ease;
+  }
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-textbg) {
+    stroke: var(--color-theme-primary) !important;
+    stroke-width: 2 !important;
+    fill-opacity: 1 !important;
+  }
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-text) {
+    fill: var(--color-theme-primary) !important;
   }
   :global(.svelte-flow__controls) {
     background: var(--color-bg-surface);
