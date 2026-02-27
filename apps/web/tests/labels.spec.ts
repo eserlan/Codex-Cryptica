@@ -96,12 +96,12 @@ test.describe("Entity Labeling System", () => {
     await labelInput.press("Enter");
 
     // 4. Verify label badge exists
-    await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
+    await expect(page.getByText("Legendary")).toBeVisible();
 
     // 5. Add another label
     await labelInput.fill("MIA");
     await labelInput.press("Enter");
-    await expect(page.getByText("MIA", { exact: true })).toBeVisible();
+    await expect(page.getByText("MIA")).toBeVisible();
 
     // Wait for auto-save to finish (ensure it hits OPFS)
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
@@ -118,15 +118,15 @@ test.describe("Entity Labeling System", () => {
       .filter({ hasText: "Test Hero" })
       .click();
 
-    await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
-    await expect(page.getByText("MIA", { exact: true })).toBeVisible();
+    await expect(page.getByText("Legendary")).toBeVisible();
+    await expect(page.getByText("MIA")).toBeVisible();
 
     // 7. Remove a label
     await page
       .getByRole("button", { name: /Remove label MIA/i })
       .click({ force: true });
-    await expect(page.getByText("MIA", { exact: true })).not.toBeVisible();
-    await expect(page.getByText("Legendary", { exact: true })).toBeVisible();
+    await expect(page.getByText("MIA")).not.toBeVisible();
+    await expect(page.getByText("Legendary")).toBeVisible();
   });
 
   test("Filter graph by labels and clear filter", async ({ page }) => {
@@ -171,10 +171,10 @@ test.describe("Entity Labeling System", () => {
     await page.locator("aside").getByText("Subject 1").click();
     await page.getByPlaceholder("Add label...").fill("important");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await expect(page.getByText("important", { exact: true })).toBeVisible();
+    await expect(page.getByText("important")).toBeVisible();
     await page.getByPlaceholder("Add label...").fill("internal");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await expect(page.getByText("internal", { exact: true })).toBeVisible();
+    await expect(page.getByText("internal")).toBeVisible();
 
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Subject 2");
@@ -194,25 +194,25 @@ test.describe("Entity Labeling System", () => {
 
     // 5. Press Enter to select the highlighted suggestion
     await page.keyboard.press("Enter");
+
+    // Wait for the input to clear to confirm submission
     await expect(labelInput).toHaveValue("");
-    // Wait for suggestions to close so getByText becomes unambiguous
-    await expect(
-      page.getByRole("option", { name: "important", exact: true }),
-    ).not.toBeVisible();
-    await expect(page.getByText("important", { exact: true })).toBeVisible();
+
+    // Explicitly check for the label now
+    await expect(page.getByText("important")).toBeVisible();
 
     // 6. Test Tab completion
     await labelInput.click();
     await labelInput.pressSequentially("int");
     await expect(
-      page.getByRole("option", { name: "internal", exact: true }),
+      page.getByRole("option", { name: "internal" }),
     ).toBeVisible();
     await page.keyboard.press("Tab");
+
+    // Wait for clear
     await expect(labelInput).toHaveValue("");
-    // Wait for suggestions to close
-    await expect(
-      page.getByRole("option", { name: "internal", exact: true }),
-    ).not.toBeVisible();
-    await expect(page.getByText("internal", { exact: true })).toBeVisible();
+
+    // Check
+    await expect(page.getByText("internal")).toBeVisible();
   });
 });

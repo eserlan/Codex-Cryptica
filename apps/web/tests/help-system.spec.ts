@@ -9,13 +9,17 @@ test.describe("Help Center System", () => {
       localStorage.setItem("codex_skip_landing", "true");
     });
     await page.goto("/");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
   });
 
   test("should open help center and display articles list", async ({
     page,
   }) => {
     // 1. Open Settings
-    await page.click('button[title="Application Settings"]');
+    await page.getByTestId("settings-button").click();
+
+    // Wait for modal to appear
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
 
     // 2. Click Help tab
     await page.click('[role="tab"]:has-text("Help")');
@@ -33,7 +37,8 @@ test.describe("Help Center System", () => {
 
   test("should allow searching for help articles", async ({ page }) => {
     // 1. Open Help
-    await page.click('button[title="Application Settings"]');
+    await page.getByTestId("settings-button").click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
     await page.click('[role="tab"]:has-text("Help")');
 
     // 2. Type in search box
@@ -52,7 +57,8 @@ test.describe("Help Center System", () => {
 
   test("should display article content when clicked", async ({ page }) => {
     // 1. Open Help
-    await page.click('button[title="Application Settings"]');
+    await page.getByTestId("settings-button").click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
     await page.click('[role="tab"]:has-text("Help")');
 
     // 2. Click "Getting Started"

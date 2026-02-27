@@ -7,6 +7,8 @@ test.describe("Import Progress Management E2E", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
       (window as any).DISABLE_ERROR_OVERLAY = true;
+      // Mock the API key to allow import to proceed
+      (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";
     });
 
     await page.goto("http://localhost:5173/");
@@ -66,14 +68,16 @@ test.describe("Import Progress Management E2E", () => {
     await page.reload();
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
+    // Re-apply mock after reload (though addInitScript handles it usually, explicit is safer if store cached)
+    await page.addInitScript(() => {
+        (window as any).__SHARED_GEMINI_KEY__ = "test-key-mock";
+    });
+
     // 5. Navigate back to the Vault settings tab
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: "Vault" }).click();
 
     // 6. Verify that "Already processed" or progress is remembered
-    // If it was small, it might already be done.
-    // Given the resume logic, it should show either the progress bar or the resume toast
-    // for identical files.
     await expect(page.getByText(/already processed|resuming/i)).toBeVisible();
   });
 });

@@ -14,35 +14,37 @@ test.describe("Cloud Sync UI", () => {
 
   test("should open and close the cloud sync menu", async ({ page }) => {
     const settingsBtn = page.getByTestId("settings-button");
-    const menu = page.getByTestId("cloud-status-menu");
+    const syncTabPanel = page.locator("#settings-panel-sync");
 
-    // 1. Initially menu should not be visible
-    await expect(menu).not.toBeVisible();
+    // 1. Initially sync panel should not be visible (modal closed)
+    await expect(syncTabPanel).not.toBeVisible();
 
     // 2. Click gear icon to open settings
     await settingsBtn.click();
 
     // 3. Switch to Sync tab
     await page.click("#settings-tab-sync");
-    await expect(menu).toBeVisible();
+    await expect(syncTabPanel).toBeVisible();
 
     // 4. Close the modal using the close button
     await page.click('button[aria-label="Close Settings"]');
-    await expect(menu).not.toBeVisible();
+    await expect(syncTabPanel).not.toBeVisible();
   });
 
-  test("should not close when clicking inside the menu", async ({ page }) => {
+  test("should not close when clicking inside the panel", async ({ page }) => {
     const settingsBtn = page.getByTestId("settings-button");
-    const menu = page.getByTestId("cloud-status-menu");
+    const syncTabPanel = page.locator("#settings-panel-sync");
 
     await settingsBtn.click();
     await page.click("#settings-tab-sync");
-    await expect(menu).toBeVisible();
+    await expect(syncTabPanel).toBeVisible();
 
     // Click inside the menu area (on an element inside the panel)
-    // The Account span only appears when connected, so let's click on a guaranteed element
-    await page.click('[role="tabpanel"]');
-    await expect(menu).toBeVisible();
+    // The GDriveConnect component renders a title
+    await syncTabPanel
+      .getByRole("heading", { name: "Google Drive Cloud Sync" })
+      .click();
+    await expect(syncTabPanel).toBeVisible();
   });
 
   test("should close when clicking the backdrop", async ({ page }) => {
@@ -54,9 +56,10 @@ test.describe("Cloud Sync UI", () => {
     await expect(dialog).toBeVisible();
 
     // Click on the backdrop (role="presentation") to close
+    // We force click at 10,10 which should be the overlay
     await page
       .locator('[role="presentation"]')
-      .click({ position: { x: 10, y: 10 } });
+      .click({ position: { x: 10, y: 10 }, force: true });
     await expect(dialog).not.toBeVisible();
   });
 });

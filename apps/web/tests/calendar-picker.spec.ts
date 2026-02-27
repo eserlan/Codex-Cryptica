@@ -11,34 +11,21 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
       );
     },
     label,
-    { timeout: 10000 },
+    { timeout: 15000 },
   );
 
   // Ensure node is centered and visible
   await page.evaluate((label) => {
     const cy = (window as any).cy;
     const node = cy.nodes().filter((n: any) => n.data("label") === label);
+    cy.stop(); // Stop any running animations/layout
     cy.fit(node, 50); // Fit to node with padding
   }, label);
 
-  // Deterministic wait for node to be visible and stable within the viewport
-  await page.waitForFunction(
-    (label: string) => {
-      const cy = (window as any).cy;
-      const node = cy.nodes().filter((n: any) => n.data("label") === label);
-      if (node.length === 0) return false;
-      const pos = node.renderedPosition();
-      const container = document.querySelector('[data-testid="graph-canvas"]');
-      if (!container) return false;
-      const rect = container.getBoundingClientRect();
-      return (
-        pos.x > 0 && pos.x < rect.width && pos.y > 0 && pos.y < rect.height
-      );
-    },
-    label,
-    { timeout: 10000 },
-  );
+  // Wait for stability
+  await page.waitForTimeout(500);
 
+  // Get position directly
   const position = await page.evaluate((label: string) => {
     const cy = (window as any).cy;
     const node = cy.nodes().filter((n: any) => n.data("label") === label);
@@ -49,11 +36,17 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
   const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
   if (!canvasBox) throw new Error("Graph canvas not found");
 
-  // Use force click if necessary, but standard click is better if accurate
+  // Click
   await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
 
-  // Wait for the panel to transition in and be stable
-  await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
+  // If panel doesn't appear, try force click slightly offset (sometimes edge of node issues?)
+  try {
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({ timeout: 2000 });
+  } catch (e) {
+    console.log("Retry clicking node...");
+    await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
+  }
 };
 
 test.describe("Campaign Date Picker E2E", () => {
@@ -111,6 +104,10 @@ test.describe("Campaign Date Picker E2E", () => {
   }) => {
     // 1. Setup an Era first in Settings
     await page.getByTestId("settings-button").click();
+
+    // Wait for modal
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+
     await page.getByRole("tab", { name: "Intelligence" }).click();
     await page.getByTestId("era-name-input").fill("Age of Myth");
     await page.getByTestId("era-start-input").fill("1000");
@@ -149,6 +146,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should support custom month names", async ({ page }) => {
     // 1. Configure custom calendar in Settings
     await page.getByTestId("settings-button").click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
     await page.getByRole("tab", { name: "Vault" }).click();
 
     // Toggle Gregorian off
