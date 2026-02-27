@@ -306,6 +306,47 @@ export const THEMES: Record<string, StylingTemplate> = {
       graph_loading: "Awakening Memories...",
     },
   },
+  fallout: {
+    id: "fallout",
+    name: "Pip-Boy Terminal",
+    tokens: {
+      primary: "#39ff14", // Pip-Boy neon green
+      secondary: "#2db110", // Darker terminal green
+      background: "#0a0a08", // Near-black CRT background
+      surface: "#111109", // Slightly lighter terminal surface
+      text: "#a8ff78", // Soft phosphor green text
+      border: "rgba(57, 255, 20, 0.4)",
+      accent: "#f5c518", // Amber/yellow gauge indicator
+      fontHeader: "'Share Tech Mono', monospace",
+      fontBody: "'Share Tech Mono', monospace",
+      texture: "crt.svg",
+    },
+    graph: {
+      nodeShape: "round-rectangle",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#2db110",
+    },
+    jargon: {
+      vault: "Pip-Boy",
+      entity: "Entry",
+      entity_plural: "Entries",
+      save: "Holotape",
+      delete: "Purge",
+      new: "New Log",
+      syncing: "Transmitting",
+      search: "V.A.T.S. Scan",
+      lore_header: "Pip-Boy Data",
+      lore_secrets: "Classified Files & Vault Secrets",
+      chronicle_header: "Wasteland Journal",
+      connections_header: "Factions & Allies",
+      tab_status: "S.P.E.C.I.A.L.",
+      tab_lore: "Pip-Boy Data",
+      tab_inventory: "Inventory",
+      graph_loading: "Accessing Vault-Tec Network...",
+    },
+  },
 };
 
 export const DEFAULT_THEME = THEMES.fantasy;

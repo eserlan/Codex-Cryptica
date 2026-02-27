@@ -1,0 +1,149 @@
+{
+  "entities": {
+    "vault-101": {
+      "id": "vault-101",
+      "title": "Vault 101",
+      "type": "location",
+      "tags": ["vault", "underground", "home"],
+      "connections": [],
+      "content": "A Vault-Tec shelter buried beneath the Capital Wasteland. Vault 101's stated purpose was that no one ever enter, and no one ever leave — a social experiment that shaped a generation.",
+      "lore": "A Vault-Tec shelter buried beneath the Capital Wasteland. Vault 101's stated purpose was that no one ever enter, and no one ever leave — a social experiment that shaped a generation.",
+      "image": "/vault-samples/images/fallout-location.png",
+      "_path": ["locations", "vault-101.md"],
+      "lastModified": 1700000000000
+    },
+    "lone-wanderer": {
+      "id": "lone-wanderer",
+      "title": "The Lone Wanderer",
+      "type": "npc",
+      "tags": ["protagonist", "survivor", "pip-boy"],
+      "connections": [
+        {
+          "target": "vault-101",
+          "type": "born_in",
+          "label": "Grew up here"
+        },
+        {
+          "target": "brotherhood-of-steel",
+          "type": "allied_with",
+          "label": "Defender of the Wastes"
+        }
+      ],
+      "content": "Born in Vault 101, the Lone Wanderer left the only home they ever knew to find their father and uncover the secrets of Project Purity. Armed with a trusty Pip-Boy 3000 and an iron will.",
+      "lore": "Born in Vault 101, the Lone Wanderer left the only home they ever knew to find their father and uncover the secrets of Project Purity. Armed with a trusty Pip-Boy 3000 and an iron will.",
+      "image": "/vault-samples/images/fallout-hero.png",
+      "_path": ["npcs", "lone-wanderer.md"],
+      "lastModified": 1700000000000
+    },
+    "brotherhood-of-steel": {
+      "id": "brotherhood-of-steel",
+      "title": "Brotherhood of Steel",
+      "type": "faction",
+      "tags": ["military", "technology", "power-armor"],
+      "connections": [
+        {
+          "target": "vault-101",
+          "type": "patrols_near",
+          "label": "Capital Wasteland operations"
+        },
+        {
+          "target": "super-mutant-behemoth",
+          "type": "enemy_of",
+          "label": "Active extermination order"
+        }
+      ],
+      "content": "A quasi-military organization that venerates pre-war technology. The Capital Wasteland chapter, Lyons' Brotherhood, defends civilians against Super Mutants and other threats using Power Armor and Energy Weapons.",
+      "lore": "A quasi-military organization that venerates pre-war technology. The Capital Wasteland chapter, Lyons' Brotherhood, defends civilians against Super Mutants and other threats using Power Armor and Energy Weapons.",
+      "image": "/vault-samples/images/fallout-faction.png",
+      "_path": ["factions", "brotherhood-of-steel.md"],
+      "lastModified": 1700000000000
+    },
+    "super-mutant-behemoth": {
+      "id": "super-mutant-behemoth",
+      "title": "Super Mutant Behemoth",
+      "type": "creature",
+      "tags": ["mutant", "dangerous", "fev"],
+      "connections": [
+        {
+          "target": "vault-101",
+          "type": "threatens",
+          "label": "Lurks the Capital Wasteland"
+        }
+      ],
+      "content": "A colossal Super Mutant that has continued to grow and mutate far beyond the norm. Standing over twenty feet tall, a Behemoth is a walking apocalypse armed with makeshift weaponry the size of cars.",
+      "lore": "A colossal Super Mutant that has continued to grow and mutate far beyond the norm. Standing over twenty feet tall, a Behemoth is a walking apocalypse armed with makeshift weaponry the size of cars.",
+      "image": "/vault-samples/images/fallout-creature.png",
+      "_path": ["creatures", "super-mutant-behemoth.md"],
+      "lastModified": 1700000000000
+    },
+    "t51-power-armor": {
+      "id": "t51-power-armor",
+      "title": "T-51 Power Armor",
+      "type": "item",
+      "tags": ["armor", "pre-war", "military"],
+      "connections": [
+        {
+          "target": "lone-wanderer",
+          "type": "used_by",
+          "label": "Signature equipment"
+        },
+        {
+          "target": "brotherhood-of-steel",
+          "type": "maintained_by",
+          "label": "Brotherhood standard issue"
+        }
+      ],
+      "content": "The pinnacle of pre-war combat armor. The T-51 Power Armor provides unrivaled protection and a self-contained environment, making its wearer nearly invincible against conventional threats in the wasteland.",
+      "lore": "The pinnacle of pre-war combat armor. The T-51 Power Armor provides unrivaled protection and a self-contained environment, making its wearer nearly invincible against conventional threats in the wasteland.",
+      "image": "/vault-samples/images/fallout-item.png",
+      "_path": ["items", "t51-power-armor.md"],
+      "lastModified": 1700000000000
+    },
+    "the-great-war": {
+      "id": "the-great-war",
+      "title": "The Great War",
+      "type": "event",
+      "tags": ["nuclear", "apocalypse", "history"],
+      "connections": [
+        {
+          "target": "vault-101",
+          "type": "caused",
+          "label": "Reason for its construction"
+        },
+        {
+          "target": "super-mutant-behemoth",
+          "type": "created",
+          "label": "Radiation and FEV mutations"
+        }
+      ],
+      "content": "On October 23, 2077, the world ended in a two-hour nuclear exchange between the United States and China. The bombs fell and reduced civilization to ash, leaving only the irradiated ruins of the old world and the survivors who endured.",
+      "lore": "On October 23, 2077, the world ended in a two-hour nuclear exchange between the United States and China. The bombs fell and reduced civilization to ash, leaving only the irradiated ruins of the old world and the survivors who endured.",
+      "image": "/vault-samples/images/fallout-event.png",
+      "_path": ["events", "the-great-war.md"],
+      "lastModified": 1700000000000
+    },
+    "project-purity": {
+      "id": "project-purity",
+      "title": "Project Purity",
+      "type": "event",
+      "tags": ["water", "science", "hope"],
+      "connections": [
+        {
+          "target": "lone-wanderer",
+          "type": "sought_by",
+          "label": "Father's life work"
+        },
+        {
+          "target": "brotherhood-of-steel",
+          "type": "defended_by",
+          "label": "Critical mission objective"
+        }
+      ],
+      "content": "A pre-war initiative to purify the Potomac River using a modified Garden of Eden Creation Kit. Completing Project Purity would provide clean water to the entire Capital Wasteland, but powerful forces seek to control or destroy it.",
+      "lore": "A pre-war initiative to purify the Potomac River using a modified Garden of Eden Creation Kit. Completing Project Purity would provide clean water to the entire Capital Wasteland, but powerful forces seek to control or destroy it.",
+      "image": "/vault-samples/images/fallout-event.png",
+      "_path": ["events", "project-purity.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}
