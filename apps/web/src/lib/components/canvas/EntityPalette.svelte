@@ -39,7 +39,7 @@
 </script>
 
 <div
-  class="w-72 h-full bg-theme-surface border-r border-theme-border flex flex-col z-10 shrink-0"
+  class="w-72 h-full bg-theme-surface border-r border-theme-border flex flex-col z-10 shrink-0 font-body"
 >
   <!-- Workspace Selector Header -->
   <div class="border-b border-theme-border">

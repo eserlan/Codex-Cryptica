@@ -75,7 +75,7 @@
     tabindex="-1"
   >
     <div
-      class="w-full max-w-xl bg-theme-surface border border-theme-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+      class="w-full max-w-xl bg-theme-surface border border-theme-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] font-body"
       transition:scale={{ duration: 200, start: 0.95 }}
     >
       <!-- Header -->
@@ -84,7 +84,7 @@
       >
         <div>
           <h2
-            class="text-lg font-bold text-theme-text font-mono uppercase tracking-widest flex items-center gap-2"
+            class="text-lg font-bold text-theme-text font-header uppercase tracking-widest flex items-center gap-2"
           >
             <Layout class="w-5 h-5 text-theme-primary" />
             Canvas Registry

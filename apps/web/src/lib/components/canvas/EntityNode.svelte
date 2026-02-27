@@ -122,12 +122,12 @@
             {entity?.type || "Unknown"}
           </span>
         </div>
-        <h3 class="text-sm font-bold text-theme-text truncate">
+        <h3 class="text-sm font-bold text-theme-text truncate font-header">
           {entity?.title || "Missing Entity"}
         </h3>
         {#if entity?.content}
           <div
-            class="text-[11px] text-theme-muted mt-2 leading-relaxed line-clamp-6 markdown-content prose prose-invert prose-xs"
+            class="text-[11px] text-theme-muted mt-2 leading-relaxed line-clamp-6 markdown-content prose prose-invert prose-xs font-body"
           >
             {@html renderMarkdown(entity.content)}
           </div>

@@ -88,7 +88,7 @@
         id: edgeId,
         type: "smoothstep",
         animated: true,
-        style: { stroke: "var(--color-theme-primary)", strokeWidth: "2" },
+        style: "stroke: var(--color-theme-primary); stroke-width: 2;",
       },
       edges,
     );
@@ -126,20 +126,21 @@
     };
   }
 
-  function handlePaneContextMenu(event: MouseEvent) {
+  function handlePaneContextMenu({ event }: { event: MouseEvent }) {
     event.preventDefault();
     contextMenu = null;
   }
 
   function handleDelete() {
     if (!contextMenu) return;
+    const targetId = contextMenu.id;
     if (contextMenu.type === "node") {
-      nodes = nodes.filter((n) => n.id !== contextMenu.id);
+      nodes = nodes.filter((n) => n.id !== targetId);
       edges = edges.filter(
-        (e) => e.source !== contextMenu.id && e.target !== contextMenu.id,
+        (e) => e.source !== targetId && e.target !== targetId,
       );
     } else {
-      edges = edges.filter((e) => e.id !== contextMenu.id);
+      edges = edges.filter((e) => e.id !== targetId);
     }
     contextMenu = null;
   }
@@ -157,7 +158,7 @@
           targetHandle: e.targetHandle || undefined,
           label: e.label as string,
           type: "smoothstep",
-          style: e.style as any,
+          style: e.style as string,
         }));
         debouncedSave();
       }
@@ -287,7 +288,7 @@
       onpanecontextmenu={handlePaneContextMenu}
       fitView
     >
-      <Background color="var(--color-theme-border)" gap={20} />
+      <Background gap={20} />
       <Controls />
       <MiniMap />
     </SvelteFlow>
@@ -309,6 +310,8 @@
 <style>
   :global(.svelte-flow) {
     background-color: var(--theme-bg);
+    font-family: var(--font-body), ui-sans-serif;
+    transition: font-family 0.3s ease;
   }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
