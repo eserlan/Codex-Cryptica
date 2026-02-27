@@ -108,11 +108,13 @@
   <div class="flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
     <div class="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
       {#if imageUrl}
-        <div class="w-full h-32 overflow-hidden border-b border-theme-border">
+        <div
+          class="w-full h-40 overflow-hidden border-b border-theme-border bg-theme-bg/50"
+        >
           <img
             src={imageUrl}
             alt={entity?.title}
-            class="w-full h-full object-cover"
+            class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
           />
         </div>
       {/if}
