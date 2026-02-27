@@ -100,11 +100,11 @@ test.describe("Interactive Demo Mode", () => {
     await page.goto("http://localhost:5173/?demo=fantasy");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
-    // Open settings
-    await page.getByTestId("settings-button").click();
+    // Wait for demo mode to be ready
+    await expect(page.getByText("DEMO MODE")).toBeVisible();
 
-    // Click Save as Campaign
-    await page.getByRole("button", { name: "Save as Campaign" }).click();
+    // Click Save as Campaign button directly from the toolbar
+    await page.getByTestId("save-as-campaign-button").click();
 
     // Notification should appear
     await expect(page.getByText("CAMPAIGN SAVED SUCCESSFULLY")).toBeVisible();
