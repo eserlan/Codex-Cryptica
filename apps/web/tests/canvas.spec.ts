@@ -15,13 +15,12 @@ test.describe("Spatial Canvas", () => {
 
   test("should allow creating a new canvas", async ({ page }) => {
     // Handle the prompt that appears when creating a new canvas
-    page.once("dialog", async (dialog) => {
-      // Accept the dialog with a default canvas name
-      await dialog.accept("New Test Canvas");
-    });
-
-    // Click new canvas button, which should trigger the prompt
-    await page.click('[title="New Canvas"]');
+    await Promise.all([
+      page
+        .waitForEvent("dialog")
+        .then((dialog) => dialog.accept("New Test Canvas")),
+      page.click('[title="New Canvas"]'),
+    ]);
 
     // Wait for the new canvas to be active in the URL or sidebar
     await expect(page.locator("text=New Test Canvas")).toBeVisible();
