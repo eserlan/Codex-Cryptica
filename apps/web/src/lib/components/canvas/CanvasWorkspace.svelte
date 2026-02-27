@@ -220,9 +220,9 @@
       bind:nodes
       bind:edges
       {nodeTypes}
-      {onConnect}
-      onNodeDragStop={syncEngine}
-      onMoveEnd={syncEngine}
+      onconnect={onConnect}
+      onnodedragstop={syncEngine}
+      onmoveend={syncEngine}
       fitView
     >
       <Background gap={20} />
