@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
+  import { page } from "$app/state";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { PATREON_URL } from "$lib/config";
   import VaultControls from "$lib/components/VaultControls.svelte";
@@ -76,6 +77,58 @@
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+      <!-- Main Navigation -->
+      <div class="flex flex-col gap-2">
+        <h3
+          class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
+        >
+          Views
+        </h3>
+        <div class="grid grid-cols-1 gap-2">
+          <a
+            href="{base}/"
+            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page
+              .url.pathname === `${base}/`
+              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
+              : 'text-theme-text'}"
+            onclick={close}
+          >
+            <span class="icon-[lucide--share-2] w-5 h-5"></span>
+            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+              >Graph</span
+            >
+          </a>
+          <a
+            href="{base}/map"
+            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
+              `${base}/map`,
+            )
+              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
+              : 'text-theme-text'}"
+            onclick={close}
+          >
+            <span class="icon-[lucide--map] w-5 h-5"></span>
+            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+              >Map</span
+            >
+          </a>
+          <a
+            href="{base}/canvas"
+            class="flex items-center gap-3 p-3 rounded border border-theme-border hover:border-theme-primary hover:bg-theme-primary/10 transition-all group {page.url.pathname.startsWith(
+              `${base}/canvas`,
+            )
+              ? 'border-theme-primary bg-theme-primary/5 text-theme-primary'
+              : 'text-theme-text'}"
+            onclick={close}
+          >
+            <span class="icon-[lucide--layout] w-5 h-5"></span>
+            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+              >Canvas</span
+            >
+          </a>
+        </div>
+      </div>
+
       <!-- Main Controls -->
       <div class="flex flex-col gap-2">
         <h3

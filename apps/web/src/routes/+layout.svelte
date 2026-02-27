@@ -424,6 +424,16 @@
           >
             MAP
           </a>
+          <a
+            href="{base}/canvas"
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page.url.pathname.startsWith(
+              `${base}/canvas`,
+            )
+              ? 'bg-theme-primary/10 text-theme-primary'
+              : 'text-theme-muted hover:text-theme-text'}"
+          >
+            CANVAS
+          </a>
         </nav>
       </div>
 
