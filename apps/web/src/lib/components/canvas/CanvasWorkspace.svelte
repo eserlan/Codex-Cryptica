@@ -5,6 +5,7 @@
     Controls,
     MiniMap,
     useSvelteFlow,
+    addEdge,
     type Node,
     type Edge,
     type Connection,
@@ -45,6 +46,8 @@
 
   function syncEngine() {
     if (!vault.isInitialized || !canvasId) return;
+
+    // Sync nodes
     engine.nodes = nodes.map((n) => ({
       id: n.id,
       type: n.type as "entity",
@@ -53,13 +56,18 @@
       width: n.data?.width as number,
       height: n.data?.height as number,
     }));
+
+    // Sync edges
     engine.edges = edges.map((e) => ({
       id: e.id,
       source: e.source,
       target: e.target,
+      sourceHandle: e.sourceHandle || undefined,
+      targetHandle: e.targetHandle || undefined,
       label: e.label as string,
-      type: e.type || "line",
+      type: e.type || "smoothstep",
     }));
+
     debouncedSave();
   }
 
@@ -78,8 +86,10 @@
           id: e.id,
           source: e.source,
           target: e.target,
+          sourceHandle: e.sourceHandle,
+          targetHandle: e.targetHandle,
           label: e.label,
-          type: e.type,
+          type: e.type || "smoothstep",
         }));
       } else {
         nodes = [];
@@ -90,16 +100,22 @@
 
   function onConnect(connection: Connection) {
     if (connection.source && connection.target) {
-      const newEdgeId = engine.addEdge(connection.source, connection.target);
-      edges = [
-        ...edges,
-        {
-          id: newEdgeId,
-          source: connection.source,
-          target: connection.target,
-          type: "line",
-        },
-      ];
+      // Add to engine store
+      const newEdgeId = engine.addEdge(
+        connection.source,
+        connection.target,
+        connection.sourceHandle,
+        connection.targetHandle,
+      );
+
+      // Use Svelte Flow's helper to create the edge object correctly
+      const newEdge = {
+        ...connection,
+        id: newEdgeId,
+        type: "smoothstep",
+      };
+
+      edges = addEdge(newEdge, edges);
       syncEngine();
     }
   }
@@ -187,7 +203,13 @@
 <div class="flex h-screen w-full bg-theme-bg overflow-hidden relative">
   <EntityPalette />
 
-  <div class="flex-1 relative" ondragover={onDragOver} ondrop={onDrop}>
+  <div
+    class="flex-1 relative"
+    ondragover={onDragOver}
+    ondrop={onDrop}
+    role="region"
+    aria-label="Canvas Workspace"
+  >
     <SvelteFlow
       bind:nodes
       bind:edges

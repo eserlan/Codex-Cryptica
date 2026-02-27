@@ -36,7 +36,69 @@
   role="button"
   aria-label={entity?.title || "Missing Entity"}
 >
-  <Handle type="target" position={Position.Top} class="!bg-theme-primary" />
+  <!-- Top Handles -->
+  <Handle
+    type="target"
+    id="top-target"
+    position={Position.Top}
+    style="left: 30%;"
+    class="!bg-theme-primary"
+  />
+  <Handle
+    type="source"
+    id="top-source"
+    position={Position.Top}
+    style="left: 70%;"
+    class="!bg-theme-primary"
+  />
+
+  <!-- Bottom Handles -->
+  <Handle
+    type="target"
+    id="bottom-target"
+    position={Position.Bottom}
+    style="left: 30%;"
+    class="!bg-theme-primary"
+  />
+  <Handle
+    type="source"
+    id="bottom-source"
+    position={Position.Bottom}
+    style="left: 70%;"
+    class="!bg-theme-primary"
+  />
+
+  <!-- Left Handles -->
+  <Handle
+    type="target"
+    id="left-target"
+    position={Position.Left}
+    style="top: 30%;"
+    class="!bg-theme-primary"
+  />
+  <Handle
+    type="source"
+    id="left-source"
+    position={Position.Left}
+    style="top: 70%;"
+    class="!bg-theme-primary"
+  />
+
+  <!-- Right Handles -->
+  <Handle
+    type="target"
+    id="right-target"
+    position={Position.Right}
+    style="top: 30%;"
+    class="!bg-theme-primary"
+  />
+  <Handle
+    type="source"
+    id="right-source"
+    position={Position.Right}
+    style="top: 70%;"
+    class="!bg-theme-primary"
+  />
 
   <div class="flex-1 overflow-y-auto max-h-[400px] custom-scrollbar">
     {#if imageUrl}
@@ -81,14 +143,18 @@
       {/if}
     </div>
   </div>
-
-  <Handle type="source" position={Position.Bottom} class="!bg-theme-primary" />
 </div>
 
 <style>
   :global(.svelte-flow__handle) {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
+    background: var(--theme-primary);
     border: 2px solid var(--theme-surface);
+    transition: all 0.2s;
+  }
+  :global(.svelte-flow__handle:hover) {
+    transform: scale(1.4);
+    background: var(--theme-text);
   }
 </style>

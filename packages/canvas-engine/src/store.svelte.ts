@@ -51,11 +51,19 @@ export class CanvasStore {
     );
   }
 
-  addEdge(source: string, target: string, label?: string) {
+  addEdge(
+    source: string,
+    target: string,
+    sourceHandle?: string | null,
+    targetHandle?: string | null,
+    label?: string,
+  ) {
     const newEdge: CanvasEdge = {
       id: `edge-${crypto.randomUUID()}`,
       source,
       target,
+      sourceHandle: sourceHandle || undefined,
+      targetHandle: targetHandle || undefined,
       label,
       type: "line",
     };
@@ -64,8 +72,14 @@ export class CanvasStore {
   }
 
   /** Alias for addEdge to satisfy contract */
-  addLink(sourceId: string, targetId: string, label?: string) {
-    return this.addEdge(sourceId, targetId, label);
+  addLink(
+    sourceId: string,
+    targetId: string,
+    label?: string,
+    sourceHandle?: string,
+    targetHandle?: string,
+  ) {
+    return this.addEdge(sourceId, targetId, sourceHandle, targetHandle, label);
   }
 
   removeEdge(edgeId: string) {
