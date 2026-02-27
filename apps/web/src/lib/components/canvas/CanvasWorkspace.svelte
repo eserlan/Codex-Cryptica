@@ -366,11 +366,13 @@
     stroke-dasharray: 5;
     animation: svelte-flow__dashdraw 0.5s linear infinite;
   }
-  :global(.svelte-flow__edge-textbg) {
+  :global(.svelte-flow__edge-textwrapper rect),
+  :global(.svelte-flow__edge-textbg),
+  :global(.svelte-flow__edge-label rect) {
     fill: var(--color-bg-surface, #0c0c0c) !important;
     fill-opacity: 0.95 !important;
     stroke: var(--color-border-primary, var(--color-theme-primary)) !important;
-    stroke-width: 1.5 !important;
+    stroke-width: 1 !important;
     rx: 6;
     ry: 6;
   }
@@ -383,7 +385,9 @@
     font-family: var(--font-mono), monospace !important;
     transition: fill 0.2s ease;
   }
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-textbg) {
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-textwrapper rect),
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-textbg),
+  :global(.svelte-flow__edge:hover .svelte-flow__edge-label rect) {
     stroke: var(--color-theme-primary) !important;
     stroke-width: 2 !important;
     fill-opacity: 1 !important;
