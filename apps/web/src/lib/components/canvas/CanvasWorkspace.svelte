@@ -290,7 +290,7 @@
     >
       <Background gap={20} />
       <Controls />
-      <MiniMap />
+      <MiniMap position="top-right" />
     </SvelteFlow>
   </div>
 
