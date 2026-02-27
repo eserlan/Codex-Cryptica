@@ -101,8 +101,8 @@
       </div>
       <button
         class={isVertical
-          ? `${btnPrimary} py-3 text-sm justify-center`
-          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          ? `${btnPrimary} py-3 text-sm justify-center gap-2`
+          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={async () => {
           try {
             await demoService.convertToCampaign();
@@ -118,8 +118,8 @@
       </button>
       <button
         class={isVertical
-          ? `${btnGhost} py-3 text-sm justify-center`
-          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          ? `${btnGhost} py-3 text-sm justify-center gap-2`
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={() => demoService.exitDemo()}
       >
         <span class="icon-[lucide--log-out] w-3 h-3"></span>
