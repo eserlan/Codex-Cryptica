@@ -223,6 +223,7 @@
       onconnect={onConnect}
       onnodedragstop={syncEngine}
       onmoveend={syncEngine}
+      connectionMode="loose"
       fitView
     >
       <Background gap={20} />

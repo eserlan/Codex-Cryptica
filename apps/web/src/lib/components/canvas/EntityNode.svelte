@@ -36,67 +36,29 @@
   role="button"
   aria-label={entity?.title || "Missing Entity"}
 >
-  <!-- Top Handles -->
+  <!-- Omni-directional Handles (Loose Connection Mode) -->
   <Handle
-    type="target"
-    id="top-target"
+    type="source"
+    id="top"
     position={Position.Top}
-    style="left: 30%;"
     class="!bg-theme-primary"
   />
   <Handle
     type="source"
-    id="top-source"
-    position={Position.Top}
-    style="left: 70%;"
-    class="!bg-theme-primary"
-  />
-
-  <!-- Bottom Handles -->
-  <Handle
-    type="target"
-    id="bottom-target"
+    id="bottom"
     position={Position.Bottom}
-    style="left: 30%;"
     class="!bg-theme-primary"
   />
   <Handle
     type="source"
-    id="bottom-source"
-    position={Position.Bottom}
-    style="left: 70%;"
-    class="!bg-theme-primary"
-  />
-
-  <!-- Left Handles -->
-  <Handle
-    type="target"
-    id="left-target"
+    id="left"
     position={Position.Left}
-    style="top: 30%;"
     class="!bg-theme-primary"
   />
   <Handle
     type="source"
-    id="left-source"
-    position={Position.Left}
-    style="top: 70%;"
-    class="!bg-theme-primary"
-  />
-
-  <!-- Right Handles -->
-  <Handle
-    type="target"
-    id="right-target"
+    id="right"
     position={Position.Right}
-    style="top: 30%;"
-    class="!bg-theme-primary"
-  />
-  <Handle
-    type="source"
-    id="right-source"
-    position={Position.Right}
-    style="top: 70%;"
     class="!bg-theme-primary"
   />
 
