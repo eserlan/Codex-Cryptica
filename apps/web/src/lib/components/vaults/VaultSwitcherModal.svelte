@@ -20,6 +20,9 @@
       const success = await vault.loadFromFolder(handle);
       if (success) {
         onClose();
+      } else if (vault.errorMessage) {
+        // Show the create/import view where vault.errorMessage is surfaced
+        showCreate = true;
       }
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
