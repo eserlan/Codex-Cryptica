@@ -14,6 +14,15 @@ changelog:
         - feat
         - minor
         - major
+    - title: "⚡ Performance (Bolt)"
+      labels:
+        - performance
+        - perf
+    - title: "🎨 User Experience (Palette)"
+      labels:
+        - ux
+        - a11y
+        - style
     - title: "🐛 Bug Fixes"
       labels:
         - bug
@@ -25,5 +34,4 @@ changelog:
     - title: "🧹 Other Improvements"
       labels:
         - refactor
-        - performance
         - internal
