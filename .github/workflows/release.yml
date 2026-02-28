@@ -67,6 +67,10 @@ jobs:
         run: npm ci
 
       - name: Build Application
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: npm run build --workspace=web
 
       - name: Create Portable Codex Zip

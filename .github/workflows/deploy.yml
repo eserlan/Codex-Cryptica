@@ -90,7 +90,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Notify Staging
-        if: success()
+        if: success() && github.ref != 'refs/heads/main'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
         run: |
