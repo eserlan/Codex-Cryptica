@@ -36,7 +36,7 @@
           : 'opacity-30'}"
       ></div>
       <h3
-        class="font-semibold text-theme-primary uppercase tracking-wider text-sm font-header"
+        class="font-semibold text-theme-primary uppercase tracking-wider text-base font-header"
       >
         Lore Oracle (Gemini AI)
       </h3>
@@ -45,14 +45,14 @@
     {#if oracle.isEnabled}
       <button
         onclick={handleClear}
-        class="text-xs text-red-400 hover:text-red-300 uppercase tracking-tight font-header"
+        class="text-sm text-red-400 hover:text-red-300 uppercase tracking-tight font-header"
       >
         Disable & Clear Key
       </button>
     {/if}
   </div>
 
-  <p class="text-[13px] text-theme-text/80 mb-4 leading-relaxed">
+  <p class="text-sm text-theme-text/80 mb-4 leading-relaxed">
     Power your archives with Google Gemini. Choose between the <strong
       class="text-theme-primary">Lite</strong
     >
@@ -63,7 +63,7 @@
   <!-- Tier Selection -->
   <div class="mb-6 space-y-3">
     <span
-      class="text-xs text-theme-text/60 uppercase font-bold block font-header"
+      class="text-sm text-theme-text/60 uppercase font-bold block font-header"
       >Oracle Intelligence Tier</span
     >
     <div class="grid grid-cols-2 gap-3">
@@ -75,13 +75,13 @@
         onclick={() => oracle.setTier("lite")}
       >
         <span
-          class="text-xs font-bold tracking-widest uppercase font-header {oracle.tier ===
+          class="text-sm font-bold tracking-widest uppercase font-header {oracle.tier ===
           'lite'
             ? 'text-theme-primary'
             : 'text-theme-muted'}">Lite Tier</span
         >
         <span
-          class="text-[13px] {oracle.tier === 'lite'
+          class="text-sm {oracle.tier === 'lite'
             ? 'text-theme-text'
             : 'text-theme-text/40'} leading-tight"
           >Fast, efficient, and suitable for simple lore retrieval.</span
@@ -95,13 +95,13 @@
         onclick={() => oracle.setTier("advanced")}
       >
         <span
-          class="text-xs font-bold tracking-widest uppercase font-header {oracle.tier ===
+          class="text-sm font-bold tracking-widest uppercase font-header {oracle.tier ===
           'advanced'
             ? 'text-theme-accent'
             : 'text-theme-muted'}">Advanced Tier</span
         >
         <span
-          class="text-[13px] {oracle.tier === 'advanced'
+          class="text-sm {oracle.tier === 'advanced'
             ? 'text-theme-text'
             : 'text-theme-text/40'} leading-tight"
           >Superior reasoning, complex world-building, and high reliability.</span
@@ -120,7 +120,7 @@
         ></span>
         <div class="flex flex-col">
           <span
-            class="text-sm text-theme-text font-bold uppercase tracking-wider font-header"
+            class="text-base text-theme-text font-bold uppercase tracking-wider font-header"
           >
             Personal Key Active
           </span>
@@ -145,11 +145,11 @@
         </div>
         <div class="flex-1">
           <h4
-            class="text-xs font-bold text-theme-primary uppercase tracking-widest mb-1 font-header"
+            class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-1 font-header"
           >
             Shared Access Active
           </h4>
-          <p class="text-[13px] text-theme-text/80 leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             You are using the system-provided shared access for the Lite tier.
             This allows for basic Oracle consultation without a personal key.
           </p>
@@ -161,7 +161,7 @@
       <div class="flex flex-col gap-1">
         <label
           for="gemini-api-key"
-          class="text-xs text-theme-text/60 uppercase font-bold flex justify-between font-header"
+          class="text-sm text-theme-text/60 uppercase font-bold flex justify-between font-header"
         >
           <span
             >{oracle.tier === "advanced"
@@ -220,14 +220,14 @@
                 });
               });
             }}
-            class="text-[10px] text-theme-muted hover:text-theme-primary text-left uppercase tracking-tighter font-header"
+            class="text-[11px] text-theme-muted hover:text-theme-primary text-left uppercase tracking-tighter font-header"
           >
             View setup guide in Help Center
           </button>
         </div>
 
         <button
-          class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary !text-theme-bg font-bold rounded text-xs tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-theme-primary/20 font-header"
+          class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary !text-theme-bg font-bold rounded text-sm tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-theme-primary/20 font-header"
           onclick={handleSave}
           disabled={!inputKey.trim()}
         >

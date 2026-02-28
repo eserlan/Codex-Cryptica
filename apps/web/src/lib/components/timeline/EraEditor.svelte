@@ -29,7 +29,7 @@
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
     <h4
-      class="text-xs font-bold text-theme-primary uppercase tracking-[0.2em] mb-4 font-header"
+      class="text-sm font-bold text-theme-primary uppercase tracking-[0.2em] mb-4 font-header"
     >
       Define World Eras
     </h4>
@@ -37,7 +37,7 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
       <div class="md:col-span-2">
         <label
-          class="block text-xs text-theme-text/70 mb-1.5 uppercase font-bold font-header"
+          class="block text-sm text-theme-text/70 mb-1.5 uppercase font-bold font-header"
           for="era-name-input">Era Name</label
         >
         <input
@@ -46,12 +46,12 @@
           bind:value={newEraName}
           placeholder="e.g. The Age of Myth"
           data-testid="era-name-input"
-          class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border rounded px-3 py-1.5 text-sm text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
       <div>
         <label
-          class="block text-xs text-theme-text/70 mb-1.5 uppercase font-bold font-header"
+          class="block text-sm text-theme-text/70 mb-1.5 uppercase font-bold font-header"
           for="era-start-input">Start Year</label
         >
         <input
@@ -59,12 +59,12 @@
           type="number"
           bind:value={newEraStart}
           data-testid="era-start-input"
-          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-sm text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
       <div>
         <label
-          class="block text-xs text-theme-text/70 mb-1.5 uppercase font-bold font-header"
+          class="block text-sm text-theme-text/70 mb-1.5 uppercase font-bold font-header"
           for="era-end-input">End Year (Opt)</label
         >
         <input
@@ -73,7 +73,7 @@
           bind:value={newEraEnd}
           placeholder="Present"
           data-testid="era-end-input"
-          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-xs text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
+          class="w-full bg-theme-surface border border-theme-border/50 rounded px-3 py-1.5 text-sm text-theme-text outline-none focus:border-theme-primary transition-all font-mono"
         />
       </div>
     </div>
@@ -81,7 +81,7 @@
     <div class="mt-4 flex items-center gap-4">
       <div class="flex items-center gap-2">
         <label
-          class="text-xs text-theme-text/70 uppercase font-bold font-header"
+          class="text-sm text-theme-text/70 uppercase font-bold font-header"
           for="era-color-input">Color</label
         >
         <input
@@ -96,7 +96,7 @@
         onclick={handleAdd}
         disabled={!newEraName.trim()}
         data-testid="initialize-era-button"
-        class="flex-1 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-xs font-bold tracking-widest uppercase disabled:opacity-30 font-header"
+        class="flex-1 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-sm font-bold tracking-widest uppercase disabled:opacity-30 font-header"
       >
         Initialize Era
       </button>

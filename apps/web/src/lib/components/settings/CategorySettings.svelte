@@ -182,7 +182,7 @@
       <button
         onclick={handleAdd}
         disabled={!newLabel.trim()}
-        class="px-3 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded text-xs tracking-widest disabled:opacity-30 transition-all shrink-0 font-header"
+        class="px-3 py-1.5 bg-theme-primary hover:bg-theme-secondary text-theme-bg font-bold rounded text-sm tracking-widest disabled:opacity-30 transition-all shrink-0 font-header"
       >
         ADD
       </button>
@@ -223,7 +223,7 @@
     >
       <div class="flex justify-between items-center mb-4">
         <h5
-          class="text-[10px] font-bold text-theme-primary uppercase tracking-widest font-header"
+          class="text-[11px] font-bold text-theme-primary uppercase tracking-widest font-header"
         >
           Glyph Library
         </h5>

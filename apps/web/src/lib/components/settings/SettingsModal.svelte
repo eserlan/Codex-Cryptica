@@ -117,7 +117,7 @@
     >
       <div class="px-6 mb-8 hidden md:block">
         <span
-          class="text-[10px] font-mono text-theme-muted uppercase tracking-[0.3em]"
+          class="text-[11px] font-mono text-theme-muted uppercase tracking-[0.3em] font-header"
           >Configuration</span
         >
       </div>
@@ -144,7 +144,7 @@
           >
             <span class="{tab.icon} w-5 h-5"></span>
             <span
-              class="text-xs font-bold uppercase tracking-wider hidden md:block font-header"
+              class="text-sm font-bold uppercase tracking-wider hidden md:block font-header"
               >{tab.label}</span
             >
 
@@ -158,7 +158,7 @@
       </div>
 
       <div
-        class="mt-auto p-4 md:p-6 text-[9px] font-mono text-theme-muted/40 uppercase hidden md:block"
+        class="mt-auto p-4 md:p-6 text-[10px] font-mono text-theme-muted/40 uppercase hidden md:block"
       >
         Version {VERSION} // Build {CODENAME}
       </div>
@@ -207,7 +207,7 @@
           >
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
+                class="text-sm font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
               >
                 Active Archive
               </h3>
@@ -215,22 +215,22 @@
                 class="bg-theme-surface border border-theme-border p-4 rounded font-mono"
               >
                 <div
-                  class="text-[10px] text-theme-muted uppercase mb-1 font-header"
+                  class="text-[11px] text-theme-muted uppercase mb-1 font-header"
                 >
                   Status
                 </div>
-                <div class="text-xs text-theme-text mb-4">
+                <div class="text-sm text-theme-text mb-4">
                   {vault.isInitialized
                     ? "Connected to Local Archive (OPFS)"
                     : "No Vault Active"}
                 </div>
 
                 <div
-                  class="text-[10px] text-theme-muted uppercase mb-1 font-header"
+                  class="text-[11px] text-theme-muted uppercase mb-1 font-header"
                 >
                   Entity Count
                 </div>
-                <div class="text-xs text-theme-text">
+                <div class="text-sm text-theme-text">
                   {vault.allEntities.length} tracked entities
                 </div>
               </div>
@@ -251,7 +251,7 @@
             aria-labelledby="settings-tab-sync"
             class="space-y-6 max-w-3xl mx-auto"
           >
-            <p class="text-[13px] text-theme-text/70 leading-relaxed">
+            <p class="text-sm text-theme-text/70 leading-relaxed">
               Configure synchronization with external cloud storage. This allows
               you to mirror your local-first archives to Google Drive for
               multi-device access and backup.
@@ -275,10 +275,10 @@
               >
                 <div>
                   <label
-                    class="block text-xs font-bold text-theme-text uppercase cursor-pointer font-header"
+                    class="block text-sm font-bold text-theme-text uppercase cursor-pointer font-header"
                     for="lite-mode-toggle">Lite Mode (No AI)</label
                   >
-                  <p class="text-[10px] text-theme-muted">
+                  <p class="text-[11px] text-theme-muted">
                     Disable all AI-powered features (Oracle chat, image
                     generation, tag suggestions).
                   </p>
@@ -298,7 +298,7 @@
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >
-                <p class="text-[13px] text-theme-text/70 leading-relaxed">
+                <p class="text-sm text-theme-text/70 leading-relaxed">
                   Manage AI integration settings. Codex Cryptica uses Google
                   Gemini to provide context-aware reasoning, automated tagging,
                   and image generation.
@@ -309,11 +309,11 @@
 
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
+                class="text-sm font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
               >
                 World Eras
               </h3>
-              <p class="text-[13px] text-theme-text/70 leading-relaxed mb-4">
+              <p class="text-sm text-theme-text/70 leading-relaxed mb-4">
                 Define chronological boundaries for your world's history. These
                 will be visualized on the timeline graph.
               </p>
@@ -327,7 +327,7 @@
             aria-labelledby="settings-tab-schema"
             class="space-y-6 max-w-3xl mx-auto"
           >
-            <p class="text-[13px] text-theme-text/70 leading-relaxed">
+            <p class="text-sm text-theme-text/70 leading-relaxed">
               Define the ontology of your world. Custom categories allow you to
               color-code nodes and group entities by their role in your
               narrative.
@@ -339,11 +339,11 @@
             </div>
 
             <h3
-              class="text-xs font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest font-header"
+              class="text-sm font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest font-header"
             >
               Campaign Labels
             </h3>
-            <p class="text-[13px] text-theme-text/70 mb-4 leading-relaxed">
+            <p class="text-sm text-theme-text/70 mb-4 leading-relaxed">
               Manage the custom tags used across your entities. Renaming a label
               here will update all tagged files project-wide.
             </p>
@@ -368,10 +368,10 @@
                 <div class="flex items-center justify-between pb-4">
                   <div>
                     <span
-                      class="block text-xs font-bold text-theme-text uppercase font-header"
+                      class="block text-sm font-bold text-theme-text uppercase font-header"
                       >Skip Welcome Screen</span
                     >
-                    <p class="text-[10px] text-theme-muted">
+                    <p class="text-[11px] text-theme-muted">
                       Hide the marketing landing page on startup even when no
                       vault is initialized.
                     </p>
@@ -388,7 +388,7 @@
             </section>
 
             <section>
-              <p class="text-[13px] text-theme-text/70 leading-relaxed">
+              <p class="text-sm text-theme-text/70 leading-relaxed">
                 Shift the visual dimension of your workspace. Zen Templates
                 redefine the interface aesthetic to match your world's genre.
               </p>
@@ -402,7 +402,7 @@
             aria-labelledby="settings-tab-help"
             class="space-y-6 max-w-3xl mx-auto"
           >
-            <p class="text-[13px] text-theme-text/70 leading-relaxed">
+            <p class="text-sm text-theme-text/70 leading-relaxed">
               Access system documentation and interactive guides to master the
               art of lore management.
             </p>
@@ -417,11 +417,11 @@
           >
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
+                class="text-sm font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
               >
                 Manifest
               </h3>
-              <div class="grid grid-cols-2 gap-4 font-mono text-[10px]">
+              <div class="grid grid-cols-2 gap-4 font-mono text-[11px]">
                 <div>
                   <div class="text-theme-muted uppercase mb-1 font-header">
                     Software
@@ -459,7 +459,7 @@
 
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
+                class="text-sm font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
               >
                 Legal Compliance
               </h3>
@@ -471,7 +471,7 @@
                   class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                 >
                   <span
-                    class="text-xs text-theme-text uppercase tracking-widest font-bold font-header"
+                    class="text-sm text-theme-text uppercase tracking-widest font-bold font-header"
                     >Privacy Policy</span
                   >
                   <span
@@ -485,7 +485,7 @@
                   class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                 >
                   <span
-                    class="text-xs text-theme-text uppercase tracking-widest font-bold font-header"
+                    class="text-sm text-theme-text uppercase tracking-widest font-bold font-header"
                     >Terms of Service</span
                   >
                   <span
