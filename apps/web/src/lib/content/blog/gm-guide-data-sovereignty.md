@@ -31,13 +31,17 @@ Most modern campaign managers are "Cloud-First." Your notes live on their server
 
 **Local-First** flips the script.
 
-- **Ownership**: Your data lives in your browser's **Origin Private File System (OPFS)**.
+![Secured Local Vault](/vault-samples/images/modern-hq.png)
+
+- **Absolute Ownership**: Your data lives in your browser's **Origin Private File System (OPFS)**.
 - **Offline Ready**: You can prep in a basement or a plane without an internet connection.
-- **Speed**: There is zero latency. No waiting for a server to "save" your map pin; it’s instantaneous.
+- **Speed**: There is zero latency. No waiting for a server to \"save\" your map pin; it’s instantaneous.
 
 ## **2\. Setting Up Your Tactical Command Center**
 
 To get started with Codex Cryptica, you don't need an account. You just need a vision.
+
+![Tactical Command Center](/vault-samples/images/wasteland-fort.png)
 
 ### **Step A: Initialize the Vault**
 

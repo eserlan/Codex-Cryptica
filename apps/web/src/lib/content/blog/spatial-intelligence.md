@@ -31,6 +31,8 @@ Here is how these three views work together to give you a "Spatial Intelligence"
 
 In Map Mode, you aren't just looking at an image; you’re interacting with a map that "knows" your notes. Whether it’s a galaxy map or a tavern floor plan, Codex treats it as a living canvas.
 
+![Tactical Map Interface](/vault-samples/images/fantasy-tavern.png)
+
 - **Persistent Pins**: Every pin you drop is a direct portal to an NPC, location, or item.
 - **Fog of War**: Keep the mystery alive. Use the Alt + Drag brush to reveal the map only when your players actually explore an area.
 - **Deep Diving**: You can attach sub-maps to entities. Click a "City" pin to dive into a street-level map, then click a "Tavern" pin to see the floor plan.
@@ -39,9 +41,12 @@ In Map Mode, you aren't just looking at an image; you’re interacting with a ma
 
 The Graph View reveals the "connective tissue" of your campaign. It ignores geography to focus on the logical web of your story.
 
+![Relational Lore Graph](/vault-samples/images/cyberpunk-city.png)
+
 - **Automatic Linking**: You don't have to draw lines manually. Every time you mention an NPC in your notes, Codex automatically draws a connection on the graph.
-- **Smart Layouts**: Powered by **Cytoscape** (a high-end data engine), your notes snap into place, helping you spot secret alliances or "orphan" plot points you might have forgotten.
-- **Time Travel**: Use the timeline slider at the bottom to watch the graph grow as your campaign's history unfolds.
+
+* **Smart Layouts**: Powered by **Cytoscape** (a high-end data engine), your notes snap into place, helping you spot secret alliances or "orphan" plot points you might have forgotten.
+* **Time Travel**: Use the timeline slider at the bottom to watch the graph grow as your campaign's history unfolds.
 
 ## **3\. The Freeform Canvas: Your Tactical \"Murder Board\"**
 
