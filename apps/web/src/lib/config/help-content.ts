@@ -221,6 +221,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.",
     icon: "icon-[lucide--layout-dashboard]",
   },
+  "the-archive": {
+    id: "the-archive",
+    title: "The Archive",
+    content:
+      "Visit our blog for deep dives into data sovereignty and tactical world-building guides.",
+    icon: "icon-[lucide--archive]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

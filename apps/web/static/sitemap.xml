@@ -6,6 +6,16 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/blog</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/gm-guide-data-sovereignty</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/features</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>

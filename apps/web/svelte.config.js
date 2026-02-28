@@ -11,7 +11,7 @@ const config = {
       strict: false,
     }),
     prerender: {
-      entries: ["/", "/features", "/terms", "/privacy"],
+      entries: ["/", "/features", "/terms", "/privacy", "/blog"],
       handleHttpError: ({ path, message }) => {
         // llms.txt is a static file served at the domain root; ignore 404s
         // that arise when prerendering under a non-root base path (e.g. /staging).
