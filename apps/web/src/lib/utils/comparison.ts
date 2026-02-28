@@ -32,6 +32,13 @@ export function isEntityMetadataEqual(a: any, b: any): boolean {
   const bIsObject = typeof b === "object" && b !== null;
 
   if (aIsObject && bIsObject) {
+    // Handle Date objects explicitly: Object.keys(new Date()) === [] so two
+    // distinct Date instances would otherwise always compare as equal.
+    if (a instanceof Date || b instanceof Date) {
+      if (!(a instanceof Date) || !(b instanceof Date)) return false;
+      return a.getTime() === b.getTime();
+    }
+
     if (Array.isArray(a) || Array.isArray(b)) {
       if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length)
         return false;

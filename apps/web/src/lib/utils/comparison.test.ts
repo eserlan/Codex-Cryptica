@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isTemporalMetadataEqual } from "./comparison";
+import { isTemporalMetadataEqual, isEntityMetadataEqual } from "./comparison";
 import type { TemporalMetadata } from "schema";
 
 describe("isTemporalMetadataEqual", () => {
@@ -59,5 +59,59 @@ describe("isTemporalMetadataEqual", () => {
 
     expect(isTemporalMetadataEqual(a, b)).toBe(true);
     expect(isTemporalMetadataEqual(a, c)).toBe(false);
+  });
+});
+
+describe("isEntityMetadataEqual", () => {
+  it("should return true for identical references", () => {
+    const obj = { x: 1 };
+    expect(isEntityMetadataEqual(obj, obj)).toBe(true);
+  });
+
+  it("should return false when one side is null/undefined", () => {
+    expect(isEntityMetadataEqual(null, { x: 1 })).toBe(false);
+    expect(isEntityMetadataEqual({ x: 1 }, undefined)).toBe(false);
+    expect(isEntityMetadataEqual(null, null)).toBe(true);
+  });
+
+  it("should return true for deeply equal plain objects", () => {
+    expect(
+      isEntityMetadataEqual({ a: 1, b: { c: 2 } }, { a: 1, b: { c: 2 } }),
+    ).toBe(true);
+  });
+
+  it("should return false for plain objects with different values", () => {
+    expect(isEntityMetadataEqual({ a: 1 }, { a: 2 })).toBe(false);
+    expect(isEntityMetadataEqual({ a: 1 }, { a: 1, b: 2 })).toBe(false);
+  });
+
+  it("should return true for equal arrays", () => {
+    expect(isEntityMetadataEqual([1, 2, 3], [1, 2, 3])).toBe(true);
+  });
+
+  it("should return false for arrays of different length or values", () => {
+    expect(isEntityMetadataEqual([1, 2], [1, 2, 3])).toBe(false);
+    expect(isEntityMetadataEqual([1, 2], [1, 3])).toBe(false);
+  });
+
+  it("should correctly compare two equal Date instances", () => {
+    const d1 = new Date("2024-01-01");
+    const d2 = new Date("2024-01-01");
+    expect(isEntityMetadataEqual(d1, d2)).toBe(true);
+  });
+
+  it("should correctly identify two different Date instances as not equal", () => {
+    const d1 = new Date("2024-01-01");
+    const d2 = new Date("2025-06-15");
+    expect(isEntityMetadataEqual(d1, d2)).toBe(false);
+  });
+
+  it("should return false when one side is a Date and the other is not", () => {
+    expect(
+      isEntityMetadataEqual(new Date("2024-01-01"), { getTime: () => 0 }),
+    ).toBe(false);
+    expect(isEntityMetadataEqual("2024-01-01", new Date("2024-01-01"))).toBe(
+      false,
+    );
   });
 });
