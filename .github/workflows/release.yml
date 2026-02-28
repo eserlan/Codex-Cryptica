@@ -22,9 +22,13 @@ jobs:
       - name: Check if version changed and is major/minor
         id: check
         run: |
-          # Get current and previous versions
+          # Get current version
           NEW_VERSION=$(jq -r .version apps/web/package.json)
-          OLD_VERSION=$(git show HEAD~1:apps/web/package.json | jq -r .version)
+          
+          # More robustly find the previous version by looking for the last commit NOT from the bot
+          # We skip the current commit (which is the bump) and look at the previous state
+          PREV_SHA=$(git rev-list -n 1 --skip=1 HEAD)
+          OLD_VERSION=$(git show $PREV_SHA:apps/web/package.json | jq -r .version)
           
           echo "Current version: $NEW_VERSION"
           echo "Previous version: $OLD_VERSION"
@@ -66,6 +70,10 @@ jobs:
 
       - name: Create Portable Codex Zip
         run: |
+          if [ ! -d "apps/web/build" ]; then
+            echo "Error: Build directory apps/web/build not found."
+            exit 1
+          fi
           cd apps/web/build
           zip -r ../../../codex-cryptica-${{ needs.check-version.outputs.version }}.zip .
           cd ../../..
