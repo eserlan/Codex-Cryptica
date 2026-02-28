@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, "**"]
+    branches: ["**", "!main"]
   workflow_dispatch:
 
 concurrency:
@@ -97,7 +97,7 @@ jobs:
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
 
       - name: Notify Production
-        if: success() && github.ref == 'refs/heads/main'
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
