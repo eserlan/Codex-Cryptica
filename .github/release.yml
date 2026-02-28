@@ -1,0 +1,37 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - dependencies
+      - chore
+      - github_actions
+    authors:
+      - github-actions[bot]
+  categories:
+    - title: "✨ New Features"
+      labels:
+        - enhancement
+        - feat
+        - minor
+        - major
+    - title: "⚡ Performance (Bolt)"
+      labels:
+        - performance
+        - perf
+    - title: "🎨 User Experience (Palette)"
+      labels:
+        - ux
+        - a11y
+        - style
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+        - fix
+    - title: "📚 Documentation"
+      labels:
+        - documentation
+        - docs
+    - title: "🧹 Other Improvements"
+      labels:
+        - refactor
+        - internal

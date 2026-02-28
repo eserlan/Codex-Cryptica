@@ -2,10 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, "**"]
-  workflow_run:
-    workflows: ["Auto Bump Web Version After Merge"]
-    types: [completed]
+    branches: ["**", "!main"]
   workflow_dispatch:
 
 concurrency:
@@ -20,8 +17,6 @@ permissions:
 
 jobs:
   build:
-    # If triggered by workflow_run, only run if the bump was successful
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -95,14 +90,14 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Notify Staging
-        if: success()
+        if: success() && github.ref != 'refs/heads/main'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
         run: |
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
 
       - name: Notify Production
-        if: success() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_run')
+        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |

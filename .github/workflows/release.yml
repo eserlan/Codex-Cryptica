@@ -1,10 +1,6 @@
 name: Create GitHub Release
 
 on:
-  workflow_run:
-    workflows: ["Auto Bump Web Version After Merge"]
-    types:
-      - completed
   workflow_dispatch:
 
 permissions:
@@ -12,8 +8,6 @@ permissions:
 
 jobs:
   check-version:
-    # Only run if the triggering workflow succeeded (for workflow_run), but allow manual and other triggers
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
@@ -73,6 +67,10 @@ jobs:
         run: npm ci
 
       - name: Build Application
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: npm run build --workspace=web
 
       - name: Create Portable Codex Zip
@@ -91,15 +89,13 @@ jobs:
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: Codex Cryptica v${{ needs.check-version.outputs.version }}
+          generate_release_notes: true
           body: |
-            ## Codex Cryptica v${{ needs.check-version.outputs.version }}
+            ## 📦 Portable Codex
             
-            This release marks a significant update to the Codex.
+            Download the `.zip` below for maximum data sovereignty. Extract and serve locally to run Codex Cryptica entirely offline.
             
-            ### Artifacts
-            - **codex-cryptica-${{ needs.check-version.outputs.version }}.zip**: A standalone, portable version of the app. Download, extract, and serve locally for maximum data sovereignty.
-            
-            [Full Changelog](https://github.com/${{ github.repository }}/compare/${{ needs.check-version.outputs.before_sha }}...v${{ needs.check-version.outputs.version }})
+            ---
           draft: false
           prerelease: false
           files: codex-cryptica-${{ needs.check-version.outputs.version }}.zip
