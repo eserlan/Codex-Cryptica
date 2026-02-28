@@ -5,7 +5,6 @@
   "description_for_model": "A local-first, privacy-centric campaign manager for RPG world-building. Specializes in knowledge graphs, tactical maps, and timeline management.",
   "description_for_human": "Secure your lore with a local-first vault for your RPG campaigns.",
   "auth": { "type": "none" },
-  "api": { "type": "openapi", "url": "https://codexcryptica.com/openapi.json" },
   "logo_url": "https://codexcryptica.com/logo.png",
   "contact_email": "espen.erlandsen@gmail.com"
 }
