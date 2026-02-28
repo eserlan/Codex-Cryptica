@@ -90,12 +90,21 @@ test.describe("Blog", () => {
       'The Freeform Canvas: Your Tactical "Murder Board"',
     );
 
-    // Check cross-link
-    const crossLink = page.getByRole("link", {
+    // Check cross-links
+    const patreonLink = page.getByRole("link", {
+      name: "original showcase on Patreon",
+    });
+    await expect(patreonLink).toBeVisible();
+    await expect(patreonLink).toHaveAttribute(
+      "href",
+      "https://www.patreon.com/posts/showcase-see-151579891",
+    );
+
+    const sovereigntyLink = page.getByRole("link", {
       name: "Guide to Data Sovereignty",
     });
-    await expect(crossLink).toBeVisible();
-    await expect(crossLink).toHaveAttribute(
+    await expect(sovereigntyLink).toBeVisible();
+    await expect(sovereigntyLink).toHaveAttribute(
       "href",
       /gm-guide-data-sovereignty$/,
     );
