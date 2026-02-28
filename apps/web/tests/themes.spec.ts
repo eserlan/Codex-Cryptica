@@ -31,13 +31,13 @@ test.describe("Visual Styling Templates", () => {
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
 
-    // 5. Verify typography overhaul (Cinzel header font)
+    // 5. Verify typography overhaul (IM Fell English header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-header")
         .trim(),
     );
-    expect(fontHeader).toContain("Cinzel");
+    expect(fontHeader).toContain("IM Fell English");
 
     // 6. Verify texture integration
     const textureOverlay = await page.evaluate(() =>
@@ -188,5 +188,34 @@ test.describe("Visual Styling Templates", () => {
       "--color-accent-primary",
       "#f472b6",
     );
+  });
+
+  test("LegalDocument uses theme-aware styling", async ({ page }) => {
+    // 1. Switch to Fantasy theme
+    await page.getByTestId("settings-button").click();
+    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("button", { name: "Ancient Parchment" }).click();
+    await page.getByLabel("Close Settings").click();
+
+    // 2. Navigate to privacy page
+    await page.goto("/privacy");
+
+    // 3. Verify header uses theme font
+    const h1 = page.locator(".legal-content h1");
+    const h1Font = await h1.evaluate((el) =>
+      getComputedStyle(el).fontFamily.trim(),
+    );
+    const themeHeaderFont = await page.evaluate(() =>
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--font-header")
+        .trim(),
+    );
+
+    // We expect the rendered font to contain the theme header font name
+    // font-family strings can be complex and use different quotes, so we normalize
+    const normalizedH1Font = h1Font.replace(/['"]/g, "");
+    const normalizedThemeFont = themeHeaderFont.replace(/['"]/g, "");
+
+    expect(normalizedH1Font).toContain(normalizedThemeFont);
   });
 });

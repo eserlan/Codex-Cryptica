@@ -95,13 +95,14 @@
           href="{base}/"
           class="px-8 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded hover:bg-theme-primary/90 transition-all active:scale-95 shadow-[0_0_30px_rgba(var(--color-primary-rgb),0.3)]"
         >
-          Initiate Surveillance
+          Enter the Codex
         </a>
       </div>
     </footer>
   </div>
 </div>
 
+<!-- svelte-ignore css-unknown-at-rule -->
 <style>
   @reference "../../../../app.css";
 </style>

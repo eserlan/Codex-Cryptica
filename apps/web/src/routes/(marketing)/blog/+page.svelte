@@ -82,6 +82,7 @@
   </div>
 </div>
 
+<!-- svelte-ignore css-unknown-at-rule -->
 <style>
   @reference "../../../app.css";
 </style>

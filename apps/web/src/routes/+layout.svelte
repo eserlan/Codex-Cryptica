@@ -549,6 +549,11 @@
           class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
           >Features</a
         >
+        <a
+          href="{base}/blog"
+          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          >Blog</a
+        >
         <button
           onclick={() => uiStore.openSettings("help")}
           class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest cursor-pointer"

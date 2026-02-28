@@ -59,12 +59,22 @@
     </a>
   </div>
 
-  <div class="legal-content font-mono text-theme-text/90">
+  <div class="legal-content font-body text-theme-text/90">
     {@html content}
   </div>
 </div>
 
 <style>
+  .legal-content {
+    font-family: var(--font-body, ui-sans-serif);
+  }
+
+  .legal-content :global(h1),
+  .legal-content :global(h2),
+  .legal-content :global(h3) {
+    font-family: var(--font-header, ui-sans-serif);
+  }
+
   .legal-content :global(h1) {
     font-size: 1.75rem;
     font-weight: 900;
@@ -77,6 +87,7 @@
   }
 
   .legal-content :global(h2) {
+    font-family: var(--theme-font-header, ui-sans-serif);
     font-size: 1.5rem;
     font-weight: 900;
     text-transform: uppercase;
@@ -89,6 +100,7 @@
   }
 
   .legal-content :global(h3) {
+    font-family: var(--theme-font-header, ui-sans-serif);
     font-size: 1.125rem;
     font-weight: 800;
     text-transform: uppercase;

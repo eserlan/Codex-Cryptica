@@ -18,7 +18,7 @@ test.describe("Help Onboarding Walkthrough", () => {
     await page.reload();
 
     // Dismiss landing page if present and wait for state to update
-    const enterButton = page.getByRole("button", { name: "Enter Workspace" });
+    const enterButton = page.getByRole("button", { name: "Enter the Codex" });
     await expect(enterButton).toBeVisible({ timeout: 15000 });
 
     await expect(async () => {
