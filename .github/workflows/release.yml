@@ -100,6 +100,6 @@ jobs:
       - name: Notify Release
         if: success()
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_RELEASE }}
         run: |
           ./scripts/discord-deploy.sh "release" "$DISCORD_WEBHOOK_URL" "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.check-version.outputs.version }}"
