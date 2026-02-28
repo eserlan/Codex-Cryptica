@@ -375,7 +375,7 @@
   />
 </svelte:head>
 
-<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-sans">
+<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-body">
   <!-- Notifications -->
   {#if uiStore.notification}
     <div
@@ -402,7 +402,8 @@
         class="icon-[lucide--alert-circle] w-5 h-5"
         class:hidden={uiStore.notification.type !== "error"}
       ></span>
-      <span class="font-mono text-xs font-bold tracking-widest uppercase"
+      <span
+        class="font-mono text-xs font-bold tracking-widest uppercase font-header"
         >{uiStore.notification.message}</span
       >
     </div>
@@ -648,6 +649,6 @@
 
 <style>
   .app-layout {
-    font-family: var(--theme-font-sans, ui-sans-serif);
+    font-family: var(--theme-font-body, ui-sans-serif);
   }
 </style>

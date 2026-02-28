@@ -129,8 +129,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       text: "#2d241e", // Inked Text
       border: "rgba(120, 53, 15, 0.3)",
       accent: "#991b1b", // Dried Blood / Crimson
-      fontHeader: "'Cinzel', serif",
-      fontBody: "'Spectral', serif",
+      fontHeader: "'IM Fell English', serif",
+      fontBody: "'IM Fell English', serif",
       texture: "parchment.svg",
     },
     graph: {
@@ -277,7 +277,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       border: "rgba(220, 38, 38, 0.3)",
       accent: "#991b1b", // Crimson (Deep accent)
       fontHeader: "'Spectral', serif",
-      fontBody: "'Inter', sans-serif",
+      fontBody: "'Spectral', serif",
       texture: "blood.svg",
     },
     graph: {

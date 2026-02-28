@@ -84,13 +84,13 @@
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h4
-          class="text-[10px] font-bold text-theme-muted uppercase tracking-widest"
+          class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-widest"
         >
           Linked Sub-Map
         </h4>
         <div class="flex items-center gap-3">
           <button
-            class="text-[10px] font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase tracking-widest flex items-center gap-1.5"
+            class="text-[10px] font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={handleDeleteMap}
             title="Delete this map"
           >
@@ -101,7 +101,7 @@
           <div class="w-px h-3 bg-theme-border"></div>
 
           <button
-            class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase tracking-widest flex items-center gap-1.5"
+            class="text-[10px] font-bold text-theme-primary hover:text-theme-text transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={() => {
               mapStore.selectMap(linkedMap!.id, true);
               uiStore.closeZenMode();
@@ -135,7 +135,7 @@
           }}
         >
           <span
-            class="px-4 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase tracking-widest shadow-xl"
+            class="px-4 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase font-header tracking-widest shadow-xl"
           >
             Enter Location
           </span>
@@ -158,7 +158,7 @@
         <span class="icon-[lucide--map-pin] text-theme-primary w-6 h-6"></span>
       </div>
       <h4
-        class="text-xs font-bold text-theme-text mb-2 uppercase tracking-tight"
+        class="text-xs font-bold text-theme-text mb-2 uppercase font-header tracking-tight"
       >
         No map attached
       </h4>
@@ -169,7 +169,7 @@
       </p>
 
       <label
-        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-[10px] font-bold rounded uppercase tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95"
+        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-[10px] font-bold rounded uppercase font-header tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95"
       >
         Upload Map
         <input

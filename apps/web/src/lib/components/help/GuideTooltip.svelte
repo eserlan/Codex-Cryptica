@@ -93,7 +93,7 @@
     class="px-4 py-3 border-b border-theme-border/30 flex justify-between items-center bg-theme-primary/5"
   >
     <span
-      class="text-[10px] text-theme-primary font-bold tracking-[0.2em] uppercase"
+      class="text-[10px] text-theme-primary font-bold tracking-[0.2em] uppercase font-header"
     >
       Guide {current} of {total}
     </span>
@@ -110,7 +110,7 @@
   <!-- Content -->
   <div class="p-5">
     <h3
-      class="text-theme-primary text-sm font-bold mb-2 uppercase tracking-wider"
+      class="text-theme-primary text-sm font-bold mb-2 uppercase font-header tracking-wider"
     >
       {step.title}
     </h3>
@@ -127,7 +127,7 @@
   >
     <button
       onclick={() => helpStore.skipTour()}
-      class="text-[10px] text-theme-muted hover:text-theme-primary uppercase font-bold tracking-widest transition-colors"
+      class="text-[10px] text-theme-muted hover:text-theme-primary uppercase font-bold font-header tracking-widest transition-colors"
       aria-label="Dismiss tour"
     >
       Dismiss
@@ -137,7 +137,7 @@
       {#if current > 1}
         <button
           onclick={() => helpStore.prevStep()}
-          class="px-3 py-1 border border-theme-border/50 text-theme-primary hover:bg-theme-primary/10 text-[10px] uppercase font-bold transition-all"
+          class="px-3 py-1 border border-theme-border/50 text-theme-primary hover:bg-theme-primary/10 text-[10px] uppercase font-bold font-header transition-all"
           aria-label="Go to previous step"
         >
           Back
@@ -145,7 +145,7 @@
       {/if}
       <button
         onclick={() => helpStore.nextStep()}
-        class="px-4 py-1 bg-theme-primary hover:bg-theme-secondary text-theme-bg text-[10px] uppercase font-bold transition-all"
+        class="px-4 py-1 bg-theme-primary hover:bg-theme-secondary text-theme-bg text-[10px] uppercase font-bold font-header transition-all"
         aria-label={isLast ? "Finish tour" : "Go to next step"}
       >
         {isLast ? "Finish" : "Next"}

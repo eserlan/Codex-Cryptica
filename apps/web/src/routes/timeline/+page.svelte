@@ -22,7 +22,7 @@
     <div class="flex items-center gap-3">
       <span class="icon-[lucide--calendar] text-green-500 w-6 h-6"></span>
       <h2
-        class="text-xl font-bold text-gray-100 font-mono tracking-wider uppercase"
+        class="text-xl font-bold text-gray-100 font-mono tracking-wider uppercase font-header"
       >
         World Timeline
       </h2>
@@ -58,7 +58,9 @@
         class="h-full flex flex-col items-center justify-center text-center p-8 space-y-4"
       >
         <span class="icon-[lucide--history] w-16 h-16 text-zinc-800"></span>
-        <h3 class="text-zinc-500 font-bold uppercase tracking-widest">
+        <h3
+          class="text-zinc-500 font-bold uppercase font-header tracking-widest"
+        >
           No Chronological Data
         </h3>
         <p class="text-xs text-zinc-600 max-w-sm leading-relaxed">

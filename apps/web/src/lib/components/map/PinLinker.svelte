@@ -35,7 +35,7 @@
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg/20"
     >
       <h3
-        class="text-sm font-bold text-theme-text uppercase tracking-widest font-mono"
+        class="text-sm font-bold text-theme-text uppercase font-header tracking-widest font-mono"
       >
         Link Lore Pin
       </h3>
@@ -93,7 +93,7 @@
 
     <footer class="p-4 bg-theme-bg/10 flex justify-end gap-3">
       <button
-        class="px-4 py-2 text-xs font-bold text-theme-muted hover:text-theme-text transition-colors uppercase tracking-widest"
+        class="px-4 py-2 text-xs font-bold text-theme-muted hover:text-theme-text transition-colors uppercase font-header tracking-widest"
         onclick={onCancel}
       >
         Skip Linking

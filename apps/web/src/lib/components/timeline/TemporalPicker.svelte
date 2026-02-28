@@ -242,7 +242,7 @@
   role="dialog"
   aria-modal="true"
   aria-label="Date Picker"
-  class="fixed z-[1000] w-[90vw] max-w-sm md:w-80 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-sans outline-none"
+  class="fixed z-[1000] w-[90vw] max-w-sm md:w-80 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-body outline-none"
   style:left="{x}px"
   style:top="{y}px"
   tabindex="0"
@@ -256,7 +256,7 @@
       aria-selected={activeTab === "era"}
       aria-controls="era-panel"
       id="era-tab"
-      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {activeTab ===
+      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
       'era'
         ? 'text-theme-primary bg-theme-primary/10'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -269,7 +269,7 @@
       aria-selected={activeTab === "manual"}
       aria-controls="manual-panel"
       id="manual-tab"
-      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors {activeTab ===
+      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-colors {activeTab ===
       'manual'
         ? 'text-theme-primary bg-theme-primary/10'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -330,7 +330,7 @@
         >
           {#each ["year", "month", "day"] as p}
             <button
-              class="flex-1 py-1 text-[9px] font-bold uppercase tracking-tighter transition-all rounded {precision ===
+              class="flex-1 py-1 text-[9px] font-bold uppercase font-header tracking-tighter transition-all rounded {precision ===
               p
                 ? 'bg-theme-primary text-theme-bg shadow-sm'
                 : 'text-theme-muted hover:text-theme-text'}"
@@ -355,7 +355,7 @@
             <button
               onclick={zoomOut}
               disabled={isManualYearEntry}
-              class="text-[10px] font-bold text-theme-text uppercase tracking-widest hover:text-theme-primary transition-colors disabled:pointer-events-none"
+              class="text-[10px] font-bold text-theme-text uppercase font-header tracking-widest hover:text-theme-primary transition-colors disabled:pointer-events-none"
             >
               {isManualYearEntry ? "Manual Entry" : viewTitle}
             </button>
@@ -384,7 +384,7 @@
             <div transition:fade class="space-y-1">
               <label
                 for="manual-year-input"
-                class="text-[9px] font-bold text-theme-muted uppercase tracking-widest"
+                class="text-[9px] font-bold text-theme-muted uppercase font-header tracking-widest"
                 >Year</label
               >
               <input
@@ -415,14 +415,14 @@
           {#if isYearOutOfRange}
             <div
               transition:slide
-              class="text-[8px] text-red-500 font-bold uppercase text-center py-1 bg-red-500/5 rounded border border-red-500/20"
+              class="text-[8px] text-red-500 font-bold uppercase font-header text-center py-1 bg-red-500/5 rounded border border-red-500/20"
             >
               Year {selectedYear} is outside {selectedEra?.name}
             </div>
           {:else if selectedEra}
             <div
               transition:slide
-              class="text-[8px] text-theme-primary/70 font-bold uppercase flex items-center justify-center gap-1 py-1"
+              class="text-[8px] text-theme-primary/70 font-bold uppercase font-header flex items-center justify-center gap-1 py-1"
             >
               <span class="w-1 h-1 rounded-full bg-theme-primary animate-pulse"
               ></span>
@@ -435,7 +435,7 @@
           <!-- Month Selection -->
           <div class="space-y-1" transition:fade>
             <label
-              class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
+              class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-wider"
               for="picker-month">Month</label
             >
             <select
@@ -460,7 +460,7 @@
           <!-- Day Selection -->
           <div class="space-y-1" transition:fade>
             <label
-              class="text-[10px] font-bold text-theme-muted uppercase tracking-wider"
+              class="text-[10px] font-bold text-theme-muted uppercase font-header tracking-wider"
               for="picker-day">Day</label
             >
             <input
@@ -484,13 +484,13 @@
     class="p-3 border-t border-theme-border flex gap-2 bg-theme-bg/30 shrink-0"
   >
     <button
-      class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
+      class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest border border-theme-border text-theme-muted hover:text-theme-text transition-colors rounded"
       onclick={onClose}
     >
       Cancel
     </button>
     <button
-      class="flex-1 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
+      class="flex-1 py-1.5 text-[10px] font-bold uppercase font-header tracking-widest bg-theme-primary text-theme-bg hover:bg-theme-secondary transition-colors rounded"
       data-testid="apply-date-button"
       onclick={save}
     >

@@ -27,7 +27,7 @@ test.describe("Lite Mode (No AI)", () => {
 
     // 2. Open Settings and Toggle Lite Mode
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: /Intelligence/i }).click();
+    await page.getByRole("tab", { name: /^AI$/i }).click();
 
     const liteModeToggle = page.getByLabel(/Lite Mode \(No AI\)/i);
     await expect(liteModeToggle).toBeVisible();
@@ -78,7 +78,7 @@ test.describe("Lite Mode (No AI)", () => {
   test("Restricted Oracle supports /help command", async ({ page }) => {
     // 1. Enable Lite Mode
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: /Intelligence/i }).click();
+    await page.getByRole("tab", { name: /^AI$/i }).click();
     await page.getByLabel(/Lite Mode \(No AI\)/i).check();
     await page.getByLabel("Close Settings").click();
 
@@ -112,7 +112,7 @@ test.describe("Lite Mode (No AI)", () => {
   test("Lite Mode persists across reloads", async ({ page }) => {
     // 1. Enable Lite Mode
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: /Intelligence/i }).click();
+    await page.getByRole("tab", { name: /^AI$/i }).click();
     await page.getByLabel(/Lite Mode \(No AI\)/i).check();
     await page.getByLabel("Close Settings").click();
 
@@ -122,7 +122,7 @@ test.describe("Lite Mode (No AI)", () => {
 
     // 3. Verify it's still ON
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: /Intelligence/i }).click();
+    await page.getByRole("tab", { name: /^AI$/i }).click();
     await expect(page.getByLabel(/Lite Mode \(No AI\)/i)).toBeChecked();
   });
 });

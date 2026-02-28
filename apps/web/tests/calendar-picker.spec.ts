@@ -41,7 +41,9 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
 
   // If panel doesn't appear, try force click slightly offset (sometimes edge of node issues?)
   try {
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+      timeout: 2000,
+    });
   } catch {
     console.log("Retry clicking node...");
     await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
@@ -108,7 +110,7 @@ test.describe("Campaign Date Picker E2E", () => {
     // Wait for modal
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
-    await page.getByRole("tab", { name: "Intelligence" }).click();
+    await page.getByRole("tab", { name: "AI" }).click();
     await page.getByTestId("era-name-input").fill("Age of Myth");
     await page.getByTestId("era-start-input").fill("1000");
     await page.getByTestId("initialize-era-button").click();

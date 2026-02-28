@@ -48,7 +48,7 @@
     </button>
 
     <h2
-      class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase flex items-center gap-2"
+      class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
       <span class="icon-[lucide--share-2] w-5 h-5"></span>
       Share Campaign
@@ -76,7 +76,7 @@
         <div class="space-y-4">
           <div class="space-y-2">
             <label
-              class="text-[10px] uppercase text-cyan-600 font-bold tracking-widest"
+              class="text-[10px] uppercase text-cyan-600 font-bold font-header tracking-widest"
               for="p2p-link-input">Active Live Session</label
             >
             <div class="flex gap-2">
@@ -116,7 +116,7 @@
         </div>
 
         <button
-          class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-black rounded text-sm font-bold tracking-widest uppercase transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
+          class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-black rounded text-sm font-bold tracking-widest uppercase font-header transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
           onclick={handleP2PStart}
           disabled={p2pLoading}
         >

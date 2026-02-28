@@ -84,7 +84,7 @@
   {#if timelineStore.filterType || startYear !== null || endYear !== null || timelineStore.includeUndated}
     <button
       onclick={clearFilters}
-      class="text-red-700 hover:text-red-500 uppercase tracking-widest transition-colors font-bold"
+      class="text-red-700 hover:text-red-500 uppercase tracking-widest transition-colors font-bold font-header"
     >
       Clear All
     </button>

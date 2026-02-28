@@ -89,7 +89,9 @@
     >
       <span class="icon-[heroicons--sparkles] w-8 h-8"></span>
     </div>
-    <h3 class="text-theme-text font-bold uppercase tracking-widest text-xs">
+    <h3
+      class="text-theme-text font-bold uppercase font-header tracking-widest text-xs"
+    >
       Oracle Offline
     </h3>
     <p class="text-xs text-theme-muted leading-relaxed max-w-[280px]">
@@ -141,7 +143,7 @@
 
         <div class="space-y-2">
           <h4
-            class="text-theme-text font-bold uppercase tracking-[0.2em] text-[10px]"
+            class="text-theme-text font-bold uppercase font-header tracking-[0.2em] text-[10px]"
           >
             The Archives are Open
           </h4>
@@ -162,11 +164,11 @@
             <!-- Tier Badge -->
             <div class="flex flex-col items-center gap-1">
               <span
-                class="text-[9px] text-theme-muted uppercase tracking-widest font-bold"
+                class="text-[9px] text-theme-muted uppercase tracking-widest font-bold font-header"
                 >Current Tier</span
               >
               <span
-                class="text-xs px-2 py-0.5 rounded border font-bold uppercase tracking-wider shadow-sm
+                class="text-xs px-2 py-0.5 rounded border font-bold uppercase font-header tracking-wider shadow-sm
                                 {oracle.tier === 'lite'
                   ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
                   : 'border-theme-accent/50 bg-theme-accent/10 text-theme-accent shadow-theme-accent/20'}"
@@ -179,11 +181,11 @@
               <div class="w-px h-6 bg-theme-border mx-1"></div>
               <div class="flex flex-col items-center gap-1">
                 <span
-                  class="text-[9px] text-theme-muted uppercase tracking-widest font-bold"
+                  class="text-[9px] text-theme-muted uppercase tracking-widest font-bold font-header"
                   >Access</span
                 >
                 <span
-                  class="text-xs px-2 py-0.5 rounded border border-theme-primary/30 bg-theme-primary/10 text-theme-primary uppercase tracking-wider font-bold"
+                  class="text-xs px-2 py-0.5 rounded border border-theme-primary/30 bg-theme-primary/10 text-theme-primary uppercase tracking-wider font-bold font-header"
                 >
                   LITE
                 </span>

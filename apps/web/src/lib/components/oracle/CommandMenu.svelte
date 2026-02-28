@@ -283,7 +283,7 @@
     class="absolute z-[100] w-64 bg-theme-surface border border-theme-border rounded shadow-2xl overflow-hidden flex flex-col opacity-0 transition-opacity duration-150"
   >
     <div
-      class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-[9px] uppercase tracking-widest font-bold text-theme-muted flex justify-between items-center"
+      class="px-3 py-2 bg-theme-bg/50 border-b border-theme-border text-[9px] uppercase tracking-widest font-bold font-header text-theme-muted flex justify-between items-center"
     >
       <div class="flex gap-1 items-center">
         {#if input.startsWith("/draw")}
@@ -362,7 +362,7 @@
                 >
                 {#if item.type}
                   <span
-                    class="text-[8px] uppercase opacity-50 font-bold tracking-widest text-theme-muted"
+                    class="text-[8px] uppercase opacity-50 font-bold font-header tracking-widest text-theme-muted"
                   >
                     {categories.getCategory(item.type)?.label || item.type}
                   </span>

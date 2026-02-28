@@ -18,7 +18,7 @@
       class="flex justify-between items-center border-b border-theme-border/30 pb-1"
     >
       <span
-        class="text-[9px] font-bold text-theme-primary uppercase tracking-widest"
+        class="text-[9px] font-bold text-theme-primary uppercase font-header tracking-widest"
         >{hint.title}</span
       >
       <button

@@ -235,7 +235,7 @@
       {#if isZenMode}
         <button
           onclick={toggleZenMode}
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase tracking-widest bg-theme-accent/10 rounded"
+          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-theme-accent border border-theme-accent/30 hover:border-theme-accent/50 transition-all uppercase font-header tracking-widest bg-theme-accent/10 rounded"
           title="Close Zen Mode"
           aria-label="Close Zen Mode"
         >

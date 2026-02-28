@@ -30,7 +30,7 @@
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
     <h4
-      class="text-xs font-bold text-theme-primary uppercase tracking-[0.2em] mb-4"
+      class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
     >
       Project Labels
     </h4>
@@ -51,13 +51,13 @@
                 />
                 <button
                   onclick={handleRename}
-                  class="px-3 py-1 bg-theme-primary text-theme-bg text-[10px] font-bold rounded uppercase transition-colors"
+                  class="px-3 py-1 bg-theme-primary text-theme-bg text-[11px] font-bold rounded uppercase font-header transition-colors"
                 >
                   Save
                 </button>
                 <button
                   onclick={() => (editingLabel = null)}
-                  class="px-3 py-1 border border-theme-border text-theme-muted text-[10px] font-bold rounded uppercase hover:text-theme-text transition-colors"
+                  class="px-3 py-1 border border-theme-border text-theme-muted text-[11px] font-bold rounded uppercase font-header hover:text-theme-text transition-colors"
                 >
                   Cancel
                 </button>

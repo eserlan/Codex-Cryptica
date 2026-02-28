@@ -109,7 +109,7 @@
     >
       {#if entity.date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "date")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.date)}</span>
@@ -117,7 +117,7 @@
       {/if}
       {#if entity.start_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "start")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.start_date)}</span>
@@ -125,7 +125,7 @@
       {/if}
       {#if entity.end_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "end")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.end_date)}</span>
@@ -137,7 +137,7 @@
   <!-- Chronicle -->
   <div>
     <h3
-      class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
+      class="text-theme-secondary font-body italic text-lg mb-3 border-b border-theme-border pb-1"
     >
       {themeStore.jargon.chronicle_header}
     </h3>
@@ -155,7 +155,7 @@
   <!-- Connections -->
   <div>
     <h3
-      class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
+      class="text-theme-secondary font-body italic text-lg mb-3 border-b border-theme-border pb-1"
     >
       {themeStore.jargon.connections_header}
     </h3>

@@ -87,12 +87,12 @@
   class="flex flex-col gap-4 p-4 border border-accent-primary/20 rounded-lg bg-bg-surface/50"
 >
   <div class="flex items-center justify-between">
-    <h3 class="text-lg font-bold text-accent-primary">
+    <h3 class="text-lg font-bold text-accent-primary font-header">
       Google Drive Cloud Sync
     </h3>
     {#if connectedUser}
       <button
-        class="text-[10px] uppercase font-bold text-theme-muted hover:text-theme-text transition-colors"
+        class="text-[11px] uppercase font-bold font-header text-theme-muted hover:text-theme-text transition-colors"
         onclick={async () => {
           await vault.disconnectCloud();
           connectedUser = null;
@@ -109,7 +109,7 @@
       <div
         class="flex flex-col bg-theme-bg/30 p-3 rounded border border-theme-border/50"
       >
-        <span class="text-[10px] text-theme-muted uppercase font-mono"
+        <span class="text-[11px] text-theme-muted uppercase font-mono"
           >Account</span
         >
         <span class="text-sm font-medium"
@@ -121,11 +121,11 @@
         class="flex flex-col bg-theme-bg/30 p-3 rounded border border-theme-border/50"
       >
         <div class="flex items-center justify-between">
-          <span class="text-[10px] text-theme-muted uppercase font-mono"
+          <span class="text-[11px] text-theme-muted uppercase font-mono"
             >Linked Folder</span
           >
           <button
-            class="text-[10px] text-accent-primary hover:underline font-bold uppercase"
+            class="text-[11px] text-accent-primary hover:underline font-bold uppercase font-header"
             onclick={() => (showPicker = true)}
           >
             Change
@@ -158,7 +158,7 @@
 
       {#if cloudMetadata?.lastSyncTime}
         <div
-          class="flex items-center gap-2 px-1 text-[10px] text-theme-muted font-mono uppercase"
+          class="flex items-center gap-2 px-1 text-[11px] text-theme-muted font-mono uppercase"
         >
           <span class="w-1.5 h-1.5 rounded-full bg-theme-primary/50"></span>
           Last Synchronized: {new Date(
@@ -168,7 +168,7 @@
       {/if}
 
       <button
-        class="w-full px-4 py-3 bg-accent-primary text-bg-primary font-bold rounded-md hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 shadow-lg shadow-accent-primary/10"
+        class="w-full px-4 py-3 bg-accent-primary text-bg-primary font-bold rounded-md hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 shadow-lg shadow-accent-primary/10 font-header text-base"
         disabled={vault.status === "saving"}
         onclick={() => (vault as any).syncToCloud(connectedUser)}
       >
@@ -199,7 +199,7 @@
       </div>
 
       <button
-        class="w-full px-4 py-3 border border-accent-primary text-accent-primary font-bold rounded-md hover:bg-accent-primary/10 transition-all disabled:opacity-50"
+        class="w-full px-4 py-3 border border-accent-primary text-accent-primary font-bold rounded-md hover:bg-accent-primary/10 transition-all disabled:opacity-50 font-header text-base"
         disabled={isConnecting}
         onclick={connect}
       >

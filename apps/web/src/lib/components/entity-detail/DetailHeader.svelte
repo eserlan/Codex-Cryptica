@@ -39,7 +39,7 @@
       <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
     </div>
     <h3
-      class="text-xl font-bold text-theme-text uppercase tracking-widest mb-2"
+      class="text-xl font-bold text-theme-text uppercase font-header tracking-widest mb-2"
     >
       Protocol Redacted
     </h3>
@@ -50,7 +50,7 @@
     </p>
     <button
       onclick={onClose}
-      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase"
+      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase font-header"
     >
       Return to Overview
     </button>
@@ -64,13 +64,13 @@
         <input
           type="text"
           bind:value={editTitle}
-          class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-xl w-full placeholder-theme-muted"
+          class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
           placeholder="Entity Title"
         />
       </div>
     {:else}
       <h2
-        class="text-2xl md:text-3xl font-bold text-theme-text font-serif tracking-wide"
+        class="text-2xl md:text-3xl font-bold text-theme-text font-body tracking-wide"
       >
         {entity.title}
       </h2>

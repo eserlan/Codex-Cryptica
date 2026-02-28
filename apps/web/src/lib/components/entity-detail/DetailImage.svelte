@@ -145,7 +145,8 @@
         <div class="flex flex-col items-center justify-center gap-2 mt-2">
           <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
           ></span>
-          <span class="text-[9px] font-bold uppercase opacity-40">No Image</span
+          <span class="text-[9px] font-bold uppercase font-header opacity-40"
+            >No Image</span
           >
         </div>
 
@@ -203,7 +204,7 @@
           class="icon-[lucide--download-cloud] w-8 h-8 text-oracle-primary animate-bounce"
         ></span>
         <span
-          class="text-[10px] font-bold text-oracle-primary tracking-widest uppercase"
+          class="text-[10px] font-bold text-oracle-primary tracking-widest uppercase font-header"
           >Drop to Archive</span
         >
       </div>

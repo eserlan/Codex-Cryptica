@@ -381,11 +381,13 @@
 </script>
 
 <div class="space-y-4">
-  <h3 class="text-xs font-bold text-theme-primary uppercase tracking-widest">
+  <h3
+    class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest"
+  >
     Archive Ingestion
   </h3>
 
-  <p class="text-[13px] text-theme-text/70 leading-relaxed">
+  <p class="text-sm text-theme-text/70 leading-relaxed">
     Import existing documents, lore bibles, or JSON data. The Oracle will
     automatically fragment monolithic files into distinct entities and extract
     embedded art.
@@ -400,18 +402,19 @@
       ></span>
 
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-bold text-red-400 uppercase tracking-wider"
+        <span
+          class="text-sm font-bold text-red-400 uppercase font-header tracking-wider"
           >Oracle Connection Required</span
         >
 
-        <p class="text-[11px] text-red-400/80 leading-tight">
+        <p class="text-xs text-red-400/80 leading-tight">
           Intelligent ingestion requires an active Gemini API key. Please
           configure your access in the
 
           <button
             class="underline hover:text-red-300"
             onclick={() => (uiStore.activeSettingsTab = "intelligence")}
-            >Intelligence</button
+            >AI</button
           > tab.
         </p>
       </div>
@@ -424,7 +427,7 @@
       class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
     >
       <div
-        class="flex items-center gap-2 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+        class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
       >
         <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
 
@@ -471,7 +474,9 @@
             {statusMessage}
           </p>
 
-          <p class="text-[9px] text-theme-muted uppercase tracking-[0.2em]">
+          <p
+            class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
+          >
             Oracle is interpreting your notes
           </p>
         </div>
@@ -484,7 +489,7 @@
 
         <button
           onclick={() => uiStore.abortActiveOperations()}
-          class="text-[9px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase tracking-widest"
+          class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
         >
           Cancel Import
         </button>
@@ -505,10 +510,10 @@
         >
           <span class="icon-[lucide--check-circle] w-8 h-8"></span>
         </div>
-        <p class="text-sm font-bold uppercase tracking-widest">
+        <p class="text-base font-bold uppercase font-header tracking-widest">
           Import Successful
         </p>
-        <p class="text-[10px] text-theme-muted uppercase font-mono">
+        <p class="text-[11px] text-theme-muted uppercase font-mono">
           Archive updated with {discoveredEntities.length} records
         </p>
       </div>

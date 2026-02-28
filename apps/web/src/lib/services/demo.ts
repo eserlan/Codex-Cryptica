@@ -119,7 +119,8 @@ class DemoService implements IDemoActions {
       wasteland: "Survive and thrive. Document your post-apocalyptic saga.",
       apocalyptic: "Survive and thrive. Document your post-apocalyptic saga.",
       modern: "Capture the present. Map your modern thriller or drama.",
-      fallout: "War never changes. Document your Pip-Boy logs and Vault-Tec secrets.",
+      fallout:
+        "War never changes. Document your Pip-Boy logs and Vault-Tec secrets.",
     };
     return prompts[theme] || prompts.fantasy;
   }

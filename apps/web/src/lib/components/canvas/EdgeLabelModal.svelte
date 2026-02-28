@@ -112,13 +112,13 @@
       >
         <button
           onclick={handleCancel}
-          class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
+          class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-colors"
         >
           Cancel
         </button>
         <button
           onclick={handleSave}
-          class="px-6 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-[10px] uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-theme-primary/10"
+          class="px-6 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold text-[10px] uppercase font-header tracking-widest hover:brightness-110 transition-all flex items-center gap-2 shadow-lg shadow-theme-primary/10"
         >
           <Check class="w-3 h-3" />
           Save Label

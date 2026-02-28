@@ -204,9 +204,7 @@ test.describe("Entity Labeling System", () => {
     // 6. Test Tab completion
     await labelInput.click();
     await labelInput.pressSequentially("int");
-    await expect(
-      page.getByRole("option", { name: "internal" }),
-    ).toBeVisible();
+    await expect(page.getByRole("option", { name: "internal" })).toBeVisible();
     await page.keyboard.press("Tab");
 
     // Wait for clear

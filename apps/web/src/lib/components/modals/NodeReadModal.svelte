@@ -149,12 +149,12 @@
                 )} text-green-500 w-5 h-5"
               ></span>
               <span
-                class="text-xs font-bold tracking-widest text-green-600 uppercase"
+                class="text-xs font-bold tracking-widest text-green-600 uppercase font-header"
                 >{entity.type}</span
               >
             </div>
             <h2
-              class="text-2xl md:text-3xl font-bold text-gray-100 font-serif tracking-wide"
+              class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
               {entity.title}
             </h2>
@@ -212,7 +212,7 @@
               class="mb-8 p-4 bg-green-900/10 border-l-2 border-green-500 rounded-r"
             >
               <h4
-                class="text-green-400 font-bold text-xs uppercase tracking-widest mb-2 font-mono"
+                class="text-green-400 font-bold text-xs uppercase font-header tracking-widest mb-2 font-mono"
               >
                 Lore & Context
               </h4>
@@ -237,7 +237,7 @@
 
           <!-- Connections -->
           <div class="border-t border-green-900/30 pt-6">
-            <h3 class="text-green-500 font-serif italic text-xl mb-4">
+            <h3 class="text-green-500 font-body italic text-xl mb-4">
               Connections
             </h3>
             {#if connections.length > 0}

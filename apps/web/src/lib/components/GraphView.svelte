@@ -1189,13 +1189,13 @@
         in:fly={{ y: 10, duration: 200 }}
       >
         <div
-          class="text-xs font-bold text-theme-primary tracking-wider uppercase mb-2 border-b border-theme-border/50 pb-1 flex justify-between"
+          class="text-xs font-bold text-theme-primary tracking-wider uppercase font-header mb-2 border-b border-theme-border/50 pb-1 flex justify-between"
         >
           <span>{hoveredEntity.title}</span>
           <span class="text-[10px] text-theme-muted">{hoveredEntity.type}</span>
         </div>
         <div
-          class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
+          class="text-sm text-theme-text/90 font-body leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary prose-headings:font-header"
         >
           {@html tooltipContent}
         </div>

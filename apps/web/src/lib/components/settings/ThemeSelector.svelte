@@ -42,7 +42,7 @@
       </div>
 
       <div
-        class="text-xs font-bold tracking-widest uppercase mb-1 transition-colors
+        class="text-xs font-bold tracking-widest uppercase font-header mb-1 transition-colors
         {themeStore.currentThemeId === theme.id
           ? 'text-theme-primary'
           : 'text-theme-text/40 group-hover:text-theme-text/80'}"

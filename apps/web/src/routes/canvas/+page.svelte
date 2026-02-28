@@ -53,14 +53,14 @@
       <span class="icon-[lucide--alert-circle] w-12 h-12 text-red-500 mb-2"
       ></span>
       <h2
-        class="text-lg font-bold text-theme-text font-mono uppercase tracking-widest"
+        class="text-lg font-bold text-theme-text font-mono uppercase font-header tracking-widest"
       >
         Initialization Error
       </h2>
       <p class="text-sm mb-6">{initializationError}</p>
       <button
         onclick={() => window.location.reload()}
-        class="px-6 py-2 bg-theme-primary text-theme-bg font-bold rounded uppercase tracking-tighter text-xs"
+        class="px-6 py-2 bg-theme-primary text-theme-bg font-bold rounded uppercase font-header tracking-tighter text-xs"
       >
         Retry System Boot
       </button>
@@ -81,7 +81,7 @@
           </p>
           <button
             onclick={() => canvasRegistry.loadForVault(vault.activeVaultId!)}
-            class="text-[10px] font-bold text-theme-primary hover:underline uppercase tracking-widest"
+            class="text-[10px] font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
           >
             Force Reload Registry
           </button>

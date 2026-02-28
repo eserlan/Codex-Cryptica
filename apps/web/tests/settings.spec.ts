@@ -25,8 +25,10 @@ test.describe("Settings Modal", () => {
     await expect(vaultHeading).toBeVisible();
 
     // 3. Switch to Intelligence tab
-    await page.click('[role="tab"]:has-text("Intelligence")');
-    await expect(page.locator("h2", { hasText: "Intelligence" })).toBeVisible();
+    await page.click('[role="tab"]:has-text("AI")');
+    await expect(
+      page.locator("h2", { hasText: "Lore Oracle (Gemini AI)" }),
+    ).toBeVisible();
     await expect(page.locator("text=Lore Oracle (Gemini AI)")).toBeVisible();
 
     // 4. Switch to Schema tab
@@ -71,8 +73,10 @@ test.describe("Settings Modal", () => {
     await expect(page.locator("h2", { hasText: "Vault" })).toBeVisible();
 
     // 3. Switch tabs
-    await page.click('[role="tab"]:has-text("Intelligence")');
-    await expect(page.locator("h2", { hasText: "Intelligence" })).toBeVisible();
+    await page.click('[role="tab"]:has-text("AI")');
+    await expect(
+      page.locator("h2", { hasText: "Lore Oracle (Gemini AI)" }),
+    ).toBeVisible();
 
     // 4. Go back online
     await context.setOffline(false);

@@ -35,7 +35,7 @@
     </div>
   {:else}
     <div
-      class="text-xs font-bold tracking-widest text-theme-secondary uppercase mb-4"
+      class="text-xs font-bold tracking-widest text-theme-secondary uppercase font-header mb-4"
     >
       {entity.type}
     </div>

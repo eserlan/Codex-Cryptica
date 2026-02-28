@@ -121,7 +121,7 @@
     tabindex="-1"
   >
     <div
-      class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh]"
+      class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body"
     >
       <!-- Input Header -->
       <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
@@ -209,7 +209,7 @@
 
                   {#if isCanvasPage}
                     <button
-                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 group/btn"
+                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
@@ -233,7 +233,7 @@
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
                   {#if result.type}
                     <span
-                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-zinc-100 dark:bg-zinc-800"
                       style="color: {categories.getColor(result.type)}"
                     >
                       {categories.getCategory(result.type)?.label ||
@@ -263,17 +263,17 @@
         class="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 flex justify-between"
       >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >↵</kbd
           > to select</span
         >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >↑↓</kbd
           > to navigate</span
         >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >esc</kbd
           > to close</span
         >

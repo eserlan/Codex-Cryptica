@@ -109,7 +109,7 @@
 
 <div class="flex flex-col gap-3 p-1">
   <div
-    class="flex items-center gap-2 text-theme-accent font-bold uppercase tracking-[0.2em] text-[10px] mb-1"
+    class="flex items-center gap-2 text-theme-accent font-bold uppercase font-header tracking-[0.2em] text-[10px] mb-1"
   >
     <span class="icon-[lucide--merge] w-3.5 h-3.5"></span>
     Merge Wizard
@@ -135,7 +135,8 @@
       <div
         class="flex items-center gap-2 mb-2 px-2 py-1 bg-theme-accent/10 rounded border border-theme-accent/20"
       >
-        <span class="text-[10px] font-bold text-theme-accent uppercase"
+        <span
+          class="text-[10px] font-bold text-theme-accent uppercase font-header"
           >Absorb:</span
         >
         <span class="text-xs text-theme-text font-mono truncate"
@@ -174,7 +175,7 @@
       <div class="flex flex-col gap-2">
         <div class="flex justify-between items-center">
           <span
-            class="text-[9px] font-bold text-theme-secondary uppercase tracking-wider"
+            class="text-[9px] font-bold text-theme-secondary uppercase font-header tracking-wider"
             >Merge Strategy</span
           >
           <div
@@ -244,7 +245,7 @@
   {:else if step === "DONE"}
     <div class="py-2 text-center" in:fade>
       <span
-        class="text-green-400 font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+        class="text-green-400 font-bold uppercase font-header tracking-widest text-[10px] flex items-center justify-center gap-2"
       >
         <span class="icon-[heroicons--check-circle] w-4 h-4"></span>
         {themeStore.resolveJargon("entity", 2)} Merged
@@ -262,20 +263,20 @@
     {#if step !== "DONE" && step !== "MERGING"}
       <button
         onclick={handleCancel}
-        class="px-3 py-1 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-all"
+        class="px-3 py-1 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase font-header tracking-widest transition-all"
         >Cancel</button
       >
 
       {#if step === "SELECT_SOURCE" || step === "SELECT_TARGET"}
         <button
           onclick={handleNext}
-          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase tracking-widest hover:opacity-80 active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
           >Next</button
         >
       {:else if step === "REVIEW"}
         <button
           onclick={handleMerge}
-          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase tracking-widest hover:opacity-80 active:scale-95 transition-all"
+          class="px-4 py-1 bg-theme-accent text-theme-bg font-bold rounded text-[10px] uppercase font-header tracking-widest hover:opacity-80 active:scale-95 transition-all"
           >Confirm Merge</button
         >
       {/if}

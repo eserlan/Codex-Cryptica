@@ -17,7 +17,7 @@
 
 <div class="space-y-2">
   <div
-    class="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-theme-muted"
+    class="flex justify-between items-center text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted"
   >
     <span>Analysis Progress</span>
     <span
@@ -48,19 +48,19 @@
 
   <div class="flex gap-4 mt-2 justify-center">
     <div
-      class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter text-theme-muted"
+      class="flex items-center gap-1.5 text-[9px] font-bold uppercase font-header tracking-tighter text-theme-muted"
     >
       <div class="w-2 h-2 rounded-sm bg-theme-muted/40"></div>
       Skipped
     </div>
     <div
-      class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter text-theme-muted"
+      class="flex items-center gap-1.5 text-[9px] font-bold uppercase font-header tracking-tighter text-theme-muted"
     >
       <div class="w-2 h-2 rounded-sm bg-theme-primary"></div>
       Completed
     </div>
     <div
-      class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-tighter text-theme-muted"
+      class="flex items-center gap-1.5 text-[9px] font-bold uppercase font-header tracking-tighter text-theme-muted"
     >
       <div class="w-2 h-2 rounded-sm bg-theme-secondary animate-pulse"></div>
       Active
