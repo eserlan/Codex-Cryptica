@@ -120,4 +120,89 @@ test.describe("Vault Import E2E", () => {
     await page.getByPlaceholder("Search notes...").fill("Note 2");
     await expect(page.getByText("Note 2")).toBeVisible();
   });
+
+  test("should load a local folder as a vault using the folder name without manual name entry", async ({
+    page,
+  }) => {
+    test.setTimeout(60000);
+
+    // Update mock to return a handle with a descriptive folder name
+    await page.evaluate(() => {
+      const mockFiles = [
+        {
+          path: ["entry1.md"],
+          content: "---\nid: entry1\ntitle: Entry 1\n---\nBody 1",
+        },
+        {
+          path: ["entry2.md"],
+          content: "---\nid: entry2\ntitle: Entry 2\n---\nBody 2",
+        },
+      ];
+      function createMockHandle(
+        name: string,
+        kind: "file" | "directory",
+        fullPath: string[] = [],
+      ): any {
+        if (kind === "file") {
+          const fileData = mockFiles.find(
+            (f) => f.path.join("/") === fullPath.join("/"),
+          );
+          return {
+            kind: "file",
+            name,
+            getFile: async () => new File([fileData?.content || ""], name),
+          };
+        }
+        return {
+          kind: "directory",
+          name,
+          async *entries() {
+            const subItems = new Map<string, "file" | "directory">();
+            for (const f of mockFiles) {
+              if (
+                f.path.length > fullPath.length &&
+                f.path
+                  .slice(0, fullPath.length)
+                  .every((v: string, i: number) => v === fullPath[i])
+              ) {
+                const subName = f.path[fullPath.length];
+                const type =
+                  f.path.length === fullPath.length + 1 ? "file" : "directory";
+                subItems.set(subName, type);
+              }
+            }
+            for (const [subName, type] of subItems.entries()) {
+              yield [
+                subName,
+                createMockHandle(subName, type, [...fullPath, subName]),
+              ];
+            }
+          },
+          async *values() {
+            for await (const [_name, handle] of (this as any).entries()) {
+              yield handle;
+            }
+          },
+        };
+      }
+      (window as any).showDirectoryPicker = async () =>
+        createMockHandle("My Local Vault", "directory");
+    });
+
+    // 1. Open Vault Switcher and click OPEN FOLDER (no name entry needed)
+    await page.getByTitle("Switch Vault").click();
+    await page.getByRole("button", { name: "OPEN FOLDER" }).click();
+
+    // 2. Verify the switcher closes and the vault is active with the folder name
+    await expect(page.getByTitle("Switch Vault")).toContainText(
+      "My Local Vault",
+    );
+
+    // 3. Verify entities were loaded in the switcher
+    await page.getByTitle("Switch Vault").click();
+    const vaultRow = page
+      .locator(".group", { hasText: "My Local Vault" })
+      .last();
+    await expect(vaultRow).toContainText("2 Items");
+  });
 });

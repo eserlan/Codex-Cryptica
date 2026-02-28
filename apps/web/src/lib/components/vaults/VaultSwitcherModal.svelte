@@ -13,6 +13,22 @@
   let editName = $state("");
   let deletingId = $state<string | null>(null);
 
+  const handleLoadFromFolder = async () => {
+    isLoading = true;
+    try {
+      const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+      const success = await vault.loadFromFolder(handle);
+      if (success) {
+        onClose();
+      }
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") return;
+      console.error(e);
+    } finally {
+      isLoading = false;
+    }
+  };
+
   const handleSwitch = async (id: string) => {
     if (id === vaultRegistry.activeVaultId) return;
     isLoading = true;
@@ -370,6 +386,14 @@
           onclick={() => (showCreate = true)}
         >
           <span class="icon-[lucide--plus] w-4 h-4"></span> NEW VAULT
+        </button>
+        <button
+          class="text-theme-accent text-sm font-bold flex items-center gap-2 hover:text-theme-secondary transition-colors"
+          onclick={handleLoadFromFolder}
+          disabled={isLoading}
+          title="Open a local folder as a new vault"
+        >
+          <span class="icon-[lucide--folder-open] w-4 h-4"></span> OPEN FOLDER
         </button>
         <button
           class="px-4 py-2 bg-theme-surface border border-theme-border rounded text-sm hover:text-theme-primary transition-colors"

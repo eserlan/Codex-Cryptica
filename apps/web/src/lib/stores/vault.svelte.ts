@@ -589,6 +589,22 @@ class VaultStore {
     }
   }
 
+  async loadFromFolder(handle: FileSystemDirectoryHandle): Promise<boolean> {
+    const id = await this.createVault(handle.name);
+    if (!id) {
+      this.status = "error";
+      this.errorMessage = "Failed to create vault from folder";
+      return false;
+    }
+    try {
+      const db = await getDB();
+      await db.put("settings", handle, `syncHandle_${id}`);
+    } catch (e) {
+      console.warn("[VaultStore] Could not persist sync handle:", e);
+    }
+    return await this.importFromFolder(handle);
+  }
+
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
     const vaultDir = await this.getActiveVaultHandle();
     if (!this.activeVaultId || !vaultDir) {
