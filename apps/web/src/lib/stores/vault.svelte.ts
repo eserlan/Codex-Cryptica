@@ -590,8 +590,11 @@ class VaultStore {
   }
 
   async loadFromFolder(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    const id = await this.createVault(handle.name);
-    if (!id) {
+    let id: string;
+    try {
+      id = await this.createVault(handle.name);
+    } catch (e) {
+      console.warn("[VaultStore] Failed to create vault from folder:", e);
       this.status = "error";
       this.errorMessage = "Failed to create vault from folder";
       return false;
