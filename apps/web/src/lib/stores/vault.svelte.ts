@@ -605,7 +605,7 @@ class VaultStore {
     } catch (e) {
       console.warn("[VaultStore] Could not persist sync handle:", e);
     }
-    return await this.importFromFolder(handle);
+    return this.importFromFolder(handle);
   }
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
