@@ -121,7 +121,9 @@
   });
 </script>
 
-<div class="h-[calc(100vh-65px)] flex bg-theme-bg overflow-hidden relative">
+<div
+  class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
+>
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />

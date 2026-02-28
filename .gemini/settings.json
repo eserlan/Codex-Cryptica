@@ -14,5 +14,14 @@
       }
     ]
   },
-  "mcpServers": {}
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "",
+        "_note_GITHUB_PERSONAL_ACCESS_TOKEN": "Set this to a GitHub personal access token before using the GitHub MCP server (keep actual secrets out of version control)."
+      }
+    }
+  }
 }

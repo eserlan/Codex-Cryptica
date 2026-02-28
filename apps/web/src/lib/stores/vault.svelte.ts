@@ -36,6 +36,7 @@ export interface IVaultServices {
 class VaultStore {
   entities = $state<Record<string, LocalEntity>>({});
   maps = $state<Record<string, Map>>({});
+  canvases = $state<Record<string, any>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   syncType = $state<"local" | "cloud" | null>(null);
   syncStats = $state({
@@ -643,6 +644,7 @@ class VaultStore {
       );
       this.entities = entities;
       this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
+      this.canvases = await vaultIO.loadCanvasesFromDisk(vaultDir);
 
       // Repopulate search index
       if (this.services) {
@@ -730,6 +732,29 @@ class VaultStore {
         this.status = "error";
         uiStore.notify(
           "Failed to save map data. Please check your storage quota.",
+          "error",
+        );
+      }
+    });
+  }
+
+  async saveCanvas(id: string) {
+    const vaultDir = await this.getActiveVaultHandle();
+    if (!vaultDir) return;
+
+    const data = this.canvases[id];
+    if (!data) return;
+
+    this.status = "saving";
+    return this.saveQueue.enqueue(`canvas-${id}`, async () => {
+      try {
+        await vaultIO.saveCanvasToDisk(vaultDir, id, data);
+        this.status = "idle";
+      } catch (err) {
+        console.error("[VaultStore] Failed to save canvas", id, err);
+        this.status = "error";
+        uiStore.notify(
+          "Failed to save canvas data. Please check your storage quota.",
           "error",
         );
       }

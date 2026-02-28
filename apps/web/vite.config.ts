@@ -41,9 +41,12 @@ export default defineConfig({
     hmr: {
       host: "localhost",
     },
+    watch: {
+      usePolling: true,
+    },
     fs: {
-      // Allow serving files from the workspace root
-      allow: [".."],
+      // Allow serving files from the workspace root and all packages
+      allow: ["../../"],
     },
   },
   optimizeDeps: {

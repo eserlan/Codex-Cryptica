@@ -19,6 +19,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "dependencies": {
+    "@codex/canvas-engine": "^0.0.0",
     "@codex/importer": "*",
     "@codex/proposer": "*",
     "@codex/search-engine": "*",
@@ -43,6 +44,7 @@
     "@types/gapi": "^0.0.47",
     "@types/gapi.auth2": "^0.0.61",
     "@types/gapi.client.drive": "^3.0.15",
+    "@xyflow/svelte": "^1.5.1",
     "chronology-engine": "*",
     "comlink": "^4.4.2",
     "cytoscape": "^3.33.1",
@@ -53,6 +55,7 @@
     "idb": "^8.0.3",
     "isomorphic-dompurify": "^3.0.0",
     "js-yaml": "^4.1.1",
+    "lucide-svelte": "^0.575.0",
     "map-engine": "*",
     "marked": "^17.0.3",
     "pdfjs-dist": "^5.4.624",

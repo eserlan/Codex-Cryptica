@@ -4,6 +4,7 @@ import {
   getDirHandle,
   type FileEntry,
 } from "../../utils/opfs";
+import { CanvasSchema } from "@codex/canvas-engine";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache";
 import {
@@ -27,6 +28,40 @@ export async function saveMapsToDisk(
   await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
 }
 
+export async function saveCanvasToDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  id: string,
+  data: any,
+) {
+  if (!vaultHandle) return;
+  const content = JSON.stringify(data, null, 2);
+  await writeOpfsFile(
+    [".codex", "canvases", `${id}.canvas`],
+    content,
+    vaultHandle,
+  );
+}
+
+export async function deleteCanvasFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+  id: string,
+) {
+  if (!vaultHandle) return;
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const canvasesDir = await codexDir.getDirectoryHandle("canvases", {
+      create: true,
+    });
+    await canvasesDir.removeEntry(`${id}.canvas`);
+  } catch (err: any) {
+    if (err.name !== "NotFoundError") {
+      console.warn(`Failed to delete canvas file ${id}.canvas`, err);
+    }
+  }
+}
+
 export async function loadMapsFromDisk(
   vaultHandle: FileSystemDirectoryHandle,
 ): Promise<Record<string, Map>> {
@@ -40,6 +75,39 @@ export async function loadMapsFromDisk(
     const text = await file.text();
     return JSON.parse(text);
   } catch {
+    return {};
+  }
+}
+
+export async function loadCanvasesFromDisk(
+  vaultHandle: FileSystemDirectoryHandle,
+): Promise<Record<string, any>> {
+  if (!vaultHandle) return {};
+  try {
+    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
+      create: true,
+    });
+    const canvasesDir = await codexDir.getDirectoryHandle("canvases", {
+      create: true,
+    });
+
+    const canvases: Record<string, any> = {};
+    for await (const [name, handle] of canvasesDir.entries()) {
+      if (handle.kind === "file" && name.endsWith(".canvas")) {
+        try {
+          const id = name.replace(".canvas", "");
+          const file = await (handle as FileSystemFileHandle).getFile();
+          const text = await file.text();
+          const raw = JSON.parse(text);
+          canvases[id] = CanvasSchema.parse(raw);
+        } catch (itemErr) {
+          console.error(`[VaultIO] Failed to load canvas ${name}`, itemErr);
+        }
+      }
+    }
+    return canvases;
+  } catch (err) {
+    console.warn("[VaultIO] Failed to load individual canvases", err);
     return {};
   }
 }

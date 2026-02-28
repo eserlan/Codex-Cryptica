@@ -5,12 +5,14 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
-  import { marked } from "marked";
-  import DOMPurify from "isomorphic-dompurify";
+  import { renderMarkdown } from "$lib/utils/markdown";
+  import { page } from "$app/state";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
   let debounceTimer: ReturnType<typeof setTimeout>;
+
+  const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
 
   // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
@@ -106,36 +108,6 @@
       searchStore.close();
     }
   };
-
-  const highlightText = (text: string, query: string) => {
-    if (!query || !text) return text;
-    // Escape regex characters in query (canonical)
-    const safeQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${safeQuery})`, "gi");
-    // Note: We don't sanitize here yet, we sanitize the final HTML
-    return text.replace(
-      regex,
-      '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
-    );
-  };
-
-  const renderMarkdown = (text: string, query: string) => {
-    if (!text) return "";
-
-    // 1. Highlight matches (injects <mark> tags into raw text)
-    const highlighted = highlightText(text, query);
-
-    // 2. Parse markdown to HTML
-    const rawHtml = marked.parseInline(highlighted) as string;
-
-    // 3. Sanitize the resulting HTML, allowing <mark> tags
-    // we assume marked might return a promise if async, but parseInline is usually sync.
-    // Typescript might complain if marked.async is true, but standard usage is string.
-    return DOMPurify.sanitize(rawHtml, {
-      ADD_TAGS: ["mark"],
-      ADD_ATTR: ["class"],
-    });
-  };
 </script>
 
 {#if searchStore.isOpen}
@@ -206,16 +178,18 @@
             aria-label="Search results"
           >
             {#each searchStore.results as result, index (result.id || `fallback-${index}`)}
-              <button
+              <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+              <div
                 id="search-result-{index}"
                 role="option"
                 tabindex="-1"
                 aria-selected={index === searchStore.selectedIndex}
-                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content
+                class="w-full text-left px-4 py-3 rounded-md flex flex-col gap-1 transition-colors preview-content cursor-pointer
                   {index === searchStore.selectedIndex
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-900 dark:text-blue-100'
                   : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-900 dark:text-zinc-100'}"
                 onclick={(e) => selectResult(result, e)}
+                onkeydown={(e) => e.key === "Enter" && selectResult(result, e)}
                 data-testid="search-result"
               >
                 <span class="font-medium truncate flex items-center gap-2">
@@ -228,7 +202,33 @@
                       style="color: {categories.getColor(result.type)}"
                     ></span>
                   {/if}
-                  {@html renderMarkdown(result.title, searchStore.query)}
+                  {@html renderMarkdown(result.title, {
+                    query: searchStore.query,
+                    inline: true,
+                  })}
+
+                  {#if isCanvasPage}
+                    <button
+                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 group/btn"
+                      aria-label={`Add ${result.title} to canvas`}
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (result.id) {
+                          window.dispatchEvent(
+                            new CustomEvent("add-to-canvas", {
+                              detail: { entityId: result.id },
+                            }),
+                          );
+                          searchStore.close();
+                        }
+                      }}
+                    >
+                      <span class="icon-[heroicons--plus-circle] w-3 h-3"
+                      ></span>
+                      Add to Canvas
+                    </button>
+                  {/if}
                 </span>
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
                   {#if result.type}
@@ -246,10 +246,13 @@
                   <p
                     class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 mt-1"
                   >
-                    {@html renderMarkdown(result.excerpt, searchStore.query)}
+                    {@html renderMarkdown(result.excerpt, {
+                      query: searchStore.query,
+                      inline: true,
+                    })}
                   </p>
                 {/if}
-              </button>
+              </div>
             {/each}
           </div>
         {/if}

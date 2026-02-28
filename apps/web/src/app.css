@@ -116,6 +116,10 @@
     --color-oracle-primary: #991b1b;
     --color-oracle-dim: color-mix(in srgb, #991b1b, #fdf6e3 30%);
     --color-oracle-dark: color-mix(in srgb, #991b1b, #fdf6e3 60%);
+
+    /* Fix for EdgeLabel white box artifacts */
+    --xy-edge-label-background-color-default: transparent;
+    --xy-edge-label-background-color: transparent;
   }
 
   html.skip-landing .marketing-layer {
@@ -202,5 +206,9 @@
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: var(--color-accent-primary);
     border-radius: 2px;
+  }
+
+  .svelte-flow__edge-labels {
+    background: transparent !important;
   }
 }

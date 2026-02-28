@@ -214,6 +214,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.",
     icon: "icon-[lucide--cloud-sync]",
   },
+  "spatial-canvas": {
+    id: "spatial-canvas",
+    title: "Spatial Canvas",
+    content:
+      "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.",
+    icon: "icon-[lucide--layout-dashboard]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];
