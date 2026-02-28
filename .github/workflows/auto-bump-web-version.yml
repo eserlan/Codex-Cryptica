@@ -52,5 +52,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "Triggering deployment workflow on main..."
           gh workflow run deploy.yml --ref main
+          echo "Triggering release workflow on main..."
           gh workflow run release.yml --ref main
