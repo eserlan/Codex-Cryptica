@@ -12,7 +12,9 @@
   }>();
 
   // Ensure root-relative links in Markdown respect the SvelteKit base path
-  const processedContent = $derived(content.replaceAll("](/)", `](${base}/)`));
+  const processedContent = $derived(
+    content.replaceAll("](/)", `](${base || "/"})`),
+  );
   const renderedHtml = $derived(marked.parse(processedContent));
   const sanitizedHtml = $derived(DOMPurify.sanitize(renderedHtml as string));
 </script>
