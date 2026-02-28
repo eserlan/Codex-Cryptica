@@ -16,16 +16,22 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 jobs:
-  verify_and_build:
+  build:
     # If triggered by workflow_run, only run if the bump was successful
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          # Production always builds from main; Staging builds from the current ref
+          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -42,36 +48,23 @@ jobs:
           npm run lint
           npm test
 
-      - name: Build Staging (/staging)
+      - name: Build Application
         env:
-          BASE_PATH: "/staging"
+          BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        run: |
-          npm run build --workspace=web
-          mkdir -p dist/staging
-          cp -r apps/web/build/* dist/staging/
+        run: npm run build --workspace=web
 
-      - name: Build Production (/)
-        # If we are on a feature branch, we want the production root to be built from the latest stable main
-        # This ensures / always points to main, while /staging points to the feature.
-        run: |
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            git fetch origin main:main
-            git checkout main
-            npm ci
-          fi
-          npm run build --workspace=web
-          cp -r apps/web/build/* dist/
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload intermediate artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: "dist/"
+          name: dist-${{ matrix.environment }}
+          path: apps/web/build/
+          retention-days: 1
 
   deploy:
-    needs: verify_and_build
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -79,8 +72,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Download Production Build
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
+          name: dist-production
+          path: dist/
+
+      - name: Download Staging Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-staging
+          path: dist/staging/
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "dist/"
 
       - name: Deploy
         id: deployment
