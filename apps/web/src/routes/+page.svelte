@@ -131,12 +131,16 @@
         "applicationCategory": "Tabletop RPG Utility",
         "operatingSystem": "Web, Local-First",
         "featureList": [
-          "Interactive Maps",
-          "Knowledge Graphs",
-          "Temporal Timelines"
+          "AI Lore Oracle",
+          "Interactive Knowledge Graphs",
+          "Tactical Map Mode",
+          "Spatial Canvas & Flowcharts",
+          "Era-based Timelines",
+          "Local-First Privacy",
+          "Google Drive Syncing"
         ],
         "storageRequirements": "Origin Private File System (OPFS)",
-        "softwareVersion": "2026.1"
+        "softwareVersion": "0.10.3"
       }
     </script>
   {/if}
