@@ -1,6 +1,10 @@
 <script lang="ts">
   import { marked } from "marked";
+  import { gfmHeadingId } from "marked-gfm-heading-id";
   import DOMPurify from "isomorphic-dompurify";
+
+  // Enable heading IDs for table of contents anchors
+  marked.use(gfmHeadingId());
 
   let { content = "" } = $props<{
     content?: string;
