@@ -77,3 +77,5 @@ Codex Cryptica uses **Google Gemini**, but with a "Privacy Firewall." Unlike oth
 The "Cloud Trap" is real, but it’s avoidable. By choosing a local-first tool, you ensure your campaign will be accessible ten years from now, exactly as you left it.
 
 **Ready to secure your lore?** [Enter the Codex →](/)
+
+_Want to see the Codex in action? Check out our [Showcase: See Your World Like Never Before](/blog/showcase-see-your-world)._
