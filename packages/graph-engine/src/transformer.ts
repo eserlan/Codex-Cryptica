@@ -193,7 +193,7 @@ export const getGraphStyle = (
         shape: graph.nodeShape,
         label: "data(label)",
         color: tokens.text,
-        "font-family": sanitizeFontForCytoscape(tokens.fontBody),
+        "font-family": sanitizeFontForCytoscape(tokens.fontHeader),
         "font-size": 10,
         "text-valign": "bottom",
         "text-margin-y": 8,

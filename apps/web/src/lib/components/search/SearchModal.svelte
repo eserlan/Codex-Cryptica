@@ -121,7 +121,7 @@
     tabindex="-1"
   >
     <div
-      class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh]"
+      class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body"
     >
       <!-- Input Header -->
       <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">

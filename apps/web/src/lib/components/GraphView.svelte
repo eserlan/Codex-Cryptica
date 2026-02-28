@@ -1195,7 +1195,7 @@
           <span class="text-[10px] text-theme-muted">{hoveredEntity.type}</span>
         </div>
         <div
-          class="text-sm text-theme-text/90 font-mono leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary"
+          class="text-sm text-theme-text/90 font-body leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary prose-headings:font-header"
         >
           {@html tooltipContent}
         </div>
