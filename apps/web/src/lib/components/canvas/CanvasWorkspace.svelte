@@ -385,6 +385,7 @@
       onedgeclick={onEdgeClick}
       onpanecontextmenu={handlePaneContextMenu}
       zoomOnDoubleClick={false}
+      proOptions={{ hideAttribution: true }}
       fitView
     >
       <Background gap={20} />
