@@ -43,9 +43,9 @@ The Graph View reveals the "connective tissue" of your campaign. It ignores geog
 - **Smart Layouts**: Powered by **Cytoscape** (a high-end data engine), your notes snap into place, helping you spot secret alliances or "orphan" plot points you might have forgotten.
 - **Time Travel**: Use the timeline slider at the bottom to watch the graph grow as your campaign's history unfolds.
 
-## **3\. The Freeform Canvas: Your Tactical "Murder Board"**
+## **3\. The Freeform Canvas: Your Tactical \"Murder Board\"**
 
-While the Graph is automated, **Canvas Mode** gives you total manual control. This is your digital "Corky Board."
+While the Graph is automated, **Canvas Mode** gives you total manual control. This is your digital "Cork Board."
 
 - **Manual Layouts**: Arrange characters and clues however you want. It’s perfect for visualizing a political hierarchy, a family tree, or a complex criminal conspiracy.
 - **Abstract Brainstorming**: Unlike the Map, the Canvas isn't bound by geography. You can cluster entities together just to see how they look, while they remain linked to your actual vault data.
@@ -68,4 +68,4 @@ Most tools force you to choose one way to look at your data. Codex Cryptica lets
 
 _Want to see the Codex in action? Check out our [Showcase: See Your World Like Never Before](/blog/showcase-see-your-world)._
 
-_See our [Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty) to learn how we keep this data 100% private._
+_See our [Guide to Data Sovereignty](gm-guide-data-sovereignty) to learn how we keep this data 100% private._

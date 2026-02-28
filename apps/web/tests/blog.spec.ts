@@ -22,7 +22,9 @@ test.describe("Blog", () => {
   test("should navigate to and render the first article", async ({ page }) => {
     await page.goto("/blog");
 
-    const articleLink = page.getByText(/The GM’s Guide to Data Sovereignty/);
+    const articleLink = page.getByRole("link", {
+      name: "The GM’s Guide to Data Sovereignty: Why 'Local-First' is the Future of Your Lore",
+    });
     await articleLink.click();
 
     // Wait for navigation
@@ -45,6 +47,16 @@ test.describe("Blog", () => {
       exact: true,
     });
     await expect(ctaButton).toBeVisible();
+
+    // Check cross-link
+    const crossLink = page.getByRole("link", {
+      name: /See Your World Like Never Before/,
+    });
+    await expect(crossLink).toBeVisible();
+    await expect(crossLink).toHaveAttribute(
+      "href",
+      /\/blog\/showcase-see-your-world$/,
+    );
   });
 
   test("should navigate to and render the spatial intelligence article", async ({
@@ -52,9 +64,9 @@ test.describe("Blog", () => {
   }) => {
     await page.goto("/blog");
 
-    const articleLink = page.getByText(
-      /Spatial Intelligence: How your Map, Graph, and Canvas Work Together/,
-    );
+    const articleLink = page.getByRole("link", {
+      name: "Spatial Intelligence: How your Map, Graph, and Canvas Work Together",
+    });
     await articleLink.click();
 
     // Wait for navigation
@@ -83,6 +95,10 @@ test.describe("Blog", () => {
       name: "Guide to Data Sovereignty",
     });
     await expect(crossLink).toBeVisible();
+    await expect(crossLink).toHaveAttribute(
+      "href",
+      /gm-guide-data-sovereignty$/,
+    );
   });
 
   test("should show 404 for non-existent article", async ({ page }) => {
