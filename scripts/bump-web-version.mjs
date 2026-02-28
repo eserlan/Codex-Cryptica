@@ -1,5 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const repoRoot = process.cwd();
 const webPackagePath = resolve(repoRoot, 'apps/web/package.json');
@@ -14,8 +15,37 @@ if (!versionMatch) {
   throw new Error(`Unsupported version format: ${version}`);
 }
 
-const [, major, minor, patch] = versionMatch;
-const nextVersion = `${major}.${minor}.${Number(patch) + 1}`;
+let [, major, minor, patch] = versionMatch.map(Number);
+
+// Determine bump type
+let bumpType = 'patch';
+const prNumber = process.env.PR_NUMBER;
+
+if (prNumber) {
+  try {
+    const labels = execSync(`gh pr view ${prNumber} --json labels --jq '.labels.[].name'`, { encoding: 'utf8' });
+    if (labels.includes('major')) {
+      bumpType = 'major';
+    } else if (labels.includes('minor')) {
+      bumpType = 'minor';
+    }
+  } catch (e) {
+    console.warn(`Failed to fetch PR labels for #${prNumber}:`, e.message);
+  }
+}
+
+if (bumpType === 'major') {
+  major += 1;
+  minor = 0;
+  patch = 0;
+} else if (bumpType === 'minor') {
+  minor += 1;
+  patch = 0;
+} else {
+  patch += 1;
+}
+
+const nextVersion = `${major}.${minor}.${patch}`;
 pkg.version = nextVersion;
 writeFileSync(webPackagePath, `${JSON.stringify(pkg, null, 2)}\n`);
 
@@ -47,5 +77,5 @@ const updatedSw = sw.replace(
 );
 writeFileSync(serviceWorkerPath, updatedSw);
 
-console.log(`Bumped web version ${version} -> ${nextVersion}`);
+console.log(`Bumped web version ${version} -> ${nextVersion} (${bumpType})`);
 console.log(`Bumped SW cache version ${swMatch[1]} -> ${nextCacheVersion}`);

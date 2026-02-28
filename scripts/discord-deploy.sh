@@ -14,6 +14,10 @@ if [ "$TYPE" == "staging" ]; then
   EMOJI="🧪"
   TITLE="Staging Deployment Complete"
   DESCRIPTION="The latest changes have been deployed to the staging environment for verification."
+elif [ "$TYPE" == "release" ]; then
+  EMOJI="📦"
+  TITLE="New Codex Release Available"
+  DESCRIPTION="A new formal version of Codex Cryptica has been archived and is ready for download."
 else
   EMOJI="🚀"
   TITLE="Production Deployment Complete"

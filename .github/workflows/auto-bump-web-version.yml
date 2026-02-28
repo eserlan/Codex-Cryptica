@@ -29,6 +29,9 @@ jobs:
           node-version: 22
 
       - name: Bump web version and service worker cache
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/bump-web-version.mjs
 
       - name: Commit and push version bump
