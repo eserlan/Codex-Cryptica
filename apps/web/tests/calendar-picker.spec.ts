@@ -41,7 +41,9 @@ const clickNodeOnCanvas = async (page: Page, label: string) => {
 
   // If panel doesn't appear, try force click slightly offset (sometimes edge of node issues?)
   try {
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+      timeout: 2000,
+    });
   } catch {
     console.log("Retry clicking node...");
     await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
