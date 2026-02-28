@@ -52,7 +52,7 @@ test.describe("Footer", () => {
 
     // Wait for the settings modal to appear
     const settingsModal = page.getByRole("dialog");
-    await expect(settingsModal).toBeVisible({ timeout: 10000 });
+    await expect(settingsModal).toBeVisible();
 
     // Verify it's on the help tab by checking for the specific heading or content
     await expect(settingsModal.locator('h2:has-text("Help")')).toBeVisible();
