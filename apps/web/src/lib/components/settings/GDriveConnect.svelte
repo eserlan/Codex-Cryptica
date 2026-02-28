@@ -87,12 +87,12 @@
   class="flex flex-col gap-4 p-4 border border-accent-primary/20 rounded-lg bg-bg-surface/50"
 >
   <div class="flex items-center justify-between">
-    <h3 class="text-lg font-bold text-accent-primary">
+    <h3 class="text-lg font-bold text-accent-primary font-header">
       Google Drive Cloud Sync
     </h3>
     {#if connectedUser}
       <button
-        class="text-[10px] uppercase font-bold text-theme-muted hover:text-theme-text transition-colors"
+        class="text-[10px] uppercase font-bold text-theme-muted hover:text-theme-text transition-colors font-header"
         onclick={async () => {
           await vault.disconnectCloud();
           connectedUser = null;
@@ -125,7 +125,7 @@
             >Linked Folder</span
           >
           <button
-            class="text-[10px] text-accent-primary hover:underline font-bold uppercase"
+            class="text-[10px] text-accent-primary hover:underline font-bold uppercase font-header"
             onclick={() => (showPicker = true)}
           >
             Change
@@ -168,7 +168,7 @@
       {/if}
 
       <button
-        class="w-full px-4 py-3 bg-accent-primary text-bg-primary font-bold rounded-md hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 shadow-lg shadow-accent-primary/10"
+        class="w-full px-4 py-3 bg-accent-primary text-bg-primary font-bold rounded-md hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 shadow-lg shadow-accent-primary/10 font-header"
         disabled={vault.status === "saving"}
         onclick={() => (vault as any).syncToCloud(connectedUser)}
       >
@@ -199,7 +199,7 @@
       </div>
 
       <button
-        class="w-full px-4 py-3 border border-accent-primary text-accent-primary font-bold rounded-md hover:bg-accent-primary/10 transition-all disabled:opacity-50"
+        class="w-full px-4 py-3 border border-accent-primary text-accent-primary font-bold rounded-md hover:bg-accent-primary/10 transition-all disabled:opacity-50 font-header"
         disabled={isConnecting}
         onclick={connect}
       >

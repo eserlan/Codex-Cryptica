@@ -381,7 +381,9 @@
 </script>
 
 <div class="space-y-4">
-  <h3 class="text-xs font-bold text-theme-primary uppercase tracking-widest">
+  <h3
+    class="text-xs font-bold text-theme-primary uppercase tracking-widest font-header"
+  >
     Archive Ingestion
   </h3>
 
@@ -400,7 +402,8 @@
       ></span>
 
       <div class="flex flex-col gap-1">
-        <span class="text-xs font-bold text-red-400 uppercase tracking-wider"
+        <span
+          class="text-xs font-bold text-red-400 uppercase tracking-wider font-header"
           >Oracle Connection Required</span
         >
 
@@ -424,7 +427,7 @@
       class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
     >
       <div
-        class="flex items-center gap-2 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+        class="flex items-center gap-2 text-[10px] font-bold text-theme-secondary uppercase tracking-wider font-header"
       >
         <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
 
@@ -471,7 +474,9 @@
             {statusMessage}
           </p>
 
-          <p class="text-[9px] text-theme-muted uppercase tracking-[0.2em]">
+          <p
+            class="text-[9px] text-theme-muted uppercase tracking-[0.2em] font-header"
+          >
             Oracle is interpreting your notes
           </p>
         </div>
@@ -484,7 +489,7 @@
 
         <button
           onclick={() => uiStore.abortActiveOperations()}
-          class="text-[9px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase tracking-widest"
+          class="text-[9px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase tracking-widest font-header"
         >
           Cancel Import
         </button>
@@ -505,7 +510,7 @@
         >
           <span class="icon-[lucide--check-circle] w-8 h-8"></span>
         </div>
-        <p class="text-sm font-bold uppercase tracking-widest">
+        <p class="text-sm font-bold uppercase tracking-widest font-header">
           Import Successful
         </p>
         <p class="text-[10px] text-theme-muted uppercase font-mono">

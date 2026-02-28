@@ -100,7 +100,7 @@
 
   <div
     bind:this={modalElement}
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101]"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-heading"
@@ -144,7 +144,7 @@
           >
             <span class="{tab.icon} w-5 h-5"></span>
             <span
-              class="text-xs font-bold uppercase tracking-wider hidden md:block"
+              class="text-xs font-bold uppercase tracking-wider hidden md:block font-header"
               >{tab.label}</span
             >
 
@@ -175,7 +175,7 @@
       >
         <h2
           id="settings-heading"
-          class="text-lg font-bold text-theme-text uppercase tracking-widest flex items-center gap-3"
+          class="text-lg font-bold text-theme-text uppercase tracking-widest flex items-center gap-3 font-header"
         >
           <span
             class="{tabs.find((t) => t.id === uiStore.activeSettingsTab)
@@ -207,14 +207,16 @@
           >
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
+                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
               >
                 Active Archive
               </h3>
               <div
                 class="bg-theme-surface border border-theme-border p-4 rounded font-mono"
               >
-                <div class="text-[10px] text-theme-muted uppercase mb-1">
+                <div
+                  class="text-[10px] text-theme-muted uppercase mb-1 font-header"
+                >
                   Status
                 </div>
                 <div class="text-xs text-theme-text mb-4">
@@ -223,7 +225,9 @@
                     : "No Vault Active"}
                 </div>
 
-                <div class="text-[10px] text-theme-muted uppercase mb-1">
+                <div
+                  class="text-[10px] text-theme-muted uppercase mb-1 font-header"
+                >
                   Entity Count
                 </div>
                 <div class="text-xs text-theme-text">
@@ -271,7 +275,7 @@
               >
                 <div>
                   <label
-                    class="block text-xs font-bold text-theme-text uppercase cursor-pointer"
+                    class="block text-xs font-bold text-theme-text uppercase cursor-pointer font-header"
                     for="lite-mode-toggle">Lite Mode (No AI)</label
                   >
                   <p class="text-[10px] text-theme-muted">
@@ -305,7 +309,7 @@
 
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest"
+                class="text-xs font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
               >
                 World Eras
               </h3>
@@ -335,7 +339,7 @@
             </div>
 
             <h3
-              class="text-xs font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest"
+              class="text-xs font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest font-header"
             >
               Campaign Labels
             </h3>
@@ -354,7 +358,7 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4"
+                class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
               >
                 Interface Configuration
               </h3>
@@ -364,7 +368,7 @@
                 <div class="flex items-center justify-between pb-4">
                   <div>
                     <span
-                      class="block text-xs font-bold text-theme-text uppercase"
+                      class="block text-xs font-bold text-theme-text uppercase font-header"
                       >Skip Welcome Screen</span
                     >
                     <p class="text-[10px] text-theme-muted">
@@ -413,33 +417,41 @@
           >
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2"
+                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
               >
                 Manifest
               </h3>
               <div class="grid grid-cols-2 gap-4 font-mono text-[10px]">
                 <div>
-                  <div class="text-theme-muted uppercase mb-1">Software</div>
+                  <div class="text-theme-muted uppercase mb-1 font-header">
+                    Software
+                  </div>
                   <div class="text-theme-text">Codex Cryptica</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1">Version</div>
+                  <div class="text-theme-muted uppercase mb-1 font-header">
+                    Version
+                  </div>
                   <div class="text-theme-text">{VERSION}</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1">Codename</div>
+                  <div class="text-theme-muted uppercase mb-1 font-header">
+                    Codename
+                  </div>
                   <div class="text-theme-text">
                     {CODENAME}
                   </div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1">
+                  <div class="text-theme-muted uppercase mb-1 font-header">
                     Architecture
                   </div>
                   <div class="text-theme-text">Local-First / Svelte 5</div>
                 </div>
                 <div>
-                  <div class="text-theme-muted uppercase mb-1">License</div>
+                  <div class="text-theme-muted uppercase mb-1 font-header">
+                    License
+                  </div>
                   <div class="text-theme-text">MIT</div>
                 </div>
               </div>
@@ -447,7 +459,7 @@
 
             <section>
               <h3
-                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2"
+                class="text-xs font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
               >
                 Legal Compliance
               </h3>
@@ -459,7 +471,7 @@
                   class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                 >
                   <span
-                    class="text-xs text-theme-text uppercase tracking-widest font-bold"
+                    class="text-xs text-theme-text uppercase tracking-widest font-bold font-header"
                     >Privacy Policy</span
                   >
                   <span
@@ -473,7 +485,7 @@
                   class="flex items-center justify-between p-3 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
                 >
                   <span
-                    class="text-xs text-theme-text uppercase tracking-widest font-bold"
+                    class="text-xs text-theme-text uppercase tracking-widest font-bold font-header"
                     >Terms of Service</span
                   >
                   <span

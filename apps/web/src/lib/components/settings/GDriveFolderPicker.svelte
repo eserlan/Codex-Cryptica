@@ -62,7 +62,7 @@
       class="p-4 border-b border-theme-border flex justify-between items-center"
     >
       <h3
-        class="text-sm font-bold uppercase tracking-widest text-theme-primary"
+        class="text-sm font-bold uppercase tracking-widest text-theme-primary font-header"
       >
         Select GDrive Folder
       </h3>
@@ -125,7 +125,7 @@
                 <span class="text-xs font-medium truncate">{folder.name}</span>
               </button>
               <button
-                class="p-3 text-theme-primary font-bold uppercase text-[10px] tracking-wider hover:bg-theme-primary/20 rounded transition-all"
+                class="p-3 text-theme-primary font-bold uppercase text-[10px] tracking-wider hover:bg-theme-primary/20 rounded transition-all font-header"
                 onclick={() => onSelect(folder)}
               >
                 Select
@@ -138,7 +138,7 @@
 
     <div class="p-4 border-t border-theme-border flex justify-end gap-3">
       <button
-        class="px-4 py-2 text-xs font-bold uppercase text-theme-muted hover:text-theme-text transition-colors"
+        class="px-4 py-2 text-xs font-bold uppercase text-theme-muted hover:text-theme-text transition-colors font-header"
         onclick={onCancel}
       >
         Cancel

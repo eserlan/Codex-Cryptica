@@ -66,7 +66,9 @@
         <span class="icon-[lucide--sparkles] text-theme-primary w-6 h-6"></span>
       </div>
       <div>
-        <h3 class="text-sm font-bold text-theme-text uppercase tracking-widest">
+        <h3
+          class="text-sm font-bold text-theme-text uppercase tracking-widest font-header"
+        >
           Transmuting Exploration into Reality
         </h3>
         <p class="text-[10px] text-theme-muted mt-1 leading-relaxed">
@@ -87,7 +89,7 @@
             window.alert("Failed to save campaign. Please try again.");
           }
         }}
-        class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-[10px] rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
+        class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-[10px] rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)] font-header"
       >
         Save as Campaign
       </button>
@@ -97,7 +99,7 @@
   <!-- Fog of War -->
   <div>
     <h3
-      class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4"
+      class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
     >
       Fog of War
     </h3>
@@ -108,7 +110,7 @@
         <div class="flex-1">
           <label
             for="default-visibility"
-            class="block text-xs font-bold text-theme-text mb-1 uppercase"
+            class="block text-xs font-bold text-theme-text mb-1 uppercase font-header"
             >Default Entity Visibility</label
           >
           <p class="text-[10px] text-theme-muted leading-relaxed">
@@ -128,7 +130,9 @@
       </div>
 
       <div class="border-t border-theme-border/30 pt-4">
-        <h4 class="text-[10px] font-bold text-theme-secondary uppercase mb-2">
+        <h4
+          class="text-[10px] font-bold text-theme-secondary uppercase mb-2 font-header"
+        >
           Tag Reference
         </h4>
         <ul class="space-y-2 text-[10px] font-mono">
@@ -152,7 +156,7 @@
   <!-- Chronology / Calendar -->
   <div>
     <h3
-      class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4"
+      class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
     >
       Chronology & Calendar
     </h3>
@@ -164,7 +168,8 @@
         class="flex items-center justify-between border-b border-theme-border/20 pb-4"
       >
         <div>
-          <span class="block text-xs font-bold text-theme-text uppercase"
+          <span
+            class="block text-xs font-bold text-theme-text uppercase font-header"
             >Standard Gregorian</span
           >
           <p class="text-[10px] text-theme-muted">
@@ -183,7 +188,7 @@
       <div class="grid grid-cols-2 gap-4">
         <div class="space-y-1">
           <label
-            class="text-[10px] font-bold text-theme-muted uppercase"
+            class="text-[10px] font-bold text-theme-muted uppercase font-header"
             for="epoch-label">Epoch Suffix</label
           >
           <input
@@ -198,7 +203,7 @@
         </div>
         <div class="space-y-1">
           <label
-            class="text-[10px] font-bold text-theme-muted uppercase"
+            class="text-[10px] font-bold text-theme-muted uppercase font-header"
             for="present-year">Present Year</label
           >
           <input
@@ -220,13 +225,13 @@
         <div transition:slide class="pt-4 border-t border-theme-border/20">
           <div class="flex items-center justify-between mb-4">
             <h4
-              class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest"
+              class="text-[10px] font-bold text-theme-secondary uppercase tracking-widest font-header"
             >
               Custom Month Structure
             </h4>
             <button
               onclick={addMonth}
-              class="text-[9px] font-bold bg-theme-primary/10 border border-theme-primary/30 text-theme-primary px-2 py-1 rounded hover:bg-theme-primary hover:text-theme-bg transition-colors"
+              class="text-[9px] font-bold bg-theme-primary/10 border border-theme-primary/30 text-theme-primary px-2 py-1 rounded hover:bg-theme-primary hover:text-theme-bg transition-colors font-header"
             >
               + ADD MONTH
             </button>
@@ -260,7 +265,7 @@
                     class="w-12 bg-transparent text-center py-1 text-xs text-theme-text focus:outline-none"
                   />
                   <span
-                    class="px-2 text-[9px] font-bold text-theme-muted uppercase border-l border-theme-border"
+                    class="px-2 text-[9px] font-bold text-theme-muted uppercase border-l border-theme-border font-header"
                     >Days</span
                   >
                 </div>

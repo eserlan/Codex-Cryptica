@@ -45,13 +45,13 @@
           >
             <div class="flex flex-col">
               <span
-                class="text-sm font-bold text-theme-primary uppercase tracking-wider"
+                class="text-sm font-bold text-theme-primary uppercase tracking-wider font-header"
                 >{article.title}</span
               >
               <div class="flex gap-2 mt-1">
                 {#each article.tags as tag}
                   <span
-                    class="text-xs bg-theme-primary/10 text-theme-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter"
+                    class="text-xs bg-theme-primary/10 text-theme-primary px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter font-header"
                     >#{tag}</span
                   >
                 {/each}
@@ -81,7 +81,7 @@
             transition:slide
           >
             <div
-              class="text-sm text-theme-text/90 leading-relaxed prose prose-theme prose-p:my-3 prose-headings:text-theme-primary prose-headings:text-sm prose-headings:font-bold prose-headings:uppercase prose-headings:tracking-widest prose-headings:mt-6 prose-headings:mb-3 prose-strong:text-theme-primary prose-code:text-theme-primary prose-li:my-1"
+              class="text-sm text-theme-text/90 leading-relaxed prose prose-theme prose-p:my-3 prose-headings:text-theme-primary prose-headings:text-sm prose-headings:font-bold prose-headings:uppercase prose-headings:font-header prose-headings:tracking-widest prose-headings:mt-6 prose-headings:mb-3 prose-strong:text-theme-primary prose-code:text-theme-primary prose-li:my-1"
             >
               {#await parseContent(article.content) then html}
                 {@html html}
@@ -108,7 +108,7 @@
 
   <div class="pt-6 border-t border-theme-border">
     <h4
-      class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-4"
+      class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-4 font-header"
     >
       Common Procedures
     </h4>
@@ -121,7 +121,8 @@
         <span
           class="icon-[lucide--map] w-5 h-5 text-theme-muted group-hover:text-theme-primary"
         ></span>
-        <span class="text-xs font-bold text-theme-text uppercase tracking-wider"
+        <span
+          class="text-xs font-bold text-theme-text uppercase tracking-wider font-header"
           >Restart Welcome Tour</span
         >
       </button>
