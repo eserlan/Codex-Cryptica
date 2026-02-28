@@ -130,7 +130,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       border: "rgba(120, 53, 15, 0.3)",
       accent: "#991b1b", // Dried Blood / Crimson
       fontHeader: "'Eagle Lake', serif",
-      fontBody: "'Spectral', serif",
+      fontBody: "'Eagle Lake', serif",
       texture: "parchment.svg",
     },
     graph: {
