@@ -2,7 +2,10 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main, '**' ]
+    branches: [main, "**"]
+  workflow_run:
+    workflows: ["Auto Bump Web Version After Merge"]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -13,75 +16,55 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: write
 
 jobs:
-  verify_and_build:
+  build:
+    # If triggered by workflow_run, only run if the bump was successful
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
+    strategy:
+      matrix:
+        environment: [production, staging]
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          # Production always builds from main; Staging builds from the current ref
+          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Test
-        run: npm test
-
-      - name: Build Staging (/staging)
-        env:
-          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
-          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
-          VITE_STAGING: true
-          BASE_PATH: /staging
+      - name: Lint and Test
         run: |
-          # Build the current branch code for staging
-          rm -rf apps/web/.svelte-kit apps/web/build dist
-          mkdir -p dist/staging
-          npm run build --workspace=web
-          cp -r apps/web/build/* dist/staging/
-          cp apps/web/build/index.html dist/staging/404.html
+          npm run lint
+          npm test
 
-      - name: Build Production (Root /)
+      - name: Build Application
         env:
+          BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_SHARED_GEMINI_KEY }}
-          VITE_GOOGLE_API_KEY: ${{ secrets.VITE_GOOGLE_API_KEY }}
-          BASE_PATH: ''
-        run: |
-          # If we are on a branch, we must switch to main to build the prod version
-          # to ensure the root site doesn't reflect experimental branch code.
-          # If we are already on main, this is a direct build.
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            git fetch origin main:main
-            git checkout main --force
-            npm ci # Refresh main dependencies
-          fi
-          rm -rf apps/web/.svelte-kit apps/web/build
-          npm run build --workspace=web
-          cp -r apps/web/build/* dist/
-          cp apps/web/build/index.html dist/404.html
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+        run: npm run build --workspace=web
 
-      - name: Upload Artifacts
-        uses: actions/upload-pages-artifact@v4
+      - name: Upload intermediate artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: 'dist/'
+          name: dist-${{ matrix.environment }}
+          path: apps/web/build/
+          retention-days: 1
 
   deploy:
-    needs: verify_and_build
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -89,8 +72,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Download Production Build
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 0
+          name: dist-production
+          path: dist/
+
+      - name: Download Staging Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-staging
+          path: dist/staging/
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "dist/"
 
       - name: Deploy
         id: deployment
@@ -104,7 +102,7 @@ jobs:
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
 
       - name: Notify Production
-        if: success() && github.ref == 'refs/heads/main'
+        if: success() && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_run')
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
