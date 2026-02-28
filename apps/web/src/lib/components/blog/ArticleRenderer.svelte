@@ -2,6 +2,7 @@
   import { marked } from "marked";
   import { gfmHeadingId } from "marked-gfm-heading-id";
   import DOMPurify from "isomorphic-dompurify";
+  import { base } from "$app/paths";
 
   // Enable heading IDs for table of contents anchors
   marked.use(gfmHeadingId());
@@ -10,7 +11,9 @@
     content?: string;
   }>();
 
-  const renderedHtml = $derived(marked.parse(content));
+  // Ensure root-relative links in Markdown respect the SvelteKit base path
+  const processedContent = $derived(content.replaceAll("](/)", `](${base}/)`));
+  const renderedHtml = $derived(marked.parse(processedContent));
   const sanitizedHtml = $derived(DOMPurify.sanitize(renderedHtml as string));
 </script>
 
