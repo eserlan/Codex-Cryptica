@@ -85,15 +85,13 @@ jobs:
         with:
           tag_name: v${{ needs.check-version.outputs.version }}
           name: Codex Cryptica v${{ needs.check-version.outputs.version }}
+          generate_release_notes: true
           body: |
-            ## Codex Cryptica v${{ needs.check-version.outputs.version }}
+            ## 📦 Portable Codex
             
-            This release marks a significant update to the Codex.
+            Download the `.zip` below for maximum data sovereignty. Extract and serve locally to run Codex Cryptica entirely offline.
             
-            ### Artifacts
-            - **codex-cryptica-${{ needs.check-version.outputs.version }}.zip**: A standalone, portable version of the app. Download, extract, and serve locally for maximum data sovereignty.
-            
-            [Full Changelog](https://github.com/${{ github.repository }}/compare/${{ needs.check-version.outputs.before_sha }}...v${{ needs.check-version.outputs.version }})
+            ---
           draft: false
           prerelease: false
           files: codex-cryptica-${{ needs.check-version.outputs.version }}.zip
