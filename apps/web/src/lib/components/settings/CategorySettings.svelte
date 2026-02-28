@@ -229,8 +229,11 @@
         </h5>
         <button
           onclick={() => (isPickerOpen = false)}
-          class="text-gray-500 hover:text-white">✕</button
+          aria-label="Close"
+          class="text-gray-500 hover:text-theme-text"
         >
+          ✕
+        </button>
       </div>
 
       <div
