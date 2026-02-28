@@ -35,6 +35,25 @@ test.describe("Footer", () => {
     await expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  test("should display Help link in the footer and open settings", async ({
+    page,
+  }) => {
+    const footer = page.locator("footer");
+    const helpLink = footer.locator('button:has-text("Help")');
+
+    await expect(helpLink).toBeVisible();
+
+    // Click help and verify settings modal opens
+    await helpLink.click();
+    const settingsModal = page.locator('[role="dialog"]');
+    await expect(settingsModal).toBeVisible();
+
+    // Verify it's on the help tab by checking for the search input
+    await expect(
+      page.locator('input[placeholder="Search documentation..."]'),
+    ).toBeVisible();
+  });
+
   test("should have correct styling classes on Patreon link", async ({
     page,
   }) => {
