@@ -392,7 +392,7 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y-no-noninteractive-element-interactions a11y-no-noninteractive-tabindex -->
 <div
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"

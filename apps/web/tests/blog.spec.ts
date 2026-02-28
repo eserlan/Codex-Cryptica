@@ -41,7 +41,7 @@ test.describe("Blog", () => {
 
     // Check CTA button
     const ctaButton = page.getByRole("link", {
-      name: "Initiate Surveillance",
+      name: "Enter the Codex",
       exact: true,
     });
     await expect(ctaButton).toBeVisible();
@@ -52,6 +52,26 @@ test.describe("Blog", () => {
 
     await expect(
       page.getByText(/Transmission not found in the archive/),
+    ).toBeVisible();
+  });
+
+  test("should navigate to blog via footer link", async ({ page }) => {
+    await page.goto("/");
+
+    // Check if landing page is visible and enter if so
+    const enterButton = page.getByRole("button", { name: "Enter the Codex" });
+    if (await enterButton.isVisible()) {
+      await enterButton.click();
+    }
+
+    const footerBlogLink = page
+      .locator("footer")
+      .getByRole("link", { name: "Blog" });
+    await footerBlogLink.click();
+
+    await expect(page).toHaveURL(/\/blog/);
+    await expect(
+      page.getByRole("heading", { name: "The Archive" }),
     ).toBeVisible();
   });
 });

@@ -282,7 +282,7 @@
   </div>
 {/if}
 
-<!-- svelte-ignore css_unknown_at_rule -->
+<!-- svelte-ignore css-unknown-at-rule -->
 <style>
   @reference "../../../app.css";
 
