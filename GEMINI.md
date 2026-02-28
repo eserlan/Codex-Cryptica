@@ -4,7 +4,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
-- TypeScript 5.x / Svelte 5 / SvelteKit 2 + SvelteKit (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components) (062-add-blog-path)
+- TypeScript 5.x / Svelte 5 / SvelteKit 2 (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components) (062-add-blog-path)
 - Static JSON or Markdown files for articles (062-add-blog-path)
 
 - TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management) (061-spatial-canvas)

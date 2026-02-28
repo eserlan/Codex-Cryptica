@@ -38,6 +38,7 @@
                 year: "numeric",
                 month: "long",
                 day: "numeric",
+                timeZone: "UTC",
               })}
             </time>
             <span class="w-8 h-px bg-theme-border"></span>

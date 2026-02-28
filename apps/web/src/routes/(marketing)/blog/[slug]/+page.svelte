@@ -13,10 +13,7 @@
 
   <!-- Open Graph -->
   <meta property="og:title" content={article.title} />
-  <meta
-    property="og:description"
-    content={article.description.replace(/"/g, "&quot;")}
-  />
+  <meta property="og:description" content={article.description} />
   <meta property="og:type" content="article" />
   <meta property="article:published_time" content={article.publishedAt} />
 </svelte:head>
@@ -46,6 +43,7 @@
             year: "numeric",
             month: "long",
             day: "numeric",
+            timeZone: "UTC",
           })}
         </time>
         <span class="w-8 h-px bg-theme-border"></span>
