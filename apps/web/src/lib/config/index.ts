@@ -14,3 +14,22 @@ export const CODENAME = import.meta.env.VITE_APP_CODENAME ?? "Cryptica";
 export const APP_NAME = "Codex Cryptica";
 export const PATREON_URL = "https://patreon.com/EspenE";
 export const DISCORD_URL = "https://discord.gg/5UUMCChF2u";
+
+export const SCHEMA_ORG = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: APP_NAME,
+  applicationCategory: "Tabletop RPG Utility",
+  operatingSystem: "Web, Local-First",
+  featureList: [
+    "AI Lore Oracle",
+    "Interactive Knowledge Graphs",
+    "Tactical Map Mode",
+    "Spatial Canvas & Flowcharts",
+    "Era-based Timelines",
+    "Local-First Privacy",
+    "Google Drive Syncing",
+  ],
+  storageRequirements: "Origin Private File System (OPFS)",
+  softwareVersion: VERSION,
+};

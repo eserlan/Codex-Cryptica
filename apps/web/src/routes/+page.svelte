@@ -9,6 +9,9 @@
   import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
+  import { SCHEMA_ORG } from "$lib/config";
+
+  const _ldJson = JSON.stringify(SCHEMA_ORG);
 
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
@@ -120,6 +123,14 @@
     }
   });
 </script>
+
+<svelte:head>
+  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
+    <script type="application/ld+json">
+      {@html _ldJson}
+    </script>
+  {/if}
+</svelte:head>
 
 <div
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
