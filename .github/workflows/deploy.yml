@@ -47,6 +47,7 @@ jobs:
           BASE_PATH: "/staging"
           VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: |
           npm run build --workspace=web
           mkdir -p dist/staging
@@ -57,6 +58,7 @@ jobs:
         # This ensures / always points to main, while /staging points to the feature.
         run: |
           if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            git fetch origin main:main
             git checkout main
             npm ci
           fi
