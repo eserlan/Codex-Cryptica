@@ -74,7 +74,7 @@
             : ''}"
         ></div>
         <span
-          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase"
+          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
         {#if uiStore.liteMode}
@@ -169,7 +169,7 @@
               window.alert("Failed to save campaign. Please try again.");
             }
           }}
-          class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest rounded hover:bg-theme-secondary transition-colors"
+          class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
         >
           Save as Campaign
         </button>

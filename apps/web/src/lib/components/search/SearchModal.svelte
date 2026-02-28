@@ -209,7 +209,7 @@
 
                   {#if isCanvasPage}
                     <button
-                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 group/btn"
+                      class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"
                       aria-label={`Add ${result.title} to canvas`}
                       onclick={(e) => {
                         e.stopPropagation();
@@ -233,7 +233,7 @@
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
                   {#if result.type}
                     <span
-                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800"
+                      class="px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase font-header tracking-wider bg-zinc-100 dark:bg-zinc-800"
                       style="color: {categories.getColor(result.type)}"
                     >
                       {categories.getCategory(result.type)?.label ||

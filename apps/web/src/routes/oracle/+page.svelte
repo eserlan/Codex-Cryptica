@@ -28,14 +28,14 @@
           : ''}"
       ></div>
       <span
-        class="text-[10px] font-bold text-oracle-primary tracking-[0.2em] uppercase"
+        class="text-[10px] font-bold text-oracle-primary tracking-[0.2em] uppercase font-header"
         >Lore Oracle Standalone</span
       >
     </div>
     <div class="flex items-center gap-2">
       {#if oracle.messages.length > 0}
         <button
-          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase tracking-widest bg-oracle-dark/20"
+          class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
           onclick={() => {
             if (
               confirm(

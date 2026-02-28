@@ -372,7 +372,7 @@
     class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
   >
     <h3
-      class="text-xs font-bold text-theme-secondary uppercase tracking-widest border-b border-theme-border pb-2"
+      class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
     >
       Connections
     </h3>
@@ -515,7 +515,7 @@
               <select
                 bind:value={editType}
                 aria-label="Entity Type"
-                class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase focus:outline-none rounded ml-2"
+                class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-2"
               >
                 {#each categories.list as cat}
                   <option value={cat.id}
@@ -525,7 +525,7 @@
               </select>
             {:else}
               <span
-                class="text-[10px] font-bold tracking-widest text-theme-primary uppercase"
+                class="text-[10px] font-bold tracking-widest text-theme-primary uppercase font-header"
                 >{entity.type}</span
               >
             {/if}
@@ -733,7 +733,7 @@
                     >
                       <span class="icon-[lucide--image] w-12 h-12 opacity-50"
                       ></span>
-                      <span class="text-[10px] font-bold uppercase"
+                      <span class="text-[10px] font-bold uppercase font-header"
                         >No Image</span
                       >
                     </div>
@@ -800,7 +800,7 @@
                     class="bg-theme-surface p-4 rounded border border-theme-border"
                   >
                     <h3
-                      class="text-xs font-bold text-theme-secondary uppercase tracking-widest mb-4"
+                      class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest mb-4"
                     >
                       Timeline Configuration
                     </h3>
@@ -822,7 +822,7 @@
                     {#if entity.start_date}
                       <div class="flex flex-col">
                         <span
-                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
+                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
                           >{getTemporalLabel(entity.type, "start")}</span
                         >
                         <span class="text-lg font-mono text-theme-primary"
@@ -833,7 +833,7 @@
                     {#if entity.end_date}
                       <div class="flex flex-col">
                         <span
-                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase"
+                          class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
                           >{getTemporalLabel(entity.type, "end")}</span
                         >
                         <span class="text-lg font-mono text-theme-primary"

@@ -65,7 +65,7 @@
                 ></span>
               </div>
               <h2
-                class="text-xl font-bold uppercase tracking-wider font-header text-theme-text"
+                class="text-xl font-bold uppercase font-header tracking-wider text-theme-text"
               >
                 {feature.title}
               </h2>
@@ -98,7 +98,7 @@
         </p>
         <a
           href="{base}/"
-          class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
+          class="inline-block px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_40px_var(--color-accent-primary)] transition-all active:scale-95"
         >
           Open the Codex
         </a>

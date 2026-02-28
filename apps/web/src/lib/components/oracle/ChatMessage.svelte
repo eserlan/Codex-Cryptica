@@ -344,7 +344,7 @@
 
                   {#if message.isDrawing && oracle.activeStyleTitle}
                     <div
-                      class="absolute bottom-full right-0 mb-2 w-48 bg-theme-surface border border-theme-border rounded shadow-xl p-2 z-50 text-[9px] font-bold tracking-widest uppercase text-theme-primary animate-pulse"
+                      class="absolute bottom-full right-0 mb-2 w-48 bg-theme-surface border border-theme-border rounded shadow-xl p-2 z-50 text-[9px] font-bold tracking-widest uppercase font-header text-theme-primary animate-pulse"
                       aria-live="polite"
                     >
                       Style: {oracle.activeStyleTitle}
@@ -421,7 +421,7 @@
                     >
                       <div class="mb-2">
                         <span
-                          class="text-theme-primary font-bold uppercase text-[9px]"
+                          class="text-theme-primary font-bold uppercase font-header text-[9px]"
                           >Chronicle:</span
                         >
                         <p class="line-clamp-2 text-theme-text/80">
@@ -430,7 +430,7 @@
                       </div>
                       <div>
                         <span
-                          class="text-theme-accent font-bold uppercase text-[9px]"
+                          class="text-theme-accent font-bold uppercase font-header text-[9px]"
                           >Lore:</span
                         >
                         <p class="line-clamp-2 text-theme-text/80">
@@ -477,7 +477,7 @@
               transition:fade
             >
               <span
-                class="text-[10px] text-green-400 font-bold uppercase tracking-wider flex items-center gap-1"
+                class="text-[10px] text-green-400 font-bold uppercase font-header tracking-wider flex items-center gap-1"
               >
                 <span class="icon-[lucide--check-circle] w-3 h-3"></span>
                 SAVED
@@ -486,7 +486,7 @@
               {#if isLastAction}
                 <button
                   onclick={handleUndo}
-                  class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                  class="text-[10px] text-theme-muted hover:text-red-400 font-bold uppercase font-header tracking-wider flex items-center gap-1 transition-colors"
                   title="Undo changes (Ctrl+Z)"
                 >
                   <span class="icon-[lucide--undo-2] w-3 h-3"></span>

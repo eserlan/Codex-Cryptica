@@ -67,7 +67,7 @@
       </div>
       <div>
         <h3
-          class="text-base font-bold text-theme-text uppercase tracking-widest font-header"
+          class="text-base font-bold text-theme-text uppercase font-header tracking-widest"
         >
           Transmuting Exploration into Reality
         </h3>
@@ -89,7 +89,7 @@
             window.alert("Failed to save campaign. Please try again.");
           }
         }}
-        class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-xs rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)] font-header"
+        class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-xs rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
       >
         Save as Campaign
       </button>
@@ -99,7 +99,7 @@
   <!-- Fog of War -->
   <div>
     <h3
-      class="text-base font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
+      class="text-base font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
     >
       Fog of War
     </h3>
@@ -131,7 +131,7 @@
 
       <div class="border-t border-theme-border/30 pt-4">
         <h4
-          class="text-[11px] font-bold text-theme-secondary uppercase mb-2 font-header"
+          class="text-[11px] font-bold text-theme-secondary uppercase font-header mb-2"
         >
           Tag Reference
         </h4>
@@ -156,7 +156,7 @@
   <!-- Chronology / Calendar -->
   <div>
     <h3
-      class="text-base font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
+      class="text-base font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
     >
       Chronology & Calendar
     </h3>
@@ -225,7 +225,7 @@
         <div transition:slide class="pt-4 border-t border-theme-border/20">
           <div class="flex items-center justify-between mb-4">
             <h4
-              class="text-[11px] font-bold text-theme-secondary uppercase tracking-widest font-header"
+              class="text-[11px] font-bold text-theme-secondary uppercase font-header tracking-widest"
             >
               Custom Month Structure
             </h4>
@@ -265,7 +265,7 @@
                     class="w-12 bg-transparent text-center py-1 text-sm text-theme-text focus:outline-none"
                   />
                   <span
-                    class="px-2 text-[10px] font-bold text-theme-muted uppercase border-l border-theme-border font-header"
+                    class="px-2 text-[10px] font-bold text-theme-muted uppercase font-header border-l border-theme-border"
                     >Days</span
                   >
                 </div>

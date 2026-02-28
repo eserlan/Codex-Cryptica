@@ -402,7 +402,8 @@
         class="icon-[lucide--alert-circle] w-5 h-5"
         class:hidden={uiStore.notification.type !== "error"}
       ></span>
-      <span class="font-mono text-xs font-bold tracking-widest uppercase"
+      <span
+        class="font-mono text-xs font-bold tracking-widest uppercase font-header"
         >{uiStore.notification.message}</span
       >
     </div>

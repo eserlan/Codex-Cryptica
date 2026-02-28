@@ -223,7 +223,7 @@
     >
       <div class="flex justify-between items-center mb-4">
         <h5
-          class="text-[11px] font-bold text-theme-primary uppercase tracking-widest font-header"
+          class="text-[11px] font-bold text-theme-primary uppercase font-header tracking-widest"
         >
           Glyph Library
         </h5>

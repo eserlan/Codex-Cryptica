@@ -462,7 +462,7 @@
           {@const entity = vault.entities[selectedPin.entityId]}
           {#if entity}
             <button
-              class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase tracking-widest whitespace-nowrap border-r border-theme-border mr-1"
+              class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase font-header tracking-widest whitespace-nowrap border-r border-theme-border mr-1"
               onclick={() => uiStore.openZenMode(entity.id)}
             >
               {entity.title}

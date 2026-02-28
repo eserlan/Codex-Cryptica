@@ -131,7 +131,7 @@
         </div>
         <button
           onclick={createNew}
-          class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg font-bold text-xs uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
+          class="px-4 py-2 rounded-lg bg-theme-primary text-theme-bg font-bold text-xs uppercase font-header tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
         >
           <Plus class="w-4 h-4" />
           Create New
@@ -178,7 +178,7 @@
                 </span>
                 {#if activeCanvasId === canvas.slug}
                   <span
-                    class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase tracking-widest"
+                    class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase font-header tracking-widest"
                     >Active</span
                   >
                 {/if}

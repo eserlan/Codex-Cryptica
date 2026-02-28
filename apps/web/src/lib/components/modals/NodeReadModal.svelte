@@ -149,7 +149,7 @@
                 )} text-green-500 w-5 h-5"
               ></span>
               <span
-                class="text-xs font-bold tracking-widest text-green-600 uppercase"
+                class="text-xs font-bold tracking-widest text-green-600 uppercase font-header"
                 >{entity.type}</span
               >
             </div>
@@ -212,7 +212,7 @@
               class="mb-8 p-4 bg-green-900/10 border-l-2 border-green-500 rounded-r"
             >
               <h4
-                class="text-green-400 font-bold text-xs uppercase tracking-widest mb-2 font-mono"
+                class="text-green-400 font-bold text-xs uppercase font-header tracking-widest mb-2 font-mono"
               >
                 Lore & Context
               </h4>

@@ -39,7 +39,7 @@
       <span class="icon-[lucide--eye-off] w-8 h-8 text-amber-500"></span>
     </div>
     <h3
-      class="text-xl font-bold text-theme-text uppercase tracking-widest mb-2"
+      class="text-xl font-bold text-theme-text uppercase font-header tracking-widest mb-2"
     >
       Protocol Redacted
     </h3>
@@ -50,7 +50,7 @@
     </p>
     <button
       onclick={onClose}
-      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase"
+      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-[10px] font-bold tracking-widest uppercase font-header"
     >
       Return to Overview
     </button>

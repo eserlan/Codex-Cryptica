@@ -105,7 +105,7 @@
       </div>
       <div class="h-px w-6 bg-theme-border/50"></div>
       <div
-        class="[writing-mode:vertical-lr] text-[10px] font-bold text-theme-muted uppercase tracking-[0.2em] py-4"
+        class="[writing-mode:vertical-lr] text-[10px] font-bold text-theme-muted uppercase font-header tracking-[0.2em] py-4"
       >
         Entity Palette
       </div>
@@ -130,7 +130,7 @@
             Active View
           </div>
           <div
-            class="text-xs font-bold text-theme-text truncate uppercase tracking-tight"
+            class="text-xs font-bold text-theme-text truncate uppercase font-header tracking-tight"
           >
             {activeCanvasName}
           </div>
@@ -143,7 +143,7 @@
 
     <div class="p-4 border-b border-theme-border">
       <h2
-        class="text-xs font-bold text-theme-primary uppercase tracking-[0.2em] mb-4"
+        class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
       >
         Entity Palette
       </h2>

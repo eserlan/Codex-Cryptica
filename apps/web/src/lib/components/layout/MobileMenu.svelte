@@ -80,7 +80,7 @@
       <!-- Main Navigation -->
       <div class="flex flex-col gap-2">
         <h3
-          class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
         >
           Views
         </h3>
@@ -94,7 +94,8 @@
             onclick={close}
           >
             <span class="icon-[lucide--share-2] w-5 h-5"></span>
-            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+            <span
+              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
               >Graph</span
             >
           </a>
@@ -108,7 +109,8 @@
             onclick={close}
           >
             <span class="icon-[lucide--map] w-5 h-5"></span>
-            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+            <span
+              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
               >Map</span
             >
           </a>
@@ -122,7 +124,8 @@
             onclick={close}
           >
             <span class="icon-[lucide--layout] w-5 h-5"></span>
-            <span class="font-mono text-sm font-bold uppercase tracking-wider"
+            <span
+              class="font-mono text-sm font-bold uppercase font-header tracking-wider"
               >Canvas</span
             >
           </a>
@@ -132,7 +135,7 @@
       <!-- Main Controls -->
       <div class="flex flex-col gap-2">
         <h3
-          class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
         >
           {themeStore.jargon.vault} Controls
         </h3>
@@ -142,7 +145,7 @@
       <!-- Application Settings -->
       <div class="flex flex-col gap-2">
         <h3
-          class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
         >
           Application
         </h3>
@@ -166,7 +169,7 @@
       <!-- Links -->
       <div class="flex flex-col gap-2 mt-auto">
         <h3
-          class="text-xs font-bold text-theme-muted uppercase tracking-widest mb-2"
+          class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-2"
         >
           Links
         </h3>

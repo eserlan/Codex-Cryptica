@@ -144,7 +144,7 @@
           >
             <span class="{tab.icon} w-5 h-5"></span>
             <span
-              class="text-sm font-bold uppercase tracking-wider hidden md:block font-header"
+              class="text-sm font-bold uppercase font-header tracking-wider hidden md:block"
               >{tab.label}</span
             >
 
@@ -175,7 +175,7 @@
       >
         <h2
           id="settings-heading"
-          class="text-lg font-bold text-theme-text uppercase tracking-widest flex items-center gap-3 font-header"
+          class="text-lg font-bold text-theme-text uppercase font-header tracking-widest flex items-center gap-3"
         >
           <span
             class="{tabs.find((t) => t.id === uiStore.activeSettingsTab)
@@ -207,7 +207,7 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
               >
                 Active Archive
               </h3>
@@ -275,7 +275,7 @@
               >
                 <div>
                   <label
-                    class="block text-sm font-bold text-theme-text uppercase cursor-pointer font-header"
+                    class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
                     for="lite-mode-toggle">Lite Mode (No AI)</label
                   >
                   <p class="text-[11px] text-theme-muted">
@@ -309,7 +309,7 @@
 
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase mb-3 tracking-widest font-header"
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
               >
                 World Eras
               </h3>
@@ -339,7 +339,7 @@
             </div>
 
             <h3
-              class="text-sm font-bold text-theme-primary uppercase mt-8 mb-3 tracking-widest font-header"
+              class="text-sm font-bold text-theme-primary uppercase font-header mt-8 mb-3 tracking-widest"
             >
               Campaign Labels
             </h3>
@@ -358,7 +358,7 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-4 font-header"
+                class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
               >
                 Interface Configuration
               </h3>
@@ -417,7 +417,7 @@
           >
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-4 tracking-widest border-b border-theme-border pb-2"
               >
                 Manifest
               </h3>
@@ -459,7 +459,7 @@
 
             <section>
               <h3
-                class="text-sm font-bold text-theme-primary uppercase mb-4 tracking-widest border-b border-theme-border pb-2 font-header"
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-4 tracking-widest border-b border-theme-border pb-2"
               >
                 Legal Compliance
               </h3>

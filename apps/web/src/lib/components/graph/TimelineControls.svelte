@@ -89,7 +89,7 @@
       transition:fade
     >
       <span
-        class="text-[9px] text-theme-muted font-bold uppercase tracking-tighter"
+        class="text-[9px] text-theme-muted font-bold uppercase font-header tracking-tighter"
         >Scale</span
       >
       <input
@@ -111,7 +111,7 @@
     >
       <div class="flex items-center gap-2">
         <span
-          class="text-[9px] text-theme-muted font-bold uppercase tracking-tighter"
+          class="text-[9px] text-theme-muted font-bold uppercase font-header tracking-tighter"
           >Range</span
         >
         <input

@@ -27,7 +27,7 @@
     <div class="flex-1 min-w-0">
       <div class="flex items-center gap-2 mb-1">
         <span
-          class="text-[10px] font-mono text-theme-primary font-bold uppercase tracking-widest bg-theme-primary/10 px-1.5 py-0.5 rounded"
+          class="text-[10px] font-mono text-theme-primary font-bold uppercase font-header tracking-widest bg-theme-primary/10 px-1.5 py-0.5 rounded"
         >
           {formatDate(entry.date)}
         </span>

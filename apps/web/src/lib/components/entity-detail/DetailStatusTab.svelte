@@ -109,7 +109,7 @@
     >
       {#if entity.date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "date")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.date)}</span>
@@ -117,7 +117,7 @@
       {/if}
       {#if entity.start_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "start")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.start_date)}</span>
@@ -125,7 +125,7 @@
       {/if}
       {#if entity.end_date?.year !== undefined}
         <div class="flex items-baseline gap-2">
-          <span class="text-theme-primary font-bold uppercase"
+          <span class="text-theme-primary font-bold uppercase font-header"
             >{getTemporalLabel(entity.type, "end")}:</span
           >
           <span class="text-theme-text">{formatDate(entity.end_date)}</span>

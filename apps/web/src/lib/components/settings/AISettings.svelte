@@ -63,7 +63,7 @@
   <!-- Tier Selection -->
   <div class="mb-6 space-y-3">
     <span
-      class="text-sm text-theme-text/60 uppercase font-bold block font-header"
+      class="text-sm text-theme-text/60 uppercase font-bold font-header block"
       >Oracle Intelligence Tier</span
     >
     <div class="grid grid-cols-2 gap-3">
@@ -120,7 +120,7 @@
         ></span>
         <div class="flex flex-col">
           <span
-            class="text-base text-theme-text font-bold uppercase tracking-wider font-header"
+            class="text-base text-theme-text font-bold uppercase font-header tracking-wider"
           >
             Personal Key Active
           </span>
@@ -145,7 +145,7 @@
         </div>
         <div class="flex-1">
           <h4
-            class="text-sm font-bold text-theme-primary uppercase tracking-widest mb-1 font-header"
+            class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest mb-1"
           >
             Shared Access Active
           </h4>
@@ -161,7 +161,7 @@
       <div class="flex flex-col gap-1">
         <label
           for="gemini-api-key"
-          class="text-sm text-theme-text/60 uppercase font-bold flex justify-between font-header"
+          class="text-sm text-theme-text/60 uppercase font-bold font-header flex justify-between"
         >
           <span
             >{oracle.tier === "advanced"

@@ -184,13 +184,13 @@
           >
             <button
               onclick={() => (uiStore.dismissedLandingPage = true)}
-              class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
+              class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
               Enter Workspace
             </button>
             <button
               onclick={() => demoService.startDemo("fantasy")}
-              class="px-12 py-5 border border-theme-primary/50 text-theme-primary font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 font-header"
+              class="px-12 py-5 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95"
             >
               Try Demo
             </button>
@@ -239,7 +239,7 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase tracking-wide font-header"
+              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
             >
               Total Privacy
             </h3>
@@ -261,7 +261,7 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase tracking-wide font-header"
+              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
             >
               AI Oracle
             </h3>
@@ -282,7 +282,7 @@
               ></span>
             </div>
             <h3
-              class="text-xl font-bold text-theme-text mb-3 uppercase tracking-wide font-header"
+              class="text-xl font-bold text-theme-text mb-3 uppercase font-header tracking-wide"
             >
               Visual Graph
             </h3>
@@ -303,7 +303,7 @@
             {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern", "fallout"] as theme}
               <button
                 onclick={() => demoService.startDemo(theme)}
-                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase tracking-widest transition-all"
+                class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
               >
                 {theme}
               </button>

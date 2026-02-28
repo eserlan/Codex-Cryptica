@@ -30,7 +30,8 @@
 
 <div class="space-y-2 p-3 bg-theme-bg/30 border border-theme-border/20 rounded">
   <div class="flex items-center justify-between">
-    <span class="text-xs font-bold text-theme-primary uppercase tracking-widest"
+    <span
+      class="text-xs font-bold text-theme-primary uppercase font-header tracking-widest"
       >{label}</span
     >
     {#if value?.year !== undefined}
@@ -72,7 +73,7 @@
   <div class="flex flex-col gap-1">
     <button
       onclick={() => (showLabelInput = !showLabelInput)}
-      class="text-[10px] text-theme-muted uppercase font-bold text-left hover:text-theme-primary transition-colors flex items-center gap-1"
+      class="text-[10px] text-theme-muted uppercase font-bold font-header text-left hover:text-theme-primary transition-colors flex items-center gap-1"
     >
       <span class="text-[8px]">{showLabelInput ? "▼" : "▶"}</span> Display Label (Optional)
     </button>

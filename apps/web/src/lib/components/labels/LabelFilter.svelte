@@ -80,7 +80,7 @@
             onclick={() => {
               onClear();
             }}
-            class="w-full py-1 text-[9px] font-bold text-theme-secondary hover:text-theme-primary uppercase tracking-tighter transition-colors"
+            class="w-full py-1 text-[9px] font-bold text-theme-secondary hover:text-theme-primary uppercase font-header tracking-tighter transition-colors"
           >
             Clear All
           </button>

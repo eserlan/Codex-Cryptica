@@ -122,7 +122,7 @@
         </button>
 
         <button
-          class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase tracking-wider"
+          class="px-3 py-1.5 bg-theme-primary text-theme-bg text-xs font-bold rounded-lg uppercase font-header tracking-wider"
           onclick={() => (showUpload = true)}
         >
           Add Map
@@ -168,7 +168,7 @@
             class="flex items-center gap-3 px-4 border-r border-theme-border"
           >
             <span
-              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
               >Brush Size</span
             >
             <input
@@ -188,7 +188,7 @@
               class="flex items-center gap-3 px-4 border-r border-theme-border"
             >
               <span
-                class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
+                class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
                 >Grid Size</span
               >
               <input
@@ -240,7 +240,7 @@
       </p>
 
       <button
-        class="px-12 py-4 bg-theme-primary text-theme-bg font-bold uppercase tracking-[0.2em] text-sm rounded-lg hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95 font-header"
+        class="px-12 py-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
         onclick={() => (showUpload = true)}
       >
         Upload World Image
@@ -262,7 +262,7 @@
           : 'border-theme-border'}"
       >
         <h3
-          class="text-xl font-bold text-theme-text mb-6 uppercase tracking-wider font-header"
+          class="text-xl font-bold text-theme-text mb-6 uppercase font-header tracking-wider"
         >
           Upload New Map
         </h3>
@@ -302,13 +302,13 @@
 
           <div class="flex gap-4 pt-4">
             <button
-              class="flex-1 px-6 py-3 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-surface transition-colors uppercase text-[10px] font-bold tracking-widest"
+              class="flex-1 px-6 py-3 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-surface transition-colors uppercase text-[10px] font-bold font-header tracking-widest"
               onclick={() => (showUpload = false)}
             >
               Cancel
             </button>
             <button
-              class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase text-[10px] tracking-widest"
+              class="flex-1 px-6 py-3 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest"
               onclick={handleUpload}
               disabled={!files}
             >

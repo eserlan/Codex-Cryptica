@@ -89,7 +89,7 @@
               y="-200"
               fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.3"
-              class="text-[40px] font-bold uppercase tracking-[0.5em] font-mono"
+              class="text-[40px] font-bold uppercase font-header tracking-[0.5em] font-mono"
             >
               {era.name}
             </text>
@@ -108,7 +108,7 @@
               fill={era.color || "var(--color-theme-accent)"}
               fill-opacity="0.3"
               transform="rotate(-90, -400, {era.startPos})"
-              class="text-[40px] font-bold uppercase tracking-[0.5em] font-mono"
+              class="text-[40px] font-bold uppercase font-header tracking-[0.5em] font-mono"
             >
               {era.name}
             </text>

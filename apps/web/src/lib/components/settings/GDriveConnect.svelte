@@ -92,7 +92,7 @@
     </h3>
     {#if connectedUser}
       <button
-        class="text-[11px] uppercase font-bold text-theme-muted hover:text-theme-text transition-colors font-header"
+        class="text-[11px] uppercase font-bold font-header text-theme-muted hover:text-theme-text transition-colors"
         onclick={async () => {
           await vault.disconnectCloud();
           connectedUser = null;

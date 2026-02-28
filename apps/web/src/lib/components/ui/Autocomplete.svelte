@@ -227,7 +227,7 @@
           <span class="truncate text-xs">{result.title}</span>
           {#if result.type}
             <span
-              class="ml-auto text-[9px] uppercase opacity-50 font-bold tracking-widest"
+              class="ml-auto text-[9px] uppercase opacity-50 font-bold font-header tracking-widest"
             >
               {categories.getCategory(result.type)?.label || result.type}
             </span>

@@ -29,7 +29,7 @@
 <div class="space-y-6">
   <div class="p-4 bg-theme-primary/5 border border-theme-primary/20 rounded-lg">
     <h4
-      class="text-sm font-bold text-theme-primary uppercase tracking-[0.2em] mb-4 font-header"
+      class="text-sm font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
     >
       Define World Eras
     </h4>
@@ -96,7 +96,7 @@
         onclick={handleAdd}
         disabled={!newEraName.trim()}
         data-testid="initialize-era-button"
-        class="flex-1 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-sm font-bold tracking-widest uppercase disabled:opacity-30 font-header"
+        class="flex-1 py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-black transition-all text-sm font-bold tracking-widest uppercase font-header disabled:opacity-30"
       >
         Initialize Era
       </button>

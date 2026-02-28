@@ -45,7 +45,7 @@
 {#if label}
   <EdgeLabel x={labelX} y={labelY}>
     <div
-      class="canvas-edge-label bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-[10px] font-bold text-theme-text uppercase tracking-widest cursor-text select-none transition-all shadow-lg hover:border-theme-primary hover:scale-105"
+      class="canvas-edge-label bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-[10px] font-bold text-theme-text uppercase font-header tracking-widest cursor-text select-none transition-all shadow-lg hover:border-theme-primary hover:scale-105"
       ondblclick={onDoubleClick}
       role="button"
       tabindex="0"
