@@ -98,10 +98,14 @@ jobs:
 
       - name: Notify Staging
         if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
         run: |
-          ./scripts/discord-deploy.sh "staging" "https://discord.com/api/webhooks/1474849321433174250/2Zc786bX-z8WX-HOh9y4ng_ThRH08vyHjiEVp3AgdkLQmiTVVWzSuvuybz46IlVovamU" "${{ steps.deployment.outputs.page_url }}staging"
+          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
 
       - name: Notify Production
         if: success() && github.ref == 'refs/heads/main'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
-          ./scripts/discord-deploy.sh "production" "https://discord.com/api/webhooks/1474849546210115654/cd5PD5CPTH3cV8DxbV9FCgqRqQUUJm_jF0Ovo0H-3FqcxzVcx0t7bethsoCYI36Lw7He" "${{ steps.deployment.outputs.page_url }}"
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}"

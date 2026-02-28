@@ -86,18 +86,20 @@ jobs:
           name: Codex Cryptica v${{ needs.check-version.outputs.version }}
           body: |
             ## Codex Cryptica v${{ needs.check-version.outputs.version }}
-            
+
             This release marks a significant update to the Codex.
-            
+
             ### Artifacts
             - **codex-cryptica-${{ needs.check-version.outputs.version }}.zip**: A standalone, portable version of the app. Download, extract, and serve locally for maximum data sovereignty.
-            
-            [Full Changelog](https://github.com/${{ github.repository }}/compare/v${{ github.event.before }}...v${{ needs.check-version.outputs.version }})
+
+            [Full Changelog](https://github.com/${{ github.repository }}/compare/${{ github.event.before }}...v${{ needs.check-version.outputs.version }})
           draft: false
           prerelease: false
           files: codex-cryptica-${{ needs.check-version.outputs.version }}.zip
 
       - name: Notify Release
         if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
-          ./scripts/discord-deploy.sh "release" "https://discord.com/api/webhooks/1474849546210115654/cd5PD5CPTH3cV8DxbV9FCgqRqQUUJm_jF0Ovo0H-3FqcxzVcx0t7bethsoCYI36Lw7He" "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.check-version.outputs.version }}"
+          ./scripts/discord-deploy.sh "release" "$DISCORD_WEBHOOK_URL" "https://github.com/${{ github.repository }}/releases/tag/v${{ needs.check-version.outputs.version }}"
