@@ -17,6 +17,7 @@ import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { parseMarkdown } from "../utils/markdown";
+import { isEntityMetadataEqual } from "../utils/comparison";
 import { SyncRegistry, LocalSyncService } from "@codex/sync-engine";
 
 import type { SearchEntry } from "schema";
@@ -920,7 +921,8 @@ class VaultStore {
         const currentValue = (current as any)[key];
         if (key === "metadata" && typeof value === "object" && value !== null) {
           // Simple nested check for metadata (like coordinates) to avoid redundant layout syncs
-          if (JSON.stringify(currentValue) !== JSON.stringify(value)) {
+          // Optimization: Avoid expensive JSON.stringify in hot loop
+          if (!isEntityMetadataEqual(currentValue, value)) {
             entityHasChanges = true;
             break;
           }
