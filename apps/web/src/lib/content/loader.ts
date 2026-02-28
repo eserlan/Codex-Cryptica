@@ -1,4 +1,9 @@
 import { load } from "js-yaml";
+import {
+  parseBlogArticle,
+  type BlogArticle,
+  type BlogIndexItem,
+} from "editor-core";
 
 export interface HelpArticle {
   id: string;
@@ -93,4 +98,49 @@ export function loadHelpArticles(): HelpArticle[] {
   });
 
   return processHelpArticles(modules);
+}
+
+const blogModules = import.meta.glob("./blog/*.md", {
+  eager: true,
+  query: "?raw",
+  import: "default",
+});
+
+let cachedArticles: BlogArticle[] | null = null;
+
+export function loadBlogArticles(): BlogArticle[] {
+  if (cachedArticles) return cachedArticles;
+
+  const articles: BlogArticle[] = [];
+  const paths = Object.keys(blogModules).sort();
+
+  for (const path of paths) {
+    const rawContent = blogModules[path] as string;
+    const article = parseBlogArticle(path, rawContent);
+    if (article) {
+      articles.push(article);
+    }
+  }
+
+  // Sort by date descending
+  cachedArticles = articles.sort(
+    (a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+
+  return cachedArticles;
+}
+
+export function getBlogIndex(): BlogIndexItem[] {
+  return loadBlogArticles().map((a) => ({
+    id: a.id,
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    publishedAt: a.publishedAt,
+  }));
+}
+
+export function getBlogArticle(slug: string): BlogArticle | null {
+  return loadBlogArticles().find((a) => a.slug === slug) || null;
 }

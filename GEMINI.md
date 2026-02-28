@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x / Svelte 5 / SvelteKit 2 (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components) (062-add-blog-path)
+- Static JSON or Markdown files for articles (062-add-blog-path)
+
 - TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management) (061-spatial-canvas)
 - OPFS (Origin Private File System) for `.canvas` JSON files; IndexedDB for canvas registry and metadata. (061-spatial-canvas)
 
@@ -110,11 +113,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 062-add-blog-path: Added TypeScript 5.x / Svelte 5 / SvelteKit 2 + SvelteKit (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components)
+
 - 061-spatial-canvas: Added TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management)
 
 - 060-robust-gdrive-sync: Added TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API
-
-- 059-robust-local-sync: Added TypeScript 5.x + Svelte 5, `idb`, Web File System Access API
-- 059-robust-local-sync: Added IndexedDB state registry for bidirectional file mirroring
 
 <!-- MANUAL ADDITIONS START -->
