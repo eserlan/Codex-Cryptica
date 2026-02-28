@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet version="2.0" 
-                xmlns:html="http://www.w3.org/TR/REC-html40"
+<xsl:stylesheet version="1.0" 
                 xmlns:sitemap="http://www.sitemaps.org/schemas/sitemap/0.9"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="html" version="1.0" encoding="UTF-8" indent="yes"/>
@@ -57,7 +56,7 @@
             padding: 12px;
             border-bottom: 1px solid #18181b;
           }
-          tr:hover {
+          tbody tr:hover {
             background-color: #18181b;
           }
           .priority {
@@ -68,33 +67,37 @@
       </head>
       <body>
         <div class="header">
-          <h1>Codex Intelligence Sitemap</h1>
+          <h1>Codex Cryptica Sitemap</h1>
           <p>Index of public-facing routes for Codex Cryptica.</p>
         </div>
         <table>
-          <tr>
-            <th>URL</th>
-            <th>Priority</th>
-            <th>Change Freq</th>
-          </tr>
-          <xsl:for-each select="sitemap:urlset/sitemap:url">
+          <thead>
             <tr>
-              <td>
-                <xsl:variable name="itemURL">
-                  <xsl:value-of select="sitemap:loc"/>
-                </xsl:variable>
-                <a href="{$itemURL}">
-                  <xsl:value-of select="sitemap:loc"/>
-                </a>
-              </td>
-              <td class="priority">
-                <xsl:value-of select="concat(sitemap:priority*100, '%')"/>
-              </td>
-              <td>
-                <xsl:value-of select="sitemap:changefreq"/>
-              </td>
+              <th>URL</th>
+              <th>Priority</th>
+              <th>Change Freq</th>
             </tr>
-          </xsl:for-each>
+          </thead>
+          <tbody>
+            <xsl:for-each select="sitemap:urlset/sitemap:url">
+              <tr>
+                <td>
+                  <xsl:variable name="itemURL">
+                    <xsl:value-of select="sitemap:loc"/>
+                  </xsl:variable>
+                  <a href="{$itemURL}">
+                    <xsl:value-of select="sitemap:loc"/>
+                  </a>
+                </td>
+                <td class="priority">
+                  <xsl:value-of select="concat(sitemap:priority*100, '%')"/>
+                </td>
+                <td>
+                  <xsl:value-of select="sitemap:changefreq"/>
+                </td>
+              </tr>
+            </xsl:for-each>
+          </tbody>
         </table>
       </body>
     </html>
