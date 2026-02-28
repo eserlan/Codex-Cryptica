@@ -218,7 +218,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "spatial-canvas",
     title: "Spatial Canvas",
     content:
-      "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board and draw visual links to map out your world manually.",
+      "Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.",
     icon: "icon-[lucide--layout-dashboard]",
   },
 };

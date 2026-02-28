@@ -16,18 +16,23 @@
     type CanvasEdge,
   } from "@codex/canvas-engine";
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import EntityNode from "$lib/components/canvas/EntityNode.svelte";
   import EntityPalette from "$lib/components/canvas/EntityPalette.svelte";
   import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
   import CanvasContextMenu from "$lib/components/canvas/CanvasContextMenu.svelte";
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
+  import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
-  import { untrack } from "svelte";
+  import { untrack, onDestroy } from "svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
-  const canvasId = $derived(page.params.id);
+  const canvasSlug = $derived(page.params.slug);
+  const canvasId = $derived(
+    canvasRegistry.canvases.find((c) => c.slug === canvasSlug)?.id,
+  );
 
   const nodeTypes = {
     entity: EntityNode,
@@ -46,6 +51,17 @@
     id: string;
   } | null>(null);
 
+  // Label Modal State
+  let labelModal = $state<{
+    isOpen: boolean;
+    edgeId: string;
+    currentLabel: string;
+  }>({
+    isOpen: false,
+    edgeId: "",
+    currentLabel: "",
+  });
+
   const { screenToFlowPosition } = useSvelteFlow();
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -56,9 +72,24 @@
     saveTimer = setTimeout(saveCanvas, 1000);
   }
 
+  // Ensure registry is loaded for slug resolution (critical for reload/deep-link)
+  $effect(() => {
+    if (vault.activeVaultId && !canvasRegistry.isLoaded) {
+      canvasRegistry.loadForVault(vault.activeVaultId);
+    }
+  });
+
   // Sync engine to local state
   $effect(() => {
     if (vault.isInitialized && canvasId) {
+      // Flush any pending save for the PREVIOUS canvas before loading new data
+      untrack(() => {
+        if (saveTimer !== null) {
+          clearTimeout(saveTimer);
+          saveCanvas();
+        }
+      });
+
       const data = untrack(() => vault.canvases[canvasId]);
       if (data) {
         nodes = data.nodes.map((n: CanvasNode) => ({
@@ -154,12 +185,11 @@
     if (!contextMenu || contextMenu.type !== "edge") return;
     const targetId = contextMenu.id;
     const edge = edges.find((e) => e.id === targetId);
-    const newLabel = prompt("Connection Label", edge?.label || "");
-    if (newLabel !== null) {
-      edges = edges.map((e) =>
-        e.id === targetId ? { ...e, label: newLabel } : e,
-      );
-    }
+    labelModal = {
+      isOpen: true,
+      edgeId: targetId,
+      currentLabel: (edge?.label as string) || "",
+    };
     contextMenu = null;
   }
 
@@ -167,25 +197,28 @@
     event: CustomEvent<{ edgeId: string; currentLabel: string }>,
   ) {
     const { edgeId, currentLabel } = event.detail;
-    const newLabel = prompt("Connection Label", currentLabel || "");
-    if (newLabel !== null) {
-      edges = edges.map((e) =>
-        e.id === edgeId ? { ...e, label: newLabel } : e,
-      );
-    }
+    labelModal = {
+      isOpen: true,
+      edgeId,
+      currentLabel: currentLabel || "",
+    };
   }
 
   function onEdgeClick({ event, edge }: { event: MouseEvent; edge: any }) {
     if (event.detail === 2) {
       // Double click
       event.stopPropagation();
-      const newLabel = prompt("Connection Label", edge.label || "");
-      if (newLabel !== null) {
-        edges = edges.map((e) =>
-          e.id === edge.id ? { ...e, label: newLabel } : e,
-        );
-      }
+      labelModal = {
+        isOpen: true,
+        edgeId: edge.id,
+        currentLabel: (edge.label as string) || "",
+      };
     }
+  }
+
+  function saveLabelModal(newLabel: string) {
+    const { edgeId } = labelModal;
+    edges = edges.map((e) => (e.id === edgeId ? { ...e, label: newLabel } : e));
   }
 
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
@@ -305,16 +338,33 @@
     };
   });
 
-  $effect(() => {
-    return () => {
-      if (saveTimer !== null) {
-        clearTimeout(saveTimer);
-      }
-    };
+  onDestroy(() => {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveCanvas();
+    }
   });
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key.toLowerCase() === "p" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const target = e.target as HTMLElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      )
+        return;
+      uiStore.showCanvasPalette = !uiStore.showCanvasPalette;
+    }
+  }
 </script>
 
-<div class="canvas-container flex h-screen w-full overflow-hidden relative">
+<div
+  class="canvas-container flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
+  onkeydown={handleKeyDown}
+  tabindex="-1"
+  role="none"
+>
   <EntityPalette />
 
   <div
@@ -339,7 +389,7 @@
     >
       <Background gap={20} />
       <Controls />
-      <MiniMap position="top-right" />
+      <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
     </SvelteFlow>
   </div>
 
@@ -356,6 +406,13 @@
 
   <CanvasHint />
   <CanvasSelectionModal />
+
+  <EdgeLabelModal
+    bind:isOpen={labelModal.isOpen}
+    initialValue={labelModal.currentLabel}
+    onSave={saveLabelModal}
+    onCancel={() => (labelModal.isOpen = false)}
+  />
 </div>
 
 <style>
@@ -380,6 +437,13 @@
     fill: var(--color-border-primary) !important;
     opacity: 0.15 !important;
   }
+  :global(.svelte-flow__edgelabel-renderer) {
+    background: transparent !important;
+    pointer-events: none;
+  }
+  :global(.svelte-flow__edge-label) {
+    background: transparent !important;
+  }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
     stroke-width: 2 !important;
@@ -402,65 +466,39 @@
     stroke-dasharray: 5;
     animation: svelte-flow__dashdraw 0.5s linear infinite;
   }
-  :global(.svelte-flow__edge-label) {
-    background: var(--color-bg-surface, #0c0c0c) !important;
-    color: var(--color-text-primary, #ffffff) !important;
-    border: 1px solid var(--color-border-primary, var(--color-theme-primary)) !important;
-    border-radius: 6px !important;
-    padding: 2px 6px !important;
-    font-size: 10px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    font-family: var(--font-mono), monospace !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  }
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-label) {
-    border-color: var(--color-theme-primary) !important;
-    box-shadow: 0 0 8px var(--color-theme-primary) !important;
-  }
-  :global(.svelte-flow__edge-textwrapper rect),
-  :global(.svelte-flow__edge-textbg),
-  :global(.svelte-flow__edge-label rect) {
-    fill: var(--color-bg-surface, #0c0c0c) !important;
-    fill-opacity: 0.95 !important;
-    stroke: var(--color-border-primary, var(--color-theme-primary)) !important;
-    stroke-width: 1 !important;
-    rx: 6;
-    ry: 6;
-  }
-  :global(.svelte-flow__edge-text) {
-    fill: var(--color-text-primary, #ffffff) !important;
-    font-size: 10px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-family: var(--font-mono), monospace !important;
-    transition: fill 0.2s ease;
-  }
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-textwrapper rect),
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-textbg),
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-label rect) {
-    stroke: var(--color-theme-primary) !important;
-    stroke-width: 2 !important;
-    fill-opacity: 1 !important;
-  }
-  :global(.svelte-flow__edge:hover .svelte-flow__edge-text) {
-    fill: var(--color-theme-primary) !important;
-  }
   :global(.svelte-flow__controls) {
-    background: var(--color-bg-surface);
-    border: 1px solid var(--color-border-primary);
+    background: var(--color-theme-surface) !important;
+    border: 1px solid var(--color-theme-border) !important;
     border-radius: 8px;
     overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
   :global(.svelte-flow__controls-button) {
-    background: var(--color-bg-surface);
-    fill: var(--color-text-primary);
-    border-bottom: 1px solid var(--color-border-primary);
+    background: var(--color-theme-surface) !important;
+    border-bottom: 1px solid var(--color-theme-border) !important;
+    color: var(--color-theme-primary) !important;
+    fill: var(--color-theme-primary) !important;
+    transition: all 0.2s ease;
+  }
+  :global(.svelte-flow__controls-button:last-child) {
+    border-bottom: none !important;
   }
   :global(.svelte-flow__controls-button:hover) {
-    background: var(--color-bg-primary);
+    background: var(--color-theme-primary) !important;
+    color: var(--color-theme-bg) !important;
+    fill: var(--color-theme-bg) !important;
+  }
+  :global(.svelte-flow__controls-button svg) {
+    fill: currentColor !important;
+  }
+  :global(.svelte-flow__minimap) {
+    background-color: var(--color-bg-surface) !important;
+    border: 1px solid var(--color-border-primary) !important;
+    border-radius: 8px !important;
+  }
+  :global(.svelte-flow__minimap-mask) {
+    fill: var(--color-theme-primary) !important;
+    fill-opacity: 0.1 !important;
   }
   @keyframes svelte-flow__dashdraw {
     from {

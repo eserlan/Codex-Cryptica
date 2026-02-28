@@ -8,7 +8,7 @@
   import { fade, scale } from "svelte/transition";
 
   let searchQuery = $state("");
-  const activeCanvasId = $derived(page.params.id);
+  const activeCanvasId = $derived(page.params.slug);
 
   const filteredCanvases = $derived(
     canvasRegistry.canvases.filter((c) =>
@@ -26,9 +26,9 @@
       `New Canvas ${canvasRegistry.canvases.length + 1}`,
     );
     if (name) {
-      const id = await canvasRegistry.create(name);
-      if (id) {
-        goto(`/canvas/${id}`);
+      const slug = await canvasRegistry.create(name);
+      if (slug) {
+        goto(`/canvas/${slug}`);
         close();
       }
     }
@@ -36,9 +36,15 @@
 
   async function deleteCanvas(id: string, e: MouseEvent) {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this canvas?")) {
+    const canvas = canvasRegistry.canvases.find((c) => c.id === id);
+    const slug = canvas?.slug;
+    if (
+      confirm(
+        `Are you sure you want to delete "${canvas?.name || "this canvas"}"?`,
+      )
+    ) {
       await canvasRegistry.delete(id);
-      if (activeCanvasId === id) goto("/canvas");
+      if (activeCanvasId === slug) goto("/canvas");
     }
   }
 
@@ -46,7 +52,12 @@
     e.stopPropagation();
     const newName = prompt("Rename Canvas", currentName);
     if (newName && newName !== currentName) {
-      await canvasRegistry.rename(id, newName);
+      const newSlug = await canvasRegistry.rename(id, newName);
+      // If we are currently on the renamed canvas, update the URL
+      const canvas = canvasRegistry.canvases.find((c) => c.id === id);
+      if (activeCanvasId === canvas?.slug && newSlug) {
+        goto(`/canvas/${newSlug}`, { replaceState: true });
+      }
     }
   }
 
@@ -135,16 +146,16 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
             onclick={() => {
-              goto(`/canvas/${canvas.id}`);
+              goto(`/canvas/${canvas.slug}`);
               close();
             }}
             onkeydown={(e) =>
-              e.key === "Enter" && (goto(`/canvas/${canvas.id}`), close())}
+              e.key === "Enter" && (goto(`/canvas/${canvas.slug}`), close())}
             role="button"
             tabindex="0"
             aria-label="Open canvas {canvas.name}"
             class="w-full text-left p-4 rounded-xl border transition-all group flex items-center gap-4 cursor-pointer
-              {activeCanvasId === canvas.id
+              {activeCanvasId === canvas.slug
               ? 'bg-theme-primary/10 border-theme-primary shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.1)]'
               : 'bg-theme-surface border-theme-border hover:border-theme-primary/50 hover:bg-theme-bg/50 shadow-sm'}"
           >
@@ -152,7 +163,7 @@
               class="w-10 h-10 rounded-lg bg-theme-bg flex items-center justify-center shrink-0 border border-theme-border group-hover:border-theme-primary/30 transition-colors"
             >
               <Layout
-                class="w-5 h-5 {activeCanvasId === canvas.id
+                class="w-5 h-5 {activeCanvasId === canvas.slug
                   ? 'text-theme-primary'
                   : 'text-theme-muted'}"
               />
@@ -165,7 +176,7 @@
                 >
                   {canvas.name}
                 </span>
-                {#if activeCanvasId === canvas.id}
+                {#if activeCanvasId === canvas.slug}
                   <span
                     class="px-1.5 py-0.5 rounded bg-theme-primary text-[8px] text-theme-bg font-bold uppercase tracking-widest"
                     >Active</span

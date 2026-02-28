@@ -266,6 +266,24 @@
 
   let lastDemoQueryParam: string | null = null;
 
+  let headerEl = $state<HTMLElement>();
+
+  $effect(() => {
+    if (headerEl && browser) {
+      const updateHeight = () => {
+        const height = headerEl!.getBoundingClientRect().height;
+        document.documentElement.style.setProperty(
+          "--header-height",
+          `${height}px`,
+        );
+      };
+      updateHeight();
+      const observer = new ResizeObserver(updateHeight);
+      observer.observe(headerEl);
+      return () => observer.disconnect();
+    }
+  });
+
   // Handle Demo Mode Deep Linking (?demo=theme)
   $effect(() => {
     const demoTheme = page.url.searchParams.get("demo");
@@ -392,6 +410,7 @@
 
   {#if !isPopup}
     <header
+      bind:this={headerEl}
       class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
     >
       <!-- Mobile: Left (Menu + Brand) -->

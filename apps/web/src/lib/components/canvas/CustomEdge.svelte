@@ -17,7 +17,7 @@
     label,
     style,
     markerEnd,
-  } = $props<EdgeProps>();
+  }: EdgeProps = $props();
 
   const [edgePath, labelX, labelY] = $derived(
     getSmoothStepPath({
@@ -42,26 +42,22 @@
 
 <BaseEdge path={edgePath} {markerEnd} {style} />
 
-<EdgeLabel x={labelX} y={labelY}>
-  <div class="nodrag nopan pointer-events-auto">
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
+{#if label}
+  <EdgeLabel x={labelX} y={labelY}>
     <div
-      class="canvas-edge-label bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-[10px] font-bold text-theme-text uppercase tracking-widest cursor-text select-none hover:border-theme-primary transition-all shadow-sm"
+      class="canvas-edge-label bg-theme-surface border border-theme-border rounded-md px-2 py-1 text-[10px] font-bold text-theme-text uppercase tracking-widest cursor-text select-none transition-all shadow-lg hover:border-theme-primary hover:scale-105"
       ondblclick={onDoubleClick}
+      role="button"
+      tabindex="0"
     >
-      {label || "???"}
+      {label}
     </div>
-  </div>
-</EdgeLabel>
+  </EdgeLabel>
+{/if}
 
 <style>
   .canvas-edge-label {
     font-family: var(--font-mono), monospace;
     white-space: nowrap;
-    pointer-events: all;
-  }
-  .canvas-edge-label:hover {
-    box-shadow: 0 0 8px var(--color-theme-primary);
-    transform: scale(1.05);
   }
 </style>

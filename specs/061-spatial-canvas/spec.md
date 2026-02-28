@@ -52,11 +52,33 @@ As a Game Master running a live session, I want to quickly find an entity using 
 
 ---
 
+### User Story 4 - Readable Workspace Context (Priority: P2)
+
+As a GM who shares links or bookmarks workspaces, I want the URL to use the canvas name (slug) instead of a UUID, so that I can easily identify which workspace I am looking at from the browser history or address bar.
+
+**Acceptance Scenarios**:
+
+1. **Given** a canvas named "Battle of the Docks", **When** I open it, **Then** the URL ends in `/canvas/battle-at-the-docks`.
+2. **Given** an active canvas, **When** I rename it, **Then** the URL automatically updates to reflect the new name.
+
+---
+
+### User Story 5 - Custom Relationship Labeling (Priority: P2)
+
+As a GM, I want a theme-aware interface for labeling my connections, so that the experience feels consistent with the rest of the application's aesthetic.
+
+**Acceptance Scenarios**:
+
+1. **Given** a connection, **When** I double-click it, **Then** a custom themed modal appears for entering the label.
+2. **Given** a labeled connection, **When** I clear the text in the modal, **Then** the label is hidden entirely from the canvas.
+
+---
+
 ### Edge Cases
 
 - **Broken References**: What happens if an entity placed on the canvas is deleted from the vault? (Assumption: The card shows a "Missing Entity" state or is automatically removed).
 - **Duplicate Entities**: System MUST allow multiple cards for the same entity on a single canvas. Each card instance maintains its own coordinates and can have independent canvas-local visual links.
-- **Canvas Naming Conflicts**: How are duplicate canvas names handled? (Assumption: Standard "Canvas 1", "Canvas 2" or error on rename).
+- **Canvas Naming Conflicts**: How are duplicate canvas names handled? (Slugs MUST be unique within a vault; system appends numeric suffixes like `-1`, `-2`).
 
 ## Requirements _(mandatory)_
 
@@ -72,6 +94,10 @@ As a Game Master running a live session, I want to quickly find an entity using 
 - **FR-008**: System MUST integrate with "Zen Mode" (entity detail view) upon interaction with a card.
 - **FR-009**: System MUST support multiple canvases per vault.
 - **FR-010**: System MUST support "Canvas Search" to find specific canvases by name.
+- **FR-011**: System MUST use name-based slugs for canvas URLs instead of UUIDs.
+- **FR-012**: System MUST provide a themed MiniMap that adheres to the active styling template (colors, viewport mask).
+- **FR-013**: System MUST use a custom themed modal for edge label editing instead of browser prompts.
+- **FR-014**: Edge labels MUST allow empty strings, in which case the label is not rendered.
 
 ### Key Entities
 

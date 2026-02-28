@@ -29,12 +29,12 @@
 
     if (vault.activeVaultId && canvasRegistry.isLoaded) {
       if (canvasRegistry.canvases.length > 0) {
-        goto(`/canvas/${canvasRegistry.canvases[0].id}`);
+        goto(`/canvas/${canvasRegistry.canvases[0].slug}`);
       } else {
         canvasRegistry
           .create("Primary Workspace")
-          .then((id) => {
-            if (id) goto(`/canvas/${id}`);
+          .then((slug) => {
+            if (slug) goto(`/canvas/${slug}`);
           })
           .catch((err) => {
             initializationError = "Failed to create initial canvas";

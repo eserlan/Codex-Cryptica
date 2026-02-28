@@ -84,6 +84,9 @@ class UIStore {
   // Fog of War State
   sharedMode = $state(false);
 
+  // Canvas Palette State
+  showCanvasPalette = $state(true);
+
   // Merge Dialog State
   mergeDialog = $state<{
     open: boolean;

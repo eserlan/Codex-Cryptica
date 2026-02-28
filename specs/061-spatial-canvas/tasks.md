@@ -52,6 +52,16 @@
 - [x] T024 [P] Create FeatureHint for new Canvas mode in `apps/web/src/lib/components/hints/CanvasHint.svelte`
 - [x] T025 Final E2E verification with Playwright in `apps/web/tests/canvas.spec.ts`
 
+## Phase 7: Quality of Life Improvements
+
+- [x] T026 [P] Implement `EdgeLabelModal.svelte` for theme-aware connection labeling
+- [x] T027 [P] Style `MiniMap` to use theme colors (`--color-theme-primary`, `--color-bg-surface`, etc.)
+- [x] T028 [P] Update `CanvasRegistry` to support name-based `slugs` for readable URLs
+- [x] T029 [P] Implement slug-based routing in `apps/web/src/routes/canvas/[slug]`
+- [x] T030 [P] Ensure URL slugs update automatically when a canvas is renamed
+- [x] T031 [P] Allow empty (hidden) connection labels in `CustomEdge.svelte`
+- [x] T032 [P] Fix "white box" artifacts in edge labels using global transparency overrides
+
 ## Dependencies
 
 - Phase 1 & 2 must be completed before any User Story implementation.

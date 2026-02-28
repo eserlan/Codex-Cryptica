@@ -97,4 +97,12 @@ apps/
 
 - Implement OPFS storage for `.canvas` files.
 - Add multi-canvas management (Create, Rename, Delete, Switch).
+- Implement slug-based routing for readable URLs.
 - Verify synchronization and performance with 100+ entities.
+
+### Milestone 5: Polish & Quality of Life
+
+- Implement `EdgeLabelModal` for custom theme-aware label editing.
+- Style the `MiniMap` to adhere to active theme tokens (background, dots, mask).
+- Refine `CustomEdge` rendering to support empty labels and fix styling artifacts.
+- Ensure URL slugs are updated reactively on canvas rename.
