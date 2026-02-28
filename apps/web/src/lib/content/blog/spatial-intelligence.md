@@ -66,4 +66,6 @@ Most tools force you to choose one way to look at your data. Codex Cryptica lets
 
 [Enter the Codex →](/)
 
+_Want to see the Codex in action? Check out our [Showcase: See Your World Like Never Before](/blog/showcase-see-your-world)._
+
 _See our [Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty) to learn how we keep this data 100% private._
