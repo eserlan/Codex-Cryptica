@@ -9,6 +9,9 @@
   import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
+  import { SCHEMA_ORG } from "$lib/config";
+
+  const _ldJson = JSON.stringify(SCHEMA_ORG);
 
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
@@ -124,24 +127,7 @@
 <svelte:head>
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Codex Cryptica",
-        "applicationCategory": "Tabletop RPG Utility",
-        "operatingSystem": "Web, Local-First",
-        "featureList": [
-          "AI Lore Oracle",
-          "Interactive Knowledge Graphs",
-          "Tactical Map Mode",
-          "Spatial Canvas & Flowcharts",
-          "Era-based Timelines",
-          "Local-First Privacy",
-          "Google Drive Syncing"
-        ],
-        "storageRequirements": "Origin Private File System (OPFS)",
-        "softwareVersion": "0.10.3"
-      }
+      {@html _ldJson}
     </script>
   {/if}
 </svelte:head>
