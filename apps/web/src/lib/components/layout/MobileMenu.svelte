@@ -189,6 +189,16 @@
           <span class="icon-[lucide--zap] w-4 h-4"></span>
           Features
         </a>
+        <button
+          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
+          onclick={() => {
+            uiStore.openSettings("help");
+            close();
+          }}
+        >
+          <span class="icon-[lucide--help-circle] w-4 h-4"></span>
+          Help
+        </button>
         <a
           href="{base}/privacy"
           target="_blank"

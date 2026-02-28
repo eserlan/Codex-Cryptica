@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Footer", () => {
   test.beforeEach(async ({ page }) => {
+    // Ensure viewport is large enough for the footer
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
     // Wait for the app to load
     await page.waitForSelector(".app-layout");
@@ -33,6 +35,30 @@ test.describe("Footer", () => {
     );
     await expect(discordLink).toHaveAttribute("target", "_blank");
     await expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  test("should display Help link in the footer and open settings", async ({
+    page,
+  }) => {
+    const footer = page.locator("footer");
+    const helpLink = footer.locator('button:has-text("Help")');
+
+    // Scroll to footer to ensure it's in view
+    await footer.scrollIntoViewIfNeeded();
+    await expect(helpLink).toBeVisible();
+
+    // Click help and verify settings modal opens
+    await helpLink.click();
+
+    // Wait for the settings modal to appear
+    const settingsModal = page.getByRole("dialog");
+    await expect(settingsModal).toBeVisible();
+
+    // Verify it's on the help tab by checking for the specific heading or content
+    await expect(settingsModal.locator('h2:has-text("Help")')).toBeVisible();
+    await expect(
+      page.locator('input[placeholder="Search documentation..."]'),
+    ).toBeVisible();
   });
 
   test("should have correct styling classes on Patreon link", async ({
