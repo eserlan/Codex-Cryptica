@@ -47,6 +47,44 @@ test.describe("Blog", () => {
     await expect(ctaButton).toBeVisible();
   });
 
+  test("should navigate to and render the spatial intelligence article", async ({
+    page,
+  }) => {
+    await page.goto("/blog");
+
+    const articleLink = page.getByText(
+      /Spatial Intelligence: How your Map, Graph, and Canvas Work Together/,
+    );
+    await articleLink.click();
+
+    // Wait for navigation
+    await expect(page).toHaveURL(/\/blog\/spatial-intelligence/);
+
+    // Check title and metadata
+    await expect(page).toHaveTitle(
+      /Spatial Intelligence: How your Map, Graph, and Canvas Work Together/,
+    );
+
+    // Check article content
+    const articleContent = page.locator(".blog-content");
+    await expect(articleContent).toBeVisible();
+    await expect(articleContent).toContainText(
+      "The Tactical Map: Grounding Your Story",
+    );
+    await expect(articleContent).toContainText(
+      "The Knowledge Graph: Visualizing the Web",
+    );
+    await expect(articleContent).toContainText(
+      'The Freeform Canvas: Your Tactical "Murder Board"',
+    );
+
+    // Check cross-link
+    const crossLink = page.getByRole("link", {
+      name: "Guide to Data Sovereignty",
+    });
+    await expect(crossLink).toBeVisible();
+  });
+
   test("should show 404 for non-existent article", async ({ page }) => {
     await page.goto("/blog/non-existent-transmission");
 
