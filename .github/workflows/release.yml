@@ -1,10 +1,6 @@
 name: Create GitHub Release
 
 on:
-  workflow_run:
-    workflows: ["Auto Bump Web Version After Merge"]
-    types:
-      - completed
   workflow_dispatch:
 
 permissions:
@@ -12,8 +8,6 @@ permissions:
 
 jobs:
   check-version:
-    # Only run if the triggering workflow succeeded (for workflow_run), but allow manual and other triggers
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       should_release: ${{ steps.check.outputs.should_release }}
