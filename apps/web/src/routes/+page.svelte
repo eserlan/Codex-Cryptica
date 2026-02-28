@@ -121,6 +121,27 @@
   });
 </script>
 
+<svelte:head>
+  {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Codex Cryptica",
+        "applicationCategory": "Tabletop RPG Utility",
+        "operatingSystem": "Web, Local-First",
+        "featureList": [
+          "Interactive Maps",
+          "Knowledge Graphs",
+          "Temporal Timelines"
+        ],
+        "storageRequirements": "Origin Private File System (OPFS)",
+        "softwareVersion": "2026.1"
+      }
+    </script>
+  {/if}
+</svelte:head>
+
 <div
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
 >
