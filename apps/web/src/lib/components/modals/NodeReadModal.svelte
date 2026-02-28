@@ -154,7 +154,7 @@
               >
             </div>
             <h2
-              class="text-2xl md:text-3xl font-bold text-gray-100 font-serif tracking-wide"
+              class="text-2xl md:text-3xl font-bold text-gray-100 font-body tracking-wide"
             >
               {entity.title}
             </h2>
@@ -237,7 +237,7 @@
 
           <!-- Connections -->
           <div class="border-t border-green-900/30 pt-6">
-            <h3 class="text-green-500 font-serif italic text-xl mb-4">
+            <h3 class="text-green-500 font-body italic text-xl mb-4">
               Connections
             </h3>
             {#if connections.length > 0}

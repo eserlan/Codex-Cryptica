@@ -169,7 +169,7 @@
               height="14"
             >
               <div
-                class="text-[10px] text-theme-accent text-center font-sans leading-none select-none"
+                class="text-[10px] text-theme-accent text-center font-body leading-none select-none"
                 style="font-family: Inter, sans-serif;"
               >
                 {node.dateLabel}
@@ -184,7 +184,7 @@
               height="60"
             >
               <div
-                class="text-[10px] text-theme-primary text-center font-sans leading-tight line-clamp-3 select-none"
+                class="text-[10px] text-theme-primary text-center font-body leading-tight line-clamp-3 select-none"
                 style="font-family: Inter, sans-serif;"
               >
                 {node.label}

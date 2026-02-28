@@ -263,17 +263,17 @@
         class="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 text-xs text-zinc-500 flex justify-between"
       >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >↵</kbd
           > to select</span
         >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >↑↓</kbd
           > to navigate</span
         >
         <span
-          ><kbd class="font-sans px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
+          ><kbd class="font-body px-1 bg-zinc-200 dark:bg-zinc-800 rounded"
             >esc</kbd
           > to close</span
         >

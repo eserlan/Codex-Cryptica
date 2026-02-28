@@ -137,7 +137,7 @@
   <!-- Chronicle -->
   <div>
     <h3
-      class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
+      class="text-theme-secondary font-body italic text-lg mb-3 border-b border-theme-border pb-1"
     >
       {themeStore.jargon.chronicle_header}
     </h3>
@@ -155,7 +155,7 @@
   <!-- Connections -->
   <div>
     <h3
-      class="text-theme-secondary font-serif italic text-lg mb-3 border-b border-theme-border pb-1"
+      class="text-theme-secondary font-body italic text-lg mb-3 border-b border-theme-border pb-1"
     >
       {themeStore.jargon.connections_header}
     </h3>

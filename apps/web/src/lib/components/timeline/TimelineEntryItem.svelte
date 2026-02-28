@@ -42,7 +42,7 @@
       </h4>
       {#if entity?.content}
         <p
-          class="text-[11px] text-theme-muted line-clamp-2 mt-1 leading-relaxed italic font-serif"
+          class="text-[11px] text-theme-muted line-clamp-2 mt-1 leading-relaxed italic font-body"
         >
           {entity.content}
         </p>

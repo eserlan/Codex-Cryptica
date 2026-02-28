@@ -45,7 +45,7 @@
   >
     <div class="flex items-center justify-between mb-4">
       <h3
-        class="text-theme-secondary font-serif italic text-lg flex items-center gap-2"
+        class="text-theme-secondary font-body italic text-lg flex items-center gap-2"
       >
         <span class="icon-[lucide--sparkles] w-4 h-4 text-theme-primary"></span>
         <span>Oracle Suggestions</span>

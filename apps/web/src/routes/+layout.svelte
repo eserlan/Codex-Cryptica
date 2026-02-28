@@ -375,7 +375,7 @@
   />
 </svelte:head>
 
-<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-sans">
+<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-body">
   <!-- Notifications -->
   {#if uiStore.notification}
     <div
@@ -649,6 +649,6 @@
 
 <style>
   .app-layout {
-    font-family: var(--theme-font-sans, ui-sans-serif);
+    font-family: var(--theme-font-body, ui-sans-serif);
   }
 </style>

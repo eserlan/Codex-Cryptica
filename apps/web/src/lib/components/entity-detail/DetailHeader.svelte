@@ -64,13 +64,13 @@
         <input
           type="text"
           bind:value={editTitle}
-          class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-xl w-full placeholder-theme-muted"
+          class="bg-theme-bg border border-theme-primary text-theme-text px-2 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-xl w-full placeholder-theme-muted"
           placeholder="Entity Title"
         />
       </div>
     {:else}
       <h2
-        class="text-2xl md:text-3xl font-bold text-theme-text font-serif tracking-wide"
+        class="text-2xl md:text-3xl font-bold text-theme-text font-body tracking-wide"
       >
         {entity.title}
       </h2>

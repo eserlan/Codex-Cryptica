@@ -535,14 +535,14 @@
               type="text"
               bind:value={editTitle}
               aria-label="Entity Title"
-              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-serif font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
+              class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
               placeholder="Entity Title"
             />
           {:else}
             <h1
               id="entity-modal-title"
               data-testid="entity-title"
-              class="text-2xl md:text-4xl font-serif font-bold text-theme-text tracking-wide"
+              class="text-2xl md:text-4xl font-body font-bold text-theme-text tracking-wide"
             >
               {entity.title}
             </h1>
@@ -847,7 +847,7 @@
                 <!-- Chronicle -->
                 <div>
                   <h2
-                    class="text-xl font-serif font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+                    class="text-xl font-body font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
                   >
                     <span class="icon-[lucide--book-open] w-5 h-5"></span>
                     {themeStore.jargon.chronicle_header}
@@ -871,7 +871,7 @@
                 <!-- Deep Lore -->
                 <div>
                   <h2
-                    class="text-xl font-serif font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+                    class="text-xl font-body font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
                   >
                     <span class="icon-[lucide--scroll] w-5 h-5"></span>
                     {themeStore.jargon.lore_secrets}

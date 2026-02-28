@@ -242,7 +242,7 @@
   role="dialog"
   aria-modal="true"
   aria-label="Date Picker"
-  class="fixed z-[1000] w-[90vw] max-w-sm md:w-80 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-sans outline-none"
+  class="fixed z-[1000] w-[90vw] max-w-sm md:w-80 bg-theme-surface border border-theme-border rounded-lg shadow-2xl overflow-hidden flex flex-col font-body outline-none"
   style:left="{x}px"
   style:top="{y}px"
   tabindex="0"
