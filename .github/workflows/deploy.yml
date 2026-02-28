@@ -20,25 +20,18 @@ permissions:
 
 jobs:
   build:
+    # If triggered by workflow_run, only run if the bump was successful
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    outputs:
-      environments: ${{ steps.set-matrix.outputs.environments }}
+    strategy:
+      matrix:
+        environment: [production, staging]
     steps:
-      - name: Determine Environments
-        id: set-matrix
-        run: |
-          # If pushing to main or triggered by bump, build both to keep them in sync
-          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.event_name }}" == "workflow_run" ]; then
-            echo 'environments=["production", "staging"]' >> $GITHUB_OUTPUT
-          else
-            # On feature branches, only build staging
-            echo 'environments=["staging"]' >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          # Production always builds from main; Staging builds from the current ref
+          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -54,34 +47,6 @@ jobs:
         run: |
           npm run lint
           npm test
-
-      # Parallel Matrix Build
-      - name: Build and Upload
-        # We use a nested strategy to only build what was determined in step 1
-        # However, to keep it simple and parallel, we use a matrix job instead of a step
-        run: echo "Transitioning to Matrix Job..."
-
-  matrix-build:
-    needs: build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: ${{ fromJson(needs.build.outputs.environments) }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: "npm"
-
-      - name: Install Dependencies
-        run: npm ci
 
       - name: Build Application
         env:
@@ -99,46 +64,26 @@ jobs:
           retention-days: 1
 
   deploy:
-    needs: matrix-build
+    needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Download Artifacts
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download Production Build
         uses: actions/download-artifact@v4
         with:
-          path: artifacts/
+          name: dist-production
+          path: dist/
 
-      - name: Prepare Combined Dist
-        run: |
-          mkdir -p dist/staging
-          
-          # 1. Handle Production (Root /)
-          # If we built production in this run, use it. 
-          # Otherwise, we skip this since GH Pages is an atomic replacement
-          # and a feature branch build WITHOUT a prod root would break the main site.
-          # Note: In a pure "Continuous Staging" setup on GH Pages, 
-          # we MUST have the root files or the site breaks.
-          
-          if [ -d "artifacts/dist-production" ]; then
-            cp -r artifacts/dist-production/* dist/
-          else
-            # CRITICAL: Since GH Pages replaces the whole site, 
-            # if we don't have prod files, we must fetch them from the last successful main run.
-            echo "No new production build. Fetching latest from main..."
-            gh run download $(gh run list --workflow deploy.yml --branch main --status success --limit 1 --json databaseId -q '.[0].databaseId') --name dist-production --dir dist/
-          fi
-          
-          # 2. Handle Staging (/staging)
-          if [ -d "artifacts/dist-staging" ]; then
-            cp -r artifacts/dist-staging/* dist/staging/
-          else
-            echo "No new staging build. Fetching latest from previous successful run..."
-            gh run download $(gh run list --workflow deploy.yml --status success --limit 1 --json databaseId -q '.[0].databaseId') --name dist-staging --dir dist/staging/
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download Staging Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-staging
+          path: dist/staging/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
@@ -150,7 +95,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Notify Staging
-        if: success() && contains(needs.matrix-build.result, 'success')
+        if: success()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
         run: |
