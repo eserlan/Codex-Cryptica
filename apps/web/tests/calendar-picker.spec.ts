@@ -110,7 +110,7 @@ test.describe("Campaign Date Picker E2E", () => {
     // Wait for modal
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
-    await page.getByRole("tab", { name: "Intelligence" }).click();
+    await page.getByRole("tab", { name: "AI" }).click();
     await page.getByTestId("era-name-input").fill("Age of Myth");
     await page.getByTestId("era-start-input").fill("1000");
     await page.getByTestId("initialize-era-button").click();

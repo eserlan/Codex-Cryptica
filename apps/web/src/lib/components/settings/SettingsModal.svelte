@@ -19,7 +19,7 @@
     { id: "sync", label: "Cloud Sync", icon: "icon-[lucide--refresh-cw]" },
     {
       id: "intelligence",
-      label: "Intelligence",
+      label: "AI",
       icon: "icon-[lucide--brain]",
     },
     { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },

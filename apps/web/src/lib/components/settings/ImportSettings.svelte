@@ -414,7 +414,7 @@
           <button
             class="underline hover:text-red-300"
             onclick={() => (uiStore.activeSettingsTab = "intelligence")}
-            >Intelligence</button
+            >AI</button
           > tab.
         </p>
       </div>
