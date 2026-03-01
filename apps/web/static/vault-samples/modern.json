@@ -8,7 +8,7 @@
       "connections": [],
       "content": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
       "lore": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
-      "image": "/vault-samples/images/modern-hq.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png",
       "_path": ["locations", "police-hq.md"],
       "lastModified": 1700000000000
     },
@@ -31,7 +31,7 @@
       ],
       "content": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
       "lore": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
-      "image": "/vault-samples/images/modern-detective.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-detective.png",
       "_path": ["npcs", "sarah-miller.md"],
       "lastModified": 1700000000000
     },
@@ -49,7 +49,7 @@
       ],
       "content": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
       "lore": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
-      "image": "/vault-samples/images/modern-npc2.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-npc2.png",
       "_path": ["npcs", "agent-cooper.md"],
       "lastModified": 1700000000000
     },
@@ -67,7 +67,7 @@
       ],
       "content": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
       "lore": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
-      "image": "/vault-samples/images/modern-faction.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-faction.png",
       "_path": ["factions", "the-syndicate.md"],
       "lastModified": 1700000000000
     },
@@ -81,7 +81,7 @@
       ],
       "content": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
       "lore": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
-      "image": "/vault-samples/images/modern-creature.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-creature.png",
       "_path": ["creatures", "attack-doberman.md"],
       "lastModified": 1700000000000
     },
@@ -99,7 +99,7 @@
       ],
       "content": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
       "lore": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
-      "image": "/vault-samples/images/modern-note.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-note.png",
       "_path": ["notes", "diamond-case-file.md"],
       "lastModified": 1700000000000
     },
@@ -117,7 +117,7 @@
       ],
       "content": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
       "lore": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
-      "image": "/vault-samples/images/modern-hq.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png",
       "_path": ["events", "the-diamond-heist.md"],
       "lastModified": 1700000000000
     }

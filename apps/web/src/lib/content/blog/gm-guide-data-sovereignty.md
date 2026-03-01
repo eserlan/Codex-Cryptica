@@ -30,13 +30,17 @@ Most campaign managers are "Cloud-First." Your notes live on someone else's comp
 
 **Local-First** means the "Master Copy" of your world lives on your device.
 
+![Secured Local Vault](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png)
+
 - **Absolute Ownership**: Your lore is stored in a "Digital Vault" (technically called OPFS) inside your browser.
 - **Internet-Optional**: Prep in a basement, a plane, or a convention hall. No Wi-Fi? No problem.
-- **Instant Speed**: There is zero "loading" time. Everything happens at the speed of your own computer.
+- **Instant Speed**: Everything happens at the speed of your own computer.
 
 ## **2\. Setting Up Your Tactical Command Center**
 
 Codex Cryptica doesn't require an account. You just start building.
+
+![Tactical Command Center](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-fort.png)
 
 ### **Step A: Initialize the Vault**
 
