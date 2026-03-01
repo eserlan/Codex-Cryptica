@@ -31,7 +31,7 @@ Here is how these three views work together to give you a "Spatial Intelligence"
 
 In Map Mode, you aren't just looking at an image; you’re interacting with a map that "knows" your notes. Whether it’s a galaxy map or a tavern floor plan, Codex treats it as a living canvas.
 
-![Tactical Map Interface](https://assets.codexcryptica.com/vault-samples/images/fantasy-tavern.png)
+![Tactical Map Interface](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-tavern.png)
 
 - **Persistent Pins**: Every pin you drop is a direct portal to an NPC, location, or item.
 - **Fog of War**: Keep the mystery alive. Use the Alt + Drag brush to reveal the map only when your players actually explore an area.
@@ -41,7 +41,7 @@ In Map Mode, you aren't just looking at an image; you’re interacting with a ma
 
 The Graph View reveals the "connective tissue" of your campaign. It ignores geography to focus on the logical web of your story.
 
-![Relational Lore Graph](https://assets.codexcryptica.com/vault-samples/images/cyberpunk-city.png)
+![Relational Lore Graph](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-city.png)
 
 - **Automatic Linking**: You don't have to draw lines manually. Every time you mention an NPC in your notes, Codex automatically draws a connection on the graph.
 - **Smart Layouts**: Powered by **Cytoscape** (a high-end data engine), your notes snap into place, helping you spot secret alliances or "orphan" plot points you might have forgotten.
@@ -51,7 +51,7 @@ The Graph View reveals the "connective tissue" of your campaign. It ignores geog
 
 While the Graph is automated, **Canvas Mode** gives you total manual control. This is your digital "Cork Board."
 
-![Custom Strategy Board](https://assets.codexcryptica.com/vault-samples/images/vampire-manor.png)
+![Custom Strategy Board](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-manor.png)
 
 - **Manual Layouts**: Arrange characters and clues however you want. It’s perfect for visualizing a political hierarchy, a family tree, or a complex criminal conspiracy.
 - **Abstract Brainstorming**: Unlike the Map, the Canvas isn't bound by geography. You can cluster entities together just to see how they look, while they remain linked to your actual vault data.

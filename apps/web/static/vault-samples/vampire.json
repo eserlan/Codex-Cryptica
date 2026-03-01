@@ -8,7 +8,7 @@
       "connections": [],
       "content": "A decaying Victorian estate on the edge of the Blackwood Forest. Locals claim to hear voices coming from the walls at night.",
       "lore": "A decaying Victorian estate on the edge of the Blackwood Forest. Locals claim to hear voices coming from the walls at night.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-manor.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-manor.png",
       "_path": ["locations", "manor-of-whispers.md"],
       "lastModified": 1700000000000
     },
@@ -31,7 +31,7 @@
       ],
       "content": "A high-born vampire who has resided in the Manor for centuries. He is elegant, charming, and utterly ruthless.\n\nHe is obsessed with completing [[The Sanguine Ritual]].",
       "lore": "A high-born vampire who has resided in the Manor for centuries. He is elegant, charming, and utterly ruthless.\n\nHe is obsessed with completing [[The Sanguine Ritual]].",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-lord.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-lord.png",
       "_path": ["npcs", "lord-julian-thorne.md"],
       "lastModified": 1700000000000
     },
@@ -49,7 +49,7 @@
       ],
       "content": "A half-vampire hunter who tracks Julian's lineage. She uses a silver-tipped crossbow and ancient alchemy.",
       "lore": "A half-vampire hunter who tracks Julian's lineage. She uses a silver-tipped crossbow and ancient alchemy.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-npc2.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-npc2.png",
       "_path": ["npcs", "seraphina-vane.md"],
       "lastModified": 1700000000000
     },
@@ -67,7 +67,7 @@
       ],
       "content": "A clandestine organization of vampire nobles who pull the strings of mortal society from the shadows.",
       "lore": "A clandestine organization of vampire nobles who pull the strings of mortal society from the shadows.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-faction.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-faction.png",
       "_path": ["factions", "crimson-court.md"],
       "lastModified": 1700000000000
     },
@@ -85,7 +85,7 @@
       ],
       "content": "A monstrous bat with a six-foot wingspan and a taste for human blood. They serve as Julian's eyes in the sky.",
       "lore": "A monstrous bat with a six-foot wingspan and a taste for human blood. They serve as Julian's eyes in the sky.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-creature.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-creature.png",
       "_path": ["creatures", "dire-bat.md"],
       "lastModified": 1700000000000
     },
@@ -103,7 +103,7 @@
       ],
       "content": "A series of blood-stained sketches and incantations detailing the astronomical alignment required for Julian's ritual.",
       "lore": "A series of blood-stained sketches and incantations detailing the astronomical alignment required for Julian's ritual.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-note.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-note.png",
       "_path": ["notes", "eclipse-ritual-note.md"],
       "lastModified": 1700000000000
     },
@@ -121,7 +121,7 @@
       ],
       "content": "An ancient ceremony designed to grant its caster total immunity to sunlight. It requires the essence of three pure souls.",
       "lore": "An ancient ceremony designed to grant its caster total immunity to sunlight. It requires the essence of three pure souls.",
-      "image": "https://assets.codexcryptica.com/vault-samples/images/vampire-manor.png",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/vampire-manor.png",
       "_path": ["events", "the-sanguine-ritual.md"],
       "lastModified": 1700000000000
     }
