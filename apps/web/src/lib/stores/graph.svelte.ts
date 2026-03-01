@@ -68,9 +68,21 @@ class GraphStore {
 
   eras = $state<Era[]>([]);
 
-  stats = $derived({
-    nodeCount: this.elements.filter((e) => e.group === "nodes").length,
-    edgeCount: this.elements.filter((e) => e.group === "edges").length,
+  stats = $derived.by(() => {
+    // OPTIMIZATION: Use imperative loop instead of multiple .filter() calls
+    // to avoid intermediate array allocations and reduce GC pressure.
+    let nodeCount = 0;
+    let edgeCount = 0;
+    const elements = this.elements;
+    const count = elements.length;
+    for (let i = 0; i < count; i++) {
+      if (elements[i].group === "nodes") {
+        nodeCount++;
+      } else if (elements[i].group === "edges") {
+        edgeCount++;
+      }
+    }
+    return { nodeCount, edgeCount };
   });
 
   requestFit() {
