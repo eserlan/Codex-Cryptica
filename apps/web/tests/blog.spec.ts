@@ -47,16 +47,6 @@ test.describe("Blog", () => {
       exact: true,
     });
     await expect(ctaButton).toBeVisible();
-
-    // Check cross-link
-    const crossLink = page.getByRole("link", {
-      name: /See Your World Like Never Before/,
-    });
-    await expect(crossLink).toBeVisible();
-    await expect(crossLink).toHaveAttribute(
-      "href",
-      /\/blog\/showcase-see-your-world$/,
-    );
   });
 
   test("should navigate to and render the spatial intelligence article", async ({

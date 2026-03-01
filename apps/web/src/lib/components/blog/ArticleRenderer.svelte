@@ -12,10 +12,11 @@
   }>();
 
   // Ensure all root-relative links/images in Markdown respect the SvelteKit base path
+  // Matches ](/path) and src="/path"
   const processedContent = $derived(
     content
-      .replaceAll("](/", `](${base}/`)
-      .replaceAll('src="/', `src="${base}/`),
+      .replace(/\]\(\//g, `](${base}/`)
+      .replace(/src="\//g, `src="${base}/`),
   );
   const renderedHtml = $derived(marked.parse(processedContent));
   const sanitizedHtml = $derived(DOMPurify.sanitize(renderedHtml as string));
