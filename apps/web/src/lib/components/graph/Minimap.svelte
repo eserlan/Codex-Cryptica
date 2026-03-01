@@ -385,6 +385,7 @@
       toggleMinimap();
     }}
     title={collapsed ? "Expand Minimap" : "Minimize Minimap"}
+    aria-label={collapsed ? "Expand Minimap" : "Minimize Minimap"}
   >
     <span class="icon-[lucide--map] w-4 h-4"></span>
   </button>

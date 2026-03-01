@@ -111,6 +111,7 @@
       role="menuitem"
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition"
       onclick={setCentralNode}
+      aria-label="Set as Central Node"
     >
       Set as Central Node
     </button>
@@ -119,6 +120,7 @@
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
         onclick={handleMerge}
+        aria-label="Merge {selectedNodes.length} Nodes"
       >
         Merge {selectedNodes.length} Nodes
       </button>

@@ -30,6 +30,7 @@
         graph.toggleOrbit();
       }}
       data-testid="orbit-exit-button"
+      aria-label="Exit Orbit Mode"
     >
       [Exit View]
     </button>
