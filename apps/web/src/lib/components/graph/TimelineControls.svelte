@@ -50,6 +50,7 @@
       ? 'bg-timeline-primary/20 text-timeline-primary border border-timeline-primary/50 shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
       : 'bg-theme-surface/90 text-theme-muted border border-theme-border hover:border-theme-primary hover:text-theme-primary'}"
     title="Toggle Chronological Timeline Mode"
+    aria-label="Toggle Chronological Timeline Mode"
   >
     <span class="flex items-center gap-2">
       <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
@@ -69,6 +70,7 @@
           ? 'bg-timeline-primary text-theme-bg'
           : 'text-theme-muted hover:text-timeline-primary'}"
         title="Horizontal Axis"
+        aria-label="Horizontal Axis"
       >
         X-AXIS
       </button>
@@ -79,6 +81,7 @@
           ? 'bg-timeline-primary text-theme-bg'
           : 'text-theme-muted hover:text-timeline-primary'}"
         title="Vertical Axis"
+        aria-label="Vertical Axis"
       >
         Y-AXIS
       </button>
