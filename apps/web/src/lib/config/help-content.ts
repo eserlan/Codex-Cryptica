@@ -225,7 +225,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "the-archive",
     title: "The Archive",
     content:
-      "Visit our blog for deep dives into data sovereignty and tactical world-building guides.",
+      "Visit our blog for deep dives into data sovereignty and tactical world-building guides. Check out our Comprehensive Help Guide for a full system manual.",
     icon: "icon-[lucide--archive]",
   },
 };

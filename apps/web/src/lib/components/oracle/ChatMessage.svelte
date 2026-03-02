@@ -283,6 +283,68 @@
     // Ideally we track if *this* message was the last action,
     // but for now global undo is the pattern.
   };
+
+  let isCopied = $state(false);
+
+  // Cache parsed HTML for both display and clipboard
+  let htmlCache = $state("");
+  let lastParsedContent = "";
+  $effect(() => {
+    if (message.content && message.content !== lastParsedContent) {
+      const currentContent = message.content;
+      parserService
+        .parse(message.content)
+        .then((html) => {
+          if (currentContent !== message.content) return;
+          htmlCache = DOMPurify.sanitize(html);
+          lastParsedContent = currentContent;
+        })
+        .catch((err) => {
+          console.error("[ChatMessage] Parsing failed:", err);
+          htmlCache = `<p class="text-red-400">Failed to render chronicle.</p>`;
+        });
+    }
+  });
+
+  async function copyToClipboard() {
+    if (!message.content) return;
+
+    // Feature detection for rich text copy
+    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
+      try {
+        let contentToCopy = htmlCache;
+        if (!contentToCopy) {
+          const rawHtml = await parserService.parse(message.content);
+          contentToCopy = DOMPurify.sanitize(rawHtml);
+        }
+        const blobHtml = new Blob([contentToCopy], { type: "text/html" });
+        const blobText = new Blob([message.content], { type: "text/plain" });
+        const data = [
+          new ClipboardItem({
+            "text/html": blobHtml,
+            "text/plain": blobText,
+          }),
+        ];
+        await navigator.clipboard.write(data);
+        isCopied = true;
+        setTimeout(() => (isCopied = false), 2000);
+        return;
+      } catch (err) {
+        console.warn("[ChatMessage] Rich text copy failed, falling back:", err);
+      }
+    }
+
+    // Fallback: Plain text only
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message.content);
+        isCopied = true;
+        setTimeout(() => (isCopied = false), 2000);
+      }
+    } catch (e) {
+      console.error("[ChatMessage] Clipboard fallback failed:", e);
+    }
+  }
 </script>
 
 <div
@@ -291,7 +353,7 @@
     : 'items-start'}"
 >
   <div
-    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed
+    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg
     {message.role === 'user'
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
@@ -309,9 +371,37 @@
         {/if}
 
         <div class="prose prose-sm {message.type === 'image' ? 'mt-4' : ''}">
-          {#await parserService.parse(message.content || "") then html}
-            {@html DOMPurify.sanitize(html)}
-          {/await}
+          {#if htmlCache}
+            {@html htmlCache}
+          {:else}
+            <div class="space-y-2 animate-pulse py-1">
+              <div class="bg-theme-border/20 h-3 w-full rounded"></div>
+              <div class="bg-theme-border/20 h-3 w-[90%] rounded"></div>
+              <div class="bg-theme-border/20 h-3 w-[95%] rounded"></div>
+            </div>
+          {/if}
+        </div>
+
+        <!-- Copy Icon (Rich Text) -->
+        <div
+          class="absolute bottom-1 right-2 opacity-0 group-hover/msg:opacity-100 group-focus-within/msg:opacity-100 focus-within:opacity-100 transition-opacity"
+        >
+          <button
+            onclick={copyToClipboard}
+            class="p-1 rounded bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary transition-all flex items-center gap-1.5"
+            title="Copy rich text to clipboard"
+            aria-label="Copy rich text to clipboard"
+            type="button"
+          >
+            {#if isCopied}
+              <span class="text-[9px] font-bold tracking-tighter uppercase"
+                >Copied!</span
+              >
+              <span class="icon-[lucide--check] w-3 h-3 text-green-400"></span>
+            {:else}
+              <span class="icon-[lucide--copy] w-3 h-3"></span>
+            {/if}
+          </button>
         </div>
 
         {#if message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20)}

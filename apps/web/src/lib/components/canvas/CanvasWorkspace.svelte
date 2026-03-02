@@ -39,6 +39,7 @@
   };
 
   const edgeTypes = {
+    straight: CustomEdge,
     smoothstep: CustomEdge,
   };
 
@@ -47,9 +48,32 @@
   let contextMenu = $state<{
     x: number;
     y: number;
-    type: "node" | "edge";
+    type: "node" | "edge" | "pane";
     id: string;
   } | null>(null);
+
+  // Modifier state passed to nodes via context or store
+  // For simplicity and reactivity, we'll use a local state here
+  let isCtrlPressed = $state(false);
+
+  $effect(() => {
+    const handleDown = (e: KeyboardEvent) => {
+      if (e.key === "Control" || e.metaKey || e.ctrlKey) {
+        isCtrlPressed = true;
+      }
+    };
+    const handleUp = (e: KeyboardEvent) => {
+      if (e.key === "Control" || e.metaKey || e.ctrlKey) {
+        isCtrlPressed = false;
+      }
+    };
+    window.addEventListener("keydown", handleDown);
+    window.addEventListener("keyup", handleUp);
+    return () => {
+      window.removeEventListener("keydown", handleDown);
+      window.removeEventListener("keyup", handleUp);
+    };
+  });
 
   // Label Modal State
   let labelModal = $state<{
@@ -60,6 +84,18 @@
     isOpen: false,
     edgeId: "",
     currentLabel: "",
+  });
+
+  let isConnecting = $state(false);
+
+  let targetVaultId = $state<string | null>(null);
+  let targetCanvasId = $state<string | null>(null);
+
+  $effect(() => {
+    if (vault.activeVaultId && canvasId) {
+      targetVaultId = vault.activeVaultId;
+      targetCanvasId = canvasId;
+    }
   });
 
   const { screenToFlowPosition } = useSvelteFlow();
@@ -96,7 +132,12 @@
           id: n.id,
           type: n.type,
           position: n.position,
-          data: { entityId: n.entityId, width: n.width, height: n.height },
+          data: {
+            entityId: n.entityId,
+            width: n.width,
+            height: n.height,
+            isCtrlPressed,
+          },
         }));
         edges = data.edges.map((e: CanvasEdge) => ({
           id: e.id,
@@ -105,13 +146,25 @@
           sourceHandle: e.sourceHandle || null,
           targetHandle: e.targetHandle || null,
           label: e.label,
-          type: e.type === "line" || !e.type ? "smoothstep" : (e.type as any),
+          type: e.type === "line" || !e.type ? "straight" : (e.type as any),
           style: e.style,
         }));
       } else {
         nodes = [];
         edges = [];
       }
+    }
+  });
+
+  $effect(() => {
+    if (nodes.length > 0) {
+      nodes = nodes.map((n) => ({
+        ...n,
+        data: {
+          ...n.data,
+          isCtrlPressed,
+        },
+      }));
     }
   });
 
@@ -122,7 +175,7 @@
       {
         ...connection,
         id: edgeId,
-        type: "smoothstep",
+        type: "straight",
         animated: true,
         style: "stroke: var(--color-theme-primary); stroke-width: 2;",
       },
@@ -164,7 +217,40 @@
 
   function handlePaneContextMenu({ event }: { event: MouseEvent }) {
     event.preventDefault();
-    contextMenu = null;
+    contextMenu = {
+      x: event.clientX,
+      y: event.clientY,
+      type: "pane",
+      id: "pane",
+    };
+  }
+
+  async function handleCreateEntity(type: string) {
+    if (!contextMenu) return;
+
+    const title = prompt(`Enter new ${type} name:`);
+    if (!title) return;
+
+    try {
+      const id = await vault.createEntity(type as any, title);
+      const position = screenToFlowPosition({
+        x: contextMenu.x,
+        y: contextMenu.y,
+      });
+
+      const newNodeId = engine.addNode(id, position);
+      nodes = [
+        ...nodes,
+        {
+          id: newNodeId,
+          type: "entity",
+          position,
+          data: { entityId: id },
+        },
+      ];
+    } catch (err) {
+      console.error("Failed to create entity from canvas", err);
+    }
   }
 
   function handleDelete() {
@@ -230,10 +316,10 @@
           id: e.id || `edge-${crypto.randomUUID()}`,
           source: e.source,
           target: e.target,
-          sourceHandle: e.sourceHandle || undefined,
-          targetHandle: e.targetHandle || undefined,
+          sourceHandle: undefined,
+          targetHandle: undefined,
           label: e.label as string,
-          type: "smoothstep",
+          type: "straight",
           style: e.style as string,
         }));
         debouncedSave();
@@ -321,12 +407,14 @@
   }
 
   async function saveCanvas() {
-    if (!vault.activeVaultId || !canvasId) return;
+    const currentVaultId = targetVaultId;
+    const currentCanvasId = targetCanvasId;
+    if (!currentVaultId || !currentCanvasId) return;
 
     const data = engine.export();
-    vault.canvases[canvasId] = data;
-    await vault.saveCanvas(canvasId);
-    await canvasRegistry.touch(canvasId);
+    vault.canvases[currentCanvasId] = data;
+    await vault.saveCanvas(currentCanvasId);
+    await canvasRegistry.touch(currentCanvasId);
   }
 
   $effect(() => {
@@ -360,7 +448,9 @@
 </script>
 
 <div
-  class="canvas-container flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
+  class="canvas-container {isConnecting
+    ? 'is-connecting'
+    : ''} flex h-[calc(100vh-var(--header-height,65px))] w-full overflow-hidden relative"
   onkeydown={handleKeyDown}
   tabindex="-1"
   role="none"
@@ -380,6 +470,8 @@
       {nodeTypes}
       {edgeTypes}
       onconnect={onConnect}
+      onconnectstart={() => (isConnecting = true)}
+      onconnectend={() => (isConnecting = false)}
       onnodecontextmenu={onNodeContextMenu}
       onedgecontextmenu={onEdgeContextMenu}
       onedgeclick={onEdgeClick}
@@ -401,6 +493,7 @@
       targetType={contextMenu.type}
       onDelete={handleDelete}
       onRename={handleRename}
+      onCreateEntity={handleCreateEntity}
       onClose={() => (contextMenu = null)}
     />
   {/if}
@@ -424,6 +517,22 @@
     background-position: top left;
     background-attachment: fixed;
   }
+
+  :global(.canvas-container.is-connecting .target-handle-cover) {
+    pointer-events: auto !important;
+    z-index: 1000 !important;
+  }
+
+  /* Force edges to always render strictly underneath all nodes,
+     preventing lines from visibly crossing over a selected node card. */
+  :global(.svelte-flow__edges) {
+    z-index: 0 !important;
+  }
+
+  :global(.svelte-flow__nodes) {
+    z-index: 10 !important;
+  }
+
   :global(.svelte-flow) {
     background-color: transparent !important;
     font-family: var(--font-body), ui-sans-serif;

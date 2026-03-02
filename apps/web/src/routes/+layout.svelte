@@ -117,12 +117,17 @@
       page.url.pathname.startsWith(`${base}/map`) ||
       page.url.pathname.startsWith(`${base}/canvas`);
 
-    if ((!uiStore.isLandingPageVisible || isWorkspaceRoute) && !hasBooted) {
-      // If we're on a workspace route, ensure the landing page is dismissed
-      if (isWorkspaceRoute && uiStore.isLandingPageVisible) {
+    const shouldShowLanding = uiStore.isLandingPageVisible;
+
+    if (!hasBooted) {
+      if (!shouldShowLanding) {
+        // User has 'skip' enabled or has already dismissed it in this session
+        bootSystem();
+      } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
+        // Deep link to map/canvas bypasses landing but dismisses it
         uiStore.dismissedLandingPage = true;
+        bootSystem();
       }
-      bootSystem();
     }
   });
 
@@ -172,7 +177,10 @@
         message.includes("notify") ||
         message.includes("INTERNET_DISCONNECTED") ||
         message.includes("Failed to fetch") ||
-        message.includes("NetworkError")
+        message.includes("NetworkError") ||
+        message.includes(
+          "ResizeObserver loop completed with undelivered notifications",
+        )
       ) {
         return;
       }

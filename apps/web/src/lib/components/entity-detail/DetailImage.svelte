@@ -221,7 +221,6 @@
     <img
       src={resolvedImageUrl}
       alt={entity.title}
-      crossorigin="anonymous"
       class="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
     />
   </button>

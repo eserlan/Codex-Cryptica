@@ -15,7 +15,7 @@
     "eldrin-the-wise": {
       "id": "eldrin-the-wise",
       "title": "Eldrin the Wise",
-      "type": "npc",
+      "type": "character",
       "tags": ["mage", "guide", "mysterious"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "vaelen-the-stern": {
       "id": "vaelen-the-stern",
       "title": "Captain Vaelen",
-      "type": "npc",
+      "type": "character",
       "tags": ["soldier", "leader", "stern"],
       "connections": [
         {
@@ -92,7 +92,7 @@
     "sky-prophecy": {
       "id": "sky-prophecy",
       "title": "Prophecy of the Shattered Sky",
-      "type": "concept",
+      "type": "note",
       "tags": ["myth", "omen", "doom"],
       "connections": [
         {

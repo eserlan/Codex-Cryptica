@@ -15,7 +15,7 @@
     "scavenger-jax": {
       "id": "scavenger-jax",
       "title": "Scavenger Jax",
-      "type": "npc",
+      "type": "character",
       "tags": ["scavenger", "survivalist", "rugged"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "mama-rust": {
       "id": "mama-rust",
       "title": "Mama Rust",
-      "type": "npc",
+      "type": "character",
       "tags": ["mechanic", "expert", "wise"],
       "connections": [
         {

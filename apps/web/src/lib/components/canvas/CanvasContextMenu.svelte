@@ -7,13 +7,15 @@
     targetType = "node",
     onDelete,
     onRename,
+    onCreateEntity,
     onClose,
   } = $props<{
     x: number;
     y: number;
-    targetType?: "node" | "edge";
+    targetType?: "node" | "edge" | "pane";
     onDelete: () => void;
     onRename?: () => void;
+    onCreateEntity?: (type: string) => void;
     onClose: () => void;
   }>();
 
@@ -63,15 +65,70 @@
     <div class="border-t border-theme-border/30 my-1"></div>
   {/if}
 
-  <button
-    role="menuitem"
-    class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
-    onclick={() => {
-      onDelete();
-      onClose();
-    }}
-  >
-    <Trash2 class="w-3.5 h-3.5" />
-    Delete
-  </button>
+  {#if targetType === "pane"}
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onCreateEntity?.("character");
+        onClose();
+      }}
+    >
+      Create Character
+    </button>
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onCreateEntity?.("location");
+        onClose();
+      }}
+    >
+      Create Location
+    </button>
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onCreateEntity?.("event");
+        onClose();
+      }}
+    >
+      Create Event
+    </button>
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onCreateEntity?.("item");
+        onClose();
+      }}
+    >
+      Create Item
+    </button>
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onCreateEntity?.("lore");
+        onClose();
+      }}
+    >
+      Create Lore
+    </button>
+  {/if}
+
+  {#if targetType !== "pane"}
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2.5 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3 transition-colors uppercase font-header tracking-widest"
+      onclick={() => {
+        onDelete();
+        onClose();
+      }}
+    >
+      <Trash2 class="w-3.5 h-3.5" />
+      Delete
+    </button>
+  {/if}
 </div>
