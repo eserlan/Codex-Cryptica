@@ -64,7 +64,7 @@
     }
   }
 
-  const isCtrlPressed = $derived(!!data.isCtrlPressed);
+  const isCtrlPressed = $derived(uiStore.isModifierPressed);
 
   function onDoubleClick() {
     if (entity) {

@@ -53,18 +53,15 @@
   } | null>(null);
 
   // Modifier state passed to nodes via context or store
-  // For simplicity and reactivity, we'll use a local state here
-  let isCtrlPressed = $state(false);
-
   $effect(() => {
     const handleDown = (e: KeyboardEvent) => {
       if (e.key === "Control" || e.metaKey || e.ctrlKey) {
-        isCtrlPressed = true;
+        uiStore.isModifierPressed = true;
       }
     };
     const handleUp = (e: KeyboardEvent) => {
       if (e.key === "Control" || e.metaKey || e.ctrlKey) {
-        isCtrlPressed = false;
+        uiStore.isModifierPressed = false;
       }
     };
     window.addEventListener("keydown", handleDown);
@@ -136,7 +133,6 @@
             entityId: n.entityId,
             width: n.width,
             height: n.height,
-            isCtrlPressed,
           },
         }));
         edges = data.edges.map((e: CanvasEdge) => ({
@@ -153,18 +149,6 @@
         nodes = [];
         edges = [];
       }
-    }
-  });
-
-  $effect(() => {
-    if (nodes.length > 0) {
-      nodes = nodes.map((n) => ({
-        ...n,
-        data: {
-          ...n.data,
-          isCtrlPressed,
-        },
-      }));
     }
   });
 
