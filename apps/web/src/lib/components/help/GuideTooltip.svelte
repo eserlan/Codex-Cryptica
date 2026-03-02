@@ -13,14 +13,17 @@
     total: number;
   }>();
 
-  const parseContent = (content: string) => {
+  // ⚡ Bolt Optimization: Memoize expensive markdown parsing and sanitization.
+  // Previously, this ran inline on every template evaluation (e.g., when tooltipStyle updated).
+  // Using $derived.by ensures it only recomputes when step.content actually changes.
+  const parsedContent = $derived.by(() => {
     try {
-      return DOMPurify.sanitize(marked.parse(content) as string);
+      return DOMPurify.sanitize(marked.parse(step.content) as string);
     } catch (e) {
       console.error("Failed to parse guide content", e);
-      return content;
+      return step.content;
     }
-  };
+  });
 
   let tooltipStyle = $derived.by(() => {
     if (!targetRect || step.targetSelector === "body") {
@@ -117,7 +120,7 @@
     <div
       class="text-theme-text/80 text-xs leading-relaxed prose prose-invert prose-p:my-1 prose-strong:text-theme-primary prose-code:text-theme-secondary"
     >
-      {@html parseContent(step.content)}
+      {@html parsedContent}
     </div>
   </div>
 
