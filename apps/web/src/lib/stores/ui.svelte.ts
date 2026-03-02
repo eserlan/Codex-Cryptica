@@ -76,6 +76,9 @@ class UIStore {
     }
   }
 
+  // Interaction Modifiers
+  isModifierPressed = $state(false);
+
   // Zen Mode State
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
