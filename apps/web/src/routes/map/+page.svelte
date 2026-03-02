@@ -141,29 +141,29 @@
           {mapStore.isGMMode ? "GM MODE: ON" : "PLAYER VIEW"}
         </button>
 
-        <div
-          class="flex items-center gap-1 border-x border-theme-border px-2 mx-1"
-        >
-          <button
-            class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showFog
-              ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
-              : 'text-theme-muted hover:text-theme-text'}"
-            onclick={() => (mapStore.showFog = !mapStore.showFog)}
-          >
-            FOG: {mapStore.showFog ? "ON" : "OFF"}
-          </button>
-
-          <button
-            class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showGrid
-              ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
-              : 'text-theme-muted hover:text-theme-text'}"
-            onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-          >
-            GRID: {mapStore.showGrid ? "ON" : "OFF"}
-          </button>
-        </div>
-
         {#if mapStore.isGMMode}
+          <div
+            class="flex items-center gap-1 border-x border-theme-border px-2 mx-1"
+          >
+            <button
+              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showFog
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
+                : 'text-theme-muted hover:text-theme-text'}"
+              onclick={() => (mapStore.showFog = !mapStore.showFog)}
+            >
+              FOG: {mapStore.showFog ? "ON" : "OFF"}
+            </button>
+
+            <button
+              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showGrid
+                ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
+                : 'text-theme-muted hover:text-theme-text'}"
+              onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
+            >
+              GRID: {mapStore.showGrid ? "ON" : "OFF"}
+            </button>
+          </div>
+
           <div
             class="flex items-center gap-3 px-4 border-r border-theme-border"
           >
@@ -174,7 +174,7 @@
             <input
               type="range"
               min="10"
-              max="200"
+              max="500"
               bind:value={mapStore.brushRadius}
               class="w-24 accent-theme-primary h-1"
             />
@@ -205,9 +205,10 @@
           {/if}
 
           <div
-            class="flex items-center px-2 text-[9px] text-theme-muted italic"
+            class="flex flex-col justify-center px-4 text-[9px] text-theme-muted italic leading-tight border-l border-theme-border/50"
           >
-            Hold Alt + Mouse to reveal
+            <span>Alt+Drag to Reveal</span>
+            <span>Alt+Shift+Drag to Hide</span>
           </div>
         {/if}
       </div>

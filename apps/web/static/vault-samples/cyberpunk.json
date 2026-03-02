@@ -15,7 +15,7 @@
     "glitch": {
       "id": "glitch",
       "title": "Glitch",
-      "type": "npc",
+      "type": "character",
       "tags": ["hacker", "netrunner", "rebel"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "chrome-eyes": {
       "id": "chrome-eyes",
       "title": "Chrome-Eyes",
-      "type": "npc",
+      "type": "character",
       "tags": ["doctor", "expert", "underground"],
       "connections": [
         {

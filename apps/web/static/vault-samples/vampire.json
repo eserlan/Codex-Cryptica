@@ -15,7 +15,7 @@
     "lord-julian-thorne": {
       "id": "lord-julian-thorne",
       "title": "Lord Julian Thorne",
-      "type": "npc",
+      "type": "character",
       "tags": ["vampire", "noble", "predator"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "seraphina-vane": {
       "id": "seraphina-vane",
       "title": "Seraphina Vane",
-      "type": "npc",
+      "type": "character",
       "tags": ["dhampir", "hunter", "vengeful"],
       "connections": [
         {

@@ -15,7 +15,7 @@
     "sarah-miller": {
       "id": "sarah-miller",
       "title": "Detective Sarah Miller",
-      "type": "npc",
+      "type": "character",
       "tags": ["detective", "focused", "expert"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "agent-cooper": {
       "id": "agent-cooper",
       "title": "Agent Cooper",
-      "type": "npc",
+      "type": "character",
       "tags": ["informant", "mysterious", "tech-expert"],
       "connections": [
         {

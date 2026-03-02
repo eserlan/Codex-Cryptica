@@ -90,12 +90,23 @@ export function renderMap(options: RenderOptions) {
     const fogCtx = fog.getContext("2d");
 
     if (fogCtx) {
-      // Fill fog layer with provided color or fallback to opaque black
+      // 1. Clear the entire offscreen buffer so there's no stale fog outside the map
       fogCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-      fogCtx.fillStyle = options.fogColor || "rgba(0, 0, 0, 0.8)";
-      fogCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-      // Punch holes where map is revealed (white = revealed in mask)
+      // 2. Fill the fog color ONLY over the exact dimensions of the scaled/translated map image
+      fogCtx.fillStyle = options.fogColor || "rgba(0, 0, 0, 0.8)";
+      fogCtx.save();
+      fogCtx.translate(center.x, center.y);
+      fogCtx.scale(transform.zoom, transform.zoom);
+      fogCtx.fillRect(
+        -image.width / 2,
+        -image.height / 2,
+        image.width,
+        image.height,
+      );
+      fogCtx.restore();
+
+      // 3. Punch holes where map is revealed (white = revealed in mask)
       fogCtx.globalCompositeOperation = "destination-out";
       fogCtx.save();
       fogCtx.translate(center.x, center.y);
@@ -110,7 +121,8 @@ export function renderMap(options: RenderOptions) {
       fogCtx.restore();
       fogCtx.globalCompositeOperation = "source-over";
 
-      // Overlay fog (with holes) on the main canvas using normal compositing
+      // 4. Overlay the perfectly constrained fog (with holes) on the main canvas
+      // The `fog` canvas is already sized to `canvasSize`, so it maps 1:1 with `ctx` without transforms.
       ctx.drawImage(fog, 0, 0);
     }
   }

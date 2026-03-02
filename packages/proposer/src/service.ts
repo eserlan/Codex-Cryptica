@@ -103,6 +103,8 @@ Criteria for a connection:
 2. The Source Entity implies a relationship (e.g., location, faction member, rival, family) with the Target.
 3. Only suggest connections that are NOT explicitly stated as WikiLinks (assumed).
 4. Assign a confidence score (0.0 to 1.0). High confidence means explicit mention; Low means thematic link.
+5. IMPORTANT: Output a MAXIMUM of ONE connection per Target Entity. Only provide the single most relevant or strongest connection if multiple exist.
+6. CRITICAL: You MUST ONLY use "targetId" values that exactly match the IDs in the "Available Target Entities" list. Do not invent your own entities.
 
 Source Entity Content:
 """
@@ -142,14 +144,46 @@ Only return the JSON. If no connections are found, return empty array [].`;
       if (!Array.isArray(rawProposals)) return [];
 
       const proposals: Proposal[] = [];
+      const validTargetIds = new Set(availableTargets.map((t) => t.id));
+      const nameToIdMap = new Map(
+        availableTargets.map((t) => [t.name.toLowerCase(), t.id]),
+      );
+      const slugToIdMap = new Map(
+        availableTargets.map((t) => [
+          t.name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
+          t.id,
+        ]),
+      );
 
-      // Filter duplicates against *existing* proposals in DB?
-      // The caller handles deduplication against *actual* connections.
-      // Here we just format them.
+      // Deduplicate proposals to only suggest one connection per target entity (highest confidence)
+      const bestProposalsByTarget = new Map<string, any>();
 
-      for (const p of rawProposals) {
+      for (let i = 0; i < rawProposals.length; i++) {
+        const p = rawProposals[i];
         if (p.confidence < this.config.minConfidence) continue;
 
+        // Robust ID Matching: AI sometimes hallucinates the 'name' as the ID or slugs it.
+        let resolvedId = p.targetId;
+        if (!validTargetIds.has(resolvedId)) {
+          const normalized = String(resolvedId).toLowerCase();
+          const matchId =
+            nameToIdMap.get(normalized) || slugToIdMap.get(normalized);
+
+          if (matchId) {
+            resolvedId = matchId;
+            p.targetId = resolvedId; // Fix the payload for the UI
+          } else {
+            continue; // Unresolvable hallucination
+          }
+        }
+
+        const existing = bestProposalsByTarget.get(resolvedId);
+        if (!existing || p.confidence > existing.confidence) {
+          bestProposalsByTarget.set(resolvedId, p);
+        }
+      }
+
+      for (const p of bestProposalsByTarget.values()) {
         const proposal: Proposal = {
           id: `${entityId}:${p.targetId}`,
           sourceId: entityId,

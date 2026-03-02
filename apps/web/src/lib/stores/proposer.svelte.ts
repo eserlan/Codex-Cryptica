@@ -17,12 +17,50 @@ class ProposerStore {
 
   activeProposals = $derived.by(() => {
     if (!vault.selectedEntityId) return [];
-    return this.proposals[vault.selectedEntityId] || [];
+
+    // Deduplicate from history/store load so old DB states don't cause duplicate keys
+    // We pick the best proposal per target (highest confidence, then latest timestamp)
+    const raw = this.proposals[vault.selectedEntityId] || [];
+    const bestByTarget = new Map<string, Proposal>();
+
+    for (const p of raw) {
+      // Reject ghost entities that no longer exist in the vault
+      if (!vault.entities[p.targetId]) continue;
+
+      const existing = bestByTarget.get(p.targetId);
+      if (
+        !existing ||
+        p.confidence > existing.confidence ||
+        (p.confidence === existing.confidence &&
+          p.timestamp > existing.timestamp)
+      ) {
+        bestByTarget.set(p.targetId, p);
+      }
+    }
+
+    return Array.from(bestByTarget.values()).sort(
+      (a, b) => b.confidence - a.confidence,
+    );
   });
 
   activeHistory = $derived.by(() => {
     if (!vault.selectedEntityId) return [];
-    return this.history[vault.selectedEntityId] || [];
+
+    const raw = this.history[vault.selectedEntityId] || [];
+    const bestByTarget = new Map<string, Proposal>();
+
+    for (const p of raw) {
+      if (!vault.entities[p.targetId]) continue;
+
+      const existing = bestByTarget.get(p.targetId);
+      if (!existing || p.timestamp > existing.timestamp) {
+        bestByTarget.set(p.targetId, p);
+      }
+    }
+
+    return Array.from(bestByTarget.values()).sort(
+      (a, b) => b.timestamp - a.timestamp,
+    );
   });
 
   constructor() {

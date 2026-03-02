@@ -15,7 +15,7 @@
     "unit-x99": {
       "id": "unit-x99",
       "title": "Unit X-99",
-      "type": "npc",
+      "type": "character",
       "tags": ["android", "combat", "logical"],
       "connections": [
         {
@@ -38,7 +38,7 @@
     "dr-aris-vance": {
       "id": "dr-aris-vance",
       "title": "Dr. Aris Vance",
-      "type": "npc",
+      "type": "character",
       "tags": ["scientist", "expert", "eccentric"],
       "connections": [
         {

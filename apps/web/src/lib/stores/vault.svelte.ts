@@ -186,6 +186,48 @@ class VaultStore {
 
     const entities = data.entities as Record<string, LocalEntity>;
 
+    const CDN_BASE = "https://assets.codexcryptica.com";
+
+    // Fix image paths in demo data
+    for (const entity of Object.values(entities)) {
+      const fixUrl = (url: string | undefined) => {
+        if (!url) return url;
+
+        // Strip any Cloudflare Image Resizer paths which can interfere with CORS headers
+        url = url.replace(/\/cdn-cgi\/image\/[^/]+\//, "/");
+
+        // 1. If it's already a full CDN URL or data URI, leave it
+        if (
+          url.startsWith("https://assets.codexcryptica.com") ||
+          url.startsWith("data:") ||
+          url.startsWith("blob:")
+        ) {
+          return url;
+        }
+
+        // 2. Handle localhost or relative/root-relative vault-samples paths
+        if (
+          url.includes("vault-samples/images/") ||
+          url.includes("localhost:5173")
+        ) {
+          // Extract the filename part
+          const parts = url.split("vault-samples/images/");
+          const filename = parts[parts.length - 1];
+          return `${CDN_BASE}/vault-samples/images/${filename}`;
+        }
+
+        // 3. Fallback for other relative paths
+        if (!url.startsWith("http") && !url.startsWith("/")) {
+          return `${CDN_BASE}/${url.replace(/^\.\//, "")}`;
+        }
+
+        return url;
+      };
+
+      entity.image = fixUrl(entity.image);
+      entity.thumbnail = fixUrl(entity.thumbnail || entity.image);
+    }
+
     this.entities = entities;
     this.demoVaultName = name || null;
     this.isInitialized = true;

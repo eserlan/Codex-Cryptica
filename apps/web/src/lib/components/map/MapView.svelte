@@ -31,7 +31,7 @@
   );
 
   const fogColor = $derived(
-    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, 0.8)`,
+    `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.isGMMode ? 0.6 : 1.0})`,
   );
   const gridColor = $derived(
     `rgba(${hexToRgb(themeStore.activeTheme.tokens.primary)}, 0.2)`,
@@ -50,6 +50,7 @@
 
       let canceled = false;
       const img = new Image();
+      img.crossOrigin = "anonymous";
       let blobUrl = "";
 
       vault
@@ -136,6 +137,9 @@
         width: canvas.width || 1,
         height: canvas.height || 1,
       };
+
+      // Sync non-reactive mirror variables for the render loop
+      _drawMask = maskCanvas;
 
       // Keep mapStore in sync so project/unproject calls stay accurate
       if (
@@ -273,12 +277,18 @@
   }
 
   function paintFog(e: MouseEvent) {
-    if (!maskCanvas || !container || !mapImage || needsMaskUpdate) return;
+    if (!maskCanvas || !container || !mapImage || needsMaskUpdate) {
+      return;
+    }
+
     needsMaskUpdate = true;
 
     requestAnimationFrame(() => {
-      if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId)
+      if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId) {
+        needsMaskUpdate = false;
         return;
+      }
+
       const rect = container.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
@@ -287,9 +297,19 @@
       const ctx = maskCanvas!.getContext("2d")!;
 
       ctx.save();
-      // In maskCanvas, opacity means "revealed", transparent means "hidden"
-      // So DRAWING on maskCanvas means CUTTING HOLES in fog.
-      ctx.fillStyle = "white";
+
+      const isHiding = e.shiftKey || e.ctrlKey || e.metaKey;
+
+      // In maskCanvas, transparent means "hidden", opacity means "revealed (punched hole)"
+      // Default Alt+drag = REVEAL (white opacity in the mask)
+      // Alt+Shift+drag or Alt+Ctrl+drag = HIDE (erase the mask canvas, restoring the fog)
+      if (isHiding) {
+        ctx.globalCompositeOperation = "destination-out";
+      } else {
+        ctx.fillStyle = "white";
+        ctx.globalCompositeOperation = "source-over";
+      }
+
       ctx.beginPath();
       ctx.arc(
         imgCoords.x + mapImage!.width / 2,
@@ -305,6 +325,7 @@
   }
 
   async function onMouseUp(e: MouseEvent) {
+    console.log("[MapView] mouseup, wasPainting:", isPainting);
     if (isPainting) {
       await mapStore.saveMask(maskCanvas!);
     }

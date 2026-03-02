@@ -8,7 +8,7 @@
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
-  import type { Entity } from "schema";
+  import { isEntityVisible, type Entity } from "schema";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -326,18 +326,36 @@
 
   let allConnections = $derived.by(() => {
     if (!entity) return [];
-    const outbound = entity.connections.map((c) => ({
-      id: c.target,
-      label: c.label || c.type,
-      title: vault.entities[c.target]?.title || c.target,
-      isOutbound: true,
-    }));
-    const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
-      id: item.sourceId,
-      label: item.connection.label || item.connection.type,
-      title: vault.entities[item.sourceId]?.title || item.sourceId,
-      isOutbound: false,
-    }));
+
+    // Helper to check if a connected entity is theoretically visible to the current user
+    const checkVisibility = (targetId: string) => {
+      const targetEntity = vault.entities[targetId];
+      if (!targetEntity) return false;
+      if (!vault.isGuest) return true;
+      return isEntityVisible(targetEntity, {
+        sharedMode: vault.isGuest,
+        defaultVisibility: vault.defaultVisibility,
+      });
+    };
+
+    const outbound = entity.connections
+      .filter((c) => checkVisibility(c.target))
+      .map((c) => ({
+        id: c.target,
+        label: c.label || c.type,
+        title: vault.entities[c.target]?.title || c.target,
+        isOutbound: true,
+      }));
+
+    const inbound = (vault.inboundConnections[entity.id] || [])
+      .filter((item) => checkVisibility(item.sourceId))
+      .map((item) => ({
+        id: item.sourceId,
+        label: item.connection.label || item.connection.type,
+        title: vault.entities[item.sourceId]?.title || item.sourceId,
+        isOutbound: false,
+      }));
+
     return [...outbound, ...inbound];
   });
 
@@ -633,38 +651,40 @@
         >
           OVERVIEW
         </button>
-        <button
-          bind:this={tabInventory}
-          role="tab"
-          id="tab-inventory"
-          aria-selected={activeTab === "inventory"}
-          aria-controls="panel-inventory"
-          tabindex={activeTab === "inventory" ? 0 : -1}
-          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
-          'inventory'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "inventory")}
-          onkeydown={handleTabKeydown}
-        >
-          INVENTORY
-        </button>
-        <button
-          bind:this={tabMap}
-          role="tab"
-          id="tab-map"
-          aria-selected={activeTab === "map"}
-          aria-controls="panel-map"
-          tabindex={activeTab === "map" ? 0 : -1}
-          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
-          'map'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
-          onclick={() => (uiStore.zenModeActiveTab = "map")}
-          onkeydown={handleTabKeydown}
-        >
-          MAP
-        </button>
+        {#if !vault.isGuest}
+          <button
+            bind:this={tabInventory}
+            role="tab"
+            id="tab-inventory"
+            aria-selected={activeTab === "inventory"}
+            aria-controls="panel-inventory"
+            tabindex={activeTab === "inventory" ? 0 : -1}
+            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+            'inventory'
+              ? 'text-theme-primary border-theme-primary'
+              : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            onclick={() => (uiStore.zenModeActiveTab = "inventory")}
+            onkeydown={handleTabKeydown}
+          >
+            INVENTORY
+          </button>
+          <button
+            bind:this={tabMap}
+            role="tab"
+            id="tab-map"
+            aria-selected={activeTab === "map"}
+            aria-controls="panel-map"
+            tabindex={activeTab === "map" ? 0 : -1}
+            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+            'map'
+              ? 'text-theme-primary border-theme-primary'
+              : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            onclick={() => (uiStore.zenModeActiveTab = "map")}
+            onkeydown={handleTabKeydown}
+          >
+            MAP
+          </button>
+        {/if}
       </div>
 
       <!-- Main Body -->

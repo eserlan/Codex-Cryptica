@@ -15,7 +15,7 @@
     "lone-wanderer": {
       "id": "lone-wanderer",
       "title": "The Lone Wanderer",
-      "type": "npc",
+      "type": "character",
       "tags": ["protagonist", "survivor", "pip-boy"],
       "connections": [
         {

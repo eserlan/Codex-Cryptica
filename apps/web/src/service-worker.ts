@@ -48,7 +48,13 @@ sw.addEventListener("fetch", (event) => {
     const url = new URL(event.request.url);
     const cache = await caches.open(CACHE);
 
-    // Bypassing service worker for development server internals or non-http
+    // 1. Bypass for cross-origin requests (e.g., CDN, Google Drive, Gemini)
+    // We only want to manage local app assets.
+    if (url.origin !== location.origin) {
+      return fetch(event.request);
+    }
+
+    // 2. Bypassing service worker for development server internals or non-http
     if (url.protocol !== "http:" && url.protocol !== "https:") {
       return fetch(event.request);
     }

@@ -184,7 +184,9 @@ class MapStore {
     canvas.height = height;
     const ctx = canvas.getContext("2d")!;
 
-    // Default: transparent (everything hidden)
+    // Default: transparent (everything hidden by fog)
+    // The fog renderer uses destination-out, meaning OPAQUE mask pixels erase the fog,
+    // and TRANSPARENT mask pixels leave the fog intact.
     ctx.clearRect(0, 0, width, height);
 
     if (!this.activeMap?.fogOfWar || !this.activeMapId) {
@@ -208,9 +210,7 @@ class MapStore {
       if (e.name !== "NotFoundError") {
         console.error("[MapStore] Failed to load mask from disk:", e);
       }
-      // No saved mask or not found: start fully revealed (white = no fog)
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, width, height);
+      // No saved mask or not found: canvas is already transparent (fully hidden fog)
     }
 
     return canvas;
