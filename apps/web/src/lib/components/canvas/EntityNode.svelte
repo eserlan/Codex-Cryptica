@@ -13,6 +13,9 @@
   const category = $derived(categories.getCategory(entity?.type || ""));
   let imageUrl = $state<string | null>(null);
 
+  // Access global state to detect if we are currently connecting anywhere on the canvas
+  const isConnecting = $derived(uiStore.isConnecting);
+
   $effect(() => {
     if (entity?.image) {
       vault.resolveImageUrl(entity.image).then((url) => {
@@ -65,6 +68,7 @@
   }
 
   const isCtrlPressed = $derived(uiStore.isModifierPressed);
+  let isHovered = $state(false);
 
   function onDoubleClick() {
     if (entity) {
@@ -75,28 +79,39 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="bg-theme-surface border border-theme-border rounded-lg shadow-lg min-w-[200px] max-w-[300px] transition-all hover:border-theme-primary group select-none flex flex-col focus:ring-2 focus:ring-theme-primary focus:outline-none relative {isCtrlPressed
-    ? 'nodrag'
-    : ''}"
+  class="bg-theme-surface border rounded-lg shadow-lg min-w-[200px] max-w-[300px] transition-all group select-none flex flex-col focus:outline-none relative
+    {isConnecting && isHovered && uiStore.connectingNodeId !== data.id
+    ? 'border-[3px] border-red-400 ring-4 ring-red-400/50 cursor-crosshair scale-[1.02]'
+    : isCtrlPressed && isHovered
+      ? 'nodrag border-[3px] border-amber-400 ring-4 ring-amber-400/50 cursor-crosshair'
+      : isCtrlPressed
+        ? 'nodrag border-theme-border'
+        : 'border-theme-border hover:border-theme-primary focus:ring-2 focus:ring-theme-primary'}"
   style:width={data.width ? `${data.width}px` : "auto"}
   style:height={data.height ? `${data.height}px` : "auto"}
   ondblclick={onDoubleClick}
   onkeydown={(e) => (e.key === "Enter" || e.key === " ") && onDoubleClick()}
+  onmouseenter={() => (isHovered = true)}
+  onmouseleave={() => (isHovered = false)}
   tabindex="0"
   role="button"
   aria-label={entity?.title || "Missing Entity"}
 >
-  <Handle
-    type="source"
-    position={Position.Bottom}
-    class="source-handle-cover !bg-theme-primary !border-theme-surface border-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100"
-    style="width: 12px; height: 12px; bottom: -6px; z-index: 50; cursor: crosshair;"
-  />
+  <!-- Invisible standard handles -->
   <Handle
     type="target"
     position={Position.Top}
-    class="target-handle-cover !bg-theme-primary !border-theme-surface border-2 transition-opacity duration-200 opacity-0 group-hover:opacity-100"
-    style="width: 12px; height: 12px; top: -6px; z-index: 50;"
+    class="!bg-transparent !border-none"
+    style="width: 1px; height: 1px; opacity: 0;"
+  />
+
+  <Handle
+    type="source"
+    position={Position.Top}
+    class="full-card-handle !bg-transparent !border-none !rounded-none"
+    style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 100; opacity: 0; transform: none !important; pointer-events: {isCtrlPressed
+      ? 'auto'
+      : 'none'}; cursor: crosshair;"
   />
 
   <div class="flex-1 flex flex-col min-h-0 overflow-hidden rounded-lg">
@@ -211,9 +226,8 @@
 </div>
 
 <style>
-  :global(.is-connecting .source-handle-cover),
-  :global(.is-connecting .target-handle-cover) {
-    opacity: 1 !important;
+  :global(.is-connecting .full-card-handle) {
+    pointer-events: none;
   }
   .markdown-content :global(strong) {
     font-weight: bold;

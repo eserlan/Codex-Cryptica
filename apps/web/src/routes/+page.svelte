@@ -11,7 +11,10 @@
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
 
-  const _ldJson = JSON.stringify(SCHEMA_ORG);
+  const jsonLdScript = $derived(
+    `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
+      `ipt>`,
+  );
 
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
@@ -126,9 +129,7 @@
 
 <svelte:head>
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
-    <script type="application/ld+json">
-      {@html _ldJson}
-    </script>
+    {@html jsonLdScript}
   {/if}
 </svelte:head>
 
