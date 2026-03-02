@@ -21,7 +21,8 @@
       return DOMPurify.sanitize(marked.parse(step.content) as string);
     } catch (e) {
       console.error("Failed to parse guide content", e);
-      return step.content;
+      // Fallback: still sanitize the original content before injecting via {@html}
+      return DOMPurify.sanitize(step.content);
     }
   });
 
