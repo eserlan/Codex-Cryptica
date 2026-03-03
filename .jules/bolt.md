@@ -21,3 +21,7 @@
 ## 2026-02-28 - [Memoizing Expensive Svelte 5 Template Functions]
 **Learning:** Calling expensive parsing functions like `marked.parse` and `DOMPurify.sanitize` inline inside Svelte templates (`{@html parseContent(step.content)}`) causes those operations to block the main thread on every reactive dependency update (e.g. tooltip repositioning).
 **Action:** Always extract expensive string or DOM processing functions out of inline template calls into `$derived.by` or `$derived` bindings to leverage Svelte 5's memoization and ensure they only execute when their exact data dependencies change.
+
+## 2026-03-03 - [Grouping Redundant Derived States]
+**Learning:** In Svelte 5, having many separate `$derived.by` declarations that depend on the same reactive trigger (like a generic keystroke counter) causes each derived block to re-execute individually on every trigger increment. For instance, multiple `editor.isActive(...)` checks fired simultaneously cause unnecessary redundant computations per keystroke.
+**Action:** Group related `$derived` properties that share the exact same reactive dependency/trigger into a single derived object. This condenses N computations into 1 computation per update, drastically reducing redundant executions.
