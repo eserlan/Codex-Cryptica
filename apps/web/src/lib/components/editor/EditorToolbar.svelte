@@ -8,53 +8,56 @@
     onToggleZenMode: () => void;
   }>();
 
-  // Use a reactive trigger to force re-evaluation when the editor state changes
-  let updateTrigger = $state(0);
+  // Optimization: Single state object for all formatting states.
+  // Assignment to its properties only triggers reactivity if the value actually changes.
+  let activeStates = $state({
+    isBold: false,
+    isItalic: false,
+    isStrike: false,
+    isCode: false,
+    isH1: false,
+    isH2: false,
+    isH3: false,
+    isBulletList: false,
+    isOrderedList: false,
+    isBlockquote: false,
+    isLink: false,
+  });
 
-  // Derived states for active formatting
-  let isBold = $derived.by(() => {
-    void updateTrigger; // Subscribe
-    return editor?.isActive("bold") ?? false;
-  });
-  let isItalic = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("italic") ?? false;
-  });
-  let isStrike = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("strike") ?? false;
-  });
-  let isCode = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("code") ?? false;
-  });
-  let isH1 = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("heading", { level: 1 }) ?? false;
-  });
-  let isH2 = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("heading", { level: 2 }) ?? false;
-  });
-  let isH3 = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("heading", { level: 3 }) ?? false;
-  });
-  let isBulletList = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("bulletList") ?? false;
-  });
-  let isOrderedList = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("orderedList") ?? false;
-  });
-  let isBlockquote = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("blockquote") ?? false;
-  });
-  let isLink = $derived.by(() => {
-    void updateTrigger;
-    return editor?.isActive("link") ?? false;
+  $effect(() => {
+    if (!editor) return;
+    const currentEditor = editor;
+
+    const update = () => {
+      activeStates.isBold = currentEditor?.isActive("bold") ?? false;
+      activeStates.isItalic = currentEditor?.isActive("italic") ?? false;
+      activeStates.isStrike = currentEditor?.isActive("strike") ?? false;
+      activeStates.isCode = currentEditor?.isActive("code") ?? false;
+      activeStates.isH1 =
+        currentEditor?.isActive("heading", { level: 1 }) ?? false;
+      activeStates.isH2 =
+        currentEditor?.isActive("heading", { level: 2 }) ?? false;
+      activeStates.isH3 =
+        currentEditor?.isActive("heading", { level: 3 }) ?? false;
+      activeStates.isBulletList =
+        currentEditor?.isActive("bulletList") ?? false;
+      activeStates.isOrderedList =
+        currentEditor?.isActive("orderedList") ?? false;
+      activeStates.isBlockquote =
+        currentEditor?.isActive("blockquote") ?? false;
+      activeStates.isLink = currentEditor?.isActive("link") ?? false;
+    };
+
+    // Initial update
+    update();
+
+    currentEditor.on("selectionUpdate", update);
+    currentEditor.on("transaction", update);
+
+    return () => {
+      currentEditor.off("selectionUpdate", update);
+      currentEditor.off("transaction", update);
+    };
   });
 
   const toggleZenMode = () => {
@@ -100,17 +103,10 @@
 
   onMount(() => {
     window.addEventListener("keydown", handleKeydown);
-
-    // Listen for editor selection changes to update the trigger
-    // This is less frequent than 'transaction' and prevents input lag while typing
-    editor?.on("selectionUpdate", () => {
-      updateTrigger++;
-    });
   });
 
   onDestroy(() => {
     window.removeEventListener("keydown", handleKeydown);
-    editor?.off("selectionUpdate");
   });
 </script>
 
@@ -122,7 +118,7 @@
     <div class="flex gap-0.5">
       <button
         onclick={() => editor.chain().focus().toggleBold().run()}
-        class="toolbar-btn {isBold ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isBold ? 'active' : ''}"
         title="Bold (Cmd+B)"
         aria-label="Bold (Cmd+B)"
       >
@@ -130,7 +126,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleItalic().run()}
-        class="toolbar-btn {isItalic ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isItalic ? 'active' : ''}"
         title="Italic (Cmd+I)"
         aria-label="Italic (Cmd+I)"
       >
@@ -138,7 +134,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleStrike().run()}
-        class="toolbar-btn {isStrike ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isStrike ? 'active' : ''}"
         title="Strike"
         aria-label="Strike"
       >
@@ -146,7 +142,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleCode().run()}
-        class="toolbar-btn {isCode ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isCode ? 'active' : ''}"
         title="Code (Cmd+E)"
         aria-label="Code (Cmd+E)"
       >
@@ -160,7 +156,7 @@
     <div class="flex gap-0.5">
       <button
         onclick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        class="toolbar-btn {isH1 ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
         title="Heading 1"
         aria-label="Heading 1"
       >
@@ -168,7 +164,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        class="toolbar-btn {isH2 ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
         title="Heading 2"
         aria-label="Heading 2"
       >
@@ -176,7 +172,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        class="toolbar-btn {isH3 ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
         title="Heading 3"
         aria-label="Heading 3"
       >
@@ -190,7 +186,7 @@
     <div class="flex gap-0.5">
       <button
         onclick={() => editor.chain().focus().toggleBulletList().run()}
-        class="toolbar-btn {isBulletList ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isBulletList ? 'active' : ''}"
         title="Bullet List"
         aria-label="Bullet List"
       >
@@ -198,7 +194,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleOrderedList().run()}
-        class="toolbar-btn {isOrderedList ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isOrderedList ? 'active' : ''}"
         title="Ordered List"
         aria-label="Ordered List"
       >
@@ -206,7 +202,7 @@
       </button>
       <button
         onclick={() => editor.chain().focus().toggleBlockquote().run()}
-        class="toolbar-btn {isBlockquote ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isBlockquote ? 'active' : ''}"
         title="Blockquote"
         aria-label="Blockquote"
       >
@@ -220,7 +216,7 @@
     <div class="flex gap-0.5">
       <button
         onclick={setLink}
-        class="toolbar-btn {isLink ? 'active' : ''}"
+        class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
         title="Link"
         aria-label="Link"
       >

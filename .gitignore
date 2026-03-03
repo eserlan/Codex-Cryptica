@@ -40,6 +40,14 @@ out/
 Thumbs.db
 node_modules
 
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*.rej
+*.orig
+
 # Test Data
 vault-5k/
 apps/web/test-results.json
