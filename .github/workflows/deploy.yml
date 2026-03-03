@@ -56,6 +56,7 @@ jobs:
         with:
           name: dist-${{ matrix.environment }}
           path: apps/web/build/
+          include-hidden-files: true
           retention-days: 1
 
   deploy:
