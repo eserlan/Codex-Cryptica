@@ -107,14 +107,18 @@
           try {
             await demoService.convertToCampaign();
           } catch (error) {
-            console.error("Failed to save campaign:", error);
-            ui.notify("Failed to save campaign. Please try again.", "error");
+            console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
+            ui.notify(
+              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "error",
+            );
           }
         }}
         data-testid="save-as-campaign-button"
+        title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
       >
         <span class="icon-[lucide--save] w-3 h-3"></span>
-        SAVE AS CAMPAIGN
+        SAVE AS {themeStore.jargon.vault.toUpperCase()}
       </button>
       <button
         class={isVertical
