@@ -477,7 +477,7 @@
       <Background gap={20} />
       <Controls />
       <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
-      {#snippet connectionLine(props: any)}
+      {#snippet connectionLineComponent(props: any)}
         <ConnectionLine {...props} />
       {/snippet}
     </SvelteFlow>
