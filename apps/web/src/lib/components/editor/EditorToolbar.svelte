@@ -8,25 +8,55 @@
     onToggleZenMode: () => void;
   }>();
 
-  // Use a reactive trigger to force re-evaluation when the editor state changes
-  let updateTrigger = $state(0);
+  // Optimization: Single state object for all formatting states.
+  // Assignment to its properties only triggers reactivity if the value actually changes.
+  let activeStates = $state({
+    isBold: false,
+    isItalic: false,
+    isStrike: false,
+    isCode: false,
+    isH1: false,
+    isH2: false,
+    isH3: false,
+    isBulletList: false,
+    isOrderedList: false,
+    isBlockquote: false,
+    isLink: false,
+  });
 
-  // Optimization: Group all active state checks into a single derived object
-  // to prevent 11 separate reactivity computations on every selection change/keystroke.
-  let activeStates = $derived.by(() => {
-    void updateTrigger; // Subscribe
-    return {
-      isBold: editor?.isActive("bold") ?? false,
-      isItalic: editor?.isActive("italic") ?? false,
-      isStrike: editor?.isActive("strike") ?? false,
-      isCode: editor?.isActive("code") ?? false,
-      isH1: editor?.isActive("heading", { level: 1 }) ?? false,
-      isH2: editor?.isActive("heading", { level: 2 }) ?? false,
-      isH3: editor?.isActive("heading", { level: 3 }) ?? false,
-      isBulletList: editor?.isActive("bulletList") ?? false,
-      isOrderedList: editor?.isActive("orderedList") ?? false,
-      isBlockquote: editor?.isActive("blockquote") ?? false,
-      isLink: editor?.isActive("link") ?? false,
+  $effect(() => {
+    if (!editor) return;
+    const currentEditor = editor;
+
+    const update = () => {
+      activeStates.isBold = currentEditor?.isActive("bold") ?? false;
+      activeStates.isItalic = currentEditor?.isActive("italic") ?? false;
+      activeStates.isStrike = currentEditor?.isActive("strike") ?? false;
+      activeStates.isCode = currentEditor?.isActive("code") ?? false;
+      activeStates.isH1 =
+        currentEditor?.isActive("heading", { level: 1 }) ?? false;
+      activeStates.isH2 =
+        currentEditor?.isActive("heading", { level: 2 }) ?? false;
+      activeStates.isH3 =
+        currentEditor?.isActive("heading", { level: 3 }) ?? false;
+      activeStates.isBulletList =
+        currentEditor?.isActive("bulletList") ?? false;
+      activeStates.isOrderedList =
+        currentEditor?.isActive("orderedList") ?? false;
+      activeStates.isBlockquote =
+        currentEditor?.isActive("blockquote") ?? false;
+      activeStates.isLink = currentEditor?.isActive("link") ?? false;
+    };
+
+    // Initial update
+    update();
+
+    currentEditor.on("selectionUpdate", update);
+    currentEditor.on("transaction", update);
+
+    return () => {
+      currentEditor.off("selectionUpdate", update);
+      currentEditor.off("transaction", update);
     };
   });
 
@@ -73,17 +103,10 @@
 
   onMount(() => {
     window.addEventListener("keydown", handleKeydown);
-
-    // Listen for editor selection changes to update the trigger
-    // This is less frequent than 'transaction' and prevents input lag while typing
-    editor?.on("selectionUpdate", () => {
-      updateTrigger++;
-    });
   });
 
   onDestroy(() => {
     window.removeEventListener("keydown", handleKeydown);
-    editor?.off("selectionUpdate");
   });
 </script>
 
