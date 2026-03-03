@@ -387,6 +387,46 @@ export const THEMES: Record<string, StylingTemplate> = {
       graph_loading: "Navigating Hyperspace...",
     },
   },
+  startrek: {
+    id: "startrek",
+    name: "LCARS Interface",
+    tokens: {
+      primary: "#FF9900", // Okudagram Orange
+      secondary: "#CC99CC", // LCARS Purple
+      background: "#000000", // Space Black
+      surface: "#111111", // Console Background
+      text: "#FFFFFF", // Standard White
+      border: "rgba(255, 153, 0, 0.4)", // Orange Glow
+      accent: "#FF3333", // Vulcan Red
+      fontHeader: "'Orbitron', sans-serif",
+      fontBody: "'Inter', sans-serif",
+    },
+    graph: {
+      nodeShape: "round-rectangle",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#99CCFF", // Federation Blue
+    },
+    jargon: {
+      vault: "LCARS Data Bank",
+      entity: "Personnel File",
+      entity_plural: "Personnel Files",
+      save: "Log",
+      delete: "Purge",
+      new: "Authorize",
+      syncing: "Establishing Link...",
+      search: "Analyze",
+      lore_header: "Federation Database",
+      lore_secrets: "Classified & Section 31 Files",
+      chronicle_header: "Stardate Logs",
+      connections_header: "Comm-link",
+      tab_status: "Bio-Signs",
+      tab_lore: "Mission Data",
+      tab_inventory: "Equipment",
+      graph_loading: "Scanning Sector...",
+    },
+  },
 };
 
 export const DEFAULT_THEME = THEMES.fantasy;
