@@ -1,9 +1,3 @@
-## 2024-05-22 - [Initial Setup]
-
-**Learning:** Journal initialized.
-**Action:** Record critical UX learnings here.
-
-## 2024-05-22 - [Timeline Control Accessibility]
-
-**Learning:** Range inputs for timeline filtering lack visible labels and proper ARIA association, making them confusing for screen reader users and difficult to target for voice control.
-**Action:** Add `aria-label` or `aria-labelledby` to range inputs and ensure they have visible accompanying text labels where design permits.
+## 2024-03-03 - Tiptap Bubble Menu Selection Nuances
+**Learning:** Tiptap's Bubble Menu extension (and Svelte 5's wrapping of it) only renders the floating toolbar into the DOM when valid, formatable text is actively selected. It remains completely detached from the DOM otherwise. When testing or designing micro-interactions for it, double-clicking empty blocks or attempting to trigger the menu programmatically via native DOM selection fails to mount the component.
+**Action:** When creating tests or verifying a11y attributes on Bubble Menu buttons, always inject realistic text into the editor and simulate an explicit user mouse selection (drag/drop) over that text rather than relying on `focus()` or `dblclick()` on empty `.ProseMirror` nodes.
