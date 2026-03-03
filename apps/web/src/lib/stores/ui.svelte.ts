@@ -78,6 +78,8 @@ class UIStore {
 
   // Interaction Modifiers
   isModifierPressed = $state(false);
+  isConnecting = $state(false);
+  connectingNodeId = $state<string | null>(null);
 
   // Zen Mode State
   showZenMode = $state(false);

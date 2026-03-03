@@ -3,14 +3,14 @@
   import { SCHEMA_ORG } from "$lib/config";
   let { children } = $props();
 
-  // Stringify schema for head
-  const _ldJson = JSON.stringify(SCHEMA_ORG);
+  const jsonLdScript = $derived(
+    `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
+      `ipt>`,
+  );
 </script>
 
 <svelte:head>
-  <script type="application/ld+json">
-    {@html _ldJson}
-  </script>
+  {@html jsonLdScript}
 </svelte:head>
 
 {@render children()}

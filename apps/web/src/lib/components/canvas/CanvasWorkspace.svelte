@@ -6,6 +6,7 @@
     MiniMap,
     useSvelteFlow,
     addEdge as addXyEdge,
+    ConnectionMode,
     type Node,
     type Edge,
     type Connection,
@@ -454,12 +455,19 @@
       {nodeTypes}
       {edgeTypes}
       onconnect={onConnect}
-      onconnectstart={() => (isConnecting = true)}
-      onconnectend={() => (isConnecting = false)}
+      onconnectstart={() => {
+        isConnecting = true;
+        uiStore.isConnecting = true;
+      }}
+      onconnectend={() => {
+        isConnecting = false;
+        uiStore.isConnecting = false;
+      }}
       onnodecontextmenu={onNodeContextMenu}
       onedgecontextmenu={onEdgeContextMenu}
       onedgeclick={onEdgeClick}
       onpanecontextmenu={handlePaneContextMenu}
+      connectionMode={ConnectionMode.Loose}
       zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
       fitView
@@ -500,11 +508,6 @@
     background-repeat: repeat;
     background-position: top left;
     background-attachment: fixed;
-  }
-
-  :global(.canvas-container.is-connecting .target-handle-cover) {
-    pointer-events: auto !important;
-    z-index: 1000 !important;
   }
 
   /* Force edges to always render strictly underneath all nodes,

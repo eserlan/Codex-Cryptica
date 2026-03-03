@@ -22,77 +22,41 @@
 
   const { getNodes } = useSvelteFlow();
 
-  // Calculate intersection between a point and a bounding box
-  function getIntersection(
-    nodeDimensions: { x: number; y: number; width: number; height: number },
-    targetX: number,
-    targetY: number,
-  ) {
-    const { x, y, width, height } = nodeDimensions;
-    // Current center of the node
-    const cx = x + width / 2;
-    const cy = y + height / 2;
-
-    // Vector from center to target
-    const dx = targetX - cx;
-    const dy = targetY - cy;
-
-    if (dx === 0 && dy === 0) return { x: cx, y: cy };
-
-    // Distance to horizontal/vertical borders
-    const scaleX = width / 2 / Math.abs(dx);
-    const scaleY = height / 2 / Math.abs(dy);
-
-    // Choose the shortest path to hit a border first
-    const scale = Math.min(scaleX, scaleY);
-
-    return {
-      x: cx + dx * scale,
-      y: cy + dy * scale,
-    };
-  }
-
   const edgeData = $derived.by(() => {
     const allNodes = getNodes();
     const sourceNode = allNodes.find((n) => n.id === source);
     const targetNode = allNodes.find((n) => n.id === target);
 
-    let sx = sourceX;
-    let sy = sourceY;
-    let tx = targetX;
-    let ty = targetY;
+    let sx, sy, tx, ty;
 
-    if (sourceNode?.measured && targetNode?.measured) {
-      const sWidth = sourceNode.measured.width || 200;
-      const sHeight = sourceNode.measured.height || 200;
-      const tWidth = targetNode.measured.width || 200;
-      const tHeight = targetNode.measured.height || 200;
+    if (sourceNode && targetNode) {
+      const sPos = (sourceNode as any).positionAbsolute ||
+        sourceNode.position || { x: 0, y: 0 };
+      const tPos = (targetNode as any).positionAbsolute ||
+        targetNode.position || { x: 0, y: 0 };
 
-      // SvelteFlow provides absolute positions via `positionAbsolute` when nested/grouped, but `position` works for top-level nodes
-      const sPos = (sourceNode as any).positionAbsolute || sourceNode.position;
-      const tPos = (targetNode as any).positionAbsolute || targetNode.position;
+      const sW = sourceNode.measured?.width ?? (sourceNode as any).width ?? 200;
+      const sH =
+        sourceNode.measured?.height ?? (sourceNode as any).height ?? 100;
+      const tW = targetNode.measured?.width ?? (targetNode as any).width ?? 200;
+      const tH =
+        targetNode.measured?.height ?? (targetNode as any).height ?? 100;
 
-      // Get center of target to aim at
-      const tCenterX = tPos.x + tWidth / 2;
-      const tCenterY = tPos.y + tHeight / 2;
-      const sCenterX = sPos.x + sWidth / 2;
-      const sCenterY = sPos.y + sHeight / 2;
+      sx = sPos.x + sW / 2;
+      sy = sPos.y + sH / 2;
+      tx = tPos.x + tW / 2;
+      ty = tPos.y + tH / 2;
 
-      const sInter = getIntersection(
-        { x: sPos.x, y: sPos.y, width: sWidth, height: sHeight },
-        tCenterX,
-        tCenterY,
-      );
-      const tInter = getIntersection(
-        { x: tPos.x, y: tPos.y, width: tWidth, height: tHeight },
-        sCenterX,
-        sCenterY,
-      );
-
-      sx = sInter.x;
-      sy = sInter.y;
-      tx = tInter.x;
-      ty = tInter.y;
+      if (isNaN(sx) || isNaN(sy)) {
+        sx = sourceX;
+        sy = sourceY;
+      }
+    } else {
+      // Very final fallback to original props
+      sx = sourceX;
+      sy = sourceY;
+      tx = targetX;
+      ty = targetY;
     }
 
     const [path, labelX, labelY] = getStraightPath({
