@@ -468,6 +468,7 @@
       onedgecontextmenu={onEdgeContextMenu}
       onedgeclick={onEdgeClick}
       onpanecontextmenu={handlePaneContextMenu}
+      defaultEdgeOptions={{ type: "straight" }}
       connectionMode={ConnectionMode.Loose}
       zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
@@ -601,6 +602,11 @@
     fill: var(--color-theme-primary) !important;
     fill-opacity: 0.1 !important;
   }
+  /* High-visibility for the drafting line */
+  :global(.svelte-flow__connectionline) {
+    z-index: 20 !important;
+  }
+
   @keyframes svelte-flow__dashdraw {
     from {
       stroke-dashoffset: 10;

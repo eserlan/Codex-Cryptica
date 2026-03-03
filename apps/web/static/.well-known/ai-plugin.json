@@ -2,9 +2,16 @@
   "schema_version": "v1",
   "name_for_model": "CodexCryptica",
   "name_for_human": "Codex Cryptica",
-  "description_for_model": "A local-first, privacy-centric campaign manager for RPG world-building. Specializes in knowledge graphs, tactical maps, and timeline management.",
+  "description_for_model": "Codex Cryptica is a local-first, privacy-centric campaign manager for RPG world-building. It allows users to manage entities (Characters, Locations, Factions), build knowledge graphs (connections), and track timelines. The AI can use this plugin to help users brainstorm lore, cross-reference campaign facts, and visualize relationships on a spatial canvas. All data is stored in the user's local vault (OPFS/IndexedDB).",
   "description_for_human": "Secure your lore with a local-first vault for your RPG campaigns.",
-  "auth": { "type": "none" },
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://codexcryptica.com/.well-known/openapi.yaml",
+    "is_user_authenticated": false
+  },
   "logo_url": "https://codexcryptica.com/logo.png",
   "contact_email": "espen.erlandsen@gmail.com",
   "legal_info_url": "https://codexcryptica.com/terms",
