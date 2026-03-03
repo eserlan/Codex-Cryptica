@@ -32,4 +32,15 @@ export const SCHEMA_ORG = {
   ],
   storageRequirements: "Origin Private File System (OPFS)",
   softwareVersion: VERSION,
+  isAccessibleForFree: "True",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Organization",
+    name: "Eserlan",
+    url: "https://github.com/eserlan",
+  },
 };
