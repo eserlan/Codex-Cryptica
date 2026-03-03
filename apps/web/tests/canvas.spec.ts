@@ -83,13 +83,14 @@ test.describe("Spatial Canvas", () => {
     // Get source and target handles
     const sourceHandle = nodes
       .nth(0)
-      .locator('.svelte-flow__handle[data-handleid="right-source"]');
+      .locator('.source-handle-cover');
     const targetHandle = nodes
       .nth(1)
-      .locator('.svelte-flow__handle[data-handleid="left-target"]');
+      .locator('.target-handle-cover');
 
-    await expect(sourceHandle).toBeVisible();
-    await expect(targetHandle).toBeVisible();
+    // These handles use opacity-0 by default and group-hover:opacity-100, but are in the DOM
+    await expect(sourceHandle).toBeAttached();
+    await expect(targetHandle).toBeAttached();
 
     // Drag from source to target
     await sourceHandle.dragTo(targetHandle, { force: true });
@@ -161,10 +162,10 @@ test.describe("Spatial Canvas", () => {
 
     const sourceHandle = nodes
       .nth(0)
-      .locator('.svelte-flow__handle[data-handleid="right-source"]');
+      .locator('.source-handle-cover');
     const targetHandle = nodes
       .nth(1)
-      .locator('.svelte-flow__handle[data-handleid="left-target"]');
+      .locator('.target-handle-cover');
 
     await sourceHandle.dragTo(targetHandle, { force: true });
     await expect(page.locator(".svelte-flow__edge")).toHaveCount(1);
@@ -202,10 +203,10 @@ test.describe("Spatial Canvas", () => {
     const nodes = page.locator(".svelte-flow__node");
     const sourceHandle = nodes
       .nth(0)
-      .locator('.svelte-flow__handle[data-handleid="right-source"]');
+      .locator('.source-handle-cover');
     const targetHandle = nodes
       .nth(1)
-      .locator('.svelte-flow__handle[data-handleid="left-target"]');
+      .locator('.target-handle-cover');
 
     await sourceHandle.dragTo(targetHandle, { force: true });
     await expect(page.locator(".svelte-flow__edge")).toHaveCount(1);
@@ -214,12 +215,15 @@ test.describe("Spatial Canvas", () => {
     const edgePath = edge.locator("path.svelte-flow__edge-path");
 
     // Double click to rename
-    await Promise.all([
-      page
-        .waitForEvent("dialog")
-        .then((dialog) => dialog.accept("Renamed Connection")),
-      edgePath.dblclick({ force: true }),
-    ]);
+    await edgePath.dblclick({ force: true });
+
+    // Wait for the rename modal
+    const input = page.locator('input[placeholder="Enter connection label..."]');
+    await expect(input).toBeVisible();
+
+    // Type the new label and save
+    await input.fill("Renamed Connection");
+    await page.getByRole("button", { name: "Save Label" }).click();
 
     // Check if label appears
     await expect(page.locator("text=Renamed Connection")).toBeVisible();
