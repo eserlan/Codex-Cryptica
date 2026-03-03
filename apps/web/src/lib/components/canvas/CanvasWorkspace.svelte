@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ConnectionLine from "./ConnectionLine.svelte";
   import {
     SvelteFlow,
     Background,
@@ -475,6 +476,9 @@
       <Background gap={20} />
       <Controls />
       <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
+      {#snippet connectionLineComponent(props: any)}
+        <ConnectionLine {...props} />
+      {/snippet}
     </SvelteFlow>
   </div>
 
