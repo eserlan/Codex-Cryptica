@@ -395,6 +395,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 **AI Powered:**
 - \`/draw [subject]\`: Visualize an entity or scene.
 - \`/create [description]\`: Automatically create a new entity from a text description.
+- \`/plot [entity name]\`: Analyse story tensions around an entity (rivals, risks, secrets). E.g. \`/plot threats around Count Dukoo\`.
 - \`/connect oracle\`: Start the guided connection wizard.
 - \`/merge oracle\`: Start the guided merge wizard.
 
@@ -470,6 +471,21 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return true;
     }
 
+    if (q.startsWith("/plot")) {
+      this.messages = [
+        ...this.messages,
+        {
+          id: this.generateId(),
+          role: "system",
+          content: `❌ The \`/plot\` command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.`,
+        },
+      ];
+      this.lastUpdated = Date.now();
+      this.broadcast();
+      this.saveToDB();
+      return true;
+    }
+
     // If it's natural language or an unknown command, reject it
     this.messages = [
       ...this.messages,
@@ -533,10 +549,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
     const isConnectRequest = query.toLowerCase().trim().startsWith("/connect");
     const isMergeRequest = query.toLowerCase().trim().startsWith("/merge");
+    const isPlotRequest = query.toLowerCase().trim().startsWith("/plot");
     const isImageRequest =
       !isCreateRequest &&
       !isConnectRequest &&
       !isMergeRequest &&
+      !isPlotRequest &&
       this.detectImageIntent(query);
 
     this.messages = [
@@ -840,6 +858,118 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             `Entity "${missingName}" was found in search but is missing from the active vault.`,
           );
         }
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
+
+    // Handle Direct /plot request
+    if (isPlotRequest) {
+      try {
+        let subject = query.replace(/^\/plot\s*/i, "").trim();
+        // Strip wrapping quotes added by the autocomplete menu
+        if (subject.startsWith('"') && subject.endsWith('"')) {
+          subject = subject.slice(1, -1).trim();
+        }
+        if (!subject) {
+          throw new Error(
+            "Please specify an entity. Usage: `/plot [entity name]` or `/plot threats around [entity name]`",
+          );
+        }
+
+        const { searchService } = await import("../services/search");
+        const results = await searchService.search(subject, { limit: 1 });
+
+        if (!results[0]) {
+          throw new Error(`Could not find entity: "${subject}"`);
+        }
+
+        const entityId = results[0].id;
+        const entity = vault.entities[entityId];
+        if (!entity) {
+          throw new Error(`Entity not found in vault: "${subject}"`);
+        }
+
+        // Gather connected entities (outbound + inbound) with deduplication
+        const uniqueConnectedIds = new Set<string>();
+        const connectedEntities: {
+          entity: any;
+          connectionType: string;
+          label?: string;
+          direction: "outbound" | "inbound";
+        }[] = [];
+
+        for (const conn of entity.connections) {
+          if (!uniqueConnectedIds.has(conn.target)) {
+            const connEntity = vault.entities[conn.target];
+            if (connEntity) {
+              uniqueConnectedIds.add(conn.target);
+              connectedEntities.push({
+                entity: connEntity,
+                connectionType: conn.type,
+                label: conn.label,
+                direction: "outbound",
+              });
+            }
+          }
+        }
+
+        const inbound = vault.inboundConnections[entityId] || [];
+        for (const { sourceId, connection } of inbound) {
+          if (!uniqueConnectedIds.has(sourceId)) {
+            const connEntity = vault.entities[sourceId];
+            if (connEntity) {
+              uniqueConnectedIds.add(sourceId);
+              connectedEntities.push({
+                entity: connEntity,
+                connectionType: connection.type,
+                label: connection.label,
+                direction: "inbound",
+              });
+            }
+          }
+        }
+
+        const modelName = TIER_MODES[this.tier];
+        const analysis = await aiService.generatePlotAnalysis(
+          key,
+          modelName,
+          entity,
+          connectedEntities,
+          query,
+        );
+
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "assistant",
+            content: analysis,
+            entityId,
+            sources: [
+              entityId,
+              ...connectedEntities.map((c) => c.entity.id as string),
+            ],
+          },
+        ];
+
+        this.lastUpdated = Date.now();
+        this.isLoading = false;
+        this.broadcast();
+        this.saveToDB();
+        return;
       } catch (err: any) {
         this.messages = [
           ...this.messages,
