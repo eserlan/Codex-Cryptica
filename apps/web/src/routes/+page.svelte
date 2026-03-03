@@ -311,7 +311,7 @@
             Try it as:
           </h3>
           <div class="flex flex-wrap justify-center gap-4">
-            {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern", "fallout"] as theme}
+            {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern", "fallout", "starwars"] as theme}
               <button
                 onclick={() => demoService.startDemo(theme)}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"

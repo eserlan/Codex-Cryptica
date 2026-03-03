@@ -347,6 +347,46 @@ export const THEMES: Record<string, StylingTemplate> = {
       graph_loading: "Accessing Vault-Tec Network...",
     },
   },
+  starwars: {
+    id: "starwars",
+    name: "Galactic Holocron",
+    tokens: {
+      primary: "#FFE81F", // Star Wars Yellow
+      secondary: "#2D3748", // Imperial Grey
+      background: "#000000", // Space Black
+      surface: "#0F172A", // Star Destroyer Interior
+      text: "#E2E8F0", // Starlight White
+      border: "rgba(74, 144, 226, 0.5)", // Lightsaber Blue
+      accent: "#EF4444", // Sith Red
+      fontHeader: "'Orbitron', sans-serif",
+      fontBody: "'Inter', sans-serif",
+    },
+    graph: {
+      nodeShape: "round-rectangle",
+      edgeStyle: "solid",
+      nodeBorderWidth: 1,
+      edgeWidth: 1,
+      edgeColor: "#4A90E2", // Lightsaber Blue
+    },
+    jargon: {
+      vault: "Holocron",
+      entity: "Data Pad",
+      entity_plural: "Data Pads",
+      save: "Encrypt",
+      delete: "Purge",
+      new: "Initialize",
+      syncing: "Transmitting",
+      search: "Scan",
+      lore_header: "Imperial Archives",
+      lore_secrets: "Forbidden Intel & Jedi Secrets",
+      chronicle_header: "System Logs",
+      connections_header: "Alliances",
+      tab_status: "Vitals",
+      tab_lore: "Archives",
+      tab_inventory: "Cargo",
+      graph_loading: "Navigating Hyperspace...",
+    },
+  },
 };
 
 export const DEFAULT_THEME = THEMES.fantasy;
