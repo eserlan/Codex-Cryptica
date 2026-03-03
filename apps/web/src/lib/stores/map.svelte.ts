@@ -12,7 +12,7 @@ class MapStore {
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(true);
-  isGMMode = $state(false);
+  isGMMode = $state(true);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
