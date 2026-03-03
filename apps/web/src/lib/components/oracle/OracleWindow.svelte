@@ -7,6 +7,7 @@
   import { demoService } from "$lib/services/demo";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   const popOut = () => {
     window.open(
@@ -165,13 +166,19 @@
               oracle.toggle();
               uiStore.openSettings("vault");
             } catch (error) {
-              console.error("Failed to convert demo to campaign", error);
-              window.alert("Failed to save campaign. Please try again.");
+              console.error(
+                `Failed to convert demo to ${themeStore.jargon.vault}`,
+                error,
+              );
+              window.alert(
+                `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              );
             }
           }}
           class="w-full py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-secondary transition-colors"
+          title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
         >
-          Save as Campaign
+          Save as {themeStore.jargon.vault}
         </button>
       </div>
     {/if}

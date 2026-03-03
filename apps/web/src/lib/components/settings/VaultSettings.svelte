@@ -6,6 +6,7 @@
   import { demoService } from "$lib/services/demo";
   import { goto } from "$app/navigation";
   import { page } from "$app/state";
+  import { themeStore } from "$lib/stores/theme.svelte";
 
   const handleVisibilityChange = async (e: Event) => {
     const value = (e.target as HTMLSelectElement).value as "visible" | "hidden";
@@ -73,7 +74,8 @@
         </h3>
         <p class="text-[11px] text-theme-muted mt-1 leading-relaxed">
           You are currently in **Demo Mode**. All changes are transient. <br />
-          Save this dataset as a new campaign to begin your permanent chronicle.
+          Save this dataset as a new {themeStore.jargon.vault} to begin your permanent
+          chronicle.
         </p>
       </div>
       <button
@@ -85,13 +87,19 @@
             goto(url.toString(), { replaceState: true });
             uiStore.closeSettings();
           } catch (error) {
-            console.error("Failed to convert demo to campaign:", error);
-            window.alert("Failed to save campaign. Please try again.");
+            console.error(
+              `Failed to convert demo to ${themeStore.jargon.vault}:`,
+              error,
+            );
+            window.alert(
+              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+            );
           }
         }}
         class="px-8 py-3 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-xs rounded hover:bg-theme-secondary transition-all active:scale-95 shadow-[0_0_20px_rgba(var(--color-accent-primary-rgb),0.2)]"
+        title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
       >
-        Save as Campaign
+        Save as {themeStore.jargon.vault}
       </button>
     </div>
   {/if}
