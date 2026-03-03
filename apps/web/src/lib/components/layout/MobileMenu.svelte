@@ -192,6 +192,14 @@
           <span class="icon-[lucide--zap] w-4 h-4"></span>
           Features
         </a>
+        <a
+          href="{base}/blog"
+          class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded"
+          onclick={close}
+        >
+          <span class="icon-[lucide--newspaper] w-4 h-4"></span>
+          Blog
+        </a>
         <button
           class="flex items-center gap-3 p-2 text-sm font-mono text-theme-secondary hover:text-theme-primary transition-colors focus:outline-none focus:ring-1 focus:ring-theme-primary rounded text-left w-full cursor-pointer"
           onclick={() => {
