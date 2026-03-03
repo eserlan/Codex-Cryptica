@@ -11,15 +11,8 @@ const config = {
       strict: false,
     }),
     prerender: {
-      entries: [
-        "/",
-        "/features",
-        "/terms",
-        "/privacy",
-        "/blog",
-        "/.well-known/ai-plugin.json",
-        "/.well-known/openapi.yaml",
-      ],
+      entries: ["/", "/features", "/terms", "/privacy", "/blog"],
+      handleUnseenRoutes: "ignore",
       handleHttpError: ({ path, message }) => {
         // llms.txt is a static file served at the domain root; ignore 404s
         // that arise when prerendering under a non-root base path (e.g. /staging).
