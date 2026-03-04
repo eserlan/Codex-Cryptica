@@ -773,7 +773,7 @@
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              if (cy && !cy.destroyed()) applyCurrentLayout(false, true);
+              if (cy && !cy.destroyed()) applyCurrentLayout(false);
             }, 200);
           }
         } catch (error) {
