@@ -42,6 +42,31 @@ class UIStore {
         this.liteMode = lite === "true";
       }
 
+      const lastLabel = localStorage.getItem("codex_last_connection_label");
+      if (lastLabel !== null) {
+        this.lastConnectionLabel = lastLabel;
+      }
+
+      const recentLabels = localStorage.getItem(
+        "codex_recent_connection_labels",
+      );
+      if (recentLabels !== null) {
+        try {
+          const parsed = JSON.parse(recentLabels);
+          if (
+            Array.isArray(parsed) &&
+            parsed.every((item) => typeof item === "string")
+          ) {
+            this.recentConnectionLabels = parsed;
+          } else {
+            throw new Error("Invalid format");
+          }
+        } catch {
+          this.recentConnectionLabels = [];
+          localStorage.removeItem("codex_recent_connection_labels");
+        }
+      }
+
       // Proactively dismiss landing page if a demo is requested via URL
       // This prevents the "flash" of the landing page before DemoService.startDemo runs.
       if (new URLSearchParams(window.location.search).has("demo")) {
@@ -60,6 +85,28 @@ class UIStore {
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_lite_mode", String(enabled));
     }
+  }
+
+  setLastConnectionLabel(label: string) {
+    this.lastConnectionLabel = label;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_last_connection_label", label);
+
+      // Update recent labels
+      const updated = [
+        label,
+        ...this.recentConnectionLabels.filter((l) => l !== label),
+      ].slice(0, 5);
+      this.recentConnectionLabels = updated;
+      localStorage.setItem(
+        "codex_recent_connection_labels",
+        JSON.stringify(updated),
+      );
+    }
+  }
+
+  startSelectionConnection() {
+    this.showSelectionConnector = true;
   }
 
   get abortSignal() {
@@ -88,6 +135,11 @@ class UIStore {
 
   // Fog of War State
   sharedMode = $state(false);
+
+  // Connection Label State
+  lastConnectionLabel = $state("");
+  recentConnectionLabels = $state<string[]>([]);
+  showSelectionConnector = $state(false);
 
   // Canvas Palette State
   showCanvasPalette = $state(true);

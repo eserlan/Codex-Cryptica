@@ -106,7 +106,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "connect-mode",
     title: "Linking Notes",
     content:
-      "Connect people and locations. Click one item then another to link them together.",
+      "Connect people and locations. Click one item then another to link them together, or right-click two selected items to connect them.",
     icon: "icon-[lucide--link]",
   },
   "oracle-image": {
@@ -125,9 +125,9 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "node-merging": {
     id: "node-merging",
-    title: "Combine Entries",
+    title: "Combine or Connect",
     content:
-      "Merge duplicate notes. Pick two or more items to combine them into one.",
+      "Right-click selected items to merge duplicates or create a new link between them.",
     icon: "icon-[lucide--git-merge]",
   },
   "fog-of-war": {

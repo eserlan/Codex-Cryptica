@@ -28,6 +28,7 @@
   import TimelineOverlay from "$lib/components/graph/TimelineOverlay.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
+  import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
@@ -1221,6 +1222,7 @@
     <TimelineOverlay {cy} />
     <OrbitControls />
     <ContextMenu {cy} />
+    <SelectionConnector {cy} />
   {/if}
 
   <!-- Hover Tooltip -->
