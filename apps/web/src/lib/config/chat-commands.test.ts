@@ -16,6 +16,7 @@ describe("chatCommands", () => {
     const names = chatCommands.map((c) => c.name);
     expect(names).toContain("/draw");
     expect(names).toContain("/create");
+    expect(names).toContain("/plot");
     expect(names).toContain("/connect");
   });
 
@@ -23,6 +24,12 @@ describe("chatCommands", () => {
     const draw = chatCommands.find((c) => c.name === "/draw");
     draw?.handler("a blue dragon");
     expect(oracle.ask).toHaveBeenCalledWith("/draw a blue dragon");
+  });
+
+  it("should trigger oracle.ask for /plot", () => {
+    const plot = chatCommands.find((c) => c.name === "/plot");
+    plot?.handler("Eldrin the Wise");
+    expect(oracle.ask).toHaveBeenCalledWith("/plot Eldrin the Wise");
   });
 
   it("should trigger oracle.ask for /create", () => {
