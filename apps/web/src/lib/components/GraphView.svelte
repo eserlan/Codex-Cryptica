@@ -129,7 +129,7 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = async (isInitial = false, forceLayout = false) => {
+  const applyCurrentLayout = async (isInitial = false) => {
     const currentCy = cy;
     if (!currentCy) return;
     if (currentLayout) {
@@ -251,7 +251,7 @@
         });
 
         const fixedNodeConstraint =
-          graph.stableLayout && !isInitial && !forceLayout
+          graph.stableLayout && !isInitial
             ? elements
                 .filter((el: any) => el.group === "nodes" && el.position)
                 .map((el: any) => ({
@@ -260,13 +260,13 @@
                 }))
             : undefined;
 
-        // If in stable mode and not forced, and we have no new nodes to place,
+        // If in stable mode and not forced (isInitial), and we have no new nodes to place,
         // we can skip the layout engine entirely and just snap positions.
         const hasNewNodes = elements.some(
           (el: any) => el.group === "nodes" && !el.position,
         );
 
-        if (graph.stableLayout && !isInitial && !hasNewNodes && !forceLayout) {
+        if (graph.stableLayout && !isInitial && !hasNewNodes) {
           // Just ensure all nodes are in sync with their metadata positions
           currentCy.nodes().forEach((n) => {
             const el = elementByNodeId.get(n.id());
@@ -828,16 +828,6 @@
       }, 50);
       return () => clearTimeout(timer);
     }
-  });
-
-  // Re-run layout when images are toggled
-  $effect(() => {
-    const _show = graph.showImages;
-    untrack(() => {
-      if (cy && !cy.destroyed() && initialLoaded) {
-        applyCurrentLayout(false, true);
-      }
-    });
   });
 
   // Manual fit request listener

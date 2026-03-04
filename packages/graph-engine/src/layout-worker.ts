@@ -64,18 +64,12 @@ export class LayoutEngine {
 
     // Explicitly set positions from element data to ensure Cytoscape applies them correctly
     // especially in headless mode where initialization might be sensitive to element order.
-    // ADDITION: Add a tiny bit of random jitter if nodes are at the same position (e.g. 0,0)
-    // to prevent fcose from collapsing into a diagonal line when randomize is false.
     cy.nodes().forEach((node: any) => {
       const el = elements.find(
         (e) => e.group === "nodes" && e.data.id === node.id(),
       );
       if (el && el.position) {
-        const jitter = () => (Math.random() - 0.5) * 0.1; // Tiny jitter
-        node.position({
-          x: el.position.x + jitter(),
-          y: el.position.y + jitter(),
-        });
+        node.position(el.position);
       }
     });
 
