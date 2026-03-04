@@ -96,6 +96,10 @@ class UIStore {
     }
   }
 
+  startSelectionConnection() {
+    this.showSelectionConnector = true;
+  }
+
   get abortSignal() {
     if (!this.abortController || this.abortController.signal.aborted) {
       this.abortController = new AbortController();
@@ -126,6 +130,7 @@ class UIStore {
   // Connection Label State
   lastConnectionLabel = $state("");
   recentConnectionLabels = $state<string[]>([]);
+  showSelectionConnector = $state(false);
 
   // Canvas Palette State
   showCanvasPalette = $state(true);

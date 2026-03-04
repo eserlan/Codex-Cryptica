@@ -47,12 +47,22 @@ test.describe("Selection Connector", () => {
       cy.nodes().select();
     });
 
-    // Check if Connect button is visible
-    const connectBtn = page.getByRole("button", { name: "Connect Selection" });
-    await expect(connectBtn).toBeVisible();
+    // Right click on one of the nodes to open context menu
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.nodes()[0];
+      const pos = node.renderedPosition();
+      node.trigger("cxttap", { renderedPosition: pos });
+    });
 
-    // Click Connect
-    await connectBtn.click();
+    // Check if Connect 2 Nodes is in context menu
+    const connectMenuItem = page.getByRole("menuitem", {
+      name: "Connect 2 Nodes",
+    });
+    await expect(connectMenuItem).toBeVisible();
+
+    // Click Connect 2 Nodes
+    await connectMenuItem.click();
 
     // Should see label input
     const labelInput = page.getByPlaceholder("e.g. Brother, Rival...");
@@ -132,8 +142,16 @@ test.describe("Selection Connector", () => {
       cy.nodes().select();
     });
 
-    // Click Connect
-    await page.getByRole("button", { name: "Connect Selection" }).click();
+    // Right click to open context menu
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.nodes()[0];
+      const pos = node.renderedPosition();
+      node.trigger("cxttap", { renderedPosition: pos });
+    });
+
+    // Click Connect 2 Nodes
+    await page.getByRole("menuitem", { name: "Connect 2 Nodes" }).click();
 
     // Verify prefilled value
     const labelInput = page.getByPlaceholder("e.g. Brother, Rival...");

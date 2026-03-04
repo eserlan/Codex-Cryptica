@@ -8,7 +8,6 @@
 
   let selection = $state<NodeSingular[]>([]);
   let position = $state({ x: 0, y: 0 });
-  let isConnecting = $state(false);
   let labelInput = $state("");
 
   $effect(() => {
@@ -23,7 +22,7 @@
           updatePosition();
         } else {
           selection = [];
-          isConnecting = false;
+          ui.showSelectionConnector = false;
         }
       };
 
@@ -51,10 +50,12 @@
     }
   });
 
-  const handleConnect = () => {
-    isConnecting = true;
-    labelInput = ui.lastConnectionLabel;
-  };
+  // Prefill label when connector opens
+  $effect(() => {
+    if (ui.showSelectionConnector) {
+      labelInput = ui.lastConnectionLabel;
+    }
+  });
 
   const submit = async () => {
     if (selection.length === 2) {
@@ -69,7 +70,7 @@
         ui.setLastConnectionLabel(label);
 
         cy.elements().unselect();
-        isConnecting = false;
+        ui.showSelectionConnector = false;
 
         ui.notify(`Connected ${sourceTitle} to ${targetTitle}`);
       } catch (err) {
@@ -82,7 +83,7 @@
     if (e.key === "Enter") {
       submit();
     } else if (e.key === "Escape") {
-      isConnecting = false;
+      ui.showSelectionConnector = false;
     }
   };
 
@@ -92,7 +93,7 @@
   };
 </script>
 
-{#if selection.length === 2}
+{#if selection.length === 2 && ui.showSelectionConnector}
   <div
     class="absolute z-40 pointer-events-none"
     style:top="{position.y}px"
@@ -100,61 +101,50 @@
     transition:fade={{ duration: 150 }}
   >
     <div class="pointer-events-auto -translate-x-1/2 -translate-y-1/2">
-      {#if !isConnecting}
-        <button
-          class="bg-theme-surface border border-theme-primary/50 text-theme-primary px-3 py-1.5 rounded shadow-2xl hover:bg-theme-primary hover:text-theme-bg transition flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-wider"
-          onclick={handleConnect}
-          aria-label="Connect Selection"
-        >
-          <span class="icon-[lucide--link] w-3 h-3"></span>
-          Connect
-        </button>
-      {:else}
+      <div
+        class="bg-theme-surface border border-theme-border shadow-2xl p-3 min-w-[240px] rounded"
+      >
         <div
-          class="bg-theme-surface border border-theme-border shadow-2xl p-3 min-w-[240px] rounded"
+          class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-2"
         >
-          <div
-            class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-2"
-          >
-            Label Connection
-          </div>
-          <input
-            bind:value={labelInput}
-            onkeydown={handleKeydown}
-            placeholder="e.g. Brother, Rival..."
-            class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded mb-3"
-            autofocus
-          />
-
-          {#if ui.recentConnectionLabels.length > 0}
-            <div class="flex flex-wrap gap-1 mb-3">
-              {#each ui.recentConnectionLabels as label}
-                <button
-                  class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
-                  onclick={() => selectRecent(label)}
-                >
-                  {label}
-                </button>
-              {/each}
-            </div>
-          {/if}
-
-          <div class="flex justify-end gap-2">
-            <button
-              class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
-              onclick={() => (isConnecting = false)}
-            >
-              Cancel
-            </button>
-            <button
-              class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
-              onclick={submit}
-            >
-              Link
-            </button>
-          </div>
+          Label Connection
         </div>
-      {/if}
+        <input
+          bind:value={labelInput}
+          onkeydown={handleKeydown}
+          placeholder="e.g. Brother, Rival..."
+          class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded mb-3"
+          autofocus
+        />
+
+        {#if ui.recentConnectionLabels.length > 0}
+          <div class="flex flex-wrap gap-1 mb-3">
+            {#each ui.recentConnectionLabels as label}
+              <button
+                class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
+                onclick={() => selectRecent(label)}
+              >
+                {label}
+              </button>
+            {/each}
+          </div>
+        {/if}
+
+        <div class="flex justify-end gap-2">
+          <button
+            class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
+            onclick={() => (ui.showSelectionConnector = false)}
+          >
+            Cancel
+          </button>
+          <button
+            class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
+            onclick={submit}
+          >
+            Link
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 {/if}
