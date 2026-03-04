@@ -2,13 +2,13 @@
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] Create the directory for layout components in `apps/web/src/lib/components/layout/`
+- [x] T001 [P] Create the directory for layout components in `apps/web/src/lib/components/layout/`
 
 ## Phase 2: Foundational
 
-- [ ] T002 Update `uiStore` with sidebar state (`leftSidebarOpen`, `activeSidebarTool`, `isMobile`) and toggle methods in `apps/web/src/lib/stores/ui.svelte.ts`
-- [ ] T003 Create unit tests for sidebar state transitions in `apps/web/src/lib/stores/ui.test.ts`
-- [ ] T004 Refactor `apps/web/src/routes/+layout.svelte` to include a `flex-row` container for the main content and sidebar
+- [x] T002 Update `uiStore` with sidebar state (`leftSidebarOpen`, `activeSidebarTool`, `isMobile`) and toggle methods in `apps/web/src/lib/stores/ui.svelte.ts`
+- [x] T003 Create unit tests for sidebar state transitions in `apps/web/src/lib/stores/ui.test.ts`
+- [x] T004 Refactor `apps/web/src/routes/+layout.svelte` to include a `flex-row` container for the main content and sidebar
 
 ## Phase 3: [US1] Dedicated Oracle Sidebar Access
 
@@ -16,11 +16,11 @@
 
 **Independent Test**: The floating orb is gone, replaced by a left sidebar icon that toggles the Oracle panel.
 
-- [ ] T005 [P] Create the `LeftSidebar.svelte` component with the Oracle icon trigger in `apps/web/src/lib/components/layout/LeftSidebar.svelte`
-- [ ] T006 [P] Create `OracleSidebarPanel.svelte` by refactoring logic from `OracleWindow.svelte` and reusing `OracleChat.svelte` in `apps/web/src/lib/components/oracle/OracleSidebarPanel.svelte`
-- [ ] T007 Integrate `LeftSidebar` and `OracleSidebarPanel` into the refactored layout in `apps/web/src/routes/+layout.svelte`
-- [ ] T008 Remove the floating "Oracle Orb" button and the docked window logic from `apps/web/src/lib/components/oracle/OracleWindow.svelte`
-- [ ] T009 Create E2E test to verify Oracle sidebar toggling and workspace expansion in `apps/web/tests/oracle-sidebar.spec.ts`
+- [x] T005 [P] Create the `LeftSidebar.svelte` component with the Oracle icon trigger in `apps/web/src/lib/components/layout/LeftSidebar.svelte`
+- [x] T006 [P] Create `OracleSidebarPanel.svelte` by refactoring logic from `OracleWindow.svelte` and reusing `OracleChat.svelte` in `apps/web/src/lib/components/oracle/OracleSidebarPanel.svelte`
+- [x] T007 Integrate `LeftSidebar` and `OracleSidebarPanel` into the refactored layout in `apps/web/src/routes/+layout.svelte`
+- [x] T008 Remove the floating "Oracle Orb" button and the docked window logic from `apps/web/src/lib/components/oracle/OracleWindow.svelte`
+- [x] T009 Create E2E test to verify Oracle sidebar toggling and workspace expansion in `apps/web/tests/oracle-sidebar.spec.ts`
 
 ## Phase 4: [US2] Persistent Navigation Hub
 
@@ -28,8 +28,8 @@
 
 **Independent Test**: Open Oracle, navigate to Map, verify it stays open.
 
-- [ ] T010 Ensure `activeSidebarTool` state is preserved in `uiStore` during client-side navigation in `apps/web/src/lib/stores/ui.svelte.ts`
-- [ ] T011 Verify sidebar persistence across routes in E2E test `apps/web/tests/oracle-sidebar.spec.ts`
+- [x] T010 Ensure `activeSidebarTool` state is preserved in `uiStore` during client-side navigation in `apps/web/src/lib/stores/ui.svelte.ts`
+- [x] T011 Verify sidebar persistence across routes in E2E test `apps/web/tests/oracle-sidebar.spec.ts`
 
 ## Phase 5: [US3] Mobile Responsive Layout
 
