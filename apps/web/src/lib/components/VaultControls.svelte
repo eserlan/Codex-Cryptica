@@ -286,33 +286,6 @@
             {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
               >{/if}
           </button>
-          <button
-            class="{iconOnlyClasses} {btnGhost} {ui.sharedMode
-              ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-              : ''}"
-            onclick={() => (ui.sharedMode = !ui.sharedMode)}
-            title={ui.sharedMode
-              ? "Exit Shared Mode (Admin View)"
-              : "Enter Shared Mode (Player Preview)"}
-            aria-label={isVertical
-              ? ui.sharedMode
-                ? "EXIT PLAYER VIEW - Exit Shared Mode (Admin View)"
-                : "PLAYER VIEW - Enter Shared Mode (Player Preview)"
-              : ui.sharedMode
-                ? "Exit Shared Mode (Admin View)"
-                : "Enter Shared Mode (Player Preview)"}
-            aria-pressed={ui.sharedMode}
-            data-testid="shared-mode-toggle"
-          >
-            <span
-              class={ui.sharedMode
-                ? "icon-[lucide--eye] w-3.5 h-3.5"
-                : "icon-[lucide--eye-off] w-3.5 h-3.5"}
-            ></span>
-            {#if isVertical}<span class="font-bold tracking-widest"
-                >{ui.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}</span
-              >{/if}
-          </button>
         </div>
       {/if}
     {/if}

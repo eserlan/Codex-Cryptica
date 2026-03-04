@@ -1244,6 +1244,29 @@
         ></span>
       </button>
 
+      <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
+
+      <button
+        class="w-8 h-8 flex items-center justify-center border transition {ui.sharedMode
+          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+          : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
+        onclick={() => (ui.sharedMode = !ui.sharedMode)}
+        title={ui.sharedMode
+          ? "Exit Shared Mode (Admin View)"
+          : "Enter Shared Mode (Player Preview)"}
+        aria-label={ui.sharedMode
+          ? "Exit Shared Mode (Admin View)"
+          : "Enter Shared Mode (Player Preview)"}
+        aria-pressed={ui.sharedMode}
+        data-testid="shared-mode-toggle"
+      >
+        <span
+          class={ui.sharedMode
+            ? "icon-[lucide--eye] w-4 h-4"
+            : "icon-[lucide--eye-off] w-4 h-4"}
+        ></span>
+      </button>
+
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleLabels()}

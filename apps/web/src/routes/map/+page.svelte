@@ -130,15 +130,30 @@
       </div>
 
       <div
-        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl"
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
       >
+        <button
+          class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode
+            ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+            : 'text-theme-muted hover:text-theme-text'}"
+          onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
+          title={uiStore.sharedMode
+            ? "Exit Shared Mode (Admin View)"
+            : "Enter Shared Mode (Player Preview)"}
+        >
+          {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
+        </button>
+
+        <div class="h-6 w-px bg-theme-border mx-1"></div>
+
         <button
           class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.isGMMode
             ? 'bg-theme-primary text-theme-bg'
             : 'text-theme-muted hover:text-theme-text'}"
           onclick={() => (mapStore.isGMMode = !mapStore.isGMMode)}
+          title={mapStore.isGMMode ? "GM Overide: ON" : "GM Override: OFF"}
         >
-          {mapStore.isGMMode ? "GM MODE: ON" : "PLAYER VIEW"}
+          {mapStore.isGMMode ? "GM MODE: ON" : "GM OVERRIDE"}
         </button>
 
         {#if mapStore.isGMMode}
