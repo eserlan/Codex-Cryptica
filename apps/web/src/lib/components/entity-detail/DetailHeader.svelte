@@ -7,6 +7,8 @@
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { page } from "$app/state";
+  import { base } from "$app/paths";
 
   let {
     entity,
@@ -19,6 +21,12 @@
     editTitle: string;
     onClose: () => void;
   }>();
+
+  const isGraphView = $derived.by(() => {
+    const path = page.url.pathname;
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return path === base || path === normalizedBase || path === "/";
+  });
 
   let isObscured = $derived.by(() => {
     if (!entity || !ui.sharedMode) return false;
@@ -78,6 +86,17 @@
 
     <div class="flex items-center gap-1">
       {#if !isEditing}
+        {#if isGraphView}
+          <button
+            onclick={() => ui.findInGraph()}
+            class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
+            aria-label="Find in Graph"
+            title="Find in Graph"
+            data-testid="find-in-graph-button"
+          >
+            <span class="icon-[lucide--target] w-5 h-5"></span>
+          </button>
+        {/if}
         <button
           onclick={() => ui.openZenMode(entity.id)}
           class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
