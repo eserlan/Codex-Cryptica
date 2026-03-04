@@ -243,6 +243,26 @@
                 .map((el: any) => el.data.id)
             : [];
 
+        // If in stable mode and not forced (isInitial), and we have no new nodes to place,
+        // we can skip the layout engine entirely and just snap positions.
+        const hasNewNodes = elements.some(
+          (el: any) => el.group === "nodes" && !el.position,
+        );
+
+        if (graph.stableLayout && !isInitial && !hasNewNodes) {
+          // Just ensure all nodes are in sync with their metadata positions
+          currentCy.nodes().forEach((n) => {
+            const el = elements.find(
+              (e: any) => e.group === "nodes" && e.data.id === n.id(),
+            ) as any;
+            if (el?.position) {
+              n.position(el.position);
+            }
+          });
+          isLayoutRunning = false;
+          return;
+        }
+
         const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
           randomize: isInitial ? true : !graph.stableLayout,
@@ -973,7 +993,7 @@
           shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
         }
 
-        if (shouldRunLayout) {
+        if (shouldRunLayout && !isLayoutRunning) {
           if (isFirstElements) {
             // Debounce the initial "fit" layout to allow more nodes to arrive
             clearTimeout(stabilizationTimeout);
