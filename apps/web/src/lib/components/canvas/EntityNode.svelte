@@ -30,6 +30,13 @@
   let editContent = $state("");
   let isSaving = $state(false);
 
+  // ⚡ Bolt Optimization: Memoize expensive markdown parsing.
+  // Previously, `{@html renderMarkdown(entity.content)}` evaluated inline on every
+  // reactive update (like hover state or connection dragging), blocking the main thread.
+  const renderedContent = $derived(
+    entity?.content ? renderMarkdown(entity.content) : ""
+  );
+
   function startEdit(e: MouseEvent) {
     e.stopPropagation();
     editContent = entity?.content || "";
@@ -159,9 +166,9 @@
               ? 'invisible pointer-events-none'
               : ''}"
           >
-            {#if entity?.content}
+            {#if renderedContent}
               <div class="line-clamp-6">
-                {@html renderMarkdown(entity.content)}
+                {@html renderedContent}
               </div>
             {/if}
           </div>
