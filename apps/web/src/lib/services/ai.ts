@@ -111,7 +111,6 @@ When providing information, consider two formats:
 
 SPECIAL COMMANDS:
 - /draw [subject]: Trigger image generation.
-- /plot [entity]: The user wants you to generate creative plot hooks, story beats, or potential events involving the specified entity (and any other relevant entities in context).
 - /create [subject]: The user strictly wants to create a new record. You MUST provide the response in a structured format so the system can extract it:
   **Name:** [Entity Title]
   **Type:** [npc | faction | location | item | event | concept]

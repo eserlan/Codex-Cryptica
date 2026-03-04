@@ -21,12 +21,6 @@ export const chatCommands: ChatCommand[] = [
     handler: (desc) => oracle.ask(`/create ${desc}`),
   },
   {
-    name: "/plot",
-    description: "Generate plot hooks and events for an entity",
-    parameters: ["[entity]"],
-    handler: (args) => oracle.ask(`/plot ${args}`),
-  },
-  {
     name: "/connect",
     description: "Link entities with AI guidance",
     parameters: ["oracle"],

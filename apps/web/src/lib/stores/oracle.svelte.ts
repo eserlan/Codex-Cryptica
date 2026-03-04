@@ -385,7 +385,6 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 
 **Available Commands:**
 - \`/create "Name" [as "Type"]\`: Create a new record.
-- \`/plot "Entity"\`: Generate plot hooks (AI disabled).
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
 - \`/clear\`: Clear chat history.
@@ -395,14 +394,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
 **AI Powered:**
 - \`/draw [subject]\`: Visualize an entity or scene.
-- \`/plot [entity]\`: Generate plot hooks and story events.
 - \`/create [description]\`: Automatically create a new entity from a text description.
 - \`/connect oracle\`: Start the guided connection wizard.
 - \`/merge oracle\`: Start the guided merge wizard.
 
 **Utility:**
 - \`/create "Name" [as "Type"]\`: Quick deterministic creation.
-- \`/plot "Entity"\`: Quick plot generation for an entity.
 - \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
 - \`/merge "Source" into "Target"\`: Quick deterministic merge.
 - \`/clear\`: Clear conversation history.
@@ -436,21 +433,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         );
       }
       return false; // Let the existing ask() logic handle the deterministic path
-    }
-
-    if (q.startsWith("/plot")) {
-      this.messages = [
-        ...this.messages,
-        {
-          id: this.generateId(),
-          role: "system",
-          content: `❌ The \`/plot\` command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use plot generation.`,
-        },
-      ];
-      this.lastUpdated = Date.now();
-      this.broadcast();
-      this.saveToDB();
-      return true;
     }
 
     if (q.startsWith("/connect")) {
@@ -551,12 +533,10 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     const isCreateRequest = query.toLowerCase().trim().startsWith("/create");
     const isConnectRequest = query.toLowerCase().trim().startsWith("/connect");
     const isMergeRequest = query.toLowerCase().trim().startsWith("/merge");
-    const isPlotRequest = query.toLowerCase().trim().startsWith("/plot");
     const isImageRequest =
       !isCreateRequest &&
       !isConnectRequest &&
       !isMergeRequest &&
-      !isPlotRequest &&
       this.detectImageIntent(query);
 
     this.messages = [

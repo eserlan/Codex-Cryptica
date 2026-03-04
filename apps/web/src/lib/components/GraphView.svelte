@@ -10,7 +10,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
-  import type { Core, NodeSingular, EdgeSingular } from "cytoscape";
+  import type { Core, NodeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
   import {
@@ -88,13 +88,8 @@
               .neighborhood()
               .nodes()
               .not(firstLevelNodes);
-            const secondLevelEdges = secondLevelNodes
-              .connectedEdges()
-              .filter(
-                (e: EdgeSingular) =>
-                  firstLevelNodes.has(e.source()) ||
-                  firstLevelNodes.has(e.target()),
-              );
+            const secondLevelEdges =
+              secondLevelNodes.edgesWith(firstLevelNodes);
             const secondLevel = secondLevelNodes.add(secondLevelEdges);
 
             allEles.addClass("dimmed");
