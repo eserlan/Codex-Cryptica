@@ -47,18 +47,24 @@ export async function migrateStructure(opfsRoot: FileSystemDirectoryHandle) {
     }
 
     if (hasImages) {
-      const rootImagesDir = await opfsRoot.getDirectoryHandle("images");
-      const targetImagesDir = await defaultVaultDir.getDirectoryHandle(
-        "images",
-        { create: true },
-      );
+      try {
+        const rootImagesDir = await opfsRoot.getDirectoryHandle("images");
+        const targetImagesDir = await defaultVaultDir.getDirectoryHandle(
+          "images",
+          { create: true },
+        );
 
-      const imageFiles = await walkOpfsDirectory(rootImagesDir);
-      for (const img of imageFiles) {
-        const blob = await img.handle.getFile();
-        await writeOpfsFile(img.path, blob, targetImagesDir);
+        const imageFiles = await walkOpfsDirectory(rootImagesDir);
+        for (const img of imageFiles) {
+          const blob = await img.handle.getFile();
+          await writeOpfsFile(img.path, blob, targetImagesDir);
+        }
+        await opfsRoot.removeEntry("images", { recursive: true });
+      } catch (err: any) {
+        if (err.name !== "NotFoundError") {
+          console.warn("Failed to migrate images directory", err);
+        }
       }
-      await opfsRoot.removeEntry("images", { recursive: true });
     }
 
     const db = await getDB();

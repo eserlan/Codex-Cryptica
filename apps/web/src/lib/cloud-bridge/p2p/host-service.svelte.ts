@@ -150,10 +150,30 @@ export class P2PHostService {
           fileHandle = await vaultHandle.getFileHandle(parts[0]);
         } else if (parts[0] === "images" && parts.length === 2) {
           // images/filename.ext
-          const imgDir = await vaultHandle.getDirectoryHandle("images");
+          let imgDir: FileSystemDirectoryHandle | undefined;
           try {
+            imgDir = await vaultHandle.getDirectoryHandle("images");
             fileHandle = await imgDir.getFileHandle(parts[1]);
-          } catch {
+          } catch (err: any) {
+            const isNotFound =
+              err &&
+              typeof err === "object" &&
+              (err.name === "NotFoundError" || err.code === "NotFoundError");
+
+            if (!isNotFound) {
+              console.error(
+                "[P2P Host] Unexpected error while accessing images directory or file",
+                err,
+              );
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
+
+            if (!imgDir) {
+              console.warn(`[P2P Host] Images directory not found`);
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
             // 1. Quick extension swap check (avoid full scan if possible)
             const requestedName = parts[1];
             if (requestedName.match(/\.(jpg|jpeg|png)$/i)) {

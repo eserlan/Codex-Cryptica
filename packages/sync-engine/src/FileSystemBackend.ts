@@ -9,19 +9,31 @@ export class FileSystemBackend implements ISyncBackend {
       handle: FileSystemDirectoryHandle,
       path: string[] = [],
     ) => {
-      for await (const entry of (handle as any).values()) {
-        const currentPath = [...path, entry.name];
-        if (entry.kind === "file") {
-          const file = await (entry as FileSystemFileHandle).getFile();
-          results.push({
-            path: currentPath.join("/"),
-            lastModified: file.lastModified,
-            size: file.size,
-            handle: entry as FileSystemFileHandle,
-          });
-        } else if (entry.kind === "directory") {
-          await scan(entry as FileSystemDirectoryHandle, currentPath);
+      try {
+        for await (const entry of (handle as any).values()) {
+          try {
+            const currentPath = [...path, entry.name];
+            if (entry.kind === "file") {
+              const file = await (entry as FileSystemFileHandle).getFile();
+              results.push({
+                path: currentPath.join("/"),
+                lastModified: file.lastModified,
+                size: file.size,
+                handle: entry as FileSystemFileHandle,
+              });
+            } else if (entry.kind === "directory") {
+              await scan(entry as FileSystemDirectoryHandle, currentPath);
+            }
+          } catch (entryErr: any) {
+            // If a file is deleted while we are scanning, just skip it
+            if (entryErr.name === "NotFoundError") continue;
+            throw entryErr;
+          }
         }
+      } catch (scanErr: any) {
+        // If the directory itself was deleted while scanning, just return what we have
+        if (scanErr.name === "NotFoundError") return;
+        throw scanErr;
       }
     };
     await scan(this.handle);
@@ -29,8 +41,15 @@ export class FileSystemBackend implements ISyncBackend {
   }
 
   async download(path: string): Promise<Blob> {
-    const fileHandle = await this.getFileHandle(path);
-    return await fileHandle.getFile();
+    try {
+      const fileHandle = await this.getFileHandle(path);
+      return await fileHandle.getFile();
+    } catch (err: any) {
+      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError") {
+        throw new Error(`File not found: ${path}`, { cause: err });
+      }
+      throw err;
+    }
   }
 
   async upload(path: string, content: Blob): Promise<FileMetadata> {
@@ -41,8 +60,12 @@ export class FileSystemBackend implements ISyncBackend {
     try {
       await writable.write(content);
       await writable.close();
-    } catch (err) {
-      await writable.abort();
+    } catch (err: any) {
+      try {
+        await writable.abort();
+      } catch {
+        // Ignore abort errors
+      }
       throw err;
     }
 
@@ -56,15 +79,22 @@ export class FileSystemBackend implements ISyncBackend {
   }
 
   async delete(path: string): Promise<void> {
-    const pathParts = path.split("/");
-    const fileName = pathParts.pop()!;
-    const dirParts = pathParts;
+    try {
+      const pathParts = path.split("/");
+      const fileName = pathParts.pop()!;
+      const dirParts = pathParts;
 
-    let current = this.handle;
-    for (const part of dirParts) {
-      current = await current.getDirectoryHandle(part);
+      let current = this.handle;
+      for (const part of dirParts) {
+        current = await current.getDirectoryHandle(part);
+      }
+      await current.removeEntry(fileName);
+    } catch (err: any) {
+      // If already deleted, that's fine
+      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError")
+        return;
+      throw err;
     }
-    await current.removeEntry(fileName);
   }
 
   private async getFileHandle(path: string, create = false) {
