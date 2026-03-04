@@ -308,7 +308,7 @@ export const getGraphStyle = (
     {
       selector: ".secondary-neighborhood",
       style: {
-        opacity: 0.65,
+        opacity: 0.6,
         "z-index": 50,
       },
     },

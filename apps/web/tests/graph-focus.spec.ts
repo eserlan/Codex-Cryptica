@@ -188,20 +188,8 @@ test.describe("Graph Focus Mode", () => {
     const focusState = await page.evaluate(() => {
       const cy = (window as any).cy;
       if (!cy) return null;
-      const edge12 = cy
-        .edges()
-        .filter(
-          (e: any) =>
-            (e.source().id() === "node-1" && e.target().id() === "node-2") ||
-            (e.source().id() === "node-2" && e.target().id() === "node-1"),
-        );
-      const edge23 = cy
-        .edges()
-        .filter(
-          (e: any) =>
-            (e.source().id() === "node-2" && e.target().id() === "node-3") ||
-            (e.source().id() === "node-3" && e.target().id() === "node-2"),
-        );
+      const edge12 = cy.$id("node-1").edgesWith(cy.$id("node-2"));
+      const edge23 = cy.$id("node-2").edgesWith(cy.$id("node-3"));
 
       return {
         node1InNeighborhood: cy.$id("node-1").hasClass("neighborhood"),
