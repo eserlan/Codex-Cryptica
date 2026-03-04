@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Find in Graph Button", () => {
   test("should center the graph on the node when clicked", async ({ page }) => {
+    page.on("console", (msg) => console.log(`[PAGE] ${msg.text()}`));
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
@@ -23,25 +24,43 @@ test.describe("Find in Graph Button", () => {
     await page.getByPlaceholder("Chronicle Title...").fill("Target Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // Wait for entities to be created
+    // Wait for entities to be created in the UI
     await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 
-    // Get the node ID
-    const nodeId = await page.evaluate(() => {
-      const entities = Object.values((window as any).vault.entities) as any[];
-      return entities.find((e) => e.title === "Target Node").id;
-    });
+    // Get the node ID and wait for it to be in vault
+    const nodeIdHandle = await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        if (!vault || !vault.entities) return null;
+        const entity = Object.values(vault.entities).find(
+          (e: any) => e.title === "Target Node",
+        );
+        return entity ? (entity as any).id : null;
+      },
+      { timeout: 10000 },
+    );
+    const nodeId = (await nodeIdHandle.jsonValue()) as string;
 
-    // Open the node in sidebar
+    // Wait until Cytoscape (window.cy) is initialized and contains the created node
+    await page.waitForFunction(
+      (id) => {
+        const cy = (window as any).cy;
+        return cy && cy.$id(id).length > 0;
+      },
+      nodeId,
+      { timeout: 10000 },
+    );
+
+    // Open node in sidebar via direct state change
     await page.evaluate((id) => {
       (window as any).vault.selectedEntityId = id;
     }, nodeId);
 
-    // Wait for sidebar to open and button to be visible
+    // Wait for sidebar button
     const findBtn = page.getByTestId("find-in-graph-button");
-    await expect(findBtn).toBeVisible();
+    await expect(findBtn).toBeVisible({ timeout: 10000 });
 
     // Pan the graph far away
     await page.evaluate(() => {
@@ -61,9 +80,6 @@ test.describe("Find in Graph Button", () => {
       const centerX = cy.width() / 2;
       const centerY = cy.height() / 2;
       return {
-        pos,
-        centerX,
-        centerY,
         isCentered:
           Math.abs(pos.x - centerX) < 50 && Math.abs(pos.y - centerY) < 50,
       };
@@ -74,20 +90,22 @@ test.describe("Find in Graph Button", () => {
     // Click Find in Graph button
     await findBtn.click();
 
-    // Wait for animation (500ms duration in code + some buffer)
+    // Wait for animation
     await page.waitForTimeout(1000);
 
     // Check that node IS centered
-    const isCentered = await page.evaluate((id) => {
+    const finalFocusState = await page.evaluate((id) => {
       const cy = (window as any).cy;
       const node = cy.$id(id);
       const pos = node.renderedPosition();
       const centerX = cy.width() / 2;
       const centerY = cy.height() / 2;
-      // Allow for some tolerance due to sidebar width affecting center
-      return Math.abs(pos.x - centerX) < 100 && Math.abs(pos.y - centerY) < 100;
+      return {
+        isCentered:
+          Math.abs(pos.x - centerX) < 100 && Math.abs(pos.y - centerY) < 100,
+      };
     }, nodeId);
 
-    expect(isCentered).toBe(true);
+    expect(finalFocusState.isCentered).toBe(true);
   });
 });
