@@ -130,15 +130,21 @@
       </div>
 
       <div
-        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl"
+        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
       >
         <button
-          class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.isGMMode
-            ? 'bg-theme-primary text-theme-bg'
+          class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode
+            ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
             : 'text-theme-muted hover:text-theme-text'}"
-          onclick={() => (mapStore.isGMMode = !mapStore.isGMMode)}
+          onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
+          title={uiStore.sharedMode
+            ? "Exit Shared Mode (Admin View)"
+            : "Enter Shared Mode (Player Preview)"}
+          data-testid="shared-mode-toggle"
+          aria-pressed={uiStore.sharedMode}
+          aria-label="Toggle player view mode"
         >
-          {mapStore.isGMMode ? "GM MODE: ON" : "PLAYER VIEW"}
+          {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
         </button>
 
         {#if mapStore.isGMMode}

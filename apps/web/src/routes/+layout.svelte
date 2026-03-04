@@ -51,6 +51,7 @@
   // Dynamic Component Loading for specialized/heavy UI elements
   // Use any to bypass strict prop validation for lazy components in the shell
   let OracleWindow = $state<any>(null);
+  let OracleSidebarPanel = $state<any>(null);
   let ZenModeModal = $state<any>(null);
   let TourOverlay = $state<any>(null);
   let DebugConsole = $state<any>(null);
@@ -80,6 +81,11 @@
       import("$lib/components/oracle/OracleWindow.svelte")
         .then((m) => (OracleWindow = m.default))
         .catch((e) => logChunkError("OracleWindow", e));
+    }
+    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
+      import("$lib/components/oracle/OracleSidebarPanel.svelte")
+        .then((m) => (OracleSidebarPanel = m.default))
+        .catch((e) => logChunkError("OracleSidebarPanel", e));
     }
     if (
       (import.meta.env.DEV ||
@@ -354,10 +360,27 @@
         uiStore.openZenMode(vault.selectedEntityId);
       }
     }
+
+    if (
+      event.key.toLowerCase() === "p" &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      const target = event.target as HTMLElement;
+      const isTyping =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable;
+
+      if (isTyping) return;
+      uiStore.sharedMode = !uiStore.sharedMode;
+    }
   };
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
   <title>Codex Cryptica | AI RPG Campaign Manager</title>
@@ -383,7 +406,7 @@
   />
 </svelte:head>
 
-<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-body">
+<div class="app-layout h-screen bg-theme-bg flex flex-col font-body">
   <!-- Notifications -->
   {#if uiStore.notification}
     <div
@@ -423,7 +446,7 @@
       class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
     >
       <!-- Mobile: Left (Menu + Brand) -->
-      <div class="flex items-center gap-3 shrink-0">
+      <div class="flex items-center gap-2 md:gap-3 shrink-0">
         <button
           class="md:hidden text-theme-muted hover:text-theme-primary transition-colors"
           onclick={() => (isMobileMenuOpen = !isMobileMenuOpen)}
@@ -431,6 +454,21 @@
         >
           <span class="icon-[lucide--menu] w-6 h-6"></span>
         </button>
+
+        <!-- Oracle Toggle (Sidebar) -->
+        {#if !uiStore.leftSidebarOpen}
+          <button
+            class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
+            onclick={() => uiStore.toggleSidebarTool("oracle")}
+            aria-label="Open Lore Oracle"
+            title="Open Lore Oracle"
+            data-testid="sidebar-oracle-button"
+          >
+            <span
+              class="icon-[heroicons--sparkles] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
+            ></span>
+          </button>
+        {/if}
 
         <h1
           class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
@@ -520,9 +558,17 @@
     </header>
   {/if}
 
-  <main class="flex-1 relative flex flex-col min-h-0">
-    {@render children()}
-  </main>
+  <div class="flex-1 flex flex-row min-h-0 relative overflow-hidden">
+    {#if uiStore.leftSidebarOpen}
+      {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
+        <OracleSidebarPanel />
+      {/if}
+    {/if}
+
+    <main class="flex-1 relative flex flex-col min-h-0">
+      {@render children()}
+    </main>
+  </div>
 
   {#if !isPopup}
     <footer

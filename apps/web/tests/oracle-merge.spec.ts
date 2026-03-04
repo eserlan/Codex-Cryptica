@@ -63,7 +63,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // 2. Open Oracle and start merge
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
     const chatInput = page.getByTestId("oracle-input");
     await expect(chatInput).toBeVisible();
 
@@ -132,7 +132,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // 2. Trigger wizard
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill("/merge oracle");
     await page.keyboard.press("Enter");
@@ -184,7 +184,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     // 2. Direct command
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill('/merge "Minion" into "Boss"');
     await page.keyboard.press("Enter");
@@ -230,7 +230,7 @@ test.describe("Oracle Merge Command E2E", () => {
     expect(preMergeState.bossId).toBeTruthy();
 
     // 2. Perform the merge via direct oracle command
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
     const chatInput = page.getByTestId("oracle-input");
     await chatInput.fill('/merge "Minion" into "Boss"');
     await page.keyboard.press("Enter");

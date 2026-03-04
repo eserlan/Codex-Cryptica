@@ -57,11 +57,11 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   },
   {
     id: "oracle",
-    targetSelector: '[data-testid="oracle-orb"]',
+    targetSelector: '[data-testid="sidebar-oracle-button"]',
     title: "Lore Oracle",
     content:
       "Ask the AI questions about your world or type `/draw` to generate character art.",
-    position: "top",
+    position: "right",
   },
   {
     id: "settings",
@@ -134,7 +134,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "fog-of-war",
     title: "Hide Secrets",
     content:
-      "Keep secrets hidden. Hide items from your map so players don't see them during a session.",
+      "Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.",
     icon: "icon-[lucide--eye-off]",
   },
   "vault-switcher": {

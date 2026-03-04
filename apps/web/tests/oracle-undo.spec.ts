@@ -42,8 +42,14 @@ test.describe("Oracle Undo", () => {
     });
 
     await page.goto("http://localhost:5173/");
+
+    // Wait until window.vault is exposed by +layout.svelte
+    await page.waitForFunction(() => (window as any).vault !== undefined, {
+      timeout: 10000,
+    });
+
     // Wait for the app to initialize
-    await expect(page.getByTestId("oracle-orb")).toBeVisible();
+    await expect(page.getByTestId("sidebar-oracle-button")).toBeVisible();
 
     // Set a mock API key to enable Oracle using the app's oracle API
     await page.evaluate(async () => {
@@ -57,31 +63,34 @@ test.describe("Oracle Undo", () => {
 
     // Initialize vault
     await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      if (vault.status !== "ready" && !vault.activeVaultId) {
-        await vault.importFromFolder();
+      const v = (window as any).vault;
+      if (v.status !== "ready" && !v.activeVaultId) {
+        await v.importFromFolder();
       }
     });
 
-    // Ensure vault is ready (or at least idle with entities)
+    // Ensure vault is ready
     await page.waitForFunction(
-      () => (window as any).vault && (window as any).vault.status === "idle",
-      { timeout: 10000 },
+      () => {
+        const v = (window as any).vault;
+        return v && v.status === "idle";
+      },
+      { timeout: 15000 },
     );
   });
 
   test("can undo a smart apply action", async ({ page }) => {
     // 1. Create a dummy node first
     await page.evaluate(async () => {
-      const vault = (window as any).vault;
-      await vault.createEntity("character", "Eldrin", {
+      const v = (window as any).vault;
+      await v.createEntity("character", "Eldrin", {
         content: "Original content",
         lore: "Original lore",
       });
     });
 
     // 2. Open Oracle and simulate a message with parsed content
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;
@@ -140,7 +149,7 @@ test.describe("Oracle Undo", () => {
 
   test("can undo a create node action", async ({ page }) => {
     // 1. Open Oracle and simulate a /create message
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;

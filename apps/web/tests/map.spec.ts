@@ -144,18 +144,17 @@ test.describe("Map Mode", () => {
     await expect(page.getByText("PLAYER VIEW")).toBeVisible();
     await expect(page.getByText("FOG: ON")).toBeVisible();
 
-    // 2. Toggle GM Mode
-    await page.waitForSelector('button:has-text("PLAYER VIEW")');
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll("button")).find((b) =>
-        b.textContent?.includes("PLAYER VIEW"),
-      );
-      if (btn) btn.click();
-    });
-    await expect(page.getByText("GM MODE: ON")).toBeVisible();
+    // 2. Click Player View (enters shared mode, hides GM tools)
+    await page.getByRole("button", { name: "PLAYER VIEW" }).click();
+    await expect(page.getByText("EXIT PLAYER VIEW")).toBeVisible();
+    await expect(page.getByText("Brush Size")).not.toBeVisible();
+
+    // 3. Toggle back
+    await page.getByRole("button", { name: "EXIT PLAYER VIEW" }).click();
+    await expect(page.getByText("PLAYER VIEW")).toBeVisible();
     await expect(page.getByText("Brush Size")).toBeVisible();
 
-    // 3. Toggle Fog
+    // 4. Toggle Fog (GM Tool)
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll("button")).find((b) =>
         b.textContent?.includes("FOG: ON"),

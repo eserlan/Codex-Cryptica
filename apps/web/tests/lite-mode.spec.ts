@@ -57,7 +57,7 @@ test.describe("Lite Mode (No AI)", () => {
     await expect(suggestionsHeader).not.toBeVisible();
 
     // 5. Interact with Oracle and verify network silence
-    await page.getByTestId("oracle-orb").click();
+    await page.getByTestId("sidebar-oracle-button").click();
     const oracleInput = page.getByTestId("oracle-input");
     await oracleInput.fill("Hello AI");
     await page.keyboard.press("Enter");
@@ -69,7 +69,7 @@ test.describe("Lite Mode (No AI)", () => {
 
     // Verify "Lite" indicator in Oracle header
     const liteIndicator = page
-      .locator(".oracle-window-container")
+      .locator('[data-testid="oracle-sidebar-panel"]')
       .getByText("LITE", { exact: true })
       .first();
     await expect(liteIndicator).toBeVisible();
@@ -83,8 +83,10 @@ test.describe("Lite Mode (No AI)", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Oracle
-    await page.getByTestId("oracle-orb").click();
-    await expect(page.locator(".oracle-window-container")).toBeVisible();
+    await page.getByTestId("sidebar-oracle-button").click();
+    await expect(
+      page.locator('[data-testid="oracle-sidebar-panel"]'),
+    ).toBeVisible();
 
     // 3. Trigger help via store (UI Enter key is flaky in tests)
     await page.evaluate(() => (window as any).oracle.showHelp());
@@ -97,8 +99,10 @@ test.describe("Lite Mode (No AI)", () => {
 
   test("Oracle supports /help command in AI mode", async ({ page }) => {
     // 1. Open Oracle
-    await page.getByTestId("oracle-orb").click();
-    await expect(page.locator(".oracle-window-container")).toBeVisible();
+    await page.getByTestId("sidebar-oracle-button").click();
+    await expect(
+      page.locator('[data-testid="oracle-sidebar-panel"]'),
+    ).toBeVisible();
 
     // 2. Trigger help via store
     await page.evaluate(() => (window as any).oracle.showHelp());

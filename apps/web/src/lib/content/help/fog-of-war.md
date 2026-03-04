@@ -19,4 +19,4 @@ The **Fog of War** system lets you track what your players have discovered. You 
 
 1. **Right-Click**: Tap a node and look for the Visibility menu.
 2. **Toggle Reveal**: Click to show or hide it from the graph.
-3. **GM View**: Click the **Eye Icon** in the bottom controls to see everything at once, regardless of Fog of War.
+3. **GM View**: Click the **Eye Icon** in the bottom controls (or press `P`) to see everything at once, regardless of Fog of War.

@@ -16,6 +16,13 @@ class UIStore {
   dismissedLandingPage = $state(false);
   liteMode = $state(false);
 
+  // Sidebar State
+  leftSidebarOpen = $state(false);
+  activeSidebarTool = $state<"oracle" | "none">("none");
+
+  // Responsive State
+  isMobile = $state(false);
+
   // Demo Mode State
   isDemoMode = $state(false);
   activeDemoTheme = $state<string | null>(null);
@@ -72,7 +79,31 @@ class UIStore {
       if (new URLSearchParams(window.location.search).has("demo")) {
         this.dismissedLandingPage = true;
       }
+
+      // Initialize isMobile
+      if (window.matchMedia) {
+        const mql = window.matchMedia("(max-width: 768px)");
+        this.isMobile = mql.matches;
+        mql.addEventListener("change", (e) => {
+          this.isMobile = e.matches;
+        });
+      }
     }
+  }
+
+  toggleSidebarTool(tool: "oracle" | "none") {
+    if (tool === "none" || this.activeSidebarTool === tool) {
+      this.leftSidebarOpen = false;
+      this.activeSidebarTool = "none";
+    } else {
+      this.leftSidebarOpen = true;
+      this.activeSidebarTool = tool;
+    }
+  }
+
+  closeSidebar() {
+    this.leftSidebarOpen = false;
+    this.activeSidebarTool = "none";
   }
 
   toggleWelcomeScreen(skip: boolean) {

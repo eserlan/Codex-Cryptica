@@ -1244,6 +1244,29 @@
         ></span>
       </button>
 
+      <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
+
+      <button
+        class="w-8 h-8 flex items-center justify-center border transition {ui.sharedMode
+          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
+          : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
+        onclick={() => (ui.sharedMode = !ui.sharedMode)}
+        title={ui.sharedMode
+          ? "Exit Shared Mode (Admin View)"
+          : "Enter Shared Mode (Player Preview)"}
+        aria-label={ui.sharedMode
+          ? "Exit Shared Mode (Admin View)"
+          : "Enter Shared Mode (Player Preview)"}
+        aria-pressed={ui.sharedMode}
+        data-testid="shared-mode-toggle"
+      >
+        <span
+          class={ui.sharedMode
+            ? "icon-[lucide--eye] w-4 h-4"
+            : "icon-[lucide--eye-off] w-4 h-4"}
+        ></span>
+      </button>
+
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleLabels()}
@@ -1251,11 +1274,12 @@
         aria-label="Toggle Labels"
       >
         <span
-          class={graph.showLabels
-            ? "icon-[lucide--type]"
-            : "icon-[lucide--type-outline] opacity-50"}
+          class="icon-[lucide--tag] w-4 h-4 {graph.showLabels
+            ? 'opacity-100'
+            : 'opacity-50'}"
         ></span>
       </button>
+
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleImages()}
@@ -1263,9 +1287,9 @@
         aria-label="Toggle Node Images"
       >
         <span
-          class={graph.showImages
-            ? "icon-[lucide--image]"
-            : "icon-[lucide--image-off] opacity-50"}
+          class="w-4 h-4 {graph.showImages
+            ? 'icon-[lucide--image] opacity-100'
+            : 'icon-[lucide--image-off] opacity-50'}"
         ></span>
       </button>
 
@@ -1274,13 +1298,18 @@
         <button
           class="w-8 h-8 flex items-center justify-center border transition {connectMode
             ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)] shadow-theme-accent/30'
-            : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition'}"
+            : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
           onclick={toggleConnectMode}
           title="Connect Mode (C)"
         >
           <span class="icon-[lucide--link] w-4 h-4"></span>
         </button>
       {/if}
+
+      <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
+      <div class="hidden md:block">
+        <FeatureHint hintId="lore-oracle" />
+      </div>
     </div>
   </div>
 
