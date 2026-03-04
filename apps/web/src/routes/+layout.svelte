@@ -369,12 +369,13 @@
       !event.altKey
     ) {
       const target = event.target as HTMLElement;
-      if (
+      const isTyping =
         target?.tagName === "INPUT" ||
         target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable
-      )
-        return;
+        target?.tagName === "SELECT" ||
+        target?.isContentEditable;
+
+      if (isTyping) return;
       uiStore.sharedMode = !uiStore.sharedMode;
     }
   };

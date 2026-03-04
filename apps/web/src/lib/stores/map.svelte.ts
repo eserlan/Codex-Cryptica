@@ -13,6 +13,7 @@ class MapStore {
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(true);
+  // GM Mode is active whenever we are NOT in Shared Mode (Player View)
   isGMMode = $derived(!uiStore.sharedMode);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
