@@ -153,8 +153,17 @@ export async function importFromFolder(
             dirPath.length > 0 ? dirCache.get(dirPathStr) : vaultHandle;
 
           if (!dirHandle && dirPath.length > 0) {
-            dirHandle = await getDirHandle(vaultHandle, dirPath, false);
-            dirCache.set(dirPathStr, dirHandle);
+            try {
+              dirHandle = await getDirHandle(vaultHandle, dirPath, false);
+              dirCache.set(dirPathStr, dirHandle);
+            } catch (e: any) {
+              if (
+                e.name !== "NotFoundError" &&
+                !e.message.includes("not found")
+              ) {
+                throw e;
+              }
+            }
           }
 
           if (dirHandle) {

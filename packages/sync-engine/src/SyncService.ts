@@ -152,7 +152,14 @@ export class SyncService {
       if (!isDeltaSync) {
         for (const path of registryMap.keys()) {
           if (!localMap.has(path) && !remoteMap.has(path)) {
-            await this.registry.deleteEntry(vaultId, path);
+            try {
+              await this.registry.deleteEntry(vaultId, path);
+            } catch (err: any) {
+              console.warn(
+                `[Sync] Failed to cleanup registry for ${path}:`,
+                err,
+              );
+            }
           }
         }
       }

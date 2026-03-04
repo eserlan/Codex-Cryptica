@@ -150,8 +150,8 @@ export class P2PHostService {
           fileHandle = await vaultHandle.getFileHandle(parts[0]);
         } else if (parts[0] === "images" && parts.length === 2) {
           // images/filename.ext
-          const imgDir = await vaultHandle.getDirectoryHandle("images");
           try {
+            const imgDir = await vaultHandle.getDirectoryHandle("images");
             fileHandle = await imgDir.getFileHandle(parts[1]);
           } catch {
             // 1. Quick extension swap check (avoid full scan if possible)
