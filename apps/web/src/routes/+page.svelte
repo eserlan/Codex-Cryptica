@@ -20,12 +20,12 @@
   function loadHeavyComponents() {
     if (!GraphView) {
       import("../lib/components/GraphView.svelte").then((m) => {
-        GraphView = m.default;
+        GraphView = (m as any).default;
       });
     }
     if (!EntityDetailPanel) {
       import("../lib/components/EntityDetailPanel.svelte").then((m) => {
-        EntityDetailPanel = m.default;
+        EntityDetailPanel = (m as any).default;
       });
     }
   }

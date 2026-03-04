@@ -57,11 +57,11 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   },
   {
     id: "oracle",
-    targetSelector: '[data-testid="oracle-orb"]',
+    targetSelector: '[data-testid="sidebar-oracle-button"]',
     title: "Lore Oracle",
     content:
       "Ask the AI questions about your world or type `/draw` to generate character art.",
-    position: "top",
+    position: "right",
   },
   {
     id: "settings",

@@ -43,9 +43,9 @@
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T015 [P] Update user-facing help documentation in `apps/web/src/lib/config/help-content.ts`
-- [ ] T016 [P] Add a `FeatureHint` for the new sidebar location in `apps/web/src/lib/components/GraphView.svelte`
-- [ ] T017 Final project-wide linting and type checking (`npm run lint`)
+- [x] T015 [P] Update user-facing help documentation in `apps/web/src/lib/config/help-content.ts`
+- [x] T016 [P] Add a `FeatureHint` for the new sidebar location in `apps/web/src/lib/components/GraphView.svelte`
+- [x] T017 Final project-wide linting and type checking (`npm run lint`)
 
 ## Dependencies
 
