@@ -17,6 +17,13 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   tilingPaddingHorizontal: 100,
 };
 
+export const IMAGE_LAYOUT_OPTIONS = {
+  ...DEFAULT_LAYOUT_OPTIONS,
+  nodeRepulsion: 450000, // Significantly stronger repulsion for larger nodes
+  idealEdgeLength: 250, // More space between connected nodes
+  nodeSeparation: 200, // Larger explicit gap
+};
+
 export const CONNECTION_COLORS = {
   friendly: "#3b82f6", // Blue-500
   enemy: "#ef4444", // Red-500

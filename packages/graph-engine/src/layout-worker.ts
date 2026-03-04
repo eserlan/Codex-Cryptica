@@ -42,10 +42,21 @@ export class LayoutEngine {
         {
           selector: "node",
           style: {
-            width: "data(width)",
-            height: "data(height)",
+            width: 32,
+            height: 32,
           },
         },
+        ...(options.showImages
+          ? [
+              {
+                selector: "node[width][height]",
+                style: {
+                  width: "data(width)",
+                  height: "data(height)",
+                },
+              },
+            ]
+          : []),
       ],
     });
 
