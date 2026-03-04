@@ -236,19 +236,30 @@
           }
         }
 
+        const fixedNodeIds =
+          graph.stableLayout && !isInitial
+            ? elements
+                .filter((el: any) => el.group === "nodes" && el.position)
+                .map((el: any) => el.data.id)
+            : [];
+
         const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
+          randomize: isInitial ? true : !graph.stableLayout,
+          fixedNodeIds,
           animate: false, // Math only in worker
         });
 
         if (!cy || currentCy.destroyed()) return;
 
-        if (isInitial) {
+        if (isInitial || (graph.stableLayout && !isLayoutRunning)) {
           currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
             if (pos) n.position(pos);
           });
-          currentCy.fit(currentCy.elements(), 40);
+          if (isInitial) {
+            currentCy.fit(currentCy.elements(), 40);
+          }
         } else {
           currentCy
             .layout({
@@ -955,7 +966,13 @@
           newEdges.length > 0 ||
           elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
-        const shouldRunLayout = structuralChange || isFirstElements;
+
+        let shouldRunLayout = structuralChange || isFirstElements;
+        if (graph.stableLayout && !isFirstElements) {
+          // If stable layout is enabled, only run layout if new nodes were added.
+          // Otherwise keep existing positions.
+          shouldRunLayout = newNodes.length > 0;
+        }
 
         if (shouldRunLayout) {
           if (isFirstElements) {
@@ -1146,6 +1163,20 @@
         aria-label="Fit to Screen"
       >
         <span class="icon-[lucide--maximize] w-4 h-4"></span>
+      </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border transition {graph.stableLayout
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => graph.toggleStableLayout()}
+        title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
+        aria-label="Toggle Stable Layout"
+      >
+        <span
+          class="{graph.stableLayout
+            ? 'icon-[lucide--pin]'
+            : 'icon-[lucide--pin-off]'} w-4 h-4"
+        ></span>
       </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"

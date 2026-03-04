@@ -52,6 +52,7 @@ class GraphStore {
 
   // Labels state
   showLabels = $state(true);
+  stableLayout = $state(true);
 
   // Timeline State
   timelineMode = $state(false);
@@ -100,6 +101,11 @@ class GraphStore {
     if (savedShowLabels !== undefined) {
       this.showLabels = savedShowLabels;
     }
+
+    const savedStableLayout = await db.get("settings", "graphStableLayout");
+    if (savedStableLayout !== undefined) {
+      this.stableLayout = savedStableLayout;
+    }
   }
 
   async saveEras() {
@@ -140,6 +146,12 @@ class GraphStore {
     this.showLabels = !this.showLabels;
     const db = await getDB();
     await db.put("settings", this.showLabels, "graphShowLabels");
+  }
+
+  async toggleStableLayout() {
+    this.stableLayout = !this.stableLayout;
+    const db = await getDB();
+    await db.put("settings", this.stableLayout, "graphStableLayout");
   }
 
   toggleTimeline() {
