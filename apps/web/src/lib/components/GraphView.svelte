@@ -76,21 +76,33 @@
     if (!currentCy) return;
     try {
       currentCy.batch(() => {
+        const allEles = currentCy.elements();
         if (!id) {
-          currentCy.elements().removeClass("dimmed");
-          currentCy.elements().removeClass("neighborhood");
+          allEles.removeClass("dimmed neighborhood secondary-neighborhood");
         } else {
           const node = currentCy.$id(id);
           if (node.length > 0) {
-            const neighborhood = node.neighborhood().add(node);
-            currentCy.elements().addClass("dimmed");
-            currentCy.elements().removeClass("neighborhood");
-            neighborhood.removeClass("dimmed");
-            neighborhood.addClass("neighborhood");
+            const firstLevel = node.closedNeighborhood();
+            const firstLevelNodes = firstLevel.nodes();
+            const secondLevelNodes = firstLevelNodes
+              .neighborhood()
+              .nodes()
+              .not(firstLevelNodes);
+            const secondLevelEdges =
+              secondLevelNodes.edgesWith(firstLevelNodes);
+            const secondLevel = secondLevelNodes.add(secondLevelEdges);
+
+            allEles.addClass("dimmed");
+            allEles.removeClass("neighborhood secondary-neighborhood");
+
+            firstLevel.removeClass("dimmed");
+            firstLevel.addClass("neighborhood");
+
+            secondLevel.removeClass("dimmed");
+            secondLevel.addClass("secondary-neighborhood");
           } else {
             // If the target node no longer exists, clear focus/dimming.
-            currentCy.elements().removeClass("dimmed");
-            currentCy.elements().removeClass("neighborhood");
+            allEles.removeClass("dimmed neighborhood secondary-neighborhood");
           }
         }
       });

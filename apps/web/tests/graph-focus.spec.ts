@@ -53,13 +53,9 @@ test.describe("Graph Focus Mode", () => {
   test("should highlight neighborhood and dim others on node click", async ({
     page,
   }) => {
-    // Click on Node 1
+    // Focus Node 1
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) {
-        const node1 = cy.$id("node-1");
-        node1.emit("tap");
-      }
+      (window as any).vault.selectedEntityId = "node-1";
     });
 
     // Wait for transition (CSS transition is 200ms, 300ms is a safe buffer)
@@ -72,7 +68,8 @@ test.describe("Graph Focus Mode", () => {
         .edges()
         .filter(
           (e: any) =>
-            e.source().id() === "node-1" && e.target().id() === "node-2",
+            (e.source().id() === "node-1" && e.target().id() === "node-2") ||
+            (e.source().id() === "node-2" && e.target().id() === "node-1"),
         );
       return {
         node1Dimmed: cy.$id("node-1").hasClass("dimmed"),
@@ -91,16 +88,14 @@ test.describe("Graph Focus Mode", () => {
   test("should shift focus when clicking a neighbor", async ({ page }) => {
     // 1. Focus Node 1
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) cy.$id("node-1").emit("tap");
+      (window as any).vault.selectedEntityId = "node-1";
     });
 
     await page.waitForTimeout(300);
 
     // 2. Focus Node 2 (neighbor of Node 1)
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) cy.$id("node-2").emit("tap");
+      (window as any).vault.selectedEntityId = "node-2";
     });
 
     await page.waitForTimeout(300);
@@ -109,24 +104,23 @@ test.describe("Graph Focus Mode", () => {
       const cy = (window as any).cy;
       if (!cy) return null;
       return {
-        node1Dimmed: cy.$id("node-1").hasClass("dimmed"), // Now neighbor
-        node2Dimmed: cy.$id("node-2").hasClass("dimmed"), // Now focused
-        node3Dimmed: cy.$id("node-3").hasClass("dimmed"), // Still distant
+        node1InNeighborhood: cy.$id("node-1").hasClass("neighborhood"),
+        node2InNeighborhood: cy.$id("node-2").hasClass("neighborhood"),
+        node3Dimmed: cy.$id("node-3").hasClass("dimmed"),
       };
     });
 
-    expect(focusState?.node2Dimmed).toBe(false);
-    expect(focusState?.node1Dimmed).toBe(false);
+    expect(focusState?.node1InNeighborhood).toBe(true);
+    expect(focusState?.node2InNeighborhood).toBe(true);
     expect(focusState?.node3Dimmed).toBe(true);
   });
 
   test("should work correctly for island nodes (no connections)", async ({
     page,
   }) => {
-    // Focus the island node
+    // Click on island node
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) cy.$id("island").emit("tap");
+      (window as any).vault.selectedEntityId = "island";
     });
 
     await page.waitForTimeout(300);
@@ -135,40 +129,87 @@ test.describe("Graph Focus Mode", () => {
       const cy = (window as any).cy;
       if (!cy) return null;
       return {
-        islandDimmed: cy.$id("island").hasClass("dimmed"),
-        othersDimmed: cy
-          .nodes()
-          .filter((n: any) => n.id() !== "island")
-          .every((n: any) => n.hasClass("dimmed")),
+        islandInNeighborhood: cy.$id("island").hasClass("neighborhood"),
+        node1Dimmed: cy.$id("node-1").hasClass("dimmed"),
+        node2Dimmed: cy.$id("node-2").hasClass("dimmed"),
       };
     });
 
-    expect(focusState?.islandDimmed).toBe(false);
-    expect(focusState?.othersDimmed).toBe(true);
+    expect(focusState?.islandInNeighborhood).toBe(true);
+    expect(focusState?.node1Dimmed).toBe(true);
+    expect(focusState?.node2Dimmed).toBe(true);
   });
 
   test("should clear focus when clicking background", async ({ page }) => {
     // 1. Focus a node
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) cy.$id("node-1").emit("tap");
+      (window as any).vault.selectedEntityId = "node-1";
     });
 
     await page.waitForTimeout(300);
 
     // 2. Click background
     await page.evaluate(() => {
-      const cy = (window as any).cy;
-      if (cy) cy.emit("tap");
+      (window as any).vault.selectedEntityId = null;
     });
 
     await page.waitForTimeout(300);
 
     const isAnythingDimmed = await page.evaluate(() => {
       const cy = (window as any).cy;
-      return cy ? cy.elements(".dimmed").length > 0 : false;
+      if (!cy) return false;
+      return cy.elements(".dimmed").length > 0;
     });
 
     expect(isAnythingDimmed).toBe(false);
+  });
+
+  test("should give medium opacity to 2-hop neighbors", async ({ page }) => {
+    // Add a chain: Node 1 → Node 2 → Node 3 (Node 3 is 2 hops from Node 1)
+    await page.evaluate(() => {
+      (window as any).vault.addConnection("node-2", "node-3", "related");
+    });
+
+    await page.waitForFunction(
+      () => {
+        const cy = (window as any).cy;
+        return cy && cy.edges().length >= 2;
+      },
+      { timeout: 5000 },
+    );
+
+    // Focus Node 1
+    await page.evaluate(() => {
+      (window as any).vault.selectedEntityId = "node-1";
+    });
+
+    await page.waitForTimeout(500);
+
+    const focusState = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      if (!cy) return null;
+      const edge12 = cy.$id("node-1").edgesWith(cy.$id("node-2"));
+      const edge23 = cy.$id("node-2").edgesWith(cy.$id("node-3"));
+
+      return {
+        node1InNeighborhood: cy.$id("node-1").hasClass("neighborhood"),
+        node2InNeighborhood: cy.$id("node-2").hasClass("neighborhood"),
+        node3InSecondary: cy.$id("node-3").hasClass("secondary-neighborhood"),
+        node3Dimmed: cy.$id("node-3").hasClass("dimmed"),
+        islandDimmed: cy.$id("island").hasClass("dimmed"),
+        edge12InNeighborhood: edge12.hasClass("neighborhood"),
+        edge23InSecondary: edge23.hasClass("secondary-neighborhood"),
+        edge23Dimmed: edge23.hasClass("dimmed"),
+      };
+    });
+
+    expect(focusState?.node1InNeighborhood).toBe(true);
+    expect(focusState?.node2InNeighborhood).toBe(true);
+    expect(focusState?.node3InSecondary).toBe(true);
+    expect(focusState?.node3Dimmed).toBe(false);
+    expect(focusState?.islandDimmed).toBe(true);
+    expect(focusState?.edge12InNeighborhood).toBe(true);
+    expect(focusState?.edge23InSecondary).toBe(true);
+    expect(focusState?.edge23Dimmed).toBe(false);
   });
 });
