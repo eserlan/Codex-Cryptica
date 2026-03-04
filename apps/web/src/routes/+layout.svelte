@@ -407,7 +407,7 @@
   />
 </svelte:head>
 
-<div class="app-layout min-h-screen bg-theme-bg flex flex-col font-body">
+<div class="app-layout h-screen bg-theme-bg flex flex-col font-body">
   <!-- Notifications -->
   {#if uiStore.notification}
     <div
