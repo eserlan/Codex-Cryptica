@@ -528,7 +528,6 @@
   {/if}
 
   <div class="flex-1 flex flex-row min-h-0 relative overflow-hidden">
-    {console.log("[Layout] Rendering Flex Row Container")}
     <LeftSidebar />
 
     {#if uiStore.leftSidebarOpen}

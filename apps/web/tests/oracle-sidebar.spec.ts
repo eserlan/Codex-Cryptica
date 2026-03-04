@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Oracle Sidebar", () => {
   test.beforeEach(async ({ page }) => {
-    page.on("console", (msg) => console.log(`[PAGE] ${msg.text()}`));
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
@@ -20,36 +19,40 @@ test.describe("Oracle Sidebar", () => {
   test("should toggle oracle sidebar and expand workspace", async ({
     page,
   }) => {
-    // 1. Verify floating orb is NOT visible
-    const orb = page.getByTestId("oracle-orb");
-    await expect(orb).not.toBeVisible();
-
-    // 2. Locate sidebar button
+    // 1. Locate reveal button
     const sidebarBtn = page.getByTestId("sidebar-oracle-button");
-    await page.screenshot({ path: "debug-layout.png" });
     await expect(sidebarBtn).toBeVisible();
 
-    // 3. Measure initial workspace width (collapsed)
+    // 2. Measure initial workspace width (collapsed)
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible();
     const initialBox = await canvas.boundingBox();
     const initialWidth = initialBox?.width || 0;
 
-    // 4. Click to open Oracle
+    // 3. Click to open Oracle
     await sidebarBtn.click();
 
-    // 5. Verify panel is visible
+    // 4. Verify panel is visible and reveal button is hidden
     const panel = page.getByTestId("oracle-sidebar-panel");
     await expect(panel).toBeVisible();
+    await expect(sidebarBtn).not.toBeVisible();
+
+    // Wait for transition animation
+    await page.waitForTimeout(500);
+
+    // 5. Verify panel is at the very left (x=0)
+    const panelBox = await panel.boundingBox();
+    expect(panelBox?.x).toBeCloseTo(0, 1);
 
     // 6. Verify workspace resized (should be smaller now)
     const openBox = await canvas.boundingBox();
     const openWidth = openBox?.width || 0;
     expect(openWidth).toBeLessThan(initialWidth);
 
-    // 7. Click to close Oracle
-    await sidebarBtn.click();
+    // 7. Click to close Oracle (using the close button in panel header)
+    await page.getByLabel("Close panel").click();
     await expect(panel).not.toBeVisible();
+    await expect(sidebarBtn).toBeVisible();
 
     // 8. Verify workspace returned to full width
     const closedBox = await canvas.boundingBox();
@@ -84,13 +87,6 @@ test.describe("Oracle Sidebar", () => {
 
     const sidebarBtn = page.getByTestId("sidebar-oracle-button");
     const panel = page.getByTestId("oracle-sidebar-panel");
-
-    // Verify button is visible (it should now be in the bottom bar)
-    await expect(sidebarBtn).toBeVisible();
-
-    // Verify the sidebar (containing the button) spans the full width
-    const btnBox = await sidebarBtn.boundingBox();
-    expect(btnBox?.y).toBeGreaterThan(600); // It should be near the bottom
 
     // Click to open
     await sidebarBtn.click();
