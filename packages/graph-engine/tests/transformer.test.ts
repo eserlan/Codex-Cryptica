@@ -85,7 +85,7 @@ describe("GraphTransformer", () => {
       themeId: "dark",
     };
 
-    const styles = getGraphStyle(mockTemplate, []);
+    const styles = getGraphStyle(mockTemplate, [], true);
 
     const friendlyStyle = styles.find(
       (s: any) => s.selector === 'edge[connectionType="friendly"]',
@@ -98,5 +98,39 @@ describe("GraphTransformer", () => {
     );
     expect(enemyStyle).toBeDefined();
     expect(enemyStyle.style["line-color"]).toBe(CONNECTION_COLORS.enemy);
+  });
+
+  it("should conditionally include image selectors based on showImages", () => {
+    const mockTemplate: StylingTemplate = {
+      tokens: {
+        background: "#000",
+        primary: "#f00",
+        surface: "#111",
+        text: "#fff",
+        fontBody: "Arial",
+        fontHeading: "Arial",
+      },
+      graph: {
+        nodeBorderWidth: 1,
+        nodeShape: "ellipse",
+        edgeColor: "#555",
+        edgeStyle: "solid",
+      },
+      themeId: "dark",
+    };
+
+    const imageSelector = "node[resolvedImage][width][height]";
+
+    // Test with images enabled (default)
+    const styleWithImages = getGraphStyle(mockTemplate, [], true);
+    expect(styleWithImages.some((s: any) => s.selector === imageSelector)).toBe(
+      true,
+    );
+
+    // Test with images disabled
+    const styleWithoutImages = getGraphStyle(mockTemplate, [], false);
+    expect(
+      styleWithoutImages.some((s: any) => s.selector === imageSelector),
+    ).toBe(false);
   });
 });
