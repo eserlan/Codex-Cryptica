@@ -121,6 +121,7 @@
         class="toolbar-btn {activeStates.isBold ? 'active' : ''}"
         title="Bold (Cmd+B)"
         aria-label="Bold (Cmd+B)"
+        aria-pressed={activeStates.isBold}
       >
         <span class="icon-[lucide--bold] w-4 h-4"></span>
       </button>
@@ -129,6 +130,7 @@
         class="toolbar-btn {activeStates.isItalic ? 'active' : ''}"
         title="Italic (Cmd+I)"
         aria-label="Italic (Cmd+I)"
+        aria-pressed={activeStates.isItalic}
       >
         <span class="icon-[lucide--italic] w-4 h-4"></span>
       </button>
@@ -137,6 +139,7 @@
         class="toolbar-btn {activeStates.isStrike ? 'active' : ''}"
         title="Strike"
         aria-label="Strike"
+        aria-pressed={activeStates.isStrike}
       >
         <span class="icon-[lucide--strikethrough] w-4 h-4"></span>
       </button>
@@ -145,6 +148,7 @@
         class="toolbar-btn {activeStates.isCode ? 'active' : ''}"
         title="Code (Cmd+E)"
         aria-label="Code (Cmd+E)"
+        aria-pressed={activeStates.isCode}
       >
         <span class="icon-[lucide--code] w-4 h-4"></span>
       </button>
@@ -159,6 +163,7 @@
         class="toolbar-btn {activeStates.isH1 ? 'active' : ''}"
         title="Heading 1"
         aria-label="Heading 1"
+        aria-pressed={activeStates.isH1}
       >
         <span class="icon-[lucide--heading-1] w-4 h-4"></span>
       </button>
@@ -167,6 +172,7 @@
         class="toolbar-btn {activeStates.isH2 ? 'active' : ''}"
         title="Heading 2"
         aria-label="Heading 2"
+        aria-pressed={activeStates.isH2}
       >
         <span class="icon-[lucide--heading-2] w-4 h-4"></span>
       </button>
@@ -175,6 +181,7 @@
         class="toolbar-btn {activeStates.isH3 ? 'active' : ''}"
         title="Heading 3"
         aria-label="Heading 3"
+        aria-pressed={activeStates.isH3}
       >
         <span class="icon-[lucide--heading-3] w-4 h-4"></span>
       </button>
@@ -189,6 +196,7 @@
         class="toolbar-btn {activeStates.isBulletList ? 'active' : ''}"
         title="Bullet List"
         aria-label="Bullet List"
+        aria-pressed={activeStates.isBulletList}
       >
         <span class="icon-[lucide--list] w-4 h-4"></span>
       </button>
@@ -197,6 +205,7 @@
         class="toolbar-btn {activeStates.isOrderedList ? 'active' : ''}"
         title="Ordered List"
         aria-label="Ordered List"
+        aria-pressed={activeStates.isOrderedList}
       >
         <span class="icon-[lucide--list-ordered] w-4 h-4"></span>
       </button>
@@ -205,6 +214,7 @@
         class="toolbar-btn {activeStates.isBlockquote ? 'active' : ''}"
         title="Blockquote"
         aria-label="Blockquote"
+        aria-pressed={activeStates.isBlockquote}
       >
         <span class="icon-[lucide--quote] w-4 h-4"></span>
       </button>
@@ -219,6 +229,7 @@
         class="toolbar-btn {activeStates.isLink ? 'active' : ''}"
         title="Link"
         aria-label="Link"
+        aria-pressed={activeStates.isLink}
       >
         <span class="icon-[lucide--link] w-4 h-4"></span>
       </button>
@@ -248,6 +259,7 @@
         aria-label={isZenMode
           ? "Exit Zen Mode (Esc)"
           : "Zen Mode (Cmd+Shift+F)"}
+        aria-pressed={isZenMode}
       >
         {#if isZenMode}
           <span class="icon-[lucide--minimize] w-4 h-4"></span>
