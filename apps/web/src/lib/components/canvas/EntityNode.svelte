@@ -33,9 +33,13 @@
   // ⚡ Bolt Optimization: Memoize expensive markdown parsing.
   // Previously, `{@html renderMarkdown(entity.content)}` evaluated inline on every
   // reactive update (like hover state or connection dragging), blocking the main thread.
-  const renderedContent = $derived(
-    entity?.content ? renderMarkdown(entity.content) : ""
-  );
+  const renderedContent = $derived.by(() => {
+    try {
+      return entity?.content ? renderMarkdown(entity.content) : "";
+    } catch {
+      return "";
+    }
+  });
 
   function startEdit(e: MouseEvent) {
     e.stopPropagation();
