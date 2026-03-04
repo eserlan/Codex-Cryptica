@@ -53,6 +53,7 @@ class GraphStore {
   // Labels state
   showLabels = $state(true);
   showImages = $state(true);
+  stableLayout = $state(true);
 
   // Timeline State
   timelineMode = $state(false);
@@ -106,6 +107,11 @@ class GraphStore {
     if (savedShowImages !== undefined) {
       this.showImages = savedShowImages;
     }
+
+    const savedStableLayout = await db.get("settings", "graphStableLayout");
+    if (savedStableLayout !== undefined) {
+      this.stableLayout = savedStableLayout;
+    }
   }
 
   async saveEras() {
@@ -143,22 +149,35 @@ class GraphStore {
   }
 
   async toggleLabels() {
-    this.showLabels = !this.showLabels;
+    const newValue = !this.showLabels;
+    this.showLabels = newValue;
     try {
       const db = await getDB();
-      await db.put("settings", this.showLabels, "graphShowLabels");
-    } catch (err) {
-      console.error("Failed to persist graph labels setting:", err);
+      await db.put("settings", newValue, "graphShowLabels");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphShowLabels:", error);
     }
   }
 
   async toggleImages() {
-    this.showImages = !this.showImages;
+    const newValue = !this.showImages;
+    this.showImages = newValue;
     try {
       const db = await getDB();
-      await db.put("settings", this.showImages, "graphShowImages");
-    } catch (err) {
-      console.error("Failed to persist graph image setting:", err);
+      await db.put("settings", newValue, "graphShowImages");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphShowImages:", error);
+    }
+  }
+
+  async toggleStableLayout() {
+    const newValue = !this.stableLayout;
+    this.stableLayout = newValue;
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphStableLayout");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphStableLayout:", error);
     }
   }
 

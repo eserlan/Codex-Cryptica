@@ -237,27 +237,72 @@
           }
         }
 
+        const elementByNodeId = new Map<string, any>();
+        elements.forEach((el: any) => {
+          if (el.group === "nodes" && el.data?.id) {
+            if (!elementByNodeId.has(el.data.id)) {
+              elementByNodeId.set(el.data.id, el);
+            }
+          }
+        });
+
+        const fixedNodeConstraint =
+          graph.stableLayout && !isInitial
+            ? elements
+                .filter((el: any) => el.group === "nodes" && el.position)
+                .map((el: any) => ({
+                  nodeId: el.data.id,
+                  position: el.position,
+                }))
+            : undefined;
+
+        // If in stable mode and not forced (isInitial), and we have no new nodes to place,
+        // we can skip the layout engine entirely and just snap positions.
+        const hasNewNodes = elements.some(
+          (el: any) => el.group === "nodes" && !el.position,
+        );
+
+        if (graph.stableLayout && !isInitial && !hasNewNodes) {
+          // Just ensure all nodes are in sync with their metadata positions
+          currentCy.nodes().forEach((n) => {
+            const el = elementByNodeId.get(n.id());
+            if (el?.position) {
+              n.position(el.position);
+            }
+          });
+          isLayoutRunning = false;
+          return;
+        }
+
         const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
+          randomize: isInitial ? true : !graph.stableLayout,
+          fixedNodeConstraint,
           animate: false, // Math only in worker
         });
 
         if (!cy || currentCy.destroyed()) return;
 
-        if (isInitial) {
+        // Apply positions. In stable mode, we snap immediately to avoid layout jitter.
+        // If it's a forced layout (isInitial), we always animate for visual feedback.
+        if (graph.stableLayout && !isInitial) {
           currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
             if (pos) n.position(pos);
           });
-          currentCy.fit(currentCy.elements(), 40);
         } else {
           currentCy
             .layout({
               name: "preset",
               positions: positions,
               animate: true,
-              animationDuration: 1000,
+              animationDuration: DEFAULT_LAYOUT_OPTIONS.animationDuration,
               animationEasing: "ease-out-quad",
+              stop: () => {
+                if (isInitial && currentCy) {
+                  currentCy.fit(currentCy.elements(), 40);
+                }
+              },
             })
             .run();
         }
@@ -969,9 +1014,14 @@
           newEdges.length > 0 ||
           elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
-        const shouldRunLayout = structuralChange || isFirstElements;
 
-        if (shouldRunLayout) {
+        let shouldRunLayout = structuralChange || isFirstElements;
+        if (graph.stableLayout && !isFirstElements) {
+          // Run layout for new nodes or to fill gaps from removals
+          shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
+        }
+
+        if (shouldRunLayout && !isLayoutRunning) {
           if (isFirstElements) {
             // Debounce the initial "fit" layout to allow more nodes to arrive
             clearTimeout(stabilizationTimeout);
@@ -1160,6 +1210,26 @@
         aria-label="Fit to Screen"
       >
         <span class="icon-[lucide--maximize] w-4 h-4"></span>
+      </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border transition {graph.stableLayout
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() =>
+          void graph
+            .toggleStableLayout()
+            .catch((error) =>
+              console.error("Failed to toggle stable layout", error),
+            )}
+        title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
+        aria-label="Toggle Stable Layout"
+        aria-pressed={graph.stableLayout}
+      >
+        <span
+          class="{graph.stableLayout
+            ? 'icon-[lucide--pin]'
+            : 'icon-[lucide--pin-off]'} w-4 h-4"
+        ></span>
       </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
