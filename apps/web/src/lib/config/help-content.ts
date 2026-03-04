@@ -134,7 +134,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "fog-of-war",
     title: "Hide Secrets",
     content:
-      "Keep secrets hidden. Hide items from your map so players don't see them during a session.",
+      "Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.",
     icon: "icon-[lucide--eye-off]",
   },
   "vault-switcher": {

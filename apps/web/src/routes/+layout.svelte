@@ -361,10 +361,26 @@
         uiStore.openZenMode(vault.selectedEntityId);
       }
     }
+
+    if (
+      event.key.toLowerCase() === "p" &&
+      !event.ctrlKey &&
+      !event.metaKey &&
+      !event.altKey
+    ) {
+      const target = event.target as HTMLElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable
+      )
+        return;
+      uiStore.sharedMode = !uiStore.sharedMode;
+    }
   };
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
   <title>Codex Cryptica | AI RPG Campaign Manager</title>
