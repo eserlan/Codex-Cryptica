@@ -140,20 +140,9 @@
           title={uiStore.sharedMode
             ? "Exit Shared Mode (Admin View)"
             : "Enter Shared Mode (Player Preview)"}
+          data-testid="shared-mode-toggle"
         >
           {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
-        </button>
-
-        <div class="h-6 w-px bg-theme-border mx-1"></div>
-
-        <button
-          class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.isGMMode
-            ? 'bg-theme-primary text-theme-bg'
-            : 'text-theme-muted hover:text-theme-text'}"
-          onclick={() => (mapStore.isGMMode = !mapStore.isGMMode)}
-          title={mapStore.isGMMode ? "GM Overide: ON" : "GM Override: OFF"}
-        >
-          {mapStore.isGMMode ? "GM MODE: ON" : "GM OVERRIDE"}
         </button>
 
         {#if mapStore.isGMMode}

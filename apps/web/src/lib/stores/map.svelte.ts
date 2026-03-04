@@ -1,4 +1,5 @@
 import { vault } from "./vault.svelte";
+import { uiStore } from "./ui.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
@@ -12,7 +13,7 @@ class MapStore {
   canvasSize = $state({ width: 0, height: 0 });
   pendingPinCoords = $state<Point | null>(null);
   showFog = $state(true);
-  isGMMode = $state(true);
+  isGMMode = $derived(!uiStore.sharedMode);
   brushRadius = $state(50);
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);

@@ -1279,6 +1279,32 @@
         ></span>
       </button>
 
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => graph.toggleImages()}
+        title="Toggle Node Images (I)"
+        aria-label="Toggle Node Images"
+      >
+        <span
+          class="w-4 h-4 {graph.showImages
+            ? 'icon-[lucide--image] opacity-100'
+            : 'icon-[lucide--image-off] opacity-50'}"
+        ></span>
+      </button>
+
+      <!-- Connect Mode Toggle (Gated) -->
+      {#if !vault.isGuest}
+        <button
+          class="w-8 h-8 flex items-center justify-center border transition {connectMode
+            ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)] shadow-theme-accent/30'
+            : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
+          onclick={toggleConnectMode}
+          title="Connect Mode (C)"
+        >
+          <span class="icon-[lucide--link] w-4 h-4"></span>
+        </button>
+      {/if}
+
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
       <div class="hidden md:block">
         <FeatureHint hintId="oracle" />

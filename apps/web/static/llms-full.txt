@@ -29,7 +29,7 @@ The AI finds new links in your notes and suggests connections you might have mis
 Right-click selected items to merge duplicates or create a new link between them.
 
 ### Hide Secrets
-Keep secrets hidden. Hide items from your map so players don't see them during a session.
+Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.
 
 ### Switching Stories
 Change your campaign. Click the folder name at the top to switch to a different story.
@@ -359,7 +359,7 @@ The **Fog of War** system lets you track what your players have discovered. You 
 
 1. **Right-Click**: Tap a node and look for the Visibility menu.
 2. **Toggle Reveal**: Click to show or hide it from the graph.
-3. **GM View**: Click the **Eye Icon** in the bottom controls to see everything at once, regardless of Fog of War.
+3. **GM View**: Click the **Eye Icon** in the bottom controls (or press `P`) to see everything at once, regardless of Fog of War.
 
 ---
 
