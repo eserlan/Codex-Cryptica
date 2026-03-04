@@ -159,11 +159,11 @@
 
         const positions = await layoutService.runTimeline(
           $state.snapshot(nodes),
-          {
+          $state.snapshot({
             axis: graph.timelineAxis,
             scale: graph.timelineScale,
             jitter: 150,
-          },
+          }),
         );
 
         if (!cy || currentCy.destroyed()) return;
@@ -278,12 +278,15 @@
           return;
         }
 
-        const positions = await layoutService.runFcose(elements, {
-          ...DEFAULT_LAYOUT_OPTIONS,
-          randomize: isInitial ? true : !graph.stableLayout,
-          fixedNodeConstraint,
-          animate: false, // Math only in worker
-        });
+        const positions = await layoutService.runFcose(
+          $state.snapshot(elements),
+          $state.snapshot({
+            ...DEFAULT_LAYOUT_OPTIONS,
+            randomize: isInitial ? true : !graph.stableLayout,
+            fixedNodeConstraint,
+            animate: false, // Math only in worker
+          }),
+        );
 
         if (!cy || currentCy.destroyed()) return;
 
