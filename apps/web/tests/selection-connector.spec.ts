@@ -47,10 +47,12 @@ test.describe("Selection Connector", () => {
       cy.nodes().select();
     });
 
-    // Right click on one of the nodes to open context menu
+    // Right click on Node A to open context menu
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const node = cy.nodes()[0];
+      const node = cy
+        .nodes()
+        .filter((n: any) => n.data("label") === "Node A")[0];
       const pos = node.renderedPosition();
       node.trigger("cxttap", { renderedPosition: pos });
     });
@@ -142,10 +144,12 @@ test.describe("Selection Connector", () => {
       cy.nodes().select();
     });
 
-    // Right click to open context menu
+    // Right click on Node C to open context menu
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const node = cy.nodes()[0];
+      const node = cy
+        .nodes()
+        .filter((n: any) => n.data("label") === "Node C")[0];
       const pos = node.renderedPosition();
       node.trigger("cxttap", { renderedPosition: pos });
     });

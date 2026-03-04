@@ -9,6 +9,7 @@
   let selection = $state<NodeSingular[]>([]);
   let position = $state({ x: 0, y: 0 });
   let labelInput = $state("");
+  let isSubmitting = $state(false);
 
   $effect(() => {
     if (cy) {
@@ -23,6 +24,7 @@
         } else {
           selection = [];
           ui.showSelectionConnector = false;
+          isSubmitting = false;
         }
       };
 
@@ -54,11 +56,13 @@
   $effect(() => {
     if (ui.showSelectionConnector) {
       labelInput = ui.lastConnectionLabel;
+      isSubmitting = false;
     }
   });
 
   const submit = async () => {
-    if (selection.length === 2) {
+    if (selection.length === 2 && !isSubmitting) {
+      isSubmitting = true;
       try {
         const sourceId = selection[0].id();
         const targetId = selection[1].id();
@@ -75,6 +79,7 @@
         ui.notify(`Connected ${sourceTitle} to ${targetTitle}`);
       } catch (err) {
         console.error("[SelectionConnector] submit failed", err);
+        isSubmitting = false;
       }
     }
   };
@@ -90,6 +95,10 @@
   const selectRecent = (label: string) => {
     labelInput = label;
     submit();
+  };
+
+  const focusAction = (el: HTMLInputElement) => {
+    el.focus();
   };
 </script>
 
@@ -114,7 +123,8 @@
           onkeydown={handleKeydown}
           placeholder="e.g. Brother, Rival..."
           class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded mb-3"
-          autofocus
+          use:focusAction
+          disabled={isSubmitting}
         />
 
         {#if ui.recentConnectionLabels.length > 0}
@@ -123,6 +133,7 @@
               <button
                 class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
                 onclick={() => selectRecent(label)}
+                disabled={isSubmitting}
               >
                 {label}
               </button>
@@ -134,14 +145,16 @@
           <button
             class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
             onclick={() => (ui.showSelectionConnector = false)}
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
             onclick={submit}
+            disabled={isSubmitting}
           >
-            Link
+            {isSubmitting ? "Linking..." : "Link"}
           </button>
         </div>
       </div>

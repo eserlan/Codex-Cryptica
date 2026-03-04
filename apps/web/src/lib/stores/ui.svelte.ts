@@ -55,6 +55,7 @@ class UIStore {
           this.recentConnectionLabels = JSON.parse(recentLabels);
         } catch {
           this.recentConnectionLabels = [];
+          localStorage.removeItem("codex_recent_connection_labels");
         }
       }
 
