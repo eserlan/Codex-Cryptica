@@ -129,7 +129,7 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = async (isInitial = false) => {
+  const applyCurrentLayout = async (isInitial = false, forceLayout = false) => {
     const currentCy = cy;
     if (!currentCy) return;
     if (currentLayout) {
@@ -196,39 +196,43 @@
       // Background FCOSE Layout
       isLayoutRunning = true;
       try {
-        // Use live dimensions from Cytoscape if available, otherwise fallback to store
-        // This ensures the layout accounts for resolved image sizes
+        // Use live dimensions and positions from Cytoscape if available, otherwise fallback to store
+        // This ensures the layout accounts for resolved image sizes and current manual positioning
         const snapshotElements = $state.snapshot(graph.elements);
         let elements = snapshotElements;
 
         if (currentCy) {
-          // Optimization: Create a map of node dimensions to avoid repetitive cy.$id() calls
-          // This reduces complexity from O(N*logN) to O(N) for dimension sync
-          const nodeDimensions = new Map<
+          // Optimization: Create a map of node states to avoid repetitive cy.$id() calls
+          const nodeStates = new Map<
             string,
-            { width: number | undefined; height: number | undefined }
+            {
+              width: number | undefined;
+              height: number | undefined;
+              position: { x: number; y: number };
+            }
           >();
 
           currentCy.nodes().forEach((node) => {
-            const w = node.data("width");
-            const h = node.data("height");
-            if (w !== undefined || h !== undefined) {
-              nodeDimensions.set(node.id(), { width: w, height: h });
-            }
+            nodeStates.set(node.id(), {
+              width: node.data("width"),
+              height: node.data("height"),
+              position: node.position(),
+            });
           });
 
-          if (nodeDimensions.size > 0) {
+          if (nodeStates.size > 0) {
             elements = snapshotElements.map((el: any) => {
               if (el.group === "nodes") {
-                const dims = nodeDimensions.get(el.data.id);
-                if (dims) {
+                const state = nodeStates.get(el.data.id);
+                if (state) {
                   return {
                     ...el,
                     data: {
                       ...el.data,
-                      width: dims.width ?? el.data.width,
-                      height: dims.height ?? el.data.height,
+                      width: state.width ?? el.data.width,
+                      height: state.height ?? el.data.height,
                     },
+                    position: state.position, // Use live position as starting point
                   };
                 }
               }
@@ -247,7 +251,7 @@
         });
 
         const fixedNodeConstraint =
-          graph.stableLayout && !isInitial
+          graph.stableLayout && !isInitial && !forceLayout
             ? elements
                 .filter((el: any) => el.group === "nodes" && el.position)
                 .map((el: any) => ({
@@ -256,13 +260,13 @@
                 }))
             : undefined;
 
-        // If in stable mode and not forced (isInitial), and we have no new nodes to place,
+        // If in stable mode and not forced, and we have no new nodes to place,
         // we can skip the layout engine entirely and just snap positions.
         const hasNewNodes = elements.some(
           (el: any) => el.group === "nodes" && !el.position,
         );
 
-        if (graph.stableLayout && !isInitial && !hasNewNodes) {
+        if (graph.stableLayout && !isInitial && !hasNewNodes && !forceLayout) {
           // Just ensure all nodes are in sync with their metadata positions
           currentCy.nodes().forEach((n) => {
             const el = elementByNodeId.get(n.id());
@@ -766,7 +770,7 @@
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              if (cy && !cy.destroyed()) applyCurrentLayout(false);
+              if (cy && !cy.destroyed()) applyCurrentLayout(false, true);
             }, 200);
           }
         } catch (error) {
@@ -821,6 +825,16 @@
       }, 50);
       return () => clearTimeout(timer);
     }
+  });
+
+  // Re-run layout when images are toggled
+  $effect(() => {
+    const _show = graph.showImages;
+    untrack(() => {
+      if (cy && !cy.destroyed() && initialLoaded) {
+        applyCurrentLayout(false, true);
+      }
+    });
   });
 
   // Manual fit request listener
