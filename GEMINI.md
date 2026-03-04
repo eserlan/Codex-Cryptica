@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4 (065-move-oracle-sidebar)
+- LocalStorage (via `UIStore`) (065-move-oracle-sidebar)
+
 - TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`) (064-help-blog-post)
 - Static Markdown file in `apps/web/src/lib/content/blog/` (064-help-blog-post)
 
@@ -116,10 +119,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 065-move-oracle-sidebar: Added TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4
+
 - 064-help-blog-post: Added TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`)
 
 - 062-add-blog-path: Added TypeScript 5.x / Svelte 5 / SvelteKit 2 + SvelteKit (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components)
-
-- 061-spatial-canvas: Added TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management)
 
 <!-- MANUAL ADDITIONS START -->

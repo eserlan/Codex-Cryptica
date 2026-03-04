@@ -9,6 +9,8 @@
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
 
+  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+
   const popOut = () => {
     window.open(
       `${base}/oracle`,
@@ -43,7 +45,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if oracle.isOpen}
+{#if oracle.isOpen && (oracle.isModal || isPopup)}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
   <div
     class="fixed inset-0 bg-black/40 z-40 {oracle.isModal
@@ -58,7 +60,7 @@
     class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
-      : 'bottom-0 left-0 w-full md:bottom-40 md:left-6 md:w-96 h-full max-h-[85vh] md:max-h-[calc(100vh-420px)] md:min-h-[400px] rounded-t-xl md:rounded-lg'}"
+      : 'bottom-0 left-0 w-full h-full rounded-t-xl'}"
     transition:fly={{ y: 50, duration: 300 }}
     role={oracle.isModal ? "dialog" : "region"}
     aria-modal={oracle.isModal ? "true" : undefined}
@@ -185,48 +187,6 @@
   </div>
 {/if}
 
-<!-- Toggle Button -->
-{#if !oracle.isOpen}
-  <button
-    class="fixed bottom-4 right-6 md:bottom-28 md:left-6 w-10 h-10 bg-theme-bg/80 border border-theme-primary/30 rounded-full flex items-center justify-center text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_var(--color-accent-primary)] shadow-theme-primary/20 z-50 group overflow-hidden"
-    onclick={() => oracle.toggle()}
-    transition:fade
-    title="Open Lore Oracle"
-    aria-label="Open Lore Oracle"
-    data-testid="oracle-orb"
-  >
-    <!-- Internal Orb Content -->
-    <div
-      class="absolute inset-0 bg-gradient-to-t from-theme-primary/10 to-transparent"
-    ></div>
-    <div
-      class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-[radial-gradient(circle_at_center,_var(--color-accent-primary)_0%,_transparent_70%)] transition-opacity duration-300"
-    ></div>
-
-    <svg
-      class="w-5 h-5 relative z-10 transition-transform duration-500 group-hover:rotate-12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-      />
-    </svg>
-
-    <div
-      class="absolute inset-0 pointer-events-none overflow-hidden opacity-30"
-    >
-      <div
-        class="w-full h-[1px] bg-theme-primary absolute top-0 animate-scan"
-      ></div>
-    </div>
-  </button>
-{/if}
-
 <style>
   @keyframes -global-scan {
     from {
@@ -235,8 +195,5 @@
     to {
       transform: translateY(200%);
     }
-  }
-  .animate-scan {
-    animation: -global-scan 3s linear infinite;
   }
 </style>

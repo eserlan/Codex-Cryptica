@@ -5,6 +5,21 @@ vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
+// Mock matchMedia
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(), // Deprecated
+    removeListener: vi.fn(), // Deprecated
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
+
 import { uiStore } from "./ui.svelte";
 
 describe("UIStore", () => {
@@ -51,5 +66,27 @@ describe("UIStore", () => {
     uiStore.closeZenMode();
     expect(uiStore.showZenMode).toBe(false);
     expect(uiStore.zenModeEntityId).toBe(null);
+  });
+
+  it("should handle sidebar state transitions", () => {
+    // Initial state
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // Toggle on
+    uiStore.toggleSidebarTool("oracle");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("oracle");
+
+    // Toggle off
+    uiStore.toggleSidebarTool("oracle");
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // Close explicitly
+    uiStore.toggleSidebarTool("oracle");
+    uiStore.closeSidebar();
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
   });
 });

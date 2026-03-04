@@ -17,7 +17,7 @@ Keep your internal archive in sync with a folder on your machine. This allows yo
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
 
 ### Linking Notes
-Connect people and locations. Click one item then another to link them together.
+Connect people and locations. Click one item then another to link them together, or right-click two selected items to connect them.
 
 ### AI Generated Art
 Save art made by the Artificial Intelligence (AI). You can drag any image created by the AI onto an entry to save it as their portrait.
@@ -25,8 +25,8 @@ Save art made by the Artificial Intelligence (AI). You can drag any image create
 ### AI Suggestions
 The AI finds new links in your notes and suggests connections you might have missed.
 
-### Combine Entries
-Merge duplicate notes. Pick two or more items to combine them into one.
+### Combine or Connect
+Right-click selected items to merge duplicates or create a new link between them.
 
 ### Hide Secrets
 Keep secrets hidden. Hide items from your map so players don't see them during a session.

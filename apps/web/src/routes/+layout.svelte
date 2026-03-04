@@ -5,6 +5,7 @@
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import SyncDashboard from "$lib/components/settings/SyncDashboard.svelte";
+  import LeftSidebar from "$lib/components/layout/LeftSidebar.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
@@ -51,6 +52,7 @@
   // Dynamic Component Loading for specialized/heavy UI elements
   // Use any to bypass strict prop validation for lazy components in the shell
   let OracleWindow = $state<any>(null);
+  let OracleSidebarPanel = $state<any>(null);
   let ZenModeModal = $state<any>(null);
   let TourOverlay = $state<any>(null);
   let DebugConsole = $state<any>(null);
@@ -80,6 +82,11 @@
       import("$lib/components/oracle/OracleWindow.svelte")
         .then((m) => (OracleWindow = m.default))
         .catch((e) => logChunkError("OracleWindow", e));
+    }
+    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
+      import("$lib/components/oracle/OracleSidebarPanel.svelte")
+        .then((m) => (OracleSidebarPanel = m.default))
+        .catch((e) => logChunkError("OracleSidebarPanel", e));
     }
     if (
       (import.meta.env.DEV ||
@@ -520,9 +527,20 @@
     </header>
   {/if}
 
-  <main class="flex-1 relative flex flex-col min-h-0">
-    {@render children()}
-  </main>
+  <div class="flex-1 flex flex-row min-h-0 relative overflow-hidden">
+    {console.log("[Layout] Rendering Flex Row Container")}
+    <LeftSidebar />
+
+    {#if uiStore.leftSidebarOpen}
+      {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
+        <OracleSidebarPanel />
+      {/if}
+    {/if}
+
+    <main class="flex-1 relative flex flex-col min-h-0">
+      {@render children()}
+    </main>
+  </div>
 
   {#if !isPopup}
     <footer
