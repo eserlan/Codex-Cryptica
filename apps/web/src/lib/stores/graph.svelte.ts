@@ -52,6 +52,7 @@ class GraphStore {
 
   // Labels state
   showLabels = $state(true);
+  showImages = $state(true);
 
   // Timeline State
   timelineMode = $state(false);
@@ -100,6 +101,11 @@ class GraphStore {
     if (savedShowLabels !== undefined) {
       this.showLabels = savedShowLabels;
     }
+
+    const savedShowImages = await db.get("settings", "graphShowImages");
+    if (savedShowImages !== undefined) {
+      this.showImages = savedShowImages;
+    }
   }
 
   async saveEras() {
@@ -138,8 +144,22 @@ class GraphStore {
 
   async toggleLabels() {
     this.showLabels = !this.showLabels;
-    const db = await getDB();
-    await db.put("settings", this.showLabels, "graphShowLabels");
+    try {
+      const db = await getDB();
+      await db.put("settings", this.showLabels, "graphShowLabels");
+    } catch (err) {
+      console.error("Failed to persist graph labels setting:", err);
+    }
+  }
+
+  async toggleImages() {
+    this.showImages = !this.showImages;
+    try {
+      const db = await getDB();
+      await db.put("settings", this.showImages, "graphShowImages");
+    } catch (err) {
+      console.error("Failed to persist graph image setting:", err);
+    }
   }
 
   toggleTimeline() {
