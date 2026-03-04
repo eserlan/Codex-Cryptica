@@ -6,9 +6,9 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   randomize: true,
   packComponents: true,
   nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: 180000, // Strong repulsion
-  idealEdgeLength: 150, // Good spacing
-  nodeSeparation: 100, // Explicit gap
+  nodeRepulsion: 450000, // Keep strong repulsion to prevent overlap
+  idealEdgeLength: 140, // More compact (was 175)
+  nodeSeparation: 80, // More compact (was 125)
   gravity: 0.1,
   gravityRange: 3.8,
   numIter: 3500,
