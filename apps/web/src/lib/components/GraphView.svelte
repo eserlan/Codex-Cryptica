@@ -266,7 +266,7 @@
               name: "preset",
               positions: positions,
               animate: true,
-              animationDuration: 1000,
+              animationDuration: DEFAULT_LAYOUT_OPTIONS.animationDuration,
               animationEasing: "ease-out-quad",
             })
             .run();
@@ -969,9 +969,8 @@
 
         let shouldRunLayout = structuralChange || isFirstElements;
         if (graph.stableLayout && !isFirstElements) {
-          // If stable layout is enabled, only run layout if new nodes were added.
-          // Otherwise keep existing positions.
-          shouldRunLayout = newNodes.length > 0;
+          // Run layout for new nodes or to fill gaps from removals
+          shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
         }
 
         if (shouldRunLayout) {

@@ -143,15 +143,17 @@ class GraphStore {
   }
 
   async toggleLabels() {
-    this.showLabels = !this.showLabels;
+    const newValue = !this.showLabels;
+    this.showLabels = newValue;
     const db = await getDB();
-    await db.put("settings", this.showLabels, "graphShowLabels");
+    await db.put("settings", newValue, "graphShowLabels");
   }
 
   async toggleStableLayout() {
-    this.stableLayout = !this.stableLayout;
+    const newValue = !this.stableLayout;
+    this.stableLayout = newValue;
     const db = await getDB();
-    await db.put("settings", this.stableLayout, "graphStableLayout");
+    await db.put("settings", newValue, "graphStableLayout");
   }
 
   toggleTimeline() {
