@@ -171,4 +171,45 @@ test.describe("Graph Focus Mode", () => {
 
     expect(isAnythingDimmed).toBe(false);
   });
+
+  test("should give medium opacity to 2-hop neighbors", async ({ page }) => {
+    // Add a chain: Node 1 → Node 2 → Node 3 (Node 3 is 2 hops from Node 1)
+    await page.evaluate(() => {
+      (window as any).vault.addConnection("node-2", "node-3", "related");
+    });
+
+    await page.waitForFunction(
+      () => {
+        const cy = (window as any).cy;
+        return cy && cy.edges().length >= 2;
+      },
+      { timeout: 5000 },
+    );
+
+    // Focus Node 1
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      if (cy) cy.$id("node-1").emit("tap");
+    });
+
+    await page.waitForTimeout(300);
+
+    const focusState = await page.evaluate(() => {
+      const cy = (window as any).cy;
+      if (!cy) return null;
+      return {
+        node1InNeighborhood: cy.$id("node-1").hasClass("neighborhood"),
+        node2InNeighborhood: cy.$id("node-2").hasClass("neighborhood"),
+        node3InSecondary: cy.$id("node-3").hasClass("secondary-neighborhood"),
+        node3Dimmed: cy.$id("node-3").hasClass("dimmed"),
+        islandDimmed: cy.$id("island").hasClass("dimmed"),
+      };
+    });
+
+    expect(focusState?.node1InNeighborhood).toBe(true);
+    expect(focusState?.node2InNeighborhood).toBe(true);
+    expect(focusState?.node3InSecondary).toBe(true);
+    expect(focusState?.node3Dimmed).toBe(false);
+    expect(focusState?.islandDimmed).toBe(true);
+  });
 });

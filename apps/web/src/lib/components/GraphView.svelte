@@ -10,7 +10,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";
-  import type { Core, NodeSingular } from "cytoscape";
+  import type { Core, NodeSingular, EdgeSingular } from "cytoscape";
   import cytoscape from "cytoscape";
   import fcose from "cytoscape-fcose";
   import {
@@ -79,18 +79,39 @@
         if (!id) {
           currentCy.elements().removeClass("dimmed");
           currentCy.elements().removeClass("neighborhood");
+          currentCy.elements().removeClass("secondary-neighborhood");
         } else {
           const node = currentCy.$id(id);
           if (node.length > 0) {
-            const neighborhood = node.neighborhood().add(node);
+            const firstLevel = node.closedNeighborhood();
+            const firstLevelNodes = firstLevel.nodes();
+            const secondLevelNodes = firstLevelNodes
+              .neighborhood()
+              .nodes()
+              .not(firstLevelNodes);
+            const secondLevelEdges = secondLevelNodes
+              .connectedEdges()
+              .filter(
+                (e: EdgeSingular) =>
+                  firstLevelNodes.has(e.source()) ||
+                  firstLevelNodes.has(e.target()),
+              );
+            const secondLevel = secondLevelNodes.add(secondLevelEdges);
+
             currentCy.elements().addClass("dimmed");
             currentCy.elements().removeClass("neighborhood");
-            neighborhood.removeClass("dimmed");
-            neighborhood.addClass("neighborhood");
+            currentCy.elements().removeClass("secondary-neighborhood");
+
+            firstLevel.removeClass("dimmed");
+            firstLevel.addClass("neighborhood");
+
+            secondLevel.removeClass("dimmed");
+            secondLevel.addClass("secondary-neighborhood");
           } else {
             // If the target node no longer exists, clear focus/dimming.
             currentCy.elements().removeClass("dimmed");
             currentCy.elements().removeClass("neighborhood");
+            currentCy.elements().removeClass("secondary-neighborhood");
           }
         }
       });

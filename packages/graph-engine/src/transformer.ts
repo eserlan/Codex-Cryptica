@@ -305,6 +305,13 @@ export const getGraphStyle = (
         "z-index": 100,
       },
     },
+    {
+      selector: ".secondary-neighborhood",
+      style: {
+        opacity: 0.65,
+        "z-index": 50,
+      },
+    },
   ];
 
   const categoryStyles = categories.map((cat) => ({
