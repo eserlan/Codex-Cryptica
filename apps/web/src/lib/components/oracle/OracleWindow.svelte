@@ -9,7 +9,7 @@
   import { page } from "$app/state";
   import { themeStore } from "$lib/stores/theme.svelte";
 
-  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  const _isPopup = $derived(page.url.pathname === `${base}/oracle`);
 
   const popOut = () => {
     window.open(
@@ -45,7 +45,7 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-{#if oracle.isOpen && (oracle.isModal || isPopup)}
+{#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
   <div
     class="fixed inset-0 bg-black/40 z-40 {oracle.isModal

@@ -1271,6 +1271,7 @@
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleLabels()}
         title="Toggle Labels (L)"
+        aria-label="Toggle Labels"
       >
         <span
           class="icon-[lucide--tag] w-4 h-4 {graph.showLabels
@@ -1307,7 +1308,7 @@
 
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
       <div class="hidden md:block">
-        <FeatureHint hintId="oracle" />
+        <FeatureHint hintId="lore-oracle" />
       </div>
     </div>
   </div>

@@ -141,6 +141,8 @@
             ? "Exit Shared Mode (Admin View)"
             : "Enter Shared Mode (Player Preview)"}
           data-testid="shared-mode-toggle"
+          aria-pressed={uiStore.sharedMode}
+          aria-label="Toggle player view mode"
         >
           {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
         </button>

@@ -5,7 +5,6 @@
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import SyncDashboard from "$lib/components/settings/SyncDashboard.svelte";
-  import LeftSidebar from "$lib/components/layout/LeftSidebar.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
@@ -560,8 +559,6 @@
   {/if}
 
   <div class="flex-1 flex flex-row min-h-0 relative overflow-hidden">
-    <LeftSidebar />
-
     {#if uiStore.leftSidebarOpen}
       {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
         <OracleSidebarPanel />

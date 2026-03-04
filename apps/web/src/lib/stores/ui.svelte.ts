@@ -81,7 +81,7 @@ class UIStore {
       }
 
       // Initialize isMobile
-      if (typeof window !== "undefined" && window.matchMedia) {
+      if (window.matchMedia) {
         const mql = window.matchMedia("(max-width: 768px)");
         this.isMobile = mql.matches;
         mql.addEventListener("change", (e) => {
