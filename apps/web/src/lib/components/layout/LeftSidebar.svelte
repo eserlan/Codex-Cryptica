@@ -9,9 +9,9 @@
 </script>
 
 <aside
-  class="w-14 bg-theme-surface border-r border-theme-border flex flex-col items-center py-4 z-40 shrink-0 transition-all duration-300 {uiStore.isMobile
-    ? 'hidden'
-    : 'flex'}"
+  class="w-14 bg-theme-surface border-r border-theme-border flex flex-col items-center py-4 z-40 shrink-0 transition-all duration-300
+         max-md:fixed max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:w-full max-md:h-14 max-md:flex-row max-md:border-t max-md:border-r-0 max-md:justify-around max-md:py-0
+         {uiStore.isMobile && uiStore.leftSidebarOpen ? 'hidden' : 'flex'}"
 >
   <button
     class="w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300 group relative

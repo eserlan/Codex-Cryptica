@@ -37,9 +37,9 @@
 
 **Independent Test**: Resize viewport to mobile width and verify sidebar adapts.
 
-- [ ] T012 Add responsive styles to `LeftSidebar.svelte` to transform into a bottom bar or hide on small screens
-- [ ] T013 Update `OracleSidebarPanel.svelte` to render as a full-screen overlay or slide-up panel on mobile
-- [ ] T014 Add E2E tests for mobile viewport responsiveness in `apps/web/tests/oracle-sidebar.spec.ts`
+- [x] T012 Add responsive styles to `LeftSidebar.svelte` to transform into a bottom bar or hide on small screens
+- [x] T013 Update `OracleSidebarPanel.svelte` to render as a full-screen overlay or slide-up panel on mobile
+- [x] T014 Add E2E tests for mobile viewport responsiveness in `apps/web/tests/oracle-sidebar.spec.ts`
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 

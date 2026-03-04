@@ -77,4 +77,28 @@ test.describe("Oracle Sidebar", () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(panel).toBeVisible();
   });
+
+  test("should adapt layout for mobile viewports", async ({ page }) => {
+    // Switch to mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    const sidebarBtn = page.getByTestId("sidebar-oracle-button");
+    const panel = page.getByTestId("oracle-sidebar-panel");
+
+    // Verify button is visible (it should now be in the bottom bar)
+    await expect(sidebarBtn).toBeVisible();
+
+    // Verify the sidebar (containing the button) spans the full width
+    const btnBox = await sidebarBtn.boundingBox();
+    expect(btnBox?.y).toBeGreaterThan(600); // It should be near the bottom
+
+    // Click to open
+    await sidebarBtn.click();
+
+    // Verify panel opens as an overlay
+    await expect(panel).toBeVisible();
+    const panelBox = await panel.boundingBox();
+    expect(panelBox?.width).toBeCloseTo(375, 1); // Should span full width
+    expect(panelBox?.height).toBeGreaterThan(600); // Should span most of height
+  });
 });

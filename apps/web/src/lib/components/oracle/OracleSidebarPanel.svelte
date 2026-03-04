@@ -20,7 +20,8 @@
 </script>
 
 <div
-  class="w-full md:w-96 bg-theme-surface border-r border-theme-border flex flex-col z-30 shrink-0 shadow-2xl relative"
+  class="w-full md:w-96 bg-theme-surface border-r border-theme-border flex flex-col z-50 shrink-0 shadow-2xl relative
+         max-md:fixed max-md:inset-0 max-md:border-none"
   transition:fly={{ x: -20, duration: 300 }}
   data-testid="oracle-sidebar-panel"
 >
