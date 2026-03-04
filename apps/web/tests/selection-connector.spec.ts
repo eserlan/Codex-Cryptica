@@ -15,6 +15,23 @@ test.describe("Selection Connector", () => {
       timeout: 10000,
     });
 
+    // Wait for vault initialization
+    await page.evaluate(async () => {
+      const waitForVault = () =>
+        new Promise((resolve) => {
+          const check = () => {
+            const vault = (window as any).vault;
+            if (vault && vault.status === "idle") {
+              resolve(true);
+            } else {
+              setTimeout(check, 100);
+            }
+          };
+          check();
+        });
+      await waitForVault();
+    });
+
     // Create two entities
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Chronicle Title...").fill("Node A");
@@ -115,6 +132,23 @@ test.describe("Selection Connector", () => {
     await page.goto("/");
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
+    });
+
+    // Wait for vault initialization
+    await page.evaluate(async () => {
+      const waitForVault = () =>
+        new Promise((resolve) => {
+          const check = () => {
+            const vault = (window as any).vault;
+            if (vault && vault.status === "idle") {
+              resolve(true);
+            } else {
+              setTimeout(check, 100);
+            }
+          };
+          check();
+        });
+      await waitForVault();
     });
 
     // Create two entities

@@ -52,7 +52,15 @@ class UIStore {
       );
       if (recentLabels !== null) {
         try {
-          this.recentConnectionLabels = JSON.parse(recentLabels);
+          const parsed = JSON.parse(recentLabels);
+          if (
+            Array.isArray(parsed) &&
+            parsed.every((item) => typeof item === "string")
+          ) {
+            this.recentConnectionLabels = parsed;
+          } else {
+            throw new Error("Invalid format");
+          }
         } catch {
           this.recentConnectionLabels = [];
           localStorage.removeItem("codex_recent_connection_labels");

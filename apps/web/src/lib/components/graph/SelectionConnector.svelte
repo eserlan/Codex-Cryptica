@@ -10,6 +10,7 @@
   let position = $state({ x: 0, y: 0 });
   let labelInput = $state("");
   let isSubmitting = $state(false);
+  let previousShow = $state(false);
 
   $effect(() => {
     if (cy) {
@@ -54,10 +55,12 @@
 
   // Prefill label when connector opens
   $effect(() => {
-    if (ui.showSelectionConnector) {
+    const currentShow = ui.showSelectionConnector;
+    if (currentShow && !previousShow) {
       labelInput = ui.lastConnectionLabel;
       isSubmitting = false;
     }
+    previousShow = currentShow;
   });
 
   const submit = async () => {
@@ -70,13 +73,25 @@
         const sourceTitle = selection[0].data("label");
         const targetTitle = selection[1].data("label");
 
-        await vault.addConnection(sourceId, targetId, "neutral", label);
-        ui.setLastConnectionLabel(label);
+        const success = await vault.addConnection(
+          sourceId,
+          targetId,
+          "neutral",
+          label,
+        );
 
-        cy.elements().unselect();
-        ui.showSelectionConnector = false;
-
-        ui.notify(`Connected ${sourceTitle} to ${targetTitle}`);
+        if (success) {
+          ui.setLastConnectionLabel(label);
+          cy.elements().unselect();
+          ui.showSelectionConnector = false;
+          ui.notify(`Connected ${sourceTitle} to ${targetTitle}`);
+        } else {
+          ui.notify(
+            `Failed to connect ${sourceTitle} to ${targetTitle}`,
+            "error",
+          );
+          isSubmitting = false;
+        }
       } catch (err) {
         console.error("[SelectionConnector] submit failed", err);
         isSubmitting = false;
@@ -114,6 +129,7 @@
         class="bg-theme-surface border border-theme-border shadow-2xl p-3 min-w-[240px] rounded"
       >
         <div
+          id="connector-title"
           class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-2"
         >
           Label Connection
@@ -125,6 +141,7 @@
           class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded mb-3"
           use:focusAction
           disabled={isSubmitting}
+          aria-labelledby="connector-title"
         />
 
         {#if ui.recentConnectionLabels.length > 0}
