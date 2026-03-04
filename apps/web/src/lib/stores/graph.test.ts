@@ -5,7 +5,7 @@ vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
   (global as any).$state.snapshot = (v: any) => v;
   (global as any).$derived = (v: any) => v;
-  (global as any).$derived.by = (v: any) => v;
+  (global as any).$derived.by = (fn: any) => fn();
   (global as any).$effect = (v: any) => v;
 });
 

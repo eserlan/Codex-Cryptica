@@ -236,12 +236,24 @@
           }
         }
 
-        const fixedNodeIds =
+        const elementByNodeId = new Map<string, any>();
+        elements.forEach((el: any) => {
+          if (el.group === "nodes" && el.data?.id) {
+            if (!elementByNodeId.has(el.data.id)) {
+              elementByNodeId.set(el.data.id, el);
+            }
+          }
+        });
+
+        const fixedNodeConstraint =
           graph.stableLayout && !isInitial
             ? elements
                 .filter((el: any) => el.group === "nodes" && el.position)
-                .map((el: any) => el.data.id)
-            : [];
+                .map((el: any) => ({
+                  nodeId: el.data.id,
+                  position: el.position,
+                }))
+            : undefined;
 
         // If in stable mode and not forced (isInitial), and we have no new nodes to place,
         // we can skip the layout engine entirely and just snap positions.
@@ -252,9 +264,7 @@
         if (graph.stableLayout && !isInitial && !hasNewNodes) {
           // Just ensure all nodes are in sync with their metadata positions
           currentCy.nodes().forEach((n) => {
-            const el = elements.find(
-              (e: any) => e.group === "nodes" && e.data.id === n.id(),
-            ) as any;
+            const el = elementByNodeId.get(n.id());
             if (el?.position) {
               n.position(el.position);
             }
@@ -266,20 +276,19 @@
         const positions = await layoutService.runFcose(elements, {
           ...DEFAULT_LAYOUT_OPTIONS,
           randomize: isInitial ? true : !graph.stableLayout,
-          fixedNodeIds,
+          fixedNodeConstraint,
           animate: false, // Math only in worker
         });
 
         if (!cy || currentCy.destroyed()) return;
 
-        if (isInitial || (graph.stableLayout && !isLayoutRunning)) {
+        // Apply positions. In stable mode, we snap immediately to avoid layout jitter.
+        // If it's a forced layout (isInitial), we always animate for visual feedback.
+        if (graph.stableLayout && !isInitial) {
           currentCy.nodes().forEach((n) => {
             const pos = positions[n.id()];
             if (pos) n.position(pos);
           });
-          if (isInitial) {
-            currentCy.fit(currentCy.elements(), 40);
-          }
         } else {
           currentCy
             .layout({
@@ -288,6 +297,11 @@
               animate: true,
               animationDuration: DEFAULT_LAYOUT_OPTIONS.animationDuration,
               animationEasing: "ease-out-quad",
+              stop: () => {
+                if (isInitial && currentCy) {
+                  currentCy.fit(currentCy.elements(), 40);
+                }
+              },
             })
             .run();
         }
@@ -1187,9 +1201,15 @@
         class="w-8 h-8 flex items-center justify-center border transition {graph.stableLayout
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
-        onclick={() => graph.toggleStableLayout()}
+        onclick={() =>
+          void graph
+            .toggleStableLayout()
+            .catch((error) =>
+              console.error("Failed to toggle stable layout", error),
+            )}
         title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
         aria-label="Toggle Stable Layout"
+        aria-pressed={graph.stableLayout}
       >
         <span
           class="{graph.stableLayout

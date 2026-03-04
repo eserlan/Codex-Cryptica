@@ -145,15 +145,23 @@ class GraphStore {
   async toggleLabels() {
     const newValue = !this.showLabels;
     this.showLabels = newValue;
-    const db = await getDB();
-    await db.put("settings", newValue, "graphShowLabels");
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphShowLabels");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphShowLabels:", error);
+    }
   }
 
   async toggleStableLayout() {
     const newValue = !this.stableLayout;
     this.stableLayout = newValue;
-    const db = await getDB();
-    await db.put("settings", newValue, "graphStableLayout");
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphStableLayout");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphStableLayout:", error);
+    }
   }
 
   toggleTimeline() {
