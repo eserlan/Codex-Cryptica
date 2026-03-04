@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Find in Graph Button", () => {
   test("should center the graph on the node when clicked", async ({ page }) => {
+    page.on("console", (msg) => console.log(`[PAGE] ${msg.text()}`));
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
@@ -28,24 +29,21 @@ test.describe("Find in Graph Button", () => {
       timeout: 10000,
     });
 
-    // Get the node ID
-    const nodeId = await page.evaluate(async () => {
-      const waitForNode = () =>
-        new Promise((resolve) => {
-          const check = () => {
-            const vault = (window as any).vault;
-            const entity = Object.values(vault.entities).find(
-              (e: any) => e.title === "Target Node",
-            );
-            if (entity) resolve((entity as any).id);
-            else setTimeout(check, 100);
-          };
-          check();
-        });
-      return (await waitForNode()) as string;
-    });
+    // Get the node ID and wait for it to be in vault
+    const nodeIdHandle = await page.waitForFunction(
+      () => {
+        const vault = (window as any).vault;
+        if (!vault || !vault.entities) return null;
+        const entity = Object.values(vault.entities).find(
+          (e: any) => e.title === "Target Node",
+        );
+        return entity ? (entity as any).id : null;
+      },
+      { timeout: 10000 },
+    );
+    const nodeId = (await nodeIdHandle.jsonValue()) as string;
 
-    // Address Copilot comment: Ensure window.cy is ready and contains the node
+    // Wait until Cytoscape (window.cy) is initialized and contains the created node
     await page.waitForFunction(
       (id) => {
         const cy = (window as any).cy;
