@@ -23,25 +23,46 @@ test.describe("Find in Graph Button", () => {
     await page.getByPlaceholder("Chronicle Title...").fill("Target Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // Wait for entities to be created
+    // Wait for entities to be created in the UI
     await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
       timeout: 10000,
     });
 
     // Get the node ID
-    const nodeId = await page.evaluate(() => {
-      const entities = Object.values((window as any).vault.entities) as any[];
-      return entities.find((e) => e.title === "Target Node").id;
+    const nodeId = await page.evaluate(async () => {
+      const waitForNode = () =>
+        new Promise((resolve) => {
+          const check = () => {
+            const vault = (window as any).vault;
+            const entity = Object.values(vault.entities).find(
+              (e: any) => e.title === "Target Node",
+            );
+            if (entity) resolve((entity as any).id);
+            else setTimeout(check, 100);
+          };
+          check();
+        });
+      return (await waitForNode()) as string;
     });
 
-    // Open the node in sidebar
+    // Address Copilot comment: Ensure window.cy is ready and contains the node
+    await page.waitForFunction(
+      (id) => {
+        const cy = (window as any).cy;
+        return cy && cy.$id(id).length > 0;
+      },
+      nodeId,
+      { timeout: 10000 },
+    );
+
+    // Open node in sidebar via direct state change
     await page.evaluate((id) => {
       (window as any).vault.selectedEntityId = id;
     }, nodeId);
 
-    // Wait for sidebar to open and button to be visible
+    // Wait for sidebar button
     const findBtn = page.getByTestId("find-in-graph-button");
-    await expect(findBtn).toBeVisible();
+    await expect(findBtn).toBeVisible({ timeout: 10000 });
 
     // Pan the graph far away
     await page.evaluate(() => {
@@ -61,9 +82,6 @@ test.describe("Find in Graph Button", () => {
       const centerX = cy.width() / 2;
       const centerY = cy.height() / 2;
       return {
-        pos,
-        centerX,
-        centerY,
         isCentered:
           Math.abs(pos.x - centerX) < 50 && Math.abs(pos.y - centerY) < 50,
       };
@@ -74,20 +92,22 @@ test.describe("Find in Graph Button", () => {
     // Click Find in Graph button
     await findBtn.click();
 
-    // Wait for animation (500ms duration in code + some buffer)
+    // Wait for animation
     await page.waitForTimeout(1000);
 
     // Check that node IS centered
-    const isCentered = await page.evaluate((id) => {
+    const finalFocusState = await page.evaluate((id) => {
       const cy = (window as any).cy;
       const node = cy.$id(id);
       const pos = node.renderedPosition();
       const centerX = cy.width() / 2;
       const centerY = cy.height() / 2;
-      // Allow for some tolerance due to sidebar width affecting center
-      return Math.abs(pos.x - centerX) < 100 && Math.abs(pos.y - centerY) < 100;
+      return {
+        isCentered:
+          Math.abs(pos.x - centerX) < 100 && Math.abs(pos.y - centerY) < 100,
+      };
     }, nodeId);
 
-    expect(isCentered).toBe(true);
+    expect(finalFocusState.isCentered).toBe(true);
   });
 });
