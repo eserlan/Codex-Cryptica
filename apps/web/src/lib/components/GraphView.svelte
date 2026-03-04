@@ -755,8 +755,11 @@
   $effect(() => {
     const currentCy = cy;
     const _id = selectedId; // Track selection state
+    const _findTrigger = ui.findNodeCounter;
+
     if (currentCy) {
       applyFocus(selectedId);
+
       // Small delay to allow flex layout to settle before resizing
       const timer = setTimeout(() => {
         currentCy.resize();

@@ -144,6 +144,13 @@ class UIStore {
   // Canvas Palette State
   showCanvasPalette = $state(true);
 
+  // Find in Graph State
+  findNodeCounter = $state(0);
+
+  findInGraph() {
+    this.findNodeCounter++;
+  }
+
   // Merge Dialog State
   mergeDialog = $state<{
     open: boolean;
