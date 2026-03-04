@@ -45,7 +45,7 @@ export class FileSystemBackend implements ISyncBackend {
       const fileHandle = await this.getFileHandle(path);
       return await fileHandle.getFile();
     } catch (err: any) {
-      if (err.name === "NotFoundError") {
+      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError") {
         throw new Error(`File not found: ${path}`, { cause: err });
       }
       throw err;
@@ -91,7 +91,8 @@ export class FileSystemBackend implements ISyncBackend {
       await current.removeEntry(fileName);
     } catch (err: any) {
       // If already deleted, that's fine
-      if (err.name === "NotFoundError") return;
+      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError")
+        return;
       throw err;
     }
   }

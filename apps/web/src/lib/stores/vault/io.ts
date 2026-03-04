@@ -2,6 +2,7 @@ import {
   writeOpfsFile,
   walkOpfsDirectory,
   getDirHandle,
+  isNotFoundError,
   type FileEntry,
 } from "../../utils/opfs";
 import { CanvasSchema } from "@codex/canvas-engine";
@@ -157,10 +158,7 @@ export async function importFromFolder(
               dirHandle = await getDirHandle(vaultHandle, dirPath, false);
               dirCache.set(dirPathStr, dirHandle);
             } catch (e: any) {
-              if (
-                e.name !== "NotFoundError" &&
-                !e.message.includes("not found")
-              ) {
+              if (!isNotFoundError(e)) {
                 throw e;
               }
             }

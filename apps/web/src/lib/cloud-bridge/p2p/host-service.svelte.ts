@@ -154,7 +154,21 @@ export class P2PHostService {
           try {
             imgDir = await vaultHandle.getDirectoryHandle("images");
             fileHandle = await imgDir.getFileHandle(parts[1]);
-          } catch {
+          } catch (err: any) {
+            const isNotFound =
+              err &&
+              typeof err === "object" &&
+              (err.name === "NotFoundError" || err.code === "NotFoundError");
+
+            if (!isNotFound) {
+              console.error(
+                "[P2P Host] Unexpected error while accessing images directory or file",
+                err,
+              );
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
+
             if (!imgDir) {
               console.warn(`[P2P Host] Images directory not found`);
               conn.send({ type: "FILE_RESPONSE", requestId, found: false });

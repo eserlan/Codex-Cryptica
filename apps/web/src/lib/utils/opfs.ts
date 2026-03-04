@@ -13,6 +13,19 @@ export async function getOpfsRoot(): Promise<FileSystemDirectoryHandle> {
 }
 
 /**
+ * Checks if an error is a NotFoundError, potentially unwrapping it if it was re-thrown.
+ */
+export function isNotFoundError(err: any): boolean {
+  if (!err) return false;
+  return (
+    err.name === "NotFoundError" ||
+    err.code === 8 || // Legacy DOMException.NOT_FOUND_ERR
+    err.cause?.name === "NotFoundError" ||
+    (err instanceof Error && err.message.includes("not found"))
+  );
+}
+
+/**
  * Gets a directory handle at the specified path relative to the root handle.
  * @param create If true, creates the directory if it doesn't exist.
  */
@@ -27,9 +40,11 @@ export async function getDirHandle(
       currentDir = await currentDir.getDirectoryHandle(part, { create });
     } catch (err: any) {
       if (err.name === "NotFoundError" && !create) {
-        throw new Error(`Directory not found: ${path.join("/")}`, {
+        const error = new Error(`Directory not found: ${path.join("/")}`, {
           cause: err,
         });
+        error.name = "NotFoundError";
+        throw error;
       }
       throw err;
     }
@@ -75,7 +90,7 @@ export async function walkOpfsDirectory(
           files.push(...subFiles);
         }
       } catch (error: any) {
-        if (error.name === "NotFoundError") continue;
+        if (isNotFoundError(error)) continue;
 
         if (onError) {
           onError(error, [...path, name]);
@@ -88,7 +103,7 @@ export async function walkOpfsDirectory(
       }
     }
   } catch (error: any) {
-    if (error.name === "NotFoundError") return files;
+    if (isNotFoundError(error)) return files;
 
     if (onError) {
       onError(error, path);
@@ -118,8 +133,12 @@ export async function readFileAsText(
     const file = await fileHandle.getFile();
     return await file.text();
   } catch (err: any) {
-    if (err.name === "NotFoundError") {
-      throw new Error(`File not found: ${path.join("/")}`, { cause: err });
+    if (isNotFoundError(err)) {
+      const error = new Error(`File not found: ${path.join("/")}`, {
+        cause: err,
+      });
+      error.name = "NotFoundError";
+      throw error;
     }
     throw err;
   }
@@ -147,8 +166,12 @@ export async function readOpfsBlob(
     const fileHandle = await dirHandle.getFileHandle(fileName);
     return await fileHandle.getFile();
   } catch (err: any) {
-    if (err.name === "NotFoundError") {
-      throw new Error(`File not found: ${path.join("/")}`, { cause: err });
+    if (isNotFoundError(err)) {
+      const error = new Error(`File not found: ${path.join("/")}`, {
+        cause: err,
+      });
+      error.name = "NotFoundError";
+      throw error;
     }
     throw err;
   }
@@ -192,7 +215,7 @@ export async function deleteOpfsEntry(
     const dirHandle = await getDirHandle(root, dirPath, false);
     await dirHandle.removeEntry(entryName, { recursive: true });
   } catch (err: any) {
-    if (err.name === "NotFoundError") return;
+    if (isNotFoundError(err)) return;
     throw err;
   }
 }
