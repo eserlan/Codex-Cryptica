@@ -47,7 +47,7 @@ test.describe("Find in Graph Button", () => {
     await page.evaluate(() => {
       const cy = (window as any).cy;
       cy.stop(); // Stop any ongoing animations
-      cy.pan({ x: 2000, y: 2000 });
+      cy.panBy({ x: 1000, y: 1000 });
     });
 
     // Wait for pan to settle

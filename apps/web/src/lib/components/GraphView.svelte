@@ -755,7 +755,7 @@
   $effect(() => {
     const currentCy = cy;
     const _id = selectedId; // Track selection state
-    const _findTrigger = ui.findNodeCounter;
+    const _findTrigger = ui.findNodeCounter; // Trigger effect when findInGraph is called
 
     if (currentCy) {
       applyFocus(selectedId);

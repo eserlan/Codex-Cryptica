@@ -22,9 +22,11 @@
     onClose: () => void;
   }>();
 
-  const isGraphView = $derived(
-    page.url.pathname === `${base}/` || page.url.pathname === base,
-  );
+  const isGraphView = $derived.by(() => {
+    const path = page.url.pathname;
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return path === base || path === normalizedBase || path === "/";
+  });
 
   let isObscured = $derived.by(() => {
     if (!entity || !ui.sharedMode) return false;
