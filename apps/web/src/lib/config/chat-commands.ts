@@ -45,6 +45,12 @@ export const chatCommands: ChatCommand[] = [
     },
   },
   {
+    name: "/plot",
+    description: "Analyse story tensions around an entity",
+    parameters: ["[entity name]"],
+    handler: (subject) => oracle.ask(`/plot ${subject}`),
+  },
+  {
     name: "/help",
     description: "Show available commands",
     handler: () => oracle.showHelp(),

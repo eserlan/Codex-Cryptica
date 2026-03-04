@@ -324,6 +324,83 @@ INSTRUCTIONS:
     }
   }
 
+  async generatePlotAnalysis(
+    apiKey: string,
+    modelName: string,
+    subject: any,
+    connectedEntities: {
+      entity: any;
+      connectionType: string;
+      label?: string;
+      direction: "outbound" | "inbound";
+    }[],
+    userQuery: string,
+  ): Promise<string> {
+    if (uiStore.liteMode)
+      throw new Error("AI features are disabled in Lite Mode.");
+    this.init(apiKey, modelName);
+    if (!this.model) throw new Error("AI Model not initialized");
+
+    const MAX_SUBJECT_CONTEXT_CHARS = 2000;
+    const MAX_CONNECTED_ENTITIES = 20;
+    const MAX_CONNECTION_CONTEXT_CHARS = 500;
+
+    const subjectContext = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${this.getConsolidatedContext(subject).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
+
+    const limitedConnections = connectedEntities.slice(
+      0,
+      MAX_CONNECTED_ENTITIES,
+    );
+    const omittedCount = connectedEntities.length - limitedConnections.length;
+
+    let connectionsContext =
+      limitedConnections.length > 0
+        ? limitedConnections
+            .map(({ entity, connectionType, label, direction }) => {
+              const dirStr = direction === "outbound" ? "→" : "←";
+              const relStr = label || connectionType;
+              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.getConsolidatedContext(entity).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
+            })
+            .join("\n\n")
+        : "No connected entities found.";
+
+    if (omittedCount > 0) {
+      const suffix = `\n\n[${omittedCount} additional connected ${
+        omittedCount === 1 ? "entity" : "entities"
+      } omitted for brevity.]`;
+      connectionsContext =
+        connectionsContext === "No connected entities found."
+          ? suffix.trimStart()
+          : connectionsContext + suffix;
+    }
+
+    const prompt = `You are a master storyteller and dramaturgy analyst. Analyze the following entity and its network of connections to identify dramatic tension.
+
+${subjectContext}
+
+--- CONNECTED ENTITIES ---
+${connectionsContext}
+
+--- USER QUERY ---
+${userQuery}
+
+Provide a concise dramaturgy analysis covering:
+1. **Rivals & Enemies**: Who directly opposes or threatens this entity?
+2. **Political Risks**: What factions, allegiances, or power structures create tension?
+3. **Hidden Secrets**: What information, if exposed, could be damaging or transformative?
+4. **Dramatic Hooks**: Suggest 2-3 story tensions that could drive a compelling narrative.
+
+Format the output in clear Markdown sections. Be specific and reference actual entities from the vault where possible.`;
+
+    try {
+      const result = await this.model.generateContent(prompt);
+      return result.response.text();
+    } catch (err: any) {
+      console.error("[AIService] Plot analysis failed:", err);
+      throw new Error(`Plot analysis failed: ${err.message}`, { cause: err });
+    }
+  }
+
   async parseConnectionIntent(
     apiKey: string,
     modelName: string,

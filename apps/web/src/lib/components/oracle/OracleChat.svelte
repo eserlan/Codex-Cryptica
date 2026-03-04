@@ -36,7 +36,8 @@
         isCmd("/connect") ||
         isCmd("/merge") ||
         isCmd("/draw") ||
-        isCmd("/create")
+        isCmd("/create") ||
+        isCmd("/plot")
       ) {
         showCommandMenu = true;
       } else {

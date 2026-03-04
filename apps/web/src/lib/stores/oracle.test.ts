@@ -124,6 +124,7 @@ vi.mock("../services/ai", () => ({
     retrieveContext: vi
       .fn()
       .mockResolvedValue({ content: "context", sourceIds: [] }),
+    generatePlotAnalysis: vi.fn(),
   },
 }));
 
@@ -559,6 +560,129 @@ describe("OracleStore", () => {
     });
   });
 
+  describe("/plot Command", () => {
+    it("should resolve entity, walk connections, and call generatePlotAnalysis", async () => {
+      const { searchService } = await import("../services/search");
+      const { aiService } = await import("../services/ai");
+      const { vault } = await import("./vault.svelte");
+
+      // Setup mock vault
+      const mainEntity = {
+        id: "hero",
+        title: "The Hero",
+        type: "character",
+        connections: [{ target: "villain", type: "enemy" }],
+      };
+      const connectedEntity = {
+        id: "villain",
+        title: "The Villain",
+        type: "character",
+        connections: [],
+      };
+      const inboundEntity = {
+        id: "friend",
+        title: "The Friend",
+        type: "character",
+        connections: [{ target: "hero", type: "ally" }],
+      };
+
+      (vault as any).entities = {
+        hero: mainEntity,
+        villain: connectedEntity,
+        friend: inboundEntity,
+      };
+
+      // Mock inbound connections map
+      (vault as any).inboundConnections = {
+        hero: [
+          { sourceId: "friend", connection: inboundEntity.connections[0] },
+        ],
+      };
+
+      // Mock search returning the main entity
+      vi.mocked(searchService.search).mockResolvedValue([
+        {
+          id: "hero",
+          title: "The Hero",
+          score: 1,
+          path: "",
+          matchType: "title",
+        },
+      ]);
+
+      // Mock AI response
+      vi.mocked(aiService.generatePlotAnalysis).mockResolvedValue(
+        "Plot tension analysis...",
+      );
+
+      oracle.apiKey = "valid-key";
+      oracle.tier = "advanced";
+
+      await oracle.ask("/plot The Hero");
+
+      // Verify AI call
+      expect(aiService.generatePlotAnalysis).toHaveBeenCalledWith(
+        "valid-key",
+        "gemini-3-flash-preview",
+        mainEntity,
+        expect.arrayContaining([
+          expect.objectContaining({
+            entity: connectedEntity,
+            direction: "outbound",
+          }),
+          expect.objectContaining({
+            entity: inboundEntity,
+            direction: "inbound",
+          }),
+        ]),
+        "/plot The Hero",
+      );
+
+      // Verify message added
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("assistant");
+      expect(lastMsg.content).toBe("Plot tension analysis...");
+      expect(lastMsg.entityId).toBe("hero");
+      expect(lastMsg.sources).toEqual(["hero", "villain", "friend"]);
+    });
+
+    it("should strip wrapping quotes from the subject", async () => {
+      const { searchService } = await import("../services/search");
+      const { aiService } = await import("../services/ai");
+      const { vault } = await import("./vault.svelte");
+
+      const mainEntity = {
+        id: "hero",
+        title: "The Hero",
+        type: "character",
+        connections: [],
+      };
+      (vault as any).entities = { hero: mainEntity };
+      (vault as any).inboundConnections = {};
+
+      vi.mocked(searchService.search).mockResolvedValue([
+        {
+          id: "hero",
+          title: "The Hero",
+          score: 1,
+          path: "",
+          matchType: "title",
+        },
+      ]);
+      vi.mocked(aiService.generatePlotAnalysis).mockResolvedValue("analysis");
+
+      oracle.apiKey = "valid-key";
+      oracle.tier = "advanced";
+
+      await oracle.ask('/plot "The Hero"');
+
+      // Verify search was called with stripped quotes
+      expect(searchService.search).toHaveBeenCalledWith("The Hero", {
+        limit: 1,
+      });
+    });
+  });
+
   describe("Restricted Mode (Lite Mode)", () => {
     beforeEach(() => {
       (uiStore as any).liteMode = true;
@@ -576,6 +700,15 @@ describe("OracleStore", () => {
       oracle.messages = [{ id: "1", role: "user", content: "hello" }];
       await oracle.ask("/clear");
       expect(oracle.messages).toHaveLength(0);
+    });
+
+    it("should reject /plot command", async () => {
+      await oracle.ask("/plot The Hero");
+      const lastMsg = oracle.messages[oracle.messages.length - 1];
+      expect(lastMsg.role).toBe("system");
+      expect(lastMsg.content).toContain(
+        "The `/plot` command is powered by AI and is disabled in Lite Mode",
+      );
     });
 
     it("should reject natural language input", async () => {
