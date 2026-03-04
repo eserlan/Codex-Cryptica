@@ -52,6 +52,7 @@ class GraphStore {
 
   // Labels state
   showLabels = $state(true);
+  showImages = $state(true);
   stableLayout = $state(true);
 
   // Timeline State
@@ -102,6 +103,11 @@ class GraphStore {
       this.showLabels = savedShowLabels;
     }
 
+    const savedShowImages = await db.get("settings", "graphShowImages");
+    if (savedShowImages !== undefined) {
+      this.showImages = savedShowImages;
+    }
+
     const savedStableLayout = await db.get("settings", "graphStableLayout");
     if (savedStableLayout !== undefined) {
       this.stableLayout = savedStableLayout;
@@ -150,6 +156,17 @@ class GraphStore {
       await db.put("settings", newValue, "graphShowLabels");
     } catch (error) {
       console.error("[GraphStore] Failed to persist graphShowLabels:", error);
+    }
+  }
+
+  async toggleImages() {
+    const newValue = !this.showImages;
+    this.showImages = newValue;
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphShowImages");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphShowImages:", error);
     }
   }
 

@@ -15,7 +15,7 @@
       const openHandler = (evt: EventObject) => {
         const node = evt.target;
         targetId = node.id();
-        position = { x: evt.renderedPosition.x, y: evt.renderedPosition.y };
+        position = evt.renderedPosition || { x: 0, y: 0 };
 
         // Check selection
         const selection = cy.$("node:selected");
@@ -93,6 +93,13 @@
       contextMenuOpen = false;
     }
   };
+
+  const handleConnectSelection = () => {
+    if (selectedNodes.length === 2) {
+      ui.startSelectionConnection();
+      contextMenuOpen = false;
+    }
+  };
 </script>
 
 {#if contextMenuOpen}
@@ -115,6 +122,16 @@
     >
       Set as Central Node
     </button>
+    {#if selectedNodes.length === 2}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+        onclick={handleConnectSelection}
+        aria-label="Connect 2 Nodes"
+      >
+        Connect 2 Nodes
+      </button>
+    {/if}
     {#if selectedNodes.length > 1}
       <button
         role="menuitem"

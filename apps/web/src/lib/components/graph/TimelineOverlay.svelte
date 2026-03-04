@@ -8,6 +8,7 @@
   } from "graph-engine";
   import type { Core, NodeSingular } from "cytoscape";
   import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -159,39 +160,41 @@
         {/each}
 
         <!-- Node Labels (Attached to node model coordinates) -->
-        {#each timelineNodes as node}
-          <g>
-            <!-- Date (Purple) - Always above node -->
-            <foreignObject
-              x={node.pos.x - 40}
-              y={node.pos.y - (node.hasImage ? 24 : 16) - 14}
-              width="80"
-              height="14"
-            >
-              <div
-                class="text-[10px] text-theme-accent text-center font-body leading-none select-none"
-                style="font-family: Inter, sans-serif;"
+        {#if graph.showLabels}
+          {#each timelineNodes as node}
+            <g transition:fade={{ duration: 150 }}>
+              <!-- Date (Purple) - Always above node -->
+              <foreignObject
+                x={node.pos.x - 40}
+                y={node.pos.y - (node.hasImage ? 24 : 16) - 14}
+                width="80"
+                height="14"
               >
-                {node.dateLabel}
-              </div>
-            </foreignObject>
+                <div
+                  class="text-[10px] text-theme-accent text-center font-body leading-none select-none"
+                  style="font-family: Inter, sans-serif;"
+                >
+                  {node.dateLabel}
+                </div>
+              </foreignObject>
 
-            <!-- Title (Normal Style) - Always below node -->
-            <foreignObject
-              x={node.pos.x - 40}
-              y={node.pos.y + (node.hasImage ? 24 : 16) + 4}
-              width="80"
-              height="60"
-            >
-              <div
-                class="text-[10px] text-theme-primary text-center font-body leading-tight line-clamp-3 select-none"
-                style="font-family: Inter, sans-serif;"
+              <!-- Title (Normal Style) - Always below node -->
+              <foreignObject
+                x={node.pos.x - 40}
+                y={node.pos.y + (node.hasImage ? 24 : 16) + 4}
+                width="80"
+                height="60"
               >
-                {node.label}
-              </div>
-            </foreignObject>
-          </g>
-        {/each}
+                <div
+                  class="text-[10px] text-theme-primary text-center font-body leading-tight line-clamp-3 select-none"
+                  style="font-family: Inter, sans-serif;"
+                >
+                  {node.label}
+                </div>
+              </foreignObject>
+            </g>
+          {/each}
+        {/if}
       </g>
     </svg>
   </div>

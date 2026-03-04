@@ -28,6 +28,7 @@
   import TimelineOverlay from "$lib/components/graph/TimelineOverlay.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
+  import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
@@ -40,7 +41,7 @@
   let isLayoutRunning = $state(false);
 
   let graphStyle = $derived([
-    ...getGraphStyle(themeStore.activeTheme, categories.list),
+    ...getGraphStyle(themeStore.activeTheme, categories.list, graph.showImages),
     {
       selector: ".filtered-out",
       style: {
@@ -363,7 +364,6 @@
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (vault.isGuest) return;
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const target = document.activeElement;
       if (
@@ -376,6 +376,7 @@
       applyCurrentLayout();
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (vault.isGuest) return;
       // Don't toggle if user is typing in an input (though we don't have many here yet)
       const target = document.activeElement;
       if (
@@ -395,6 +396,16 @@
       )
         return;
       graph.toggleLabels();
+    }
+    if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const target = document.activeElement;
+      if (
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        (target as HTMLElement)?.isContentEditable
+      )
+        return;
+      graph.toggleImages();
     }
     if (e.key === "Escape" && connectMode) {
       toggleConnectMode();
@@ -789,8 +800,11 @@
   $effect(() => {
     const currentCy = cy;
     const _id = selectedId; // Track selection state
+    const _findTrigger = ui.findNodeCounter; // Trigger effect when findInGraph is called
+
     if (currentCy) {
       applyFocus(selectedId);
+
       // Small delay to allow flex layout to settle before resizing
       const timer = setTimeout(() => {
         currentCy.resize();
@@ -1230,7 +1244,32 @@
         ></span>
       </button>
 
-      <!-- Connect Mode Toggle -->
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => graph.toggleLabels()}
+        title="Toggle Labels (L)"
+        aria-label="Toggle Labels"
+      >
+        <span
+          class={graph.showLabels
+            ? "icon-[lucide--type]"
+            : "icon-[lucide--type-outline] opacity-50"}
+        ></span>
+      </button>
+      <button
+        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
+        onclick={() => graph.toggleImages()}
+        title="Toggle Node Images (I)"
+        aria-label="Toggle Node Images"
+      >
+        <span
+          class={graph.showImages
+            ? "icon-[lucide--image]"
+            : "icon-[lucide--image-off] opacity-50"}
+        ></span>
+      </button>
+
+      <!-- Connect Mode Toggle (Gated) -->
       {#if !vault.isGuest}
         <button
           class="w-8 h-8 flex items-center justify-center border transition {connectMode
@@ -1256,6 +1295,7 @@
     <TimelineOverlay {cy} />
     <OrbitControls />
     <ContextMenu {cy} />
+    <SelectionConnector {cy} />
   {/if}
 
   <!-- Hover Tooltip -->

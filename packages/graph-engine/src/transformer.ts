@@ -177,11 +177,12 @@ const sanitizeFontForCytoscape = (fontFamily?: string): string => {
 export const getGraphStyle = (
   template: StylingTemplate,
   categories: Category[],
+  showImages: boolean,
 ): any[] => {
   const { tokens, graph } = template;
 
   // Base styles (excluding revealed overrides which need to come last)
-  const baseStyle = [
+  const baseStyle: any[] = [
     {
       selector: "node",
       style: {
@@ -203,7 +204,10 @@ export const getGraphStyle = (
         "transition-duration": 200,
       },
     },
-    {
+  ];
+
+  if (showImages) {
+    baseStyle.push({
       selector: "node[resolvedImage][width][height]",
       style: {
         "background-fit": "cover",
@@ -214,7 +218,10 @@ export const getGraphStyle = (
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
       },
-    },
+    });
+  }
+
+  baseStyle.push(
     {
       selector: "node:selected",
       style: {
@@ -312,11 +319,10 @@ export const getGraphStyle = (
         "z-index": 50,
       },
     },
-  ];
+  );
 
   const categoryStyles = categories.map((cat) => ({
-    // Include specific selector for image nodes to override base image style (which has [resolvedImage][width][height])
-    selector: `node[type="${cat.id}"], node[type="${cat.id}"][resolvedImage][width][height]`,
+    selector: `node[type="${cat.id}"]`,
     style: {
       "border-color": cat.color,
       "border-width": graph.nodeBorderWidth + 2,
@@ -324,7 +330,7 @@ export const getGraphStyle = (
   }));
 
   // Revealed styles come LAST to override category borders,
-  const revealedStyles = [
+  const revealedStyles: any[] = [
     {
       selector: "node[isRevealed]",
       style: {
@@ -333,7 +339,10 @@ export const getGraphStyle = (
         "overlay-opacity": 0,
       },
     },
-    {
+  ];
+
+  if (showImages) {
+    revealedStyles.push({
       selector: "node[isRevealed][resolvedImage]",
       style: {
         "background-image": "data(resolvedImage)",
@@ -342,8 +351,8 @@ export const getGraphStyle = (
         "background-position-y": "50%",
         "border-width": graph.nodeBorderWidth + 4,
       },
-    },
-  ];
+    });
+  }
 
   return [...baseStyle, ...categoryStyles, ...revealedStyles];
 };

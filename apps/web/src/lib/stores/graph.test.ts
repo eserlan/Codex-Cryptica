@@ -55,9 +55,17 @@ import { graph } from "./graph.svelte";
 describe("GraphStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset graph state
+    graph.showLabels = true;
+    graph.showImages = true;
+    graph.stableLayout = true;
+    graph.timelineMode = false;
+    graph.orbitMode = false;
   });
 
-  it("should initialize with stableLayout as true by default", () => {
+  it("should initialize with default values", () => {
+    expect(graph.showLabels).toBe(true);
+    expect(graph.showImages).toBe(true);
     expect(graph.stableLayout).toBe(true);
   });
 
@@ -74,16 +82,44 @@ describe("GraphStore", () => {
     expect(putSpy).toHaveBeenCalledWith("settings", true, "graphStableLayout");
   });
 
-  it("should load stableLayout from IndexedDB on init", async () => {
+  it("should toggle images and persist to IDB", async () => {
     const db = await getDB();
-    vi.spyOn(db, "get").mockImplementation((store, key) => {
-      if (store === "settings" && key === "graphStableLayout") {
-        return Promise.resolve(false);
-      }
+    const putSpy = vi.spyOn(db, "put");
+
+    await graph.toggleImages();
+    expect(graph.showImages).toBe(false);
+    expect(putSpy).toHaveBeenCalledWith("settings", false, "graphShowImages");
+
+    await graph.toggleImages();
+    expect(graph.showImages).toBe(true);
+    expect(putSpy).toHaveBeenCalledWith("settings", true, "graphShowImages");
+  });
+
+  it("should toggle labels and persist to IDB", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+
+    await graph.toggleLabels();
+    expect(graph.showLabels).toBe(false);
+    expect(putSpy).toHaveBeenCalledWith("settings", false, "graphShowLabels");
+
+    await graph.toggleLabels();
+    expect(graph.showLabels).toBe(true);
+    expect(putSpy).toHaveBeenCalledWith("settings", true, "graphShowLabels");
+  });
+
+  it("should load saved settings on init", async () => {
+    const db = await getDB();
+    vi.spyOn(db, "get").mockImplementation((_store, key) => {
+      if (key === "graphShowLabels") return Promise.resolve(false);
+      if (key === "graphShowImages") return Promise.resolve(false);
+      if (key === "graphStableLayout") return Promise.resolve(false);
       return Promise.resolve(undefined);
     });
 
     await graph.init();
+    expect(graph.showLabels).toBe(false);
+    expect(graph.showImages).toBe(false);
     expect(graph.stableLayout).toBe(false);
   });
 });
