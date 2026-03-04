@@ -16,7 +16,6 @@
   import {
     getGraphStyle,
     DEFAULT_LAYOUT_OPTIONS,
-    IMAGE_LAYOUT_OPTIONS,
     hasTimelineDate,
     type GraphNode,
     type GraphEdge,
@@ -284,12 +283,8 @@
           return;
         }
 
-        const layoutOptions = graph.showImages
-          ? IMAGE_LAYOUT_OPTIONS
-          : DEFAULT_LAYOUT_OPTIONS;
-
         const positions = await layoutService.runFcose(elements, {
-          ...layoutOptions,
+          ...DEFAULT_LAYOUT_OPTIONS,
           showImages: graph.showImages,
           randomize: isInitial ? true : !graph.stableLayout,
           fixedNodeConstraint,
