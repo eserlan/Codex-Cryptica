@@ -7,6 +7,7 @@ import { getDB } from "../utils/idb";
 class GraphStore {
   // Svelte 5 derived state
   activeLabels = $state(new Set<string>());
+  activeCategories = $state(new Set<string>());
 
   elements = $derived.by(() => {
     const allEntities = vault.allEntities;
@@ -146,6 +147,20 @@ class GraphStore {
 
   clearLabelFilters() {
     this.activeLabels = new Set();
+  }
+
+  toggleCategoryFilter(categoryId: string) {
+    if (this.activeCategories.has(categoryId)) {
+      this.activeCategories.delete(categoryId);
+    } else {
+      this.activeCategories.add(categoryId);
+    }
+    // Svelte Set reactivity trigger
+    this.activeCategories = new Set(this.activeCategories);
+  }
+
+  clearCategoryFilters() {
+    this.activeCategories = new Set();
   }
 
   async toggleLabels() {

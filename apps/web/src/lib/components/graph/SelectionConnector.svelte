@@ -163,6 +163,7 @@
             class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
             onclick={() => (ui.showSelectionConnector = false)}
             disabled={isSubmitting}
+            aria-label="Cancel connection"
           >
             Cancel
           </button>
@@ -170,6 +171,7 @@
             class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
             onclick={submit}
             disabled={isSubmitting}
+            aria-label="Create connection"
           >
             {isSubmitting ? "Linking..." : "Link"}
           </button>
