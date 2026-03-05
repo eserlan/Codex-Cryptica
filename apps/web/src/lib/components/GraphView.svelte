@@ -128,16 +128,31 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = async (isInitial = false, isForced = false) => {
+  // Performance timing
+  const appStartTime = performance.now();
+  const getElapsed = () => (performance.now() - appStartTime).toFixed(2) + "ms";
+
+  const applyCurrentLayout = async (
+    isInitial = false,
+    isForced = false,
+    caller = "unknown",
+  ) => {
     const currentCy = cy;
     if (!currentCy) {
       console.warn(
-        "[GraphView] applyCurrentLayout skipped: cy not initialized",
+        `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
       );
       return;
     }
 
-    if (isLayoutRunning && !isInitial) {
+    console.log(
+      `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
+    );
+
+    if (isLayoutRunning && !isInitial && !isForced) {
+      console.log(
+        `[GraphView][${getElapsed()}] applyCurrentLayout ABORTED (caller: ${caller}): isLayoutRunning is true!`,
+      );
       return;
     }
 
@@ -151,11 +166,27 @@
 
     isLayoutRunning = true;
     try {
+      currentCy.resize(); // Ensure container dimensions are up to date
+
+      // Ensure node visibility is correct BEFORE running any layout math
+      // This ensures fcose includes previously hidden nodes in the calculation.
+      currentCy.batch(() => {
+        currentCy.nodes().forEach((node) => {
+          const data = node.data() as GraphNode["data"];
+          const hasDate = hasTimelineDate({ group: "nodes", data });
+          if (graph.timelineMode && !hasDate) {
+            node.addClass("timeline-hidden");
+          } else {
+            node.removeClass("timeline-hidden");
+          }
+        });
+      });
+
       if (vault.isGuest) {
         // For guests, we rely entirely on synced positions.
         // Simply fit to view initially if needed.
         if (isInitial) {
-          currentCy.fit(currentCy.elements(), 40);
+          currentCy.fit(currentCy.nodes(), 50);
         }
         isLayoutRunning = false;
         return;
@@ -181,14 +212,33 @@
             return;
           }
 
-          currentCy
+          console.log(
+            "[GraphView] Timeline layout calculated positions for",
+            Object.keys(positions).length,
+            "nodes",
+          );
+          console.log(
+            "[GraphView] Sample Timeline positions:",
+            Object.entries(positions).slice(0, 3),
+          );
+
+          const nodesToLayout = currentCy
+            .nodes()
+            .filter((n) => positions[n.id()] !== undefined);
+
+          nodesToLayout
             .layout({
               name: "preset",
               positions: positions,
               animate: true,
               animationDuration: 500,
               animationEasing: "ease-out-cubic",
+              fit: true,
+              padding: 50,
               stop: () => {
+                console.log(
+                  `[GraphView][${getElapsed()}] Timeline layout COMPLETED`,
+                );
                 isLayoutRunning = false;
               },
             })
@@ -202,10 +252,13 @@
         if (isInitial) {
           currentCy.resize();
           currentCy.animate({
-            fit: { eles: currentCy.elements(), padding: 40 },
+            fit: { eles: currentCy.nodes(), padding: 50 },
             duration: 800,
             easing: "ease-out-cubic",
             complete: () => {
+              console.log(
+                `[GraphView][${getElapsed()}] Orbit animation COMPLETED`,
+              );
               isLayoutRunning = false;
             },
           });
@@ -215,52 +268,107 @@
       } else {
         // Main-thread FCOSE Layout
         try {
-          const randomize = isInitial ? true : !graph.stableLayout;
+          const nodes = currentCy.nodes();
+          const snapshotNodes = graph.elements.filter(
+            (el) => el.group === "nodes",
+          );
+          const hasNewNodes = snapshotNodes.some((el: any) => !el.position);
 
-          // If stable mode and not forced (like image toggle), just snap to existing positions and return
-          const hasNewNodes = graph.elements.some(
-            (el: any) => el.group === "nodes" && !el.position,
+          // Heuristic: If multiple nodes exist and ALL of them are at 0,0, they are clumped/broken.
+          const nodesAtOrigin = snapshotNodes.filter(
+            (el: any) =>
+              el.position && el.position.x === 0 && el.position.y === 0,
+          ).length;
+          const isClumpedAtOrigin =
+            snapshotNodes.length > 1 && nodesAtOrigin === snapshotNodes.length;
+
+          // Force randomization if:
+          // 1. We have brand new nodes.
+          // 2. Initial load and stability is OFF.
+          // 3. We are coming OUT of timeline mode.
+          // 4. Everything is clumped at 0,0 (invalid saved state).
+          const isExitingTimeline =
+            caller === "Timeline Toggle" && !graph.timelineMode;
+          const randomize =
+            hasNewNodes ||
+            (isInitial && !graph.stableLayout) ||
+            isExitingTimeline ||
+            isClumpedAtOrigin;
+
+          console.log(
+            `[GraphView][${getElapsed()}] FCOSE Layout check: nodes=${nodes.length}, hasNewNodes=${hasNewNodes}, clumped=${isClumpedAtOrigin}, stable=${graph.stableLayout}, randomize=${randomize}, caller=${caller}`,
           );
 
-          if (graph.stableLayout && !isInitial && !isForced && !hasNewNodes) {
-            // Note: Since elements are already passed via cy.add() and their positions
-            // are synced in the $effect, we don't necessarily need to force positions here,
-            // but we can ensure they are locked.
+          // Bypass logic: Only skip the math solver if we are in stable mode
+          // and we already have positions for everything, AND it's not a broken clump or mode change.
+          if (
+            graph.stableLayout &&
+            !isForced &&
+            !hasNewNodes &&
+            !isExitingTimeline &&
+            !isClumpedAtOrigin
+          ) {
+            if (isInitial && currentCy) {
+              console.log(
+                `[GraphView][${getElapsed()}] Initial load bypass: fitting camera...`,
+              );
+              currentCy.resize();
+              currentCy.fit(currentCy.elements(), 100);
+            }
+            console.log(
+              `[GraphView][${getElapsed()}] Stable layout bypass COMPLETED`,
+            );
             isLayoutRunning = false;
             return;
           }
 
+          console.log(`[GraphView][${getElapsed()}] Starting FCOSE solver...`);
+
           currentLayout = currentCy.layout({
             ...DEFAULT_LAYOUT_OPTIONS,
             randomize,
-            animate: true,
-            animationDuration: DEFAULT_LAYOUT_OPTIONS.animationDuration,
-            animationEasing: "ease-out-quad",
-            // If randomize is false (e.g. toggling images), fcose will use the CURRENT visual positions as its starting point.
-            // This prevents the diagonal collapse because the nodes are already spread out correctly!
-            stop: () => {
-              if (isInitial && currentCy) {
-                currentCy.fit(currentCy.elements(), 40);
-              }
-              isLayoutRunning = false;
-
-              // SYNC: Update vault with new positions
-              if (!vault.isGuest && currentCy) {
-                const updates: Record<string, Partial<Entity>> = {};
-                currentCy.nodes().forEach((node) => {
-                  updates[node.id()] = {
-                    metadata: {
-                      ...(vault.entities[node.id()]?.metadata || {}),
-                      coordinates: node.position(),
-                    },
-                  };
-                });
-                if (Object.keys(updates).length > 0) {
-                  vault.batchUpdateEntities(updates as any);
-                }
-              }
-            },
+            animate: false, // Calculate math instantly for stability
+            fit: false, // We will handle fitting manually for better control
           });
+
+          currentLayout.one("layoutstop", () => {
+            console.log(
+              `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
+            );
+
+            currentCy.resize();
+            currentCy.animate({
+              fit: {
+                eles: currentCy.elements(),
+                padding: 100,
+              },
+              duration: 800,
+              easing: "ease-out-quad",
+              complete: () => {
+                console.log(
+                  `[GraphView][${getElapsed()}] Layout Animation COMPLETED`,
+                );
+                isLayoutRunning = false;
+              },
+            });
+
+            // SYNC: Update vault with new positions
+            if (!vault.isGuest && currentCy) {
+              const updates: Record<string, Partial<Entity>> = {};
+              currentCy.nodes().forEach((node) => {
+                updates[node.id()] = {
+                  metadata: {
+                    ...(vault.entities[node.id()]?.metadata || {}),
+                    coordinates: node.position(),
+                  },
+                };
+              });
+              if (Object.keys(updates).length > 0) {
+                vault.batchUpdateEntities(updates as any);
+              }
+            }
+          });
+
           currentLayout.run();
         } catch (err) {
           console.error("Layout failed:", err);
@@ -294,7 +402,7 @@
       )
         return;
       graph.toggleTimeline();
-      applyCurrentLayout();
+      applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (vault.isGuest) return;
@@ -345,6 +453,9 @@
         if (!container) return; // Guard against rapid unmounts
 
         try {
+          console.log(
+            `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
+          );
           const instance = (await initGraph({
             container,
             elements: untrack(() => graph.elements), // Initialize with current elements
@@ -513,6 +624,7 @@
 
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
+  let isFirstImageResolution = true;
 
   let lastStyle: any[] = [];
   $effect(() => {
@@ -550,25 +662,6 @@
     }
   });
 
-  $effect(() => {
-    const currentCy = cy;
-    const isTimelineMode = graph.timelineMode;
-    const _elements = graph.elements;
-    if (!currentCy) return;
-    currentCy.batch(() => {
-      currentCy.nodes().forEach((node) => {
-        const data = node.data() as GraphNode["data"];
-        const hasDate = hasTimelineDate({ group: "nodes", data });
-        if (isTimelineMode && !hasDate) {
-          node.addClass("timeline-hidden");
-        } else {
-          node.removeClass("timeline-hidden");
-        }
-      });
-    });
-  });
-
-  // Reactive effect to resolve node images
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
@@ -707,9 +800,28 @@
                 }
               });
 
-              // Re-run layout now that node dimensions are accurate
+              // Re-run layout now that node dimensions are accurate.
+              // If we are still in the initial loading phase, the main 500ms stabilization
+              // timeout will handle the layout anyway, so we don't need to trigger it here.
               setTimeout(() => {
-                if (cy && !cy.destroyed()) applyCurrentLayout(false, true);
+                if (cy && !cy.destroyed()) {
+                  // If this is the first time images are resolving (i.e. app startup),
+                  // we assume the saved coordinates already account for image sizes, so we skip layout.
+                  if (isFirstImageResolution) {
+                    isFirstImageResolution = false;
+                  } else {
+                    const isLoaded = untrack(() => initialLoaded);
+                    if (isLoaded) {
+                      // Respect stableLayout: only force if stability is OFF.
+                      // If stability is ON, bypass logic will snap camera but skip math.
+                      applyCurrentLayout(
+                        false,
+                        !graph.stableLayout,
+                        "Image Resolution",
+                      );
+                    }
+                  }
+                }
               }, 50);
             }
           } catch (error) {
@@ -744,7 +856,7 @@
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
         setTimeout(() => {
-          applyCurrentLayout(false);
+          applyCurrentLayout(false, false, "Mode Change");
         }, 0);
       });
     }
@@ -986,14 +1098,17 @@
             clearTimeout(stabilizationTimeout);
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
-                applyCurrentLayout(true, true);
+                // Pass isForced=false so the stableLayout bypass works!
+                applyCurrentLayout(true, false, "Initial Startup");
                 untrack(() => {
                   initialLoaded = true;
                 });
               }
-            }, 500); // 500ms window for more nodes to appear
+            }, 200); // 200ms window for more nodes to appear (was 500ms)
           } else {
-            applyCurrentLayout(false, true);
+            // Respect stableLayout here: if stable is ON, don't "force" a layout run
+            // which allows the bypass logic in applyCurrentLayout to do its job.
+            applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
         } else {
           // If no layout run, still might need focus update if elements were updated
@@ -1192,7 +1307,7 @@
       </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => applyCurrentLayout(true)}
+        onclick={() => applyCurrentLayout(true, true, "UI Redraw Button")}
         title="Redraw Layout"
         aria-label="Redraw Layout"
       >
