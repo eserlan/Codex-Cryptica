@@ -30,16 +30,16 @@
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
-  import { setCentralNode } from "graph-engine";
+  import { setCentralNode, getTimelineLayout } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
-  import { layoutService } from "$lib/services/layout";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
   let isLayoutRunning = $state(false);
+  let graphVisible = $state(false);
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list, graph.showImages),
@@ -136,12 +136,34 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
+  // Performance timing
+  const appStartTime = performance.now();
+  const getElapsed = () => (performance.now() - appStartTime).toFixed(2) + "ms";
+
   const applyCurrentLayout = async (
     isInitial = false,
-    allowMovement = false,
+    isForced = false,
+    caller = "unknown",
   ) => {
     const currentCy = cy;
-    if (!currentCy) return;
+    if (!currentCy) {
+      console.warn(
+        `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
+      );
+      return;
+    }
+
+    console.log(
+      `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
+    );
+
+    if (isLayoutRunning && !isInitial && !isForced) {
+      console.log(
+        `[GraphView][${getElapsed()}] applyCurrentLayout ABORTED (caller: ${caller}): isLayoutRunning is true!`,
+      );
+      return;
+    }
+
     if (currentLayout) {
       try {
         currentLayout.stop();
@@ -150,225 +172,259 @@
       }
     }
 
-    if (vault.isGuest) {
-      // For guests, we rely entirely on synced positions.
-      // Simply fit to view initially if needed.
-      if (isInitial) {
-        currentCy.fit(currentCy.elements(), 40);
-      }
-      isLayoutRunning = false;
-      return;
-    }
+    isLayoutRunning = true;
+    try {
+      currentCy.resize(); // Ensure container dimensions are up to date
 
-    if (graph.timelineMode) {
-      isLayoutRunning = true;
-      try {
-        const nodes = graph.elements.filter(
-          (e) => e.group === "nodes",
-        ) as any[];
+      // Ensure node visibility is correct BEFORE running any layout math
+      // This ensures fcose includes previously hidden nodes in the calculation.
+      currentCy.batch(() => {
+        currentCy.nodes().forEach((node) => {
+          const data = node.data() as GraphNode["data"];
+          const hasDate = hasTimelineDate({ group: "nodes", data });
+          if (graph.timelineMode && !hasDate) {
+            node.addClass("timeline-hidden");
+          } else {
+            node.removeClass("timeline-hidden");
+          }
+        });
+      });
 
-        const positions = await layoutService.runTimeline(
-          $state.snapshot(nodes),
-          {
-            axis: graph.timelineAxis,
-            scale: graph.timelineScale,
-            jitter: 150,
-          },
-        );
-
-        if (!cy || currentCy.destroyed()) return;
-
-        currentCy
-          .layout({
-            name: "preset",
-            positions: positions,
-            animate: true,
-            animationDuration: 500,
-            animationEasing: "ease-out-cubic",
-          })
-          .run();
-      } catch (err) {
-        console.error("Timeline layout failed:", err);
-      } finally {
+      if (vault.isGuest) {
+        // For guests, we rely entirely on synced positions.
+        // Simply fit to view initially if needed.
+        if (isInitial) {
+          currentCy.fit(currentCy.nodes(), 20);
+          graphVisible = true;
+        }
         isLayoutRunning = false;
+        return;
       }
-    } else if (graph.orbitMode && graph.centralNodeId) {
-      setCentralNode(currentCy, graph.centralNodeId);
-      if (isInitial) {
-        currentCy.resize();
-        currentCy.animate({
-          fit: { eles: currentCy.elements(), padding: 40 },
-          duration: 800,
-          easing: "ease-out-cubic",
-        });
-      }
-    } else {
-      // Background FCOSE Layout
-      isLayoutRunning = true;
-      try {
-        // Use live dimensions from Cytoscape if available, otherwise fallback to store
-        // This ensures the layout accounts for resolved image sizes
-        const snapshotElements = $state.snapshot(graph.elements);
-        let elements = snapshotElements;
 
-        if (currentCy) {
-          // Optimization: Create a map of node dimensions to avoid repetitive cy.$id() calls
-          // This reduces complexity from O(N*logN) to O(N) for dimension sync
-          const nodeDimensions = new Map<
-            string,
-            { width: number | undefined; height: number | undefined }
-          >();
+      if (graph.timelineMode) {
+        try {
+          const nodes = graph.elements.filter(
+            (e) => e.group === "nodes",
+          ) as any[];
 
-          currentCy.nodes().forEach((node) => {
-            const w = node.data("width");
-            const h = node.data("height");
-            if (w !== undefined || h !== undefined) {
-              nodeDimensions.set(node.id(), { width: w, height: h });
-            }
-          });
+          const positions = getTimelineLayout(
+            $state.snapshot(nodes),
+            $state.snapshot({
+              axis: graph.timelineAxis,
+              scale: graph.timelineScale,
+              jitter: 150,
+            }),
+          );
 
-          if (nodeDimensions.size > 0) {
-            elements = snapshotElements.map((el: any) => {
-              if (el.group === "nodes") {
-                const dims = nodeDimensions.get(el.data.id);
-                if (dims) {
-                  return {
-                    ...el,
-                    data: {
-                      ...el.data,
-                      width: dims.width ?? el.data.width,
-                      height: dims.height ?? el.data.height,
-                    },
-                  };
-                }
-              }
-              return el;
-            });
+          if (!cy || currentCy.destroyed()) {
+            isLayoutRunning = false;
+            return;
           }
-        }
 
-        const elementByNodeId = new Map<string, any>();
-        elements.forEach((el: any) => {
-          if (el.group === "nodes" && el.data?.id) {
-            if (!elementByNodeId.has(el.data.id)) {
-              elementByNodeId.set(el.data.id, el);
-            }
-          }
-        });
+          console.log(
+            "[GraphView] Timeline layout calculated positions for",
+            Object.keys(positions).length,
+            "nodes",
+          );
+          console.log(
+            "[GraphView] Sample Timeline positions:",
+            Object.entries(positions).slice(0, 3),
+          );
 
-        const fixedNodeConstraint =
-          graph.stableLayout && !isInitial && !allowMovement
-            ? elements
-                .filter((el: any) => el.group === "nodes" && el.position)
-                .map((el: any) => ({
-                  nodeId: el.data.id,
-                  position: el.position,
-                }))
-            : undefined;
+          const nodesToLayout = currentCy
+            .nodes()
+            .filter((n) => positions[n.id()] !== undefined);
 
-        // If in stable mode and not forced (isInitial), and we have no new nodes to place,
-        // and movement is not allowed (e.g. by showImages toggle),
-        // we can skip the layout engine entirely and just snap positions.
-        const hasNewNodes = elements.some(
-          (el: any) => el.group === "nodes" && !el.position,
-        );
-
-        if (
-          graph.stableLayout &&
-          !isInitial &&
-          !hasNewNodes &&
-          !allowMovement
-        ) {
-          // Just ensure all nodes are in sync with their metadata positions
-          currentCy.nodes().forEach((n) => {
-            const el = elementByNodeId.get(n.id());
-            if (el?.position) {
-              n.position(el.position);
-            }
-          });
-          isLayoutRunning = false;
-          return;
-        }
-
-        const positions = await layoutService.runFcose(elements, {
-          ...DEFAULT_LAYOUT_OPTIONS,
-          showImages: graph.showImages,
-          randomize: isInitial ? true : !graph.stableLayout,
-          fixedNodeConstraint,
-          animate: false, // Math only in worker
-        });
-
-        if (!cy || currentCy.destroyed()) return;
-
-        // Apply positions. In stable mode, we snap immediately to avoid layout jitter.
-        // If it's a forced layout (isInitial), we always animate for visual feedback.
-        if (graph.stableLayout && !isInitial) {
-          currentCy.nodes().forEach((n) => {
-            const pos = positions[n.id()];
-            if (pos) n.position(pos);
-          });
-        } else {
-          currentCy
+          graphVisible = true;
+          nodesToLayout
             .layout({
               name: "preset",
               positions: positions,
               animate: true,
-              animationDuration: DEFAULT_LAYOUT_OPTIONS.animationDuration,
-              animationEasing: "ease-out-quad",
+              animationDuration: 500,
+              animationEasing: "ease-out-cubic",
+              fit: true,
+              padding: 20,
               stop: () => {
-                if (isInitial && currentCy) {
-                  currentCy.fit(currentCy.elements(), 40);
-                }
+                console.log(
+                  `[GraphView][${getElapsed()}] Timeline layout COMPLETED`,
+                );
+                isLayoutRunning = false;
               },
             })
             .run();
+        } catch (err) {
+          console.error("Timeline layout failed:", err);
+          isLayoutRunning = false;
         }
-
-        // SYNC: Update vault with new positions
-        // We do this after the layout is calculated so guests get the data.
-        {
-          const updates: Record<string, Partial<Entity>> = {};
-          for (const [id, pos] of Object.entries(positions)) {
-            updates[id] = {
-              metadata: {
-                ...(vault.entities[id]?.metadata || {}),
-                coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
-              },
-            };
-          }
-          if (Object.keys(updates).length > 0) {
-            vault.batchUpdateEntities(updates as any);
-          }
-        }
-      } catch (err) {
-        console.error("Background layout failed:", err);
-        // Fallback to main thread
-        if (cy && !currentCy.destroyed()) {
-          currentLayout = currentCy.layout({
-            ...DEFAULT_LAYOUT_OPTIONS,
-            stop: () => {
-              // Sync fallback layout too
-              if (!vault.isGuest && currentCy) {
-                const updates: Record<string, Partial<Entity>> = {};
-                currentCy.nodes().forEach((node) => {
-                  updates[node.id()] = {
-                    metadata: {
-                      ...(vault.entities[node.id()]?.metadata || {}),
-                      coordinates: node.position(),
-                    },
-                  };
-                });
-                if (Object.keys(updates).length > 0) {
-                  vault.batchUpdateEntities(updates as any);
-                }
-              }
+      } else if (graph.orbitMode && graph.centralNodeId) {
+        setCentralNode(currentCy, graph.centralNodeId);
+        if (isInitial) {
+          currentCy.resize();
+          graphVisible = true;
+          currentCy.animate({
+            fit: { eles: currentCy.nodes(), padding: 20 },
+            duration: 800,
+            easing: "ease-out-cubic",
+            complete: () => {
+              console.log(
+                `[GraphView][${getElapsed()}] Orbit animation COMPLETED`,
+              );
+              isLayoutRunning = false;
             },
           });
-          currentLayout.run();
+        } else {
+          isLayoutRunning = false;
         }
-      } finally {
-        isLayoutRunning = false;
+      } else {
+        // Main-thread FCOSE Layout
+        try {
+          const nodes = currentCy.nodes();
+          const snapshotNodes = graph.elements.filter(
+            (el) => el.group === "nodes",
+          );
+          const hasNewNodes = snapshotNodes.some((el: any) => !el.position);
+
+          // Heuristic: If multiple nodes exist and ALL of them are at 0,0, they are clumped/broken.
+          const nodesAtOrigin = snapshotNodes.filter(
+            (el: any) =>
+              el.position && el.position.x === 0 && el.position.y === 0,
+          ).length;
+          const isClumpedAtOrigin =
+            snapshotNodes.length > 1 && nodesAtOrigin === snapshotNodes.length;
+
+          // Force randomization if:
+          // 1. We have brand new nodes.
+          // 2. Initial load and stability is OFF.
+          // 3. We are coming OUT of timeline mode.
+          // 4. Everything is clumped at 0,0 (invalid saved state).
+          const isExitingTimeline =
+            caller === "Timeline Toggle" && !graph.timelineMode;
+          const randomize =
+            hasNewNodes ||
+            (isInitial && !graph.stableLayout) ||
+            isExitingTimeline ||
+            isClumpedAtOrigin;
+
+          console.log(
+            `[GraphView][${getElapsed()}] FCOSE Layout check: nodes=${nodes.length}, hasNewNodes=${hasNewNodes}, clumped=${isClumpedAtOrigin}, stable=${graph.stableLayout}, randomize=${randomize}, caller=${caller}`,
+          );
+
+          // Bypass logic: Only skip the math solver if we are in stable mode
+          // and we already have positions for everything, AND it's not a broken clump or mode change.
+          if (
+            graph.stableLayout &&
+            !isForced &&
+            !hasNewNodes &&
+            !isExitingTimeline &&
+            !isClumpedAtOrigin
+          ) {
+            if (isInitial && currentCy) {
+              currentCy.resize();
+              currentCy.fit(currentCy.elements(), 20);
+              graphVisible = true;
+              // Adaptive: Unlock image layouts after a short grace period on bypass
+              setTimeout(() => {
+                layoutReady = true;
+              }, 1000);
+            }
+
+            // If we are already loaded and just updated images in stable mode,
+            // we don't even want to fit/snap the camera. Just stay perfectly still.
+            isLayoutRunning = false;
+            return;
+          }
+
+          console.log(`[GraphView][${getElapsed()}] Starting FCOSE solver...`);
+
+          const width = currentCy.width();
+          const height = currentCy.height();
+          const ar = width / height;
+          const isLandscape = ar > 1.2;
+
+          currentLayout = currentCy.layout({
+            ...DEFAULT_LAYOUT_OPTIONS,
+            // VIEWPORT SEEDING
+            boundingBox: { x1: 0, y1: 0, x2: width, y2: height },
+
+            // ANISOTROPIC ADAPTIVE PHYSICS
+            // We drastically differentiate landscape vs portrait to "reward" the available axis.
+            gravity: isLandscape ? 0.1 : 0.8,
+            idealEdgeLength: isLandscape ? 140 : 60,
+            nodeRepulsion: isLandscape
+              ? Math.min(45000, 5000 + snapshotNodes.length * 150)
+              : Math.min(20000, 3000 + snapshotNodes.length * 50),
+            nodeSeparation: isLandscape ? 150 : 60,
+
+            randomize,
+            animate: false, // Calculate math instantly for stability
+            fit: false, // We will handle fitting manually for better control
+          } as any);
+
+          const layout = currentLayout;
+          layout.one("layoutstop", () => {
+            if (currentLayout !== layout || currentCy.destroyed()) return;
+
+            console.log(
+              `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
+            );
+
+            currentCy.resize();
+            graphVisible = true;
+            currentCy.animate({
+              fit: {
+                eles: currentCy.elements(),
+                padding: 20,
+              },
+              duration: 800,
+              easing: "ease-out-quad",
+              complete: () => {
+                console.log(
+                  `[GraphView][${getElapsed()}] Layout Animation COMPLETED`,
+                );
+                isLayoutRunning = false;
+                // Adaptive: Unlock image layouts once the initial burst is finished
+                if (isInitial) {
+                  setTimeout(() => {
+                    layoutReady = true;
+                  }, 1000);
+                }
+              },
+            });
+
+            // SYNC: Update vault with new positions
+            if (!vault.isGuest && currentCy) {
+              const updates: Record<string, Partial<Entity>> = {};
+              currentCy.nodes().forEach((node) => {
+                const pos = node.position();
+                updates[node.id()] = {
+                  metadata: {
+                    ...(vault.entities[node.id()]?.metadata || {}),
+                    coordinates: {
+                      x: Math.round(pos.x),
+                      y: Math.round(pos.y),
+                    },
+                  },
+                };
+              });
+              if (Object.keys(updates).length > 0) {
+                vault.batchUpdateEntities(updates as any);
+              }
+            }
+          });
+
+          currentLayout.run();
+        } catch (err) {
+          console.error("Layout failed:", err);
+          isLayoutRunning = false;
+        }
       }
+    } catch (error) {
+      console.error(
+        "[GraphView] Unexpected error in applyCurrentLayout:",
+        error,
+      );
+      isLayoutRunning = false;
     }
   };
 
@@ -390,7 +446,7 @@
       )
         return;
       graph.toggleTimeline();
-      applyCurrentLayout();
+      applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (vault.isGuest) return;
@@ -441,6 +497,9 @@
         if (!container) return; // Guard against rapid unmounts
 
         try {
+          console.log(
+            `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
+          );
           const instance = (await initGraph({
             container,
             elements: untrack(() => graph.elements), // Initialize with current elements
@@ -593,22 +652,31 @@
         // Ignore
       }
     }
-    if (cy) {
-      cy.destroy();
-      cy = undefined;
-    }
     if (initTimer) {
       clearTimeout(initTimer);
       initTimer = null;
     }
-    if (import.meta.env.DEV) {
-      delete (window as any).cy;
+    if (cy) {
+      // Cleanup blob URLs to prevent memory leaks
+      cy.nodes("[resolvedImage]").forEach((node) => {
+        const url = node.data("resolvedImage");
+        if (url && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
+      if (import.meta.env.DEV) {
+        delete (window as any).cy;
+      }
+      cy.destroy();
+      cy = undefined;
     }
     clearTimeout(hoverTimeout);
   });
 
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
+  let layoutReady = $state(false);
 
   let lastStyle: any[] = [];
   $effect(() => {
@@ -671,151 +739,185 @@
 
   $effect(() => {
     const currentCy = cy;
-    const isTimelineMode = graph.timelineMode;
-    const _elements = graph.elements;
-    if (!currentCy) return;
-    currentCy.batch(() => {
-      currentCy.nodes().forEach((node) => {
-        const data = node.data() as GraphNode["data"];
-        const hasDate = hasTimelineDate({ group: "nodes", data });
-        if (isTimelineMode && !hasDate) {
-          node.addClass("timeline-hidden");
-        } else {
-          node.removeClass("timeline-hidden");
-        }
-      });
-    });
-  });
-
-  // Reactive effect to resolve node images
-  $effect(() => {
-    const currentCy = cy;
     if (currentCy && graph.elements) {
-      const currentElements = graph.elements;
-      const timeout = setTimeout(async () => {
-        try {
-          // Optimization: Pre-calculate resolved images map for O(1) lookups
-          const resolvedImages = new Map<string, string>();
-          if (currentCy) {
-            currentCy.nodes("[resolvedImage]").forEach((node) => {
-              const resolvedImagePath = node.data("resolvedImagePath");
-              if (typeof resolvedImagePath === "string") {
-                resolvedImages.set(node.id(), resolvedImagePath);
-              }
-            });
-          }
-
-          const nodesToResolve = currentElements.filter((el): el is any => {
-            if (el.group !== "nodes") return false;
-            const imagePath = el.data.thumbnail || el.data.image;
-            if (!imagePath) return false;
-
-            // Check if already resolved in Cytoscape
-            const resolvedPath = resolvedImages.get(el.data.id);
-            if (resolvedPath === imagePath) {
-              return false;
+      if (graph.showImages) {
+        const currentElements = graph.elements;
+        const timeout = setTimeout(async () => {
+          try {
+            // Optimization: Pre-calculate resolved images map for O(1) lookups
+            const resolvedImages = new Map<string, string>();
+            if (currentCy) {
+              currentCy.nodes("[resolvedImage]").forEach((node) => {
+                const resolvedImagePath = node.data("resolvedImagePath");
+                if (typeof resolvedImagePath === "string") {
+                  resolvedImages.set(node.id(), resolvedImagePath);
+                }
+              });
             }
-            return true;
-          });
 
-          // CHUNK_SIZE processing
-          const CHUNK_SIZE = 20;
-          let hasUpdates = false;
-          for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
-            const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
-            await Promise.all(
-              chunk.map(async (el) => {
-                const data = el.data as any;
-                const imagePath = data.thumbnail || data.image;
-                if (!imagePath) return;
+            const nodesToResolve = currentElements.filter((el): el is any => {
+              if (el.group !== "nodes") return false;
+              const imagePath = el.data.thumbnail || el.data.image;
+              if (!imagePath) return false;
 
-                const resolvedUrl = await vault.resolveImageUrl(imagePath);
+              // Check if already resolved in Cytoscape
+              const resolvedPath = resolvedImages.get(el.data.id);
+              if (resolvedPath === imagePath) {
+                return false;
+              }
+              return true;
+            });
 
-                if (resolvedUrl && currentCy) {
+            // Process images concurrently in chunks to not overwhelm network/memory,
+            // but collect results to update Cytoscape all at once for an instant visual change.
+            const updatesToApply: Array<{
+              id: string;
+              imagePath: string;
+              resolvedUrl: string;
+              w: number;
+              h: number;
+            }> = [];
+
+            const CHUNK_SIZE = 20;
+            for (let i = 0; i < nodesToResolve.length; i += CHUNK_SIZE) {
+              const chunk = nodesToResolve.slice(i, i + CHUNK_SIZE);
+              await Promise.all(
+                chunk.map(async (el) => {
+                  const data = el.data as any;
+                  const imagePath = data.thumbnail || data.image;
+                  if (!imagePath) return;
+
+                  const resolvedUrl = await vault.resolveImageUrl(imagePath);
+
+                  if (resolvedUrl) {
+                    let w = data.width;
+                    let h = data.height;
+
+                    if (!w || !h) {
+                      // Detect image dimensions only if missing
+                      const img = new Image();
+                      img.crossOrigin = "anonymous";
+                      img.src = resolvedUrl;
+                      await new Promise((resolve) => {
+                        img.onload = resolve;
+                        img.onerror = resolve; // Continue even if image fails to load
+                      });
+
+                      w = img.naturalWidth || 100;
+                      h = img.naturalHeight || 100;
+                    }
+
+                    // Calculate scaled dimensions (max aspect 2.0, max size 64)
+                    const maxDim = 64;
+                    const ratio = w / h;
+
+                    if (w > h) {
+                      w = maxDim;
+                      h = maxDim / ratio;
+                    } else {
+                      h = maxDim;
+                      w = maxDim * ratio;
+                    }
+
+                    // Hard constraints to prevent extreme boxes
+                    if (w / h > 2.5) {
+                      w = h * 2.5;
+                    }
+                    if (h / w > 2.5) {
+                      h = w * 2.5;
+                    }
+
+                    updatesToApply.push({
+                      id: data.id,
+                      imagePath,
+                      resolvedUrl,
+                      w: Math.round(w),
+                      h: Math.round(h),
+                    });
+                  }
+                }),
+              );
+            }
+
+            if (
+              updatesToApply.length > 0 &&
+              currentCy &&
+              !currentCy.destroyed()
+            ) {
+              currentCy.batch(() => {
+                for (const update of updatesToApply) {
                   // Race condition guard: verify the node still exists and
                   // its image path hasn't changed while we were resolving
-                  const node = currentCy.$id(data.id);
-                  if (node.length === 0) return;
+                  const node = currentCy.$id(update.id);
+                  if (node.length === 0) continue;
+
                   const currentNodeData = node.data();
                   const currentPath =
                     currentNodeData.thumbnail || currentNodeData.image;
-                  if (currentPath !== imagePath) return;
+                  if (currentPath !== update.imagePath) continue;
 
-                  let w = data.width;
-                  let h = data.height;
-
-                  if (!w || !h) {
-                    // Detect image dimensions only if missing
-                    const img = new Image();
-                    img.crossOrigin = "anonymous";
-                    img.src = resolvedUrl;
-                    await new Promise((resolve) => {
-                      img.onload = resolve;
-                      img.onerror = resolve; // Continue even if image fails to load
-                    });
-
-                    w = img.naturalWidth || 100;
-                    h = img.naturalHeight || 100;
+                  // Revoke previous blob URL to prevent memory leaks
+                  const oldUrl = node.data("resolvedImage");
+                  if (
+                    oldUrl &&
+                    oldUrl.startsWith("blob:") &&
+                    oldUrl !== update.resolvedUrl
+                  ) {
+                    URL.revokeObjectURL(oldUrl);
                   }
 
-                  // Calculate scaled dimensions (max aspect 2.0, max size 64)
-                  const maxDim = 64;
-                  const ratio = w / h;
-
-                  if (w > h) {
-                    w = maxDim;
-                    h = maxDim / ratio;
-                  } else {
-                    h = maxDim;
-                    w = maxDim * ratio;
-                  }
-
-                  // Hard constraints to prevent extreme boxes
-                  if (w / h > 2.5) {
-                    w = h * 2.5;
-                  }
-                  if (h / w > 2.5) {
-                    h = w * 2.5;
-                  }
-
-                  currentCy.batch(() => {
-                    // Revoke previous blob URL to prevent memory leaks
-                    const oldUrl = node.data("resolvedImage");
-                    if (
-                      oldUrl &&
-                      oldUrl.startsWith("blob:") &&
-                      oldUrl !== resolvedUrl
-                    ) {
-                      URL.revokeObjectURL(oldUrl);
-                    }
-
-                    node.data({
-                      resolvedImage: resolvedUrl,
-                      resolvedImagePath: imagePath,
-                      width: Math.round(w),
-                      height: Math.round(h),
-                    });
-                    hasUpdates = true;
+                  node.data({
+                    resolvedImage: update.resolvedUrl,
+                    resolvedImagePath: update.imagePath,
+                    width: update.w,
+                    height: update.h,
                   });
                 }
-              }),
-            );
-          }
+              });
 
-          if (hasUpdates && cy && !cy.destroyed()) {
-            // Re-run layout now that node dimensions are accurate
-            // Use a slight delay to allow batching if multiple chunks finish close together
-            setTimeout(() => {
-              if (cy && !cy.destroyed())
-                applyCurrentLayout(false, graph.showImages);
-            }, 200);
-          }
-        } catch (error) {
-          console.error("Failed to resolve node images", error);
-        }
-      }, 100); // 100ms debounce
+              // Re-run layout now that node dimensions are accurate.
+              // If we are still in the initial loading phase, the main 200ms stabilization
+              // timeout will handle the layout anyway, so we don't need to trigger it here.
+              setTimeout(() => {
+                if (cy && !cy.destroyed()) {
+                  // ADAPTIVE GUARD: We suppress image-triggered layouts until the initial
+                  // "burst" or "bypass" has fully settled (layoutReady).
+                  if (!layoutReady) {
+                    console.log(
+                      `[GraphView][${getElapsed()}] Image resolution suppressed (Initial Stabilizing).`,
+                    );
+                    return;
+                  }
 
-      return () => clearTimeout(timeout);
+                  const isLoaded = untrack(() => initialLoaded);
+                  if (isLoaded) {
+                    // Respect stableLayout: only force if stability is OFF.
+                    // If stability is ON, bypass logic will snap camera but skip math.
+                    applyCurrentLayout(
+                      false,
+                      !graph.stableLayout,
+                      "Image Resolution",
+                    );
+                  }
+                }
+              }, 50);
+            }
+          } catch (error) {
+            console.error("Failed to resolve node images", error);
+          }
+        }, 100); // 100ms debounce
+
+        return () => clearTimeout(timeout);
+      } else {
+        // If images are toggled OFF, cleanup any existing blob URLs
+        currentCy.nodes("[resolvedImage]").forEach((node) => {
+          const url = node.data("resolvedImage");
+          if (url && url.startsWith("blob:")) {
+            URL.revokeObjectURL(url);
+          }
+          node.removeData("resolvedImage resolvedImagePath width height");
+        });
+      }
     }
   });
 
@@ -832,7 +934,7 @@
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
         setTimeout(() => {
-          applyCurrentLayout(false, false);
+          applyCurrentLayout(false, false, "Mode Change");
         }, 0);
       });
     }
@@ -873,7 +975,7 @@
         currentCy.animate({
           fit: {
             eles: currentCy.elements(),
-            padding: 50,
+            padding: 20,
           },
           duration: 800,
           easing: "ease-out-cubic",
@@ -1062,6 +1164,7 @@
 
         let shouldRunLayout =
           structuralChange || isFirstElements || showImagesChanged;
+
         if (graph.stableLayout && !isFirstElements && !showImagesChanged) {
           // Run layout for new nodes or to fill gaps from removals
           shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
@@ -1073,14 +1176,17 @@
             clearTimeout(stabilizationTimeout);
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
-                applyCurrentLayout(true, showImagesChanged);
+                // Pass isForced=false so the stableLayout bypass works!
+                applyCurrentLayout(true, false, "Initial Startup");
                 untrack(() => {
                   initialLoaded = true;
                 });
               }
-            }, 500); // 500ms window for more nodes to appear
+            }, 50); // Reduced from 200ms for faster local-first startup
           } else {
-            applyCurrentLayout(false, showImagesChanged);
+            // Respect stableLayout here: if stable is ON, don't "force" a layout run
+            // which allows the bypass logic in applyCurrentLayout to do its job.
+            applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
         } else {
           // If no layout run, still might need focus update if elements were updated
@@ -1287,7 +1393,7 @@
       </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => applyCurrentLayout(true)}
+        onclick={() => applyCurrentLayout(false, true, "UI Redraw Button")}
         title="Redraw Layout"
         aria-label="Redraw Layout"
       >
@@ -1369,7 +1475,9 @@
 
   <!-- Graph Canvas -->
   <div
-    class="absolute inset-0 z-10 w-full h-full"
+    class="absolute inset-0 z-10 w-full h-full opacity-0 transition-opacity duration-500 {graphVisible
+      ? 'opacity-100'
+      : 'opacity-0'}"
     bind:this={container}
     data-testid="graph-canvas"
   ></div>

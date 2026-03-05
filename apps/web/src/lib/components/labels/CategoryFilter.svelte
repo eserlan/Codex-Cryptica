@@ -73,7 +73,9 @@
       >
         <span
           class="{getIconClass(cat.icon)} w-3.5 h-3.5"
-          style={activeCategories.has(cat.id) ? undefined : `color: ${cat.color}`}
+          style={activeCategories.has(cat.id)
+            ? undefined
+            : `color: ${cat.color}`}
         ></span>
       </button>
     {/each}

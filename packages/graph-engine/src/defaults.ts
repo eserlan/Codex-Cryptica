@@ -4,17 +4,15 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   animationDuration: 800,
   quality: "default",
   randomize: true,
-  packComponents: true,
+  packComponents: false, // Disable tiling to allow gravity to pull islands closer
   nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: 450000, // Keep strong repulsion to prevent overlap
-  idealEdgeLength: 140, // More compact (was 175)
-  nodeSeparation: 80, // More compact (was 125)
-  gravity: 0.1,
+  nodeRepulsion: 25000, // Base maximum repulsion
+  idealEdgeLength: 80,
+  nodeSeparation: 100,
+  gravity: 0.5,
   gravityRange: 3.8,
-  numIter: 3500,
-  tile: true,
-  tilingPaddingVertical: 100,
-  tilingPaddingHorizontal: 100,
+  numIter: 3500, // Reverted for better complex graph quality
+  tile: false,
 };
 
 export const CONNECTION_COLORS = {

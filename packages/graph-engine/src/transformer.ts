@@ -207,6 +207,17 @@ export const getGraphStyle = (
   ];
 
   if (showImages) {
+    // PREDICTIVE SIZING: If a node HAS an image but it isn't resolved yet,
+    // give it a 64x64 placeholder size. This ensures the initial FCOSE layout
+    // leaves enough room for the image before it actually loads!
+    baseStyle.push({
+      selector: "node[image], node[thumbnail]",
+      style: {
+        width: 64,
+        height: 64,
+      },
+    });
+
     baseStyle.push({
       selector: "node[resolvedImage][width][height]",
       style: {
