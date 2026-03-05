@@ -102,6 +102,11 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     await page.getByPlaceholder("Add label...").press("Enter");
     await page.waitForTimeout(500);
 
+    await page.waitForTimeout(500);
+
+    // Ensure all dropdowns are closed before starting
+    await page.mouse.click(1, 1);
+
     // 2. Open Filter and select tag1
     await page.getByRole("button", { name: /Labels \(/ }).click();
     await page.waitForTimeout(500);
