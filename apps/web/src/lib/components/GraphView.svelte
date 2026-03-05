@@ -39,6 +39,7 @@
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
   let isLayoutRunning = $state(false);
+  let showMinimap = $state(false);
   let graphVisible = $state(false);
 
   let graphStyle = $derived([
@@ -1301,6 +1302,14 @@
     {/if}
 
     <div class="pointer-events-auto">
+      <CategoryFilter
+        activeCategories={graph.activeCategories}
+        onToggle={(id) => graph.toggleCategoryFilter(id)}
+        onClear={() => graph.clearCategoryFilters()}
+      />
+    </div>
+
+    <div class="pointer-events-auto">
       <LabelFilter
         activeLabels={graph.activeLabels}
         filterMode={graph.labelFilterMode}
@@ -1309,18 +1318,7 @@
         onClear={() => graph.clearLabelFilters()}
       />
     </div>
-
-    <div class="pointer-events-auto">
-      <CategoryFilter
-        activeCategories={graph.activeCategories}
-        onToggle={(id) => graph.toggleCategoryFilter(id)}
-        onClear={() => graph.clearCategoryFilters()}
-      />
-    </div>
-    <!-- Real Mini-map -->
-    {#if cy}
-      <Minimap {cy} absolute={false} width={192} height={128} />
-    {/if}
+    <!-- Mini-map moved to bottom controls -->
 
     {#if graph.timelineMode}
       <div
@@ -1357,7 +1355,33 @@
 
   <!-- Zoom Controls (Bottom Left) -->
   <div class="absolute bottom-6 left-6 z-20 flex flex-col gap-2 items-start">
+    {#if cy}
+      <div class="relative">
+        <Minimap
+          {cy}
+          absolute={false}
+          width={192}
+          height={128}
+          isExpanded={showMinimap}
+        />
+      </div>
+    {/if}
+
     <div class="flex gap-1 items-center">
+      <button
+        class="w-8 h-8 flex items-center justify-center border transition {showMinimap
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => (showMinimap = !showMinimap)}
+        title="Toggle Minimap"
+        aria-label="Toggle Minimap"
+        aria-pressed={showMinimap}
+      >
+        <span class="icon-[lucide--map] w-4 h-4"></span>
+      </button>
+
+      <div class="h-6 w-px bg-theme-border/30 mx-1"></div>
+
       <TimelineControls onApply={applyCurrentLayout} />
       <div class="h-6 w-px bg-theme-border/30 mx-2"></div>
       <button
@@ -1568,30 +1592,41 @@
   <!-- Selection Actions -->
   {#if selectionCount >= 2 && !connectMode}
     <div
-      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto"
-      transition:fly={{ y: -20, duration: 200 }}
+      class="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto
+        {ui.isMobile ? 'bottom-24' : 'top-20'}"
+      transition:fly={{ y: ui.isMobile ? 20 : -20, duration: 200 }}
     >
       <div class="flex gap-2">
         <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-1.5 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2"
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2
+            {ui.isMobile ? 'h-10 px-5' : 'py-1.5'}"
           onclick={() =>
             ui.openBulkLabelDialog(
               cy?.$("node:selected").map((n) => n.id()) || [],
             )}
         >
-          <span class="icon-[lucide--layers] w-3 h-3"></span>
+          <span
+            class="icon-[lucide--layers] {ui.isMobile ? 'w-4 h-4' : 'w-3 h-3'}"
+          ></span>
           Label ({selectionCount})
         </button>
         <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-1.5 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2"
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2
+            {ui.isMobile ? 'h-10 px-5' : 'py-1.5'}"
           onclick={() =>
             ui.openMergeDialog(cy?.$("node:selected").map((n) => n.id()) || [])}
         >
-          <span class="icon-[lucide--git-merge] w-3 h-3"></span>
+          <span
+            class="icon-[lucide--git-merge] {ui.isMobile
+              ? 'w-4 h-4'
+              : 'w-3 h-3'}"
+          ></span>
           Merge
         </button>
       </div>
-      <FeatureHint hintId="node-merging" />
+      {#if !ui.isMobile}
+        <FeatureHint hintId="node-merging" />
+      {/if}
     </div>
   {/if}
 

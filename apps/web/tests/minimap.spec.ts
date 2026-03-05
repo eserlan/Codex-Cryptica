@@ -24,21 +24,35 @@ test.describe("Minimap Navigation", () => {
       setInterval(applyMocks, 100);
     });
 
-    await page.goto("/");
+    await page.goto("http://localhost:5173/");
     // Wait for app load
     await expect(
       page.getByRole("heading", { name: "Codex Cryptica" }),
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test("should render the minimap container and canvas", async ({ page }) => {
+  test("should toggle minimap using the dedicated button", async ({ page }) => {
+    const toggleBtn = page.getByRole("button", { name: "Toggle Minimap" });
     const minimap = page.locator(".minimap-container");
-    await expect(minimap).toBeVisible();
 
-    // Expand to see canvas
-    await minimap.click();
+    // Initially hidden
+    await expect(minimap).toHaveCSS("opacity", "0");
+
+    // Click to expand
+    await toggleBtn.click();
+    await expect(minimap).toHaveCSS("opacity", "1");
     await expect(minimap).not.toHaveClass(/collapsed/);
 
+    // Click to collapse
+    await toggleBtn.click();
+    await expect(minimap).toHaveCSS("opacity", "0");
+  });
+
+  test("should render the minimap canvas when expanded", async ({ page }) => {
+    const toggleBtn = page.getByRole("button", { name: "Toggle Minimap" });
+    await toggleBtn.click();
+
+    const minimap = page.locator(".minimap-container");
     const canvas = minimap.locator("canvas");
     await expect(canvas).toBeVisible();
 
@@ -48,12 +62,10 @@ test.describe("Minimap Navigation", () => {
   });
 
   test("should pan graph when dragging viewport rect", async ({ page }) => {
-    const minimap = page.locator(".minimap-container");
-    // Expand
-    await minimap.click();
-    await expect(minimap).not.toHaveClass(/collapsed/);
+    const toggleBtn = page.getByRole("button", { name: "Toggle Minimap" });
+    await toggleBtn.click();
 
-    // 1. Get initial position of viewport rect
+    const minimap = page.locator(".minimap-container");
     const viewportRect = minimap.locator(".viewport-rect");
     await expect(viewportRect).toBeVisible();
 
@@ -72,10 +84,6 @@ test.describe("Minimap Navigation", () => {
     // Allow RAF loop to catch up
     await page.waitForTimeout(100);
 
-    // 3. Verify it moved (since graph syncs back, if graph panned, rect should be in new pos)
-    // Note: The graph pan is async, but our test runs fast. We might need to wait for update.
-    // The component uses RAF, so it should be within a frame or two.
-
     await expect
       .poll(
         async () => {
@@ -90,18 +98,13 @@ test.describe("Minimap Navigation", () => {
   test("should center graph when clicking minimap background", async ({
     page,
   }) => {
-    const minimap = page.locator(".minimap-container");
-    // Expand
-    await minimap.click();
+    const toggleBtn = page.getByRole("button", { name: "Toggle Minimap" });
+    await toggleBtn.click();
 
-    // 1. Get initial viewport rect position
+    const minimap = page.locator(".minimap-container");
     const viewportRect = page.locator(".viewport-rect");
     const boxBefore = await viewportRect.boundingBox();
     if (!boxBefore) throw new Error("Viewport rect not found");
-
-    // 2. Click somewhere else in the minimap (e.g. top-left corner)
-    const minimapBox = await minimap.boundingBox();
-    if (!minimapBox) throw new Error("Minimap not found");
 
     // Click at 10,10 inside minimap (likely outside the center viewport)
     await minimap.click({ position: { x: 10, y: 10 } });
@@ -116,25 +119,5 @@ test.describe("Minimap Navigation", () => {
         { timeout: 2000 },
       )
       .not.toBeCloseTo(boxBefore.x, 0);
-  });
-
-  test("should toggle minimap visibility", async ({ page }) => {
-    const minimap = page.locator(".minimap-container");
-
-    // Initially collapsed
-    await expect(minimap).toHaveClass(/collapsed/);
-
-    // Click to expand
-    await minimap.click();
-    await expect(minimap).not.toHaveClass(/collapsed/);
-
-    // Hover to show toggle button
-    await minimap.hover();
-    const toggleBtn = minimap.locator(".toggle-btn");
-    await expect(toggleBtn).toBeVisible();
-
-    // Click toggle to collapse
-    await toggleBtn.click();
-    await expect(minimap).toHaveClass(/collapsed/);
   });
 });

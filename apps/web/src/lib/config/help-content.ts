@@ -125,10 +125,10 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "node-merging": {
     id: "node-merging",
-    title: "Combine or Connect",
+    title: "Multi-Selection Actions",
     content:
-      "Right-click selected items to merge duplicates or create a new link between them.",
-    icon: "icon-[lucide--git-merge]",
+      "Use the toolbar to quickly Apply Labels to multiple items or Merge duplicates into a single entry.",
+    icon: "icon-[lucide--layers]",
   },
   "fog-of-war": {
     id: "fog-of-war",

@@ -3,7 +3,7 @@
   import { ui } from "$lib/stores/ui.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { fade } from "svelte/transition";
+  import { fade, fly } from "svelte/transition";
 
   let {
     isOpen = false,
@@ -26,8 +26,6 @@
   let sharedLabels = $derived.by(() => {
     if (entityIds.length === 0) return [];
 
-    // Optimization: Start with the labels of the first entity and intersect with others.
-    // This is more efficient than mapping everything to sets first.
     const firstId = entityIds[0];
     const firstEntityLabels = vault.entities[firstId]?.labels ?? [];
     if (firstEntityLabels.length === 0) return [];
@@ -75,7 +73,6 @@
   let allSuggestions = $derived.by(() => {
     const query = applyInput.trim().toLowerCase();
     if (query) return applySuggestions;
-    // Show recent labels if input is empty
     return graph.recentLabels;
   });
 
@@ -89,7 +86,6 @@
   };
 
   $effect(() => {
-    // Reset when dialog reopens
     if (isOpen) {
       applyInput = "";
       applySelectedIndex = -1;
@@ -101,10 +97,7 @@
   const handleApplyKeydown = async (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      const label =
-        applySelectedIndex >= 0 && applySelectedIndex < allSuggestions.length
-          ? allSuggestions[applySelectedIndex]
-          : applyInput.trim();
+      const label = applyInput.trim();
       if (label) await applyLabel(label);
     } else if (
       e.key === "Tab" &&
@@ -116,7 +109,9 @@
         applySelectedIndex >= 0 && applySelectedIndex < allSuggestions.length
           ? allSuggestions[applySelectedIndex]
           : allSuggestions[0];
-      await applyLabel(label);
+      applyInput = label;
+      showApplySuggestions = false;
+      applySelectedIndex = -1;
     } else if (e.key === "ArrowDown") {
       if (allSuggestions.length > 0) {
         e.preventDefault();
@@ -144,14 +139,10 @@
     try {
       const finalLabel = label.trim().toLowerCase();
       const count = await vault.bulkAddLabel(entityIds, finalLabel);
-
-      // Save to recent labels
       await graph.addRecentLabel(finalLabel);
-
       applyInput = "";
       applySelectedIndex = -1;
       showApplySuggestions = false;
-
       ui.notify(
         `Label "${finalLabel}" applied to ${count} ${themeStore.resolveJargon("entity", count)}.`,
         "success",
@@ -190,31 +181,34 @@
     )}"
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
     onkeydown={handleKeydown}
+    transition:fade={{ duration: 200 }}
   >
     <div
-      class="w-full max-w-md bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col"
+      class="w-full max-w-md bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col overflow-hidden
+        {ui.isMobile ? 'max-h-[90vh]' : 'max-h-[80vh]'}"
+      transition:fly={{ y: 20, duration: 300 }}
     >
       <!-- Header -->
       <div
-        class="p-6 border-b border-theme-border flex justify-between items-center"
+        class="p-4 md:p-6 border-b border-theme-border flex justify-between items-center"
       >
-        <h2 class="text-xl font-bold text-theme-text">
+        <h2 class="text-lg md:text-xl font-bold text-theme-text">
           Label {entityIds.length}
           {themeStore.resolveJargon("entity", entityIds.length)}
         </h2>
         <button
           onclick={onClose}
-          class="text-theme-muted hover:text-theme-text"
+          class="text-theme-muted hover:text-theme-text p-1"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span class="icon-[lucide--x] w-5 h-5 md:w-6 md:h-6"></span>
         </button>
       </div>
 
       <!-- Tabs -->
       <div class="flex border-b border-theme-border">
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors {activeTab ===
+          class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'apply'
             ? 'text-theme-primary border-b-2 border-theme-primary'
             : 'text-theme-muted hover:text-theme-text'}"
@@ -223,7 +217,7 @@
           Apply Label
         </button>
         <button
-          class="flex-1 py-2 text-sm font-medium transition-colors {activeTab ===
+          class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'remove'
             ? 'text-theme-primary border-b-2 border-theme-primary'
             : 'text-theme-muted hover:text-theme-text'}"
@@ -234,11 +228,11 @@
       </div>
 
       <!-- Body -->
-      <div class="p-6 space-y-4">
+      <div class="p-4 md:p-6 space-y-4 overflow-y-auto">
         {#if activeTab === "apply"}
-          <p class="text-sm text-theme-muted">
+          <p class="text-xs md:text-sm text-theme-muted">
             Type a label name and press <kbd
-              class="px-1 py-0.5 bg-theme-bg border border-theme-border rounded text-xs font-mono"
+              class="px-1 py-0.5 bg-theme-bg border border-theme-border rounded text-[10px] font-mono"
               >Enter</kbd
             >
             to apply it to all selected {themeStore.resolveJargon(
@@ -257,7 +251,7 @@
               onfocus={() => (showApplySuggestions = true)}
               onblur={() =>
                 setTimeout(() => (showApplySuggestions = false), 150)}
-              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-3 md:py-2 text-sm text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
             />
             {#if showApplySuggestions && allSuggestions.length > 0}
               <div
@@ -267,7 +261,7 @@
               >
                 {#if !applyInput.trim()}
                   <div
-                    class="px-3 py-1.5 text-[10px] font-bold text-theme-primary uppercase tracking-widest border-b border-theme-border/50 bg-theme-primary/5"
+                    class="px-3 py-2 md:py-1.5 text-[9px] md:text-[10px] font-bold text-theme-primary uppercase tracking-widest border-b border-theme-border/50 bg-theme-primary/5"
                   >
                     Recent Labels
                   </div>
@@ -277,8 +271,12 @@
                     type="button"
                     role="option"
                     aria-selected={i === applySelectedIndex}
-                    onclick={() => applyLabel(suggestion)}
-                    class="w-full px-3 py-2 text-left text-sm transition-colors border-b border-theme-border/50 last:border-0
+                    onclick={() => {
+                      applyInput = suggestion;
+                      showApplySuggestions = false;
+                      applySelectedIndex = -1;
+                    }}
+                    class="w-full px-3 py-3 md:py-2 text-left text-sm transition-colors border-b border-theme-border/50 last:border-0
                       {i === applySelectedIndex
                       ? 'bg-theme-primary/20 text-theme-primary'
                       : 'text-theme-muted hover:bg-theme-primary/10 hover:text-theme-primary'}"
@@ -292,60 +290,64 @@
           <button
             onclick={() => applyLabel(applyInput)}
             disabled={!applyInput.trim() || isLoading}
-            class="w-full py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
+            class="w-full py-3 md:py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg"
           >
             {isLoading ? "Applying…" : "Apply to all"}
           </button>
         {:else if anyLabels.length === 0}
-          <p class="text-sm text-theme-muted text-center py-4">
-            No labels found on the selected {themeStore.resolveJargon(
-              "entity",
-              entityIds.length,
-            )}.
-          </p>
-        {:else}
-          <p class="text-sm text-theme-muted">
-            Click a label to remove it from all selected {themeStore.resolveJargon(
-              "entity",
-              entityIds.length,
-            )} that have it.
-          </p>
-          <div class="flex flex-wrap gap-2">
-            {#each anyLabels as label}
-              {@const isShared = sharedLabels.includes(label)}
-              <button
-                onclick={() => removeLabel(label)}
-                disabled={isLoading}
-                title={isShared
-                  ? `Remove "${label}" from all selected`
-                  : `Remove "${label}" from entities that have it`}
-                class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-mono border transition-colors
-                    {isShared
-                  ? 'bg-theme-primary/10 border-theme-primary/40 text-theme-primary hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
-                  : 'bg-theme-bg border-theme-border text-theme-muted hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'}"
-              >
-                {label}
-                <span class="icon-[lucide--x] w-3 h-3"></span>
-              </button>
-            {/each}
-          </div>
-          {#if sharedLabels.length < anyLabels.length}
-            <p class="text-xs text-theme-muted">
-              <span class="text-theme-primary">Highlighted</span> labels are
-              present on all selected {themeStore.resolveJargon(
+          <div class="text-center py-8">
+            <p class="text-sm text-theme-muted italic">
+              No labels found on the selected {themeStore.resolveJargon(
                 "entity",
                 entityIds.length,
-              )}. Others are present on at least one.
+              )}.
             </p>
-          {/if}
+          </div>
+        {:else}
+          <div class="space-y-4">
+            <p class="text-xs md:text-sm text-theme-muted">
+              Click a label to remove it from all selected {themeStore.resolveJargon(
+                "entity",
+                entityIds.length,
+              )} that have it.
+            </p>
+            <div class="flex flex-wrap gap-2">
+              {#each anyLabels as label}
+                {@const isShared = sharedLabels.includes(label)}
+                <button
+                  onclick={() => removeLabel(label)}
+                  disabled={isLoading}
+                  title={isShared
+                    ? `Remove "${label}" from all selected`
+                    : `Remove "${label}" from entities that have it`}
+                  class="inline-flex items-center gap-1 px-3 py-2 md:px-2 md:py-1 rounded text-xs font-mono border transition-colors
+                      {isShared
+                    ? 'bg-theme-primary/10 border-theme-primary/40 text-theme-primary hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'
+                    : 'bg-theme-bg border-theme-border text-theme-muted hover:bg-red-500/20 hover:border-red-500/50 hover:text-red-400'}"
+                >
+                  {label}
+                  <span class="icon-[lucide--x] w-3 h-3"></span>
+                </button>
+              {/each}
+            </div>
+            {#if sharedLabels.length < anyLabels.length}
+              <p class="text-[10px] md:text-xs text-theme-muted leading-tight">
+                <span class="text-theme-primary font-bold">Highlighted</span>
+                labels are present on all selected {themeStore.resolveJargon(
+                  "entity",
+                  entityIds.length,
+                )}. Others are present on at least one.
+              </p>
+            {/if}
+          </div>
         {/if}
       </div>
 
       <!-- Footer -->
-      <div class="px-6 pb-6 flex justify-end">
+      <div class="p-4 md:p-6 border-t border-theme-border flex justify-end">
         <button
           onclick={onClose}
-          class="px-4 py-2 text-theme-muted hover:text-theme-text transition-colors text-sm"
+          class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-text hover:border-theme-primary transition-colors text-sm font-medium rounded"
         >
           Done
         </button>

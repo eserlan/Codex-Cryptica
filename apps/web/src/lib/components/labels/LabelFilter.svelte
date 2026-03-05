@@ -17,8 +17,18 @@
   } = $props();
 
   let isOpen = $state(false);
+  let labelQuery = $state("");
 
-  const toggleDropdown = () => (isOpen = !isOpen);
+  const filteredLabels = $derived.by(() => {
+    const query = labelQuery.trim().toLowerCase();
+    if (!query) return vault.labelIndex;
+    return vault.labelIndex.filter((l) => l.toLowerCase().includes(query));
+  });
+
+  const toggleDropdown = () => {
+    isOpen = !isOpen;
+    if (isOpen) labelQuery = "";
+  };
 </script>
 
 <div class="relative">
@@ -42,12 +52,36 @@
     <div class="fixed inset-0 z-10" onclick={() => (isOpen = false)}></div>
 
     <div
-      class="absolute top-full left-0 mt-2 w-48 bg-theme-surface border border-theme-border rounded shadow-2xl z-20 max-h-64 overflow-y-auto custom-scrollbar"
+      class="absolute top-full left-0 mt-2 w-56 bg-theme-surface border border-theme-border rounded shadow-2xl z-20 max-h-80 flex flex-col"
       transition:fade={{ duration: 100 }}
     >
+      {#if vault.labelIndex.length > 5}
+        <div class="p-2 border-b border-theme-border/50 bg-theme-bg/30">
+          <div class="relative">
+            <input
+              type="text"
+              bind:value={labelQuery}
+              placeholder="Search labels..."
+              class="w-full bg-theme-bg border border-theme-border rounded px-7 py-1.5 text-[10px] text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
+            />
+            <span
+              class="icon-[lucide--search] absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-theme-muted"
+            ></span>
+            {#if labelQuery}
+              <button
+                onclick={() => (labelQuery = "")}
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-text"
+              >
+                <span class="icon-[lucide--x] w-3 h-3"></span>
+              </button>
+            {/if}
+          </div>
+        </div>
+      {/if}
+
       {#if activeLabels.size > 1 && onToggleMode}
         <div
-          class="px-2 py-1.5 border-b border-theme-border/50 bg-theme-primary/5 flex items-center justify-between"
+          class="px-2 py-1.5 border-b border-theme-border/50 bg-theme-primary/5 flex items-center justify-between shrink-0"
         >
           <span
             class="text-[9px] font-bold text-theme-primary uppercase tracking-tighter"
@@ -71,8 +105,9 @@
           </button>
         </div>
       {/if}
-      <div class="p-2 space-y-1">
-        {#each vault.labelIndex as label}
+
+      <div class="p-2 space-y-1 overflow-y-auto custom-scrollbar flex-1">
+        {#each filteredLabels as label}
           <button
             onclick={() => onToggle(label)}
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-[10px] font-mono uppercase tracking-wider transition-colors {activeLabels.has(
@@ -99,13 +134,13 @@
           <div
             class="px-2 py-4 text-center text-[10px] text-theme-muted italic"
           >
-            No labels indexed
+            {labelQuery ? "No matching labels" : "No labels indexed"}
           </div>
         {/each}
       </div>
 
       {#if activeLabels.size > 0}
-        <div class="p-2 border-t border-theme-border">
+        <div class="p-2 border-t border-theme-border shrink-0">
           <button
             onclick={() => {
               onClear();
