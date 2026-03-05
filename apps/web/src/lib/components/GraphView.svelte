@@ -649,14 +649,15 @@
   $effect(() => {
     const currentCy = cy;
     if (currentCy && !currentCy.destroyed() && graph.activeCategories) {
-      const active = Array.from(graph.activeCategories);
+      const activeCategories = graph.activeCategories;
       const entities = vault.entities;
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
           const entity = entities[node.id()];
           if (!entity) return;
 
-          const hasMatch = active.length === 0 || active.includes(entity.type);
+          const hasMatch =
+            activeCategories.size === 0 || activeCategories.has(entity.type);
 
           if (hasMatch) {
             node.removeClass("category-filtered-out");
