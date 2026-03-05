@@ -38,6 +38,7 @@
   let currentLayout: any;
   let stabilizationTimeout: number | undefined;
   let isLayoutRunning = $state(false);
+  let graphVisible = $state(false);
 
   let graphStyle = $derived([
     ...getGraphStyle(themeStore.activeTheme, categories.list, graph.showImages),
@@ -186,7 +187,8 @@
         // For guests, we rely entirely on synced positions.
         // Simply fit to view initially if needed.
         if (isInitial) {
-          currentCy.fit(currentCy.nodes(), 50);
+          currentCy.fit(currentCy.nodes(), 20);
+          graphVisible = true;
         }
         isLayoutRunning = false;
         return;
@@ -226,6 +228,7 @@
             .nodes()
             .filter((n) => positions[n.id()] !== undefined);
 
+          graphVisible = true;
           nodesToLayout
             .layout({
               name: "preset",
@@ -234,7 +237,7 @@
               animationDuration: 500,
               animationEasing: "ease-out-cubic",
               fit: true,
-              padding: 50,
+              padding: 20,
               stop: () => {
                 console.log(
                   `[GraphView][${getElapsed()}] Timeline layout COMPLETED`,
@@ -251,8 +254,9 @@
         setCentralNode(currentCy, graph.centralNodeId);
         if (isInitial) {
           currentCy.resize();
+          graphVisible = true;
           currentCy.animate({
-            fit: { eles: currentCy.nodes(), padding: 50 },
+            fit: { eles: currentCy.nodes(), padding: 20 },
             duration: 800,
             easing: "ease-out-cubic",
             complete: () => {
@@ -313,7 +317,8 @@
                 `[GraphView][${getElapsed()}] Initial load bypass: fitting camera...`,
               );
               currentCy.resize();
-              currentCy.fit(currentCy.elements(), 100);
+              currentCy.fit(currentCy.elements(), 20);
+              graphVisible = true;
             }
             console.log(
               `[GraphView][${getElapsed()}] Stable layout bypass COMPLETED`,
@@ -331,16 +336,20 @@
             fit: false, // We will handle fitting manually for better control
           });
 
-          currentLayout.one("layoutstop", () => {
+          const layout = currentLayout;
+          layout.one("layoutstop", () => {
+            if (currentLayout !== layout) return;
+
             console.log(
               `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
             );
 
             currentCy.resize();
+            graphVisible = true;
             currentCy.animate({
               fit: {
                 eles: currentCy.elements(),
-                padding: 100,
+                padding: 20,
               },
               duration: 800,
               easing: "ease-out-quad",
@@ -356,10 +365,14 @@
             if (!vault.isGuest && currentCy) {
               const updates: Record<string, Partial<Entity>> = {};
               currentCy.nodes().forEach((node) => {
+                const pos = node.position();
                 updates[node.id()] = {
                   metadata: {
                     ...(vault.entities[node.id()]?.metadata || {}),
-                    coordinates: node.position(),
+                    coordinates: {
+                      x: Math.round(pos.x),
+                      y: Math.round(pos.y),
+                    },
                   },
                 };
               });
@@ -624,7 +637,6 @@
 
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
-  let isFirstImageResolution = true;
 
   let lastStyle: any[] = [];
   $effect(() => {
@@ -805,21 +817,28 @@
               // timeout will handle the layout anyway, so we don't need to trigger it here.
               setTimeout(() => {
                 if (cy && !cy.destroyed()) {
-                  // If this is the first time images are resolving (i.e. app startup),
-                  // we assume the saved coordinates already account for image sizes, so we skip layout.
-                  if (isFirstImageResolution) {
-                    isFirstImageResolution = false;
-                  } else {
-                    const isLoaded = untrack(() => initialLoaded);
-                    if (isLoaded) {
-                      // Respect stableLayout: only force if stability is OFF.
-                      // If stability is ON, bypass logic will snap camera but skip math.
-                      applyCurrentLayout(
-                        false,
-                        !graph.stableLayout,
-                        "Image Resolution",
-                      );
-                    }
+                  // STARTUP GUARD: During the first few seconds of app life, we suppress
+                  // image-triggered layouts to avoid the "double animation" jank.
+                  const STARTUP_GRACE_PERIOD = 5000;
+                  const isStartupPhase =
+                    performance.now() - appStartTime < STARTUP_GRACE_PERIOD;
+
+                  if (isStartupPhase) {
+                    console.log(
+                      `[GraphView][${getElapsed()}] Image resolution suppressed (Startup Phase).`,
+                    );
+                    return;
+                  }
+
+                  const isLoaded = untrack(() => initialLoaded);
+                  if (isLoaded) {
+                    // Respect stableLayout: only force if stability is OFF.
+                    // If stability is ON, bypass logic will snap camera but skip math.
+                    applyCurrentLayout(
+                      false,
+                      !graph.stableLayout,
+                      "Image Resolution",
+                    );
                   }
                 }
               }, 50);
@@ -897,7 +916,7 @@
         currentCy.animate({
           fit: {
             eles: currentCy.elements(),
-            padding: 50,
+            padding: 20,
           },
           duration: 800,
           easing: "ease-out-cubic",
@@ -1104,7 +1123,7 @@
                   initialLoaded = true;
                 });
               }
-            }, 200); // 200ms window for more nodes to appear (was 500ms)
+            }, 50); // Reduced from 200ms for faster local-first startup
           } else {
             // Respect stableLayout here: if stable is ON, don't "force" a layout run
             // which allows the bypass logic in applyCurrentLayout to do its job.
@@ -1389,7 +1408,9 @@
 
   <!-- Graph Canvas -->
   <div
-    class="absolute inset-0 z-10 w-full h-full"
+    class="absolute inset-0 z-10 w-full h-full transition-opacity duration-500 {graphVisible
+      ? 'opacity-100'
+      : 'opacity-0'}"
     bind:this={container}
     data-testid="graph-canvas"
   ></div>

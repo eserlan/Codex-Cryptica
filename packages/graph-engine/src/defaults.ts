@@ -6,7 +6,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   randomize: true,
   packComponents: true,
   nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: 25000,
+  nodeRepulsion: 25000, // High repulsion for dense lore-webs; consider scaling by node count in the future.
   idealEdgeLength: 100,
   nodeSeparation: 150,
   gravity: 0.1,

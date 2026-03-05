@@ -3,13 +3,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
 
-  let { onApply } = $props<{
-    onApply?: (
-      isInitial?: boolean,
-      isForced?: boolean,
-      caller?: string,
-    ) => void;
-  }>();
+  interface LayoutTrigger {
+    (isInitial?: boolean, isForced?: boolean, caller?: string): void;
+  }
+  let { onApply } = $props<{ onApply?: LayoutTrigger }>();
 
   const toggle = () => {
     graph.toggleTimeline();
