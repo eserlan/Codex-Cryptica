@@ -21,11 +21,11 @@ As a user with a large vault, I want to search for lore without the UI freezing 
 
 - **Success Criteria**: Search typing remains responsive (no dropped frames) even during a 100+ file import.
 
-### User Story 2 - Fluid Graph Layout (Priority: P1)
+### User Story 2 - Fluid Graph Layout (SUPERSEDED)
 
-As a user, I want the graph to rearrange itself smoothly when I switch views or add new nodes.
+> **Note**: This user story is now handled via main-thread execution with professional pipeline optimizations. See [ADR 004](../../docs/adr/004-direct-cytoscape-layout.md).
 
-- **Success Criteria**: Force-directed layouts (fcose) execute in the background, and the UI remains interactive while positions are being calculated.
+- **Success Criteria**: Force-directed layouts (fcose) execute with smooth animations, and the UI remains interactive via optimized stabilization windows.
 
 ---
 
@@ -37,11 +37,13 @@ As a user, I want the graph to rearrange itself smoothly when I switch views or 
 - Implement `SearchService` as a wrapper around the Comlink worker.
 - System MUST use **Transferables** (ArrayBuffers) for search result sets exceeding 100 items to minimize serialization overhead.
 
-### FR-002: Background Graph Layout
+### FR-002: Background Graph Layout (SUPERSEDED)
 
-- Implement `layout.worker.ts` for Cytoscape.js calculations.
-- Support `fcose` and custom `timeline` layouts in the worker.
-- The worker should receive node/edge data and return a map of `id -> {x, y}` positions.
+> **Note**: This requirement was abandoned in favor of direct main-thread execution. See [ADR 004](../../docs/adr/004-direct-cytoscape-layout.md) for rationale.
+
+- ~~Implement `layout.worker.ts` for Cytoscape.js calculations.~~
+- ~~Support `fcose` and custom `timeline` layouts in the worker.~~
+- ~~The worker should receive node/edge data and return a map of `id -> {x, y}` positions.~~
 
 ### FR-003: Background Markdown Parsing
 
