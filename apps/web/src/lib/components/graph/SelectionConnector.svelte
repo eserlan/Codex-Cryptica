@@ -151,6 +151,7 @@
                 class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
                 onclick={() => selectRecent(label)}
                 disabled={isSubmitting}
+                aria-label="Use recent label: {label}"
               >
                 {label}
               </button>
@@ -163,6 +164,7 @@
             class="text-[10px] font-mono text-theme-muted hover:text-theme-text transition uppercase"
             onclick={() => (ui.showSelectionConnector = false)}
             disabled={isSubmitting}
+            aria-label="Cancel connection"
           >
             Cancel
           </button>
@@ -170,6 +172,7 @@
             class="text-[10px] font-mono text-theme-primary hover:text-theme-accent transition uppercase"
             onclick={submit}
             disabled={isSubmitting}
+            aria-label="Create connection"
           >
             {isSubmitting ? "Linking..." : "Link"}
           </button>

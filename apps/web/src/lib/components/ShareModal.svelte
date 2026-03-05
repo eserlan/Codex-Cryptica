@@ -92,6 +92,7 @@
                 class="px-4 py-1 border rounded text-xs transition-colors {p2pCopied
                   ? 'bg-cyan-500 border-cyan-400 text-black font-bold'
                   : 'bg-cyan-900/30 border-cyan-800 text-cyan-400 hover:bg-cyan-800 hover:text-white'}"
+                aria-label="Copy P2P link"
               >
                 {p2pCopied ? "COPIED!" : "COPY"}
               </button>
