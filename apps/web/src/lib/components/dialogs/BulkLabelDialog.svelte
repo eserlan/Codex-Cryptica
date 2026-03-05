@@ -24,18 +24,31 @@
   // Labels already shared by ALL selected entities (for remove tab)
   let sharedLabels = $derived.by(() => {
     if (entityIds.length === 0) return [];
-    const labelSets = entityIds.map(
-      (id: string) =>
-        new Set(
-          (vault.entities[id]?.labels ?? []).map((l: string) =>
-            l.toLowerCase(),
-          ),
+
+    // Optimization: Start with the labels of the first entity and intersect with others.
+    // This is more efficient than mapping everything to sets first.
+    const firstId = entityIds[0];
+    const firstEntityLabels = vault.entities[firstId]?.labels ?? [];
+    if (firstEntityLabels.length === 0) return [];
+
+    let shared = new Set(firstEntityLabels.map((l) => l.toLowerCase()));
+
+    for (let i = 1; i < entityIds.length; i++) {
+      const entityLabels = new Set(
+        (vault.entities[entityIds[i]]?.labels ?? []).map((l) =>
+          l.toLowerCase(),
         ),
-    );
-    const first = labelSets[0] as Set<string>;
-    return Array.from(first)
-      .filter((l: string) => labelSets.every((s: Set<string>) => s.has(l)))
-      .sort((a: string, b: string) => a.localeCompare(b));
+      );
+      // Intersect
+      for (const label of shared) {
+        if (!entityLabels.has(label)) {
+          shared.delete(label);
+        }
+      }
+      if (shared.size === 0) break;
+    }
+
+    return Array.from(shared).sort((a, b) => a.localeCompare(b));
   });
 
   // Labels present in at least one selected entity (for remove tab when no shared ones)
@@ -112,17 +125,17 @@
     if (!label.trim()) return;
     isLoading = true;
     try {
-      const count = await vault.bulkAddLabel(
-        entityIds,
-        label.trim().toLowerCase(),
-      );
-      ui.notify(
-        `Label "${label.trim().toLowerCase()}" applied to ${count} ${themeStore.resolveJargon("entity", count)}.`,
-        "success",
-      );
+      const finalLabel = label.trim().toLowerCase();
+      const count = await vault.bulkAddLabel(entityIds, finalLabel);
+
       applyInput = "";
       applySelectedIndex = -1;
       showApplySuggestions = false;
+
+      ui.notify(
+        `Label "${finalLabel}" applied to ${count} ${themeStore.resolveJargon("entity", count)}.`,
+        "success",
+      );
     } finally {
       isLoading = false;
     }
