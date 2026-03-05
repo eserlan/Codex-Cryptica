@@ -151,7 +151,6 @@
                 class="text-[9px] bg-theme-primary/10 text-theme-primary border border-theme-primary/30 px-2 py-0.5 rounded-full hover:bg-theme-primary hover:text-theme-bg transition"
                 onclick={() => selectRecent(label)}
                 disabled={isSubmitting}
-                aria-label="Use recent label: {label}"
               >
                 {label}
               </button>
