@@ -130,12 +130,16 @@ export function addLabel(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
+  const normalizedLabel = label.trim().toLowerCase();
+  if (!normalizedLabel) return { entities, updated: null };
+
   const labels = entity.labels || [];
-  if (labels.includes(label)) return { entities, updated: null };
+  if (labels.some((l) => l.toLowerCase() === normalizedLabel))
+    return { entities, updated: null };
 
   const updated = {
     ...entity,
-    labels: [...labels, label],
+    labels: [...labels, normalizedLabel],
     updatedAt: Date.now(),
   } as LocalEntity;
   return {
@@ -152,12 +156,14 @@ export function removeLabel(
   const entity = entities[id];
   if (!entity) return { entities, updated: null };
 
+  const normalizedLabel = label.trim().toLowerCase();
   const labels = entity.labels || [];
-  if (!labels.includes(label)) return { entities, updated: null };
+  if (!labels.some((l) => l.toLowerCase() === normalizedLabel))
+    return { entities, updated: null };
 
   const updated = {
     ...entity,
-    labels: labels.filter((l) => l !== label),
+    labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
     updatedAt: Date.now(),
   } as LocalEntity;
   return {
