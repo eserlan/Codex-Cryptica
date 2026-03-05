@@ -23,7 +23,7 @@
 
   cytoscape.use(fcose);
   import { themeStore } from "$lib/stores/theme.svelte";
-  import Minimap from "$lib/components/graph/Minimap.svelte";
+  import Minimap from "./graph/Minimap.svelte";
   import TimelineControls from "$lib/components/graph/TimelineControls.svelte";
   import TimelineOverlay from "$lib/components/graph/TimelineOverlay.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
