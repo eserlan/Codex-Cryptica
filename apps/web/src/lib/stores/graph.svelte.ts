@@ -56,6 +56,7 @@ class GraphStore {
   showImages = $state(true);
   stableLayout = $state(true);
   recentLabels = $state<string[]>([]);
+  labelFilterMode = $state<"AND" | "OR">("OR");
 
   // Timeline State
   timelineMode = $state(false);
@@ -118,6 +119,14 @@ class GraphStore {
     const savedRecentLabels = await db.get("settings", "graphRecentLabels");
     if (savedRecentLabels !== undefined) {
       this.recentLabels = savedRecentLabels;
+    }
+
+    const savedLabelFilterMode = await db.get(
+      "settings",
+      "graphLabelFilterMode",
+    );
+    if (savedLabelFilterMode !== undefined) {
+      this.labelFilterMode = savedLabelFilterMode;
     }
   }
 
@@ -199,6 +208,20 @@ class GraphStore {
       await db.put("settings", newValue, "graphStableLayout");
     } catch (error) {
       console.error("[GraphStore] Failed to persist graphStableLayout:", error);
+    }
+  }
+
+  async toggleLabelFilterMode() {
+    const newValue = this.labelFilterMode === "OR" ? "AND" : "OR";
+    this.labelFilterMode = newValue;
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphLabelFilterMode");
+    } catch (error) {
+      console.error(
+        "[GraphStore] Failed to persist graphLabelFilterMode:",
+        error,
+      );
     }
   }
 

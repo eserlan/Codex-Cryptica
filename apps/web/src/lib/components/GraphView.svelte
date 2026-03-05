@@ -695,14 +695,25 @@
     const currentCy = cy;
     if (currentCy && graph.activeLabels) {
       const active = Array.from(graph.activeLabels).map((l) => l.toLowerCase());
+      const filterMode = graph.labelFilterMode;
+
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
           const entity = vault.entities[node.id()];
           if (!entity) return;
 
-          const hasMatch =
-            active.length === 0 ||
-            (entity.labels || []).some((l) => active.includes(l.toLowerCase()));
+          let hasMatch = active.length === 0;
+
+          if (!hasMatch) {
+            const entityLabels = (entity.labels || []).map((l) =>
+              l.toLowerCase(),
+            );
+            if (filterMode === "AND") {
+              hasMatch = active.every((l) => entityLabels.includes(l));
+            } else {
+              hasMatch = active.some((l) => entityLabels.includes(l));
+            }
+          }
 
           if (hasMatch) {
             node.removeClass("filtered-out");
@@ -1292,7 +1303,9 @@
     <div class="pointer-events-auto">
       <LabelFilter
         activeLabels={graph.activeLabels}
+        filterMode={graph.labelFilterMode}
         onToggle={(l) => graph.toggleLabelFilter(l)}
+        onToggleMode={() => graph.toggleLabelFilterMode()}
         onClear={() => graph.clearLabelFilters()}
       />
     </div>
@@ -1566,7 +1579,7 @@
               cy?.$("node:selected").map((n) => n.id()) || [],
             )}
         >
-          <span class="icon-[lucide--tag] w-3 h-3"></span>
+          <span class="icon-[lucide--layers] w-3 h-3"></span>
           Label ({selectionCount})
         </button>
         <button

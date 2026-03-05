@@ -6,10 +6,14 @@
     activeLabels,
     onToggle,
     onClear,
+    filterMode = "OR",
+    onToggleMode,
   }: {
     activeLabels: Set<string>;
     onToggle: (label: string) => void;
     onClear: () => void;
+    filterMode?: "AND" | "OR";
+    onToggleMode?: () => void;
   } = $props();
 
   let isOpen = $state(false);
@@ -41,6 +45,32 @@
       class="absolute top-full left-0 mt-2 w-48 bg-theme-surface border border-theme-border rounded shadow-2xl z-20 max-h-64 overflow-y-auto custom-scrollbar"
       transition:fade={{ duration: 100 }}
     >
+      {#if activeLabels.size > 1 && onToggleMode}
+        <div
+          class="px-2 py-1.5 border-b border-theme-border/50 bg-theme-primary/5 flex items-center justify-between"
+        >
+          <span
+            class="text-[9px] font-bold text-theme-primary uppercase tracking-tighter"
+            >Logic Mode</span
+          >
+          <button
+            onclick={onToggleMode}
+            class="flex items-center gap-1 bg-theme-surface border border-theme-border rounded px-1.5 py-0.5 text-[9px] font-bold text-theme-text hover:border-theme-primary transition-colors"
+          >
+            <span
+              class={filterMode === "AND"
+                ? "text-theme-primary"
+                : "text-theme-muted"}>AND</span
+            >
+            <span class="text-theme-muted/30">/</span>
+            <span
+              class={filterMode === "OR"
+                ? "text-theme-primary"
+                : "text-theme-muted"}>OR</span
+            >
+          </button>
+        </div>
+      {/if}
       <div class="p-2 space-y-1">
         {#each vault.labelIndex as label}
           <button

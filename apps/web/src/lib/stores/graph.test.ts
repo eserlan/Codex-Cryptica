@@ -149,4 +149,27 @@ describe("GraphStore", () => {
     expect(graph.recentLabels[0]).toBe("f");
     expect(graph.recentLabels).not.toContain("b");
   });
+
+  it("should toggle labelFilterMode and persist it", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+
+    expect(graph.labelFilterMode).toBe("OR");
+
+    await graph.toggleLabelFilterMode();
+    expect(graph.labelFilterMode).toBe("AND");
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "AND",
+      "graphLabelFilterMode",
+    );
+
+    await graph.toggleLabelFilterMode();
+    expect(graph.labelFilterMode).toBe("OR");
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "OR",
+      "graphLabelFilterMode",
+    );
+  });
 });
