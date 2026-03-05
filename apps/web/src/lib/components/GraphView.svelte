@@ -32,6 +32,7 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import { setCentralNode } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
+  import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
   import { layoutService } from "$lib/services/layout";
 
   let container: HTMLElement;
@@ -50,6 +51,12 @@
     },
     {
       selector: ".timeline-hidden",
+      style: {
+        display: "none",
+      },
+    },
+    {
+      selector: ".category-filtered-out",
       style: {
         display: "none",
       },
@@ -641,6 +648,29 @@
 
   $effect(() => {
     const currentCy = cy;
+    if (currentCy && !currentCy.destroyed() && graph.activeCategories) {
+      const activeCategories = graph.activeCategories;
+      const entities = vault.entities;
+      currentCy.batch(() => {
+        currentCy.nodes().forEach((node) => {
+          const entity = entities[node.id()];
+          if (!entity) return;
+
+          const hasMatch =
+            activeCategories.size === 0 || activeCategories.has(entity.type);
+
+          if (hasMatch) {
+            node.removeClass("category-filtered-out");
+          } else {
+            node.addClass("category-filtered-out");
+          }
+        });
+      });
+    }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
     const isTimelineMode = graph.timelineMode;
     const _elements = graph.elements;
     if (!currentCy) return;
@@ -1158,6 +1188,14 @@
         activeLabels={graph.activeLabels}
         onToggle={(l) => graph.toggleLabelFilter(l)}
         onClear={() => graph.clearLabelFilters()}
+      />
+    </div>
+
+    <div class="pointer-events-auto">
+      <CategoryFilter
+        activeCategories={graph.activeCategories}
+        onToggle={(id) => graph.toggleCategoryFilter(id)}
+        onClear={() => graph.clearCategoryFilters()}
       />
     </div>
     <!-- Real Mini-map -->
