@@ -8,9 +8,16 @@
     width?: number;
     height?: number;
     absolute?: boolean;
+    isExpanded?: boolean;
   }
 
-  let { cy, width = 200, height = 150, absolute = true }: Props = $props();
+  let {
+    cy,
+    width = 200,
+    height = 150,
+    absolute = true,
+    isExpanded = false,
+  }: Props = $props();
 
   interface MinimapNode {
     id: string;
@@ -41,10 +48,6 @@
   // Projection helpers
   let graphBounds = $state({ x1: 0, y1: 0, x2: 0, y2: 0, w: 1, h: 1 });
   let scale = $state(1); // minimap pixels / graph units
-
-  // Toggle Visibility (US4)
-  let collapsed = $state(true); // Default to collapsed to save screen space
-  const toggleMinimap = () => (collapsed = !collapsed);
 
   const updateProjection = () => {
     if (!cy) return;
@@ -98,15 +101,15 @@
     for (let i = 0; i < cyNodes.length; i++) {
       const node = cyNodes[i];
       const pos = node.position();
-      
+
       // Use border-color as the primary minimap color (this is where category colors are applied)
       let color = node.style("border-color");
-      
+
       // Fallback to background-color if border is not useful
       if (isTransparent(color)) {
         color = node.style("background-color");
       }
-      
+
       // Ultimate fallback to theme primary
       if (isTransparent(color)) {
         color = "#4ade80";
@@ -194,7 +197,7 @@
 
   // Reactive redraw on state changes
   $effect(() => {
-    if (!collapsed && nodes && graphBounds && scale !== undefined) {
+    if (isExpanded && nodes && graphBounds && scale !== undefined) {
       requestRedraw();
     }
   });
@@ -247,7 +250,7 @@
   const handleMinimapClick = (e: MouseEvent) => {
     // Ignore if clicking the viewport rect itself (handled by drag or propagation stopped)
     // Also ignore if we just finished a drag operation
-    if (isDragging || hasMoved || collapsed) return;
+    if (isDragging || hasMoved || !isExpanded) return;
     if (!cy || scale <= 0) return;
 
     // e.offsetX/Y is relative to the target.
@@ -321,11 +324,12 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="minimap-container {collapsed ? 'collapsed' : ''} {absolute
+  class="minimap-container {!isExpanded ? 'collapsed' : ''} {absolute
     ? 'absolute-pos'
     : 'relative-pos'}"
-  style:width="{collapsed ? 40 : width}px"
-  style:height="{collapsed ? 40 : height}px"
+  style:width="{!isExpanded ? 0 : width}px"
+  style:height="{!isExpanded ? 0 : height}px"
+  style:opacity={!isExpanded ? 0 : 1}
   role="button"
   aria-label="Graph minimap. Click to reposition the view. Drag the rectangle to pan."
   tabindex="0"
@@ -348,7 +352,6 @@
     style:top="{viewportY}px"
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
-    style:background-color="color-mix(in srgb, var(--color-theme-primary) 10%, transparent)"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
@@ -376,19 +379,6 @@
       }
     }}
   ></div>
-
-  <!-- Toggle Button -->
-  <button
-    class="toggle-btn"
-    onclick={(e: MouseEvent) => {
-      e.stopPropagation();
-      toggleMinimap();
-    }}
-    title={collapsed ? "Expand Minimap" : "Minimize Minimap"}
-    aria-label={collapsed ? "Expand Minimap" : "Minimize Minimap"}
-  >
-    <span class="icon-[lucide--map] w-4 h-4"></span>
-  </button>
 </div>
 
 <style>
@@ -414,57 +404,6 @@
   .minimap-container.relative-pos {
     position: relative;
     /* No forced location */
-  }
-
-  .minimap-container.collapsed {
-    border-radius: 9999px;
-    cursor: pointer;
-  }
-
-  /* Hide internals when collapsed */
-  .minimap-container.collapsed canvas,
-  .minimap-container.collapsed .viewport-rect {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .toggle-btn {
-    position: absolute;
-    top: 0.25rem;
-    right: 0.25rem;
-    width: 1.5rem;
-    height: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-accent-primary);
-    opacity: 0.7;
-    background: var(--color-theme-bg);
-    border-radius: 0.25rem;
-    cursor: pointer;
-    z-index: 60;
-    opacity: 0; /* Hidden by default, shown on hover */
-    transition: opacity 0.2s;
-  }
-
-  .toggle-btn:focus-visible {
-    opacity: 1;
-    outline: 2px solid var(--color-accent-primary);
-    outline-offset: 2px;
-  }
-
-  .minimap-container:hover .toggle-btn {
-    opacity: 1;
-  }
-
-  /* When collapsed, toggle btn covers the whole circle implicitly or we style it differently */
-  .minimap-container.collapsed .toggle-btn {
-    opacity: 1;
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
   }
 
   .viewport-rect {

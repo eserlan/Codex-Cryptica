@@ -1068,6 +1068,54 @@ class VaultStore {
     return false;
   }
 
+  async bulkAddLabel(ids: string[], label: string): Promise<number> {
+    let count = 0;
+    const currentEntities = this.entities;
+    const newEntities = { ...currentEntities };
+    const toSave: LocalEntity[] = [];
+
+    for (const id of ids) {
+      const result = vaultEntities.addLabel(newEntities, id, label);
+      if (result.updated) {
+        newEntities[id] = result.updated;
+        toSave.push(result.updated);
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      // Atomic state update
+      this.entities = newEntities;
+      // Sequential saves to avoid overwhelming the persistence layer if necessary,
+      // or parallel if it supports it. scheduleSave is usually debounced/queued.
+      await Promise.all(toSave.map((e) => this.scheduleSave(e)));
+    }
+    return count;
+  }
+
+  async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
+    let count = 0;
+    const currentEntities = this.entities;
+    const newEntities = { ...currentEntities };
+    const toSave: LocalEntity[] = [];
+
+    for (const id of ids) {
+      const result = vaultEntities.removeLabel(newEntities, id, label);
+      if (result.updated) {
+        newEntities[id] = result.updated;
+        toSave.push(result.updated);
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      // Atomic state update
+      this.entities = newEntities;
+      await Promise.all(toSave.map((e) => this.scheduleSave(e)));
+    }
+    return count;
+  }
+
   async addConnection(
     sourceId: string,
     targetId: string,

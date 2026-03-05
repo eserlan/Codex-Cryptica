@@ -56,6 +56,7 @@
   let TourOverlay = $state<any>(null);
   let DebugConsole = $state<any>(null);
   let MergeNodesDialog = $state<any>(null);
+  let BulkLabelDialog = $state<any>(null);
 
   const isPopup = $derived(page.url.pathname === `${base}/oracle`);
   let isMobileMenuOpen = $state(false);
@@ -76,6 +77,11 @@
       import("$lib/components/dialogs/MergeNodesDialog.svelte")
         .then((m) => (MergeNodesDialog = m.default))
         .catch((e) => logChunkError("MergeNodesDialog", e));
+    }
+    if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
+      import("$lib/components/dialogs/BulkLabelDialog.svelte")
+        .then((m) => (BulkLabelDialog = m.default))
+        .catch((e) => logChunkError("BulkLabelDialog", e));
     }
     if (!isPopup && !OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
@@ -652,6 +658,13 @@
             isOpen={uiStore.mergeDialog.open}
             sourceNodeIds={uiStore.mergeDialog.sourceIds}
             onClose={() => uiStore.closeMergeDialog()}
+          />
+        {/if}
+        {#if BulkLabelDialog}
+          <BulkLabelDialog
+            isOpen={uiStore.bulkLabelDialog.open}
+            entityIds={uiStore.bulkLabelDialog.entityIds}
+            onClose={() => uiStore.closeBulkLabelDialog()}
           />
         {/if}
         {#if DebugConsole}
