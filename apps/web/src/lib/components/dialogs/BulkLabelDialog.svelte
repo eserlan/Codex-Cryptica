@@ -182,6 +182,7 @@
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
     onkeydown={handleKeydown}
     transition:fade={{ duration: 200 }}
+    tabindex="0"
   >
     <div
       class="w-full max-w-md bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col overflow-hidden
@@ -245,7 +246,6 @@
               type="text"
               bind:value={applyInput}
               placeholder="Label name…"
-              autofocus
               disabled={isLoading}
               onkeydown={handleApplyKeydown}
               onfocus={() => (showApplySuggestions = true)}
