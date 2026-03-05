@@ -13,7 +13,7 @@ test.describe("Category Filter", () => {
           getFileHandle: async (_name: string) => {
             return {
               kind: "file",
-              name: name,
+              name: "file",
               getFile: async () => ({
                 lastModified: Date.now(),
                 text: async () => "---\ntitle: Test\n---",
@@ -69,21 +69,61 @@ test.describe("Category Filter", () => {
     });
   });
 
-  test("Category filter toolbar is visible with All button active by default", async ({
+  test("Category filter toggle button is visible and filters are hidden by default", async ({
     page,
   }) => {
     const filterBar = page.getByTestId("category-filter");
     await expect(filterBar).toBeVisible();
 
-    // The "All" button should appear active (no categories selected)
+    // Toggle button is visible
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+    await expect(toggleBtn).toBeVisible();
+
+    // Filter buttons are hidden until expanded
     const allBtn = page.getByTestId("category-filter-all");
+    await expect(allBtn).not.toBeVisible();
+  });
+
+  test("Clicking filter icon expands the category buttons", async ({
+    page,
+  }) => {
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+    const allBtn = page.getByTestId("category-filter-all");
+
+    // Expand
+    await toggleBtn.click();
     await expect(allBtn).toBeVisible();
     await expect(allBtn).toHaveClass(/bg-theme-primary/);
+
+    // Collapse
+    await toggleBtn.click();
+    await expect(allBtn).not.toBeVisible();
+  });
+
+  test("Active count badge appears on toggle icon when filters are selected and panel is collapsed", async ({
+    page,
+  }) => {
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+
+    // Expand and select a category
+    await toggleBtn.click();
+    await page.getByTestId("category-filter-character").click();
+
+    // Collapse
+    await toggleBtn.click();
+
+    // Badge showing count "1" should appear inside the toggle button
+    const badge = toggleBtn.locator("span");
+    await expect(badge).toBeVisible();
+    await expect(badge).toHaveText("1");
   });
 
   test("Selecting a category type activates the button and deactivates All", async ({
     page,
   }) => {
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+    await toggleBtn.click();
+
     const allBtn = page.getByTestId("category-filter-all");
     const characterBtn = page.getByTestId("category-filter-character");
 
@@ -102,6 +142,9 @@ test.describe("Category Filter", () => {
   test("Clicking All button clears active category filters", async ({
     page,
   }) => {
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+    await toggleBtn.click();
+
     const allBtn = page.getByTestId("category-filter-all");
     const locationBtn = page.getByTestId("category-filter-location");
 
@@ -118,6 +161,9 @@ test.describe("Category Filter", () => {
   test("Multiple categories can be selected simultaneously", async ({
     page,
   }) => {
+    const toggleBtn = page.getByTestId("category-filter-toggle");
+    await toggleBtn.click();
+
     const characterBtn = page.getByTestId("category-filter-character");
     const locationBtn = page.getByTestId("category-filter-location");
 
