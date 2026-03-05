@@ -352,7 +352,7 @@
             randomize,
             animate: false, // Calculate math instantly for stability
             fit: false, // We will handle fitting manually for better control
-          });
+          } as any);
 
           const layout = currentLayout;
           layout.one("layoutstop", () => {
