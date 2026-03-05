@@ -129,7 +129,10 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  const applyCurrentLayout = async (isInitial = false) => {
+  const applyCurrentLayout = async (
+    isInitial = false,
+    allowMovement = false,
+  ) => {
     const currentCy = cy;
     if (!currentCy) return;
     if (currentLayout) {
@@ -251,7 +254,7 @@
         });
 
         const fixedNodeConstraint =
-          graph.stableLayout && !isInitial
+          graph.stableLayout && !isInitial && !allowMovement
             ? elements
                 .filter((el: any) => el.group === "nodes" && el.position)
                 .map((el: any) => ({
@@ -261,12 +264,18 @@
             : undefined;
 
         // If in stable mode and not forced (isInitial), and we have no new nodes to place,
+        // and movement is not allowed (e.g. by showImages toggle),
         // we can skip the layout engine entirely and just snap positions.
         const hasNewNodes = elements.some(
           (el: any) => el.group === "nodes" && !el.position,
         );
 
-        if (graph.stableLayout && !isInitial && !hasNewNodes) {
+        if (
+          graph.stableLayout &&
+          !isInitial &&
+          !hasNewNodes &&
+          !allowMovement
+        ) {
           // Just ensure all nodes are in sync with their metadata positions
           currentCy.nodes().forEach((n) => {
             const el = elementByNodeId.get(n.id());
@@ -282,6 +291,7 @@
           $state.snapshot(elements),
           $state.snapshot({
             ...DEFAULT_LAYOUT_OPTIONS,
+            showImages: graph.showImages,
             randomize: isInitial ? true : !graph.stableLayout,
             fixedNodeConstraint,
             animate: false, // Math only in worker
@@ -773,7 +783,8 @@
             // Re-run layout now that node dimensions are accurate
             // Use a slight delay to allow batching if multiple chunks finish close together
             setTimeout(() => {
-              if (cy && !cy.destroyed()) applyCurrentLayout(false);
+              if (cy && !cy.destroyed())
+                applyCurrentLayout(false, graph.showImages);
             }, 200);
           }
         } catch (error) {
@@ -798,7 +809,7 @@
         // Defer layout application to break synchronous reactive cycles
         // preventing 'effect_update_depth_exceeded' errors
         setTimeout(() => {
-          applyCurrentLayout(false);
+          applyCurrentLayout(false, false);
         }, 0);
       });
     }
@@ -848,9 +859,13 @@
     }
   });
 
+  let lastShowImages = graph.showImages;
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
+      const showImagesChanged = lastShowImages !== graph.showImages;
+      lastShowImages = graph.showImages;
+      const _images = graph.showImages; // Re-run layout when images are toggled
       try {
         currentCy.resize(); // Ensure viewport is up to date
 
@@ -1022,8 +1037,9 @@
           elementsToRemove.length > 0;
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
 
-        let shouldRunLayout = structuralChange || isFirstElements;
-        if (graph.stableLayout && !isFirstElements) {
+        let shouldRunLayout =
+          structuralChange || isFirstElements || showImagesChanged;
+        if (graph.stableLayout && !isFirstElements && !showImagesChanged) {
           // Run layout for new nodes or to fill gaps from removals
           shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
         }
@@ -1034,14 +1050,14 @@
             clearTimeout(stabilizationTimeout);
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
-                applyCurrentLayout(true);
+                applyCurrentLayout(true, showImagesChanged);
                 untrack(() => {
                   initialLoaded = true;
                 });
               }
             }, 500); // 500ms window for more nodes to appear
           } else {
-            applyCurrentLayout(false);
+            applyCurrentLayout(false, showImagesChanged);
           }
         } else {
           // If no layout run, still might need focus update if elements were updated

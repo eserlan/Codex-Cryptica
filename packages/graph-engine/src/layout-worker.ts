@@ -42,8 +42,12 @@ export class LayoutEngine {
         {
           selector: "node",
           style: {
-            width: "data(width)",
-            height: "data(height)",
+            // If images are off, use standard 32x32.
+            // If images are on, use data(width/height) with fallback to 32.
+            width: options.showImages ? "data(width)" : 32,
+            height: options.showImages ? "data(height)" : 32,
+            "min-width": 32,
+            "min-height": 32,
           },
         },
         // Fallback for nodes without measured dimensions
@@ -78,6 +82,9 @@ export class LayoutEngine {
         const layout = cy.layout({
           name: "fcose",
           ...options,
+          // Explicitly force dimension awareness
+          nodeDimensionsIncludeLabels: true,
+          uniformNodeDimensions: false,
           stop: () => {
             const positions: LayoutResult = {};
             cy.nodes().forEach((node: any) => {
