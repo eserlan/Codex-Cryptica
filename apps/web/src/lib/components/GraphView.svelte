@@ -313,24 +313,42 @@
             !isClumpedAtOrigin
           ) {
             if (isInitial && currentCy) {
-              console.log(
-                `[GraphView][${getElapsed()}] Initial load bypass: fitting camera...`,
-              );
               currentCy.resize();
               currentCy.fit(currentCy.elements(), 20);
               graphVisible = true;
+              // Adaptive: Unlock image layouts after a short grace period on bypass
+              setTimeout(() => {
+                layoutReady = true;
+              }, 1000);
             }
-            console.log(
-              `[GraphView][${getElapsed()}] Stable layout bypass COMPLETED`,
-            );
+
+            // If we are already loaded and just updated images in stable mode,
+            // we don't even want to fit/snap the camera. Just stay perfectly still.
             isLayoutRunning = false;
             return;
           }
 
           console.log(`[GraphView][${getElapsed()}] Starting FCOSE solver...`);
 
+          const width = currentCy.width();
+          const height = currentCy.height();
+          const ar = width / height;
+          const isLandscape = ar > 1.2;
+
           currentLayout = currentCy.layout({
             ...DEFAULT_LAYOUT_OPTIONS,
+            // VIEWPORT SEEDING
+            boundingBox: { x1: 0, y1: 0, x2: width, y2: height },
+
+            // ANISOTROPIC ADAPTIVE PHYSICS
+            // We drastically differentiate landscape vs portrait to "reward" the available axis.
+            gravity: isLandscape ? 0.1 : 0.8,
+            idealEdgeLength: isLandscape ? 140 : 60,
+            nodeRepulsion: isLandscape
+              ? Math.min(45000, 5000 + snapshotNodes.length * 150)
+              : Math.min(20000, 3000 + snapshotNodes.length * 50),
+            nodeSeparation: isLandscape ? 150 : 60,
+
             randomize,
             animate: false, // Calculate math instantly for stability
             fit: false, // We will handle fitting manually for better control
@@ -338,7 +356,7 @@
 
           const layout = currentLayout;
           layout.one("layoutstop", () => {
-            if (currentLayout !== layout) return;
+            if (currentLayout !== layout || currentCy.destroyed()) return;
 
             console.log(
               `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
@@ -358,6 +376,12 @@
                   `[GraphView][${getElapsed()}] Layout Animation COMPLETED`,
                 );
                 isLayoutRunning = false;
+                // Adaptive: Unlock image layouts once the initial burst is finished
+                if (isInitial) {
+                  setTimeout(() => {
+                    layoutReady = true;
+                  }, 1000);
+                }
               },
             });
 
@@ -621,22 +645,31 @@
         // Ignore
       }
     }
-    if (cy) {
-      cy.destroy();
-      cy = undefined;
-    }
     if (initTimer) {
       clearTimeout(initTimer);
       initTimer = null;
     }
-    if (import.meta.env.DEV) {
-      delete (window as any).cy;
+    if (cy) {
+      // Cleanup blob URLs to prevent memory leaks
+      cy.nodes("[resolvedImage]").forEach((node) => {
+        const url = node.data("resolvedImage");
+        if (url && url.startsWith("blob:")) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
+      if (import.meta.env.DEV) {
+        delete (window as any).cy;
+      }
+      cy.destroy();
+      cy = undefined;
     }
     clearTimeout(hoverTimeout);
   });
 
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
+  let layoutReady = $state(false);
 
   let lastStyle: any[] = [];
   $effect(() => {
@@ -813,19 +846,15 @@
               });
 
               // Re-run layout now that node dimensions are accurate.
-              // If we are still in the initial loading phase, the main 500ms stabilization
+              // If we are still in the initial loading phase, the main 200ms stabilization
               // timeout will handle the layout anyway, so we don't need to trigger it here.
               setTimeout(() => {
                 if (cy && !cy.destroyed()) {
-                  // STARTUP GUARD: During the first few seconds of app life, we suppress
-                  // image-triggered layouts to avoid the "double animation" jank.
-                  const STARTUP_GRACE_PERIOD = 5000;
-                  const isStartupPhase =
-                    performance.now() - appStartTime < STARTUP_GRACE_PERIOD;
-
-                  if (isStartupPhase) {
+                  // ADAPTIVE GUARD: We suppress image-triggered layouts until the initial
+                  // "burst" or "bypass" has fully settled (layoutReady).
+                  if (!layoutReady) {
                     console.log(
-                      `[GraphView][${getElapsed()}] Image resolution suppressed (Startup Phase).`,
+                      `[GraphView][${getElapsed()}] Image resolution suppressed (Initial Stabilizing).`,
                     );
                     return;
                   }
@@ -1326,7 +1355,7 @@
       </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => applyCurrentLayout(true, true, "UI Redraw Button")}
+        onclick={() => applyCurrentLayout(false, true, "UI Redraw Button")}
         title="Redraw Layout"
         aria-label="Redraw Layout"
       >
@@ -1408,7 +1437,7 @@
 
   <!-- Graph Canvas -->
   <div
-    class="absolute inset-0 z-10 w-full h-full transition-opacity duration-500 {graphVisible
+    class="absolute inset-0 z-10 w-full h-full opacity-0 transition-opacity duration-500 {graphVisible
       ? 'opacity-100'
       : 'opacity-0'}"
     bind:this={container}
