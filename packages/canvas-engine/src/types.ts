@@ -39,7 +39,10 @@ export const CanvasEdgeSchema = z.object({
   label: z.string().optional(),
   type: z.string().optional().default("smoothstep"),
   style: z
-    .union([z.string(), z.record(z.union([z.string(), z.number()]))])
+    .union([
+      z.string(),
+      z.record(z.string(), z.union([z.string(), z.number()])),
+    ])
     .optional(),
 });
 
