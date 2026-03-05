@@ -77,6 +77,7 @@
   });
 
   let showApplySuggestions = $state(false);
+  let inputElement = $state<HTMLInputElement | null>(null);
 
   const selectSuggestion = (index: number) => {
     applySelectedIndex = index;
@@ -91,6 +92,11 @@
       applySelectedIndex = -1;
       showApplySuggestions = false;
       activeTab = "apply";
+
+      // Programmatic focus for accessibility & UX
+      setTimeout(() => {
+        inputElement?.focus();
+      }, 50);
     }
   });
 
@@ -244,6 +250,7 @@
           <div class="relative">
             <input
               type="text"
+              bind:this={inputElement}
               bind:value={applyInput}
               placeholder="Label name…"
               disabled={isLoading}

@@ -4,7 +4,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   animationDuration: 800,
   quality: "default",
   randomize: true,
-  packComponents: false, // Disable tiling to allow gravity to pull islands closer
+  packComponents: true, // Enable tiling to manage disconnected components efficiently
   nodeDimensionsIncludeLabels: true,
   nodeRepulsion: 25000, // Base maximum repulsion
   idealEdgeLength: 80,
@@ -12,7 +12,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   gravity: 0.5,
   gravityRange: 3.8,
   numIter: 3500, // Reverted for better complex graph quality
-  tile: false,
+  tile: true,
 };
 
 export const CONNECTION_COLORS = {

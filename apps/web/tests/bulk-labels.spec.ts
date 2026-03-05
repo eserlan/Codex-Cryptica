@@ -80,46 +80,44 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     page,
   }) => {
     // 1. Setup entities with specific labels
-    // Alpha: [tag1, tag2]
-    // Beta: [tag1]
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Alpha");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.waitForTimeout(500);
+    await expect(page.locator("aside").getByText("Alpha")).toBeVisible();
     await page.locator("aside").getByText("Alpha").click();
     await page.getByPlaceholder("Add label...").fill("tag1");
     await page.getByPlaceholder("Add label...").press("Enter");
+    await expect(page.getByText("tag1").first()).toBeVisible();
     await page.getByPlaceholder("Add label...").fill("tag2");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await page.waitForTimeout(500);
+    await expect(page.getByText("tag2").first()).toBeVisible();
 
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Beta");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.waitForTimeout(500);
+    await expect(page.locator("aside").getByText("Beta")).toBeVisible();
     await page.locator("aside").getByText("Beta").click();
     await page.getByPlaceholder("Add label...").fill("tag1");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await page.waitForTimeout(500);
-
-    await page.waitForTimeout(500);
+    await expect(page.getByText("tag1").first()).toBeVisible();
 
     // Ensure all dropdowns are closed before starting
     await page.mouse.click(1, 1);
 
     // 2. Open Filter and select tag1
     await page.getByRole("button", { name: /Labels \(/ }).click();
-    await page.waitForTimeout(500);
-    await page.getByRole("button", { name: "tag1", exact: true }).click();
+    const tag1Btn = page.getByRole("button", { name: "tag1", exact: true });
+    await expect(tag1Btn).toBeVisible();
+    await tag1Btn.click();
 
     // 3. Select tag2 (re-open if needed)
     const labelsBtn = page.getByRole("button", { name: /Labels \(/ });
-    const tag2 = page.getByRole("button", { name: "tag2", exact: true });
-    if (!(await tag2.isVisible())) {
+    const tag2Btn = page.getByRole("button", { name: "tag2", exact: true });
+    if (!(await tag2Btn.isVisible())) {
       await labelsBtn.click();
-      await page.waitForTimeout(200);
     }
-    await tag2.click();
+    await expect(tag2Btn).toBeVisible();
+    await tag2Btn.click();
     await expect(
       page.getByRole("button", { name: "Labels (2)" }),
     ).toBeVisible();
@@ -130,7 +128,7 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       .locator("..")
       .getByRole("button")
       .click();
-    // Only Alpha has BOTH tag1 and tag2. Beta should be hidden.
+    // Verify Logic Mode button state
     await expect(
       page.locator("button:has-text('AND') .text-theme-primary"),
     ).toBeVisible();
@@ -162,7 +160,6 @@ test.describe("Bulk Labeling and Selection Actions", () => {
 
     // 2. Open filter
     await page.getByRole("button", { name: /Labels \(/ }).click();
-    await page.waitForTimeout(500); // Allow dropdown to settle
 
     // 3. Search for 'cherry'
     const searchInput = page.getByPlaceholder("Search labels...");
