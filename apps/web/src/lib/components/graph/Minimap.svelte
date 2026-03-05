@@ -352,8 +352,6 @@
     style:top="{viewportY}px"
     style:width="{Math.max(viewportW, 2)}px"
     style:height="{Math.max(viewportH, 2)}px"
-    style:background-color="color-mix(in srgb, var(--color-theme-primary) 10%,
-    transparent)"
     role="button"
     aria-label="Drag to pan the graph view. Use arrow keys to pan when focused."
     tabindex="0"
