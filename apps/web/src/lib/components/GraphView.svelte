@@ -30,9 +30,8 @@
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
-  import { setCentralNode } from "graph-engine";
+  import { setCentralNode, getTimelineLayout } from "graph-engine";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
-  import { layoutService } from "$lib/services/layout";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -168,7 +167,7 @@
             (e) => e.group === "nodes",
           ) as any[];
 
-          const positions = await layoutService.runTimeline(
+          const positions = getTimelineLayout(
             $state.snapshot(nodes),
             $state.snapshot({
               axis: graph.timelineAxis,
