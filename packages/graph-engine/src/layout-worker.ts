@@ -28,6 +28,7 @@ export class LayoutEngine {
           return cytoscape;
         } catch (err) {
           workerCyPromise = null;
+          console.error("[LayoutWorker] Failed to load Cytoscape/fcose:", err);
           throw err;
         }
       })();
@@ -68,12 +69,32 @@ export class LayoutEngine {
 
     // Explicitly set positions from element data to ensure Cytoscape applies them correctly
     // especially in headless mode where initialization might be sensitive to element order.
+    const nodeMap = new Map<string, any>();
+    elements.forEach((el) => {
+      if (el.group === "nodes") {
+        nodeMap.set(el.data.id, el);
+      }
+    });
+
     cy.nodes().forEach((node: any) => {
-      const el = elements.find(
-        (e) => e.group === "nodes" && e.data.id === node.id(),
-      );
+      const el = nodeMap.get(node.id());
       if (el && el.position) {
-        node.position(el.position);
+        // Add a tiny bit of jitter if randomize is false to prevent numerical collapse
+        // but only if the position is actually present.
+        const jitter = options.randomize ? 0 : (Math.random() - 0.5) * 0.1;
+        const pos = {
+          x: Number(el.position.x) + jitter,
+          y: Number(el.position.y) + jitter,
+        };
+
+        if (isNaN(pos.x) || isNaN(pos.y)) {
+          console.warn(
+            `[LayoutWorker] Invalid position for node ${node.id()}:`,
+            el.position,
+          );
+        } else {
+          node.position(pos);
+        }
       }
     });
 
@@ -87,9 +108,12 @@ export class LayoutEngine {
           uniformNodeDimensions: false,
           stop: () => {
             const positions: LayoutResult = {};
+
             cy.nodes().forEach((node: any) => {
-              positions[node.id()] = node.position();
+              const pos = node.position();
+              positions[node.id()] = { x: pos.x, y: pos.y };
             });
+
             cy.destroy();
             resolve(positions);
           },
@@ -97,6 +121,7 @@ export class LayoutEngine {
 
         layout.run();
       } catch (error) {
+        console.error("[LayoutWorker] fcose layout failed:", error);
         try {
           cy.destroy();
         } catch {
