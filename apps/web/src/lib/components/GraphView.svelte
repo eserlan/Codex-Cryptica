@@ -1552,11 +1552,32 @@
     </div>
   {/if}
 
-  <!-- Merge Hint -->
+  <!-- Selection Actions -->
   {#if selectionCount >= 2 && !connectMode}
     <div
-      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
+      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto"
+      transition:fly={{ y: -20, duration: 200 }}
     >
+      <div class="flex gap-2">
+        <button
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-1.5 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2"
+          onclick={() =>
+            ui.openBulkLabelDialog(
+              cy?.$("node:selected").map((n) => n.id()) || [],
+            )}
+        >
+          <span class="icon-[lucide--tag] w-3 h-3"></span>
+          Label ({selectionCount})
+        </button>
+        <button
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-1.5 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2"
+          onclick={() =>
+            ui.openMergeDialog(cy?.$("node:selected").map((n) => n.id()) || [])}
+        >
+          <span class="icon-[lucide--git-merge] w-3 h-3"></span>
+          Merge
+        </button>
+      </div>
       <FeatureHint hintId="node-merging" />
     </div>
   {/if}

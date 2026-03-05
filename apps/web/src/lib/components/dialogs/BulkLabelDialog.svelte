@@ -1,6 +1,7 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { ui } from "$lib/stores/ui.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { fade } from "svelte/transition";
 
@@ -71,7 +72,21 @@
       .slice(0, 5);
   });
 
+  let allSuggestions = $derived.by(() => {
+    const query = applyInput.trim().toLowerCase();
+    if (query) return applySuggestions;
+    // Show recent labels if input is empty
+    return graph.recentLabels;
+  });
+
   let showApplySuggestions = $state(false);
+
+  const selectSuggestion = (index: number) => {
+    applySelectedIndex = index;
+    if (index >= 0 && index < allSuggestions.length) {
+      applyInput = allSuggestions[index];
+    }
+  };
 
   $effect(() => {
     // Reset when dialog reopens
@@ -87,33 +102,35 @@
     if (e.key === "Enter") {
       e.preventDefault();
       const label =
-        applySelectedIndex >= 0 && applySelectedIndex < applySuggestions.length
-          ? applySuggestions[applySelectedIndex]
+        applySelectedIndex >= 0 && applySelectedIndex < allSuggestions.length
+          ? allSuggestions[applySelectedIndex]
           : applyInput.trim();
       if (label) await applyLabel(label);
     } else if (
       e.key === "Tab" &&
       showApplySuggestions &&
-      applySuggestions.length > 0
+      allSuggestions.length > 0
     ) {
       e.preventDefault();
       const label =
-        applySelectedIndex >= 0 && applySelectedIndex < applySuggestions.length
-          ? applySuggestions[applySelectedIndex]
-          : applySuggestions[0];
+        applySelectedIndex >= 0 && applySelectedIndex < allSuggestions.length
+          ? allSuggestions[applySelectedIndex]
+          : allSuggestions[0];
       await applyLabel(label);
     } else if (e.key === "ArrowDown") {
-      if (applySuggestions.length > 0) {
+      if (allSuggestions.length > 0) {
         e.preventDefault();
-        applySelectedIndex = (applySelectedIndex + 1) % applySuggestions.length;
+        const next = (applySelectedIndex + 1) % allSuggestions.length;
+        selectSuggestion(next);
       }
     } else if (e.key === "ArrowUp") {
-      if (applySuggestions.length > 0) {
+      if (allSuggestions.length > 0) {
         e.preventDefault();
-        applySelectedIndex =
+        const prev =
           applySelectedIndex <= 0
-            ? applySuggestions.length - 1
+            ? allSuggestions.length - 1
             : applySelectedIndex - 1;
+        selectSuggestion(prev);
       }
     } else if (e.key === "Escape") {
       showApplySuggestions = false;
@@ -127,6 +144,9 @@
     try {
       const finalLabel = label.trim().toLowerCase();
       const count = await vault.bulkAddLabel(entityIds, finalLabel);
+
+      // Save to recent labels
+      await graph.addRecentLabel(finalLabel);
 
       applyInput = "";
       applySelectedIndex = -1;
@@ -239,13 +259,20 @@
                 setTimeout(() => (showApplySuggestions = false), 150)}
               class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text outline-none focus:border-theme-primary transition-all placeholder-theme-muted/50"
             />
-            {#if showApplySuggestions && applySuggestions.length > 0}
+            {#if showApplySuggestions && allSuggestions.length > 0}
               <div
                 role="listbox"
                 class="absolute top-full left-0 mt-1 w-full bg-theme-surface border border-theme-border rounded shadow-xl z-30 overflow-hidden"
                 transition:fade={{ duration: 100 }}
               >
-                {#each applySuggestions as suggestion, i}
+                {#if !applyInput.trim()}
+                  <div
+                    class="px-3 py-1.5 text-[10px] font-bold text-theme-primary uppercase tracking-widest border-b border-theme-border/50 bg-theme-primary/5"
+                  >
+                    Recent Labels
+                  </div>
+                {/if}
+                {#each allSuggestions as suggestion, i}
                   <button
                     type="button"
                     role="option"
