@@ -100,6 +100,13 @@
       contextMenuOpen = false;
     }
   };
+
+  const handleBulkLabel = () => {
+    if (selectedNodes.length >= 1) {
+      ui.openBulkLabelDialog(selectedNodes);
+      contextMenuOpen = false;
+    }
+  };
 </script>
 
 {#if contextMenuOpen}
@@ -142,5 +149,15 @@
         Merge {selectedNodes.length} Nodes
       </button>
     {/if}
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+      onclick={handleBulkLabel}
+      aria-label="Apply / Remove Label"
+    >
+      {selectedNodes.length > 1
+        ? `Label ${selectedNodes.length} Nodes…`
+        : "Label…"}
+    </button>
   </div>
 {/if}
