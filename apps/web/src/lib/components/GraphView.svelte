@@ -648,11 +648,12 @@
 
   $effect(() => {
     const currentCy = cy;
-    if (currentCy && graph.activeCategories) {
+    if (currentCy && !currentCy.destroyed() && graph.activeCategories) {
       const active = Array.from(graph.activeCategories);
+      const entities = vault.entities;
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
-          const entity = vault.entities[node.id()];
+          const entity = entities[node.id()];
           if (!entity) return;
 
           const hasMatch = active.length === 0 || active.includes(entity.type);

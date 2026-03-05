@@ -41,14 +41,14 @@
   {#if isOpen}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="fixed inset-0 z-10" onclick={() => (isOpen = false)}></div>
+    <div class="fixed inset-0 z-40" onclick={() => (isOpen = false)}></div>
 
     <div
-      class="absolute top-full left-0 mt-2 w-52 bg-theme-surface border border-theme-border rounded shadow-2xl z-20 max-h-64 overflow-y-auto custom-scrollbar"
+      class="absolute top-full left-0 mt-2 w-52 bg-theme-surface border border-theme-border rounded shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar"
       transition:fade={{ duration: 100 }}
     >
       <div class="p-2 space-y-1">
-        {#each categories.list as cat}
+        {#each categories.list as cat (cat.id)}
           <button
             onclick={() => onToggle(cat.id)}
             class="w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-[10px] font-mono uppercase tracking-wider transition-colors {activeCategories.has(
@@ -69,10 +69,7 @@
                 ></span>
               {/if}
             </span>
-            <span
-              class={iconClass(cat)}
-              style="color: {cat.color}"
-            ></span>
+            <span class={iconClass(cat)} style="color: {cat.color}"></span>
             <span class="truncate">{cat.label}</span>
           </button>
         {/each}
