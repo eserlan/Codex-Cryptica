@@ -4,6 +4,7 @@ export type SyncActionType =
   | "EXPORT_TO_FS" // A) Only OPFS changed, or F) New on OPFS, or D) FS deleted (recreate)
   | "IMPORT_TO_OPFS" // B) Only FS changed, or F) New on FS
   | "DELETE_FS" // E) OPFS deleted and FS unchanged
+  | "DELETE_OPFS" // Added for OPFS deletion handling
   | "HANDLE_CONFLICT" // C) Both changed
   | "MATCH_INITIAL" // Exists in both, unrecorded, but identical
   | "SKIP";
