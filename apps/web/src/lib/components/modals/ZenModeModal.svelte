@@ -240,6 +240,7 @@
     ) {
       try {
         await vault.deleteEntity(entity.id);
+        uiStore.notify(`"${entity.title}" deleted.`, "success");
         isEditing = false;
         handleClose();
       } catch (err: any) {

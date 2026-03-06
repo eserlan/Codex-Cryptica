@@ -118,8 +118,17 @@
 
     if (window.confirm(message)) {
       contextMenuOpen = false;
-      for (const id of selectedNodes) {
-        await vault.deleteEntity(id);
+      try {
+        for (const id of selectedNodes) {
+          await vault.deleteEntity(id);
+        }
+        uiStore.notify(
+          count > 1 ? `Deleted ${count} nodes.` : "Node deleted.",
+          "success",
+        );
+      } catch (err: any) {
+        console.error("Failed to delete nodes", err);
+        uiStore.notify(`Failed to delete: ${err.message}`, "error");
       }
     }
   };
@@ -175,17 +184,19 @@
         ? `Label ${selectedNodes.length} Nodes…`
         : "Label…"}
     </button>
-    <button
-      role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border"
-      onclick={deleteNodes}
-      aria-label="Delete {selectedNodes.length > 1
-        ? `${selectedNodes.length} Nodes`
-        : 'Node'}"
-    >
-      Delete {selectedNodes.length > 1
-        ? `${selectedNodes.length} Nodes`
-        : "Node"}
-    </button>
+    {#if !vault.isGuest}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border"
+        onclick={deleteNodes}
+        aria-label="Delete {selectedNodes.length > 1
+          ? `${selectedNodes.length} Nodes`
+          : 'Node'}"
+      >
+        Delete {selectedNodes.length > 1
+          ? `${selectedNodes.length} Nodes`
+          : "Node"}
+      </button>
+    {/if}
   </div>
 {/if}
