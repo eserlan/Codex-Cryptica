@@ -38,6 +38,7 @@
     onclick={() => editor?.chain().focus().toggleBold().run()}
     class="menu-btn {isBold ? 'active' : ''}"
     aria-label="Bold"
+    aria-pressed={isBold}
   >
     <span class="icon-[lucide--bold] w-4 h-4"></span>
   </button>
@@ -45,6 +46,7 @@
     onclick={() => editor?.chain().focus().toggleItalic().run()}
     class="menu-btn {isItalic ? 'active' : ''}"
     aria-label="Italic"
+    aria-pressed={isItalic}
   >
     <span class="icon-[lucide--italic] w-4 h-4"></span>
   </button>
@@ -52,6 +54,7 @@
     onclick={setLink}
     class="menu-btn {isLink ? 'active' : ''}"
     aria-label="Link"
+    aria-pressed={isLink}
   >
     <span class="icon-[lucide--link] w-4 h-4"></span>
   </button>
