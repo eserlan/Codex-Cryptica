@@ -338,25 +338,38 @@
       });
     };
 
-    const outbound = entity.connections
-      .filter((c) => checkVisibility(c.target))
-      .map((c) => ({
-        id: c.target,
-        label: c.label || c.type,
-        title: vault.entities[c.target]?.title || c.target,
-        isOutbound: true,
-      }));
+    // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative
+    // loop to prevent intermediate array allocations and reduce GC pressure.
+    const result = [];
 
-    const inbound = (vault.inboundConnections[entity.id] || [])
-      .filter((item) => checkVisibility(item.sourceId))
-      .map((item) => ({
-        id: item.sourceId,
-        label: item.connection.label || item.connection.type,
-        title: vault.entities[item.sourceId]?.title || item.sourceId,
-        isOutbound: false,
-      }));
+    const connectionsLength = entity.connections.length;
+    for (let i = 0; i < connectionsLength; i++) {
+      const c = entity.connections[i];
+      if (checkVisibility(c.target)) {
+        result.push({
+          id: c.target,
+          label: c.label || c.type,
+          title: vault.entities[c.target]?.title || c.target,
+          isOutbound: true,
+        });
+      }
+    }
 
-    return [...outbound, ...inbound];
+    const inboundConnections = vault.inboundConnections[entity.id] || [];
+    const inboundLength = inboundConnections.length;
+    for (let i = 0; i < inboundLength; i++) {
+      const item = inboundConnections[i];
+      if (checkVisibility(item.sourceId)) {
+        result.push({
+          id: item.sourceId,
+          label: item.connection.label || item.connection.type,
+          title: vault.entities[item.sourceId]?.title || item.sourceId,
+          isOutbound: false,
+        });
+      }
+    }
+
+    return result;
   });
 
   const handleLightboxKeydown = (e: KeyboardEvent) => {
