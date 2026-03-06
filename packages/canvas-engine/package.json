@@ -20,7 +20,7 @@
     "svelte": "^5.23.0"
   },
   "devDependencies": {
-    "@codex/schema": "workspace:*",
+    "schema": "*",
     "@sveltejs/kit": "^2.18.2",
     "@types/node": "^22.13.10",
     "eslint": "^9.22.0",
