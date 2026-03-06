@@ -1,10 +1,11 @@
 {
   "name": "@codex/canvas-engine",
   "version": "0.0.0",
-  "type": "module",
   "private": true,
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "test": "vitest run",
     "lint": "eslint \"src/**/*.ts\""
@@ -12,17 +13,18 @@
   "dependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "vite": "^7.3.1",
-    "zod": "^3.24.1"
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "@xyflow/svelte": "^1.5.1",
-    "svelte": "^5.53.5"
+    "svelte": "^5.23.0"
   },
   "devDependencies": {
-    "@types/node": "^25.3.1",
-    "@xyflow/svelte": "^1.5.1",
-    "svelte": "^5.53.5",
-    "typescript": "^5.7.3",
+    "schema": "*",
+    "@sveltejs/kit": "^2.18.2",
+    "@types/node": "^22.13.10",
+    "eslint": "^9.22.0",
+    "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
 }
