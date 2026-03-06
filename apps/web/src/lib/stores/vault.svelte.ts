@@ -499,7 +499,7 @@ class VaultStore {
         this.status = "idle"; // Reset status so the UI doesn't hang
         uiStore.notify(
           "Local folder link lost. Please re-select the folder.",
-          "warning",
+          "error",
         );
 
         // Clear the dead handle from DB

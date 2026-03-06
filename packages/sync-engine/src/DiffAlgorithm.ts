@@ -39,18 +39,20 @@ export class DiffAlgorithm {
       // OPFS Changed: Compare current OPFS hash to the stored manifest hash
       // Note: If hash is missing, we must assume it changed to be safe,
       // but the ideal flow ensures hashes are always written to the manifest.
-      opfsChanged =
+      opfsChanged = !!(
         opfsExists &&
         (!registry.lastSyncedOpfsHash ||
-          registry.lastSyncedOpfsHash !== opfs.hash);
+          registry.lastSyncedOpfsHash !== opfs.hash)
+      );
 
       // FS Changed: Compare current FS (size + mtime) to stored manifest fingerprint
-      fsChanged =
+      fsChanged = !!(
         fsExists &&
         (registry.lastSyncedFsSize === undefined ||
           registry.lastSyncedFsModified === undefined ||
           fs.size !== registry.lastSyncedFsSize ||
-          fs.lastModified !== registry.lastSyncedFsModified);
+          fs.lastModified !== registry.lastSyncedFsModified)
+      );
     } else {
       // If there's no registry entry, both are considered "changed" / new
       opfsChanged = !!opfsExists;
