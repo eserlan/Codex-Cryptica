@@ -372,7 +372,6 @@ export class SyncService {
           break;
         }
       }
-
       if (action.isConflict && action.type !== "HANDLE_CONFLICT") {
         result.conflicts.push(action.path);
       }
