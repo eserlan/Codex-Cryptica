@@ -122,13 +122,13 @@
         for (const id of selectedNodes) {
           await vault.deleteEntity(id);
         }
-        uiStore.notify(
+        ui.notify(
           count > 1 ? `Deleted ${count} nodes.` : "Node deleted.",
           "success",
         );
       } catch (err: any) {
         console.error("Failed to delete nodes", err);
-        uiStore.notify(`Failed to delete: ${err.message}`, "error");
+        ui.notify(`Failed to delete: ${err.message}`, "error");
       }
     }
   };
