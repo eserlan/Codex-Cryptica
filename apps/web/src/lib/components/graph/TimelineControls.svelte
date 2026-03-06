@@ -3,16 +3,19 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
 
-  let { onApply } = $props<{ onApply?: () => void }>();
+  interface LayoutTrigger {
+    (isInitial?: boolean, isForced?: boolean, caller?: string): void;
+  }
+  let { onApply } = $props<{ onApply?: LayoutTrigger }>();
 
   const toggle = () => {
     graph.toggleTimeline();
-    if (onApply) onApply();
+    if (onApply) onApply(false, true, "Timeline Toggle"); // Force layout override
   };
 
   const setAxis = (axis: "x" | "y") => {
     graph.setTimelineAxis(axis);
-    if (onApply) onApply();
+    if (onApply) onApply(false, true, "Timeline Axis Switch"); // Force layout override
   };
 
   let minYear = $derived.by(() => {

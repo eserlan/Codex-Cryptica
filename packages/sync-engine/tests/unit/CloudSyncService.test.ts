@@ -13,9 +13,9 @@ describe("CloudSyncService", () => {
     const deletedEntry = {
       filePath: "deleted.md",
       vaultId: "vault-1",
-      lastLocalModified: 100,
-      lastOpfsModified: 100,
-      size: 10,
+      lastSyncedFsModified: 100,
+      lastSyncedFsSize: 10,
+      lastSyncedOpfsHash: "abc",
       status: "SYNCED" as const,
       remoteId: "remote-id-1",
     };
@@ -51,16 +51,19 @@ describe("CloudSyncService", () => {
       }),
       getDirectoryHandle: vi.fn().mockImplementation(() => mockOpfs),
       removeEntry: vi.fn().mockResolvedValue(undefined),
-      values: vi.fn().mockReturnValue({
+      entries: vi.fn().mockReturnValue({
         [Symbol.asyncIterator]: async function* () {
-          yield {
-            kind: "file",
-            name: "deleted.md",
-            getFile: async () => ({
-              lastModified: 100,
-              size: 10,
-            }),
-          };
+          yield [
+            "deleted.md",
+            {
+              kind: "file",
+              name: "deleted.md",
+              getFile: async () => ({
+                lastModified: 100,
+                size: 10,
+              }),
+            },
+          ];
         },
       }),
     };
@@ -118,9 +121,9 @@ describe("CloudSyncService", () => {
     vi.mocked(registry.getEntryByRemoteId).mockResolvedValue({
       filePath: "deleted.md",
       vaultId: "vault-1",
-      lastLocalModified: 100,
-      lastOpfsModified: 100,
-      size: 10,
+      lastSyncedFsModified: 100,
+      lastSyncedFsSize: 10,
+      lastSyncedOpfsHash: "abc",
       status: "SYNCED",
       remoteId: "remote-id-1",
     });

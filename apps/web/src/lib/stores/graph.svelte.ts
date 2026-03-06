@@ -55,6 +55,8 @@ class GraphStore {
   showLabels = $state(true);
   showImages = $state(true);
   stableLayout = $state(true);
+  recentLabels = $state<string[]>([]);
+  labelFilterMode = $state<"AND" | "OR">("OR");
 
   // Timeline State
   timelineMode = $state(false);
@@ -112,6 +114,19 @@ class GraphStore {
     const savedStableLayout = await db.get("settings", "graphStableLayout");
     if (savedStableLayout !== undefined) {
       this.stableLayout = savedStableLayout;
+    }
+
+    const savedRecentLabels = await db.get("settings", "graphRecentLabels");
+    if (savedRecentLabels !== undefined) {
+      this.recentLabels = savedRecentLabels;
+    }
+
+    const savedLabelFilterMode = await db.get(
+      "settings",
+      "graphLabelFilterMode",
+    );
+    if (savedLabelFilterMode !== undefined) {
+      this.labelFilterMode = savedLabelFilterMode;
     }
   }
 
@@ -193,6 +208,39 @@ class GraphStore {
       await db.put("settings", newValue, "graphStableLayout");
     } catch (error) {
       console.error("[GraphStore] Failed to persist graphStableLayout:", error);
+    }
+  }
+
+  async toggleLabelFilterMode() {
+    const newValue = this.labelFilterMode === "OR" ? "AND" : "OR";
+    this.labelFilterMode = newValue;
+    try {
+      const db = await getDB();
+      await db.put("settings", newValue, "graphLabelFilterMode");
+    } catch (error) {
+      console.error(
+        "[GraphStore] Failed to persist graphLabelFilterMode:",
+        error,
+      );
+    }
+  }
+
+  async addRecentLabel(label: string) {
+    const normalized = label.trim().toLowerCase();
+    if (!normalized) return;
+
+    // Move to top, remove existing
+    const updated = [
+      normalized,
+      ...this.recentLabels.filter((l) => l !== normalized),
+    ].slice(0, 5);
+
+    this.recentLabels = updated;
+    try {
+      const db = await getDB();
+      await db.put("settings", updated, "graphRecentLabels");
+    } catch (error) {
+      console.error("[GraphStore] Failed to persist graphRecentLabels:", error);
     }
   }
 

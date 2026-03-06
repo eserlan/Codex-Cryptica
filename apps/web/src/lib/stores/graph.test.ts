@@ -122,4 +122,54 @@ describe("GraphStore", () => {
     expect(graph.showImages).toBe(false);
     expect(graph.stableLayout).toBe(false);
   });
+
+  it("should add recent labels and persist them", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+
+    graph.recentLabels = ["a", "b"];
+    await graph.addRecentLabel("c");
+
+    expect(graph.recentLabels).toEqual(["c", "a", "b"]);
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      ["c", "a", "b"],
+      "graphRecentLabels",
+    );
+
+    // Should move to top if already exists
+    await graph.addRecentLabel("a");
+    expect(graph.recentLabels).toEqual(["a", "c", "b"]);
+
+    // Should limit to 5
+    await graph.addRecentLabel("d");
+    await graph.addRecentLabel("e");
+    await graph.addRecentLabel("f");
+    expect(graph.recentLabels).toHaveLength(5);
+    expect(graph.recentLabels[0]).toBe("f");
+    expect(graph.recentLabels).not.toContain("b");
+  });
+
+  it("should toggle labelFilterMode and persist it", async () => {
+    const db = await getDB();
+    const putSpy = vi.spyOn(db, "put");
+
+    expect(graph.labelFilterMode).toBe("OR");
+
+    await graph.toggleLabelFilterMode();
+    expect(graph.labelFilterMode).toBe("AND");
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "AND",
+      "graphLabelFilterMode",
+    );
+
+    await graph.toggleLabelFilterMode();
+    expect(graph.labelFilterMode).toBe("OR");
+    expect(putSpy).toHaveBeenCalledWith(
+      "settings",
+      "OR",
+      "graphLabelFilterMode",
+    );
+  });
 });

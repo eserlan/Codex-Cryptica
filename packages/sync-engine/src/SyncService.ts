@@ -13,8 +13,8 @@ export class SyncService {
 
   async sync(
     vaultId: string,
-    local: ISyncBackend,
-    remote: ISyncBackend,
+    fsBackend: ISyncBackend,
+    opfsBackend: ISyncBackend,
     sinceToken?: string | null,
     validator?: (
       path: string,
@@ -37,27 +37,27 @@ export class SyncService {
     };
 
     try {
-      const localScan = await local.scan(vaultId);
-      const remoteScan = await remote.scan(vaultId, sinceToken);
+      const fsScan = await fsBackend.scan(vaultId);
+      const opfsScan = await opfsBackend.scan(vaultId, sinceToken);
       const registryEntries = await this.registry.getEntriesByVault(vaultId);
 
-      result.nextToken = remoteScan.nextToken;
+      result.nextToken = opfsScan.nextToken;
 
       // 1. Deduplicate remote changes by handle if they are strings (Cloud IDs)
-      const remoteFilesById = new Map<string, FileMetadata>();
-      const otherRemoteFiles: FileMetadata[] = [];
+      const opfsFilesById = new Map<string, FileMetadata>();
+      const otherOpfsFiles: FileMetadata[] = [];
 
-      for (const f of remoteScan.files) {
+      for (const f of opfsScan.files) {
         if (typeof f.handle === "string") {
-          remoteFilesById.set(f.handle, f);
+          opfsFilesById.set(f.handle, f);
         } else {
-          otherRemoteFiles.push(f);
+          otherOpfsFiles.push(f);
         }
       }
 
       // 2. Resolve paths for "unknown" files (deletions)
-      const resolvedRemoteFiles = await Promise.all(
-        Array.from(remoteFilesById.values()).map(async (f) => {
+      const resolvedOpfsFiles = await Promise.all(
+        Array.from(opfsFilesById.values()).map(async (f) => {
           if (f.path === "unknown" && typeof f.handle === "string") {
             const entry = await this.registry.getEntryByRemoteId(f.handle);
             if (entry) return { ...f, path: entry.filePath };
@@ -66,48 +66,48 @@ export class SyncService {
         }),
       );
 
-      const remoteFiles = [...resolvedRemoteFiles, ...otherRemoteFiles];
+      const opfsFiles = [...resolvedOpfsFiles, ...otherOpfsFiles];
 
-      const localFiles = localScan.files;
-      const localMap = new Map(localFiles.map((f) => [f.path, f]));
-      const remoteMap = new Map(remoteFiles.map((f) => [f.path, f]));
+      const fsFiles = fsScan.files;
+      const fsMap = new Map(fsFiles.map((f) => [f.path, f]));
+      const opfsMap = new Map(opfsFiles.map((f) => [f.path, f]));
       const registryMap = new Map(registryEntries.map((e) => [e.filePath, e]));
 
       const isDeltaSync = sinceToken !== undefined && sinceToken !== null;
       const allPaths = new Set([
-        ...localMap.keys(),
-        ...remoteMap.keys(),
+        ...fsMap.keys(),
+        ...opfsMap.keys(),
         ...registryMap.keys(),
       ]);
 
       const actions: SyncAction[] = [];
       for (const path of allPaths) {
-        let remoteMetadata = remoteMap.get(path);
+        let opfsMetadata = opfsMap.get(path);
         const registryEntry = registryMap.get(path);
 
-        const isRemoteDeleted = remoteMetadata?.isDeleted;
+        const isOpfsDeleted = opfsMetadata?.isDeleted;
 
         // In delta sync, if a file is missing from the remote scan but exists in our registry,
         // it means the file has NOT changed on the remote side.
         if (
           isDeltaSync &&
-          !remoteMetadata &&
-          !isRemoteDeleted &&
+          !opfsMetadata &&
+          !isOpfsDeleted &&
           registryEntry?.remoteId
         ) {
-          remoteMetadata = {
+          opfsMetadata = {
             path,
-            lastModified: registryEntry.lastOpfsModified,
-            size: registryEntry.size,
+            lastModified: Date.now(), // OPFS doesn't give real mtimes
+            size: registryEntry.lastSyncedFsSize || 0, // Fallback
             handle: registryEntry.remoteId,
-            hash: registryEntry.remoteHash,
+            hash: registryEntry.lastSyncedOpfsHash,
           };
         }
 
         const action = await DiffAlgorithm.calculateAction(
           path,
-          localMap.get(path),
-          remoteMetadata,
+          fsMap.get(path),
+          opfsMetadata,
           registryEntry,
           validator,
         );
@@ -130,7 +130,7 @@ export class SyncService {
         }
       };
 
-      const CONCURRENCY = 5;
+      const CONCURRENCY = 1; // Strict sequential for reliability on large local vaults
       let nextActionIndex = 0;
       await Promise.all(
         Array.from({ length: CONCURRENCY }).map(async () => {
@@ -138,7 +138,13 @@ export class SyncService {
             const action = actions[nextActionIndex++];
             if (!action) continue;
             try {
-              await this.executeAction(action, vaultId, local, remote, result);
+              await this.executeAction(
+                action,
+                vaultId,
+                fsBackend,
+                opfsBackend,
+                result,
+              );
             } catch (err: any) {
               result.failed.push({ path: action.path, error: err.message });
             } finally {
@@ -151,7 +157,7 @@ export class SyncService {
       // Cleanup registry for completely gone files (Only during full sync)
       if (!isDeltaSync) {
         for (const path of registryMap.keys()) {
-          if (!localMap.has(path) && !remoteMap.has(path)) {
+          if (!fsMap.has(path) && !opfsMap.has(path)) {
             await this.registry.deleteEntry(vaultId, path);
           }
         }
@@ -166,8 +172,8 @@ export class SyncService {
   protected async executeAction(
     action: SyncAction,
     vaultId: string,
-    local: ISyncBackend,
-    remote: ISyncBackend,
+    fsBackend: ISyncBackend,
+    opfsBackend: ISyncBackend,
     result: SyncResult,
   ) {
     try {
@@ -176,108 +182,204 @@ export class SyncService {
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
-            lastLocalModified: action.localMetadata!.lastModified,
-            lastOpfsModified: action.opfsMetadata!.lastModified,
-            size: action.localMetadata!.size,
+            lastSyncedFsModified: action.fsMetadata!.lastModified,
+            lastSyncedFsSize: action.fsMetadata!.size,
+            lastSyncedOpfsHash: action.opfsMetadata!.hash,
             status: "SYNCED",
-            remoteId: this.getSerializableId(action.opfsMetadata!, remote),
-            remoteHash: action.opfsMetadata?.hash,
+            remoteId: this.getSerializableId(action.opfsMetadata!, opfsBackend),
           });
           break;
         }
 
-        case "CREATE_OPFS":
-        case "UPDATE_OPFS": {
-          const localContent = await local.download(
+        case "EXPORT_TO_FS": {
+          const opfsContent = await opfsBackend.download(
             action.path,
-            typeof action.localMetadata?.handle === "string"
-              ? action.localMetadata.handle
-              : undefined,
-          );
-          const updatedRemote = await remote.upload(
-            action.path,
-            localContent,
             typeof action.opfsMetadata?.handle === "string"
               ? action.opfsMetadata.handle
               : undefined,
           );
 
+          let shouldUpload = true;
+
+          // CONTENT EQUALITY FAST-PATH
+          if (
+            action.fsMetadata &&
+            action.fsMetadata.size === opfsContent.size
+          ) {
+            try {
+              const fsContent = await fsBackend.download(
+                action.path,
+                typeof action.fsMetadata?.handle === "string"
+                  ? action.fsMetadata.handle
+                  : undefined,
+              );
+
+              if (
+                action.path.endsWith(".md") ||
+                action.path.endsWith(".markdown")
+              ) {
+                const fsText = await fsContent.text();
+                const opfsText = await opfsContent.text();
+                if (fsText === opfsText) {
+                  shouldUpload = false;
+                  console.log(
+                    `[Sync] Fast-Path: Contents of ${action.path} are identical. Skipping export to FS.`,
+                  );
+                }
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+
+          const updatedFs = shouldUpload
+            ? await fsBackend.upload(
+                action.path,
+                opfsContent,
+                typeof action.fsMetadata?.handle === "string"
+                  ? action.fsMetadata.handle
+                  : undefined,
+              )
+            : action.fsMetadata!;
+
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
-            lastLocalModified: action.localMetadata!.lastModified,
-            lastOpfsModified: updatedRemote.lastModified,
-            size: updatedRemote.size,
-            status: "SYNCED",
-            remoteId: this.getSerializableId(
-              updatedRemote,
-              remote,
-              action.registryEntry,
-            ),
-            remoteHash: updatedRemote.hash,
-          });
-
-          if (action.type === "CREATE_OPFS") result.created.push(action.path);
-          else result.updated.push(action.path);
-          break;
-        }
-
-        case "CREATE_LOCAL":
-        case "UPDATE_LOCAL": {
-          const remoteContent = await remote.download(
-            action.path,
-            typeof action.opfsMetadata?.handle === "string"
-              ? action.opfsMetadata.handle
-              : undefined,
-          );
-          const updatedLocal = await local.upload(
-            action.path,
-            remoteContent,
-            typeof action.localMetadata?.handle === "string"
-              ? action.localMetadata.handle
-              : undefined,
-          );
-
-          await this.registry.putEntry({
-            filePath: action.path,
-            vaultId,
-            lastLocalModified: updatedLocal.lastModified,
-            lastOpfsModified: action.opfsMetadata!.lastModified,
-            size: updatedLocal.size,
+            lastSyncedFsModified: updatedFs.lastModified,
+            lastSyncedFsSize: updatedFs.size,
+            lastSyncedOpfsHash: action.opfsMetadata!.hash, // Ideally we calculate a real hash here if missing
             status: "SYNCED",
             remoteId: this.getSerializableId(
               action.opfsMetadata!,
-              remote,
+              opfsBackend,
               action.registryEntry,
             ),
-            remoteHash: action.opfsMetadata?.hash,
           });
 
-          if (action.type === "CREATE_LOCAL") result.created.push(action.path);
-          else result.updated.push(action.path);
+          if (shouldUpload) {
+            if (!action.registryEntry) result.created.push(action.path);
+            else result.updated.push(action.path);
+          }
+          break;
+        }
+
+        case "IMPORT_TO_OPFS": {
+          const fsContent = await fsBackend.download(
+            action.path,
+            typeof action.fsMetadata?.handle === "string"
+              ? action.fsMetadata.handle
+              : undefined,
+          );
+
+          let shouldUpload = true;
+
+          if (
+            action.opfsMetadata &&
+            action.opfsMetadata.size === fsContent.size
+          ) {
+            try {
+              const opfsContent = await opfsBackend.download(
+                action.path,
+                typeof action.opfsMetadata?.handle === "string"
+                  ? action.opfsMetadata.handle
+                  : undefined,
+              );
+
+              if (
+                action.path.endsWith(".md") ||
+                action.path.endsWith(".markdown")
+              ) {
+                const fsText = await fsContent.text();
+                const opfsText = await opfsContent.text();
+                if (fsText === opfsText) {
+                  shouldUpload = false;
+                  console.log(
+                    `[Sync] Fast-Path: Contents of ${action.path} are identical. Skipping import to OPFS.`,
+                  );
+                }
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+
+          const updatedOpfs = shouldUpload
+            ? await opfsBackend.upload(
+                action.path,
+                fsContent,
+                typeof action.opfsMetadata?.handle === "string"
+                  ? action.opfsMetadata.handle
+                  : undefined,
+              )
+            : action.opfsMetadata!;
+
+          await this.registry.putEntry({
+            filePath: action.path,
+            vaultId,
+            lastSyncedFsModified: action.fsMetadata!.lastModified,
+            lastSyncedFsSize: action.fsMetadata!.size,
+            lastSyncedOpfsHash: updatedOpfs.hash,
+            status: "SYNCED",
+            remoteId: this.getSerializableId(
+              updatedOpfs,
+              opfsBackend,
+              action.registryEntry,
+            ),
+          });
+
+          if (shouldUpload) {
+            if (!action.registryEntry) result.created.push(action.path);
+            else result.updated.push(action.path);
+          }
+          break;
+        }
+
+        case "HANDLE_CONFLICT": {
+          // Default Conflict Strategy: Create Conflict Copy (FS content to OPFS with timestamp)
+          const fsContent = await fsBackend.download(
+            action.path,
+            typeof action.fsMetadata?.handle === "string"
+              ? action.fsMetadata.handle
+              : undefined,
+          );
+
+          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+          const extIndex = action.path.lastIndexOf(".");
+          const basePath =
+            extIndex !== -1 ? action.path.substring(0, extIndex) : action.path;
+          const ext = extIndex !== -1 ? action.path.substring(extIndex) : "";
+          const conflictPath = `${basePath}.conflict-${timestamp}${ext}`;
+
+          await opfsBackend.upload(conflictPath, fsContent);
+
+          // We don't update the registry for the main path because it's still conflicting until resolved manually,
+          // but we effectively "imported" the remote changes safely.
+          result.conflicts.push(action.path);
+          break;
+        }
+
+        case "DELETE_FS": {
+          await fsBackend.delete(action.path, action.registryEntry?.remoteId);
+          await this.registry.deleteEntry(vaultId, action.path);
+          result.deleted.push(action.path);
           break;
         }
 
         case "DELETE_OPFS": {
-          await remote.delete(action.path, action.registryEntry?.remoteId);
-          await this.registry.deleteEntry(vaultId, action.path);
-          result.deleted.push(action.path);
-          break;
-        }
-
-        case "DELETE_LOCAL": {
-          await local.delete(action.path, action.registryEntry?.remoteId);
+          await opfsBackend.delete(action.path, action.registryEntry?.remoteId);
           await this.registry.deleteEntry(vaultId, action.path);
           result.deleted.push(action.path);
           break;
         }
       }
-
-      if (action.isConflict) {
+      if (action.isConflict && action.type !== "HANDLE_CONFLICT") {
         result.conflicts.push(action.path);
       }
     } catch (err: any) {
-      console.error(`[Sync] Error processing ${action.path}:`, err);
+      console.error(
+        `[Sync] Error processing ${action.path} (${action.type}):`,
+        err,
+      );
       throw err; // Re-throw to be caught by the orchestrator loop
     }
   }

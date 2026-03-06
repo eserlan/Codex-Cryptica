@@ -79,12 +79,11 @@ export interface ILocalSyncService {
 export interface SyncEntry {
   filePath: string;
   vaultId: string;
-  lastLocalModified: number;
-  lastOpfsModified: number;
-  size: number;
+  lastSyncedFsModified?: number;
+  lastSyncedFsSize?: number;
+  lastSyncedOpfsHash?: string;
   status: "SYNCED" | "DIRTY" | "CONFLICT";
-  remoteId?: string;
-  remoteHash?: string;
+  remoteId?: string; // Kept for Google Drive compatibility
 }
 
 export interface CloudSyncMetadata {

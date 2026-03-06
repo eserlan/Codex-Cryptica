@@ -196,6 +196,20 @@ class UIStore {
     this.mergeDialog = { open: false, sourceIds: [] };
   }
 
+  // Bulk Label Dialog State
+  bulkLabelDialog = $state<{
+    open: boolean;
+    entityIds: string[];
+  }>({ open: false, entityIds: [] });
+
+  openBulkLabelDialog(entityIds: string[]) {
+    this.bulkLabelDialog = { open: true, entityIds };
+  }
+
+  closeBulkLabelDialog() {
+    this.bulkLabelDialog = { open: false, entityIds: [] };
+  }
+
   // Compatibility aliases (can be deprecated later)
   /** @deprecated Use zenModeEntityId */
   get readModeNodeId() {

@@ -10,9 +10,9 @@ export class FileSystemBackend implements ISyncBackend {
       path: string[] = [],
     ) => {
       try {
-        for await (const entry of (handle as any).values()) {
+        for await (const [name, entry] of (handle as any).entries()) {
           try {
-            const currentPath = [...path, entry.name];
+            const currentPath = [...path, name];
             if (entry.kind === "file") {
               const file = await (entry as FileSystemFileHandle).getFile();
               results.push({
@@ -25,13 +25,11 @@ export class FileSystemBackend implements ISyncBackend {
               await scan(entry as FileSystemDirectoryHandle, currentPath);
             }
           } catch (entryErr: any) {
-            // If a file is deleted while we are scanning, just skip it
             if (entryErr.name === "NotFoundError") continue;
             throw entryErr;
           }
         }
       } catch (scanErr: any) {
-        // If the directory itself was deleted while scanning, just return what we have
         if (scanErr.name === "NotFoundError") return;
         throw scanErr;
       }
@@ -42,10 +40,10 @@ export class FileSystemBackend implements ISyncBackend {
 
   async download(path: string): Promise<Blob> {
     try {
-      const fileHandle = await this.getFileHandle(path);
+      const fileHandle = await this.resolveFileHandle(path, false);
       return await fileHandle.getFile();
     } catch (err: any) {
-      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError") {
+      if (err.name === "NotFoundError") {
         throw new Error(`File not found: ${path}`, { cause: err });
       }
       throw err;
@@ -53,34 +51,70 @@ export class FileSystemBackend implements ISyncBackend {
   }
 
   async upload(path: string, content: Blob): Promise<FileMetadata> {
-    const fileHandle = await this.getFileHandle(path, true);
-    const writable = await (fileHandle as any).createWritable({
-      keepExistingData: false,
-    });
-    try {
-      await writable.write(content);
-      await writable.close();
-    } catch (err: any) {
-      try {
-        await writable.abort();
-      } catch {
-        // Ignore abort errors
-      }
-      throw err;
-    }
+    let retries = 3;
+    let delay = 1000;
 
-    const updated = await fileHandle.getFile();
-    return {
-      path,
-      lastModified: updated.lastModified,
-      size: updated.size,
-      handle: fileHandle,
-    };
+    while (retries > 0) {
+      try {
+        // Resolve leaf handle freshly from the root
+        const fileHandle = await this.resolveFileHandle(path, true);
+
+        // VERIFICATION: Ensure the handle is truly functional before opening writable
+        await fileHandle.getFile().catch(() => {
+          /* may not exist yet if just created */
+        });
+
+        const writable = await (fileHandle as any).createWritable({
+          keepExistingData: false,
+        });
+
+        try {
+          await writable.write(content);
+          await writable.close();
+        } catch (writeErr: any) {
+          try {
+            await writable.abort();
+          } catch {
+            /* ignore */
+          }
+          throw writeErr;
+        }
+
+        // Final verification of the written file
+        const finalFileHandle = await this.resolveFileHandle(path, false);
+        const updated = await finalFileHandle.getFile();
+
+        return {
+          path,
+          lastModified: updated.lastModified,
+          size: updated.size,
+          handle: finalFileHandle,
+        };
+      } catch (err: any) {
+        if (err.name === "NotFoundError" && retries > 1) {
+          console.warn(
+            `[FileSystemBackend] Refreshing root and retrying ${path}... (${retries - 1} left)`,
+          );
+          retries--;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+          continue;
+        }
+        console.error(
+          `[FileSystemBackend] Critical upload failure for ${path}:`,
+          err,
+        );
+        throw err;
+      }
+    }
+    throw new Error(`Failed to upload ${path} after multiple retries.`);
   }
 
   async delete(path: string): Promise<void> {
     try {
-      const pathParts = path.split("/");
+      const pathParts = path.split("/").filter((p) => p.length > 0);
+      if (pathParts.length === 0) return;
+
       const fileName = pathParts.pop()!;
       const dirParts = pathParts;
 
@@ -90,22 +124,65 @@ export class FileSystemBackend implements ISyncBackend {
       }
       await current.removeEntry(fileName);
     } catch (err: any) {
-      // If already deleted, that's fine
-      if (err.name === "NotFoundError" || err.cause?.name === "NotFoundError")
-        return;
+      if (err.name === "NotFoundError") return;
       throw err;
     }
   }
 
-  private async getFileHandle(path: string, create = false) {
-    const pathParts = path.split("/");
-    const fileName = pathParts.pop()!;
-    const dirParts = pathParts;
+  /**
+   * Always resolves a path from the root handle to ensure we never use stale sub-handles.
+   */
+  private async resolveFileHandle(
+    path: string,
+    create: boolean,
+  ): Promise<FileSystemFileHandle> {
+    const parts = path.split("/").filter((p) => p.length > 0);
+    const fileName = parts.pop()!;
+    let currentDir = this.handle;
 
-    let current = this.handle;
-    for (const part of dirParts) {
-      current = await current.getDirectoryHandle(part, { create });
+    // Verify root handle permission on every resolution
+    try {
+      if (
+        (await (currentDir as any).queryPermission({ mode: "readwrite" })) !==
+        "granted"
+      ) {
+        throw new Error("Permission to write to local directory was revoked.");
+      }
+    } catch {
+      const err = new Error(
+        "Local directory handle is completely disconnected.",
+      );
+      err.name = "NotFoundError";
+      throw err;
     }
-    return await current.getFileHandle(fileName, { create });
+
+    for (const part of parts) {
+      try {
+        currentDir = await currentDir.getDirectoryHandle(part, { create });
+      } catch (err: any) {
+        if (err.name === "NotFoundError") {
+          console.error(
+            `[FileSystemBackend] Directory ${part} missing in path ${path} (create=${create})`,
+          );
+        }
+        throw err;
+      }
+    }
+
+    try {
+      const fh = await currentDir.getFileHandle(fileName, { create });
+      if (create) {
+        // Force the OS to acknowledge the file creation
+        await fh.getFile();
+      }
+      return fh;
+    } catch (err: any) {
+      if (err.name === "NotFoundError") {
+        console.error(
+          `[FileSystemBackend] File ${fileName} missing in path ${path} (create=${create})`,
+        );
+      }
+      throw err;
+    }
   }
 }
