@@ -1,6 +1,7 @@
 <script lang="ts">
   import { graph } from "$lib/stores/graph.svelte";
   import { ui } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
 
   let { cy } = $props<{ cy: Core }>();
@@ -107,6 +108,30 @@
       contextMenuOpen = false;
     }
   };
+
+  const deleteNodes = async () => {
+    const count = selectedNodes.length;
+    const message =
+      count > 1
+        ? `Are you sure you want to delete ${count} nodes and all their connections? This cannot be undone.`
+        : "Are you sure you want to delete this node and all its connections? This cannot be undone.";
+
+    if (window.confirm(message)) {
+      contextMenuOpen = false;
+      try {
+        for (const id of selectedNodes) {
+          await vault.deleteEntity(id);
+        }
+        ui.notify(
+          count > 1 ? `Deleted ${count} nodes.` : "Node deleted.",
+          "success",
+        );
+      } catch (err: any) {
+        console.error("Failed to delete nodes", err);
+        ui.notify(`Failed to delete: ${err.message}`, "error");
+      }
+    }
+  };
 </script>
 
 {#if contextMenuOpen}
@@ -159,5 +184,19 @@
         ? `Label ${selectedNodes.length} Nodes…`
         : "Label…"}
     </button>
+    {#if !vault.isGuest}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border"
+        onclick={deleteNodes}
+        aria-label="Delete {selectedNodes.length > 1
+          ? `${selectedNodes.length} Nodes`
+          : 'Node'}"
+      >
+        Delete {selectedNodes.length > 1
+          ? `${selectedNodes.length} Nodes`
+          : "Node"}
+      </button>
+    {/if}
   </div>
 {/if}

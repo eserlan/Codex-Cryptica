@@ -1,9 +1,9 @@
-## 2025-02-14 - Search Modal Accessibility
+## 2024-03-03 - Tiptap Bubble Menu Selection Nuances
 
-**Learning:** The application's search modal (and potentially other dropdowns) lacked standard ARIA roles for comboboxes. Implementing `role="combobox"`, `role="listbox"`, and `aria-activedescendant` significantly improves screen reader navigation.
-**Action:** When creating or modifying dropdown components, always check for the combobox pattern and ensure `aria-activedescendant` is correctly managed. Empty states should use `role="status"` to be announced.
+**Learning:** Tiptap's Bubble Menu extension (and Svelte 5's wrapping of it) only renders the floating toolbar into the DOM when valid, formattable text is actively selected. It remains completely detached from the DOM otherwise. When testing or designing micro-interactions for it, double-clicking empty blocks or attempting to trigger the menu programmatically via native DOM selection fails to mount the component.
+**Action:** When creating tests or verifying a11y attributes on Bubble Menu buttons, always inject realistic text into the editor and simulate an explicit user mouse selection (drag/drop) over that text rather than relying on `focus()` or `dblclick()` on empty `.ProseMirror` nodes.
 
-## 2026-02-25 - Zen Mode Lightbox Accessibility
+## 2025-03-04 - Editor Toolbar Toggle Buttons Accessibility
 
-**Learning:** Modal components like the image lightbox require explicit focus management and trapping to be fully accessible to keyboard and screen reader users. Standard ARIA roles (`role="dialog"`, `aria-modal="true"`) are necessary but insufficient without active state management.
-**Action:** Implement focus traps in all modal-like components to prevent "tabbing out" into background content. Ensure focus is restored to the triggering element upon closure to maintain the user's navigational context.
+**Learning:** Found that TipTap editor toolbar buttons use visual classes (`.active`) to show toggle state but are missing `aria-pressed` attributes. This is a common pattern where visual state isn't communicated to screen readers for toggle buttons.
+**Action:** Always add `aria-pressed` to format toggle buttons in rich text editors to ensure screen reader users know which formatting options are currently active.

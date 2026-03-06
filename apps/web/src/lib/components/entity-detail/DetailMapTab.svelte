@@ -5,9 +5,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
 
-  let { entity } = $props<{ entity: Entity }>();
+  let { entity } = $props<{ entity?: Entity | null }>();
 
   let linkedMap = $derived.by(() => {
+    if (!entity) return undefined;
     return Object.values(vault.maps).find(
       (m) => m.parentEntityId === entity.id,
     );
@@ -16,7 +17,7 @@
   let files = $state<FileList | null>(null);
 
   async function handleUpload() {
-    if (files && files[0]) {
+    if (files && files[0] && entity) {
       try {
         const mapId = await mapStore.uploadMap(files[0], `${entity.title} Map`);
         if (!mapId) {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ConnectionSchema } from "./connection.js";
+import { ConnectionSchema } from "./connection";
 
 export const DEFAULT_ICON = "lucide:circle";
 

@@ -17,6 +17,13 @@
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
+  // Close Zen Mode if the entity being viewed is deleted
+  $effect(() => {
+    if (uiStore.showZenMode && entityId && !entity) {
+      uiStore.closeZenMode();
+    }
+  });
+
   let isEditing = $state(false);
   let isSaving = $state(false);
   let activeTab = $derived(uiStore.zenModeActiveTab);
@@ -150,9 +157,9 @@
             `;
 
       // Construct Plain Text (convert WikiLinks to simple text)
-      let text = `${entity.title}\n\n`;
-      text += `CHRONICLE:\n${(entity.content || "").replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n\n`;
-      if (entity.lore) {
+      let text = `${entity?.title || ""}\n\n`;
+      text += `CHRONICLE:\n${(entity?.content || "").replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n\n`;
+      if (entity?.lore) {
         text += `DEEP LORE:\n${entity.lore.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n`;
       }
 
@@ -175,7 +182,7 @@
       // Fallback to plain text
       try {
         await navigator.clipboard.writeText(
-          `${entity.title}\n\n${(entity.content || "").replace(/[[ (.*?) ]]/g, "$1")}`,
+          `${entity?.title || ""}\n\n${(entity?.content || "").replace(/[[ (.*?) ]]/g, "$1")}`,
         );
         isCopied = true;
         setTimeout(() => (isCopied = false), 2000);
@@ -233,6 +240,7 @@
     ) {
       try {
         await vault.deleteEntity(entity.id);
+        uiStore.notify(`"${entity.title}" deleted.`, "success");
         isEditing = false;
         handleClose();
       } catch (err: any) {
@@ -546,7 +554,7 @@
           <div class="flex items-center gap-3 mb-1">
             <span
               class="{getIconClass(
-                categories.getCategory(entity.type)?.icon,
+                categories.getCategory(entity?.type || '')?.icon,
               )} text-theme-primary w-5 h-5"
             ></span>
             {#if isEditing}
@@ -564,7 +572,7 @@
             {:else}
               <span
                 class="text-[10px] font-bold tracking-widest text-theme-primary uppercase font-header"
-                >{entity.type}</span
+                >{entity?.type || ""}</span
               >
             {/if}
           </div>
@@ -582,7 +590,7 @@
               data-testid="entity-title"
               class="text-2xl md:text-4xl font-body font-bold text-theme-text tracking-wide"
             >
-              {entity.title}
+              {entity?.title || ""}
             </h1>
           {/if}
         </div>
@@ -723,7 +731,7 @@
               class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
             >
               <!-- Labels -->
-              {#if entity.labels && entity.labels.length > 0}
+              {#if entity?.labels && entity.labels.length > 0}
                 <div class="flex flex-wrap gap-1.5 mb-6">
                   {#each entity.labels as label}
                     <LabelBadge {label} />
@@ -747,7 +755,7 @@
                       placeholder="https://..."
                     />
                   </div>
-                {:else if entity.image}
+                {:else if entity?.image}
                   <button
                     onclick={() => (showLightbox = true)}
                     class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
@@ -755,7 +763,7 @@
                   >
                     <img
                       src={resolvedImageUrl}
-                      alt={entity.title}
+                      alt={entity?.title || ""}
                       class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
                     />
                     <div
@@ -847,34 +855,34 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                       <TemporalEditor
                         bind:value={editStartDate}
-                        label={getTemporalLabel(entity.type, "start")}
+                        label={getTemporalLabel(entity?.type || "", "start")}
                       />
                       <TemporalEditor
                         bind:value={editEndDate}
-                        label={getTemporalLabel(entity.type, "end")}
+                        label={getTemporalLabel(entity?.type || "", "end")}
                       />
                     </div>
                   </div>
-                {:else if entity.start_date || entity.end_date}
+                {:else if entity?.start_date || entity?.end_date}
                   <div
                     class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
                   >
-                    {#if entity.start_date}
+                    {#if entity?.start_date}
                       <div class="flex flex-col">
                         <span
                           class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
-                          >{getTemporalLabel(entity.type, "start")}</span
+                          >{getTemporalLabel(entity?.type || "", "start")}</span
                         >
                         <span class="text-lg font-mono text-theme-primary"
                           >{formatDate(entity.start_date)}</span
                         >
                       </div>
                     {/if}
-                    {#if entity.end_date}
+                    {#if entity?.end_date}
                       <div class="flex flex-col">
                         <span
                           class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
-                          >{getTemporalLabel(entity.type, "end")}</span
+                          >{getTemporalLabel(entity?.type || "", "end")}</span
                         >
                         <span class="text-lg font-mono text-theme-primary"
                           >{formatDate(entity.end_date)}</span
@@ -901,7 +909,7 @@
                   {:else}
                     <div class="prose-container">
                       <MarkdownEditor
-                        content={entity.content || "No records found."}
+                        content={entity?.content || "No records found."}
                         editable={false}
                       />
                     </div>
@@ -927,7 +935,7 @@
                       class="bg-theme-accent/5 border border-theme-border p-6 rounded-lg min-h-[100px] prose-container"
                     >
                       <MarkdownEditor
-                        content={entity.lore || "No deep lore recorded."}
+                        content={entity?.lore || "No deep lore recorded."}
                         editable={false}
                       />
                     </div>
