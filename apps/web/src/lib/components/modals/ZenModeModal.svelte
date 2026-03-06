@@ -324,8 +324,15 @@
     return str;
   };
 
+  interface ConnectionListItem {
+    id: string;
+    label: string;
+    title: string;
+    isOutbound: boolean;
+  }
+
   let allConnections = $derived.by(() => {
-    if (!entity) return [];
+    if (!entity) return [] as ConnectionListItem[];
 
     // Helper to check if a connected entity is theoretically visible to the current user
     const checkVisibility = (targetId: string) => {
@@ -340,7 +347,7 @@
 
     // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative
     // loop to prevent intermediate array allocations and reduce GC pressure.
-    const result = [];
+    const result: ConnectionListItem[] = [];
 
     const connectionsLength = entity.connections.length;
     for (let i = 0; i < connectionsLength; i++) {
