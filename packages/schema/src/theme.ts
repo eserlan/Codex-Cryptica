@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { type JargonMap } from "./jargon";
+import { type JargonMap } from "./jargon.js";
 
 export const ThemeTokensSchema = z.object({
   primary: z.string(),

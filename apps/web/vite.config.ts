@@ -46,7 +46,7 @@ export default defineConfig({
     },
     fs: {
       // Allow serving files from the workspace root and all packages
-      allow: ["../../"],
+      allow: [resolve(__dirname, "../../")],
     },
   },
   optimizeDeps: {
