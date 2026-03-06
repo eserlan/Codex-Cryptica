@@ -52,7 +52,7 @@ jobs:
         run: npm run build --workspace=web
 
       - name: Upload intermediate artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.environment }}
           path: apps/web/build/
@@ -72,19 +72,19 @@ jobs:
           fetch-depth: 0
 
       - name: Download Production Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist-production
           path: dist/
 
       - name: Download Staging Build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist-staging
           path: dist/staging/
 
       - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: "dist/"
 
