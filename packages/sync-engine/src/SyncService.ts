@@ -130,7 +130,7 @@ export class SyncService {
         }
       };
 
-      const CONCURRENCY = 5;
+      const CONCURRENCY = 1; // Strict sequential for reliability on large local vaults
       let nextActionIndex = 0;
       await Promise.all(
         Array.from({ length: CONCURRENCY }).map(async () => {
@@ -277,7 +277,10 @@ export class SyncService {
         result.conflicts.push(action.path);
       }
     } catch (err: any) {
-      console.error(`[Sync] Error processing ${action.path}:`, err);
+      console.error(
+        `[Sync] Error processing ${action.path} (${action.type}):`,
+        err,
+      );
       throw err; // Re-throw to be caught by the orchestrator loop
     }
   }

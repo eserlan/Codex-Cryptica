@@ -375,7 +375,42 @@ class VaultStore {
       `syncHandle_${this.activeVaultId}`,
     );
 
+    console.log(
+      `[VaultStore] syncToLocal triggered. Local handle retrieved from DB:`,
+      !!localHandle,
+    );
+
     try {
+      if (localHandle) {
+        // PROACTIVE VALIDATION: Check if the handle itself is still valid/attached
+        // before even asking for permissions. Browsers often throw NotFoundError here
+        // if the folder was moved/deleted or the IDB entry went stale.
+        try {
+          console.log(
+            `[VaultStore] Verifying saved handle for "${localHandle.name}"...`,
+          );
+          // A simple name access isn't enough, we must force I/O to test the handle
+          const iterator = (localHandle as any).values();
+          await iterator.next();
+          console.log("[VaultStore] Handle verification successful.");
+        } catch (validationErr: any) {
+          console.warn(
+            "[VaultStore] Saved local handle validation failed:",
+            validationErr,
+          );
+          if (
+            validationErr.name === "NotFoundError" ||
+            validationErr.message?.includes("not found")
+          ) {
+            console.warn(
+              "[VaultStore] Handle is definitively detached. Clearing it from DB.",
+            );
+            localHandle = null;
+            await db.delete("settings", `syncHandle_${this.activeVaultId}`);
+          }
+        }
+      }
+
       if (localHandle) {
         const permission = await localHandle.queryPermission({
           mode: "readwrite",
@@ -389,6 +424,9 @@ class VaultStore {
       }
 
       if (!localHandle) {
+        window.alert(
+          "Please select a local folder to sync this vault with. This is required to grant the browser permission to read and write your files, or because the previous folder link was lost.",
+        );
         localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
         await db.put(
           "settings",
@@ -429,11 +467,48 @@ class VaultStore {
             const text = await file.text();
             const { metadata } = parseMarkdown(text);
             return !!(metadata.id || metadata.title);
-          } catch {
+          } catch (err: any) {
+            if (err.name === "NotFoundError") {
+              console.warn(
+                `[VaultStore] Sync validator: File not found during validation: ${path}`,
+              );
+            } else {
+              console.error(
+                `[VaultStore] Sync validator error for ${path}:`,
+                err,
+              );
+            }
             return false;
           }
         },
       );
+
+      const isHandleError = (msg: string) =>
+        msg.includes("NotFoundError") ||
+        msg.includes("could not be found") ||
+        msg.includes("A requested file or directory could not be found");
+
+      const hasHandleError =
+        (result.error && isHandleError(result.error)) ||
+        (result.failed && result.failed.some((f) => isHandleError(f.error)));
+
+      if (hasHandleError) {
+        console.warn(
+          "[VaultStore] Local directory handle is invalid (caught by backend). Prompting for new selection...",
+        );
+        this.status = "idle"; // Reset status so the UI doesn't hang
+        uiStore.notify(
+          "Local folder link lost. Please re-select the folder.",
+          "warning",
+        );
+
+        // Clear the dead handle from DB
+        await db.delete("settings", `syncHandle_${this.activeVaultId}`);
+
+        // The user will need to click sync again to trigger the prompt.
+        // We do not auto-prompt here because it can cause UX issues if it loops.
+        return;
+      }
 
       if (result.error) {
         this.status = "error";
