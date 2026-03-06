@@ -59,6 +59,12 @@
   let BulkLabelDialog = $state<any>(null);
 
   const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
+  const isMarketingPage = $derived(
+    MARKETING_ROUTES.some((route) =>
+      page.url.pathname.startsWith(`${base}${route}`),
+    ),
+  );
   let isMobileMenuOpen = $state(false);
 
   // Lazy load components when needed
@@ -571,7 +577,7 @@
       {/if}
     {/if}
 
-    <main class="flex-1 relative flex flex-col min-h-0">
+    <main class="flex-1 relative flex flex-col min-h-0 {isMarketingPage ? 'overflow-y-auto' : ''}">
       {@render children()}
     </main>
   </div>
