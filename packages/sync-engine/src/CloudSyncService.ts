@@ -1,8 +1,8 @@
 import { type SyncResult, type FileMetadata } from "./types";
 import { SyncRegistry } from "./SyncRegistry";
 import { SyncService } from "./SyncService";
-import { FileSystemBackend } from "./FileSystemBackend";
 import { GDriveBackend } from "./GDriveBackend";
+import { OpfsBackend } from "./OpfsBackend";
 
 export class CloudSyncService {
   private service: SyncService;
@@ -29,7 +29,7 @@ export class CloudSyncService {
       total: number;
     }) => void,
   ): Promise<SyncResult> {
-    const local = new FileSystemBackend(opfsHandle);
+    const local = new OpfsBackend(opfsHandle, this.registry);
 
     const metadata = await this.registry.getCloudMetadata(vaultId);
     const sinceToken = metadata?.lastSyncToken;

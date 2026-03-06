@@ -75,13 +75,13 @@ export async function deleteEntity(
   const path = entity._path || [`${id}.md`];
 
   // 1. Delete file from OPFS
-  await deleteOpfsEntry(vaultDir, path);
+  await deleteOpfsEntry(vaultDir, path, vaultDir.name);
 
   // 2. Delete images from OPFS
   if (entity.image) {
     try {
       const imagePath = entity.image.split("/");
-      await deleteOpfsEntry(vaultDir, imagePath);
+      await deleteOpfsEntry(vaultDir, imagePath, vaultDir.name);
     } catch (e) {
       console.warn("Failed to delete image", e);
     }
@@ -89,7 +89,7 @@ export async function deleteEntity(
   if (entity.thumbnail) {
     try {
       const thumbPath = entity.thumbnail.split("/");
-      await deleteOpfsEntry(vaultDir, thumbPath);
+      await deleteOpfsEntry(vaultDir, thumbPath, vaultDir.name);
     } catch (e) {
       console.warn("Failed to delete thumbnail", e);
     }

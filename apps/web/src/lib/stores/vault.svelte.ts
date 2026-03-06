@@ -923,14 +923,22 @@ class VaultStore {
       try {
         if (map.assetPath) {
           const pathSegments = map.assetPath.split("/");
-          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            pathSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }
 
         if (map.fogOfWar?.maskPath) {
           const maskSegments = map.fogOfWar.maskPath.split("/");
-          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            maskSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }

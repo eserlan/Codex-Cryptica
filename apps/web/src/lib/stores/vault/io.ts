@@ -3,6 +3,7 @@ import {
   walkOpfsDirectory,
   getDirHandle,
   isNotFoundError,
+  deleteOpfsEntry,
   type FileEntry,
 } from "../../utils/opfs";
 import { CanvasSchema } from "@codex/canvas-engine";
@@ -26,7 +27,12 @@ export async function saveMapsToDisk(
 ) {
   if (!vaultHandle) return;
   const content = JSON.stringify(maps, null, 2);
-  await writeOpfsFile([".codex", "maps.json"], content, vaultHandle);
+  await writeOpfsFile(
+    [".codex", "maps.json"],
+    content,
+    vaultHandle,
+    vaultHandle.name,
+  );
 }
 
 export async function saveCanvasToDisk(
@@ -40,6 +46,7 @@ export async function saveCanvasToDisk(
     [".codex", "canvases", `${id}.canvas`],
     content,
     vaultHandle,
+    vaultHandle.name,
   );
 }
 
@@ -49,13 +56,11 @@ export async function deleteCanvasFromDisk(
 ) {
   if (!vaultHandle) return;
   try {
-    const codexDir = await vaultHandle.getDirectoryHandle(".codex", {
-      create: true,
-    });
-    const canvasesDir = await codexDir.getDirectoryHandle("canvases", {
-      create: true,
-    });
-    await canvasesDir.removeEntry(`${id}.canvas`);
+    await deleteOpfsEntry(
+      vaultHandle,
+      [".codex", "canvases", `${id}.canvas`],
+      vaultHandle.name,
+    );
   } catch (err: any) {
     if (err.name !== "NotFoundError") {
       console.warn(`Failed to delete canvas file ${id}.canvas`, err);
@@ -187,9 +192,9 @@ export async function importFromFolder(
           const name = path[path.length - 1].toLowerCase();
           if (name.endsWith(".md") || name.endsWith(".markdown")) {
             const content = await localFile.text();
-            await writeOpfsFile(path, content, vaultHandle);
+            await writeOpfsFile(path, content, vaultHandle, activeVaultId);
           } else {
-            await writeOpfsFile(path, localFile, vaultHandle);
+            await writeOpfsFile(path, localFile, vaultHandle, activeVaultId);
           }
           successCount++;
         }
@@ -335,5 +340,5 @@ export async function saveEntityToDisk(
 
   const path = entity._path || [`${entity.id}.md`];
   const content = stringifyEntity(entity);
-  await writeOpfsFile(path, content, vaultHandle);
+  await writeOpfsFile(path, content, vaultHandle, activeVaultId);
 }

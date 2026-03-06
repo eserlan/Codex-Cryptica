@@ -1,5 +1,9 @@
 import { type IDBPDatabase } from "idb";
-import { type SyncEntry, type CloudSyncMetadata } from "./types";
+import {
+  type SyncEntry,
+  type CloudSyncMetadata,
+  type OpfsStateEntry,
+} from "./types";
 
 export class SyncRegistry {
   constructor(private db: IDBPDatabase<any>) {}
@@ -32,6 +36,46 @@ export class SyncRegistry {
     if (entries.length === 0) return;
 
     const tx = this.db.transaction("sync_registry", "readwrite");
+    for (const entry of entries) {
+      await tx.store.delete([entry.vaultId, entry.filePath]);
+    }
+    await tx.done;
+  }
+
+  async getOpfsState(
+    vaultId: string,
+    filePath: string,
+  ): Promise<OpfsStateEntry | undefined> {
+    return this.db.get("opfs_file_state", [vaultId, filePath]);
+  }
+
+  async putOpfsState(entry: OpfsStateEntry): Promise<void> {
+    await this.db.put("opfs_file_state", entry);
+  }
+
+  async putOpfsStates(entries: OpfsStateEntry[]): Promise<void> {
+    if (entries.length === 0) return;
+
+    const tx = this.db.transaction("opfs_file_state", "readwrite");
+    for (const entry of entries) {
+      await tx.store.put(entry);
+    }
+    await tx.done;
+  }
+
+  async deleteOpfsState(vaultId: string, filePath: string): Promise<void> {
+    await this.db.delete("opfs_file_state", [vaultId, filePath]);
+  }
+
+  async getOpfsStatesByVault(vaultId: string): Promise<OpfsStateEntry[]> {
+    return this.db.getAllFromIndex("opfs_file_state", "by-vault", vaultId);
+  }
+
+  async clearOpfsStatesByVault(vaultId: string): Promise<void> {
+    const entries = await this.getOpfsStatesByVault(vaultId);
+    if (entries.length === 0) return;
+
+    const tx = this.db.transaction("opfs_file_state", "readwrite");
     for (const entry of entries) {
       await tx.store.delete([entry.vaultId, entry.filePath]);
     }

@@ -23,11 +23,16 @@ export async function saveImageToVault(
 
     // Convert original image to WebP and save
     const webpBlob = await convertToWebP(blob);
-    await writeOpfsFile([filename], webpBlob, imagesDir);
+    await writeOpfsFile([filename], webpBlob, imagesDir, vaultHandle.name);
 
     // Generate and save thumbnail (already outputs WebP)
     const thumbnailBlob = await generateThumbnail(blob, 200);
-    await writeOpfsFile([thumbFilename], thumbnailBlob, imagesDir);
+    await writeOpfsFile(
+      [thumbFilename],
+      thumbnailBlob,
+      imagesDir,
+      vaultHandle.name,
+    );
 
     const imagePath = `images/${filename}`;
     const thumbnailPath = `images/${thumbFilename}`;
@@ -88,7 +93,7 @@ export async function resolveImageUrl(
         }
 
         // Save to cache
-        await writeOpfsFile([safeName], blob, externalDir);
+        await writeOpfsFile([safeName], blob, externalDir, vaultHandle.name);
         return URL.createObjectURL(blob);
       }
     } catch (err: any) {

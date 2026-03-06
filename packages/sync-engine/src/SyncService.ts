@@ -7,6 +7,7 @@ import {
 import { SyncRegistry } from "./SyncRegistry";
 import { DiffAlgorithm, type SyncAction } from "./DiffAlgorithm";
 import { FileSystemBackend } from "./FileSystemBackend";
+import { OpfsBackend } from "./OpfsBackend";
 
 export class SyncService {
   constructor(protected registry: SyncRegistry) {}
@@ -179,6 +180,18 @@ export class SyncService {
     try {
       switch (action.type) {
         case "MATCH_INITIAL": {
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            fsBackend,
+            action.path,
+            action.fsMetadata!,
+          );
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            opfsBackend,
+            action.path,
+            action.opfsMetadata!,
+          );
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
@@ -241,6 +254,13 @@ export class SyncService {
                   : undefined,
               )
             : action.fsMetadata!;
+
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            fsBackend,
+            action.path,
+            updatedFs,
+          );
 
           await this.registry.putEntry({
             filePath: action.path,
@@ -313,6 +333,13 @@ export class SyncService {
               )
             : action.opfsMetadata!;
 
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            opfsBackend,
+            action.path,
+            updatedOpfs,
+          );
+
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
@@ -350,7 +377,16 @@ export class SyncService {
           const ext = extIndex !== -1 ? action.path.substring(extIndex) : "";
           const conflictPath = `${basePath}.conflict-${timestamp}${ext}`;
 
-          await opfsBackend.upload(conflictPath, fsContent);
+          const conflictFile = await opfsBackend.upload(
+            conflictPath,
+            fsContent,
+          );
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            opfsBackend,
+            conflictPath,
+            conflictFile,
+          );
 
           // We don't update the registry for the main path because it's still conflicting until resolved manually,
           // but we effectively "imported" the remote changes safely.
@@ -361,6 +397,7 @@ export class SyncService {
         case "DELETE_FS": {
           await fsBackend.delete(action.path, action.registryEntry?.remoteId);
           await this.registry.deleteEntry(vaultId, action.path);
+          await this.deleteOpfsStateIfNeeded(vaultId, fsBackend, action.path);
           result.deleted.push(action.path);
           break;
         }
@@ -368,6 +405,7 @@ export class SyncService {
         case "DELETE_OPFS": {
           await opfsBackend.delete(action.path, action.registryEntry?.remoteId);
           await this.registry.deleteEntry(vaultId, action.path);
+          await this.deleteOpfsStateIfNeeded(vaultId, opfsBackend, action.path);
           result.deleted.push(action.path);
           break;
         }
@@ -394,5 +432,31 @@ export class SyncService {
       : backend instanceof FileSystemBackend
         ? undefined
         : registryEntry?.remoteId;
+  }
+
+  private async persistOpfsStateIfNeeded(
+    vaultId: string,
+    backend: ISyncBackend,
+    path: string,
+    metadata: FileMetadata,
+  ) {
+    if (!(backend instanceof OpfsBackend) || !metadata.hash) return;
+
+    await this.registry.putOpfsState({
+      vaultId,
+      filePath: path,
+      hash: metadata.hash,
+      size: metadata.size,
+      lastModified: metadata.lastModified,
+    });
+  }
+
+  private async deleteOpfsStateIfNeeded(
+    vaultId: string,
+    backend: ISyncBackend,
+    path: string,
+  ) {
+    if (!(backend instanceof OpfsBackend)) return;
+    await this.registry.deleteOpfsState(vaultId, path);
   }
 }

@@ -6,6 +6,7 @@ import {
 import { SyncRegistry } from "./SyncRegistry";
 import { SyncService } from "./SyncService";
 import { FileSystemBackend } from "./FileSystemBackend";
+import { OpfsBackend } from "./OpfsBackend";
 
 export class LocalSyncService implements ILocalSyncService {
   private service: SyncService;
@@ -24,7 +25,7 @@ export class LocalSyncService implements ILocalSyncService {
     ) => boolean | Promise<boolean>,
   ): Promise<SyncResult> {
     const local = new FileSystemBackend(localHandle);
-    const remote = new FileSystemBackend(opfsHandle);
+    const remote = new OpfsBackend(opfsHandle, this.registry);
     return this.service.sync(vaultId, local, remote, null, validator);
   }
 
