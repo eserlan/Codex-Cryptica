@@ -1,224 +1,159 @@
 import { type SyncEntry, type FileMetadata } from "./types";
 
 export type SyncActionType =
-  | "CREATE_LOCAL"
-  | "CREATE_OPFS"
-  | "UPDATE_LOCAL"
-  | "UPDATE_OPFS"
-  | "DELETE_LOCAL"
-  | "DELETE_OPFS"
-  | "MATCH_INITIAL"
+  | "EXPORT_TO_FS" // A) Only OPFS changed, or F) New on OPFS, or D) FS deleted (recreate)
+  | "IMPORT_TO_OPFS" // B) Only FS changed, or F) New on FS
+  | "DELETE_FS" // E) OPFS deleted and FS unchanged
+  | "HANDLE_CONFLICT" // C) Both changed
+  | "MATCH_INITIAL" // Exists in both, unrecorded, but identical
   | "SKIP";
 
 export interface SyncAction {
   type: SyncActionType;
   path: string;
-  localMetadata?: FileMetadata;
+  fsMetadata?: FileMetadata;
   opfsMetadata?: FileMetadata;
   registryEntry?: SyncEntry;
   isConflict?: boolean;
 }
 
 export class DiffAlgorithm {
-  private static readonly SKEW_MS = 2000;
-
-  static calculateAction(
+  static async calculateAction(
     path: string,
-    local: FileMetadata | undefined,
+    fs: FileMetadata | undefined,
     opfs: FileMetadata | undefined,
     registry: SyncEntry | undefined,
     validator?: (
       path: string,
       metadata: FileMetadata,
     ) => boolean | Promise<boolean>,
-  ): SyncAction | Promise<SyncAction> {
-    const localChanged =
-      local && registry
-        ? this.hasChanged(
-            local.lastModified,
-            local.size,
-            registry.lastLocalModified,
-            registry.size,
-            local.hash,
-            undefined, // No registry local hash yet
-          )
-        : !!local;
+  ): Promise<SyncAction> {
+    const opfsExists = opfs && !opfs.isDeleted;
+    const fsExists = fs && !fs.isDeleted;
 
-    const opfsChanged =
-      opfs && registry
-        ? this.hasChanged(
-            opfs.lastModified,
-            opfs.size,
-            registry.lastOpfsModified,
-            registry.size,
-            opfs.hash,
-            registry.remoteHash,
-          )
-        : !!opfs;
+    // Determine change state based on the authoritative manifest (registry)
+    let opfsChanged: boolean;
+    let fsChanged: boolean;
 
-    const validate = async () => {
-      if (validator) {
-        // Validate LOCAL if it changed
-        if (local && localChanged && !local.isDeleted) {
-          const isValid = await validator(path, local);
-          if (!isValid) return { type: "SKIP" as const, path };
-        }
+    if (registry) {
+      // OPFS Changed: Compare current OPFS hash to the stored manifest hash
+      // Note: If hash is missing, we must assume it changed to be safe,
+      // but the ideal flow ensures hashes are always written to the manifest.
+      opfsChanged =
+        opfsExists &&
+        (!registry.lastSyncedOpfsHash ||
+          registry.lastSyncedOpfsHash !== opfs.hash);
 
-        // Validate OPFS if it changed
-        if (opfs && opfsChanged && !opfs.isDeleted) {
-          const isValid = await validator(path, opfs);
-          if (!isValid) return { type: "SKIP" as const, path };
-        }
+      // FS Changed: Compare current FS (size + mtime) to stored manifest fingerprint
+      fsChanged =
+        fsExists &&
+        (registry.lastSyncedFsSize === undefined ||
+          registry.lastSyncedFsModified === undefined ||
+          fs.size !== registry.lastSyncedFsSize ||
+          fs.lastModified !== registry.lastSyncedFsModified);
+    } else {
+      // If there's no registry entry, both are considered "changed" / new
+      opfsChanged = !!opfsExists;
+      fsChanged = !!fsExists;
+    }
+
+    // Optional Validation
+    if (validator) {
+      if (fsExists && fsChanged) {
+        const isValid = await validator(path, fs);
+        if (!isValid) return { type: "SKIP", path };
       }
-
-      return this.performCalculation(
-        path,
-        local,
-        opfs,
-        registry,
-        localChanged,
-        opfsChanged,
-      );
-    };
-
-    // If validator is provided, we treat the whole thing as async for simplicity,
-    // but we only do it if the file actually exists and changed.
-    if (validator && ((local && localChanged) || (opfs && opfsChanged))) {
-      return validate();
-    }
-
-    // Otherwise perform synchronous calculation
-    return this.performCalculation(
-      path,
-      local,
-      opfs,
-      registry,
-      localChanged,
-      opfsChanged,
-    );
-  }
-
-  private static performCalculation(
-    path: string,
-    local: FileMetadata | undefined,
-    opfs: FileMetadata | undefined,
-    registry: SyncEntry | undefined,
-    localChanged: boolean,
-    opfsChanged: boolean,
-  ): SyncAction {
-    // 0. Explicit Deletion Signals (Delta Sync)
-    if (opfs?.isDeleted && local && registry) {
-      // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
-      // even if explicitly deleted on the remote side.
-      if (this.isProtectedPath(path)) {
-        return { type: "SKIP", path };
+      if (opfsExists && opfsChanged) {
+        const isValid = await validator(path, opfs);
+        if (!isValid) return { type: "SKIP", path };
       }
-      return { type: "DELETE_LOCAL", path, registryEntry: registry };
-    }
-    if (local?.isDeleted && opfs && registry) {
-      return { type: "DELETE_OPFS", path, registryEntry: registry };
     }
 
-    // 1. New File Case (Not in registry)
+    // --- Decision Table Application ---
+
+    // 1. No Registry Entry (Initial Encounter)
     if (!registry) {
-      if (local && !local.isDeleted && (!opfs || opfs.isDeleted)) {
-        return { type: "CREATE_OPFS", path, localMetadata: local };
-      }
-      if (opfs && !opfs.isDeleted && (!local || local.isDeleted)) {
-        return { type: "CREATE_LOCAL", path, opfsMetadata: opfs };
-      }
-      if (local && !local.isDeleted && opfs && !opfs.isDeleted) {
-        // Exists in both but no record. Check if they are identical.
-        const match = !this.hasChanged(
-          local.lastModified,
-          local.size,
-          opfs.lastModified,
-          opfs.size,
-        );
-        if (match) {
+      if (opfsExists && !fsExists)
+        return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+      if (!opfsExists && fsExists)
+        return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+      if (opfsExists && fsExists) {
+        // Exists in both but no record. Assume conflict unless sizes perfectly match.
+        // A true hash check would be ideal here, but we default to conflict for safety.
+        if (fs.size === opfs.size) {
+          // If sizes match on initial encounter, we assume they are identical
+          // to prevent mass-conflicts on first run.
           return {
             type: "MATCH_INITIAL",
             path,
-            localMetadata: local,
+            fsMetadata: fs,
             opfsMetadata: opfs,
           };
         }
-        // Exists in both and differ. Resolve via newest-wins.
-        const action = this.resolveConflict(path, local, opfs);
-        return { ...action, isConflict: true };
+        return {
+          type: "HANDLE_CONFLICT",
+          path,
+          fsMetadata: fs,
+          opfsMetadata: opfs,
+          isConflict: true,
+        };
       }
       return { type: "SKIP", path };
     }
 
-    // 2. Deletion Detection
-    if (!local) {
-      if (opfs) {
-        // SAFETY: Never automatically delete images or cache from OPFS during local sync
-        // if they are just missing from the local folder. These are app-managed assets.
-        if (path.startsWith("images/") || path.startsWith(".cache/")) {
-          return { type: "SKIP", path };
-        }
-        return { type: "DELETE_OPFS", path, registryEntry: registry };
+    // 2. A) Only OPFS changed -> Export to FS
+    if (opfsChanged && !fsChanged && opfsExists && fsExists) {
+      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+    }
+
+    // 3. B) Only FS changed -> Import to OPFS
+    if (!opfsChanged && fsChanged && opfsExists && fsExists) {
+      return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+    }
+
+    // 4. C) Both changed -> Conflict
+    if (opfsChanged && fsChanged && opfsExists && fsExists) {
+      return {
+        type: "HANDLE_CONFLICT",
+        path,
+        fsMetadata: fs,
+        opfsMetadata: opfs,
+        isConflict: true,
+      };
+    }
+
+    // 5. F) New file on FS (not in manifest) -> Import to OPFS
+    if (!opfsExists && fsExists && fsChanged) {
+      return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+    }
+
+    // 6. G) New file in OPFS (exists in manifest but not in FS) -> Export to FS
+    if (opfsExists && !fsExists && opfsChanged) {
+      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+    }
+
+    // 7. D) FS deleted (missing) and OPFS unchanged -> Recreate FS from OPFS
+    if (opfsExists && !fsExists && !opfsChanged) {
+      // Treat FS deletion as "user removed replica". Recreate from primary OPFS.
+      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+    }
+
+    // 8. E) OPFS deleted and FS unchanged -> Delete in FS
+    if (!opfsExists && fsExists && !fsChanged) {
+      // OPFS is primary. If it's gone, the replica should be destroyed.
+      // SAFETY: Never delete critical app directories.
+      if (path.startsWith("images/") || path.startsWith(".cache/")) {
+        return { type: "SKIP", path };
       }
+      return { type: "DELETE_FS", path, registryEntry: registry };
+    }
+
+    // 9. Both deleted
+    if (!opfsExists && !fsExists) {
+      // Just clean up registry later
       return { type: "SKIP", path };
     }
 
-    if (!opfs) {
-      if (local) {
-        // SAFETY: Never automatically delete images or cache from the local workspace (OPFS)
-        // if they are just missing from the remote side.
-        if (this.isProtectedPath(path)) {
-          return { type: "SKIP", path };
-        }
-        return { type: "DELETE_LOCAL", path, registryEntry: registry };
-      }
-      return { type: "SKIP", path };
-    }
-
-    // 3. Modification Detection
-    if (!localChanged && !opfsChanged) {
-      return { type: "SKIP", path };
-    }
-
-    if (localChanged && !opfsChanged) {
-      return { type: "UPDATE_OPFS", path, localMetadata: local };
-    }
-
-    if (!localChanged && opfsChanged) {
-      return { type: "UPDATE_LOCAL", path, opfsMetadata: opfs };
-    }
-
-    // Both changed - Conflict
-    const action = this.resolveConflict(path, local, opfs);
-    return { ...action, isConflict: true };
-  }
-
-  private static hasChanged(
-    currentMod: number,
-    currentSize: number,
-    regMod: number,
-    regSize: number,
-    currentHash?: string,
-    regHash?: string,
-  ): boolean {
-    if (currentHash && regHash && currentHash === regHash) return false;
-    if (currentSize !== regSize) return true;
-    return Math.abs(currentMod - regMod) > this.SKEW_MS;
-  }
-
-  private static resolveConflict(
-    path: string,
-    local: FileMetadata,
-    opfs: FileMetadata,
-  ): SyncAction {
-    if (local.lastModified >= opfs.lastModified) {
-      return { type: "UPDATE_OPFS", path, localMetadata: local };
-    } else {
-      return { type: "UPDATE_LOCAL", path, opfsMetadata: opfs };
-    }
-  }
-
-  private static isProtectedPath(path: string): boolean {
-    return path.startsWith("images/") || path.startsWith(".cache/");
+    return { type: "SKIP", path };
   }
 }

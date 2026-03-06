@@ -13,9 +13,9 @@ describe("CloudSyncService", () => {
     const deletedEntry = {
       filePath: "deleted.md",
       vaultId: "vault-1",
-      lastLocalModified: 100,
-      lastOpfsModified: 100,
-      size: 10,
+      lastSyncedFsModified: 100,
+      lastSyncedFsSize: 10,
+      lastSyncedOpfsHash: "abc",
       status: "SYNCED" as const,
       remoteId: "remote-id-1",
     };
@@ -121,9 +121,9 @@ describe("CloudSyncService", () => {
     vi.mocked(registry.getEntryByRemoteId).mockResolvedValue({
       filePath: "deleted.md",
       vaultId: "vault-1",
-      lastLocalModified: 100,
-      lastOpfsModified: 100,
-      size: 10,
+      lastSyncedFsModified: 100,
+      lastSyncedFsSize: 10,
+      lastSyncedOpfsHash: "abc",
       status: "SYNCED",
       remoteId: "remote-id-1",
     });

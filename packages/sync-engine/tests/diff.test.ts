@@ -5,146 +5,161 @@ import { type SyncEntry, type FileMetadata } from "../src/types";
 describe("DiffAlgorithm", () => {
   const path = "test.md";
 
-  const createMeta = (lastModified: number, size = 100): FileMetadata => ({
+  const createMeta = (
+    lastModified: number,
+    size = 100,
+    hash = "abc",
+  ): FileMetadata => ({
     path,
     lastModified,
     size,
+    hash,
     handle: {} as any,
   });
 
   const createEntry = (
-    localMod: number,
-    opfsMod: number,
-    size = 100,
+    fsMod: number,
+    fsSize = 100,
+    opfsHash = "abc",
   ): SyncEntry => ({
     filePath: path,
     vaultId: "v1",
-    lastLocalModified: localMod,
-    lastOpfsModified: opfsMod,
-    size,
+    lastSyncedFsModified: fsMod,
+    lastSyncedFsSize: fsSize,
+    lastSyncedOpfsHash: opfsHash,
     status: "SYNCED",
   });
 
-  it("should detect new file in local", () => {
-    const local = createMeta(1000);
-    const result = DiffAlgorithm.calculateAction(
+  it("should detect new file in local (FS)", async () => {
+    const fs = createMeta(1000);
+    const result = await DiffAlgorithm.calculateAction(
       path,
-      local,
+      fs,
       undefined,
       undefined,
     );
-    expect(result.type).toBe("CREATE_OPFS");
+    expect(result.type).toBe("IMPORT_TO_OPFS");
   });
 
-  it("should detect new file in OPFS", () => {
+  it("should detect new file in OPFS", async () => {
     const opfs = createMeta(1000);
-    const result = DiffAlgorithm.calculateAction(
+    const result = await DiffAlgorithm.calculateAction(
       path,
       undefined,
       opfs,
       undefined,
     );
-    expect(result.type).toBe("CREATE_LOCAL");
+    expect(result.type).toBe("EXPORT_TO_FS");
   });
 
-  it("should handle initial match (no registry)", () => {
-    const local = createMeta(5000);
-    const opfs = createMeta(1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, undefined);
-    expect(result.type).toBe("UPDATE_OPFS");
+  it("should handle initial match (no registry) - same size", async () => {
+    const fs = createMeta(1000, 100);
+    const opfs = createMeta(1000, 100);
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      undefined,
+    );
+    expect(result.type).toBe("MATCH_INITIAL");
+  });
+
+  it("should handle initial match (no registry) - different size -> conflict", async () => {
+    const fs = createMeta(1000, 100);
+    const opfs = createMeta(1000, 200);
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      undefined,
+    );
+    expect(result.type).toBe("HANDLE_CONFLICT");
     expect(result.isConflict).toBe(true);
   });
 
-  it("should detect local deletion", () => {
+  it("should detect local (FS) deletion (recreate from OPFS)", async () => {
     const opfs = createMeta(1000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
       path,
       undefined,
       opfs,
       registry,
     );
-    expect(result.type).toBe("DELETE_OPFS");
+    expect(result.type).toBe("EXPORT_TO_FS");
   });
 
-  it("should detect OPFS deletion", () => {
-    const local = createMeta(1000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(
+  it("should detect OPFS deletion", async () => {
+    const fs = createMeta(1000);
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
       path,
-      local,
+      fs,
       undefined,
       registry,
     );
-    expect(result.type).toBe("DELETE_LOCAL");
+    expect(result.type).toBe("DELETE_FS");
   });
 
-  it("should skip if all match", () => {
-    const local = createMeta(1000);
-    const opfs = createMeta(1000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
+  it("should skip if all match", async () => {
+    const fs = createMeta(1000, 100, "abc");
+    const opfs = createMeta(1000, 100, "abc");
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
     expect(result.type).toBe("SKIP");
   });
 
-  it("should detect local update", () => {
-    const local = createMeta(5000);
-    const opfs = createMeta(1000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
-    expect(result.type).toBe("UPDATE_OPFS");
+  it("should detect local (FS) update", async () => {
+    const fs = createMeta(5000, 100, "abc");
+    const opfs = createMeta(1000, 100, "abc");
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
+    expect(result.type).toBe("IMPORT_TO_OPFS");
   });
 
-  it("should detect OPFS update", () => {
-    const local = createMeta(1000);
-    const opfs = createMeta(5000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
-    expect(result.type).toBe("UPDATE_LOCAL");
+  it("should detect OPFS update", async () => {
+    const fs = createMeta(1000, 100, "abc");
+    const opfs = createMeta(1000, 100, "def"); // new hash
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
+    expect(result.type).toBe("EXPORT_TO_FS");
   });
 
-  it("should handle conflict (local newer)", () => {
-    const local = createMeta(6000);
-    const opfs = createMeta(5000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
-    expect(result.type).toBe("UPDATE_OPFS");
+  it("should handle conflict", async () => {
+    const fs = createMeta(6000, 200, "abc"); // fs changed
+    const opfs = createMeta(5000, 100, "def"); // opfs changed
+    const registry = createEntry(1000, 100, "abc");
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
+    expect(result.type).toBe("HANDLE_CONFLICT");
     expect(result.isConflict).toBe(true);
   });
 
-  it("should handle conflict (opfs newer)", () => {
-    const local = createMeta(5000);
-    const opfs = createMeta(6000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
-    expect(result.type).toBe("UPDATE_LOCAL");
-    expect(result.isConflict).toBe(true);
-  });
-
-  it("should respect clock skew", () => {
-    const local = createMeta(1500);
-    const opfs = createMeta(1000);
-    const registry = createEntry(1000, 1000);
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, registry);
-    // 1500 is within 2000ms skew of 1000
-    expect(result.type).toBe("SKIP");
-  });
-
-  it("should handle file added to both locations independently", () => {
-    const local = createMeta(5000, 100);
-    const opfs = createMeta(6000, 200); // Different size
-    const result = DiffAlgorithm.calculateAction(path, local, opfs, undefined);
-    // Registry is missing, exists in both. Should resolve newest wins.
-    expect(result.type).toBe("UPDATE_LOCAL");
-    expect(result.isConflict).toBe(true);
-  });
-
-  it("should skip if missing in both but in registry (cleanup case)", () => {
-    const result = DiffAlgorithm.calculateAction(
+  it("should skip if missing in both but in registry (cleanup case)", async () => {
+    const result = await DiffAlgorithm.calculateAction(
       path,
       undefined,
       undefined,
-      createEntry(1000, 1000),
+      createEntry(1000, 100, "abc"),
     );
     expect(result.type).toBe("SKIP");
   });
