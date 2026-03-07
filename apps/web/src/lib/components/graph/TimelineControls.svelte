@@ -41,9 +41,6 @@
     };
   });
 
-  let minYear = $derived(yearRange.min);
-  let maxYear = $derived(yearRange.max);
-
   let filterStart = $state<number>(0);
   let filterEnd = $state<number>(3000);
 
