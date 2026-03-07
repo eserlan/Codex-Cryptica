@@ -143,10 +143,17 @@
   };
 </script>
 
+<svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
   data-testid="vault-switcher-modal"
+  onclick={(e) => {
+    if (e.target === e.currentTarget) onClose();
+  }}
 >
   <div
     role="dialog"
