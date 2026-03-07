@@ -42,15 +42,17 @@ describe("OpfsBackend", () => {
               "notes",
               {
                 kind: "directory",
-                entries: async function* () {
-                  yield [
-                    "alpha.md",
-                    {
-                      kind: "file",
-                      getFile: async () => alpha,
-                    },
-                  ];
-                },
+                entries: vi.fn().mockReturnValue({
+                  [Symbol.asyncIterator]: async function* () {
+                    yield [
+                      "alpha.md",
+                      {
+                        kind: "file",
+                        getFile: async () => alpha,
+                      },
+                    ];
+                  },
+                }),
               },
             ];
           },

@@ -122,7 +122,7 @@ export class OpfsBackend implements ISyncBackend {
     for (const part of pathParts) {
       current = await current.getDirectoryHandle(part);
     }
-    await current.removeEntry(fileName);
+    await current.removeEntry(fileName, { recursive: true });
   }
 
   private async resolveFileHandle(

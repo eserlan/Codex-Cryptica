@@ -7,3 +7,4 @@ export * from "./FileSystemBackend";
 export * from "./OpfsBackend";
 export * from "./GDriveBackend";
 export * from "./CloudSyncService";
+export * from "./hash";
