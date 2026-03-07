@@ -9,7 +9,9 @@ test.describe("Graph Deletion and UI Safety", () => {
     });
 
     await page.goto("/");
-    await expect(page.getByTestId("graph-canvas")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Wait for vault initialization
     await page.evaluate(async () => {
@@ -29,7 +31,9 @@ test.describe("Graph Deletion and UI Safety", () => {
     });
   });
 
-  test("should delete multiple nodes from graph context menu", async ({ page }) => {
+  test("should delete multiple nodes from graph context menu", async ({
+    page,
+  }) => {
     // 1. Create two entities
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Chronicle Title...").fill("Node A");
@@ -53,12 +57,16 @@ test.describe("Graph Deletion and UI Safety", () => {
       node.trigger("cxttap", { renderedPosition: pos });
     });
 
-    const deleteMenuItem = page.getByRole("menuitem", { name: /Delete 2 Nodes/ });
+    const deleteMenuItem = page.getByRole("menuitem", {
+      name: /Delete 2 Nodes/,
+    });
     await expect(deleteMenuItem).toBeVisible();
 
     // Handle confirmation dialog
     page.once("dialog", (dialog) => {
-      expect(dialog.message()).toContain("Are you sure you want to delete 2 nodes");
+      expect(dialog.message()).toContain(
+        "Are you sure you want to delete 2 nodes",
+      );
       dialog.accept();
     });
 
@@ -73,16 +81,20 @@ test.describe("Graph Deletion and UI Safety", () => {
 
     // Verify nodes are gone from Store
     const storeCount = await page.evaluate(() => {
-        return Object.keys((window as any).vault.entities).length;
+      return Object.keys((window as any).vault.entities).length;
     });
     expect(storeCount).toBe(0);
   });
 
-  test("Zen Mode should auto-close when viewing an entity that gets deleted", async ({ page }) => {
+  test("Zen Mode should auto-close when viewing an entity that gets deleted", async ({
+    page,
+  }) => {
     // 1. Create an entity
     const entityId = await page.evaluate(async () => {
       const vault = (window as any).vault;
-      return await vault.createEntity("character", "Ephemeral Node", { content: "Will be deleted" });
+      return await vault.createEntity("character", "Ephemeral Node", {
+        content: "Will be deleted",
+      });
     });
 
     // 2. Open Zen Mode for it via uiStore to be reliable
@@ -92,7 +104,9 @@ test.describe("Graph Deletion and UI Safety", () => {
 
     const modal = page.getByTestId("zen-mode-modal");
     await expect(modal).toBeVisible();
-    await expect(modal.getByTestId("entity-title")).toHaveText("Ephemeral Node");
+    await expect(modal.getByTestId("entity-title")).toHaveText(
+      "Ephemeral Node",
+    );
 
     // 3. Delete the entity programmatically (simulating external deletion or store update)
     await page.evaluate(async (id) => {
