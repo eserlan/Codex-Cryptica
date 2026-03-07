@@ -67,18 +67,16 @@ describe("CloudSyncService", () => {
       }),
       getDirectoryHandle: vi.fn().mockImplementation(() => mockOpfs),
       removeEntry: vi.fn().mockResolvedValue(undefined),
-      entries: vi.fn().mockReturnValue({
-        [Symbol.asyncIterator]: async function* () {
-          yield [
-            "deleted.md",
-            {
-              kind: "file",
-              name: "deleted.md",
-              getFile: async () => makeBlob(fileContent, 100),
-            },
-          ];
-        },
-      }),
+      [Symbol.asyncIterator]: async function* () {
+        yield [
+          "deleted.md",
+          {
+            kind: "file",
+            name: "deleted.md",
+            getFile: async () => makeBlob(fileContent, 100),
+          },
+        ];
+      },
     };
 
     service = new CloudSyncService(registry, gdrive);

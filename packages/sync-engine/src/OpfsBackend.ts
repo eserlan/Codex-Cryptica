@@ -25,7 +25,7 @@ export class OpfsBackend implements ISyncBackend {
       path: string[] = [],
     ) => {
       try {
-        for await (const [name, entry] of (dirHandle as any).entries()) {
+        for await (const [name, entry] of dirHandle) {
           try {
             const currentPath = [...path, name];
             if (entry.kind === "file") {

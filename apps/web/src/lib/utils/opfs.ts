@@ -231,7 +231,7 @@ export async function writeOpfsFile(
   const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
 
   // Create a writable stream to the file
-  const writable = await fileHandle.createWritable();
+  const writable = await fileHandle.createWritable({ keepExistingData: false });
   await writable.write(content);
   await writable.close();
 

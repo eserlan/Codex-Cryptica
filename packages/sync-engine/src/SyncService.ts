@@ -440,8 +440,7 @@ export class SyncService {
     path: string,
     metadata: FileMetadata,
   ) {
-    if (!(backend instanceof OpfsBackend) || metadata.hash === undefined)
-      return;
+    if (!(backend instanceof OpfsBackend) || !metadata.hash) return;
 
     await this.registry.putOpfsState({
       vaultId,

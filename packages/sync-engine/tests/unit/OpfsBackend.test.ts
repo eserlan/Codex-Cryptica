@@ -36,27 +36,23 @@ describe("OpfsBackend", () => {
     const digestSpy = vi.spyOn(crypto.subtle, "digest");
     const backend = new OpfsBackend(
       {
-        entries: vi.fn().mockReturnValue({
-          [Symbol.asyncIterator]: async function* () {
-            yield [
-              "notes",
-              {
-                kind: "directory",
-                entries: vi.fn().mockReturnValue({
-                  [Symbol.asyncIterator]: async function* () {
-                    yield [
-                      "alpha.md",
-                      {
-                        kind: "file",
-                        getFile: async () => alpha,
-                      },
-                    ];
+        [Symbol.asyncIterator]: async function* () {
+          yield [
+            "notes",
+            {
+              kind: "directory",
+              [Symbol.asyncIterator]: async function* () {
+                yield [
+                  "alpha.md",
+                  {
+                    kind: "file",
+                    getFile: async () => alpha,
                   },
-                }),
+                ];
               },
-            ];
-          },
-        }),
+            },
+          ];
+        },
       } as any,
       registry,
     );
@@ -81,17 +77,15 @@ describe("OpfsBackend", () => {
 
     const backend = new OpfsBackend(
       {
-        entries: vi.fn().mockReturnValue({
-          [Symbol.asyncIterator]: async function* () {
-            yield [
-              "beta.json",
-              {
-                kind: "file",
-                getFile: async () => beta,
-              },
-            ];
-          },
-        }),
+        [Symbol.asyncIterator]: async function* () {
+          yield [
+            "beta.json",
+            {
+              kind: "file",
+              getFile: async () => beta,
+            },
+          ];
+        },
       } as any,
       registry,
     );
