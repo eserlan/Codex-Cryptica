@@ -1,9 +1,45 @@
+import { getDB } from "./idb";
+import { hashBlob } from "@codex/sync-engine";
+
 export interface FileEntry {
   handle: FileSystemFileHandle;
   path: string[];
 }
 
 export const VAULTS_DIR = "vaults";
+
+function normalizeVaultId(vaultId?: string | null): string | null {
+  if (!vaultId) return null;
+  const trimmed = vaultId.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function persistOpfsState(
+  vaultId: string | null,
+  filePath: string,
+  file: File,
+): Promise<void> {
+  if (!vaultId) return;
+
+  const db = await getDB();
+  await db.put("opfs_file_state", {
+    vaultId,
+    filePath,
+    hash: await hashBlob(file),
+    size: file.size,
+    lastModified: file.lastModified,
+  });
+}
+
+async function deleteOpfsState(
+  vaultId: string | null,
+  filePath: string,
+): Promise<void> {
+  if (!vaultId) return;
+
+  const db = await getDB();
+  await db.delete("opfs_file_state", [vaultId, filePath]);
+}
 
 /**
  * Gets the root directory handle for the Origin Private File System.
@@ -184,6 +220,7 @@ export async function writeOpfsFile(
   path: string[],
   content: string | Blob | File,
   root: FileSystemDirectoryHandle,
+  vaultId?: string,
 ): Promise<void> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
@@ -194,9 +231,23 @@ export async function writeOpfsFile(
   const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
 
   // Create a writable stream to the file
-  const writable = await fileHandle.createWritable();
+  const writable = await fileHandle.createWritable({ keepExistingData: false });
   await writable.write(content);
   await writable.close();
+
+  try {
+    const writtenFile = await fileHandle.getFile();
+    await persistOpfsState(
+      normalizeVaultId(vaultId),
+      path.join("/"),
+      writtenFile,
+    );
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to update fingerprint cache for ${path.join("/")}. Sync performance may be affected.`,
+      err,
+    );
+  }
 }
 
 /**
@@ -205,18 +256,35 @@ export async function writeOpfsFile(
 export async function deleteOpfsEntry(
   root: FileSystemDirectoryHandle,
   path: string[],
+  vaultId?: string,
 ): Promise<void> {
   if (path.length === 0) throw new Error("Path cannot be empty");
 
   const entryName = path[path.length - 1];
   const dirPath = path.slice(0, -1);
 
+  const dirHandle = await getDirHandle(root, dirPath, false).catch((err) => {
+    if (isNotFoundError(err)) return null;
+    throw err;
+  });
+
+  if (!dirHandle) return;
+
   try {
-    const dirHandle = await getDirHandle(root, dirPath, false);
     await dirHandle.removeEntry(entryName, { recursive: true });
-  } catch (err: any) {
+  } catch (err) {
     if (isNotFoundError(err)) return;
     throw err;
+  }
+
+  // Best-effort cache cleanup
+  try {
+    await deleteOpfsState(normalizeVaultId(vaultId), path.join("/"));
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to clear fingerprint cache for ${path.join("/")}`,
+      err,
+    );
   }
 }
 
@@ -249,4 +317,22 @@ export async function deleteVaultDir(
 ): Promise<void> {
   const vaultsDir = await getOrCreateDir(root, [VAULTS_DIR]);
   await vaultsDir.removeEntry(vaultId, { recursive: true });
+
+  // Best-effort cache cleanup for the entire vault
+  try {
+    const db = await getDB();
+    const tx = db.transaction("opfs_file_state", "readwrite");
+    const index = tx.store.index("by-vault");
+    let cursor = await index.openCursor(vaultId);
+    while (cursor) {
+      await cursor.delete();
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to clear fingerprint cache for vault ${vaultId}`,
+      err,
+    );
+  }
 }

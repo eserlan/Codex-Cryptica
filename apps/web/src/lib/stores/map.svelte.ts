@@ -3,6 +3,7 @@ import { uiStore } from "./ui.svelte";
 import type { Map, MapPin, Point, ViewportTransform } from "schema";
 import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
+import { writeOpfsFile } from "../utils/opfs";
 
 class MapStore {
   activeMapId = $state<string | null>(null);
@@ -114,16 +115,12 @@ class MapStore {
     // 1. Convert to WebP and Save to OPFS
     try {
       const webpBlob = await convertToWebP(file, 0.85);
-
-      const mapsDir = await vaultDir.getDirectoryHandle("maps", {
-        create: true,
-      });
-      const fileHandle = await mapsDir.getFileHandle(storageName, {
-        create: true,
-      });
-      const writable = await fileHandle.createWritable();
-      await writable.write(webpBlob);
-      await writable.close();
+      await writeOpfsFile(
+        ["maps", storageName],
+        webpBlob,
+        vaultDir,
+        vaultDir.name,
+      );
     } catch (err) {
       console.error("[MapStore] Map upload failed", err);
       return undefined;
@@ -154,15 +151,6 @@ class MapStore {
 
     return vault.saveQueue.enqueue(`mask-${this.activeMapId}`, async () => {
       try {
-        const mapsDir = await vaultDir.getDirectoryHandle("maps", {
-          create: true,
-        });
-        const fileHandle = await mapsDir.getFileHandle(
-          `${this.activeMapId}_mask.png`,
-          { create: true },
-        );
-        const writable = await fileHandle.createWritable();
-
         const blob = await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
             (b) =>
@@ -172,8 +160,12 @@ class MapStore {
             "image/png",
           );
         });
-        await writable.write(blob);
-        await writable.close();
+        await writeOpfsFile(
+          ["maps", `${this.activeMapId}_mask.png`],
+          blob,
+          vaultDir,
+          vaultDir.name,
+        );
       } catch (err) {
         console.error("[MapStore] Failed to save mask", err);
       }

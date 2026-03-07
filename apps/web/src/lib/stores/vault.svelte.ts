@@ -353,65 +353,40 @@ class VaultStore {
   async syncToLocal() {
     if (!this.syncService || !this.activeVaultId) return;
 
-    try {
-      // Ensure all pending application saves are flushed before starting sync
-      // We use a timeout to prevent hanging forever if a task is stuck
-      await Promise.race([
-        this.saveQueue.waitForAll(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
-        ),
-      ]);
-    } catch (err) {
-      console.warn("Continuing sync despite save queue issues:", err);
-    }
-
-    const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
-
+    // 1. PRE-SYNC HANDLE VALIDATION (Must be first to preserve user gesture)
+    // We get the handle from DB immediately to check if we need to prompt the user
     const db = await getDB();
     let localHandle = await db.get(
       "settings",
       `syncHandle_${this.activeVaultId}`,
     );
 
-    console.log(
-      `[VaultStore] syncToLocal triggered. Local handle retrieved from DB:`,
-      !!localHandle,
-    );
-
-    try {
-      if (localHandle) {
-        // PROACTIVE VALIDATION: Check if the handle itself is still valid/attached
-        // before even asking for permissions. Browsers often throw NotFoundError here
-        // if the folder was moved/deleted or the IDB entry went stale.
-        try {
-          console.log(
-            `[VaultStore] Verifying saved handle for "${localHandle.name}"...`,
-          );
-          // A simple name access isn't enough, we must force I/O to test the handle
-          const iterator = (localHandle as any).values();
-          await iterator.next();
-          console.log("[VaultStore] Handle verification successful.");
-        } catch (validationErr: any) {
+    if (localHandle) {
+      try {
+        // PROACTIVE VALIDATION: Force I/O to test the handle
+        const iterator = (localHandle as any).values();
+        await iterator.next();
+      } catch (validationErr: any) {
+        console.warn(
+          "[VaultStore] Saved local handle validation failed:",
+          validationErr,
+        );
+        if (
+          validationErr.name === "NotFoundError" ||
+          validationErr.message?.includes("not found")
+        ) {
           console.warn(
-            "[VaultStore] Saved local handle validation failed:",
-            validationErr,
+            "[VaultStore] Handle is definitively detached. Clearing it from DB.",
           );
-          if (
-            validationErr.name === "NotFoundError" ||
-            validationErr.message?.includes("not found")
-          ) {
-            console.warn(
-              "[VaultStore] Handle is definitively detached. Clearing it from DB.",
-            );
-            localHandle = null;
-            await db.delete("settings", `syncHandle_${this.activeVaultId}`);
-          }
+          localHandle = null;
+          await db.delete("settings", `syncHandle_${this.activeVaultId}`);
         }
       }
+    }
 
-      if (localHandle) {
+    // Handle permissions if we still have a handle
+    if (localHandle) {
+      try {
         const permission = await localHandle.queryPermission({
           mode: "readwrite",
         });
@@ -421,11 +396,19 @@ class VaultStore {
           });
           if (newPermission !== "granted") localHandle = null;
         }
+      } catch (err) {
+        console.warn("[VaultStore] Permission request failed", err);
+        localHandle = null;
       }
+    }
 
-      if (!localHandle) {
+    // 2. PROMPT FOR FOLDER (Crucial user gesture path)
+    if (!localHandle) {
+      try {
+        // The alert serves as a synchronous bridge to ensure the following await window.showDirectoryPicker
+        // is still considered part of the user gesture chain by some browsers.
         window.alert(
-          "Please select a local folder to sync this vault with. This is required to grant the browser permission to read and write your files, or because the previous folder link was lost.",
+          "Please select a local folder to sync this vault with. This is required to grant permission or reconnect a lost link.",
         );
         localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
         await db.put(
@@ -433,7 +416,29 @@ class VaultStore {
           localHandle,
           `syncHandle_${this.activeVaultId}`,
         );
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
+        console.error("[VaultStore] Folder selection failed", err);
+        this.errorMessage = "Failed to select folder: " + err.message;
+        this.status = "error";
+        return;
       }
+    }
+
+    // 3. PROCEED WITH SYNC (Background work)
+    try {
+      // Ensure all pending application saves are flushed before starting sync
+      await Promise.race([
+        this.saveQueue.waitForAll(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+        ),
+      ]).catch((err) =>
+        console.warn("Continuing sync despite save queue issues:", err),
+      );
+
+      const opfsHandle = await this.getActiveVaultHandle();
+      if (!opfsHandle) return;
 
       this.status = "saving";
       this.syncType = "local";
@@ -923,14 +928,22 @@ class VaultStore {
       try {
         if (map.assetPath) {
           const pathSegments = map.assetPath.split("/");
-          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            pathSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }
 
         if (map.fogOfWar?.maskPath) {
           const maskSegments = map.fogOfWar.maskPath.split("/");
-          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            maskSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }

@@ -8,6 +8,16 @@ describe("CloudSyncService", () => {
   let registry: SyncRegistry;
   let gdrive: GDriveBackend;
   let mockOpfs: any;
+  const fileContent = "0123456789";
+
+  const makeBlob = (content: string, lastModified: number): Blob => {
+    const blob = new Blob([content]);
+    Object.defineProperty(blob, "lastModified", {
+      value: lastModified,
+      configurable: true,
+    });
+    return blob;
+  };
 
   beforeEach(() => {
     const deletedEntry = {
@@ -23,10 +33,14 @@ describe("CloudSyncService", () => {
     registry = {
       getEntriesByVault: vi.fn().mockResolvedValue([deletedEntry]),
       getCloudMetadata: vi.fn().mockResolvedValue(null),
+      getOpfsStatesByVault: vi.fn().mockResolvedValue([]),
       putEntry: vi.fn(),
+      putOpfsState: vi.fn(),
+      putOpfsStates: vi.fn(),
       putCloudMetadata: vi.fn(),
       getEntryByRemoteId: vi.fn().mockResolvedValue(deletedEntry),
       deleteEntry: vi.fn(),
+      deleteOpfsState: vi.fn(),
     } as any;
 
     gdrive = {
@@ -36,36 +50,33 @@ describe("CloudSyncService", () => {
       }),
       connect: vi.fn(),
       download: vi.fn(),
-      upload: vi.fn(),
+      upload: vi.fn().mockResolvedValue({
+        path: "deleted.md",
+        size: fileContent.length,
+        lastModified: 100,
+        hash: "abc",
+        handle: "remote-id-1",
+      }),
       delete: vi.fn(),
     } as any;
 
     mockOpfs = {
       kind: "directory",
       getFileHandle: vi.fn().mockResolvedValue({
-        getFile: vi.fn().mockResolvedValue({
-          lastModified: 100,
-          size: 10,
-          text: async () => "content",
-        }),
+        getFile: vi.fn().mockResolvedValue(makeBlob(fileContent, 100)),
       }),
       getDirectoryHandle: vi.fn().mockImplementation(() => mockOpfs),
       removeEntry: vi.fn().mockResolvedValue(undefined),
-      entries: vi.fn().mockReturnValue({
-        [Symbol.asyncIterator]: async function* () {
-          yield [
-            "deleted.md",
-            {
-              kind: "file",
-              name: "deleted.md",
-              getFile: async () => ({
-                lastModified: 100,
-                size: 10,
-              }),
-            },
-          ];
-        },
-      }),
+      [Symbol.asyncIterator]: async function* () {
+        yield [
+          "deleted.md",
+          {
+            kind: "file",
+            name: "deleted.md",
+            getFile: async () => makeBlob(fileContent, 100),
+          },
+        ];
+      },
     };
 
     service = new CloudSyncService(registry, gdrive);

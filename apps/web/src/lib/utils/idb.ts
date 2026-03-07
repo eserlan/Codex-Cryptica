@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from "idb";
 import type { LocalEntity } from "../stores/vault/types";
-import type { SyncEntry } from "@codex/sync-engine";
+import type { SyncEntry, OpfsStateEntry } from "@codex/sync-engine";
 
 export interface VaultRecord {
   id: string;
@@ -60,6 +60,13 @@ interface CodexDB extends DBSchema {
       lastSyncTime: number;
     };
   };
+  opfs_file_state: {
+    key: [string, string];
+    value: OpfsStateEntry;
+    indexes: {
+      "by-vault": string;
+    };
+  };
   proposals: {
     key: string; // composite key or auto-inc? Let's use id or [sourceId, targetId]
     value: {
@@ -94,8 +101,8 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 12 to add canvases store.
-export const DB_VERSION = 12;
+// DB_VERSION was bumped to 13 to add OPFS fingerprint cache.
+export const DB_VERSION = 13;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -139,6 +146,13 @@ export function getDB() {
 
         if (!db.objectStoreNames.contains("cloud_sync_metadata")) {
           db.createObjectStore("cloud_sync_metadata", { keyPath: "vaultId" });
+        }
+
+        if (!db.objectStoreNames.contains("opfs_file_state")) {
+          const store = db.createObjectStore("opfs_file_state", {
+            keyPath: ["vaultId", "filePath"],
+          });
+          store.createIndex("by-vault", "vaultId");
         }
 
         if (!db.objectStoreNames.contains("proposals")) {

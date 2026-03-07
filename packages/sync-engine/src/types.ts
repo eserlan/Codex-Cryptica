@@ -86,6 +86,14 @@ export interface SyncEntry {
   remoteId?: string; // Kept for Google Drive compatibility
 }
 
+export interface OpfsStateEntry {
+  vaultId: string;
+  filePath: string;
+  hash: string;
+  size: number;
+  lastModified: number;
+}
+
 export interface CloudSyncMetadata {
   vaultId: string;
   gdriveFolderId: string;
@@ -106,6 +114,13 @@ export interface SyncDB extends DBSchema {
   cloud_sync_metadata: {
     key: string;
     value: CloudSyncMetadata;
+  };
+  opfs_file_state: {
+    key: [string, string];
+    value: OpfsStateEntry;
+    indexes: {
+      "by-vault": string;
+    };
   };
 }
 
