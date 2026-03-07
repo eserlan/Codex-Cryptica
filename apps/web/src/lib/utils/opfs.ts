@@ -235,12 +235,19 @@ export async function writeOpfsFile(
   await writable.write(content);
   await writable.close();
 
-  const writtenFile = await fileHandle.getFile();
-  await persistOpfsState(
-    normalizeVaultId(vaultId),
-    path.join("/"),
-    writtenFile,
-  );
+  try {
+    const writtenFile = await fileHandle.getFile();
+    await persistOpfsState(
+      normalizeVaultId(vaultId),
+      path.join("/"),
+      writtenFile,
+    );
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to update fingerprint cache for ${path.join("/")}. Sync performance may be affected.`,
+      err,
+    );
+  }
 }
 
 /**
@@ -256,13 +263,28 @@ export async function deleteOpfsEntry(
   const entryName = path[path.length - 1];
   const dirPath = path.slice(0, -1);
 
+  const dirHandle = await getDirHandle(root, dirPath, false).catch((err) => {
+    if (isNotFoundError(err)) return null;
+    throw err;
+  });
+
+  if (!dirHandle) return;
+
   try {
-    const dirHandle = await getDirHandle(root, dirPath, false);
     await dirHandle.removeEntry(entryName, { recursive: true });
-    await deleteOpfsState(normalizeVaultId(vaultId), path.join("/"));
-  } catch (err: any) {
+  } catch (err) {
     if (isNotFoundError(err)) return;
     throw err;
+  }
+
+  // Best-effort cache cleanup
+  try {
+    await deleteOpfsState(normalizeVaultId(vaultId), path.join("/"));
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to clear fingerprint cache for ${path.join("/")}`,
+      err,
+    );
   }
 }
 
@@ -296,13 +318,21 @@ export async function deleteVaultDir(
   const vaultsDir = await getOrCreateDir(root, [VAULTS_DIR]);
   await vaultsDir.removeEntry(vaultId, { recursive: true });
 
-  const db = await getDB();
-  const tx = db.transaction("opfs_file_state", "readwrite");
-  const index = tx.store.index("by-vault");
-  let cursor = await index.openCursor(vaultId);
-  while (cursor) {
-    await cursor.delete();
-    cursor = await cursor.continue();
+  // Best-effort cache cleanup for the entire vault
+  try {
+    const db = await getDB();
+    const tx = db.transaction("opfs_file_state", "readwrite");
+    const index = tx.store.index("by-vault");
+    let cursor = await index.openCursor(vaultId);
+    while (cursor) {
+      await cursor.delete();
+      cursor = await cursor.continue();
+    }
+    await tx.done;
+  } catch (err) {
+    console.warn(
+      `[OPFS] Failed to clear fingerprint cache for vault ${vaultId}`,
+      err,
+    );
   }
-  await tx.done;
 }

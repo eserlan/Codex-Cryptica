@@ -25,8 +25,8 @@ Save art made by the Artificial Intelligence (AI). You can drag any image create
 ### AI Suggestions
 The AI finds new links in your notes and suggests connections you might have missed.
 
-### Combine or Connect
-Right-click selected items to merge duplicates or create a new link between them.
+### Multi-Selection Actions
+Use the toolbar to quickly Apply Labels to multiple items or Merge duplicates into a single entry.
 
 ### Hide Secrets
 Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.
