@@ -41,15 +41,12 @@
     };
   });
 
-  let minYear = $derived(yearRange.min);
-  let maxYear = $derived(yearRange.max);
-
   let filterStart = $state<number>(0);
   let filterEnd = $state<number>(3000);
 
   $effect(() => {
-    filterStart = graph.timelineRange.start ?? minYear;
-    filterEnd = graph.timelineRange.end ?? maxYear;
+    filterStart = graph.timelineRange.start ?? yearRange.min;
+    filterEnd = graph.timelineRange.end ?? yearRange.max;
   });
 
   const applyRange = () => {
