@@ -18,26 +18,35 @@
     if (onApply) onApply(false, true, "Timeline Axis Switch"); // Force layout override
   };
 
-  let minYear = $derived.by(() => {
-    const years = Object.values(vault.entities)
-      .map((e) => e.date?.year ?? e.start_date?.year ?? e.end_date?.year)
-      .filter((y): y is number => y !== undefined);
-    return years.length ? Math.min(...years) : 0;
-  });
+  // ⚡ Bolt Optimization: Calculate min and max in a single pass over the entities.
+  let yearRange = $derived.by(() => {
+    const allEntities = Object.values(vault.entities);
+    const count = allEntities.length;
+    let min = Infinity;
+    let max = -Infinity;
+    let found = false;
 
-  let maxYear = $derived.by(() => {
-    const years = Object.values(vault.entities)
-      .map((e) => e.date?.year ?? e.start_date?.year ?? e.end_date?.year)
-      .filter((y): y is number => y !== undefined);
-    return years.length ? Math.max(...years) : 3000;
+    for (let i = 0; i < count; i++) {
+      const e = allEntities[i];
+      const year = e.date?.year ?? e.start_date?.year ?? e.end_date?.year;
+      if (year !== undefined) {
+        if (year < min) min = year;
+        if (year > max) max = year;
+        found = true;
+      }
+    }
+    return {
+      min: found ? min : 0,
+      max: found ? max : 3000,
+    };
   });
 
   let filterStart = $state<number>(0);
   let filterEnd = $state<number>(3000);
 
   $effect(() => {
-    filterStart = graph.timelineRange.start ?? minYear;
-    filterEnd = graph.timelineRange.end ?? maxYear;
+    filterStart = graph.timelineRange.start ?? yearRange.min;
+    filterEnd = graph.timelineRange.end ?? yearRange.max;
   });
 
   const applyRange = () => {
