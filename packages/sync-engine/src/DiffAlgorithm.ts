@@ -60,13 +60,13 @@ export class DiffAlgorithm {
       fsChanged = !!fsExists;
     }
 
-    // Optional Validation
+    // Optional Validation - Always validate existing files to ensure excluded files are never processed
     if (validator) {
-      if (fsExists && fsChanged) {
+      if (fsExists) {
         const isValid = await validator(path, fs);
         if (!isValid) return { type: "SKIP", path };
       }
-      if (opfsExists && opfsChanged) {
+      if (opfsExists) {
         const isValid = await validator(path, opfs);
         if (!isValid) return { type: "SKIP", path };
       }

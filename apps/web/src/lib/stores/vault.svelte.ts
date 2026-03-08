@@ -1,6 +1,6 @@
 // apps/web/src/lib/stores/vault.svelte.ts
 import { getDB } from "../utils/idb";
-import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
+import { getVaultDir, deleteOpfsEntry, walkOpfsDirectory } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
@@ -48,6 +48,21 @@ class VaultStore {
     total: 0,
     progress: 0,
   });
+
+  hasConflictFiles = $state(false);
+
+  private async checkForConflicts() {
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+    try {
+      const files = await walkOpfsDirectory(opfsHandle);
+      this.hasConflictFiles = files.some((f) =>
+        f.path[f.path.length - 1].includes(".conflict-"),
+      );
+    } catch {
+      this.hasConflictFiles = false;
+    }
+  }
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
@@ -346,11 +361,142 @@ class VaultStore {
         "Failed to initialize storage. Please check browser support for OPFS.";
     } finally {
       this.isInitialized = true;
+      await this.checkForConflicts();
       if (this.status !== "error") this.status = "idle";
     }
   }
 
+  async cleanupConflictFiles() {
+    if (!this.activeVaultId) return;
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    // Get current local handle if active to clean up both sides
+    const db = await getDB();
+    const localHandle = await db.get(
+      "settings",
+      `syncHandle_${this.activeVaultId}`,
+    );
+
+    this.status = "saving";
+    try {
+      console.log("[VaultStore] Squashing conflict history...");
+
+      const squash = async (root: FileSystemDirectoryHandle, label: string) => {
+        const allFiles = await walkOpfsDirectory(root);
+        const groups = new Map<
+          string,
+          { originalPath: string[]; variants: any[] }
+        >();
+
+        for (const file of allFiles) {
+          const filename = file.path[file.path.length - 1];
+          const conflictIndex = filename.indexOf(".conflict-");
+
+          let logicalName = filename;
+          if (conflictIndex !== -1) {
+            const extIndex = filename.lastIndexOf(".");
+            logicalName =
+              filename.substring(0, conflictIndex) +
+              (extIndex !== -1 ? filename.substring(extIndex) : "");
+          }
+
+          const logicalPathArray = [...file.path.slice(0, -1), logicalName];
+          const logicalPath = logicalPathArray.join("/");
+
+          if (!groups.has(logicalPath)) {
+            groups.set(logicalPath, {
+              originalPath: logicalPathArray,
+              variants: [],
+            });
+          }
+
+          const f = await file.handle.getFile();
+          groups.get(logicalPath)!.variants.push({
+            ...file,
+            lastModified: f.lastModified,
+            isConflict: conflictIndex !== -1,
+          });
+        }
+
+        let deleted = 0;
+        let promoted = 0;
+
+        for (const group of groups.values()) {
+          if (group.variants.length <= 1) continue;
+
+          group.variants.sort((a, b) => b.lastModified - a.lastModified);
+          const winner = group.variants[0];
+          const losers = group.variants.slice(1);
+
+          for (const loser of losers) {
+            await deleteOpfsEntry(root, loser.path, this.activeVaultId);
+            deleted++;
+          }
+
+          if (winner.isConflict) {
+            try {
+              const blob = await winner.handle.getFile();
+              const { writeOpfsFile } = await import("../utils/opfs");
+              await writeOpfsFile(
+                group.originalPath.slice(1),
+                blob,
+                root,
+                this.activeVaultId,
+              );
+              await deleteOpfsEntry(root, winner.path, this.activeVaultId);
+              promoted++;
+            } catch (err) {
+              console.error(
+                `[${label}] Failed to promote ${winner.path.join("/")}`,
+                err,
+              );
+            }
+          }
+        }
+        return { deleted, promoted };
+      };
+
+      const opfsResults = await squash(opfsHandle, "OPFS");
+      let fsResults = { deleted: 0, promoted: 0 };
+
+      if (localHandle) {
+        try {
+          // Verify we still have permission
+          if (
+            (await localHandle.queryPermission({ mode: "readwrite" })) ===
+            "granted"
+          ) {
+            fsResults = await squash(localHandle, "LOCAL");
+          }
+        } catch (err) {
+          console.warn("[VaultStore] Could not clean up local folder:", err);
+        }
+      }
+
+      await this.checkForConflicts();
+      await this.loadFiles();
+
+      const totalDeleted = opfsResults.deleted + fsResults.deleted;
+      const totalPromoted = opfsResults.promoted + fsResults.promoted;
+
+      uiStore.notify(
+        `History squashed: ${totalDeleted} files removed, ${totalPromoted} versions promoted across stores.`,
+        "success",
+      );
+    } catch (err: any) {
+      console.error("[VaultStore] Cleanup failed", err);
+      uiStore.notify("Cleanup failed: " + err.message, "error");
+    } finally {
+      this.status = "idle";
+    }
+  }
+
   async syncToLocal() {
+    if (!this.syncService || !this.activeVaultId) return;
+
+    // ... (rest of method)
+    // I need to update the validator inside syncToLocal too
     if (!this.syncService || !this.activeVaultId) return;
 
     // 1. PRE-SYNC HANDLE VALIDATION (Must be first to preserve user gesture)
@@ -442,8 +588,9 @@ class VaultStore {
 
       this.status = "saving";
       this.syncType = "local";
+      const ts = new Date().toISOString().split("T")[1].split("Z")[0];
       console.log(
-        "[VaultStore] Starting local sync with handle:",
+        `[${ts}] [VaultStore] Starting local sync with handle:`,
         localHandle.name,
       );
 
@@ -456,7 +603,11 @@ class VaultStore {
         this.activeVaultId,
         localHandle,
         opfsHandle,
-        async (path, meta) => {
+        async (path, _meta) => {
+          // 1. HARD EXCLUSION: Never sync conflict files
+          // The cleanupConflictFiles method handles removing them from both OPFS and FS.
+          if (path.includes(".conflict-")) return false;
+
           if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
 
           // Use the optimized lookup map
@@ -521,6 +672,7 @@ class VaultStore {
       } else {
         this.status = "idle";
         this.syncType = null;
+        await this.checkForConflicts();
         uiStore.notify(
           `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
           "success",

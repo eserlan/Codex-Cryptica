@@ -274,6 +274,29 @@
               {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
             {/if}
           </button>
+
+          {#if vault.hasConflictFiles}
+            <button
+              class="{btnGhost} text-amber-500 hover:text-amber-400 hover:border-amber-700 {iconOnlyClasses}"
+              onclick={() => {
+                if (
+                  confirm(
+                    "This will scan for .conflict files and delete those that are identical to the original version. Continue?",
+                  )
+                ) {
+                  vault.cleanupConflictFiles();
+                }
+              }}
+              title="Clean up Redundant Conflict Files"
+              aria-label="Clean up Redundant Conflict Files"
+            >
+              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+              {#if isVertical}<span class="font-bold tracking-widest"
+                  >CLEANUP</span
+                >{/if}
+            </button>
+          {/if}
+
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
             onclick={() => (showShare = true)}

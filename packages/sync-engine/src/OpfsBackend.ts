@@ -14,6 +14,7 @@ export class OpfsBackend implements ISyncBackend {
 
   async scan(vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
+    const start = performance.now();
     const cachedEntries = await this.registry.getOpfsStatesByVault(vaultId);
     const cachedByPath = new Map(
       cachedEntries.map((entry) => [entry.filePath, entry]),
@@ -76,6 +77,11 @@ export class OpfsBackend implements ISyncBackend {
     if (refreshedEntries.length > 0) {
       await this.registry.putOpfsStates(refreshedEntries);
     }
+
+    const end = performance.now();
+    console.log(
+      `[Sync] OpfsBackend scan took ${(end - start).toFixed(2)}ms for ${results.length} files (${refreshedEntries.length} hashed, ${results.length - refreshedEntries.length} cached).`,
+    );
 
     return { files: results };
   }
