@@ -55,11 +55,18 @@ class VaultStore {
     const opfsHandle = await this.getActiveVaultHandle();
     if (!opfsHandle) return;
     try {
+      console.log("[VaultStore] Checking for conflict files in OPFS...");
       const files = await walkOpfsDirectory(opfsHandle);
-      this.hasConflictFiles = files.some((f) =>
+      const conflictCount = files.filter((f) =>
         f.path[f.path.length - 1].includes(".conflict-"),
+      ).length;
+
+      this.hasConflictFiles = conflictCount > 0;
+      console.log(
+        `[VaultStore] Found ${conflictCount} conflict files. hasConflictFiles = ${this.hasConflictFiles}`,
       );
-    } catch {
+    } catch (err) {
+      console.error("[VaultStore] Failed to check for conflict files:", err);
       this.hasConflictFiles = false;
     }
   }
