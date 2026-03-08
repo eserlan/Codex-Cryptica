@@ -151,10 +151,10 @@
   data-testid="vault-switcher-modal"
   role="presentation"
   tabindex="0"
-  on:click={(e) => {
+  onclick={(e) => {
     if (e.target === e.currentTarget) onClose();
   }}
-  on:keydown={(e) => {
+  onkeydown={(e) => {
     if (
       e.target === e.currentTarget &&
       (e.key === "Enter" || e.key === " " || e.key === "Spacebar")
