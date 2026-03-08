@@ -430,7 +430,11 @@ class VaultStore {
           const losers = group.variants.slice(1);
 
           for (const loser of losers) {
-            await deleteOpfsEntry(root, loser.path, this.activeVaultId);
+            await deleteOpfsEntry(
+              root,
+              loser.path,
+              this.activeVaultId || undefined,
+            );
             deleted++;
           }
 
@@ -442,9 +446,13 @@ class VaultStore {
                 group.originalPath.slice(1),
                 blob,
                 root,
-                this.activeVaultId,
+                this.activeVaultId || undefined,
               );
-              await deleteOpfsEntry(root, winner.path, this.activeVaultId);
+              await deleteOpfsEntry(
+                root,
+                winner.path,
+                this.activeVaultId || undefined,
+              );
               promoted++;
             } catch (err) {
               console.error(
@@ -615,11 +623,11 @@ class VaultStore {
           if (existing) return true;
 
           // Safety: If the file is unusually large (> 1MB), skip deep validation to avoid OOM
-          if (meta.size > 1024 * 1024) return true;
+          if (_meta.size > 1024 * 1024) return true;
 
           try {
-            if (!(meta.handle instanceof FileSystemFileHandle)) return true;
-            const file = await meta.handle.getFile();
+            if (!(_meta.handle instanceof FileSystemFileHandle)) return true;
+            const file = await _meta.handle.getFile();
             const text = await file.text();
             const { metadata } = parseMarkdown(text);
             return !!(metadata.id || metadata.title);
