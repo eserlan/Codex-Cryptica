@@ -373,6 +373,84 @@ class VaultStore {
     }
   }
 
+  async recoverMisplacedFiles() {
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    try {
+      console.log("[VaultStore] Starting recovery of misplaced files...");
+      const files = await walkOpfsDirectory(opfsHandle);
+
+      let recoveredCount = 0;
+
+      for (const file of files) {
+        // Only look at files that are at the ROOT of the vault (path length === 1)
+        if (file.path.length === 1) {
+          const filename = file.path[0];
+
+          // Determine where it SHOULD be based on extension/prefix
+          let targetDir: string[] | null = null;
+
+          if (
+            filename.endsWith(".webp") ||
+            filename.endsWith(".jpg") ||
+            filename.endsWith(".png") ||
+            filename.endsWith(".jpeg")
+          ) {
+            // It's an image. Is it a map or a regular image?
+            if (
+              filename.includes("_mask.png") ||
+              filename.match(/^[0-9a-f]{8}-[0-9a-f]{4}/)
+            ) {
+              targetDir = ["maps"];
+            } else {
+              targetDir = ["images"];
+            }
+          } else if (filename.endsWith(".canvas")) {
+            targetDir = [".codex", "canvases"];
+          }
+
+          if (targetDir) {
+            console.log(
+              `[VaultStore] Recovering ${filename} to ${targetDir.join("/")}/`,
+            );
+            try {
+              const blob = await file.handle.getFile();
+              const { writeOpfsFile, deleteOpfsEntry } =
+                await import("../utils/opfs");
+              await writeOpfsFile(
+                [...targetDir, filename],
+                blob,
+                opfsHandle,
+                this.activeVaultId || undefined,
+              );
+              await deleteOpfsEntry(
+                opfsHandle,
+                file.path,
+                this.activeVaultId || undefined,
+              );
+              recoveredCount++;
+            } catch (err) {
+              console.error(`[VaultStore] Failed to recover ${filename}`, err);
+            }
+          }
+        }
+      }
+
+      if (recoveredCount > 0) {
+        uiStore.notify(
+          `Recovered ${recoveredCount} misplaced files.`,
+          "success",
+        );
+        await this.loadFiles(); // Reload everything
+      } else {
+        console.log("[VaultStore] No misplaced files found.");
+      }
+    } catch (err) {
+      console.error("[VaultStore] Recovery failed:", err);
+    }
+  }
+
   async cleanupConflictFiles() {
     if (!this.activeVaultId) return;
     const opfsHandle = await this.getActiveVaultHandle();
@@ -430,7 +508,33 @@ class VaultStore {
         let promoted = 0;
 
         for (const group of groups.values()) {
-          if (group.variants.length <= 1) continue;
+          if (group.variants.length === 1) {
+            const onlyVariant = group.variants[0];
+            if (onlyVariant.isConflict) {
+              try {
+                const blob = await onlyVariant.handle.getFile();
+                const { writeOpfsFile } = await import("../utils/opfs");
+                await writeOpfsFile(
+                  group.originalPath,
+                  blob,
+                  root,
+                  this.activeVaultId || undefined,
+                );
+                await deleteOpfsEntry(
+                  root,
+                  onlyVariant.path,
+                  this.activeVaultId || undefined,
+                );
+                promoted++;
+              } catch (err) {
+                console.error(
+                  `[${label}] Failed to promote orphaned conflict ${onlyVariant.path.join("/")}`,
+                  err,
+                );
+              }
+            }
+            continue;
+          }
 
           group.variants.sort((a, b) => b.lastModified - a.lastModified);
           const winner = group.variants[0];

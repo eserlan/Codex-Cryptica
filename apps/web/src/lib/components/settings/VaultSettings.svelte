@@ -164,6 +164,31 @@
             </button>
           </div>
         {/if}
+
+        <div
+          class="pt-4 border-t border-theme-border/30 flex justify-between items-center"
+        >
+          <div>
+            <span
+              class="block text-[10px] font-bold text-blue-500 mb-1 uppercase font-header tracking-wider"
+            >
+              Rescue Misplaced Files
+            </span>
+            <span class="text-xs text-theme-muted">
+              Use this if your images or maps are missing after a conflict
+              squash.
+            </span>
+          </div>
+          <button
+            class="px-4 py-2 border border-blue-500/50 text-blue-500 hover:bg-blue-500/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+            onclick={async () => {
+              await vault.recoverMisplacedFiles();
+            }}
+          >
+            <span class="icon-[lucide--life-buoy] w-4 h-4"></span>
+            Recover Files
+          </button>
+        </div>
       </div>
     </div>
   </div>
