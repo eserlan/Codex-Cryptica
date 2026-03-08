@@ -450,7 +450,7 @@ class VaultStore {
               const blob = await winner.handle.getFile();
               const { writeOpfsFile } = await import("../utils/opfs");
               await writeOpfsFile(
-                group.originalPath.slice(1),
+                group.originalPath,
                 blob,
                 root,
                 this.activeVaultId || undefined,
