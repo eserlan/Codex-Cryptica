@@ -22,10 +22,9 @@ jobs:
       matrix:
         # Only build production on main branch; only build staging on other branches
         environment: >-
-          ${{ github.ref == 'refs/heads/main' 
-            ? fromJSON('["production"]') 
-            : fromJSON('["staging"]') 
-          }}
+          ${{ fromJSON(
+            if(github.ref == 'refs/heads/main', '["production"]', '["staging"]')
+          ) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
