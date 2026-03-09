@@ -189,6 +189,31 @@
             Recover Files
           </button>
         </div>
+
+        <div
+          class="pt-4 border-t border-theme-border/30 flex justify-between items-center"
+        >
+          <div>
+            <span
+              class="block text-[10px] font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
+            >
+              Schema Integrity
+            </span>
+            <span class="text-xs text-theme-muted">
+              Remove top-level fields that were incorrectly duplicated into
+              metadata.
+            </span>
+          </div>
+          <button
+            class="px-4 py-2 border border-theme-muted/50 text-theme-text hover:bg-theme-muted/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+            onclick={async () => {
+              await vault.cleanupMetadata();
+            }}
+          >
+            <span class="icon-[lucide--database-zap] w-4 h-4"></span>
+            Purge Metadata
+          </button>
+        </div>
       </div>
     </div>
   </div>
