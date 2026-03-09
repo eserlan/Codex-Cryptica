@@ -605,10 +605,10 @@ export class SyncService {
 
         const fsArr = new Uint8Array(fsBuf);
         const opfsArr = new Uint8Array(opfsBuf);
-        for (let i = 0; i < fsArr.length; i++) {
-          if (fsArr[i] !== opfsArr[i]) return false;
-        }
-        return true;
+        return (
+          fsArr.length === opfsArr.length &&
+          fsArr.every((val, i) => val === opfsArr[i])
+        );
       }
     } catch {
       return false;

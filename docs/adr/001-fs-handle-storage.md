@@ -52,3 +52,5 @@ This hybrid approach provides the best of both worlds: the reliability and perfo
 1.  **`VaultStore` Refactor:** The store was refactored to use OPFS handles for all file operations.
 2.  **`Sync to Local` Feature:** A new UI control was added to allow users to trigger a full sync from OPFS to a user-selected local directory.
 3.  **Migration Path:** A one-time, automatic migration was created to move existing FSA-based vaults into the OPFS on first launch.
+
+**See also:** [ADR 006: Optimized Bidirectional Synchronization](./006-optimized-bidirectional-sync.md) for details on the optimized synchronization logic and conflict handling.

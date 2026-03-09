@@ -373,119 +373,6 @@ class VaultStore {
     }
   }
 
-  async recoverMisplacedFiles() {
-    const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
-
-    const db = await getDB();
-    const localHandle = await db.get(
-      "settings",
-      `syncHandle_${this.activeVaultId}`,
-    );
-
-    this.status = "saving";
-    try {
-      console.log("[VaultStore] Starting recovery of misplaced files...");
-
-      const recover = async (
-        root: FileSystemDirectoryHandle,
-        label: string,
-      ) => {
-        const files = await walkOpfsDirectory(root);
-        let recovered = 0;
-
-        for (const file of files) {
-          // Only look at files that are at the ROOT of the vault (path length === 1)
-          if (file.path.length === 1) {
-            const filename = file.path[0];
-
-            // Determine where it SHOULD be based on extension/prefix
-            let targetDir: string[] | null = null;
-
-            if (
-              filename.endsWith(".webp") ||
-              filename.endsWith(".jpg") ||
-              filename.endsWith(".png") ||
-              filename.endsWith(".jpeg")
-            ) {
-              // It's an image. Is it a map or a regular image?
-              if (
-                filename.includes("_mask.png") ||
-                filename.match(/^[0-9a-f]{8}-[0-9a-f]{4}/)
-              ) {
-                targetDir = ["maps"];
-              } else {
-                targetDir = ["images"];
-              }
-            } else if (filename.endsWith(".canvas")) {
-              targetDir = [".codex", "canvases"];
-            }
-
-            if (targetDir) {
-              console.log(
-                `[${label}] Recovering ${filename} to ${targetDir.join("/")}/`,
-              );
-              try {
-                const blob = await file.handle.getFile();
-                const { writeOpfsFile, deleteOpfsEntry } =
-                  await import("../utils/opfs");
-                await writeOpfsFile(
-                  [...targetDir, filename],
-                  blob,
-                  root,
-                  this.activeVaultId || undefined,
-                );
-                await deleteOpfsEntry(
-                  root,
-                  file.path,
-                  this.activeVaultId || undefined,
-                );
-                recovered++;
-              } catch (err) {
-                console.error(`[${label}] Failed to recover ${filename}`, err);
-              }
-            }
-          }
-        }
-        return recovered;
-      };
-
-      const opfsRecovered = await recover(opfsHandle, "OPFS");
-      let fsRecovered = 0;
-
-      if (localHandle) {
-        try {
-          if (
-            (await localHandle.queryPermission({ mode: "readwrite" })) ===
-            "granted"
-          ) {
-            fsRecovered = await recover(localHandle, "LOCAL");
-          }
-        } catch (err) {
-          console.warn("[VaultStore] Could not recover local folder:", err);
-        }
-      }
-
-      const totalRecovered = opfsRecovered + fsRecovered;
-
-      if (totalRecovered > 0) {
-        uiStore.notify(
-          `Recovered ${totalRecovered} misplaced files across stores.`,
-          "success",
-        );
-        await this.loadFiles(); // Reload everything
-      } else {
-        console.log("[VaultStore] No misplaced files found.");
-        uiStore.notify("No misplaced files found at the root level.", "info");
-      }
-    } catch (err) {
-      console.error("[VaultStore] Recovery failed:", err);
-      uiStore.notify("Recovery failed.", "error");
-    } finally {
-      this.status = "idle";
-    }
-  }
-
   async cleanupConflictFiles() {
     if (!this.activeVaultId) return;
     const opfsHandle = await this.getActiveVaultHandle();
@@ -501,6 +388,7 @@ class VaultStore {
     this.status = "saving";
     try {
       console.log("[VaultStore] Squashing conflict history...");
+      const { writeOpfsFile, deleteOpfsEntry } = await import("../utils/opfs");
 
       const squash = async (root: FileSystemDirectoryHandle, label: string) => {
         const allFiles = await walkOpfsDirectory(root);
@@ -548,7 +436,6 @@ class VaultStore {
             if (onlyVariant.isConflict) {
               try {
                 const blob = await onlyVariant.handle.getFile();
-                const { writeOpfsFile } = await import("../utils/opfs");
                 await writeOpfsFile(
                   group.originalPath,
                   blob,
@@ -587,7 +474,6 @@ class VaultStore {
           if (winner.isConflict) {
             try {
               const blob = await winner.handle.getFile();
-              const { writeOpfsFile } = await import("../utils/opfs");
               await writeOpfsFile(
                 group.originalPath,
                 blob,

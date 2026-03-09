@@ -26,49 +26,58 @@ export class OpfsBackend implements ISyncBackend {
       path: string[] = [],
     ) => {
       try {
+        const entries: [string, FileSystemHandle][] = [];
         for await (const [name, entry] of dirHandle) {
-          try {
-            const currentPath = [...path, name];
-            if (entry.kind === "file") {
-              const fileHandle = entry as FileSystemFileHandle;
-              const file = await fileHandle.getFile();
-              const relativePath = currentPath.join("/");
-              const cached = cachedByPath.get(relativePath);
-              let hash = cached?.hash;
+          entries.push([name, entry]);
+        }
 
-              if (
-                !cached ||
-                cached.size !== file.size ||
-                cached.lastModified !== file.lastModified
-              ) {
-                hash = await hashBlob(file);
-                refreshedEntries.push({
-                  vaultId,
-                  filePath: relativePath,
-                  hash,
-                  size: file.size,
-                  lastModified: file.lastModified,
-                });
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+          const chunk = entries.slice(i, i + CHUNK_SIZE);
+          await Promise.all(
+            chunk.map(async ([name, entry]) => {
+              const currentPath = [...path, name];
+              if (entry.kind === "file") {
+                try {
+                  const fileHandle = entry as FileSystemFileHandle;
+                  const file = await fileHandle.getFile();
+                  const relativePath = currentPath.join("/");
+                  const cached = cachedByPath.get(relativePath);
+                  let hash = cached?.hash;
+
+                  if (
+                    !cached ||
+                    cached.size !== file.size ||
+                    cached.lastModified !== file.lastModified
+                  ) {
+                    hash = await hashBlob(file);
+                    refreshedEntries.push({
+                      vaultId,
+                      filePath: relativePath,
+                      hash,
+                      size: file.size,
+                      lastModified: file.lastModified,
+                    });
+                  }
+
+                  results.push({
+                    path: relativePath,
+                    lastModified: file.lastModified,
+                    size: file.size,
+                    handle: fileHandle,
+                    hash,
+                  });
+                } catch (entryErr: any) {
+                  if (entryErr.name !== "NotFoundError") throw entryErr;
+                }
+              } else if (entry.kind === "directory") {
+                await scan(entry as FileSystemDirectoryHandle, currentPath);
               }
-
-              results.push({
-                path: relativePath,
-                lastModified: file.lastModified,
-                size: file.size,
-                handle: fileHandle,
-                hash,
-              });
-            } else if (entry.kind === "directory") {
-              await scan(entry as FileSystemDirectoryHandle, currentPath);
-            }
-          } catch (entryErr: any) {
-            if (entryErr.name === "NotFoundError") continue;
-            throw entryErr;
-          }
+            }),
+          );
         }
       } catch (scanErr: any) {
-        if (scanErr.name === "NotFoundError") return;
-        throw scanErr;
+        if (scanErr.name !== "NotFoundError") throw scanErr;
       }
     };
 

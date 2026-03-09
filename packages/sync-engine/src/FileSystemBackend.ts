@@ -18,33 +18,41 @@ export class FileSystemBackend implements ISyncBackend {
       path: string[] = [],
     ) => {
       try {
-        const promises: Promise<void>[] = [];
-        for await (const [name, entry] of (handle as any).entries()) {
-          const currentPath = [...path, name];
-          if (entry.kind === "file") {
-            promises.push(
-              (entry as FileSystemFileHandle).getFile().then((file) => {
-                results.push({
-                  path: currentPath.join("/"),
-                  lastModified: file.lastModified,
-                  size: file.size,
-                  handle: entry as FileSystemFileHandle,
-                });
-                scannedCount++;
-                if (scannedCount % 500 === 0) {
-                  console.log(
-                    `[${getTs()}] [Sync] FileSystemBackend: Scanned ${scannedCount} files so far...`,
-                  );
-                }
-              }),
-            );
-          } else if (entry.kind === "directory") {
-            promises.push(
-              scan(entry as FileSystemDirectoryHandle, currentPath),
-            );
-          }
+        const entries: [string, FileSystemHandle][] = [];
+        for await (const [name, entry] of handle) {
+          entries.push([name, entry]);
         }
-        await Promise.all(promises);
+
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+          const chunk = entries.slice(i, i + CHUNK_SIZE);
+          await Promise.all(
+            chunk.map(async ([name, entry]) => {
+              const currentPath = [...path, name];
+              if (entry.kind === "file") {
+                try {
+                  const file = await (entry as FileSystemFileHandle).getFile();
+                  results.push({
+                    path: currentPath.join("/"),
+                    lastModified: file.lastModified,
+                    size: file.size,
+                    handle: entry as FileSystemFileHandle,
+                  });
+                  scannedCount++;
+                  if (scannedCount % 500 === 0) {
+                    console.log(
+                      `[${getTs()}] [Sync] FileSystemBackend: Scanned ${scannedCount} files so far...`,
+                    );
+                  }
+                } catch (entryErr: any) {
+                  if (entryErr.name !== "NotFoundError") throw entryErr;
+                }
+              } else if (entry.kind === "directory") {
+                await scan(entry as FileSystemDirectoryHandle, currentPath);
+              }
+            }),
+          );
+        }
       } catch (scanErr: any) {
         if (scanErr.name === "NotFoundError") return;
         throw scanErr;

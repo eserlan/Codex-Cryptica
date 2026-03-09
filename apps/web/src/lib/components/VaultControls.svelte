@@ -275,27 +275,6 @@
             {/if}
           </button>
 
-          <!-- ALWAYS VISIBLE FOR DEBUGGING/FORCED CLEANUP -->
-          <button
-            class="{btnGhost} text-amber-500 hover:text-amber-400 hover:border-amber-700 {iconOnlyClasses}"
-            onclick={async () => {
-              if (
-                confirm(
-                  "This will scan for .conflict files and keep only the newest version of each file. Continue?",
-                )
-              ) {
-                await vault.cleanupConflictFiles();
-              }
-            }}
-            title="Force Clean up Redundant Conflict Files"
-            aria-label="Force Clean up Redundant Conflict Files"
-          >
-            <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
-            {#if isVertical}<span class="font-bold tracking-widest"
-                >CLEANUP</span
-              >{/if}
-          </button>
-
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
             onclick={() => (showShare = true)}
