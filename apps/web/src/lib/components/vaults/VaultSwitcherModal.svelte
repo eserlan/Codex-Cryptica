@@ -147,6 +147,14 @@
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
   data-testid="vault-switcher-modal"
+  onclick={(e) => {
+    if (e.target === e.currentTarget) onClose();
+  }}
+  onkeydown={(e) => {
+    if (e.key === "Escape") onClose();
+  }}
+  role="button"
+  tabindex="0"
 >
   <div
     role="dialog"

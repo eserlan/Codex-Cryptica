@@ -20,13 +20,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production, staging]
+        # Only build production on main branch; only build staging on other branches
+        environment: >-
+          ${{ github.ref == 'refs/heads/main' 
+            ? fromJSON('["production"]') 
+            : fromJSON('["staging"]') 
+          }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          # Production always builds from main; Staging builds from the current ref
-          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
+          # Staging builds from the current ref
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
