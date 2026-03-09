@@ -181,7 +181,7 @@ describe("DiffAlgorithm", () => {
   });
 
   it("should trigger conflict if hash is missing AND FS changed", async () => {
-    const fs = createMeta(2000, 100, "abc"); // FS changed
+    const fs = createMeta(6000, 100, "abc"); // FS changed (diff > 2000ms)
     const opfs = createMeta(1000, 100, "abc");
     const registry = createEntry(1000, 100, ""); // Missing hash
     (registry as any).lastSyncedOpfsHash = undefined;

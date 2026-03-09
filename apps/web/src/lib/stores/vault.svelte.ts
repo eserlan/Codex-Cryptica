@@ -535,10 +535,6 @@ class VaultStore {
   async syncToLocal() {
     if (!this.syncService || !this.activeVaultId) return;
 
-    // ... (rest of method)
-    // I need to update the validator inside syncToLocal too
-    if (!this.syncService || !this.activeVaultId) return;
-
     // 1. PRE-SYNC HANDLE VALIDATION (Must be first to preserve user gesture)
     // We get the handle from DB immediately to check if we need to prompt the user
     const db = await getDB();
