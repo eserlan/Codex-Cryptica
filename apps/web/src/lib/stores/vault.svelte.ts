@@ -373,57 +373,6 @@ class VaultStore {
     }
   }
 
-  async cleanupMetadata() {
-    if (!this.activeVaultId) return;
-
-    let cleanedCount = 0;
-    const topLevelKeys = [
-      "id",
-      "type",
-      "title",
-      "tags",
-      "labels",
-      "connections",
-      "lore",
-      "image",
-      "thumbnail",
-      "date",
-      "start_date",
-      "end_date",
-      "updatedAt",
-    ];
-
-    for (const entityId in this.entities) {
-      const entity = this.entities[entityId];
-      if (!entity.metadata) continue;
-
-      let changed = false;
-      const newMetadata = { ...entity.metadata };
-
-      for (const key of Object.keys(newMetadata)) {
-        if (topLevelKeys.includes(key)) {
-          delete (newMetadata as any)[key];
-          changed = true;
-        }
-      }
-
-      if (changed) {
-        // Use updateEntity to trigger reactive updates and persistence
-        await this.updateEntity(entityId, { metadata: newMetadata });
-        cleanedCount++;
-      }
-    }
-
-    if (cleanedCount > 0) {
-      uiStore.notify(
-        `Cleaned up redundant metadata in ${cleanedCount} chronicles.`,
-        "success",
-      );
-    } else {
-      uiStore.notify("No redundant metadata found.", "info");
-    }
-  }
-
   async recoverMisplacedFiles() {
     const opfsHandle = await this.getActiveVaultHandle();
     if (!opfsHandle) return;
