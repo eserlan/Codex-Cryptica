@@ -566,7 +566,7 @@ export class SyncService {
     }
   }
 
-  private async compareContent(
+  protected async compareContent(
     path: string,
     fsBackend: ISyncBackend,
     opfsBackend: ISyncBackend,
@@ -598,17 +598,25 @@ export class SyncService {
         const opfsText = await opfs.text();
         return fsText === opfsText;
       } else {
-        // Binary comparison for images/other files
-        const fsBuf = await fs.arrayBuffer();
-        const opfsBuf = await opfs.arrayBuffer();
-        if (fsBuf.byteLength !== opfsBuf.byteLength) return false;
+        // Binary comparison for images/other files, using chunked reads to avoid large allocations
+        if (fs.size !== opfs.size) return false;
 
-        const fsArr = new Uint8Array(fsBuf);
-        const opfsArr = new Uint8Array(opfsBuf);
-        return (
-          fsArr.length === opfsArr.length &&
-          fsArr.every((val, i) => val === opfsArr[i])
-        );
+        const CHUNK_SIZE = 1024 * 1024; // 1 MiB
+        for (let offset = 0; offset < fs.size; offset += CHUNK_SIZE) {
+          const end = Math.min(offset + CHUNK_SIZE, fs.size);
+          const fsChunkBuf = await fs.slice(offset, end).arrayBuffer();
+          const opfsChunkBuf = await opfs.slice(offset, end).arrayBuffer();
+
+          if (fsChunkBuf.byteLength !== opfsChunkBuf.byteLength) return false;
+
+          const fsArr = new Uint8Array(fsChunkBuf);
+          const opfsArr = new Uint8Array(opfsChunkBuf);
+
+          if (!fsArr.every((val, i) => val === opfsArr[i])) {
+            return false;
+          }
+        }
+        return true;
       }
     } catch {
       return false;
