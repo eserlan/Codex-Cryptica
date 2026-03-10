@@ -432,7 +432,9 @@
                   <div class="text-theme-muted uppercase mb-1 font-header">
                     License
                   </div>
-                  <div class="text-theme-text">MIT</div>
+                  <div class="text-theme-text">
+                    Polyform Noncommercial License 1.0.0
+                  </div>
                 </div>
               </div>
             </section>
