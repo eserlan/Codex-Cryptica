@@ -569,3 +569,21 @@ describe("AIService Lite Mode Gating", () => {
     ).rejects.toThrow("AI features are disabled in Lite Mode.");
   });
 });
+
+describe("AIService Expansion Logic", () => {
+  it("should identify expansion keywords correctly", () => {
+    // Accessing private method for testing
+    const isExpand = (aiService as any).isExpandRequest.bind(aiService);
+
+    expect(isExpand("tell me more about the tower")).toBe(true);
+    expect(isExpand("expand on Eldrin")).toBe(true);
+    expect(isExpand("describe the village")).toBe(true);
+    expect(isExpand("elaborate on the plot")).toBe(true);
+    expect(isExpand("give me detailed info")).toBe(true);
+    expect(isExpand("deep dive into the lore")).toBe(true);
+
+    expect(isExpand("who is Eldrin?")).toBe(false);
+    expect(isExpand("where is the tavern?")).toBe(false);
+    expect(isExpand("what happened?")).toBe(false);
+  });
+});

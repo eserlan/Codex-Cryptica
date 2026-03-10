@@ -103,11 +103,13 @@ STANDALONE SEARCH QUERY:`;
     const isDemoMarker = "DEMO_MODE_ACTIVE";
     let systemInstruction = `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 
 
-If the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
+BE TERSE BY DEFAULT. Your primary goal is to provide brief, direct answers (Chronicle/Blurb format) unless explicitly asked for more detail.
 
-When providing information, consider two formats:
-1. Chronicle / Blurb: A short, focused 2-3 sentence summary. (Default if "blurb", "chronicle", or "short desc" is mentioned)
-2. Lore / Notes: An expansive, detailed deep-dive including "hooks", secrets, and background fluff.
+If the user asks you to "expand", "describe", "elaborate", or "tell me more", you should provide a Lore/Notes deep-dive. In these cases, feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
+
+FORMATS:
+1. Chronicle / Blurb (DEFAULT): A short, focused 2-3 sentence summary. Use this for almost all queries.
+2. Lore / Notes (ON REQUEST): An expansive, detailed deep-dive including "hooks", secrets, and background fluff. Use this ONLY if explicitly asked to expand or describe in detail.
 
 SPECIAL COMMANDS:
 - /draw [subject]: Trigger image generation.
@@ -498,9 +500,14 @@ Format the output in clear Markdown sections. Be specific and reference actual e
     });
 
     try {
+      const isExpand = this.isExpandRequest(query);
+      const instruction = isExpand
+        ? "[INSTRUCTION: PROVIDE DETAILED LORE]"
+        : "[INSTRUCTION: BE TERSE AND CONCISE]";
+
       const finalQuery = context
-        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}[USER QUERY]\n${query}`
-        : `${prefixContext}${query}`;
+        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}${instruction}\n[USER QUERY]\n${query}`
+        : `${prefixContext}${instruction}\n${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
 
@@ -573,6 +580,19 @@ Format the output in clear Markdown sections. Be specific and reference actual e
     }
 
     return followUpPatterns.some((p) => p.test(q));
+  }
+
+  private isExpandRequest(query: string): boolean {
+    const q = query.toLowerCase().trim();
+    const expandKeywords = [
+      "expand",
+      "describe",
+      "elaborate",
+      "tell me more",
+      "detailed",
+      "deep dive",
+    ];
+    return expandKeywords.some((keyword) => q.includes(keyword));
   }
 
   async retrieveContext(
