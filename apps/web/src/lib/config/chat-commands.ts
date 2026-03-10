@@ -9,6 +9,11 @@ export interface ChatCommand {
 
 export const chatCommands: ChatCommand[] = [
   {
+    name: "/roll",
+    description: "Roll dice (e.g. /roll 2d20kh1 + 5)",
+    handler: (args) => oracle.ask("/roll " + args),
+  },
+  {
     name: "/draw",
     description: "Visualize something with AI",
     parameters: ["[subject]"],

@@ -55,6 +55,7 @@
   let DebugConsole = $state<any>(null);
   let MergeNodesDialog = $state<any>(null);
   let BulkLabelDialog = $state<any>(null);
+  let DiceModal = $state<any>(null);
 
   const isPopup = $derived(page.url.pathname === `${base}/oracle`);
   const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
@@ -86,6 +87,11 @@
       import("$lib/components/dialogs/BulkLabelDialog.svelte")
         .then((m) => (BulkLabelDialog = m.default))
         .catch((e) => logChunkError("BulkLabelDialog", e));
+    }
+    if (!DiceModal) {
+      import("$lib/components/dice/DiceModal.svelte")
+        .then((m) => (DiceModal = m.default))
+        .catch((e) => logChunkError("DiceModal", e));
     }
     if (!isPopup && !OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
@@ -479,6 +485,19 @@
           </button>
         {/if}
 
+        <!-- Die Roller Toggle -->
+        <button
+          class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
+          onclick={() => (uiStore.showDiceModal = true)}
+          aria-label="Open Die Roller"
+          title="Open Die Roller"
+          data-testid="dice-roller-button"
+        >
+          <span
+            class="icon-[lucide--dices] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
+          ></span>
+        </button>
+
         <h1
           class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
         >
@@ -671,6 +690,9 @@
             entityIds={uiStore.bulkLabelDialog.entityIds}
             onClose={() => uiStore.closeBulkLabelDialog()}
           />
+        {/if}
+        {#if DiceModal}
+          <DiceModal />
         {/if}
         {#if DebugConsole}
           <DebugConsole />

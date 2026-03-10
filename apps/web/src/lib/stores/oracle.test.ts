@@ -707,7 +707,7 @@ describe("OracleStore", () => {
       const lastMsg = oracle.messages[oracle.messages.length - 1];
       expect(lastMsg.role).toBe("system");
       expect(lastMsg.content).toContain(
-        "The `/plot` command is powered by AI and is disabled in Lite Mode",
+        "The /plot command is powered by AI and is disabled in Lite Mode",
       );
     });
 

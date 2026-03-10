@@ -14,6 +14,7 @@ class UIStore {
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
   liteMode = $state(false);
+  showDiceModal = $state(false);
 
   // Sidebar State
   leftSidebarOpen = $state(false);

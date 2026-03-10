@@ -214,6 +214,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Visit our blog for deep dives into data sovereignty and tactical world-building guides. Check out our Comprehensive Help Guide for a full system manual.",
     icon: "icon-[lucide--archive]",
   },
+  "dice-rolling": {
+    id: "dice-rolling",
+    title: "Die Roller",
+    content:
+      "Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.",
+    icon: "icon-[lucide--dices]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

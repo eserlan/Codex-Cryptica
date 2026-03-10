@@ -19,6 +19,11 @@ try {
 
 export default defineConfig({
   plugins: [sveltekit() as any],
+  resolve: {
+    alias: {
+      "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
+    },
+  },
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
   },
@@ -40,6 +45,7 @@ export default defineConfig({
       "editor-core",
       "schema",
       "chronology-engine",
+      "dice-engine",
       "@codex/sync-engine",
       "@codex/proposer",
       "@codex/search-engine",
