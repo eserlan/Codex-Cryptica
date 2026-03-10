@@ -65,7 +65,7 @@
     if (pendingTimeout) clearTimeout(pendingTimeout);
     pendingTimeout = setTimeout(() => {
       flushPending();
-    }, 600); // 600ms window for accumulation
+    }, 400); // 400ms window for accumulation
   };
 
   const reroll = (f: string) => {

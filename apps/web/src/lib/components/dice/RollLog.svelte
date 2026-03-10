@@ -41,6 +41,7 @@
       <div class="flex justify-between items-center">
         <span
           class="text-theme-primary font-bold text-sm font-header tracking-tighter"
+          data-testid="roll-formula"
         >
           {roll.formula}
         </span>

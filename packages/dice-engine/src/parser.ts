@@ -7,6 +7,10 @@ export class DiceParser {
    */
   parse(formula: string): RollCommand {
     const cleanFormula = formula.toLowerCase().replace(/\s+/g, "");
+    if (!cleanFormula) {
+      throw new Error("Empty roll formula");
+    }
+
     const parts: RollPart[] = [];
 
     // We split by + or - while keeping the delimiter to handle modifiers and dice signs
@@ -16,7 +20,6 @@ export class DiceParser {
 
     for (const segment of segments) {
       if (segment === "+") {
-        // currentSign * 1 = currentSign (no change)
         continue;
       }
       if (segment === "-") {
@@ -25,8 +28,9 @@ export class DiceParser {
       }
       if (!segment.trim()) continue;
 
-      // Try matching dice: (\d+)?d(\d+)(!|kh\d+|kl\d+)*
-      const diceMatch = segment.match(/^(\d+)?d(\d+)(.*)$/);
+      // Tighten regex: (\d+)?d(\d+) followed optionally by valid tokens ONLY
+      // Valid tokens: ! (exploding), kh(\d+)? (keep highest), kl(\d+)? (keep lowest)
+      const diceMatch = segment.match(/^(\d+)?d(\d+)([!khl0-9]*)$/);
 
       if (diceMatch) {
         const count = parseInt(diceMatch[1] || "1", 10);
@@ -34,35 +38,50 @@ export class DiceParser {
         const suffix = diceMatch[3] || "";
 
         const options: RollOptions = {
-          exploding: suffix.includes("!"),
+          exploding: false,
         };
 
-        const khMatch = suffix.match(/kh(\d+)?/);
-        if (khMatch) {
-          options.keepHighest = parseInt(khMatch[1] || "1", 10);
+        // Validate suffix content strictly
+        let remainingSuffix = suffix;
+
+        if (remainingSuffix.includes("!")) {
+          options.exploding = true;
+          remainingSuffix = remainingSuffix.replace("!", "");
         }
 
-        const klMatch = suffix.match(/kl(\d+)?/);
+        const khMatch = remainingSuffix.match(/kh(\d+)?/);
+        if (khMatch) {
+          options.keepHighest = parseInt(khMatch[1] || "1", 10);
+          remainingSuffix = remainingSuffix.replace(khMatch[0], "");
+        }
+
+        const klMatch = remainingSuffix.match(/kl(\d+)?/);
         if (klMatch) {
           options.keepLowest = parseInt(klMatch[1] || "1", 10);
+          remainingSuffix = remainingSuffix.replace(klMatch[0], "");
+        }
+
+        // If there's still content in the suffix, it's an invalid token
+        if (remainingSuffix.length > 0) {
+          throw new Error(`Invalid tokens in roll formula: ${remainingSuffix}`);
         }
 
         parts.push({
           type: "dice",
-          count: count * currentSign, // Maintain sign for subtraction support
+          count: count * currentSign,
           sides,
           options,
         });
-        currentSign = 1; // Reset for next segment
+        currentSign = 1;
       } else {
-        // Try matching pure modifier
-        const val = parseInt(segment, 10);
-        if (!isNaN(val)) {
+        // Strict modifier check: MUST be entirely numeric
+        if (/^\d+$/.test(segment)) {
+          const val = parseInt(segment, 10);
           parts.push({
             type: "modifier",
             value: val * currentSign,
           });
-          currentSign = 1; // Reset for next segment
+          currentSign = 1;
         } else {
           throw new Error(`Invalid roll segment: ${segment}`);
         }
@@ -70,7 +89,7 @@ export class DiceParser {
     }
 
     if (parts.length === 0) {
-      throw new Error("Empty roll formula");
+      throw new Error("Invalid roll formula");
     }
 
     return {

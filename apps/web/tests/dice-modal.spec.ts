@@ -34,9 +34,9 @@ test.describe("Dice Modal UI and Isolation", () => {
     await modal.getByRole("button", { name: /d20/i }).click({ force: true });
 
     // 3. Verify it appears in the modal's session history
-    const historyItem = modal.locator(".bg-theme-surface\\/50", {
-      hasText: /1d20/,
-    });
+    const historyItem = modal
+      .getByTestId("roll-formula")
+      .filter({ hasText: "1d20" });
     await expect(historyItem).toBeVisible({ timeout: 10000 });
   });
 
@@ -51,9 +51,9 @@ test.describe("Dice Modal UI and Isolation", () => {
       .getByRole("button", { name: "ROLL", exact: true })
       .click({ force: true });
 
-    const historyItem = modal.locator(".bg-theme-surface\\/50", {
-      hasText: /3d6 \+ 5/,
-    });
+    const historyItem = modal
+      .getByTestId("roll-formula")
+      .filter({ hasText: "3d6 + 5" });
     await expect(historyItem).toBeVisible({ timeout: 10000 });
   });
 
@@ -68,13 +68,13 @@ test.describe("Dice Modal UI and Isolation", () => {
     await d6Button.click({ force: true });
     await d6Button.click({ force: true });
 
-    // Wait for the accumulator timeout (600ms) to flush
+    // Wait for the accumulator timeout (400ms) to flush
     await page.waitForTimeout(1000);
 
     // Verify it rolled 3d6
-    const historyItem = modal.locator(".bg-theme-surface\\/50", {
-      hasText: /3d6/,
-    });
+    const historyItem = modal
+      .getByTestId("roll-formula")
+      .filter({ hasText: "3d6" });
     await expect(historyItem).toBeVisible();
   });
 
@@ -85,7 +85,7 @@ test.describe("Dice Modal UI and Isolation", () => {
     // 1. Perform initial roll
     await modal.getByRole("button", { name: /d20/i }).click({ force: true });
     await expect(
-      modal.locator(".bg-theme-surface\\/50", { hasText: /1d20/ }),
+      modal.getByTestId("roll-formula").filter({ hasText: "1d20" }),
     ).toHaveCount(1);
 
     // 2. Click reroll button
@@ -96,7 +96,7 @@ test.describe("Dice Modal UI and Isolation", () => {
 
     // 3. Verify there are now two d20 rolls in history
     await expect(
-      modal.locator(".bg-theme-surface\\/50", { hasText: /1d20/ }),
+      modal.getByTestId("roll-formula").filter({ hasText: "1d20" }),
     ).toHaveCount(2);
   });
 
@@ -171,7 +171,8 @@ test.describe("Dice Modal UI and Isolation", () => {
     await expect(modal).not.toBeVisible();
 
     // 4. Verify Oracle chat does NOT contain the d100 roll result
-    const oracleMessage = page.locator(".chat-message.system", {
+    // Use the chat-message test ID for reliability
+    const oracleMessage = page.locator('[data-testid="chat-message"]', {
       hasText: /1d100/,
     });
     await expect(oracleMessage).not.toBeVisible();

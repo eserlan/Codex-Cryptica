@@ -5,9 +5,10 @@
 To perform a roll programmatically:
 
 ```typescript
-import { diceEngine } from "@codex/dice-engine";
+import { diceEngine, diceParser } from "dice-engine";
 
-const result = diceEngine.evaluate("2d20kh1 + 5");
+const command = diceParser.parse("2d20kh1 + 5");
+const result = diceEngine.execute(command);
 console.log(result.total); // Final sum
 console.log(result.parts[0].rolls); // Individual dice results
 ```

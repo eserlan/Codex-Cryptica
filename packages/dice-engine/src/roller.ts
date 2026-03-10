@@ -1,6 +1,10 @@
 import type { RollCommand, RollResult, PartResult, DicePart } from "./types";
+import { diceParser } from "./parser";
 
 export class DiceEngine {
+  private randomBuffer = new Uint32Array(256);
+  private bufferIndex = 256;
+
   /**
    * Generates a random integer between 1 and sides (inclusive)
    * Uses rejection sampling to ensure perfect fairness (no modulo bias).
@@ -9,13 +13,15 @@ export class DiceEngine {
     if (sides <= 0) return 0;
     if (sides === 1) return 1;
 
-    const array = new Uint32Array(1);
     const max = Math.floor(0xffffffff / sides) * sides;
     let unbiasedRoll: number;
 
     do {
-      crypto.getRandomValues(array);
-      unbiasedRoll = array[0];
+      if (this.bufferIndex >= this.randomBuffer.length) {
+        crypto.getRandomValues(this.randomBuffer);
+        this.bufferIndex = 0;
+      }
+      unbiasedRoll = this.randomBuffer[this.bufferIndex++];
     } while (unbiasedRoll >= max);
 
     return (unbiasedRoll % sides) + 1;
@@ -119,6 +125,20 @@ export class DiceEngine {
       formula: command.formula,
       timestamp: Date.now(),
     };
+  }
+
+  /**
+   * Alias for execute() to match documentation and contracts.
+   */
+  roll(command: RollCommand): RollResult {
+    return this.execute(command);
+  }
+
+  /**
+   * Shorthand to parse and roll in one step.
+   */
+  evaluate(formula: string): RollResult {
+    return this.execute(diceParser.parse(formula));
   }
 }
 

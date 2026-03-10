@@ -56,6 +56,7 @@
   const handleSubmit = async () => {
     if (!input || oracle.isLoading) return;
     const query = input.trim();
+    if (!query) return;
 
     // Add to history if not duplicate of last
     if (commandHistory[commandHistory.length - 1] !== query) {

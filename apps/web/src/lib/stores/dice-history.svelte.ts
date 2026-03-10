@@ -8,11 +8,33 @@ export interface ContextualRollResult extends RollResult {
 
 class DiceHistoryStore {
   history = $state<ContextualRollResult[]>([]);
+  private _initStarted = false;
+
+  constructor() {
+    // Auto-initialize on the client so persisted history is available
+    if (typeof window !== "undefined") {
+      void this.init();
+    }
+  }
 
   async init() {
-    const db = await getDB();
-    const all = await db.getAll("dice_history");
-    this.history = all.sort((a, b) => a.timestamp - b.timestamp);
+    if (this._initStarted) {
+      return;
+    }
+    this._initStarted = true;
+
+    try {
+      const db = await getDB();
+      const all = await db.getAll("dice_history");
+      const sorted = all.sort((a, b) => a.timestamp - b.timestamp);
+
+      // Only set from DB if no in-memory history exists yet, to avoid clobbering
+      if (this.history.length === 0 && sorted.length > 0) {
+        this.history = sorted;
+      }
+    } catch (e) {
+      console.error("[DiceHistory] Failed to load history:", e);
+    }
   }
 
   async addResult(result: RollResult, context: "chat" | "modal") {
