@@ -97,11 +97,18 @@ interface CodexDB extends DBSchema {
       "by-vault": string;
     };
   };
+  dice_history: {
+    key: string; // id
+    value: any; // RollResult
+    indexes: {
+      "by-context": string;
+    };
+  };
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 13 to add OPFS fingerprint cache.
-export const DB_VERSION = 13;
+// DB_VERSION was bumped to 14 to add dice_history store (preventing downgrade errors).
+export const DB_VERSION = 14;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
 
@@ -163,6 +170,11 @@ export function getDB() {
         if (!db.objectStoreNames.contains("canvases")) {
           const store = db.createObjectStore("canvases", { keyPath: "id" });
           store.createIndex("by-vault", "vaultId");
+        }
+
+        if (!db.objectStoreNames.contains("dice_history")) {
+          const store = db.createObjectStore("dice_history", { keyPath: "id" });
+          store.createIndex("by-context", "context");
         }
       },
       blocked() {
