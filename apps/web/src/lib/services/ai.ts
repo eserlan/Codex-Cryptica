@@ -4,6 +4,7 @@ import {
 } from "@google/generative-ai";
 import { searchService } from "./search";
 import { uiStore } from "../stores/ui.svelte";
+import { EXPAND_KEYWORDS } from "../config/oracle-constants";
 
 export const TIER_MODES = {
   lite: "gemini-flash-lite-latest",
@@ -583,15 +584,7 @@ Format the output in clear Markdown sections. Be specific and reference actual e
 
   private isExpandRequest(query: string): boolean {
     const q = query.toLowerCase().trim();
-    const expandKeywords = [
-      "expand",
-      "describe",
-      "elaborate",
-      "tell me more",
-      "detailed",
-      "deep dive",
-    ];
-    return expandKeywords.some((keyword) => q.includes(keyword));
+    return EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
   }
 
   async retrieveContext(

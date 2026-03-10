@@ -5,6 +5,7 @@ import { vault } from "./vault.svelte";
 import { uiStore } from "./ui.svelte";
 import { diceEngine, diceParser } from "dice-engine";
 import { diceHistory } from "./dice-history.svelte";
+import { EXPAND_KEYWORDS } from "../config/oracle-constants";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
@@ -1476,15 +1477,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
   private isExpandRequest(query: string): boolean {
     const q = query.toLowerCase().trim();
-    const expandKeywords = [
-      "expand",
-      "describe",
-      "elaborate",
-      "tell me more",
-      "detailed",
-      "deep dive",
-    ];
-    return expandKeywords.some((keyword) => q.includes(keyword));
+    return EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
   }
 }
 
