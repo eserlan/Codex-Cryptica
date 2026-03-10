@@ -4,7 +4,6 @@
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
-  import SyncDashboard from "$lib/components/settings/SyncDashboard.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
   import { graph } from "$lib/stores/graph.svelte";
@@ -19,7 +18,6 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { demoService } from "$lib/services/demo";
   import { calendarStore } from "$lib/stores/calendar.svelte";
-  import { cloudConfig } from "$lib/stores/cloud-config";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
@@ -256,7 +254,6 @@
 
       (window as any).categories = categories;
       (window as any).uiStore = uiStore;
-      (window as any).cloudConfig = cloudConfig;
       (window as any).isEntityVisible = isEntityVisible;
 
       // Eagerly load P2P services for E2E
@@ -574,8 +571,7 @@
       <div class="hidden md:flex items-center gap-4 shrink-0">
         <VaultControls />
         <button
-          class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings &&
-          uiStore.activeSettingsTab !== 'sync'
+          class="w-8 h-8 flex items-center justify-center border transition-all {uiStore.showSettings
             ? 'border-theme-primary bg-theme-primary/10 text-theme-primary'
             : 'border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary'} relative"
           onclick={() => uiStore.toggleSettings("vault")}
@@ -673,7 +669,6 @@
       {/if}
       {#if browser}
         <SettingsModal />
-        <SyncDashboard />
 
         {#if ZenModeModal}
           <ZenModeModal />

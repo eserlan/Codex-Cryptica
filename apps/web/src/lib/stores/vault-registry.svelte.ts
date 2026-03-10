@@ -75,37 +75,6 @@ class VaultRegistryStore {
     return record.id;
   }
 
-  async createVaultFromDrive(name: string, folderId: string): Promise<string> {
-    if (!this.#opfsRoot) throw new Error("Storage not initialized");
-    const record = await registry.createVault(this.#opfsRoot, name);
-
-    // Link it immediately
-    const db = await getDB();
-    const updated = {
-      ...record,
-      gdriveFolderId: folderId,
-      gdriveSyncEnabled: true,
-    };
-    await db.put("vaults", updated);
-
-    await this.listVaults();
-    return record.id;
-  }
-
-  async linkVaultToDrive(vaultId: string, folderId: string): Promise<void> {
-    const record = await registry.getVault(vaultId);
-    if (!record) throw new Error("Vault not found");
-
-    const db = await getDB();
-    const updated = {
-      ...record,
-      gdriveFolderId: folderId,
-      gdriveSyncEnabled: true,
-    };
-    await db.put("vaults", updated);
-    await this.listVaults();
-  }
-
   async renameVault(id: string, newName: string): Promise<void> {
     const record = await registry.renameVault(id, newName);
     if (record && this.activeVaultId === id) {

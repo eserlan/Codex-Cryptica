@@ -26,7 +26,6 @@ export interface ISyncBackend {
 
   /**
    * Scans the backend for files.
-   * For cloud backends, this could use a changes feed.
    */
   scan(
     vaultId: string,
@@ -83,7 +82,7 @@ export interface SyncEntry {
   lastSyncedFsSize?: number;
   lastSyncedOpfsHash?: string;
   status: "SYNCED" | "DIRTY" | "CONFLICT";
-  remoteId?: string; // Kept for Google Drive compatibility
+  remoteId?: string; // Kept for generic remote ID support
 }
 
 export interface OpfsStateEntry {
@@ -96,8 +95,8 @@ export interface OpfsStateEntry {
 
 export interface CloudSyncMetadata {
   vaultId: string;
-  gdriveFolderId: string;
-  gdriveFolderName?: string;
+  remoteFolderId: string;
+  remoteFolderName?: string;
   lastSyncToken: string | null;
   lastSyncTime: number;
 }
@@ -122,37 +121,4 @@ export interface SyncDB extends DBSchema {
       "by-vault": string;
     };
   };
-}
-
-/** Google Drive API Types */
-
-export interface GDriveFile {
-  id: string;
-  name: string;
-  mimeType: string;
-  modifiedTime: string;
-  size?: string;
-  md5Checksum?: string;
-  parents?: string[];
-}
-
-export interface GDriveChangesResponse {
-  kind: string;
-  newStartPageToken: string;
-  nextPageToken?: string;
-  changes: Array<{
-    kind: string;
-    type: string;
-    time: string;
-    removed: boolean;
-    fileId: string;
-    file?: GDriveFile;
-  }>;
-}
-
-export interface GDriveListResponse {
-  kind: string;
-  nextPageToken?: string;
-  incompleteSearch: boolean;
-  files: GDriveFile[];
 }

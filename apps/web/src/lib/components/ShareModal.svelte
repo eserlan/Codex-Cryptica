@@ -55,9 +55,8 @@
     </h2>
 
     <p class="text-xs mb-6 text-gray-400">
-      Generate a read-only link to share your campaign. Recipients can view the
-      knowledge graph and notes but cannot edit. Requires Google Drive Cloud
-      Bridge.
+      Generate a live link to share your campaign via P2P. Recipients can view
+      the knowledge graph and notes in real-time while you keep this tab open.
     </p>
 
     {#if error}

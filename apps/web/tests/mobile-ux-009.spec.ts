@@ -171,7 +171,7 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       }
     });
 
-    test("cloud status button (in menu) should meet touch target requirements", async ({
+    test("settings button (in menu) should meet touch target requirements", async ({
       page,
     }) => {
       await page.setViewportSize({ width: 375, height: 667 });

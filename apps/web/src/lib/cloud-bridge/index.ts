@@ -5,7 +5,7 @@
 
 export interface CloudConfig {
   enabled: boolean;
-  provider: "gdrive";
+  provider: string;
   connectedEmail?: string;
   lastSyncTimestamp?: number;
   syncInterval: number; // milliseconds
@@ -13,7 +13,7 @@ export interface CloudConfig {
   // Sharing Extensions
   shareStatus?: "private" | "public";
   shareLink?: string;
-  gdriveFolderId?: string; // Cache the folder ID for easier sharing
+  remoteFolderId?: string; // Cache the folder ID for easier sharing
 }
 
 export interface SyncStats {

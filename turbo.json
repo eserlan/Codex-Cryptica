@@ -1,25 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": [
-    "VITE_GOOGLE_CLIENT_ID",
-    "VITE_SHARED_GEMINI_KEY",
-    "NODE_ENV"
-  ],
+  "globalEnv": ["VITE_SHARED_GEMINI_KEY", "NODE_ENV"],
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        ".svelte-kit/**",
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": [".svelte-kit/**", "dist/**"]
     },
     "lint": {},
     "test": {
-      "dependsOn": [
-        "^build"
-      ]
+      "dependsOn": ["^build"]
     },
     "dev": {
       "cache": false,

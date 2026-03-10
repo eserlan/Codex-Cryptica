@@ -68,7 +68,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="settings-button"]',
     title: "Settings",
     content:
-      "Manage your AI keys, change NPC categories, or set up Google Drive syncing.",
+      "Manage your AI keys, change NPC categories, or configure your local folder mirror.",
     position: "bottom",
   },
 ];
@@ -179,13 +179,6 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
-  "multi-vault-sync": {
-    id: "multi-vault-sync",
-    title: "Multi-Vault Sync",
-    content:
-      "Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.",
-    icon: "icon-[lucide--cloud]",
-  },
   "lite-mode": {
     id: "lite-mode",
     title: "Lite Mode (No AI)",
@@ -206,13 +199,6 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
     icon: "icon-[lucide--map]",
-  },
-  "robust-gdrive-sync": {
-    id: "robust-gdrive-sync",
-    title: "Cloud Mirroring",
-    content:
-      "Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.",
-    icon: "icon-[lucide--cloud-sync]",
   },
   "spatial-canvas": {
     id: "spatial-canvas",

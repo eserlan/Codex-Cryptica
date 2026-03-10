@@ -12,15 +12,6 @@ test.describe("Category Architecture Modal", () => {
     await page.evaluate(async () => {
       await (window as any).categories.init();
     });
-
-    // Simulate connected cloud state so manage-categories-button is visible
-    await page.evaluate(() => {
-      const cloudConfig = (window as any).cloudConfig;
-      if (cloudConfig) {
-        cloudConfig.setEnabled(true);
-        cloudConfig.setConnectedEmail("test@example.com");
-      }
-    });
   });
 
   test("should open Category Architecture modal and display default categories", async ({

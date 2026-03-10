@@ -1,6 +1,5 @@
 export type SettingsTab =
   | "vault"
-  | "sync"
   | "intelligence"
   | "schema"
   | "aesthetics"
