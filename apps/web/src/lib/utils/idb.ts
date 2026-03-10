@@ -52,8 +52,9 @@ interface CodexDB extends DBSchema {
     key: string; // vaultId
     value: {
       vaultId: string;
-      gdriveFolderId: string;
-      gdriveFolderName?: string;
+      remoteFolderId: string;
+      remoteFolderName?: string;
+
       lastSyncToken: string | null;
       lastSyncTime: number;
     };

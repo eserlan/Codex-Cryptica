@@ -1,3 +1,10 @@
+---
+id: offline-sync
+title: Offline Support & Synchronization
+tags: [technical, sync, privacy]
+rank: 5
+---
+
 # Offline Support & Synchronization
 
 Codex Cryptica is designed as a **local-first** application. This means your data always lives on your device first, ensuring you can continue building your world even without an internet connection.

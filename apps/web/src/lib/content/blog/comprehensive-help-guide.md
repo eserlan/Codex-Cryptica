@@ -1,10 +1,18 @@
 ---
+id: comprehensive-help-guide
+slug: comprehensive-help-guide
 title: "The Ultimate Guide to Mastering Codex Cryptica"
-date: "2026-03-05"
-author: "The Archivist"
-excerpt: "Everything you need to know to build, manage, and synchronize your RPG campaign world."
-tags: ["guide", "tutorial", "sync", "ai"]
-image: "https://images.unsplash.com/photo-1519074063912-ad2fe3f5190a?q=80&w=2070"
+description: "Everything you need to know to build, manage, and synchronize your RPG campaign world using our local-first architecture."
+keywords:
+  [
+    "RPG Guide",
+    "Campaign Management",
+    "World Building",
+    "Local-First",
+    "Markdown",
+    "Tutorial",
+  ]
+publishedAt: 2026-03-05T12:00:00Z
 ---
 
 Welcome to Codex Cryptica. Whether you're a seasoned GM or just starting your first world-building project, this guide will walk you through the core features and advanced techniques to help you manage your lore with ease.

@@ -1,10 +1,18 @@
 ---
+id: gm-guide-data-sovereignty
+slug: gm-guide-data-sovereignty
 title: "The GM's Guide to Data Sovereignty: Your World, Your Files"
-date: "2026-03-01"
-author: "The Archivist"
-excerpt: "Why 'Local-First' is the most important feature you didn't know you needed for your RPG campaign."
-tags: ["philosophy", "architecture", "data", "privacy"]
-image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070"
+description: "Why 'Local-First' is the most important feature you didn't know you needed for your RPG campaign and how to keep your data private and portable."
+keywords:
+  [
+    "Data Sovereignty",
+    "Local-First",
+    "RPG Campaign",
+    "Markdown",
+    "Privacy",
+    "Self-Hosting",
+  ]
+publishedAt: 2026-03-01T10:00:00Z
 ---
 
 As a Game Master, your campaign world is a labor of love. Hundreds of hours spent crafting NPCs, drawing maps, and weaving complex plot threads. But where does all that data actually live?
