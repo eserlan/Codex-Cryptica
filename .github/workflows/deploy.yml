@@ -58,7 +58,7 @@ jobs:
           name: dist-${{ matrix.environment }}
           path: apps/web/build/
           include-hidden-files: true
-          retention-days: 1
+          retention-days: ${{ matrix.environment == 'production' && 90 || 1 }}
 
   deploy:
     needs: build
@@ -72,14 +72,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Production Build
+      - name: Download Latest Production Build
+        if: github.ref != 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist
+          # Download dist-production from the most recent successful run on main
+          gh run download --name dist-production --branch main --dir dist || echo "No production artifact found on main"
+
+      - name: Download Production Build (Current Run)
         if: github.ref == 'refs/heads/main'
         uses: actions/download-artifact@v8
         with:
           name: dist-production
           path: dist/
 
-      - name: Download Staging Build
+      - name: Download Staging Build (Current Run)
         if: github.ref != 'refs/heads/main'
         uses: actions/download-artifact@v8
         with:
