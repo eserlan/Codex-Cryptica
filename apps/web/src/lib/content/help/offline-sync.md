@@ -1,25 +1,38 @@
----
-id: offline-sync
-title: Privacy & Sync
-tags: [offline, google drive, security]
-rank: 5
----
+# Offline Support & Synchronization
 
-## Local-First Always
+Codex Cryptica is designed as a **local-first** application. This means your data always lives on your device first, ensuring you can continue building your world even without an internet connection.
 
-Your data is yours.
+## Local Storage (OPFS)
 
-### Local Folder Sync
+By default, all your campaign data is stored in the **Origin Private File System (OPFS)**. This is a high-performance, sandboxed area within your browser.
 
-Keep your internal archive in sync with a folder on your machine. This enables you to use external markdown editors (like Obsidian) or move assets manually.
+- **Privacy:** Your data is not uploaded to our servers.
+- **Speed:** Reading and writing thousands of chronicles is near-instant.
+- **Persistence:** Your work is saved automatically as you type.
 
-Synchronization is **bidirectional**:
+## Synchronization with Local Folders
 
-- **Internal → External**: Updates made in the app are mirrored to your folder.
-- **External → Internal**: Edits made in your folder are imported back into the app.
+You can mirror your internal archives with any folder on your computer. This enables several powerful workflows:
 
-The system automatically resolves conflicts using a "newest version wins" strategy.
+1.  **External Backups:** Keep a real-time copy of your world in a folder you control.
+2.  **External Editing:** Use your favorite Markdown editor (like Obsidian or VS Code) to edit your chronicles while Codex is closed.
+3.  **Cloud Mirroring:** By selecting a folder managed by a cloud provider (like Google Drive, Dropbox, or iCloud), you can achieve multi-device synchronization using your OS's built-in support.
 
-### Cloud Sync
+### How to set up Cloud Sync (via OS)
 
-You can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server.
+To sync your world across multiple devices using Google Drive or other providers:
+
+1.  Install the official client for your provider (e.g., [Google Drive for Desktop](https://www.google.com/drive/download/)).
+2.  In Codex Cryptica, go to **Settings > Vault**.
+3.  Under **Synchronization**, click **Sync to Folder**.
+4.  Select a folder within your local Google Drive/Cloud directory.
+5.  Codex will now mirror your files to that folder, and your OS will handle the background upload to the cloud.
+
+## Managing Multiple Devices
+
+When you open Codex on a new device:
+
+1.  Create a new vault or open the **Vault Selector**.
+2.  Click **Open Folder**.
+3.  Select the cloud-synced folder you set up on your first device.
+4.  Codex will import your world and keep it in sync with the cloud mirror.

@@ -32,8 +32,6 @@ export async function createVault(
     createdAt: Date.now(),
     lastOpenedAt: Date.now(),
     entityCount: 0,
-    gdriveSyncEnabled: false,
-    gdriveFolderId: null,
     syncState: {
       lastSyncMs: null,
       remoteHash: null,

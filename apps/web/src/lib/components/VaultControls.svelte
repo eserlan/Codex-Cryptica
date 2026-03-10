@@ -2,7 +2,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { cloudConfig } from "$stores/cloud-config";
   import ShareModal from "$lib/components/ShareModal.svelte";
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
@@ -21,7 +20,6 @@
   let createError = $state<string | null>(null);
 
   // Logic
-  let isShared = $derived($cloudConfig.shareStatus === "public");
   let isVertical = $derived(orientation === "vertical");
 
   // Styling derived states
@@ -138,16 +136,6 @@
       >
         <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
         <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
-      </div>
-    {/if}
-
-    {#if isShared}
-      <div
-        class="flex items-center gap-1.5 px-2 py-1 border border-blue-900/50 bg-blue-950/20 text-blue-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
-        title="This campaign is publicly accessible via link."
-      >
-        <span class="icon-[lucide--globe] w-3.5 h-3.5"></span>
-        <span class={isVertical ? "inline" : "hidden md:inline"}>SHARED</span>
       </div>
     {/if}
 

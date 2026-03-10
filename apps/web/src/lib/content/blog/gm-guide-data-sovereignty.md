@@ -1,83 +1,46 @@
 ---
-id: gm-guide-data-sovereignty
-slug: gm-guide-data-sovereignty
-title: "The GM’s Guide to Data Sovereignty: Why 'Local-First' is the Future of Your Lore"
-description: "In an era of disappearing digital services, data sovereignty is a Game Master's most important tool. Learn how to leverage a local-first architecture for your campaign."
-keywords:
-  [
-    "RPG Campaign Manager",
-    "Local-First",
-    "Data Privacy for DMs",
-    "Interactive RPG Maps",
-    "Cyberpunk World Building Tool",
-    "Obsidian Alternative for RPGs",
-  ]
-publishedAt: 2026-02-28T18:10:45Z
+title: "The GM's Guide to Data Sovereignty: Your World, Your Files"
+date: "2026-03-01"
+author: "The Archivist"
+excerpt: "Why 'Local-First' is the most important feature you didn't know you needed for your RPG campaign."
+tags: ["philosophy", "architecture", "data", "privacy"]
+image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070"
 ---
 
-In an era of disappearing digital services and mandatory subscriptions, the most important tool in a Game Master's arsenal isn't just a map—it's **owning your data.** At **Codex Cryptica**, we believe your world-building belongs to you, not a server. Here is how our "Local-First" approach makes your campaign faster, safer, and truly yours.
+As a Game Master, your campaign world is a labor of love. Hundreds of hours spent crafting NPCs, drawing maps, and weaving complex plot threads. But where does all that data actually live?
 
-### **In this Guide**
+In most modern apps, the answer is "on someone else's server." This is fine until that server goes down, the company changes its pricing model, or—heaven forbid—they shut down entirely.
 
-- [1\. What is 'Local-First'?](#1-what-is-local-first-and-why-should-you-care)
-- [2\. Setting Up Your Tactical Vault](#2-setting-up-your-tactical-command-center)
-- [3\. Mastering the 'Spatial Brain'](#3-mastering-the-spatial-brain-map--graph)
-- [4\. The Privacy-First AI Oracle](#4-the-privacy-first-ai-oracle)
+Codex Cryptica takes a different path. We call it **Local-First.**
 
-## **1\. What is 'Local-First' (and Why Should You Care?)**
+## What is Local-First?
 
-Most campaign managers are "Cloud-First." Your notes live on someone else's computer. If their site goes down, your game night is ruined. If they change their pricing, your notes are held hostage.
+Local-First software gives you the best of both worlds: the reliability of an offline app and the convenience of the cloud.
 
-**Local-First** means the "Master Copy" of your world lives on your device.
+1.  **Your world is always available.** You don't need an internet connection to prep your session or check a note during play.
+2.  **You own your files.** Your data is stored in your browser's internal storage (OPFS) and can be mirrored to any folder on your computer.
+3.  **Privacy by default.** We can't read your notes because they never leave your device unless you choose to sync them.
 
-![Secured Local Vault](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png)
+## The Power of Synchronization
 
-- **Absolute Ownership**: Your lore is stored in a "Digital Vault" (technically called OPFS) inside your browser.
-- **Internet-Optional**: Prep in a basement, a plane, or a convention hall. No Wi-Fi? No problem.
-- **Instant Speed**: Everything happens at the speed of your own computer.
+While your data lives on your device, we know you probably want to work on your campaign from multiple machines—maybe your desktop at home and your laptop at the game table.
 
-## **2\. Setting Up Your Tactical Command Center**
+Instead of building a proprietary cloud that traps your data, Codex Cryptica uses **Local Folder Synchronization.**
 
-Codex Cryptica doesn't require an account. You just start building.
+### How it works:
 
-![Tactical Command Center](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-fort.png)
+1.  **Select a Folder:** You choose a directory on your computer to "mirror" your internal archives.
+2.  **Automatic Mirroring:** As you edit in Codex, the app automatically updates the files in that folder.
+3.  **Use Your OS for the Rest:** By selecting a folder managed by a cloud client (like **Google Drive for Desktop**, **Dropbox**, or **iCloud**), your operating system handles the cloud synchronization for you.
 
-### **Step A: Initialize the Vault**
+## Why this is a Win for GMs
 
-When you first enter the workspace, the system carves out a private space on your machine. This is your **Vault**. Think of it as a physical notebook that happens to be digital.
+- **Freedom of Choice:** Want to use Dropbox instead of Drive? No problem.
+- **Open Formats:** Your chronicles are stored as standard Markdown files. If you ever stop using Codex, you can open your world in any text editor.
+- **Security:** Your cloud credentials stay with your OS, not with us.
 
-### **Step B: The "Cloud Mirror" (GDrive)**
+## Building for the Long Haul
 
-Even though your data is local, you probably want to switch between your laptop and desktop. Instead of a proprietary cloud, we use **Google Drive**.
+Campaigns can last years. By building on local-first principles, we're ensuring that your creative work is as durable as the dice on your table. Your world belongs to you—exactly as it should be.
 
-1.  Go to **Settings > Sync**.
-2.  Connect your GDrive account.
-3.  Your local files are now mirrored to a folder you own and control. If you stop using Codex, your files are still there in your GDrive.
-
-## **3\. Mastering the 'Spatial Brain' (Map & Graph)**
-
-A great campaign needs to track "Where" things are and "How" they connect.
-
-### **Tactical Map Overlay**
-
-In **Map Mode**, your maps aren't just static images; they are interactive dashboards.
-
-- **Double-Click** to drop a pin.
-- **Connect Lore**: Link a pin to an NPC or Location to open their notes instantly.
-- **Fog of War**: Use the Alt + Drag brush to reveal the map as your players explore.
-
-### **The Relationship Graph**
-
-Switch to **Canvas Mode** to see the "Logic" of your world. Codex reads your notes and automatically draws lines between characters and factions. Use the **Timeline Slider** to watch your world’s history unfold chronologically.
-
-## **4\. The Privacy-First AI Oracle**
-
-Codex Cryptica uses **Google Gemini**, but with a "Privacy Firewall." Unlike other AI tools that "train" on your notes, our **Lore Oracle** only reads the specific context you give it during a session.
-
-**Pro-Tip**: Use your own Gemini API key for "Advanced Tier" performance. This keeps your generations private and lightning-fast.
-
-## **Conclusion: Your World, Your Rules**
-
-The "Cloud Trap" is real, but it’s avoidable. By choosing a local-first tool, you ensure your campaign will be accessible ten years from now, exactly as you left it.
-
-**Ready to secure your lore?** [Enter the Codex →](/)
+Happy world-building!

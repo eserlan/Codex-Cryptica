@@ -50,7 +50,7 @@ For Advanced Tier users: Instantly generate visuals for your lore. Look for the 
 Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.
 
 ### Multi-Vault Sync
-Connect multiple distinct campaigns to Google Drive independently. Each vault saves to its own folder seamlessly.
+Mirror your local-first archives to any folder on your computer for multi-device access and backup. By selecting a folder managed by a cloud client (like Google Drive for Desktop, Dropbox, or iCloud), your operating system handles the synchronization for you.
 
 ### Lite Mode (No AI)
 Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.
@@ -62,7 +62,7 @@ Our marketing and legal pages are pre-baked as static HTML for instant loading a
 Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.
 
 ### Cloud Mirroring
-Sync your campaign to Google Drive with automatic fault tolerance. Your changes are mirrored across all your devices with silent token refreshing and exponential backoff.
+Mirror your local-first archives to any folder on your computer for multi-device access and backup. By selecting a folder managed by a cloud client (like Google Drive for Desktop, Dropbox, or iCloud), your operating system handles the synchronization for you.
 
 ### Spatial Canvas
 Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.
@@ -258,7 +258,7 @@ The system automatically resolves conflicts using a "newest version wins" strate
 
 ### Cloud Sync
 
-You can optionally enable **Google Drive Mirroring** in the settings. This creates a one-to-one copy of your local files in your Drive, enabling multi-device sync without a centralized server.
+You can optionally enable **Local Folder Synchronization** in the settings. This creates a one-to-one mirror of your internal files in a folder on your computer, enabling multi-device sync via your OS's built-in cloud support.
 
 ---
 

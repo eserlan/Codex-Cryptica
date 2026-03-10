@@ -16,8 +16,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management) (061-spatial-canvas)
 - OPFS (Origin Private File System) for `.canvas` JSON files; IndexedDB for canvas registry and metadata. (061-spatial-canvas)
 
-- TypeScript 5.x / Node.js 20+ + Google Identity Services (GIS), `fetch` API for Google Drive v3 REST API (060-robust-gdrive-sync)
-- OPFS (Vault Data), IndexedDB via `idb` (Sync Registry metadata) (060-robust-gdrive-sync)
+- OPFS (Vault Data), IndexedDB via `idb` (Sync Registry metadata)
 
 - TypeScript 5.x + Svelte 5, `idb`, Web File System Access API (059-robust-local-sync)
 - IndexedDB (Metadata), OPFS (Internal Files), Local Filesystem (External Mirror) (059-robust-local-sync)
@@ -57,8 +56,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - N/A (Transient UI state) (012-minimap)
 - TypeScript 5.x / Node.js 20+ + Cytoscape.js, Svelte 5 (014-graph-focus-mode)
 - N/A (UI-only state) (014-graph-focus-mode)
-- TypeScript 5.x, Node.js 20+ + Google Drive API v3, Svelte 5, `idb` (017-sync-refinement)
-- OPFS (Vault), IndexedDB (Metadata Store) (017-sync-refinement)
+- OPFS (Vault), IndexedDB (Metadata Store)
 - TypeScript 5.x, Node.js 20+ + Svelte 5, Cytoscape.js, `@google/generative-ai` (018-perf-improvements)
 - OPFS (Origin Private File System), IndexedDB (via `idb`) (018-perf-improvements)
 - TypeScript 5.x / Node.js 20+ + `@google/generative-ai`, FlexSearch, Svelte 5 (019-oracle-rag-improvements)
@@ -81,8 +79,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 - TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `idb` (034-fog-of-war)
 - OPFS (Vault Files), IndexedDB (Metadata), LocalStorage (UI State) (034-fog-of-war)
 
-- TypeScript 5.x, Node.js 20+ (dev), Browser Runtime + `googleapis` or `gapi-script` (003-gdrive-mirroring)
-- OPFS (Origin Private File System) / IndexedDB (Metadata) (003-gdrive-mirroring)
+- OPFS (Origin Private File System) / IndexedDB (Metadata)
 - FlexSearch (004-fuzzy-search)
 - `@sveltejs/adapter-static` (005-gh-pages-deploy)
 - IndexedDB Caching (007-scalability-hardening)
