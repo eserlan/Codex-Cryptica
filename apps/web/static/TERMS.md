@@ -28,7 +28,7 @@ The software is provided "as is", without warranty of any kind. In no event shal
 
 ## 6. License
 
-The application source code is licensed under the MIT License.
+The licensing terms for the application source code are not specified in this document. Refer to the project repository or distribution for the applicable license information.
 
 ---
 
