@@ -281,16 +281,28 @@
         // Main-thread FCOSE Layout
         try {
           const nodes = currentCy.nodes();
-          const snapshotNodes = graph.elements.filter(
-            (el) => el.group === "nodes",
-          );
-          const hasNewNodes = snapshotNodes.some((el: any) => !el.position);
+
+          // ⚡ Bolt Optimization: Replace multiple chained .filter() and .some() passes
+          // with a single imperative loop to prevent intermediate array allocations
+          // and reduce GC pressure during layout calculations.
+          const snapshotNodes: any[] = [];
+          let hasNewNodes = false;
+          let nodesAtOrigin = 0;
+
+          const elementsLen = graph.elements.length;
+          for (let i = 0; i < elementsLen; i++) {
+            const el = graph.elements[i] as any;
+            if (el.group === "nodes") {
+              snapshotNodes.push(el);
+              if (!el.position) {
+                hasNewNodes = true;
+              } else if (el.position.x === 0 && el.position.y === 0) {
+                nodesAtOrigin++;
+              }
+            }
+          }
 
           // Heuristic: If multiple nodes exist and ALL of them are at 0,0, they are clumped/broken.
-          const nodesAtOrigin = snapshotNodes.filter(
-            (el: any) =>
-              el.position && el.position.x === 0 && el.position.y === 0,
-          ).length;
           const isClumpedAtOrigin =
             snapshotNodes.length > 1 && nodesAtOrigin === snapshotNodes.length;
 
