@@ -16,14 +16,19 @@ permissions:
   actions: write
 
 jobs:
-  verify_and_build:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [production, staging]
     env:
       HUSKY: 0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          # Production always builds from main; Staging builds from the current ref
+          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -40,45 +45,52 @@ jobs:
           npm run lint
           npm test
 
-      - name: Build Staging (/staging)
+      - name: Build Application
         env:
-          BASE_PATH: /staging
+          BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
         run: |
           npm run build --workspace=web
-          mkdir -p dist/staging
-          cp -r apps/web/build/* dist/staging/
-          cp apps/web/build/index.html dist/staging/404.html
+          cp apps/web/build/index.html apps/web/build/404.html
 
-      - name: Build Production (Root /)
-        env:
-          BASE_PATH: ''
-          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        run: |
-          # If we are on a feature branch, we want production to be the latest main
-          # If we are on main, we build the current state
-          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
-            git checkout main --force
-            npm ci
-          fi
-          npm run build --workspace=web
-          cp -r apps/web/build/* dist/
-          cp apps/web/build/index.html dist/404.html
+      - name: Upload intermediate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.environment }}
+          path: apps/web/build/
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Production Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-production
+          path: dist/
+
+      - name: Download Staging Build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-staging
+          path: dist/staging/
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "dist/"
 
-  deploy:
-    needs: verify_and_build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
