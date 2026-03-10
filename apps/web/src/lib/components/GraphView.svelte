@@ -1194,6 +1194,11 @@
           shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
         }
 
+        // PERCEIVED PERF: If we are in the middle of an incremental load,
+        // we want to see the nodes appearing, but we don't want to lock the UI
+        // by running a heavy FCOSE layout on every single chunk.
+        const isVaultLoading = vault.status === "loading";
+
         if (shouldRunLayout && !isLayoutRunning) {
           if (isFirstElements) {
             // Debounce the initial "fit" layout to allow more nodes to arrive
@@ -1207,14 +1212,28 @@
                 });
               }
             }, 50); // Reduced from 200ms for faster local-first startup
-          } else {
-            // Respect stableLayout here: if stable is ON, don't "force" a layout run
-            // which allows the bypass logic in applyCurrentLayout to do its job.
+          } else if (!isVaultLoading) {
+            // Only run immediate layout if NOT loading more files
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
+          } else {
+            // While loading, we just added the elements to Cytoscape (step 3 above).
+            // They will be visible (likely at origin or saved positions).
+            // We can optionally trigger a fit() if it's the first set of elements
+            // to give immediate visual feedback.
+            if (currentCy.nodes().length > 0 && !graphVisible) {
+              currentCy.fit(currentCy.nodes(), 20);
+              graphVisible = true;
+            }
           }
         } else {
           // If no layout run, still might need focus update if elements were updated
           if (selectedId) applyFocus(selectedId);
+        }
+
+        // FINAL SYNC: When vault finishes loading, trigger one last layout
+        // to ensure everything is positioned correctly.
+        if (initialLoaded && !isVaultLoading && structuralChange) {
+          applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
         }
 
         return () => {

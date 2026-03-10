@@ -170,7 +170,17 @@
       aria-live="polite"
     >
       {#if vault.status === "loading"}
-        <span class="animate-pulse text-theme-primary">LOADING...</span>
+        <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
+          <span class="animate-pulse text-theme-primary font-bold"
+            >LOADING... {vault.syncStats.progress}%</span
+          >
+          <div class="w-full h-1 bg-theme-border rounded-full overflow-hidden">
+            <div
+              class="h-full bg-theme-primary transition-all duration-300 ease-out"
+              style="width: {vault.syncStats.progress}%"
+            ></div>
+          </div>
+        </div>
       {:else if vault.status === "saving"}
         <span class="text-theme-accent">SAVING...</span>
       {:else if vault.status === "error"}
