@@ -34,9 +34,19 @@
   });
 
   let yearPositions = $derived.by(() => {
-    const years = Object.values(vault.entities)
-      .map((e) => e.date?.year ?? e.start_date?.year ?? e.end_date?.year)
-      .filter((y): y is number => y !== undefined);
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
+    // to prevent intermediate array allocations and reduce GC pressure during rapid UI updates.
+    const allEntities = Object.values(vault.entities);
+    const count = allEntities.length;
+    const years: number[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const e = allEntities[i];
+      const year = e.date?.year ?? e.start_date?.year ?? e.end_date?.year;
+      if (year !== undefined) {
+        years.push(year);
+      }
+    }
 
     return getSequentialYearPositions(years, graph.timelineScale);
   });

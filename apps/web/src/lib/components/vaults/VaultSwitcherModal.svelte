@@ -143,18 +143,29 @@
   };
 </script>
 
+<svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
+
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
   data-testid="vault-switcher-modal"
+  role="button"
+  tabindex="0"
   onclick={(e) => {
     if (e.target === e.currentTarget) onClose();
   }}
   onkeydown={(e) => {
-    if (e.key === "Escape") onClose();
+    if (
+      e.target === e.currentTarget &&
+      (e.key === "Enter" ||
+        e.key === " " ||
+        e.key === "Spacebar" ||
+        e.key === "Escape")
+    ) {
+      e.preventDefault();
+      onClose();
+    }
   }}
-  role="button"
-  tabindex="0"
 >
   <div
     role="dialog"
