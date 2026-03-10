@@ -48,19 +48,6 @@ test.describe("Settings Modal", () => {
     await expect(page.locator('[role="dialog"]')).not.toBeVisible();
   });
 
-  test("should open directly to sync tab from cloud button", async ({
-    page,
-  }) => {
-    const settingsBtn = page.locator('button[data-testid="settings-button"]');
-    await expect(settingsBtn).toBeVisible();
-    await settingsBtn.click();
-    await page.click('[role="tab"]:has-text("Cloud Sync")');
-    await page.waitForSelector('h2:has-text("Cloud Sync")', {
-      state: "visible",
-    });
-    await expect(page.locator("h2", { hasText: "Cloud Sync" })).toBeVisible();
-  });
-
   test("should function correctly in offline mode", async ({
     page,
     context,

@@ -74,4 +74,4 @@ Most tools force you to choose one way to look at your data. Codex Cryptica lets
 
 _Want to see more? Check out our [original showcase on Patreon](https://www.patreon.com/posts/showcase-see-151579891)._
 
-_See our [Guide to Data Sovereignty](gm-guide-data-sovereignty) to learn how we keep this data 100% private._
+_See our [Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty) to learn how we keep this data 100% private._

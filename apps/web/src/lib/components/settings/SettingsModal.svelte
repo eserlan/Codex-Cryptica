@@ -2,7 +2,6 @@
   import { uiStore, type SettingsTab } from "$stores/ui.svelte";
   import { fly, fade } from "svelte/transition";
   import AISettings from "./AISettings.svelte";
-  import GDriveConnect from "./GDriveConnect.svelte";
   import EraEditor from "../timeline/EraEditor.svelte";
   import ThemeSelector from "./ThemeSelector.svelte";
   import CategorySettings from "./CategorySettings.svelte";
@@ -16,7 +15,6 @@
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
     { id: "vault", label: "Vault", icon: "icon-[lucide--database]" },
-    { id: "sync", label: "Cloud Sync", icon: "icon-[lucide--refresh-cw]" },
     {
       id: "intelligence",
       label: "AI",
@@ -243,24 +241,6 @@
             <section class="border-t border-theme-border pt-6">
               <ImportSettings />
             </section>
-          </div>
-        {:else if uiStore.activeSettingsTab === "sync"}
-          <div
-            role="tabpanel"
-            id="settings-panel-sync"
-            aria-labelledby="settings-tab-sync"
-            class="space-y-6 max-w-3xl mx-auto"
-          >
-            <p class="text-sm text-theme-text/70 leading-relaxed">
-              Configure synchronization with external cloud storage. This allows
-              you to mirror your local-first archives to Google Drive for
-              multi-device access and backup.
-            </p>
-            <div
-              class="bg-theme-surface border border-theme-border p-6 rounded"
-            >
-              <GDriveConnect />
-            </div>
           </div>
         {:else if uiStore.activeSettingsTab === "intelligence"}
           <div
