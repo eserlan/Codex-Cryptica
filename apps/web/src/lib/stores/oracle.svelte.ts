@@ -3,13 +3,16 @@ import { getDB } from "../utils/idb";
 import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
 import { uiStore } from "./ui.svelte";
+import { diceEngine, diceParser } from "dice-engine";
+import { diceHistory } from "./dice-history.svelte";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
   role: "user" | "assistant" | "system";
   content: string;
-  type?: "text" | "image" | "wizard";
+  type?: "text" | "image" | "wizard" | "roll";
   wizardType?: "connection" | "merge";
+  rollResult?: any; // RollResult from @codex/dice-engine
   imageUrl?: string; // temporary blob: URL or local path
   imageBlob?: Blob; // stored temporarily for archiving
   entityId?: string; // ID of the entity used for generation context
@@ -45,6 +48,9 @@ class OracleStore {
 
   constructor() {
     if (typeof window !== "undefined") {
+      // Initialize dice history
+      diceHistory.init();
+
       this.channel = new BroadcastChannel("codex-oracle-sync");
       this.channel.onmessage = (event) => {
         const { type, data } = event.data;
@@ -384,6 +390,7 @@ class OracleStore {
 In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
 **Available Commands:**
+- \`/roll [formula]\`: Roll dice (e.g. \`/roll 2d20kh1 + 5\`).
 - \`/create "Name" [as "Type"]\`: Create a new record.
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
@@ -400,6 +407,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`/merge oracle\`: Start the guided merge wizard.
 
 **Utility:**
+- \`/roll [formula]\`: Interactive dice roller (e.g. \`/roll 4d6!\`).
 - \`/create "Name" [as "Type"]\`: Quick deterministic creation.
 - \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
 - \`/merge "Source" into "Target"\`: Quick deterministic merge.
@@ -425,12 +433,20 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return true;
     }
 
+    if (q.startsWith("/roll")) {
+      const formula = query.slice(5).trim();
+      if (!formula) {
+        throw new Error("Please specify a roll formula (e.g. /roll 1d20).");
+      }
+      return false; // Let ask() handle the execution logic for /roll
+    }
+
     if (q.startsWith("/create")) {
       const quotedRegex = /\/create\s+"([^"]+)"(?:\s+as\s+("([^"]+)"|(\w+)))?/i;
       const match = query.match(quotedRegex);
       if (!match) {
         throw new Error(
-          'Invalid format. Use: `/create "Entity Name"` or `/create "Entity Name" as "Type"`',
+          'Invalid format. Use: /create "Entity Name" or /create "Entity Name" as "Type"',
         );
       }
       return false; // Let the existing ask() logic handle the deterministic path
@@ -441,7 +457,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       const match = query.match(quotedRegex);
       if (!match) {
         throw new Error(
-          'Invalid format. Use: `/connect "Entity A" label "Entity B"`',
+          'Invalid format. Use: /connect "Entity A" label "Entity B"',
         );
       }
       return false; // Let the existing ask() logic handle the deterministic regex path
@@ -451,7 +467,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       const quotedRegex = /\/merge\s+"([^"]+)"\s+into\s+"([^"]+)"/i;
       const match = query.match(quotedRegex);
       if (!match) {
-        throw new Error('Invalid format. Use: `/merge "Source" into "Target"`');
+        throw new Error('Invalid format. Use: /merge "Source" into "Target"');
       }
       return false; // Let the existing ask() logic handle the deterministic regex path
     }
@@ -462,7 +478,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         {
           id: this.generateId(),
           role: "system",
-          content: `❌ The \`/draw\` command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use image generation.`,
+          content:
+            "❌ The /draw command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use image generation.",
         },
       ];
       this.lastUpdated = Date.now();
@@ -477,7 +494,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         {
           id: this.generateId(),
           role: "system",
-          content: `❌ The \`/plot\` command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.`,
+          content:
+            "❌ The /plot command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.",
         },
       ];
       this.lastUpdated = Date.now();
@@ -493,7 +511,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         id: this.generateId(),
         role: "system",
         content:
-          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type `/help` for a list of available commands.",
+          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type /help for a list of available commands.",
       },
     ];
     this.lastUpdated = Date.now();
@@ -527,9 +545,15 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     const key = this.effectiveApiKey;
 
     // Only require a key if we aren't in Lite Mode OR if we're doing natural language (which is rejected later anyway)
-    if (!key && !uiStore.liteMode) return;
+    // AND it's not a /roll command which is deterministic and local
+    const isRollRequest = query.toLowerCase().trim().startsWith("/roll");
+    if (!key && !uiStore.liteMode && !isRollRequest) return;
 
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
+    if (
+      typeof navigator !== "undefined" &&
+      !navigator.onLine &&
+      !isRollRequest
+    ) {
       this.messages = [
         ...this.messages,
         { id: this.generateId(), role: "user", content: query },
@@ -555,6 +579,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       !isConnectRequest &&
       !isMergeRequest &&
       !isPlotRequest &&
+      !isRollRequest &&
       this.detectImageIntent(query);
 
     this.messages = [
@@ -565,6 +590,49 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     this.isLoading = true;
     this.broadcast();
     this.saveToDB();
+
+    // Handle Direct /roll request
+    if (isRollRequest) {
+      try {
+        const formula = query.slice(5).trim();
+        const command = diceParser.parse(formula);
+        const result = diceEngine.execute(command);
+
+        // Add to history store
+        await diceHistory.addResult(result, "chat");
+
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: "", // Redundant, handled by RollMessage component
+            type: "roll",
+            rollResult: result,
+          },
+        ];
+
+        this.lastUpdated = Date.now();
+        this.isLoading = false;
+        this.broadcast();
+        this.saveToDB();
+        return;
+      } catch (err: any) {
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ Roll failed: ${err.message}`,
+          },
+        ];
+        this.isLoading = false;
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+        return;
+      }
+    }
 
     // Handle Direct /create request
     if (isCreateRequest) {

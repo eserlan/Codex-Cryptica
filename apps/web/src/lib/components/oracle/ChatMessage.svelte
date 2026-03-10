@@ -6,6 +6,7 @@
   import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import ImageMessage from "./ImageMessage.svelte";
+  import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
   import MergeWizard from "./MergeWizard.svelte";
   import { parseOracleResponse } from "editor-core";
@@ -351,9 +352,11 @@
   class="flex flex-col gap-1 mb-4 {message.role === 'user'
     ? 'items-end'
     : 'items-start'}"
+  data-testid="chat-message"
+  data-role={message.role}
 >
   <div
-    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg
+    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden
     {message.role === 'user'
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
@@ -370,17 +373,28 @@
           <ImageMessage {message} />
         {/if}
 
-        <div class="prose prose-sm {message.type === 'image' ? 'mt-4' : ''}">
-          {#if htmlCache}
-            {@html htmlCache}
-          {:else}
-            <div class="space-y-2 animate-pulse py-1">
-              <div class="bg-theme-border/20 h-3 w-full rounded"></div>
-              <div class="bg-theme-border/20 h-3 w-[90%] rounded"></div>
-              <div class="bg-theme-border/20 h-3 w-[95%] rounded"></div>
-            </div>
-          {/if}
-        </div>
+        {#if message.type === "roll"}
+          <RollMessage {message} />
+        {/if}
+
+        {#if message.content}
+          <div
+            class="prose prose-sm {message.type === 'image' ||
+            message.type === 'roll'
+              ? 'mt-4 border-t border-theme-border/30 pt-2'
+              : ''}"
+          >
+            {#if htmlCache}
+              {@html htmlCache}
+            {:else}
+              <div class="space-y-2 animate-pulse py-1">
+                <div class="bg-theme-border/20 h-3 w-full rounded"></div>
+                <div class="bg-theme-border/20 h-3 w-[90%] rounded"></div>
+                <div class="bg-theme-border/20 h-3 w-[95%] rounded"></div>
+              </div>
+            {/if}
+          </div>
+        {/if}
 
         <!-- Copy Icon (Rich Text) -->
         <div

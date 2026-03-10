@@ -15,6 +15,11 @@
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();
   let showCommandMenu = $state(false);
 
+  // Command history for ArrowUp/Down navigation
+  let commandHistory = $state<string[]>([]);
+  let historyIndex = $state(-1);
+  let temporaryInput = $state("");
+
   const adjustHeight = () => {
     if (!textArea) return;
     textArea.style.height = "auto";
@@ -51,8 +56,19 @@
   const handleSubmit = async () => {
     if (!input || oracle.isLoading) return;
     const query = input.trim();
+
+    // Add to history if not duplicate of last
+    if (commandHistory[commandHistory.length - 1] !== query) {
+      commandHistory.push(query);
+      if (commandHistory.length > 50) commandHistory.shift();
+    }
+    historyIndex = -1;
+    temporaryInput = "";
+
     input = "";
-    if (textArea) textArea.style.height = "";
+    if (textArea) {
+      textArea.style.height = "";
+    }
 
     // Check if it's a command
     if (query.startsWith("/")) {
@@ -62,11 +78,66 @@
       const cmd = chatCommands.find((c) => c.name === cmdName);
       if (cmd) {
         await cmd.handler(args);
+        tick().then(() => textArea?.focus());
         return;
       }
     }
 
     await oracle.ask(query);
+    tick().then(() => textArea?.focus());
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (showCommandMenu && commandMenu?.handleKeyDown(e)) {
+      return;
+    }
+
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
+
+    // History Navigation
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+      // Only navigate if cursor is at the beginning (Up) or end (Down)
+      // or if the input is empty to avoid interrupting normal editing.
+      const isAtStart = textArea?.selectionStart === 0;
+      const isAtEnd = textArea?.selectionStart === input.length;
+
+      if (e.key === "ArrowUp" && isAtStart) {
+        if (commandHistory.length === 0) return;
+
+        if (historyIndex === -1) {
+          temporaryInput = input;
+          historyIndex = commandHistory.length - 1;
+        } else if (historyIndex > 0) {
+          historyIndex--;
+        }
+
+        if (historyIndex >= 0) {
+          e.preventDefault();
+          input = commandHistory[historyIndex];
+          // Move cursor to end after update
+          tick().then(() => {
+            if (!textArea || oracle.isLoading) return;
+            const len = input.length;
+            textArea.setSelectionRange(len, len);
+          });
+        }
+      } else if (e.key === "ArrowDown" && isAtEnd) {
+        if (historyIndex !== -1) {
+          if (historyIndex < commandHistory.length - 1) {
+            historyIndex++;
+            input = commandHistory[historyIndex];
+          } else {
+            historyIndex = -1;
+            input = temporaryInput;
+          }
+          e.preventDefault();
+        }
+      }
+    }
   };
 
   $effect(() => {
@@ -244,15 +315,7 @@
         bind:value={input}
         data-testid="oracle-input"
         aria-label="Chat Input"
-        onkeydown={(e) => {
-          if (showCommandMenu && commandMenu?.handleKeyDown(e)) {
-            return;
-          }
-          if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
-            e.preventDefault();
-            handleSubmit();
-          }
-        }}
+        onkeydown={handleKeyDown}
         placeholder="Ask the archives or type &quot;/&quot; for commands..."
         class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-mono resize-none overflow-hidden no-scrollbar shadow-inner"
         disabled={oracle.isLoading}

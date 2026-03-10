@@ -49,6 +49,7 @@
     "comlink": "^4.4.2",
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",
+    "dice-engine": "*",
     "editor-core": "*",
     "flexsearch": "^0.8.212",
     "graph-engine": "*",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@iconify-json/carbon": "^1.2.19",
+    "@iconify-json/game-icons": "^1.2.3",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.95",
     "@iconify-json/mdi": "^1.2.3",

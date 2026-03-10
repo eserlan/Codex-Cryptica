@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization) (066-die-rolling)
+- IndexedDB (via `idb`) for session-based roll history (066-die-rolling)
+
 - TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4 (065-move-oracle-sidebar)
 - LocalStorage (via `UIStore`) (065-move-oracle-sidebar)
 
@@ -32,6 +35,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 - TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK (051-demo-mode)
 - Transient (In-memory) for demo session; IndexedDB for conversion (051-demo-mode)
+
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `idb` (IndexedDB), Web Crypto API (066-die-rolling)
+- IndexedDB (`dice_history` store) (066-die-rolling)
 
 - TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation) (049-theme-based-jargon)
 - N/A (Transient UI state derived from active theme) (049-theme-based-jargon)
@@ -119,10 +125,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 066-die-rolling: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization)
+
 - 065-move-oracle-sidebar: Added TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4
 
 - 064-help-blog-post: Added TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`)
-
-- 062-add-blog-path: Added TypeScript 5.x / Svelte 5 / SvelteKit 2 + SvelteKit (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components)
 
 <!-- MANUAL ADDITIONS START -->
