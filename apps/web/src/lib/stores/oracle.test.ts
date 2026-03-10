@@ -121,6 +121,7 @@ vi.mock("../services/ai", () => ({
     generateImage: vi.fn().mockResolvedValue(new Blob()),
     distillVisualPrompt: vi.fn().mockResolvedValue("distilled"),
     enhancePrompt: vi.fn().mockReturnValue("enhanced"),
+    expandQuery: vi.fn().mockImplementation((_k, q) => Promise.resolve(q)),
     retrieveContext: vi
       .fn()
       .mockResolvedValue({ content: "context", sourceIds: [] }),
@@ -256,6 +257,45 @@ describe("OracleStore", () => {
       const assistantMsg = oracle.messages[oracle.messages.length - 1];
       expect(assistantMsg.type).toBe("image");
     }
+  });
+
+  it("should detect expansion intent (isLongResponse) correctly", async () => {
+    oracle.apiKey = "test-key";
+    const { aiService } = await import("../services/ai");
+    vi.mocked(aiService.retrieveContext).mockResolvedValue({
+      content: "context",
+      primaryEntityId: "1",
+      sourceIds: [],
+    });
+    vi.mocked(aiService.generateResponse).mockResolvedValue();
+
+    // 1. Terse query
+    await oracle.ask("Who is Eldrin?");
+    let lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(false);
+    expect(lastMsg.responseLength).toBe("terse");
+
+    // 2. Expansion query
+    await oracle.ask("Expand on Eldrin");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
+    expect(lastMsg.responseLength).toBe("detailed");
+
+    // 3. Elaborate query
+    await oracle.ask("Tell me more about the tavern");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
+    expect(lastMsg.responseLength).toBe("detailed");
+
+    // 4. "more" keyword
+    await oracle.ask("more");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
+
+    // 5. "anything else" keyword
+    await oracle.ask("anything else?");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
   });
 
   it("should update lastUpdated on message changes", async () => {

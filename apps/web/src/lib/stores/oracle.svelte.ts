@@ -5,6 +5,7 @@ import { vault } from "./vault.svelte";
 import { uiStore } from "./ui.svelte";
 import { diceEngine, diceParser } from "dice-engine";
 import { diceHistory } from "./dice-history.svelte";
+import { EXPAND_KEYWORDS } from "../config/oracle-constants";
 
 export interface ChatMessage {
   id: string; // Unique identifier for reactivity and identification
@@ -20,6 +21,8 @@ export interface ChatMessage {
   sources?: string[]; // IDs of entities consulted for this message (FR-001)
   isDrawing?: boolean; // Indicates if this message is currently triggering an image generation
   hasDrawAction?: boolean; // Whether this message provides a "Draw" button
+  isLongResponse?: boolean; // Whether this is a detailed lore drop (shows extra actions)
+  responseLength?: "terse" | "balanced" | "detailed"; // Visual indicator of the AI's intended scope
 }
 
 export interface UndoableAction {
@@ -1057,6 +1060,9 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     // Streaming response setup
     const assistantMsgIndex = this.messages.length;
+    const isLongResponse = this.isExpandRequest(query);
+    const responseLength = isLongResponse ? "detailed" : "terse";
+
     this.messages = [
       ...this.messages,
       {
@@ -1064,6 +1070,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         role: "assistant",
         content: "",
         type: isImageRequest ? "image" : "text",
+        isLongResponse,
+        responseLength,
       },
     ];
     this.lastUpdated = Date.now();
@@ -1444,6 +1452,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         imageUrl,
         imageBlob,
         entityId,
+        isLongResponse: true,
       },
     ];
     this.lastUpdated = Date.now();
@@ -1464,6 +1473,11 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       }
     });
     return titles;
+  }
+
+  private isExpandRequest(query: string): boolean {
+    const q = query.toLowerCase().trim();
+    return EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
   }
 }
 

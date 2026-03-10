@@ -4,6 +4,7 @@ import {
 } from "@google/generative-ai";
 import { searchService } from "./search";
 import { uiStore } from "../stores/ui.svelte";
+import { EXPAND_KEYWORDS } from "../config/oracle-constants";
 
 export const TIER_MODES = {
   lite: "gemini-flash-lite-latest",
@@ -103,11 +104,12 @@ STANDALONE SEARCH QUERY:`;
     const isDemoMarker = "DEMO_MODE_ACTIVE";
     let systemInstruction = `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 
 
-If the user asks you to expand, describe, or fill in the blanks, you should feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore. 
+RESPONSE GUIDELINES:
+- DEFAULT: Provide short, direct answers (2-3 sentences). This is highly preferred for simple queries.
+- MEDIUM: If the query is complex or involves multiple entities, you may provide a medium-length response (1-2 concise paragraphs).
+- LONG: Provide an expansive deep-dive (hooks, secrets, fluff) ONLY if the user explicitly asks to "expand", "describe", "elaborate", or "tell me more".
 
-When providing information, consider two formats:
-1. Chronicle / Blurb: A short, focused 2-3 sentence summary. (Default if "blurb", "chronicle", or "short desc" is mentioned)
-2. Lore / Notes: An expansive, detailed deep-dive including "hooks", secrets, and background fluff.
+In all cases, ensure your tone is wise, evocative, and creative. Feel free to "weave new threads"—inventing details that are stylistically and logically consistent with the existing lore when appropriate.
 
 SPECIAL COMMANDS:
 - /draw [subject]: Trigger image generation.
@@ -498,9 +500,14 @@ Format the output in clear Markdown sections. Be specific and reference actual e
     });
 
     try {
+      const isExpand = this.isExpandRequest(query);
+      const instruction = isExpand
+        ? "[INSTRUCTION: PROVIDE DETAILED LORE]"
+        : "[INSTRUCTION: BE CONCISE. SHORT IS PREFERRED, MEDIUM IS ALLOWED IF NEEDED]";
+
       const finalQuery = context
-        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}[USER QUERY]\n${query}`
-        : `${prefixContext}${query}`;
+        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}${instruction}\n[USER QUERY]\n${query}`
+        : `${prefixContext}${instruction}\n${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
 
@@ -573,6 +580,11 @@ Format the output in clear Markdown sections. Be specific and reference actual e
     }
 
     return followUpPatterns.some((p) => p.test(q));
+  }
+
+  private isExpandRequest(query: string): boolean {
+    const q = query.toLowerCase().trim();
+    return EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
   }
 
   async retrieveContext(
