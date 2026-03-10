@@ -28,7 +28,7 @@ The software is provided "as is", without warranty of any kind. In no event shal
 
 ## 6. License
 
-The application source code is licensed under the Polyform Noncommercial License 1.0.0. Refer to the LICENSE file in the project repository for the full license text.
+The application source code is licensed under the [Polyform Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/). Refer to the LICENSE file in the project repository for more details.
 
 ---
 

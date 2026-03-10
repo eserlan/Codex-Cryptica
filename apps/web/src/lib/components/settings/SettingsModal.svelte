@@ -433,7 +433,7 @@
                     License
                   </div>
                   <div class="text-theme-text">
-                    Polyform Noncommercial 1.0.0
+                    Polyform Noncommercial License 1.0.0
                   </div>
                 </div>
               </div>
