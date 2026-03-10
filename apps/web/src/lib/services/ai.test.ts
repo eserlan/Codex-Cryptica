@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { aiService } from "./ai";
 import { vault } from "../stores/vault.svelte";
 import { searchService } from "./search";
@@ -568,6 +568,10 @@ describe("AIService Lite Mode Gating", () => {
       aiService.generateMergeProposal("key", "model", {}, []),
     ).rejects.toThrow("AI features are disabled in Lite Mode.");
   });
+
+  afterEach(() => {
+    (uiStore as any).liteMode = false;
+  });
 });
 
 describe("AIService Expansion Logic", () => {
@@ -581,6 +585,8 @@ describe("AIService Expansion Logic", () => {
     expect(isExpand("elaborate on the plot")).toBe(true);
     expect(isExpand("give me detailed info")).toBe(true);
     expect(isExpand("deep dive into the lore")).toBe(true);
+    expect(isExpand("more")).toBe(true);
+    expect(isExpand("anything else")).toBe(true);
 
     expect(isExpand("who is Eldrin?")).toBe(false);
     expect(isExpand("where is the tavern?")).toBe(false);

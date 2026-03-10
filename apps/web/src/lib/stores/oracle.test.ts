@@ -286,6 +286,16 @@ describe("OracleStore", () => {
     lastMsg = oracle.messages[oracle.messages.length - 1];
     expect(lastMsg.isLongResponse).toBe(true);
     expect(lastMsg.responseLength).toBe("detailed");
+
+    // 4. "more" keyword
+    await oracle.ask("more");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
+
+    // 5. "anything else" keyword
+    await oracle.ask("anything else?");
+    lastMsg = oracle.messages[oracle.messages.length - 1];
+    expect(lastMsg.isLongResponse).toBe(true);
   });
 
   it("should update lastUpdated on message changes", async () => {

@@ -5,6 +5,8 @@ export const EXPAND_KEYWORDS = [
   "tell me more",
   "detailed",
   "deep dive",
+  "more",
+  "anything else",
 ];
 
 export const RESPONSE_LENGTH_LABELS = {
