@@ -25,14 +25,14 @@ jobs:
           ${{ fromJSON(github.ref == 'refs/heads/main' && '["production"]' || '["staging"]') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           # Production always builds from main; Staging builds from the current ref
           ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "npm"
@@ -53,7 +53,7 @@ jobs:
         run: npm run build --workspace=web
 
       - name: Upload intermediate artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: dist-${{ matrix.environment }}
           path: apps/web/build/
@@ -68,7 +68,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -79,18 +79,23 @@ jobs:
         run: |
           mkdir -p dist
           # Download dist-production from the most recent successful run on main
-          gh run download --name dist-production --branch main --dir dist || echo "No production artifact found on main"
+          RUN_ID=$(gh run list --branch main --status success --workflow "Deploy to GitHub Pages" --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -n "$RUN_ID" ]; then
+            gh run download "$RUN_ID" --name dist-production --dir dist
+          else
+            echo "No production artifact found on main"
+          fi
 
       - name: Download Production Build (Current Run)
         if: github.ref == 'refs/heads/main'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: dist-production
           path: dist/
 
       - name: Download Staging Build (Current Run)
         if: github.ref != 'refs/heads/main'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: dist-staging
           path: dist/staging/
