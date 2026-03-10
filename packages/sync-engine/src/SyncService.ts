@@ -7,9 +7,14 @@ import {
 import { SyncRegistry } from "./SyncRegistry";
 import { DiffAlgorithm, type SyncAction } from "./DiffAlgorithm";
 import { FileSystemBackend } from "./FileSystemBackend";
+import { OpfsBackend } from "./OpfsBackend";
 
 export class SyncService {
   constructor(protected registry: SyncRegistry) {}
+
+  private getTs() {
+    return new Date().toISOString().split("T")[1].split("Z")[0];
+  }
 
   async sync(
     vaultId: string,
@@ -37,9 +42,23 @@ export class SyncService {
     };
 
     try {
+      console.log(
+        `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId}`,
+      );
       const fsScan = await fsBackend.scan(vaultId);
+      console.log(
+        `[${this.getTs()}] [Sync] FS Scan complete: ${fsScan.files.length} files found.`,
+      );
+
       const opfsScan = await opfsBackend.scan(vaultId, sinceToken);
+      console.log(
+        `[${this.getTs()}] [Sync] OPFS Scan complete: ${opfsScan.files.length} files found.`,
+      );
+
       const registryEntries = await this.registry.getEntriesByVault(vaultId);
+      console.log(
+        `[${this.getTs()}] [Sync] Registry loaded: ${registryEntries.length} entries.`,
+      );
 
       result.nextToken = opfsScan.nextToken;
 
@@ -116,6 +135,20 @@ export class SyncService {
         }
       }
 
+      console.log(
+        `[${this.getTs()}] [Sync] Identified ${actions.length} actions:`,
+      );
+      const actionCounts = actions.reduce(
+        (acc, a) => {
+          acc[a.type] = (acc[a.type] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+      Object.entries(actionCounts).forEach(([type, count]) => {
+        console.log(`  - ${type}: ${count}`);
+      });
+
       const totalActions = actions.length;
 
       const updateProgress = () => {
@@ -138,6 +171,9 @@ export class SyncService {
             const action = actions[nextActionIndex++];
             if (!action) continue;
             try {
+              console.log(
+                `[${this.getTs()}] [Sync] Executing ${action.type} for: ${action.path}`,
+              );
               await this.executeAction(
                 action,
                 vaultId,
@@ -146,6 +182,9 @@ export class SyncService {
                 result,
               );
             } catch (err: any) {
+              console.error(
+                `[${this.getTs()}] [Sync] Failed ${action.type} for ${action.path}: ${err.message}`,
+              );
               result.failed.push({ path: action.path, error: err.message });
             } finally {
               updateProgress();
@@ -162,7 +201,22 @@ export class SyncService {
           }
         }
       }
+
+      console.log(
+        `[${this.getTs()}] [Sync] Sync complete for ${vaultId}. Result:`,
+        {
+          created: result.created.length,
+          updated: result.updated.length,
+          deleted: result.deleted.length,
+          conflicts: result.conflicts.length,
+          failed: result.failed.length,
+        },
+      );
     } catch (e: any) {
+      console.error(
+        `[${this.getTs()}] [Sync] Critical error during sync for ${vaultId}:`,
+        e.message,
+      );
       result.error = e.message;
     }
 
@@ -179,6 +233,49 @@ export class SyncService {
     try {
       switch (action.type) {
         case "MATCH_INITIAL": {
+          // Verify content match for text files to avoid false positives on size-only matches
+          let contentsIdentical = false;
+          if (
+            action.fsMetadata &&
+            action.opfsMetadata &&
+            action.fsMetadata.size === action.opfsMetadata.size
+          ) {
+            contentsIdentical = await this.compareContent(
+              action.path,
+              fsBackend,
+              opfsBackend,
+              action.fsMetadata,
+              action.opfsMetadata,
+            );
+          }
+
+          if (!contentsIdentical) {
+            // If they weren't actually identical, treat as conflict instead
+            console.log(
+              `[${this.getTs()}] [Sync] Initial match failed content verification for ${action.path}. Treating as conflict.`,
+            );
+            await this.executeAction(
+              { ...action, type: "HANDLE_CONFLICT" },
+              vaultId,
+              fsBackend,
+              opfsBackend,
+              result,
+            );
+            return;
+          }
+
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            fsBackend,
+            action.path,
+            action.fsMetadata!,
+          );
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            opfsBackend,
+            action.path,
+            action.opfsMetadata!,
+          );
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
@@ -206,29 +303,20 @@ export class SyncService {
             action.fsMetadata &&
             action.fsMetadata.size === opfsContent.size
           ) {
-            try {
-              const fsContent = await fsBackend.download(
+            if (
+              await this.compareContent(
                 action.path,
-                typeof action.fsMetadata?.handle === "string"
-                  ? action.fsMetadata.handle
-                  : undefined,
+                fsBackend,
+                opfsBackend,
+                action.fsMetadata,
+                action.opfsMetadata,
+                opfsContent,
+              )
+            ) {
+              shouldUpload = false;
+              console.log(
+                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping export to FS.`,
               );
-
-              if (
-                action.path.endsWith(".md") ||
-                action.path.endsWith(".markdown")
-              ) {
-                const fsText = await fsContent.text();
-                const opfsText = await opfsContent.text();
-                if (fsText === opfsText) {
-                  shouldUpload = false;
-                  console.log(
-                    `[Sync] Fast-Path: Contents of ${action.path} are identical. Skipping export to FS.`,
-                  );
-                }
-              }
-            } catch {
-              /* ignore */
             }
           }
 
@@ -242,12 +330,19 @@ export class SyncService {
               )
             : action.fsMetadata!;
 
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            fsBackend,
+            action.path,
+            updatedFs,
+          );
+
           await this.registry.putEntry({
             filePath: action.path,
             vaultId,
             lastSyncedFsModified: updatedFs.lastModified,
             lastSyncedFsSize: updatedFs.size,
-            lastSyncedOpfsHash: action.opfsMetadata!.hash, // Ideally we calculate a real hash here if missing
+            lastSyncedOpfsHash: action.opfsMetadata!.hash,
             status: "SYNCED",
             remoteId: this.getSerializableId(
               action.opfsMetadata!,
@@ -277,29 +372,21 @@ export class SyncService {
             action.opfsMetadata &&
             action.opfsMetadata.size === fsContent.size
           ) {
-            try {
-              const opfsContent = await opfsBackend.download(
+            if (
+              await this.compareContent(
                 action.path,
-                typeof action.opfsMetadata?.handle === "string"
-                  ? action.opfsMetadata.handle
-                  : undefined,
+                fsBackend,
+                opfsBackend,
+                action.fsMetadata,
+                action.opfsMetadata,
+                undefined,
+                fsContent,
+              )
+            ) {
+              shouldUpload = false;
+              console.log(
+                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping import to OPFS.`,
               );
-
-              if (
-                action.path.endsWith(".md") ||
-                action.path.endsWith(".markdown")
-              ) {
-                const fsText = await fsContent.text();
-                const opfsText = await opfsContent.text();
-                if (fsText === opfsText) {
-                  shouldUpload = false;
-                  console.log(
-                    `[Sync] Fast-Path: Contents of ${action.path} are identical. Skipping import to OPFS.`,
-                  );
-                }
-              }
-            } catch {
-              /* ignore */
             }
           }
 
@@ -312,6 +399,13 @@ export class SyncService {
                   : undefined,
               )
             : action.opfsMetadata!;
+
+          await this.persistOpfsStateIfNeeded(
+            vaultId,
+            opfsBackend,
+            action.path,
+            updatedOpfs,
+          );
 
           await this.registry.putEntry({
             filePath: action.path,
@@ -335,32 +429,119 @@ export class SyncService {
         }
 
         case "HANDLE_CONFLICT": {
-          // Default Conflict Strategy: Create Conflict Copy (FS content to OPFS with timestamp)
-          const fsContent = await fsBackend.download(
-            action.path,
-            typeof action.fsMetadata?.handle === "string"
-              ? action.fsMetadata.handle
-              : undefined,
-          );
+          // Check if contents are actually identical even if metadata differs
+          if (
+            action.fsMetadata &&
+            action.opfsMetadata &&
+            action.fsMetadata.size === action.opfsMetadata.size
+          ) {
+            if (
+              await this.compareContent(
+                action.path,
+                fsBackend,
+                opfsBackend,
+                action.fsMetadata,
+                action.opfsMetadata,
+              )
+            ) {
+              console.log(
+                `[${this.getTs()}] [Sync] Conflict resolution: Contents of ${action.path} are actually identical. Updating registry.`,
+              );
+              // Mark as synced and update fingerprints
+              await this.registry.putEntry({
+                filePath: action.path,
+                vaultId,
+                lastSyncedFsModified: action.fsMetadata.lastModified,
+                lastSyncedFsSize: action.fsMetadata.size,
+                lastSyncedOpfsHash: action.opfsMetadata.hash,
+                status: "SYNCED",
+                remoteId: this.getSerializableId(
+                  action.opfsMetadata,
+                  opfsBackend,
+                  action.registryEntry,
+                ),
+              });
+              break;
+            }
+          }
 
-          const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-          const extIndex = action.path.lastIndexOf(".");
-          const basePath =
-            extIndex !== -1 ? action.path.substring(0, extIndex) : action.path;
-          const ext = extIndex !== -1 ? action.path.substring(extIndex) : "";
-          const conflictPath = `${basePath}.conflict-${timestamp}${ext}`;
+          // User wants "Last version of every file" (Last Write Wins)
+          const fsTime = action.fsMetadata?.lastModified || 0;
+          const opfsTime = action.opfsMetadata?.lastModified || 0;
 
-          await opfsBackend.upload(conflictPath, fsContent);
-
-          // We don't update the registry for the main path because it's still conflicting until resolved manually,
-          // but we effectively "imported" the remote changes safely.
-          result.conflicts.push(action.path);
+          if (fsTime > opfsTime) {
+            console.log(
+              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using LOCAL (FS) version (newer).`,
+            );
+            const fsContent = await fsBackend.download(
+              action.path,
+              typeof action.fsMetadata?.handle === "string"
+                ? action.fsMetadata.handle
+                : undefined,
+            );
+            const updatedOpfs = await opfsBackend.upload(
+              action.path,
+              fsContent,
+            );
+            await this.persistOpfsStateIfNeeded(
+              vaultId,
+              opfsBackend,
+              action.path,
+              updatedOpfs,
+            );
+            await this.registry.putEntry({
+              filePath: action.path,
+              vaultId,
+              lastSyncedFsModified: action.fsMetadata!.lastModified,
+              lastSyncedFsSize: action.fsMetadata!.size,
+              lastSyncedOpfsHash: updatedOpfs.hash,
+              status: "SYNCED",
+              remoteId: this.getSerializableId(
+                updatedOpfs,
+                opfsBackend,
+                action.registryEntry,
+              ),
+            });
+            result.updated.push(action.path);
+          } else {
+            console.log(
+              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using INTERNAL (OPFS) version.`,
+            );
+            const opfsContent = await opfsBackend.download(
+              action.path,
+              typeof action.opfsMetadata?.handle === "string"
+                ? action.opfsMetadata.handle
+                : undefined,
+            );
+            const updatedFs = await fsBackend.upload(action.path, opfsContent);
+            await this.persistOpfsStateIfNeeded(
+              vaultId,
+              fsBackend,
+              action.path,
+              updatedFs,
+            );
+            await this.registry.putEntry({
+              filePath: action.path,
+              vaultId,
+              lastSyncedFsModified: updatedFs.lastModified,
+              lastSyncedFsSize: updatedFs.size,
+              lastSyncedOpfsHash: action.opfsMetadata!.hash,
+              status: "SYNCED",
+              remoteId: this.getSerializableId(
+                action.opfsMetadata!,
+                opfsBackend,
+                action.registryEntry,
+              ),
+            });
+            result.updated.push(action.path);
+          }
           break;
         }
 
         case "DELETE_FS": {
           await fsBackend.delete(action.path, action.registryEntry?.remoteId);
           await this.registry.deleteEntry(vaultId, action.path);
+          await this.deleteOpfsStateIfNeeded(vaultId, fsBackend, action.path);
           result.deleted.push(action.path);
           break;
         }
@@ -368,6 +549,7 @@ export class SyncService {
         case "DELETE_OPFS": {
           await opfsBackend.delete(action.path, action.registryEntry?.remoteId);
           await this.registry.deleteEntry(vaultId, action.path);
+          await this.deleteOpfsStateIfNeeded(vaultId, opfsBackend, action.path);
           result.deleted.push(action.path);
           break;
         }
@@ -377,10 +559,67 @@ export class SyncService {
       }
     } catch (err: any) {
       console.error(
-        `[Sync] Error processing ${action.path} (${action.type}):`,
+        `[${this.getTs()}] [Sync] Error processing ${action.path} (${action.type}):`,
         err,
       );
       throw err; // Re-throw to be caught by the orchestrator loop
+    }
+  }
+
+  protected async compareContent(
+    path: string,
+    fsBackend: ISyncBackend,
+    opfsBackend: ISyncBackend,
+    fsMetadata?: FileMetadata,
+    opfsMetadata?: FileMetadata,
+    opfsBlob?: Blob,
+    fsBlob?: Blob,
+  ): Promise<boolean> {
+    try {
+      const fs =
+        fsBlob ||
+        (await fsBackend.download(
+          path,
+          typeof fsMetadata?.handle === "string"
+            ? fsMetadata.handle
+            : undefined,
+        ));
+      const opfs =
+        opfsBlob ||
+        (await opfsBackend.download(
+          path,
+          typeof opfsMetadata?.handle === "string"
+            ? opfsMetadata.handle
+            : undefined,
+        ));
+
+      if (path.endsWith(".md") || path.endsWith(".markdown")) {
+        const fsText = await fs.text();
+        const opfsText = await opfs.text();
+        return fsText === opfsText;
+      } else {
+        // Binary comparison for images/other files, using chunked reads to avoid large allocations
+        if (fs.size !== opfs.size) return false;
+
+        const CHUNK_SIZE = 1024 * 1024; // 1 MiB
+        for (let offset = 0; offset < fs.size; offset += CHUNK_SIZE) {
+          const end = Math.min(offset + CHUNK_SIZE, fs.size);
+          const fsChunkBuf = await fs.slice(offset, end).arrayBuffer();
+          const opfsChunkBuf = await opfs.slice(offset, end).arrayBuffer();
+
+          if (fsChunkBuf.byteLength !== opfsChunkBuf.byteLength) return false;
+
+          const fsArr = new Uint8Array(fsChunkBuf);
+          const opfsArr = new Uint8Array(opfsChunkBuf);
+
+          if (!fsArr.every((val, i) => val === opfsArr[i])) {
+            return false;
+          }
+        }
+        return true;
+      }
+    } catch {
+      return false;
     }
   }
 
@@ -394,5 +633,31 @@ export class SyncService {
       : backend instanceof FileSystemBackend
         ? undefined
         : registryEntry?.remoteId;
+  }
+
+  private async persistOpfsStateIfNeeded(
+    vaultId: string,
+    backend: ISyncBackend,
+    path: string,
+    metadata: FileMetadata,
+  ) {
+    if (!(backend instanceof OpfsBackend) || !metadata.hash) return;
+
+    await this.registry.putOpfsState({
+      vaultId,
+      filePath: path,
+      hash: metadata.hash,
+      size: metadata.size,
+      lastModified: metadata.lastModified,
+    });
+  }
+
+  private async deleteOpfsStateIfNeeded(
+    vaultId: string,
+    backend: ISyncBackend,
+    path: string,
+  ) {
+    if (!(backend instanceof OpfsBackend)) return;
+    await this.registry.deleteOpfsState(vaultId, path);
   }
 }

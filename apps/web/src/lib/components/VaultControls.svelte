@@ -274,6 +274,7 @@
               {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
             {/if}
           </button>
+
           <button
             class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
             onclick={() => (showShare = true)}

@@ -34,6 +34,19 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["tests/setup.ts"],
   },
+  ssr: {
+    noExternal: [
+      "graph-engine",
+      "editor-core",
+      "schema",
+      "chronology-engine",
+      "@codex/sync-engine",
+      "@codex/proposer",
+      "@codex/search-engine",
+      "@codex/importer",
+      "@codex/canvas-engine",
+    ],
+  },
   server: {
     headers: {
       "Cross-Origin-Opener-Policy": "same-origin-allow-popups",

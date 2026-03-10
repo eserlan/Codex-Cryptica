@@ -1,6 +1,6 @@
 // apps/web/src/lib/stores/vault.svelte.ts
 import { getDB } from "../utils/idb";
-import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
+import { getVaultDir, deleteOpfsEntry, walkOpfsDirectory } from "../utils/opfs";
 import { KeyedTaskQueue } from "../utils/queue";
 import type { Entity, Map } from "schema";
 import type { IStorageAdapter } from "../cloud-bridge/types";
@@ -48,6 +48,28 @@ class VaultStore {
     total: 0,
     progress: 0,
   });
+
+  hasConflictFiles = $state(false);
+
+  private async checkForConflicts() {
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+    try {
+      console.log("[VaultStore] Checking for conflict files in OPFS...");
+      const files = await walkOpfsDirectory(opfsHandle);
+      const conflictCount = files.filter((f) =>
+        f.path[f.path.length - 1].includes(".conflict-"),
+      ).length;
+
+      this.hasConflictFiles = conflictCount > 0;
+      console.log(
+        `[VaultStore] Found ${conflictCount} conflict files. hasConflictFiles = ${this.hasConflictFiles}`,
+      );
+    } catch (err) {
+      console.error("[VaultStore] Failed to check for conflict files:", err);
+      this.hasConflictFiles = false;
+    }
+  }
   isInitialized = $state(false);
   errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
@@ -346,72 +368,207 @@ class VaultStore {
         "Failed to initialize storage. Please check browser support for OPFS.";
     } finally {
       this.isInitialized = true;
+      await this.checkForConflicts();
       if (this.status !== "error") this.status = "idle";
+    }
+  }
+
+  async cleanupConflictFiles() {
+    if (!this.activeVaultId) return;
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    // Get current local handle if active to clean up both sides
+    const db = await getDB();
+    const localHandle = await db.get(
+      "settings",
+      `syncHandle_${this.activeVaultId}`,
+    );
+
+    this.status = "saving";
+    try {
+      console.log("[VaultStore] Squashing conflict history...");
+      const { writeOpfsFile, deleteOpfsEntry } = await import("../utils/opfs");
+
+      const squash = async (root: FileSystemDirectoryHandle, label: string) => {
+        const allFiles = await walkOpfsDirectory(root);
+        const groups = new Map<
+          string,
+          { originalPath: string[]; variants: any[] }
+        >();
+
+        for (const file of allFiles) {
+          const filename = file.path[file.path.length - 1];
+          const conflictIndex = filename.indexOf(".conflict-");
+
+          let logicalName = filename;
+          if (conflictIndex !== -1) {
+            const extIndex = filename.lastIndexOf(".");
+            logicalName =
+              filename.substring(0, conflictIndex) +
+              (extIndex !== -1 ? filename.substring(extIndex) : "");
+          }
+
+          const logicalPathArray = [...file.path.slice(0, -1), logicalName];
+          const logicalPath = logicalPathArray.join("/");
+
+          if (!groups.has(logicalPath)) {
+            groups.set(logicalPath, {
+              originalPath: logicalPathArray,
+              variants: [],
+            });
+          }
+
+          const f = await file.handle.getFile();
+          groups.get(logicalPath)!.variants.push({
+            ...file,
+            lastModified: f.lastModified,
+            isConflict: conflictIndex !== -1,
+          });
+        }
+
+        let deleted = 0;
+        let promoted = 0;
+
+        for (const group of groups.values()) {
+          if (group.variants.length === 1) {
+            const onlyVariant = group.variants[0];
+            if (onlyVariant.isConflict) {
+              try {
+                const blob = await onlyVariant.handle.getFile();
+                await writeOpfsFile(
+                  group.originalPath,
+                  blob,
+                  root,
+                  this.activeVaultId || undefined,
+                );
+                await deleteOpfsEntry(
+                  root,
+                  onlyVariant.path,
+                  this.activeVaultId || undefined,
+                );
+                promoted++;
+              } catch (err) {
+                console.error(
+                  `[${label}] Failed to promote orphaned conflict ${onlyVariant.path.join("/")}`,
+                  err,
+                );
+              }
+            }
+            continue;
+          }
+
+          group.variants.sort((a, b) => b.lastModified - a.lastModified);
+          const winner = group.variants[0];
+          const losers = group.variants.slice(1);
+
+          for (const loser of losers) {
+            await deleteOpfsEntry(
+              root,
+              loser.path,
+              this.activeVaultId || undefined,
+            );
+            deleted++;
+          }
+
+          if (winner.isConflict) {
+            try {
+              const blob = await winner.handle.getFile();
+              await writeOpfsFile(
+                group.originalPath,
+                blob,
+                root,
+                this.activeVaultId || undefined,
+              );
+              await deleteOpfsEntry(
+                root,
+                winner.path,
+                this.activeVaultId || undefined,
+              );
+              promoted++;
+            } catch (err) {
+              console.error(
+                `[${label}] Failed to promote ${winner.path.join("/")}`,
+                err,
+              );
+            }
+          }
+        }
+        return { deleted, promoted };
+      };
+
+      const opfsResults = await squash(opfsHandle, "OPFS");
+      let fsResults = { deleted: 0, promoted: 0 };
+
+      if (localHandle) {
+        try {
+          // Verify we still have permission
+          if (
+            (await localHandle.queryPermission({ mode: "readwrite" })) ===
+            "granted"
+          ) {
+            fsResults = await squash(localHandle, "LOCAL");
+          }
+        } catch (err) {
+          console.warn("[VaultStore] Could not clean up local folder:", err);
+        }
+      }
+
+      await this.checkForConflicts();
+      await this.loadFiles();
+
+      const totalDeleted = opfsResults.deleted + fsResults.deleted;
+      const totalPromoted = opfsResults.promoted + fsResults.promoted;
+
+      uiStore.notify(
+        `History squashed: ${totalDeleted} files removed, ${totalPromoted} versions promoted across stores.`,
+        "success",
+      );
+    } catch (err: any) {
+      console.error("[VaultStore] Cleanup failed", err);
+      uiStore.notify("Cleanup failed: " + err.message, "error");
+    } finally {
+      this.status = "idle";
     }
   }
 
   async syncToLocal() {
     if (!this.syncService || !this.activeVaultId) return;
 
-    try {
-      // Ensure all pending application saves are flushed before starting sync
-      // We use a timeout to prevent hanging forever if a task is stuck
-      await Promise.race([
-        this.saveQueue.waitForAll(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
-        ),
-      ]);
-    } catch (err) {
-      console.warn("Continuing sync despite save queue issues:", err);
-    }
-
-    const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
-
+    // 1. PRE-SYNC HANDLE VALIDATION (Must be first to preserve user gesture)
+    // We get the handle from DB immediately to check if we need to prompt the user
     const db = await getDB();
     let localHandle = await db.get(
       "settings",
       `syncHandle_${this.activeVaultId}`,
     );
 
-    console.log(
-      `[VaultStore] syncToLocal triggered. Local handle retrieved from DB:`,
-      !!localHandle,
-    );
-
-    try {
-      if (localHandle) {
-        // PROACTIVE VALIDATION: Check if the handle itself is still valid/attached
-        // before even asking for permissions. Browsers often throw NotFoundError here
-        // if the folder was moved/deleted or the IDB entry went stale.
-        try {
-          console.log(
-            `[VaultStore] Verifying saved handle for "${localHandle.name}"...`,
-          );
-          // A simple name access isn't enough, we must force I/O to test the handle
-          const iterator = (localHandle as any).values();
-          await iterator.next();
-          console.log("[VaultStore] Handle verification successful.");
-        } catch (validationErr: any) {
+    if (localHandle) {
+      try {
+        // PROACTIVE VALIDATION: Force I/O to test the handle
+        const iterator = (localHandle as any).values();
+        await iterator.next();
+      } catch (validationErr: any) {
+        console.warn(
+          "[VaultStore] Saved local handle validation failed:",
+          validationErr,
+        );
+        if (
+          validationErr.name === "NotFoundError" ||
+          validationErr.message?.includes("not found")
+        ) {
           console.warn(
-            "[VaultStore] Saved local handle validation failed:",
-            validationErr,
+            "[VaultStore] Handle is definitively detached. Clearing it from DB.",
           );
-          if (
-            validationErr.name === "NotFoundError" ||
-            validationErr.message?.includes("not found")
-          ) {
-            console.warn(
-              "[VaultStore] Handle is definitively detached. Clearing it from DB.",
-            );
-            localHandle = null;
-            await db.delete("settings", `syncHandle_${this.activeVaultId}`);
-          }
+          localHandle = null;
+          await db.delete("settings", `syncHandle_${this.activeVaultId}`);
         }
       }
+    }
 
-      if (localHandle) {
+    // Handle permissions if we still have a handle
+    if (localHandle) {
+      try {
         const permission = await localHandle.queryPermission({
           mode: "readwrite",
         });
@@ -421,11 +578,19 @@ class VaultStore {
           });
           if (newPermission !== "granted") localHandle = null;
         }
+      } catch (err) {
+        console.warn("[VaultStore] Permission request failed", err);
+        localHandle = null;
       }
+    }
 
-      if (!localHandle) {
+    // 2. PROMPT FOR FOLDER (Crucial user gesture path)
+    if (!localHandle) {
+      try {
+        // The alert serves as a synchronous bridge to ensure the following await window.showDirectoryPicker
+        // is still considered part of the user gesture chain by some browsers.
         window.alert(
-          "Please select a local folder to sync this vault with. This is required to grant the browser permission to read and write your files, or because the previous folder link was lost.",
+          "Please select a local folder to sync this vault with. This is required to grant permission or reconnect a lost link.",
         );
         localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
         await db.put(
@@ -433,12 +598,35 @@ class VaultStore {
           localHandle,
           `syncHandle_${this.activeVaultId}`,
         );
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
+        console.error("[VaultStore] Folder selection failed", err);
+        this.errorMessage = "Failed to select folder: " + err.message;
+        this.status = "error";
+        return;
       }
+    }
+
+    // 3. PROCEED WITH SYNC (Background work)
+    try {
+      // Ensure all pending application saves are flushed before starting sync
+      await Promise.race([
+        this.saveQueue.waitForAll(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
+        ),
+      ]).catch((err) =>
+        console.warn("Continuing sync despite save queue issues:", err),
+      );
+
+      const opfsHandle = await this.getActiveVaultHandle();
+      if (!opfsHandle) return;
 
       this.status = "saving";
       this.syncType = "local";
+      const ts = new Date().toISOString().split("T")[1].split("Z")[0];
       console.log(
-        "[VaultStore] Starting local sync with handle:",
+        `[${ts}] [VaultStore] Starting local sync with handle:`,
         localHandle.name,
       );
 
@@ -451,7 +639,11 @@ class VaultStore {
         this.activeVaultId,
         localHandle,
         opfsHandle,
-        async (path, meta) => {
+        async (path, _meta) => {
+          // 1. HARD EXCLUSION: Never sync conflict files
+          // The cleanupConflictFiles method handles removing them from both OPFS and FS.
+          if (path.includes(".conflict-")) return false;
+
           if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
 
           // Use the optimized lookup map
@@ -459,11 +651,11 @@ class VaultStore {
           if (existing) return true;
 
           // Safety: If the file is unusually large (> 1MB), skip deep validation to avoid OOM
-          if (meta.size > 1024 * 1024) return true;
+          if (_meta.size > 1024 * 1024) return true;
 
           try {
-            if (!(meta.handle instanceof FileSystemFileHandle)) return true;
-            const file = await meta.handle.getFile();
+            if (!(_meta.handle instanceof FileSystemFileHandle)) return true;
+            const file = await _meta.handle.getFile();
             const text = await file.text();
             const { metadata } = parseMarkdown(text);
             return !!(metadata.id || metadata.title);
@@ -516,6 +708,7 @@ class VaultStore {
       } else {
         this.status = "idle";
         this.syncType = null;
+        await this.checkForConflicts();
         uiStore.notify(
           `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
           "success",
@@ -923,14 +1116,22 @@ class VaultStore {
       try {
         if (map.assetPath) {
           const pathSegments = map.assetPath.split("/");
-          await deleteOpfsEntry(vaultDir, pathSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            pathSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }
 
         if (map.fogOfWar?.maskPath) {
           const maskSegments = map.fogOfWar.maskPath.split("/");
-          await deleteOpfsEntry(vaultDir, maskSegments).catch((e) => {
+          await deleteOpfsEntry(
+            vaultDir,
+            maskSegments,
+            this.activeVaultId ?? undefined,
+          ).catch((e) => {
             if (e.name !== "NotFoundError") throw e;
           });
         }

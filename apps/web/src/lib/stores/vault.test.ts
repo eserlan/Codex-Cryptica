@@ -1,43 +1,98 @@
-// apps/web/src/lib/stores/vault.test.ts
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock Svelte 5 Runes
-vi.hoisted(() => {
-  (global as any).$state = (v: any) => v;
-  (global as any).$state.snapshot = (v: any) => v;
-  (global as any).$derived = (v: any) => v;
-  (global as any).$derived.by = (v: any) => v;
-  (global as any).$effect = (v: any) => v;
-  (global as any).__APP_VERSION__ = "0.0.0-test";
+// Fix Worker is not defined
+class MockWorker {
+  constructor() {}
+  postMessage() {}
+  terminate() {}
+  addEventListener() {}
+  removeEventListener() {}
+}
+vi.stubGlobal("Worker", MockWorker);
 
-  (global as any).localStorage = {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-  };
-});
-
-import { vault } from "./vault.svelte";
-
-vi.mock("./ui.svelte", () => ({
-  uiStore: {
-    isDemoMode: false,
-    notify: vi.fn(),
-  },
+vi.mock("../workers/search.worker?worker", () => ({
+  default: MockWorker,
 }));
 
-vi.mock("$lib/stores/debug.svelte", () => ({
-  debugStore: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
+vi.mock("./vault-registry.svelte", () => ({
+  vaultRegistry: {
+    init: vi.fn().mockResolvedValue(undefined),
+    rootHandle: { kind: "directory" } as any,
+    activeVaultId: "test-vault",
+    setActiveVault: vi.fn().mockResolvedValue(undefined),
   },
 }));
 
 vi.mock("./theme.svelte", () => ({
   themeStore: {
-    loadForVault: vi.fn(),
+    loadForVault: vi.fn().mockResolvedValue(undefined),
   },
+}));
+
+vi.mock("./vault/io", () => ({
+  loadVaultFiles: vi.fn().mockResolvedValue({ entities: {} }),
+  loadMapsFromDisk: vi.fn().mockResolvedValue({}),
+  loadCanvasesFromDisk: vi.fn().mockResolvedValue({}),
+  saveEntityToDisk: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("./vault/migration", () => ({
+  checkForMigration: vi.fn().mockResolvedValue({ required: false }),
+  runMigration: vi.fn().mockResolvedValue(undefined),
+  migrateStructure: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../services/search", () => ({
+  searchService: {
+    index: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("../services/ai", () => ({
+  aiService: {
+    analyze: vi.fn(),
+    clearStyleCache: vi.fn(),
+  },
+}));
+
+vi.mock("@codex/sync-engine", () => {
+  return {
+    SyncRegistry: class {
+      init = vi.fn();
+      getEntriesByVault = vi.fn().mockResolvedValue([]);
+      getOpfsStatesByVault = vi.fn().mockResolvedValue([]);
+      putEntry = vi.fn();
+      putOpfsState = vi.fn();
+      putOpfsStates = vi.fn();
+      deleteEntry = vi.fn();
+      deleteOpfsState = vi.fn();
+    },
+    LocalSyncService: class {
+      sync = vi.fn().mockResolvedValue({
+        updated: [],
+        created: [],
+        deleted: [],
+        conflicts: [],
+        failed: [],
+      });
+    },
+    SyncService: vi.fn(),
+    OpfsBackend: vi.fn(),
+    FileSystemBackend: vi.fn(),
+  };
+});
+
+vi.mock("../utils/opfs", () => ({
+  getOpfsRoot: vi.fn(),
+  getVaultDir: vi.fn(),
+  writeOpfsFile: vi.fn(),
+  readOpfsBlob: vi.fn(),
+  deleteOpfsEntry: vi.fn(),
+  walkOpfsDirectory: vi.fn().mockResolvedValue([]),
+  getDirHandle: vi.fn(),
+  isNotFoundError: vi.fn().mockReturnValue(false),
 }));
 
 vi.mock("../utils/idb", () => ({
@@ -48,111 +103,26 @@ vi.mock("../utils/idb", () => ({
     getAll: vi.fn().mockResolvedValue([]),
     transaction: vi.fn().mockReturnValue({
       store: {
-        clear: vi.fn(),
-        put: vi.fn(),
+        index: vi.fn().mockReturnValue({
+          openCursor: vi.fn().mockResolvedValue(null),
+        }),
       },
       done: Promise.resolve(),
     }),
   }),
   getPersistedHandle: vi.fn().mockResolvedValue(null),
-  persistHandle: vi.fn(),
-  clearPersistedHandle: vi.fn(),
+  clearPersistedHandle: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../utils/opfs", () => {
-  const mockDir = {
-    getDirectoryHandle: vi.fn().mockResolvedValue({
-      getFileHandle: vi.fn().mockResolvedValue({
-        getFile: vi.fn().mockResolvedValue({
-          text: vi.fn().mockResolvedValue(`---
-id: test
-title: Test
----
-`),
-          lastModified: 1,
-        }),
-      }),
-    }),
-    values: vi.fn().mockImplementation(async function* () {
-      yield {
-        kind: "file",
-        name: "test.md",
-        getFile: () =>
-          Promise.resolve({
-            text: () =>
-              Promise.resolve(`---
-id: test
-title: Test
----
-`),
-            lastModified: 1,
-          }),
-      };
-    }),
-    entries: vi.fn().mockImplementation(async function* () {
-      yield [
-        "test.md",
-        {
-          kind: "file",
-          getFile: () =>
-            Promise.resolve({
-              text: () =>
-                Promise.resolve(`---
-id: test
-title: Test
----
-`),
-              lastModified: 1,
-            }),
-        },
-      ];
-    }),
-  };
-
-  return {
-    getOpfsRoot: vi.fn().mockResolvedValue(mockDir),
-    getVaultDir: vi.fn().mockResolvedValue(mockDir),
-    createVaultDir: vi.fn().mockResolvedValue(mockDir),
-    deleteVaultDir: vi.fn().mockResolvedValue(undefined),
-    getOrCreateDir: vi.fn().mockResolvedValue(mockDir),
-    walkOpfsDirectory: vi.fn().mockResolvedValue([
-      {
-        handle: {
-          getFile: vi.fn().mockResolvedValue({
-            text: vi.fn().mockResolvedValue(`---
-id: test
-title: Test
----
-`),
-            lastModified: 1,
-          }),
-        },
-        path: ["test.md"],
-      },
-    ]),
-    writeOpfsFile: vi.fn(),
-    readOpfsBlob: vi.fn(),
-    deleteOpfsEntry: vi.fn(),
-    readFileAsText: vi.fn().mockResolvedValue(`---
-id: test
-title: Test
----
-`),
-  };
-});
-
-vi.mock("../services/search", () => ({
-  searchService: {
-    clear: vi.fn(),
-    index: vi.fn(),
-  },
-}));
-
-vi.mock("../services/cache", () => ({
-  cacheService: {
-    get: vi.fn().mockResolvedValue(null),
-    set: vi.fn(),
-  },
+vi.mock("../../utils/markdown", () => ({
+  sanitizeId: vi
+    .fn()
+    .mockImplementation((s) => s.toLowerCase().replace(/\s+/g, "-")),
+  parseMarkdown: vi.fn().mockReturnValue({
+    metadata: { title: "Test", id: "test" },
+    content: "Content",
+  }),
+  stringifyEntity: vi.fn().mockReturnValue("--- title: Test --- content"),
 }));
 
 vi.mock("./debug.svelte", () => ({
@@ -163,21 +133,49 @@ vi.mock("./debug.svelte", () => ({
   },
 }));
 
+import { loadVaultFiles } from "./vault/io";
+import { vault } from "./vault.svelte";
+
 describe("VaultStore (OPFS)", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+
+    // Reset singleton state
     vault.entities = {};
+    (vault as any).isInitialized = false;
+    (vault as any).status = "idle";
+    (vault as any).errorMessage = null;
+    (vault as any).syncService = null;
+    (vault as any).services = null;
   });
 
   it("should initialize and load files from OPFS", async () => {
+    const { getVaultDir } = await import("../utils/opfs");
+    vi.mocked(getVaultDir).mockResolvedValue({ kind: "directory" } as any);
+
+    vi.mocked(loadVaultFiles).mockResolvedValue({
+      entities: {
+        test: { id: "test", title: "Test", type: "note" } as any,
+      },
+    });
+
     await vault.init();
+
+    expect(loadVaultFiles).toHaveBeenCalled();
     expect(Object.keys(vault.entities).length).toBe(1);
     expect(vault.entities["test"]?.title).toBe("Test");
   });
 
   it("should create a new entity in OPFS", async () => {
     await vault.createEntity("character", "New Character");
-    expect(Object.keys(vault.entities).length).toBe(1);
+    expect(Object.keys(vault.entities)).toHaveLength(1);
     expect(vault.entities["new-character"]?.title).toBe("New Character");
+  });
+
+  it("should return early in syncToLocal if not initialized", async () => {
+    // Manually ensure syncService is null (it's null by default in new instances)
+    (vault as any).syncService = null;
+    const result = await vault.syncToLocal();
+    expect(result).toBeUndefined();
   });
 });

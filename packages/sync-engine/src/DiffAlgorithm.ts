@@ -47,26 +47,31 @@ export class DiffAlgorithm {
       );
 
       // FS Changed: Compare current FS (size + mtime) to stored manifest fingerprint
-      fsChanged = !!(
+      // We use a 2-second fuzzy window to handle millisecond-level metadata jitter
+      // common in many filesystems and browser I/O implementations.
+      const sizeMismatch =
         fsExists &&
         (registry.lastSyncedFsSize === undefined ||
-          registry.lastSyncedFsModified === undefined ||
-          fs.size !== registry.lastSyncedFsSize ||
-          fs.lastModified !== registry.lastSyncedFsModified)
-      );
+          fs.size !== registry.lastSyncedFsSize);
+      const timeMismatch =
+        fsExists &&
+        (registry.lastSyncedFsModified === undefined ||
+          Math.abs(fs.lastModified - registry.lastSyncedFsModified) > 2000);
+
+      fsChanged = !!(fsExists && (sizeMismatch || timeMismatch));
     } else {
       // If there's no registry entry, both are considered "changed" / new
       opfsChanged = !!opfsExists;
       fsChanged = !!fsExists;
     }
 
-    // Optional Validation
+    // Optional Validation - Always validate existing files to ensure excluded files are never processed
     if (validator) {
-      if (fsExists && fsChanged) {
+      if (fsExists) {
         const isValid = await validator(path, fs);
         if (!isValid) return { type: "SKIP", path };
       }
-      if (opfsExists && opfsChanged) {
+      if (opfsExists) {
         const isValid = await validator(path, opfs);
         if (!isValid) return { type: "SKIP", path };
       }

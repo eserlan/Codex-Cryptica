@@ -172,7 +172,6 @@ export class NodeMergeService {
       content: suggestedBody,
       metadata: {
         ...targetEntity.metadata,
-        ...suggestedFrontmatter, // Copy other fields back to metadata
       },
     };
 

@@ -20,7 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [production, staging]
+        # On main branch, build production only. On feature branches, build staging only.
+        environment: >-
+          ${{ fromJSON(github.ref == 'refs/heads/main' && '["production"]' || '["staging"]') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -72,12 +74,14 @@ jobs:
           fetch-depth: 0
 
       - name: Download Production Build
+        if: github.ref == 'refs/heads/main'
         uses: actions/download-artifact@v8
         with:
           name: dist-production
           path: dist/
 
       - name: Download Staging Build
+        if: github.ref != 'refs/heads/main'
         uses: actions/download-artifact@v8
         with:
           name: dist-staging

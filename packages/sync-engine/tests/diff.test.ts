@@ -163,4 +163,36 @@ describe("DiffAlgorithm", () => {
     );
     expect(result.type).toBe("SKIP");
   });
+
+  it("should detect OPFS change if hash is missing in registry", async () => {
+    const fs = createMeta(1000, 100, "abc");
+    const opfs = createMeta(1000, 100, "abc");
+    const registry = createEntry(1000, 100, ""); // Missing hash
+    (registry as any).lastSyncedOpfsHash = undefined;
+
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
+    // Currently this triggers EXPORT_TO_FS because it assumes OPFS changed
+    expect(result.type).toBe("EXPORT_TO_FS");
+  });
+
+  it("should trigger conflict if hash is missing AND FS changed", async () => {
+    const fs = createMeta(6000, 100, "abc"); // FS changed (diff > 2000ms)
+    const opfs = createMeta(1000, 100, "abc");
+    const registry = createEntry(1000, 100, ""); // Missing hash
+    (registry as any).lastSyncedOpfsHash = undefined;
+
+    const result = await DiffAlgorithm.calculateAction(
+      path,
+      fs,
+      opfs,
+      registry,
+    );
+    expect(result.type).toBe("HANDLE_CONFLICT");
+    expect(result.isConflict).toBe(true);
+  });
 });

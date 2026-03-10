@@ -5,29 +5,53 @@ export class FileSystemBackend implements ISyncBackend {
 
   async scan(_vaultId: string): Promise<{ files: FileMetadata[] }> {
     const results: FileMetadata[] = [];
+    const start = performance.now();
+    let scannedCount = 0;
+
+    const getTs = () => new Date().toISOString().split("T")[1].split("Z")[0];
+    console.log(
+      `[${getTs()}] [Sync] FileSystemBackend: Starting to read local folder contents... (This may take a while for large folders)`,
+    );
+
     const scan = async (
       handle: FileSystemDirectoryHandle,
       path: string[] = [],
     ) => {
       try {
-        for await (const [name, entry] of (handle as any).entries()) {
-          try {
-            const currentPath = [...path, name];
-            if (entry.kind === "file") {
-              const file = await (entry as FileSystemFileHandle).getFile();
-              results.push({
-                path: currentPath.join("/"),
-                lastModified: file.lastModified,
-                size: file.size,
-                handle: entry as FileSystemFileHandle,
-              });
-            } else if (entry.kind === "directory") {
-              await scan(entry as FileSystemDirectoryHandle, currentPath);
-            }
-          } catch (entryErr: any) {
-            if (entryErr.name === "NotFoundError") continue;
-            throw entryErr;
-          }
+        const entries: [string, FileSystemHandle][] = [];
+        for await (const [name, entry] of handle) {
+          entries.push([name, entry]);
+        }
+
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < entries.length; i += CHUNK_SIZE) {
+          const chunk = entries.slice(i, i + CHUNK_SIZE);
+          await Promise.all(
+            chunk.map(async ([name, entry]) => {
+              const currentPath = [...path, name];
+              if (entry.kind === "file") {
+                try {
+                  const file = await (entry as FileSystemFileHandle).getFile();
+                  results.push({
+                    path: currentPath.join("/"),
+                    lastModified: file.lastModified,
+                    size: file.size,
+                    handle: entry as FileSystemFileHandle,
+                  });
+                  scannedCount++;
+                  if (scannedCount % 500 === 0) {
+                    console.log(
+                      `[${getTs()}] [Sync] FileSystemBackend: Scanned ${scannedCount} files so far...`,
+                    );
+                  }
+                } catch (entryErr: any) {
+                  if (entryErr.name !== "NotFoundError") throw entryErr;
+                }
+              } else if (entry.kind === "directory") {
+                await scan(entry as FileSystemDirectoryHandle, currentPath);
+              }
+            }),
+          );
         }
       } catch (scanErr: any) {
         if (scanErr.name === "NotFoundError") return;
@@ -35,6 +59,10 @@ export class FileSystemBackend implements ISyncBackend {
       }
     };
     await scan(this.handle);
+    const end = performance.now();
+    console.log(
+      `[${getTs()}] [Sync] FileSystemBackend scan took ${(end - start).toFixed(2)}ms for ${results.length} files.`,
+    );
     return { files: results };
   }
 

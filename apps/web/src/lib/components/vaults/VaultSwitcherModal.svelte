@@ -149,15 +149,18 @@
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
   data-testid="vault-switcher-modal"
-  role="presentation"
+  role="button"
   tabindex="0"
-  on:click={(e) => {
+  onclick={(e) => {
     if (e.target === e.currentTarget) onClose();
   }}
-  on:keydown={(e) => {
+  onkeydown={(e) => {
     if (
       e.target === e.currentTarget &&
-      (e.key === "Enter" || e.key === " " || e.key === "Spacebar")
+      (e.key === "Enter" ||
+        e.key === " " ||
+        e.key === "Spacebar" ||
+        e.key === "Escape")
     ) {
       e.preventDefault();
       onClose();

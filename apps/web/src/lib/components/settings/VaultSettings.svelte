@@ -104,6 +104,70 @@
     </div>
   {/if}
 
+  <!-- Active Archive Info -->
+  <div>
+    <h3
+      class="text-base font-bold text-theme-primary uppercase font-header tracking-widest mb-4"
+    >
+      Active Archive
+    </h3>
+    <div
+      class="bg-theme-bg/50 border border-theme-border p-4 rounded-lg space-y-4"
+    >
+      <div class="flex flex-col gap-4">
+        <div>
+          <span
+            class="block text-[10px] font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
+            >Status</span
+          >
+          <span class="text-sm font-mono text-theme-text"
+            >Connected to Local Archive (OPFS)</span
+          >
+        </div>
+        <div>
+          <span
+            class="block text-[10px] font-bold text-theme-muted mb-1 uppercase font-header tracking-wider"
+            >Entity Count</span
+          >
+          <span class="text-sm font-mono text-theme-text"
+            >{Object.keys(vault.entities).length} tracked entities</span
+          >
+        </div>
+        {#if vault.hasConflictFiles}
+          <div
+            class="pt-4 border-t border-theme-border/30 flex justify-between items-center"
+          >
+            <div>
+              <span
+                class="block text-[10px] font-bold text-amber-500 mb-1 uppercase font-header tracking-wider"
+              >
+                Sync Conflicts Detected
+              </span>
+              <span class="text-xs text-theme-muted">
+                Redundant copies from previous sync issues exist.
+              </span>
+            </div>
+            <button
+              class="px-4 py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+              onclick={async () => {
+                if (
+                  confirm(
+                    "This will scan for .conflict files, keep only the newest version of each file, and remove the rest. Continue?",
+                  )
+                ) {
+                  await vault.cleanupConflictFiles();
+                }
+              }}
+            >
+              <span class="icon-[lucide--trash-2] w-4 h-4"></span>
+              Squash History
+            </button>
+          </div>
+        {/if}
+      </div>
+    </div>
+  </div>
+
   <!-- Fog of War -->
   <div>
     <h3
