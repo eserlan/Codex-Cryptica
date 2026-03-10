@@ -99,7 +99,7 @@ interface CodexDB extends DBSchema {
   };
   dice_history: {
     key: string; // id
-    value: any; // RollResult (from @codex/dice-engine)
+    value: any; // RollResult
     indexes: {
       "by-context": string;
     };
@@ -107,7 +107,7 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 14 to add dice_history store.
+// DB_VERSION was bumped to 14 to add dice_history store (preventing downgrade errors).
 export const DB_VERSION = 14;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>>;
@@ -132,7 +132,10 @@ export function getDB() {
           db.createObjectStore("vaults", { keyPath: "id" });
         }
 
-        // ... existing sync_registry logic ...
+        // Recreate sync_registry if schema changes
+        if (db.objectStoreNames.contains("sync_registry") && oldVersion < 10) {
+          db.deleteObjectStore("sync_registry");
+        }
 
         if (!db.objectStoreNames.contains("sync_registry")) {
           const store = db.createObjectStore("sync_registry", {
