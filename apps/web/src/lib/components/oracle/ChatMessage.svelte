@@ -362,6 +362,19 @@
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
     {#if message.role === "assistant" || message.role === "system"}
+      {#if message.responseLength && !message.isDrawing}
+        <div class="flex items-center gap-1.5 mb-2 opacity-40 select-none">
+          <span class="icon-[lucide--scroll] w-2.5 h-2.5"></span>
+          <span
+            class="text-[8px] font-bold uppercase tracking-[0.2em] font-header"
+          >
+            {message.responseLength === "detailed"
+              ? "Deep-Dive Lore"
+              : "Brief Chronicle"}
+          </span>
+        </div>
+      {/if}
+
       {#if message.type === "wizard"}
         {#if message.wizardType === "connection"}
           <ConnectionWizard bind:message />
@@ -418,7 +431,7 @@
           </button>
         </div>
 
-        {#if message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20)}
+        {#if message.isLongResponse && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
           {#if !isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"
