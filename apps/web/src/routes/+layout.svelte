@@ -366,41 +366,34 @@
       searchStore.open();
     }
 
-    // Undo (Regret)
-    if (
+    const target = event.target as HTMLElement;
+    const isTyping =
+      target?.tagName === "INPUT" ||
+      target?.tagName === "TEXTAREA" ||
+      target?.closest('[contenteditable="true"]');
+
+    if (isTyping) return;
+
+    const isUndo =
       (event.metaKey || event.ctrlKey) &&
       event.key.toLowerCase() === "z" &&
-      !event.shiftKey
-    ) {
-      // Check if user is typing in a text field
-      const target = event.target as HTMLElement;
-      const isTyping =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable;
+      !event.shiftKey;
 
-      if (!isTyping) {
-        event.preventDefault();
-        oracle.undo();
-      }
+    const isRedo =
+      (event.metaKey || event.ctrlKey) &&
+      (event.key.toLowerCase() === "y" ||
+        (event.key.toLowerCase() === "z" && event.shiftKey));
+
+    // Undo (Regret)
+    if (isUndo) {
+      event.preventDefault();
+      oracle.undo();
     }
 
     // Redo (Reregret)
-    if (
-      (event.metaKey || event.ctrlKey) &&
-      (event.key.toLowerCase() === "y" ||
-        (event.key.toLowerCase() === "z" && event.shiftKey))
-    ) {
-      const target = event.target as HTMLElement;
-      const isTyping =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable;
-
-      if (!isTyping) {
-        event.preventDefault();
-        oracle.redo();
-      }
+    if (isRedo) {
+      event.preventDefault();
+      oracle.redo();
     }
 
     if (

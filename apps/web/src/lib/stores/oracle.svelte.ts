@@ -461,8 +461,8 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 - \`/help\`: Show this message.
 
 **Keyboard Shortcuts:**
-- \`Ctrl + Z\`: Undo (Regret)
-- \`Ctrl + Y\`: Redo (Reregret)
+- \`Cmd/Ctrl + Z\`: Undo (Regret)
+- \`Cmd/Ctrl + Y\`: Redo (Reregret)
 - \`Cmd/Ctrl + K\`: Search`
           : `### Oracle Command Guide
 The Lore Oracle supports several slash commands to help you manage your vault:
@@ -483,8 +483,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`/help\`: Show this guide.
 
 **Keyboard Shortcuts:**
-- \`Ctrl + Z\`: Undo (Regret) last action.
-- \`Ctrl + Y\` / \`Ctrl + Shift + Z\`: Redo (Reregret).
+- \`Cmd/Ctrl + Z\`: Undo (Regret) last action.
+- \`Cmd/Ctrl + Y\` or \`Cmd + Shift + Z\`: Redo (Reregret).
 - \`Cmd/Ctrl + K\`: Search.`,
       },
     ];
@@ -870,12 +870,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             },
             undefined, // no messageId
             async () => {
-              // REDO: Re-execute merge
-              const proposal = await nodeMergeService.proposeMerge({
-                sourceNodeIds: [sourceId, targetId],
-                targetNodeId: targetId,
-                strategy: "concat",
-              });
+              // REDO: Re-execute merge using the captured proposal
               await nodeMergeService.executeMerge(proposal, [
                 sourceId,
                 targetId,

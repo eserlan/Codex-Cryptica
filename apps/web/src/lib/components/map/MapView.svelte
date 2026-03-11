@@ -511,14 +511,14 @@
   <!-- Visual Brush Indicator -->
   {#if mapStore.isGMMode && isAltPressed}
     <div
-      class="absolute pointer-events-none z-30 border-2 border-white/50 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)] bg-white/10 flex items-center justify-center transition-all duration-75"
+      class="absolute pointer-events-none z-30 border-2 border-theme-primary/50 rounded-full shadow-[0_0_10px_rgba(var(--color-theme-primary-rgb),0.3)] bg-theme-primary/10 flex items-center justify-center transition-all duration-75"
       style:left="{lastMousePos.x - visualBrushRadius}px"
       style:top="{lastMousePos.y - visualBrushRadius}px"
       style:width="{visualBrushRadius * 2}px"
       style:height="{visualBrushRadius * 2}px"
     >
       <!-- Center dot -->
-      <div class="w-1 h-1 bg-white/50 rounded-full"></div>
+      <div class="w-1 h-1 bg-theme-primary/50 rounded-full"></div>
     </div>
   {/if}
 
