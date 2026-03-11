@@ -38,7 +38,8 @@ class SearchStore {
   private loadRecents(): SearchResult[] {
     if (typeof localStorage === "undefined") return [];
     try {
-      const raw = localStorage.getItem(this.getStorageKey());
+      const key = this.getStorageKey();
+      const raw = localStorage.getItem(key);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
@@ -141,4 +142,7 @@ class SearchStore {
   }
 }
 
-export const searchStore = new SearchStore();
+const SEARCH_KEY = "__codex_search_instance__";
+export const searchStore: SearchStore =
+  (globalThis as any)[SEARCH_KEY] ??
+  ((globalThis as any)[SEARCH_KEY] = new SearchStore());

@@ -64,6 +64,8 @@ export const EntitySchema = z.object({
 export type Entity = z.infer<typeof EntitySchema>;
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 
+export const DEFAULT_ENTITY_TYPE = "note";
+
 export const DEFAULT_CATEGORIES: Category[] = [
   {
     id: "character",

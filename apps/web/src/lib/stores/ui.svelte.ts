@@ -293,5 +293,7 @@ class UIStore {
   }
 }
 
-export const uiStore = new UIStore();
+const UI_KEY = "__codex_ui_instance__";
+export const uiStore: UIStore =
+  (globalThis as any)[UI_KEY] ?? ((globalThis as any)[UI_KEY] = new UIStore());
 export const ui = uiStore;

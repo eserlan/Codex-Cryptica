@@ -4,31 +4,28 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count | Type                |
-| :--- | :---------------------------------------------------------- | :--------- | :------------------ |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | 1,484      | Store (State/Logic) |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | 1,381      | Store (State/Logic) |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | 1,371      | UI Component        |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | 1,058      | UI Component        |
-| 5    | `apps/web/src/lib/services/ai.ts`                           | 819        | Service (API/Logic) |
-| 6    | `apps/web/src/routes/+layout.svelte`                        | 753        | UI Layout           |
-| 7    | `packages/sync-engine/src/SyncService.ts`                   | 663        | Engine Core         |
-| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 620        | UI Component        |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618        | UI Component        |
-| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 535        | UI Component        |
+| Rank | File Path                                                   | Line Count    | Type                | Status      |
+| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :---------- |
+| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED    |
+| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED    |
+| 3    | `apps/web/src/lib/components/GraphView.svelte`              | 1,371         | UI Component        | IN PROGRESS |
+| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | 1,058         | UI Component        |             |
+| 5    | `apps/web/src/lib/services/ai.ts`                           | 819           | Service (API/Logic) |             |
+| 6    | `apps/web/src/routes/+layout.svelte`                        | 753           | UI Layout           |             |
+| 7    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         |             |
+| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 620           | UI Component        |             |
+| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |             |
+| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 535           | UI Component        |             |
 
 ---
 
 ## Evaluation & Refactoring Strategies
 
-### 1. `oracle.svelte.ts` (1,484 lines)
+### 1. `oracle.svelte.ts` (Refactored)
 
-**Current State:** This file handles everything related to the Oracle: chat history, context gathering, prompt building, API interactions, command parsing (`/connect`, `/draw`), undo/redo stacks, and error handling. It's a classic God Object.
-**Refactoring Strategy:**
-
-- **Extract Command Parser:** Move the slash-command parsing logic (`/connect`, `/draw`) into a dedicated `OracleCommandParser` utility or package.
-- **Extract Chat History:** Create a standalone `ChatHistoryStore` specifically for managing the messages array, undo/redo logic, and persistent storage.
-- **Extract Generation Logic:** The actual construction of the prompt and invocation of the `AIService` can be split into an `OracleGenerator` class, leaving `OracleStore` to merely orchestrate the UI state.
+**Status:** ✅ **COMPLETED (2026-03-11)**
+**Summary:** Refactored into `@codex/oracle-engine`. Logic isolated into `ChatHistoryService`, `OracleSettingsService`, `OracleCommandParser`, `OracleActionExecutor`, `OracleGenerator`, and `UndoRedoService`.
+**Outcome:** Reduced from ~1,600 lines to 233 lines. Established Dependency Injection as a core principle.
 
 ### 2. `vault.svelte.ts` (1,381 lines)
 

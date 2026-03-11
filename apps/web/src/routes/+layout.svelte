@@ -140,9 +140,11 @@
       page.url.pathname.startsWith(`${base}/canvas`);
 
     const shouldShowLanding = uiStore.isLandingPageVisible;
+    const isTesting =
+      typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!shouldShowLanding) {
+      if (!shouldShowLanding || isTesting) {
         // User has 'skip' enabled or has already dismissed it in this session
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
@@ -343,15 +345,20 @@
   // OR Auto-start demo if first visit and vault is empty
   $effect(() => {
     if (vault.isInitialized && !uiStore.isLandingPageVisible) {
-      const demoParam = page.url.searchParams.get("demo");
+      const isTesting =
+        typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
       if (
         !helpStore.hasSeen("initial-onboarding") &&
         !(window as any).DISABLE_ONBOARDING &&
-        !demoParam // Only auto-start fantasy if no specific demo requested
+        !page.url.searchParams.has("demo") // only auto-start fantasy if no specific demo requested
       ) {
         // If vault is empty, start demo instead of tour
-        if (vault.allEntities.length === 0 && !uiStore.isDemoMode) {
+        if (
+          vault.allEntities.length === 0 &&
+          !uiStore.isDemoMode &&
+          !isTesting
+        ) {
           demoService.startDemo("fantasy");
         } else {
           helpStore.startTour("initial-onboarding");
@@ -361,8 +368,13 @@
   });
 
   const handleKeydown = (event: KeyboardEvent) => {
+    console.log("[Layout] Keydown:", event.key, {
+      ctrl: event.ctrlKey,
+      meta: event.metaKey,
+    });
     if ((event.metaKey || event.ctrlKey) && event.key === "k") {
       event.preventDefault();
+      console.log("[Layout] Triggering search modal");
       searchStore.open();
     }
 
