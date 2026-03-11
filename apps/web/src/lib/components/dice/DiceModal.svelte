@@ -5,6 +5,7 @@
   import { fly, fade, slide } from "svelte/transition";
   import RollLog from "./RollLog.svelte";
   import { tick } from "svelte";
+  import { getDiceIcon } from "$lib/utils/dice-icons";
 
   let formula = $state("");
   let error = $state("");
@@ -105,13 +106,13 @@
   };
 
   const diceTypes = [
-    { sides: 4, icon: "icon-[mdi--dice-d4]" },
-    { sides: 6, icon: "icon-[mdi--dice-d6]" },
-    { sides: 8, icon: "icon-[mdi--dice-d8]" },
-    { sides: 10, icon: "icon-[mdi--dice-d10]" },
-    { sides: 12, icon: "icon-[mdi--dice-d12]" },
-    { sides: 20, icon: "icon-[mdi--dice-d20]" },
-    { sides: 100, icon: "icon-[mdi--dice-multiple]" },
+    { sides: 4 },
+    { sides: 6 },
+    { sides: 8 },
+    { sides: 10 },
+    { sides: 12 },
+    { sides: 20 },
+    { sides: 100 },
   ];
 </script>
 
@@ -173,7 +174,7 @@
                 class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
                 >d{die.sides}</span
               >
-              <span class="{die.icon} w-5 h-5"></span>
+              <span class="{getDiceIcon(die.sides)} w-5 h-5"></span>
             </button>
           {/each}
         </div>

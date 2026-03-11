@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ContextualRollResult } from "$lib/stores/dice-history.svelte";
   import { slide } from "svelte/transition";
+  import { getDiceIcon } from "$lib/utils/dice-icons";
 
   let { rolls = [], onReroll } = $props<{
     rolls: ContextualRollResult[];
@@ -13,26 +14,8 @@
     [...rolls].sort((a, b) => b.timestamp - a.timestamp),
   );
 
-  const getDiceIcon = (sides?: number) => {
-    switch (sides) {
-      case 4:
-        return "icon-[mdi--dice-d4]";
-      case 6:
-        return "icon-[mdi--dice-d6]";
-      case 8:
-        return "icon-[mdi--dice-d8]";
-      case 10:
-        return "icon-[mdi--dice-d10]";
-      case 12:
-        return "icon-[mdi--dice-d12]";
-      case 20:
-        return "icon-[mdi--dice-d20]";
-      default:
-        return "icon-[mdi--dice-multiple]";
-    }
-  };
-
-  const isMax = (roll: number, sides?: number) => sides && roll === sides;
+  const isMax = (roll: number, sides?: number) =>
+    sides !== undefined && roll === sides;
   const isMin = (roll: number) => roll === 1;
 
   // For large pools, we might want to show a summary or a toggle
@@ -132,7 +115,7 @@
                           r,
                           part.sides,
                         )
-                          ? 'text-theme-primary drop-shadow-[0_0_2px_rgba(var(--color-theme-primary-rgb),0.3)]'
+                          ? 'text-theme-primary drop-shadow-[0_0_2px_rgba(var(--color-accent-primary),0.3)]'
                           : isMin(r)
                             ? 'text-red-500'
                             : 'text-theme-text'}"
@@ -193,9 +176,13 @@
 
       <!-- Reroll button -->
       <button
-        class="absolute right-3 bottom-3 p-2 rounded-lg bg-theme-primary/10 border border-theme-primary/20 text-theme-primary opacity-0 group-hover/item:opacity-100 transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-lg"
+        class="absolute right-3 bottom-3 p-2 rounded-lg bg-theme-primary/10 border border-theme-primary/20 text-theme-primary transition-all hover:bg-theme-primary hover:text-theme-bg active:scale-95 shadow-lg group-hover/item:opacity-100"
+        class:opacity-0={_i !== 0}
+        class:opacity-100={_i === 0}
+        type="button"
         onclick={() => onReroll?.(roll.formula)}
         title="Reroll this formula"
+        aria-label="Reroll this formula"
       >
         <span class="icon-[lucide--refresh-cw] w-4 h-4"></span>
       </button>

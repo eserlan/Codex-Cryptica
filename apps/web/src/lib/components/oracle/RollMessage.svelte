@@ -1,28 +1,10 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { slide } from "svelte/transition";
+  import { getDiceIcon } from "$lib/utils/dice-icons";
 
   let { message }: { message: ChatMessage } = $props();
   const result = $derived(message.rollResult);
-
-  const getDieIcon = (sides: number) => {
-    switch (sides) {
-      case 4:
-        return "icon-[mdi--dice-d4]";
-      case 6:
-        return "icon-[mdi--dice-d6]";
-      case 8:
-        return "icon-[mdi--dice-d8]";
-      case 10:
-        return "icon-[mdi--dice-d10]";
-      case 12:
-        return "icon-[mdi--dice-d12]";
-      case 20:
-        return "icon-[mdi--dice-d20]";
-      default:
-        return "icon-[mdi--dice-multiple]";
-    }
-  };
 </script>
 
 {#if result}
@@ -66,7 +48,9 @@
             <div class="flex items-center gap-2">
               {#if part.sides}
                 <span
-                  class="{getDieIcon(part.sides)} w-3 h-3 text-theme-primary/60"
+                  class="{getDiceIcon(
+                    part.sides,
+                  )} w-3 h-3 text-theme-primary/60"
                 ></span>
               {/if}
               <span
