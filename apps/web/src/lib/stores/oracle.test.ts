@@ -378,11 +378,11 @@ describe("OracleStore", () => {
   describe("Undo Logic", () => {
     it("should push undo actions to the stack with IDs", () => {
       const revertFn = vi.fn().mockResolvedValue(undefined);
-      oracle.pushUndoAction("Test Action", revertFn, "msg-123");
+      oracle.pushUndoAction("Test Action", revertFn, undefined, "msg-123");
 
       expect(oracle.undoStack.length).toBe(1);
       expect(oracle.undoStack[0].description).toBe("Test Action");
-      expect(oracle.undoStack[0].revert).toBe(revertFn);
+      expect(oracle.undoStack[0].undo).toBe(revertFn);
       expect(oracle.undoStack[0].messageId).toBe("msg-123");
       expect(oracle.undoStack[0].id).toBeDefined();
     });
@@ -408,7 +408,7 @@ describe("OracleStore", () => {
       expect(oracle.isUndoing).toBe(false);
     });
 
-    it("should pop and execute revert function on successful undo", async () => {
+    it("should pop and execute undo function on successful undo", async () => {
       const revertFn = vi.fn().mockResolvedValue(undefined);
       oracle.pushUndoAction("Test Action", revertFn);
 
@@ -469,8 +469,21 @@ describe("OracleStore", () => {
       oracle.pushUndoAction("Action 2", async () => {});
       expect(oracle.redoStack.length).toBe(0);
     });
-  });
 
+    it("should execute redo function on successful redo", async () => {
+      const undoFn = vi.fn().mockResolvedValue(undefined);
+      const redoFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", undoFn, redoFn);
+
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+
+      await oracle.redo();
+      expect(redoFn).toHaveBeenCalled();
+      expect(oracle.redoStack.length).toBe(0);
+      expect(oracle.undoStack.length).toBe(1);
+    });
+  });
   describe("Draw Button Logic", () => {
     it("should set hasDrawAction for assistant messages in advanced tier", async () => {
       oracle.apiKey = "test-key";

@@ -5,6 +5,7 @@
   import { vault } from "../../stores/vault.svelte";
   import { uiStore } from "../../stores/ui.svelte";
   import { themeStore } from "../../stores/theme.svelte";
+  import { oracle } from "../../stores/oracle.svelte";
   import { hexToRgb } from "../../utils/color";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
@@ -188,6 +189,7 @@
   const KEYBOARD_ZOOM_STEP = 0.1;
   let isPanning = false;
   let isPainting = false;
+  let maskSnapshot: HTMLCanvasElement | null = null;
   let needsMaskUpdate = false;
   let lastMousePos = $state({ x: 0, y: 0 });
   let mouseDownPos = { x: 0, y: 0 };
@@ -269,6 +271,15 @@
 
     if (mapStore.isGMMode && e.altKey) {
       isPainting = true;
+
+      // Capture snapshot for undo
+      if (maskCanvas) {
+        maskSnapshot = document.createElement("canvas");
+        maskSnapshot.width = maskCanvas.width;
+        maskSnapshot.height = maskCanvas.height;
+        maskSnapshot.getContext("2d")?.drawImage(maskCanvas, 0, 0);
+      }
+
       paintFog(e);
     } else if (e.button === 0) {
       isPanning = true;
@@ -348,7 +359,51 @@
   async function onMouseUp(e: MouseEvent) {
     console.log("[MapView] mouseup, wasPainting:", isPainting);
     if (isPainting) {
+      const snapshotBefore = maskSnapshot;
+      const currentMapId = mapStore.activeMapId;
+
+      // Capture after state
+      const snapshotAfter = document.createElement("canvas");
+      snapshotAfter.width = maskCanvas!.width;
+      snapshotAfter.height = maskCanvas!.height;
+      snapshotAfter.getContext("2d")?.drawImage(maskCanvas!, 0, 0);
+
+      oracle.pushUndoAction(
+        "Map Drawing",
+        async () => {
+          // UNDO
+          if (
+            snapshotBefore &&
+            maskCanvas &&
+            mapStore.activeMapId === currentMapId
+          ) {
+            const ctx = maskCanvas.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+              ctx.drawImage(snapshotBefore, 0, 0);
+              await mapStore.saveMask(maskCanvas);
+            }
+          }
+        },
+        async () => {
+          // REDO
+          if (
+            snapshotAfter &&
+            maskCanvas &&
+            mapStore.activeMapId === currentMapId
+          ) {
+            const ctx = maskCanvas.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+              ctx.drawImage(snapshotAfter, 0, 0);
+              await mapStore.saveMask(maskCanvas);
+            }
+          }
+        },
+      );
+
       await mapStore.saveMask(maskCanvas!);
+      maskSnapshot = null;
     }
 
     if (isPanning) {

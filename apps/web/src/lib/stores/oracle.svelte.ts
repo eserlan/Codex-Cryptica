@@ -29,7 +29,8 @@ export interface UndoableAction {
   id: string;
   messageId?: string;
   description: string;
-  revert: () => Promise<void>;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
   timestamp: number;
 }
 
@@ -91,14 +92,20 @@ class OracleStore {
 
   pushUndoAction(
     description: string,
-    revert: () => Promise<void>,
+    undo: () => Promise<void>,
+    redo?: () => Promise<void>,
     messageId?: string,
   ) {
     this.undoStack.push({
       id: this.generateId(),
       messageId,
       description,
-      revert,
+      undo,
+      redo:
+        redo ||
+        (async () => {
+          console.warn(`Redo not implemented for: ${description}`);
+        }),
       timestamp: Date.now(),
     });
     // New action clears redo stack (standard behavior)
@@ -120,7 +127,7 @@ class OracleStore {
     const action = this.undoStack.pop();
     if (action) {
       try {
-        await action.revert();
+        await action.undo();
 
         // Push to redo stack
         this.redoStack.push(action);
@@ -171,18 +178,50 @@ class OracleStore {
   async redo() {
     if (this.redoStack.length === 0 || this.isUndoing) return;
 
+    this.isUndoing = true;
+    this.broadcast();
+
     const action = this.redoStack.pop();
     if (action) {
-      // For now, we'll just notify that redo is plumbing-only
-      this.messages = [
-        ...this.messages,
-        {
-          id: this.generateId(),
-          role: "system",
-          content: `🔄 Redo (Reregret) for **${action.description}** is not yet fully reversible.`,
-        },
-      ];
-      this.lastUpdated = Date.now();
+      try {
+        await action.redo();
+
+        // Push back to undo stack
+        this.undoStack.push(action);
+
+        // Show success system message
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `🔄 Redid: **${action.description}**`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+      } catch (err: any) {
+        console.error("Redo failed:", err);
+        // Put it back
+        this.redoStack.push(action);
+
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ Redo failed: ${err.message}.`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+      } finally {
+        this.isUndoing = false;
+        this.broadcast();
+      }
+    } else {
+      this.isUndoing = false;
       this.broadcast();
     }
   }
@@ -819,16 +858,27 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             },
           ];
 
-          // Push Undo
+          // Push Undo/Redo
           this.pushUndoAction(
             `Merge ${sourceEntity.title} into ${targetEntity.title}`,
             async () => {
-              // Re-create source
+              // UNDO: Re-create source and restore target
               await vault.createEntity(beforeSource.type, beforeSource.title, {
                 ...beforeSource,
               });
-              // Restore target
               vault.updateEntity(targetId, beforeTarget);
+            },
+            async () => {
+              // REDO: Re-execute merge
+              const proposal = await nodeMergeService.proposeMerge({
+                sourceNodeIds: [sourceId, targetId],
+                targetNodeId: targetId,
+                strategy: "concat",
+              });
+              await nodeMergeService.executeMerge(proposal, [
+                sourceId,
+                targetId,
+              ]);
             },
           );
 
@@ -938,11 +988,21 @@ The Lore Oracle supports several slash commands to help you manage your vault:
               },
             ];
 
-            // Push Undo
+            // Push Undo/Redo
             this.pushUndoAction(
               `Connect ${source.title} to ${target.title}`,
               async () => {
+                // UNDO: Remove connection
                 await vault.removeConnection(source.id, target.id, typeToUse);
+              },
+              async () => {
+                // REDO: Re-add connection
+                await vault.addConnection(
+                  source.id,
+                  target.id,
+                  typeToUse,
+                  label,
+                );
               },
             );
 
