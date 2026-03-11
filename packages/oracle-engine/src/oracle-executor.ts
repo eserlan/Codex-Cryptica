@@ -87,7 +87,7 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 **Keyboard Shortcuts:**
 - \`Cmd/Ctrl + Z\`: Undo (Regret)
 - \`Cmd/Ctrl + Y\`: Redo (Reregret)
-- \`Cmd/Ctrl + K\`: Search\``
+- \`Cmd/Ctrl + K\`: Search.\``
         : `### Oracle Command Guide
 The Lore Oracle supports several slash commands to help you manage your vault:
 
@@ -526,6 +526,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     try {
       if (isImageRequest) {
+        assistantMsg.content = query; // Ensure prompt has context
         const blob = await this.generator.generateMessageVisualization(
           assistantMsg,
           context,

@@ -127,7 +127,7 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 
 - 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
-- 067-oracle-store-refactor: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 067-oracle-store-refactor: Added N/A
 
 - 066-die-rolling: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization)
 

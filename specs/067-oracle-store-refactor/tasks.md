@@ -77,10 +77,10 @@ description: "Task list for Oracle Store Refactor implementation"
 
 ### Implementation for User Story 2
 
-- [x] T014 [P] [US2] Implement `UndoRedoService` in `packages/oracle-engine/src/undo-redo.svelte.ts`
-- [x] T015 [P] [US2] Create unit tests for `UndoRedoService` in `packages/oracle-engine/src/undo-redo.test.ts`
-- [x] T016 [US2] Refactor `OracleStore.undo()`, `OracleStore.redo()`, and `pushUndoAction()` to use `UndoRedoService` from `@codex/oracle-engine`
-- [x] T017 [US2] Remove redundant undo/redo stack state from `OracleStore`
+- [x] T015 [P] [US2] Implement `UndoRedoService` in `packages/oracle-engine/src/undo-redo.svelte.ts`
+- [x] T016 [P] [US2] Create unit tests for `UndoRedoService` in `packages/oracle-engine/src/undo-redo.test.ts`
+- [x] T017 [US2] Refactor `OracleStore.undo()`, `OracleStore.redo()`, and `pushUndoAction()` to use `UndoRedoService` from `@codex/oracle-engine`
+- [x] T018 [US2] Remove redundant undo/redo stack state from `OracleStore`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -90,11 +90,11 @@ description: "Task list for Oracle Store Refactor implementation"
 
 **Purpose**: Finalizing the refactor and ensuring quality standards.
 
-- [x] T018 [P] Verify `apps/web/src/lib/stores/oracle.svelte.ts` is under 400 lines (SC-001)
-- [x] T019 [P] Update user documentation in `apps/web/src/lib/config/help-content.ts` (Constitution Principle VII)
-- [x] T020 [P] Documentation updates in `quickstart.md`
-- [x] T021 Final code cleanup and removal of unused imports in `apps/web/src/lib/stores/oracle.svelte.ts`
-- [x] T022 Run full Playwright E2E test suite with `--reporter=list` to ensure no regressions
+- [x] T019 [P] Verify `apps/web/src/lib/stores/oracle.svelte.ts` is under 400 lines (SC-001)
+- [x] T020 [P] Update user documentation in `apps/web/src/lib/config/help-content.ts` (Constitution Principle VII)
+- [x] T021 [P] Documentation updates in `quickstart.md`
+- [x] T022 Final code cleanup and removal of unused imports in `apps/web/src/lib/stores/oracle.svelte.ts`
+- [x] T023 Run full Playwright E2E test suite with `--reporter=list` to ensure no regressions
 
 ---
 
@@ -102,12 +102,12 @@ description: "Task list for Oracle Store Refactor implementation"
 
 **Goal**: Bring `OracleStore` under 150 LOC by moving all domain mutations and environment logic to services.
 
-- [x] T023 [P] Implement `OracleSettingsService` in `packages/oracle-engine/src/oracle-settings.svelte.ts`
-- [x] T024 [P] Move domain mutations (`startWizard`, `updateMessageEntity`) to `ChatHistoryService`
-- [x] T025 [P] Implement `OracleSyncService` or unify `BroadcastChannel` logic in `oracle-settings`
-- [x] T026 Refactor `OracleStore` to use new services and remove boilerplate
-- [x] T027 Verify `apps/web/src/lib/stores/oracle.svelte.ts` is under 150 lines (FR-009)
-- [x] T028 Final regression test run
+- [x] T024 [P] Implement `OracleSettingsService` in `packages/oracle-engine/src/oracle-settings.svelte.ts`
+- [x] T025 [P] Move domain mutations (`startWizard`, `updateMessageEntity`) to `ChatHistoryService`
+- [x] T026 [P] Implement `OracleSyncService` or unify `BroadcastChannel` logic in `oracle-settings`
+- [x] T027 Refactor `OracleStore` to use new services and remove boilerplate
+- [x] T028 Verify `apps/web/src/lib/stores/oracle.svelte.ts` is under 150 lines (FR-009)
+- [x] T029 Final regression test run
 
 ---
 

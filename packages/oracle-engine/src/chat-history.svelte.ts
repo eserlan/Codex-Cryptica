@@ -68,8 +68,8 @@ export class ChatHistoryService {
 
   // --- Domain Mutations ---
 
-  startWizard(type: "connection" | "merge") {
-    this.addMessage({
+  async startWizard(type: "connection" | "merge") {
+    await this.addMessage({
       id: crypto.randomUUID(),
       role: "assistant",
       content: `Starting ${type} wizard...`,
@@ -86,13 +86,13 @@ export class ChatHistoryService {
     }
   }
 
-  addTestImageMessage(
+  async addTestImageMessage(
     content: string,
     imageUrl: string,
     imageBlob: Blob,
     entityId?: string,
   ) {
-    this.addMessage({
+    await this.addMessage({
       id: crypto.randomUUID(),
       role: "assistant",
       content,
