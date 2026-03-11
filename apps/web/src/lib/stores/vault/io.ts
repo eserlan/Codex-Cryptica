@@ -318,7 +318,7 @@ export async function loadVaultFiles(
     return entity;
   };
 
-  const CHUNK_SIZE = 50;
+  const CHUNK_SIZE = 20;
   for (let i = 0; i < mdFiles.length; i += CHUNK_SIZE) {
     const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
     const chunkResults = await Promise.all(chunk.map(processFile));
@@ -333,6 +333,12 @@ export async function loadVaultFiles(
 
     if (onProgress) {
       onProgress(chunkEntities, Math.min(i + CHUNK_SIZE, total), total);
+    }
+
+    // PERCEIVED PERF: Yield to main thread to allow Svelte and Cytoscape to render.
+    // This makes the "world building" effect visible even if processing is fast.
+    if (total > CHUNK_SIZE) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
     }
   }
 
