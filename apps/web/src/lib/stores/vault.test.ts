@@ -166,6 +166,40 @@ describe("VaultStore (OPFS)", () => {
     expect(vault.entities["test"]?.title).toBe("Test");
   });
 
+  it("should support incremental loading via onProgress callback", async () => {
+    const { getVaultDir } = await import("../utils/opfs");
+    vi.mocked(getVaultDir).mockResolvedValue({ kind: "directory" } as any);
+
+    vi.mocked(loadVaultFiles).mockImplementation(
+      async (_vid, _handle, onProgress) => {
+        if (onProgress) {
+          onProgress(
+            { chunk1: { id: "chunk1", title: "Chunk 1" } as any },
+            1,
+            2,
+          );
+          onProgress(
+            { chunk2: { id: "chunk2", title: "Chunk 2" } as any },
+            2,
+            2,
+          );
+        }
+        return {
+          entities: {
+            chunk1: { id: "chunk1", title: "Chunk 1" } as any,
+            chunk2: { id: "chunk2", title: "Chunk 2" } as any,
+          },
+        };
+      },
+    );
+
+    await vault.init();
+
+    expect(vault.syncStats.progress).toBe(100);
+    expect(vault.syncStats.created).toBe(2);
+    expect(Object.keys(vault.entities)).toHaveLength(2);
+  });
+
   it("should create a new entity in OPFS", async () => {
     await vault.createEntity("character", "New Character");
     expect(Object.keys(vault.entities)).toHaveLength(1);
