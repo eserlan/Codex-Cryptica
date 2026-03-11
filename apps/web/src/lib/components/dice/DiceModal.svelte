@@ -161,7 +161,7 @@
       </div>
 
       <!-- Custom Formula -->
-      <div class="p-4 space-y-2 border-b border-theme-border/30">
+      <div class="p-4 space-y-3 border-b border-theme-border/30 bg-theme-bg/10">
         <form
           onsubmit={(e) => {
             e.preventDefault();
@@ -169,17 +169,17 @@
           }}
           class="flex gap-2"
         >
-          <div class="relative flex-1">
+          <div class="relative flex-1 group">
             <input
               bind:this={formulaInput}
               type="text"
               bind:value={formula}
               placeholder="Enter formula (e.g. 2d20kh1 + 5)"
-              class="w-full bg-theme-bg border border-theme-border rounded-lg pl-3 pr-8 py-2 text-sm focus:border-theme-primary outline-none font-mono"
+              class="w-full bg-theme-bg border border-theme-border rounded-xl pl-4 pr-10 py-3 text-sm focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 outline-none font-mono transition-all placeholder:opacity-40"
             />
             <button
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary transition-colors"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary transition-colors p-1"
               onclick={() => (showHelp = !showHelp)}
               title="Formula Help"
             >
@@ -188,7 +188,7 @@
           </div>
           <button
             type="submit"
-            class="bg-theme-primary text-theme-bg font-bold px-4 py-2 rounded-lg text-xs tracking-widest hover:brightness-110 active:scale-95 transition-all"
+            class="bg-theme-primary text-theme-bg font-bold px-6 py-2 rounded-xl text-xs tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-theme-primary/20"
           >
             ROLL
           </button>
