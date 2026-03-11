@@ -2,27 +2,16 @@
 # https://github.com/actions/labeler
 
 web:
-  - changed-files:
-      - any-glob-to-any-file: apps/web/**/*
+  - any: ['apps/web/**/*']
 
 packages:
-  - changed-files:
-      - any-glob-to-any-file: packages/**/*
+  - any: ['packages/**/*']
 
 documentation:
-  - changed-files:
-      - any-glob-to-any-file: 
-          - docs/**/*
-          - "**/*.md"
+  - any: ['docs/**/*', './*.md']
 
 infrastructure:
-  - changed-files:
-      - any-glob-to-any-file: 
-          - .github/**/*
-          - turbo.json
-          - package.json
-          - package-lock.json
+  - any: ['.github/**/*', 'turbo.json', 'package.json', 'package-lock.json']
 
 scripts:
-  - changed-files:
-      - any-glob-to-any-file: scripts/**/*
+  - any: ['scripts/**/*']
