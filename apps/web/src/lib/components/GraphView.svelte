@@ -717,14 +717,36 @@
 
           let hasMatch = active.length === 0;
 
-          if (!hasMatch) {
-            const entityLabels = (entity.labels || []).map((l) =>
-              l.toLowerCase(),
-            );
+          if (!hasMatch && entity.labels && entity.labels.length > 0) {
+            // ⚡ Bolt Optimization: Use imperative loops to prevent array allocations
+            // (.map) in hot loops that process every node in the graph.
+            const labels = entity.labels;
             if (filterMode === "AND") {
-              hasMatch = active.every((l) => entityLabels.includes(l));
+              hasMatch = true;
+              for (let i = 0; i < active.length; i++) {
+                let found = false;
+                for (let j = 0; j < labels.length; j++) {
+                  if (labels[j].toLowerCase() === active[i]) {
+                    found = true;
+                    break;
+                  }
+                }
+                if (!found) {
+                  hasMatch = false;
+                  break;
+                }
+              }
             } else {
-              hasMatch = active.some((l) => entityLabels.includes(l));
+              hasMatch = false;
+              for (let i = 0; i < active.length; i++) {
+                for (let j = 0; j < labels.length; j++) {
+                  if (labels[j].toLowerCase() === active[i]) {
+                    hasMatch = true;
+                    break;
+                  }
+                }
+                if (hasMatch) break;
+              }
             }
           }
 
