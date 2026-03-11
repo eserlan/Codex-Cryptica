@@ -48,7 +48,7 @@ export function parseOracleResponse(text: string): OracleParseResult {
                 data.imageURL ||
                 data.frontmatter?.image,
               thumbnail:
-                data.thumbnail || data.thumbnail || data.frontmatter?.thumbnail,
+                data.thumbnail || data.thumb || data.frontmatter?.thumbnail,
               connections: data.detectedLinks || data.connections || [],
             };
           }

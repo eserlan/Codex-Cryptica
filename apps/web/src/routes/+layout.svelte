@@ -368,13 +368,8 @@
   });
 
   const handleKeydown = (event: KeyboardEvent) => {
-    console.log("[Layout] Keydown:", event.key, {
-      ctrl: event.ctrlKey,
-      meta: event.metaKey,
-    });
     if ((event.metaKey || event.ctrlKey) && event.key === "k") {
       event.preventDefault();
-      console.log("[Layout] Triggering search modal");
       searchStore.open();
     }
 

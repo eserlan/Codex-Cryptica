@@ -91,5 +91,6 @@ export function stringifyEntity(entity: Entity): string {
  */
 export function deriveIdFromPath(path: string[]): string {
   const filename = path[path.length - 1];
-  return filename.replace(/\.(md|markdown)$/i, "");
+  const basename = filename.replace(/\.(md|markdown)$/i, "");
+  return sanitizeId(basename);
 }

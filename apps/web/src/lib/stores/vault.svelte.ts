@@ -256,7 +256,11 @@ export class VaultStore {
       await this.repository.loadFiles(
         this.activeVaultId,
         vaultDir,
-        async (chunk) => {
+        async (chunk, current, total) => {
+          this.syncStats.total = total;
+          this.syncStats.progress = Math.round((current / total) * 100);
+          this.syncStats.created = current;
+
           if (this.services) {
             const indexPromises = Object.values(chunk).map((entity) => {
               const path = entity._path?.join("/") || `${entity.id}.md`;
@@ -334,7 +338,14 @@ export class VaultStore {
               (s) => (this.status = s),
             );
           })
-          .catch(() => {})
+          .catch((error) => {
+            console.error(
+              "Failed to schedule save: unable to resolve vault directory handle",
+              error,
+            );
+            this.status = "error";
+            this.errorMessage = "Failed to access storage for saving.";
+          })
       : Promise.resolve();
   }
 

@@ -51,7 +51,8 @@ class DemoService implements IDemoActions {
       // Ensure registry is initialized so we have rootHandle for OPFS operations (e.g. Map uploads)
       await vaultRegistry.init();
 
-      await vault.loadDemoData(demoName, data);
+      const entities = (data as any).entities || data;
+      await vault.loadDemoData(demoName, entities);
     } catch (err) {
       console.error("[DemoService] Failed to start demo:", err);
       uiStore.setGlobalError("Failed to start demo session.");

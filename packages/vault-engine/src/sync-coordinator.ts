@@ -275,9 +275,12 @@ export class SyncCoordinator {
 
       onStateChange({ status: "saving", syncType: "local" });
 
-      const pathToEntity = new Map(
-        Object.values(currentEntities).map((e) => [e._path?.join("/"), e]),
-      );
+      const pathToEntity = new Map<string, LocalEntity>();
+      for (const e of Object.values(currentEntities)) {
+        if (e._path) {
+          pathToEntity.set(e._path.join("/"), e);
+        }
+      }
 
       const result = await this.syncEngine.sync(
         activeVaultId,
