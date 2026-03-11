@@ -12,11 +12,13 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   test-e2e:
     name: Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       HUSKY: 0
     steps:
@@ -39,8 +41,11 @@ jobs:
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        # We override the reporter to include HTML for the artifact, while keeping 'list' for CI visibility
-        run: npm run test:e2e -- --reporter=list,html
+        # We run from the apps/web directory to ensure paths are correct
+        # We override workers to 2 (standard GHA) to speed up from 41 mins
+        # We use 'github' reporter for annotations and 'html' for the artifact
+        working-directory: apps/web
+        run: npx playwright test --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()
@@ -49,3 +54,10 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+      - name: Post Summary
+        if: always()
+        run: |
+          echo "### E2E Test Run Complete 🎭" >> $GITHUB_STEP_SUMMARY
+          echo "The full interactive HTML report has been uploaded as an **artifact**." >> $GITHUB_STEP_SUMMARY
+          echo "You can find it at the bottom of this page under 'Artifacts'. Download and open 'index.html' to see screenshots and traces." >> $GITHUB_STEP_SUMMARY
