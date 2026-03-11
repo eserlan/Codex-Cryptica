@@ -89,6 +89,33 @@
   );
   let showCreate = $derived(parsed.title && !alreadyExists && !isSaved);
 
+  let showActions = $derived.by(() => {
+    if (message.role !== "assistant") return false;
+    if (
+      message.type === "image" ||
+      message.type === "roll" ||
+      message.type === "wizard"
+    )
+      return false;
+
+    // Structured response detected
+    if (parsed.wasSplit || (parsed.title && parsed.title.length > 3))
+      return true;
+
+    // Explicit long response
+    if (message.isLongResponse) return true;
+
+    // Content length heuristic (only check after generation finishes)
+    if (
+      !oracle.isLoading &&
+      message.content &&
+      message.content.length > LORE_THRESHOLD
+    )
+      return true;
+
+    return false;
+  });
+
   // Capture state helper
   const captureState = (entityId: string) => {
     const entity = vault.entities[entityId];
@@ -278,12 +305,6 @@
 
   const handleUndo = async () => {
     await oracle.undo();
-    // Local UI update handled by reactivity if we needed it,
-    // but oracle.undo() manages the stack.
-    // We just might want to reset isSaved if we could correlate,
-    // but simply clicking undo is enough.
-    // Ideally we track if *this* message was the last action,
-    // but for now global undo is the pattern.
   };
 
   let isCopied = $state(false);
@@ -311,7 +332,6 @@
   async function copyToClipboard() {
     if (!message.content) return;
 
-    // Feature detection for rich text copy
     if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
       try {
         let contentToCopy = htmlCache;
@@ -336,7 +356,6 @@
       }
     }
 
-    // Fallback: Plain text only
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(message.content);
@@ -430,7 +449,7 @@
           </button>
         </div>
 
-        {#if message.isLongResponse && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
+        {#if showActions && (message.hasDrawAction || ((targetEntity || activeEntity || showCreate) && message.content.length > 20))}
           {#if !isSaved}
             <div
               class="mt-3 pt-3 border-t border-theme-border flex flex-wrap gap-2 justify-end"

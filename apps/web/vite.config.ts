@@ -47,6 +47,7 @@ export default defineConfig({
       "chronology-engine",
       "dice-engine",
       "@codex/sync-engine",
+      "@codex/oracle-engine",
       "@codex/proposer",
       "@codex/search-engine",
       "@codex/importer",

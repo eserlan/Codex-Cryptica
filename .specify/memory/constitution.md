@@ -35,6 +35,10 @@ To maintain build integrity and code quality, AI agents MUST:
 
 Every major feature MUST include a corresponding user-facing help description or guide article within `apps/web/src/lib/config/help-content.ts`. Features with complex interactions SHOULD also include a `FeatureHint` to guide first-time usage.
 
+### VIII. Dependency Injection (DI)
+
+To ensure unit-testability and modularity, all services and stores MUST use constructor-based dependency injection. Constructors should provide sensible defaults for production while allowing mocks to be passed in during tests. Export both the class and a default singleton. (See ADR 007).
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.

@@ -58,7 +58,7 @@ export const chatCommands: ChatCommand[] = [
   {
     name: "/help",
     description: "Show available commands",
-    handler: () => oracle.showHelp(),
+    handler: () => oracle.ask("/help"),
   },
   {
     name: "/clear",

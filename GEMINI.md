@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`) (067-oracle-store-refactor)
+- IndexedDB (for chat history persistence via `ChatHistoryService`) (067-oracle-store-refactor)
+
 - TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization) (066-die-rolling)
 - IndexedDB (via `idb`) for session-based roll history (066-die-rolling)
 
@@ -118,14 +121,14 @@ TypeScript: Follow standard conventions
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
 - **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
+- **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
 
+- 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
+- 067-oracle-store-refactor: Added N/A
+
 - 066-die-rolling: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization)
-
-- 065-move-oracle-sidebar: Added TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4
-
-- 064-help-blog-post: Added TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`)
 
 <!-- MANUAL ADDITIONS START -->

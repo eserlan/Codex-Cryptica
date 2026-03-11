@@ -183,7 +183,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "lite-mode",
     title: "Lite Mode (No AI)",
     content:
-      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /connect and /merge.",
+      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
     icon: "icon-[lucide--zap-off]",
   },
   "seo-prerendering": {
