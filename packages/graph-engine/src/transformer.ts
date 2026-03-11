@@ -219,15 +219,21 @@ export const getGraphStyle = (
     });
 
     baseStyle.push({
-      selector: "node[resolvedImage][width][height]",
+      selector: "node[resolvedImage]",
       style: {
         "background-fit": "cover",
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
-        width: "data(width)",
-        height: "data(height)",
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
+      },
+    });
+
+    baseStyle.push({
+      selector: "node[resolvedImage][width][height]",
+      style: {
+        width: "data(width)",
+        height: "data(height)",
       },
     });
   }

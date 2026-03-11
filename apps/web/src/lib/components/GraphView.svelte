@@ -691,6 +691,46 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
 
+  // IMAGE RESOLUTION: Resolve node images from OPFS/vault
+  $effect(() => {
+    const currentCy = cy;
+    const showImages = graph.showImages;
+    const elements = graph.elements; // Observe elements to trigger on new chunks
+
+    if (currentCy && elements && showImages) {
+      untrack(() => {
+        const nodesWithImages = currentCy
+          .nodes()
+          .filter(
+            (n) =>
+              (n.data("image") || n.data("thumbnail")) &&
+              !n.data("resolvedImage"),
+          );
+
+        if (nodesWithImages.length > 0) {
+          console.log(
+            `[GraphView] Resolving images for ${nodesWithImages.length} nodes...`,
+          );
+        }
+
+        nodesWithImages.forEach(async (node) => {
+          const imagePath = node.data("image") || node.data("thumbnail");
+          try {
+            const url = await vault.resolveImageUrl(imagePath);
+            if (url && !currentCy.destroyed()) {
+              node.data("resolvedImage", url);
+
+              // Trigger a style update so Cytoscape re-evaluates selectors like node[resolvedImage]
+              currentCy.style().update();
+            }
+          } catch (err) {
+            console.warn(`Failed to resolve image for ${node.id()}`, err);
+          }
+        });
+      });
+    }
+  });
+
   let lastStyle: any[] = [];
   $effect(() => {
     const currentStyle = graphStyle;
@@ -997,6 +1037,17 @@
         } else {
           // If no layout run, still might need focus update if elements were updated
           if (selectedId) applyFocus(selectedId);
+        }
+
+        // FINAL SYNC: When vault finishes loading, trigger one last layout
+        // to ensure everything is positioned correctly.
+        if (initialLoaded && !isVaultLoading) {
+          clearTimeout(stabilizationTimeout);
+          stabilizationTimeout = window.setTimeout(() => {
+            console.log(`[GraphView] Loading settled. Finalizing layout.`);
+            applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
+            _layoutReady = true;
+          }, 500);
         }
 
         return () => {
