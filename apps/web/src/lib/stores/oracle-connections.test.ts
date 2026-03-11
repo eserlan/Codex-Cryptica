@@ -82,9 +82,9 @@ vi.mock("../services/search", () => ({
 
 describe("OracleStore - /connect parsing", () => {
   beforeEach(() => {
-    oracle.messages = [];
+    oracle.reset();
+    oracle.setKey("test-key");
     vi.clearAllMocks();
-    (oracle as any).apiKey = "test-key";
   });
 
   it("should handle direct /connect command", async () => {
