@@ -685,55 +685,6 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
 
-  // IMAGE RESOLUTION: Resolve node images from OPFS/vault
-  $effect(() => {
-    const currentCy = cy;
-    const showImages = graph.showImages;
-    const elements = graph.elements; // Observe elements to trigger on new chunks
-
-    if (currentCy && elements && showImages) {
-      untrack(() => {
-        const nodesWithImages = currentCy
-          .nodes()
-          .filter(
-            (n) =>
-              (n.data("image") || n.data("thumbnail")) &&
-              !n.data("resolvedImage"),
-          );
-
-        if (nodesWithImages.length > 0) {
-          debugStore.log(
-            `[GraphView] Resolving images for ${nodesWithImages.length} nodes...`,
-          );
-        }
-
-        let styleUpdateTimeout: number | undefined;
-        nodesWithImages.forEach((node) => {
-          // Fire and forget the async resolution to keep it parallel and avoid linting overload errors
-          void (async () => {
-            const imagePath = node.data("image") || node.data("thumbnail");
-            try {
-              const url = await vault.resolveImageUrl(imagePath);
-              if (url && !currentCy.destroyed()) {
-                const oldUrl = node.data("resolvedImage");
-                node.data("resolvedImage", url);
-                if (oldUrl?.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
-
-                // Batch style updates to avoid layout thrashing during large loads
-                clearTimeout(styleUpdateTimeout);
-                styleUpdateTimeout = window.setTimeout(() => {
-                  if (!currentCy.destroyed()) currentCy.style().update();
-                }, 100);
-              }
-            } catch (err) {
-              debugStore.error(`Failed to resolve image for ${node.id()}`, err);
-            }
-          })();
-        });
-      });
-    }
-  });
-
   let lastStyle: any[] = [];
   $effect(() => {
     const currentStyle = graphStyle;
@@ -804,7 +755,7 @@
     }
   });
 
-  let lastShowImages = $state(graph.showImages);
+  let lastShowImages = graph.showImages;
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
@@ -942,17 +893,26 @@
                 const newVal = newData[k];
                 const curVal = currentData[k];
 
-                // Performance optimized check for TemporalMetadata objects
+                // Performance optimized check for TemporalMetadata objects and arrays
                 let isMatch: boolean;
                 if (
                   el.group === "nodes" &&
                   (k === "date" || k === "start_date" || k === "end_date")
                 ) {
                   isMatch = isTemporalMetadataEqual(newVal, curVal);
+                } else if (Array.isArray(newVal)) {
+                  // Shallow array equality for labels/tags
+                  isMatch =
+                    Array.isArray(curVal) &&
+                    newVal.length === curVal.length &&
+                    newVal.every((v, i) => v === curVal[i]);
                 } else if (typeof newVal === "object" && newVal !== null) {
-                  // OPTIMIZATION: Assume object inequality to avoid expensive JSON.stringify in hot loop.
-                  // Only TemporalMetadata (handled above) is expected to be an object in this context.
-                  isMatch = false;
+                  // Coordinates check
+                  if (k === "coordinates" && curVal) {
+                    isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
+                  } else {
+                    isMatch = false;
+                  }
                 } else {
                   isMatch = curVal === newVal;
                 }
@@ -1071,6 +1031,58 @@
       } catch (err) {
         debugStore.error("Cytoscape Error", err);
       }
+    }
+  });
+
+  // IMAGE RESOLUTION: Resolve node images from OPFS/vault
+  // Declared AFTER the elements effect to ensure it sees newly added nodes in the same tick.
+  $effect(() => {
+    const currentCy = cy;
+    const showImages = graph.showImages;
+    const elements = graph.elements; // Observe elements to trigger on new chunks
+
+    if (currentCy && elements && showImages) {
+      untrack(() => {
+        const nodesWithImages = currentCy
+          .nodes()
+          .filter(
+            (n) =>
+              (n.data("image") || n.data("thumbnail")) &&
+              !n.data("resolvedImage"),
+          );
+
+        if (nodesWithImages.length > 0) {
+          debugStore.log(
+            `[GraphView] Resolving images for ${nodesWithImages.length} nodes...`,
+          );
+        }
+
+        let styleUpdateTimeout: number | undefined;
+        nodesWithImages.forEach((node) => {
+          // Fire and forget the async resolution to keep it parallel and avoid linting overload errors
+          void (async () => {
+            const imagePath = node.data("image") || node.data("thumbnail");
+            try {
+              const url = await vault.resolveImageUrl(imagePath);
+              if (url && !currentCy.destroyed()) {
+                const oldUrl = node.data("resolvedImage");
+                if (oldUrl === url) return; // Skip if already same (prevents flicker)
+
+                node.data("resolvedImage", url);
+                if (oldUrl?.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
+
+                // Batch style updates to avoid layout thrashing during large loads
+                clearTimeout(styleUpdateTimeout);
+                styleUpdateTimeout = window.setTimeout(() => {
+                  if (!currentCy.destroyed()) currentCy.style().update();
+                }, 150); // Slightly longer debounce for stability
+              }
+            } catch (err) {
+              debugStore.error(`Failed to resolve image for ${node.id()}`, err);
+            }
+          })();
+        });
+      });
     }
   });
 
