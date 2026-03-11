@@ -5,6 +5,7 @@
   import { fly, fade, slide } from "svelte/transition";
   import RollLog from "./RollLog.svelte";
   import { tick } from "svelte";
+  import { getDiceIcon } from "$lib/utils/dice-icons";
 
   let formula = $state("");
   let error = $state("");
@@ -12,10 +13,9 @@
   let formulaInput = $state<HTMLInputElement>();
   let rollLogComponent = $state<ReturnType<typeof RollLog>>();
 
-  // Successive Click Accumulator
-  let pendingSides = $state<number | null>(null);
-  let pendingCount = $state(0);
-  let pendingTimeout = $state<any>(null);
+  // History Navigation
+  let historyIndex = $state(-1);
+  let originalFormula = "";
 
   const executeRoll = async (f: string) => {
     try {
@@ -23,6 +23,8 @@
       const command = diceParser.parse(f);
       const result = diceEngine.execute(command);
       await diceHistory.addResult(result, "modal");
+      // Reset history navigation
+      historyIndex = -1;
       // Scroll to top to see new result
       await tick();
       rollLogComponent?.scrollToTop();
@@ -32,9 +34,6 @@
   };
 
   const roll = (customFormula?: string) => {
-    // Flush any pending quick rolls first
-    flushPending();
-
     const f = customFormula || formula;
     if (!f) return;
     executeRoll(f);
@@ -44,28 +43,62 @@
     }
   };
 
-  const flushPending = () => {
-    if (pendingSides !== null && pendingCount > 0) {
-      executeRoll(`${pendingCount}d${pendingSides}`);
-      pendingSides = null;
-      pendingCount = 0;
-      if (pendingTimeout) clearTimeout(pendingTimeout);
+  const quickAdd = (sides: number) => {
+    if (!formula) {
+      formula = `1d${sides}`;
+    } else {
+      // Global increment: find if the formula contains this die type anywhere
+      // Match "XdSide" where X is a number
+      const diePattern = new RegExp(`(\\d+)d${sides}\\b`, "i");
+      const match = formula.match(diePattern);
+
+      if (match) {
+        // Increment the existing count
+        const count = parseInt(match[1]) + 1;
+        formula = formula.replace(diePattern, `${count}d${sides}`);
+      } else {
+        // Append as a new part
+        const trimmed = formula.trim();
+        const lastChar = trimmed.slice(-1);
+        if (/[0-9a-z]/i.test(lastChar)) {
+          formula = `${trimmed} + 1d${sides}`;
+        } else {
+          formula = `${trimmed} 1d${sides}`;
+        }
+      }
     }
+    formulaInput?.focus();
   };
 
-  const quickRoll = (sides: number) => {
-    if (pendingSides === sides) {
-      pendingCount++;
-    } else {
-      flushPending();
-      pendingSides = sides;
-      pendingCount = 1;
-    }
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const history = diceHistory.modalHistory;
+    // Get unique formulas in reverse chronological order (most recent first)
+    const uniqueFormulas = Array.from(
+      new Set(history.map((h) => h.formula)),
+    ).reverse();
 
-    if (pendingTimeout) clearTimeout(pendingTimeout);
-    pendingTimeout = setTimeout(() => {
-      flushPending();
-    }, 400); // 400ms window for accumulation
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (uniqueFormulas.length === 0) return;
+
+      if (historyIndex === -1) {
+        originalFormula = formula;
+      }
+
+      if (historyIndex < uniqueFormulas.length - 1) {
+        historyIndex++;
+        formula = uniqueFormulas[historyIndex];
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        historyIndex--;
+        formula = uniqueFormulas[historyIndex];
+      } else if (historyIndex === 0) {
+        historyIndex = -1;
+        formula = originalFormula;
+      }
+    }
   };
 
   const reroll = (f: string) => {
@@ -73,27 +106,25 @@
   };
 
   const diceTypes = [
-    { sides: 4, icon: "icon-[mdi--dice-d4]" },
-    { sides: 6, icon: "icon-[mdi--dice-d6]" },
-    { sides: 8, icon: "icon-[mdi--dice-d8]" },
-    { sides: 10, icon: "icon-[mdi--dice-d10]" },
-    { sides: 12, icon: "icon-[mdi--dice-d12]" },
-    { sides: 20, icon: "icon-[mdi--dice-d20]" },
-    { sides: 100, icon: "icon-[mdi--dice-multiple]" },
+    { sides: 4 },
+    { sides: 6 },
+    { sides: 8 },
+    { sides: 10 },
+    { sides: 12 },
+    { sides: 20 },
+    { sides: 100 },
   ];
 </script>
 
 {#if uiStore.showDiceModal}
   <!-- Backdrop -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 bg-theme-bg/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"
     onclick={() => {
-      flushPending();
       uiStore.showDiceModal = false;
     }}
-    onkeydown={(e) =>
-      (e.key === "Escape" || e.key === " ") &&
-      (flushPending(), (uiStore.showDiceModal = false))}
+    onkeydown={(e) => e.key === "Escape" && (uiStore.showDiceModal = false)}
     transition:fade={{ duration: 200 }}
     role="button"
     tabindex="0"
@@ -122,7 +153,6 @@
         <button
           class="p-1 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
           onclick={() => {
-            flushPending();
             uiStore.showDiceModal = false;
           }}
           aria-label="Close"
@@ -137,31 +167,24 @@
           {#each diceTypes as die}
             <button
               class="flex flex-col items-center justify-center w-12 h-14 rounded-lg border border-theme-border bg-theme-bg hover:border-theme-primary hover:text-theme-primary transition-all active:scale-90 group relative"
-              onclick={() => quickRoll(die.sides)}
-              title="Click multiple times to roll more dice"
+              onclick={() => quickAdd(die.sides)}
+              title="Add {die.sides}-sided die to formula"
             >
-              {#if pendingSides === die.sides && pendingCount > 0}
-                <span
-                  class="absolute -top-1 -right-1 bg-theme-primary text-theme-bg text-[10px] font-bold px-1.5 rounded-full shadow-lg animate-in zoom-in duration-100"
-                >
-                  {pendingCount}
-                </span>
-              {/if}
               <span
                 class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
                 >d{die.sides}</span
               >
-              <span class="{die.icon} w-5 h-5"></span>
+              <span class="{getDiceIcon(die.sides)} w-5 h-5"></span>
             </button>
           {/each}
         </div>
         <p class="text-[9px] text-center text-theme-muted italic opacity-60">
-          Click in succession to roll multiple dice
+          Click dice to build your formula
         </p>
       </div>
 
       <!-- Custom Formula -->
-      <div class="p-4 space-y-2 border-b border-theme-border/30">
+      <div class="p-4 space-y-3 border-b border-theme-border/30 bg-theme-bg/10">
         <form
           onsubmit={(e) => {
             e.preventDefault();
@@ -169,17 +192,18 @@
           }}
           class="flex gap-2"
         >
-          <div class="relative flex-1">
+          <div class="relative flex-1 group">
             <input
               bind:this={formulaInput}
               type="text"
               bind:value={formula}
+              onkeydown={handleKeyDown}
               placeholder="Enter formula (e.g. 2d20kh1 + 5)"
-              class="w-full bg-theme-bg border border-theme-border rounded-lg pl-3 pr-8 py-2 text-sm focus:border-theme-primary outline-none font-mono"
+              class="w-full bg-theme-bg border border-theme-border rounded-xl pl-4 pr-10 py-3 text-sm focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 outline-none font-mono transition-all placeholder:opacity-40"
             />
             <button
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary transition-colors"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary transition-colors p-1"
               onclick={() => (showHelp = !showHelp)}
               title="Formula Help"
             >
@@ -188,7 +212,7 @@
           </div>
           <button
             type="submit"
-            class="bg-theme-primary text-theme-bg font-bold px-4 py-2 rounded-lg text-xs tracking-widest hover:brightness-110 active:scale-95 transition-all"
+            class="bg-theme-primary text-theme-bg font-bold px-6 py-2 rounded-xl text-xs tracking-[0.2em] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-theme-primary/20"
           >
             ROLL
           </button>
