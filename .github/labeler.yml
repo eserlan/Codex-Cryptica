@@ -1,0 +1,17 @@
+# GitHub Labeler Configuration
+# https://github.com/actions/labeler
+
+web:
+  - any: ['apps/web/**/*']
+
+packages:
+  - any: ['packages/**/*']
+
+documentation:
+  - any: ['docs/**/*', './*.md']
+
+infrastructure:
+  - any: ['.github/**/*', 'turbo.json', 'package.json', 'package-lock.json']
+
+scripts:
+  - any: ['scripts/**/*']
