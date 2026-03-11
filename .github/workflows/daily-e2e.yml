@@ -1,0 +1,51 @@
+name: Daily E2E Tests
+
+on:
+  schedule:
+    # Run at 03:00 UTC every day
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: "e2e-tests"
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test-e2e:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npm exec --workspace=web -- playwright install --with-deps chromium
+
+      - name: Run E2E Tests
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+        # We override the reporter to include HTML for the artifact, while keeping 'list' for CI visibility
+        run: npm run test:e2e -- --reporter=list,html
+
+      - name: Upload Playwright Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
