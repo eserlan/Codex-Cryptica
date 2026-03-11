@@ -12,11 +12,13 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   test-e2e:
     name: Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       HUSKY: 0
     steps:
@@ -39,8 +41,10 @@ jobs:
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        # We override the reporter to include HTML for the artifact, while keeping 'list' for CI visibility
-        run: npm run test:e2e -- --reporter=list,html
+        working-directory: apps/web
+        # We use 'github' for annotations and 'list' for logs.
+        # The HTML report is for the artifact.
+        run: npm exec --workspace=web -- playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()
@@ -49,3 +53,16 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report/
           retention-days: 7
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "### E2E Test Run Complete 🎭" >> $GITHUB_STEP_SUMMARY
+          echo "The full interactive HTML report has been uploaded as an **artifact**." >> $GITHUB_STEP_SUMMARY
+          echo "#### How to view the report:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Scroll down to the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
+          echo "2. Download \`playwright-report\`." >> $GITHUB_STEP_SUMMARY
+          echo "3. Extract the zip and open \`index.html\` in your browser." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
+          echo "> Test failures are annotated directly in the **Summary** and **Files changed** tabs!" >> $GITHUB_STEP_SUMMARY
