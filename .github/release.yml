@@ -14,6 +14,8 @@ changelog:
         - feat
         - minor
         - major
+        - web
+        - packages
     - title: "⚡ Performance (Bolt)"
       labels:
         - performance
@@ -35,3 +37,5 @@ changelog:
       labels:
         - refactor
         - internal
+        - infrastructure
+        - scripts
