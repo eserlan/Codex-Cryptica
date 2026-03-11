@@ -779,6 +779,15 @@ class VaultStore {
     if (!this.activeVaultId || !vaultDir) return;
 
     this.status = "loading";
+    this.syncStats = {
+      updated: 0,
+      created: 0,
+      deleted: 0,
+      failed: 0,
+      total: 0,
+      progress: 0,
+    };
+
     try {
       if (this.services) {
         this.services.ai.clearStyleCache();
@@ -788,7 +797,16 @@ class VaultStore {
       const { entities } = await vaultIO.loadVaultFiles(
         this.activeVaultId,
         vaultDir,
+        (chunk, current, total) => {
+          // Incrementally update entities
+          this.entities = { ...this.entities, ...chunk };
+          this.syncStats.total = total;
+          this.syncStats.progress = Math.round((current / total) * 100);
+          this.syncStats.created = current; // Use created to show loaded count
+        },
       );
+
+      // Final sync of everything just in case (though onProgress should have handled it)
       this.entities = entities;
       this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
       this.canvases = await vaultIO.loadCanvasesFromDisk(vaultDir);

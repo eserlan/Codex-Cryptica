@@ -244,6 +244,11 @@ async function walkAllFiles(
 export async function loadVaultFiles(
   activeVaultId: string,
   vaultHandle: FileSystemDirectoryHandle,
+  onProgress?: (
+    chunkEntities: Record<string, LocalEntity>,
+    current: number,
+    total: number,
+  ) => void,
 ): Promise<{
   entities: Record<string, LocalEntity>;
 }> {
@@ -258,7 +263,8 @@ export async function loadVaultFiles(
     return name.endsWith(".md") || name.endsWith(".markdown");
   });
 
-  debugStore.log(`Found ${mdFiles.length} markdown files in OPFS.`);
+  const total = mdFiles.length;
+  debugStore.log(`Found ${total} markdown files in OPFS.`);
 
   const entities: Record<string, LocalEntity> = {};
 
@@ -308,14 +314,32 @@ export async function loadVaultFiles(
       await cacheService.set(cacheKey, lastModified, entity);
     }
 
-    if (!entity.id || entity.id === "undefined") return;
-    entities[entity.id] = entity;
+    if (!entity.id || entity.id === "undefined") return null;
+    return entity;
   };
 
-  const CHUNK_SIZE = 5;
+  const CHUNK_SIZE = 40;
   for (let i = 0; i < mdFiles.length; i += CHUNK_SIZE) {
     const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
-    await Promise.all(chunk.map(processFile));
+    const chunkResults = await Promise.all(chunk.map(processFile));
+
+    const chunkEntities: Record<string, LocalEntity> = {};
+    for (const entity of chunkResults) {
+      if (entity) {
+        entities[entity.id] = entity;
+        chunkEntities[entity.id] = entity;
+      }
+    }
+
+    if (onProgress) {
+      onProgress(chunkEntities, Math.min(i + CHUNK_SIZE, total), total);
+    }
+
+    // PERCEIVED PERF: Yield to main thread to allow Svelte and Cytoscape to render.
+    // This makes the "world building" effect visible even if processing is fast.
+    if (total > CHUNK_SIZE) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
   }
 
   debugStore.log(
