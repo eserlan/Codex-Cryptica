@@ -28,7 +28,7 @@
 **Learning:** In Svelte 5, having many separate `$derived.by` declarations that depend on the same reactive trigger (like a generic keystroke counter) causes each derived block to re-execute individually on every trigger increment. For instance, multiple `editor.isActive(...)` checks fired simultaneously cause unnecessary redundant computations per keystroke.
 **Action:** Group related active state checks that share the same trigger (like editor events) into a single `$state` object updated via a single callback. This prevents N separate reactive computations and avoids redundant re-renders.
 
-## 2026-03-11 - [Optimizing Object Comparison in Hot Loops]
+## 2026-03-11 - [Avoiding Array-Method Allocations in Cytoscape Node Loops]
 
 **Learning:** `Array.prototype.map` and `Array.prototype.some`/`every` methods inside Svelte 5 `$effect` loops that iterate over Cytoscape nodes create excessive temporary array allocations, leading to high garbage collection pressure during graph rendering and interactions.
 **Action:** Replace chaining functional array methods (like `.map` and `.every`) with tightly nested imperative `for` loops and `break` conditions in hot paths (like `GraphView.svelte` node filtering) to minimize memory allocations while maintaining early-exit optimizations.

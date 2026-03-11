@@ -710,6 +710,9 @@
       const active = Array.from(graph.activeLabels).map((l) => l.toLowerCase());
       const filterMode = graph.labelFilterMode;
 
+      // ⚡ Bolt Optimization: Scratch array declared once per effect run and reused
+      // across all nodes to avoid per-node allocations for lowercased labels.
+      const lowerScratch: string[] = [];
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
           const entity = vault.entities[node.id()];
@@ -718,15 +721,21 @@
           let hasMatch = active.length === 0;
 
           if (!hasMatch && entity.labels && entity.labels.length > 0) {
-            // ⚡ Bolt Optimization: Use imperative loops to prevent array allocations
-            // (.map) in hot loops that process every node in the graph.
             const labels = entity.labels;
+
+            // Pre-lowercase each label exactly once per node into the scratch array,
+            // then compare against active filters using simple string equality.
+            lowerScratch.length = labels.length;
+            for (let j = 0; j < labels.length; j++) {
+              lowerScratch[j] = labels[j].toLowerCase();
+            }
+
             if (filterMode === "AND") {
               hasMatch = true;
               for (let i = 0; i < active.length; i++) {
                 let found = false;
-                for (let j = 0; j < labels.length; j++) {
-                  if (labels[j].toLowerCase() === active[i]) {
+                for (let j = 0; j < lowerScratch.length; j++) {
+                  if (lowerScratch[j] === active[i]) {
                     found = true;
                     break;
                   }
@@ -739,8 +748,8 @@
             } else {
               hasMatch = false;
               for (let i = 0; i < active.length; i++) {
-                for (let j = 0; j < labels.length; j++) {
-                  if (labels[j].toLowerCase() === active[i]) {
+                for (let j = 0; j < lowerScratch.length; j++) {
+                  if (lowerScratch[j] === active[i]) {
                     hasMatch = true;
                     break;
                   }
