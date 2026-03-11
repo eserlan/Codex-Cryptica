@@ -4,6 +4,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import type { Entity } from "schema";
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
   import { ui } from "$lib/stores/ui.svelte";
@@ -148,18 +149,18 @@
   ) => {
     const currentCy = cy;
     if (!currentCy) {
-      console.warn(
+      debugStore.warn(
         `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
       );
       return;
     }
 
-    console.log(
+    debugStore.log(
       `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
     );
 
     if (isLayoutRunning && !isInitial && !isForced) {
-      console.log(
+      debugStore.log(
         `[GraphView][${getElapsed()}] applyCurrentLayout ABORTED (caller: ${caller}): isLayoutRunning is true!`,
       );
       return;
@@ -222,14 +223,8 @@
             return;
           }
 
-          console.log(
-            "[GraphView] Timeline layout calculated positions for",
-            Object.keys(positions).length,
-            "nodes",
-          );
-          console.log(
-            "[GraphView] Sample Timeline positions:",
-            Object.entries(positions).slice(0, 3),
+          debugStore.log(
+            `[GraphView] Timeline layout calculated positions for ${Object.keys(positions).length} nodes`,
           );
 
           const nodesToLayout = currentCy
@@ -247,7 +242,7 @@
               fit: true,
               padding: 20,
               stop: () => {
-                console.log(
+                debugStore.log(
                   `[GraphView][${getElapsed()}] Timeline layout COMPLETED`,
                 );
                 isLayoutRunning = false;
@@ -255,7 +250,7 @@
             })
             .run();
         } catch (err) {
-          console.error("Timeline layout failed:", err);
+          debugStore.error("Timeline layout failed", err);
           isLayoutRunning = false;
         }
       } else if (graph.orbitMode && graph.centralNodeId) {
@@ -268,7 +263,7 @@
             duration: 800,
             easing: "ease-out-cubic",
             complete: () => {
-              console.log(
+              debugStore.log(
                 `[GraphView][${getElapsed()}] Orbit animation COMPLETED`,
               );
               isLayoutRunning = false;
@@ -319,7 +314,7 @@
             isExitingTimeline ||
             isClumpedAtOrigin;
 
-          console.log(
+          debugStore.log(
             `[GraphView][${getElapsed()}] FCOSE Layout check: nodes=${nodes.length}, hasNewNodes=${hasNewNodes}, clumped=${isClumpedAtOrigin}, stable=${graph.stableLayout}, randomize=${randomize}, caller=${caller}`,
           );
 
@@ -348,7 +343,9 @@
             return;
           }
 
-          console.log(`[GraphView][${getElapsed()}] Starting FCOSE solver...`);
+          debugStore.log(
+            `[GraphView][${getElapsed()}] Starting FCOSE solver...`,
+          );
 
           const width = currentCy.width();
           const height = currentCy.height();
@@ -378,7 +375,7 @@
           layout.one("layoutstop", () => {
             if (currentLayout !== layout || currentCy.destroyed()) return;
 
-            console.log(
+            debugStore.log(
               `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
             );
 
@@ -392,7 +389,7 @@
               duration: 800,
               easing: "ease-out-quad",
               complete: () => {
-                console.log(
+                debugStore.log(
                   `[GraphView][${getElapsed()}] Layout Animation COMPLETED`,
                 );
                 isLayoutRunning = false;
@@ -428,15 +425,12 @@
 
           currentLayout.run();
         } catch (err) {
-          console.error("Layout failed:", err);
+          debugStore.error("Layout failed", err);
           isLayoutRunning = false;
         }
       }
     } catch (error) {
-      console.error(
-        "[GraphView] Unexpected error in applyCurrentLayout:",
-        error,
-      );
+      debugStore.error("Unexpected error in applyCurrentLayout", error);
       isLayoutRunning = false;
     }
   };
@@ -510,7 +504,7 @@
         if (!container) return; // Guard against rapid unmounts
 
         try {
-          console.log(
+          debugStore.log(
             `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
           );
           const instance = (await initGraph({
@@ -651,7 +645,7 @@
             }
           });
         } catch (error) {
-          console.error("Failed to initialize graph:", error);
+          debugStore.error("Failed to initialize graph", error);
         }
       }, 0);
     }
@@ -708,7 +702,7 @@
           );
 
         if (nodesWithImages.length > 0) {
-          console.log(
+          debugStore.log(
             `[GraphView] Resolving images for ${nodesWithImages.length} nodes...`,
           );
         }
@@ -721,7 +715,9 @@
             try {
               const url = await vault.resolveImageUrl(imagePath);
               if (url && !currentCy.destroyed()) {
+                const oldUrl = node.data("resolvedImage");
                 node.data("resolvedImage", url);
+                if (oldUrl?.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
 
                 // Batch style updates to avoid layout thrashing during large loads
                 clearTimeout(styleUpdateTimeout);
@@ -730,7 +726,7 @@
                 }, 100);
               }
             } catch (err) {
-              console.warn(`Failed to resolve image for ${node.id()}`, err);
+              debugStore.error(`Failed to resolve image for ${node.id()}`, err);
             }
           })();
         });
@@ -812,7 +808,7 @@
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
-      console.log(
+      debugStore.log(
         `[GraphView][${getElapsed()}] Elements effect triggered. Element count: ${graph.elements.length}`,
       );
       const showImagesChanged = lastShowImages !== graph.showImages;
@@ -850,7 +846,7 @@
         }
 
         if (elementsToRemove.length > 0) {
-          console.log(
+          debugStore.log(
             `[GraphView] Removing ${elementsToRemove.length} elements`,
           );
           currentCy.remove(currentCy.collection(elementsToRemove));
@@ -876,7 +872,7 @@
         }
 
         if (newNodes.length > 0 || newEdges.length > 0) {
-          console.log(
+          debugStore.log(
             `[GraphView] Adding ${newNodes.length} nodes and ${newEdges.length} edges`,
           );
           // Always add nodes first
@@ -918,7 +914,7 @@
                 elementMap.set(e.id(), e);
               });
             } catch (e) {
-              console.warn("Failed to add some edges to graph", e);
+              debugStore.warn("Failed to add some edges to graph", e);
             }
           }
         }
@@ -930,6 +926,12 @@
             if (node) {
               const currentData = node.data() as Record<string, any>;
               const newData = el.data as Record<string, any>;
+
+              // Preserve the resolvedImage if it exists in the graph instance but not in the new data
+              const existingResolvedImage = node.data("resolvedImage");
+              if (existingResolvedImage && !newData.resolvedImage) {
+                newData.resolvedImage = existingResolvedImage;
+              }
 
               // Robust equality check to prevent unnecessary style recalculations
               let changed = false;
@@ -1006,7 +1008,7 @@
 
         if (shouldRunLayout && !isLayoutRunning) {
           if (isFirstElements) {
-            console.log(
+            debugStore.log(
               `[GraphView] Initial elements arriving. Making visible and debouncing layout.`,
             );
             // First chunk! Make it visible immediately so the user sees progress.
@@ -1029,14 +1031,14 @@
             // Subsequent chunks during load:
             // Just add them to the view and keep the camera fitted.
             // We do NOT run the heavy math solver here.
-            console.log(
+            debugStore.log(
               `[GraphView] Incremental chunk during load. Refitting camera.`,
             );
             graphVisible = true;
             currentCy.fit(currentCy.nodes(), 20);
           } else {
             // Normal post-load operation
-            console.log(
+            debugStore.log(
               `[GraphView] structural update after load. Triggering layout.`,
             );
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
@@ -1051,7 +1053,7 @@
         if (initialLoaded && !isVaultLoading) {
           clearTimeout(stabilizationTimeout);
           stabilizationTimeout = window.setTimeout(() => {
-            console.log(`[GraphView] Loading settled. Finalizing layout.`);
+            debugStore.log(`[GraphView] Loading settled. Finalizing layout.`);
             applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
             _layoutReady = true;
           }, 500);
@@ -1067,7 +1069,7 @@
           }
         };
       } catch (err) {
-        console.error("Cytoscape Error:", err);
+        debugStore.error("Cytoscape Error", err);
       }
     }
   });

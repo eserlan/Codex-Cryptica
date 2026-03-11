@@ -798,9 +798,6 @@ class VaultStore {
         this.activeVaultId,
         vaultDir,
         (chunk, current, total) => {
-          console.log(
-            `[VaultStore] Updating entities with chunk of ${Object.keys(chunk).length}. Total: ${total}`,
-          );
           // Incrementally update entities
           this.entities = { ...this.entities, ...chunk };
           this.syncStats.total = total;
