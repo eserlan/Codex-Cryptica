@@ -41,11 +41,10 @@ jobs:
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        # We run from the apps/web directory to ensure paths are correct
-        # We override workers to 2 (standard GHA) to speed up from 41 mins
-        # We use 'github' reporter for annotations and 'html' for the artifact
         working-directory: apps/web
-        run: npx playwright test --reporter=list,html,github --workers=2
+        # We use 'github' for annotations and 'list' for logs.
+        # The HTML report is for the artifact.
+        run: npx playwright test --config playwright.config.ts --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()
@@ -55,9 +54,15 @@ jobs:
           path: apps/web/playwright-report/
           retention-days: 7
 
-      - name: Post Summary
+      - name: Generate Summary
         if: always()
         run: |
           echo "### E2E Test Run Complete 🎭" >> $GITHUB_STEP_SUMMARY
           echo "The full interactive HTML report has been uploaded as an **artifact**." >> $GITHUB_STEP_SUMMARY
-          echo "You can find it at the bottom of this page under 'Artifacts'. Download and open 'index.html' to see screenshots and traces." >> $GITHUB_STEP_SUMMARY
+          echo "#### How to view the report:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Scroll down to the **Artifacts** section at the bottom of this page." >> $GITHUB_STEP_SUMMARY
+          echo "2. Download \`playwright-report\`." >> $GITHUB_STEP_SUMMARY
+          echo "3. Extract the zip and open \`index.html\` in your browser." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!TIP]" >> $GITHUB_STEP_SUMMARY
+          echo "> Test failures are annotated directly in the **Summary** and **Files changed** tabs!" >> $GITHUB_STEP_SUMMARY
