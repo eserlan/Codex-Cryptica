@@ -44,7 +44,7 @@ jobs:
         working-directory: apps/web
         # We use 'github' for annotations and 'list' for logs.
         # The HTML report is for the artifact.
-        run: npx playwright test --config playwright.config.ts --reporter=list,html,github --workers=2
+        run: npm exec --workspace=web -- playwright test --config=playwright.config.ts --reporter=list,html,github --workers=2
 
       - name: Upload Playwright Report
         if: always()
