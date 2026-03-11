@@ -29,7 +29,8 @@ export interface UndoableAction {
   id: string;
   messageId?: string;
   description: string;
-  revert: () => Promise<void>;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
   timestamp: number;
 }
 
@@ -44,8 +45,9 @@ class OracleStore {
   isModal = $state(false);
   activeStyleTitle = $state<string | null>(null);
 
-  // Undo Stack (Transient, not persisted to DB)
+  // Undo/Redo Stacks (Transient, not persisted to DB)
   undoStack = $state<UndoableAction[]>([]);
+  redoStack = $state<UndoableAction[]>([]);
 
   private channel: BroadcastChannel | null = null;
 
@@ -90,16 +92,25 @@ class OracleStore {
 
   pushUndoAction(
     description: string,
-    revert: () => Promise<void>,
+    undo: () => Promise<void>,
     messageId?: string,
+    redo?: () => Promise<void>,
   ) {
     this.undoStack.push({
       id: this.generateId(),
       messageId,
       description,
-      revert,
+      undo,
+      redo:
+        redo ||
+        (async () => {
+          console.warn(`Redo not implemented for: ${description}`);
+        }),
       timestamp: Date.now(),
     });
+    // New action clears redo stack (standard behavior)
+    this.redoStack = [];
+
     // Limit stack size to prevent memory leaks, keep last 50 actions
     if (this.undoStack.length > 50) {
       this.undoStack.shift();
@@ -112,14 +123,14 @@ class OracleStore {
     this.isUndoing = true;
     this.broadcast();
 
-    // Peek the action first
-    const action = this.undoStack[this.undoStack.length - 1];
+    // Pop the action
+    const action = this.undoStack.pop();
     if (action) {
       try {
-        await action.revert();
+        await action.undo();
 
-        // Remove from stack ONLY after successful revert
-        this.undoStack.pop();
+        // Push to redo stack
+        this.redoStack.push(action);
 
         // Broadcast local event for UI components (like ChatMessage)
         this.channel?.postMessage({
@@ -133,7 +144,7 @@ class OracleStore {
           {
             id: this.generateId(),
             role: "system",
-            content: `↩️ Undid action: **${action.description}**`,
+            content: `↩️ Undid: **${action.description}**`,
           },
         ];
         this.lastUpdated = Date.now();
@@ -141,17 +152,66 @@ class OracleStore {
         this.saveToDB();
       } catch (err: any) {
         console.error("Undo failed:", err);
-        // We leave it on the stack? Copilot suggested pushing it back,
-        // but since we peeked, we just don't pop it.
-        // Actually, if it failed, it might be stuck.
-        // But letting the user retry is better than losing it.
+        // Put it back
+        this.undoStack.push(action);
 
         this.messages = [
           ...this.messages,
           {
             id: this.generateId(),
             role: "system",
-            content: `❌ Undo failed: ${err.message}. You can try again.`,
+            content: `❌ Undo failed: ${err.message}.`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+      } finally {
+        this.isUndoing = false;
+        this.broadcast();
+      }
+    } else {
+      this.isUndoing = false;
+      this.broadcast();
+    }
+  }
+
+  async redo() {
+    if (this.redoStack.length === 0 || this.isUndoing) return;
+
+    this.isUndoing = true;
+    this.broadcast();
+
+    const action = this.redoStack.pop();
+    if (action) {
+      try {
+        await action.redo();
+
+        // Push back to undo stack
+        this.undoStack.push(action);
+
+        // Show success system message
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `🔄 Redid: **${action.description}**`,
+          },
+        ];
+        this.lastUpdated = Date.now();
+        this.broadcast();
+        this.saveToDB();
+      } catch (err: any) {
+        console.error("Redo failed:", err);
+        // Put it back
+        this.redoStack.push(action);
+
+        this.messages = [
+          ...this.messages,
+          {
+            id: this.generateId(),
+            role: "system",
+            content: `❌ Redo failed: ${err.message}.`,
           },
         ];
         this.lastUpdated = Date.now();
@@ -398,7 +458,12 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
 - \`/clear\`: Clear chat history.
-- \`/help\`: Show this message.`
+- \`/help\`: Show this message.
+
+**Keyboard Shortcuts:**
+- \`Cmd/Ctrl + Z\`: Undo (Regret)
+- \`Cmd/Ctrl + Y\`: Redo (Reregret)
+- \`Cmd/Ctrl + K\`: Search`
           : `### Oracle Command Guide
 The Lore Oracle supports several slash commands to help you manage your vault:
 
@@ -415,7 +480,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
 - \`/merge "Source" into "Target"\`: Quick deterministic merge.
 - \`/clear\`: Clear conversation history.
-- \`/help\`: Show this guide.`,
+- \`/help\`: Show this guide.
+
+**Keyboard Shortcuts:**
+- \`Cmd/Ctrl + Z\`: Undo (Regret) last action.
+- \`Cmd/Ctrl + Y\` or \`Cmd + Shift + Z\`: Redo (Reregret).
+- \`Cmd/Ctrl + K\`: Search.`,
       },
     ];
     this.lastUpdated = Date.now();
@@ -788,16 +858,23 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             },
           ];
 
-          // Push Undo
+          // Push Undo/Redo
           this.pushUndoAction(
             `Merge ${sourceEntity.title} into ${targetEntity.title}`,
             async () => {
-              // Re-create source
+              // UNDO: Re-create source and restore target
               await vault.createEntity(beforeSource.type, beforeSource.title, {
                 ...beforeSource,
               });
-              // Restore target
               vault.updateEntity(targetId, beforeTarget);
+            },
+            undefined, // no messageId
+            async () => {
+              // REDO: Re-execute merge using the captured proposal
+              await nodeMergeService.executeMerge(proposal, [
+                sourceId,
+                targetId,
+              ]);
             },
           );
 
@@ -907,11 +984,22 @@ The Lore Oracle supports several slash commands to help you manage your vault:
               },
             ];
 
-            // Push Undo
+            // Push Undo/Redo
             this.pushUndoAction(
               `Connect ${source.title} to ${target.title}`,
               async () => {
+                // UNDO: Remove connection
                 await vault.removeConnection(source.id, target.id, typeToUse);
+              },
+              undefined, // no messageId
+              async () => {
+                // REDO: Re-add connection
+                await vault.addConnection(
+                  source.id,
+                  target.id,
+                  typeToUse,
+                  label,
+                );
               },
             );
 

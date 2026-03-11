@@ -382,7 +382,7 @@ describe("OracleStore", () => {
 
       expect(oracle.undoStack.length).toBe(1);
       expect(oracle.undoStack[0].description).toBe("Test Action");
-      expect(oracle.undoStack[0].revert).toBe(revertFn);
+      expect(oracle.undoStack[0].undo).toBe(revertFn);
       expect(oracle.undoStack[0].messageId).toBe("msg-123");
       expect(oracle.undoStack[0].id).toBeDefined();
     });
@@ -408,7 +408,7 @@ describe("OracleStore", () => {
       expect(oracle.isUndoing).toBe(false);
     });
 
-    it("should pop and execute revert function on successful undo", async () => {
+    it("should pop and execute undo function on successful undo", async () => {
       const revertFn = vi.fn().mockResolvedValue(undefined);
       oracle.pushUndoAction("Test Action", revertFn);
 
@@ -426,7 +426,7 @@ describe("OracleStore", () => {
 
       const lastMessage = oracle.messages[oracle.messages.length - 1];
       expect(lastMessage.role).toBe("system");
-      expect(lastMessage.content).toContain("Undid action: **Test Action**");
+      expect(lastMessage.content).toContain("Undid: **Test Action**");
     });
 
     it("should keep action on stack if revert fails", async () => {
@@ -448,13 +448,42 @@ describe("OracleStore", () => {
       for (let i = 0; i < 55; i++) {
         oracle.pushUndoAction(`Action ${i}`, async () => {});
       }
-
       expect(oracle.undoStack.length).toBe(50);
       expect(oracle.undoStack[0].description).toBe("Action 5"); // First 5 should be shifted out
       expect(oracle.undoStack[49].description).toBe("Action 54");
     });
-  });
 
+    it("should push undid action to redo stack", async () => {
+      const revertFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", revertFn);
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+      expect(oracle.redoStack[0].description).toBe("Test Action");
+    });
+
+    it("should clear redo stack when a new action is pushed", async () => {
+      oracle.pushUndoAction("Action 1", async () => {});
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+
+      oracle.pushUndoAction("Action 2", async () => {});
+      expect(oracle.redoStack.length).toBe(0);
+    });
+
+    it("should execute redo function on successful redo", async () => {
+      const undoFn = vi.fn().mockResolvedValue(undefined);
+      const redoFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", undoFn, undefined, redoFn);
+
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+
+      await oracle.redo();
+      expect(redoFn).toHaveBeenCalled();
+      expect(oracle.redoStack.length).toBe(0);
+      expect(oracle.undoStack.length).toBe(1);
+    });
+  });
   describe("Draw Button Logic", () => {
     it("should set hasDrawAction for assistant messages in advanced tier", async () => {
       oracle.apiKey = "test-key";
