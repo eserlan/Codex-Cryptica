@@ -426,7 +426,7 @@ describe("OracleStore", () => {
 
       const lastMessage = oracle.messages[oracle.messages.length - 1];
       expect(lastMessage.role).toBe("system");
-      expect(lastMessage.content).toContain("Undid action: **Test Action**");
+      expect(lastMessage.content).toContain("Undid: **Test Action**");
     });
 
     it("should keep action on stack if revert fails", async () => {
@@ -448,10 +448,26 @@ describe("OracleStore", () => {
       for (let i = 0; i < 55; i++) {
         oracle.pushUndoAction(`Action ${i}`, async () => {});
       }
-
       expect(oracle.undoStack.length).toBe(50);
       expect(oracle.undoStack[0].description).toBe("Action 5"); // First 5 should be shifted out
       expect(oracle.undoStack[49].description).toBe("Action 54");
+    });
+
+    it("should push undid action to redo stack", async () => {
+      const revertFn = vi.fn().mockResolvedValue(undefined);
+      oracle.pushUndoAction("Test Action", revertFn);
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+      expect(oracle.redoStack[0].description).toBe("Test Action");
+    });
+
+    it("should clear redo stack when a new action is pushed", async () => {
+      oracle.pushUndoAction("Action 1", async () => {});
+      await oracle.undo();
+      expect(oracle.redoStack.length).toBe(1);
+
+      oracle.pushUndoAction("Action 2", async () => {});
+      expect(oracle.redoStack.length).toBe(0);
     });
   });
 

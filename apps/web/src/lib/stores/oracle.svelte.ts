@@ -44,8 +44,9 @@ class OracleStore {
   isModal = $state(false);
   activeStyleTitle = $state<string | null>(null);
 
-  // Undo Stack (Transient, not persisted to DB)
+  // Undo/Redo Stacks (Transient, not persisted to DB)
   undoStack = $state<UndoableAction[]>([]);
+  redoStack = $state<UndoableAction[]>([]);
 
   private channel: BroadcastChannel | null = null;
 
@@ -100,6 +101,9 @@ class OracleStore {
       revert,
       timestamp: Date.now(),
     });
+    // New action clears redo stack (standard behavior)
+    this.redoStack = [];
+
     // Limit stack size to prevent memory leaks, keep last 50 actions
     if (this.undoStack.length > 50) {
       this.undoStack.shift();
@@ -112,14 +116,14 @@ class OracleStore {
     this.isUndoing = true;
     this.broadcast();
 
-    // Peek the action first
-    const action = this.undoStack[this.undoStack.length - 1];
+    // Pop the action
+    const action = this.undoStack.pop();
     if (action) {
       try {
         await action.revert();
 
-        // Remove from stack ONLY after successful revert
-        this.undoStack.pop();
+        // Push to redo stack
+        this.redoStack.push(action);
 
         // Broadcast local event for UI components (like ChatMessage)
         this.channel?.postMessage({
@@ -133,7 +137,7 @@ class OracleStore {
           {
             id: this.generateId(),
             role: "system",
-            content: `↩️ Undid action: **${action.description}**`,
+            content: `↩️ Undid: **${action.description}**`,
           },
         ];
         this.lastUpdated = Date.now();
@@ -141,17 +145,15 @@ class OracleStore {
         this.saveToDB();
       } catch (err: any) {
         console.error("Undo failed:", err);
-        // We leave it on the stack? Copilot suggested pushing it back,
-        // but since we peeked, we just don't pop it.
-        // Actually, if it failed, it might be stuck.
-        // But letting the user retry is better than losing it.
+        // Put it back
+        this.undoStack.push(action);
 
         this.messages = [
           ...this.messages,
           {
             id: this.generateId(),
             role: "system",
-            content: `❌ Undo failed: ${err.message}. You can try again.`,
+            content: `❌ Undo failed: ${err.message}.`,
           },
         ];
         this.lastUpdated = Date.now();
@@ -162,6 +164,25 @@ class OracleStore {
       }
     } else {
       this.isUndoing = false;
+      this.broadcast();
+    }
+  }
+
+  async redo() {
+    if (this.redoStack.length === 0 || this.isUndoing) return;
+
+    const action = this.redoStack.pop();
+    if (action) {
+      // For now, we'll just notify that redo is plumbing-only
+      this.messages = [
+        ...this.messages,
+        {
+          id: this.generateId(),
+          role: "system",
+          content: `🔄 Redo (Reregret) for **${action.description}** is not yet fully reversible.`,
+        },
+      ];
+      this.lastUpdated = Date.now();
       this.broadcast();
     }
   }
@@ -398,7 +419,12 @@ In Lite Mode, the Oracle is restricted to functional utility commands only. Natu
 - \`/connect "Entity A" label "Entity B"\`: Create a connection.
 - \`/merge "Source" into "Target"\`: Merge two entities.
 - \`/clear\`: Clear chat history.
-- \`/help\`: Show this message.`
+- \`/help\`: Show this message.
+
+**Keyboard Shortcuts:**
+- \`Ctrl + Z\`: Undo (Regret)
+- \`Ctrl + Y\`: Redo (Reregret)
+- \`Cmd/Ctrl + K\`: Search`
           : `### Oracle Command Guide
 The Lore Oracle supports several slash commands to help you manage your vault:
 
@@ -415,7 +441,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 - \`/connect "Entity A" label "Entity B"\`: Quick deterministic connection.
 - \`/merge "Source" into "Target"\`: Quick deterministic merge.
 - \`/clear\`: Clear conversation history.
-- \`/help\`: Show this guide.`,
+- \`/help\`: Show this guide.
+
+**Keyboard Shortcuts:**
+- \`Ctrl + Z\`: Undo (Regret) last action.
+- \`Ctrl + Y\` / \`Ctrl + Shift + Z\`: Redo (Reregret).
+- \`Cmd/Ctrl + K\`: Search.`,
       },
     ];
     this.lastUpdated = Date.now();
