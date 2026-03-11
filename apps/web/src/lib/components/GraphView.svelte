@@ -823,8 +823,16 @@
     const currentCy = cy;
     const showImages = graph.showImages;
     const elements = graph.elements;
+    const isVaultLoading = vault.status === "loading";
 
-    if (currentCy && elements && showImages) {
+    // FLICKER PREVENTION: Defer all image loading until the graph has finished incrementally loading.
+    // This stops Cytoscape from thrashing styles and re-rendering on every single chunk.
+    if (
+      currentCy &&
+      elements &&
+      showImages &&
+      (!isVaultLoading || didFinalizeLoad)
+    ) {
       untrack(() => {
         const nodesWithImages = currentCy
           .nodes()
