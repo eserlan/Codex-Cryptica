@@ -843,63 +843,56 @@
               !resolvingIds.has(n.id()),
           );
 
-        const CONCURRENCY_LIMIT = 8;
-        let active = 0;
-        let styleUpdateTimeout: number | undefined;
-        const queue: { node: any; imagePath: string }[] = [];
+        if (nodesWithImages.length === 0) return;
 
-        const scheduleStyleUpdate = () => {
-          clearTimeout(styleUpdateTimeout);
-          styleUpdateTimeout = window.setTimeout(() => {
-            if (currentCy && !currentCy.destroyed()) currentCy.style().update();
-          }, 150);
-        };
+        // Mark them all as resolving immediately so they aren't picked up by subsequent reactive triggers
+        nodesWithImages.forEach((n) => resolvingIds.add(n.id()));
 
-        const processNext = () => {
-          while (active < CONCURRENCY_LIMIT && queue.length > 0) {
-            const { node, imagePath } = queue.shift()!;
-            active += 1;
-            resolvingIds.add(node.id());
-
-            void (async () => {
-              try {
+        // Bulk process all images concurrently
+        void (async () => {
+          try {
+            const results = await Promise.all(
+              nodesWithImages.map(async (node) => {
+                const imagePath = node.data("image") || node.data("thumbnail");
                 let url = urlCache.get(imagePath);
                 if (!url) {
                   url = await vault.resolveImageUrl(imagePath);
                   if (url) urlCache.set(imagePath, url);
                 }
+                return {
+                  node,
+                  url,
+                  oldUrl: node.data("resolvedImage") as string | undefined,
+                };
+              }),
+            );
 
-                if (!url || currentCy.destroyed() || !graph.showImages) {
-                  resolvingIds.delete(node.id());
-                  return;
-                }
+            // Abort if graph was destroyed or images turned off during the async resolution
+            if (currentCy.destroyed() || !graph.showImages) {
+              nodesWithImages.forEach((n) => resolvingIds.delete(n.id()));
+              return;
+            }
 
-                const oldUrl = node.data("resolvedImage");
-                if (oldUrl === url) {
-                  resolvingIds.delete(node.id());
-                  return;
+            // Apply all resolved images in a single atomic batch
+            currentCy.batch(() => {
+              for (const { node, url, oldUrl } of results) {
+                if (url && url !== oldUrl) {
+                  node.data("resolvedImage", url);
+                  if (oldUrl?.startsWith("blob:")) {
+                    URL.revokeObjectURL(oldUrl);
+                  }
                 }
-
-                node.data("resolvedImage", url);
-                if (oldUrl?.startsWith("blob:")) {
-                  URL.revokeObjectURL(oldUrl);
-                }
-                scheduleStyleUpdate();
-              } catch (err) {
-                debugStore.error(`Image Error: ${node.id()}`, err);
-              } finally {
-                active -= 1;
-                if (queue.length > 0 && !currentCy.destroyed()) processNext();
               }
-            })();
-          }
-        };
+            });
 
-        nodesWithImages.forEach((node) => {
-          const path = node.data("image") || node.data("thumbnail");
-          if (path) queue.push({ node, imagePath: path });
-        });
-        if (queue.length > 0) processNext();
+            // Trigger one final, definitive style update for all new images
+            currentCy.style().update();
+          } catch (err) {
+            debugStore.error("Bulk image resolution failed", err);
+            // On failure, unmark so they might be retried
+            nodesWithImages.forEach((n) => resolvingIds.delete(n.id()));
+          }
+        })();
       });
     } else if (currentCy && !showImages) {
       untrack(() => {
