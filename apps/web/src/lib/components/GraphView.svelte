@@ -685,7 +685,9 @@
 
         if (newNodes.length > 0 || newEdges.length > 0) {
           if (newNodes.length > 0) {
-            currentCy.add(newNodes).forEach((n) => elementMap.set(n.id(), n));
+            currentCy.add(newNodes).forEach((n) => {
+              elementMap.set(n.id(), n);
+            });
           }
           const validEdges = newEdges.filter((edge) => {
             const sourceId = edge.data.source!;
@@ -697,7 +699,9 @@
             );
           });
           if (validEdges.length > 0) {
-            currentCy.add(validEdges).forEach((e) => elementMap.set(e.id(), e));
+            currentCy.add(validEdges).forEach((e) => {
+              elementMap.set(e.id(), e);
+            });
           }
         }
 
