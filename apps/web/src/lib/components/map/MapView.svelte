@@ -5,6 +5,7 @@
   import { vault } from "../../stores/vault.svelte";
   import { uiStore } from "../../stores/ui.svelte";
   import { themeStore } from "../../stores/theme.svelte";
+  import { oracle } from "../../stores/oracle.svelte";
   import { hexToRgb } from "../../utils/color";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
@@ -165,6 +166,40 @@
           opacity: 0.5,
         },
       });
+
+      // Render Visual Brush Indicator directly on canvas for zero-lag tracking
+      if (mapStore.isGMMode && isAltPressed && isPointerOver) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.save();
+          const primaryRGB = hexToRgb(themeStore.activeTheme.tokens.primary);
+
+          // Outer circle
+          ctx.beginPath();
+          ctx.arc(
+            lastMousePos.x,
+            lastMousePos.y,
+            visualBrushRadius,
+            0,
+            Math.PI * 2,
+          );
+          ctx.strokeStyle = `rgba(${primaryRGB}, 0.5)`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Fill
+          ctx.fillStyle = `rgba(${primaryRGB}, 0.1)`;
+          ctx.fill();
+
+          // Center dot
+          ctx.beginPath();
+          ctx.arc(lastMousePos.x, lastMousePos.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${primaryRGB}, 0.5)`;
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
     }
     animationFrameId = requestAnimationFrame(draw);
   }
@@ -188,12 +223,28 @@
   const KEYBOARD_ZOOM_STEP = 0.1;
   let isPanning = false;
   let isPainting = false;
-  let needsMaskUpdate = false;
-  let lastMousePos = { x: 0, y: 0 };
+  let maskSnapshot: HTMLCanvasElement | null = null;
+  let lastMousePos = $state({ x: 0, y: 0 });
+  let lastPaintPos: { x: number; y: number } | null = null;
+  let lastPaintImgCoords: { x: number; y: number } | null = null;
   let mouseDownPos = { x: 0, y: 0 };
+  let isAltPressed = $state(false);
+  let isPointerOver = $state(false);
+  let cachedRect: DOMRect | null = null;
+
+  const visualBrushRadius = $derived(
+    mapStore.brushRadius * mapStore.viewport.zoom,
+  );
+
+  function updateCachedRect() {
+    if (container) {
+      cachedRect = container.getBoundingClientRect();
+    }
+  }
 
   function onKeyDown(event: KeyboardEvent) {
-    const { key } = event;
+    const { key, altKey } = event;
+    isAltPressed = altKey;
     const viewport = mapStore.viewport;
     let handled = false;
 
@@ -249,85 +300,171 @@
     }
   }
 
+  function onKeyUp(event: KeyboardEvent) {
+    isAltPressed = event.altKey;
+  }
+
   function onMouseDown(e: MouseEvent) {
+    updateCachedRect();
+    if (cachedRect) {
+      lastMousePos = {
+        x: e.clientX - cachedRect.left,
+        y: e.clientY - cachedRect.top,
+      };
+    }
     mouseDownPos = { x: e.clientX, y: e.clientY };
-    lastMousePos = { x: e.clientX, y: e.clientY };
+    isAltPressed = e.altKey;
 
     if (mapStore.isGMMode && e.altKey) {
       isPainting = true;
-      paintFog(e);
+      lastPaintPos = { x: lastMousePos.x, y: lastMousePos.y };
+      lastPaintImgCoords = mapStore.unproject(lastPaintPos);
+
+      // Capture snapshot for undo
+      if (maskCanvas) {
+        maskSnapshot = document.createElement("canvas");
+        maskSnapshot.width = maskCanvas.width;
+        maskSnapshot.height = maskCanvas.height;
+        maskSnapshot.getContext("2d")?.drawImage(maskCanvas, 0, 0);
+      }
+
+      paintFog(
+        lastMousePos.x,
+        lastMousePos.y,
+        e.shiftKey || e.ctrlKey || e.metaKey,
+      );
     } else if (e.button === 0) {
       isPanning = true;
     }
   }
 
   function onMouseMove(e: MouseEvent) {
+    if (!cachedRect) updateCachedRect();
+    if (!cachedRect) return;
+
+    const mouseX = e.clientX - cachedRect.left;
+    const mouseY = e.clientY - cachedRect.top;
+    isAltPressed = e.altKey;
+
     if (isPainting) {
-      paintFog(e);
-    } else if (isPanning) {
-      const dx = e.clientX - lastMousePos.x;
-      const dy = e.clientY - lastMousePos.y;
+      paintFog(mouseX, mouseY, e.shiftKey || e.ctrlKey || e.metaKey);
+    } else if (isPanning && !isAltPressed) {
+      const dx = mouseX - lastMousePos.x;
+      const dy = mouseY - lastMousePos.y;
 
       mapStore.updateViewport(
         { x: mapStore.viewport.pan.x + dx, y: mapStore.viewport.pan.y + dy },
         mapStore.viewport.zoom,
       );
     }
-    lastMousePos = { x: e.clientX, y: e.clientY };
+    lastMousePos = { x: mouseX, y: mouseY };
   }
 
-  function paintFog(e: MouseEvent) {
-    if (!maskCanvas || !container || !mapImage || needsMaskUpdate) {
+  function onMouseEnter() {
+    isPointerOver = true;
+    updateCachedRect();
+  }
+
+  function onMouseLeave() {
+    isPointerOver = false;
+  }
+
+  function paintFog(x: number, y: number, isHiding: boolean) {
+    if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId) {
       return;
     }
 
-    needsMaskUpdate = true;
+    const imgCoords = mapStore.unproject({ x, y });
+    const prevImgCoords = lastPaintImgCoords || imgCoords;
+    const ctx = maskCanvas!.getContext("2d")!;
 
-    requestAnimationFrame(() => {
-      if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId) {
-        needsMaskUpdate = false;
-        return;
-      }
+    ctx.save();
 
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+    const isErase = isHiding;
 
-      const imgCoords = mapStore.unproject({ x, y });
-      const ctx = maskCanvas!.getContext("2d")!;
+    if (isErase) {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.fillStyle = "white";
+      ctx.strokeStyle = "white";
+      ctx.globalCompositeOperation = "source-over";
+    }
 
-      ctx.save();
+    const centerX = imgCoords.x + mapImage!.width / 2;
+    const centerY = imgCoords.y + mapImage!.height / 2;
+    const prevX = prevImgCoords.x + mapImage!.width / 2;
+    const prevY = prevImgCoords.y + mapImage!.height / 2;
 
-      const isHiding = e.shiftKey || e.ctrlKey || e.metaKey;
+    // Draw a line from previous to current to fill gaps
+    ctx.beginPath();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = mapStore.brushRadius * 2;
+    ctx.moveTo(prevX, prevY);
+    ctx.lineTo(centerX, centerY);
+    ctx.stroke();
 
-      // In maskCanvas, transparent means "hidden", opacity means "revealed (punched hole)"
-      // Default Alt+drag = REVEAL (white opacity in the mask)
-      // Alt+Shift+drag or Alt+Ctrl+drag = HIDE (erase the mask canvas, restoring the fog)
-      if (isHiding) {
-        ctx.globalCompositeOperation = "destination-out";
-      } else {
-        ctx.fillStyle = "white";
-        ctx.globalCompositeOperation = "source-over";
-      }
+    // Also draw the circle at the end point for perfect rounding
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, mapStore.brushRadius, 0, Math.PI * 2);
+    ctx.fill();
 
-      ctx.beginPath();
-      ctx.arc(
-        imgCoords.x + mapImage!.width / 2,
-        imgCoords.y + mapImage!.height / 2,
-        mapStore.brushRadius / mapStore.viewport.zoom,
-        0,
-        Math.PI * 2,
-      );
-      ctx.fill();
-      ctx.restore();
-      needsMaskUpdate = false;
-    });
+    ctx.restore();
+    lastPaintPos = { x, y };
+    lastPaintImgCoords = imgCoords;
   }
 
   async function onMouseUp(e: MouseEvent) {
     console.log("[MapView] mouseup, wasPainting:", isPainting);
     if (isPainting) {
+      const snapshotBefore = maskSnapshot;
+      const currentMapId = mapStore.activeMapId;
+
+      // Capture after state
+      const snapshotAfter = document.createElement("canvas");
+      snapshotAfter.width = maskCanvas!.width;
+      snapshotAfter.height = maskCanvas!.height;
+      snapshotAfter.getContext("2d")?.drawImage(maskCanvas!, 0, 0);
+
+      oracle.pushUndoAction(
+        "Map Drawing",
+        async () => {
+          // UNDO
+          if (
+            snapshotBefore &&
+            maskCanvas &&
+            mapStore.activeMapId === currentMapId
+          ) {
+            const ctx = maskCanvas.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+              ctx.drawImage(snapshotBefore, 0, 0);
+              await mapStore.saveMask(maskCanvas);
+            }
+          }
+        },
+        undefined, // No messageId for map drawing
+        async () => {
+          // REDO
+          if (
+            snapshotAfter &&
+            maskCanvas &&
+            mapStore.activeMapId === currentMapId
+          ) {
+            const ctx = maskCanvas.getContext("2d");
+            if (ctx) {
+              ctx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+              ctx.drawImage(snapshotAfter, 0, 0);
+              await mapStore.saveMask(maskCanvas);
+            }
+          }
+        },
+      );
+
       await mapStore.saveMask(maskCanvas!);
+      maskSnapshot = null;
+      lastPaintPos = null;
+      lastPaintImgCoords = null;
     }
 
     if (isPanning) {
@@ -405,8 +542,13 @@
     const relX = (panX - mapStore.viewport.pan.x) / oldZoom;
     const relY = (panY - mapStore.viewport.pan.y) / oldZoom;
 
-    const newPanX = panX - relX * newZoom;
-    const newPanY = panY - relY * newZoom;
+    // Use current pan when Alt is held to avoid shifting the map during resize
+    const newPanX = isAltPressed
+      ? mapStore.viewport.pan.x
+      : panX - relX * newZoom;
+    const newPanY = isAltPressed
+      ? mapStore.viewport.pan.y
+      : panY - relY * newZoom;
 
     mapStore.updateViewport({ x: newPanX, y: newPanY }, newZoom);
     mapAnnouncement = `Zoom level ${newZoom.toFixed(2)}`;
@@ -414,19 +556,23 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   role="application"
+  aria-roledescription="map"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="0"
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
-  onmouseleave={onMouseUp}
   ondblclick={onDoubleClick}
   onwheel={onWheel}
   onkeydown={onKeyDown}
+  onkeyup={onKeyUp}
 >
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
 

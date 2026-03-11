@@ -63,7 +63,12 @@
   {#if mapStore.activeMap}
     <MapView>
       <!-- HUD Overlay -->
-      <div class="absolute top-4 left-4 z-10 flex gap-2">
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
+      <div
+        class="absolute top-4 left-4 z-10 flex gap-2"
+        role="presentation"
+        onmousedown={(e) => e.stopPropagation()}
+      >
         {#if mapStore.canGoBack}
           <button
             class="px-3 py-1.5 bg-theme-surface border border-theme-border text-theme-text text-xs font-bold rounded-lg hover:border-theme-primary transition-colors flex items-center gap-2"
@@ -129,8 +134,11 @@
         </button>
       </div>
 
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
+        role="presentation"
+        onmousedown={(e) => e.stopPropagation()}
       >
         <button
           class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode

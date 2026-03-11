@@ -366,6 +366,36 @@
       searchStore.open();
     }
 
+    const target = event.target as HTMLElement;
+    const isTyping =
+      target?.tagName === "INPUT" ||
+      target?.tagName === "TEXTAREA" ||
+      target?.closest("[contenteditable]");
+
+    if (isTyping) return;
+
+    const isUndo =
+      (event.metaKey || event.ctrlKey) &&
+      event.key.toLowerCase() === "z" &&
+      !event.shiftKey;
+
+    const isRedo =
+      (event.metaKey || event.ctrlKey) &&
+      (event.key.toLowerCase() === "y" ||
+        (event.key.toLowerCase() === "z" && event.shiftKey));
+
+    // Undo (Regret)
+    if (isUndo) {
+      event.preventDefault();
+      oracle.undo();
+    }
+
+    // Redo (Reregret)
+    if (isRedo) {
+      event.preventDefault();
+      oracle.redo();
+    }
+
     if (
       ((event.ctrlKey || event.metaKey) && event.key === "ArrowUp") ||
       (event.altKey && event.key.toLowerCase() === "z")
