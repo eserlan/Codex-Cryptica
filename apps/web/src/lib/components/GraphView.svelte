@@ -138,13 +138,30 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
+  // Performance timing
+  const appStartTime = performance.now();
+  const getElapsed = () => (performance.now() - appStartTime).toFixed(2) + "ms";
+
   const applyCurrentLayout = async (
     isInitial = false,
     isForced = false,
     caller = "unknown",
   ) => {
     const currentCy = cy;
-    if (!currentCy) return;
+    if (!currentCy) {
+      if (import.meta.env.DEV) {
+        debugStore.warn(
+          `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
+        );
+      }
+      return;
+    }
+
+    if (import.meta.env.DEV) {
+      debugStore.log(
+        `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
+      );
+    }
 
     if (isLayoutRunning && !isInitial && !isForced) {
       return;
@@ -429,6 +446,11 @@
         if (!container) return;
 
         try {
+          if (import.meta.env.DEV) {
+            debugStore.log(
+              `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
+            );
+          }
           const instance = (await initGraph({
             container,
             elements: untrack(() => graph.elements),
@@ -592,13 +614,6 @@
         activeStyleJson = styleJson;
         untrack(() => {
           currentCy.style(currentStyle);
-          // Re-apply cached images after a global style reset
-          currentCy.nodes().forEach((node) => {
-            const cachedUrl = urlCache.get(
-              node.data("image") || node.data("thumbnail"),
-            );
-            if (cachedUrl) node.style("background-image", cachedUrl);
-          });
         });
       }
     }
@@ -719,38 +734,46 @@
                 if (
                   k === "id" ||
                   k === "resolvedImage" ||
+                  k === "image" ||
+                  k === "thumbnail" ||
                   !Object.hasOwn(newData, k)
                 )
                   continue;
                 const newVal = newData[k];
                 const curVal = currentData[k];
                 let isMatch = newVal === curVal;
+
                 if (!isMatch) {
                   if (
                     el.group === "nodes" &&
                     (k === "date" || k === "start_date" || k === "end_date")
-                  )
+                  ) {
                     isMatch = isTemporalMetadataEqual(newVal, curVal);
-                  else if (Array.isArray(newVal))
+                  } else if (Array.isArray(newVal)) {
                     isMatch =
                       Array.isArray(curVal) &&
                       newVal.length === curVal.length &&
                       newVal.every((v, i) => v === curVal[i]);
-                  else if (
-                    typeof newVal === "object" &&
-                    newVal !== null &&
-                    curVal !== null &&
-                    typeof curVal === "object"
-                  ) {
-                    if (k === "coordinates")
-                      isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
-                    else if (k === "metadata")
+                  } else if (typeof newVal === "object" && newVal !== null) {
+                    if (k === "coordinates") {
                       isMatch =
+                        !!curVal &&
+                        newVal.x === curVal.x &&
+                        newVal.y === curVal.y;
+                    } else if (k === "metadata") {
+                      isMatch =
+                        !!curVal &&
                         newVal.coordinates?.x === curVal.coordinates?.x &&
                         newVal.coordinates?.y === curVal.coordinates?.y &&
                         newVal.isRevealed === curVal.isRevealed;
+                    } else {
+                      // Fallback for other objects (e.g. dateLabel which shouldn't be an object but just in case)
+                      isMatch =
+                        JSON.stringify(newVal) === JSON.stringify(curVal);
+                    }
                   }
                 }
+
                 if (!isMatch) {
                   patch[k] = newVal;
                   hasChanges = true;
@@ -785,7 +808,9 @@
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
                 applyCurrentLayout(true, false, "Initial Startup");
-                initialLoaded = true;
+                untrack(() => {
+                  initialLoaded = true;
+                });
               }
             }, 500);
           } else if (isVaultLoading) {
@@ -856,9 +881,10 @@
           .filter(
             (n) =>
               (n.data("image") || n.data("thumbnail")) &&
-              !n.style("background-image") &&
+              !n.data("resolvedImage") &&
               !resolvingIds.has(n.id()),
           );
+
         const CONCURRENCY_LIMIT = 8;
         let active = 0;
         let styleUpdateTimeout: number | undefined;
@@ -890,9 +916,16 @@
                   return;
                 }
 
-                // NUCLEAR OPTION: Direct element styling bypasses global rule re-evaluations
-                node.style("background-image", url);
+                const oldUrl = node.data("resolvedImage");
+                if (oldUrl === url) {
+                  resolvingIds.delete(node.id());
+                  return;
+                }
+
                 node.data("resolvedImage", url);
+                if (oldUrl?.startsWith("blob:")) {
+                  URL.revokeObjectURL(oldUrl);
+                }
                 scheduleStyleUpdate();
               } catch (err) {
                 debugStore.error(`Image Error: ${node.id()}`, err);
@@ -913,10 +946,16 @@
     } else if (currentCy && !showImages) {
       untrack(() => {
         resolvingIds.clear();
-        currentCy.nodes().forEach((node) => {
-          node.removeStyle("background-image");
-          node.removeData("resolvedImage");
-        });
+        currentCy
+          .nodes()
+          .filter((n) => n.data("resolvedImage"))
+          .forEach((node) => {
+            const oldUrl = node.data("resolvedImage");
+            if (oldUrl?.startsWith("blob:")) {
+              URL.revokeObjectURL(oldUrl);
+            }
+            node.removeData("resolvedImage");
+          });
         currentCy.style().update();
       });
     }
