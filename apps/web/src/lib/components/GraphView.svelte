@@ -138,31 +138,15 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  // Performance timing
-  const appStartTime = performance.now();
-  const getElapsed = () => (performance.now() - appStartTime).toFixed(2) + "ms";
-
   const applyCurrentLayout = async (
     isInitial = false,
     isForced = false,
     caller = "unknown",
   ) => {
     const currentCy = cy;
-    if (!currentCy) {
-      debugStore.warn(
-        `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
-      );
-      return;
-    }
-
-    debugStore.log(
-      `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
-    );
+    if (!currentCy) return;
 
     if (isLayoutRunning && !isInitial && !isForced) {
-      debugStore.log(
-        `[GraphView][${getElapsed()}] applyCurrentLayout ABORTED (caller: ${caller}): isLayoutRunning is true!`,
-      );
       return;
     }
 
@@ -223,10 +207,6 @@
             return;
           }
 
-          debugStore.log(
-            `[GraphView] Timeline layout calculated positions for ${Object.keys(positions).length} nodes`,
-          );
-
           const nodesToLayout = currentCy
             .nodes()
             .filter((n) => positions[n.id()] !== undefined);
@@ -242,9 +222,6 @@
               fit: true,
               padding: 20,
               stop: () => {
-                debugStore.log(
-                  `[GraphView][${getElapsed()}] Timeline layout COMPLETED`,
-                );
                 isLayoutRunning = false;
               },
             })
@@ -263,9 +240,6 @@
             duration: 800,
             easing: "ease-out-cubic",
             complete: () => {
-              debugStore.log(
-                `[GraphView][${getElapsed()}] Orbit animation COMPLETED`,
-              );
               isLayoutRunning = false;
             },
           });
@@ -275,11 +249,6 @@
       } else {
         // Main-thread FCOSE Layout
         try {
-          const nodes = currentCy.nodes();
-
-          // ⚡ Bolt Optimization: Replace multiple chained .filter() and .some() passes
-          // with a single imperative loop to prevent intermediate array allocations
-          // and reduce GC pressure during layout calculations.
           const snapshotNodes: any[] = [];
           let hasNewNodes = false;
           let nodesAtOrigin = 0;
@@ -314,10 +283,6 @@
             isExitingTimeline ||
             isClumpedAtOrigin;
 
-          debugStore.log(
-            `[GraphView][${getElapsed()}] FCOSE Layout check: nodes=${nodes.length}, hasNewNodes=${hasNewNodes}, clumped=${isClumpedAtOrigin}, stable=${graph.stableLayout}, randomize=${randomize}, caller=${caller}`,
-          );
-
           // Bypass logic: Only skip the math solver if we are in stable mode
           // and we already have positions for everything, AND it's not a broken clump or mode change.
           if (
@@ -337,15 +302,9 @@
               }, 1000);
             }
 
-            // If we are already loaded and just updated images in stable mode,
-            // we don't even want to fit/snap the camera. Just stay perfectly still.
             isLayoutRunning = false;
             return;
           }
-
-          debugStore.log(
-            `[GraphView][${getElapsed()}] Starting FCOSE solver...`,
-          );
 
           const width = currentCy.width();
           const height = currentCy.height();
@@ -358,7 +317,6 @@
             boundingBox: { x1: 0, y1: 0, x2: width, y2: height },
 
             // ANISOTROPIC ADAPTIVE PHYSICS
-            // We drastically differentiate landscape vs portrait to "reward" the available axis.
             gravity: isLandscape ? 0.1 : 0.8,
             idealEdgeLength: isLandscape ? 140 : 60,
             nodeRepulsion: isLandscape
@@ -375,10 +333,6 @@
           layout.one("layoutstop", () => {
             if (currentLayout !== layout || currentCy.destroyed()) return;
 
-            debugStore.log(
-              `[GraphView][${getElapsed()}] FCOSE math complete. Animating to positions...`,
-            );
-
             currentCy.resize();
             graphVisible = true;
             currentCy.animate({
@@ -389,9 +343,6 @@
               duration: 800,
               easing: "ease-out-quad",
               complete: () => {
-                debugStore.log(
-                  `[GraphView][${getElapsed()}] Layout Animation COMPLETED`,
-                );
                 isLayoutRunning = false;
                 // Adaptive: Unlock image layouts once the initial burst is finished
                 if (isInitial) {
@@ -425,7 +376,7 @@
 
           currentLayout.run();
         } catch (err) {
-          debugStore.error("Layout failed", err);
+          console.error("Layout failed:", err);
           isLayoutRunning = false;
         }
       }
@@ -444,47 +395,25 @@
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    const target = document.activeElement;
+    if (
+      target?.tagName === "INPUT" ||
+      target?.tagName === "TEXTAREA" ||
+      (target as HTMLElement)?.isContentEditable
+    )
+      return;
+
     if (e.key.toLowerCase() === "t" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      const target = document.activeElement;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        (target as HTMLElement)?.isContentEditable
-      )
-        return;
       graph.toggleTimeline();
       applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (vault.isGuest) return;
-      // Don't toggle if user is typing in an input (though we don't have many here yet)
-      const target = document.activeElement;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        (target as HTMLElement)?.isContentEditable
-      )
-        return;
-      toggleConnectMode();
+      if (!vault.isGuest) toggleConnectMode();
     }
     if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      const target = document.activeElement;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        (target as HTMLElement)?.isContentEditable
-      )
-        return;
       graph.toggleLabels();
     }
     if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      const target = document.activeElement;
-      if (
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        (target as HTMLElement)?.isContentEditable
-      )
-        return;
       graph.toggleImages();
     }
     if (e.key === "Escape" && connectMode) {
@@ -496,24 +425,16 @@
 
   onMount(() => {
     if (container) {
-      // Defer graph initialization to next task queue tick.
-      // This yields the main thread back to the browser so Svelte can completely
-      // remove the "Initiating Neural Interface..." screen and paint the empty frame
-      // BEFORE Cytoscape synchronously locks up the main thread with 1000s of elements.
       initTimer = setTimeout(async () => {
-        if (!container) return; // Guard against rapid unmounts
+        if (!container) return;
 
         try {
-          debugStore.log(
-            `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
-          );
           const instance = (await initGraph({
             container,
-            elements: untrack(() => graph.elements), // Initialize with current elements
+            elements: untrack(() => graph.elements),
             style: untrack(() => graphStyle),
           })) as any;
 
-          // If the timer was cleared by onDestroy, cleanup the orphan instance
           if (initTimer === null) {
             instance.destroy();
             return;
@@ -521,7 +442,6 @@
 
           cy = instance;
 
-          // Expose for E2E testing
           if (import.meta.env.DEV || (window as any).__E2E__) {
             (window as any).cy = instance;
           }
@@ -532,10 +452,7 @@
             clearTimeout(hoverTimeout);
             hoverTimeout = window.setTimeout(() => {
               const renderedPos = node.renderedPosition();
-              hoverPosition = {
-                x: renderedPos.x,
-                y: renderedPos.y,
-              };
+              hoverPosition = { x: renderedPos.x, y: renderedPos.y };
               hoveredEntityId = node.id();
             }, HOVER_DELAY);
           });
@@ -575,20 +492,15 @@
                 sourceId = null;
                 targetNode.removeClass("selected-source");
               } else {
-                // Create the connection in the store
                 await vault.addConnection(sourceId, targetId, "neutral");
-
                 instance?.$(".selected-source").removeClass("selected-source");
                 sourceId = null;
-                connectMode = false; // Auto exit connect mode
+                connectMode = false;
               }
             } else if (graph.orbitMode) {
-              // US2: Switch center if clicked in orbit mode
               graph.setCentralNode(targetId);
-              // Also show the detail panel for the node
               selectedId = targetId;
             } else {
-              // Selection Logic for Detail Panel
               selectedId = targetId;
             }
           });
@@ -597,28 +509,19 @@
           instance.on("cxttap", "edge", (evt: any) => {
             if (vault.isGuest) return;
             const edge = evt.target;
-            const sourceId = edge.data("source");
-            const targetId = edge.data("target");
-            const currentLabel = edge.data("label") || "";
-            const currentType = edge.data("connectionType") || "neutral";
-
             editingEdge = {
-              source: sourceId,
-              target: targetId,
-              label: currentLabel,
-              type: currentType,
+              source: edge.data("source"),
+              target: edge.data("target"),
+              label: edge.data("label") || "",
+              type: edge.data("connectionType") || "neutral",
             };
-            edgeEditInput = currentLabel;
-            edgeEditType = currentType;
+            edgeEditInput = editingEdge.label;
+            edgeEditType = editingEdge.type;
           });
 
           instance.on("tap", (evt: any) => {
             if (evt.target === instance) {
-              // Only clear selection if we clicked strictly on background, not on node
-              if (!connectMode) {
-                selectedId = null;
-              }
-              // Close edge editor on background tap
+              if (!connectMode) selectedId = null;
               editingEdge = null;
             }
           });
@@ -633,7 +536,6 @@
             const node = evt.target;
             const id = node.id();
             const pos = node.position();
-
             const entity = vault.entities[id];
             if (entity) {
               await vault.updateEntity(id, {
@@ -656,7 +558,7 @@
       try {
         currentLayout.stop();
       } catch {
-        // Ignore
+        /* ignore */
       }
     }
     if (initTimer) {
@@ -664,17 +566,7 @@
       initTimer = null;
     }
     if (cy) {
-      // Cleanup blob URLs to prevent memory leaks
-      cy.nodes("[resolvedImage]").forEach((node) => {
-        const url = node.data("resolvedImage");
-        if (url && url.startsWith("blob:")) {
-          URL.revokeObjectURL(url);
-        }
-      });
-
-      if (import.meta.env.DEV) {
-        delete (window as any).cy;
-      }
+      if (import.meta.env.DEV) delete (window as any).cy;
       cy.destroy();
       cy = undefined;
     }
@@ -684,17 +576,31 @@
   // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
+  let didFinalizeLoad = $state(false);
 
-  let lastStyle: any[] = [];
+  // FLICKER PREVENTION: URL Cache for stable blob identity
+  const urlCache = new Map<string, string>();
+
+  // FLICKER PREVENTION: Smart Style Management
+  let activeStyleJson = "";
   $effect(() => {
     const currentStyle = graphStyle;
     const currentCy = cy;
     if (currentCy && currentStyle) {
-      const _isNewRef = currentStyle !== lastStyle;
-      lastStyle = currentStyle;
-      untrack(() => {
-        currentCy.style(currentStyle);
-      });
+      const styleJson = JSON.stringify(currentStyle);
+      if (styleJson !== activeStyleJson) {
+        activeStyleJson = styleJson;
+        untrack(() => {
+          currentCy.style(currentStyle);
+          // Re-apply cached images after a global style reset
+          currentCy.nodes().forEach((node) => {
+            const cachedUrl = urlCache.get(
+              node.data("image") || node.data("thumbnail"),
+            );
+            if (cachedUrl) node.style("background-image", cachedUrl);
+          });
+        });
+      }
     }
   });
 
@@ -703,25 +609,20 @@
     if (currentCy && graph.activeLabels) {
       const active = Array.from(graph.activeLabels).map((l) => l.toLowerCase());
       const filterMode = graph.labelFilterMode;
-
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
           const entity = vault.entities[node.id()];
           if (!entity) return;
-
           let hasMatch = active.length === 0;
-
           if (!hasMatch) {
             const entityLabels = (entity.labels || []).map((l) =>
               l.toLowerCase(),
             );
-            if (filterMode === "AND") {
-              hasMatch = active.every((l) => entityLabels.includes(l));
-            } else {
-              hasMatch = active.some((l) => entityLabels.includes(l));
-            }
+            hasMatch =
+              filterMode === "AND"
+                ? active.every((l) => entityLabels.includes(l))
+                : active.some((l) => entityLabels.includes(l));
           }
-
           if (hasMatch) {
             node.removeClass("filtered-out");
           } else {
@@ -741,11 +642,10 @@
         currentCy.nodes().forEach((node) => {
           const entity = entities[node.id()];
           if (!entity) return;
-
-          const hasMatch =
-            activeCategories.size === 0 || activeCategories.has(entity.type);
-
-          if (hasMatch) {
+          if (
+            activeCategories.size === 0 ||
+            activeCategories.has(entity.type)
+          ) {
             node.removeClass("category-filtered-out");
           } else {
             node.addClass("category-filtered-out");
@@ -755,291 +655,195 @@
     }
   });
 
-  let lastShowImages = graph.showImages;
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
-      debugStore.log(
-        `[GraphView][${getElapsed()}] Elements effect triggered. Element count: ${graph.elements.length}`,
-      );
-      const showImagesChanged = lastShowImages !== graph.showImages;
-      lastShowImages = graph.showImages;
-      const _images = graph.showImages; // Re-run layout when images are toggled
       try {
-        currentCy.resize(); // Ensure viewport is up to date
-
-        // 0. Take a consistent snapshot of the entire elements array
-        // This breaks reactivity and prevents infinite loops/DataCloneErrors
+        currentCy.resize();
         const snapshotElements = $state.snapshot(graph.elements);
-
-        // 1. Build Set of target IDs (avoiding map allocation)
-        const targetIds = new Set<string>();
-        const snapshotLength = snapshotElements.length;
-        for (let i = 0; i < snapshotLength; i++) {
-          targetIds.add(snapshotElements[i].data.id);
-        }
-
-        // 2. Build map of current elements AND identify removals in one pass
-        const elementMap = new Map<string, any>();
+        const targetIds = new Set(snapshotElements.map((el) => el.data.id));
+        const elementMap = new Map();
         const elementsToRemove: any[] = [];
 
-        // Iterating cy.elements() directly avoids Array.from overhead
-        const currentElements = currentCy.elements();
-        const currentLength = currentElements.length;
-        for (let i = 0; i < currentLength; i++) {
-          const el = currentElements[i];
+        currentCy.elements().forEach((el) => {
           const id = el.id();
-          if (!targetIds.has(id)) {
-            elementsToRemove.push(el);
-          } else {
-            elementMap.set(id, el);
-          }
-        }
+          if (!targetIds.has(id)) elementsToRemove.push(el);
+          else elementMap.set(id, el);
+        });
 
-        if (elementsToRemove.length > 0) {
-          debugStore.log(
-            `[GraphView] Removing ${elementsToRemove.length} elements`,
-          );
+        if (elementsToRemove.length > 0)
           currentCy.remove(currentCy.collection(elementsToRemove));
-        }
 
-        // 3. Add new elements safely
-        // OPTIMIZATION: Single pass to filter and classify new elements
-        // Avoids multiple filter passes and intermediate array allocations
         const newNodes: GraphNode[] = [];
         const newEdges: GraphEdge[] = [];
-
-        // Use cached snapshotLength for consistency and minor performance gains
-        for (let i = 0; i < snapshotLength; i++) {
-          const el = snapshotElements[i];
+        snapshotElements.forEach((el) => {
           if (!elementMap.has(el.data.id)) {
-            // Use 'in' check to match original behavior strictly
-            if (!("source" in el.data)) {
-              newNodes.push(el as GraphNode);
-            } else {
-              newEdges.push(el as GraphEdge);
-            }
+            if (!("source" in el.data)) newNodes.push(el as GraphNode);
+            else newEdges.push(el as GraphEdge);
           }
-        }
+        });
 
         if (newNodes.length > 0 || newEdges.length > 0) {
-          debugStore.log(
-            `[GraphView] Adding ${newNodes.length} nodes and ${newEdges.length} edges`,
-          );
-          // Always add nodes first
           if (newNodes.length > 0) {
-            const addedNodes = currentCy.add(newNodes);
-            // OPTIMIZATION: Hydrate elementMap with ONLY the newly added nodes
-            // Avoids O(N) full graph scan
-            addedNodes.forEach((n) => {
-              elementMap.set(n.id(), n);
-            });
+            currentCy.add(newNodes).forEach((n) => elementMap.set(n.id(), n));
           }
-
-          // Then add edges, but ONLY if both source and target exist in the graph
           const validEdges = newEdges.filter((edge) => {
-            const edgeData = edge.data as {
-              source?: string;
-              target?: string;
-              id: string;
-            };
-            const sourceId = edgeData.source!;
-            const targetId = edgeData.target!;
-
-            if (!currentCy) return false;
-
-            const sourceExists = currentCy.$id(sourceId).nonempty();
-            const targetExists = currentCy.$id(targetId).nonempty();
-
-            if (!sourceExists || !targetExists) {
-              return false;
-            }
-            return true;
+            const sourceId = edge.data.source!;
+            const targetId = edge.data.target!;
+            return (
+              currentCy &&
+              currentCy.$id(sourceId).nonempty() &&
+              currentCy.$id(targetId).nonempty()
+            );
           });
-
           if (validEdges.length > 0) {
-            try {
-              const addedEdges = currentCy.add(validEdges);
-              // OPTIMIZATION: Hydrate elementMap with ONLY the newly added edges
-              addedEdges.forEach((e) => {
-                elementMap.set(e.id(), e);
-              });
-            } catch (e) {
-              debugStore.warn("Failed to add some edges to graph", e);
-            }
+            currentCy.add(validEdges).forEach((e) => elementMap.set(e.id(), e));
           }
         }
 
-        // 4. Update existing elements (labels, etc) - Data Sync only
+        // Surgical Data Sync
         currentCy.batch(() => {
           snapshotElements.forEach((el) => {
             const node = elementMap.get(el.data.id);
             if (node) {
-              const currentData = node.data() as Record<string, any>;
+              const currentData = node.data();
               const newData = el.data as Record<string, any>;
+              const patch: Record<string, any> = {};
+              let hasChanges = false;
 
-              // Preserve the resolvedImage if it exists in the graph instance but not in the new data
-              const existingResolvedImage = node.data("resolvedImage");
-              if (existingResolvedImage && !newData.resolvedImage) {
-                newData.resolvedImage = existingResolvedImage;
-              }
-
-              // Robust equality check to prevent unnecessary style recalculations
-              let changed = false;
               for (const k in newData) {
-                // Skip ID as it's the lookup key
-                if (k === "id" || !Object.hasOwn(newData, k)) continue;
-
+                if (
+                  k === "id" ||
+                  k === "resolvedImage" ||
+                  !Object.hasOwn(newData, k)
+                )
+                  continue;
                 const newVal = newData[k];
                 const curVal = currentData[k];
-
-                // Performance optimized check for TemporalMetadata objects and arrays
-                let isMatch: boolean;
-                if (
-                  el.group === "nodes" &&
-                  (k === "date" || k === "start_date" || k === "end_date")
-                ) {
-                  isMatch = isTemporalMetadataEqual(newVal, curVal);
-                } else if (Array.isArray(newVal)) {
-                  // Shallow array equality for labels/tags
-                  isMatch =
-                    Array.isArray(curVal) &&
-                    newVal.length === curVal.length &&
-                    newVal.every((v, i) => v === curVal[i]);
-                } else if (typeof newVal === "object" && newVal !== null) {
-                  // Coordinates check
-                  if (k === "coordinates" && curVal) {
-                    isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
-                  } else {
-                    isMatch = false;
-                  }
-                } else {
-                  isMatch = curVal === newVal;
-                }
-
+                let isMatch = newVal === curVal;
                 if (!isMatch) {
-                  changed = true;
-                  break;
+                  if (
+                    el.group === "nodes" &&
+                    (k === "date" || k === "start_date" || k === "end_date")
+                  )
+                    isMatch = isTemporalMetadataEqual(newVal, curVal);
+                  else if (Array.isArray(newVal))
+                    isMatch =
+                      Array.isArray(curVal) &&
+                      newVal.length === curVal.length &&
+                      newVal.every((v, i) => v === curVal[i]);
+                  else if (
+                    typeof newVal === "object" &&
+                    newVal !== null &&
+                    curVal !== null &&
+                    typeof curVal === "object"
+                  ) {
+                    if (k === "coordinates")
+                      isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
+                    else if (k === "metadata")
+                      isMatch =
+                        newVal.coordinates?.x === curVal.coordinates?.x &&
+                        newVal.coordinates?.y === curVal.coordinates?.y &&
+                        newVal.isRevealed === curVal.isRevealed;
+                  }
+                }
+                if (!isMatch) {
+                  patch[k] = newVal;
+                  hasChanges = true;
                 }
               }
-
-              if (changed) {
-                // Cytoscape merges data objects automatically
-                node.data(newData);
-              }
-
-              // Sync position for guests (Host relies on local layout)
+              if (hasChanges) node.data(patch);
               if (
                 vault.isGuest &&
                 el.group === "nodes" &&
                 el.position?.x !== undefined
               ) {
                 const currentPos = node.position();
-                // Check if position changed significantly (> 1px) to avoid jitter
                 if (
                   Math.abs(currentPos.x - el.position.x) > 1 ||
                   Math.abs(currentPos.y - el.position.y) > 1
-                ) {
+                )
                   node.position(el.position);
-                }
               }
             }
           });
         });
 
-        // 4. Force layout ONLY if structural changes occurred OR if first load
-        const structuralChange =
-          newNodes.length > 0 ||
-          newEdges.length > 0 ||
-          elementsToRemove.length > 0;
-        const isFirstElements = !initialLoaded && graph.elements.length > 0;
-
-        let shouldRunLayout =
-          structuralChange || isFirstElements || showImagesChanged;
-
-        if (graph.stableLayout && !isFirstElements && !showImagesChanged) {
-          // Run layout for new nodes or to fill gaps from removals
-          shouldRunLayout = newNodes.length > 0 || elementsToRemove.length > 0;
-        }
-
-        // PERCEIVED PERF: If we are in the middle of an incremental load,
-        // we want to see the nodes appearing immediately.
         const isVaultLoading = vault.status === "loading";
-
-        if (shouldRunLayout && !isLayoutRunning) {
+        const isFirstElements = !initialLoaded && graph.elements.length > 0;
+        if (newNodes.length > 0 || isFirstElements) {
           if (isFirstElements) {
-            debugStore.log(
-              `[GraphView] Initial elements arriving. Making visible and debouncing layout.`,
-            );
-            // First chunk! Make it visible immediately so the user sees progress.
             if (!graphVisible) {
               currentCy.fit(currentCy.nodes(), 20);
               graphVisible = true;
             }
-
-            // Debounce the final high-quality layout until loading settles
             clearTimeout(stabilizationTimeout);
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
                 applyCurrentLayout(true, false, "Initial Startup");
-                untrack(() => {
-                  initialLoaded = true;
-                });
+                initialLoaded = true;
               }
-            }, 500); // 500ms buffer to catch all chunks before heavy math
+            }, 500);
           } else if (isVaultLoading) {
-            // Subsequent chunks during load:
-            // Just add them to the view and keep the camera fitted.
-            // We do NOT run the heavy math solver here.
-            debugStore.log(
-              `[GraphView] Incremental chunk during load. Refitting camera.`,
-            );
             graphVisible = true;
             currentCy.fit(currentCy.nodes(), 20);
           } else {
-            // Normal post-load operation
-            debugStore.log(
-              `[GraphView] structural update after load. Triggering layout.`,
-            );
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
-        } else {
-          // If no layout run, still might need focus update if elements were updated
-          if (selectedId) applyFocus(selectedId);
         }
 
-        // FINAL SYNC: When vault finishes loading, trigger one last layout
-        // to ensure everything is positioned correctly.
-        if (initialLoaded && !isVaultLoading) {
+        if (initialLoaded && !isVaultLoading && !didFinalizeLoad) {
           clearTimeout(stabilizationTimeout);
           stabilizationTimeout = window.setTimeout(() => {
-            debugStore.log(`[GraphView] Loading settled. Finalizing layout.`);
             applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
             _layoutReady = true;
+            didFinalizeLoad = true;
           }, 500);
         }
-
-        return () => {
-          if (currentLayout) {
-            try {
-              currentLayout.stop();
-            } catch {
-              // Ignore
-            }
-          }
-        };
       } catch (err) {
         debugStore.error("Cytoscape Error", err);
       }
     }
   });
 
-  // IMAGE RESOLUTION: Resolve node images from OPFS/vault
-  // Declared AFTER the elements effect to ensure it sees newly added nodes in the same tick.
+  $effect(() => {
+    const currentCy = cy;
+    if (currentCy) {
+      applyFocus(selectedId);
+      const timer = setTimeout(() => {
+        currentCy.resize();
+        if (selectedId) {
+          const node = currentCy.$id(selectedId);
+          if (node.length > 0)
+            currentCy.animate({
+              center: { eles: node },
+              duration: 500,
+              easing: "ease-out-cubic",
+            });
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
+    if (currentCy && graph.fitRequest > 0) {
+      untrack(() =>
+        currentCy.animate({
+          fit: { eles: currentCy.elements(), padding: 20 },
+          duration: 800,
+          easing: "ease-out-cubic",
+        }),
+      );
+    }
+  });
+
+  const resolvingIds = new Set<string>();
   $effect(() => {
     const currentCy = cy;
     const showImages = graph.showImages;
-    const elements = graph.elements; // Observe elements to trigger on new chunks
+    const elements = graph.elements;
 
     if (currentCy && elements && showImages) {
       untrack(() => {
@@ -1048,45 +852,72 @@
           .filter(
             (n) =>
               (n.data("image") || n.data("thumbnail")) &&
-              !n.data("resolvedImage"),
+              !n.style("background-image") &&
+              !resolvingIds.has(n.id()),
           );
-
-        if (nodesWithImages.length > 0) {
-          debugStore.log(
-            `[GraphView] Resolving images for ${nodesWithImages.length} nodes...`,
-          );
-        }
-
+        const CONCURRENCY_LIMIT = 8;
+        let active = 0;
         let styleUpdateTimeout: number | undefined;
-        nodesWithImages.forEach((node) => {
-          // Fire and forget the async resolution to keep it parallel and avoid linting overload errors
-          void (async () => {
-            const imagePath = node.data("image") || node.data("thumbnail");
-            try {
-              const url = await vault.resolveImageUrl(imagePath);
-              if (url && !currentCy.destroyed()) {
-                const oldUrl = node.data("resolvedImage");
-                if (oldUrl === url) return; // Skip if already same (prevents flicker)
+        const queue: { node: any; imagePath: string }[] = [];
 
+        const scheduleStyleUpdate = () => {
+          clearTimeout(styleUpdateTimeout);
+          styleUpdateTimeout = window.setTimeout(() => {
+            if (currentCy && !currentCy.destroyed()) currentCy.style().update();
+          }, 150);
+        };
+
+        const processNext = () => {
+          while (active < CONCURRENCY_LIMIT && queue.length > 0) {
+            const { node, imagePath } = queue.shift()!;
+            active += 1;
+            resolvingIds.add(node.id());
+
+            void (async () => {
+              try {
+                let url = urlCache.get(imagePath);
+                if (!url) {
+                  url = await vault.resolveImageUrl(imagePath);
+                  if (url) urlCache.set(imagePath, url);
+                }
+
+                if (!url || currentCy.destroyed() || !graph.showImages) {
+                  resolvingIds.delete(node.id());
+                  return;
+                }
+
+                // NUCLEAR OPTION: Direct element styling bypasses global rule re-evaluations
+                node.style("background-image", url);
                 node.data("resolvedImage", url);
-                if (oldUrl?.startsWith("blob:")) URL.revokeObjectURL(oldUrl);
-
-                // Batch style updates to avoid layout thrashing during large loads
-                clearTimeout(styleUpdateTimeout);
-                styleUpdateTimeout = window.setTimeout(() => {
-                  if (!currentCy.destroyed()) currentCy.style().update();
-                }, 150); // Slightly longer debounce for stability
+                scheduleStyleUpdate();
+              } catch (err) {
+                debugStore.error(`Image Error: ${node.id()}`, err);
+              } finally {
+                active -= 1;
+                if (queue.length > 0 && !currentCy.destroyed()) processNext();
               }
-            } catch (err) {
-              debugStore.error(`Failed to resolve image for ${node.id()}`, err);
-            }
-          })();
+            })();
+          }
+        };
+
+        nodesWithImages.forEach((node) => {
+          const path = node.data("image") || node.data("thumbnail");
+          if (path) queue.push({ node, imagePath: path });
         });
+        if (queue.length > 0) processNext();
+      });
+    } else if (currentCy && !showImages) {
+      untrack(() => {
+        resolvingIds.clear();
+        currentCy.nodes().forEach((node) => {
+          node.removeStyle("background-image");
+          node.removeData("resolvedImage");
+        });
+        currentCy.style().update();
       });
     }
   });
 
-  // Save edge label logic
   const saveEdgeLabel = async () => {
     if (editingEdge) {
       await vault.updateConnection(
@@ -1100,7 +931,6 @@
     }
   };
 
-  // Derived state for breadcrumbs
   let selectedEntity = $derived(selectedId ? vault.entities[selectedId] : null);
   let parentEntity = $derived(
     selectedId
@@ -1109,13 +939,9 @@
         : null
       : null,
   );
-
-  // Derived state for tooltip
   let hoveredEntity = $derived(
     hoveredEntityId ? vault.entities[hoveredEntityId] : null,
   );
-
-  // Memoize markdown parsing to prevent re-computation on every render (e.g. tooltip position updates)
   let tooltipContent = $derived(
     hoveredEntity?.content
       ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
@@ -1126,13 +952,11 @@
 <div
   class="absolute inset-0 w-full h-full bg-theme-bg overflow-hidden shadow-2xl border-y border-theme-border/30"
 >
-  <!-- Decorative Grid Overlay -->
   <div
     class="absolute inset-0 pointer-events-none opacity-20"
     style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
 
-  <!-- Top Left Overlay (Breadcrumbs & Minimap) -->
   <div
     class="absolute top-6 left-6 z-20 flex flex-col items-start gap-3 pointer-events-none"
   >
@@ -1184,7 +1008,6 @@
         onClear={() => graph.clearLabelFilters()}
       />
     </div>
-    <!-- Mini-map moved to bottom controls -->
 
     {#if graph.timelineMode}
       <div
@@ -1219,7 +1042,6 @@
     {/if}
   </div>
 
-  <!-- Zoom Controls (Bottom Left) -->
   <div class="absolute bottom-6 left-6 z-20 flex flex-col gap-2 items-start">
     {#if cy}
       <div class="relative">
@@ -1245,9 +1067,7 @@
       >
         <span class="icon-[lucide--map] w-4 h-4"></span>
       </button>
-
       <div class="h-6 w-px bg-theme-border/30 mx-1"></div>
-
       <TimelineControls onApply={applyCurrentLayout} />
       <div class="h-6 w-px bg-theme-border/30 mx-2"></div>
       <button
@@ -1255,128 +1075,97 @@
         onclick={() => cy?.zoom(cy.zoom() * 1.2)}
         title="Zoom In"
         aria-label="Zoom In"
+        ><span class="icon-[lucide--zoom-in] w-4 h-4"></span></button
       >
-        <span class="icon-[lucide--zoom-in] w-4 h-4"></span>
-      </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => cy?.zoom(cy.zoom() / 1.2)}
         title="Zoom Out"
         aria-label="Zoom Out"
+        ><span class="icon-[lucide--zoom-out] w-4 h-4"></span></button
       >
-        <span class="icon-[lucide--zoom-out] w-4 h-4"></span>
-      </button>
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.requestFit()}
         title="Fit to Screen"
         aria-label="Fit to Screen"
+        ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
       >
-        <span class="icon-[lucide--maximize] w-4 h-4"></span>
-      </button>
       <button
         class="w-8 h-8 flex items-center justify-center border transition {graph.stableLayout
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
         onclick={() =>
-          void graph
-            .toggleStableLayout()
-            .catch((error) =>
-              console.error("Failed to toggle stable layout", error),
-            )}
+          void graph.toggleStableLayout().catch((e) => console.error(e))}
         title={graph.stableLayout ? "Stable Layout: ON" : "Stable Layout: OFF"}
         aria-label="Toggle Stable Layout"
         aria-pressed={graph.stableLayout}
-      >
-        <span
+        ><span
           class="{graph.stableLayout
             ? 'icon-[lucide--pin]'
             : 'icon-[lucide--pin-off]'} w-4 h-4"
-        ></span>
-      </button>
+        ></span></button
+      >
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => applyCurrentLayout(false, true, "UI Redraw Button")}
         title="Redraw Layout"
         aria-label="Redraw Layout"
-      >
-        <span
+        ><span
           class="icon-[lucide--refresh-cw] w-4 h-4 {isLayoutRunning
             ? 'animate-spin'
             : ''}"
-        ></span>
-      </button>
-
+        ></span></button
+      >
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
-
       <button
         class="w-8 h-8 flex items-center justify-center border transition {ui.sharedMode
           ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
           : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
         onclick={() => (ui.sharedMode = !ui.sharedMode)}
-        title={ui.sharedMode
-          ? "Exit Shared Mode (Admin View)"
-          : "Enter Shared Mode (Player Preview)"}
-        aria-label={ui.sharedMode
-          ? "Exit Shared Mode (Admin View)"
-          : "Enter Shared Mode (Player Preview)"}
-        aria-pressed={ui.sharedMode}
+        title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
         data-testid="shared-mode-toggle"
-      >
-        <span
+        ><span
           class={ui.sharedMode
             ? "icon-[lucide--eye] w-4 h-4"
             : "icon-[lucide--eye-off] w-4 h-4"}
-        ></span>
-      </button>
-
+        ></span></button
+      >
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleLabels()}
         title="Toggle Labels (L)"
-        aria-label="Toggle Labels"
-      >
-        <span
+        ><span
           class="icon-[lucide--tag] w-4 h-4 {graph.showLabels
             ? 'opacity-100'
             : 'opacity-50'}"
-        ></span>
-      </button>
-
+        ></span></button
+      >
       <button
         class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => graph.toggleImages()}
         title="Toggle Node Images (I)"
-        aria-label="Toggle Node Images"
-      >
-        <span
+        ><span
           class="w-4 h-4 {graph.showImages
             ? 'icon-[lucide--image] opacity-100'
             : 'icon-[lucide--image-off] opacity-50'}"
-        ></span>
-      </button>
-
-      <!-- Connect Mode Toggle (Gated) -->
+        ></span></button
+      >
       {#if !vault.isGuest}
         <button
           class="w-8 h-8 flex items-center justify-center border transition {connectMode
-            ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)] shadow-theme-accent/30'
+            ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)]'
             : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
           onclick={toggleConnectMode}
           title="Connect Mode (C)"
+          ><span class="icon-[lucide--link] w-4 h-4"></span></button
         >
-          <span class="icon-[lucide--link] w-4 h-4"></span>
-        </button>
       {/if}
-
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
-      <div class="hidden md:block">
-        <FeatureHint hintId="lore-oracle" />
-      </div>
+      <div class="hidden md:block"><FeatureHint hintId="lore-oracle" /></div>
     </div>
   </div>
 
-  <!-- Graph Canvas -->
   <div
     class="absolute inset-0 z-10 w-full h-full opacity-0 transition-opacity duration-500 {graphVisible
       ? 'opacity-100'
@@ -1392,7 +1181,6 @@
     <SelectionConnector {cy} />
   {/if}
 
-  <!-- Hover Tooltip -->
   {#if hoveredEntityId && hoverPosition && hoveredEntity}
     <div
       class="absolute z-50 pointer-events-none"
@@ -1416,8 +1204,6 @@
         >
           {@html tooltipContent}
         </div>
-
-        <!-- Decorative corner bits -->
         <div
           class="absolute -top-px -left-px w-2 h-2 border-t border-l border-theme-primary"
         ></div>
@@ -1425,78 +1211,67 @@
           class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-theme-primary"
         ></div>
       </div>
-      <!-- Arrow/Stem -->
       <div
         class="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-theme-primary/50"
       ></div>
     </div>
   {/if}
 
-  <!-- Connection Hints -->
   {#if connectMode}
     <div
       class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
     >
-      {#if !sourceId}
-        <div
+      {#if !sourceId}<div
           class="bg-green-500/10 border border-green-500/50 text-green-200 px-4 py-1 rounded-full text-xs font-mono animate-bounce"
         >
           > SELECT SOURCE NODE
         </div>
-      {:else}
-        <div
+      {:else}<div
           class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-200 px-4 py-1 rounded-full text-xs font-mono animate-bounce"
         >
           > SELECT TARGET TO LINK
-        </div>
-      {/if}
-
+        </div>{/if}
       <FeatureHint hintId="connect-mode" />
     </div>
   {/if}
 
-  <!-- Selection Actions -->
   {#if selectionCount >= 2 && !connectMode}
     <div
-      class="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto
-        {ui.isMobile ? 'bottom-24' : 'top-20'}"
+      class="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto {ui.isMobile
+        ? 'bottom-24'
+        : 'top-20'}"
       transition:fly={{ y: ui.isMobile ? 20 : -20, duration: 200 }}
     >
       <div class="flex gap-2">
         <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2
-            {ui.isMobile ? 'h-10 px-5' : 'py-1.5'}"
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2 {ui.isMobile
+            ? 'h-10 px-5'
+            : 'py-1.5'}"
           onclick={() =>
             ui.openBulkLabelDialog(
               cy?.$("node:selected").map((n) => n.id()) || [],
             )}
-        >
-          <span
+          ><span
             class="icon-[lucide--layers] {ui.isMobile ? 'w-4 h-4' : 'w-3 h-3'}"
-          ></span>
-          Label ({selectionCount})
-        </button>
+          ></span>Label ({selectionCount})</button
+        >
         <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2
-            {ui.isMobile ? 'h-10 px-5' : 'py-1.5'}"
+          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2 {ui.isMobile
+            ? 'h-10 px-5'
+            : 'py-1.5'}"
           onclick={() =>
             ui.openMergeDialog(cy?.$("node:selected").map((n) => n.id()) || [])}
-        >
-          <span
+          ><span
             class="icon-[lucide--git-merge] {ui.isMobile
               ? 'w-4 h-4'
               : 'w-3 h-3'}"
-          ></span>
-          Merge
-        </button>
+          ></span>Merge</button
+        >
       </div>
-      {#if !ui.isMobile}
-        <FeatureHint hintId="node-merging" />
-      {/if}
+      {#if !ui.isMobile}<FeatureHint hintId="node-merging" />{/if}
     </div>
   {/if}
 
-  <!-- Edge Edit Modal -->
   {#if editingEdge}
     <div
       class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
@@ -1514,10 +1289,11 @@
             bind:value={edgeEditType}
             class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded uppercase"
           >
-            <option value="related_to">Default (Grey)</option>
-            <option value="neutral">Neutral (Amber)</option>
-            <option value="friendly">Friendly (Blue)</option>
-            <option value="enemy">Enemy (Red)</option>
+            <option value="related_to">Default (Grey)</option><option
+              value="neutral">Neutral (Amber)</option
+            ><option value="friendly">Friendly (Blue)</option><option
+              value="enemy">Enemy (Red)</option
+            >
           </select>
         </div>
         <input
@@ -1533,16 +1309,12 @@
         <div class="flex gap-2 mt-3">
           <button
             class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-theme-bg transition rounded"
-            onclick={saveEdgeLabel}
+            onclick={saveEdgeLabel}>Save</button
           >
-            Save
-          </button>
           <button
             class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary transition rounded"
-            onclick={() => (editingEdge = null)}
+            onclick={() => (editingEdge = null)}>Cancel</button
           >
-            Cancel
-          </button>
         </div>
         <button
           class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
@@ -1555,10 +1327,8 @@
               );
               editingEdge = null;
             }
-          }}
+          }}>Delete Connection</button
         >
-          Delete Connection
-        </button>
       </div>
     </div>
   {/if}

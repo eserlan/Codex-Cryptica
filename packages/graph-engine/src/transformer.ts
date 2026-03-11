@@ -217,25 +217,6 @@ export const getGraphStyle = (
         height: 64,
       },
     });
-
-    baseStyle.push({
-      selector: "node[resolvedImage]",
-      style: {
-        "background-fit": "cover",
-        "background-clip": "node",
-        "background-image": "data(resolvedImage)",
-        "border-width": graph.nodeBorderWidth + 1,
-        "border-color": tokens.primary,
-      },
-    });
-
-    baseStyle.push({
-      selector: "node[resolvedImage][width][height]",
-      style: {
-        width: "data(width)",
-        height: "data(height)",
-      },
-    });
   }
 
   baseStyle.push(
