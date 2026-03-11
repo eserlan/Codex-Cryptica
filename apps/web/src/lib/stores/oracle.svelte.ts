@@ -93,8 +93,8 @@ class OracleStore {
   pushUndoAction(
     description: string,
     undo: () => Promise<void>,
-    redo?: () => Promise<void>,
     messageId?: string,
+    redo?: () => Promise<void>,
   ) {
     this.undoStack.push({
       id: this.generateId(),
@@ -868,6 +868,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
               });
               vault.updateEntity(targetId, beforeTarget);
             },
+            undefined, // no messageId
             async () => {
               // REDO: Re-execute merge
               const proposal = await nodeMergeService.proposeMerge({
@@ -995,6 +996,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                 // UNDO: Remove connection
                 await vault.removeConnection(source.id, target.id, typeToUse);
               },
+              undefined, // no messageId
               async () => {
                 // REDO: Re-add connection
                 await vault.addConnection(

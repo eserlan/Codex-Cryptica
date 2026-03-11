@@ -385,6 +385,7 @@
             }
           }
         },
+        undefined, // No messageId for map drawing
         async () => {
           // REDO
           if (

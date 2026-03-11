@@ -378,7 +378,7 @@ describe("OracleStore", () => {
   describe("Undo Logic", () => {
     it("should push undo actions to the stack with IDs", () => {
       const revertFn = vi.fn().mockResolvedValue(undefined);
-      oracle.pushUndoAction("Test Action", revertFn, undefined, "msg-123");
+      oracle.pushUndoAction("Test Action", revertFn, "msg-123");
 
       expect(oracle.undoStack.length).toBe(1);
       expect(oracle.undoStack[0].description).toBe("Test Action");
@@ -473,7 +473,7 @@ describe("OracleStore", () => {
     it("should execute redo function on successful redo", async () => {
       const undoFn = vi.fn().mockResolvedValue(undefined);
       const redoFn = vi.fn().mockResolvedValue(undefined);
-      oracle.pushUndoAction("Test Action", undoFn, redoFn);
+      oracle.pushUndoAction("Test Action", undoFn, undefined, redoFn);
 
       await oracle.undo();
       expect(oracle.redoStack.length).toBe(1);
