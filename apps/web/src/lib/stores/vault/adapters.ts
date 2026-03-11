@@ -47,10 +47,7 @@ export const fileIOAdapter: IFileIOAdapter = {
   parseMarkdown: (text, path) => {
     const parsed = parseMarkdown(text);
     const id = parsed.metadata.id || deriveIdFromPath(path);
-    const connections = [
-      ...(parsed.metadata.connections || []),
-      ...parsed.wikiLinks,
-    ];
+    const connections = parsed.metadata.connections || [];
     return {
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,

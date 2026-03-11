@@ -1,12 +1,11 @@
 import yaml from "js-yaml";
-import type { Entity, Connection } from "schema";
+import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
 
 export interface ParseResult {
   metadata: Partial<Entity>;
   content: string;
-  wikiLinks: Connection[];
 }
 
 export function renderMarkdown(
@@ -55,10 +54,7 @@ export function parseMarkdown(raw: string): ParseResult {
     content = raw.replace(frontmatterRegex, "").trim();
   }
 
-  // Wiki links are ignored to prevent performance issues and GC pressure
-  const wikiLinks: Connection[] = [];
-
-  return { metadata, content, wikiLinks };
+  return { metadata, content };
 }
 
 export function sanitizeId(text: string): string {

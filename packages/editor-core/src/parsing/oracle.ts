@@ -8,12 +8,6 @@ export interface OracleParseResult {
   image?: string;
   thumbnail?: string;
   connections?: (string | { target: string; label?: string })[];
-  wikiLinks?: {
-    target: string;
-    type: string;
-    strength: number;
-    label?: string;
-  }[];
 }
 
 /**
@@ -54,9 +48,8 @@ export function parseOracleResponse(text: string): OracleParseResult {
                 data.imageURL ||
                 data.frontmatter?.image,
               thumbnail:
-                data.thumbnail || data.thumb || data.frontmatter?.thumbnail,
+                data.thumbnail || data.thumbnail || data.frontmatter?.thumbnail,
               connections: data.detectedLinks || data.connections || [],
-              wikiLinks: extractWikiLinks(data.content || data.lore || ""),
             };
           }
         }
@@ -66,14 +59,12 @@ export function parseOracleResponse(text: string): OracleParseResult {
     // Fall back to text parsing
   }
 
-  // Cache wiki links early to avoid redundant regex calls
-  const wikiLinks = extractWikiLinks(text);
-
   // Strategy 1: Explicit Markers
   // Broaden regex to include markdown bold, headers, and simple "Label:" at start of line
   // We use a non-global regex but with 'i' and 'm' flags.
   const chronicleMarkerRegex =
     /^(?:#+\s*|\*\*|__)?Chronicle\b(?:\*\*|__|:|\s)*:?\s*/im;
+
   const loreMarkerRegex = /^(?:#+\s*|\*\*|__)?Lore\b(?:\*\*|__|:|\s)*:?\s*/im;
   const nameMarkerRegex =
     /^(?:#+\s*|\*\*|__)?(?:Name|Title)\b(?:\*\*|__|:|\s)*:?\s*/im;
@@ -209,7 +200,6 @@ export function parseOracleResponse(text: string): OracleParseResult {
       image: extractedImage,
       thumbnail: extractedThumbnail,
       connections: extractedConnections,
-      wikiLinks,
     };
   }
 
@@ -258,7 +248,6 @@ export function parseOracleResponse(text: string): OracleParseResult {
       method: "heuristic",
       title: extractedTitle,
       type: guessType(text),
-      wikiLinks,
     };
   }
   // Fallback: Everything is Lore (safer than everything being Chronicle)
@@ -268,7 +257,6 @@ export function parseOracleResponse(text: string): OracleParseResult {
     wasSplit: false,
     method: "none",
     type: guessType(text),
-    wikiLinks,
   };
 }
 
@@ -330,36 +318,4 @@ function guessType(text: string): string | undefined {
   )
     return "item";
   return undefined;
-}
-
-const WIKI_LINK_REGEX = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-
-function extractWikiLinks(
-  content: string,
-): { target: string; type: string; strength: number; label?: string }[] {
-  const matches = content.matchAll(WIKI_LINK_REGEX);
-  const connections: {
-    target: string;
-    type: string;
-    strength: number;
-    label?: string;
-  }[] = [];
-
-  for (const match of matches) {
-    const target = match[1].trim();
-    const label = match[2]?.trim();
-    const targetId = target
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
-
-    connections.push({
-      target: targetId,
-      type: "related_to",
-      strength: 1.0,
-      label: label || target,
-    });
-  }
-  return connections;
 }

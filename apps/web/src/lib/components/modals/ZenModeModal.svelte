@@ -84,22 +84,12 @@
     if (!entity) return;
 
     try {
-      // Pre-process WikiLinks: convert [[Link]] or [[Link|Label]] to <strong>Label</strong> for rich text
-      const processedContent = (entity.content || "").replace(
-        /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
-        (_, target, label) => `<strong>${label || target}</strong>`,
-      );
-      const processedLore = (entity.lore || "").replace(
-        /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
-        (_, target, label) => `<strong>${label || target}</strong>`,
-      );
-
       // Render Markdown
       const chronicleHtml = DOMPurify.sanitize(
-        await marked.parse(processedContent),
+        await marked.parse(entity.content || ""),
       );
-      const loreHtml = processedLore
-        ? DOMPurify.sanitize(await marked.parse(processedLore))
+      const loreHtml = entity.lore
+        ? DOMPurify.sanitize(await marked.parse(entity.lore))
         : "";
 
       let imageHtml = "";
@@ -156,11 +146,11 @@
                 </html>
             `;
 
-      // Construct Plain Text (convert WikiLinks to simple text)
+      // Construct Plain Text
       let text = `${entity?.title || ""}\n\n`;
-      text += `CHRONICLE:\n${(entity?.content || "").replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n\n`;
+      text += `CHRONICLE:\n${entity?.content || ""}\n\n`;
       if (entity?.lore) {
-        text += `DEEP LORE:\n${entity.lore.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => label || target)}\n`;
+        text += `DEEP LORE:\n${entity.lore}\n`;
       }
 
       const clipboardData: Record<string, Blob> = {
@@ -182,7 +172,7 @@
       // Fallback to plain text
       try {
         await navigator.clipboard.writeText(
-          `${entity?.title || ""}\n\n${(entity?.content || "").replace(/[[ (.*?) ]]/g, "$1")}`,
+          `${entity?.title || ""}\n\n${entity?.content || ""}`,
         );
         isCopied = true;
         setTimeout(() => (isCopied = false), 2000);
