@@ -68,7 +68,7 @@
           {
             selector: "node",
             style: {
-              label: "", // Labels handled by TimelineOverlay or toggled off
+              label: "",
             },
           },
         ]
@@ -111,24 +111,21 @@
             secondLevel.removeClass("dimmed");
             secondLevel.addClass("secondary-neighborhood");
           } else {
-            // If the target node no longer exists, clear focus/dimming.
             allEles.removeClass("dimmed neighborhood secondary-neighborhood");
           }
         }
       });
     } catch {
-      // Ignore if cy is partially destroyed
+      /* ignore */
     }
   };
 
-  // Hover state
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
   let hoverTimeout: number | undefined;
   let selectionCount = $state(0);
-  const HOVER_DELAY = 800; // ms
+  const HOVER_DELAY = 800;
 
-  // Edge editing state
   let editingEdge = $state<{
     source: string;
     target: string;
@@ -138,30 +135,13 @@
   let edgeEditInput = $state("");
   let edgeEditType = $state("neutral");
 
-  // Performance timing
-  const appStartTime = performance.now();
-  const getElapsed = () => (performance.now() - appStartTime).toFixed(2) + "ms";
-
   const applyCurrentLayout = async (
     isInitial = false,
     isForced = false,
     caller = "unknown",
   ) => {
     const currentCy = cy;
-    if (!currentCy) {
-      if (import.meta.env.DEV) {
-        debugStore.warn(
-          `[GraphView][${getElapsed()}] applyCurrentLayout skipped (caller: ${caller}): cy not initialized`,
-        );
-      }
-      return;
-    }
-
-    if (import.meta.env.DEV) {
-      debugStore.log(
-        `[GraphView][${getElapsed()}] applyCurrentLayout CALLED by: ${caller}. isInitial=${isInitial}, isForced=${isForced}, isLayoutRunning=${isLayoutRunning}, timelineMode=${graph.timelineMode}`,
-      );
-    }
+    if (!currentCy) return;
 
     if (isLayoutRunning && !isInitial && !isForced) {
       return;
@@ -177,10 +157,8 @@
 
     isLayoutRunning = true;
     try {
-      currentCy.resize(); // Ensure container dimensions are up to date
+      currentCy.resize();
 
-      // Ensure node visibility is correct BEFORE running any layout math
-      // This ensures fcose includes previously hidden nodes in the calculation.
       currentCy.batch(() => {
         currentCy.nodes().forEach((node) => {
           const data = node.data() as GraphNode["data"];
@@ -194,8 +172,6 @@
       });
 
       if (vault.isGuest) {
-        // For guests, we rely entirely on synced positions.
-        // Simply fit to view initially if needed.
         if (isInitial) {
           currentCy.fit(currentCy.nodes(), 20);
           graphVisible = true;
@@ -264,7 +240,6 @@
           isLayoutRunning = false;
         }
       } else {
-        // Main-thread FCOSE Layout
         try {
           const snapshotNodes: any[] = [];
           let hasNewNodes = false;
@@ -283,15 +258,9 @@
             }
           }
 
-          // Heuristic: If multiple nodes exist and ALL of them are at 0,0, they are clumped/broken.
           const isClumpedAtOrigin =
             snapshotNodes.length > 1 && nodesAtOrigin === snapshotNodes.length;
 
-          // Force randomization if:
-          // 1. We have brand new nodes.
-          // 2. Initial load and stability is OFF.
-          // 3. We are coming OUT of timeline mode.
-          // 4. Everything is clumped at 0,0 (invalid saved state).
           const isExitingTimeline =
             caller === "Timeline Toggle" && !graph.timelineMode;
           const randomize =
@@ -300,8 +269,6 @@
             isExitingTimeline ||
             isClumpedAtOrigin;
 
-          // Bypass logic: Only skip the math solver if we are in stable mode
-          // and we already have positions for everything, AND it's not a broken clump or mode change.
           if (
             graph.stableLayout &&
             !isForced &&
@@ -313,7 +280,6 @@
               currentCy.resize();
               currentCy.fit(currentCy.elements(), 20);
               graphVisible = true;
-              // Adaptive: Unlock image layouts after a short grace period on bypass
               setTimeout(() => {
                 _layoutReady = true;
               }, 1000);
@@ -330,20 +296,16 @@
 
           currentLayout = currentCy.layout({
             ...DEFAULT_LAYOUT_OPTIONS,
-            // VIEWPORT SEEDING
             boundingBox: { x1: 0, y1: 0, x2: width, y2: height },
-
-            // ANISOTROPIC ADAPTIVE PHYSICS
             gravity: isLandscape ? 0.1 : 0.8,
             idealEdgeLength: isLandscape ? 140 : 60,
             nodeRepulsion: isLandscape
               ? Math.min(45000, 5000 + snapshotNodes.length * 150)
               : Math.min(20000, 3000 + snapshotNodes.length * 50),
             nodeSeparation: isLandscape ? 150 : 60,
-
             randomize,
-            animate: false, // Calculate math instantly for stability
-            fit: false, // We will handle fitting manually for better control
+            animate: false,
+            fit: false,
           } as any);
 
           const layout = currentLayout;
@@ -361,7 +323,6 @@
               easing: "ease-out-quad",
               complete: () => {
                 isLayoutRunning = false;
-                // Adaptive: Unlock image layouts once the initial burst is finished
                 if (isInitial) {
                   setTimeout(() => {
                     _layoutReady = true;
@@ -370,7 +331,6 @@
               },
             });
 
-            // SYNC: Update vault with new positions
             if (!vault.isGuest && currentCy) {
               const updates: Record<string, Partial<Entity>> = {};
               currentCy.nodes().forEach((node) => {
@@ -446,11 +406,6 @@
         if (!container) return;
 
         try {
-          if (import.meta.env.DEV) {
-            debugStore.log(
-              `[GraphView][${getElapsed()}] Initializing Cytoscape instance...`,
-            );
-          }
           const instance = (await initGraph({
             container,
             elements: untrack(() => graph.elements),
@@ -468,7 +423,6 @@
             (window as any).cy = instance;
           }
 
-          // Hover events
           instance.on("mouseover", "node", (evt: any) => {
             const node = evt.target;
             clearTimeout(hoverTimeout);
@@ -485,7 +439,6 @@
             hoverPosition = null;
           });
 
-          // Update hover position on drag/pan/zoom to keep it attached (optional but nice)
           instance.on("position", "node", (evt: any) => {
             if (hoveredEntityId === evt.target.id()) {
               const renderedPos = evt.target.renderedPosition();
@@ -527,7 +480,6 @@
             }
           });
 
-          // Right-click on edge to edit label
           instance.on("cxttap", "edge", (evt: any) => {
             if (vault.isGuest) return;
             const edge = evt.target;
@@ -552,7 +504,6 @@
             selectionCount = instance?.$("node:selected").length || 0;
           });
 
-          // Save position on drag end
           instance.on("dragfree", "node", async (evt: any) => {
             if (vault.isGuest) return;
             const node = evt.target;
@@ -595,20 +546,22 @@
     clearTimeout(hoverTimeout);
   });
 
-  // Reactive effect to update graph when store changes
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
 
-  // FLICKER PREVENTION: URL Cache for stable blob identity
   const urlCache = new Map<string, string>();
 
-  // FLICKER PREVENTION: Smart Style Management
+  // FLICKER PREVENTION: Lockdown global style effect during loading.
   let activeStyleJson = "";
   $effect(() => {
     const currentStyle = graphStyle;
     const currentCy = cy;
-    if (currentCy && currentStyle) {
+    const isVaultLoading = vault.status === "loading";
+
+    // While loading, we do NOT re-apply global styles. This is the biggest flicker killer.
+    // New nodes added via currentCy.add() will inherit the current stylesheet rules automatically.
+    if (currentCy && currentStyle && (!isVaultLoading || didFinalizeLoad)) {
       const styleJson = JSON.stringify(currentStyle);
       if (styleJson !== activeStyleJson) {
         activeStyleJson = styleJson;
@@ -673,8 +626,9 @@
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements) {
+      const isVaultLoading = vault.status === "loading";
+
       try {
-        currentCy.resize();
         const snapshotElements = $state.snapshot(graph.elements);
         const targetIds = new Set(snapshotElements.map((el) => el.data.id));
         const elementMap = new Map();
@@ -720,83 +674,81 @@
           }
         }
 
-        // Surgical Data Sync
-        currentCy.batch(() => {
-          snapshotElements.forEach((el) => {
-            const node = elementMap.get(el.data.id);
-            if (node) {
-              const currentData = node.data();
-              const newData = el.data as Record<string, any>;
-              const patch: Record<string, any> = {};
-              let hasChanges = false;
+        // FLICKER PREVENTION: Only sync data for existing elements if loading is FINISHED.
+        // This is strictly enforced here to prevent any metadata jitter during waves.
+        if (!isVaultLoading || didFinalizeLoad) {
+          currentCy.batch(() => {
+            snapshotElements.forEach((el) => {
+              const node = elementMap.get(el.data.id);
+              if (node) {
+                const currentData = node.data();
+                const newData = el.data as Record<string, any>;
+                const patch: Record<string, any> = {};
+                let hasChanges = false;
 
-              for (const k in newData) {
-                if (
-                  k === "id" ||
-                  k === "resolvedImage" ||
-                  k === "image" ||
-                  k === "thumbnail" ||
-                  !Object.hasOwn(newData, k)
-                )
-                  continue;
-                const newVal = newData[k];
-                const curVal = currentData[k];
-                let isMatch = newVal === curVal;
-
-                if (!isMatch) {
+                for (const k in newData) {
                   if (
-                    el.group === "nodes" &&
-                    (k === "date" || k === "start_date" || k === "end_date")
-                  ) {
-                    isMatch = isTemporalMetadataEqual(newVal, curVal);
-                  } else if (Array.isArray(newVal)) {
-                    isMatch =
-                      Array.isArray(curVal) &&
-                      newVal.length === curVal.length &&
-                      newVal.every((v, i) => v === curVal[i]);
-                  } else if (typeof newVal === "object" && newVal !== null) {
-                    if (k === "coordinates") {
+                    k === "id" ||
+                    k === "resolvedImage" ||
+                    k === "image" ||
+                    k === "thumbnail" ||
+                    !Object.hasOwn(newData, k)
+                  )
+                    continue;
+                  const newVal = newData[k];
+                  const curVal = currentData[k];
+                  let isMatch = newVal === curVal;
+                  if (!isMatch) {
+                    if (
+                      el.group === "nodes" &&
+                      (k === "date" || k === "start_date" || k === "end_date")
+                    )
+                      isMatch = isTemporalMetadataEqual(newVal, curVal);
+                    else if (Array.isArray(newVal))
                       isMatch =
-                        !!curVal &&
-                        newVal.x === curVal.x &&
-                        newVal.y === curVal.y;
-                    } else if (k === "metadata") {
-                      isMatch =
-                        !!curVal &&
-                        newVal.coordinates?.x === curVal.coordinates?.x &&
-                        newVal.coordinates?.y === curVal.coordinates?.y &&
-                        newVal.isRevealed === curVal.isRevealed;
-                    } else {
-                      // Fallback for other objects (e.g. dateLabel which shouldn't be an object but just in case)
-                      isMatch =
-                        JSON.stringify(newVal) === JSON.stringify(curVal);
+                        Array.isArray(curVal) &&
+                        newVal.length === curVal.length &&
+                        newVal.every((v, i) => v === curVal[i]);
+                    else if (
+                      typeof newVal === "object" &&
+                      newVal !== null &&
+                      curVal !== null &&
+                      typeof curVal === "object"
+                    ) {
+                      if (k === "coordinates")
+                        isMatch =
+                          newVal.x === curVal.x && newVal.y === curVal.y;
+                      else if (k === "metadata")
+                        isMatch =
+                          !!curVal &&
+                          newVal.coordinates?.x === curVal.coordinates?.x &&
+                          newVal.coordinates?.y === curVal.coordinates?.y &&
+                          newVal.isRevealed === curVal.isRevealed;
                     }
                   }
+                  if (!isMatch) {
+                    patch[k] = newVal;
+                    hasChanges = true;
+                  }
                 }
-
-                if (!isMatch) {
-                  patch[k] = newVal;
-                  hasChanges = true;
-                }
-              }
-              if (hasChanges) node.data(patch);
-              if (
-                vault.isGuest &&
-                el.group === "nodes" &&
-                el.position?.x !== undefined
-              ) {
-                const currentPos = node.position();
+                if (hasChanges) node.data(patch);
                 if (
-                  Math.abs(currentPos.x - el.position.x) > 1 ||
-                  Math.abs(currentPos.y - el.position.y) > 1
-                )
-                  node.position(el.position);
+                  vault.isGuest &&
+                  el.group === "nodes" &&
+                  el.position?.x !== undefined
+                ) {
+                  const currentPos = node.position();
+                  if (
+                    Math.abs(currentPos.x - el.position.x) > 1 ||
+                    Math.abs(currentPos.y - el.position.y) > 1
+                  )
+                    node.position(el.position);
+                }
               }
-            }
+            });
           });
-        });
+        }
 
-        const isVaultLoading = vault.status === "loading";
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         if (newNodes.length > 0 || isFirstElements) {
           if (isFirstElements) {
@@ -808,14 +760,12 @@
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
                 applyCurrentLayout(true, false, "Initial Startup");
-                untrack(() => {
-                  initialLoaded = true;
-                });
+                initialLoaded = true;
               }
             }, 500);
           } else if (isVaultLoading) {
             graphVisible = true;
-            currentCy.fit(currentCy.nodes(), 20);
+            // Removed redundant fit() during waves to reduce thread pressure.
           } else {
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
