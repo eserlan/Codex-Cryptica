@@ -137,7 +137,7 @@
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
 >
   <div class="flex-1 relative overflow-hidden">
-    {#if GraphView && (vault.isInitialized || isGuestMode)}
+    {#if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
