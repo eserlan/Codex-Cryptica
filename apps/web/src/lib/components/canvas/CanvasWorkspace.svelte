@@ -33,7 +33,7 @@
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
   const canvasId = $derived(
-    canvasRegistry.canvases.find((c) => c.slug === canvasSlug)?.id,
+    canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug)?.id,
   );
 
   const nodeTypes = {
@@ -110,7 +110,7 @@
   // Ensure registry is loaded for slug resolution (critical for reload/deep-link)
   $effect(() => {
     if (vault.activeVaultId && !canvasRegistry.isLoaded) {
-      canvasRegistry.loadForVault(vault.activeVaultId);
+      canvasRegistry.loadFromVault(vault.activeVaultId);
     }
   });
 

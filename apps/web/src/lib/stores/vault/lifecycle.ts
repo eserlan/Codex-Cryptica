@@ -84,22 +84,19 @@ export class VaultLifecycleManager {
     return this.importFromFolder(handle);
   }
 
-  switchVault(id: string) {
+  async switchVault(id: string) {
     if (this.getActiveVaultId() === id) return;
     this.repository.clear();
     mapRegistry.maps = {};
-    canvasRegistry.canvases = {};
+    canvasRegistry.clear();
     this.setSelectedEntityId(null);
     this.setHasConflictFiles(false);
     this.setStatus("loading");
 
-    vaultRegistry.setActiveVault(id).then(() => {
-      this.loadFiles();
-      themeStore.loadForVault(id);
-      window.dispatchEvent(
-        new CustomEvent("vault-switched", { detail: { id } }),
-      );
-    });
+    await vaultRegistry.setActiveVault(id);
+    await this.loadFiles();
+    await themeStore.loadForVault(id);
+    window.dispatchEvent(new CustomEvent("vault-switched", { detail: { id } }));
   }
 
   async createVault(name: string): Promise<string> {
@@ -113,17 +110,17 @@ export class VaultLifecycleManager {
     if (this.getActiveVaultId() === id) {
       this.repository.clear();
       mapRegistry.maps = {};
-      canvasRegistry.canvases = {};
-      const nextVault = vaultRegistry.vaults[0];
+      canvasRegistry.clear();
+      const nextVault = vaultRegistry.availableVaults[0];
       if (nextVault) {
-        this.switchVault(nextVault.id);
+        await this.switchVault(nextVault.id);
       }
     }
   }
 
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
     const CDN_BASE = "https://assets.codexcryptica.com";
-    for (const entity of Object.values(entities)) {
+    for (const entity of Object.values(entities) as LocalEntity[]) {
       const fixUrl = (url: string | undefined) => {
         if (!url) return url;
         url = url.replace(/\/cdn-cgi\/image\/[^/]+\//, "/");
@@ -155,7 +152,9 @@ export class VaultLifecycleManager {
     const services = this.getServices();
     if (services?.search) {
       await services.search.clear();
-      for (const entity of Object.values(this.repository.entities)) {
+      for (const entity of Object.values(
+        this.repository.entities,
+      ) as LocalEntity[]) {
         await services.search.index({
           id: entity.id,
           title: entity.title,

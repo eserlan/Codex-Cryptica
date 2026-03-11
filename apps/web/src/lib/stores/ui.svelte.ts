@@ -167,6 +167,9 @@ class UIStore {
   // Fog of War State
   sharedMode = $state(false);
 
+  // Guest Mode State
+  isGuestMode = $state(false);
+
   // Connection Label State
   lastConnectionLabel = $state("");
   recentConnectionLabels = $state<string[]>([]);

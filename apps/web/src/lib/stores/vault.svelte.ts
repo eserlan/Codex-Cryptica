@@ -53,6 +53,16 @@ export class VaultStore {
     vaultRelationships.rebuildInboundMap(this.entities),
   );
 
+  labelIndex = $derived.by(() => {
+    const labels = new Set<string>();
+    for (const entity of this.allEntities) {
+      if (entity.labels) {
+        entity.labels.forEach((l) => labels.add(l));
+      }
+    }
+    return Array.from(labels).sort();
+  });
+
   // Callbacks
   onEntityUpdate?: (entity: LocalEntity) => void;
   onEntityDelete?: (entityId: string) => void;
@@ -78,6 +88,12 @@ export class VaultStore {
   }
   get activeVaultId() {
     return vaultRegistry.activeVaultId;
+  }
+  get vaultName() {
+    return vaultRegistry.vaultName;
+  }
+  get saveQueue() {
+    return this.repository.saveQueue;
   }
   get isGuest() {
     return !!uiStore.isGuestMode;
@@ -182,8 +198,8 @@ export class VaultStore {
         await this.loadFiles();
       } else {
         await vaultRegistry.listVaults();
-        if (vaultRegistry.vaults.length > 0) {
-          const firstVault = vaultRegistry.vaults[0];
+        if (vaultRegistry.availableVaults.length > 0) {
+          const firstVault = vaultRegistry.availableVaults[0];
           await vaultRegistry.setActiveVault(firstVault.id);
           await themeStore.loadForVault(firstVault.id);
           await this.loadFiles();
@@ -242,7 +258,7 @@ export class VaultStore {
                 entity.lore || "",
                 ...Object.values(entity.metadata || {}).flat(),
               ].join(" ");
-              return this.services!.search.index({
+              const promise = this.services!.search.index({
                 id: entity.id,
                 title: entity.title,
                 content: entity.content,
@@ -250,7 +266,10 @@ export class VaultStore {
                 path,
                 keywords,
                 updatedAt: Date.now(),
-              }).catch(console.warn);
+              });
+              return promise && promise.catch
+                ? promise.catch(console.warn)
+                : Promise.resolve();
             });
             await Promise.all(indexPromises);
           }
@@ -279,17 +298,18 @@ export class VaultStore {
         entity.lore || "",
         ...Object.values(entity.metadata || {}).flat(),
       ].join(" ");
-      this.services.search
-        .index({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content,
-          type: entity.type,
-          path,
-          keywords,
-          updatedAt: Date.now(),
-        })
-        .catch(console.warn);
+      const promise = this.services.search.index({
+        id: entity.id,
+        title: entity.title,
+        content: entity.content,
+        type: entity.type,
+        path,
+        keywords,
+        updatedAt: Date.now(),
+      });
+      if (promise && promise.catch) {
+        promise.catch(console.warn);
+      }
     }
 
     if (uiStore.isDemoMode) return Promise.resolve();
@@ -351,6 +371,56 @@ export class VaultStore {
   }
   removeLabel(id: string, label: string) {
     return this.crudManager.removeLabel(id, label);
+  }
+
+  bulkAddLabel(ids: string[], label: string) {
+    return this.crudManager.bulkAddLabel(ids, label);
+  }
+  bulkRemoveLabel(ids: string[], label: string) {
+    return this.crudManager.bulkRemoveLabel(ids, label);
+  }
+  batchCreateEntities(newEntitiesList: LocalEntity[]) {
+    return this.crudManager.batchCreateEntities(newEntitiesList);
+  }
+
+  updateConnection(
+    sourceId: string,
+    targetId: string,
+    oldType: string,
+    newType: string,
+    newLabel?: string,
+  ) {
+    return this.crudManager.updateConnection(
+      sourceId,
+      targetId,
+      oldType,
+      newType,
+      newLabel,
+    );
+  }
+
+  async resolveImageUrl(
+    path: string,
+    fileFetcher?: (path: string) => Promise<Blob>,
+  ) {
+    return this.assetManager.resolveImageUrl(
+      await this.getActiveVaultHandle(),
+      path,
+      fileFetcher,
+    );
+  }
+
+  async saveImageToVault(
+    blob: Blob | File,
+    entityId: string,
+    originalName?: string,
+  ) {
+    return this.assetManager.saveImageToVault(
+      await this.getActiveVaultHandle(),
+      blob,
+      entityId,
+      originalName,
+    );
   }
 
   async getActiveVaultHandle(): Promise<FileSystemDirectoryHandle | undefined> {

@@ -63,7 +63,7 @@
   onMount(async () => {
     if (isGuestMode && shareId && shareId.startsWith("p2p-")) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
-      vault.isGuest = true; // Activate guest mode
+      uiStore.isGuestMode = true; // Activate guest mode
 
       try {
         await p2pGuestService.connectToHost(
@@ -74,7 +74,7 @@
               defaultVisibility: graph.defaultVisibility,
             });
             // Update vault entities with received data
-            vault.entities = Object.fromEntries(
+            vault.repository.entities = Object.fromEntries(
               Object.entries(graph.entities).map(
                 ([id, entity]: [string, any]) => [
                   id,
@@ -100,7 +100,7 @@
           },
           (updatedEntity) => {
             // Real-time update from host
-            vault.entities[updatedEntity.id] = {
+            vault.repository.entities[updatedEntity.id] = {
               ...updatedEntity,
               _path:
                 typeof updatedEntity._path === "string"
@@ -110,7 +110,7 @@
           },
           (deletedId) => {
             // Real-time delete from host
-            delete vault.entities[deletedId];
+            delete vault.repository.entities[deletedId];
           },
           (batchUpdates) => {
             // Real-time batch update from host
@@ -119,7 +119,7 @@
         );
       } catch (err) {
         console.error("[Guest Mode] Failed to connect to host:", err);
-        vault.isGuest = false;
+        uiStore.isGuestMode = false;
         vault.status = "error";
         vault.errorMessage = "Failed to connect to shared campaign.";
       }

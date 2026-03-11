@@ -120,21 +120,41 @@ export class VaultCrudManager {
     targetId: string,
     type: string,
     label?: string,
-    strength: number = 1.0,
+    _strength: number = 1.0,
   ): Promise<boolean> {
-    const { entities, sourceUpdated, targetUpdated } =
-      vaultEntities.addConnection(
-        this.getEntities(),
-        sourceId,
-        targetId,
-        type,
-        label,
-        strength,
-      );
-    if (sourceUpdated || targetUpdated) {
+    const { entities, updatedSource } = vaultEntities.addConnection(
+      this.getEntities(),
+      sourceId,
+      targetId,
+      type,
+      label,
+    );
+    if (updatedSource) {
       this.setEntities(entities);
-      if (sourceUpdated) await this.scheduleSave(sourceUpdated);
-      if (targetUpdated) await this.scheduleSave(targetUpdated);
+      await this.scheduleSave(updatedSource);
+      return true;
+    }
+    return false;
+  }
+
+  async updateConnection(
+    sourceId: string,
+    targetId: string,
+    oldType: string,
+    newType: string,
+    newLabel?: string,
+  ): Promise<boolean> {
+    const { entities, updatedSource } = vaultEntities.updateConnection(
+      this.getEntities(),
+      sourceId,
+      targetId,
+      oldType,
+      newType,
+      newLabel,
+    );
+    if (updatedSource) {
+      this.setEntities(entities);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
@@ -145,17 +165,15 @@ export class VaultCrudManager {
     targetId: string,
     type: string,
   ): Promise<boolean> {
-    const { entities, sourceUpdated, targetUpdated } =
-      vaultEntities.removeConnection(
-        this.getEntities(),
-        sourceId,
-        targetId,
-        type,
-      );
-    if (sourceUpdated || targetUpdated) {
+    const { entities, updatedSource } = vaultEntities.removeConnection(
+      this.getEntities(),
+      sourceId,
+      targetId,
+      type,
+    );
+    if (updatedSource) {
       this.setEntities(entities);
-      if (sourceUpdated) await this.scheduleSave(sourceUpdated);
-      if (targetUpdated) await this.scheduleSave(targetUpdated);
+      await this.scheduleSave(updatedSource);
       return true;
     }
     return false;
@@ -175,6 +193,38 @@ export class VaultCrudManager {
     return false;
   }
 
+  async bulkAddLabel(ids: string[], label: string): Promise<number> {
+    const { entities, modifiedIds } = vaultEntities.bulkAddLabel(
+      this.getEntities(),
+      ids,
+      label,
+    );
+    if (modifiedIds.length > 0) {
+      this.setEntities(entities);
+      for (const id of modifiedIds) {
+        const entity = entities[id];
+        if (entity) await this.scheduleSave(entity);
+      }
+    }
+    return modifiedIds.length;
+  }
+
+  async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
+    const { entities, modifiedIds } = vaultEntities.bulkRemoveLabel(
+      this.getEntities(),
+      ids,
+      label,
+    );
+    if (modifiedIds.length > 0) {
+      this.setEntities(entities);
+      for (const id of modifiedIds) {
+        const entity = entities[id];
+        if (entity) await this.scheduleSave(entity);
+      }
+    }
+    return modifiedIds.length;
+  }
+
   async removeLabel(id: string, label: string): Promise<boolean> {
     const { entities, updated } = vaultEntities.removeLabel(
       this.getEntities(),
@@ -187,5 +237,16 @@ export class VaultCrudManager {
       return true;
     }
     return false;
+  }
+
+  async batchCreateEntities(newEntitiesList: LocalEntity[]): Promise<void> {
+    const { entities } = vaultEntities.batchCreateEntities(
+      this.getEntities(),
+      newEntitiesList,
+    );
+    this.setEntities(entities);
+    for (const entity of newEntitiesList) {
+      await this.scheduleSave(entity);
+    }
   }
 }

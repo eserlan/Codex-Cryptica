@@ -96,7 +96,10 @@ export const syncIOAdapter: ISyncIOAdapter = {
 };
 
 export const syncNotifier: ISyncNotifier = {
-  notify: (msg, type) => uiStore.notify(msg, type),
+  notify: (msg, type) => {
+    const uiType = type === "warning" ? "info" : type;
+    uiStore.notify(msg, uiType);
+  },
   alert: (msg) => window.alert(msg),
 };
 
