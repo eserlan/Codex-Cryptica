@@ -178,6 +178,7 @@ export function addConnection(
   targetId: string,
   type: string,
   label?: string,
+  strength: number = 1.0,
 ): {
   entities: Record<string, LocalEntity>;
   updatedSource: LocalEntity | null;
@@ -189,7 +190,7 @@ export function addConnection(
     target: targetId,
     type,
     label,
-    strength: 1,
+    strength,
   };
 
   const updatedSource = {

@@ -161,7 +161,11 @@ export class VaultLifecycleManager {
           content: entity.content,
           type: entity.type,
           path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
-          keywords: (entity.tags || []).join(" "),
+          keywords: [
+            ...(entity.tags || []),
+            entity.lore || "",
+            ...Object.values(entity.metadata || {}).flat(),
+          ].join(" "),
           updatedAt: Date.now(),
         });
       }

@@ -79,7 +79,7 @@ export class VaultRepository {
         }
       }
 
-      if (!entity || !entity.id || entity.id === "undefined") return null;
+      if (!entity || !entity.id) return null;
       return entity;
     };
 

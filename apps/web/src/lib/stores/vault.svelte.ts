@@ -25,8 +25,16 @@ import {
 } from "./vault/adapters";
 
 export interface IVaultServices {
-  search: any;
-  ai: any;
+  search: {
+    index(entry: any): Promise<void>;
+    remove(id: string): Promise<void>;
+    clear(): Promise<void>;
+    search(query: string, options?: any): Promise<any[]>;
+  };
+  ai: {
+    clearStyleCache(): void;
+    expandQuery(apiKey: string, query: string, history: any[]): Promise<string>;
+  };
 }
 
 export class VaultStore {
@@ -136,16 +144,6 @@ export class VaultStore {
     if (typeof window !== "undefined") {
       mapRegistry.init(this.repository.saveQueue);
       canvasRegistry.init(this.repository.saveQueue);
-
-      if (!syncCoordinator) {
-        createSyncEngine().then((engine) => {
-          this.syncCoordinator = new SyncCoordinator(
-            syncIOAdapter,
-            engine,
-            syncNotifier,
-          );
-        });
-      }
     }
   }
 
@@ -159,6 +157,15 @@ export class VaultStore {
       const { searchService } = await import("../services/search");
       const { aiService } = await import("../services/ai");
       this.services = { search: searchService, ai: aiService };
+
+      if (!this.syncCoordinator) {
+        const engine = await createSyncEngine();
+        this.syncCoordinator = new SyncCoordinator(
+          syncIOAdapter,
+          engine,
+          syncNotifier,
+        );
+      }
     }
 
     try {

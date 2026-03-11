@@ -65,11 +65,14 @@ export class VaultCrudManager {
     return true;
   }
 
-  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>): boolean {
+  async batchUpdateEntities(
+    updates: Record<string, Partial<LocalEntity>>,
+  ): Promise<boolean> {
     let hasChanges = false;
     const currentEntities = this.getEntities();
     const newEntities = { ...currentEntities };
     const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
+    const savePromises: Promise<void>[] = [];
 
     for (const [id, patch] of Object.entries(updates)) {
       if (!currentEntities[id]) continue;
@@ -78,12 +81,13 @@ export class VaultCrudManager {
       newEntities[id] = merged;
       appliedUpdates[id] = patch;
       hasChanges = true;
-      this.scheduleSave(merged);
+      savePromises.push(this.scheduleSave(merged));
     }
 
     if (hasChanges) {
       this.setEntities(newEntities);
       if (this.onBatchUpdate) this.onBatchUpdate(appliedUpdates);
+      await Promise.all(savePromises);
       return true;
     }
     return false;
@@ -128,6 +132,7 @@ export class VaultCrudManager {
       targetId,
       type,
       label,
+      _strength,
     );
     if (updatedSource) {
       this.setEntities(entities);
