@@ -12,10 +12,9 @@
   let formulaInput = $state<HTMLInputElement>();
   let rollLogComponent = $state<ReturnType<typeof RollLog>>();
 
-  // Successive Click Accumulator
-  let pendingSides = $state<number | null>(null);
-  let pendingCount = $state(0);
-  let pendingTimeout = $state<any>(null);
+  // History Navigation
+  let historyIndex = $state(-1);
+  let originalFormula = "";
 
   const executeRoll = async (f: string) => {
     try {
@@ -23,6 +22,8 @@
       const command = diceParser.parse(f);
       const result = diceEngine.execute(command);
       await diceHistory.addResult(result, "modal");
+      // Reset history navigation
+      historyIndex = -1;
       // Scroll to top to see new result
       await tick();
       rollLogComponent?.scrollToTop();
@@ -32,9 +33,6 @@
   };
 
   const roll = (customFormula?: string) => {
-    // Flush any pending quick rolls first
-    flushPending();
-
     const f = customFormula || formula;
     if (!f) return;
     executeRoll(f);
@@ -44,28 +42,62 @@
     }
   };
 
-  const flushPending = () => {
-    if (pendingSides !== null && pendingCount > 0) {
-      executeRoll(`${pendingCount}d${pendingSides}`);
-      pendingSides = null;
-      pendingCount = 0;
-      if (pendingTimeout) clearTimeout(pendingTimeout);
+  const quickAdd = (sides: number) => {
+    if (!formula) {
+      formula = `1d${sides}`;
+    } else {
+      // Global increment: find if the formula contains this die type anywhere
+      // Match "XdSide" where X is a number
+      const diePattern = new RegExp(`(\\d+)d${sides}\\b`, "i");
+      const match = formula.match(diePattern);
+
+      if (match) {
+        // Increment the existing count
+        const count = parseInt(match[1]) + 1;
+        formula = formula.replace(diePattern, `${count}d${sides}`);
+      } else {
+        // Append as a new part
+        const trimmed = formula.trim();
+        const lastChar = trimmed.slice(-1);
+        if (/[0-9a-z]/i.test(lastChar)) {
+          formula = `${trimmed} + 1d${sides}`;
+        } else {
+          formula = `${trimmed} 1d${sides}`;
+        }
+      }
     }
+    formulaInput?.focus();
   };
 
-  const quickRoll = (sides: number) => {
-    if (pendingSides === sides) {
-      pendingCount++;
-    } else {
-      flushPending();
-      pendingSides = sides;
-      pendingCount = 1;
-    }
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const history = diceHistory.modalHistory;
+    // Get unique formulas in reverse chronological order (most recent first)
+    const uniqueFormulas = Array.from(
+      new Set(history.map((h) => h.formula)),
+    ).reverse();
 
-    if (pendingTimeout) clearTimeout(pendingTimeout);
-    pendingTimeout = setTimeout(() => {
-      flushPending();
-    }, 400); // 400ms window for accumulation
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (uniqueFormulas.length === 0) return;
+
+      if (historyIndex === -1) {
+        originalFormula = formula;
+      }
+
+      if (historyIndex < uniqueFormulas.length - 1) {
+        historyIndex++;
+        formula = uniqueFormulas[historyIndex];
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        historyIndex--;
+        formula = uniqueFormulas[historyIndex];
+      } else if (historyIndex === 0) {
+        historyIndex = -1;
+        formula = originalFormula;
+      }
+    }
   };
 
   const reroll = (f: string) => {
@@ -85,15 +117,13 @@
 
 {#if uiStore.showDiceModal}
   <!-- Backdrop -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="fixed inset-0 bg-theme-bg/80 backdrop-blur-md z-[100] flex items-center justify-center p-4"
     onclick={() => {
-      flushPending();
       uiStore.showDiceModal = false;
     }}
-    onkeydown={(e) =>
-      (e.key === "Escape" || e.key === " ") &&
-      (flushPending(), (uiStore.showDiceModal = false))}
+    onkeydown={(e) => e.key === "Escape" && (uiStore.showDiceModal = false)}
     transition:fade={{ duration: 200 }}
     role="button"
     tabindex="0"
@@ -122,7 +152,6 @@
         <button
           class="p-1 hover:bg-theme-primary/10 rounded-md transition-colors text-theme-muted hover:text-theme-primary"
           onclick={() => {
-            flushPending();
             uiStore.showDiceModal = false;
           }}
           aria-label="Close"
@@ -137,16 +166,9 @@
           {#each diceTypes as die}
             <button
               class="flex flex-col items-center justify-center w-12 h-14 rounded-lg border border-theme-border bg-theme-bg hover:border-theme-primary hover:text-theme-primary transition-all active:scale-90 group relative"
-              onclick={() => quickRoll(die.sides)}
-              title="Click multiple times to roll more dice"
+              onclick={() => quickAdd(die.sides)}
+              title="Add {die.sides}-sided die to formula"
             >
-              {#if pendingSides === die.sides && pendingCount > 0}
-                <span
-                  class="absolute -top-1 -right-1 bg-theme-primary text-theme-bg text-[10px] font-bold px-1.5 rounded-full shadow-lg animate-in zoom-in duration-100"
-                >
-                  {pendingCount}
-                </span>
-              {/if}
               <span
                 class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
                 >d{die.sides}</span
@@ -156,7 +178,7 @@
           {/each}
         </div>
         <p class="text-[9px] text-center text-theme-muted italic opacity-60">
-          Click in succession to roll multiple dice
+          Click dice to build your formula
         </p>
       </div>
 
@@ -174,6 +196,7 @@
               bind:this={formulaInput}
               type="text"
               bind:value={formula}
+              onkeydown={handleKeyDown}
               placeholder="Enter formula (e.g. 2d20kh1 + 5)"
               class="w-full bg-theme-bg border border-theme-border rounded-xl pl-4 pr-10 py-3 text-sm focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 outline-none font-mono transition-all placeholder:opacity-40"
             />
