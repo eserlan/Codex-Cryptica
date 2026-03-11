@@ -9,6 +9,8 @@ export type OracleIntent =
     }
   | { type: "connect"; sourceName: string; label: string; targetName: string }
   | { type: "merge"; sourceName: string; targetName: string }
+  | { type: "connect-ai"; query: string }
+  | { type: "merge-ai"; query: string }
   | { type: "plot"; query: string }
   | { type: "help" }
   | { type: "clear" }

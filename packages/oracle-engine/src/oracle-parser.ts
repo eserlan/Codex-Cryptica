@@ -72,6 +72,7 @@ export class OracleCommandParser {
           type: "error",
           message: 'Invalid format. Use: /connect "Entity A" label "Entity B"',
         };
+      return { type: "connect-ai", query };
     }
 
     if (q.startsWith("/merge")) {
@@ -89,6 +90,7 @@ export class OracleCommandParser {
           type: "error",
           message: 'Invalid format. Use: /merge "Source" into "Target"',
         };
+      return { type: "merge-ai", query };
     }
 
     if (q.startsWith("/plot")) {

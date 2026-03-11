@@ -17,8 +17,12 @@ import { vault } from "./vault.svelte";
 vi.mock("../services/ai", () => ({
   aiService: {
     parseConnectionIntent: vi.fn(),
-    retrieveContext: vi.fn(),
+    parseMergeIntent: vi.fn(),
+    retrieveContext: vi
+      .fn()
+      .mockResolvedValue({ content: "ctx", sourceIds: [] }),
     expandQuery: vi.fn(),
+    generateResponse: vi.fn().mockResolvedValue(undefined),
   },
   TIER_MODES: { lite: "lite", advanced: "advanced" },
 }));

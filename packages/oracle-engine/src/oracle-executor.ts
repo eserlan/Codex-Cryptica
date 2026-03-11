@@ -38,6 +38,12 @@ export class OracleActionExecutor {
       case "merge":
         await this.executeMerge(intent.sourceName, intent.targetName, context);
         break;
+      case "connect-ai":
+        await this.executeConnectAI(intent.query, context);
+        break;
+      case "merge-ai":
+        await this.executeMergeAI(intent.query, context);
+        break;
       case "plot":
         await this.executePlot(intent.query, context);
         break;
@@ -175,6 +181,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     label: string,
     targetName: string,
     context: OracleExecutionContext,
+    type?: string,
   ) {
     try {
       const sourceRes = await context.searchService.search(sourceName, {
@@ -195,7 +202,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       const target = context.vault.entities[targetId];
 
       if (source && target) {
-        const typeToUse = "related_to";
+        const typeToUse = type || "related_to";
         const success = await context.vault.addConnection(
           source.id,
           target.id,
@@ -320,6 +327,57 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         throw new Error(
           `Entity resolution failed for "${sourceName}" or "${targetName}".`,
         );
+      }
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ ${err.message}`,
+      });
+    }
+  }
+
+  private async executeConnectAI(
+    query: string,
+    context: OracleExecutionContext,
+  ) {
+    try {
+      const intent = await context.aiService.parseConnectionIntent(
+        context.effectiveApiKey,
+        query,
+        context,
+      );
+      if (intent) {
+        await this.executeConnect(
+          intent.sourceName,
+          intent.label,
+          intent.targetName,
+          context,
+          intent.type,
+        );
+      } else {
+        throw new Error("AI could not understand connection intent.");
+      }
+    } catch (err: any) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ ${err.message}`,
+      });
+    }
+  }
+
+  private async executeMergeAI(query: string, context: OracleExecutionContext) {
+    try {
+      const intent = await context.aiService.parseMergeIntent(
+        context.effectiveApiKey,
+        query,
+        context,
+      );
+      if (intent) {
+        await this.executeMerge(intent.sourceName, intent.targetName, context);
+      } else {
+        throw new Error("AI could not understand merge intent.");
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({
