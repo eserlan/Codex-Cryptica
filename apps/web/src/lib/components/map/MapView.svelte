@@ -189,11 +189,17 @@
   let isPanning = false;
   let isPainting = false;
   let needsMaskUpdate = false;
-  let lastMousePos = { x: 0, y: 0 };
+  let lastMousePos = $state({ x: 0, y: 0 });
   let mouseDownPos = { x: 0, y: 0 };
+  let isAltPressed = $state(false);
+
+  const visualBrushRadius = $derived(
+    mapStore.brushRadius * mapStore.viewport.zoom,
+  );
 
   function onKeyDown(event: KeyboardEvent) {
-    const { key } = event;
+    const { key, altKey } = event;
+    isAltPressed = altKey;
     const viewport = mapStore.viewport;
     let handled = false;
 
@@ -249,9 +255,17 @@
     }
   }
 
+  function onKeyUp(event: KeyboardEvent) {
+    isAltPressed = event.altKey;
+  }
+
   function onMouseDown(e: MouseEvent) {
+    const rect = container?.getBoundingClientRect();
+    if (rect) {
+      lastMousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
     mouseDownPos = { x: e.clientX, y: e.clientY };
-    lastMousePos = { x: e.clientX, y: e.clientY };
+    isAltPressed = e.altKey;
 
     if (mapStore.isGMMode && e.altKey) {
       isPainting = true;
@@ -262,18 +276,25 @@
   }
 
   function onMouseMove(e: MouseEvent) {
+    const rect = container?.getBoundingClientRect();
+    if (!rect) return;
+
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    isAltPressed = e.altKey;
+
     if (isPainting) {
       paintFog(e);
     } else if (isPanning) {
-      const dx = e.clientX - lastMousePos.x;
-      const dy = e.clientY - lastMousePos.y;
+      const dx = mouseX - lastMousePos.x;
+      const dy = mouseY - lastMousePos.y;
 
       mapStore.updateViewport(
         { x: mapStore.viewport.pan.x + dx, y: mapStore.viewport.pan.y + dy },
         mapStore.viewport.zoom,
       );
     }
-    lastMousePos = { x: e.clientX, y: e.clientY };
+    lastMousePos = { x: mouseX, y: mouseY };
   }
 
   function paintFog(e: MouseEvent) {
@@ -314,7 +335,7 @@
       ctx.arc(
         imgCoords.x + mapImage!.width / 2,
         imgCoords.y + mapImage!.height / 2,
-        mapStore.brushRadius / mapStore.viewport.zoom,
+        mapStore.brushRadius,
         0,
         Math.PI * 2,
       );
@@ -427,8 +448,23 @@
   ondblclick={onDoubleClick}
   onwheel={onWheel}
   onkeydown={onKeyDown}
+  onkeyup={onKeyUp}
 >
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
+
+  <!-- Visual Brush Indicator -->
+  {#if mapStore.isGMMode && isAltPressed}
+    <div
+      class="absolute pointer-events-none z-30 border-2 border-white/50 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.3)] bg-white/10 flex items-center justify-center transition-all duration-75"
+      style:left="{lastMousePos.x - visualBrushRadius}px"
+      style:top="{lastMousePos.y - visualBrushRadius}px"
+      style:width="{visualBrushRadius * 2}px"
+      style:height="{visualBrushRadius * 2}px"
+    >
+      <!-- Center dot -->
+      <div class="w-1 h-1 bg-white/50 rounded-full"></div>
+    </div>
+  {/if}
 
   {#if !mapImage}
     <div
