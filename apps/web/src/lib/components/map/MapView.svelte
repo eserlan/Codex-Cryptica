@@ -192,12 +192,21 @@
   let maskSnapshot: HTMLCanvasElement | null = null;
   let needsMaskUpdate = false;
   let lastMousePos = $state({ x: 0, y: 0 });
+  let lastPaintPos: { x: number; y: number } | null = null;
   let mouseDownPos = { x: 0, y: 0 };
   let isAltPressed = $state(false);
+  let isPointerOver = $state(false);
+  let cachedRect: DOMRect | null = null;
 
   const visualBrushRadius = $derived(
     mapStore.brushRadius * mapStore.viewport.zoom,
   );
+
+  function updateCachedRect() {
+    if (container) {
+      cachedRect = container.getBoundingClientRect();
+    }
+  }
 
   function onKeyDown(event: KeyboardEvent) {
     const { key, altKey } = event;
@@ -262,15 +271,19 @@
   }
 
   function onMouseDown(e: MouseEvent) {
-    const rect = container?.getBoundingClientRect();
-    if (rect) {
-      lastMousePos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    updateCachedRect();
+    if (cachedRect) {
+      lastMousePos = {
+        x: e.clientX - cachedRect.left,
+        y: e.clientY - cachedRect.top,
+      };
     }
     mouseDownPos = { x: e.clientX, y: e.clientY };
     isAltPressed = e.altKey;
 
     if (mapStore.isGMMode && e.altKey) {
       isPainting = true;
+      lastPaintPos = { x: lastMousePos.x, y: lastMousePos.y };
 
       // Capture snapshot for undo
       if (maskCanvas) {
@@ -280,23 +293,27 @@
         maskSnapshot.getContext("2d")?.drawImage(maskCanvas, 0, 0);
       }
 
-      paintFog(e);
+      paintFog(
+        lastMousePos.x,
+        lastMousePos.y,
+        e.shiftKey || e.ctrlKey || e.metaKey,
+      );
     } else if (e.button === 0) {
       isPanning = true;
     }
   }
 
   function onMouseMove(e: MouseEvent) {
-    const rect = container?.getBoundingClientRect();
-    if (!rect) return;
+    if (!cachedRect) updateCachedRect();
+    if (!cachedRect) return;
 
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
+    const mouseX = e.clientX - cachedRect.left;
+    const mouseY = e.clientY - cachedRect.top;
     isAltPressed = e.altKey;
 
     if (isPainting) {
-      paintFog(e);
-    } else if (isPanning) {
+      paintFog(mouseX, mouseY, e.shiftKey || e.ctrlKey || e.metaKey);
+    } else if (isPanning && !isAltPressed) {
       const dx = mouseX - lastMousePos.x;
       const dy = mouseY - lastMousePos.y;
 
@@ -308,7 +325,16 @@
     lastMousePos = { x: mouseX, y: mouseY };
   }
 
-  function paintFog(e: MouseEvent) {
+  function onMouseEnter() {
+    isPointerOver = true;
+    updateCachedRect();
+  }
+
+  function onMouseLeave() {
+    isPointerOver = false;
+  }
+
+  function paintFog(x: number, y: number, isHiding: boolean) {
     if (!maskCanvas || !container || !mapImage || needsMaskUpdate) {
       return;
     }
@@ -321,37 +347,45 @@
         return;
       }
 
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
       const imgCoords = mapStore.unproject({ x, y });
+      const prevImgCoords = lastPaintPos
+        ? mapStore.unproject(lastPaintPos)
+        : imgCoords;
       const ctx = maskCanvas!.getContext("2d")!;
 
       ctx.save();
 
-      const isHiding = e.shiftKey || e.ctrlKey || e.metaKey;
+      const isErase = isHiding;
 
-      // In maskCanvas, transparent means "hidden", opacity means "revealed (punched hole)"
-      // Default Alt+drag = REVEAL (white opacity in the mask)
-      // Alt+Shift+drag or Alt+Ctrl+drag = HIDE (erase the mask canvas, restoring the fog)
-      if (isHiding) {
+      if (isErase) {
         ctx.globalCompositeOperation = "destination-out";
       } else {
         ctx.fillStyle = "white";
+        ctx.strokeStyle = "white";
         ctx.globalCompositeOperation = "source-over";
       }
 
+      const centerX = imgCoords.x + mapImage!.width / 2;
+      const centerY = imgCoords.y + mapImage!.height / 2;
+      const prevX = prevImgCoords.x + mapImage!.width / 2;
+      const prevY = prevImgCoords.y + mapImage!.height / 2;
+
+      // Draw a line from previous to current to fill gaps
       ctx.beginPath();
-      ctx.arc(
-        imgCoords.x + mapImage!.width / 2,
-        imgCoords.y + mapImage!.height / 2,
-        mapStore.brushRadius,
-        0,
-        Math.PI * 2,
-      );
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = mapStore.brushRadius * 2;
+      ctx.moveTo(prevX, prevY);
+      ctx.lineTo(centerX, centerY);
+      ctx.stroke();
+
+      // Also draw the circle at the end point for perfect rounding
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, mapStore.brushRadius, 0, Math.PI * 2);
       ctx.fill();
+
       ctx.restore();
+      lastPaintPos = { x, y };
       needsMaskUpdate = false;
     });
   }
@@ -405,6 +439,7 @@
 
       await mapStore.saveMask(maskCanvas!);
       maskSnapshot = null;
+      lastPaintPos = null;
     }
 
     if (isPanning) {
@@ -482,8 +517,13 @@
     const relX = (panX - mapStore.viewport.pan.x) / oldZoom;
     const relY = (panY - mapStore.viewport.pan.y) / oldZoom;
 
-    const newPanX = panX - relX * newZoom;
-    const newPanY = panY - relY * newZoom;
+    // Use current pan when Alt is held to avoid shifting the map during resize
+    const newPanX = isAltPressed
+      ? mapStore.viewport.pan.x
+      : panX - relX * newZoom;
+    const newPanY = isAltPressed
+      ? mapStore.viewport.pan.y
+      : panY - relY * newZoom;
 
     mapStore.updateViewport({ x: newPanX, y: newPanY }, newZoom);
     mapAnnouncement = `Zoom level ${newZoom.toFixed(2)}`;
@@ -497,10 +537,11 @@
   role="application"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="0"
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
   onmousedown={onMouseDown}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
-  onmouseleave={onMouseUp}
   ondblclick={onDoubleClick}
   onwheel={onWheel}
   onkeydown={onKeyDown}
@@ -509,7 +550,7 @@
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
 
   <!-- Visual Brush Indicator -->
-  {#if mapStore.isGMMode && isAltPressed}
+  {#if mapStore.isGMMode && isAltPressed && isPointerOver}
     <div
       class="absolute pointer-events-none z-30 border-2 border-theme-primary/50 rounded-full shadow-[0_0_10px_rgba(var(--color-theme-primary-rgb),0.3)] bg-theme-primary/10 flex items-center justify-center transition-all duration-75"
       style:left="{lastMousePos.x - visualBrushRadius}px"
