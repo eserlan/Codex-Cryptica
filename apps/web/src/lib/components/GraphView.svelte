@@ -713,19 +713,26 @@
           );
         }
 
-        nodesWithImages.forEach(async (node) => {
-          const imagePath = node.data("image") || node.data("thumbnail");
-          try {
-            const url = await vault.resolveImageUrl(imagePath);
-            if (url && !currentCy.destroyed()) {
-              node.data("resolvedImage", url);
+        let styleUpdateTimeout: number | undefined;
+        nodesWithImages.forEach((node) => {
+          // Fire and forget the async resolution to keep it parallel and avoid linting overload errors
+          void (async () => {
+            const imagePath = node.data("image") || node.data("thumbnail");
+            try {
+              const url = await vault.resolveImageUrl(imagePath);
+              if (url && !currentCy.destroyed()) {
+                node.data("resolvedImage", url);
 
-              // Trigger a style update so Cytoscape re-evaluates selectors like node[resolvedImage]
-              currentCy.style().update();
+                // Batch style updates to avoid layout thrashing during large loads
+                clearTimeout(styleUpdateTimeout);
+                styleUpdateTimeout = window.setTimeout(() => {
+                  if (!currentCy.destroyed()) currentCy.style().update();
+                }, 100);
+              }
+            } catch (err) {
+              console.warn(`Failed to resolve image for ${node.id()}`, err);
             }
-          } catch (err) {
-            console.warn(`Failed to resolve image for ${node.id()}`, err);
-          }
+          })();
         });
       });
     }
