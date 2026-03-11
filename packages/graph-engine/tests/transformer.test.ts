@@ -119,7 +119,7 @@ describe("GraphTransformer", () => {
       themeId: "dark",
     };
 
-    const imageSelector = "node[resolvedImage][width][height]";
+    const imageSelector = "node[image], node[thumbnail]";
 
     // Test with images enabled (default)
     const styleWithImages = getGraphStyle(mockTemplate, [], true);
