@@ -12,6 +12,8 @@ concurrency:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   test-e2e:
@@ -40,17 +42,31 @@ jobs:
         env:
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
-        # Use npx playwright test directly to ensure config-driven reporting and multiple workers
-        # We use 2 workers (GHA standard) to speed up execution
         run: npx playwright test --config apps/web/playwright.config.ts --reporter=list,html --workers=2
 
-      - name: Debug - List Files
+      - name: Prepare Report for Deployment
         if: always()
         run: |
-          echo "Listing apps/web directory:"
-          ls -R apps/web/playwright-report || echo "Report directory not found"
+          mkdir -p public-report
+          cp -r apps/web/playwright-report/* public-report/
 
-      - name: Upload Playwright Report
+      - name: Upload Pages Artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public-report/
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          # Note: This will overwrite the current GH Pages site with the report
+          # If you want to keep the app AND reports, we should merge them.
+          # For now, this is a dedicated "Report Site" approach or a starting point.
+          preview: true 
+
+      - name: Upload Artifact (Backup)
         if: always()
         uses: actions/upload-artifact@v4
         with:
