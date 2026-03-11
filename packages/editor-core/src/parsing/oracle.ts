@@ -56,7 +56,7 @@ export function parseOracleResponse(text: string): OracleParseResult {
               thumbnail:
                 data.thumbnail || data.thumb || data.frontmatter?.thumbnail,
               connections: data.detectedLinks || data.connections || [],
-              wikiLinks: [],
+              wikiLinks: extractWikiLinks(data.content || data.lore || ""),
             };
           }
         }
@@ -66,8 +66,8 @@ export function parseOracleResponse(text: string): OracleParseResult {
     // Fall back to text parsing
   }
 
-  // Wiki links are ignored to prevent performance issues
-  const wikiLinks: any[] = [];
+  // Cache wiki links early to avoid redundant regex calls
+  const wikiLinks = extractWikiLinks(text);
 
   // Strategy 1: Explicit Markers
   // Broaden regex to include markdown bold, headers, and simple "Label:" at start of line
@@ -330,4 +330,36 @@ function guessType(text: string): string | undefined {
   )
     return "item";
   return undefined;
+}
+
+const WIKI_LINK_REGEX = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+function extractWikiLinks(
+  content: string,
+): { target: string; type: string; strength: number; label?: string }[] {
+  const matches = content.matchAll(WIKI_LINK_REGEX);
+  const connections: {
+    target: string;
+    type: string;
+    strength: number;
+    label?: string;
+  }[] = [];
+
+  for (const match of matches) {
+    const target = match[1].trim();
+    const label = match[2]?.trim();
+    const targetId = target
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    connections.push({
+      target: targetId,
+      type: "related_to",
+      strength: 1.0,
+      label: label || target,
+    });
+  }
+  return connections;
 }
