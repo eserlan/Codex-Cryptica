@@ -21,6 +21,7 @@
   "dependencies": {
     "@codex/canvas-engine": "^0.0.0",
     "@codex/importer": "*",
+    "@codex/oracle-engine": "*",
     "@codex/proposer": "*",
     "@codex/search-engine": "*",
     "@codex/sync-engine": "^0.0.0",

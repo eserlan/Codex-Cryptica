@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`) (067-oracle-store-refactor)
+- IndexedDB (for chat history persistence via `ChatHistoryService`) (067-oracle-store-refactor)
+
 - TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization) (066-die-rolling)
 - IndexedDB (via `idb`) for session-based roll history (066-die-rolling)
 
@@ -122,10 +125,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
+- 067-oracle-store-refactor: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
 - 066-die-rolling: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization)
-
-- 065-move-oracle-sidebar: Added TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4
-
-- 064-help-blog-post: Added TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`)
 
 <!-- MANUAL ADDITIONS START -->
