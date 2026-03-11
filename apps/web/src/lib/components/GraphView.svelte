@@ -846,7 +846,9 @@
         if (nodesWithImages.length === 0) return;
 
         // Mark them all as resolving immediately so they aren't picked up by subsequent reactive triggers
-        nodesWithImages.forEach((n) => resolvingIds.add(n.id()));
+        nodesWithImages.forEach((n) => {
+          resolvingIds.add(n.id());
+        });
 
         // Bulk process all images concurrently
         void (async () => {
@@ -869,7 +871,9 @@
 
             // Abort if graph was destroyed or images turned off during the async resolution
             if (currentCy.destroyed() || !graph.showImages) {
-              nodesWithImages.forEach((n) => resolvingIds.delete(n.id()));
+              nodesWithImages.forEach((n) => {
+                resolvingIds.delete(n.id());
+              });
               return;
             }
 
@@ -890,7 +894,9 @@
           } catch (err) {
             debugStore.error("Bulk image resolution failed", err);
             // On failure, unmark so they might be retried
-            nodesWithImages.forEach((n) => resolvingIds.delete(n.id()));
+            nodesWithImages.forEach((n) => {
+              resolvingIds.delete(n.id());
+            });
           }
         })();
       });
