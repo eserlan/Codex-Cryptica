@@ -370,7 +370,7 @@
     const isTyping =
       target?.tagName === "INPUT" ||
       target?.tagName === "TEXTAREA" ||
-      target?.closest('[contenteditable="true"]');
+      target?.closest("[contenteditable]");
 
     if (isTyping) return;
 

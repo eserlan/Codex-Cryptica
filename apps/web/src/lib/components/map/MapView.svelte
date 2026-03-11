@@ -166,6 +166,40 @@
           opacity: 0.5,
         },
       });
+
+      // Render Visual Brush Indicator directly on canvas for zero-lag tracking
+      if (mapStore.isGMMode && isAltPressed && isPointerOver) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.save();
+          const primaryRGB = hexToRgb(themeStore.activeTheme.tokens.primary);
+
+          // Outer circle
+          ctx.beginPath();
+          ctx.arc(
+            lastMousePos.x,
+            lastMousePos.y,
+            visualBrushRadius,
+            0,
+            Math.PI * 2,
+          );
+          ctx.strokeStyle = `rgba(${primaryRGB}, 0.5)`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Fill
+          ctx.fillStyle = `rgba(${primaryRGB}, 0.1)`;
+          ctx.fill();
+
+          // Center dot
+          ctx.beginPath();
+          ctx.arc(lastMousePos.x, lastMousePos.y, 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${primaryRGB}, 0.5)`;
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
     }
     animationFrameId = requestAnimationFrame(draw);
   }
@@ -190,9 +224,9 @@
   let isPanning = false;
   let isPainting = false;
   let maskSnapshot: HTMLCanvasElement | null = null;
-  let needsMaskUpdate = false;
   let lastMousePos = $state({ x: 0, y: 0 });
   let lastPaintPos: { x: number; y: number } | null = null;
+  let lastPaintImgCoords: { x: number; y: number } | null = null;
   let mouseDownPos = { x: 0, y: 0 };
   let isAltPressed = $state(false);
   let isPointerOver = $state(false);
@@ -284,6 +318,7 @@
     if (mapStore.isGMMode && e.altKey) {
       isPainting = true;
       lastPaintPos = { x: lastMousePos.x, y: lastMousePos.y };
+      lastPaintImgCoords = mapStore.unproject(lastPaintPos);
 
       // Capture snapshot for undo
       if (maskCanvas) {
@@ -335,59 +370,48 @@
   }
 
   function paintFog(x: number, y: number, isHiding: boolean) {
-    if (!maskCanvas || !container || !mapImage || needsMaskUpdate) {
+    if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId) {
       return;
     }
 
-    needsMaskUpdate = true;
+    const imgCoords = mapStore.unproject({ x, y });
+    const prevImgCoords = lastPaintImgCoords || imgCoords;
+    const ctx = maskCanvas!.getContext("2d")!;
 
-    requestAnimationFrame(() => {
-      if (!container || !maskCanvas || !mapImage || !mapStore.activeMapId) {
-        needsMaskUpdate = false;
-        return;
-      }
+    ctx.save();
 
-      const imgCoords = mapStore.unproject({ x, y });
-      const prevImgCoords = lastPaintPos
-        ? mapStore.unproject(lastPaintPos)
-        : imgCoords;
-      const ctx = maskCanvas!.getContext("2d")!;
+    const isErase = isHiding;
 
-      ctx.save();
+    if (isErase) {
+      ctx.globalCompositeOperation = "destination-out";
+    } else {
+      ctx.fillStyle = "white";
+      ctx.strokeStyle = "white";
+      ctx.globalCompositeOperation = "source-over";
+    }
 
-      const isErase = isHiding;
+    const centerX = imgCoords.x + mapImage!.width / 2;
+    const centerY = imgCoords.y + mapImage!.height / 2;
+    const prevX = prevImgCoords.x + mapImage!.width / 2;
+    const prevY = prevImgCoords.y + mapImage!.height / 2;
 
-      if (isErase) {
-        ctx.globalCompositeOperation = "destination-out";
-      } else {
-        ctx.fillStyle = "white";
-        ctx.strokeStyle = "white";
-        ctx.globalCompositeOperation = "source-over";
-      }
+    // Draw a line from previous to current to fill gaps
+    ctx.beginPath();
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.lineWidth = mapStore.brushRadius * 2;
+    ctx.moveTo(prevX, prevY);
+    ctx.lineTo(centerX, centerY);
+    ctx.stroke();
 
-      const centerX = imgCoords.x + mapImage!.width / 2;
-      const centerY = imgCoords.y + mapImage!.height / 2;
-      const prevX = prevImgCoords.x + mapImage!.width / 2;
-      const prevY = prevImgCoords.y + mapImage!.height / 2;
+    // Also draw the circle at the end point for perfect rounding
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, mapStore.brushRadius, 0, Math.PI * 2);
+    ctx.fill();
 
-      // Draw a line from previous to current to fill gaps
-      ctx.beginPath();
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = mapStore.brushRadius * 2;
-      ctx.moveTo(prevX, prevY);
-      ctx.lineTo(centerX, centerY);
-      ctx.stroke();
-
-      // Also draw the circle at the end point for perfect rounding
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, mapStore.brushRadius, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-      lastPaintPos = { x, y };
-      needsMaskUpdate = false;
-    });
+    ctx.restore();
+    lastPaintPos = { x, y };
+    lastPaintImgCoords = imgCoords;
   }
 
   async function onMouseUp(e: MouseEvent) {
@@ -440,6 +464,7 @@
       await mapStore.saveMask(maskCanvas!);
       maskSnapshot = null;
       lastPaintPos = null;
+      lastPaintImgCoords = null;
     }
 
     if (isPanning) {
@@ -531,10 +556,12 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
   role="application"
+  aria-roledescription="map"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
   tabindex="0"
   onmouseenter={onMouseEnter}
@@ -548,20 +575,6 @@
   onkeyup={onKeyUp}
 >
   <canvas bind:this={canvas} class="absolute inset-0"></canvas>
-
-  <!-- Visual Brush Indicator -->
-  {#if mapStore.isGMMode && isAltPressed && isPointerOver}
-    <div
-      class="absolute pointer-events-none z-30 border-2 border-theme-primary/50 rounded-full shadow-[0_0_10px_rgba(var(--color-theme-primary-rgb),0.3)] bg-theme-primary/10 flex items-center justify-center transition-all duration-75"
-      style:left="{lastMousePos.x - visualBrushRadius}px"
-      style:top="{lastMousePos.y - visualBrushRadius}px"
-      style:width="{visualBrushRadius * 2}px"
-      style:height="{visualBrushRadius * 2}px"
-    >
-      <!-- Center dot -->
-      <div class="w-1 h-1 bg-theme-primary/50 rounded-full"></div>
-    </div>
-  {/if}
 
   {#if !mapImage}
     <div
