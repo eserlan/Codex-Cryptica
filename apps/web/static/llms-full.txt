@@ -64,6 +64,9 @@ Design custom layouts like conspiracy boards or quest flowcharts. Drag entities 
 ### The Archive
 Visit our blog for deep dives into data sovereignty and tactical world-building guides. Check out our Comprehensive Help Guide for a full system manual.
 
+### Die Roller
+Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.
+
 
 ## Help Documentation
 
@@ -241,7 +244,7 @@ Codex Cryptica is designed as a **local-first** application. This means your dat
 
 ## Local Storage (OPFS)
 
-By default, all your campaign data is stored in the **Origin Private File System (OPFS)**. This is a high-performance, sandboxed area within your browser. 
+By default, all your campaign data is stored in the **Origin Private File System (OPFS)**. This is a high-performance, sandboxed area within your browser.
 
 - **Privacy:** Your data is not uploaded to our servers.
 - **Speed:** Reading and writing thousands of chronicles is near-instant.
