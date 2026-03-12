@@ -681,8 +681,20 @@
         const newEdges: GraphEdge[] = [];
         snapshotElements.forEach((el) => {
           if (!elementMap.has(el.data.id)) {
-            if (!("source" in el.data)) newNodes.push(el as GraphNode);
-            else newEdges.push(el as GraphEdge);
+            if (!("source" in el.data)) {
+              const node = el as GraphNode;
+              if (!node.position) {
+                // Assign a temporary random position to avoid the 0,0 clump
+                // during progressive loading. This makes "pop-in" look better.
+                node.position = {
+                  x: Math.random() * 600 - 300,
+                  y: Math.random() * 600 - 300,
+                };
+              }
+              newNodes.push(node);
+            } else {
+              newEdges.push(el as GraphEdge);
+            }
           }
         });
 
@@ -786,10 +798,7 @@
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         if (newNodes.length > 0 || isFirstElements) {
           if (isFirstElements) {
-            if (!graphVisible) {
-              currentCy.fit(currentCy.nodes(), 20);
-              graphVisible = true;
-            }
+            graphVisible = true;
             clearTimeout(stabilizationTimeout);
             stabilizationTimeout = window.setTimeout(() => {
               if (!initialLoaded) {
@@ -799,7 +808,6 @@
             }, 500);
           } else if (isVaultLoading) {
             graphVisible = true;
-            // Removed redundant fit() during waves to reduce thread pressure.
           } else {
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
@@ -857,17 +865,13 @@
     const currentCy = cy;
     const showImages = graph.showImages;
     const elements = graph.elements;
-    const isVaultLoading = vault.status === "loading";
 
-    // FLICKER PREVENTION: Defer all image loading until the graph has finished incrementally loading.
-    // This stops Cytoscape from thrashing styles and re-rendering on every single chunk.
-    if (
-      currentCy &&
-      elements &&
-      showImages &&
-      (!isVaultLoading || didFinalizeLoad)
-    ) {
+    // FLICKER PREVENTION: Defer bulk re-processing of images until load is finished,
+    // but allow the effect to run so that NEWLY added nodes can start resolving.
+    if (currentCy && elements && showImages) {
       untrack(() => {
+        // During vault loading, we ONLY resolve images for nodes that don't have a resolvedImage yet.
+        // This prevents the "deferred image loading" that was causing the final jitter.
         const nodesWithImages = currentCy
           .nodes()
           .filter(
