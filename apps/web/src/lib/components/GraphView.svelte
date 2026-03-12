@@ -16,7 +16,7 @@
   import fcose from "cytoscape-fcose";
   import {
     getGraphStyle,
-    DEFAULT_LAYOUT_OPTIONS,
+    getDynamicLayoutOptions,
     hasTimelineDate,
     type GraphNode,
     type GraphEdge,
@@ -147,6 +147,10 @@
       return;
     }
 
+    debugStore.log(
+      `[GraphView] Applying layout. isInitial=${isInitial}, isForced=${isForced}, caller=${caller}`,
+    );
+
     if (currentLayout) {
       try {
         currentLayout.stop();
@@ -182,6 +186,7 @@
 
       if (graph.timelineMode) {
         try {
+          debugStore.log("[GraphView] Calculating timeline layout...");
           const nodes = graph.elements.filter(
             (e) => e.group === "nodes",
           ) as any[];
@@ -224,6 +229,9 @@
           isLayoutRunning = false;
         }
       } else if (graph.orbitMode && graph.centralNodeId) {
+        debugStore.log(
+          `[GraphView] Applying orbit layout for central node: ${graph.centralNodeId}`,
+        );
         setCentralNode(currentCy, graph.centralNodeId);
         if (isInitial) {
           currentCy.resize();
@@ -243,7 +251,6 @@
         try {
           const snapshotNodes: any[] = [];
           let hasNewNodes = false;
-          let nodesAtOrigin = 0;
 
           const elementsLen = graph.elements.length;
           for (let i = 0; i < elementsLen; i++) {
@@ -252,22 +259,43 @@
               snapshotNodes.push(el);
               if (!el.position) {
                 hasNewNodes = true;
-              } else if (el.position.x === 0 && el.position.y === 0) {
-                nodesAtOrigin++;
               }
             }
           }
 
+          const cyNodes = currentCy.nodes();
+          let nodesAtOrigin = 0;
+          let samplePositions: string[] = [];
+
+          cyNodes.forEach((n) => {
+            const p = n.position();
+            if (p.x === 0 && p.y === 0) nodesAtOrigin++;
+            if (samplePositions.length < 3) {
+              samplePositions.push(`id=${n.id()} p=${JSON.stringify(p)}`);
+            }
+          });
+
+          debugStore.log(
+            `[GraphView] Cytoscape nodes: ${cyNodes.length}. At origin: ${nodesAtOrigin}. Samples: ${samplePositions.join(", ")}`,
+          );
+
+          // Only clumped if practically EVERY node is at 0,0.
+          // Since transformer now randomizes, this should be false during load.
           const isClumpedAtOrigin =
-            snapshotNodes.length > 1 && nodesAtOrigin === snapshotNodes.length;
+            cyNodes.length > 1 && nodesAtOrigin === cyNodes.length;
+
+          if (isClumpedAtOrigin) {
+            debugStore.log(
+              "[GraphView] Nodes are clumped at origin, forcing randomization.",
+            );
+          }
 
           const isExitingTimeline =
             caller === "Timeline Toggle" && !graph.timelineMode;
-          const randomize =
-            hasNewNodes ||
-            (isInitial && !graph.stableLayout) ||
-            isExitingTimeline ||
-            isClumpedAtOrigin;
+
+          // CRITICAL FIX: Only randomize if we are explicitly forced OR if we are clumped at origin.
+          // Otherwise, trust the positions provided by the transformer!
+          const randomize = isClumpedAtOrigin || isExitingTimeline;
 
           if (
             graph.stableLayout &&
@@ -277,6 +305,9 @@
             !isClumpedAtOrigin
           ) {
             if (isInitial && currentCy) {
+              debugStore.log(
+                "[GraphView] Stable layout active: fitting existing positions.",
+              );
               currentCy.resize();
               currentCy.fit(currentCy.elements(), 20);
               graphVisible = true;
@@ -294,15 +325,20 @@
           const ar = width / height;
           const isLandscape = ar > 1.2;
 
+          debugStore.log(
+            `[GraphView] Running FCOSE layout. randomize=${randomize}, nodes=${cyNodes.length}`,
+          );
+
+          // If we are about to layout a fresh load, do a quick fit.
+          if (isInitial || caller === "Load Finalized") {
+            debugStore.log("[GraphView] Pre-layout fit for stability.");
+            currentCy.fit(currentCy.elements(), 20);
+          }
+
           currentLayout = currentCy.layout({
-            ...DEFAULT_LAYOUT_OPTIONS,
-            boundingBox: { x1: 0, y1: 0, x2: width, y2: height },
+            ...getDynamicLayoutOptions(cyNodes.length),
+            boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
             gravity: isLandscape ? 0.1 : 0.8,
-            idealEdgeLength: isLandscape ? 140 : 60,
-            nodeRepulsion: isLandscape
-              ? Math.min(45000, 5000 + snapshotNodes.length * 150)
-              : Math.min(20000, 3000 + snapshotNodes.length * 50),
-            nodeSeparation: isLandscape ? 150 : 60,
             randomize,
             animate: false,
             fit: false,
@@ -312,6 +348,9 @@
           layout.one("layoutstop", () => {
             if (currentLayout !== layout || currentCy.destroyed()) return;
 
+            debugStore.log(
+              "[GraphView] Layout calculation complete. Finalizing fit and syncing positions.",
+            );
             currentCy.resize();
             graphVisible = true;
             currentCy.animate({
@@ -549,6 +588,7 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
+  let isFinalizing = false;
 
   const urlCache = new Map<string, string>();
 
@@ -682,16 +722,7 @@
         snapshotElements.forEach((el) => {
           if (!elementMap.has(el.data.id)) {
             if (!("source" in el.data)) {
-              const node = el as GraphNode;
-              if (!node.position) {
-                // Assign a temporary random position to avoid the 0,0 clump
-                // during progressive loading. This makes "pop-in" look better.
-                node.position = {
-                  x: Math.random() * 600 - 300,
-                  y: Math.random() * 600 - 300,
-                };
-              }
-              newNodes.push(node);
+              newNodes.push(el as GraphNode);
             } else {
               newEdges.push(el as GraphEdge);
             }
@@ -699,9 +730,19 @@
         });
 
         if (newNodes.length > 0 || newEdges.length > 0) {
+          debugStore.log(
+            `[GraphView] Incremental update: +${newNodes.length} nodes, +${newEdges.length} edges.`,
+          );
           if (newNodes.length > 0) {
-            currentCy.add(newNodes).forEach((n) => {
+            const addedNodes = currentCy.add(newNodes);
+            addedNodes.forEach((n) => {
               elementMap.set(n.id(), n);
+              // EXPLICIT FORCE: Cytoscape sometimes ignores 'position' in cy.add()
+              // depending on initialization state. Force it immediately.
+              const originalNode = newNodes.find((nn) => nn.data.id === n.id());
+              if (originalNode && originalNode.position) {
+                n.position(originalNode.position);
+              }
             });
           }
           const validEdges = newEdges.filter((edge) => {
@@ -717,6 +758,11 @@
             currentCy.add(validEdges).forEach((e) => {
               elementMap.set(e.id(), e);
             });
+          }
+
+          // PROGRESSIVE FIT: Ensure the canvas resizes to fit the expanding galaxy of nodes
+          if (isVaultLoading) {
+            currentCy.fit(currentCy.elements(), 20);
           }
         }
 
@@ -798,14 +844,11 @@
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         if (newNodes.length > 0 || isFirstElements) {
           if (isFirstElements) {
+            debugStore.log(
+              "[GraphView] First elements received, marked initialLoaded=true",
+            );
+            initialLoaded = true;
             graphVisible = true;
-            clearTimeout(stabilizationTimeout);
-            stabilizationTimeout = window.setTimeout(() => {
-              if (!initialLoaded) {
-                applyCurrentLayout(true, false, "Initial Startup");
-                initialLoaded = true;
-              }
-            }, 500);
           } else if (isVaultLoading) {
             graphVisible = true;
           } else {
@@ -814,12 +857,22 @@
         }
 
         if (initialLoaded && !isVaultLoading && !didFinalizeLoad) {
+          if (!isFinalizing) {
+            debugStore.log(
+              "[GraphView] Vault load finished. Starting 800ms finalize timer.",
+            );
+            isFinalizing = true;
+          }
           clearTimeout(stabilizationTimeout);
           stabilizationTimeout = window.setTimeout(() => {
+            debugStore.log(
+              "[GraphView] Finalize timer triggered. Applying Load Finalized layout.",
+            );
             applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
             _layoutReady = true;
             didFinalizeLoad = true;
-          }, 500);
+            isFinalizing = false;
+          }, 800);
         }
       } catch (err) {
         debugStore.error("Cytoscape Error", err);
@@ -883,6 +936,10 @@
 
         if (nodesWithImages.length === 0) return;
 
+        debugStore.log(
+          `[GraphView] Resolving images for ${nodesWithImages.length} nodes.`,
+        );
+
         // Mark them all as resolving immediately so they aren't picked up by subsequent reactive triggers
         nodesWithImages.forEach((n) => {
           resolvingIds.add(n.id());
@@ -917,6 +974,9 @@
 
             // Apply all resolved images in a single atomic batch
             currentCy.batch(() => {
+              debugStore.log(
+                `[GraphView] Applying ${results.length} resolved images.`,
+              );
               for (const { node, url, oldUrl } of results) {
                 if (url && url !== oldUrl) {
                   node.data("resolvedImage", url);
