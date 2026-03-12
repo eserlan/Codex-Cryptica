@@ -107,7 +107,9 @@
                   onclick={() => handleApply(proposal)}
                   class="p-1.5 hover:bg-green-500/20 text-green-400 rounded transition-colors"
                   title="Apply Connection"
-                  aria-label="Apply connection proposal"
+                  aria-label="Apply connection proposal for {vault.entities[
+                    proposal.targetId
+                  ]?.title || proposal.targetId}"
                 >
                   <span class="icon-[lucide--check] w-4 h-4"></span>
                 </button>
@@ -115,7 +117,9 @@
                   onclick={() => handleDismiss(proposal)}
                   class="p-1.5 hover:bg-red-500/20 text-red-400 rounded transition-colors"
                   title="Dismiss"
-                  aria-label="Dismiss connection proposal"
+                  aria-label="Dismiss connection proposal for {vault.entities[
+                    proposal.targetId
+                  ]?.title || proposal.targetId}"
                 >
                   <span class="icon-[lucide--x] w-4 h-4"></span>
                 </button>

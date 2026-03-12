@@ -90,7 +90,7 @@
                 onclick={() => handleDelete(label)}
                 class="p-2 text-red-900/60 hover:text-red-500 transition-colors"
                 title="Delete Label Project-wide"
-                aria-label="Delete {label} label"
+                aria-label="Delete {label} label project-wide"
               >
                 <span class="icon-[lucide--trash-2] w-4 h-4"></span>
               </button>
