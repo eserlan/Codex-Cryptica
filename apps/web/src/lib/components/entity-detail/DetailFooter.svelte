@@ -50,6 +50,7 @@
       {#if !vault.isGuest}
         <button
           onclick={onDelete}
+          data-testid="delete-entity-button"
           class="border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-[10px] font-bold px-3 py-2 rounded tracking-widest transition"
         >
           {themeStore.jargon.delete.toUpperCase()}

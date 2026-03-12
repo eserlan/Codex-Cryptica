@@ -167,6 +167,9 @@ class UIStore {
   // Fog of War State
   sharedMode = $state(false);
 
+  // Guest Mode State
+  isGuestMode = $state(false);
+
   // Connection Label State
   lastConnectionLabel = $state("");
   recentConnectionLabels = $state<string[]>([]);
@@ -293,5 +296,7 @@ class UIStore {
   }
 }
 
-export const uiStore = new UIStore();
+const UI_KEY = "__codex_ui_instance__";
+export const uiStore: UIStore =
+  (globalThis as any)[UI_KEY] ?? ((globalThis as any)[UI_KEY] = new UIStore());
 export const ui = uiStore;

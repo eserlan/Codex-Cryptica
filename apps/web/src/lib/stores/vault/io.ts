@@ -281,7 +281,7 @@ export async function loadVaultFiles(
       entity = { ...cached.entity, _path: fileEntry.path };
     } else {
       const text = await file.text();
-      const { metadata, content, wikiLinks } = parseMarkdown(text || "");
+      const { metadata, content } = parseMarkdown(text || "");
       const id =
         metadata.id ||
         sanitizeId(
@@ -291,7 +291,7 @@ export async function loadVaultFiles(
           ),
         );
 
-      const connections = [...(metadata.connections || []), ...wikiLinks];
+      const connections = metadata.connections || [];
       entity = {
         id: id!,
         type: metadata.type || "character",

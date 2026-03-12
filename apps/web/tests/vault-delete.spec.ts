@@ -2,58 +2,18 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Vault Node Deletion", () => {
   test.beforeEach(async ({ page }) => {
-    // Mock window.showDirectoryPicker
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
-      // @ts-expect-error - Mock browser API
-      window.showDirectoryPicker = async () => {
-        return {
-          kind: "directory",
-          name: "test-vault",
-          requestPermission: async () => "granted",
-          queryPermission: async () => "granted",
-          values: async function* () {
-            yield* [];
-          },
-          getFileHandle: async (name: string, _options?: any) => {
-            return {
-              kind: "file",
-              name,
-              getFile: async () =>
-                new File(
-                  ["---\ntitle: " + name.replace(".md", "") + "\n---\nContent"],
-                  name,
-                ),
-              createWritable: async () => ({
-                write: async () => {},
-                close: async () => {},
-              }),
-            };
-          },
-          getDirectoryHandle: async (name: string, _options?: any) => {
-            return {
-              kind: "directory",
-              name,
-              removeEntry: async () => {},
-            };
-          },
-          removeEntry: async () => {},
-        };
-      };
+      (window as any).localStorage.setItem("codex_skip_landing", "true");
     });
-
+    // Create a fresh vault for each test if possible, or clear existing
     await page.goto("http://localhost:5173/");
-    // Wait for auto-init
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
   });
 
   test("should delete a node and its file", async ({ page }) => {
-    // 1. Create a node to delete
+    // 1. Create a node
     const newButton = page.getByTestId("new-entity-button");
     await newButton.click();
-
     await page
       .locator('input[placeholder="Chronicle Title..."]')
       .fill("Delete Me");
@@ -61,10 +21,10 @@ test.describe("Vault Node Deletion", () => {
 
     // 2. Open the node
     await page.getByText("Delete Me").first().click();
-    await expect(page.getByText("Chronicle")).toBeVisible();
+    await expect(page.getByTestId("entity-count")).toBeVisible();
 
     // 3. Trigger deletion
-    const deleteButton = page.getByRole("button", { name: "DELETE" });
+    const deleteButton = page.getByTestId("delete-entity-button");
 
     // Handle confirmation dialog
     page.once("dialog", (dialog) => {
@@ -75,8 +35,8 @@ test.describe("Vault Node Deletion", () => {
     await deleteButton.click();
 
     // 4. Verify node is gone from UI
-    await expect(page.getByText("Delete Me")).not.toBeVisible();
-    await expect(page.getByText("Chronicle")).not.toBeVisible(); // Detail panel closed
+    await expect(page.getByText("Delete Me")).toHaveCount(0);
+    await expect(page.getByTestId("entity-detail-panel")).not.toBeVisible();
   });
 
   test("should cancel deletion", async ({ page }) => {
@@ -96,10 +56,10 @@ test.describe("Vault Node Deletion", () => {
       dialog.dismiss();
     });
 
-    await page.getByRole("button", { name: "DELETE" }).click();
+    await page.getByTestId("delete-entity-button").click();
 
     // 4. Verify node still exists
     await expect(page.getByText("Keep Me").first()).toBeVisible();
-    await expect(page.getByText("Chronicle")).toBeVisible();
+    await expect(page.getByTestId("entity-count")).toBeVisible();
   });
 });

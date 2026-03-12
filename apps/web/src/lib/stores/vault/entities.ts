@@ -178,6 +178,7 @@ export function addConnection(
   targetId: string,
   type: string,
   label?: string,
+  strength: number = 1.0,
 ): {
   entities: Record<string, LocalEntity>;
   updatedSource: LocalEntity | null;
@@ -189,7 +190,7 @@ export function addConnection(
     target: targetId,
     type,
     label,
-    strength: 1,
+    strength,
   };
 
   const updatedSource = {
@@ -263,4 +264,70 @@ export function removeConnection(
     entities: { ...entities, [sourceId]: updatedSource },
     updatedSource,
   };
+}
+
+export function bulkAddLabel(
+  entities: Record<string, LocalEntity>,
+  ids: string[],
+  label: string,
+): { entities: Record<string, LocalEntity>; modifiedIds: string[] } {
+  const newEntities = { ...entities };
+  const modifiedIds: string[] = [];
+  const normalizedLabel = label.trim().toLowerCase();
+
+  for (const id of ids) {
+    const entity = newEntities[id];
+    if (!entity) continue;
+    const labels = entity.labels || [];
+    if (labels.some((l) => l.toLowerCase() === normalizedLabel)) continue;
+
+    newEntities[id] = {
+      ...entity,
+      labels: [...labels, normalizedLabel],
+      updatedAt: Date.now(),
+    } as LocalEntity;
+    modifiedIds.push(id);
+  }
+
+  return { entities: newEntities, modifiedIds };
+}
+
+export function bulkRemoveLabel(
+  entities: Record<string, LocalEntity>,
+  ids: string[],
+  label: string,
+): { entities: Record<string, LocalEntity>; modifiedIds: string[] } {
+  const newEntities = { ...entities };
+  const modifiedIds: string[] = [];
+  const normalizedLabel = label.trim().toLowerCase();
+
+  for (const id of ids) {
+    const entity = newEntities[id];
+    if (!entity) continue;
+    const labels = entity.labels || [];
+    if (!labels.some((l) => l.toLowerCase() === normalizedLabel)) continue;
+
+    newEntities[id] = {
+      ...entity,
+      labels: labels.filter((l) => l.toLowerCase() !== normalizedLabel),
+      updatedAt: Date.now(),
+    } as LocalEntity;
+    modifiedIds.push(id);
+  }
+
+  return { entities: newEntities, modifiedIds };
+}
+
+export function batchCreateEntities(
+  entities: Record<string, LocalEntity>,
+  newEntitiesList: LocalEntity[],
+): { entities: Record<string, LocalEntity> } {
+  const newEntities = { ...entities };
+  for (const entity of newEntitiesList) {
+    newEntities[entity.id] = {
+      ...entity,
+      updatedAt: Date.now(),
+    };
+  }
+  return { entities: newEntities };
 }

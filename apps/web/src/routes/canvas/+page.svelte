@@ -21,22 +21,24 @@
     }
 
     if (vault.activeVaultId && !canvasRegistry.isLoaded) {
-      canvasRegistry.loadForVault(vault.activeVaultId).catch((err) => {
-        initializationError = "Failed to load canvas registry";
-        console.error(err);
-      });
+      canvasRegistry
+        .loadFromVault(vault.activeVaultId)
+        .catch((err: unknown) => {
+          initializationError = "Failed to load canvas registry";
+          console.error(err);
+        });
     }
 
     if (vault.activeVaultId && canvasRegistry.isLoaded) {
-      if (canvasRegistry.canvases.length > 0) {
-        goto(`/canvas/${canvasRegistry.canvases[0].slug}`);
+      if (canvasRegistry.allCanvases.length > 0) {
+        goto(`/canvas/${canvasRegistry.allCanvases[0].slug}`);
       } else {
         canvasRegistry
           .create("Primary Workspace")
           .then((slug) => {
             if (slug) goto(`/canvas/${slug}`);
           })
-          .catch((err) => {
+          .catch((err: unknown) => {
             initializationError = "Failed to create initial canvas";
             console.error(err);
           });
@@ -80,7 +82,7 @@
             The registry is taking longer than usual to respond.
           </p>
           <button
-            onclick={() => canvasRegistry.loadForVault(vault.activeVaultId!)}
+            onclick={() => canvasRegistry.loadFromVault(vault.activeVaultId!)}
             class="text-[10px] font-bold text-theme-primary hover:underline uppercase font-header tracking-widest"
           >
             Force Reload Registry

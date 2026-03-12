@@ -48,7 +48,7 @@ describe("VaultStore - Entity Creation", () => {
     (vaultRegistry as any).isInitialized = false;
 
     await vault.init();
-    vault.entities = {};
+    vault.repository.entities = {};
   });
 
   it("should create a single entity", async () => {

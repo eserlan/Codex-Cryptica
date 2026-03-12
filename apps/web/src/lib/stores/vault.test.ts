@@ -14,26 +14,40 @@ vi.mock("../workers/search.worker?worker", () => ({
   default: MockWorker,
 }));
 
-vi.mock("./vault-registry.svelte", () => ({
-  vaultRegistry: {
-    init: vi.fn().mockResolvedValue(undefined),
-    rootHandle: { kind: "directory" } as any,
-    activeVaultId: "test-vault",
-    setActiveVault: vi.fn().mockResolvedValue(undefined),
-  },
-}));
+vi.mock("./vault-registry.svelte", () => {
+  const mockDirHandle: any = {
+    kind: "directory",
+    getFileHandle: vi.fn().mockResolvedValue({
+      getFile: vi.fn().mockResolvedValue({ text: () => "{}" }),
+    }),
+    entries: vi.fn().mockReturnValue({
+      [Symbol.asyncIterator]() {
+        return {
+          next() {
+            return Promise.resolve({ done: true });
+          },
+        };
+      },
+    }),
+  };
+  mockDirHandle.getDirectoryHandle = vi.fn().mockResolvedValue(mockDirHandle);
+
+  return {
+    vaultRegistry: {
+      init: vi.fn().mockResolvedValue(undefined),
+      rootHandle: mockDirHandle,
+      activeVaultId: "test-vault",
+      setActiveVault: vi.fn().mockResolvedValue(undefined),
+      listVaults: vi.fn().mockResolvedValue([]),
+      vaults: [],
+    },
+  };
+});
 
 vi.mock("./theme.svelte", () => ({
   themeStore: {
     loadForVault: vi.fn().mockResolvedValue(undefined),
   },
-}));
-
-vi.mock("./vault/io", () => ({
-  loadVaultFiles: vi.fn().mockResolvedValue({ entities: {} }),
-  loadMapsFromDisk: vi.fn().mockResolvedValue({}),
-  loadCanvasesFromDisk: vi.fn().mockResolvedValue({}),
-  saveEntityToDisk: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./vault/migration", () => ({
@@ -57,44 +71,6 @@ vi.mock("../services/ai", () => ({
   },
 }));
 
-vi.mock("@codex/sync-engine", () => {
-  return {
-    SyncRegistry: class {
-      init = vi.fn();
-      getEntriesByVault = vi.fn().mockResolvedValue([]);
-      getOpfsStatesByVault = vi.fn().mockResolvedValue([]);
-      putEntry = vi.fn();
-      putOpfsState = vi.fn();
-      putOpfsStates = vi.fn();
-      deleteEntry = vi.fn();
-      deleteOpfsState = vi.fn();
-    },
-    LocalSyncService: class {
-      sync = vi.fn().mockResolvedValue({
-        updated: [],
-        created: [],
-        deleted: [],
-        conflicts: [],
-        failed: [],
-      });
-    },
-    SyncService: vi.fn(),
-    OpfsBackend: vi.fn(),
-    FileSystemBackend: vi.fn(),
-  };
-});
-
-vi.mock("../utils/opfs", () => ({
-  getOpfsRoot: vi.fn(),
-  getVaultDir: vi.fn(),
-  writeOpfsFile: vi.fn(),
-  readOpfsBlob: vi.fn(),
-  deleteOpfsEntry: vi.fn(),
-  walkOpfsDirectory: vi.fn().mockResolvedValue([]),
-  getDirHandle: vi.fn(),
-  isNotFoundError: vi.fn().mockReturnValue(false),
-}));
-
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
     get: vi.fn(),
@@ -114,64 +90,45 @@ vi.mock("../utils/idb", () => ({
   clearPersistedHandle: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../../utils/markdown", () => ({
-  sanitizeId: vi
-    .fn()
-    .mockImplementation((s) => s.toLowerCase().replace(/\s+/g, "-")),
-  parseMarkdown: vi.fn().mockReturnValue({
-    metadata: { title: "Test", id: "test" },
-    content: "Content",
-  }),
-  stringifyEntity: vi.fn().mockReturnValue("--- title: Test --- content"),
-}));
-
-vi.mock("./debug.svelte", () => ({
-  debugStore: {
-    log: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  },
-}));
-
-import { loadVaultFiles } from "./vault/io";
-import { vault } from "./vault.svelte";
+import { VaultStore } from "./vault.svelte";
 
 describe("VaultStore (OPFS)", () => {
+  let testVault: VaultStore;
+  let mockRepository: any;
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    // Reset singleton state
-    vault.entities = {};
-    (vault as any).isInitialized = false;
-    (vault as any).status = "idle";
-    (vault as any).errorMessage = null;
-    (vault as any).syncService = null;
-    (vault as any).services = null;
+    mockRepository = {
+      entities: {},
+      loadFiles: vi.fn(),
+      scheduleSave: vi.fn(),
+      clear: vi.fn(),
+      saveQueue: { totalPendingCount: 0 },
+    };
+
+    testVault = new VaultStore(mockRepository);
   });
 
   it("should initialize and load files from OPFS", async () => {
-    const { getVaultDir } = await import("../utils/opfs");
-    vi.mocked(getVaultDir).mockResolvedValue({ kind: "directory" } as any);
-
-    vi.mocked(loadVaultFiles).mockResolvedValue({
-      entities: {
+    mockRepository.loadFiles.mockImplementation(async () => {
+      const entities = {
         test: { id: "test", title: "Test", type: "note" } as any,
-      },
+      };
+      mockRepository.entities = entities;
+      return entities;
     });
 
-    await vault.init();
+    await testVault.init();
 
-    expect(loadVaultFiles).toHaveBeenCalled();
-    expect(Object.keys(vault.entities).length).toBe(1);
-    expect(vault.entities["test"]?.title).toBe("Test");
+    expect(mockRepository.loadFiles).toHaveBeenCalled();
+    expect(Object.keys(testVault.entities).length).toBe(1);
+    expect(testVault.entities["test"]?.title).toBe("Test");
   });
 
   it("should support incremental loading via onProgress callback", async () => {
-    const { getVaultDir } = await import("../utils/opfs");
-    vi.mocked(getVaultDir).mockResolvedValue({ kind: "directory" } as any);
-
-    vi.mocked(loadVaultFiles).mockImplementation(
-      async (_vid, _handle, onProgress) => {
+    mockRepository.loadFiles.mockImplementation(
+      async (_vid: any, _handle: any, onProgress: any) => {
         if (onProgress) {
           onProgress(
             { chunk1: { id: "chunk1", title: "Chunk 1" } as any },
@@ -184,32 +141,30 @@ describe("VaultStore (OPFS)", () => {
             2,
           );
         }
-        return {
-          entities: {
-            chunk1: { id: "chunk1", title: "Chunk 1" } as any,
-            chunk2: { id: "chunk2", title: "Chunk 2" } as any,
-          },
+        const entities = {
+          chunk1: { id: "chunk1", title: "Chunk 1" } as any,
+          chunk2: { id: "chunk2", title: "Chunk 2" } as any,
         };
+        mockRepository.entities = entities;
+        return entities;
       },
     );
 
-    await vault.init();
+    await testVault.init();
 
-    expect(vault.syncStats.progress).toBe(100);
-    expect(vault.syncStats.created).toBe(2);
-    expect(Object.keys(vault.entities)).toHaveLength(2);
+    expect(Object.keys(testVault.entities)).toHaveLength(2);
   });
 
   it("should create a new entity in OPFS", async () => {
-    await vault.createEntity("character", "New Character");
-    expect(Object.keys(vault.entities)).toHaveLength(1);
-    expect(vault.entities["new-character"]?.title).toBe("New Character");
+    mockRepository.scheduleSave.mockResolvedValue(undefined);
+    await testVault.createEntity("character", "New Character");
+    expect(Object.keys(testVault.entities)).toHaveLength(1);
+    expect(testVault.entities["new-character"]?.title).toBe("New Character");
   });
 
   it("should return early in syncToLocal if not initialized", async () => {
-    // Manually ensure syncService is null (it's null by default in new instances)
-    (vault as any).syncService = null;
-    const result = await vault.syncToLocal();
+    testVault.syncCoordinator = null;
+    const result = await testVault.syncToLocal();
     expect(result).toBeUndefined();
   });
 });

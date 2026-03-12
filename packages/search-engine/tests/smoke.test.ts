@@ -145,4 +145,28 @@ describe("SearchEngine Functionality", () => {
     expect(results[0].id).toBe("small-entity");
     expect(results).not.toHaveProperty("isEncoded");
   });
+
+  it("should support partial substring matching in titles", async () => {
+    await engine.add({
+      id: "murbag-id",
+      title: "Iron Emperor Murbag",
+      content: "The ruler of the iron wastes.",
+      path: "murbag.md",
+    });
+
+    // Substring in middle of word
+    let results = await engine.search("mur");
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("murbag-id");
+
+    // Substring at start of word
+    results = await engine.search("iron");
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("murbag-id");
+
+    // Substring at end of word
+    results = await engine.search("bag");
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("murbag-id");
+  });
 });

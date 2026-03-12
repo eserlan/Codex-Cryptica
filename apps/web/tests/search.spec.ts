@@ -254,13 +254,17 @@ test.describe("Fuzzy Search", () => {
           matchType: "title",
         },
       ];
-      window.localStorage.setItem("search_recents", JSON.stringify(recents));
+      window.localStorage.setItem(
+        "search_recents_default",
+        JSON.stringify(recents),
+      );
     });
 
     await page.goto("http://localhost:5173/");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
 
-    // Click search input in header to open modal
-    await page.getByTestId("search-input").click();
+    // Use keyboard shortcut to open modal
+    await page.keyboard.press("Control+k");
 
     const resultItem = page
       .getByTestId("search-result")
