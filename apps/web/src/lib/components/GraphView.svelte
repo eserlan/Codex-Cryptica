@@ -304,16 +304,20 @@
             !isExitingTimeline &&
             !isClumpedAtOrigin
           ) {
-            if (isInitial && currentCy) {
+            if ((isInitial || caller === "Load Finalized") && currentCy) {
               debugStore.log(
                 "[GraphView] Stable layout active: fitting existing positions.",
               );
               currentCy.resize();
-              currentCy.fit(currentCy.elements(), 20);
+              currentCy.animate({
+                fit: { eles: currentCy.elements(), padding: 20 },
+                duration: 800,
+                easing: "ease-out-cubic",
+                complete: () => {
+                  _layoutReady = true;
+                },
+              });
               graphVisible = true;
-              setTimeout(() => {
-                _layoutReady = true;
-              }, 1000);
             }
 
             isLayoutRunning = false;
