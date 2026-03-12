@@ -15,6 +15,7 @@ export interface GraphNode {
     weight: number;
     image?: string;
     thumbnail?: string;
+    labels?: string[];
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
