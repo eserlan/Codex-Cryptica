@@ -4,18 +4,18 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count    | Type                | Status      |
-| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :---------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED    |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED    |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | 1,371         | UI Component        | IN PROGRESS |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | 1,058         | UI Component        |             |
-| 5    | `apps/web/src/lib/services/ai.ts`                           | 819           | Service (API/Logic) |             |
-| 6    | `apps/web/src/routes/+layout.svelte`                        | 753           | UI Layout           |             |
-| 7    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         |             |
-| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 620           | UI Component        |             |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |             |
-| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 535           | UI Component        |             |
+| Rank | File Path                                                   | Line Count    | Type                | Status   |
+| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
+| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED |
+| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED |
+| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 449 | UI Component        | ✅ FIXED |
+| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | 1,058         | UI Component        |          |
+| 5    | `apps/web/src/lib/services/ai.ts`                           | 819           | Service (API/Logic) |          |
+| 6    | `apps/web/src/routes/+layout.svelte`                        | 753           | UI Layout           |          |
+| 7    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         |          |
+| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 620           | UI Component        |          |
+| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
+| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 535           | UI Component        |          |
 
 ---
 
@@ -27,22 +27,17 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 **Summary:** Refactored into `@codex/oracle-engine`. Logic isolated into `ChatHistoryService`, `OracleSettingsService`, `OracleCommandParser`, `OracleActionExecutor`, `OracleGenerator`, and `UndoRedoService`.
 **Outcome:** Reduced from ~1,600 lines to 233 lines. Established Dependency Injection as a core principle.
 
-### 2. `vault.svelte.ts` (1,381 lines)
+### 2. `vault.svelte.ts` (Refactored)
 
-**Current State:** The heart of the application. It manages the in-memory entity graph, coordinates OPFS file I/O, handles bulk updates, manages map and canvas metadata, and orchestrates the search index.
-**Refactoring Strategy:**
+**Status:** ✅ **COMPLETED (2026-03-11)**
+**Summary:** Refactored into `@codex/vault-engine` and specialized stores. Logic decoupled into `VaultRegistryStore`, `MapRegistryStore`, `CanvasRegistryStore`, and `VaultRepository`.
+**Outcome:** Reduced from ~1,400 lines to 364 lines. Improved data separation and persistence logic.
 
-- **Decouple I/O:** While some I/O is in `vault/io.ts`, the store still directly manages a lot of persistence logic. We can move more of the specific entity creation/update logic to a dedicated `VaultRepository` class.
-- **Separate Indexes:** The store currently manages the active vault ID, the entities, the maps, and the canvases. We could split these into domain-specific stores (e.g., `CanvasRegistryStore`, `MapRegistryStore`) that are derived from or sync alongside a much leaner `VaultCoreStore`.
+### 3. `GraphView.svelte` (Refactored)
 
-### 3. `GraphView.svelte` (1,371 lines)
-
-**Current State:** Handles Cytoscape initialization, complex layout algorithms (FCOSE, Timeline, Orbit), event listeners (taps, drags, hovers), tooltips, the minimap overlay, filtering logic, and complex state synchronization.
-**Refactoring Strategy:**
-
-- **Extract Layout Logic:** Move the complex FCOSE parameter generation and animation sequences into an external `LayoutManager.ts` file.
-- **Extract Event Handlers:** The massive `onMount` block containing all Cytoscape `.on()` listeners should be extracted into a hook (e.g., `useGraphEvents(cy, vault)`).
-- **Componentize UI Overlays:** The bottom-left control bar and the hover tooltip should be extracted into their own standalone components (`GraphControls.svelte`, `GraphTooltip.svelte`) that accept `cy` or the `hoveredEntity` as props.
+**Status:** ✅ **COMPLETED (2026-03-12)**
+**Summary:** Refactored into modular components and decoupled logic. Extracted `GraphHUD`, `GraphToolbar`, `GraphTooltip`, and `EdgeEditorModal` UI components. Moved layout execution to `LayoutManager`, styling to `GraphStyles`, event handling to `useGraphEvents`, and element synchronization to `useGraphSync`.
+**Outcome:** Reduced from 1,371 lines to 449 lines. Improved viewport stability and eliminated image loading jitter. Established a clear separation between the UI layer and the visualization engine.
 
 ### 4. `ZenModeModal.svelte` (1,058 lines)
 
@@ -73,4 +68,4 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Conclusion
 
-The highest priority for refactoring should be **`GraphView.svelte`** and **`oracle.svelte.ts`**. These files represent the core interactive loops of the application, and their current size makes extending them highly prone to regressions (as seen with recent flickering issues). By extracting logic into modular services and smaller UI components, we can significantly improve the codebase's velocity and stability.
+The highest priority for refactoring should now shift to **`ZenModeModal.svelte`** and **`ai.ts`**. The successful refactors of `oracle.svelte.ts`, `vault.svelte.ts`, and `GraphView.svelte` have established strong patterns for modularity and isolation that can be applied to these remaining large files. By extracting logic into specialized components and services, we continue to improve the codebase's velocity and long-term stability.
