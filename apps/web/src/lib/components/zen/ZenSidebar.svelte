@@ -42,9 +42,10 @@
     };
 
     const result: ConnectionListItem[] = [];
-    const connectionsLength = entity.connections.length;
+    const connections = entity?.connections || [];
+    const connectionsLength = connections.length;
     for (let i = 0; i < connectionsLength; i++) {
-      const c = entity.connections[i];
+      const c = connections[i];
       if (checkVisibility(c.target)) {
         result.push({
           id: c.target,
@@ -55,7 +56,7 @@
       }
     }
 
-    const inboundConnections = vault.inboundConnections[entity.id] || [];
+    const inboundConnections = vault.inboundConnections[entity?.id || ""] || [];
     const inboundLength = inboundConnections.length;
     for (let i = 0; i < inboundLength; i++) {
       const item = inboundConnections[i];
@@ -78,9 +79,9 @@
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
 >
   <!-- Labels -->
-  {#if entity?.labels && entity.labels.length > 0}
+  {#if entity?.labels && entity?.labels?.length > 0}
     <div class="flex flex-wrap gap-1.5 mb-6">
-      {#each entity.labels as label}
+      {#each entity?.labels ?? [] as label}
         <LabelBadge {label} />
       {/each}
     </div>

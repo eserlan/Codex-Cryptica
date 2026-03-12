@@ -92,7 +92,7 @@
       </button>
     {/if}
 
-    {#if !editState.isEditing && !vault.isGuest}
+    {#if !editState.isEditing && !vault.isGuest && entity}
       <button
         onclick={onStartEdit}
         class="px-3 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
