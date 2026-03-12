@@ -1,0 +1,27 @@
+name: Copilot Review Notification
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: |
+      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' || 
+      github.event.review.user.login == 'Copilot'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Send Discord Notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
+        run: |
+          ./scripts/discord-review-notify.sh \
+            "$DISCORD_WEBHOOK_URL" \
+            "${{ github.event.pull_request.title }}" \
+            "${{ github.event.pull_request.html_url }}" \
+            "${{ github.event.review.state }}" \
+            "${{ github.event.review.user.login }}" \
+            "${{ github.event.review.body }}"
