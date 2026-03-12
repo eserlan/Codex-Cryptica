@@ -75,7 +75,9 @@ describe("GraphTransformer", () => {
 
     const elements = GraphTransformer.entitiesToElements(entities);
     expect(elements).toHaveLength(1);
-    expect((elements[0] as any).position).toBeUndefined();
+    expect((elements[0] as any).position).toBeDefined();
+    expect((elements[0] as any).position).toHaveProperty("x");
+    expect((elements[0] as any).position).toHaveProperty("y");
   });
 
   it("should transform image field", () => {
