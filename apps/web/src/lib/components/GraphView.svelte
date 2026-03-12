@@ -329,12 +329,6 @@
             `[GraphView] Running FCOSE layout. randomize=${randomize}, nodes=${cyNodes.length}`,
           );
 
-          // If we are about to layout a fresh load, do a quick fit.
-          if (isInitial || caller === "Load Finalized") {
-            debugStore.log("[GraphView] Pre-layout fit for stability.");
-            currentCy.fit(currentCy.elements(), 20);
-          }
-
           currentLayout = currentCy.layout({
             ...getDynamicLayoutOptions(cyNodes.length),
             boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
@@ -349,7 +343,7 @@
             if (currentLayout !== layout || currentCy.destroyed()) return;
 
             debugStore.log(
-              "[GraphView] Layout calculation complete. Finalizing fit and syncing positions.",
+              `[GraphView] Layout calculation complete. Animating camera to fit (from zoom: ${currentCy.zoom().toFixed(3)}).`,
             );
             currentCy.resize();
             graphVisible = true;
@@ -759,11 +753,6 @@
               elementMap.set(e.id(), e);
             });
           }
-
-          // PROGRESSIVE FIT: Ensure the canvas resizes to fit the expanding galaxy of nodes
-          if (isVaultLoading) {
-            currentCy.fit(currentCy.elements(), 20);
-          }
         }
 
         // FLICKER PREVENTION: Only sync data for existing elements if loading is FINISHED.
@@ -845,10 +834,14 @@
         if (newNodes.length > 0 || isFirstElements) {
           if (isFirstElements) {
             debugStore.log(
-              "[GraphView] First elements received, marked initialLoaded=true",
+              "[GraphView] First elements received, setting initial wide viewport.",
             );
             initialLoaded = true;
             graphVisible = true;
+            // Set a static, wide camera view for the loading phase
+            const w = currentCy.width();
+            const h = currentCy.height();
+            currentCy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
           } else if (isVaultLoading) {
             graphVisible = true;
           } else {
