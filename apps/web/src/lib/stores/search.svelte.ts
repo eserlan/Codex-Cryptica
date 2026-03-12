@@ -7,8 +7,7 @@ import { ui } from "./ui.svelte";
 
 class SearchStore {
   query = $state("");
-  // Use $state.raw for results since they are potentially large and don't need deep reactivity
-  results = $state.raw<SearchResult[]>([]);
+  results = $state<SearchResult[]>([]);
   isOpen = $state(false);
   selectedIndex = $state(0);
   isLoading = $state(false);

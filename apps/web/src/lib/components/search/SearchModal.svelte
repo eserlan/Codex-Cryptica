@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import { searchStore } from "$lib/stores/search.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
@@ -20,6 +21,14 @@
       tick().then(() => inputElement?.focus());
     } else {
       clearTimeout(debounceTimer);
+    }
+  });
+
+  $effect(() => {
+    if (searchStore.isOpen) {
+      debugStore.log(
+        `[SearchModal] isOpen=${searchStore.isOpen}, query="${searchStore.query}", results=${searchStore.results.length}`,
+      );
     }
   });
 
