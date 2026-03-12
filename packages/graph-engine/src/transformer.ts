@@ -71,6 +71,12 @@ export class GraphTransformer {
     }
 
     const elements: GraphElement[] = [];
+    const count = entities.length;
+
+    // Dynamically calculate spread based on entity count.
+    // Larger vaults need more initial room.
+    const spread = Math.max(2000, Math.sqrt(count) * 250);
+    const halfSpread = spread / 2;
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
     // Performance: Imperative loop to avoid iterator allocation on hot path.
@@ -125,10 +131,35 @@ export class GraphTransformer {
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (isRevealed) (nodeData as any).isRevealed = true;
 
+      const coords = entity.metadata?.coordinates;
+      const hasValidCoords =
+        coords &&
+        typeof coords.x === "number" &&
+        typeof coords.y === "number" &&
+        Number.isFinite(coords.x) &&
+        Number.isFinite(coords.y);
+
+      // Assign a stable-ish random position based on ID if no coords exist.
+      // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
+      let hash = 0;
+      if (!hasValidCoords) {
+        const id = entity.id;
+        const len = id.length;
+        for (let j = 0; j < len; j++) {
+          hash = (hash << 5) - hash + id.charCodeAt(j);
+          hash |= 0; // Convert to 32bit integer
+        }
+      }
+
       elements.push({
         group: "nodes",
         data: nodeData,
-        position: entity.metadata?.coordinates,
+        position: hasValidCoords
+          ? coords
+          : {
+              x: (Math.abs(hash) % spread) - halfSpread,
+              y: (Math.abs(hash * 13) % spread) - halfSpread,
+            },
       });
 
       // Create Edges

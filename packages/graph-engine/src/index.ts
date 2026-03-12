@@ -61,7 +61,7 @@ export const initGraph = async (options: GraphOptions) => {
       },
     ],
     layout: {
-      name: "null",
+      name: "preset",
     },
   });
 };
