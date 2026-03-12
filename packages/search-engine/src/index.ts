@@ -15,6 +15,7 @@ export function extractIdAndDoc(item: any): { id: string | null; doc: any } {
 
 export class SearchEngine {
   private index: any = null;
+  private docCount = 0;
   private onLog:
     | ((level: "info" | "warn" | "error", msg: string, data?: any) => void)
     | null = null;
@@ -81,9 +82,9 @@ export class SearchEngine {
       this.log("warn", "Index was null during add(), re-initializing.");
       this.initIndex();
     }
-    this.log("info", `Adding document: ${doc.id} (${doc.title})`);
     try {
       this.index.add(doc);
+      this.docCount++;
     } catch (err) {
       this.log("error", `Failed to add document ${doc.id}`, err);
     }
@@ -93,6 +94,7 @@ export class SearchEngine {
     if (!this.index) return;
     this.log("info", `Removing document: ${id}`);
     this.index.remove(id);
+    this.docCount = Math.max(0, this.docCount - 1);
   }
 
   async search(
@@ -105,7 +107,10 @@ export class SearchEngine {
     }
 
     const limit = options.limit || 20;
-    this.log("info", `Searching for: "${query}" with limit ${limit}`);
+    this.log(
+      "info",
+      `Searching ${this.docCount} documents for: "${query}" (limit: ${limit})`,
+    );
     const results = await this.index.searchAsync(query, {
       limit,
       enrich: true,
@@ -204,6 +209,7 @@ export class SearchEngine {
 
   clear() {
     this.log("info", "Clearing index...");
+    this.docCount = 0;
     this.initIndex();
   }
 }
