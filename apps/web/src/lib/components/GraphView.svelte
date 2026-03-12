@@ -261,45 +261,33 @@
           }
 
           const cyNodes = currentCy.nodes();
-          let nodesAtOrigin = 0;
-          let samplePositions: string[] = [];
-
-          cyNodes.forEach((n) => {
-            const p = n.position();
-            if (p.x === 0 && p.y === 0) nodesAtOrigin++;
-            if (samplePositions.length < 3) {
-              samplePositions.push(`id=${n.id()} p=${JSON.stringify(p)}`);
-            }
-          });
-
-          debugStore.log(
-            `[GraphView] Cytoscape nodes: ${cyNodes.length}. At origin: ${nodesAtOrigin}. Samples: ${samplePositions.join(", ")}`,
-          );
-
-          // Only clumped if practically EVERY node is at 0,0.
-          // Since transformer now randomizes, this should be false during load.
-          const isClumpedAtOrigin =
-            cyNodes.length > 1 && nodesAtOrigin === cyNodes.length;
-
-          if (isClumpedAtOrigin) {
-            debugStore.log(
-              "[GraphView] Nodes are clumped at origin, forcing randomization.",
-            );
-          }
-
           const isExitingTimeline =
             caller === "Timeline Toggle" && !graph.timelineMode;
 
           // CRITICAL FIX: Only randomize if we are explicitly forced OR if we are clumped at origin.
           // Otherwise, trust the positions provided by the transformer!
-          const randomize = isClumpedAtOrigin || isExitingTimeline;
+          // We check for clumping only if we have nodes.
+          let randomize = isExitingTimeline;
+          if (!randomize && cyNodes.length > 1) {
+            let nodesAtOrigin = 0;
+            cyNodes.forEach((n) => {
+              const p = n.position();
+              if (p.x === 0 && p.y === 0) nodesAtOrigin++;
+            });
+            if (nodesAtOrigin === cyNodes.length) {
+              randomize = true;
+              debugStore.log(
+                "[GraphView] Nodes are clumped at origin, forcing randomization.",
+              );
+            }
+          }
 
           if (
             graph.stableLayout &&
             !isForced &&
             !hasNewNodes &&
             !isExitingTimeline &&
-            !isClumpedAtOrigin
+            !randomize
           ) {
             if ((isInitial || caller === "Load Finalized") && currentCy) {
               debugStore.log(
@@ -497,7 +485,10 @@
               if (!sourceId) {
                 sourceId = targetId;
                 targetNode.addClass("selected-source");
-              } else if (sourceId !== targetId) {
+              } else if (sourceId === targetId) {
+                sourceId = null;
+                targetNode.removeClass("selected-source");
+              } else {
                 const source = sourceId;
                 const target = targetId;
                 await vault.addConnection(source, target, "neutral");
@@ -554,6 +545,9 @@
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
 
+  const urlCache = new Map<string, string>();
+  const resolvingIds = new Set<string>();
+
   // Reset loading state when vault starts loading
   $effect(() => {
     if (vault.status === "loading") {
@@ -565,11 +559,10 @@
           if (url.startsWith("blob:")) URL.revokeObjectURL(url);
         });
         urlCache.clear();
+        resolvingIds.clear();
       });
     }
   });
-
-  const urlCache = new Map<string, string>();
 
   // FLICKER PREVENTION: Lockdown global style effect during loading.
   let activeStyleJson = "";
@@ -861,7 +854,6 @@
     }
   });
 
-  const resolvingIds = new Set<string>();
   $effect(() => {
     const currentCy = cy;
     const showImages = graph.showImages;
@@ -1153,6 +1145,21 @@
       >
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
       <button
+        class="w-8 h-8 items-center justify-center border hidden md:flex transition {ui.sharedMode
+          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => (ui.sharedMode = !ui.sharedMode)}
+        title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
+        aria-label="Toggle Shared Mode"
+        data-testid="shared-mode-toggle"
+        aria-pressed={ui.sharedMode}
+        ><span
+          class={ui.sharedMode
+            ? "icon-[lucide--eye] w-4 h-4"
+            : "icon-[lucide--eye-off] w-4 h-4"}
+        ></span></button
+      >
+      <button
         class="w-8 h-8 items-center justify-center border hidden md:flex transition {graph.showLabels
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
           : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
@@ -1175,9 +1182,7 @@
     </div>
   </div>
 
-  <div class="absolute bottom-6 right-6 z-20">
-    <OrbitControls />
-  </div>
+  <OrbitControls />
 
   <div
     bind:this={container}

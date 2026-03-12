@@ -132,7 +132,24 @@ export class GraphTransformer {
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;
-      const hasValidCoords = coords && (coords.x !== 0 || coords.y !== 0);
+      const hasValidCoords =
+        coords &&
+        typeof coords.x === "number" &&
+        typeof coords.y === "number" &&
+        Number.isFinite(coords.x) &&
+        Number.isFinite(coords.y);
+
+      // Assign a stable-ish random position based on ID if no coords exist.
+      // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
+      let hash = 0;
+      if (!hasValidCoords) {
+        const id = entity.id;
+        const len = id.length;
+        for (let j = 0; j < len; j++) {
+          hash = (hash << 5) - hash + id.charCodeAt(j);
+          hash |= 0; // Convert to 32bit integer
+        }
+      }
 
       elements.push({
         group: "nodes",
@@ -140,27 +157,8 @@ export class GraphTransformer {
         position: hasValidCoords
           ? coords
           : {
-              // Assign a stable-ish random position based on ID if no coords exist.
-              // This prevents the 0,0 clump from the very first moment.
-              x:
-                (entity.id
-                  .split("")
-                  .reduce(
-                    (acc, char, i) => acc + char.charCodeAt(0) * (i + 1),
-                    0,
-                  ) %
-                  spread) -
-                halfSpread,
-              y:
-                ((entity.id
-                  .split("")
-                  .reduce(
-                    (acc, char, i) => acc + char.charCodeAt(0) * (i + 1),
-                    0,
-                  ) *
-                  13) %
-                  spread) -
-                halfSpread,
+              x: (Math.abs(hash) % spread) - halfSpread,
+              y: (Math.abs(hash * 13) % spread) - halfSpread,
             },
       });
 
