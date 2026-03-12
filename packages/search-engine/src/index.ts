@@ -52,18 +52,21 @@ export class SearchEngine {
       index: [
         {
           field: "title",
-          tokenize: "multi",
+          tokenize: "full",
           optimize: true,
+          resolution: 9,
         },
         {
           field: "keywords",
-          tokenize: "multi",
+          tokenize: "full",
           optimize: true,
+          resolution: 9,
         },
         {
           field: "content",
-          tokenize: "multi",
+          tokenize: "forward",
           optimize: true,
+          resolution: 5,
           minlength: 2,
         },
       ],
