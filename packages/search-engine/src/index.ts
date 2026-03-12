@@ -15,38 +15,56 @@ export function extractIdAndDoc(item: any): { id: string | null; doc: any } {
 
 export class SearchEngine {
   private index: any = null;
+  private onLog:
+    | ((level: "info" | "warn" | "error", msg: string, data?: any) => void)
+    | null = null;
 
   constructor() {
     this.initIndex();
   }
 
+  setLogger(
+    callback: (
+      level: "info" | "warn" | "error",
+      msg: string,
+      data?: any,
+    ) => void,
+  ) {
+    this.onLog = callback;
+    this.log("info", "Logger attached to SearchEngine");
+  }
+
+  private log(level: "info" | "warn" | "error", msg: string, data?: any) {
+    console[level](`[SearchEngine] ${msg}`, data || "");
+    if (this.onLog) {
+      try {
+        this.onLog(level, msg, data);
+      } catch (err) {
+        console.error("Failed to send log to main thread", err);
+      }
+    }
+  }
+
   initIndex() {
-    console.log("[SearchEngine] Initializing FlexSearch index...");
+    this.log("info", "Initializing FlexSearch index...");
     const config: any = {
       id: "id",
       index: [
         {
           field: "title",
-          tokenize: "forward",
+          tokenize: "multi",
           optimize: true,
-          resolution: 9,
         },
         {
           field: "keywords",
-          tokenize: "full",
+          tokenize: "multi",
           optimize: true,
-          resolution: 9,
         },
         {
           field: "content",
-          tokenize: "forward",
+          tokenize: "multi",
           optimize: true,
-          resolution: 9,
           minlength: 2,
-          context: {
-            depth: 3,
-            resolution: 9,
-          },
         },
       ],
       store: ["id", "title", "path", "content", "type"],
@@ -57,22 +75,20 @@ export class SearchEngine {
 
   add(doc: SearchEntry) {
     if (!this.index) {
-      console.warn(
-        "[SearchEngine] Index was null during add(), re-initializing.",
-      );
+      this.log("warn", "Index was null during add(), re-initializing.");
       this.initIndex();
     }
-    console.log(`[SearchEngine] Adding document: ${doc.id} (${doc.title})`);
+    this.log("info", `Adding document: ${doc.id} (${doc.title})`);
     try {
       this.index.add(doc);
     } catch (err) {
-      console.error(`[SearchEngine] Failed to add document ${doc.id}:`, err);
+      this.log("error", `Failed to add document ${doc.id}`, err);
     }
   }
 
   remove(id: string) {
     if (!this.index) return;
-    console.log(`[SearchEngine] Removing document: ${id}`);
+    this.log("info", `Removing document: ${id}`);
     this.index.remove(id);
   }
 
@@ -81,19 +97,19 @@ export class SearchEngine {
     options: SearchOptions = {},
   ): Promise<SearchResult[]> {
     if (!this.index) {
-      console.warn("[SearchEngine] Search called but index is null.");
+      this.log("warn", "Search called but index is null.");
       return [];
     }
 
     const limit = options.limit || 20;
-    console.log(`[SearchEngine] Searching for: "${query}" with limit ${limit}`);
+    this.log("info", `Searching for: "${query}" with limit ${limit}`);
     const results = await this.index.searchAsync(query, {
       limit,
       enrich: true,
       suggest: true,
     });
 
-    console.log(`[SearchEngine] Raw field results count:`, results.length);
+    this.log("info", `Raw field results count: ${results.length}`);
     const resultsMap = new Map<string, SearchResult>();
 
     // Process results from all fields
@@ -103,8 +119,9 @@ export class SearchEngine {
       const isKeywords = field === "keywords";
       const baseScore = isTitle ? 1.0 : isKeywords ? 0.8 : 0.5;
 
-      console.log(
-        `[SearchEngine] Field "${field}" returned ${fieldResult.result.length} matches.`,
+      this.log(
+        "info",
+        `Field "${field}" returned ${fieldResult.result.length} matches.`,
       );
 
       for (let i = 0; i < fieldResult.result.length; i++) {
@@ -112,7 +129,7 @@ export class SearchEngine {
         const { id, doc: entry } = extractIdAndDoc(item);
 
         if (!id) {
-          console.warn(`[SearchEngine] Could not extract ID from item:`, item);
+          this.log("warn", `Could not extract ID from item:`, item);
           continue;
         }
 
@@ -122,8 +139,8 @@ export class SearchEngine {
         const existing = resultsMap.get(id);
 
         if (!existing || currentScore > existing.score) {
-          resultsMap.set(id, {
-            id,
+          resultsMap.set(id as string, {
+            id: id as string,
             title: entry?.title || id,
             type: entry?.type,
             path: entry?.path || "",
@@ -142,9 +159,7 @@ export class SearchEngine {
       (a, b) => b.score - a.score,
     );
 
-    console.log(
-      `[SearchEngine] Total processed results: ${processedResults.length}`,
-    );
+    this.log("info", `Total processed results: ${processedResults.length}`);
     return processedResults;
   }
 
@@ -185,7 +200,7 @@ export class SearchEngine {
   }
 
   clear() {
-    console.log("[SearchEngine] Clearing index...");
+    this.log("info", "Clearing index...");
     this.initIndex();
   }
 }

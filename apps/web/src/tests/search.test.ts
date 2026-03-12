@@ -11,6 +11,7 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
       .fn()
       .mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
     clear: vi.fn().mockResolvedValue(true),
+    setLogger: vi.fn(),
   };
 
   class MockWorker {
@@ -32,6 +33,7 @@ vi.mock("comlink", () => {
     wrap: vi.fn(() => mockApi),
     expose: vi.fn(),
     transfer: vi.fn((obj) => obj),
+    proxy: vi.fn((fn) => fn),
   };
 });
 
