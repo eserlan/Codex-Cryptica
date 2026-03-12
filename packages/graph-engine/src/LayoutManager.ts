@@ -136,11 +136,13 @@ export class LayoutManager {
     caller: string,
   ) {
     const cyNodes = this.cy.nodes();
+    let hasNewNodes = false;
 
-    // Check for nodes without positions
+    // Detect nodes without meaningful positions
     cyNodes.forEach((n) => {
-      if (!n.position() || (n.position().x === 0 && n.position().y === 0)) {
-        // We consider 0,0 potentially new or clumped
+      const p = n.position();
+      if (!p || (p.x === 0 && p.y === 0)) {
+        hasNewNodes = true;
       }
     });
 
@@ -160,7 +162,13 @@ export class LayoutManager {
       }
     }
 
-    if (options.stableLayout && !isForced && !isExitingTimeline && !randomize) {
+    if (
+      options.stableLayout &&
+      !isForced &&
+      !isExitingTimeline &&
+      !randomize &&
+      !hasNewNodes
+    ) {
       if (isInitial || caller === "Load Finalized") {
         this.cy.resize();
         this.cy.animate({

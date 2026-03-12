@@ -23,9 +23,9 @@ describe("syncGraphElements", () => {
     syncGraphElements(mockCy as unknown as Core, {
       elements: [],
       vaultStatus: "idle",
-      didFinalizeLoad: false,
       initialLoaded: false,
-      isGuest: false,
+      isTemporalMetadataEqual: (a, b) =>
+        JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.elements).toHaveBeenCalled();
   });
@@ -35,9 +35,9 @@ describe("syncGraphElements", () => {
     syncGraphElements(mockCy as unknown as Core, {
       elements: newElements,
       vaultStatus: "idle",
-      didFinalizeLoad: false,
       initialLoaded: false,
-      isGuest: false,
+      isTemporalMetadataEqual: (a, b) =>
+        JSON.stringify(a) === JSON.stringify(b),
     });
     expect(mockCy.add).toHaveBeenCalled();
   });

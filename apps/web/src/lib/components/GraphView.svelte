@@ -338,6 +338,9 @@
         vaultStatus: vault.status,
         initialLoaded,
         isTemporalMetadataEqual,
+        activeLabels: graph.activeLabels,
+        labelFilterMode: graph.labelFilterMode,
+        activeCategories: graph.activeCategories,
         onFirstElements: () => {
           initialLoaded = true;
           graphVisible = true;
@@ -351,6 +354,18 @@
     const currentCy = cy;
     if (currentCy) {
       applyFocus(selectedId);
+      if (selectedId) {
+        const node = currentCy.$id(selectedId);
+        if (node.length > 0) {
+          untrack(() =>
+            currentCy.animate({
+              center: { eles: node },
+              duration: 800,
+              easing: "ease-out-cubic",
+            }),
+          );
+        }
+      }
     }
   });
 
