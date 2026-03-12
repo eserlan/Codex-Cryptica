@@ -126,6 +126,7 @@
           onclick={() => graph.removeEra(era.id)}
           class="text-red-900 hover:text-red-500 transition-colors p-2"
           title="Delete Era"
+          aria-label="Delete era {era.name}"
         >
           <span class="icon-[lucide--trash-2] w-4 h-4"></span>
         </button>
