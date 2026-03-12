@@ -21,9 +21,9 @@
   },
   "devDependencies": {
     "schema": "*",
-    "@sveltejs/kit": "^2.18.2",
-    "@types/node": "^22.13.10",
-    "eslint": "^9.22.0",
+    "@sveltejs/kit": "^2.54.0",
+    "@types/node": "^25.4.0",
+    "eslint": "^10.0.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }
