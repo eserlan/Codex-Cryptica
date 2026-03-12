@@ -26,7 +26,6 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import Minimap from "./graph/Minimap.svelte";
   import TimelineControls from "$lib/components/graph/TimelineControls.svelte";
-  import TimelineOverlay from "$lib/components/graph/TimelineOverlay.svelte";
   import OrbitControls from "$lib/components/graph/OrbitControls.svelte";
   import ContextMenu from "$lib/components/graph/ContextMenu.svelte";
   import SelectionConnector from "$lib/components/graph/SelectionConnector.svelte";
@@ -38,7 +37,6 @@
   let container: HTMLElement;
   let cy: Core | undefined = $state();
   let currentLayout: any;
-  let stabilizationTimeout: number | undefined;
   let isLayoutRunning = $state(false);
   let showMinimap = $state(false);
   let graphVisible = $state(false);
@@ -123,7 +121,6 @@
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
   let hoverTimeout: number | undefined;
-  let selectionCount = $state(0);
   const HOVER_DELAY = 800;
 
   let editingEdge = $state<{
@@ -500,31 +497,25 @@
               if (!sourceId) {
                 sourceId = targetId;
                 targetNode.addClass("selected-source");
-              } else if (sourceId === targetId) {
-                sourceId = null;
-                targetNode.removeClass("selected-source");
-              } else {
-                await vault.addConnection(sourceId, targetId, "neutral");
-                instance?.$(".selected-source").removeClass("selected-source");
-                sourceId = null;
-                connectMode = false;
+              } else if (sourceId !== targetId) {
+                const source = sourceId;
+                const target = targetId;
+                await vault.addConnection(source, target, "neutral");
+                toggleConnectMode();
               }
-            } else if (graph.orbitMode) {
-              graph.setCentralNode(targetId);
-              selectedId = targetId;
             } else {
               selectedId = targetId;
             }
           });
 
-          instance.on("cxttap", "edge", (evt: any) => {
-            if (vault.isGuest) return;
+          instance.on("tap", "edge", (evt: any) => {
             const edge = evt.target;
+            const data = edge.data();
             editingEdge = {
-              source: edge.data("source"),
-              target: edge.data("target"),
-              label: edge.data("label") || "",
-              type: edge.data("connectionType") || "neutral",
+              source: data.source,
+              target: data.target,
+              label: data.label || "",
+              type: data.connectionType || "neutral",
             };
             edgeEditInput = editingEdge.label;
             edgeEditType = editingEdge.type;
@@ -532,45 +523,21 @@
 
           instance.on("tap", (evt: any) => {
             if (evt.target === instance) {
-              if (!connectMode) selectedId = null;
-              editingEdge = null;
+              selectedId = null;
+              if (connectMode) toggleConnectMode();
             }
           });
 
-          instance.on("select unselect", "node", () => {
-            selectionCount = instance?.$("node:selected").length || 0;
-          });
-
-          instance.on("dragfree", "node", async (evt: any) => {
-            if (vault.isGuest) return;
-            const node = evt.target;
-            const id = node.id();
-            const pos = node.position();
-            const entity = vault.entities[id];
-            if (entity) {
-              await vault.updateEntity(id, {
-                metadata: {
-                  ...(entity.metadata || {}),
-                  coordinates: { x: Math.round(pos.x), y: Math.round(pos.y) },
-                },
-              });
-            }
-          });
-        } catch (error) {
-          debugStore.error("Failed to initialize graph", error);
+          // Set initial visibility
+          graphVisible = true;
+        } catch (err) {
+          debugStore.error("Graph Init Failed", err);
         }
-      }, 0);
+      }, 50);
     }
   });
 
   onDestroy(() => {
-    if (currentLayout) {
-      try {
-        currentLayout.stop();
-      } catch {
-        /* ignore */
-      }
-    }
     if (initTimer) {
       clearTimeout(initTimer);
       initTimer = null;
@@ -586,7 +553,21 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
-  let isFinalizing = false;
+
+  // Reset loading state when vault starts loading
+  $effect(() => {
+    if (vault.status === "loading") {
+      untrack(() => {
+        initialLoaded = false;
+        didFinalizeLoad = false;
+        // Clear cache and revoke all blobs to prevent memory leaks
+        urlCache.forEach((url) => {
+          if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+        });
+        urlCache.clear();
+      });
+    }
+  });
 
   const urlCache = new Map<string, string>();
 
@@ -595,11 +576,10 @@
   $effect(() => {
     const currentStyle = graphStyle;
     const currentCy = cy;
-    const isVaultLoading = vault.status === "loading";
 
-    // While loading, we do NOT re-apply global styles. This is the biggest flicker killer.
-    // New nodes added via currentCy.add() will inherit the current stylesheet rules automatically.
-    if (currentCy && currentStyle && (!isVaultLoading || didFinalizeLoad)) {
+    // While loading, we ALLOW global style updates if they actually change,
+    // but the lockdown condition was causing a final jump when it was lifted.
+    if (currentCy && currentStyle) {
       const styleJson = JSON.stringify(currentStyle);
       if (styleJson !== activeStyleJson) {
         activeStyleJson = styleJson;
@@ -607,6 +587,18 @@
           currentCy.style(currentStyle);
         });
       }
+    }
+  });
+
+  // Load Finalization Trigger
+  $effect(() => {
+    if (vault.status === "idle" && initialLoaded && !didFinalizeLoad) {
+      didFinalizeLoad = true;
+      debugStore.log(
+        "[GraphView] Vault load finalized, unlocking all updates.",
+      );
+      // Force layout with fitting when loading is finalized
+      applyCurrentLayout(false, true, "Load Finalized");
     }
   });
 
@@ -759,80 +751,58 @@
           }
         }
 
-        // FLICKER PREVENTION: Only sync data for existing elements if loading is FINISHED.
-        // This is strictly enforced here to prevent any metadata jitter during waves.
-        if (!isVaultLoading || didFinalizeLoad) {
-          currentCy.batch(() => {
-            snapshotElements.forEach((el) => {
-              const node = elementMap.get(el.data.id);
-              if (node) {
-                const currentData = node.data();
-                const newData = el.data as Record<string, any>;
-                const patch: Record<string, any> = {};
-                let hasChanges = false;
+        // Incremental Data Sync
+        currentCy.batch(() => {
+          snapshotElements.forEach((el) => {
+            const node = elementMap.get(el.data.id);
+            if (node) {
+              const currentData = node.data();
+              const newData = el.data as Record<string, any>;
+              const patch: Record<string, any> = {};
+              let hasChanges = false;
 
-                for (const k in newData) {
+              for (const k in newData) {
+                if (k === "id" || !Object.hasOwn(newData, k)) continue;
+
+                const newVal = newData[k];
+                const curVal = currentData[k];
+                let isMatch = newVal === curVal;
+                if (!isMatch) {
                   if (
-                    k === "id" ||
-                    k === "resolvedImage" ||
-                    k === "image" ||
-                    k === "thumbnail" ||
-                    !Object.hasOwn(newData, k)
+                    el.group === "nodes" &&
+                    (k === "date" || k === "start_date" || k === "end_date")
                   )
-                    continue;
-                  const newVal = newData[k];
-                  const curVal = currentData[k];
-                  let isMatch = newVal === curVal;
-                  if (!isMatch) {
-                    if (
-                      el.group === "nodes" &&
-                      (k === "date" || k === "start_date" || k === "end_date")
-                    )
-                      isMatch = isTemporalMetadataEqual(newVal, curVal);
-                    else if (Array.isArray(newVal))
+                    isMatch = isTemporalMetadataEqual(newVal, curVal);
+                  else if (Array.isArray(newVal))
+                    isMatch =
+                      Array.isArray(curVal) &&
+                      newVal.length === curVal.length &&
+                      newVal.every((v, i) => v === curVal[i]);
+                  else if (
+                    typeof newVal === "object" &&
+                    newVal !== null &&
+                    curVal !== null &&
+                    typeof curVal === "object"
+                  ) {
+                    if (k === "coordinates")
+                      isMatch = newVal.x === curVal.x && newVal.y === curVal.y;
+                    else if (k === "metadata")
                       isMatch =
-                        Array.isArray(curVal) &&
-                        newVal.length === curVal.length &&
-                        newVal.every((v, i) => v === curVal[i]);
-                    else if (
-                      typeof newVal === "object" &&
-                      newVal !== null &&
-                      curVal !== null &&
-                      typeof curVal === "object"
-                    ) {
-                      if (k === "coordinates")
-                        isMatch =
-                          newVal.x === curVal.x && newVal.y === curVal.y;
-                      else if (k === "metadata")
-                        isMatch =
-                          !!curVal &&
-                          newVal.coordinates?.x === curVal.coordinates?.x &&
-                          newVal.coordinates?.y === curVal.coordinates?.y &&
-                          newVal.isRevealed === curVal.isRevealed;
-                    }
-                  }
-                  if (!isMatch) {
-                    patch[k] = newVal;
-                    hasChanges = true;
+                        !!curVal &&
+                        newVal.coordinates?.x === curVal.coordinates?.x &&
+                        newVal.coordinates?.y === curVal.coordinates?.y &&
+                        newVal.isRevealed === curVal.isRevealed;
                   }
                 }
-                if (hasChanges) node.data(patch);
-                if (
-                  vault.isGuest &&
-                  el.group === "nodes" &&
-                  el.position?.x !== undefined
-                ) {
-                  const currentPos = node.position();
-                  if (
-                    Math.abs(currentPos.x - el.position.x) > 1 ||
-                    Math.abs(currentPos.y - el.position.y) > 1
-                  )
-                    node.position(el.position);
+                if (!isMatch) {
+                  patch[k] = newVal;
+                  hasChanges = true;
                 }
               }
-            });
+              if (hasChanges) node.data(patch);
+            }
           });
-        }
+        });
 
         const isFirstElements = !initialLoaded && graph.elements.length > 0;
         if (newNodes.length > 0 || isFirstElements) {
@@ -851,25 +821,6 @@
           } else {
             applyCurrentLayout(false, !graph.stableLayout, "Elements Update");
           }
-        }
-
-        if (initialLoaded && !isVaultLoading && !didFinalizeLoad) {
-          if (!isFinalizing) {
-            debugStore.log(
-              "[GraphView] Vault load finished. Starting 800ms finalize timer.",
-            );
-            isFinalizing = true;
-          }
-          clearTimeout(stabilizationTimeout);
-          stabilizationTimeout = window.setTimeout(() => {
-            debugStore.log(
-              "[GraphView] Finalize timer triggered. Applying Load Finalized layout.",
-            );
-            applyCurrentLayout(false, !graph.stableLayout, "Load Finalized");
-            _layoutReady = true;
-            didFinalizeLoad = true;
-            isFinalizing = false;
-          }, 800);
         }
       } catch (err) {
         debugStore.error("Cytoscape Error", err);
@@ -916,12 +867,8 @@
     const showImages = graph.showImages;
     const elements = graph.elements;
 
-    // FLICKER PREVENTION: Defer bulk re-processing of images until load is finished,
-    // but allow the effect to run so that NEWLY added nodes can start resolving.
     if (currentCy && elements && showImages) {
       untrack(() => {
-        // During vault loading, we ONLY resolve images for nodes that don't have a resolvedImage yet.
-        // This prevents the "deferred image loading" that was causing the final jitter.
         const nodesWithImages = currentCy
           .nodes()
           .filter(
@@ -933,11 +880,7 @@
 
         if (nodesWithImages.length === 0) return;
 
-        debugStore.log(
-          `[GraphView] Resolving images for ${nodesWithImages.length} nodes.`,
-        );
-
-        // Mark them all as resolving immediately so they aren't picked up by subsequent reactive triggers
+        // Mark them all as resolving immediately
         nodesWithImages.forEach((n) => {
           resolvingIds.add(n.id());
         });
@@ -961,7 +904,6 @@
               }),
             );
 
-            // Abort if graph was destroyed or images turned off during the async resolution
             if (currentCy.destroyed() || !graph.showImages) {
               nodesWithImages.forEach((n) => {
                 resolvingIds.delete(n.id());
@@ -969,26 +911,23 @@
               return;
             }
 
-            // Apply all resolved images in a single atomic batch
-            currentCy.batch(() => {
-              debugStore.log(
-                `[GraphView] Applying ${results.length} resolved images.`,
-              );
-              for (const { node, url, oldUrl } of results) {
-                if (url && url !== oldUrl) {
-                  node.data("resolvedImage", url);
-                  if (oldUrl?.startsWith("blob:")) {
-                    URL.revokeObjectURL(oldUrl);
+            // Apply in smaller batches if many images are resolved at once to prevent massive style churn
+            const batchSize = 10;
+            for (let i = 0; i < results.length; i += batchSize) {
+              const chunk = results.slice(i, i + batchSize);
+              currentCy.batch(() => {
+                for (const { node, url, oldUrl } of chunk) {
+                  if (url && url !== oldUrl) {
+                    node.data("resolvedImage", url);
+                    if (oldUrl?.startsWith("blob:")) {
+                      URL.revokeObjectURL(oldUrl);
+                    }
                   }
                 }
-              }
-            });
-
-            // Trigger one final, definitive style update for all new images
-            currentCy.style().update();
+              });
+            }
           } catch (err) {
-            debugStore.error("Bulk image resolution failed", err);
-            // On failure, unmark so they might be retried
+            debugStore.error("Incremental image resolution failed", err);
             nodesWithImages.forEach((n) => {
               resolvingIds.delete(n.id());
             });
@@ -1214,219 +1153,165 @@
       >
       <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
       <button
-        class="w-8 h-8 flex items-center justify-center border transition {ui.sharedMode
-          ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-          : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
-        onclick={() => (ui.sharedMode = !ui.sharedMode)}
-        title={ui.sharedMode ? "Exit Shared Mode" : "Enter Shared Mode"}
-        data-testid="shared-mode-toggle"
-        ><span
-          class={ui.sharedMode
-            ? "icon-[lucide--eye] w-4 h-4"
-            : "icon-[lucide--eye-off] w-4 h-4"}
-        ></span></button
+        class="w-8 h-8 items-center justify-center border hidden md:flex transition {graph.showLabels
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => void graph.toggleLabels().catch((e) => console.error(e))}
+        title={graph.showLabels ? "Labels: ON" : "Labels: OFF"}
+        aria-label="Toggle Labels"
+        aria-pressed={graph.showLabels}
+        ><span class="icon-[lucide--type] w-4 h-4"></span></button
       >
       <button
-        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => graph.toggleLabels()}
-        title="Toggle Labels (L)"
-        ><span
-          class="icon-[lucide--tag] w-4 h-4 {graph.showLabels
-            ? 'opacity-100'
-            : 'opacity-50'}"
-        ></span></button
+        class="w-8 h-8 items-center justify-center border hidden md:flex transition {graph.showImages
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => void graph.toggleImages().catch((e) => console.error(e))}
+        title={graph.showImages ? "Images: ON" : "Images: OFF"}
+        aria-label="Toggle Images"
+        aria-pressed={graph.showImages}
+        ><span class="icon-[lucide--image] w-4 h-4"></span></button
       >
-      <button
-        class="w-8 h-8 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => graph.toggleImages()}
-        title="Toggle Node Images (I)"
-        ><span
-          class="w-4 h-4 {graph.showImages
-            ? 'icon-[lucide--image] opacity-100'
-            : 'icon-[lucide--image-off] opacity-50'}"
-        ></span></button
-      >
-      {#if !vault.isGuest}
-        <button
-          class="w-8 h-8 flex items-center justify-center border transition {connectMode
-            ? 'border-theme-accent bg-theme-accent/20 text-theme-accent shadow-[0_0_10px_var(--color-theme-accent)]'
-            : 'border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text'}"
-          onclick={toggleConnectMode}
-          title="Connect Mode (C)"
-          ><span class="icon-[lucide--link] w-4 h-4"></span></button
-        >
-      {/if}
-      <div class="h-6 w-px bg-theme-border/30 mx-2 hidden md:block"></div>
-      <div class="hidden md:block"><FeatureHint hintId="lore-oracle" /></div>
     </div>
   </div>
 
+  <div class="absolute bottom-6 right-6 z-20">
+    <OrbitControls />
+  </div>
+
   <div
-    class="absolute inset-0 z-10 w-full h-full opacity-0 transition-opacity duration-500 {graphVisible
-      ? 'opacity-100'
-      : 'opacity-0'}"
     bind:this={container}
-    data-testid="graph-canvas"
+    class="w-full h-full {graphVisible
+      ? 'opacity-100'
+      : 'opacity-0'} transition-opacity duration-1000"
   ></div>
 
-  {#if cy}
-    <TimelineOverlay {cy} />
-    <OrbitControls />
-    <ContextMenu {cy} />
-    <SelectionConnector {cy} />
-  {/if}
-
-  {#if hoveredEntityId && hoverPosition && hoveredEntity}
+  {#if hoveredEntityId && hoverPosition}
     <div
-      class="absolute z-50 pointer-events-none"
-      style:top="{hoverPosition.y}px"
-      style:left="{hoverPosition.x}px"
-      style:transform="translate(-50%, -115%)"
-      transition:fade={{ duration: 150 }}
+      class="fixed z-50 pointer-events-none bg-theme-surface/90 backdrop-blur-md border border-theme-primary/30 p-4 shadow-2xl max-w-xs overflow-hidden"
+      style="left: {hoverPosition.x + 20}px; top: {hoverPosition.y - 20}px;"
+      transition:fly={{ y: 10, duration: 200 }}
     >
-      <div
-        class="bg-theme-bg/95 border border-theme-primary/50 shadow-2xl p-4 rounded-sm max-w-[400px] min-w-[200px]"
-        in:fly={{ y: 10, duration: 200 }}
-      >
-        <div
-          class="text-xs font-bold text-theme-primary tracking-wider uppercase font-header mb-2 border-b border-theme-border/50 pb-1 flex justify-between"
+      <div class="flex flex-col gap-2">
+        <h3
+          class="text-theme-primary font-header font-bold text-xs uppercase tracking-widest border-b border-theme-primary/20 pb-1"
         >
-          <span>{hoveredEntity.title}</span>
-          <span class="text-[10px] text-theme-muted">{hoveredEntity.type}</span>
-        </div>
-        <div
-          class="text-sm text-theme-text/90 font-body leading-relaxed prose prose-p:my-1 prose-headings:text-theme-primary prose-headings:text-xs prose-strong:text-theme-primary prose-em:text-theme-secondary prose-headings:font-header"
-        >
+          {hoveredEntity?.title || hoveredEntityId}
+        </h3>
+        <div class="prose prose-invert prose-xs text-[10px] line-clamp-4">
           {@html tooltipContent}
         </div>
-        <div
-          class="absolute -top-px -left-px w-2 h-2 border-t border-l border-theme-primary"
-        ></div>
-        <div
-          class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-theme-primary"
-        ></div>
+        {#if hoveredEntity?.tags?.length}
+          <div class="flex flex-wrap gap-1 mt-1">
+            {#each hoveredEntity.tags as tag}
+              <span
+                class="px-1.5 py-0.5 bg-theme-primary/10 border border-theme-primary/20 text-theme-primary text-[8px] font-mono rounded"
+                >{tag}</span
+              >
+            {/each}
+          </div>
+        {/if}
       </div>
-      <div
-        class="absolute left-1/2 -translate-x-1/2 bottom-[-6px] w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-theme-primary/50"
-      ></div>
-    </div>
-  {/if}
-
-  {#if connectMode}
-    <div
-      class="absolute top-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-4 pointer-events-auto"
-    >
-      {#if !sourceId}<div
-          class="bg-green-500/10 border border-green-500/50 text-green-200 px-4 py-1 rounded-full text-xs font-mono animate-bounce"
-        >
-          > SELECT SOURCE NODE
-        </div>
-      {:else}<div
-          class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-200 px-4 py-1 rounded-full text-xs font-mono animate-bounce"
-        >
-          > SELECT TARGET TO LINK
-        </div>{/if}
-      <FeatureHint hintId="connect-mode" />
-    </div>
-  {/if}
-
-  {#if selectionCount >= 2 && !connectMode}
-    <div
-      class="absolute left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 pointer-events-auto {ui.isMobile
-        ? 'bottom-24'
-        : 'top-20'}"
-      transition:fly={{ y: ui.isMobile ? 20 : -20, duration: 200 }}
-    >
-      <div class="flex gap-2">
-        <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2 {ui.isMobile
-            ? 'h-10 px-5'
-            : 'py-1.5'}"
-          onclick={() =>
-            ui.openBulkLabelDialog(
-              cy?.$("node:selected").map((n) => n.id()) || [],
-            )}
-          ><span
-            class="icon-[lucide--layers] {ui.isMobile ? 'w-4 h-4' : 'w-3 h-3'}"
-          ></span>Label ({selectionCount})</button
-        >
-        <button
-          class="bg-theme-surface/90 backdrop-blur border border-theme-primary/50 text-theme-primary px-4 py-2 rounded-full text-[10px] font-mono shadow-xl hover:bg-theme-primary hover:text-theme-bg transition-all uppercase tracking-wider flex items-center gap-2 {ui.isMobile
-            ? 'h-10 px-5'
-            : 'py-1.5'}"
-          onclick={() =>
-            ui.openMergeDialog(cy?.$("node:selected").map((n) => n.id()) || [])}
-          ><span
-            class="icon-[lucide--git-merge] {ui.isMobile
-              ? 'w-4 h-4'
-              : 'w-3 h-3'}"
-          ></span>Merge</button
-        >
-      </div>
-      {#if !ui.isMobile}<FeatureHint hintId="node-merging" />{/if}
     </div>
   {/if}
 
   {#if editingEdge}
     <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30"
+      class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+      transition:fade={{ duration: 200 }}
     >
       <div
-        class="bg-theme-surface border border-theme-border shadow-2xl p-4 min-w-[280px]"
+        class="bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
+        transition:fly={{ y: 20, duration: 300 }}
       >
-        <div
-          class="text-[10px] font-mono text-theme-primary uppercase tracking-widest mb-3"
+        <h2
+          class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
         >
-          Edit Connection
-        </div>
-        <div class="mb-2">
-          <select
-            bind:value={edgeEditType}
-            class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-xs font-mono focus:outline-none focus:border-theme-primary rounded uppercase"
-          >
-            <option value="related_to">Default (Grey)</option><option
-              value="neutral">Neutral (Amber)</option
-            ><option value="friendly">Friendly (Blue)</option><option
-              value="enemy">Enemy (Red)</option
+          Update Connection
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label
+              for="edge-label"
+              class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+              >Label</label
             >
-          </select>
+            <input
+              id="edge-label"
+              type="text"
+              bind:value={edgeEditInput}
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
+              placeholder="Friend, Enemy, Leader..."
+            />
+          </div>
+
+          <div>
+            <label
+              for="edge-type"
+              class="block text-[10px] font-bold text-theme-muted uppercase mb-1"
+              >Relationship Nature</label
+            >
+            <select
+              id="edge-type"
+              bind:value={edgeEditType}
+              class="w-full bg-theme-bg border border-theme-border px-3 py-2 text-xs focus:border-theme-primary outline-none text-theme-text transition-colors"
+            >
+              <option value="friendly">Friendly</option>
+              <option value="neutral">Neutral</option>
+              <option value="enemy">Hostile</option>
+            </select>
+          </div>
+
+          <div class="flex justify-between items-center pt-4">
+            <button
+              onclick={async () => {
+                if (editingEdge) {
+                  await vault.removeConnection(
+                    editingEdge.source,
+                    editingEdge.target,
+                    editingEdge.type,
+                  );
+                  editingEdge = null;
+                }
+              }}
+              class="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+            >
+              Sever Connection
+            </button>
+
+            <div class="flex gap-2">
+              <button
+                onclick={() => (editingEdge = null)}
+                class="px-4 py-2 text-[10px] font-bold text-theme-muted hover:text-theme-text uppercase tracking-widest transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onclick={saveEdgeLabel}
+                class="px-6 py-2 bg-theme-primary text-theme-bg text-[10px] font-bold uppercase tracking-widest hover:bg-theme-secondary transition-colors"
+              >
+                Sync Data
+              </button>
+            </div>
+          </div>
         </div>
-        <input
-          type="text"
-          bind:value={edgeEditInput}
-          placeholder="Enter description..."
-          class="w-full bg-theme-bg border border-theme-border text-theme-text px-3 py-2 text-sm font-mono focus:outline-none focus:border-theme-primary rounded"
-          onkeydown={(e) => {
-            if (e.key === "Enter") saveEdgeLabel();
-            if (e.key === "Escape") editingEdge = null;
-          }}
-        />
-        <div class="flex gap-2 mt-3">
-          <button
-            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-primary/10 border border-theme-primary/30 text-theme-primary hover:bg-theme-primary hover:text-theme-bg transition rounded"
-            onclick={saveEdgeLabel}>Save</button
-          >
-          <button
-            class="flex-1 px-3 py-1.5 text-xs font-mono uppercase bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-primary transition rounded"
-            onclick={() => (editingEdge = null)}>Cancel</button
-          >
-        </div>
-        <button
-          class="w-full mt-2 px-3 py-1.5 text-xs font-mono uppercase bg-red-900/20 border border-red-900/50 text-red-500 hover:bg-red-900/40 hover:text-red-400 transition"
-          onclick={async () => {
-            if (editingEdge) {
-              await vault.removeConnection(
-                editingEdge.source,
-                editingEdge.target,
-                editingEdge.type,
-              );
-              editingEdge = null;
-            }
-          }}>Delete Connection</button
-        >
       </div>
     </div>
   {/if}
+
+  {#if cy}
+    <ContextMenu {cy} />
+    <SelectionConnector {cy} />
+  {/if}
+  <FeatureHint hintId="graph-controls" />
 </div>
 
 <svelte:window onkeydown={handleKeyDown} />
+
+<style>
+  :global(.selected-source) {
+    box-shadow: 0 0 20px #facc15;
+    z-index: 1000 !important;
+  }
+</style>

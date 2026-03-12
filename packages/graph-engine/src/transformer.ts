@@ -145,13 +145,19 @@ export class GraphTransformer {
               x:
                 (entity.id
                   .split("")
-                  .reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+                  .reduce(
+                    (acc, char, i) => acc + char.charCodeAt(0) * (i + 1),
+                    0,
+                  ) %
                   spread) -
                 halfSpread,
               y:
                 ((entity.id
                   .split("")
-                  .reduce((acc, char) => acc + char.charCodeAt(0), 0) *
+                  .reduce(
+                    (acc, char, i) => acc + char.charCodeAt(0) * (i + 1),
+                    0,
+                  ) *
                   13) %
                   spread) -
                 halfSpread,

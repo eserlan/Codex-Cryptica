@@ -306,8 +306,6 @@ export class VaultStore {
       );
       await mapRegistry.loadFromVault(this.activeVaultId);
       await canvasRegistry.loadFromVault(this.activeVaultId);
-
-      this.status = "idle";
     } catch (err: any) {
       debugStore.error("[VaultStore] Load failed", err);
       console.error("[VaultStore] Load failed", err);
