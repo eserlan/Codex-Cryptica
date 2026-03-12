@@ -57,7 +57,7 @@
   };
 </script>
 
-{#if show && imageUrl}
+{#if show}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
@@ -84,10 +84,19 @@
       <span class="icon-[lucide--x] w-8 h-8"></span>
     </button>
 
-    <img
-      src={imageUrl}
-      alt={title}
-      class="max-w-full max-h-full object-contain shadow-2xl rounded pointer-events-none"
-    />
+    {#if imageUrl}
+      <img
+        src={imageUrl}
+        alt={title}
+        class="max-w-full max-h-full object-contain shadow-2xl rounded pointer-events-none"
+      />
+    {:else}
+      <div class="flex flex-col items-center gap-4 text-white/50">
+        <span class="icon-[lucide--loader-2] w-12 h-12 animate-spin"></span>
+        <span class="text-sm font-mono tracking-widest uppercase"
+          >Resolving Neural Visual...</span
+        >
+      </div>
+    {/if}
   </div>
 {/if}

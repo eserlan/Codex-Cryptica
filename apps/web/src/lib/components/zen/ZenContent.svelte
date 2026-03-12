@@ -76,19 +76,25 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TemporalEditor
             bind:value={editState.startDate}
-            label={getTemporalLabel(entity?.type || "", "start")}
+            label={getTemporalLabel(
+              editState?.type ?? entity?.type ?? "",
+              "start",
+            )}
           />
           <TemporalEditor
             bind:value={editState.endDate}
-            label={getTemporalLabel(entity?.type || "", "end")}
+            label={getTemporalLabel(
+              editState?.type ?? entity?.type ?? "",
+              "end",
+            )}
           />
         </div>
       </div>
-    {:else if entity.start_date || entity.end_date}
+    {:else if entity?.start_date || entity?.end_date}
       <div
         class="flex flex-wrap gap-8 p-4 bg-theme-primary/5 border border-theme-border rounded"
       >
-        {#if entity.start_date}
+        {#if entity?.start_date}
           <div class="flex flex-col">
             <span
               class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
@@ -96,11 +102,11 @@
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
             <span class="text-lg font-mono text-theme-primary"
-              >{formatDate(entity.start_date)}</span
+              >{formatDate(entity?.start_date)}</span
             >
           </div>
         {/if}
-        {#if entity.end_date}
+        {#if entity?.end_date}
           <div class="flex flex-col">
             <span
               class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
@@ -108,7 +114,7 @@
               {getTemporalLabel(entity?.type || "", "end")}
             </span>
             <span class="text-lg font-mono text-theme-primary"
-              >{formatDate(entity.end_date)}</span
+              >{formatDate(entity?.end_date)}</span
             >
           </div>
         {/if}
@@ -132,7 +138,7 @@
       {:else}
         <div class="prose-container">
           <MarkdownEditor
-            content={entity.content || "No records found."}
+            content={entity?.content || "No records found."}
             editable={false}
           />
         </div>
@@ -158,7 +164,7 @@
           class="bg-theme-accent/5 border border-theme-border p-6 rounded-lg min-h-[100px] prose-container"
         >
           <MarkdownEditor
-            content={entity.lore || "No deep lore recorded."}
+            content={entity?.lore || "No deep lore recorded."}
             editable={false}
           />
         </div>

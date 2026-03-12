@@ -2,14 +2,14 @@ import type { Entity } from "schema";
 
 export function createEditState(_initialEntity: Entity | null) {
   let isEditing = $state(false);
-  let editTitle = $state("");
-  let editContent = $state("");
-  let editLore = $state("");
-  let editType = $state("");
-  let editImage = $state("");
-  let editDate = $state<Entity["date"]>();
-  let editStartDate = $state<Entity["start_date"]>();
-  let editEndDate = $state<Entity["end_date"]>();
+  let editTitle = $state(_initialEntity?.title ?? "");
+  let editContent = $state(_initialEntity?.content || "");
+  let editLore = $state(_initialEntity?.lore || "");
+  let editType = $state(_initialEntity?.type ?? "");
+  let editImage = $state(_initialEntity?.image || "");
+  let editDate = $state<Entity["date"]>(_initialEntity?.date);
+  let editStartDate = $state<Entity["start_date"]>(_initialEntity?.start_date);
+  let editEndDate = $state<Entity["end_date"]>(_initialEntity?.end_date);
 
   function start(entity: Entity) {
     editTitle = entity.title;

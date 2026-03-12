@@ -35,7 +35,9 @@
     <div class="flex items-center gap-3 mb-1">
       <span
         class="{getIconClass(
-          categories.getCategory(entity?.type || '')?.icon,
+          categories.getCategory(
+            editState.isEditing ? editState.type : entity?.type || '',
+          )?.icon,
         )} text-theme-primary w-5 h-5"
       ></span>
       {#if editState.isEditing}

@@ -78,7 +78,7 @@
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
 >
   <!-- Labels -->
-  {#if entity.labels && entity.labels.length > 0}
+  {#if entity?.labels && entity.labels.length > 0}
     <div class="flex flex-wrap gap-1.5 mb-6">
       {#each entity.labels as label}
         <LabelBadge {label} />
@@ -102,10 +102,11 @@
           placeholder="https://..."
         />
       </div>
-    {:else if entity.image}
+    {:else if entity?.image}
       <button
         onclick={onShowLightbox}
-        class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        disabled={!resolvedImageUrl}
+        class="w-full rounded-lg border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-lg bg-theme-bg/50 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none disabled:cursor-wait"
         aria-label="View full size image"
       >
         <img
@@ -130,7 +131,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.liteMode}
+        {#if oracle.tier === "advanced" && !uiStore.liteMode && entity}
           <button
             onclick={() => oracle.drawEntity(entity.id)}
             disabled={oracle.isLoading}

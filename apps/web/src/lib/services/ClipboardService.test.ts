@@ -36,8 +36,7 @@ describe("ClipboardService", () => {
 
     const result = await service.copyEntity(mockEntity);
     expect(result).toBe(true);
-    expect(
-      navigator.clipboard.write || navigator.clipboard.writeText,
-    ).toHaveBeenCalled();
+    expect(navigator.clipboard.write).toHaveBeenCalled();
+    expect((global as any).ClipboardItem).toHaveBeenCalled();
   });
 });
