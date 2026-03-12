@@ -1,6 +1,7 @@
 import type { SearchResult } from "schema";
 import { isEntityVisible } from "schema";
 import { searchService } from "$lib/services/search";
+import { debugStore } from "./debug.svelte";
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
 
@@ -85,7 +86,9 @@ class SearchStore {
         return;
       }
 
+      debugStore.log(`[SearchStore] Searching for: "${query}"`);
       const results = await searchService.search(query, { limit: 20 });
+      debugStore.log(`[SearchStore] Found ${results.length} raw results.`);
 
       // Filter results based on visibility settings
       const settings = {
@@ -95,12 +98,21 @@ class SearchStore {
 
       const filteredResults = results.filter((result) => {
         const entity = vault.entities[result.id];
-        if (!entity) return false;
+        if (!entity) {
+          debugStore.warn(
+            `[SearchStore] Result entity not found in vault: ${result.id}`,
+          );
+          return false;
+        }
         return isEntityVisible(entity, settings);
       });
 
+      debugStore.log(
+        `[SearchStore] ${filteredResults.length} results visible.`,
+      );
       this.results = filteredResults;
     } catch (error) {
+      debugStore.error("[SearchStore] Search failed", error);
       console.error("Search failed:", error);
       this.results = [];
     } finally {

@@ -56,11 +56,13 @@ export class SearchEngine {
 
   add(doc: SearchEntry) {
     if (!this.index) this.initIndex();
+    console.log(`[SearchEngine] Adding document: ${doc.id} (${doc.title})`);
     this.index?.add(doc);
   }
 
   remove(id: string) {
     if (!this.index) return;
+    console.log(`[SearchEngine] Removing document: ${id}`);
     this.index.remove(id);
   }
 
@@ -71,12 +73,14 @@ export class SearchEngine {
     if (!this.index) return [];
 
     const limit = options.limit || 20;
+    console.log(`[SearchEngine] Searching for: "${query}" with limit ${limit}`);
     const results = await this.index.searchAsync(query, {
       limit,
       enrich: true,
       suggest: true,
     });
 
+    console.log(`[SearchEngine] Raw results from FlexSearch:`, results);
     const resultsMap = new Map<string, SearchResult>();
 
     // Process results from all fields

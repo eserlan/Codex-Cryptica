@@ -96,6 +96,9 @@ export class VaultRepository {
         }
       }
 
+      // Update incrementally to allow search/UI to work during load
+      this.entities = { ...this.entities, ...chunkEntities };
+
       if (onProgress) {
         await onProgress(chunkEntities, Math.min(i + CHUNK_SIZE, total), total);
       }

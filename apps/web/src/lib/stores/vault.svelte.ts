@@ -3,6 +3,7 @@ import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
+import { debugStore } from "./debug.svelte";
 import * as vaultMigration from "./vault/migration";
 import type { LocalEntity } from "./vault/types";
 import type { Entity } from "schema";
@@ -248,9 +249,13 @@ export class VaultStore {
     };
 
     try {
+      debugStore.log(
+        `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
+      );
       if (this.services) {
         this.services.ai.clearStyleCache();
         await this.services.search.clear();
+        debugStore.log("[VaultStore] Search index cleared.");
       }
 
       await this.repository.loadFiles(
@@ -262,6 +267,9 @@ export class VaultStore {
           this.syncStats.created = current;
 
           if (this.services) {
+            debugStore.log(
+              `[VaultStore] Indexing chunk of ${Object.keys(chunk).length} entities (${current}/${total})`,
+            );
             const indexPromises = Object.values(chunk).map((entity) => {
               const path = entity._path?.join("/") || `${entity.id}.md`;
               const keywords = [
@@ -279,7 +287,13 @@ export class VaultStore {
                 updatedAt: Date.now(),
               });
               return promise && promise.catch
-                ? promise.catch(console.warn)
+                ? promise.catch((err) => {
+                    debugStore.error(
+                      `[VaultStore] Failed to index entity: ${entity.id}`,
+                      err,
+                    );
+                    console.warn(err);
+                  })
                 : Promise.resolve();
             });
             await Promise.all(indexPromises);
@@ -287,11 +301,15 @@ export class VaultStore {
         },
       );
 
+      debugStore.log(
+        `[VaultStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+      );
       await mapRegistry.loadFromVault(this.activeVaultId);
       await canvasRegistry.loadFromVault(this.activeVaultId);
 
       this.status = "idle";
     } catch (err: any) {
+      debugStore.error("[VaultStore] Load failed", err);
       console.error("[VaultStore] Load failed", err);
       this.status = "error";
       this.errorMessage = err.message;
