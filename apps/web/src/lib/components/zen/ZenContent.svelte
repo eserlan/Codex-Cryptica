@@ -6,10 +6,10 @@
 
   let {
     entity,
-    editState,
+    editState = $bindable(),
     scrollContainer = $bindable(),
   } = $props<{
-    entity: Entity;
+    entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
   }>();

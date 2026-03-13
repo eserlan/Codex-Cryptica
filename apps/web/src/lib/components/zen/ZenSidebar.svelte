@@ -7,13 +7,13 @@
 
   let {
     entity,
-    editState,
+    editState = $bindable(),
     resolvedImageUrl,
     onShowLightbox,
     onNavigate,
     onDelete,
   } = $props<{
-    entity: Entity;
+    entity: Entity | null;
     editState: any;
     resolvedImageUrl: string;
     onShowLightbox: () => void;

@@ -6,7 +6,7 @@
 
   let {
     entity,
-    editState,
+    editState = $bindable(),
     isSaving,
     isCopied,
     onCopy,

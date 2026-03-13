@@ -16,7 +16,7 @@
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
   // Logic & State Hooks
-  const editState = createEditState(null);
+  let editState = $state(createEditState(null));
   const actions = createZenModeActions(editState);
 
   let isEditing = $derived(editState.isEditing);
@@ -197,7 +197,7 @@
       <!-- Header -->
       <ZenHeader
         {entity}
-        {editState}
+        bind:editState
         {isSaving}
         {isCopied}
         onCopy={handleCopy}
@@ -278,14 +278,14 @@
           >
             <ZenSidebar
               {entity}
-              {editState}
+              bind:editState
               {resolvedImageUrl}
               onShowLightbox={() => (showLightbox = true)}
               onNavigate={navigateTo}
               onDelete={handleDelete}
             />
 
-            <ZenContent {entity} {editState} bind:scrollContainer />
+            <ZenContent {entity} bind:editState bind:scrollContainer />
           </div>
         {:else if activeTab === "map"}
           <div
