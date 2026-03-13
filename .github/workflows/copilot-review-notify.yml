@@ -10,10 +10,7 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    # Robust check: User is a Bot AND login contains 'copilot'
-    if: |
-      github.event.review.user.type == 'Bot' && 
-      contains(toLower(github.event.review.user.login), 'copilot')
+    # Temporarily removed IF condition to verify trigger
     steps:
       - name: Checkout
         uses: actions/checkout@v4

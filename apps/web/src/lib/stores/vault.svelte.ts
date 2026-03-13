@@ -413,7 +413,12 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
-  batchCreateEntities(newEntitiesList: LocalEntity[]) {
+  batchCreateEntities(
+    newEntitiesList: (
+      | LocalEntity
+      | { type: string; title: string; initialData: Partial<Entity> }
+    )[],
+  ) {
     return this.crudManager.batchCreateEntities(newEntitiesList);
   }
 
