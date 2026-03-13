@@ -18,7 +18,7 @@ The **Stable Layout** toggle (represented by a pin icon in the Graph Toolbar) co
 - **Auto-Arrangement:** Every time the graph structure significantly changes (e.g., adding a connection or a new node), the engine will briefly run a simulation to find an optimal aesthetic arrangement.
 - **Initial Setup:** This is useful for new campaigns or when you want the AI to suggest a logical spatial structure for your lore.
 
-## Manual Redraw (The "Refresh" Icon)
+## Redraw Layout (The "Refresh" Icon)
 
 Regardless of whether **Stable Layout** is ON or OFF, you can always click the **Redraw Layout** button (the circular arrows icon). This action bypasses the stability setting to perform a one-time "forced" simulation of the graph.
 
@@ -27,6 +27,15 @@ Regardless of whether **Stable Layout** is ON or OFF, you can always click the *
 - **De-Cluttering:** Over time, especially when adding many new entities or connections, the graph might become visually dense or overlap. Redrawing uses the physics engine to find a fresh, balanced distribution.
 - **New Entities:** When Stable Layout is ON, new nodes are placed in a default "safe" zone. If you add several at once, they may appear grouped too closely. A Manual Redraw will space them out relative to their connections.
 - **Layout Recovery:** If you've manually dragged nodes into a messy arrangement, a redraw will reset them based on the current force-directed algorithm.
+
+## Connecting Nodes (The "Link" Icon)
+
+The **Link** button (chain icon) allows you to quickly create a relationship between two selected nodes.
+
+- **Impact on Stability**: If **Stable Layout** is OFF, creating a new connection will trigger a brief simulation to pull the two related nodes closer together. If **Stable Layout** is ON, the nodes will remain in their current positions despite the new link.
+- **Selection Required**: This button only becomes active when exactly two nodes are selected in the graph.
+
+## Interaction with Modes
 
 ### Interaction with Modes
 

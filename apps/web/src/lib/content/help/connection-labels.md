@@ -11,9 +11,24 @@ Not every connection is the same. You can add labels to the lines in your graph 
 
 ### How to Add Labels
 
-1. **Connect Nodes**: Press `C`, click the first node, then the second.
-2. **Type the Label**: A small box will appear. Type things like "Enemy," "Child of," or "Home Town."
-3. **Hide Labels**: If your graph gets too cluttered, press `L` to hide the text on the lines.
+You can add labels using two methods:
+
+#### 1. The Link Button (Recommended)
+
+1. **Select Two Nodes**: Click one node, then `Shift + Click` or `Cmd/Ctrl + Click` another.
+2. **Click Link**: Click the **Chain icon** in the bottom-left toolbar.
+3. **Type the Label**: Enter the relationship name in the box that appears.
+
+#### 2. Manual Connect Mode
+
+1. **Toggle Mode**: Press `C` on your keyboard.
+2. **Click Nodes**: Click the first node, then the second.
+3. **Type the Label**: Enter the relationship name.
+
+### Tips for Labels
+
+- **Common Labels**: Use "Enemy," "Child of," or "Home Town" for consistency.
+- **Hide Labels**: If your graph gets too cluttered, press `L` to hide the text on the lines.
 
 ### AI Context
 
