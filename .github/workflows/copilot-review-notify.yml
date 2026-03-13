@@ -17,11 +17,11 @@ jobs:
       - name: Send Discord Notification
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          REVIEW_STATE: ${{ github.event.review.state }}
+          REVIEWER: ${{ github.event.review.user.login }}
+          REVIEW_BODY: ${{ github.event.review.body }}
         run: |
-          ./scripts/discord-review-notify.sh \
-            "$DISCORD_WEBHOOK_URL" \
-            "${{ github.event.pull_request.title }}" \
-            "${{ github.event.pull_request.html_url }}" \
-            "${{ github.event.review.state }}" \
-            "${{ github.event.review.user.login }}" \
-            "${{ github.event.review.body }}"
+          chmod +x ./scripts/discord-review-notify.sh
+          ./scripts/discord-review-notify.sh

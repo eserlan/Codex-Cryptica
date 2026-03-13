@@ -1,39 +1,36 @@
 #!/bin/bash
 # Discord PR Review Notification Script
 
-WEBHOOK_URL=$1
-PR_TITLE=$2
-PR_URL=$3
-REVIEW_STATE=$4
-REVIEWER=$5
-REVIEW_BODY=$6
+# Read from environment variables to avoid shell quoting issues
+WEBHOOK_URL="${DISCORD_WEBHOOK_URL}"
+PR_TITLE="${PR_TITLE}"
+PR_URL="${PR_URL}"
+REVIEW_STATE="${REVIEW_STATE}"
+REVIEWER="${REVIEWER}"
+REVIEW_BODY="${REVIEW_BODY}"
 
 if [ -z "$WEBHOOK_URL" ]; then
-  echo "Error: Missing Webhook URL"
+  echo "Error: Missing DISCORD_WEBHOOK_URL environment variable"
   exit 1
 fi
 
 # Define emoji and title based on review state
-case "$REVIEW_STATE" in
+case "${REVIEW_STATE,,}" in # lowercase for matching
   "approved")
     EMOJI="✅"
     TITLE="PR Approved by Copilot"
-    COLOR=3066993 # Green
     ;;
   "changes_requested")
     EMOJI="❌"
     TITLE="Changes Requested by Copilot"
-    COLOR=15158332 # Red
     ;;
   "commented")
     EMOJI="💬"
     TITLE="Copilot Review Comments"
-    COLOR=3447003 # Blue
     ;;
   *)
     EMOJI="🔍"
     TITLE="Copilot PR Review Finished"
-    COLOR=8421504 # Grey
     ;;
 esac
 
