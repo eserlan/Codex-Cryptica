@@ -3,12 +3,13 @@ id: chronology
 title: Custom Chronology
 description: Master the sands of time with tactile grid pickers and custom campaign calendars.
 icon: icon-[lucide--history]
+rank: 11
 tags: ["time", "timeline", "calendar", "eras"]
 ---
 
 # Custom Chronology
 
-Codex Arcana allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+Codex Cryptica allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
 
 ## The Date Picker
 

@@ -2,12 +2,12 @@
 id: importing
 title: Importing Notes
 tags: [import, oracle, resume]
-rank: 5
+rank: 8
 ---
 
 # Importing Content
 
-Codex Arcana can transform your unstructured notes into a structured Knowledge Graph using the Lore Oracle.
+Codex Cryptica can transform your unstructured notes into a structured Knowledge Graph using the Lore Oracle.
 
 ## How it Works
 

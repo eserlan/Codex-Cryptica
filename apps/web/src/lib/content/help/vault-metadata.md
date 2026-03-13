@@ -2,7 +2,7 @@
 id: vault-metadata
 title: Vault Structure
 tags: [markdown, yaml, technical]
-rank: 11
+rank: 17
 ---
 
 ## How Files are Stored

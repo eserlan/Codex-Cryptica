@@ -2,7 +2,7 @@
 id: chat-commands
 title: Chat Commands
 tags: [commands, discovery, connect, merge, oracle]
-rank: 5
+rank: 7
 ---
 
 ## Command Discovery

@@ -2,7 +2,7 @@
 id: spatial-canvas
 title: Spatial Canvas
 tags: [layout, connections, workspace]
-rank: 5
+rank: 4
 ---
 
 ## Designing Your Desk

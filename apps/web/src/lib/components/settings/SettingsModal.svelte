@@ -369,8 +369,8 @@
 
             <section>
               <p class="text-sm text-theme-text/70 leading-relaxed">
-                Shift the visual dimension of your workspace. Zen Templates
-                redefine the interface aesthetic to match your world's genre.
+                Shift the visual dimension of your workspace. Themes redefine
+                the interface aesthetic to match your world's genre.
               </p>
               <ThemeSelector />
             </section>
