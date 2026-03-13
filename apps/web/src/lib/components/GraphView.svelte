@@ -3,6 +3,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { ui } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
 
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
@@ -161,7 +162,13 @@
       applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (!vault.isGuest) toggleConnectMode();
+      if (!vault.isGuest) {
+        if (selectedCount === 2) {
+          ui.showSelectionConnector = !ui.showSelectionConnector;
+        } else {
+          toggleConnectMode();
+        }
+      }
     }
     if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleLabels();
