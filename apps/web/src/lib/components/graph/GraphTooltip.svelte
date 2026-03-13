@@ -26,12 +26,12 @@
       <h3
         class="text-theme-primary font-header font-bold text-xs uppercase tracking-widest border-b border-theme-primary/20 pb-1"
       >
-        {hoveredEntity.title || hoveredEntity.id}
+        {hoveredEntity?.title || hoveredEntity?.id}
       </h3>
       <div class="prose prose-invert prose-xs text-[10px] line-clamp-4">
         {@html tooltipContent}
       </div>
-      {#if hoveredEntity.tags?.length}
+      {#if hoveredEntity?.tags?.length}
         <div class="flex flex-wrap gap-1 mt-1">
           {#each hoveredEntity.tags as tag}
             <span
