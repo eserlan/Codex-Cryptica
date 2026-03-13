@@ -11,6 +11,7 @@ export interface HelpArticle {
   tags: string[];
   content: string;
   rank?: number;
+  hidden?: boolean;
 }
 
 export function parseHelpArticle(
@@ -43,6 +44,7 @@ export function parseHelpArticle(
       title: metadata.title || "Untitled",
       tags: metadata.tags || [],
       rank: metadata.rank,
+      hidden: metadata.hidden || false,
       content: content ? content.trim() : "",
     };
   } catch (e) {
@@ -75,7 +77,9 @@ export function processHelpArticles(
       }
 
       loadedIds.add(article.id);
-      articles.push(article);
+      if (!article.hidden) {
+        articles.push(article);
+      }
     }
   }
 

@@ -1,13 +1,13 @@
 ---
 id: themes
-title: Zen Templates
+title: Themes
 tags: ["interface", "aesthetics", "customization"]
 rank: 15
 ---
 
-# Zen Templates
+# Themes
 
-Codex Arcana allows you to shift the visual dimension of your workspace using **Zen Templates**. These themes redefine the entire interface aesthetic to match your world's genre, using curated color palettes, custom typography, and atmospheric textures to ensure total immersion for lore keepers.
+Codex Cryptica allows you to shift the visual dimension of your workspace using **Themes**. These themes redefine the entire interface aesthetic to match your world's genre, using curated color palettes, custom typography, and atmospheric textures to ensure total immersion for lore keepers.
 
 ## Changing Themes
 
@@ -15,7 +15,7 @@ You can switch between available templates at any time:
 
 1.  Open **Settings** (click the gear icon or press `S`).
 2.  Navigate to the **Aesthetics** tab.
-3.  Select a theme from the **Zen Templates** list.
+3.  Select a theme from the **Themes** list.
 
 The changes will be applied instantly across the entire application, including the knowledge graph and all detail panels.
 

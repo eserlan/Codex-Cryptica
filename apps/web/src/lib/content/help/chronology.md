@@ -9,7 +9,7 @@ tags: ["time", "timeline", "calendar", "eras"]
 
 # Custom Chronology
 
-Codex Arcana allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
+Codex Cryptica allows you to define the very structure of time for your campaign world. Gone are the days of manual math or being forced into a standard Earth calendar.
 
 ## The Date Picker
 
