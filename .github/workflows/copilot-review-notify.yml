@@ -10,10 +10,7 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    if: |
-      github.event.review.user.login == 'Copilot' ||
-      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' ||
-      contains(toLower(github.event.review.user.login), 'copilot')
+    # Temporarily removed IF condition to verify trigger
     steps:
       - name: Checkout
         uses: actions/checkout@v4
