@@ -17,7 +17,7 @@
 
   // Logic & State Hooks
   let editState = $state(createEditState(null));
-  const actions = createZenModeActions(() => editState);
+  const actions = createZenModeActions(editState);
 
   let isEditing = $derived(editState.isEditing);
   let isSaving = $derived(actions.isSaving);

@@ -144,7 +144,7 @@ export class GraphTransformer {
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
       let hash = 0;
       if (!hasValidCoords) {
-        const id = entity.id || "unknown";
+        const id = entity.id;
         const len = id.length;
         for (let j = 0; j < len; j++) {
           hash = (hash << 5) - hash + id.charCodeAt(j);

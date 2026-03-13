@@ -320,34 +320,14 @@ export function bulkRemoveLabel(
 
 export function batchCreateEntities(
   entities: Record<string, LocalEntity>,
-  newEntitiesList: (
-    | LocalEntity
-    | { type: string; title: string; initialData: Partial<Entity> }
-  )[],
-): { entities: Record<string, LocalEntity>; created: LocalEntity[] } {
+  newEntitiesList: LocalEntity[],
+): { entities: Record<string, LocalEntity> } {
   const newEntities = { ...entities };
-  const created: LocalEntity[] = [];
-
-  for (const item of newEntitiesList) {
-    let entity: LocalEntity;
-
-    if ("id" in item) {
-      entity = {
-        ...item,
-        updatedAt: Date.now(),
-      } as LocalEntity;
-    } else {
-      entity = createEntity(
-        item.title,
-        item.type as any,
-        item.initialData,
-        newEntities,
-      );
-    }
-
-    newEntities[entity.id] = entity;
-    created.push(entity);
+  for (const entity of newEntitiesList) {
+    newEntities[entity.id] = {
+      ...entity,
+      updatedAt: Date.now(),
+    };
   }
-
-  return { entities: newEntities, created };
+  return { entities: newEntities };
 }
