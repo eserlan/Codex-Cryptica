@@ -37,16 +37,9 @@ The **Link** button (chain icon) allows you to quickly create a relationship bet
 
 ## Interaction with Modes
 
-### Interaction with Modes
-
-- **Timeline Mode:** Clicking redraw in Timeline Mode will re-calculate the temporal distribution. This is useful if you've filtered the range and want to maximize the use of screen space.
-- **Orbit Mode:** Redrawing in Orbit Mode will re-center the graph on the current Focus Node and re-arrange the surrounding "satellites" for optimal clarity.
-- **Position Saving:** Note that redrawing will overwrite any manually set positions. If you have spent a long time hand-crafting a specific layout, use this button with caution!
-
-## Timeline & Orbit Modes
-
-- **Timeline Mode:** Bypasses stability settings to arrange nodes chronologically along an X or Y axis based on their associated dates.
-- **Orbit Mode:** Centers the graph around a specific "Focus Node," arranging immediate connections in a circular pattern. Stability is partially maintained for distant nodes, but the focus area is always recalculated for clarity.
+- **Timeline Mode:** Bypasses stability settings to arrange nodes chronologically along an X or Y axis based on their associated dates. Clicking redraw in this mode will re-calculate the temporal distribution, which is useful if you've filtered the range and want to maximize screen space.
+- **Orbit Mode:** Centers the graph around a specific "Focus Node," arranging immediate connections in a circular pattern. Stability is partially maintained for distant nodes, but the focus area is always recalculated for clarity. Redrawing will re-center the graph and re-arrange the surrounding "satellites" for optimal clarity.
+- **Position Saving:** Note that redrawing will overwrite any manually set positions. If you have spent a long time hand-crafting a specific layout, use the button with caution!
 
 ---
 
