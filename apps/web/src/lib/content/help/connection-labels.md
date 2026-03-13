@@ -2,7 +2,7 @@
 id: connection-labels
 title: Relationship Labels
 tags: [connections, graph, metadata]
-rank: 10
+rank: 7
 ---
 
 ## Labeling Your Links

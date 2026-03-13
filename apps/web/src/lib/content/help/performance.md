@@ -2,7 +2,7 @@
 id: performance-optimization
 title: Performance Optimization
 tags: [technical, scaling, performance]
-rank: 12
+rank: 18
 ---
 
 ## Scaling Your Archives

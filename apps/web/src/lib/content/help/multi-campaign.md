@@ -2,7 +2,7 @@
 id: multi-campaign
 title: Multiple Vaults
 tags: [vault, setup, organization]
-rank: 9
+rank: 14
 ---
 
 ## Switch Between Campaigns

@@ -2,7 +2,7 @@
 id: node-merging
 title: Merging Nodes
 tags: [organization, cleanup, ai]
-rank: 7
+rank: 8
 ---
 
 ## Consolidation Power

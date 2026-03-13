@@ -2,7 +2,7 @@
 id: themes
 title: Zen Templates
 tags: ["interface", "aesthetics", "customization"]
-rank: 10
+rank: 15
 ---
 
 # Zen Templates
