@@ -1,4 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// Mock Svelte 5 Runes
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.snapshot = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = (v: any) => v;
+  (global as any).$effect = (v: any) => v;
+});
+
 import { DefaultImageGenerationService } from "../../lib/services/ai/image-generation.service";
 import { uiStore } from "../../lib/stores/ui.svelte";
 

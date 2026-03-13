@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../lib/services/search", () => ({
-  searchService: {
-    search: vi.fn().mockResolvedValue([]),
-  },
+// Mock environment
+vi.mock("$app/environment", () => ({
+  browser: true,
 }));
 
 // Mock Svelte 5 Runes
@@ -13,7 +12,14 @@ vi.hoisted(() => {
   (global as any).$derived = (v: any) => v;
   (global as any).$derived.by = (v: any) => v;
   (global as any).$effect = (v: any) => v;
+  (global as any).$effect.root = (v: any) => v();
 });
+
+vi.mock("../../lib/services/search", () => ({
+  searchService: {
+    search: vi.fn().mockResolvedValue([]),
+  },
+}));
 
 import { OracleStore } from "./oracle.svelte";
 
