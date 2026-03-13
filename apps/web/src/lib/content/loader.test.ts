@@ -50,6 +50,22 @@ Content`;
         expect.stringContaining("Missing 'id' in frontmatter"),
       );
     });
+
+    it("should parse 'hidden' as boolean strictly", () => {
+      const cases = [
+        { yaml: "hidden: true", expected: true },
+        { yaml: "hidden: false", expected: false },
+        { yaml: 'hidden: "true"', expected: false }, // String "true" is not boolean true
+        { yaml: "hidden: 1", expected: false },
+        { yaml: "", expected: false },
+      ];
+
+      for (const { yaml, expected } of cases) {
+        const rawContent = `---\nid: test\n${yaml}\n---\nContent`;
+        const article = parseHelpArticle("test.md", rawContent);
+        expect(article?.hidden).toBe(expected);
+      }
+    });
   });
 
   describe("processHelpArticles", () => {
@@ -95,6 +111,55 @@ Content`;
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("valid");
+    });
+
+    it("should filter out hidden articles", () => {
+      const modules = {
+        "visible.md": "---\nid: visible\ntitle: Visible\n---\nContent",
+        "hidden.md":
+          "---\nid: hidden\ntitle: Hidden\nhidden: true\n---\nContent",
+      };
+
+      const result = processHelpArticles(modules);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe("visible");
+    });
+
+    it("should handle duplicate IDs correctly with hidden flags", () => {
+      // If a visible base is overwritten by a hidden override, it should be hidden
+      const modules1 = {
+        "1-base.md": "---\nid: mixed\ntitle: Base\n---\nContent",
+        "2-override.md":
+          "---\nid: mixed\ntitle: Override\nhidden: true\n---\nContent",
+      };
+      expect(processHelpArticles(modules1)).toHaveLength(0);
+
+      // If a hidden base is overwritten by a visible override, it should be visible
+      const modules2 = {
+        "1-base.md": "---\nid: mixed\ntitle: Base\nhidden: true\n---\nContent",
+        "2-override.md": "---\nid: mixed\ntitle: Override\n---\nContent",
+      };
+      const res2 = processHelpArticles(modules2);
+      expect(res2).toHaveLength(1);
+      expect(res2[0].title).toBe("Override");
+    });
+
+    it("should process a realistic set of help articles", () => {
+      const modules = {
+        "intro.md":
+          "---\nid: intro\ntitle: Introduction\nrank: 0\n---\nWelcome.",
+        "graph.md":
+          "---\nid: graph\ntitle: Graph Basics\nrank: 10\n---\nConnections.",
+        "oracle.md":
+          "---\nid: oracle\ntitle: Oracle Guide\nrank: 20\n---\nAsk AI.",
+      };
+
+      const result = processHelpArticles(modules);
+      expect(result).toHaveLength(3);
+      expect(result[0].id).toBe("intro");
+      expect(result[1].id).toBe("graph");
+      expect(result[2].id).toBe("oracle");
     });
   });
 });

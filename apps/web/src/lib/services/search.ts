@@ -3,39 +3,38 @@ import * as Comlink from "comlink";
 // We import the worker constructor using Vite's syntax
 import SearchWorker from "../workers/search.worker?worker";
 import type { SearchEngine } from "@codex/search-engine";
+import { debugStore } from "../stores/debug.svelte";
 
 export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchEngine> | null = null;
 
-  private static current: SearchService | null = null;
-  private static vaultListenerAttached = false;
-  private static readonly handleVaultSwitched = () => {
-    const current = SearchService.current;
-    if (current) {
-      current.terminate();
-      current.initWorker();
-    }
-  };
-
   constructor() {
     if (typeof window !== "undefined") {
       this.initWorker();
-      SearchService.current = this;
-
-      if (!SearchService.vaultListenerAttached) {
-        window.addEventListener(
-          "vault-switched",
-          SearchService.handleVaultSwitched,
-        );
-        SearchService.vaultListenerAttached = true;
-      }
     }
   }
 
   private initWorker() {
     this.worker = new SearchWorker();
     this.api = Comlink.wrap<SearchEngine>(this.worker);
+
+    // Bridge logs from worker to main thread log service
+    this.api.setLogger(
+      Comlink.proxy(
+        (level: "info" | "warn" | "error", msg: string, data?: any) => {
+          const message = `[SearchEngine] ${msg}`;
+          if (level === "error") {
+            debugStore.error(message, data);
+          } else if (level === "warn") {
+            debugStore.warn(message, data);
+          } else {
+            debugStore.log(message, data);
+          }
+        },
+      ),
+    );
+
     // Initialize immediately
     this.init();
   }

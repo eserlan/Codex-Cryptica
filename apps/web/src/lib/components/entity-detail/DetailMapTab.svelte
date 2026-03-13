@@ -94,6 +94,7 @@
             class="text-[10px] font-bold text-red-500/70 hover:text-red-400 transition-colors uppercase font-header tracking-widest flex items-center gap-1.5"
             onclick={handleDeleteMap}
             title="Delete this map"
+            aria-label="Delete map"
           >
             <span class="icon-[lucide--trash-2] w-3 h-3"></span>
             DELETE

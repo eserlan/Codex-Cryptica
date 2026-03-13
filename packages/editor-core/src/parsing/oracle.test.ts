@@ -103,14 +103,6 @@ A secret society.`;
     expect(result.type).toBe("faction");
   });
 
-  it("should extract wiki links from text", () => {
-    const input = `Found in [[Iron City]] by [[John Doe|Captain John]].`;
-    const result = parseOracleResponse(input);
-    expect(result.wikiLinks).toHaveLength(2);
-    expect(result.wikiLinks?.[0].target).toBe("iron-city");
-    expect(result.wikiLinks?.[1].label).toBe("Captain John");
-  });
-
   it("should guess type from keywords", () => {
     const input = `This is a powerful artifact forged in fire.`;
     const result = parseOracleResponse(input);

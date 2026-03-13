@@ -2,7 +2,7 @@
 id: offline-sync
 title: Offline Support & Synchronization
 tags: [technical, sync, privacy]
-rank: 5
+rank: 16
 ---
 
 # Offline Support & Synchronization

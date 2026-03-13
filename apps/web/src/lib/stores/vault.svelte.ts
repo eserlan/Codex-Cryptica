@@ -1,44 +1,48 @@
-// apps/web/src/lib/stores/vault.svelte.ts
-import { getDB } from "../utils/idb";
-import { getVaultDir, deleteOpfsEntry, walkOpfsDirectory } from "../utils/opfs";
-import { KeyedTaskQueue } from "../utils/queue";
-import type { Entity, Map } from "schema";
-import type { IStorageAdapter } from "../cloud-bridge/types";
-import { debugStore } from "./debug.svelte";
 import { uiStore } from "./ui.svelte";
-import type { LocalEntity } from "./vault/types";
-export type { LocalEntity };
-
-import * as vaultIO from "./vault/io";
-import * as vaultAssets from "./vault/assets";
-import * as vaultMigration from "./vault/migration";
-import * as vaultRelationships from "./vault/relationships";
-import * as vaultEntities from "./vault/entities";
 import { vaultRegistry } from "./vault-registry.svelte";
+import { mapRegistry } from "./map-registry.svelte";
+import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
-import { parseMarkdown } from "../utils/markdown";
-import { isEntityMetadataEqual } from "../utils/comparison";
-import { SyncRegistry, LocalSyncService } from "@codex/sync-engine";
+import { debugStore } from "./debug.svelte";
+import * as vaultMigration from "./vault/migration";
+import type { LocalEntity, BatchCreateInput } from "./vault/types";
+import type { Entity } from "schema";
+import { getDB } from "../utils/idb";
+import { VaultCrudManager } from "./vault/crud";
+import { VaultLifecycleManager } from "./vault/lifecycle";
+import * as vaultRelationships from "./vault/relationships";
+import {
+  VaultRepository,
+  SyncCoordinator,
+  AssetManager,
+} from "@codex/vault-engine";
+import {
+  fileIOAdapter,
+  syncIOAdapter,
+  syncNotifier,
+  assetIOAdapter,
+  imageProcessor,
+  createSyncEngine,
+} from "./vault/adapters";
 
-import type { SearchEntry } from "schema";
-
-// Service Interfaces for Dependency Injection
 export interface IVaultServices {
   search: {
-    index: (data: SearchEntry) => Promise<void>;
-    remove: (id: string) => Promise<void>;
-    clear: () => Promise<void>;
+    index(entry: any): Promise<void>;
+    remove(id: string): Promise<void>;
+    clear(): Promise<void>;
+    search(query: string, options?: any): Promise<any[]>;
   };
   ai: {
-    clearStyleCache: () => void;
+    clearStyleCache(): void;
+    expandQuery(apiKey: string, query: string, history: any[]): Promise<string>;
   };
 }
 
-class VaultStore {
-  entities = $state<Record<string, LocalEntity>>({});
-  maps = $state<Record<string, Map>>({});
-  canvases = $state<Record<string, any>>({});
+export class VaultStore {
+  // Reactive State
+  isInitialized = $state(false);
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
+  errorMessage = $state<string | null>(null);
   syncType = $state<"local" | null>(null);
   syncStats = $state({
     updated: 0,
@@ -48,261 +52,121 @@ class VaultStore {
     total: 0,
     progress: 0,
   });
-
   hasConflictFiles = $state(false);
-
-  private async checkForConflicts() {
-    const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
-    try {
-      console.log("[VaultStore] Checking for conflict files in OPFS...");
-      const files = await walkOpfsDirectory(opfsHandle);
-      const conflictCount = files.filter((f) =>
-        f.path[f.path.length - 1].includes(".conflict-"),
-      ).length;
-
-      this.hasConflictFiles = conflictCount > 0;
-      console.log(
-        `[VaultStore] Found ${conflictCount} conflict files. hasConflictFiles = ${this.hasConflictFiles}`,
-      );
-    } catch (err) {
-      console.error("[VaultStore] Failed to check for conflict files:", err);
-      this.hasConflictFiles = false;
-    }
-  }
-  isInitialized = $state(false);
-  errorMessage = $state<string | null>(null);
   selectedEntityId = $state<string | null>(null);
-  migrationRequired = $state(false);
   demoVaultName = $state<string | null>(null);
-
-  // Fog of War Settings
+  migrationRequired = $state(false);
   defaultVisibility = $state<"visible" | "hidden">("visible");
 
-  // State (Mirrored/Proxied from Registry or local)
-  isOpfs = $state(true);
-  isGuest = $state(false);
-  storageAdapter: IStorageAdapter | null = null;
+  inboundConnections = $derived.by(() =>
+    vaultRelationships.rebuildInboundMap(this.entities),
+  );
 
-  // Real-time update hooks
-  onEntityUpdate: ((entity: LocalEntity) => void) | null = null;
-  onEntityDelete: ((id: string) => void) | null = null;
-  onBatchUpdate:
-    | ((updates: Record<string, Partial<LocalEntity>>) => void)
-    | null = null;
+  labelIndex = $derived.by(() => {
+    const labels = new Set<string>();
+    for (const entity of this.allEntities) {
+      if (entity.labels) {
+        entity.labels.forEach((l) => labels.add(l));
+      }
+    }
+    return Array.from(labels).sort();
+  });
 
-  // Services (Injected)
-  private services: IVaultServices | null = null;
-  private syncService: LocalSyncService | null = null;
+  // Callbacks
+  onEntityUpdate?: (entity: LocalEntity) => void;
+  onEntityDelete?: (entityId: string) => void;
+  onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
 
-  // Registry Accessors
+  // Services
+  public services: IVaultServices | null = null;
+  private crudManager: VaultCrudManager;
+  private lifecycleManager: VaultLifecycleManager;
+
+  // Delegated Getters
+  get entities() {
+    return this.repository.entities;
+  }
+  get allEntities() {
+    return Object.values(this.repository.entities);
+  }
+  get maps() {
+    return mapRegistry.maps;
+  }
+  get canvases() {
+    return canvasRegistry.canvases;
+  }
   get activeVaultId() {
     return vaultRegistry.activeVaultId;
   }
   get vaultName() {
-    return this.demoVaultName || vaultRegistry.vaultName;
+    return vaultRegistry.vaultName;
+  }
+  get saveQueue() {
+    return this.repository.saveQueue;
+  }
+  get isGuest() {
+    return !!uiStore.isGuestMode;
   }
 
-  get availableVaults() {
-    return vaultRegistry.availableVaults;
-  }
+  constructor(
+    public repository = new VaultRepository(fileIOAdapter),
+    private assetManager = new AssetManager(assetIOAdapter, imageProcessor),
+    public syncCoordinator: SyncCoordinator | null = null,
+  ) {
+    this.crudManager = new VaultCrudManager(
+      () => this.entities,
+      (entities) => {
+        this.repository.entities = entities;
+      },
+      (entity) => this.scheduleSave(entity),
+      () => this.getActiveVaultHandle(),
+      () => this.isGuest,
+      () => this.services,
+      (id) => this.onEntityDelete && this.onEntityDelete(id),
+      (entity) => this.onEntityUpdate && this.onEntityUpdate(entity),
+      (updates) => this.onBatchUpdate && this.onBatchUpdate(updates),
+    );
 
-  // Derived adjacency map - automatically stays in sync with entities!
-  inboundConnections = $derived.by(() => {
-    return vaultRelationships.rebuildInboundMap(this.entities);
-  });
-
-  labelIndex = $derived.by(() => {
-    const seen = new Set<string>();
-    for (const entity of Object.values(this.entities)) {
-      for (const label of entity.labels || []) {
-        seen.add(label.trim().toLowerCase());
-      }
-    }
-    return Array.from(seen).sort((a, b) => a.localeCompare(b));
-  });
-
-  get allEntities() {
-    return Object.values(this.entities);
-  }
-
-  public async getActiveVaultHandle(): Promise<
-    FileSystemDirectoryHandle | undefined
-  > {
-    if (!vaultRegistry.rootHandle || !this.activeVaultId) return undefined;
-    return await getVaultDir(vaultRegistry.rootHandle, this.activeVaultId);
-  }
-
-  /**
-   * Internal save queue for coordinating OPFS writes.
-   * NOTE: This queue is public so that MapStore (see map.svelte.ts) can enqueue
-   * map-related save operations to ensure data consistency.
-   * External code should avoid manipulating it directly.
-   */
-  public saveQueue = new KeyedTaskQueue();
-
-  get pendingSaveCount() {
-    return this.saveQueue.totalPendingCount;
-  }
-
-  constructor() {
-    console.log("[VaultStore] New Instance Created", Date.now());
-  }
-
-  async createVault(name: string): Promise<string> {
-    const id = await vaultRegistry.createVault(name);
-    await this.switchVault(id);
-    return id;
-  }
-
-  async switchVault(id: string): Promise<void> {
-    if (this.activeVaultId === id && this.isInitialized) return;
-
-    await this.saveQueue.waitForAll();
-    this.entities = {};
-    this.maps = {};
-
-    // Clear chat history in DB before switching
-    const db = await getDB();
-    try {
-      const tx = db.transaction("chat_history", "readwrite");
-      await tx.store.clear();
-      await tx.done;
-    } catch (e) {
-      console.warn("[VaultStore] Failed to clear chat history", e);
-    }
-
-    this.status = "loading";
-    this.errorMessage = null;
-
-    // Load theme for the new vault as early as possible to avoid FOUC/flicker
-    await themeStore.loadForVault(id);
-    await vaultRegistry.setActiveVault(id);
+    this.lifecycleManager = new VaultLifecycleManager(
+      (s) => (this.status = s),
+      (m) => (this.errorMessage = m),
+      () => this.activeVaultId,
+      () => this.getActiveVaultHandle(),
+      this.repository,
+      () => this.loadFiles(),
+      () => this.entities,
+      (n) => (this.demoVaultName = n),
+      (v) => (this.isInitialized = v),
+      () => this.services,
+      (c) => (this.hasConflictFiles = c),
+      (id) => (this.selectedEntityId = id),
+    );
 
     if (typeof window !== "undefined") {
-      window.dispatchEvent(
-        new CustomEvent("vault-switched", { detail: { id } }),
-      );
-    }
-
-    await this.loadFiles();
-  }
-
-  /**
-   * Loads sample data into the vault for transient demo exploration.
-   * Bypasses IndexedDB and OPFS.
-   */
-  async loadDemoData(data: { entities: Record<string, any> }, name?: string) {
-    await this.saveQueue.waitForAll();
-    this.selectedEntityId = null;
-
-    const entities = data.entities as Record<string, LocalEntity>;
-
-    const CDN_BASE = "https://assets.codexcryptica.com";
-
-    // Fix image paths in demo data
-    for (const entity of Object.values(entities)) {
-      const fixUrl = (url: string | undefined) => {
-        if (!url) return url;
-
-        // Strip any Cloudflare Image Resizer paths which can interfere with CORS headers
-        url = url.replace(/\/cdn-cgi\/image\/[^/]+\//, "/");
-
-        // 1. If it's already a full CDN URL or data URI, leave it
-        if (
-          url.startsWith("https://assets.codexcryptica.com") ||
-          url.startsWith("data:") ||
-          url.startsWith("blob:")
-        ) {
-          return url;
-        }
-
-        // 2. Handle localhost or relative/root-relative vault-samples paths
-        if (
-          url.includes("vault-samples/images/") ||
-          url.includes("localhost:5173")
-        ) {
-          // Extract the filename part
-          const parts = url.split("vault-samples/images/");
-          const filename = parts[parts.length - 1];
-          return `${CDN_BASE}/vault-samples/images/${filename}`;
-        }
-
-        // 3. Fallback for other relative paths
-        if (!url.startsWith("http") && !url.startsWith("/")) {
-          return `${CDN_BASE}/${url.replace(/^\.\//, "")}`;
-        }
-
-        return url;
-      };
-
-      entity.image = fixUrl(entity.image);
-      entity.thumbnail = fixUrl(entity.thumbnail || entity.image);
-    }
-
-    this.entities = entities;
-    this.demoVaultName = name || null;
-    this.isInitialized = true;
-    this.status = "idle";
-
-    // Index everything for search
-    if (this.services?.search) {
-      await this.services.search.clear();
-      for (const entity of Object.values(this.entities)) {
-        await this.services.search.index({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content,
-          type: entity.type,
-          path: entity._path?.join("/") || `${entity.id}.md`,
-          keywords: (entity.tags || []).join(" "),
-          updatedAt: Date.now(),
-        });
-      }
-    }
-  }
-
-  /**
-   * Persists the current transient state to a new IndexedDB vault.
-   */
-  async persistToIndexedDB(vaultId: string) {
-    this.status = "saving";
-    try {
-      // 1. Set as active vault in registry
-      await vaultRegistry.setActiveVault(vaultId);
-
-      // 2. Save all entities to OPFS
-      for (const entity of Object.values(this.entities)) {
-        await this.saveToDisk(entity, vaultId);
-      }
-
-      // 3. Clear transient flags and finish
-      this.demoVaultName = null;
-      this.status = "idle";
-    } catch (err: any) {
-      console.error("[VaultStore] Persistence failed:", err);
-      this.status = "error";
-      this.errorMessage = "Failed to persist demo data.";
-      throw err;
+      mapRegistry.init(this.repository.saveQueue);
+      canvasRegistry.init(this.repository.saveQueue);
     }
   }
 
   async init(injectedServices?: IVaultServices) {
     this.isInitialized = false;
     this.status = "loading";
-    debugStore.log(`Vault initializing (v${__APP_VERSION__}) [OPFS Mode]...`);
 
-    // Handle Dependency Injection
     if (injectedServices) {
       this.services = injectedServices;
     } else if (typeof window !== "undefined") {
-      // Lazy load real services if not injected (browser runtime)
       const { searchService } = await import("../services/search");
       const { aiService } = await import("../services/ai");
-      this.services = {
-        search: searchService,
-        ai: aiService,
-      };
+      this.services = { search: searchService, ai: aiService };
+
+      if (!this.syncCoordinator) {
+        const engine = await createSyncEngine();
+        this.syncCoordinator = new SyncCoordinator(
+          syncIOAdapter,
+          engine,
+          syncNotifier,
+        );
+      }
     }
 
     try {
@@ -311,21 +175,14 @@ class VaultStore {
       if (!opfsRoot) throw new Error("OPFS Root failed to initialize");
 
       if (uiStore.isDemoMode) {
-        debugStore.log(
-          "Vault init: Demo mode active, skipping further initialization.",
-        );
         this.isInitialized = true;
         this.status = "idle";
         return;
       }
 
       const db = await getDB();
-      this.syncService = new LocalSyncService(new SyncRegistry(db));
-
       const savedVisibility = await db.get("settings", "defaultVisibility");
-      if (savedVisibility) {
-        this.defaultVisibility = savedVisibility;
-      }
+      if (savedVisibility) this.defaultVisibility = savedVisibility;
 
       const migration = await vaultMigration.checkForMigration();
       if (migration.required && migration.handle) {
@@ -344,433 +201,36 @@ class VaultStore {
 
       await vaultMigration.migrateStructure(opfsRoot);
 
-      // If we have an active vault from registry, load it
       if (this.activeVaultId) {
         await themeStore.loadForVault(this.activeVaultId);
-
         await this.loadFiles();
+      } else {
+        await vaultRegistry.listVaults();
+        if (vaultRegistry.availableVaults.length > 0) {
+          const firstVault = vaultRegistry.availableVaults[0];
+          await vaultRegistry.setActiveVault(firstVault.id);
+          await themeStore.loadForVault(firstVault.id);
+          await this.loadFiles();
+        }
       }
     } catch (err) {
       console.error("[VaultStore] Init failed", err);
-      debugStore.error("Vault Store initialization failed", err);
       this.status = "error";
       this.errorMessage =
         "Failed to initialize storage. Please check browser support for OPFS.";
     } finally {
       this.isInitialized = true;
       await this.checkForConflicts();
-      if (this.status !== "error") this.status = "idle";
-    }
-  }
-
-  async cleanupConflictFiles() {
-    if (!this.activeVaultId) return;
-    const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
-
-    // Get current local handle if active to clean up both sides
-    const db = await getDB();
-    const localHandle = await db.get(
-      "settings",
-      `syncHandle_${this.activeVaultId}`,
-    );
-
-    this.status = "saving";
-    try {
-      console.log("[VaultStore] Squashing conflict history...");
-      const { writeOpfsFile, deleteOpfsEntry } = await import("../utils/opfs");
-
-      const squash = async (root: FileSystemDirectoryHandle, label: string) => {
-        const allFiles = await walkOpfsDirectory(root);
-        const groups = new Map<
-          string,
-          { originalPath: string[]; variants: any[] }
-        >();
-
-        for (const file of allFiles) {
-          const filename = file.path[file.path.length - 1];
-          const conflictIndex = filename.indexOf(".conflict-");
-
-          let logicalName = filename;
-          if (conflictIndex !== -1) {
-            const extIndex = filename.lastIndexOf(".");
-            logicalName =
-              filename.substring(0, conflictIndex) +
-              (extIndex !== -1 ? filename.substring(extIndex) : "");
-          }
-
-          const logicalPathArray = [...file.path.slice(0, -1), logicalName];
-          const logicalPath = logicalPathArray.join("/");
-
-          if (!groups.has(logicalPath)) {
-            groups.set(logicalPath, {
-              originalPath: logicalPathArray,
-              variants: [],
-            });
-          }
-
-          const f = await file.handle.getFile();
-          groups.get(logicalPath)!.variants.push({
-            ...file,
-            lastModified: f.lastModified,
-            isConflict: conflictIndex !== -1,
-          });
-        }
-
-        let deleted = 0;
-        let promoted = 0;
-
-        for (const group of groups.values()) {
-          if (group.variants.length === 1) {
-            const onlyVariant = group.variants[0];
-            if (onlyVariant.isConflict) {
-              try {
-                const blob = await onlyVariant.handle.getFile();
-                await writeOpfsFile(
-                  group.originalPath,
-                  blob,
-                  root,
-                  this.activeVaultId || undefined,
-                );
-                await deleteOpfsEntry(
-                  root,
-                  onlyVariant.path,
-                  this.activeVaultId || undefined,
-                );
-                promoted++;
-              } catch (err) {
-                console.error(
-                  `[${label}] Failed to promote orphaned conflict ${onlyVariant.path.join("/")}`,
-                  err,
-                );
-              }
-            }
-            continue;
-          }
-
-          group.variants.sort((a, b) => b.lastModified - a.lastModified);
-          const winner = group.variants[0];
-          const losers = group.variants.slice(1);
-
-          for (const loser of losers) {
-            await deleteOpfsEntry(
-              root,
-              loser.path,
-              this.activeVaultId || undefined,
-            );
-            deleted++;
-          }
-
-          if (winner.isConflict) {
-            try {
-              const blob = await winner.handle.getFile();
-              await writeOpfsFile(
-                group.originalPath,
-                blob,
-                root,
-                this.activeVaultId || undefined,
-              );
-              await deleteOpfsEntry(
-                root,
-                winner.path,
-                this.activeVaultId || undefined,
-              );
-              promoted++;
-            } catch (err) {
-              console.error(
-                `[${label}] Failed to promote ${winner.path.join("/")}`,
-                err,
-              );
-            }
-          }
-        }
-        return { deleted, promoted };
-      };
-
-      const opfsResults = await squash(opfsHandle, "OPFS");
-      let fsResults = { deleted: 0, promoted: 0 };
-
-      if (localHandle) {
-        try {
-          // Verify we still have permission
-          if (
-            (await localHandle.queryPermission({ mode: "readwrite" })) ===
-            "granted"
-          ) {
-            fsResults = await squash(localHandle, "LOCAL");
-          }
-        } catch (err) {
-          console.warn("[VaultStore] Could not clean up local folder:", err);
-        }
-      }
-
-      await this.checkForConflicts();
-      await this.loadFiles();
-
-      const totalDeleted = opfsResults.deleted + fsResults.deleted;
-      const totalPromoted = opfsResults.promoted + fsResults.promoted;
-
-      uiStore.notify(
-        `History squashed: ${totalDeleted} files removed, ${totalPromoted} versions promoted across stores.`,
-        "success",
-      );
-    } catch (err: any) {
-      console.error("[VaultStore] Cleanup failed", err);
-      uiStore.notify("Cleanup failed: " + err.message, "error");
-    } finally {
-      this.status = "idle";
-    }
-  }
-
-  async syncToLocal() {
-    if (!this.syncService || !this.activeVaultId) return;
-
-    // 1. PRE-SYNC HANDLE VALIDATION (Must be first to preserve user gesture)
-    // We get the handle from DB immediately to check if we need to prompt the user
-    const db = await getDB();
-    let localHandle = await db.get(
-      "settings",
-      `syncHandle_${this.activeVaultId}`,
-    );
-
-    if (localHandle) {
-      try {
-        // PROACTIVE VALIDATION: Force I/O to test the handle
-        const iterator = (localHandle as any).values();
-        await iterator.next();
-      } catch (validationErr: any) {
-        console.warn(
-          "[VaultStore] Saved local handle validation failed:",
-          validationErr,
-        );
-        if (
-          validationErr.name === "NotFoundError" ||
-          validationErr.message?.includes("not found")
-        ) {
-          console.warn(
-            "[VaultStore] Handle is definitively detached. Clearing it from DB.",
+      if (this.status !== "error") {
+        this.status = "idle";
+        if (this.activeVaultId) {
+          window.dispatchEvent(
+            new CustomEvent("vault-switched", {
+              detail: { id: this.activeVaultId },
+            }),
           );
-          localHandle = null;
-          await db.delete("settings", `syncHandle_${this.activeVaultId}`);
         }
       }
-    }
-
-    // Handle permissions if we still have a handle
-    if (localHandle) {
-      try {
-        const permission = await localHandle.queryPermission({
-          mode: "readwrite",
-        });
-        if (permission !== "granted") {
-          const newPermission = await localHandle.requestPermission({
-            mode: "readwrite",
-          });
-          if (newPermission !== "granted") localHandle = null;
-        }
-      } catch (err) {
-        console.warn("[VaultStore] Permission request failed", err);
-        localHandle = null;
-      }
-    }
-
-    // 2. PROMPT FOR FOLDER (Crucial user gesture path)
-    if (!localHandle) {
-      try {
-        // The alert serves as a synchronous bridge to ensure the following await window.showDirectoryPicker
-        // is still considered part of the user gesture chain by some browsers.
-        window.alert(
-          "Please select a local folder to sync this vault with. This is required to grant permission or reconnect a lost link.",
-        );
-        localHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-        await db.put(
-          "settings",
-          localHandle,
-          `syncHandle_${this.activeVaultId}`,
-        );
-      } catch (err: any) {
-        if (err.name === "AbortError") return;
-        console.error("[VaultStore] Folder selection failed", err);
-        this.errorMessage = "Failed to select folder: " + err.message;
-        this.status = "error";
-        return;
-      }
-    }
-
-    // 3. PROCEED WITH SYNC (Background work)
-    try {
-      // Ensure all pending application saves are flushed before starting sync
-      await Promise.race([
-        this.saveQueue.waitForAll(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Save queue timeout")), 10000),
-        ),
-      ]).catch((err) =>
-        console.warn("Continuing sync despite save queue issues:", err),
-      );
-
-      const opfsHandle = await this.getActiveVaultHandle();
-      if (!opfsHandle) return;
-
-      this.status = "saving";
-      this.syncType = "local";
-      const ts = new Date().toISOString().split("T")[1].split("Z")[0];
-      console.log(
-        `[${ts}] [VaultStore] Starting local sync with handle:`,
-        localHandle.name,
-      );
-
-      // Optimization: Create a lookup map once before the sync starts
-      const pathToEntity = new Map(
-        Object.values(this.entities).map((e) => [e._path?.join("/"), e]),
-      );
-
-      const result = await this.syncService.sync(
-        this.activeVaultId,
-        localHandle,
-        opfsHandle,
-        async (path, _meta) => {
-          // 1. HARD EXCLUSION: Never sync conflict files
-          // The cleanupConflictFiles method handles removing them from both OPFS and FS.
-          if (path.includes(".conflict-")) return false;
-
-          if (!path.endsWith(".md") && !path.endsWith(".markdown")) return true;
-
-          // Use the optimized lookup map
-          const existing = pathToEntity.get(path);
-          if (existing) return true;
-
-          // Safety: If the file is unusually large (> 1MB), skip deep validation to avoid OOM
-          if (_meta.size > 1024 * 1024) return true;
-
-          try {
-            if (!(_meta.handle instanceof FileSystemFileHandle)) return true;
-            const file = await _meta.handle.getFile();
-            const text = await file.text();
-            const { metadata } = parseMarkdown(text);
-            return !!(metadata.id || metadata.title);
-          } catch (err: any) {
-            if (err.name === "NotFoundError") {
-              console.warn(
-                `[VaultStore] Sync validator: File not found during validation: ${path}`,
-              );
-            } else {
-              console.error(
-                `[VaultStore] Sync validator error for ${path}:`,
-                err,
-              );
-            }
-            return false;
-          }
-        },
-      );
-
-      const isHandleError = (msg: string) =>
-        msg.includes("NotFoundError") ||
-        msg.includes("could not be found") ||
-        msg.includes("A requested file or directory could not be found");
-
-      const hasHandleError =
-        (result.error && isHandleError(result.error)) ||
-        (result.failed && result.failed.some((f) => isHandleError(f.error)));
-
-      if (hasHandleError) {
-        console.warn(
-          "[VaultStore] Local directory handle is invalid (caught by backend). Prompting for new selection...",
-        );
-        this.status = "idle"; // Reset status so the UI doesn't hang
-        uiStore.notify(
-          "Local folder link lost. Please re-select the folder.",
-          "error",
-        );
-
-        // Clear the dead handle from DB
-        await db.delete("settings", `syncHandle_${this.activeVaultId}`);
-
-        // The user will need to click sync again to trigger the prompt.
-        // We do not auto-prompt here because it can cause UX issues if it loops.
-        return;
-      }
-
-      if (result.error) {
-        this.status = "error";
-        this.errorMessage = result.error;
-      } else {
-        this.status = "idle";
-        this.syncType = null;
-        await this.checkForConflicts();
-        uiStore.notify(
-          `Sync complete: ${result.created.length} created, ${result.updated.length} updated, ${result.deleted.length} deleted.`,
-          "success",
-        );
-      }
-    } catch (e: any) {
-      if (e.name === "AbortError") {
-        this.status = "idle";
-        this.syncType = null;
-        return;
-      }
-      this.status = "error";
-      this.syncType = null;
-      this.errorMessage = e.message;
-      console.error("Sync failed", e);
-    }
-  }
-
-  async loadFromFolder(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    let id: string;
-    try {
-      id = await this.createVault(handle.name);
-    } catch (e) {
-      console.warn("[VaultStore] Failed to create vault from folder:", e);
-      this.status = "error";
-      this.errorMessage = "Failed to create vault from folder";
-      return false;
-    }
-    try {
-      const db = await getDB();
-      await db.put("settings", handle, `syncHandle_${id}`);
-    } catch (e) {
-      console.warn("[VaultStore] Could not persist sync handle:", e);
-    }
-    return this.importFromFolder(handle);
-  }
-
-  async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!this.activeVaultId || !vaultDir) {
-      this.status = "error";
-      this.errorMessage = "Vault not open";
-      return false;
-    }
-
-    this.status = "loading";
-    const result = await vaultIO.importFromFolder(
-      this.activeVaultId,
-      vaultDir,
-      handle,
-    );
-
-    if (result.success) {
-      await this.loadFiles();
-      const db = await getDB();
-      const entityCount = Object.keys(this.entities).length;
-      const record = await db.get("vaults", this.activeVaultId);
-      if (record) {
-        record.entityCount = entityCount;
-        await db.put("vaults", record);
-        await vaultRegistry.listVaults();
-      }
-      this.status = "idle";
-      return true;
-    } else {
-      if (result.error === "User cancelled") {
-        this.status = "idle";
-      } else {
-        this.status = "error";
-        this.errorMessage = result.error || "Import failed";
-      }
-      return false;
     }
   }
 
@@ -789,593 +249,317 @@ class VaultStore {
     };
 
     try {
+      debugStore.log(
+        `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
+      );
       if (this.services) {
         this.services.ai.clearStyleCache();
         await this.services.search.clear();
+        debugStore.log("[VaultStore] Search index cleared.");
       }
 
-      const { entities } = await vaultIO.loadVaultFiles(
+      await this.repository.loadFiles(
         this.activeVaultId,
         vaultDir,
-        (chunk, current, total) => {
-          // Incrementally update entities
-          this.entities = { ...this.entities, ...chunk };
+        async (chunk, current, total) => {
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
-          this.syncStats.created = current; // Use created to show loaded count
+          this.syncStats.created = current;
+
+          if (this.services) {
+            debugStore.log(
+              `[VaultStore] Indexing chunk of ${Object.keys(chunk).length} entities (${current}/${total})`,
+            );
+            const indexPromises = Object.values(chunk).map((entity) => {
+              const path = entity._path?.join("/") || `${entity.id}.md`;
+              const keywords = [
+                ...(entity.tags || []),
+                entity.lore || "",
+                ...Object.values(entity.metadata || {}).flat(),
+              ].join(" ");
+              const promise = this.services!.search.index({
+                id: entity.id,
+                title: entity.title,
+                content: entity.content,
+                type: entity.type,
+                path,
+                keywords,
+                updatedAt: Date.now(),
+              });
+              return promise && promise.catch
+                ? promise.catch((err) => {
+                    debugStore.error(
+                      `[VaultStore] Failed to index entity: ${entity.id}`,
+                      err,
+                    );
+                    console.warn(err);
+                  })
+                : Promise.resolve();
+            });
+            await Promise.all(indexPromises);
+          }
         },
       );
 
-      // Final sync of everything just in case (though onProgress should have handled it)
-      this.entities = entities;
-      this.maps = await vaultIO.loadMapsFromDisk(vaultDir);
-      this.canvases = await vaultIO.loadCanvasesFromDisk(vaultDir);
-
-      // Repopulate search index
-      if (this.services) {
-        const indexPromises = Object.values(entities).map((entity) => {
-          const path = entity._path?.join("/") || `${entity.id}.md`;
-          const keywords = [
-            ...(entity.tags || []),
-            entity.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
-          ].join(" ");
-          return this.services!.search.index({
-            id: entity.id,
-            title: entity.title,
-            content: entity.content,
-            type: entity.type,
-            path,
-            keywords,
-            updatedAt: Date.now(),
-          });
-        });
-        await Promise.all(indexPromises);
-      }
-
-      this.status = "idle";
-    } catch (err) {
-      console.error("[VaultStore] loadFiles failed", err);
-      this.status = "error";
-      this.errorMessage = "Failed to load vault files";
-    } finally {
-      this.isInitialized = true;
-    }
-  }
-
-  async saveToDisk(
-    entity: LocalEntity | Entity,
-    targetVaultId?: string | null,
-  ) {
-    const vid = targetVaultId || this.activeVaultId;
-    if (!vid || !vaultRegistry.rootHandle) return;
-    const vaultDir = await getVaultDir(vaultRegistry.rootHandle, vid);
-
-    try {
-      await vaultIO.saveEntityToDisk(
-        vaultDir,
-        vid,
-        entity as LocalEntity,
-        this.isGuest,
+      debugStore.log(
+        `[VaultStore] Load complete. Indexed ${this.syncStats.created} entities.`,
       );
-      if (this.services) {
-        const path =
-          (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`;
-        const keywords = [
-          ...(entity.tags || []),
-          entity.lore || "",
-          ...Object.values(entity.metadata || {}).flat(),
-        ].join(" ");
-        await this.services.search.index({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content,
-          type: entity.type,
-          path,
-          keywords,
-          updatedAt: Date.now(),
-        });
-      }
+      await mapRegistry.loadFromVault(this.activeVaultId);
+      await canvasRegistry.loadFromVault(this.activeVaultId);
     } catch (err: any) {
+      debugStore.error("[VaultStore] Load failed", err);
+      console.error("[VaultStore] Load failed", err);
       this.status = "error";
-      this.errorMessage = `Failed to save ${entity.title}: ${err.message}`;
-      debugStore.error(`Save to OPFS failed for ${entity.id}`, err);
+      this.errorMessage = err.message;
     }
-  }
-
-  async saveMaps() {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    this.status = "saving";
-    return this.saveQueue.enqueue("maps-metadata", async () => {
-      try {
-        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
-        this.status = "idle";
-      } catch (err) {
-        console.error("[VaultStore] Failed to save maps", err);
-        this.status = "error";
-        uiStore.notify(
-          "Failed to save map data. Please check your storage quota.",
-          "error",
-        );
-      }
-    });
-  }
-
-  async saveCanvas(id: string) {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    const data = this.canvases[id];
-    if (!data) return;
-
-    this.status = "saving";
-    return this.saveQueue.enqueue(`canvas-${id}`, async () => {
-      try {
-        await vaultIO.saveCanvasToDisk(vaultDir, id, data);
-        this.status = "idle";
-      } catch (err) {
-        console.error("[VaultStore] Failed to save canvas", id, err);
-        this.status = "error";
-        uiStore.notify(
-          "Failed to save canvas data. Please check your storage quota.",
-          "error",
-        );
-      }
-    });
-  }
-
-  async deleteMap(id: string): Promise<void> {
-    if (this.isGuest) throw new Error("Cannot delete maps in Guest Mode");
-    if (
-      uiStore.isDemoMode &&
-      !(typeof window !== "undefined" && (window as any).__E2E__)
-    ) {
-      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
-      return;
-    }
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    const map = this.maps[id];
-    if (!map) return;
-
-    // Remove from in-memory state (reassign to trigger reactivity)
-    const newMaps = { ...this.maps };
-    delete newMaps[id];
-    this.maps = newMaps;
-
-    // Async OPFS cleanup
-    return this.saveQueue.enqueue(`delete-map-${id}`, async () => {
-      try {
-        if (map.assetPath) {
-          const pathSegments = map.assetPath.split("/");
-          await deleteOpfsEntry(
-            vaultDir,
-            pathSegments,
-            this.activeVaultId ?? undefined,
-          ).catch((e) => {
-            if (e.name !== "NotFoundError") throw e;
-          });
-        }
-
-        if (map.fogOfWar?.maskPath) {
-          const maskSegments = map.fogOfWar.maskPath.split("/");
-          await deleteOpfsEntry(
-            vaultDir,
-            maskSegments,
-            this.activeVaultId ?? undefined,
-          ).catch((e) => {
-            if (e.name !== "NotFoundError") throw e;
-          });
-        }
-
-        await vaultIO.saveMapsToDisk(vaultDir, this.maps);
-      } catch (err: any) {
-        console.error("[VaultStore] Failed to delete map files", err);
-        this.status = "error";
-        uiStore.notify(`Failed to fully delete map: ${err.message}`, "error");
-      }
-    });
   }
 
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
-    if (uiStore.isDemoMode) {
-      // In Demo Mode, we only update search index, no disk save
-      if (this.services) {
-        const path =
-          (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`;
-        const keywords = [
-          ...(entity.tags || []),
-          entity.lore || "",
-          ...Object.values(entity.metadata || {}).flat(),
-        ].join(" ");
-        void this.services.search
-          .index({
-            id: entity.id,
-            title: entity.title,
-            content: entity.content,
-            type: entity.type,
-            path,
-            keywords,
-            updatedAt: Date.now(),
-          })
-          .catch((err) => {
-            debugStore.error(
-              `Search index update failed in demo mode for ${entity.id}`,
-              err,
-            );
-          });
+    if (this.services) {
+      const path =
+        (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`;
+      const keywords = [
+        ...(entity.tags || []),
+        entity.lore || "",
+        ...Object.values(entity.metadata || {}).flat(),
+      ].join(" ");
+      const promise = this.services.search.index({
+        id: entity.id,
+        title: entity.title,
+        content: entity.content,
+        type: entity.type,
+        path,
+        keywords,
+        updatedAt: Date.now(),
+      });
+      if (promise && promise.catch) {
+        promise.catch(console.warn);
       }
-      return Promise.resolve();
     }
 
-    this.status = "saving";
-    const targetVaultId = this.activeVaultId;
-    return this.saveQueue
-      .enqueue(entity.id, async () => {
-        await this.saveToDisk(entity, targetVaultId);
-        this.status = "idle";
-      })
-      .catch((err) => {
-        console.error("Save failed for", entity.title, err);
-        this.status = "error";
-      });
+    if (uiStore.isDemoMode) return Promise.resolve();
+
+    return vaultRegistry.rootHandle && this.activeVaultId
+      ? vaultRegistry.rootHandle
+          .getDirectoryHandle("vaults")
+          .then((v) => v.getDirectoryHandle(this.activeVaultId!))
+          .then((vaultDir) => {
+            return this.repository.scheduleSave(
+              vaultDir,
+              this.activeVaultId!,
+              entity as LocalEntity,
+              this.isGuest,
+              (s) => (this.status = s),
+            );
+          })
+          .catch((error) => {
+            console.error(
+              "Failed to schedule save: unable to resolve vault directory handle",
+              error,
+            );
+            this.status = "error";
+            this.errorMessage = "Failed to access storage for saving.";
+          })
+      : Promise.resolve();
   }
 
-  async createEntity(
+  // --- CRUD Delegations ---
+  createEntity(
     type: Entity["type"],
     title: string,
     initialData: Partial<Entity> = {},
-  ): Promise<string> {
-    const newEntity = vaultEntities.createEntity(
-      title,
-      type,
-      initialData,
-      this.entities,
-    );
-    this.entities[newEntity.id] = newEntity;
-    await this.scheduleSave(newEntity);
-    return newEntity.id;
+  ) {
+    return this.crudManager.createEntity(type, title, initialData);
   }
-
-  async updateEntity(
-    id: string,
-    updates: Partial<LocalEntity>,
-  ): Promise<boolean> {
-    const { entities, updated } = vaultEntities.updateEntity(
-      this.entities,
-      id,
-      updates,
-    );
-    if (!updated) return false;
-
-    this.entities = entities;
-
-    const styleKeywords = [
-      "art style",
-      "visual aesthetic",
-      "world guide",
-      "style",
-    ];
-    if (
-      styleKeywords.some(
-        (kw) =>
-          updated.title.toLowerCase().includes(kw) ||
-          (updates.title && updates.title.toLowerCase().includes(kw)),
-      )
-    ) {
-      if (this.services) this.services.ai.clearStyleCache();
-    }
-
-    await this.scheduleSave(updated);
-    return true;
+  updateEntity(id: string, updates: Partial<LocalEntity>) {
+    return this.crudManager.updateEntity(id, updates);
   }
-
-  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>): boolean {
-    let hasChanges = false;
-    const currentEntities = this.entities; // Ref for read
-    const newEntities = { ...currentEntities }; // Shallow copy for potential write
-
-    const appliedUpdates: Record<string, Partial<LocalEntity>> = {};
-
-    for (const [id, patch] of Object.entries(updates)) {
-      if (!currentEntities[id]) continue;
-
-      const current = currentEntities[id];
-
-      // Shallow equality check: only compare fields present in the patch
-      let entityHasChanges = false;
-      for (const [key, value] of Object.entries(patch)) {
-        const currentValue = (current as any)[key];
-        if (key === "metadata" && typeof value === "object" && value !== null) {
-          // Simple nested check for metadata (like coordinates) to avoid redundant layout syncs
-          // Optimization: Avoid expensive JSON.stringify in hot loop
-          if (!isEntityMetadataEqual(currentValue, value)) {
-            entityHasChanges = true;
-            break;
-          }
-        } else if (currentValue !== value) {
-          entityHasChanges = true;
-          break;
-        }
-      }
-
-      if (!entityHasChanges) {
-        continue;
-      }
-
-      const merged = { ...current, ...patch, updatedAt: Date.now() };
-
-      newEntities[id] = merged;
-      appliedUpdates[id] = patch; // Store what actually changed
-      hasChanges = true;
-      this.scheduleSave(merged);
-    }
-
-    if (hasChanges) {
-      this.entities = newEntities;
-      if (this.onBatchUpdate) {
-        this.onBatchUpdate(appliedUpdates);
-      }
-      return true;
-    }
-    return false;
+  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>) {
+    return this.crudManager.batchUpdateEntities(updates);
   }
-
-  async deleteEntity(id: string): Promise<void> {
-    if (this.isGuest) throw new Error("Cannot delete entities in Guest Mode");
-    if (uiStore.isDemoMode) {
-      uiStore.notify("Deletion is disabled in Demo Mode.", "info");
-      return;
-    }
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
-
-    const { entities, deletedEntity, modifiedIds } =
-      await vaultEntities.deleteEntity(vaultDir, this.entities, id);
-    if (deletedEntity) {
-      this.entities = entities;
-      if (this.onEntityDelete) this.onEntityDelete(id);
-      modifiedIds.forEach((mId) => {
-        const entity = this.entities[mId];
-        if (entity) {
-          this.scheduleSave(entity);
-          if (this.onEntityUpdate) this.onEntityUpdate(entity);
-        }
-      });
-      if (this.services) await this.services.search.remove(id);
-    }
+  deleteEntity(id: string) {
+    return this.crudManager.deleteEntity(id);
   }
-
-  async addLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.addLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.scheduleSave(updated);
-      return true;
-    }
-    return false;
-  }
-
-  async removeLabel(id: string, label: string): Promise<boolean> {
-    const { entities, updated } = vaultEntities.removeLabel(
-      this.entities,
-      id,
-      label,
-    );
-    if (updated) {
-      this.entities = entities;
-      await this.scheduleSave(updated);
-      return true;
-    }
-    return false;
-  }
-
-  async bulkAddLabel(ids: string[], label: string): Promise<number> {
-    let count = 0;
-    const currentEntities = this.entities;
-    const newEntities = { ...currentEntities };
-    const toSave: LocalEntity[] = [];
-
-    for (const id of ids) {
-      const result = vaultEntities.addLabel(newEntities, id, label);
-      if (result.updated) {
-        newEntities[id] = result.updated;
-        toSave.push(result.updated);
-        count++;
-      }
-    }
-
-    if (count > 0) {
-      // Atomic state update
-      this.entities = newEntities;
-      // Sequential saves to avoid overwhelming the persistence layer if necessary,
-      // or parallel if it supports it. scheduleSave is usually debounced/queued.
-      await Promise.all(toSave.map((e) => this.scheduleSave(e)));
-    }
-    return count;
-  }
-
-  async bulkRemoveLabel(ids: string[], label: string): Promise<number> {
-    let count = 0;
-    const currentEntities = this.entities;
-    const newEntities = { ...currentEntities };
-    const toSave: LocalEntity[] = [];
-
-    for (const id of ids) {
-      const result = vaultEntities.removeLabel(newEntities, id, label);
-      if (result.updated) {
-        newEntities[id] = result.updated;
-        toSave.push(result.updated);
-        count++;
-      }
-    }
-
-    if (count > 0) {
-      // Atomic state update
-      this.entities = newEntities;
-      await Promise.all(toSave.map((e) => this.scheduleSave(e)));
-    }
-    return count;
-  }
-
-  async addConnection(
+  addConnection(
     sourceId: string,
     targetId: string,
     type: string,
     label?: string,
-  ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.addConnection(
-      this.entities,
+    strength?: number,
+  ) {
+    return this.crudManager.addConnection(
       sourceId,
       targetId,
       type,
       label,
+      strength,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-      return true;
-    }
-    return false;
+  }
+  removeConnection(sourceId: string, targetId: string, type: string) {
+    return this.crudManager.removeConnection(sourceId, targetId, type);
+  }
+  addLabel(id: string, label: string) {
+    return this.crudManager.addLabel(id, label);
+  }
+  removeLabel(id: string, label: string) {
+    return this.crudManager.removeLabel(id, label);
   }
 
-  async updateConnection(
+  bulkAddLabel(ids: string[], label: string) {
+    return this.crudManager.bulkAddLabel(ids, label);
+  }
+  bulkRemoveLabel(ids: string[], label: string) {
+    return this.crudManager.bulkRemoveLabel(ids, label);
+  }
+  batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
+    return this.crudManager.batchCreateEntities(newEntitiesList);
+  }
+
+  updateConnection(
     sourceId: string,
     targetId: string,
     oldType: string,
     newType: string,
     newLabel?: string,
-  ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.updateConnection(
-      this.entities,
+  ) {
+    return this.crudManager.updateConnection(
       sourceId,
       targetId,
       oldType,
       newType,
       newLabel,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-      return true;
-    }
-    return false;
   }
 
-  async removeConnection(
-    sourceId: string,
-    targetId: string,
-    type: string,
-  ): Promise<boolean> {
-    const { entities, updatedSource } = vaultEntities.removeConnection(
-      this.entities,
-      sourceId,
-      targetId,
-      type,
+  async resolveImageUrl(
+    path: string,
+    fileFetcher?: (path: string) => Promise<Blob>,
+  ) {
+    return this.assetManager.resolveImageUrl(
+      await this.getActiveVaultHandle(),
+      path,
+      fileFetcher,
     );
-    if (updatedSource) {
-      this.entities = entities;
-      await this.scheduleSave(updatedSource);
-      return true;
-    }
-    return false;
   }
 
   async saveImageToVault(
-    blob: Blob,
+    blob: Blob | File,
     entityId: string,
     originalName?: string,
-  ): Promise<string> {
-    if (this.isGuest) throw new Error("Cannot save images in Guest Mode");
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) throw new Error("Vault not open");
-
-    const entity = this.entities[entityId];
-    if (!entity) throw new Error(`Entity ${entityId} not found`);
-
-    const { image, thumbnail } = await vaultAssets.saveImageToVault(
-      vaultDir,
+  ) {
+    return this.assetManager.saveImageToVault(
+      await this.getActiveVaultHandle(),
       blob,
       entityId,
       originalName,
     );
-    await this.updateEntity(entityId, { image, thumbnail });
-    return image;
   }
 
-  async batchCreateEntities(
-    batch: {
-      type: Entity["type"];
-      title: string;
-      initialData?: Partial<Entity>;
-    }[],
-  ): Promise<string[]> {
-    const createdIds: string[] = [];
-    for (const item of batch) {
-      try {
-        const id = await this.createEntity(
-          item.type,
-          item.title,
-          item.initialData,
-        );
-        createdIds.push(id);
-      } catch (err) {
-        console.warn(`Batch item failed: ${item.title}`, err);
-      }
-    }
-    return createdIds;
-  }
-
-  async resolveImageUrl(path: string): Promise<string> {
-    if (
-      path.startsWith("/") ||
-      path.startsWith("http://") ||
-      path.startsWith("https://") ||
-      path.startsWith("blob:") ||
-      path.startsWith("data:")
-    ) {
-      return path;
-    }
-
-    const vaultDir = await this.getActiveVaultHandle();
-
-    if (this.isGuest) {
-      // Lazy import to avoid circular dependency since guest-service imports vault types or vault?
-      // Actually guest-service likely imports vault, so circular is real.
-      const { p2pGuestService } =
-        await import("$lib/cloud-bridge/p2p/guest-service");
-      return await vaultAssets.resolveImageUrl(vaultDir, path, (p) =>
-        p2pGuestService.getFile(p),
+  async getActiveVaultHandle(): Promise<FileSystemDirectoryHandle | undefined> {
+    if (!this.activeVaultId || !vaultRegistry.rootHandle) return undefined;
+    try {
+      const vaultsDir = await vaultRegistry.rootHandle.getDirectoryHandle(
+        "vaults",
+        { create: true },
       );
+      return await vaultsDir.getDirectoryHandle(this.activeVaultId, {
+        create: true,
+      });
+    } catch (err) {
+      console.warn("Failed to get active vault handle", err);
+      return undefined;
     }
-
-    return await vaultAssets.resolveImageUrl(vaultDir, path);
   }
 
-  async setDefaultVisibility(visibility: "visible" | "hidden") {
-    this.defaultVisibility = visibility;
+  // --- Map & Canvas Delegations ---
+  saveMaps() {
+    return mapRegistry.saveMaps();
+  }
+  deleteMap(id: string) {
+    return mapRegistry.deleteMap(id);
+  }
+  saveCanvas(id: string) {
+    return canvasRegistry.saveCanvas(id);
+  }
+
+  // --- Sync Delegations ---
+
+  async syncToLocal() {
+    if (!this.syncCoordinator || !this.activeVaultId) return;
+    const opfsHandle = await this.getActiveVaultHandle();
+    await this.syncCoordinator.syncToLocal(
+      this.activeVaultId,
+      opfsHandle,
+      this.entities,
+      () => this.repository.waitForAllSaves(),
+      (state) => {
+        this.status = state.status;
+        this.syncType = state.syncType;
+        if (state.errorMessage) this.errorMessage = state.errorMessage;
+      },
+      () => this.checkForConflicts(),
+    );
+  }
+
+  async cleanupConflictFiles() {
+    if (!this.syncCoordinator || !this.activeVaultId) return;
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+
+    await this.syncCoordinator.cleanupConflictFiles(
+      this.activeVaultId,
+      opfsHandle,
+      (status) => (this.status = status),
+      () => this.loadFiles(),
+    );
+  }
+
+  async checkForConflicts() {
+    const opfsHandle = await this.getActiveVaultHandle();
+    if (!opfsHandle) return;
+    try {
+      const files = await fileIOAdapter.walkDirectory(opfsHandle);
+      this.hasConflictFiles = files.some((f: any) =>
+        f.path[f.path.length - 1].includes(".conflict-"),
+      );
+    } catch {
+      this.hasConflictFiles = false;
+    }
+  }
+
+  // --- Lifecycle Delegations ---
+  importFromFolder(handle?: FileSystemDirectoryHandle) {
+    return this.lifecycleManager.importFromFolder(handle);
+  }
+  loadFromFolder(handle: FileSystemDirectoryHandle) {
+    return this.lifecycleManager.loadFromFolder(handle);
+  }
+  switchVault(id: string) {
+    return this.lifecycleManager.switchVault(id);
+  }
+  createVault(name: string) {
+    return this.lifecycleManager.createVault(name);
+  }
+  deleteVault(id: string) {
+    return this.lifecycleManager.deleteVault(id);
+  }
+  loadDemoData(name: string, entities: Record<string, LocalEntity>) {
+    return this.lifecycleManager.loadDemoData(name, entities);
+  }
+  persistToIndexedDB(vaultId: string) {
+    return this.lifecycleManager.persistToIndexedDB(vaultId);
+  }
+
+  async setDefaultVisibility(v: "visible" | "hidden") {
+    this.defaultVisibility = v;
     const db = await getDB();
-    await db.put("settings", visibility, "defaultVisibility");
+    await db.put("settings", v, "defaultVisibility");
   }
 }
 
 const VAULT_KEY = "__codex_vault_instance__";
-
-function getVaultSingleton(): VaultStore {
-  const globalObj = globalThis as unknown as Record<string, VaultStore>;
-  if (!globalObj[VAULT_KEY]) {
-    globalObj[VAULT_KEY] = new VaultStore();
-  }
-  return globalObj[VAULT_KEY];
-}
-
-export const vault: VaultStore = getVaultSingleton();
+export const vault: VaultStore =
+  (globalThis as any)[VAULT_KEY] ??
+  ((globalThis as any)[VAULT_KEY] = new VaultStore());

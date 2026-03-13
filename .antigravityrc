@@ -1,0 +1,19 @@
+terminal:
+  allow_list:
+    - "git *"
+    - "dir *"
+    - "gci *"
+    - "docker *"
+    - "node *"
+    - "npm *"
+    - "npx *"
+    - "winget *"
+    - "$env:Path = *"
+    - "gemini *"
+    - "New-Item *"
+    - "Add-Content *"
+    - "Set-Content *"
+    - "[System.Environment]::SetEnvironmentVariable*"
+    - "python3 *"
+    - "rm -rf .cache"
+  auto_approve_all: true

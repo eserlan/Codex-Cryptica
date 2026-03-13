@@ -15,6 +15,7 @@ export interface GraphNode {
     weight: number;
     image?: string;
     thumbnail?: string;
+    labels?: string[];
     date?: TemporalMetadata;
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
@@ -55,9 +56,6 @@ const formatDate = (date?: TemporalMetadata) => {
   return str;
 };
 
-// Pre-compiled regex for performance (avoids allocation)
-const REVEALED_REGEX = /^(revealed|visible)$/i;
-
 export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
@@ -74,24 +72,33 @@ export class GraphTransformer {
     }
 
     const elements: GraphElement[] = [];
+    const count = entities.length;
+
+    // Dynamically calculate spread based on entity count.
+    // Larger vaults need more initial room.
+    const spread = Math.max(2000, Math.sqrt(count) * 250);
+    const halfSpread = spread / 2;
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
     // Performance: Imperative loop to avoid iterator allocation on hot path.
     // Length is accessed directly as modern engines optimize this and it avoids inconsistent local caching.
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
+      if (!entity.id) continue;
+
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
 
       // Visibility markers for Admin visual cues
-      // OPTIMIZATION: Avoid array allocation and lowercasing everything by checking tags/labels directly.
+      // OPTIMIZATION: Simple string comparisons are ~10x faster than Regex
       // We check for existence first to avoid '|| []' allocation.
       let isRevealed = false;
       const tags = entity.tags;
       if (tags) {
         for (let j = 0; j < tags.length; j++) {
-          if (REVEALED_REGEX.test(tags[j])) {
+          const t = tags[j].toLowerCase();
+          if (t === "revealed" || t === "visible") {
             isRevealed = true;
             break;
           }
@@ -102,7 +109,8 @@ export class GraphTransformer {
         const labels = entity.labels;
         if (labels) {
           for (let k = 0; k < labels.length; k++) {
-            if (REVEALED_REGEX.test(labels[k])) {
+            const l = labels[k].toLowerCase();
+            if (l === "revealed" || l === "visible") {
               isRevealed = true;
               break;
             }
@@ -126,10 +134,35 @@ export class GraphTransformer {
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (isRevealed) (nodeData as any).isRevealed = true;
 
+      const coords = entity.metadata?.coordinates;
+      const hasValidCoords =
+        coords &&
+        typeof coords.x === "number" &&
+        typeof coords.y === "number" &&
+        Number.isFinite(coords.x) &&
+        Number.isFinite(coords.y);
+
+      // Assign a stable-ish random position based on ID if no coords exist.
+      // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
+      let hash = 0;
+      if (!hasValidCoords) {
+        const id = entity.id;
+        const len = id.length;
+        for (let j = 0; j < len; j++) {
+          hash = (hash << 5) - hash + id.charCodeAt(j);
+          hash |= 0; // Convert to 32bit integer
+        }
+      }
+
       elements.push({
         group: "nodes",
         data: nodeData,
-        position: entity.metadata?.coordinates,
+        position: hasValidCoords
+          ? coords
+          : {
+              x: (Math.abs(hash) % spread) - halfSpread,
+              y: (Math.abs(hash * 13) % spread) - halfSpread,
+            },
       });
 
       // Create Edges

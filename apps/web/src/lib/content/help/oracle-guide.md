@@ -2,7 +2,7 @@
 id: oracle-guide
 title: The Lore Oracle
 tags: [ai, gemini, rag]
-rank: 4
+rank: 5
 ---
 
 ## AI Intelligence

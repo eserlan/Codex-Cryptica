@@ -1,13 +1,13 @@
 import type { SearchResult } from "schema";
 import { isEntityVisible } from "schema";
 import { searchService } from "$lib/services/search";
+import { debugStore } from "./debug.svelte";
 import { vault } from "./vault.svelte";
 import { ui } from "./ui.svelte";
 
 class SearchStore {
   query = $state("");
-  // Use $state.raw for results since they are potentially large and don't need deep reactivity
-  results = $state.raw<SearchResult[]>([]);
+  results = $state<SearchResult[]>([]);
   isOpen = $state(false);
   selectedIndex = $state(0);
   isLoading = $state(false);
@@ -38,7 +38,8 @@ class SearchStore {
   private loadRecents(): SearchResult[] {
     if (typeof localStorage === "undefined") return [];
     try {
-      const raw = localStorage.getItem(this.getStorageKey());
+      const key = this.getStorageKey();
+      const raw = localStorage.getItem(key);
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
@@ -84,7 +85,9 @@ class SearchStore {
         return;
       }
 
+      debugStore.log(`[SearchStore] Searching for: "${query}"`);
       const results = await searchService.search(query, { limit: 20 });
+      debugStore.log(`[SearchStore] Found ${results.length} raw results.`);
 
       // Filter results based on visibility settings
       const settings = {
@@ -94,12 +97,21 @@ class SearchStore {
 
       const filteredResults = results.filter((result) => {
         const entity = vault.entities[result.id];
-        if (!entity) return false;
+        if (!entity) {
+          debugStore.warn(
+            `[SearchStore] Result entity not found in vault: ${result.id}`,
+          );
+          return false;
+        }
         return isEntityVisible(entity, settings);
       });
 
+      debugStore.log(
+        `[SearchStore] ${filteredResults.length} results visible.`,
+      );
       this.results = filteredResults;
     } catch (error) {
+      debugStore.error("[SearchStore] Search failed", error);
       console.error("Search failed:", error);
       this.results = [];
     } finally {
@@ -141,4 +153,7 @@ class SearchStore {
   }
 }
 
-export const searchStore = new SearchStore();
+const SEARCH_KEY = "__codex_search_instance__";
+export const searchStore: SearchStore =
+  (globalThis as any)[SEARCH_KEY] ??
+  ((globalThis as any)[SEARCH_KEY] = new SearchStore());
