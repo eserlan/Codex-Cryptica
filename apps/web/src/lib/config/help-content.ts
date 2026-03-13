@@ -158,11 +158,11 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
   },
-  "zen-templates": {
-    id: "zen-templates",
-    title: "Change the Look",
+  themes: {
+    id: "themes",
+    title: "Themes",
     content:
-      "Instantly change the way the app looks and speaks. Pick a new style like Fantasy or Sci-Fi to change colors, fonts, and even the words used in the buttons.",
+      "Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual themes—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.",
     icon: "icon-[lucide--palette]",
   },
   "draw-button": {

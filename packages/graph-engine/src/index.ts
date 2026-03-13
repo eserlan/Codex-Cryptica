@@ -3,6 +3,11 @@ export * from "./layouts/timeline";
 export * from "./layouts/orbit";
 export * from "./renderer/overlays";
 export * from "./defaults";
+export * from "./LayoutManager";
+export * from "./GraphStyles";
+export * from "./events/useGraphEvents";
+export * from "./sync/useGraphSync";
+export * from "./sync/ImageManager";
 
 export interface GraphOptions {
   container?: HTMLElement;
@@ -61,7 +66,7 @@ export const initGraph = async (options: GraphOptions) => {
       },
     ],
     layout: {
-      name: "null",
+      name: "preset",
     },
   });
 };

@@ -3,6 +3,7 @@ id: the-archive
 title: The Archive (Blog)
 tags: [community, education, meta]
 rank: 100
+hidden: true
 ---
 
 Explore the official **Codex Cryptica Blog**, also known as **The Archive**.

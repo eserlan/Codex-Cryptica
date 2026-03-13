@@ -317,9 +317,9 @@ export class P2PHostService {
   }
 
   stopHosting() {
-    vault.onEntityUpdate = null;
-    vault.onEntityDelete = null;
-    vault.onBatchUpdate = null;
+    vault.onEntityUpdate = undefined;
+    vault.onEntityDelete = undefined;
+    vault.onBatchUpdate = undefined;
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;

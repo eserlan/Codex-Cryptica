@@ -2,7 +2,8 @@
 id: landing-page
 title: Terminal Landing Page
 tags: ["interface", "privacy", "performance"]
-rank: 5
+rank: 19
+hidden: true
 ---
 
 # Terminal Landing Page

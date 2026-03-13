@@ -11,6 +11,7 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
       .fn()
       .mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
     clear: vi.fn().mockResolvedValue(true),
+    setLogger: vi.fn(),
   };
 
   class MockWorker {
@@ -32,6 +33,7 @@ vi.mock("comlink", () => {
     wrap: vi.fn(() => mockApi),
     expose: vi.fn(),
     transfer: vi.fn((obj) => obj),
+    proxy: vi.fn((fn) => fn),
   };
 });
 
@@ -42,8 +44,18 @@ vi.mock("../lib/workers/search.worker?worker", () => {
   };
 });
 
+// Mock debugStore
+vi.mock("$lib/stores/debug.svelte", () => ({
+  debugStore: {
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 // Import after mock
 import { SearchService } from "$lib/services/search";
+import { debugStore } from "$lib/stores/debug.svelte";
 
 describe("SearchService", () => {
   let service: SearchService;
@@ -80,6 +92,33 @@ describe("SearchService", () => {
     expect(mockApi.searchOptimized).toHaveBeenCalledWith(
       "query",
       expect.any(Object),
+    );
+  });
+
+  it("should bridge logs from worker to debugStore", () => {
+    // Get the callback passed to setLogger
+    const logCallback = (mockApi.setLogger as any).mock.calls[0][0];
+    expect(logCallback).toBeDefined();
+
+    // Test info level (should map to log)
+    logCallback("info", "Test info message", { foo: "bar" });
+    expect(debugStore.log).toHaveBeenCalledWith(
+      "[SearchEngine] Test info message",
+      { foo: "bar" },
+    );
+
+    // Test warn level
+    logCallback("warn", "Test warn message");
+    expect(debugStore.warn).toHaveBeenCalledWith(
+      "[SearchEngine] Test warn message",
+      undefined,
+    );
+
+    // Test error level
+    logCallback("error", "Test error message");
+    expect(debugStore.error).toHaveBeenCalledWith(
+      "[SearchEngine] Test error message",
+      undefined,
     );
   });
 });

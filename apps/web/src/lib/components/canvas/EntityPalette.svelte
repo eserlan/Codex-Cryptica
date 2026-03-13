@@ -18,7 +18,7 @@
 
   const canvasSlug = $derived(page.params.slug);
   const activeCanvasName = $derived(
-    canvasRegistry.canvases.find((c) => c.slug === canvasSlug)?.name ||
+    canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug)?.name ||
       "Workspace",
   );
 

@@ -11,7 +11,7 @@
   const activeCanvasId = $derived(page.params.slug);
 
   const filteredCanvases = $derived(
-    canvasRegistry.canvases.filter((c) =>
+    canvasRegistry.allCanvases.filter((c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()),
     ),
   );
@@ -23,7 +23,7 @@
   async function createNew() {
     const name = prompt(
       "Canvas Name",
-      `New Canvas ${canvasRegistry.canvases.length + 1}`,
+      `New Canvas ${canvasRegistry.allCanvases.length + 1}`,
     );
     if (name) {
       const slug = await canvasRegistry.create(name);
@@ -36,7 +36,7 @@
 
   async function deleteCanvas(id: string, e: MouseEvent) {
     e.stopPropagation();
-    const canvas = canvasRegistry.canvases.find((c) => c.id === id);
+    const canvas = canvasRegistry.allCanvases.find((c) => c.id === id);
     const slug = canvas?.slug;
     if (
       confirm(
@@ -54,7 +54,7 @@
     if (newName && newName !== currentName) {
       const newSlug = await canvasRegistry.rename(id, newName);
       // If we are currently on the renamed canvas, update the URL
-      const canvas = canvasRegistry.canvases.find((c) => c.id === id);
+      const canvas = canvasRegistry.allCanvases.find((c) => c.id === id);
       if (activeCanvasId === canvas?.slug && newSlug) {
         goto(`/canvas/${newSlug}`, { replaceState: true });
       }
@@ -69,7 +69,7 @@
 
   $effect(() => {
     if (vault.activeVaultId && uiStore.showCanvasSelector) {
-      canvasRegistry.loadForVault(vault.activeVaultId);
+      canvasRegistry.loadFromVault(vault.activeVaultId);
     }
   });
 </script>

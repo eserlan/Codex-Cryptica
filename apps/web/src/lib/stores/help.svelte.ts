@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
 import {
   type GuideStep,
@@ -111,13 +112,11 @@ class HelpStore {
   startTour(id: string) {
     if (browser && (window as any).DISABLE_ONBOARDING) return;
 
-    // Prevent starting tours while the landing page is visible
-    if (uiStore.isLandingPageVisible) {
-      console.log("[HelpStore] Tour deferred: Landing page is active.");
-      return;
-    }
-
     if (id === "initial-onboarding") {
+      // Dismiss landing page and close settings modal to ensure the tour is visible
+      uiStore.dismissedLandingPage = true;
+      uiStore.closeSettings();
+
       this.activeTour = {
         id,
         currentStepIndex: 0,
@@ -194,6 +193,21 @@ class HelpStore {
       this.expandedId = id;
       uiStore.openSettings("help");
     }
+  }
+
+  openHelpWindow() {
+    if (!browser) return;
+
+    const width = 800;
+    const height = 900;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const url = `${window.location.origin}${base}/help`;
+    const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
+
+    const newWin = window.open(url, "CodexCrypticaHelp", features);
+    if (newWin) newWin.opener = null;
   }
 
   async copyShareLink(id: string) {

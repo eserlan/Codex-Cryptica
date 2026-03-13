@@ -225,44 +225,14 @@ export class NodeMergeService {
   async updateBacklinks(sourceIds: string[], targetId: string): Promise<void> {
     const targetEntity = vault.entities[targetId];
     if (!targetEntity) return;
-    const targetTitle = targetEntity.title;
-
-    const sourceTitles = sourceIds
-      .map((id) => vault.entities[id]?.title)
-      .filter((t) => t);
 
     const allEntities = Object.values(vault.entities);
 
     for (const entity of allEntities) {
       if (sourceIds.includes(entity.id) || entity.id === targetId) continue;
 
-      let contentModified = false;
-      let newContent = entity.content || "";
-      let newLore = entity.lore || "";
       let connectionsModified = false;
       const newConnections = [...(entity.connections || [])];
-
-      // 1. Text Replacement
-      for (const sourceTitle of sourceTitles) {
-        const escaped = sourceTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        // Match [[Title]] or [[Title|Alias]]
-        const regex = new RegExp(`\\[\\[${escaped}(\\|.*?)?\\]\\]`, "gi");
-
-        if (newContent.match(regex)) {
-          newContent = newContent.replace(
-            regex,
-            (_match, p1) => `[[${targetTitle}${p1 || ""}]]`,
-          );
-          contentModified = true;
-        }
-        if (newLore.match(regex)) {
-          newLore = newLore.replace(
-            regex,
-            (_match, p1) => `[[${targetTitle}${p1 || ""}]]`,
-          );
-          contentModified = true;
-        }
-      }
 
       // 2. Connection Re-mapping (Graph Edges)
       const sourceIdSet = new Set(sourceIds);
@@ -288,10 +258,8 @@ export class NodeMergeService {
         newConnections.splice(0, newConnections.length, ...unique);
       }
 
-      if (contentModified || connectionsModified) {
+      if (connectionsModified) {
         await vault.updateEntity(entity.id, {
-          content: newContent,
-          lore: newLore,
           connections: newConnections,
         });
       }

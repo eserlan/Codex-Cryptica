@@ -198,7 +198,6 @@
     try {
       const type = (parsed.type || "character") as any;
       const connections = [
-        ...(parsed.wikiLinks || []),
         ...(parsed.connections || []).map((conn) => {
           const targetName = typeof conn === "string" ? conn : conn.target;
           const label =
@@ -509,12 +508,6 @@
                     <div class="space-y-1 text-theme-text/80">
                       <p><b>Name:</b> {parsed.title}</p>
                       <p><b>Type:</b> {parsed.type || "npc"}</p>
-                      {#if parsed.wikiLinks && parsed.wikiLinks.length > 0}
-                        <p>
-                          <b>Connections:</b>
-                          {parsed.wikiLinks.length} found
-                        </p>
-                      {/if}
                     </div>
                   </div>
                 </button>

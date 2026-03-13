@@ -114,7 +114,7 @@
 {#if helpStore.activeTour && !isDisabled}
     {#if targetRect}
         <div
-            class="fixed inset-0 z-[80] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
+            class="fixed inset-0 z-[var(--z-index-overlay-max,150)] bg-black/60 backdrop-blur-[2px] transition-all duration-300"
             style={maskStyle}
             transition:fade
             role="presentation"

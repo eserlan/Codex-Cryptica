@@ -89,4 +89,23 @@ describe("UIStore", () => {
     expect(uiStore.leftSidebarOpen).toBe(false);
     expect(uiStore.activeSidebarTool).toBe("none");
   });
+
+  it("should toggle connect mode and clear connectingNodeId", () => {
+    // Initial state
+    expect(uiStore.isConnecting).toBe(false);
+    expect(uiStore.connectingNodeId).toBe(null);
+
+    // Toggle on
+    uiStore.toggleConnectMode();
+    expect(uiStore.isConnecting).toBe(true);
+
+    // Set a connecting node
+    uiStore.connectingNodeId = "test-node";
+    expect(uiStore.connectingNodeId).toBe("test-node");
+
+    // Toggle off
+    uiStore.toggleConnectMode();
+    expect(uiStore.isConnecting).toBe(false);
+    expect(uiStore.connectingNodeId).toBe(null);
+  });
 });

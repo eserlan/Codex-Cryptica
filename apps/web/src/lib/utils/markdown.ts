@@ -1,12 +1,11 @@
 import yaml from "js-yaml";
-import type { Entity, Connection } from "schema";
+import type { Entity } from "schema";
 import { marked } from "marked";
 import DOMPurify from "isomorphic-dompurify";
 
 export interface ParseResult {
   metadata: Partial<Entity>;
   content: string;
-  wikiLinks: Connection[];
 }
 
 export function renderMarkdown(
@@ -55,38 +54,13 @@ export function parseMarkdown(raw: string): ParseResult {
     content = raw.replace(frontmatterRegex, "").trim();
   }
 
-  // Extract Wiki Links from content: [[Target]] or [[Target|Label]]
-  const wikiLinks = extractWikiLinks(content);
-
-  return { metadata, content, wikiLinks };
-}
-
-export function extractWikiLinks(content: string): Connection[] {
-  const regex = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
-  const matches = content.matchAll(regex);
-  const connections: Connection[] = [];
-
-  for (const match of matches) {
-    const target = match[1].trim();
-    const label = match[2]?.trim();
-
-    // Sanitize ID (basic version)
-    const targetId = sanitizeId(target);
-
-    connections.push({
-      target: targetId,
-      type: "related_to", // Default type for inline links
-      label: label || target,
-      strength: 1,
-    });
-  }
-
-  return connections;
+  return { metadata, content };
 }
 
 export function sanitizeId(text: string): string {
   return text
     .toLowerCase()
+    .trim()
     .replace(/[^a-z0-9]/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
@@ -110,4 +84,13 @@ export function stringifyEntity(entity: Entity): string {
   // Use sortKeys: false to preserve our specific order
   const yamlStr = yaml.dump(orderedMetadata, { sortKeys: false });
   return `---\n${yamlStr}---\n${content || ""}`;
+}
+
+/**
+ * Derives a unique entity ID from a file path.
+ */
+export function deriveIdFromPath(path: string[]): string {
+  const filename = path[path.length - 1];
+  const basename = filename.replace(/\.(md|markdown)$/i, "");
+  return sanitizeId(basename);
 }

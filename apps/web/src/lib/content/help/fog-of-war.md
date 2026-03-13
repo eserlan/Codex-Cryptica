@@ -2,7 +2,7 @@
 id: fog-of-war
 title: Fog of War
 tags: [exploration, graph, security]
-rank: 8
+rank: 12
 ---
 
 ## Hiding Information

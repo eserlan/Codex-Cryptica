@@ -57,7 +57,10 @@
   let BulkLabelDialog = $state<any>(null);
   let DiceModal = $state<any>(null);
 
-  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  const isPopup = $derived(
+    page.url.pathname === `${base}/oracle` ||
+      page.url.pathname === `${base}/help`,
+  );
   const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
   const isMarketingPage = $derived(
     MARKETING_ROUTES.some((route) =>
@@ -140,9 +143,11 @@
       page.url.pathname.startsWith(`${base}/canvas`);
 
     const shouldShowLanding = uiStore.isLandingPageVisible;
+    const isTesting =
+      typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!shouldShowLanding) {
+      if (!shouldShowLanding || isTesting) {
         // User has 'skip' enabled or has already dismissed it in this session
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
@@ -343,15 +348,20 @@
   // OR Auto-start demo if first visit and vault is empty
   $effect(() => {
     if (vault.isInitialized && !uiStore.isLandingPageVisible) {
-      const demoParam = page.url.searchParams.get("demo");
+      const isTesting =
+        typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
       if (
         !helpStore.hasSeen("initial-onboarding") &&
         !(window as any).DISABLE_ONBOARDING &&
-        !demoParam // Only auto-start fantasy if no specific demo requested
+        !page.url.searchParams.has("demo") // only auto-start fantasy if no specific demo requested
       ) {
         // If vault is empty, start demo instead of tour
-        if (vault.allEntities.length === 0 && !uiStore.isDemoMode) {
+        if (
+          vault.allEntities.length === 0 &&
+          !uiStore.isDemoMode &&
+          !isTesting
+        ) {
           demoService.startDemo("fantasy");
         } else {
           helpStore.startTour("initial-onboarding");
@@ -623,7 +633,7 @@
     {/if}
 
     <main
-      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage
+      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage || isPopup
         ? 'overflow-y-auto'
         : ''}"
     >
