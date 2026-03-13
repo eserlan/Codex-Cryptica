@@ -1,5 +1,5 @@
 import * as vaultEntities from "./entities";
-import type { LocalEntity } from "./types";
+import type { LocalEntity, BatchCreateInput } from "./types";
 import type { Entity } from "schema";
 import { uiStore } from "../ui.svelte";
 
@@ -244,12 +244,7 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(
-    newEntitiesList: (
-      | LocalEntity
-      | { type: string; title: string; initialData: Partial<Entity> }
-    )[],
-  ): Promise<void> {
+  async batchCreateEntities(newEntitiesList: BatchCreateInput[]): Promise<void> {
     const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,

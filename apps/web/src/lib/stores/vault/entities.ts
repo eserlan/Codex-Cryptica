@@ -1,6 +1,6 @@
 import type { Entity, Connection } from "schema";
 import { sanitizeId } from "../../utils/markdown";
-import type { LocalEntity } from "./types";
+import type { LocalEntity, BatchCreateInput } from "./types";
 import { deleteOpfsEntry } from "../../utils/opfs";
 
 /**
@@ -320,10 +320,7 @@ export function bulkRemoveLabel(
 
 export function batchCreateEntities(
   entities: Record<string, LocalEntity>,
-  newEntitiesList: (
-    | LocalEntity
-    | { type: string; title: string; initialData: Partial<Entity> }
-  )[],
+  newEntitiesList: BatchCreateInput[],
 ): { entities: Record<string, LocalEntity>; created: LocalEntity[] } {
   const newEntities = { ...entities };
   const created: LocalEntity[] = [];
