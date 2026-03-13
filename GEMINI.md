@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte (069-pop-out-help-window)
+- LocalStorage (for help state persistence) (069-pop-out-help-window)
+
 - TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`) (067-oracle-store-refactor)
 - IndexedDB (for chat history persistence via `ChatHistoryService`) (067-oracle-store-refactor)
 
@@ -126,9 +129,9 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 069-pop-out-help-window: Added TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
+
 - 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
 - 067-oracle-store-refactor: Added N/A
-
-- 066-die-rolling: Added TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization)
 
 <!-- MANUAL ADDITIONS START -->

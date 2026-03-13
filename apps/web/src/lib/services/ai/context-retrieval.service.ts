@@ -1,9 +1,11 @@
-import { searchService } from "../search";
+import { searchService as defaultSearchService } from "../search";
 import type { ContextRetrievalService } from "schema";
 
-class DefaultContextRetrievalService implements ContextRetrievalService {
+export class DefaultContextRetrievalService implements ContextRetrievalService {
   private styleCache: string | null = null;
   private styleTitleCache: string | null = null;
+
+  constructor(private searchService = defaultSearchService) {}
 
   getConsolidatedContext(entity: any): string {
     const parts = [];
@@ -21,18 +23,24 @@ class DefaultContextRetrievalService implements ContextRetrievalService {
     entities: Record<string, any>,
   ): string | undefined {
     const queryLower = query.toLowerCase();
-    const entityList = Object.values(entities);
+    const matches = [];
 
-    const matches = entityList
-      .filter((e: any) => {
-        const titleLower = e.title.toLowerCase();
-        if (titleLower.length > 2) {
-          return queryLower.includes(titleLower);
-        }
+    for (const id in entities) {
+      const e = entities[id];
+      const titleLower = e.title.toLowerCase();
+      let matched = false;
+
+      if (titleLower.length > 2) {
+        if (queryLower.includes(titleLower)) matched = true;
+      } else {
         const pattern = new RegExp(`\\b${this.escapeRegExp(titleLower)}\\b`);
-        return pattern.test(queryLower);
-      })
-      .sort((a: any, b: any) => b.title.length - a.title.length);
+        if (pattern.test(queryLower)) matched = true;
+      }
+
+      if (matched) matches.push(e);
+    }
+
+    matches.sort((a: any, b: any) => b.title.length - a.title.length);
 
     return matches[0]?.id;
   }
@@ -78,7 +86,7 @@ class DefaultContextRetrievalService implements ContextRetrievalService {
         styleContext = this.styleCache;
         activeStyleTitle = this.styleTitleCache || undefined;
       } else {
-        const styleResults = await searchService.search(
+        const styleResults = await this.searchService.search(
           "art style visual aesthetic",
           { limit: 1 },
         );
@@ -91,13 +99,13 @@ class DefaultContextRetrievalService implements ContextRetrievalService {
             this.styleTitleCache = activeStyleTitle || "";
           }
         } else {
-          this.styleCache = ""; 
+          this.styleCache = "";
           this.styleTitleCache = "";
         }
       }
     }
 
-    let results = await searchService.search(query, { limit: 5 });
+    let results = await this.searchService.search(query, { limit: 5 });
 
     if (results.length === 0) {
       const keywords = query
@@ -108,19 +116,33 @@ class DefaultContextRetrievalService implements ContextRetrievalService {
           (w) =>
             w.length > 2 &&
             ![
-              "the", "and", "was", "for", "who", "how", "did", "his", "her", "they", "with", "from",
+              "the",
+              "and",
+              "was",
+              "for",
+              "who",
+              "how",
+              "did",
+              "his",
+              "her",
+              "they",
+              "with",
+              "from",
             ].includes(w),
         );
 
       if (keywords.length > 0) {
-        results = await searchService.search(keywords.join(" "), { limit: 5 });
+        results = await this.searchService.search(keywords.join(" "), {
+          limit: 5,
+        });
       }
     }
 
     const activeId = vault.selectedEntityId;
     const explicitSubject = this.findExplicitSubject(query, vault.entities);
     const topSearchResult = results[0];
-    const isHighConfidenceSearch = topSearchResult && topSearchResult.score >= 0.6;
+    const isHighConfidenceSearch =
+      topSearchResult && topSearchResult.score >= 0.6;
     const isFollowUp = this.isFollowUp(query);
 
     let primaryEntityId: string | undefined;
@@ -197,7 +219,7 @@ class DefaultContextRetrievalService implements ContextRetrievalService {
 
       contextMap.set(id, fullSnippet);
       sourceIds.push(id);
-      currentTotal += fullSnippet.length + 2; 
+      currentTotal += fullSnippet.length + 2;
     };
 
     if (activeId) addEntityToContext(activeId);

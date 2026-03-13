@@ -254,7 +254,6 @@
         (window as any).oracle = m.oracle;
       });
       import("$lib/services/ai").then((m) => {
-        (window as any).aiService = m.aiService;
         (window as any).textGeneration = m.textGenerationService;
         (window as any).imageGeneration = m.imageGenerationService;
         (window as any).contextRetrieval = m.contextRetrievalService;

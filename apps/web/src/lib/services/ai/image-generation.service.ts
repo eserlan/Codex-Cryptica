@@ -1,9 +1,15 @@
-import { aiClientManager } from "./client-manager";
+import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type { ImageGenerationService } from "schema";
-import { buildEnhancePrompt, buildVisualDistillationPrompt } from "./prompts/visual-distillation";
+import {
+  buildEnhancePrompt,
+  buildVisualDistillationPrompt,
+} from "./prompts/visual-distillation";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
+import { GEMINI_API_BASE_URL } from "../../config/oracle-constants";
 
-class DefaultImageGenerationService implements ImageGenerationService {
+export class DefaultImageGenerationService implements ImageGenerationService {
+  constructor(private aiClientManager = defaultAiClientManager) {}
+
   async distillVisualPrompt(
     apiKey: string,
     query: string,
@@ -14,9 +20,11 @@ class DefaultImageGenerationService implements ImageGenerationService {
     if (!isAIEnabled()) return query;
     if (!context) return query;
 
-    const model = aiClientManager.getModel(apiKey, modelName);
+    const model = this.aiClientManager.getModel(apiKey, modelName);
 
-    console.log(`[ImageGenerationService] Distilling visual prompt using: ${modelName}`);
+    console.log(
+      `[ImageGenerationService] Distilling visual prompt using: ${modelName}`,
+    );
 
     const prompt = buildVisualDistillationPrompt(query, context);
 
@@ -44,8 +52,10 @@ class DefaultImageGenerationService implements ImageGenerationService {
   ): Promise<Blob> {
     assertAIEnabled();
     try {
-      console.log(`[ImageGenerationService] Generating image with model: ${modelName}`);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+      console.log(
+        `[ImageGenerationService] Generating image with model: ${modelName}`,
+      );
+      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent?key=${apiKey}`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -107,7 +117,10 @@ class DefaultImageGenerationService implements ImageGenerationService {
 
       return new Blob([bytes], { type: "image/png" });
     } catch (err: any) {
-      console.error(`[ImageGenerationService] Image generation failed:`, err.message);
+      console.error(
+        `[ImageGenerationService] Image generation failed:`,
+        err.message,
+      );
       throw err;
     }
   }

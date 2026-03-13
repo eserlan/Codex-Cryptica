@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { contextRetrievalService } from "../../lib/services/ai/context-retrieval.service";
-import { searchService } from "../../lib/services/search";
 
 vi.mock("../../lib/services/search", () => ({
   searchService: {
@@ -8,11 +6,16 @@ vi.mock("../../lib/services/search", () => ({
   },
 }));
 
+import { DefaultContextRetrievalService } from "../../lib/services/ai/context-retrieval.service";
+
 describe("ContextRetrievalService", () => {
   let mockVault: any;
+  let mockSearchService: any;
+  let service: DefaultContextRetrievalService;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
     mockVault = {
       entities: {
         "woods-id": {
@@ -48,30 +51,32 @@ describe("ContextRetrievalService", () => {
       inboundConnections: {},
     };
 
-    vi.mocked(searchService.search).mockImplementation(async (q) => {
-      const results = [];
-      for (const id in mockVault.entities) {
-        const entity = mockVault.entities[id];
-        const pattern = new RegExp(`\\b${entity.title}\\b`, "i");
-        if (pattern.test(q)) {
-          results.push({
-            id,
-            title: entity.title,
-            score: 0.9,
-            matchType: "title" as const,
-            path: "",
-          });
+    mockSearchService = {
+      search: vi.fn().mockImplementation(async (q) => {
+        const results = [];
+        for (const id in mockVault.entities) {
+          const entity = mockVault.entities[id];
+          const pattern = new RegExp(`\\b${entity.title}\\b`, "i");
+          if (pattern.test(q)) {
+            results.push({
+              id,
+              title: entity.title,
+              score: 0.9,
+              matchType: "title" as const,
+              path: "",
+            });
+          }
         }
-      }
-      return results;
-    });
+        return results;
+      }),
+    };
 
-    (contextRetrievalService as any).clearStyleCache();
+    service = new DefaultContextRetrievalService(mockSearchService);
   });
 
   it("should prioritize explicit title matches over active selection", async () => {
     mockVault.selectedEntityId = "crone-id";
-    const { primaryEntityId } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId } = await service.retrieveContext(
       "Tell me about The Woods",
       new Set(),
       mockVault,
@@ -82,7 +87,7 @@ describe("ContextRetrievalService", () => {
   });
 
   it("should match short titles only with word boundaries", async () => {
-    const { primaryEntityId: match1 } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId: match1 } = await service.retrieveContext(
       "Tell me about AI",
       new Set(),
       mockVault,
@@ -91,7 +96,7 @@ describe("ContextRetrievalService", () => {
     );
     expect(match1).toBe("ai-id");
 
-    const { primaryEntityId: match2 } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId: match2 } = await service.retrieveContext(
       "Training is hard",
       new Set(),
       mockVault,
@@ -103,7 +108,7 @@ describe("ContextRetrievalService", () => {
 
   it("should prioritize high-confidence search results over active selection", async () => {
     mockVault.selectedEntityId = "crone-id";
-    vi.mocked(searchService.search).mockResolvedValue([
+    mockSearchService.search.mockResolvedValue([
       {
         id: "woods-id",
         title: "The Woods",
@@ -113,7 +118,7 @@ describe("ContextRetrievalService", () => {
       },
     ]);
 
-    const { primaryEntityId } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId } = await service.retrieveContext(
       "What is in that place?",
       new Set(),
       mockVault,
@@ -124,7 +129,7 @@ describe("ContextRetrievalService", () => {
   });
 
   it("should prioritize high-confidence search over sticky context", async () => {
-    vi.mocked(searchService.search).mockResolvedValue([
+    mockSearchService.search.mockResolvedValue([
       {
         id: "crone-id",
         title: "The Crone",
@@ -134,7 +139,7 @@ describe("ContextRetrievalService", () => {
       },
     ]);
 
-    const { primaryEntityId } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId } = await service.retrieveContext(
       "Tell me about that ancient woman",
       new Set(),
       mockVault,
@@ -146,7 +151,7 @@ describe("ContextRetrievalService", () => {
 
   it("should stick to previous context for follow-up questions", async () => {
     mockVault.selectedEntityId = "crone-id";
-    const { primaryEntityId } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId } = await service.retrieveContext(
       "it?",
       new Set(),
       mockVault,
@@ -158,7 +163,7 @@ describe("ContextRetrievalService", () => {
 
   it("should ignore low-confidence search results and fallback to active selection", async () => {
     mockVault.selectedEntityId = "crone-id";
-    vi.mocked(searchService.search).mockResolvedValue([
+    mockSearchService.search.mockResolvedValue([
       {
         id: "guardsman-id",
         title: "The Guardsman",
@@ -168,7 +173,7 @@ describe("ContextRetrievalService", () => {
       },
     ]);
 
-    const { primaryEntityId } = await contextRetrievalService.retrieveContext(
+    const { primaryEntityId } = await service.retrieveContext(
       "Who is there?",
       new Set(),
       mockVault,
@@ -189,7 +194,7 @@ describe("ContextRetrievalService", () => {
       },
     ];
 
-    const { content: contentOut } = await contextRetrievalService.retrieveContext(
+    const { content: contentOut } = await service.retrieveContext(
       "The Woods",
       new Set(),
       mockVault,
@@ -199,7 +204,7 @@ describe("ContextRetrievalService", () => {
     expect(contentOut).toContain("--- Connections ---");
     expect(contentOut).toContain("- The Woods → Ancient Dweller → The Crone");
 
-    const { content: contentIn } = await contextRetrievalService.retrieveContext(
+    const { content: contentIn } = await service.retrieveContext(
       "The Crone",
       new Set(),
       mockVault,
@@ -220,7 +225,7 @@ describe("ContextRetrievalService", () => {
       tags: [],
     };
 
-    const { content } = await contextRetrievalService.retrieveContext(
+    const { content } = await service.retrieveContext(
       "Fusion Entity",
       new Set(),
       mockVault,
@@ -232,7 +237,7 @@ describe("ContextRetrievalService", () => {
   });
 
   it("should populate sourceIds for all consulted entities", async () => {
-    vi.mocked(searchService.search).mockResolvedValue([
+    mockSearchService.search.mockResolvedValue([
       {
         id: "woods-id",
         title: "The Woods",
@@ -249,7 +254,7 @@ describe("ContextRetrievalService", () => {
       },
     ]);
 
-    const { sourceIds } = await contextRetrievalService.retrieveContext(
+    const { sourceIds } = await service.retrieveContext(
       "The Woods and Crone",
       new Set(),
       mockVault,

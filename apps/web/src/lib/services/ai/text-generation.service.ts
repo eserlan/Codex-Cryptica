@@ -1,14 +1,19 @@
-import { aiClientManager } from "./client-manager";
+import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import { TIER_MODES, type TextGenerationService } from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
 import { EXPAND_KEYWORDS } from "../../config/oracle-constants";
-import { contextRetrievalService } from "./context-retrieval.service";
+import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 
-class DefaultTextGenerationService implements TextGenerationService {
+export class DefaultTextGenerationService implements TextGenerationService {
+  constructor(
+    private aiClientManager = defaultAiClientManager,
+    private contextRetrievalService = defaultContextRetrievalService,
+  ) {}
+
   async expandQuery(
     apiKey: string,
     query: string,
@@ -16,7 +21,7 @@ class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<string> {
     if (!isAIEnabled()) return query;
     try {
-      const liteModel = aiClientManager.getModel(apiKey, TIER_MODES.lite);
+      const liteModel = this.aiClientManager.getModel(apiKey, TIER_MODES.lite);
 
       const conversationContext = history
         .slice(-4)
@@ -27,10 +32,15 @@ class DefaultTextGenerationService implements TextGenerationService {
 
       const result = await liteModel.generateContent(prompt);
       const expanded = result.response.text().trim();
-      console.log(`[TextGenerationService] Expanded query: "${query}" -> "${expanded}"`);
+      console.log(
+        `[TextGenerationService] Expanded query: "${query}" -> "${expanded}"`,
+      );
       return expanded;
     } catch (err) {
-      console.error("[TextGenerationService] Query expansion failed, using original:", err);
+      console.error(
+        "[TextGenerationService] Query expansion failed, using original:",
+        err,
+      );
       return query;
     }
   }
@@ -42,13 +52,13 @@ class DefaultTextGenerationService implements TextGenerationService {
     sources: any[],
   ): Promise<{ body: string; lore?: string }> {
     assertAIEnabled();
-    const model = aiClientManager.getModel(apiKey, modelName);
+    const model = this.aiClientManager.getModel(apiKey, modelName);
 
-    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${contextRetrievalService.getConsolidatedContext(target)}`;
+    const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target)}`;
     const sourceContext = sources
       .map(
         (s, i) =>
-          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${contextRetrievalService.getConsolidatedContext(s)}`,
+          `--- SOURCE ${i + 1}: ${s.title} (${s.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(s)}`,
       )
       .join("\n\n");
 
@@ -77,13 +87,13 @@ class DefaultTextGenerationService implements TextGenerationService {
     userQuery: string,
   ): Promise<string> {
     assertAIEnabled();
-    const model = aiClientManager.getModel(apiKey, modelName);
+    const model = this.aiClientManager.getModel(apiKey, modelName);
 
     const MAX_SUBJECT_CONTEXT_CHARS = 2000;
     const MAX_CONNECTED_ENTITIES = 20;
     const MAX_CONNECTION_CONTEXT_CHARS = 500;
 
-    const subjectContextStr = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${contextRetrievalService.getConsolidatedContext(subject).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
+    const subjectContextStr = `--- SUBJECT: ${subject.title} (${subject.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(subject).slice(0, MAX_SUBJECT_CONTEXT_CHARS)}`;
 
     const limitedConnections = connectedEntities.slice(
       0,
@@ -97,7 +107,7 @@ class DefaultTextGenerationService implements TextGenerationService {
             .map(({ entity, connectionType, label, direction }) => {
               const dirStr = direction === "outbound" ? "→" : "←";
               const relStr = label || connectionType;
-              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${contextRetrievalService.getConsolidatedContext(entity).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
+              return `--- CONNECTED (${dirStr} ${relStr}): ${entity.title} (${entity.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(entity).slice(0, MAX_CONNECTION_CONTEXT_CHARS)}`;
             })
             .join("\n\n")
         : "No connected entities found.";
@@ -112,7 +122,11 @@ class DefaultTextGenerationService implements TextGenerationService {
           : connectionsContext + suffix;
     }
 
-    const prompt = buildPlotAnalysisPrompt(subjectContextStr, connectionsContext, userQuery);
+    const prompt = buildPlotAnalysisPrompt(
+      subjectContextStr,
+      connectionsContext,
+      userQuery,
+    );
 
     try {
       const result = await model.generateContent(prompt);
@@ -139,7 +153,11 @@ class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<void> {
     assertAIEnabled();
     const systemInstruction = buildSystemInstruction(demoMode);
-    const model = aiClientManager.getModel(apiKey, modelName, systemInstruction);
+    const model = this.aiClientManager.getModel(
+      apiKey,
+      modelName,
+      systemInstruction,
+    );
 
     const sanitizedHistory: {
       role: "user" | "model";
