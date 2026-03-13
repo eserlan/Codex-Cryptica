@@ -4,12 +4,16 @@ on:
   pull_request_review:
     types: [submitted]
 
+permissions:
+  pull-requests: read
+
 jobs:
   notify:
     runs-on: ubuntu-latest
+    # Robust check: User is a Bot AND login contains 'copilot'
     if: |
-      github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' || 
-      github.event.review.user.login == 'Copilot'
+      github.event.review.user.type == 'Bot' && 
+      contains(toLower(github.event.review.user.login), 'copilot')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
