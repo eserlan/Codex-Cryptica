@@ -3,7 +3,7 @@ id: chronology
 title: Custom Chronology
 description: Master the sands of time with tactile grid pickers and custom campaign calendars.
 icon: icon-[lucide--history]
-rank: 9
+rank: 11
 tags: ["time", "timeline", "calendar", "eras"]
 ---
 

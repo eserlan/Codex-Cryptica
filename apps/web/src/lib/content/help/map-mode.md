@@ -2,7 +2,7 @@
 id: map-mode
 title: Map Mode
 tags: [map, spatial, pins, fog of war, hierarchy]
-rank: 12
+rank: 3
 ---
 
 ## Spatial Lore Navigation

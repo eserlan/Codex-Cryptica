@@ -2,7 +2,7 @@
 id: gemini-api-key
 title: Acquiring a Gemini API Key
 tags: [ai, gemini, setup]
-rank: 4
+rank: 6
 ---
 
 ## How to get your Gemini API Key

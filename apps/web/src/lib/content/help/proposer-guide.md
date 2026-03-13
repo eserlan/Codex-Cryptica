@@ -2,7 +2,7 @@
 id: proposer-guide
 title: Connections Proposer
 tags: [ai, connections, discovery]
-rank: 11
+rank: 13
 ---
 
 ## Automated Discovery

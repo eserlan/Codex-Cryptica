@@ -2,7 +2,7 @@
 id: importing
 title: Importing Notes
 tags: [import, oracle, resume]
-rank: 6
+rank: 8
 ---
 
 # Importing Content
