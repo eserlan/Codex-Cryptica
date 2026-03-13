@@ -144,5 +144,22 @@ Content`;
       expect(res2).toHaveLength(1);
       expect(res2[0].title).toBe("Override");
     });
+
+    it("should process a realistic set of help articles", () => {
+      const modules = {
+        "intro.md":
+          "---\nid: intro\ntitle: Introduction\nrank: 0\n---\nWelcome.",
+        "graph.md":
+          "---\nid: graph\ntitle: Graph Basics\nrank: 10\n---\nConnections.",
+        "oracle.md":
+          "---\nid: oracle\ntitle: Oracle Guide\nrank: 20\n---\nAsk AI.",
+      };
+
+      const result = processHelpArticles(modules);
+      expect(result).toHaveLength(3);
+      expect(result[0].id).toBe("intro");
+      expect(result[1].id).toBe("graph");
+      expect(result[2].id).toBe("oracle");
+    });
   });
 });

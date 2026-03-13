@@ -82,6 +82,9 @@
   --color-timeline-dim: color-mix(in srgb, var(--color-timeline-primary), black 25%);
   --color-timeline-dark: color-mix(in srgb, var(--color-timeline-primary), black 45%);
 
+  --z-index-overlay-max: 150;
+  --z-index-overlay-tooltip: 152;
+
   --font-header: var(--font-header);
   --font-body: var(--font-body);
 }

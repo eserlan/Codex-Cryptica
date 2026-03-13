@@ -57,7 +57,10 @@
   let BulkLabelDialog = $state<any>(null);
   let DiceModal = $state<any>(null);
 
-  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  const isPopup = $derived(
+    page.url.pathname === `${base}/oracle` ||
+      page.url.pathname === `${base}/help`,
+  );
   const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
   const isMarketingPage = $derived(
     MARKETING_ROUTES.some((route) =>
@@ -630,7 +633,7 @@
     {/if}
 
     <main
-      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage
+      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage || isPopup
         ? 'overflow-y-auto'
         : ''}"
     >
