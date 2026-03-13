@@ -2,7 +2,7 @@
 id: graph-basics
 title: Knowledge Graph
 tags: [navigation, connections]
-rank: 3
+rank: 2
 ---
 
 ## Quick Guide
