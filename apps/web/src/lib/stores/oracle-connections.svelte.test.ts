@@ -76,7 +76,7 @@ describe("OracleStore - /connect parsing", () => {
   it("should show error if entities cannot be resolved", async () => {
     // Force an error intent from parser by being in lite mode or similar,
     // but here we just mock the executor's response to an error intent
-    mockExecutor.execute.mockImplementationOnce(async (_intent) => {
+    mockExecutor.execute.mockImplementationOnce(async (_intent: any) => {
       await mockChatHistory.addMessage({
         role: "system",
         content: '❌ Could not find source entity: "Unknown"',

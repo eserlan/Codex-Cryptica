@@ -25,6 +25,12 @@ import {
   createSyncEngine,
 } from "./vault/adapters";
 
+import {
+  textGenerationService,
+  imageGenerationService,
+  contextRetrievalService,
+} from "../services/ai";
+
 export interface IVaultServices {
   search: {
     index(entry: any): Promise<void>;
@@ -32,10 +38,9 @@ export interface IVaultServices {
     clear(): Promise<void>;
     search(query: string, options?: any): Promise<any[]>;
   };
-  ai: {
-    clearStyleCache(): void;
-    expandQuery(apiKey: string, query: string, history: any[]): Promise<string>;
-  };
+  textGeneration: typeof textGenerationService;
+  imageGeneration: typeof imageGenerationService;
+  contextRetrieval: typeof contextRetrievalService;
 }
 
 export class VaultStore {
@@ -156,8 +161,17 @@ export class VaultStore {
       this.services = injectedServices;
     } else if (typeof window !== "undefined") {
       const { searchService } = await import("../services/search");
-      const { contextRetrievalService } = await import("../services/ai");
-      this.services = { search: searchService, ai: contextRetrievalService };
+      const {
+        contextRetrievalService,
+        textGenerationService,
+        imageGenerationService,
+      } = await import("../services/ai");
+      this.services = {
+        search: searchService,
+        contextRetrieval: contextRetrievalService,
+        textGeneration: textGenerationService,
+        imageGeneration: imageGenerationService,
+      };
 
       if (!this.syncCoordinator) {
         const engine = await createSyncEngine();
@@ -253,7 +267,7 @@ export class VaultStore {
         `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
       );
       if (this.services) {
-        this.services.ai.clearStyleCache();
+        this.services.contextRetrieval.clearStyleCache();
         await this.services.search.clear();
         debugStore.log("[VaultStore] Search index cleared.");
       }
