@@ -315,9 +315,12 @@ export async function deleteVaultDir(
   root: FileSystemDirectoryHandle,
   vaultId: string,
 ): Promise<void> {
+  const normalized = normalizeVaultId(vaultId);
+  if (!normalized) return;
+
   try {
     const vaultsDir = await getDirHandle(root, [VAULTS_DIR], false);
-    await vaultsDir.removeEntry(vaultId, { recursive: true });
+    await vaultsDir.removeEntry(normalized, { recursive: true });
   } catch (err) {
     if (isNotFoundError(err)) {
       // Already deleted or never existed, that's fine
@@ -331,7 +334,7 @@ export async function deleteVaultDir(
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    let cursor = await index.openCursor(vaultId);
+    let cursor = await index.openCursor(normalized);
     while (cursor) {
       await cursor.delete();
       cursor = await cursor.continue();
@@ -339,7 +342,7 @@ export async function deleteVaultDir(
     await tx.done;
   } catch (err) {
     console.warn(
-      `[OPFS] Failed to clear fingerprint cache for vault ${vaultId}`,
+      `[OPFS] Failed to clear fingerprint cache for vault ${normalized}`,
       err,
     );
   }
