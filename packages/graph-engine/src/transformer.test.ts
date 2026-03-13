@@ -305,4 +305,19 @@ describe("GraphTransformer", () => {
     const edge2 = elements2.find((e) => e.group === "edges");
     expect(edge2).toBeDefined(); // Edge should exist
   });
+
+  it("should not crash on entities with missing ID", () => {
+    const entities: any[] = [
+      {
+        type: "npc",
+        title: "Broken Node",
+        content: "",
+      },
+    ];
+
+    // This should not throw TypeError
+    const elements = GraphTransformer.entitiesToElements(entities);
+    expect(elements).toHaveLength(1);
+    expect(elements[0].data.id).toBeUndefined(); // Or "unknown" if we decided to fallback, current code preserves original
+  });
 });

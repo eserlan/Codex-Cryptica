@@ -8,16 +8,22 @@ export interface ZenModeActionsDependencies {
 }
 
 export function createZenModeActions(
-  editState: any,
+  editStateOrGetter: any | (() => any),
   deps: ZenModeActionsDependencies = {},
 ) {
   const uiStore = deps.uiStore ?? defaultUiStore;
   const vault = deps.vault ?? defaultVault;
 
+  const getEditState = () =>
+    typeof editStateOrGetter === "function"
+      ? editStateOrGetter()
+      : editStateOrGetter;
+
   let isSaving = $state(false);
 
   const saveChanges = async (entityId: string) => {
     isSaving = true;
+    const editState = getEditState();
     try {
       await vault.updateEntity(entityId, {
         title: editState.title,
@@ -46,7 +52,7 @@ export function createZenModeActions(
       try {
         await vault.deleteEntity(entity.id);
         uiStore.notify(`"${entity.title}" deleted.`, "success");
-        editState.isEditing = false;
+        getEditState().isEditing = false;
         onDeleted();
       } catch (err: any) {
         console.error("[ZenModeActions] Failed to delete entity", err);
@@ -56,6 +62,7 @@ export function createZenModeActions(
   };
 
   const handleClose = (onClose: () => void) => {
+    const editState = getEditState();
     if (editState.isEditing) {
       if (!confirm("Discard unsaved changes?")) return;
     }
