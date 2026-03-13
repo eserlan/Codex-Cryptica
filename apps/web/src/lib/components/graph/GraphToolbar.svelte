@@ -19,10 +19,13 @@
   let showMinimap = $state(false);
 
   const canConnect = $derived(selectedCount === 2);
+  const isConnecting = $derived(ui.showSelectionConnector || ui.isConnecting);
   const connectionTooltip = $derived(
     selectedCount === 2
       ? "Connect Selected Nodes"
-      : "Select 2 nodes to create a connection",
+      : ui.isConnecting
+        ? "Exit Connect Mode"
+        : "Enter Connect Mode (C)",
   );
 </script>
 
@@ -95,18 +98,19 @@
       >
       {#if !ui.isGuestMode}
         <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {ui.showSelectionConnector
-            ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
-            : canConnect
-              ? 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'
-              : 'border-theme-border bg-theme-surface/40 text-theme-muted/40 cursor-not-allowed'}"
-          onclick={() =>
-            canConnect &&
-            (ui.showSelectionConnector = !ui.showSelectionConnector)}
+          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
+            ? 'border-theme-primary bg-theme-primary/20 text-theme-primary shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
+            : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+          onclick={() => {
+            if (canConnect) {
+              ui.showSelectionConnector = !ui.showSelectionConnector;
+            } else {
+              ui.toggleConnectMode();
+            }
+          }}
           title={connectionTooltip}
           aria-label={connectionTooltip}
-          aria-pressed={ui.showSelectionConnector}
-          disabled={!canConnect}
+          aria-pressed={isConnecting}
           ><span class="icon-[lucide--link] w-4 h-4"></span></button
         >
       {/if}
