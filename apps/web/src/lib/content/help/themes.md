@@ -7,7 +7,7 @@ rank: 15
 
 # Zen Templates
 
-Codex Cryptica allows you to shift the visual dimension of your workspace using **Zen Templates**. These themes redefine the entire interface aesthetic to match your world's genre, ensuring a more immersive experience for lore keepers.
+Codex Arcana allows you to shift the visual dimension of your workspace using **Zen Templates**. These themes redefine the entire interface aesthetic to match your world's genre, using curated color palettes, custom typography, and atmospheric textures to ensure total immersion for lore keepers.
 
 ## Changing Themes
 

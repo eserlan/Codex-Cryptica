@@ -162,7 +162,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "zen-templates",
     title: "Change the Look",
     content:
-      "Instantly change the way the app looks and speaks. Pick a new style like Fantasy or Sci-Fi to change colors, fonts, and even the words used in the buttons.",
+      "Instantly transform the look and feel of your workspace. Choose from a variety of distinct visual templates—from Ancient Parchment to Sci-Fi Terminal—to perfectly match the genre of your story.",
     icon: "icon-[lucide--palette]",
   },
   "draw-button": {
