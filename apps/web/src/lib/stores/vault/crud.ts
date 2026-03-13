@@ -244,13 +244,18 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(newEntitiesList: LocalEntity[]): Promise<void> {
-    const { entities } = vaultEntities.batchCreateEntities(
+  async batchCreateEntities(
+    newEntitiesList: (
+      | LocalEntity
+      | { type: string; title: string; initialData: Partial<Entity> }
+    )[],
+  ): Promise<void> {
+    const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,
     );
     this.setEntities(entities);
-    for (const entity of newEntitiesList) {
+    for (const entity of created) {
       await this.scheduleSave(entity);
     }
   }
