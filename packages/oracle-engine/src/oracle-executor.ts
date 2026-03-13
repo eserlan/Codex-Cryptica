@@ -342,16 +342,18 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     context: OracleExecutionContext,
   ) {
     try {
-      const intent = await context.aiService.parseConnectionIntent(
-        context.effectiveApiKey,
+      const { ProposerService } = await import("@codex/proposer");
+      const proposer = new ProposerService();
+      const intent = await proposer.parseConnectionIntent(
+        context.effectiveApiKey!,
+        context.modelName,
         query,
-        context,
       );
       if (intent) {
         await this.executeConnect(
-          intent.sourceName,
-          intent.label,
-          intent.targetName,
+          intent.sourceName || "",
+          intent.label || "",
+          intent.targetName || "",
           context,
           intent.type,
         );
@@ -369,10 +371,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
   private async executeMergeAI(query: string, context: OracleExecutionContext) {
     try {
-      const intent = await context.aiService.parseMergeIntent(
-        context.effectiveApiKey,
+      const { ProposerService } = await import("@codex/proposer");
+      const proposer = new ProposerService();
+      const intent = await proposer.parseMergeIntent(
+        context.effectiveApiKey!,
+        context.modelName,
         query,
-        context,
       );
       if (intent) {
         await this.executeMerge(intent.sourceName, intent.targetName, context);
@@ -447,8 +451,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         }
       }
 
-      const analysis = await context.aiService.generatePlotAnalysis(
-        context.effectiveApiKey,
+      const analysis = await context.textGeneration.generatePlotAnalysis(
+        context.effectiveApiKey!,
         context.modelName,
         entity,
         connectedEntities,

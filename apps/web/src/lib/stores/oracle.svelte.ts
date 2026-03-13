@@ -1,4 +1,6 @@
-import { aiService } from "../services/ai";
+import { contextRetrievalService } from "../services/ai/context-retrieval.service";
+import { textGenerationService } from "../services/ai/text-generation.service";
+import { imageGenerationService } from "../services/ai/image-generation.service";
 import { getDB } from "../utils/idb";
 import { graph } from "./graph.svelte";
 import { vault } from "./vault.svelte";
@@ -137,7 +139,9 @@ export class OracleStore {
   ): OracleExecutionContext {
     return {
       vault,
-      aiService,
+      textGeneration: textGenerationService,
+      imageGeneration: imageGenerationService,
+      contextRetrieval: contextRetrievalService,
       diceEngine,
       diceParser,
       diceHistory,

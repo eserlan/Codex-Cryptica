@@ -14,8 +14,8 @@ export class OracleGenerator {
     // 1. Expand query if follow-up
     let searchQuery = query;
     if (context.chatHistory.messages.length > 2) {
-      searchQuery = await context.aiService.expandQuery(
-        context.effectiveApiKey,
+      searchQuery = await context.textGeneration.expandQuery(
+        context.effectiveApiKey!,
         query,
         context.chatHistory.messages.slice(0, -2),
       );
@@ -35,7 +35,7 @@ export class OracleGenerator {
       content: aiContext,
       primaryEntityId,
       sourceIds,
-    } = await context.aiService.retrieveContext(
+    } = await context.contextRetrieval.retrieveContext(
       searchQuery,
       alreadySentTitles,
       context.vault,
@@ -44,8 +44,8 @@ export class OracleGenerator {
     );
 
     // 4. Trigger Generation
-    await context.aiService.generateResponse(
-      context.effectiveApiKey,
+    await context.textGeneration.generateResponse(
+      context.effectiveApiKey!,
       query,
       context.chatHistory.messages.slice(0, -2),
       aiContext,
@@ -65,7 +65,7 @@ export class OracleGenerator {
     context: OracleExecutionContext,
   ): Promise<Blob> {
     const entity = context.vault.entities[entityId];
-    const { content: aiContext } = await context.aiService.retrieveContext(
+    const { content: aiContext } = await context.contextRetrieval.retrieveContext(
       entity.title,
       new Set(),
       context.vault,
@@ -73,16 +73,16 @@ export class OracleGenerator {
       true,
     );
 
-    const visualPrompt = await context.aiService.distillVisualPrompt(
-      context.effectiveApiKey,
+    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
+      context.effectiveApiKey!,
       `A visualization of ${entity.title}`,
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
-    return await context.aiService.generateImage(
-      context.effectiveApiKey,
+    return await context.imageGeneration.generateImage(
+      context.effectiveApiKey!,
       visualPrompt,
       "gemini-2.5-flash-image",
     );
@@ -100,7 +100,7 @@ export class OracleGenerator {
       : null;
     const searchQuery = entity ? entity.title : message.content.slice(0, 100);
 
-    const { content: aiContext } = await context.aiService.retrieveContext(
+    const { content: aiContext } = await context.contextRetrieval.retrieveContext(
       searchQuery,
       new Set(),
       context.vault,
@@ -108,16 +108,16 @@ export class OracleGenerator {
       true,
     );
 
-    const visualPrompt = await context.aiService.distillVisualPrompt(
-      context.effectiveApiKey,
+    const visualPrompt = await context.imageGeneration.distillVisualPrompt(
+      context.effectiveApiKey!,
       message.content,
       aiContext,
       context.modelName,
       context.isDemoMode,
     );
 
-    return await context.aiService.generateImage(
-      context.effectiveApiKey,
+    return await context.imageGeneration.generateImage(
+      context.effectiveApiKey!,
       visualPrompt,
       "gemini-2.5-flash-image",
     );

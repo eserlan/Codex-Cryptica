@@ -1,7 +1,7 @@
 <script lang="ts">
   import { oracle, type ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { aiService, TIER_MODES } from "$lib/services/ai";
+  import { TIER_MODES, contextRetrievalService } from "$lib/services/ai";
   import Autocomplete from "../ui/Autocomplete.svelte";
   import { fade, slide } from "svelte/transition";
 
@@ -74,11 +74,17 @@
       const target = vault.entities[targetId!];
 
       const modelName = TIER_MODES[oracle.tier];
-      const proposal = await aiService.generateConnectionProposal(
+      
+      const { ProposerService } = await import("@codex/proposer");
+      const proposer = new ProposerService();
+      
+      const proposal = await proposer.generateConnectionProposal(
         key,
         modelName,
-        source,
-        target,
+        contextRetrievalService.getConsolidatedContext(source),
+        contextRetrievalService.getConsolidatedContext(target),
+        source.title,
+        target.title,
       );
 
       // Only apply if the user hasn't typed their own label yet

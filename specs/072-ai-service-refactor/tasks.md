@@ -21,9 +21,9 @@ description: "Task list for AI Service Refactor implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create `apps/web/src/lib/services/ai/` and `apps/web/src/lib/services/ai/prompts/` directories
-- [ ] T002 Create test directory `apps/web/src/tests/ai/`
-- [ ] T003 Move `TIER_MODES` constants from `ai.ts` to `packages/schema/src/ai.ts` (create file if needed)
+- [x] T001 Create `apps/web/src/lib/services/ai/` and `apps/web/src/lib/services/ai/prompts/` directories
+- [x] T002 Create test directory `apps/web/src/tests/ai/`
+- [x] T003 Move `TIER_MODES` constants from `ai.ts` to `packages/schema/src/ai.ts` (create file if needed)
 
 ---
 
@@ -33,9 +33,9 @@ description: "Task list for AI Service Refactor implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] Implement `AIClientManager` in `apps/web/src/lib/services/ai/client-manager.ts`
-- [ ] T005 [P] Implement `AICapabilityGuard` in `apps/web/src/lib/services/ai/capability-guard.ts`
-- [ ] T006 Update `OracleExecutionContext` interface in `packages/oracle-engine/src/types.ts` to include `textGeneration`, `imageGeneration`, and `contextRetrieval`
+- [x] T004 [P] Implement `AIClientManager` in `apps/web/src/lib/services/ai/client-manager.ts`
+- [x] T005 [P] Implement `AICapabilityGuard` in `apps/web/src/lib/services/ai/capability-guard.ts`
+- [x] T006 Update `OracleExecutionContext` interface in `packages/oracle-engine/src/types.ts` to include `textGeneration`, `imageGeneration`, and `contextRetrieval`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -49,10 +49,10 @@ description: "Task list for AI Service Refactor implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Extract system instructions prompt to `apps/web/src/lib/services/ai/prompts/system-instructions.ts`
-- [ ] T008 [P] [US1] Extract query expansion prompt to `apps/web/src/lib/services/ai/prompts/query-expansion.ts`
-- [ ] T009 [P] [US1] Extract plot analysis prompt to `apps/web/src/lib/services/ai/prompts/plot-analysis.ts`
-- [ ] T010 [P] [US1] Extract merge proposal prompt to `apps/web/src/lib/services/ai/prompts/merge-proposal.ts`
+- [x] T007 [P] [US1] Extract system instructions prompt to `apps/web/src/lib/services/ai/prompts/system-instructions.ts`
+- [x] T008 [P] [US1] Extract query expansion prompt to `apps/web/src/lib/services/ai/prompts/query-expansion.ts`
+- [x] T009 [P] [US1] Extract plot analysis prompt to `apps/web/src/lib/services/ai/prompts/plot-analysis.ts`
+- [x] T010 [P] [US1] Extract merge proposal prompt to `apps/web/src/lib/services/ai/prompts/merge-proposal.ts`
 - [ ] T011 [US1] Implement `ContextRetrievalService` in `apps/web/src/lib/services/ai/context-retrieval.service.ts`
 - [ ] T012 [US1] Implement `TextGenerationService` in `apps/web/src/lib/services/ai/text-generation.service.ts` (depends on prompt extractions and AIClientManager)
 - [ ] T013 [US1] Migrate context retrieval tests to `apps/web/src/tests/ai/context-retrieval.spec.ts`
@@ -72,7 +72,7 @@ description: "Task list for AI Service Refactor implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T017 [P] [US2] Extract visual distillation prompt to `apps/web/src/lib/services/ai/prompts/visual-distillation.ts`
+- [x] T017 [P] [US2] Extract visual distillation prompt to `apps/web/src/lib/services/ai/prompts/visual-distillation.ts`
 - [ ] T018 [US2] Implement `ImageGenerationService` in `apps/web/src/lib/services/ai/image-generation.service.ts` (depends on TextGenerationService for distillation)
 - [ ] T019 [US2] Migrate image generation tests to `apps/web/src/tests/ai/image-generation.spec.ts`
 - [ ] T020 [US2] Update `apps/web/src/lib/stores/oracle.svelte.ts` to inject `ImageGenerationService` into `OracleExecutionContext`

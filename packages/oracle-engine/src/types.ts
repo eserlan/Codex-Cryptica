@@ -1,3 +1,5 @@
+import type { ContextRetrievalService, TextGenerationService, ImageGenerationService } from "schema";
+
 export type OracleIntent =
   | { type: "chat"; query: string; isAIIntent: boolean }
   | { type: "roll"; formula: string; title?: string }
@@ -45,7 +47,9 @@ export interface UndoableAction {
 
 export interface OracleExecutionContext {
   vault: any;
-  aiService: any;
+  textGeneration: TextGenerationService;
+  imageGeneration: ImageGenerationService;
+  contextRetrieval: ContextRetrievalService;
   diceEngine: any;
   diceParser: any;
   diceHistory: any;
