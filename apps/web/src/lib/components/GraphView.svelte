@@ -32,6 +32,7 @@
   let imageManager: GraphImageManager | undefined = $state();
   let isLayoutRunning = $state(false);
   let graphVisible = $state(false);
+  let selectedCount = $state(0);
 
   let graphStyle = $derived(
     getGraphStyles(
@@ -195,6 +196,12 @@
           cy = instance;
           layoutManager = new LayoutManager(instance);
           imageManager = new GraphImageManager(instance);
+
+          const updateSelectionCount = () => {
+            selectedCount = instance.$("node:selected").length;
+          };
+          instance.on("select unselect", "node", updateSelectionCount);
+          updateSelectionCount();
 
           if (import.meta.env.DEV || (window as any).__E2E__) {
             (window as any).cy = instance;
@@ -421,7 +428,7 @@
     {cy}
     {isLayoutRunning}
     onApplyLayout={applyCurrentLayout}
-    selectedCount={graph.selection.length}
+    {selectedCount}
   />
 
   <OrbitControls />
