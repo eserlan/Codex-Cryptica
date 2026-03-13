@@ -10,7 +10,7 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    if: |
+    if: >-
       github.event.review.user.login == 'Copilot' ||
       github.event.review.user.login == 'copilot-pull-request-reviewer[bot]' ||
       (github.event.review.user.type == 'Bot' && contains(toLower(github.event.review.user.login), 'copilot'))
