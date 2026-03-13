@@ -239,7 +239,8 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       const entity = vault.entities[res.id];
       if (!entity) continue;
 
-      for (const conn of entity.connections) {
+      const connections = entity.connections || [];
+      for (const conn of connections) {
         if (currentTotal >= MAX_CHARS) break;
         addEntityToContext(conn.target, true);
       }
@@ -247,7 +248,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     if (sourceIds.length > 0) {
       console.log(
-        `[AIService] Consulted ${sourceIds.length} records:`,
+        `[ContextRetrievalService] Consulted ${sourceIds.length} records:`,
         sourceIds,
       );
     }

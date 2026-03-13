@@ -341,24 +341,38 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     query: string,
     context: OracleExecutionContext,
   ) {
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "⚠️ The /connect command requires an AI API key. Please configure one in Settings.",
+      });
+      return;
+    }
+
     try {
       const { ProposerService } = await import("@codex/proposer");
       const proposer = new ProposerService();
       const intent = await proposer.parseConnectionIntent(
-        context.effectiveApiKey!,
+        apiKey,
         context.modelName,
         query,
       );
-      if (intent) {
+
+      if (intent && intent.sourceName?.trim() && intent.targetName?.trim()) {
         await this.executeConnect(
-          intent.sourceName || "",
+          intent.sourceName,
           intent.label || "",
-          intent.targetName || "",
+          intent.targetName,
           context,
           intent.type,
         );
       } else {
-        throw new Error("AI could not understand connection intent.");
+        throw new Error(
+          'AI could not understand connection names. Please use explicit format: `/connect "A" to "B"`.',
+        );
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({
@@ -370,18 +384,32 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   private async executeMergeAI(query: string, context: OracleExecutionContext) {
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "⚠️ The /merge command requires an AI API key. Please configure one in Settings.",
+      });
+      return;
+    }
+
     try {
       const { ProposerService } = await import("@codex/proposer");
       const proposer = new ProposerService();
       const intent = await proposer.parseMergeIntent(
-        context.effectiveApiKey!,
+        apiKey,
         context.modelName,
         query,
       );
-      if (intent) {
+
+      if (intent && intent.sourceName?.trim() && intent.targetName?.trim()) {
         await this.executeMerge(intent.sourceName, intent.targetName, context);
       } else {
-        throw new Error("AI could not understand merge intent.");
+        throw new Error(
+          'AI could not understand merge names. Please use explicit format: `/merge "Source" into "Target"`.',
+        );
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({
@@ -403,6 +431,17 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "⚠️ The /plot command requires an AI API key. Please configure one in Settings.",
+      });
+      return;
+    }
+
     try {
       if (!subject) {
         throw new Error(
@@ -420,7 +459,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       const uniqueConnectedIds = new Set<string>();
       const connectedEntities: any[] = [];
 
-      for (const conn of entity.connections) {
+      for (const conn of entity.connections || []) {
         if (!uniqueConnectedIds.has(conn.target)) {
           const connEntity = context.vault.entities[conn.target];
           if (connEntity) {
@@ -452,7 +491,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       }
 
       const analysis = await context.textGeneration.generatePlotAnalysis(
-        context.effectiveApiKey!,
+        apiKey,
         context.modelName,
         entity,
         connectedEntities,

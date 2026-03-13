@@ -27,11 +27,17 @@ describe("OracleActionExecutor - Detailed", () => {
       searchService: {
         search: vi.fn(),
       },
-      aiService: {
+      textGeneration: {
         generatePlotAnalysis: vi.fn(),
         expandQuery: vi.fn(),
-        retrieveContext: vi.fn(),
         generateResponse: vi.fn(),
+      },
+      imageGeneration: {
+        generateImage: vi.fn(),
+        distillVisualPrompt: vi.fn(),
+      },
+      contextRetrieval: {
+        retrieveContext: vi.fn(),
       },
       undoRedo: {
         pushUndoAction: vi.fn(),
@@ -164,7 +170,7 @@ describe("OracleActionExecutor - Detailed", () => {
 
     it("should post user message and start assistant message", async () => {
       vi.stubGlobal("navigator", { onLine: true });
-      mockContext.aiService.retrieveContext.mockResolvedValue({
+      mockContext.contextRetrieval.retrieveContext.mockResolvedValue({
         content: "ctx",
         sourceIds: [],
       });

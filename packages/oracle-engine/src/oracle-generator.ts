@@ -11,11 +11,22 @@ export class OracleGenerator {
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
 
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "⚠️ AI features require an API key. Please configure one in Settings.",
+      });
+      return { sourceIds: [] };
+    }
+
     // 1. Expand query if follow-up
     let searchQuery = query;
     if (context.chatHistory.messages.length > 2) {
       searchQuery = await context.textGeneration.expandQuery(
-        context.effectiveApiKey!,
+        apiKey,
         query,
         context.chatHistory.messages.slice(0, -2),
       );
@@ -45,7 +56,7 @@ export class OracleGenerator {
 
     // 4. Trigger Generation
     await context.textGeneration.generateResponse(
-      context.effectiveApiKey!,
+      apiKey,
       query,
       context.chatHistory.messages.slice(0, -2),
       aiContext,
@@ -64,17 +75,21 @@ export class OracleGenerator {
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) throw new Error("API key missing");
+
     const entity = context.vault.entities[entityId];
-    const { content: aiContext } = await context.contextRetrieval.retrieveContext(
-      entity.title,
-      new Set(),
-      context.vault,
-      entityId,
-      true,
-    );
+    const { content: aiContext } =
+      await context.contextRetrieval.retrieveContext(
+        entity.title,
+        new Set(),
+        context.vault,
+        entityId,
+        true,
+      );
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      context.effectiveApiKey!,
+      apiKey,
       `A visualization of ${entity.title}`,
       aiContext,
       context.modelName,
@@ -82,7 +97,7 @@ export class OracleGenerator {
     );
 
     return await context.imageGeneration.generateImage(
-      context.effectiveApiKey!,
+      apiKey,
       visualPrompt,
       "gemini-2.5-flash-image",
     );
@@ -95,21 +110,25 @@ export class OracleGenerator {
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) throw new Error("API key missing");
+
     const entity = message.entityId
       ? context.vault.entities[message.entityId]
       : null;
     const searchQuery = entity ? entity.title : message.content.slice(0, 100);
 
-    const { content: aiContext } = await context.contextRetrieval.retrieveContext(
-      searchQuery,
-      new Set(),
-      context.vault,
-      message.entityId,
-      true,
-    );
+    const { content: aiContext } =
+      await context.contextRetrieval.retrieveContext(
+        searchQuery,
+        new Set(),
+        context.vault,
+        message.entityId,
+        true,
+      );
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
-      context.effectiveApiKey!,
+      apiKey,
       message.content,
       aiContext,
       context.modelName,
@@ -117,7 +136,7 @@ export class OracleGenerator {
     );
 
     return await context.imageGeneration.generateImage(
-      context.effectiveApiKey!,
+      apiKey,
       visualPrompt,
       "gemini-2.5-flash-image",
     );

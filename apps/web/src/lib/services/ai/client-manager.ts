@@ -1,6 +1,9 @@
-import { GoogleGenerativeAI, type GenerativeModel } from "@google/generative-ai";
+import {
+  GoogleGenerativeAI,
+  type GenerativeModel,
+} from "@google/generative-ai";
 
-class AIClientManager {
+export class DefaultAIClientManager {
   private client: GoogleGenerativeAI | null = null;
   private currentKey: string | null = null;
 
@@ -12,7 +15,11 @@ class AIClientManager {
     return this.client;
   }
 
-  getModel(apiKey: string, modelName: string, systemInstruction?: string): GenerativeModel {
+  getModel(
+    apiKey: string,
+    modelName: string,
+    systemInstruction?: string,
+  ): GenerativeModel {
     const client = this.getClient(apiKey);
     return client.getGenerativeModel({
       model: modelName,
@@ -21,4 +28,4 @@ class AIClientManager {
   }
 }
 
-export const aiClientManager = new AIClientManager();
+export const aiClientManager = new DefaultAIClientManager();
