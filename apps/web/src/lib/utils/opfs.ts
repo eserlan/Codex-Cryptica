@@ -315,8 +315,16 @@ export async function deleteVaultDir(
   root: FileSystemDirectoryHandle,
   vaultId: string,
 ): Promise<void> {
-  const vaultsDir = await getOrCreateDir(root, [VAULTS_DIR]);
-  await vaultsDir.removeEntry(vaultId, { recursive: true });
+  try {
+    const vaultsDir = await getDirHandle(root, [VAULTS_DIR], false);
+    await vaultsDir.removeEntry(vaultId, { recursive: true });
+  } catch (err) {
+    if (isNotFoundError(err)) {
+      // Already deleted or never existed, that's fine
+    } else {
+      throw err;
+    }
+  }
 
   // Best-effort cache cleanup for the entire vault
   try {
