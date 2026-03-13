@@ -57,7 +57,10 @@
   let BulkLabelDialog = $state<any>(null);
   let DiceModal = $state<any>(null);
 
-  const isPopup = $derived(page.url.pathname === `${base}/oracle`);
+  const isPopup = $derived(
+    page.url.pathname === `${base}/oracle` ||
+      page.url.pathname === `${base}/help`,
+  );
   const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
   const isMarketingPage = $derived(
     MARKETING_ROUTES.some((route) =>

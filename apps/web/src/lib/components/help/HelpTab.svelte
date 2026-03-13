@@ -3,32 +3,31 @@
   import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import { slide } from "svelte/transition";
+  import HelpHeader from "./HelpHeader.svelte";
 
-  const parseContent = async (content: string) => {
-    try {
-      const html = await parserService.parse(content);
-      return DOMPurify.sanitize(html);
-    } catch (e) {
-      console.error("Failed to parse help article", e);
-      return content;
-    }
+  let { isStandalone = false } = $props();
+
+  const memo = new Map<string, Promise<string>>();
+  const parseContent = (content: string) => {
+    if (memo.has(content)) return memo.get(content)!;
+
+    const promise = (async () => {
+      try {
+        const html = await parserService.parse(content);
+        return DOMPurify.sanitize(html);
+      } catch (e) {
+        console.error("Failed to parse help article", e);
+        return content;
+      }
+    })();
+
+    memo.set(content, promise);
+    return promise;
   };
 </script>
 
-<div class="space-y-6">
-  <div class="relative group">
-    <span
-      class="absolute left-3 top-1/2 -translate-y-1/2 icon-[heroicons--magnifying-glass] w-4 h-4 text-theme-muted group-focus-within:text-theme-primary transition-colors"
-    ></span>
-    <input
-      type="text"
-      placeholder="Search documentation..."
-      class="w-full bg-theme-surface border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 rounded py-2 pl-10 pr-4 text-sm font-mono text-theme-text transition-all placeholder:text-theme-muted"
-      value={helpStore.searchQuery}
-      oninput={(e) => helpStore.setSearchQuery(e.currentTarget.value)}
-      aria-label="Search documentation"
-    />
-  </div>
+<div class="help-tab-container" class:p-2={!isStandalone}>
+  <HelpHeader {isStandalone} />
 
   <div class="space-y-3">
     {#each helpStore.searchResults as article}
@@ -104,28 +103,5 @@
         </p>
       </div>
     {/each}
-  </div>
-
-  <div class="pt-6 border-t border-theme-border">
-    <h4
-      class="text-xs font-bold text-theme-muted uppercase font-header tracking-widest mb-4"
-    >
-      Common Procedures
-    </h4>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-      <button
-        onclick={() => helpStore.startTour("initial-onboarding")}
-        class="p-3 border border-theme-border rounded bg-theme-primary/5 hover:bg-theme-primary/10 transition-all flex items-center gap-3 group"
-        aria-label="Restart welcome tour"
-      >
-        <span
-          class="icon-[lucide--map] w-5 h-5 text-theme-muted group-hover:text-theme-primary"
-        ></span>
-        <span
-          class="text-xs font-bold text-theme-text uppercase font-header tracking-wider"
-          >Restart Welcome Tour</span
-        >
-      </button>
-    </div>
   </div>
 </div>

@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
 import {
   type GuideStep,
@@ -194,6 +195,13 @@ class HelpStore {
       this.expandedId = id;
       uiStore.openSettings("help");
     }
+  }
+
+  openHelpWindow() {
+    if (!browser) return;
+    const url = `${window.location.origin}${base}/help`;
+    const features = "width=800,height=900,toolbar=0,location=0,menubar=0";
+    window.open(url, "CodexCrypticaHelp", features);
   }
 
   async copyShareLink(id: string) {

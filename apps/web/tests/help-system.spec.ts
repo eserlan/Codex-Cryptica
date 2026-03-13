@@ -75,4 +75,31 @@ test.describe("Help Center System", () => {
       page.locator('strong:has-text("absolute sovereignty")'),
     ).toBeVisible();
   });
+
+  test("should navigate to standalone help route directly", async ({
+    page,
+  }) => {
+    // 1. Navigate to standalone route
+    await page.goto("/help");
+
+    // 2. Verify standalone header
+    await expect(
+      page.locator("h1", { hasText: "Documentation" }),
+    ).toBeVisible();
+
+    // 3. Verify help articles are loaded
+    await expect(page.getByText("Getting Started")).toBeVisible();
+
+    // 4. Verify Pop-out button is HIDDEN (isStandalone = true)
+    await expect(page.locator('button:has-text("Pop-out")')).not.toBeVisible();
+  });
+
+  test("should show pop-out button in modal help tab", async ({ page }) => {
+    // 1. Open Help in modal
+    await page.getByTestId("settings-button").click();
+    await page.click('[role="tab"]:has-text("Help")');
+
+    // 2. Verify Pop-out button is VISIBLE
+    await expect(page.locator('button:has-text("Pop-out")')).toBeVisible();
+  });
 });
