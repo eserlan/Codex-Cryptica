@@ -18,9 +18,21 @@ The **Stable Layout** toggle (represented by a pin icon in the Graph Toolbar) co
 - **Auto-Arrangement:** Every time the graph structure significantly changes (e.g., adding a connection or a new node), the engine will briefly run a simulation to find an optimal aesthetic arrangement.
 - **Initial Setup:** This is useful for new campaigns or when you want the AI to suggest a logical spatial structure for your lore.
 
-## Manual Redraw
+## Manual Redraw (The "Refresh" Icon)
 
-Regardless of whether Stable Layout is ON or OFF, you can always click the **Redraw Layout** (refresh icon) to force a one-time simulation. This is useful if your graph has become cluttered and you want the engine to clean it up without permanently enabling auto-redraw.
+Regardless of whether **Stable Layout** is ON or OFF, you can always click the **Redraw Layout** button (the circular arrows icon). This action bypasses the stability setting to perform a one-time "forced" simulation of the graph.
+
+### Why Redraw?
+
+- **De-Cluttering:** Over time, especially when adding many new entities or connections, the graph might become visually dense or overlap. Redrawing uses the physics engine to find a fresh, balanced distribution.
+- **New Entities:** When Stable Layout is ON, new nodes are placed in a default "safe" zone. If you add several at once, they may appear grouped too closely. A Manual Redraw will space them out relative to their connections.
+- **Layout Recovery:** If you've manually dragged nodes into a messy arrangement, a redraw will reset them based on the current force-directed algorithm.
+
+### Interaction with Modes
+
+- **Timeline Mode:** Clicking redraw in Timeline Mode will re-calculate the temporal distribution. This is useful if you've filtered the range and want to maximize the use of screen space.
+- **Orbit Mode:** Redrawing in Orbit Mode will re-center the graph on the current Focus Node and re-arrange the surrounding "satellites" for optimal clarity.
+- **Position Saving:** Note that redrawing will overwrite any manually set positions. If you have spent a long time hand-crafting a specific layout, use this button with caution!
 
 ## Timeline & Orbit Modes
 
