@@ -5,7 +5,7 @@ import { canvasRegistry } from "./canvas-registry.svelte";
 import { themeStore } from "./theme.svelte";
 import { debugStore } from "./debug.svelte";
 import * as vaultMigration from "./vault/migration";
-import type { LocalEntity } from "./vault/types";
+import type { LocalEntity, BatchCreateInput } from "./vault/types";
 import type { Entity } from "schema";
 import { getDB } from "../utils/idb";
 import { VaultCrudManager } from "./vault/crud";
@@ -413,12 +413,7 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
-  batchCreateEntities(
-    newEntitiesList: (
-      | LocalEntity
-      | { type: string; title: string; initialData: Partial<Entity> }
-    )[],
-  ) {
+  batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
     return this.crudManager.batchCreateEntities(newEntitiesList);
   }
 

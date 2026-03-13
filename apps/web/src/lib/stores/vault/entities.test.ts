@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { batchCreateEntities } from "./entities";
-import type { LocalEntity } from "./types";
+import type { LocalEntity, BatchCreateInput } from "./types";
 
 describe("vault/entities - batchCreateEntities", () => {
   it("should handle full LocalEntity objects", () => {
@@ -32,7 +32,7 @@ describe("vault/entities - batchCreateEntities", () => {
 
   it("should handle creation requests without IDs", () => {
     const existingEntities: Record<string, LocalEntity> = {};
-    const requests = [
+    const requests: BatchCreateInput[] = [
       {
         type: "location",
         title: "The Misty Mountains",
@@ -44,7 +44,7 @@ describe("vault/entities - batchCreateEntities", () => {
 
     const { entities, created } = batchCreateEntities(
       existingEntities,
-      requests as any,
+      requests,
     );
 
     const createdEntity = created[0];
@@ -58,7 +58,7 @@ describe("vault/entities - batchCreateEntities", () => {
     const existingEntities: Record<string, LocalEntity> = {
       forest: { id: "forest", title: "Forest" } as LocalEntity,
     };
-    const requests = [
+    const requests: BatchCreateInput[] = [
       {
         type: "location",
         title: "Forest",
@@ -68,7 +68,7 @@ describe("vault/entities - batchCreateEntities", () => {
 
     const { entities, created } = batchCreateEntities(
       existingEntities,
-      requests as any,
+      requests,
     );
 
     expect(created[0].id).toBe("forest-1");
@@ -78,15 +78,12 @@ describe("vault/entities - batchCreateEntities", () => {
 
   it("should support mixed full entities and creation requests", () => {
     const existingEntities: Record<string, LocalEntity> = {};
-    const mixed = [
+    const mixed: BatchCreateInput[] = [
       { id: "existing-1", title: "Existing", type: "note" } as LocalEntity,
       { type: "character", title: "New Character", initialData: {} },
     ];
 
-    const { entities, created } = batchCreateEntities(
-      existingEntities,
-      mixed as any,
-    );
+    const { entities, created } = batchCreateEntities(existingEntities, mixed);
 
     expect(created).toHaveLength(2);
     expect(entities["existing-1"]).toBeDefined();
