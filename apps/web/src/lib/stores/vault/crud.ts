@@ -58,7 +58,7 @@ export class VaultCrudManager {
         updated.title.toLowerCase().includes(kw),
       )
     ) {
-      services.contextRetrieval.clearStyleCache();
+      services.ai.clearStyleCache();
     }
 
     await this.scheduleSave(updated);
