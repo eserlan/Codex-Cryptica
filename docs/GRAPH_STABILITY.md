@@ -38,3 +38,7 @@ Regardless of whether **Stable Layout** is ON or OFF, you can always click the *
 
 - **Timeline Mode:** Bypasses stability settings to arrange nodes chronologically along an X or Y axis based on their associated dates.
 - **Orbit Mode:** Centers the graph around a specific "Focus Node," arranging immediate connections in a circular pattern. Stability is partially maintained for distant nodes, but the focus area is always recalculated for clarity.
+
+---
+
+> **Tip:** You can use the `Fit to Screen` button (maximize icon) after a redraw to ensure the entire newly-calculated graph is visible.
