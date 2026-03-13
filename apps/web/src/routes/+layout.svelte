@@ -633,7 +633,7 @@
     {/if}
 
     <main
-      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage
+      class="flex-1 relative flex flex-col min-h-0 {isMarketingPage || isPopup
         ? 'overflow-y-auto'
         : ''}"
     >

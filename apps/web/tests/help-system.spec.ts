@@ -97,6 +97,7 @@ test.describe("Help Center System", () => {
   test("should show pop-out button in modal help tab", async ({ page }) => {
     // 1. Open Help in modal
     await page.getByTestId("settings-button").click();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
     await page.click('[role="tab"]:has-text("Help")');
 
     // 2. Verify Pop-out button is VISIBLE

@@ -1,12 +1,5 @@
 <script lang="ts">
   import HelpTab from "$lib/components/help/HelpTab.svelte";
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { onMount } from "svelte";
-
-  onMount(() => {
-    // Ensure help store is initialized if navigating directly
-    helpStore.init();
-  });
 </script>
 
 <svelte:head>

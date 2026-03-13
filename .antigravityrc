@@ -15,6 +15,5 @@ terminal:
     - "Set-Content *"
     - "[System.Environment]::SetEnvironmentVariable*"
     - "python3 *"
-    - "python3 *"
     - "rm -rf .cache"
   auto_approve_all: true

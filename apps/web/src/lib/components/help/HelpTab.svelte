@@ -17,7 +17,7 @@
         return DOMPurify.sanitize(html);
       } catch (e) {
         console.error("Failed to parse help article", e);
-        return content;
+        return DOMPurify.sanitize(content);
       }
     })();
 
