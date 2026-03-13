@@ -9,13 +9,13 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED |
 | 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED |
 | 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 449 | UI Component        | ✅ FIXED |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | 1,058         | UI Component        |          |
-| 5    | `apps/web/src/lib/services/ai.ts`                           | 819           | Service (API/Logic) |          |
-| 6    | `apps/web/src/routes/+layout.svelte`                        | 753           | UI Layout           |          |
-| 7    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         |          |
-| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 620           | UI Component        |          |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
-| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 535           | UI Component        |          |
+| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 331 | UI Component        | ✅ FIXED |
+| 5    | `apps/web/src/lib/services/ai.ts`                           | 707           | Service (API/Logic) |          |
+| 6    | `apps/web/src/routes/+layout.svelte`                        | 723           | UI Layout           |          |
+| 7    | `packages/sync-engine/src/SyncService.ts`                   | 607           | Engine Core         |          |
+| 8    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 573           | UI Component        |          |
+| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 565           | UI Component        |          |
+| 10   | `apps/web/src/lib/components/map/MapView.svelte`            | 598           | UI Component        |          |
 
 ---
 
