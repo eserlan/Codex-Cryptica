@@ -44,7 +44,7 @@ export function parseHelpArticle(
       title: metadata.title || "Untitled",
       tags: metadata.tags || [],
       rank: metadata.rank,
-      hidden: metadata.hidden || false,
+      hidden: metadata.hidden === true,
       content: content ? content.trim() : "",
     };
   } catch (e) {
@@ -56,9 +56,7 @@ export function parseHelpArticle(
 export function processHelpArticles(
   modules: Record<string, any>,
 ): HelpArticle[] {
-  const articles: HelpArticle[] = [];
-  const loadedIds = new Set<string>();
-
+  const articleMap = new Map<string, HelpArticle>();
   const paths = Object.keys(modules).sort();
 
   for (const path of paths) {
@@ -66,32 +64,26 @@ export function processHelpArticles(
     const article = parseHelpArticle(path, rawContent);
 
     if (article) {
-      if (loadedIds.has(article.id)) {
+      if (articleMap.has(article.id)) {
         console.warn(
           `Duplicate help article ID found: ${article.id}. Overwriting with content from ${path}.`,
         );
-        const index = articles.findIndex((a) => a.id === article.id);
-        if (index !== -1) {
-          articles.splice(index, 1);
-        }
       }
-
-      loadedIds.add(article.id);
-      if (!article.hidden) {
-        articles.push(article);
-      }
+      articleMap.set(article.id, article);
     }
   }
 
-  return articles.sort((a, b) => {
-    const rankA = a.rank ?? Number.MAX_SAFE_INTEGER;
-    const rankB = b.rank ?? Number.MAX_SAFE_INTEGER;
+  return Array.from(articleMap.values())
+    .filter((a) => !a.hidden)
+    .sort((a, b) => {
+      const rankA = a.rank ?? Number.MAX_SAFE_INTEGER;
+      const rankB = b.rank ?? Number.MAX_SAFE_INTEGER;
 
-    if (rankA !== rankB) {
-      return rankA - rankB;
-    }
-    return a.title.localeCompare(b.title);
-  });
+      if (rankA !== rankB) {
+        return rankA - rankB;
+      }
+      return a.title.localeCompare(b.title);
+    });
 }
 
 export function loadHelpArticles(): HelpArticle[] {
