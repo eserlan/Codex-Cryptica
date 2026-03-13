@@ -86,6 +86,16 @@
         ></span></button
       >
       <button
+        class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {ui.showSelectionConnector
+          ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+          : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
+        onclick={() => (ui.showSelectionConnector = !ui.showSelectionConnector)}
+        title="Connect Selected Nodes"
+        aria-label="Connect Selected Nodes"
+        aria-pressed={ui.showSelectionConnector}
+        ><span class="icon-[lucide--link] w-4 h-4"></span></button
+      >
+      <button
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => onApplyLayout(false, true, "UI Redraw Button")}
         title="Redraw Layout"
