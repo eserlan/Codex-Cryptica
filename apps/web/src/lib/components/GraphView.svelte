@@ -417,7 +417,12 @@
 
   <GraphHUD {selectedEntity} {parentEntity} {selectedId} {isLayoutRunning} />
 
-  <GraphToolbar {cy} {isLayoutRunning} onApplyLayout={applyCurrentLayout} />
+  <GraphToolbar
+    {cy}
+    {isLayoutRunning}
+    onApplyLayout={applyCurrentLayout}
+    selectedCount={graph.selection.length}
+  />
 
   <OrbitControls />
 

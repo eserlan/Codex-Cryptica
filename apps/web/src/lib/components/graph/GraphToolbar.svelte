@@ -5,7 +5,7 @@
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
 
-  let { cy, isLayoutRunning, onApplyLayout } = $props<{
+  let { cy, isLayoutRunning, onApplyLayout, selectedCount } = $props<{
     cy: Core | undefined;
     isLayoutRunning: boolean;
     onApplyLayout: (
@@ -13,9 +13,17 @@
       isForced?: boolean,
       caller?: string,
     ) => Promise<void>;
+    selectedCount: number;
   }>();
 
   let showMinimap = $state(false);
+
+  const canConnect = $derived(selectedCount === 2);
+  const connectionTooltip = $derived(
+    selectedCount === 2
+      ? "Connect Selected Nodes"
+      : "Select 2 nodes to create a connection",
+  );
 </script>
 
 <div
@@ -85,6 +93,23 @@
             : 'icon-[lucide--pin-off]'} w-4 h-4"
         ></span></button
       >
+      {#if !ui.isGuestMode}
+        <button
+          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {ui.showSelectionConnector
+            ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
+            : canConnect
+              ? 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'
+              : 'border-theme-border bg-theme-surface/40 text-theme-muted/40 cursor-not-allowed'}"
+          onclick={() =>
+            canConnect &&
+            (ui.showSelectionConnector = !ui.showSelectionConnector)}
+          title={connectionTooltip}
+          aria-label={connectionTooltip}
+          aria-pressed={ui.showSelectionConnector}
+          disabled={!canConnect}
+          ><span class="icon-[lucide--link] w-4 h-4"></span></button
+        >
+      {/if}
       <button
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
         onclick={() => onApplyLayout(false, true, "UI Redraw Button")}
