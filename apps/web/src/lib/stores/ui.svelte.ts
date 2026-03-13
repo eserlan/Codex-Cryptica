@@ -136,6 +136,13 @@ class UIStore {
     }
   }
 
+  toggleConnectMode() {
+    this.isConnecting = !this.isConnecting;
+    if (!this.isConnecting) {
+      this.connectingNodeId = null;
+    }
+  }
+
   startSelectionConnection() {
     this.showSelectionConnector = true;
   }

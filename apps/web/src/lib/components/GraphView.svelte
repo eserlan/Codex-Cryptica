@@ -3,6 +3,7 @@
   import { initGraph } from "graph-engine";
   import { graph } from "$lib/stores/graph.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { ui } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
 
   import { isTemporalMetadataEqual } from "$lib/utils/comparison";
@@ -44,8 +45,6 @@
     ),
   );
 
-  let connectMode = $state(false);
-  let sourceId = $state<string | null>(null);
   let { selectedId = $bindable(null) } = $props<{
     selectedId: string | null;
   }>();
@@ -139,13 +138,11 @@
     );
   };
 
-  const toggleConnectMode = () => {
-    connectMode = !connectMode;
-    if (!connectMode) {
-      sourceId = null;
+  $effect(() => {
+    if (!ui.isConnecting) {
       cy?.$(".selected-source").removeClass("selected-source");
     }
-  };
+  });
 
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = document.activeElement;
@@ -161,7 +158,13 @@
       applyCurrentLayout(false, false, "Keyboard Shortcut (T)");
     }
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      if (!vault.isGuest) toggleConnectMode();
+      if (!vault.isGuest) {
+        if (selectedCount === 2) {
+          ui.showSelectionConnector = !ui.showSelectionConnector;
+        } else {
+          ui.toggleConnectMode();
+        }
+      }
     }
     if (e.key.toLowerCase() === "l" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleLabels();
@@ -169,8 +172,8 @@
     if (e.key.toLowerCase() === "i" && !e.ctrlKey && !e.metaKey && !e.altKey) {
       graph.toggleImages();
     }
-    if (e.key === "Escape" && connectMode) {
-      toggleConnectMode();
+    if (e.key === "Escape" && ui.isConnecting) {
+      ui.toggleConnectMode();
     }
   };
 
@@ -217,18 +220,18 @@
               hoverPosition = null;
             },
             onNodeTap: async (id, node) => {
-              if (connectMode) {
-                if (!sourceId) {
-                  sourceId = id;
+              if (ui.isConnecting) {
+                if (!ui.connectingNodeId) {
+                  ui.connectingNodeId = id;
                   node.addClass("selected-source");
-                } else if (sourceId === id) {
-                  sourceId = null;
+                } else if (ui.connectingNodeId === id) {
+                  ui.connectingNodeId = null;
                   node.removeClass("selected-source");
                 } else {
-                  const source = sourceId;
+                  const source = ui.connectingNodeId;
                   const target = id;
                   await vault.addConnection(source, target, "neutral");
-                  toggleConnectMode();
+                  ui.toggleConnectMode();
                 }
               } else {
                 selectedId = id;
@@ -244,7 +247,7 @@
             },
             onBackgroundTap: () => {
               selectedId = null;
-              if (connectMode) toggleConnectMode();
+              if (ui.isConnecting) ui.toggleConnectMode();
             },
             onViewportChange: () => {
               if (hoveredEntityId && instance) {

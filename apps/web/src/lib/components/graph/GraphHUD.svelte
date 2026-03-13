@@ -98,4 +98,25 @@
       Neural Layout Synthesis Processing...
     </div>
   {/if}
+
+  {#if ui.isConnecting}
+    <div
+      class="bg-blue-500/20 border border-blue-500/50 backdrop-blur-md px-4 py-2 rounded flex items-center gap-3 text-[10px] font-bold tracking-[0.2em] text-blue-300 shadow-lg uppercase pointer-events-auto"
+      transition:fade
+    >
+      <span class="icon-[lucide--link] w-3.5 h-3.5 animate-pulse"></span>
+      {#if !ui.connectingNodeId}
+        Select Source Entity
+      {:else}
+        Select Target to Connect
+      {/if}
+      <button
+        onclick={() => ui.toggleConnectMode()}
+        class="ml-2 hover:text-white transition-colors"
+        title="Cancel (Esc)"
+      >
+        [ESC]
+      </button>
+    </div>
+  {/if}
 </div>
