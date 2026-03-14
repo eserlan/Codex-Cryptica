@@ -79,10 +79,7 @@
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (uniqueFormulas.length === 0) {
-        console.log("DiceModal: ArrowUp pressed but uniqueFormulas is empty");
-        return;
-      }
+      if (uniqueFormulas.length === 0) return;
 
       if (historyIndex === -1) {
         originalFormula = formula;

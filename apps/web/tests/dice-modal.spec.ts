@@ -59,7 +59,7 @@ test.describe("Dice Modal UI and Isolation", () => {
     const historyItem = modal
       .getByTestId("roll-formula")
       .filter({ hasText: /1d20/i });
-    await expect(historyItem).toBeVisible({ timeout: 10000 });
+    await expect(historyItem.first()).toBeVisible({ timeout: 10000 });
   });
 
   test("should perform a custom roll in modal", async ({ page }) => {
@@ -74,7 +74,7 @@ test.describe("Dice Modal UI and Isolation", () => {
     const historyItem = modal
       .getByTestId("roll-formula")
       .filter({ hasText: /3d6 \+ 5/i });
-    await expect(historyItem).toBeVisible({ timeout: 10000 });
+    await expect(historyItem.first()).toBeVisible({ timeout: 10000 });
   });
 
   test("should navigate history using Arrow keys", async ({ page }) => {
@@ -86,19 +86,19 @@ test.describe("Dice Modal UI and Isolation", () => {
     // 1. Perform two different rolls
     await input.fill("1d4");
     await input.press("Enter");
-    await expect(
-      modal.getByTestId("roll-formula").filter({ hasText: /1d4/i }).first(),
-    ).toBeVisible();
-
-    await page.waitForTimeout(500); // Give it time to breathe
+    const firstRoll = modal
+      .getByTestId("roll-formula")
+      .filter({ hasText: /1d4/i })
+      .first();
+    await expect(firstRoll).toBeVisible();
 
     await input.fill("2d8");
     await input.press("Enter");
-    await expect(
-      modal.getByTestId("roll-formula").filter({ hasText: /2d8/i }).first(),
-    ).toBeVisible();
-
-    await page.waitForTimeout(500);
+    const secondRoll = modal
+      .getByTestId("roll-formula")
+      .filter({ hasText: /2d8/i })
+      .first();
+    await expect(secondRoll).toBeVisible();
 
     // 2. Press ArrowUp to get "2d8" (the last roll)
     await input.focus();
@@ -124,9 +124,13 @@ test.describe("Dice Modal UI and Isolation", () => {
 
     const input = modal.getByPlaceholder(/Enter formula/i);
     for (let i = 0; i < 15; i++) {
-      await input.fill(`1d${i + 2}`);
+      const formula = `1d${i + 2}`;
+      await input.fill(formula);
       await input.press("Enter");
-      await page.waitForTimeout(50);
+      // Wait for the new roll to appear at the top
+      await expect(modal.getByTestId("roll-formula").first()).toContainText(
+        formula,
+      );
     }
 
     const scrollContainer = modal.locator(".overflow-y-auto");
@@ -134,11 +138,15 @@ test.describe("Dice Modal UI and Isolation", () => {
       el.scrollTop = el.scrollHeight;
     });
 
-    await page.waitForTimeout(500);
-    const scrollTopBefore = await scrollContainer.evaluate(
-      (el) => el.scrollTop,
-    );
-    expect(scrollTopBefore).toBeGreaterThan(0);
+    // Verify we are actually scrolled down
+    await expect
+      .poll(
+        async () => {
+          return await scrollContainer.evaluate((el) => el.scrollTop);
+        },
+        { timeout: 5000 },
+      )
+      .toBeGreaterThan(0);
 
     const oldestRerollBtn = modal
       .locator('button[title="Reroll this formula"]')
@@ -146,6 +154,7 @@ test.describe("Dice Modal UI and Isolation", () => {
     await oldestRerollBtn.scrollIntoViewIfNeeded();
     await oldestRerollBtn.click({ force: true });
 
+    // Wait for scroll and verify we are back at the top
     await expect
       .poll(
         async () => {
