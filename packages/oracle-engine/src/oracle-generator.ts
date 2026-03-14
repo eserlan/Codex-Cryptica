@@ -99,7 +99,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-2.5-flash-image",
+      context.modelName,
     );
   }
 
@@ -138,7 +138,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-2.5-flash-image",
+      context.modelName,
     );
   }
 

@@ -80,6 +80,7 @@ export class GraphImageManager {
           });
         }
 
+        this.cy.style().update();
         options.onBatchApplied?.(results.length);
       } catch (err) {
         options.onError?.(err);

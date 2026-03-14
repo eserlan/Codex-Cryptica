@@ -254,7 +254,8 @@ export const getGraphStyle = (
     });
 
     baseStyle.push({
-      selector: "node[resolvedImage]",
+      selector:
+        "node[resolvedImage], node[image][resolvedImage], node[thumbnail][resolvedImage]",
       style: {
         "background-fit": "cover",
         "background-clip": "node",
