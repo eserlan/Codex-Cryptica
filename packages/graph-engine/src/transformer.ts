@@ -233,7 +233,9 @@ export const getGraphStyle = (
         "text-margin-y": 8,
         "text-max-width": 80,
         "text-wrap": "wrap",
-        "transition-property": "opacity",
+        opacity: 1,
+        "text-opacity": 1,
+        "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
       },
     },
@@ -273,20 +275,6 @@ export const getGraphStyle = (
 
   baseStyle.push(
     {
-      selector: "node:selected",
-      style: {
-        "background-color": tokens.surface,
-        "border-color": tokens.primary,
-        "border-width": graph.nodeBorderWidth + 1,
-        color: "#fff",
-        "text-outline-color": "#000",
-        "text-outline-width": 2,
-        "overlay-color": tokens.primary,
-        "overlay-padding": 8,
-        "overlay-opacity": 0.3,
-      },
-    },
-    {
       selector: ".selected-source",
       style: {
         "border-width": graph.nodeBorderWidth + 1,
@@ -314,7 +302,7 @@ export const getGraphStyle = (
         "text-background-opacity": 0.8,
         "text-background-padding": "2px",
         "text-margin-y": -8,
-        "transition-property": "opacity",
+        "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
       },
     },
@@ -340,32 +328,26 @@ export const getGraphStyle = (
       },
     },
     {
-      selector: "edge:selected",
-      style: {
-        "line-color": tokens.primary,
-        "target-arrow-color": tokens.primary,
-        width: 2,
-        opacity: 1,
-      },
-    },
-    {
       selector: ".dimmed",
       style: {
-        opacity: 0.35,
+        opacity: 0.08,
+        "text-opacity": 0.08,
         events: "no",
       },
     },
     {
       selector: ".neighborhood",
       style: {
-        opacity: 1,
+        opacity: 0.75,
+        "text-opacity": 0.75,
         "z-index": 100,
       },
     },
     {
       selector: ".secondary-neighborhood",
       style: {
-        opacity: 0.6,
+        opacity: 0.5,
+        "text-opacity": 0.5,
         "z-index": 50,
       },
     },
@@ -379,7 +361,7 @@ export const getGraphStyle = (
     },
   }));
 
-  // Revealed styles come LAST to override category borders,
+  // Revealed styles come after category borders
   const revealedStyles: any[] = [
     {
       selector: "node[isRevealed]",
@@ -404,5 +386,43 @@ export const getGraphStyle = (
     });
   }
 
-  return [...baseStyle, ...categoryStyles, ...revealedStyles];
+  // Selection styles MUST come last to ensure they override EVERYTHING
+  // (category colors, revealed borders, and focus-mode opacities)
+  const selectionStyles: any[] = [
+    {
+      selector: "node:selected",
+      style: {
+        "background-color": tokens.surface,
+        "border-color": tokens.primary,
+        "border-width": graph.nodeBorderWidth + 1,
+        color: "#fff",
+        opacity: 1,
+        "text-opacity": 1,
+        "text-outline-color": "#000",
+        "text-outline-width": 2,
+        "underlay-color": tokens.primary,
+        "underlay-padding": 8,
+        "underlay-opacity": 0.3,
+        "underlay-shape": graph.nodeShape,
+        "z-index": 1000,
+      },
+    },
+    {
+      selector: "edge:selected",
+      style: {
+        "line-color": tokens.primary,
+        "target-arrow-color": tokens.primary,
+        width: 2,
+        opacity: 1,
+        "text-opacity": 1,
+      },
+    },
+  ];
+
+  return [
+    ...baseStyle,
+    ...categoryStyles,
+    ...revealedStyles,
+    ...selectionStyles,
+  ];
 };
