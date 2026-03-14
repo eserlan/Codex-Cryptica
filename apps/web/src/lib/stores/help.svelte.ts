@@ -7,8 +7,8 @@ import {
   HELP_ARTICLES,
 } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
-import { uiStore } from "./ui.svelte";
-import { searchStore } from "./search.svelte";
+import { uiStore as defaultUiStore } from "./ui.svelte";
+import { searchStore as defaultSearchStore } from "./search.svelte";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -18,7 +18,7 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
-class HelpStore {
+export class HelpStore {
   // Walkthrough State
   activeTour = $state<{
     id: string;
@@ -37,6 +37,10 @@ class HelpStore {
   isHelpOpen = $state(false);
   expandedId = $state<string | null>(null);
   isInitialized = $state(false);
+
+  // Dependencies
+  private uiStore: typeof defaultUiStore;
+  private searchStore: typeof defaultSearchStore;
 
   get searchResults() {
     // If not initialized or index doesn't exist, return all articles
@@ -67,7 +71,12 @@ class HelpStore {
 
   private index: any;
 
-  constructor() {
+  constructor(
+    uiStore: typeof defaultUiStore = defaultUiStore,
+    searchStore: typeof defaultSearchStore = defaultSearchStore,
+  ) {
+    this.uiStore = uiStore;
+    this.searchStore = searchStore;
     // Init handled explicitly in layout
   }
 
@@ -132,8 +141,8 @@ class HelpStore {
 
     if (id === "initial-onboarding") {
       // Dismiss landing page and close settings modal to ensure the tour is visible
-      uiStore.dismissedLandingPage = true;
-      uiStore.closeSettings();
+      this.uiStore.dismissedLandingPage = true;
+      this.uiStore.closeSettings();
 
       this.activeTour = {
         id,
@@ -151,15 +160,15 @@ class HelpStore {
       // Trigger sidepanel states based on step targets
       const nextStep = this.activeTour.steps[this.activeTour.currentStepIndex];
       if (nextStep.id === "search") {
-        searchStore.open();
+        this.searchStore.open();
       } else if (nextStep.id === "oracle") {
         setTimeout(() => {
-          uiStore.activeSidebarTool = "oracle";
-          uiStore.leftSidebarOpen = true;
+          this.uiStore.activeSidebarTool = "oracle";
+          this.uiStore.leftSidebarOpen = true;
         }, 100);
       } else if (nextStep.id === "settings") {
         setTimeout(() => {
-          uiStore.openSettings("vault");
+          this.uiStore.openSettings("vault");
         }, 100);
       }
     } else {
@@ -173,12 +182,12 @@ class HelpStore {
 
     const prevStep = this.activeTour.steps[this.activeTour.currentStepIndex];
     if (prevStep.id === "search") {
-      searchStore.open();
+      this.searchStore.open();
     } else if (prevStep.id === "oracle") {
-      uiStore.activeSidebarTool = "oracle";
-      uiStore.leftSidebarOpen = true;
+      this.uiStore.activeSidebarTool = "oracle";
+      this.uiStore.leftSidebarOpen = true;
     } else if (prevStep.id === "settings") {
-      uiStore.openSettings("vault");
+      this.uiStore.openSettings("vault");
     }
   }
 
@@ -215,7 +224,7 @@ class HelpStore {
     const article = HELP_ARTICLES.find((a) => a.id === id);
     if (article) {
       this.expandedId = id;
-      uiStore.openSettings("help");
+      this.uiStore.openSettings("help");
     }
   }
 
