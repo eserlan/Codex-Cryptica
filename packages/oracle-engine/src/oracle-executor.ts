@@ -576,12 +576,31 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         );
         const imageUrl = URL.createObjectURL(blob);
 
+        const { primaryEntityId } = await this.generator.generateChatResponse(
+          query,
+          context,
+          () => {},
+        );
+
         const finalMsgs = [...context.chatHistory.messages];
         const last = finalMsgs[finalMsgs.length - 1];
         last.imageUrl = imageUrl;
         last.imageBlob = blob;
         last.content = `Generated visualization for: "${query}"`;
+        last.entityId = primaryEntityId;
         context.chatHistory.setMessages(finalMsgs);
+
+        // Auto-attach to entity if possible
+        if (primaryEntityId && !context.isDemoMode) {
+          const { image, thumbnail } = await context.vault.saveImageToVault(
+            blob,
+            primaryEntityId,
+          );
+          await context.vault.updateEntity(primaryEntityId, {
+            image,
+            thumbnail,
+          });
+        }
       } else {
         const { primaryEntityId, sourceIds } =
           await this.generator.generateChatResponse(
@@ -635,7 +654,14 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           entityId,
         });
       } else {
-        await context.vault.saveImageToVault(blob, entityId);
+        const { image, thumbnail } = await context.vault.saveImageToVault(
+          blob,
+          entityId,
+        );
+        await context.vault.updateEntity(entityId, {
+          image,
+          thumbnail,
+        });
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({

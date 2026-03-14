@@ -6,6 +6,7 @@
 **Headers**:
 
 - `Content-Type: application/json`
+- `x-goog-api-key: [USER_API_KEY]`
 
 **Body**:
 

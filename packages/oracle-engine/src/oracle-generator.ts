@@ -99,7 +99,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      context.modelName,
+      "gemini-3.1-flash-image-preview", // Use Nano Banana 2 specifically for IMAGE modality
     );
   }
 
@@ -138,7 +138,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      context.modelName,
+      "gemini-3.1-flash-image-preview", // Use Nano Banana 2 specifically for IMAGE modality
     );
   }
 

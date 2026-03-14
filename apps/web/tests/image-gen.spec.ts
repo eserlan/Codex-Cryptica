@@ -56,26 +56,47 @@ test.describe("Oracle Image Generation", () => {
   }) => {
     // Mock the generateContent API
     await page.route("**/models/*:generateContent**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    inlineData: {
-                      data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-                      mimeType: "image/png",
+      const postData = route.request().postDataJSON();
+      const isImageRequest =
+        postData?.generationConfig?.response_modalities?.includes("IMAGE");
+
+      if (isImageRequest) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                        mimeType: "image/png",
+                      },
                     },
-                  },
-                ],
+                  ],
+                },
               },
-            },
-          ],
-        }),
-      });
+            ],
+          }),
+        });
+      } else {
+        // Text request (likely prompt distillation)
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: "Mocked distilled prompt..." }],
+                },
+              },
+            ],
+          }),
+        });
+      }
     });
 
     // 1. Open Oracle
@@ -102,26 +123,47 @@ test.describe("Oracle Image Generation", () => {
   }) => {
     // Mock the generateContent API
     await page.route("**/models/*:generateContent**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    inlineData: {
-                      data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
-                      mimeType: "image/png",
+      const postData = route.request().postDataJSON();
+      const isImageRequest =
+        postData?.generationConfig?.response_modalities?.includes("IMAGE");
+
+      if (isImageRequest) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [
+                    {
+                      inlineData: {
+                        data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                        mimeType: "image/png",
+                      },
                     },
-                  },
-                ],
+                  ],
+                },
               },
-            },
-          ],
-        }),
-      });
+            ],
+          }),
+        });
+      } else {
+        // Text request (likely prompt distillation)
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: "Mocked distilled prompt..." }],
+                },
+              },
+            ],
+          }),
+        });
+      }
     });
 
     // 1. Ensure we are in a state where we can create an entity

@@ -55,12 +55,13 @@ export class DefaultImageGenerationService implements ImageGenerationService {
       console.log(
         `[ImageGenerationService] Generating image with model: ${modelName}`,
       );
-      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent?key=${apiKey}`;
+      const url = `${GEMINI_API_BASE_URL}/models/${modelName}:generateContent`;
 
       const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify({
           contents: [

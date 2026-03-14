@@ -62,29 +62,53 @@
 
     if (!entity) return;
 
-    const messageId = e.dataTransfer?.getData("application/codex-image-id");
+    const messageId =
+      e.dataTransfer?.getData("application/codex-image-id") ||
+      e.dataTransfer?.getData("text/plain");
+
     if (messageId) {
       const message = oracle.messages.find((m) => m.id === messageId);
       if (message?.imageBlob) {
         try {
-          await vault.saveImageToVault(message.imageBlob, entity.id);
+          const { image, thumbnail } = await vault.saveImageToVault(
+            message.imageBlob,
+            entity.id,
+          );
+          await vault.updateEntity(entity.id, { image, thumbnail });
         } catch (err) {
-          console.error("Failed to save dropped image", err);
-          alert("Failed to archive dropped image.");
+          console.error("[DetailImage] Failed to save Oracle image:", err);
+          alert("Failed to archive image from Oracle.");
+        }
+      } else {
+        // If it was just text/plain but not a valid message ID, fall through to files
+        if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+          await handleFileDrop(e.dataTransfer.files[0]);
         }
       }
     } else if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith("image/")) {
-        try {
-          await vault.saveImageToVault(file, entity.id);
-        } catch (err) {
-          console.error("Failed to save dropped external file", err);
-          alert("Failed to save external image.");
-        }
-      }
+      await handleFileDrop(e.dataTransfer.files[0]);
+    } else {
+      console.warn(
+        "[DetailImage] Drop event contained no recognized data types",
+      );
     }
   };
+
+  async function handleFileDrop(file: File) {
+    if (!entity) return;
+    if (file.type.startsWith("image/")) {
+      try {
+        const { image, thumbnail } = await vault.saveImageToVault(
+          file,
+          entity.id,
+        );
+        await vault.updateEntity(entity.id, { image, thumbnail });
+      } catch (err) {
+        console.error("[DetailImage] Failed to save external file:", err);
+        alert("Failed to save external image.");
+      }
+    }
+  }
 </script>
 
 <svelte:window

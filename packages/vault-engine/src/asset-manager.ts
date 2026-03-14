@@ -163,7 +163,18 @@ export class AssetManager {
 
       const blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
       return URL.createObjectURL(blob);
-    } catch (err) {
+    } catch (err: any) {
+      // If the file or directory doesn't exist, just return empty string to avoid crashing the graph.
+      // We check multiple properties because different browsers and our own wrapping can vary.
+      const isNotFound =
+        err.name === "NotFoundError" ||
+        err.code === 8 ||
+        err.message?.toLowerCase().includes("not found") ||
+        err.cause?.name === "NotFoundError";
+
+      if (isNotFound) {
+        return "";
+      }
       console.warn(`Failed to resolve image path: ${cleanPath}`, err);
       return "";
     }
