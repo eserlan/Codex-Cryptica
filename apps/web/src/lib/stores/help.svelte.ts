@@ -18,6 +18,8 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
+const SEARCH_FIELDS = ["title", "tags", "content"];
+
 export class HelpStore {
   // Walkthrough State
   activeTour = $state<{
@@ -42,7 +44,11 @@ export class HelpStore {
   private uiStore: typeof defaultUiStore;
   private searchStore: typeof defaultSearchStore;
 
-  get searchResults() {
+  /**
+   * searchResults is an explicit derived property to ensure caching
+   * and reactive updates when searchQuery or isInitialized changes.
+   */
+  searchResults = $derived.by(() => {
     // If not initialized or index doesn't exist, return all articles
     if (!this.isInitialized || !this.index) return HELP_ARTICLES;
 
@@ -60,7 +66,7 @@ export class HelpStore {
     } else {
       return [];
     }
-  }
+  });
 
   // Persistence State
   private state = $state<HelpStoreState>({
@@ -119,8 +125,6 @@ export class HelpStore {
     this.activeTour = null;
     this.isHelpOpen = false;
     this.expandedId = null;
-    // We don't reset isInitialized or index unless explicitly requested
-    // but we can clear search results by clearing query.
   }
 
   /**
@@ -135,11 +139,7 @@ export class HelpStore {
     this.index = new FlexSearch.Document({
       document: {
         id: "id",
-        index: [
-          { field: "title", tokenize: "forward" },
-          { field: "tags", tokenize: "forward" },
-          { field: "content", tokenize: "forward" },
-        ],
+        index: SEARCH_FIELDS,
         store: true,
       },
     });

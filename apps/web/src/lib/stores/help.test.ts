@@ -32,10 +32,12 @@ describe("HelpStore", () => {
     const store = new HelpStore(mockUiStore, mockSearchStore);
 
     // Test that it uses the injected UI store
+    const original = (window as any).DISABLE_ONBOARDING;
     (window as any).DISABLE_ONBOARDING = false;
     store.startTour("initial-onboarding");
     expect(mockUiStore.dismissedLandingPage).toBe(true);
     expect(mockUiStore.closeSettings).toHaveBeenCalled();
+    (window as any).DISABLE_ONBOARDING = original;
   });
 
   it("should initialize with all help articles", () => {
