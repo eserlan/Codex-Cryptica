@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { helpStore } from "$stores/help.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
   import { fly } from "svelte/transition";
   import { marked } from "marked";
   import DOMPurify from "isomorphic-dompurify";

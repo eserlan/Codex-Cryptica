@@ -3,7 +3,6 @@ import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
 import {
   type GuideStep,
-  type HelpArticle,
   ONBOARDING_TOUR,
   HELP_ARTICLES,
 } from "$lib/config/help-content";
@@ -35,10 +34,29 @@ class HelpStore {
 
   // Help Center State
   searchQuery = $state("");
-  searchResults = $state<HelpArticle[]>([]);
   isHelpOpen = $state(false);
   expandedId = $state<string | null>(null);
   isInitialized = $state(false);
+
+  get searchResults() {
+    // If not initialized or index doesn't exist, return all articles
+    if (!this.isInitialized || !this.index) return HELP_ARTICLES;
+
+    const query = this.searchQuery;
+    if (!query) return HELP_ARTICLES;
+
+    const results = this.index.search(query);
+    const allMatches = new Set<string>();
+    results.forEach((r: any) => {
+      r.result.forEach((id: any) => allMatches.add(id.toString()));
+    });
+
+    if (allMatches.size > 0) {
+      return HELP_ARTICLES.filter((a) => allMatches.has(a.id));
+    } else {
+      return [];
+    }
+  }
 
   // Persistence State
   private state = $state<HelpStoreState>({
@@ -99,7 +117,6 @@ class HelpStore {
     });
 
     HELP_ARTICLES.forEach((article) => this.index.add(article));
-    this.searchResults = HELP_ARTICLES;
   }
 
   private save() {
@@ -187,25 +204,6 @@ class HelpStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    if (!this.index) {
-      this.buildIndex();
-    }
-    if (!query) {
-      this.searchResults = HELP_ARTICLES;
-      return;
-    }
-
-    const results = this.index.search(query);
-    const allMatches = new Set<string>();
-    results.forEach((r: any) => {
-      r.result.forEach((id: any) => allMatches.add(id.toString()));
-    });
-
-    if (allMatches.size > 0) {
-      this.searchResults = HELP_ARTICLES.filter((a) => allMatches.has(a.id));
-    } else {
-      this.searchResults = [];
-    }
   }
 
   toggleArticle(id: string) {
@@ -262,4 +260,7 @@ class HelpStore {
   }
 }
 
-export const helpStore = new HelpStore();
+const HELP_KEY = "__codex_help_instance__";
+export const helpStore: HelpStore =
+  (globalThis as any)[HELP_KEY] ??
+  ((globalThis as any)[HELP_KEY] = new HelpStore());
