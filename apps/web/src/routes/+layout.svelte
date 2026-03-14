@@ -3,31 +3,40 @@
   import { browser } from "$app/environment";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { createGlobalShortcutHandler } from "$lib/actions/useGlobalShortcuts";
-  import {
-    bootWorkspaceStores,
-    createGlobalEventHandlers,
-    exposeE2EGlobals,
-    initializeShellServices,
-    maybeStartOnboardingOrDemo,
-    openHelpArticleFromHash,
-    registerProductionServiceWorker,
-  } from "$lib/app/init/app-init";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
+  import SearchModal from "$lib/components/search/SearchModal.svelte";
+  import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
+  import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import { HELP_ARTICLES } from "$lib/config/help-content";
   import { demoService } from "$lib/services/demo";
   import { helpStore } from "$lib/stores/help.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { timelineStore } from "$lib/stores/timeline.svelte";
+  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
 
   let { children } = $props();
 
   let OracleSidebarPanel = $state<any>(null);
+  let OracleWindow = $state<any>(null);
+  let ZenModeModal = $state<any>(null);
+  let TourOverlay = $state<any>(null);
+  let DebugConsole = $state<any>(null);
+  let MergeNodesDialog = $state<any>(null);
+  let BulkLabelDialog = $state<any>(null);
+  let DiceModal = $state<any>(null);
 
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
@@ -39,26 +48,89 @@
       page.url.pathname.startsWith(`${base}${route}`),
     ),
   );
+  const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
 
   let isMobileMenuOpen = $state(false);
   let hasBooted = $state(false);
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
 
+  const isSpecialEnv =
+    import.meta.env.DEV ||
+    (typeof window !== "undefined" && (window as any).__E2E__) ||
+    import.meta.env.VITE_STAGING === "true";
+
+  const logChunkError = (name: string, error: any) => {
+    if (isSpecialEnv) {
+      console.error(`Failed to load ${name}`, error);
+    } else {
+      debugStore.error(`Failed to lazy-load component: ${name}`, error);
+    }
+  };
+
   $effect(() => {
     if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
       import("$lib/components/oracle/OracleSidebarPanel.svelte")
         .then((module) => (OracleSidebarPanel = module.default))
-        .catch((error) =>
-          debugStore.error("Lazy load failed: OracleSidebarPanel", error),
-        );
+        .catch((error) => logChunkError("OracleSidebarPanel", error));
+    }
+
+    if (uiStore.showZenMode && !ZenModeModal) {
+      import("$lib/components/modals/ZenModeModal.svelte")
+        .then((m) => (ZenModeModal = m.default))
+        .catch((e) => logChunkError("ZenModeModal", e));
+    }
+
+    if (helpStore.activeTour && !TourOverlay) {
+      import("$lib/components/help/TourOverlay.svelte")
+        .then((m) => (TourOverlay = m.default))
+        .catch((e) => logChunkError("TourOverlay", e));
+    }
+
+    if (uiStore.mergeDialog.open && !MergeNodesDialog) {
+      import("$lib/components/dialogs/MergeNodesDialog.svelte")
+        .then((m) => (MergeNodesDialog = m.default))
+        .catch((e) => logChunkError("MergeNodesDialog", e));
+    }
+
+    if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
+      import("$lib/components/dialogs/BulkLabelDialog.svelte")
+        .then((m) => (BulkLabelDialog = m.default))
+        .catch((e) => logChunkError("BulkLabelDialog", e));
+    }
+
+    if (!DiceModal) {
+      import("$lib/components/dice/DiceModal.svelte")
+        .then((m) => (DiceModal = m.default))
+        .catch((e) => logChunkError("DiceModal", e));
+    }
+
+    if (!isPopup && !OracleWindow) {
+      import("$lib/components/oracle/OracleWindow.svelte")
+        .then((m) => (OracleWindow = m.default))
+        .catch((e) => logChunkError("OracleWindow", e));
+    }
+
+    if (isSpecialEnv && !DebugConsole) {
+      import("$lib/components/debug/DebugConsole.svelte")
+        .then((m) => (DebugConsole = m.default))
+        .catch((e) => logChunkError("DebugConsole", e));
     }
   });
 
   function bootSystem() {
     if (hasBooted) return;
     hasBooted = true;
-    bootWorkspaceStores();
+
+    debugStore.log("System booting: Initializing heavy stores...");
+    categories.init();
+    timelineStore.init();
+    graph.init();
+    calendarStore.init();
+
+    vault.init().catch((error) => {
+      console.error("Vault initialization failed", error);
+    });
   }
 
   $effect(() => {
@@ -82,17 +154,102 @@
   });
 
   onMount(() => {
-    initializeShellServices();
-    registerProductionServiceWorker();
+    helpStore.init();
+    themeStore.init();
+    oracle.init();
 
-    const { handleGlobalError, handleUnhandledRejection, handleVaultSwitched } =
-      createGlobalEventHandlers();
+    if ("serviceWorker" in navigator && !import.meta.env.DEV) {
+      navigator.serviceWorker
+        .register(`${base}/service-worker.js`)
+        .catch((error) => {
+          console.warn("Service Worker registration failed:", error);
+        });
+    }
+
+    const handleGlobalError = (event: ErrorEvent) => {
+      if (
+        event.target instanceof HTMLScriptElement ||
+        event.target instanceof HTMLLinkElement
+      ) {
+        return;
+      }
+
+      const message = event.message || "";
+      if (
+        message.includes("Script error") ||
+        message.includes("Load failed") ||
+        message.includes("isHeadless") ||
+        message.includes("notify") ||
+        message.includes("INTERNET_DISCONNECTED") ||
+        message.includes("Failed to fetch") ||
+        message.includes("NetworkError") ||
+        message.includes(
+          "ResizeObserver loop completed with undelivered notifications",
+        )
+      ) {
+        return;
+      }
+
+      console.error("[Fatal Error MSG]", event.message, event.error?.stack);
+      uiStore.setGlobalError(event.message, event.error?.stack);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const message = reason?.message || "";
+
+      if (
+        message.includes("Failed to fetch") ||
+        message.includes("NetworkError") ||
+        message.includes("Load failed") ||
+        message.includes("INTERNET_DISCONNECTED")
+      ) {
+        return;
+      }
+
+      console.error("[Fatal Rejection]", event);
+      uiStore.setGlobalError(
+        message || "Unhandled Promise Rejection",
+        reason?.stack,
+      );
+    };
+
+    const handleVaultSwitched = () => {
+      calendarStore.init();
+    };
 
     window.addEventListener("error", handleGlobalError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
     window.addEventListener("vault-switched", handleVaultSwitched);
 
-    exposeE2EGlobals();
+    if (import.meta.env.DEV || (window as any).__E2E__) {
+      (window as any).searchStore = searchStore;
+      (window as any).vault = vault;
+      (window as any).vaultRegistry = vaultRegistry;
+      (window as any).canvasRegistry = canvasRegistry;
+      (window as any).graph = graph;
+      (window as any).oracle = oracle;
+      (window as any).calendarStore = calendarStore;
+      (window as any).helpStore = helpStore;
+      (window as any).categories = categories;
+      (window as any).uiStore = uiStore;
+      (window as any).isEntityVisible = isEntityVisible;
+
+      import("$lib/stores/oracle.svelte").then((m) => {
+        (window as any).oracle = m.oracle;
+      });
+      import("$lib/services/ai").then((m) => {
+        (window as any).textGeneration = m.textGenerationService;
+        (window as any).imageGeneration = m.imageGenerationService;
+        (window as any).contextRetrieval = m.contextRetrievalService;
+      });
+      import("$lib/cloud-bridge/p2p/host-service.svelte").then((m) => {
+        (window as any).p2pHostService = m.p2pHost;
+      });
+      import("$lib/cloud-bridge/p2p/guest-service").then((m) => {
+        (window as any).p2pGuestService = m.p2pGuestService;
+      });
+    }
 
     return () => {
       window.removeEventListener("error", handleGlobalError);
@@ -106,22 +263,19 @@
 
   $effect(() => {
     if (!helpStore.isInitialized) return;
-    return openHelpArticleFromHash(page.url.hash) ?? undefined;
-  });
-
-  $effect(() => {
-    if (headerEl && browser) {
-      const updateHeight = () => {
-        const height = headerEl!.getBoundingClientRect().height;
-        document.documentElement.style.setProperty(
-          "--header-height",
-          `${height}px`,
+    const hash = page.url.hash;
+    if (hash && hash.startsWith("#help/")) {
+      const articleId = hash.replace("#help/", "");
+      if (articleId) {
+        const exists = HELP_ARTICLES.some(
+          (article) => article.id === articleId,
         );
-      };
-      updateHeight();
-      const observer = new ResizeObserver(updateHeight);
-      observer.observe(headerEl);
-      return () => observer.disconnect();
+        if (exists) {
+          setTimeout(() => {
+            helpStore.openHelpToArticle(articleId);
+          }, 100);
+        }
+      }
     }
   });
 
@@ -145,14 +299,70 @@
   });
 
   $effect(() => {
-    if (vault.isInitialized && !uiStore.isLandingPageVisible) {
-      const isTesting =
-        typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
-      maybeStartOnboardingOrDemo(isTesting, page.url.searchParams.has("demo"));
+    if (headerEl && browser) {
+      const updateHeight = () => {
+        const height = headerEl!.getBoundingClientRect().height;
+        document.documentElement.style.setProperty(
+          "--header-height",
+          `${height}px`,
+        );
+      };
+      updateHeight();
+      const observer = new ResizeObserver(updateHeight);
+      observer.observe(headerEl);
+      return () => observer.disconnect();
     }
   });
 
-  const handleKeydown = createGlobalShortcutHandler();
+  $effect(() => {
+    if (vault.isInitialized && !uiStore.isLandingPageVisible) {
+      if (
+        !helpStore.hasSeen("initial-onboarding") &&
+        !(window as any).DISABLE_ONBOARDING &&
+        !page.url.searchParams.has("demo")
+      ) {
+        const isTesting =
+          typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
+        if (
+          vault.allEntities.length === 0 &&
+          !uiStore.isDemoMode &&
+          !isTesting
+        ) {
+          demoService.startDemo("fantasy");
+        } else {
+          helpStore.startTour("initial-onboarding");
+        }
+      }
+    }
+  });
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    const target = document.activeElement;
+    if (
+      target?.tagName === "INPUT" ||
+      target?.tagName === "TEXTAREA" ||
+      (target as HTMLElement)?.isContentEditable
+    ) {
+      return;
+    }
+
+    if (
+      (e.key === "k" || e.key === "K") &&
+      (e.metaKey || e.ctrlKey) &&
+      !e.shiftKey
+    ) {
+      e.preventDefault();
+      searchStore.toggle();
+    }
+
+    if (e.key === "Escape") {
+      if (searchStore.isOpen) {
+        searchStore.close();
+      } else if (uiStore.showSettings) {
+        uiStore.closeSettings();
+      }
+    }
+  };
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -421,7 +631,44 @@
       </div>
     </footer>
 
-    <GlobalModalProvider bind:isMobileMenuOpen />
+    <SearchModal />
+
+    {#if !isLoginRoute}
+      {#if OracleWindow}
+        <OracleWindow />
+      {/if}
+      {#if browser}
+        <SettingsModal />
+
+        {#if ZenModeModal}
+          <ZenModeModal />
+        {/if}
+        {#if TourOverlay}
+          <TourOverlay />
+        {/if}
+        <MobileMenu bind:isOpen={isMobileMenuOpen} />
+        {#if MergeNodesDialog}
+          <MergeNodesDialog
+            isOpen={uiStore.mergeDialog.open}
+            sourceNodeIds={uiStore.mergeDialog.sourceIds}
+            onClose={() => uiStore.closeMergeDialog()}
+          />
+        {/if}
+        {#if BulkLabelDialog}
+          <BulkLabelDialog
+            isOpen={uiStore.bulkLabelDialog.open}
+            entityIds={uiStore.bulkLabelDialog.entityIds}
+            onClose={() => uiStore.closeBulkLabelDialog()}
+          />
+        {/if}
+        {#if DiceModal}
+          <DiceModal />
+        {/if}
+        {#if DebugConsole}
+          <DebugConsole />
+        {/if}
+      {/if}
+    {/if}
   {/if}
 </div>
 

@@ -24,6 +24,7 @@ export class OracleStore {
   // Reactive UI state
   isOpen = $state(false);
   isModal = $state(false);
+  isInitialized = $state(false);
 
   constructor(
     private chatHistory = new ChatHistoryService(),
@@ -75,9 +76,11 @@ export class OracleStore {
   }
 
   async init() {
+    if (this.isInitialized) return;
     const db = await getDB();
     await this.settings.init(db);
     await this.chatHistory.init(db);
+    this.isInitialized = true;
   }
 
   async ask(query: string) {
@@ -223,6 +226,10 @@ export class OracleStore {
   }
   addTestImageMessage(c: string, u: string, b: Blob, e?: string) {
     this.chatHistory.addTestImageMessage(c, u, b, e);
+  }
+
+  setMessages(messages: ChatMessage[]) {
+    this.chatHistory.setMessages(messages);
   }
 
   reset() {

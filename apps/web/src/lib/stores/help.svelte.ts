@@ -9,6 +9,7 @@ import {
 } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
 import { uiStore } from "./ui.svelte";
+import { searchStore } from "./search.svelte";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -129,6 +130,21 @@ class HelpStore {
     if (!this.activeTour) return;
     if (this.activeTour.currentStepIndex < this.activeTour.steps.length - 1) {
       this.activeTour.currentStepIndex++;
+
+      // Trigger sidepanel states based on step targets
+      const nextStep = this.activeTour.steps[this.activeTour.currentStepIndex];
+      if (nextStep.id === "search") {
+        searchStore.open();
+      } else if (nextStep.id === "oracle") {
+        setTimeout(() => {
+          uiStore.activeSidebarTool = "oracle";
+          uiStore.leftSidebarOpen = true;
+        }, 100);
+      } else if (nextStep.id === "settings") {
+        setTimeout(() => {
+          uiStore.openSettings("vault");
+        }, 100);
+      }
     } else {
       this.completeTour();
     }
@@ -137,6 +153,16 @@ class HelpStore {
   prevStep() {
     if (!this.activeTour || this.activeTour.currentStepIndex === 0) return;
     this.activeTour.currentStepIndex--;
+
+    const prevStep = this.activeTour.steps[this.activeTour.currentStepIndex];
+    if (prevStep.id === "search") {
+      searchStore.open();
+    } else if (prevStep.id === "oracle") {
+      uiStore.activeSidebarTool = "oracle";
+      uiStore.leftSidebarOpen = true;
+    } else if (prevStep.id === "settings") {
+      uiStore.openSettings("vault");
+    }
   }
 
   completeTour() {

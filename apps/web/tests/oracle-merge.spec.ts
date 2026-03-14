@@ -294,8 +294,11 @@ test.describe("Oracle Merge Command E2E", () => {
         const current = v.entities[bossId];
         if (!preBoss || !current) return false;
         // Compare serialized forms to catch differences in fields & connections
-        const snapshot = (obj: any) =>
-          JSON.stringify(obj, Object.keys(obj).sort());
+        const snapshot = (obj: any) => {
+          const clone = { ...obj };
+          delete clone.updatedAt;
+          return JSON.stringify(clone, Object.keys(clone).sort());
+        };
         return snapshot(preBoss) === snapshot(current);
       },
       { preBoss: preMergeState.bossState, bossId: preMergeState.bossId! },

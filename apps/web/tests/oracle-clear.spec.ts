@@ -9,6 +9,15 @@ test.describe("Oracle Clear Chat", () => {
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("/");
+
+    // Ensure Oracle is initialized
+    await page.waitForFunction(
+      () => {
+        const oracle = (window as any).oracle;
+        return oracle && oracle.isInitialized;
+      },
+      { timeout: 15000 },
+    );
   });
 
   test("should show clear chat button only when messages exist and clear history on click (docked)", async ({

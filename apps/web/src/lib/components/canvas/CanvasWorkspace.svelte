@@ -472,14 +472,12 @@
       connectionMode={ConnectionMode.Loose}
       zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
+      connectionLineComponent={ConnectionLine}
       fitView
     >
       <Background gap={20} />
       <Controls />
       <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
-      {#snippet connectionLineComponent(props: any)}
-        <ConnectionLine {...props} />
-      {/snippet}
     </SvelteFlow>
   </div>
 

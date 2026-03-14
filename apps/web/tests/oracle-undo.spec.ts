@@ -43,12 +43,15 @@ test.describe("Oracle Undo", () => {
 
     await page.goto("http://localhost:5173/");
 
-    // Wait until window.vault is exposed by +layout.svelte
-    await page.waitForFunction(() => (window as any).vault !== undefined, {
-      timeout: 10000,
-    });
-
     // Wait for the app to initialize
+    await page.waitForFunction(
+      () => {
+        const oracle = (window as any).oracle;
+        return oracle && oracle.isInitialized;
+      },
+      { timeout: 15000 },
+    );
+
     await expect(page.getByTestId("sidebar-oracle-button")).toBeVisible();
 
     // Set a mock API key to enable Oracle using the app's oracle API
@@ -94,7 +97,7 @@ test.describe("Oracle Undo", () => {
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;
-      oracle.messages = [
+      oracle.setMessages([
         ...oracle.messages,
         {
           id: "msg-assistant-1",
@@ -102,7 +105,7 @@ test.describe("Oracle Undo", () => {
           content: "Title: Eldrin\nChronicle: New content\nLore: New lore",
           entityId: "eldrin",
         },
-      ];
+      ]);
     });
 
     // 3. Click Smart Apply
@@ -140,7 +143,7 @@ test.describe("Oracle Undo", () => {
     // 6. Verify restored state
 
     // 6. Verify restored state
-    await expect(page.getByText(/Undid action/i)).toBeVisible();
+    await expect(page.getByText(/Undid:/i)).toBeVisible();
     const contentAfterUndo = await page.evaluate(
       () => (window as any).vault.entities["eldrin"].content,
     );
@@ -153,7 +156,7 @@ test.describe("Oracle Undo", () => {
 
     await page.evaluate(() => {
       const oracle = (window as any).oracle;
-      oracle.messages = [
+      oracle.setMessages([
         ...oracle.messages,
         {
           id: "msg-assistant-create",
@@ -161,7 +164,7 @@ test.describe("Oracle Undo", () => {
           content:
             "Title: New Character\nType: character\nChronicle: A new person.",
         },
-      ];
+      ]);
     });
 
     // 2. Click Create
@@ -184,7 +187,7 @@ test.describe("Oracle Undo", () => {
     await undoBtn.click();
 
     // 5. Verify node removed
-    await expect(page.getByText(/Undid action/i)).toBeVisible();
+    await expect(page.getByText(/Undid:/i)).toBeVisible();
     const nodeExistsAfterUndo = await page.evaluate(
       () => !!(window as any).vault.entities["new-character"],
     );

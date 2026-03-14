@@ -41,8 +41,10 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     // Wait for app to be ready
     await page.waitForFunction(
       () =>
-        (window as any).vault !== undefined &&
-        (window as any).aiService !== undefined,
+        (window as any).vault?.isInitialized &&
+        (window as any).oracle?.isInitialized &&
+        (window as any).textGeneration !== undefined,
+      { timeout: 15000 },
     );
 
     // After load, apply the vault handle mock
@@ -84,7 +86,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     // 2. Inject a structured message into the store
     await page.evaluate(() => {
       const oracle = (window as any).oracle;
-      oracle.messages = [
+      oracle.setMessages([
         ...oracle.messages,
         {
           id: "test-msg-1",
@@ -92,7 +94,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
           content:
             "## Chronicle\nA short summary.\n\n## Lore\nDetailed background info.",
         },
-      ];
+      ]);
     });
 
     // 3. Select a dummy node to enable 'Apply'
@@ -139,8 +141,10 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
 
     // 2. Mock the AI response for a /create command
     await page.evaluate(() => {
-      const aiService = (window as any).aiService;
-      aiService.generateResponse = (
+      const textGeneration = (window as any).textGeneration;
+      const contextRetrieval = (window as any).contextRetrieval;
+
+      textGeneration.generateResponse = (
         _k: any,
         _q: any,
         _h: any,
@@ -151,10 +155,10 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
         const text =
           "**Name:** Dragon Fire\n**Type:** Spell\n**Chronicle:** Burn everything.\n**Lore:** Ancient magic of the drakes.";
         onUpdate(text);
-        return Promise.resolve({ text: () => text });
+        return Promise.resolve();
       };
-      aiService.expandQuery = (_k: any, q: any) => Promise.resolve(q);
-      aiService.retrieveContext = () =>
+      textGeneration.expandQuery = (_k: any, q: any) => Promise.resolve(q);
+      contextRetrieval.retrieveContext = () =>
         Promise.resolve({ content: "", sourceIds: [] });
     });
 
@@ -162,10 +166,15 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     await textarea.fill("/create a dragon spell");
     await page.keyboard.press("Enter");
 
-    // Verify system message confirms creation
-    await expect(
-      page.getByText(/Automatically created node:.*Dragon Fire/i),
-    ).toBeVisible({ timeout: 10000 });
+    // Verify create button appears and click it
+    const createBtn = page.getByRole("button", {
+      name: /CREATE AS ITEM: DRAGON FIRE/i,
+    });
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
+    await createBtn.click();
+
+    // Verify SAVED state in message
+    await expect(page.getByText(/SAVED/i)).toBeVisible({ timeout: 10000 });
 
     // Verify entity exists in vault
     const entityExists = await page.evaluate(() => {

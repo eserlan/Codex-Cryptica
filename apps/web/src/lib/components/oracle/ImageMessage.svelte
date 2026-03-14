@@ -19,7 +19,14 @@
     isArchiving = true;
     archiveError = null;
     try {
-      await vault.saveImageToVault(message.imageBlob, activeEntity.id);
+      const paths = await vault.saveImageToVault(
+        message.imageBlob,
+        activeEntity.id,
+      );
+      await vault.updateEntity(activeEntity.id, {
+        image: paths.image,
+        thumbnail: paths.thumbnail,
+      });
     } catch (err: any) {
       console.error("Failed to archive image", err);
       archiveError = err.message || "Failed to save image.";
