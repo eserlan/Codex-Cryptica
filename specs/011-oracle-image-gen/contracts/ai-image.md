@@ -1,26 +1,28 @@
-# AI Contract: Image Generation (Nano Banana / Gemini 2.5 Flash Image)
+# AI Contract: Image Generation (Gemini Multimodal Output)
 
 ## Request
 
-**Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent`
+**Endpoint**: `POST https://generativelanguage.googleapis.com/v1beta/models/[MODEL_NAME]:generateContent`
 **Headers**:
 
-- `Authorization: Bearer [USER_API_KEY]`
 - `Content-Type: application/json`
+- `x-goog-api-key: [USER_API_KEY]`
 
 **Body**:
 
 ```json
 {
-  "instances": [
+  "contents": [
     {
-      "prompt": "[PROMPT_TEXT] (derived from user query + vault context)"
+      "parts": [
+        {
+          "text": "[PROMPT_TEXT] (derived from user query + vault context)"
+        }
+      ]
     }
   ],
-  "parameters": {
-    "sampleCount": 1,
-    "aspectRatio": "1:1",
-    "safetySetting": "block_none"
+  "generationConfig": {
+    "response_modalities": ["IMAGE"]
   }
 }
 ```
@@ -32,10 +34,18 @@
 
 ```json
 {
-  "predictions": [
+  "candidates": [
     {
-      "bytesBase64Encoded": "[BASE64_IMAGE_DATA]",
-      "mimeType": "image/png"
+      "content": {
+        "parts": [
+          {
+            "inlineData": {
+              "data": "[BASE64_IMAGE_DATA]",
+              "mimeType": "image/png"
+            }
+          }
+        ]
+      }
     }
   ]
 }

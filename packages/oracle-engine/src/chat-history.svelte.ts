@@ -10,7 +10,14 @@ export class ChatHistoryService {
     this.db = db;
     const savedMessages = await db.getAll("chat_history");
     if (savedMessages && savedMessages.length > 0) {
-      this.messages = savedMessages;
+      // Restore blob URLs for persisted blobs
+      const messages = savedMessages.map((msg) => {
+        if (msg.imageBlob && !msg.imageUrl) {
+          msg.imageUrl = URL.createObjectURL(msg.imageBlob);
+        }
+        return msg;
+      });
+      this.messages = messages;
     }
   }
 
@@ -48,7 +55,8 @@ export class ChatHistoryService {
       await tx.store.clear();
       for (const msg of $state.snapshot(this.messages)) {
         const toPersist = { ...msg };
-        delete toPersist.imageBlob;
+        // We keep imageBlob (it's a Blob, IndexedDB can store it)
+        // But we MUST remove imageUrl if it's a blob URL because they expire
         if (toPersist.imageUrl?.startsWith("blob:")) {
           delete toPersist.imageUrl;
         }
@@ -60,10 +68,10 @@ export class ChatHistoryService {
     }
   }
 
-  setMessages(messages: ChatMessage[]) {
+  async setMessages(messages: ChatMessage[]) {
     this.messages = messages;
     this.lastUpdated = Date.now();
-    this.saveToDB();
+    await this.saveToDB();
   }
 
   // --- Domain Mutations ---

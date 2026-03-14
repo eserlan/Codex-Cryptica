@@ -55,9 +55,12 @@ test.describe("Oracle Image Generation", () => {
     page,
   }) => {
     // Mock the generateContent API
-    await page.route(
-      "**/models/gemini-2.5-flash-image:generateContent**",
-      async (route) => {
+    await page.route("**/models/*:generateContent**", async (route) => {
+      const postData = route.request().postDataJSON();
+      const isImageRequest =
+        postData?.generationConfig?.response_modalities?.includes("IMAGE");
+
+      if (isImageRequest) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -78,8 +81,23 @@ test.describe("Oracle Image Generation", () => {
             ],
           }),
         });
-      },
-    );
+      } else {
+        // Text request (likely prompt distillation)
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: "Mocked distilled prompt..." }],
+                },
+              },
+            ],
+          }),
+        });
+      }
+    });
 
     // 1. Open Oracle
     const trigger = page.locator("button[title='Open Lore Oracle']");
@@ -104,9 +122,12 @@ test.describe("Oracle Image Generation", () => {
     page,
   }) => {
     // Mock the generateContent API
-    await page.route(
-      "**/models/gemini-2.5-flash-image:generateContent**",
-      async (route) => {
+    await page.route("**/models/*:generateContent**", async (route) => {
+      const postData = route.request().postDataJSON();
+      const isImageRequest =
+        postData?.generationConfig?.response_modalities?.includes("IMAGE");
+
+      if (isImageRequest) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -127,8 +148,23 @@ test.describe("Oracle Image Generation", () => {
             ],
           }),
         });
-      },
-    );
+      } else {
+        // Text request (likely prompt distillation)
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            candidates: [
+              {
+                content: {
+                  parts: [{ text: "Mocked distilled prompt..." }],
+                },
+              },
+            ],
+          }),
+        });
+      }
+    });
 
     // 1. Ensure we are in a state where we can create an entity
     const newBtn = page.getByTestId("new-entity-button");
