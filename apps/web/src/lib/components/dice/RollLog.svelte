@@ -62,7 +62,9 @@
             {roll.formula}
           </span>
         </div>
-        <span class="text-[9px] text-theme-muted font-mono">
+        <span
+          class="text-[9px] text-theme-muted font-header uppercase tracking-tighter"
+        >
           {new Date(roll.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
@@ -111,7 +113,7 @@
                         )} w-3 h-3 text-theme-muted"
                       ></span>
                       <span
-                        class="text-xs font-bold font-mono transition-colors {isMax(
+                        class="text-xs font-bold font-header transition-colors {isMax(
                           r,
                           part.sides,
                         )
@@ -148,7 +150,7 @@
                       >
                       {#each part.dropped as d}
                         <div
-                          class="flex items-center justify-center w-6 h-6 bg-theme-bg border border-theme-border/30 rounded text-[10px] font-mono text-theme-muted line-through"
+                          class="flex items-center justify-center w-6 h-6 bg-theme-bg border border-theme-border/30 rounded text-[10px] font-header text-theme-muted line-through"
                           title="Dropped: {d}"
                         >
                           {d}

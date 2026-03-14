@@ -22,7 +22,7 @@ test.describe("Advanced Draw Button", () => {
   test("Lite tier does NOT show draw buttons", async ({ page }) => {
     // 1. Check Sidepanel via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
+    await page.getByTestId("search-modal-input").fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     await expect(page.getByText("No Image")).toBeVisible();
@@ -61,7 +61,7 @@ test.describe("Advanced Draw Button", () => {
 
     // 2. Check Sidepanel via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
+    await page.getByTestId("search-modal-input").fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     // Wait for sidepanel transition and ensure heading is visible
@@ -115,11 +115,11 @@ test.describe("Advanced Draw Button", () => {
 
     // 2. Check Zen Mode via Search
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder(/Search notes/i).fill("Ancient Dragon");
+    await page.getByTestId("search-modal-input").fill("Ancient Dragon");
     await page.getByTestId("search-result").first().click();
 
     // Open Zen Mode
-    await page.keyboard.press("Alt+z");
+    await page.getByTestId("enter-zen-mode-button").click();
 
     // Wait for Zen Mode transition and ensure heading is visible
     const zenModal = page.getByTestId("zen-mode-modal");

@@ -31,13 +31,13 @@ test.describe("Visual Styling Templates", () => {
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
 
-    // 5. Verify typography overhaul (IM Fell English header font)
+    // 5. Verify typography overhaul (Zilla Slab header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
-        .getPropertyValue("--font-header")
+        .getPropertyValue("--font-header-val")
         .trim(),
     );
-    expect(fontHeader).toContain("IM Fell English");
+    expect(fontHeader).toContain("Zilla Slab");
 
     // 6. Verify texture integration
     const textureOverlay = await page.evaluate(() =>
@@ -207,7 +207,7 @@ test.describe("Visual Styling Templates", () => {
     );
     const themeHeaderFont = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
-        .getPropertyValue("--font-header")
+        .getPropertyValue("--font-header-val")
         .trim(),
     );
 

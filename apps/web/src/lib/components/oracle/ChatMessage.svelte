@@ -375,7 +375,7 @@
   data-role={message.role}
 >
   <div
-    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden
+    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden font-body
     {message.role === 'user'
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
@@ -438,7 +438,8 @@
             type="button"
           >
             {#if isCopied}
-              <span class="text-[9px] font-bold tracking-tighter uppercase"
+              <span
+                class="text-[9px] font-bold tracking-tighter uppercase font-header"
                 >Copied!</span
               >
               <span class="icon-[lucide--check] w-3 h-3 text-green-400"></span>
@@ -473,7 +474,7 @@
                       class="icon-[lucide--palette] w-3.5 h-3.5 shrink-0"
                       aria-hidden="true"
                     ></span>
-                    <span>DRAW</span>
+                    <span class="font-header">DRAW</span>
                   {/if}
 
                   {#if message.isDrawing && oracle.activeStyleTitle}
@@ -494,7 +495,7 @@
                 >
                   <span class="icon-[lucide--plus-circle] w-3.5 h-3.5 shrink-0"
                   ></span>
-                  <span class="truncate"
+                  <span class="truncate font-header"
                     >CREATE AS {parsed.type?.toUpperCase() || "NEW NODE"}: {parsed.title?.toUpperCase()}</span
                   >
 
@@ -524,7 +525,7 @@
                   >
                     <span class="icon-[lucide--refresh-cw] w-3 h-3 shrink-0"
                     ></span>
-                    <span class="truncate"
+                    <span class="truncate font-header"
                       >USE: {activeEntity!.title.toUpperCase()}</span
                     >
                   </button>
@@ -537,7 +538,7 @@
                     title="Save to {(targetEntity || activeEntity!).title}"
                   >
                     <span class="icon-[lucide--wand-2] w-3 h-3 shrink-0"></span>
-                    <span class="truncate"
+                    <span class="truncate font-header"
                       >SMART APPLY TO {(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()}</span
@@ -575,7 +576,7 @@
                   >
                     <span class="icon-[lucide--copy-plus] w-3 h-3 shrink-0"
                     ></span>
-                    <span class="truncate"
+                    <span class="truncate font-header"
                       >COPY TO CHRONICLE ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span
@@ -589,7 +590,7 @@
                   >
                     <span class="icon-[lucide--scroll-text] w-3 h-3 shrink-0"
                     ></span>
-                    <span class="truncate"
+                    <span class="truncate font-header"
                       >COPY TO LORE ({(
                         targetEntity || activeEntity!
                       ).title.toUpperCase()})</span

@@ -77,6 +77,7 @@
 <div
   style="background-image: var(--bg-texture-overlay)"
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
+  data-testid="zen-sidebar"
 >
   <!-- Labels -->
   {#if entity?.labels && entity?.labels?.length > 0}
@@ -197,11 +198,11 @@
                   : 'bg-blue-500'}"
               ></span>
               <div class="flex-1 min-w-0">
-                <div class="text-[11px] text-theme-muted uppercase font-mono">
+                <div class="text-[11px] text-theme-muted uppercase font-header">
                   {conn.label}
                 </div>
                 <div
-                  class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+                  class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
                 >
                   {conn.title}
                 </div>

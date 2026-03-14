@@ -82,7 +82,7 @@
         >
         {#if uiStore.liteMode}
           <span
-            class="text-[8px] font-mono bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
+            class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
             >LITE</span
           >
         {/if}

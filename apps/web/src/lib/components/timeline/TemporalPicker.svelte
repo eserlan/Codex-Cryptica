@@ -304,7 +304,7 @@
                 >{era.name}</span
               >
             </div>
-            <div class="text-[9px] text-theme-muted ml-3 font-mono">
+            <div class="text-[9px] text-theme-muted ml-3 font-header">
               Year {era.start_year}
               {era.end_year ? `→ ${era.end_year}` : "→ Present"}
             </div>
@@ -392,7 +392,7 @@
                 bind:this={manualInputRef}
                 type="number"
                 bind:value={selectedYear}
-                class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
+                class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
                 placeholder="Enter Year..."
               />
             </div>
@@ -401,7 +401,7 @@
               {#each gridItems as item}
                 <button
                   onclick={() => selectInGrid(item)}
-                  class="py-2 text-[11px] font-mono rounded border transition-all {selectedYear ===
+                  class="py-2 text-[11px] font-header rounded border transition-all {selectedYear ===
                     item && yearPickerView === 'years'
                     ? 'bg-theme-primary text-theme-bg border-theme-primary shadow-[0_0_10px_rgba(var(--color-primary),0.3)]'
                     : 'bg-theme-bg/50 border-theme-border/30 text-theme-text hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
@@ -441,7 +441,7 @@
             <select
               id="picker-month"
               bind:value={selectedMonth}
-              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
               data-testid="month-selector"
             >
               <option
@@ -471,7 +471,7 @@
                 selectedMonth - 1
               ]?.days || 31}
               bind:value={selectedDay}
-              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-mono"
+              class="w-full bg-theme-bg border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none font-body"
             />
           </div>
         {/if}

@@ -51,7 +51,7 @@
         <!-- Year Marker -->
         <div class="relative flex items-center justify-start md:justify-center">
           <span
-            class="bg-black border border-green-500/50 px-4 py-1 rounded text-xs font-mono font-bold text-green-400 z-10 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+            class="bg-black border border-green-500/50 px-4 py-1 rounded text-xs font-header font-bold text-green-400 z-10 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
           >
             {year}
           </span>

@@ -105,6 +105,7 @@
     tabindex="-1"
     onkeydown={handleKeydown}
     transition:fly={{ y: 20, duration: 300 }}
+    data-testid="settings-modal"
   >
     <!-- Sidebar Navigation -->
     <div
@@ -115,7 +116,7 @@
     >
       <div class="px-6 mb-8 hidden md:block">
         <span
-          class="text-[11px] font-mono text-theme-muted uppercase tracking-[0.3em] font-header"
+          class="text-[11px] font-header text-theme-muted uppercase tracking-[0.3em]"
           >Configuration</span
         >
       </div>
@@ -156,7 +157,7 @@
       </div>
 
       <div
-        class="mt-auto p-4 md:p-6 text-[10px] font-mono text-theme-muted/40 uppercase hidden md:block"
+        class="mt-auto p-4 md:p-6 text-[10px] font-header text-theme-muted/40 uppercase hidden md:block"
       >
         Version {VERSION} // Build {CODENAME}
       </div>
@@ -210,7 +211,7 @@
                 Active Archive
               </h3>
               <div
-                class="bg-theme-surface border border-theme-border p-4 rounded font-mono"
+                class="bg-theme-surface border border-theme-border p-4 rounded font-body"
               >
                 <div
                   class="text-[11px] text-theme-muted uppercase mb-1 font-header"
@@ -401,7 +402,7 @@
               >
                 Manifest
               </h3>
-              <div class="grid grid-cols-2 gap-4 font-mono text-[11px]">
+              <div class="grid grid-cols-2 gap-4 font-body text-[11px]">
                 <div>
                   <div class="text-theme-muted uppercase mb-1 font-header">
                     Software
@@ -479,11 +480,11 @@
 
             <section class="pt-4 text-center">
               <div
-                class="text-[10px] font-mono text-theme-muted/40 uppercase tracking-[0.5em] mb-2"
+                class="text-[10px] font-header text-theme-muted/40 uppercase tracking-[0.5em] mb-2"
               >
                 Secure Connection Protocol Active
               </div>
-              <div class="text-[8px] font-mono text-theme-muted/20 uppercase">
+              <div class="text-[8px] font-header text-theme-muted/20 uppercase">
                 No telemetry detected // User privacy prioritized
               </div>
             </section>

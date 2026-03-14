@@ -96,7 +96,6 @@
 
 <style>
   .canvas-edge-label {
-    font-family: var(--font-mono), monospace;
     white-space: nowrap;
   }
 </style>

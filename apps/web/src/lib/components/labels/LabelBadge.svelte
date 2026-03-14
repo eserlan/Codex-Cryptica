@@ -12,6 +12,7 @@
 
 <div
   class="inline-flex items-center gap-1 px-2 py-0.5 bg-theme-accent/10 border border-theme-accent/30 rounded text-[10px] font-bold text-theme-accent uppercase font-header tracking-wider whitespace-nowrap group"
+  data-testid="label-badge"
 >
   <span>{label}</span>
   {#if removable}

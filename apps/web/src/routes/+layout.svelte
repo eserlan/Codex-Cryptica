@@ -418,8 +418,7 @@
         class="icon-[lucide--alert-circle] w-5 h-5"
         class:hidden={uiStore.notification.type !== "error"}
       ></span>
-      <span
-        class="font-mono text-xs font-bold tracking-widest uppercase font-header"
+      <span class="font-header text-xs font-bold tracking-widest uppercase"
         >{uiStore.notification.message}</span
       >
     </div>
@@ -469,7 +468,7 @@
         </button>
 
         <h1
-          class="text-lg md:text-xl font-bold text-theme-text font-mono tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
+          class="text-lg md:text-xl font-bold text-theme-text font-header tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
         >
           <span class="icon-[lucide--book-open] text-theme-primary w-5 h-5"
           ></span>
@@ -482,7 +481,7 @@
         >
           <a
             href="{base}/"
-            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page
               .url.pathname === `${base}/`
               ? 'bg-theme-primary/10 text-theme-primary'
               : 'text-theme-muted hover:text-theme-text'}"
@@ -491,7 +490,7 @@
           </a>
           <a
             href="{base}/map"
-            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page.url.pathname.startsWith(
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
               `${base}/map`,
             )
               ? 'bg-theme-primary/10 text-theme-primary'
@@ -501,7 +500,7 @@
           </a>
           <a
             href="{base}/canvas"
-            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors {page.url.pathname.startsWith(
+            class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
               `${base}/canvas`,
             )
               ? 'bg-theme-primary/10 text-theme-primary'
@@ -521,7 +520,7 @@
           <input
             type="text"
             placeholder="Search (Cmd+K)..."
-            class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-mono text-theme-text transition-all placeholder:text-theme-muted/50"
+            class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-body text-theme-text transition-all placeholder:text-theme-muted/50"
             onfocus={() => searchStore.open()}
             value={searchStore.query}
             oninput={(e) => searchStore.setQuery(e.currentTarget.value)}
@@ -576,7 +575,7 @@
       class="px-6 py-4 bg-theme-surface border-t border-theme-border flex flex-col md:flex-row justify-between items-center gap-4 hidden md:flex"
     >
       <div
-        class="text-[10px] font-mono text-theme-muted uppercase tracking-widest"
+        class="text-[10px] font-header text-theme-muted uppercase tracking-widest"
       >
         &copy; 2026 Codex Cryptica // Local-First Intelligence
       </div>
@@ -586,7 +585,7 @@
             href={PATREON_URL}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+            class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
             >Support on Patreon</a
           >
         {/if}
@@ -595,37 +594,37 @@
             href={DISCORD_URL}
             target="_blank"
             rel="noopener noreferrer"
-            class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+            class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
             >Discord</a
           >
         {/if}
         <a
           href="{base}/features"
-          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
           >Features</a
         >
         <a
           href="{base}/blog"
-          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
           >Blog</a
         >
         <button
           onclick={() => uiStore.openSettings("help")}
-          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest cursor-pointer"
+          class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest cursor-pointer"
           >Help</button
         >
         <a
           href="{base}/privacy"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
           >Privacy Policy</a
         >
         <a
           href="{base}/terms"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-[10px] font-mono text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
+          class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
           >Terms of Service</a
         >
       </div>
@@ -718,6 +717,6 @@
 
 <style>
   .app-layout {
-    font-family: var(--theme-font-body, ui-sans-serif);
+    font-family: var(--font-body, ui-sans-serif);
   }
 </style>

@@ -49,7 +49,7 @@
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg/20"
     >
       <h3
-        class="text-sm font-bold text-theme-text uppercase font-header tracking-widest font-mono"
+        class="text-sm font-bold text-theme-text uppercase font-header tracking-widest"
       >
         Link Lore Pin
       </h3>
