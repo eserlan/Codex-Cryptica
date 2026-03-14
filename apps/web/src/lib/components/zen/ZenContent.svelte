@@ -101,7 +101,7 @@
             >
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
-            <span class="text-lg font-mono text-theme-primary"
+            <span class="text-lg font-header text-theme-primary"
               >{formatDate(entity?.start_date)}</span
             >
           </div>
@@ -113,7 +113,7 @@
             >
               {getTemporalLabel(entity?.type || "", "end")}
             </span>
-            <span class="text-lg font-mono text-theme-primary"
+            <span class="text-lg font-header text-theme-primary"
               >{formatDate(entity?.end_date)}</span
             >
           </div>

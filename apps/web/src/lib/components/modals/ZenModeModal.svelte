@@ -221,7 +221,7 @@
           aria-selected={activeTab === "overview"}
           aria-controls="panel-overview"
           tabindex={activeTab === "overview" ? 0 : -1}
-          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+          class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
           'overview'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -238,7 +238,7 @@
             aria-selected={activeTab === "inventory"}
             aria-controls="panel-inventory"
             tabindex={activeTab === "inventory" ? 0 : -1}
-            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
             'inventory'
               ? 'text-theme-primary border-theme-primary'
               : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -254,7 +254,7 @@
             aria-selected={activeTab === "map"}
             aria-controls="panel-map"
             tabindex={activeTab === "map" ? 0 : -1}
-            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 {activeTab ===
+            class="py-3 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
             'map'
               ? 'text-theme-primary border-theme-primary'
               : 'text-theme-muted border-transparent hover:text-theme-text'}"
@@ -306,7 +306,7 @@
             role="tabpanel"
             id="panel-inventory"
             aria-labelledby="tab-inventory"
-            class="flex-1 p-8 flex items-center justify-center text-theme-muted font-mono text-sm italic"
+            class="flex-1 p-8 flex items-center justify-center text-theme-muted font-header text-sm italic"
           >
             Inventory system initialization pending...
           </div>

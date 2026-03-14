@@ -197,7 +197,7 @@
                   : 'bg-blue-500'}"
               ></span>
               <div class="flex-1 min-w-0">
-                <div class="text-[11px] text-theme-muted uppercase font-mono">
+                <div class="text-[11px] text-theme-muted uppercase font-header">
                   {conn.label}
                 </div>
                 <div
