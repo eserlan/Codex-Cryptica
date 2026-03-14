@@ -201,7 +201,7 @@
                   {conn.label}
                 </div>
                 <div
-                  class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition"
+                  class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
                 >
                   {conn.title}
                 </div>
