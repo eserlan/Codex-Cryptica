@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { helpStore } from "$lib/stores/help.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
@@ -9,10 +10,8 @@
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
 
   let {
-    isPopup,
     isMobileMenuOpen = $bindable(false),
   }: {
-    isPopup: boolean;
     isMobileMenuOpen: boolean;
   } = $props();
 
@@ -24,6 +23,8 @@
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
       console.error(`Failed to load ${name}`, error);
+    } else {
+      debugStore.error(`Failed to lazy-load component: ${name}`, error);
     }
   };
 
@@ -68,7 +69,7 @@
         .catch((e) => logChunkError("DiceModal", e));
     }
 
-    if (!isPopup && !OracleWindow) {
+    if (!OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
         .then((m) => (OracleWindow = m.default))
         .catch((e) => logChunkError("OracleWindow", e));
@@ -82,43 +83,41 @@
   });
 </script>
 
-{#if !isPopup}
-  <SearchModal />
+<SearchModal />
 
-  {#if !isLoginRoute}
-    {#if OracleWindow}
-      <OracleWindow />
+{#if !isLoginRoute}
+  {#if OracleWindow}
+    <OracleWindow />
+  {/if}
+  {#if browser}
+    <SettingsModal />
+
+    {#if ZenModeModal}
+      <ZenModeModal />
     {/if}
-    {#if browser}
-      <SettingsModal />
-
-      {#if ZenModeModal}
-        <ZenModeModal />
-      {/if}
-      {#if TourOverlay}
-        <TourOverlay />
-      {/if}
-      <MobileMenu bind:isOpen={isMobileMenuOpen} />
-      {#if MergeNodesDialog}
-        <MergeNodesDialog
-          isOpen={uiStore.mergeDialog.open}
-          sourceNodeIds={uiStore.mergeDialog.sourceIds}
-          onClose={() => uiStore.closeMergeDialog()}
-        />
-      {/if}
-      {#if BulkLabelDialog}
-        <BulkLabelDialog
-          isOpen={uiStore.bulkLabelDialog.open}
-          entityIds={uiStore.bulkLabelDialog.entityIds}
-          onClose={() => uiStore.closeBulkLabelDialog()}
-        />
-      {/if}
-      {#if DiceModal}
-        <DiceModal />
-      {/if}
-      {#if DebugConsole}
-        <DebugConsole />
-      {/if}
+    {#if TourOverlay}
+      <TourOverlay />
+    {/if}
+    <MobileMenu bind:isOpen={isMobileMenuOpen} />
+    {#if MergeNodesDialog}
+      <MergeNodesDialog
+        isOpen={uiStore.mergeDialog.open}
+        sourceNodeIds={uiStore.mergeDialog.sourceIds}
+        onClose={() => uiStore.closeMergeDialog()}
+      />
+    {/if}
+    {#if BulkLabelDialog}
+      <BulkLabelDialog
+        isOpen={uiStore.bulkLabelDialog.open}
+        entityIds={uiStore.bulkLabelDialog.entityIds}
+        onClose={() => uiStore.closeBulkLabelDialog()}
+      />
+    {/if}
+    {#if DiceModal}
+      <DiceModal />
+    {/if}
+    {#if DebugConsole}
+      <DebugConsole />
     {/if}
   {/if}
 {/if}

@@ -35,7 +35,7 @@ export const registerProductionServiceWorker = () => {
   }
 };
 
-export const createGlobalErrorHandlers = () => {
+export const createGlobalEventHandlers = () => {
   const handleGlobalError = (event: ErrorEvent) => {
     if (
       event.target instanceof HTMLScriptElement ||

@@ -6,7 +6,7 @@
   import { createGlobalShortcutHandler } from "$lib/actions/useGlobalShortcuts";
   import {
     bootWorkspaceStores,
-    createGlobalErrorHandlers,
+    createGlobalEventHandlers,
     exposeE2EGlobals,
     initializeShellServices,
     maybeStartOnboardingOrDemo,
@@ -86,7 +86,7 @@
     registerProductionServiceWorker();
 
     const { handleGlobalError, handleUnhandledRejection, handleVaultSwitched } =
-      createGlobalErrorHandlers();
+      createGlobalEventHandlers();
 
     window.addEventListener("error", handleGlobalError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
@@ -421,7 +421,7 @@
       </div>
     </footer>
 
-    <GlobalModalProvider {isPopup} bind:isMobileMenuOpen />
+    <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 </div>
 
