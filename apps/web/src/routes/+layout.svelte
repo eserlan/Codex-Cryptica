@@ -1,61 +1,33 @@
 <script lang="ts">
   import "../app.css";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import { page } from "$app/state";
+  import { createGlobalShortcutHandler } from "$lib/actions/useGlobalShortcuts";
+  import {
+    bootWorkspaceStores,
+    createGlobalErrorHandlers,
+    exposeE2EGlobals,
+    initializeShellServices,
+    maybeStartOnboardingOrDemo,
+    openHelpArticleFromHash,
+    registerProductionServiceWorker,
+  } from "$lib/app/init/app-init";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
-  import SearchModal from "$lib/components/search/SearchModal.svelte";
-  import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
-  import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { searchStore } from "$lib/stores/search.svelte";
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { uiStore } from "$lib/stores/ui.svelte";
-  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
+  import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
+  import { DISCORD_URL, PATREON_URL } from "$lib/config";
   import { demoService } from "$lib/services/demo";
-  import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
+  import { searchStore } from "$lib/stores/search.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
-  import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
-  import { page } from "$app/state";
-  import { base } from "$app/paths";
-  import { browser } from "$app/environment";
-  import { PATREON_URL, DISCORD_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
-  /**
-   * Gates noisy console errors for lazy-load failures to DEV/E2E/Staging.
-   * In production, logs to internal debugStore instead of polluting the console.
-   */
-  const logChunkError = (name: string, error: any) => {
-    const isSpecialEnv =
-      import.meta.env.DEV ||
-      (typeof window !== "undefined" && (window as any).__E2E__) ||
-      import.meta.env.VITE_STAGING === "true";
-
-    if (isSpecialEnv) {
-      console.error(`Failed to load ${name}`, error);
-    } else {
-      debugStore.error(`Lazy load failed: ${name}`, error);
-    }
-  };
-
-  // Dynamic Component Loading for specialized/heavy UI elements
-  // Use any to bypass strict prop validation for lazy components in the shell
-  let OracleWindow = $state<any>(null);
   let OracleSidebarPanel = $state<any>(null);
-  let ZenModeModal = $state<any>(null);
-  let TourOverlay = $state<any>(null);
-  let DebugConsole = $state<any>(null);
-  let MergeNodesDialog = $state<any>(null);
-  let BulkLabelDialog = $state<any>(null);
-  let DiceModal = $state<any>(null);
 
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
@@ -67,75 +39,28 @@
       page.url.pathname.startsWith(`${base}${route}`),
     ),
   );
-  let isMobileMenuOpen = $state(false);
 
-  // Lazy load components when needed
+  let isMobileMenuOpen = $state(false);
+  let hasBooted = $state(false);
+  let lastDemoQueryParam: string | null = null;
+  let headerEl = $state<HTMLElement>();
+
   $effect(() => {
-    if (uiStore.showZenMode && !ZenModeModal) {
-      import("$lib/components/modals/ZenModeModal.svelte")
-        .then((m) => (ZenModeModal = m.default))
-        .catch((e) => logChunkError("ZenModeModal", e));
-    }
-    if (helpStore.activeTour && !TourOverlay) {
-      import("$lib/components/help/TourOverlay.svelte")
-        .then((m) => (TourOverlay = m.default))
-        .catch((e) => logChunkError("TourOverlay", e));
-    }
-    if (uiStore.mergeDialog.open && !MergeNodesDialog) {
-      import("$lib/components/dialogs/MergeNodesDialog.svelte")
-        .then((m) => (MergeNodesDialog = m.default))
-        .catch((e) => logChunkError("MergeNodesDialog", e));
-    }
-    if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
-      import("$lib/components/dialogs/BulkLabelDialog.svelte")
-        .then((m) => (BulkLabelDialog = m.default))
-        .catch((e) => logChunkError("BulkLabelDialog", e));
-    }
-    if (!DiceModal) {
-      import("$lib/components/dice/DiceModal.svelte")
-        .then((m) => (DiceModal = m.default))
-        .catch((e) => logChunkError("DiceModal", e));
-    }
-    if (!isPopup && !OracleWindow) {
-      import("$lib/components/oracle/OracleWindow.svelte")
-        .then((m) => (OracleWindow = m.default))
-        .catch((e) => logChunkError("OracleWindow", e));
-    }
     if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
       import("$lib/components/oracle/OracleSidebarPanel.svelte")
-        .then((m) => (OracleSidebarPanel = m.default))
-        .catch((e) => logChunkError("OracleSidebarPanel", e));
-    }
-    if (
-      (import.meta.env.DEV ||
-        (typeof window !== "undefined" && (window as any).__E2E__) ||
-        import.meta.env.VITE_STAGING === "true") &&
-      !DebugConsole
-    ) {
-      import("$lib/components/debug/DebugConsole.svelte")
-        .then((m) => (DebugConsole = m.default))
-        .catch((e) => logChunkError("DebugConsole", e));
+        .then((module) => (OracleSidebarPanel = module.default))
+        .catch((error) =>
+          debugStore.error("Lazy load failed: OracleSidebarPanel", error),
+        );
     }
   });
-
-  let hasBooted = $state(false);
 
   function bootSystem() {
     if (hasBooted) return;
     hasBooted = true;
-
-    debugStore.log("System booting: Initializing heavy stores...");
-    categories.init();
-    timelineStore.init();
-    graph.init();
-    calendarStore.init();
-
-    vault.init().catch((error) => {
-      console.error("Vault initialization failed", error);
-    });
+    bootWorkspaceStores();
   }
 
-  // Reactive boot trigger
   $effect(() => {
     const isWorkspaceRoute =
       page.url.pathname === `${base}/` ||
@@ -148,129 +73,26 @@
 
     if (!hasBooted) {
       if (!shouldShowLanding || isTesting) {
-        // User has 'skip' enabled or has already dismissed it in this session
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
-        // Deep link to map/canvas bypasses landing but dismisses it
         uiStore.dismissedLandingPage = true;
         bootSystem();
       }
     }
   });
 
-  // E2E test helpers: Expose stores globally for Playwright evaluate() calls
-  $effect(() => {
-    if (typeof window !== "undefined" && (window as any).__E2E__) {
-      (window as any).vault = vault;
-      (window as any).vaultRegistry = vaultRegistry;
-      (window as any).canvasRegistry = canvasRegistry;
-      (window as any).graph = graph;
-      (window as any).oracle = oracle;
-      (window as any).uiStore = uiStore;
-    }
-  });
-
   onMount(() => {
-    console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
+    initializeShellServices();
+    registerProductionServiceWorker();
 
-    // Light initializations required for the landing page/shell
-    helpStore.init();
-    themeStore.init();
-    oracle.init();
-
-    // Register Service Worker for PWA/Offline support (Production only)
-    if ("serviceWorker" in navigator && !import.meta.env.DEV) {
-      navigator.serviceWorker
-        .register(`${base}/service-worker.js`)
-        .catch((error) => {
-          console.warn("Service Worker registration failed:", error);
-        });
-    }
-
-    const handleGlobalError = (event: ErrorEvent) => {
-      // Ignore non-fatal script/asset load failures (common when offline)
-      if (
-        event.target instanceof HTMLScriptElement ||
-        event.target instanceof HTMLLinkElement
-      ) {
-        return;
-      }
-
-      const message = event.message || "";
-      if (
-        message.includes("Script error") ||
-        message.includes("Load failed") ||
-        message.includes("isHeadless") ||
-        message.includes("notify") ||
-        message.includes("INTERNET_DISCONNECTED") ||
-        message.includes("Failed to fetch") ||
-        message.includes("NetworkError") ||
-        message.includes(
-          "ResizeObserver loop completed with undelivered notifications",
-        )
-      ) {
-        return;
-      }
-
-      console.error("[Fatal Error]", event);
-      uiStore.setGlobalError(event.message, event.error?.stack);
-    };
-
-    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-      const reason = event.reason;
-      const message = reason?.message || "";
-
-      if (
-        message.includes("Failed to fetch") ||
-        message.includes("NetworkError") ||
-        message.includes("Load failed") ||
-        message.includes("INTERNET_DISCONNECTED")
-      ) {
-        return;
-      }
-
-      console.error("[Fatal Rejection]", event);
-      uiStore.setGlobalError(
-        message || "Unhandled Promise Rejection",
-        reason?.stack,
-      );
-    };
+    const { handleGlobalError, handleUnhandledRejection, handleVaultSwitched } =
+      createGlobalErrorHandlers();
 
     window.addEventListener("error", handleGlobalError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
-    window.addEventListener("vault-switched", () => {
-      calendarStore.init();
-    });
+    window.addEventListener("vault-switched", handleVaultSwitched);
 
-    // Expose for E2E testing
-    if (import.meta.env.DEV || (window as any).__E2E__) {
-      (window as any).searchStore = searchStore;
-      (window as any).vault = vault;
-      (window as any).graph = graph;
-      (window as any).calendarStore = calendarStore;
-      (window as any).helpStore = helpStore;
-
-      import("$lib/stores/oracle.svelte").then((m) => {
-        (window as any).oracle = m.oracle;
-      });
-      import("$lib/services/ai").then((m) => {
-        (window as any).textGeneration = m.textGenerationService;
-        (window as any).imageGeneration = m.imageGenerationService;
-        (window as any).contextRetrieval = m.contextRetrievalService;
-      });
-
-      (window as any).categories = categories;
-      (window as any).uiStore = uiStore;
-      (window as any).isEntityVisible = isEntityVisible;
-
-      // Eagerly load P2P services for E2E
-      import("$lib/cloud-bridge/p2p/host-service.svelte").then((m) => {
-        (window as any).p2pHostService = m.p2pHost;
-      });
-      import("$lib/cloud-bridge/p2p/guest-service").then((m) => {
-        (window as any).p2pGuestService = m.p2pGuestService;
-      });
-    }
+    exposeE2EGlobals();
 
     return () => {
       window.removeEventListener("error", handleGlobalError);
@@ -278,31 +100,14 @@
         "unhandledrejection",
         handleUnhandledRejection,
       );
+      window.removeEventListener("vault-switched", handleVaultSwitched);
     };
   });
 
-  // Handle Direct Help Links (#help/article-id)
   $effect(() => {
     if (!helpStore.isInitialized) return;
-
-    const hash = page.url.hash;
-    if (hash && hash.startsWith("#help/")) {
-      const articleId = hash.replace("#help/", "");
-      if (articleId) {
-        const exists = HELP_ARTICLES.some((a) => a.id === articleId);
-        if (exists) {
-          const timer = setTimeout(() => {
-            helpStore.openHelpToArticle(articleId);
-          }, 100);
-          return () => clearTimeout(timer);
-        }
-      }
-    }
+    return openHelpArticleFromHash(page.url.hash) ?? undefined;
   });
-
-  let lastDemoQueryParam: string | null = null;
-
-  let headerEl = $state<HTMLElement>();
 
   $effect(() => {
     if (headerEl && browser) {
@@ -320,121 +125,34 @@
     }
   });
 
-  // Handle Demo Mode Deep Linking (?demo=theme)
   $effect(() => {
     const demoTheme = page.url.searchParams.get("demo");
 
-    // If there is no demo param, reset our tracking state and exit.
     if (!demoTheme) {
       lastDemoQueryParam = null;
       return;
     }
 
-    // If we've already handled this exact query param value, do nothing.
     if (demoTheme === lastDemoQueryParam) {
       return;
     }
 
-    // Record that we've now handled this query param value.
     lastDemoQueryParam = demoTheme;
 
-    // Suppression of auto-start check
     if (!uiStore.wasConverted) {
-      // We only start if it's actually different from what we think we are showing,
-      // but DemoService.startDemo is the ultimate source of truth for loading data.
       demoService.startDemo(demoTheme);
     }
   });
 
-  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
-  // OR Auto-start demo if first visit and vault is empty
   $effect(() => {
     if (vault.isInitialized && !uiStore.isLandingPageVisible) {
       const isTesting =
         typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
-
-      if (
-        !helpStore.hasSeen("initial-onboarding") &&
-        !(window as any).DISABLE_ONBOARDING &&
-        !page.url.searchParams.has("demo") // only auto-start fantasy if no specific demo requested
-      ) {
-        // If vault is empty, start demo instead of tour
-        if (
-          vault.allEntities.length === 0 &&
-          !uiStore.isDemoMode &&
-          !isTesting
-        ) {
-          demoService.startDemo("fantasy");
-        } else {
-          helpStore.startTour("initial-onboarding");
-        }
-      }
+      maybeStartOnboardingOrDemo(isTesting, page.url.searchParams.has("demo"));
     }
   });
 
-  const handleKeydown = (event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-      event.preventDefault();
-      searchStore.open();
-    }
-
-    const target = event.target as HTMLElement;
-    const isTyping =
-      target?.tagName === "INPUT" ||
-      target?.tagName === "TEXTAREA" ||
-      target?.closest("[contenteditable]");
-
-    if (isTyping) return;
-
-    const isUndo =
-      (event.metaKey || event.ctrlKey) &&
-      event.key.toLowerCase() === "z" &&
-      !event.shiftKey;
-
-    const isRedo =
-      (event.metaKey || event.ctrlKey) &&
-      (event.key.toLowerCase() === "y" ||
-        (event.key.toLowerCase() === "z" && event.shiftKey));
-
-    // Undo (Regret)
-    if (isUndo) {
-      event.preventDefault();
-      oracle.undo();
-    }
-
-    // Redo (Reregret)
-    if (isRedo) {
-      event.preventDefault();
-      oracle.redo();
-    }
-
-    if (
-      ((event.ctrlKey || event.metaKey) && event.key === "ArrowUp") ||
-      (event.altKey && event.key.toLowerCase() === "z")
-    ) {
-      if (vault.selectedEntityId) {
-        event.preventDefault();
-        uiStore.openZenMode(vault.selectedEntityId);
-      }
-    }
-
-    if (
-      event.key.toLowerCase() === "p" &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
-      const target = event.target as HTMLElement;
-      const isTyping =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable;
-
-      if (isTyping) return;
-      uiStore.sharedMode = !uiStore.sharedMode;
-    }
-  };
+  const handleKeydown = createGlobalShortcutHandler();
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -703,44 +421,7 @@
       </div>
     </footer>
 
-    <SearchModal />
-
-    {#if (page.url.pathname as string) !== `${base}/login`}
-      {#if OracleWindow}
-        <OracleWindow />
-      {/if}
-      {#if browser}
-        <SettingsModal />
-
-        {#if ZenModeModal}
-          <ZenModeModal />
-        {/if}
-        {#if TourOverlay}
-          <TourOverlay />
-        {/if}
-        <MobileMenu bind:isOpen={isMobileMenuOpen} />
-        {#if MergeNodesDialog}
-          <MergeNodesDialog
-            isOpen={uiStore.mergeDialog.open}
-            sourceNodeIds={uiStore.mergeDialog.sourceIds}
-            onClose={() => uiStore.closeMergeDialog()}
-          />
-        {/if}
-        {#if BulkLabelDialog}
-          <BulkLabelDialog
-            isOpen={uiStore.bulkLabelDialog.open}
-            entityIds={uiStore.bulkLabelDialog.entityIds}
-            onClose={() => uiStore.closeBulkLabelDialog()}
-          />
-        {/if}
-        {#if DiceModal}
-          <DiceModal />
-        {/if}
-        {#if DebugConsole}
-          <DebugConsole />
-        {/if}
-      {/if}
-    {/if}
+    <GlobalModalProvider {isPopup} bind:isMobileMenuOpen />
   {/if}
 </div>
 
