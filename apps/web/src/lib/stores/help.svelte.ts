@@ -3,13 +3,12 @@ import { base } from "$app/paths";
 import { VERSION } from "$lib/config";
 import {
   type GuideStep,
-  type HelpArticle,
   ONBOARDING_TOUR,
   HELP_ARTICLES,
 } from "$lib/config/help-content";
 import FlexSearch from "flexsearch";
-import { uiStore } from "./ui.svelte";
-import { searchStore } from "./search.svelte";
+import { uiStore as defaultUiStore } from "./ui.svelte";
+import { searchStore as defaultSearchStore } from "./search.svelte";
 
 const STORAGE_KEY = "codex-cryptica-help-state";
 
@@ -19,7 +18,9 @@ interface HelpStoreState {
   dismissedHints: string[];
 }
 
-class HelpStore {
+const SEARCH_FIELDS = ["title", "tags", "content"];
+
+export class HelpStore {
   // Walkthrough State
   activeTour = $state<{
     id: string;
@@ -35,10 +36,37 @@ class HelpStore {
 
   // Help Center State
   searchQuery = $state("");
-  searchResults = $state<HelpArticle[]>([]);
   isHelpOpen = $state(false);
   expandedId = $state<string | null>(null);
   isInitialized = $state(false);
+
+  // Dependencies
+  private uiStore: typeof defaultUiStore;
+  private searchStore: typeof defaultSearchStore;
+
+  /**
+   * searchResults is an explicit derived property to ensure caching
+   * and reactive updates when searchQuery or isInitialized changes.
+   */
+  searchResults = $derived.by(() => {
+    // If not initialized or index doesn't exist, return all articles
+    if (!this.isInitialized || !this.index) return HELP_ARTICLES;
+
+    const query = this.searchQuery;
+    if (!query) return HELP_ARTICLES;
+
+    const results = this.index.search(query);
+    const allMatches = new Set<string>();
+    results.forEach((r: any) => {
+      r.result.forEach((id: any) => allMatches.add(id.toString()));
+    });
+
+    if (allMatches.size > 0) {
+      return HELP_ARTICLES.filter((a) => allMatches.has(a.id));
+    } else {
+      return [];
+    }
+  });
 
   // Persistence State
   private state = $state<HelpStoreState>({
@@ -48,8 +76,14 @@ class HelpStore {
   });
 
   private index: any;
+  private indexedCount = 0;
 
-  constructor() {
+  constructor(
+    uiStore: typeof defaultUiStore = defaultUiStore,
+    searchStore: typeof defaultSearchStore = defaultSearchStore,
+  ) {
+    this.uiStore = uiStore;
+    this.searchStore = searchStore;
     // Init handled explicitly in layout
   }
 
@@ -82,24 +116,36 @@ class HelpStore {
     this.isInitialized = true;
   }
 
-  private buildIndex() {
-    if (this.index) return;
+  /**
+   * Resets the store to its initial state.
+   * Primarily used for testing to prevent state leakage.
+   */
+  reset() {
+    this.searchQuery = "";
+    this.activeTour = null;
+    this.isHelpOpen = false;
+    this.expandedId = null;
+  }
+
+  /**
+   * Rebuilds the search index.
+   * Useful during development if articles change without a full reload.
+   */
+  buildIndex(force = false) {
+    if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
+      return;
 
     // Initialize FlexSearch
     this.index = new FlexSearch.Document({
       document: {
         id: "id",
-        index: [
-          { field: "title", tokenize: "forward" },
-          { field: "tags", tokenize: "forward" },
-          { field: "content", tokenize: "forward" },
-        ],
+        index: SEARCH_FIELDS,
         store: true,
       },
     });
 
     HELP_ARTICLES.forEach((article) => this.index.add(article));
-    this.searchResults = HELP_ARTICLES;
+    this.indexedCount = HELP_ARTICLES.length;
   }
 
   private save() {
@@ -115,8 +161,8 @@ class HelpStore {
 
     if (id === "initial-onboarding") {
       // Dismiss landing page and close settings modal to ensure the tour is visible
-      uiStore.dismissedLandingPage = true;
-      uiStore.closeSettings();
+      this.uiStore.dismissedLandingPage = true;
+      this.uiStore.closeSettings();
 
       this.activeTour = {
         id,
@@ -134,15 +180,15 @@ class HelpStore {
       // Trigger sidepanel states based on step targets
       const nextStep = this.activeTour.steps[this.activeTour.currentStepIndex];
       if (nextStep.id === "search") {
-        searchStore.open();
+        this.searchStore.open();
       } else if (nextStep.id === "oracle") {
         setTimeout(() => {
-          uiStore.activeSidebarTool = "oracle";
-          uiStore.leftSidebarOpen = true;
+          this.uiStore.activeSidebarTool = "oracle";
+          this.uiStore.leftSidebarOpen = true;
         }, 100);
       } else if (nextStep.id === "settings") {
         setTimeout(() => {
-          uiStore.openSettings("vault");
+          this.uiStore.openSettings("vault");
         }, 100);
       }
     } else {
@@ -156,12 +202,12 @@ class HelpStore {
 
     const prevStep = this.activeTour.steps[this.activeTour.currentStepIndex];
     if (prevStep.id === "search") {
-      searchStore.open();
+      this.searchStore.open();
     } else if (prevStep.id === "oracle") {
-      uiStore.activeSidebarTool = "oracle";
-      uiStore.leftSidebarOpen = true;
+      this.uiStore.activeSidebarTool = "oracle";
+      this.uiStore.leftSidebarOpen = true;
     } else if (prevStep.id === "settings") {
-      uiStore.openSettings("vault");
+      this.uiStore.openSettings("vault");
     }
   }
 
@@ -187,25 +233,6 @@ class HelpStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    if (!this.index) {
-      this.buildIndex();
-    }
-    if (!query) {
-      this.searchResults = HELP_ARTICLES;
-      return;
-    }
-
-    const results = this.index.search(query);
-    const allMatches = new Set<string>();
-    results.forEach((r: any) => {
-      r.result.forEach((id: any) => allMatches.add(id.toString()));
-    });
-
-    if (allMatches.size > 0) {
-      this.searchResults = HELP_ARTICLES.filter((a) => allMatches.has(a.id));
-    } else {
-      this.searchResults = [];
-    }
   }
 
   toggleArticle(id: string) {
@@ -217,7 +244,7 @@ class HelpStore {
     const article = HELP_ARTICLES.find((a) => a.id === id);
     if (article) {
       this.expandedId = id;
-      uiStore.openSettings("help");
+      this.uiStore.openSettings("help");
     }
   }
 
@@ -262,4 +289,7 @@ class HelpStore {
   }
 }
 
-export const helpStore = new HelpStore();
+const HELP_KEY = "__codex_help_instance__";
+export const helpStore: HelpStore =
+  (globalThis as any)[HELP_KEY] ??
+  ((globalThis as any)[HELP_KEY] = new HelpStore());

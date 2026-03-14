@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { helpStore } from "$stores/help.svelte";
+  import { helpStore } from "$lib/stores/help.svelte";
   import { parserService } from "$lib/services/parser";
   import DOMPurify from "isomorphic-dompurify";
   import { slide } from "svelte/transition";
@@ -30,7 +30,7 @@
   <HelpHeader {isStandalone} />
 
   <div class="space-y-3">
-    {#each helpStore.searchResults as article}
+    {#each helpStore.searchResults as article (article.id)}
       <div
         class="border border-theme-border bg-theme-primary/5 rounded overflow-hidden"
       >

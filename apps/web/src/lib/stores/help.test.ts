@@ -13,14 +13,31 @@ vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
-import { helpStore } from "./help.svelte";
+import { helpStore, HelpStore } from "./help.svelte";
 import { HELP_ARTICLES } from "$lib/config/help-content";
 
 describe("HelpStore", () => {
   beforeEach(() => {
     vi.mocked(localStorage.getItem).mockReturnValue(null);
     helpStore.init();
-    helpStore.setSearchQuery("");
+    helpStore.reset();
+  });
+
+  it("should support constructor injection for UI and Search stores", () => {
+    const mockUiStore = {
+      dismissedLandingPage: false,
+      closeSettings: vi.fn(),
+    } as any;
+    const mockSearchStore = { open: vi.fn() } as any;
+    const store = new HelpStore(mockUiStore, mockSearchStore);
+
+    // Test that it uses the injected UI store
+    const original = (window as any).DISABLE_ONBOARDING;
+    (window as any).DISABLE_ONBOARDING = false;
+    store.startTour("initial-onboarding");
+    expect(mockUiStore.dismissedLandingPage).toBe(true);
+    expect(mockUiStore.closeSettings).toHaveBeenCalled();
+    (window as any).DISABLE_ONBOARDING = original;
   });
 
   it("should initialize with all help articles", () => {
