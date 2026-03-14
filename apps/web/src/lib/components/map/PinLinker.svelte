@@ -13,9 +13,23 @@
 
   let results = $derived.by(() => {
     if (!query) return vault.allEntities.slice(0, 10);
-    return vault.allEntities
-      .filter((e) => e.title.toLowerCase().includes(query.toLowerCase()))
-      .slice(0, 10);
+
+    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
+    // This avoids iterating through the entire vault (O(N) vs O(K)) and prevents allocating a large intermediate array.
+    const maxResults = 10;
+    const lowerQuery = query.toLowerCase();
+    const matches = [];
+
+    // Memory Note: Accessing vault.allEntities inside the loop bounds, without local variable caching,
+    // as per instructions regarding getter micro-optimizations.
+    for (let i = 0; i < vault.allEntities.length; i++) {
+      const e = vault.allEntities[i];
+      if (e.title.toLowerCase().includes(lowerQuery)) {
+        matches.push(e);
+        if (matches.length === maxResults) break;
+      }
+    }
+    return matches;
   });
 
   onMount(() => {
