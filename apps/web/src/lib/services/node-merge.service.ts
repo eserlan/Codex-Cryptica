@@ -8,7 +8,8 @@ import {
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
 import { vault } from "../stores/vault.svelte";
 import { oracle } from "../stores/oracle.svelte";
-import { aiService, TIER_MODES } from "./ai";
+import { textGenerationService } from "./ai/text-generation.service";
+import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
 
 export type { IMergedContentProposal };
@@ -94,7 +95,7 @@ export class NodeMergeService {
         lore: n.frontmatter.lore,
       });
 
-      const aiProposal = await aiService.generateMergeProposal(
+      const aiProposal = await textGenerationService.generateMergeProposal(
         apiKey,
         modelName,
         mapToAiEntity(targetContent),

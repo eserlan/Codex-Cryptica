@@ -2,7 +2,7 @@ import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
 import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
-import { TIER_MODES } from "../services/ai";
+import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
 import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";

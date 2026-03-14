@@ -65,9 +65,15 @@ vi.mock("../services/search", () => ({
 }));
 
 vi.mock("../services/ai", () => ({
-  aiService: {
-    analyze: vi.fn(),
+  contextRetrievalService: {
     clearStyleCache: vi.fn(),
+    retrieveContext: vi.fn(),
+  },
+  textGenerationService: {
+    generateResponse: vi.fn(),
+  },
+  imageGenerationService: {
+    generateImage: vi.fn(),
   },
 }));
 

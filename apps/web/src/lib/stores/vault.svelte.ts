@@ -156,8 +156,15 @@ export class VaultStore {
       this.services = injectedServices;
     } else if (typeof window !== "undefined") {
       const { searchService } = await import("../services/search");
-      const { aiService } = await import("../services/ai");
-      this.services = { search: searchService, ai: aiService };
+      const { contextRetrievalService, textGenerationService } =
+        await import("../services/ai");
+      this.services = {
+        search: searchService,
+        ai: {
+          clearStyleCache: () => contextRetrievalService.clearStyleCache(),
+          expandQuery: (k, q, h) => textGenerationService.expandQuery(k, q, h),
+        },
+      };
 
       if (!this.syncCoordinator) {
         const engine = await createSyncEngine();

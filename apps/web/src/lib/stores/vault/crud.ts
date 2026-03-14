@@ -244,7 +244,9 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(newEntitiesList: BatchCreateInput[]): Promise<void> {
+  async batchCreateEntities(
+    newEntitiesList: BatchCreateInput[],
+  ): Promise<void> {
     const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,
