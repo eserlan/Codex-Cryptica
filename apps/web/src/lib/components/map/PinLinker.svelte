@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { vault } from "../../stores/vault.svelte";
   import { fade, scale } from "svelte/transition";
+  import type { Entity } from "schema";
 
   let { onSelect, onCancel } = $props<{
     onSelect: (entityId: string) => void;
@@ -15,15 +16,14 @@
     if (!query) return vault.allEntities.slice(0, 10);
 
     // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
-    // This avoids iterating through the entire vault (O(N) vs O(K)) and prevents allocating a large intermediate array.
+    // Cache allEntities once to avoid repeated getter allocations (Object.values) on each iteration.
     const maxResults = 10;
     const lowerQuery = query.toLowerCase();
-    const matches = [];
+    const allEntities = vault.allEntities;
+    const matches: Entity[] = [];
 
-    // Memory Note: Accessing vault.allEntities inside the loop bounds, without local variable caching,
-    // as per instructions regarding getter micro-optimizations.
-    for (let i = 0; i < vault.allEntities.length; i++) {
-      const e = vault.allEntities[i];
+    for (let i = 0; i < allEntities.length; i++) {
+      const e = allEntities[i];
       if (e.title.toLowerCase().includes(lowerQuery)) {
         matches.push(e);
         if (matches.length === maxResults) break;
