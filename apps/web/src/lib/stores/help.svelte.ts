@@ -70,6 +70,7 @@ export class HelpStore {
   });
 
   private index: any;
+  private indexedCount = 0;
 
   constructor(
     uiStore: typeof defaultUiStore = defaultUiStore,
@@ -109,8 +110,26 @@ export class HelpStore {
     this.isInitialized = true;
   }
 
-  private buildIndex() {
-    if (this.index) return;
+  /**
+   * Resets the store to its initial state.
+   * Primarily used for testing to prevent state leakage.
+   */
+  reset() {
+    this.searchQuery = "";
+    this.activeTour = null;
+    this.isHelpOpen = false;
+    this.expandedId = null;
+    // We don't reset isInitialized or index unless explicitly requested
+    // but we can clear search results by clearing query.
+  }
+
+  /**
+   * Rebuilds the search index.
+   * Useful during development if articles change without a full reload.
+   */
+  buildIndex(force = false) {
+    if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
+      return;
 
     // Initialize FlexSearch
     this.index = new FlexSearch.Document({
@@ -126,6 +145,7 @@ export class HelpStore {
     });
 
     HELP_ARTICLES.forEach((article) => this.index.add(article));
+    this.indexedCount = HELP_ARTICLES.length;
   }
 
   private save() {

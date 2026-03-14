@@ -20,7 +20,7 @@ describe("HelpStore", () => {
   beforeEach(() => {
     vi.mocked(localStorage.getItem).mockReturnValue(null);
     helpStore.init();
-    helpStore.setSearchQuery("");
+    helpStore.reset();
   });
 
   it("should support constructor injection for UI and Search stores", () => {
