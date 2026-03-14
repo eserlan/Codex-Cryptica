@@ -145,6 +145,7 @@
               ? "search-results-list"
               : undefined}
             aria-label="Search notes"
+            data-testid="search-modal-input"
             aria-activedescendant={searchStore.results.length > 0
               ? `search-result-${searchStore.selectedIndex}`
               : undefined}

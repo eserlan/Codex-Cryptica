@@ -87,8 +87,13 @@ test.describe("Entity Labeling System", () => {
     await page.getByPlaceholder(/Title\.\.\./).fill("Test Hero");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // 2. Select the entity to open Detail Panel
-    await page.locator("aside").getByText("Test Hero").click();
+    // 2. Select the entity to open Detail Panel (using search)
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Test Hero");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Test Hero" })
+      .click();
 
     // 3. Add a label
     const labelInput = page.getByPlaceholder("Add label...");
@@ -96,12 +101,16 @@ test.describe("Entity Labeling System", () => {
     await labelInput.press("Enter");
 
     // 4. Verify label badge exists
-    await expect(page.getByText("Legendary")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "Legendary" }),
+    ).toBeVisible();
 
     // 5. Add another label
     await labelInput.fill("MIA");
     await labelInput.press("Enter");
-    await expect(page.getByText("MIA")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "MIA" }),
+    ).toBeVisible();
 
     // Wait for auto-save to finish (ensure it hits OPFS)
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
@@ -112,21 +121,29 @@ test.describe("Entity Labeling System", () => {
 
     // Use search to find the hero again
     await page.keyboard.press("Control+k");
-    await page.getByPlaceholder("Search notes...").fill("Test Hero");
+    await page.getByTestId("search-modal-input").fill("Test Hero");
     await page
       .getByTestId("search-result")
       .filter({ hasText: "Test Hero" })
       .click();
 
-    await expect(page.getByText("Legendary")).toBeVisible();
-    await expect(page.getByText("MIA")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "Legendary" }),
+    ).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "MIA" }),
+    ).toBeVisible();
 
     // 7. Remove a label
     await page
       .getByRole("button", { name: /Remove label MIA/i })
       .click({ force: true });
-    await expect(page.getByText("MIA")).not.toBeVisible();
-    await expect(page.getByText("Legendary")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "MIA" }),
+    ).not.toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "Legendary" }),
+    ).toBeVisible();
   });
 
   test("Filter graph by labels and clear filter", async ({ page }) => {
@@ -134,32 +151,39 @@ test.describe("Entity Labeling System", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Alpha");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.locator("aside").getByText("Alpha").click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Alpha");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Alpha" })
+      .click();
     await page.getByPlaceholder("Add label...").fill("Group A");
     await page.getByPlaceholder("Add label...").press("Enter");
 
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Beta");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.locator("aside").getByText("Beta").click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Beta");
+    await page.getByTestId("search-result").filter({ hasText: "Beta" }).click();
     await page.getByPlaceholder("Add label...").fill("Group B");
     await page.getByPlaceholder("Add label...").press("Enter");
 
     // 2. Filter by Group A
-    await page.getByRole("button", { name: "Labels (0)" }).click();
+    await page.getByRole("button", { name: /Labels \(0\)/ }).click();
     await page.getByRole("button", { name: "Group A" }).click();
 
-    // Wait for graph update (nodes are added/removed from DOM via Cytoscape, but we can check the Label dropdown count or some other indicator)
-    // Better: Check that the Graph Store elements count changed if we exposed it,
-    // or just verify the dropdown says "Labels (1)"
+    // 3. Verify dropdown reflects filter
     await expect(
-      page.getByRole("button", { name: "Labels (1)" }),
+      page.getByRole("button", { name: /Labels \(1\)/ }),
     ).toBeVisible();
 
-    // 3. Clear filters
+    // 4. Clear filters
     await page.getByRole("button", { name: "Clear All" }).click();
     await expect(
-      page.getByRole("button", { name: "Labels (0)" }),
+      page.getByRole("button", { name: /Labels \(0\)/ }),
     ).toBeVisible();
   });
 
@@ -168,18 +192,34 @@ test.describe("Entity Labeling System", () => {
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Subject 1");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.locator("aside").getByText("Subject 1").click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Subject 1");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Subject 1" })
+      .click();
     await page.getByPlaceholder("Add label...").fill("important");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await expect(page.getByText("important")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "important" }),
+    ).toBeVisible();
     await page.getByPlaceholder("Add label...").fill("internal");
     await page.getByPlaceholder("Add label...").press("Enter");
-    await expect(page.getByText("internal")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "internal" }),
+    ).toBeVisible();
 
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder(/Title\.\.\./).fill("Subject 2");
     await page.getByRole("button", { name: "ADD" }).click();
-    await page.locator("aside").getByText("Subject 2").click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Subject 2");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Subject 2" })
+      .click();
 
     const labelInput = page.getByPlaceholder("Add label...");
 
@@ -199,7 +239,9 @@ test.describe("Entity Labeling System", () => {
     await expect(labelInput).toHaveValue("");
 
     // Explicitly check for the label now
-    await expect(page.getByText("important")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "important" }),
+    ).toBeVisible();
 
     // 6. Test Tab completion
     await labelInput.click();
@@ -211,6 +253,8 @@ test.describe("Entity Labeling System", () => {
     await expect(labelInput).toHaveValue("");
 
     // Check
-    await expect(page.getByText("internal")).toBeVisible();
+    await expect(
+      page.getByTestId("label-badge").filter({ hasText: "internal" }),
+    ).toBeVisible();
   });
 });

@@ -87,7 +87,7 @@
   }
 
   .legal-content :global(h2) {
-    font-family: var(--theme-font-header, ui-sans-serif);
+    font-family: var(--font-header, ui-sans-serif);
     font-size: 1.5rem;
     font-weight: 900;
     text-transform: uppercase;
@@ -100,7 +100,7 @@
   }
 
   .legal-content :global(h3) {
-    font-family: var(--theme-font-header, ui-sans-serif);
+    font-family: var(--font-header, ui-sans-serif);
     font-size: 1.125rem;
     font-weight: 800;
     text-transform: uppercase;

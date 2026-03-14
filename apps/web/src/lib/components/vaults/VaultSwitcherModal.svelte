@@ -148,7 +148,6 @@
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   transition:fade
-  data-testid="vault-switcher-modal"
   role="button"
   tabindex="0"
   onclick={(e) => {
@@ -173,6 +172,7 @@
     aria-labelledby="vault-selector-title"
     class="bg-theme-surface border border-theme-border rounded-lg shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]"
     transition:scale
+    data-testid="vault-switcher-modal"
   >
     <div
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg"
@@ -244,19 +244,19 @@
                 {v.name}
                 {#if v.id === vaultRegistry.activeVaultId}
                   <span
-                    class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-mono"
+                    class="text-[10px] bg-theme-primary text-theme-bg px-1.5 py-0.5 rounded-full font-header"
                     >ACTIVE</span
                   >
                 {/if}
               </div>
-              <div class="text-xs text-theme-muted mt-1 font-mono">
+              <div class="text-xs text-theme-muted mt-1 font-header">
                 Last opened: {formatDate(v.lastOpenedAt)}
               </div>
             </button>
 
             <div class="text-right flex items-center gap-1 pl-2">
               <div
-                class="text-xs font-mono text-theme-secondary mr-2 hidden sm:block"
+                class="text-xs font-header text-theme-secondary mr-2 hidden sm:block"
               >
                 {v.entityCount || 0} Items
               </div>

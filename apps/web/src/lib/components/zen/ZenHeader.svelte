@@ -30,6 +30,7 @@
 <header
   style="background-image: var(--bg-texture-overlay)"
   class="px-4 md:px-6 py-4 border-b border-theme-border bg-theme-surface flex justify-between items-start shrink-0"
+  data-testid="zen-header"
 >
   <div class="flex-1 mr-4 md:mr-8">
     <div class="flex items-center gap-3 mb-1">

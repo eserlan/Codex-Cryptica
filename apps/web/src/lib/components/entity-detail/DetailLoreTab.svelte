@@ -17,7 +17,7 @@
 <div class="space-y-4">
   <div>
     <div
-      class="flex items-center gap-3 text-xs uppercase tracking-widest text-theme-muted mb-6 font-mono"
+      class="flex items-center gap-3 text-xs uppercase tracking-widest text-theme-muted mb-6 font-header"
     >
       <span class="text-theme-accent icon-[lucide--file-text] w-4 h-4"></span>
       <span>{themeStore.jargon.lore_header}</span>

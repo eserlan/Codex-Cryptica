@@ -79,7 +79,10 @@
 
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (uniqueFormulas.length === 0) return;
+      if (uniqueFormulas.length === 0) {
+        console.log("DiceModal: ArrowUp pressed but uniqueFormulas is empty");
+        return;
+      }
 
       if (historyIndex === -1) {
         originalFormula = formula;
@@ -199,7 +202,7 @@
               bind:value={formula}
               onkeydown={handleKeyDown}
               placeholder="Enter formula (e.g. 2d20kh1 + 5)"
-              class="w-full bg-theme-bg border border-theme-border rounded-xl pl-4 pr-10 py-3 text-sm focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 outline-none font-mono transition-all placeholder:opacity-40"
+              class="w-full bg-theme-bg border border-theme-border rounded-xl pl-4 pr-10 py-3 text-sm focus:border-theme-primary focus:ring-2 focus:ring-theme-primary/20 outline-none font-body transition-all placeholder:opacity-40"
             />
             <button
               type="button"

@@ -85,7 +85,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2 font-mono">
+<div class="flex flex-col gap-2 font-body">
   <div
     class="flex {isVertical
       ? 'flex-col items-stretch gap-3'
@@ -153,7 +153,7 @@
         class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
       ></span>
       <span
-        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[240px] truncate"
+        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[240px] truncate font-header"
       >
         {themeStore.jargon.vault}: {vault.vaultName}
       </span>
@@ -171,7 +171,7 @@
     >
       {#if vault.status === "loading"}
         <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
-          <span class="animate-pulse text-theme-primary font-bold"
+          <span class="animate-pulse text-theme-primary font-bold font-header"
             >LOADING... {vault.syncStats.progress}%</span
           >
           <div class="w-full h-1 bg-theme-border rounded-full overflow-hidden">
@@ -190,7 +190,9 @@
           {vault.errorMessage || "ERROR"}
         </span>
       {:else if vault.allEntities.length > 0}
-        <span class="text-theme-secondary" data-testid="entity-count"
+        <span
+          class="text-theme-secondary font-header"
+          data-testid="entity-count"
           >{vault.allEntities.length}
           {themeStore
             .resolveJargon("entity", vault.allEntities.length)
@@ -312,7 +314,7 @@
         bind:value={newTitle}
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}
-        class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 {isVertical
+        class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 font-body {isVertical
           ? 'py-3 text-sm'
           : ''}"
         aria-invalid={!!createError}
@@ -321,7 +323,7 @@
       <select
         bind:value={newType}
         aria-label="New Entity Type"
-        class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary {isVertical
+        class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary font-body {isVertical
           ? 'py-3 text-sm'
           : ''}"
       >
@@ -353,7 +355,7 @@
       {#if createError}
         <div
           id="create-error"
-          class="text-[10px] text-red-500 w-full text-center"
+          class="text-[10px] text-red-500 w-full text-center font-header"
           role="alert"
         >
           {createError}

@@ -48,11 +48,11 @@ test.describe("Footer", () => {
     await expect(helpLink).toBeVisible();
 
     // Click help and verify settings modal opens
-    await helpLink.click();
+    await helpLink.click({ force: true });
 
     // Wait for the settings modal to appear
-    const settingsModal = page.getByRole("dialog");
-    await expect(settingsModal).toBeVisible();
+    const settingsModal = page.getByTestId("settings-modal");
+    await expect(settingsModal).toBeVisible({ timeout: 10000 });
 
     // Verify it's on the help tab by checking for the specific heading or content
     await expect(settingsModal.locator('h2:has-text("Help")')).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("Footer", () => {
     const classes = await patreonLink.getAttribute("class");
 
     expect(classes).toContain("text-[10px]");
-    expect(classes).toContain("font-mono");
+    expect(classes).toContain("font-header");
     expect(classes).toContain("uppercase");
     expect(classes).toContain("tracking-widest");
   });

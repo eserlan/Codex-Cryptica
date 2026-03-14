@@ -18,7 +18,7 @@
     >
       <div class="flex flex-col min-w-0">
         <span
-          class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1"
+          class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
           >Result</span
         >
         <span
@@ -29,11 +29,11 @@
       </div>
       <div class="flex flex-col items-end shrink-0 min-w-0">
         <span
-          class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1"
+          class="text-[9px] font-bold text-theme-muted uppercase tracking-widest leading-none mb-1 font-header"
           >Formula</span
         >
         <span
-          class="text-xs font-mono text-theme-text bg-theme-primary/10 px-2 py-1 rounded border border-theme-primary/20 whitespace-nowrap"
+          class="text-xs font-header text-theme-text bg-theme-primary/10 px-2 py-1 rounded border border-theme-primary/20 whitespace-nowrap"
         >
           {result.formula}
         </span>
@@ -54,7 +54,7 @@
                 ></span>
               {/if}
               <span
-                class="text-[9px] font-bold text-theme-muted uppercase tracking-tighter"
+                class="text-[9px] font-bold text-theme-muted uppercase tracking-tighter font-header"
                 >Part {i + 1} breakdown</span
               >
             </div>
@@ -76,7 +76,7 @@
                 {/each}
               {/if}
               <div
-                class="h-8 flex items-center px-2 text-xs font-bold text-theme-primary/80"
+                class="h-8 flex items-center px-2 text-xs font-bold text-theme-primary/80 font-header"
               >
                 = {part.value}
               </div>
@@ -86,10 +86,11 @@
           <div
             class="flex items-center gap-2 bg-theme-primary/5 rounded px-3 py-1.5 border border-theme-primary/10 w-fit"
           >
-            <span class="text-[10px] font-bold text-theme-muted uppercase"
+            <span
+              class="text-[10px] font-bold text-theme-muted uppercase font-header"
               >Modifier</span
             >
-            <span class="text-sm font-bold text-theme-primary"
+            <span class="text-sm font-bold text-theme-primary font-header"
               >{part.value >= 0 ? "+" : "-"}{Math.abs(part.value)}</span
             >
           </div>

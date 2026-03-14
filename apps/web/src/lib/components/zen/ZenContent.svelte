@@ -63,6 +63,7 @@
   bind:this={scrollContainer}
   class="flex-1 p-6 md:p-8 md:overflow-y-auto custom-scrollbar bg-theme-bg"
   style="background-image: var(--bg-texture-overlay)"
+  data-testid="zen-content"
 >
   <div class="max-w-3xl mx-auto space-y-12">
     <!-- Temporal Data -->
@@ -124,7 +125,7 @@
     <!-- Chronicle -->
     <div>
       <h2
-        class="text-xl font-body font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+        class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
       >
         <span class="icon-[lucide--book-open] w-5 h-5"></span>
         {themeStore.jargon.chronicle_header}
@@ -148,7 +149,7 @@
     <!-- Deep Lore -->
     <div>
       <h2
-        class="text-xl font-body font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+        class="text-xl font-header font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
       >
         <span class="icon-[lucide--scroll] w-5 h-5"></span>
         {themeStore.jargon.lore_secrets}

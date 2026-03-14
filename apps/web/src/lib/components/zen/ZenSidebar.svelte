@@ -77,6 +77,7 @@
 <div
   style="background-image: var(--bg-texture-overlay)"
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
+  data-testid="zen-sidebar"
 >
   <!-- Labels -->
   {#if entity?.labels && entity?.labels?.length > 0}

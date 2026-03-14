@@ -189,7 +189,7 @@
       OPEN SETTINGS
     </button>
     <div class="flex flex-col gap-2 w-full pt-4">
-      <p class="text-[10px] text-theme-muted font-mono">
+      <p class="text-[10px] text-theme-muted font-header">
         Vault contents never leave this device except for inference via your own
         API key.
       </p>
@@ -220,7 +220,7 @@
           >
             The Archives are Open
           </h4>
-          <p class="text-xs text-theme-muted leading-relaxed font-mono">
+          <p class="text-xs text-theme-muted leading-relaxed font-body">
             Greetings, Seeker. I am the Oracle, the keeper of your recorded
             lore. Ask of the robber, the mayor, or the shadows beyond the
             village... I shall consult the echoes of your vault.
@@ -276,7 +276,7 @@
     {#if oracle.isLoading}
       <div class="flex justify-start" transition:fade>
         <div
-          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-mono animate-pulse"
+          class="bg-theme-surface border border-theme-border px-3 py-2 rounded text-xs text-theme-primary font-header animate-pulse"
         >
           Consulting archives...
         </div>
@@ -318,7 +318,7 @@
         aria-label="Chat Input"
         onkeydown={handleKeyDown}
         placeholder="Ask the archives or type &quot;/&quot; for commands..."
-        class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-mono resize-none overflow-hidden no-scrollbar shadow-inner"
+        class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-body resize-none overflow-hidden no-scrollbar shadow-inner"
         disabled={oracle.isLoading}
         rows="1"
       ></textarea>

@@ -157,8 +157,8 @@ class ThemeStore {
       `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 60%)`,
     );
 
-    root.style.setProperty("--font-header", tokens.fontHeader);
-    root.style.setProperty("--font-body", tokens.fontBody);
+    root.style.setProperty("--font-header-val", tokens.fontHeader);
+    root.style.setProperty("--font-body-val", tokens.fontBody);
 
     root.style.setProperty(
       "--theme-border-width",
