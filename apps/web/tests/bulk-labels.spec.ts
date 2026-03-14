@@ -13,7 +13,7 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     });
   });
 
-  test("should show selection toolbar when multiple nodes are selected", async ({
+  test("should show label action in context menu when nodes are selected", async ({
     page,
   }) => {
     // 1. Create two entities
@@ -25,16 +25,19 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     await page.getByPlaceholder(/Title\.\.\./).fill("Node B");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // 2. Select both nodes (mocking selection since dragging is hard in E2E)
+    // 2. Select both nodes
     await page.evaluate(() => {
       const cy = (window as any).cy;
       cy.nodes().select();
     });
 
-    // 3. Verify toolbar appears
-    const toolbar = page.locator("button:has-text('Label (2)')");
-    await expect(toolbar).toBeVisible();
-    await expect(page.locator("button:has-text('Merge')")).toBeVisible();
+    // 3. Right click on a node to show context menu
+    const canvas = page.getByTestId("graph-canvas");
+    await canvas.click({ button: "right" });
+
+    // 4. Verify context menu action appears
+    const labelAction = page.getByRole("menuitem", { name: /Label 2 Nodes/ });
+    await expect(labelAction).toBeVisible();
   });
 
   test("should open bulk label dialog and apply labels", async ({ page }) => {
@@ -50,25 +53,30 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       (window as any).cy.nodes().select();
     });
 
-    // 2. Click Label button in toolbar
-    await page.getByRole("button", { name: /Label \(2\)/ }).click();
+    // 2. Right click to open context menu
+    const canvas = page.getByTestId("graph-canvas");
+    await canvas.click({ button: "right" });
 
-    // 3. Verify Dialog
+    // 3. Click Label action
+    await page.getByRole("menuitem", { name: /Label 2 Nodes/ }).click();
+
+    // 4. Verify Dialog
     await expect(page.getByRole("dialog")).toBeVisible();
-    await expect(page.getByText("Label 2 chronicles")).toBeVisible();
+    await expect(page.getByText(/Label 2 Chronicles/i)).toBeVisible();
 
-    // 4. Apply a new label
+    // 5. Apply a new label
     const input = page.getByPlaceholder("Label name…");
     await input.fill("shared-tag");
     await page.getByRole("button", { name: "Apply to all" }).click();
 
-    // 5. Verify notification and dialog close logic
+    // 6. Verify notification and dialog close logic
     await expect(page.getByText(/Label "shared-tag" applied/)).toBeVisible();
     await page.getByRole("button", { name: "Done" }).click();
     await expect(page.getByRole("dialog")).not.toBeVisible();
 
-    // 6. Check recent labels (should appear when input is cleared/focused)
-    await page.getByRole("button", { name: /Label \(2\)/ }).click();
+    // 7. Check recent labels
+    await canvas.click({ button: "right" });
+    await page.getByRole("menuitem", { name: /Label 2 Nodes/ }).click();
     await input.click();
     await expect(page.getByText("Recent Labels")).toBeVisible();
     await expect(

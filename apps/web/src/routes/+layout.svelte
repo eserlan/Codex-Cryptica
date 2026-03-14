@@ -1,55 +1,36 @@
 <script lang="ts">
   import "../app.css";
+  import { browser } from "$app/environment";
+  import { base } from "$app/paths";
+  import { page } from "$app/state";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
   import SearchModal from "$lib/components/search/SearchModal.svelte";
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
+  import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
+  import { DISCORD_URL, PATREON_URL } from "$lib/config";
+  import { HELP_ARTICLES } from "$lib/config/help-content";
+  import { demoService } from "$lib/services/demo";
+  import { helpStore } from "$lib/stores/help.svelte";
+  import { searchStore } from "$lib/stores/search.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { vaultRegistry } from "$lib/stores/vault-registry.svelte";
-  import { graph } from "$lib/stores/graph.svelte";
-  import { timelineStore } from "$lib/stores/timeline.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { searchStore } from "$lib/stores/search.svelte";
-  import { helpStore } from "$lib/stores/help.svelte";
-  import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { oracle } from "$lib/stores/oracle.svelte";
-  import { demoService } from "$lib/services/demo";
+  import { timelineStore } from "$lib/stores/timeline.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
+  import { graph } from "$lib/stores/graph.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import { isEntityVisible } from "schema";
   import { onMount } from "svelte";
   import { fade } from "svelte/transition";
-  import { page } from "$app/state";
-  import { base } from "$app/paths";
-  import { browser } from "$app/environment";
-  import { PATREON_URL, DISCORD_URL, APP_NAME, VERSION } from "$lib/config";
 
   let { children } = $props();
 
-  /**
-   * Gates noisy console errors for lazy-load failures to DEV/E2E/Staging.
-   * In production, logs to internal debugStore instead of polluting the console.
-   */
-  const logChunkError = (name: string, error: any) => {
-    const isSpecialEnv =
-      import.meta.env.DEV ||
-      (typeof window !== "undefined" && (window as any).__E2E__) ||
-      import.meta.env.VITE_STAGING === "true";
-
-    if (isSpecialEnv) {
-      console.error(`Failed to load ${name}`, error);
-    } else {
-      debugStore.error(`Lazy load failed: ${name}`, error);
-    }
-  };
-
-  // Dynamic Component Loading for specialized/heavy UI elements
-  // Use any to bypass strict prop validation for lazy components in the shell
-  let OracleWindow = $state<any>(null);
   let OracleSidebarPanel = $state<any>(null);
+  let OracleWindow = $state<any>(null);
   let ZenModeModal = $state<any>(null);
   let TourOverlay = $state<any>(null);
   let DebugConsole = $state<any>(null);
@@ -67,58 +48,75 @@
       page.url.pathname.startsWith(`${base}${route}`),
     ),
   );
-  let isMobileMenuOpen = $state(false);
+  const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
 
-  // Lazy load components when needed
+  let isMobileMenuOpen = $state(false);
+  let hasBooted = $state(false);
+  let lastDemoQueryParam: string | null = null;
+  let headerEl = $state<HTMLElement>();
+
+  const isSpecialEnv =
+    import.meta.env.DEV ||
+    (typeof window !== "undefined" && (window as any).__E2E__) ||
+    import.meta.env.VITE_STAGING === "true";
+
+  const logChunkError = (name: string, error: any) => {
+    if (isSpecialEnv) {
+      console.error(`Failed to load ${name}`, error);
+    } else {
+      debugStore.error(`Failed to lazy-load component: ${name}`, error);
+    }
+  };
+
   $effect(() => {
+    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
+      import("$lib/components/oracle/OracleSidebarPanel.svelte")
+        .then((module) => (OracleSidebarPanel = module.default))
+        .catch((error) => logChunkError("OracleSidebarPanel", error));
+    }
+
     if (uiStore.showZenMode && !ZenModeModal) {
       import("$lib/components/modals/ZenModeModal.svelte")
         .then((m) => (ZenModeModal = m.default))
         .catch((e) => logChunkError("ZenModeModal", e));
     }
+
     if (helpStore.activeTour && !TourOverlay) {
       import("$lib/components/help/TourOverlay.svelte")
         .then((m) => (TourOverlay = m.default))
         .catch((e) => logChunkError("TourOverlay", e));
     }
+
     if (uiStore.mergeDialog.open && !MergeNodesDialog) {
       import("$lib/components/dialogs/MergeNodesDialog.svelte")
         .then((m) => (MergeNodesDialog = m.default))
         .catch((e) => logChunkError("MergeNodesDialog", e));
     }
+
     if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
       import("$lib/components/dialogs/BulkLabelDialog.svelte")
         .then((m) => (BulkLabelDialog = m.default))
         .catch((e) => logChunkError("BulkLabelDialog", e));
     }
+
     if (!DiceModal) {
       import("$lib/components/dice/DiceModal.svelte")
         .then((m) => (DiceModal = m.default))
         .catch((e) => logChunkError("DiceModal", e));
     }
+
     if (!isPopup && !OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
         .then((m) => (OracleWindow = m.default))
         .catch((e) => logChunkError("OracleWindow", e));
     }
-    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
-      import("$lib/components/oracle/OracleSidebarPanel.svelte")
-        .then((m) => (OracleSidebarPanel = m.default))
-        .catch((e) => logChunkError("OracleSidebarPanel", e));
-    }
-    if (
-      (import.meta.env.DEV ||
-        (typeof window !== "undefined" && (window as any).__E2E__) ||
-        import.meta.env.VITE_STAGING === "true") &&
-      !DebugConsole
-    ) {
+
+    if (isSpecialEnv && !DebugConsole) {
       import("$lib/components/debug/DebugConsole.svelte")
         .then((m) => (DebugConsole = m.default))
         .catch((e) => logChunkError("DebugConsole", e));
     }
   });
-
-  let hasBooted = $state(false);
 
   function bootSystem() {
     if (hasBooted) return;
@@ -135,7 +133,6 @@
     });
   }
 
-  // Reactive boot trigger
   $effect(() => {
     const isWorkspaceRoute =
       page.url.pathname === `${base}/` ||
@@ -148,37 +145,19 @@
 
     if (!hasBooted) {
       if (!shouldShowLanding || isTesting) {
-        // User has 'skip' enabled or has already dismissed it in this session
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
-        // Deep link to map/canvas bypasses landing but dismisses it
         uiStore.dismissedLandingPage = true;
         bootSystem();
       }
     }
   });
 
-  // E2E test helpers: Expose stores globally for Playwright evaluate() calls
-  $effect(() => {
-    if (typeof window !== "undefined" && (window as any).__E2E__) {
-      (window as any).vault = vault;
-      (window as any).vaultRegistry = vaultRegistry;
-      (window as any).canvasRegistry = canvasRegistry;
-      (window as any).graph = graph;
-      (window as any).oracle = oracle;
-      (window as any).uiStore = uiStore;
-    }
-  });
-
   onMount(() => {
-    console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
-
-    // Light initializations required for the landing page/shell
     helpStore.init();
     themeStore.init();
     oracle.init();
 
-    // Register Service Worker for PWA/Offline support (Production only)
     if ("serviceWorker" in navigator && !import.meta.env.DEV) {
       navigator.serviceWorker
         .register(`${base}/service-worker.js`)
@@ -188,7 +167,6 @@
     }
 
     const handleGlobalError = (event: ErrorEvent) => {
-      // Ignore non-fatal script/asset load failures (common when offline)
       if (
         event.target instanceof HTMLScriptElement ||
         event.target instanceof HTMLLinkElement
@@ -212,7 +190,7 @@
         return;
       }
 
-      console.error("[Fatal Error]", event);
+      console.error("[Fatal Error MSG]", event.message, event.error?.stack);
       uiStore.setGlobalError(event.message, event.error?.stack);
     };
 
@@ -236,19 +214,26 @@
       );
     };
 
+    const handleVaultSwitched = () => {
+      calendarStore.init();
+    };
+
     window.addEventListener("error", handleGlobalError);
     window.addEventListener("unhandledrejection", handleUnhandledRejection);
-    window.addEventListener("vault-switched", () => {
-      calendarStore.init();
-    });
+    window.addEventListener("vault-switched", handleVaultSwitched);
 
-    // Expose for E2E testing
     if (import.meta.env.DEV || (window as any).__E2E__) {
       (window as any).searchStore = searchStore;
       (window as any).vault = vault;
+      (window as any).vaultRegistry = vaultRegistry;
+      (window as any).canvasRegistry = canvasRegistry;
       (window as any).graph = graph;
+      (window as any).oracle = oracle;
       (window as any).calendarStore = calendarStore;
       (window as any).helpStore = helpStore;
+      (window as any).categories = categories;
+      (window as any).uiStore = uiStore;
+      (window as any).isEntityVisible = isEntityVisible;
 
       import("$lib/stores/oracle.svelte").then((m) => {
         (window as any).oracle = m.oracle;
@@ -258,12 +243,6 @@
         (window as any).imageGeneration = m.imageGenerationService;
         (window as any).contextRetrieval = m.contextRetrievalService;
       });
-
-      (window as any).categories = categories;
-      (window as any).uiStore = uiStore;
-      (window as any).isEntityVisible = isEntityVisible;
-
-      // Eagerly load P2P services for E2E
       import("$lib/cloud-bridge/p2p/host-service.svelte").then((m) => {
         (window as any).p2pHostService = m.p2pHost;
       });
@@ -278,31 +257,46 @@
         "unhandledrejection",
         handleUnhandledRejection,
       );
+      window.removeEventListener("vault-switched", handleVaultSwitched);
     };
   });
 
-  // Handle Direct Help Links (#help/article-id)
   $effect(() => {
     if (!helpStore.isInitialized) return;
-
     const hash = page.url.hash;
     if (hash && hash.startsWith("#help/")) {
       const articleId = hash.replace("#help/", "");
       if (articleId) {
-        const exists = HELP_ARTICLES.some((a) => a.id === articleId);
+        const exists = HELP_ARTICLES.some(
+          (article) => article.id === articleId,
+        );
         if (exists) {
-          const timer = setTimeout(() => {
+          setTimeout(() => {
             helpStore.openHelpToArticle(articleId);
           }, 100);
-          return () => clearTimeout(timer);
         }
       }
     }
   });
 
-  let lastDemoQueryParam: string | null = null;
+  $effect(() => {
+    const demoTheme = page.url.searchParams.get("demo");
 
-  let headerEl = $state<HTMLElement>();
+    if (!demoTheme) {
+      lastDemoQueryParam = null;
+      return;
+    }
+
+    if (demoTheme === lastDemoQueryParam) {
+      return;
+    }
+
+    lastDemoQueryParam = demoTheme;
+
+    if (!uiStore.wasConverted) {
+      demoService.startDemo(demoTheme);
+    }
+  });
 
   $effect(() => {
     if (headerEl && browser) {
@@ -320,45 +314,15 @@
     }
   });
 
-  // Handle Demo Mode Deep Linking (?demo=theme)
-  $effect(() => {
-    const demoTheme = page.url.searchParams.get("demo");
-
-    // If there is no demo param, reset our tracking state and exit.
-    if (!demoTheme) {
-      lastDemoQueryParam = null;
-      return;
-    }
-
-    // If we've already handled this exact query param value, do nothing.
-    if (demoTheme === lastDemoQueryParam) {
-      return;
-    }
-
-    // Record that we've now handled this query param value.
-    lastDemoQueryParam = demoTheme;
-
-    // Suppression of auto-start check
-    if (!uiStore.wasConverted) {
-      // We only start if it's actually different from what we think we are showing,
-      // but DemoService.startDemo is the ultimate source of truth for loading data.
-      demoService.startDemo(demoTheme);
-    }
-  });
-
-  // Trigger onboarding for new users after vault has initialized AND landing page is dismissed
-  // OR Auto-start demo if first visit and vault is empty
   $effect(() => {
     if (vault.isInitialized && !uiStore.isLandingPageVisible) {
-      const isTesting =
-        typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
-
       if (
         !helpStore.hasSeen("initial-onboarding") &&
         !(window as any).DISABLE_ONBOARDING &&
-        !page.url.searchParams.has("demo") // only auto-start fantasy if no specific demo requested
+        !page.url.searchParams.has("demo")
       ) {
-        // If vault is empty, start demo instead of tour
+        const isTesting =
+          typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
         if (
           vault.allEntities.length === 0 &&
           !uiStore.isDemoMode &&
@@ -372,67 +336,31 @@
     }
   });
 
-  const handleKeydown = (event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-      event.preventDefault();
-      searchStore.open();
-    }
-
-    const target = event.target as HTMLElement;
-    const isTyping =
+  const handleKeydown = (e: KeyboardEvent) => {
+    const target = document.activeElement;
+    if (
       target?.tagName === "INPUT" ||
       target?.tagName === "TEXTAREA" ||
-      target?.closest("[contenteditable]");
-
-    if (isTyping) return;
-
-    const isUndo =
-      (event.metaKey || event.ctrlKey) &&
-      event.key.toLowerCase() === "z" &&
-      !event.shiftKey;
-
-    const isRedo =
-      (event.metaKey || event.ctrlKey) &&
-      (event.key.toLowerCase() === "y" ||
-        (event.key.toLowerCase() === "z" && event.shiftKey));
-
-    // Undo (Regret)
-    if (isUndo) {
-      event.preventDefault();
-      oracle.undo();
-    }
-
-    // Redo (Reregret)
-    if (isRedo) {
-      event.preventDefault();
-      oracle.redo();
+      (target as HTMLElement)?.isContentEditable
+    ) {
+      return;
     }
 
     if (
-      ((event.ctrlKey || event.metaKey) && event.key === "ArrowUp") ||
-      (event.altKey && event.key.toLowerCase() === "z")
+      (e.key === "k" || e.key === "K") &&
+      (e.metaKey || e.ctrlKey) &&
+      !e.shiftKey
     ) {
-      if (vault.selectedEntityId) {
-        event.preventDefault();
-        uiStore.openZenMode(vault.selectedEntityId);
+      e.preventDefault();
+      searchStore.toggle();
+    }
+
+    if (e.key === "Escape") {
+      if (searchStore.isOpen) {
+        searchStore.close();
+      } else if (uiStore.showSettings) {
+        uiStore.closeSettings();
       }
-    }
-
-    if (
-      event.key.toLowerCase() === "p" &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
-      const target = event.target as HTMLElement;
-      const isTyping =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.tagName === "SELECT" ||
-        target?.isContentEditable;
-
-      if (isTyping) return;
-      uiStore.sharedMode = !uiStore.sharedMode;
     }
   };
 </script>
@@ -705,7 +633,7 @@
 
     <SearchModal />
 
-    {#if (page.url.pathname as string) !== `${base}/login`}
+    {#if !isLoginRoute}
       {#if OracleWindow}
         <OracleWindow />
       {/if}

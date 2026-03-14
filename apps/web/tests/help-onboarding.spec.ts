@@ -45,6 +45,8 @@ test.describe("Help Onboarding Walkthrough", () => {
       },
       { timeout: 15000 },
     );
+
+    await page.waitForTimeout(2000);
   });
 
   test("should automatically start onboarding for new users", async ({
@@ -58,7 +60,9 @@ test.describe("Help Onboarding Walkthrough", () => {
     });
 
     // 2. Click Next
-    await page.getByRole("button", { name: "Next" }).click({ force: true });
+    await page.getByRole("button", { name: "Next" }).click();
+    await page.waitForTimeout(500);
+
     // 3. Check if Vault step is highlighted (Vault info should be visible)
     await expect(page.locator("h3").getByText("Open a Vault")).toBeVisible({
       timeout: 10000,
@@ -66,21 +70,25 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // 4. Navigate through all steps
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Search
+    await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Quick Search")).toBeVisible({
       timeout: 10000,
     });
 
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Graph
+    await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Knowledge Graph")).toBeVisible({
       timeout: 10000,
     });
 
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Oracle
+    await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Lore Oracle")).toBeVisible({
       timeout: 10000,
     });
 
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Settings
+    await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Settings")).toBeVisible({
       timeout: 10000,
     });
@@ -141,6 +149,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // 1. Activate Connect Mode (press C)
     await page.keyboard.press("c");
+    await page.waitForTimeout(500);
 
     // 2. Verify hint appears
     await expect(page.getByText("Linking Notes")).toBeVisible({

@@ -8,6 +8,11 @@
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { fly } from "svelte/transition";
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    // Component initialization logic if any
+  });
 
   const popOut = () => {
     window.open(

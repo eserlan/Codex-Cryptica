@@ -73,6 +73,14 @@ class SearchStore {
     this.isOpen = false;
   }
 
+  toggle() {
+    if (this.isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+
   async setQuery(query: string) {
     this.query = query;
     this.isLoading = true;

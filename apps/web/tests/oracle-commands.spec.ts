@@ -6,13 +6,27 @@ test.describe("Oracle Chat Commands", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("http://localhost:5173/");
 
+    // Wait for vault to be idle
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+
     // Open Oracle Window
-    const toggleBtn = page.getByTitle("Open Lore Oracle");
+    const toggleBtn = page.getByTestId("sidebar-oracle-button");
+    await expect(toggleBtn).toBeVisible();
     await toggleBtn.click();
+
+    // Wait for the app to initialize
+    await page.waitForFunction(
+      () => {
+        const oracle = (window as any).oracle;
+        return oracle && oracle.isInitialized;
+      },
+      { timeout: 15000 },
+    );
   });
 
   test("Slash Command Menu discovery", async ({ page }) => {

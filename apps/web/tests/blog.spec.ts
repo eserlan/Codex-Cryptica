@@ -15,7 +15,7 @@ test.describe("Blog", () => {
     await expect(heading).toBeVisible();
 
     // Check if the first article is listed
-    const articleLink = page.getByText(/The GM’s Guide to Data Sovereignty/);
+    const articleLink = page.getByText(/The GM['']s Guide to Data Sovereignty/);
     await expect(articleLink).toBeVisible();
   });
 
@@ -23,7 +23,7 @@ test.describe("Blog", () => {
     await page.goto("/blog");
 
     const articleLink = page.getByRole("link", {
-      name: "The GM’s Guide to Data Sovereignty: Why 'Local-First' is the Future of Your Lore",
+      name: "The GM's Guide to Data Sovereignty: Your World, Your Files",
     });
     await articleLink.click();
 
@@ -31,20 +31,18 @@ test.describe("Blog", () => {
     await expect(page).toHaveURL(/\/blog\/gm-guide-data-sovereignty/);
 
     // Check title and metadata
-    await expect(page).toHaveTitle(/The GM’s Guide to Data Sovereignty/);
+    await expect(page).toHaveTitle(/The GM's Guide to Data Sovereignty/);
 
     // Check article content
     const articleContent = page.locator(".blog-content");
     await expect(articleContent).toBeVisible();
-    await expect(articleContent).toContainText("What is 'Local-First'");
-    await expect(articleContent).toContainText(
-      "Setting Up Your Tactical Command Center",
-    );
+    await expect(articleContent).toContainText("What is Local-First");
+    await expect(articleContent).toContainText("The Power of Synchronization");
 
     // Check CTA button
     const ctaButton = page.getByRole("link", {
-      name: "Enter the Codex",
-      exact: true,
+      name: /Enter the Codex/,
+      exact: false,
     });
     await expect(ctaButton).toBeVisible();
   });

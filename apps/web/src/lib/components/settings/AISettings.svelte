@@ -73,7 +73,7 @@
           ? 'bg-theme-primary/10 border-theme-primary ring-1 ring-theme-primary/50'
           : 'bg-theme-bg/30 border-theme-border hover:border-theme-primary/50'}"
         onclick={() => oracle.setTier("lite")}
-        aria-pressed={oracle.tier === 'lite'}
+        aria-pressed={oracle.tier === "lite"}
       >
         <span
           class="text-sm font-bold tracking-widest uppercase font-header {oracle.tier ===
@@ -94,7 +94,7 @@
           ? 'bg-theme-accent/10 border-theme-accent ring-1 ring-theme-accent/50'
           : 'bg-theme-bg/30 border-theme-border hover:border-theme-accent/30'}"
         onclick={() => oracle.setTier("advanced")}
-        aria-pressed={oracle.tier === 'advanced'}
+        aria-pressed={oracle.tier === "advanced"}
       >
         <span
           class="text-sm font-bold tracking-widest uppercase font-header {oracle.tier ===

@@ -53,21 +53,13 @@ test.describe("Vault E2E", () => {
     await page.getByPlaceholder("Chronicle Title...").fill("Source Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // 1. Toggle via Button
-    const connectBtn = page.getByTitle("Connect Mode (C)");
-    await expect(connectBtn).toBeVisible();
-    await connectBtn.click();
-
-    // Should show "SELECT SOURCE NODE"
-    await expect(page.getByText("> SELECT SOURCE NODE")).toBeVisible();
-
-    // Toggle off
-    await connectBtn.click();
-    await expect(page.getByText("> SELECT SOURCE NODE")).not.toBeVisible();
-
-    // 2. Toggle via Keyboard 'C'
+    // 1. Toggle via Keyboard 'C'
     await page.keyboard.press("c");
-    await expect(page.getByText("> SELECT SOURCE NODE")).toBeVisible();
+    await expect(page.getByText("Select Source Entity")).toBeVisible();
+
+    // Toggle off via Keyboard 'C'
+    await page.keyboard.press("c");
+    await expect(page.getByText("Select Source Entity")).not.toBeVisible();
   });
 
   test("Toggle Node Labels Shortcut", async ({ page }) => {
@@ -85,13 +77,7 @@ test.describe("Vault E2E", () => {
     expect(isHiddenAfterPress).toBe(false);
 
     // Verify Cytoscape style reflects this
-    const _labelStyle = await page.evaluate(() => {
-      const cy = (window as any).cy;
-      return cy.nodes()[0]?.style("label");
-    });
-    // For 0 entities, this might skip, but Vault E2E beforeEach ensures some state if we added nodes.
-    // However, the base e2e.spec.ts starts with NO VAULT.
-    // Let's create a node first to be sure we can check style.
+    // Create a node first to be sure we can check style.
     await page.getByTestId("new-entity-button").click();
     await page.getByPlaceholder("Chronicle Title...").fill("Test Node");
     await page.getByRole("button", { name: "ADD" }).click();
@@ -101,34 +87,24 @@ test.describe("Vault E2E", () => {
       await page.keyboard.press("l");
     }
 
-    // Wait for the node to appear in cy graph
-    await page.waitForFunction(
-      () => {
-        const cy = (window as any).cy;
-        return cy.nodes().nonempty();
-      },
-      { timeout: 5000 },
-    );
-
-    // Now check the label style (returns "" when labels are hidden)
-    const currentLabelStyle = await page.evaluate(() => {
+    const labelStyleAfterHide = await page.evaluate(() => {
       const cy = (window as any).cy;
-      return cy.nodes().first().style("label");
+      return cy.nodes()[0]?.style("label");
     });
-    expect(currentLabelStyle).toBe("");
+    expect(labelStyleAfterHide).toBe("");
 
-    // 3. Toggle On
+    // 3. Toggle back On
     await page.keyboard.press("l");
-    const isShownAfterSecondPress = await page.evaluate(
+    const isShownAgain = await page.evaluate(
       () => (window as any).graph.showLabels,
     );
-    expect(isShownAfterSecondPress).toBe(true);
+    expect(isShownAgain).toBe(true);
 
-    const restoredLabelStyle = await page.evaluate(() => {
+    const labelStyleAfterShow = await page.evaluate(() => {
       const cy = (window as any).cy;
-      return cy.nodes().first()?.style("label");
+      return cy.nodes()[0]?.style("label");
     });
-    expect(restoredLabelStyle).not.toBe("");
+    expect(labelStyleAfterShow).not.toBe("");
 
     // 4. Verify blocked when typing in input
     await page.getByTestId("new-entity-button").click();

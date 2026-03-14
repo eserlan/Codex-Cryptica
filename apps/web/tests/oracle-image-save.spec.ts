@@ -14,7 +14,9 @@ test.describe("Oracle Image Save to Entity", () => {
     await page.waitForFunction(
       () =>
         (window as any).vault?.isInitialized &&
-        (window as any).vault?.status === "idle",
+        (window as any).vault?.status === "idle" &&
+        (window as any).oracle?.isInitialized,
+      { timeout: 15000 },
     );
   });
 

@@ -452,6 +452,9 @@
     <SelectionConnector {cy} />
   {/if}
   <FeatureHint hintId="graph-controls" />
+  {#if ui.isConnecting}
+    <FeatureHint hintId="connect-mode" />
+  {/if}
 </div>
 
 <svelte:window onkeydown={handleKeyDown} />

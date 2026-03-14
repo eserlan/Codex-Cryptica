@@ -112,7 +112,7 @@
   <Handle
     type="target"
     position={Position.Top}
-    class="!bg-transparent !border-none"
+    class="!bg-transparent !border-none target-test-handle"
     style="width: 1px; height: 1px; opacity: 0;"
   />
 

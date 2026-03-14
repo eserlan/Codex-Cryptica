@@ -93,7 +93,7 @@ test.describe("Category Filter", () => {
     // Expand
     await toggleBtn.click();
     await expect(allBtn).toBeVisible();
-    await expect(allBtn).toHaveClass(/bg-theme-primary/);
+    await expect(allBtn).toHaveClass(/shadow-sm/);
 
     // Collapse
     await toggleBtn.click();
@@ -128,15 +128,15 @@ test.describe("Category Filter", () => {
     const characterBtn = page.getByTestId("category-filter-character");
 
     // Initially All is active
-    await expect(allBtn).toHaveClass(/bg-theme-primary/);
-    await expect(characterBtn).not.toHaveClass(/bg-theme-primary/);
+    await expect(allBtn).toHaveClass(/shadow-sm/);
+    await expect(characterBtn).toHaveAttribute("aria-pressed", "false");
 
     // Click Character filter
     await characterBtn.click();
 
     // All should now be inactive, Character active
-    await expect(allBtn).not.toHaveClass(/bg-theme-primary/);
-    await expect(characterBtn).toHaveClass(/bg-theme-primary/);
+    await expect(allBtn).not.toHaveClass(/shadow-sm/);
+    await expect(characterBtn).toHaveAttribute("aria-pressed", "true");
   });
 
   test("Clicking All button clears active category filters", async ({
@@ -150,12 +150,12 @@ test.describe("Category Filter", () => {
 
     // Select a filter
     await locationBtn.click();
-    await expect(locationBtn).toHaveClass(/bg-theme-primary/);
+    await expect(locationBtn).toHaveAttribute("aria-pressed", "true");
 
     // Click All to clear
     await allBtn.click();
-    await expect(allBtn).toHaveClass(/bg-theme-primary/);
-    await expect(locationBtn).not.toHaveClass(/bg-theme-primary/);
+    await expect(allBtn).toHaveClass(/shadow-sm/);
+    await expect(locationBtn).toHaveAttribute("aria-pressed", "false");
   });
 
   test("Multiple categories can be selected simultaneously", async ({
@@ -170,7 +170,7 @@ test.describe("Category Filter", () => {
     await characterBtn.click();
     await locationBtn.click();
 
-    await expect(characterBtn).toHaveClass(/bg-theme-primary/);
-    await expect(locationBtn).toHaveClass(/bg-theme-primary/);
+    await expect(characterBtn).toHaveAttribute("aria-pressed", "true");
+    await expect(locationBtn).toHaveAttribute("aria-pressed", "true");
   });
 });

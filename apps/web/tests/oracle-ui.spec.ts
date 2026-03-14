@@ -9,17 +9,30 @@ test.describe("Oracle UI - Elastic Input", () => {
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("http://localhost:5173/");
+
+    // Ensure Oracle is initialized
+    await page.waitForFunction(
+      () => {
+        const oracle = (window as any).oracle;
+        return oracle && oracle.isInitialized;
+      },
+      { timeout: 15000 },
+    );
   });
 
   test("should expand textarea when typing multi-line text and reset on submit", async ({
     page,
   }) => {
     // Open Oracle Window
-    const toggleBtn = page.getByTitle("Open Lore Oracle");
+    const toggleBtn = page.getByTestId("sidebar-oracle-button");
+    await expect(toggleBtn).toBeVisible();
     await toggleBtn.click();
 
+    const sidebar = page.getByTestId("oracle-sidebar-panel");
+    await expect(sidebar).toBeVisible({ timeout: 15000 });
+
     const textarea = page.getByTestId("oracle-input");
-    await expect(textarea).toBeVisible();
+    await expect(textarea).toBeVisible({ timeout: 10000 });
 
     // Get initial height
     const initialBox = await textarea.boundingBox();
