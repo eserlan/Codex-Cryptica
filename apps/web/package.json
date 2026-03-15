@@ -51,6 +51,7 @@
     "comlink": "^4.4.2",
     "cytoscape": "^3.33.1",
     "cytoscape-fcose": "^2.2.0",
+    "dexie": "^4.3.0",
     "dice-engine": "*",
     "editor-core": "*",
     "flexsearch": "^0.8.212",
