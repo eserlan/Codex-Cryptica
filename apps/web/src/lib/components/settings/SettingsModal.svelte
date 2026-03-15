@@ -7,7 +7,6 @@
   import CategorySettings from "./CategorySettings.svelte";
   import LabelSettings from "./LabelSettings.svelte";
   import HelpTab from "../help/HelpTab.svelte";
-  import ImportSettings from "./ImportSettings.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { base } from "$app/paths";
@@ -61,20 +60,6 @@
     } else if (previousActiveElement) {
       previousActiveElement.focus();
       previousActiveElement = null;
-    }
-  });
-
-  $effect(() => {
-    if (uiStore.showSettings && uiStore.activeSettingsSection) {
-      const sectionId = `settings-section-${uiStore.activeSettingsSection}`;
-      // Small delay to ensure the content is rendered
-      const timer = setTimeout(() => {
-        const element = modalElement?.querySelector(`#${sectionId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 200);
-      return () => clearTimeout(timer);
     }
   });
 
@@ -253,11 +238,26 @@
               <VaultSettings />
             </section>
 
-            <section
-              id="settings-section-ingestion"
-              class="border-t border-theme-border pt-6"
-            >
-              <ImportSettings />
+            <section class="border-t border-theme-border pt-6">
+              <h3
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
+              >
+                Archive Ingestion
+              </h3>
+              <p class="text-sm text-theme-text/70 leading-relaxed mb-6">
+                Import existing documents, lore bibles, or JSON data via the
+                dedicated ingestion terminal. This allows for continuous imports
+                without interrupting your current session.
+              </p>
+              <button
+                onclick={() => uiStore.openImportWindow()}
+                class="w-full py-4 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-xs rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+              >
+                <span
+                  class="icon-[lucide--folder-input] w-4 h-4 transition-transform group-hover:-translate-y-1"
+                ></span>
+                Launch Dedicated Ingestion Terminal
+              </button>
             </section>
           </div>
         {:else if uiStore.activeSettingsTab === "intelligence"}

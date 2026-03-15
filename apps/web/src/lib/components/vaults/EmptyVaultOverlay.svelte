@@ -7,7 +7,7 @@
   let { onCreateNew } = $props<{ onCreateNew: () => void }>();
 
   function handleImport() {
-    uiStore.openSettings("vault", "ingestion");
+    uiStore.openImportWindow();
   }
 </script>
 

@@ -248,7 +248,7 @@
           class={isVertical
             ? `${btnGhost} py-3 text-sm justify-center gap-2`
             : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
-          onclick={() => ui.openSettings("vault", "ingestion")}
+          onclick={() => ui.openImportWindow()}
           data-testid="import-vault-button"
           title="Import markdown notes or JSON data into your archive."
         >
