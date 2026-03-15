@@ -1,4 +1,5 @@
 import { entityDb } from "../utils/entity-db";
+import type { EntityContentRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 
 /**
@@ -27,9 +28,17 @@ export class CacheService {
   > | null = null;
 
   /**
+   * Pre-loaded content records keyed by `entityId`.  Stored separately from
+   * the graph-entity map to avoid attaching undeclared properties to typed
+   * `LocalEntity` objects.  Used by `loadEntityContent` (via `VaultStore`) to
+   * serve Dexie content without an extra round-trip.
+   */
+  private preloadedContent: Map<string, EntityContentRecord> | null = null;
+
+  /**
    * Bulk-loads all graph entities and their content for the given vault from
-   * Dexie into an in-memory map.  Calling this once before iterating over
-   * individual files reduces N round-trips to the IndexedDB to a single
+   * Dexie into in-memory maps.  Calling this once before iterating over
+   * individual files reduces N per-file IDB round-trips to a single
    * parallel pair of queries.
    *
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
@@ -42,12 +51,13 @@ export class CacheService {
         entityDb.entityContent.where("vaultId").equals(vaultId).toArray(),
       ]);
 
-      const contentMap = new Map(contentRecords.map((r) => [r.entityId, r]));
+      const contentMap = new Map<string, EntityContentRecord>(
+        contentRecords.map((r) => [r.entityId, r]),
+      );
       const map = new Map<string, { lastModified: number; entity: LocalEntity }>();
 
       for (const record of graphRecords) {
         const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
-        const contentRecord = contentMap.get(graphData.id);
         const entity: LocalEntity = {
           ...graphData,
           // Content starts as empty — loaded lazily when the entity is opened.
@@ -55,20 +65,23 @@ export class CacheService {
           lore: undefined,
         };
         map.set(`${vaultId}:${filePath}`, { lastModified, entity });
-
-        // Also cache by entity id so get-by-id lookups are fast.
-        // Store full content in a side-channel so loadEntityContent can
-        // retrieve it without another Dexie round-trip.
-        if (contentRecord) {
-          (entity as any).__cachedContent = contentRecord.content;
-          (entity as any).__cachedLore = contentRecord.lore;
-        }
       }
 
       this.preloaded = map;
+      this.preloadedContent = contentMap;
     } catch {
       this.preloaded = null;
+      this.preloadedContent = null;
     }
+  }
+
+  /**
+   * Returns the pre-loaded content record for an entity, if available.
+   * Used by `VaultStore.loadEntityContent` to serve content without an extra
+   * Dexie round-trip after `preloadVault` has run.
+   */
+  getPreloadedContent(entityId: string): EntityContentRecord | undefined {
+    return this.preloadedContent?.get(entityId);
   }
 
   /**
@@ -137,16 +150,22 @@ export class CacheService {
         }),
       ]);
 
-      // Keep the in-memory snapshot consistent.
+      // Keep the in-memory snapshots consistent.
       if (this.preloaded) {
         const graphEntity: LocalEntity = {
           ...graphData,
           content: "",
           lore: undefined,
         };
-        (graphEntity as any).__cachedContent = content || "";
-        (graphEntity as any).__cachedLore = lore;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
+      }
+      if (this.preloadedContent) {
+        this.preloadedContent.set(entity.id, {
+          entityId: entity.id,
+          vaultId,
+          content: content || "",
+          lore,
+        });
       }
     } catch {
       // Non-fatal — the OPFS file is the source of truth.
@@ -163,27 +182,28 @@ export class CacheService {
         entityDb.graphEntities.where("vaultId").equals(vaultId).delete(),
         entityDb.entityContent.where("vaultId").equals(vaultId).delete(),
       ]);
-      if (this.preloaded) {
-        // Invalidate the entire preloaded map — it belongs to one vault.
-        this.preloaded = null;
-      }
+      // Invalidate the entire preloaded maps — they belong to one vault.
+      this.preloaded = null;
+      this.preloadedContent = null;
     } catch {
       // Non-fatal.
     }
   }
 
   /**
-   * Invalidates the in-memory preload snapshot without touching Dexie.
+   * Invalidates the in-memory preload snapshots without touching Dexie.
    * Call this before switching to a different vault so the next `get` call
    * triggers a fresh Dexie lookup for the new vault.
    */
   invalidatePreload(): void {
     this.preloaded = null;
+    this.preloadedContent = null;
   }
 
   /** @deprecated Use `clearVault` instead. */
   async clear(): Promise<void> {
     this.preloaded = null;
+    this.preloadedContent = null;
   }
 }
 

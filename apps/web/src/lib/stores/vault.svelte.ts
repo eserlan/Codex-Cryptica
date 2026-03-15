@@ -377,7 +377,7 @@ export class VaultStore {
             record.lore || "",
             ...Object.values(entity.metadata || {}).flat(),
           ].join(" ");
-          const promise = this.services!.search.index({
+          return this.services!.search.index({
             id: entity.id,
             title: entity.title,
             content: record.content,
@@ -385,8 +385,7 @@ export class VaultStore {
             path,
             keywords,
             updatedAt: Date.now(),
-          });
-          return promise && promise.catch ? promise.catch(console.warn) : Promise.resolve();
+          }).catch(console.warn);
         });
         return Promise.all(promises);
       })
@@ -397,8 +396,12 @@ export class VaultStore {
 
   /**
    * Loads the `content` and `lore` fields for the entity with the given ID
-   * from the Dexie `entityContent` table and updates `this.entities[id]`
-   * in place.  Subsequent calls for the same ID are no-ops.
+   * and updates `this.entities[id]` in place.  Subsequent calls for the same
+   * ID are no-ops.
+   *
+   * The method first checks the CacheService's pre-loaded content snapshot
+   * (populated during `loadFiles()`) to avoid an extra Dexie round-trip.  If
+   * not available there it falls back to a direct `entityContent` table lookup.
    *
    * This is the primary entry-point for lazy content loading — call it
    * whenever the entity is "opened" (detail panel, read modal, edit mode, etc.)
@@ -412,10 +415,12 @@ export class VaultStore {
     if (!entity) return;
 
     try {
-      const record = await entityDb.entityContent.get([
-        this.activeVaultId,
-        id,
-      ]);
+      // Fast path: use the content map already fetched during preloadVault.
+      const preloaded = cacheService.getPreloadedContent(id);
+      const record =
+        preloaded ??
+        (await entityDb.entityContent.get([this.activeVaultId, id]));
+
       if (record) {
         this.repository.entities = {
           ...this.repository.entities,
