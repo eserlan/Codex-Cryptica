@@ -158,6 +158,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
   },
+  "import-feature": {
+    id: "import-feature",
+    title: "Importing Data",
+    content:
+      "Quickly bring your existing notes or JSON data into the Codex. The Oracle can automatically fragment large files into distinct entities.",
+    icon: "icon-[lucide--folder-input]",
+  },
   themes: {
     id: "themes",
     title: "Themes",
