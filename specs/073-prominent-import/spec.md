@@ -7,18 +7,18 @@
 
 ## User Scenarios & Testing _(mandatory)_
 
-### User Story 1 - Quick Access from Top Menu (Priority: P1)
+### User Story 1 - Dedicated Archive Importer (Priority: P1)
 
-As a user, I want to be able to import my existing markdown notes directly from the top menu (Vault Controls), so that I can quickly populate my vault without diving into deep settings menus.
+As a user, I want a dedicated standalone view for importing my existing markdown notes, so that I can perform continuous, high-volume importing without interrupting my main research session.
 
-**Why this priority**: High value for user retention and onboarding. The import feature is currently "hidden" in settings, which creates friction for users wanting to bring their data into the app. The top menu is the primary global action area.
+**Why this priority**: High value for user retention and onboarding. Moving the import feature out of settings and into a focused "importer" view reduces cognitive load and allows for uninterrupted world-building.
 
-**Independent Test**: Can be fully tested by clicking the "Import" button in the Vault Controls and verifying the file picker opens and processes files.
+**Independent Test**: Click the "IMPORT" button in the Vault Controls; verify a new centered browser window opens with the dedicated Archive Importer.
 
 **Acceptance Scenarios**:
 
-1. **Given** the app is open, **When** I look at the top menu (Vault Controls), **Then** I should see an "Import" button near the "New Entity" or "Sync" actions.
-2. **Given** the app is in mobile view, **When** I open the controls, **Then** the Import action should be clearly visible.
+1. **Given** the app is open, **When** I look at the top menu (Vault Controls), **Then** I should see an "Import" button that triggers a popout window.
+2. **Given** the importer is open, **When** I look at the layout, **Then** it should be focused (no top menu or site footer) to maximize working space.
 
 ---
 
@@ -28,7 +28,7 @@ As a user managing my files in the Vault Explorer, I want an import action right
 
 **Why this priority**: Provides contextual relevance. Users in the file explorer are already in a "management" mindset.
 
-**Independent Test**: Can be tested by clicking the icon in the explorer header and verifying it triggers the import workflow.
+**Independent Test**: Click the icon in the explorer header; verify it triggers the dedicated popout importer.
 
 **Acceptance Scenarios**:
 
@@ -36,47 +36,32 @@ As a user managing my files in the Vault Explorer, I want an import action right
 
 ---
 
-### User Story 3 - Onboarding from Empty State (Priority: P1)
-
-As a new user with an empty vault, I want to see "Import" as a primary onboarding action, so that I know how to get started with my existing data.
-
-**Why this priority**: Critical for "Day 0" experience. An empty screen is a dead end without clear calls to action.
-
-**Independent Test**: Can be tested by creating a new empty vault and verifying the empty state UI appears with prominent "Import" and "Create" buttons.
-
-**Acceptance Scenarios**:
-
-1. **Given** a vault with no nodes, **When** I open the File Explorer, **Then** I should see a helpful message and two primary buttons: "Create New Node" and "Import Markdown".
-
----
-
 ### Edge Cases
 
-- **Mobile View**: Button should handle tight spacing by collapsing to icon-only if necessary, but remain prominent in the expanded menu.
-- **Importing Large Volumes**: The UI should utilize the `ImportProgress` component to show feedback during long imports.
+- **Popout Blocking**: How does the app handle browsers that block `window.open`? (Assumption: User is prompted to allow popups or use the manual link).
+- **Responsive Importer**: The popout window should be responsive and centered on the screen.
 - **Duplicate Files**: Handled by existing ImportService logic (e.g., skip or overwrite).
 
 ## Requirements _(mandatory)_
 
 ### Functional Requirements
 
-- **FR-001**: System MUST provide a persistent "Import" button in the global Vault Controls (top menu).
-- **FR-002**: System MUST provide an "Import" icon button in the Vault Explorer header.
-- **FR-003**: System MUST display an "Import Markdown" call-to-action in the File Explorer when the current vault is empty.
-- **FR-004**: Actions MUST trigger the existing `ImportService` or equivalent file-system import logic.
-- **FR-005**: The top menu button MUST be visually consistent with the "New Entity" and "Sync" buttons.
-- **FR-006**: System SHOULD support deep-linking to the "Archive Ingestion" section of the Vault settings.
+- **FR-001**: System MUST provide a standalone route at `/import` for the dedicated Archive Importer.
+- **FR-002**: System MUST hide global navigation (header/footer) in the `/import` route for maximum focus.
+- **FR-003**: System MUST provide a persistent "IMPORT" button in the top navigation menu.
+- **FR-004**: System MUST provide an "Import" icon button in the Vault Explorer header.
+- **FR-005**: All import triggers MUST launch the Archive Importer in a new centered browser window (800x900).
 
 ### Key Entities
 
-- **Vault**: The container for all nodes; used to determine if the "Empty State" should be shown.
+- **UIStore**: Manages the `openImportWindow` logic and popout state.
 - **ImportService**: The service layer that handles the actual file reading and node creation logic.
 
 ## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
-- **SC-001**: 100% of users can trigger an import action from the top menu in exactly one click.
-- **SC-002**: New users with empty vaults are presented with the Import option immediately upon opening the explorer.
+- **SC-001**: 100% of users can launch the importer in a single click from the main interface.
+- **SC-002**: The importer provides a focused, distraction-free environment (no global menu/footer).
 - **SC-003**: The "Import" action is visually consistent with existing primary actions (New Entity, Sync).
-- **SC-004**: Users can identify the primary import action within 5 seconds of arriving at an empty graph state.
+- **SC-004**: Users can identify and launch the import action within 5 seconds of opening the top navigation menu.

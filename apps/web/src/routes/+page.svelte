@@ -10,7 +10,6 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
-  import EmptyVaultOverlay from "$lib/components/vaults/EmptyVaultOverlay.svelte";
 
   const jsonLdScript = $derived(
     `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
@@ -140,14 +139,6 @@
   <div class="flex-1 relative overflow-hidden">
     {#if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
-
-      {#if vault.isInitialized && vault.allEntities.length === 0 && !uiStore.isDemoMode && !isGuestMode}
-        <EmptyVaultOverlay
-          onCreateNew={() => {
-            uiStore.openSettings("vault");
-          }}
-        />
-      {/if}
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
         class="absolute inset-0 bg-theme-bg flex items-center justify-center"

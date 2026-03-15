@@ -34,9 +34,33 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   {
     id: "vault",
     targetSelector: '[data-testid="open-vault-button"]',
-    title: "Open a Vault",
+    title: "Vault Management",
     content:
-      "Choose a folder on your computer to store your files. Your lore is saved as standard Markdown files.",
+      "This is your active story. Click here to switch between different campaigns or create a new vault.",
+    position: "bottom",
+  },
+  {
+    id: "graph",
+    targetSelector: '[data-testid="nav-graph"]',
+    title: "Knowledge Graph",
+    content:
+      "The primary view of your world. See how Character, Locations, and Events connect through an interactive web.",
+    position: "bottom",
+  },
+  {
+    id: "map",
+    targetSelector: '[data-testid="nav-map"]',
+    title: "Tactical Maps",
+    content:
+      "Plot your campaign data onto geographic or tactical canvases with persistent pins and Fog of War.",
+    position: "bottom",
+  },
+  {
+    id: "canvas",
+    targetSelector: '[data-testid="nav-canvas"]',
+    title: "Spatial Canvas",
+    content:
+      "Design custom layouts like conspiracy boards or quest flowcharts on an infinite board.",
     position: "bottom",
   },
   {
@@ -44,31 +68,39 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="search-input"]',
     title: "Quick Search",
     content:
-      "Press `Cmd+K` to search everything. Find NPCs, locations, and events instantly.",
+      "Find anything instantly. Press `Cmd+K` from anywhere to search NPCs, locations, and lore.",
     position: "bottom",
-  },
-  {
-    id: "graph",
-    targetSelector: '[data-testid="graph-canvas"]',
-    title: "Knowledge Graph",
-    content:
-      "See how everything connects. Press `C` to start linking people and places together.",
-    position: "top",
   },
   {
     id: "oracle",
     targetSelector: '[data-testid="sidebar-oracle-button"]',
     title: "Lore Oracle",
     content:
-      "Ask the AI questions about your world or type `/draw` to generate character art.",
+      "Consult the AI about your world or perform utility tasks like /roll and /create.",
     position: "right",
+  },
+  {
+    id: "dice",
+    targetSelector: '[data-testid="dice-roller-button"]',
+    title: "Polyhedral Dice",
+    content:
+      "Quick access to the Die Roller modal for all your standard RPG dice needs.",
+    position: "bottom",
+  },
+  {
+    id: "importer",
+    targetSelector: '[data-testid="import-vault-button"]',
+    title: "Archive Importer",
+    content:
+      "Quickly bring your existing notes or JSON data into the Codex via the dedicated importer.",
+    position: "bottom",
   },
   {
     id: "settings",
     targetSelector: '[data-testid="settings-button"]',
-    title: "Settings",
+    title: "System Settings",
     content:
-      "Manage your AI keys, change NPC categories, or configure your local folder mirror.",
+      "Configure your AI keys, adjust visual themes, and manage NPC categories.",
     position: "bottom",
   },
 ];
@@ -157,13 +189,6 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Safe file loading. If a file import stops, just pick the file again to finish where you left off.",
     icon: "icon-[lucide--file-up]",
-  },
-  "import-feature": {
-    id: "import-feature",
-    title: "Importing Data",
-    content:
-      "Quickly bring your existing notes or JSON data into the Codex. The Oracle can automatically fragment large files into distinct entities.",
-    icon: "icon-[lucide--folder-input]",
   },
   themes: {
     id: "themes",

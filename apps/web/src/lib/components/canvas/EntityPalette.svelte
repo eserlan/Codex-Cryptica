@@ -150,7 +150,7 @@
           Entity Palette
         </h2>
         <button
-          onclick={() => uiStore.openSettings("vault", "ingestion")}
+          onclick={() => uiStore.openImportWindow()}
           class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
           title="Import Archive"
           data-testid="explorer-import-button"

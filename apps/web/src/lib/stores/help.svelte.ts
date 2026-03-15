@@ -176,21 +176,6 @@ export class HelpStore {
     if (!this.activeTour) return;
     if (this.activeTour.currentStepIndex < this.activeTour.steps.length - 1) {
       this.activeTour.currentStepIndex++;
-
-      // Trigger sidepanel states based on step targets
-      const nextStep = this.activeTour.steps[this.activeTour.currentStepIndex];
-      if (nextStep.id === "search") {
-        this.searchStore.open();
-      } else if (nextStep.id === "oracle") {
-        setTimeout(() => {
-          this.uiStore.activeSidebarTool = "oracle";
-          this.uiStore.leftSidebarOpen = true;
-        }, 100);
-      } else if (nextStep.id === "settings") {
-        setTimeout(() => {
-          this.uiStore.openSettings("vault");
-        }, 100);
-      }
     } else {
       this.completeTour();
     }
@@ -199,16 +184,6 @@ export class HelpStore {
   prevStep() {
     if (!this.activeTour || this.activeTour.currentStepIndex === 0) return;
     this.activeTour.currentStepIndex--;
-
-    const prevStep = this.activeTour.steps[this.activeTour.currentStepIndex];
-    if (prevStep.id === "search") {
-      this.searchStore.open();
-    } else if (prevStep.id === "oracle") {
-      this.uiStore.activeSidebarTool = "oracle";
-      this.uiStore.leftSidebarOpen = true;
-    } else if (prevStep.id === "settings") {
-      this.uiStore.openSettings("vault");
-    }
   }
 
   completeTour() {

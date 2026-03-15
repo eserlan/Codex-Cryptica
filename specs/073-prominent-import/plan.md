@@ -5,7 +5,7 @@
 
 ## Summary
 
-This feature makes the data import process more accessible and prominent. It adds a global "IMPORT" button to the `VaultControls` (top menu) and implements an `EmptyVaultOverlay` to guide new users when their vault contains no entities. The technical approach leverages existing `ImportSettings.svelte` logic by deep-linking to the vault settings tab.
+This feature makes the data import process more accessible and prominent. It adds a global "IMPORT" button to the `VaultControls` (top menu). The technical approach has shifted from a settings modal integration to a **Dedicated Archive Importer** that pops out in a new browser window, providing a focused environment for continuous data processing.
 
 ## Technical Context
 
@@ -15,9 +15,9 @@ This feature makes the data import process more accessible and prominent. It add
 **Testing**: Playwright (E2E)
 **Target Platform**: Web (Prerendered/Static)
 **Project Type**: web
-**Performance Goals**: Instant UI transition to Settings Modal
-**Constraints**: Client-side only (Privacy principle)
-**Scale/Scope**: Small UI enhancement with significant onboarding impact
+**Performance Goals**: Instant UI transition to focused Popout Terminal
+**Constraints**: Client-side only (Privacy principle); `window.open` compatibility
+**Scale/Scope**: Dedicated standalone route with global navigation exclusion
 
 ## Constitution Check
 
@@ -25,8 +25,8 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 - **Library-First**: PASS (Reuses `@codex/importer`).
 - **Privacy**: PASS (All local processing).
-- **Simplicity**: PASS (Reuses existing `SettingsModal` and `ImportSettings` components).
-- **User Documentation**: PASS (Plan includes adding a `FeatureHint` for the new button).
+- **Simplicity**: PASS (Reuses existing `ImportSettings` component in a standalone route).
+- **User Documentation**: PASS (Includes `FeatureHint` and dedicated route description).
 
 ## Project Structure
 
@@ -49,16 +49,18 @@ apps/web/
 ├── src/
 │   ├── lib/
 │   │   ├── components/
-│   │   │   ├── VaultControls.svelte       # MODIFIED: Added global Import button
-│   │   │   └── vaults/
-│   │   │       └── EmptyVaultOverlay.svelte # NEW: Onboarding guide for empty vaults
+│   │   │   └── VaultControls.svelte       # MODIFIED: Added global Import button
 │   │   └── stores/
-│   │       └── ui.svelte.ts               # MODIFIED: Support for deep-linking/scrolling to import
+│   │       └── ui.svelte.ts               # MODIFIED: openImportWindow popout logic
+│   └── routes/
+│       ├── +layout.svelte                 # MODIFIED: Hide global menu for /import
+└── import/
+    └── +page.svelte               # NEW: Dedicated Archive Importer route
 └── tests/
-    └── import-prominence.spec.ts          # NEW: E2E verification
+    └── import-prominence.spec.ts          # NEW: E2E verification for popout behavior
 ```
 
-**Structure Decision**: Monorepo. The changes are primarily in the `web` app as it's a UI-focused feature. Reusing existing stores and components ensures consistency.
+**Structure Decision**: Monorepo. The changes are primarily in the `web` app. The popout approach ensures that the import process does not block the main application thread or UI session.
 
 ## Complexity Tracking
 

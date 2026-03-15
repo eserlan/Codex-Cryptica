@@ -6,7 +6,6 @@
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
-  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -244,18 +243,19 @@
             : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
         </button>
 
-        <button
-          class={isVertical
-            ? `${btnGhost} py-3 text-sm justify-center gap-2`
-            : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
-          onclick={() => ui.openSettings("vault", "ingestion")}
-          data-testid="import-vault-button"
-          title="Import markdown notes or JSON data into your archive."
-        >
-          <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
-          IMPORT
-          <FeatureHint hintId="import-feature" />
-        </button>
+        <div class="relative flex items-center">
+          <button
+            class={isVertical
+              ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
+              : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+            onclick={() => ui.openImportWindow()}
+            data-testid="import-vault-button"
+            title="Import markdown notes or JSON data into your archive."
+          >
+            <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
+            IMPORT
+          </button>
+        </div>
 
         <div
           class="flex {isVertical

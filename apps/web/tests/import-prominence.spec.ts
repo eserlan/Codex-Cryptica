@@ -16,53 +16,33 @@ test.describe("Prominent Import Feature", () => {
     }
   });
 
-  test("should have an Import button in Vault Controls that opens settings", async ({
+  test("should have an Import button in Vault Controls that opens a new window", async ({
     page,
+    context,
   }) => {
     const importBtn = page.getByTestId("import-vault-button");
-    // Button might be hidden if vault not init, but we'll try to wait for it
     await expect(importBtn).toBeVisible({ timeout: 15000 });
 
+    // Listen for the new page being opened
+    const pagePromise = context.waitForEvent("page");
     await importBtn.click();
 
-    const settingsModal = page.getByTestId("settings-modal");
-    await expect(settingsModal).toBeVisible();
-    await expect(page.locator("#settings-section-ingestion")).toBeVisible();
+    const newPage = await pagePromise;
+    await expect(newPage).toHaveTitle(/Archive Importer/i);
+    await expect(newPage.locator("h1")).toContainText(/Archive Importer/i);
   });
 
   test("should have an Import button in Entity Palette header", async ({
     page,
+    context,
   }) => {
-    // Open palette if on mobile or collapsed (default is desktop expanded)
     const explorerImportBtn = page.getByTestId("explorer-import-button");
     await expect(explorerImportBtn).toBeVisible({ timeout: 15000 });
 
+    const pagePromise = context.waitForEvent("page");
     await explorerImportBtn.click();
 
-    const settingsModal = page.getByTestId("settings-modal");
-    await expect(settingsModal).toBeVisible();
-    await expect(page.locator("#settings-section-ingestion")).toBeVisible();
-  });
-
-  test("should show EmptyVaultOverlay when vault is empty", async ({
-    page,
-  }) => {
-    // This test is highly dependent on vault state.
-    // If it fails, we'll assume it's because the test vault isn't empty.
-    const overlayHeading = page.getByText(/The Archive is Silent/i);
-    const isVisible = await overlayHeading
-      .isVisible({ timeout: 5000 })
-      .catch(() => false);
-
-    if (isVisible) {
-      const importArchiveBtn = page.getByRole("button", {
-        name: /Import Archive/i,
-      });
-      await expect(importArchiveBtn).toBeVisible();
-      await importArchiveBtn.click();
-      await expect(page.getByTestId("settings-modal")).toBeVisible();
-    } else {
-      console.log("Skipping empty state check as vault appears non-empty");
-    }
+    const newPage = await pagePromise;
+    await expect(newPage).toHaveTitle(/Archive Importer/i);
   });
 });

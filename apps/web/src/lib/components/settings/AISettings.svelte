@@ -1,20 +1,11 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
   import { onMount } from "svelte";
-
-  let inputKey = $state("");
-  let showKey = $state(false);
+  import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
 
   onMount(() => {
     oracle.init();
   });
-
-  const handleSave = async () => {
-    if (inputKey.trim()) {
-      await oracle.setKey(inputKey.trim());
-      inputKey = "";
-    }
-  };
 
   const handleClear = async () => {
     if (
@@ -159,83 +150,8 @@
       </div>
     {/if}
 
-    <div class="space-y-4 pt-2 border-t border-theme-border">
-      <div class="flex flex-col gap-1">
-        <label
-          for="gemini-api-key"
-          class="text-sm text-theme-text/60 uppercase font-bold font-header flex justify-between"
-        >
-          <span
-            >{oracle.tier === "advanced"
-              ? "Required: Advanced Access Key"
-              : "Upgrade to Personal Key"}</span
-          >
-          {#if oracle.tier === "advanced"}
-            <span class="text-theme-accent animate-pulse"
-              >! ADVANCED REQUIRES PERSONAL KEY</span
-            >
-          {/if}
-        </label>
-        <p class="text-[11px] text-theme-muted mb-2">
-          Providing your own key ensures consistent availability and enables
-          higher intelligence tiers.
-        </p>
-        <div class="relative">
-          <input
-            id="gemini-api-key"
-            type={showKey ? "text" : "password"}
-            placeholder="Paste your Google Gemini API key..."
-            class="w-full bg-theme-surface border border-theme-border rounded px-3 py-2 text-sm text-theme-text focus:border-theme-primary outline-none pr-10 font-mono shadow-inner"
-            bind:value={inputKey}
-          />
-          <button
-            type="button"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-theme-muted hover:text-theme-primary flex items-center justify-center"
-            onclick={() => (showKey = !showKey)}
-            aria-label="{showKey ? 'Hide' : 'Show'} API Key"
-          >
-            <span
-              class={showKey
-                ? "icon-[lucide--eye-off] w-4 h-4"
-                : "icon-[lucide--eye] w-4 h-4"}
-            ></span>
-          </button>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <a
-            href="https://aistudio.google.com/app/apikey"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-xs text-theme-secondary hover:text-theme-primary underline underline-offset-2"
-          >
-            Get a free key from Google AI Studio →
-          </a>
-          <button
-            onclick={() => {
-              import("$lib/stores/ui.svelte").then(({ uiStore }) => {
-                uiStore.activeSettingsTab = "help";
-                import("$lib/stores/help.svelte").then(({ helpStore }) => {
-                  helpStore.setSearchQuery("Gemini API Key");
-                });
-              });
-            }}
-            class="text-[11px] text-theme-muted hover:text-theme-primary text-left uppercase tracking-tighter font-header"
-          >
-            View setup guide in Help Center
-          </button>
-        </div>
-
-        <button
-          class="px-6 py-2 bg-theme-primary hover:bg-theme-secondary !text-theme-bg font-bold rounded text-sm tracking-widest transition-all disabled:opacity-50 shadow-lg shadow-theme-primary/20 font-header"
-          onclick={handleSave}
-          disabled={!inputKey.trim()}
-        >
-          {oracle.tier === "advanced" ? "ACTIVATE ADVANCED" : "UPGRADE ACCESS"}
-        </button>
-      </div>
+    <div class="pt-2 border-t border-theme-border">
+      <InlineKeySetup />
     </div>
   {/if}
 </div>
