@@ -22,23 +22,39 @@
       "Workspace",
   );
 
-  const types = $derived([
-    "all",
-    ...new Set(vault.allEntities.map((e) => e.type)),
-  ]);
+  const types = $derived.by(() => {
+    // ⚡ Bolt Optimization: Use imperative loop to prevent intermediate array allocation from map()
+    // Cache vault.allEntities to prevent multiple Object.values() allocations
+    const allEntities = vault.allEntities;
+    const typesSet = new Set<string>(["all"]);
+    for (let i = 0; i < allEntities.length; i++) {
+      typesSet.add(allEntities[i].type);
+    }
+    return Array.from(typesSet);
+  });
 
-  const filteredEntities = $derived(
-    vault.allEntities
-      .filter((e) => {
-        const matchesSearch =
-          e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.content?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType =
-          typeFilters.includes("all") || typeFilters.includes(e.type);
-        return matchesSearch && matchesType;
-      })
-      .sort((a, b) => a.title.localeCompare(b.title)),
-  );
+  const filteredEntities = $derived.by(() => {
+    // ⚡ Bolt Optimization: Use imperative loop instead of chained filter().sort()
+    // Cache vault.allEntities to prevent multiple Object.values() allocations
+    const allEntities = vault.allEntities;
+    const filtered = [];
+    const lowerQuery = searchQuery.toLowerCase();
+    const filterAll = typeFilters.includes("all");
+
+    for (let i = 0; i < allEntities.length; i++) {
+      const e = allEntities[i];
+      const matchesSearch =
+        e.title.toLowerCase().includes(lowerQuery) ||
+        (e.content !== undefined && e.content !== null && e.content.toLowerCase().includes(lowerQuery));
+      const matchesType = filterAll || typeFilters.includes(e.type);
+
+      if (matchesSearch && matchesType) {
+        filtered.push(e);
+      }
+    }
+
+    return filtered.sort((a, b) => a.title.localeCompare(b.title));
+  });
 
   function onDragStart(event: DragEvent, entityId: string) {
     if (event.dataTransfer) {
