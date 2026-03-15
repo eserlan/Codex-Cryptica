@@ -56,6 +56,7 @@ export function isNotFoundError(err: any): boolean {
   return (
     err.name === "NotFoundError" ||
     err.code === 8 || // Legacy DOMException.NOT_FOUND_ERR
+    err.message?.toLowerCase().includes("not found") ||
     err.cause?.name === "NotFoundError" ||
     (err instanceof Error && err.message.includes("not found"))
   );

@@ -20,6 +20,7 @@ export interface IFileIOAdapter {
     entity: LocalEntity,
   ): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
+  isNotFoundError(err: any): boolean;
 }
 
 const SKEW_MS = 1000;

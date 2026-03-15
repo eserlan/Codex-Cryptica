@@ -2,6 +2,7 @@ import {
   walkOpfsDirectory,
   writeOpfsFile,
   deleteOpfsEntry,
+  isNotFoundError,
 } from "../../utils/opfs";
 import {
   parseMarkdown,
@@ -67,6 +68,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       _path: path,
     } as any;
   },
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const syncIOAdapter: ISyncIOAdapter = {
@@ -90,6 +92,7 @@ export const syncIOAdapter: ISyncIOAdapter = {
     await window.showDirectoryPicker({ mode: "readwrite" }),
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const syncNotifier: ISyncNotifier = {
@@ -104,6 +107,7 @@ export const assetIOAdapter: IAssetIOAdapter = {
   writeOpfsFile: writeOpfsFile as any,
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const imageProcessor: IImageProcessor = {

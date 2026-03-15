@@ -22,8 +22,8 @@ sequenceDiagram
     CS-->>VS: In-memory Metadata Map populated
     VS->>VS: repository.entities = cachedMetadata
     Note right of VS: UI renders Graph immediately
-    VS->>SE: index(metadata)
-    Note right of SE: Search works for Titles/Tags
+    VS->>SE: index(metadata) [Background]
+    Note right of SE: Search warmed in background
     end
 
     alt skipSyncIfWarm is false (or cache was empty)
@@ -92,7 +92,9 @@ sequenceDiagram
 ## Key Performance Design Decisions
 
 1.  **Cache-First UI**: Graph visibility is decoupled from filesystem I/O latency.
-2.  **Differential Sync**: Phase 2 only processes actual filesystem changes, skipping redundant work for 99% of typical loads.
-3.  **Table Splitting**: Metadata is separated from Content/Lore. The graph view only needs metadata, allowing the heavy text to stay on disk until needed.
-4.  **Streaming Indexing**: Avoids `toArray()` when indexing the full vault to prevent JS heap spikes.
-5.  **Timestamp Normalization**: `lastModified` is floored to integer milliseconds to ensure consistent cache hits across different browsers and storage engines.
+2.  **In-Memory Search Index**: While Dexie persists the raw data, the **Search Engine (FlexSearch)** is currently purely in-memory (running in a Web Worker). This means it **must** be re-fed from Dexie on every app load to enable filtering and search.
+3.  **Fast Metadata Warming**: To provide immediate searchability, Phase 1 performs a lightweight metadata-only index (Titles/Tags) in the background.
+4.  **Differential Sync**: Phase 2 only processes actual filesystem changes, skipping redundant work for 99% of typical loads.
+5.  **Table Splitting**: Metadata is separated from Content/Lore. The graph view only needs metadata, allowing the heavy text to stay on disk until needed.
+6.  **Streaming Indexing**: Avoids `toArray()` when indexing the full vault to prevent JS heap spikes.
+7.  **Timestamp Normalization**: `lastModified` is floored to integer milliseconds to ensure consistent cache hits across different browsers and storage engines.

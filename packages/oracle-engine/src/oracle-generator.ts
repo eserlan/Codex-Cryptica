@@ -2,25 +2,16 @@ import type { ChatMessage, OracleExecutionContext } from "./types";
 
 export class OracleGenerator {
   /**
-   * Orchestrates the construction of context and the generation of an AI chat response.
+   * Identifies the primary entity and gathered source IDs for a query
+   * without triggering a full text generation cycle.
    */
-  async generateChatResponse(
+  async identifyPrimaryEntity(
     query: string,
     context: OracleExecutionContext,
-    onPartial: (partial: string) => void,
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
-
     const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ AI features require an API key. Please configure one in Settings.",
-      });
-      return { sourceIds: [] };
-    }
+    if (!apiKey) return { sourceIds: [] };
 
     // 1. Expand query if follow-up
     let searchQuery = query;
@@ -42,19 +33,62 @@ export class OracleGenerator {
     }
 
     // 3. Retrieve RAG Context
-    const {
-      content: aiContext,
-      primaryEntityId,
-      sourceIds,
-    } = await context.contextRetrieval.retrieveContext(
-      searchQuery,
-      alreadySentTitles,
-      context.vault,
-      lastEntityId,
-      false,
+    const { primaryEntityId, sourceIds } =
+      await context.contextRetrieval.retrieveContext(
+        searchQuery,
+        alreadySentTitles,
+        context.vault,
+        lastEntityId,
+        false,
+      );
+
+    return { primaryEntityId, sourceIds };
+  }
+
+  /**
+   * Orchestrates the construction of context and the generation of an AI chat response.
+   */
+  async generateChatResponse(
+    query: string,
+    context: OracleExecutionContext,
+    onPartial: (partial: string) => void,
+  ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
+    const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
+
+    const apiKey = context.effectiveApiKey;
+    if (!apiKey) {
+      await context.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content:
+          "⚠️ AI features require an API key. Please configure one in Settings.",
+      });
+      return { sourceIds: [] };
+    }
+
+    // 1. Identify primary entity and gather context metadata
+    const { primaryEntityId, sourceIds } = await this.identifyPrimaryEntity(
+      query,
+      context,
     );
 
-    // 4. Trigger Generation
+    // 2. Retrieve the actual context content for the identified entities
+    // (Optimization: we could fold this into identifyPrimaryEntity if needed,
+    // but keeping them distinct for clarity here).
+    const lastEntityId = context.chatHistory.messages.findLast(
+      (m: ChatMessage) => m.entityId,
+    )?.entityId;
+
+    const { content: aiContext } =
+      await context.contextRetrieval.retrieveContext(
+        query, // Use original query for specific retrieval here
+        alreadySentTitles,
+        context.vault,
+        lastEntityId,
+        false,
+      );
+
+    // 3. Trigger Generation
     await context.textGeneration.generateResponse(
       apiKey,
       query,

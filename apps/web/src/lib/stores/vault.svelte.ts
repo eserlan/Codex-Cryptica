@@ -251,11 +251,14 @@ export class VaultStore {
     }
   }
 
+  private _vaultHandle: FileSystemDirectoryHandle | undefined = undefined;
+
   async loadFiles(skipSyncIfWarm = true) {
     if (!this.activeVaultId) return;
 
     this.status = "loading";
     this._contentLoadedIds = new Set();
+    this._vaultHandle = undefined; // Reset handle on load
     this.syncStats = {
       updated: 0,
       created: 0,
@@ -277,8 +280,6 @@ export class VaultStore {
       }
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
-      // This allows the graph to render before we even resolve the OPFS handle
-      // or start walking the directory.
       await cacheService.preloadVault(this.activeVaultId);
       const cachedEntities = cacheService.getPreloadedEntities();
 
@@ -300,7 +301,7 @@ export class VaultStore {
             return this.services!.search.index({
               id: entity.id,
               title: entity.title,
-              content: entity.content, // Empty string for now (lazy load)
+              content: entity.content,
               type: entity.type,
               path,
               keywords: [
@@ -311,8 +312,12 @@ export class VaultStore {
               updatedAt: Date.now(),
             });
           });
-          await Promise.all(indexPromises);
-          debugStore.log(`[VaultStore] Cache-First: Search index warmed.`);
+          // Do NOT await indexing here - let it happen in background to unblock image resolution
+          Promise.all(indexPromises)
+            .then(() =>
+              debugStore.log(`[VaultStore] Cache-First: Search index warmed.`),
+            )
+            .catch(console.warn);
         }
 
         if (skipSyncIfWarm) {
@@ -320,11 +325,16 @@ export class VaultStore {
             "[VaultStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
           this.status = "idle";
+
+          // Start background tasks
           if (this.activeVaultId) {
-            await mapRegistry.loadFromVault(this.activeVaultId);
-            await canvasRegistry.loadFromVault(this.activeVaultId);
+            mapRegistry.loadFromVault(this.activeVaultId);
+            canvasRegistry.loadFromVault(this.activeVaultId);
           }
           this.indexContentInBackground();
+
+          // Resolve handle in background for image resolution
+          this.getActiveVaultHandle();
           return;
         }
       }
@@ -449,11 +459,30 @@ export class VaultStore {
     );
     const start = performance.now();
     let indexedCount = 0;
+    const batch: any[] = [];
+    const BATCH_SIZE = 50;
+
+    const flushBatch = async () => {
+      if (batch.length === 0) return;
+      if (!this.services) return;
+
+      const currentBatch = [...batch];
+      batch.length = 0;
+
+      try {
+        await Promise.all(
+          currentBatch.map((entry) => this.services!.search.index(entry)),
+        );
+        indexedCount += currentBatch.length;
+      } catch (err) {
+        debugStore.warn("[VaultStore] Batch indexing failed", err);
+      }
+    };
 
     entityDb.entityContent
       .where("vaultId")
       .equals(vaultId)
-      .each((record) => {
+      .each(async (record) => {
         if (!this.services || this.activeVaultId !== vaultId) return;
         const entity = this.entities[record.entityId];
         if (!entity || this._contentLoadedIds.has(record.entityId)) {
@@ -466,22 +495,23 @@ export class VaultStore {
           record.lore || "",
           ...Object.values(entity.metadata || {}).flat(),
         ].join(" ");
-        this.services.search
-          .index({
-            id: entity.id,
-            title: entity.title,
-            content: record.content,
-            type: entity.type,
-            path,
-            keywords,
-            updatedAt: Date.now(),
-          })
-          .then(() => {
-            indexedCount++;
-          })
-          .catch((err) => debugStore.warn(`[VaultStore] Error: ${err}`));
+
+        batch.push({
+          id: entity.id,
+          title: entity.title,
+          content: record.content,
+          type: entity.type,
+          path,
+          keywords,
+          updatedAt: Date.now(),
+        });
+
+        if (batch.length >= BATCH_SIZE) {
+          await flushBatch();
+        }
       })
-      .then(() => {
+      .then(async () => {
+        await flushBatch();
         debugStore.log(
           `[VaultStore] Background indexing completed. Indexed ${indexedCount} entities in ${(performance.now() - start).toFixed(2)}ms`,
         );
@@ -690,14 +720,20 @@ export class VaultStore {
 
   async getActiveVaultHandle(): Promise<FileSystemDirectoryHandle | undefined> {
     if (!this.activeVaultId || !vaultRegistry.rootHandle) return undefined;
+    if (this._vaultHandle) return this._vaultHandle;
+
     try {
       const vaultsDir = await vaultRegistry.rootHandle.getDirectoryHandle(
         "vaults",
         { create: true },
       );
-      return await vaultsDir.getDirectoryHandle(this.activeVaultId, {
-        create: true,
-      });
+      this._vaultHandle = await vaultsDir.getDirectoryHandle(
+        this.activeVaultId,
+        {
+          create: true,
+        },
+      );
+      return this._vaultHandle;
     } catch (err) {
       debugStore.warn("[VaultStore] Failed to get active vault handle", err);
       return undefined;

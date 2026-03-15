@@ -569,12 +569,11 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     try {
       if (isImageRequest) {
-        // We first run a chat response cycle to identify the primary entity and gather context.
-        // This is much faster/cheaper than full image generation and avoids clobbering.
-        const { primaryEntityId } = await this.generator.generateChatResponse(
+        // Identify the primary entity to attach the image to, without triggering
+        // a full (and redundant) text generation response.
+        const { primaryEntityId } = await this.generator.identifyPrimaryEntity(
           query,
           context,
-          () => {},
         );
 
         assistantMsg.content = query;

@@ -46,9 +46,8 @@ export function createEditState(
     vaultInstance
       .loadEntityContent(entityId)
       .then(() => {
-        // Guard against the user closing the panel or switching entity while
-        // the Dexie read was in flight.
-        // We use isEditing check and ensure the ID still matches the one we started with.
+        // Guard against the user closing the panel, switching entity, or
+        // starting a different edit cycle while the Dexie read was in flight.
         if (!isEditing || vaultInstance.selectedEntityId !== entityId) return;
 
         const fresh = vaultInstance.entities[entityId];

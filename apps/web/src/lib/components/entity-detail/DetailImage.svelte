@@ -64,21 +64,22 @@
     if (!entity) return;
 
     const customId = e.dataTransfer?.getData("application/codex-image-id");
-    if (customId) {
-      const message = oracle.messages.find((m) => m.id === customId);
-      if (message?.imageBlob) {
-        try {
-          const { image, thumbnail } = await vault.saveImageToVault(
-            message.imageBlob,
-            entity.id,
-          );
-          await vault.updateEntity(entity.id, { image, thumbnail });
-        } catch (err) {
-          debugStore.error("[DetailImage] Failed to save Oracle image:", err);
-          alert("Failed to archive image from Oracle.");
-        }
-        return; // Success
+    const message = customId
+      ? oracle.messages.find((m) => m.id === customId)
+      : null;
+
+    if (message?.imageBlob) {
+      try {
+        const { image, thumbnail } = await vault.saveImageToVault(
+          message.imageBlob,
+          entity.id,
+        );
+        await vault.updateEntity(entity.id, { image, thumbnail });
+      } catch (err) {
+        debugStore.error("[DetailImage] Failed to save Oracle image:", err);
+        alert("Failed to archive image from Oracle.");
       }
+      return;
     }
 
     // Fallback to standard file drop

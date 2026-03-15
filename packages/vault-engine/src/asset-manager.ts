@@ -16,6 +16,7 @@ export interface IAssetIOAdapter {
     path: string[],
     create?: boolean,
   ): Promise<FileSystemDirectoryHandle>;
+  isNotFoundError(err: any): boolean;
 }
 
 export class AssetManager {
@@ -155,12 +156,7 @@ export class AssetManager {
     } catch (err: any) {
       // Gracefully handle "Not Found" errors from the File System API.
       // This prevents the UI from crashing if an entity references a missing image.
-      const isNotFound =
-        err.name === "NotFoundError" ||
-        err.code === 8 || // Standard DOMException error code for NotFound
-        err.message?.toLowerCase().includes("not found");
-
-      if (isNotFound) {
+      if (this.ioAdapter.isNotFoundError(err)) {
         return "";
       }
       console.warn(`Failed to resolve image path: ${cleanPath}`, err);

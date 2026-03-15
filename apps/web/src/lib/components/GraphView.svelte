@@ -398,6 +398,9 @@
       imageManager.sync({
         showImages: graph.showImages,
         resolveImageUrl: (path) => vault.resolveImageUrl(path),
+        onBatchApplied: (count) => {
+          debugStore.log(`[GraphView] Applied ${count} images to graph nodes.`);
+        },
         onError: (err) =>
           debugStore.error("Incremental image resolution failed", err),
       });
