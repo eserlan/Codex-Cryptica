@@ -4,6 +4,7 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import type { Entity } from "schema";
   import {
     Search,
     Filter,
@@ -37,15 +38,27 @@
     // ⚡ Bolt Optimization: Use imperative loop instead of chained filter().sort()
     // Cache vault.allEntities to prevent multiple Object.values() allocations
     const allEntities = vault.allEntities;
-    const filtered = [];
-    const lowerQuery = searchQuery.toLowerCase();
+    const filtered: Entity[] = [];
+    const query = searchQuery.trim().toLowerCase();
     const filterAll = typeFilters.includes("all");
 
+    // Fast path: Just type filtering and sorting if no search query
+    if (!query) {
+      for (let i = 0; i < allEntities.length; i++) {
+        const e = allEntities[i];
+        if (filterAll || typeFilters.includes(e.type)) {
+          filtered.push(e);
+        }
+      }
+      return filtered.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    // Full search path
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
       const matchesSearch =
-        e.title.toLowerCase().includes(lowerQuery) ||
-        (e.content !== undefined && e.content !== null && e.content.toLowerCase().includes(lowerQuery));
+        e.title.toLowerCase().includes(query) ||
+        e.content.toLowerCase().includes(query);
       const matchesType = filterAll || typeFilters.includes(e.type);
 
       if (matchesSearch && matchesType) {
