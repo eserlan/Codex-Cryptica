@@ -302,6 +302,8 @@ export class VaultStore {
       }
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
+      // This allows the graph to render before we even resolve the OPFS handle
+      // or start walking the directory.
       await cacheService.preloadVault(this.activeVaultId);
       const cachedEntities = cacheService.getPreloadedEntities();
 
@@ -337,7 +339,7 @@ export class VaultStore {
             return this.services!.search.index({
               id: entity.id,
               title: entity.title,
-              content: entity.content,
+              content: entity.content, // Empty string for now (lazy load)
               type: entity.type,
               path,
               keywords: [
@@ -594,6 +596,8 @@ export class VaultStore {
             `[VaultStore] Tier 1: Loaded chronicle from cache for ${id}`,
           );
         }
+      } else {
+        debugStore.log(`[VaultStore] No Dexie content record found for ${id}`);
       }
 
       // TIER 2 & 3: Load Lore (and fresh Chronicle) from Markdown file
@@ -671,6 +675,8 @@ export class VaultStore {
       this._contentLoadedIds.add(id);
     } catch (err) {
       debugStore.error(`[VaultStore] Failed to load content for ${id}:`, err);
+      // Transient Dexie failure — do NOT mark as loaded so the next call
+      // (e.g. the user closing and reopening the panel) can retry.
     }
   }
 
