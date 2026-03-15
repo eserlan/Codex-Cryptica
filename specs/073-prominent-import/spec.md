@@ -51,6 +51,7 @@ As a user managing my files in the Vault Explorer, I want an import action right
 - **FR-003**: System MUST provide a persistent "IMPORT" button in the top navigation menu.
 - **FR-004**: System MUST provide an "Import" icon button in the Vault Explorer header.
 - **FR-005**: All import triggers MUST launch the Archive Importer in a new centered browser window (800x900).
+- **FR-006**: System MUST automatically synchronize the vault state across browser windows (e.g., via BroadcastChannel) so that imports completed in the popout instantly appear in the main application window without a manual refresh.
 
 ### Key Entities
 

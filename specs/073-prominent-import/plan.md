@@ -15,8 +15,8 @@ This feature makes the data import process more accessible and prominent. It add
 **Testing**: Playwright (E2E)
 **Target Platform**: Web (Prerendered/Static)
 **Project Type**: web
-**Performance Goals**: Instant UI transition to focused Popout Terminal
-**Constraints**: Client-side only (Privacy principle); `window.open` compatibility
+**Performance Goals**: Instant UI transition to focused Popout Terminal, real-time cross-window sync upon import completion.
+**Constraints**: Client-side only (Privacy principle); `window.open` and `BroadcastChannel` compatibility
 **Scale/Scope**: Dedicated standalone route with global navigation exclusion
 
 ## Constitution Check

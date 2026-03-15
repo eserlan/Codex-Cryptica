@@ -262,6 +262,12 @@ Codex Cryptica can transform your unstructured notes into a structured Knowledge
 2. **Analysis**: The Oracle breaks your documents into chunks and analyzes them to find characters, locations, and items.
 3. **Review**: You review the discovered entities and their relationships before adding them to your vault.
 
+## Dedicated Importer
+
+For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window. 
+
+- **Seamless Sync**: Any entities you import or review in this popup are instantly saved and synchronized back to your main graph in real-time. No manual refresh required!
+
 ## Resilient Imports
 
 Large documents can take time to process. The system automatically tracks your progress:
