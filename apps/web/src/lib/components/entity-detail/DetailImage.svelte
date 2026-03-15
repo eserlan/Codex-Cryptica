@@ -2,6 +2,7 @@
   import type { Entity } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { debugStore } from "$lib/stores/debug.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
 
@@ -62,12 +63,9 @@
 
     if (!entity) return;
 
-    const messageId =
-      e.dataTransfer?.getData("application/codex-image-id") ||
-      e.dataTransfer?.getData("text/plain");
-
-    if (messageId) {
-      const message = oracle.messages.find((m) => m.id === messageId);
+    const customId = e.dataTransfer?.getData("application/codex-image-id");
+    if (customId) {
+      const message = oracle.messages.find((m) => m.id === customId);
       if (message?.imageBlob) {
         try {
           const { image, thumbnail } = await vault.saveImageToVault(
@@ -76,26 +74,21 @@
           );
           await vault.updateEntity(entity.id, { image, thumbnail });
         } catch (err) {
-          console.error("[DetailImage] Failed to save Oracle image:", err);
+          debugStore.error("[DetailImage] Failed to save Oracle image:", err);
           alert("Failed to archive image from Oracle.");
         }
-      } else {
-        // If it was just text/plain but not a valid message ID, fall through to files
-        if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
-          await handleFileDrop(e.dataTransfer.files[0]);
-        }
+        return; // Success
       }
-    } else if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+    }
+
+    // Fallback to standard file drop
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
       await handleFileDrop(e.dataTransfer.files[0]);
-    } else {
-      console.warn(
-        "[DetailImage] Drop event contained no recognized data types",
-      );
     }
   };
 
   async function handleFileDrop(file: File) {
-    if (!entity) return;
+    if (!entity || !file) return;
     if (file.type.startsWith("image/")) {
       try {
         const { image, thumbnail } = await vault.saveImageToVault(
@@ -104,7 +97,7 @@
         );
         await vault.updateEntity(entity.id, { image, thumbnail });
       } catch (err) {
-        console.error("[DetailImage] Failed to save external file:", err);
+        debugStore.error("[DetailImage] Failed to save external file:", err);
         alert("Failed to save external image.");
       }
     }

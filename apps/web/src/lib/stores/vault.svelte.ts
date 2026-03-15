@@ -231,7 +231,7 @@ export class VaultStore {
         }
       }
     } catch (err) {
-      console.error("[VaultStore] Init failed", err);
+      debugStore.error("[VaultStore] Init failed", err);
       this.status = "error";
       this.errorMessage =
         "Failed to initialize storage. Please check browser support for OPFS.";
@@ -252,8 +252,7 @@ export class VaultStore {
   }
 
   async loadFiles() {
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!this.activeVaultId || !vaultDir) return;
+    if (!this.activeVaultId) return;
 
     this.status = "loading";
     this._contentLoadedIds = new Set();
@@ -270,30 +269,85 @@ export class VaultStore {
       debugStore.log(
         `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
       );
+
       if (this.services) {
         this.services.ai.clearStyleCache();
         await this.services.search.clear();
         debugStore.log("[VaultStore] Search index cleared.");
       }
 
-      // Bulk-load graph entities from Dexie before iterating individual files.
-      // This converts N per-file IDB round-trips into a single parallel read,
-      // significantly reducing startup latency on warm cache loads.
+      // 1. Cache-First: Preload graph metadata from Dexie immediately.
+      // This allows the graph to render before we even resolve the OPFS handle
+      // or start walking the directory.
       await cacheService.preloadVault(this.activeVaultId);
+      const cachedEntities = cacheService.getPreloadedEntities();
 
-      await this.repository.loadFiles(
+      if (cachedEntities.length > 0) {
+        const entityMap: Record<string, LocalEntity> = {};
+        for (const e of cachedEntities) {
+          entityMap[e.id] = e;
+        }
+        // Push to repository to trigger immediate UI/Graph rendering
+        this.repository.entities = entityMap;
+        debugStore.log(
+          `[VaultStore] Cache-First: Populated ${cachedEntities.length} entities from Dexie.`,
+        );
+
+        // Metadata indexing for immediate search capability
+        if (this.services) {
+          const indexPromises = cachedEntities.map((entity) => {
+            const path = entity._path?.join("/") || `${entity.id}.md`;
+            return this.services!.search.index({
+              id: entity.id,
+              title: entity.title,
+              content: entity.content, // Empty string for now (lazy load)
+              type: entity.type,
+              path,
+              keywords: [
+                ...(entity.tags || []),
+                entity.lore || "",
+                ...Object.values(entity.metadata || {}).flat(),
+              ].join(" "),
+              updatedAt: Date.now(),
+            });
+          });
+          await Promise.all(indexPromises);
+          debugStore.log(`[VaultStore] Cache-First: Search index warmed.`);
+        }
+      }
+
+      // 2. FS-Sync: Resolve OPFS handle and perform full synchronization
+      const vaultDir = await this.getActiveVaultHandle();
+      if (!vaultDir) {
+        this.status = cachedEntities.length > 0 ? "idle" : "error";
+        if (this.status === "error") {
+          this.errorMessage = "Failed to resolve vault directory handle";
+        }
+        return;
+      }
+
+      // If we already have cached entities, we can set status to idle NOW
+      // and let the sync happen in the background.
+      if (cachedEntities.length > 0) {
+        this.status = "idle";
+      }
+
+      // We don't await this if status is already idle (warm cache)
+      const syncPromise = this.repository.loadFiles(
         this.activeVaultId,
         vaultDir,
-        async (chunk, current, total) => {
+        async (chunk, current, total, newOrChanged) => {
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
           this.syncStats.created = current;
 
-          if (this.services) {
+          const changedCount = Object.keys(newOrChanged).length;
+
+          if (this.services && changedCount > 0) {
             debugStore.log(
-              `[VaultStore] Indexing chunk of ${Object.keys(chunk).length} entities (${current}/${total})`,
+              `[VaultStore] Syncing ${changedCount} changed entities in chunk (${current}/${total})`,
             );
-            const indexPromises = Object.values(chunk).map((entity) => {
+            const indexPromises = Object.values(newOrChanged).map((entity) => {
               // Track entities that arrived from OPFS (cache miss path) — they
               // already have content populated so no lazy load is needed later.
               if (entity.content) {
@@ -321,7 +375,6 @@ export class VaultStore {
                       `[VaultStore] Failed to index entity: ${entity.id}`,
                       err,
                     );
-                    console.warn(err);
                   })
                 : Promise.resolve();
             });
@@ -330,9 +383,22 @@ export class VaultStore {
         },
       );
 
-      debugStore.log(
-        `[VaultStore] Load complete. Indexed ${this.syncStats.created} entities.`,
-      );
+      if (this.status === "loading") {
+        await syncPromise;
+      } else {
+        // Just catch errors for background sync
+        syncPromise.catch((err: any) => {
+          debugStore.error("[VaultStore] Background sync failed", err);
+        });
+      }
+
+      if (this.status === "loading") {
+        debugStore.log(
+          `[VaultStore] Load complete. Indexed ${this.syncStats.created} entities.`,
+        );
+        this.status = "idle";
+      }
+
       await mapRegistry.loadFromVault(this.activeVaultId);
       await canvasRegistry.loadFromVault(this.activeVaultId);
 
@@ -343,7 +409,6 @@ export class VaultStore {
       this.indexContentInBackground();
     } catch (err: any) {
       debugStore.error("[VaultStore] Load failed", err);
-      console.error("[VaultStore] Load failed", err);
       this.status = "error";
       this.errorMessage = err.message;
     }
@@ -365,6 +430,12 @@ export class VaultStore {
   private indexContentInBackground(): void {
     const vaultId = this.activeVaultId;
     if (!vaultId || !this.services) return;
+
+    debugStore.log(
+      `[VaultStore] Starting background content indexing for: ${vaultId}`,
+    );
+    const start = performance.now();
+    let indexedCount = 0;
 
     entityDb.entityContent
       .where("vaultId")
@@ -392,7 +463,15 @@ export class VaultStore {
             keywords,
             updatedAt: Date.now(),
           })
-          .catch(console.warn);
+          .then(() => {
+            indexedCount++;
+          })
+          .catch((err) => debugStore.warn(`[VaultStore] Error: ${err}`));
+      })
+      .then(() => {
+        debugStore.log(
+          `[VaultStore] Background indexing completed. Indexed ${indexedCount} entities in ${(performance.now() - start).toFixed(2)}ms`,
+        );
       })
       .catch((err) =>
         debugStore.warn("[VaultStore] Background content indexing failed", err),
@@ -417,6 +496,8 @@ export class VaultStore {
     if (!this.entities[id]) return;
 
     try {
+      debugStore.log(`[VaultStore] Loading content for entity: ${id}`);
+      const start = performance.now();
       const record = await entityDb.entityContent.get([this.activeVaultId, id]);
 
       if (record) {
@@ -433,13 +514,19 @@ export class VaultStore {
               lore: record.lore,
             },
           };
+          debugStore.log(
+            `[VaultStore] Content loaded for ${id} in ${(performance.now() - start).toFixed(2)}ms`,
+          );
         }
+      } else {
+        debugStore.log(`[VaultStore] No Dexie content record found for ${id}`);
       }
       // Mark as loaded whether a record was found or not — a missing record
       // means the entity genuinely has no persisted content yet, so retrying
       // would be wasteful.
       this._contentLoadedIds.add(id);
-    } catch {
+    } catch (err) {
+      debugStore.error(`[VaultStore] Failed to load content for ${id}:`, err);
       // Transient Dexie failure — do NOT mark as loaded so the next call
       // (e.g. the user closing and reopening the panel) can retry.
     }
@@ -466,7 +553,7 @@ export class VaultStore {
         updatedAt: Date.now(),
       });
       if (promise && promise.catch) {
-        promise.catch(console.warn);
+        promise.catch((err) => debugStore.warn(`[VaultStore] Error: ${err}`));
       }
     }
 
@@ -486,8 +573,8 @@ export class VaultStore {
             );
           })
           .catch((error) => {
-            console.error(
-              "Failed to schedule save: unable to resolve vault directory handle",
+            debugStore.error(
+              "[VaultStore] Failed to schedule save: unable to resolve vault directory handle",
               error,
             );
             this.status = "error";
@@ -599,7 +686,7 @@ export class VaultStore {
         create: true,
       });
     } catch (err) {
-      console.warn("Failed to get active vault handle", err);
+      debugStore.warn("[VaultStore] Failed to get active vault handle", err);
       return undefined;
     }
   }

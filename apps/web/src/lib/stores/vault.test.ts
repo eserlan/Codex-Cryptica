@@ -140,11 +140,13 @@ describe("VaultStore (OPFS)", () => {
             { chunk1: { id: "chunk1", title: "Chunk 1" } as any },
             1,
             2,
+            {},
           );
           onProgress(
             { chunk2: { id: "chunk2", title: "Chunk 2" } as any },
             2,
             2,
+            {},
           );
         }
         const entities = {

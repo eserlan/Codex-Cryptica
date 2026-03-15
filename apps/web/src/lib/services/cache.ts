@@ -1,5 +1,6 @@
 import { entityDb } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
+import { debugStore } from "../stores/debug.svelte";
 
 /**
  * Parses the composite cache key used by the vault adapter layer.
@@ -45,6 +46,8 @@ export class CacheService {
    */
   async preloadVault(vaultId: string): Promise<void> {
     try {
+      debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
+      const start = performance.now();
       const graphRecords = await entityDb.graphEntities
         .where("vaultId")
         .equals(vaultId)
@@ -67,7 +70,11 @@ export class CacheService {
       }
 
       this.preloaded = map;
-    } catch {
+      debugStore.log(
+        `[CacheService] Preloaded ${map.size} graph entities in ${(performance.now() - start).toFixed(2)}ms`,
+      );
+    } catch (err) {
+      debugStore.error("[CacheService] Preload failed:", err);
       this.preloaded = null;
     }
   }
@@ -83,7 +90,10 @@ export class CacheService {
   ): Promise<{ lastModified: number; entity: LocalEntity } | null> {
     // Fast path: use the pre-loaded in-memory snapshot when available.
     if (this.preloaded) {
-      return this.preloaded.get(path) ?? null;
+      const hit = this.preloaded.get(path);
+      if (hit) {
+        return hit;
+      }
     }
 
     // Slow path: individual Dexie lookup (cold start or after vault switch
@@ -95,7 +105,9 @@ export class CacheService {
         .equals([vaultId, filePath])
         .first();
 
-      if (!record) return null;
+      if (!record) {
+        return null;
+      }
 
       const {
         vaultId: _vid,
@@ -109,7 +121,11 @@ export class CacheService {
         lore: undefined,
       };
       return { lastModified, entity };
-    } catch {
+    } catch (err) {
+      debugStore.warn(
+        `[CacheService] Individual lookup failed for ${path}:`,
+        err,
+      );
       return null;
     }
   }
@@ -159,7 +175,11 @@ export class CacheService {
         };
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }
-    } catch {
+    } catch (err) {
+      debugStore.error(
+        `[CacheService] Failed to save ${entity.id} to Dexie:`,
+        err,
+      );
       // Non-fatal — the OPFS file is the source of truth.
     }
   }
@@ -189,6 +209,15 @@ export class CacheService {
     } catch {
       // Non-fatal.
     }
+  }
+
+  /**
+   * Returns all preloaded entities from the in-memory metadata map.
+   * Useful for immediately populating the UI before OPFS sync starts.
+   */
+  getPreloadedEntities(): LocalEntity[] {
+    if (!this.preloaded) return [];
+    return Array.from(this.preloaded.values()).map((entry) => entry.entity);
   }
 
   /**

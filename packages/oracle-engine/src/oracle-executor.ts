@@ -569,18 +569,22 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     try {
       if (isImageRequest) {
-        assistantMsg.content = query; // Ensure prompt has context
-        const blob = await this.generator.generateMessageVisualization(
-          assistantMsg,
-          context,
-        );
-        const imageUrl = URL.createObjectURL(blob);
-
+        // We first run a chat response cycle to identify the primary entity and gather context.
+        // This is much faster/cheaper than full image generation and avoids clobbering.
         const { primaryEntityId } = await this.generator.generateChatResponse(
           query,
           context,
           () => {},
         );
+
+        assistantMsg.content = query;
+        assistantMsg.entityId = primaryEntityId;
+
+        const blob = await this.generator.generateMessageVisualization(
+          assistantMsg,
+          context,
+        );
+        const imageUrl = URL.createObjectURL(blob);
 
         const finalMsgs = [...context.chatHistory.messages];
         const last = finalMsgs[finalMsgs.length - 1];

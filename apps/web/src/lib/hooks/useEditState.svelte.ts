@@ -1,5 +1,6 @@
 import type { Entity } from "schema";
 import { vault as defaultVault } from "../stores/vault.svelte";
+import { debugStore } from "../stores/debug.svelte";
 
 /**
  * Minimal interface describing the vault capabilities that `createEditState`
@@ -47,14 +48,18 @@ export function createEditState(
       .then(() => {
         // Guard against the user closing the panel or switching entity while
         // the Dexie read was in flight.
+        // We use isEditing check and ensure the ID still matches the one we started with.
         if (!isEditing || vaultInstance.selectedEntityId !== entityId) return;
+
         const fresh = vaultInstance.entities[entityId];
-        if (fresh) {
-          editContent = fresh.content || "";
+        if (fresh && fresh.content) {
+          editContent = fresh.content;
           editLore = fresh.lore || "";
         }
       })
-      .catch(console.warn);
+      .catch((err) =>
+        debugStore.warn(`[useEditState] Content load failed: ${err}`),
+      );
   }
 
   function cancel() {
