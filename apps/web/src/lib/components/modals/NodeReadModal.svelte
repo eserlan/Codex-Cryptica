@@ -17,6 +17,12 @@
   let renderTimeout: ReturnType<typeof setTimeout> | null = null;
   const renderCache = new Map<string, string>();
 
+  // Load entity content from Dexie when the read-mode modal opens.
+  $effect(() => {
+    const id = ui.readModeNodeId;
+    if (id) vault.loadEntityContent(id);
+  });
+
   $effect(() => {
     // Clear any pending render when the entity/content changes
     if (renderTimeout) {

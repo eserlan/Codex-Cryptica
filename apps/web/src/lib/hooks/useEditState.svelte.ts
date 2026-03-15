@@ -1,4 +1,5 @@
 import type { Entity } from "schema";
+import { vault } from "../stores/vault.svelte";
 
 export function createEditState(_initialEntity: Entity | null) {
   let isEditing = $state(false);
@@ -21,6 +22,24 @@ export function createEditState(_initialEntity: Entity | null) {
     editStartDate = entity.start_date;
     editEndDate = entity.end_date;
     isEditing = true;
+
+    // Ensure content is fully loaded from Dexie before the editor opens.
+    // If the entity was populated from the graph-entity cache the content
+    // field will be ""; loadEntityContent fills it in reactively.
+    const entityId = entity.id;
+    vault
+      .loadEntityContent(entityId)
+      .then(() => {
+        // Guard against the user closing the panel or switching entity while
+        // the Dexie read was in flight.
+        if (!isEditing || vault.selectedEntityId !== entityId) return;
+        const fresh = vault.entities[entityId];
+        if (fresh) {
+          editContent = fresh.content || "";
+          editLore = fresh.lore || "";
+        }
+      })
+      .catch(console.warn);
   }
 
   function cancel() {
