@@ -302,8 +302,6 @@ export class VaultStore {
       }
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
-      // This allows the graph to render before we even resolve the OPFS handle
-      // or start walking the directory.
       await cacheService.preloadVault(this.activeVaultId);
       const cachedEntities = cacheService.getPreloadedEntities();
 
@@ -339,7 +337,7 @@ export class VaultStore {
             return this.services!.search.index({
               id: entity.id,
               title: entity.title,
-              content: entity.content, // Empty string for now (lazy load)
+              content: entity.content,
               type: entity.type,
               path,
               keywords: [
@@ -373,19 +371,6 @@ export class VaultStore {
 
           // Resolve handle in background for image resolution
           this.getActiveVaultHandle();
-          return;
-        }
-
-        if (skipSyncIfWarm) {
-          debugStore.log(
-            "[VaultStore] Cache is warm. Skipping OPFS background sync for instant load.",
-          );
-          this.status = "idle";
-          if (this.activeVaultId) {
-            await mapRegistry.loadFromVault(this.activeVaultId);
-            await canvasRegistry.loadFromVault(this.activeVaultId);
-          }
-          this.indexContentInBackground();
           return;
         }
       }
