@@ -141,6 +141,10 @@
       minute: "2-digit",
     });
   };
+
+  const focusNode = (node: HTMLElement) => {
+    node.focus();
+  };
 </script>
 
 <svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
@@ -212,6 +216,7 @@
               <input
                 bind:value={editName}
                 aria-label="New vault name"
+                use:focusNode
                 class="bg-theme-bg border border-theme-primary rounded px-2 py-1 text-sm flex-1 text-theme-text focus:outline-none"
                 onclick={(e) => e.stopPropagation()}
               />
