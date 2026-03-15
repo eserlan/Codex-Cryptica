@@ -16,7 +16,7 @@ export class VaultLifecycleManager {
       FileSystemDirectoryHandle | undefined
     >,
     private repository: any,
-    private loadFiles: () => Promise<void>,
+    private loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>,
     private getEntities: () => Record<string, LocalEntity>,
     private setDemoVaultName: (name: string | null) => void,
     private setInitialized: (val: boolean) => void,
@@ -39,7 +39,7 @@ export class VaultLifecycleManager {
       const { importFromFolder } = await import("./io");
       const result = await importFromFolder(activeVaultId, vaultDir, handle);
       if (result.success) {
-        await this.loadFiles();
+        await this.loadFiles(false);
         const db = await getDB();
         const entityCount = Object.keys(this.getEntities()).length;
         const record = await db.get("vaults", activeVaultId);
@@ -94,7 +94,7 @@ export class VaultLifecycleManager {
     this.setStatus("loading");
 
     await vaultRegistry.setActiveVault(id);
-    await this.loadFiles();
+    await this.loadFiles(true);
     await themeStore.loadForVault(id);
     this.setStatus("idle");
     window.dispatchEvent(new CustomEvent("vault-switched", { detail: { id } }));

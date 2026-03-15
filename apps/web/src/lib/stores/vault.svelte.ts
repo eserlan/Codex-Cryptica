@@ -143,7 +143,7 @@ export class VaultStore {
       () => this.activeVaultId,
       () => this.getActiveVaultHandle(),
       this.repository,
-      () => this.loadFiles(),
+      (skipSync) => this.loadFiles(skipSync),
       () => this.entities,
       (n) => (this.demoVaultName = n),
       (v) => (this.isInitialized = v),
@@ -251,7 +251,7 @@ export class VaultStore {
     }
   }
 
-  async loadFiles() {
+  async loadFiles(skipSyncIfWarm = true) {
     if (!this.activeVaultId) return;
 
     this.status = "loading";
@@ -313,6 +313,19 @@ export class VaultStore {
           });
           await Promise.all(indexPromises);
           debugStore.log(`[VaultStore] Cache-First: Search index warmed.`);
+        }
+
+        if (skipSyncIfWarm) {
+          debugStore.log(
+            "[VaultStore] Cache is warm. Skipping OPFS background sync for instant load.",
+          );
+          this.status = "idle";
+          if (this.activeVaultId) {
+            await mapRegistry.loadFromVault(this.activeVaultId);
+            await canvasRegistry.loadFromVault(this.activeVaultId);
+          }
+          this.indexContentInBackground();
+          return;
         }
       }
 

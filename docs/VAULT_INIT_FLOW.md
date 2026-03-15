@@ -26,6 +26,7 @@ sequenceDiagram
     Note right of SE: Search works for Titles/Tags
     end
 
+    alt skipSyncIfWarm is false (or cache was empty)
     rect rgb(220, 240, 220)
     Note over VS,VR: Phase 2: Optimized FS Sync (Background)
     VS->>VS: getActiveVaultHandle()
@@ -43,6 +44,9 @@ sequenceDiagram
             VS->>SE: index(metadata + content)
         end
     end
+    end
+    else skipSyncIfWarm is true (Fast Boot)
+    Note over VS: Skip Phase 2 entirely for zero-FS-read startup.
     end
 
     rect rgb(240, 240, 200)
