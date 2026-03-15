@@ -9,9 +9,4 @@ export interface IOracleCommandParser {
    * Detects if the user wants an image generated.
    */
   detectImageIntent(query: string): boolean;
-
-  /**
-   * Checks for keywords indicating an expanded lore drop.
-   */
-  isExpandRequest(query: string): boolean;
 }

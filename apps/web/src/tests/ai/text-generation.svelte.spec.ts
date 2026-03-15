@@ -51,23 +51,4 @@ describe("TextGenerationService", () => {
       );
     });
   });
-
-  describe("Expansion Logic (isExpandRequest)", () => {
-    it("should identify expansion keywords correctly", () => {
-      const isExpand = (service as any).isExpandRequest.bind(service);
-
-      expect(isExpand("tell me more about the tower")).toBe(true);
-      expect(isExpand("expand on Eldrin")).toBe(true);
-      expect(isExpand("describe the village")).toBe(true);
-      expect(isExpand("elaborate on the plot")).toBe(true);
-      expect(isExpand("give me detailed info")).toBe(true);
-      expect(isExpand("deep dive into the lore")).toBe(true);
-      expect(isExpand("more")).toBe(true);
-      expect(isExpand("anything else")).toBe(true);
-
-      expect(isExpand("who is Eldrin?")).toBe(false);
-      expect(isExpand("where is the tavern?")).toBe(false);
-      expect(isExpand("what happened?")).toBe(false);
-    });
-  });
 });

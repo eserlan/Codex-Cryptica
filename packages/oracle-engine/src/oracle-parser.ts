@@ -1,17 +1,6 @@
 import type { OracleIntent } from "./types";
 
 export class OracleCommandParser {
-  private static EXPAND_KEYWORDS = [
-    "expand",
-    "describe",
-    "elaborate",
-    "tell me more",
-    "detailed",
-    "deep dive",
-    "more",
-    "anything else",
-  ];
-
   static parse(query: string, liteMode: boolean): OracleIntent {
     const q = query.toLowerCase().trim();
 
@@ -170,10 +159,5 @@ export class OracleCommandParser {
     }
 
     return false;
-  }
-
-  static isExpandRequest(query: string): boolean {
-    const q = query.toLowerCase().trim();
-    return this.EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
   }
 }
