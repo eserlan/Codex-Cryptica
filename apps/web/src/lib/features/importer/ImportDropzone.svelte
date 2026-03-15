@@ -3,9 +3,10 @@
 
   interface Props {
     onFileSelect: (files: File[]) => void;
+    isStandalone?: boolean;
   }
 
-  let { onFileSelect }: Props = $props();
+  let { onFileSelect, isStandalone = false }: Props = $props();
 
   let dragging = $state(false);
   let content = $state("");
@@ -58,7 +59,9 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="dropzone-container {dragging ? 'dragging' : ''}"
+  class="dropzone-container {dragging ? 'dragging' : ''} {isStandalone
+    ? 'standalone'
+    : ''}"
   ondragover={(e) => {
     e.preventDefault();
     dragging = true;
@@ -130,6 +133,11 @@
     transition: all 0.2s;
   }
 
+  .dropzone-container.standalone {
+    flex: 1;
+    min-height: 400px;
+  }
+
   .dropzone-container.dragging {
     border-color: var(--color-theme-primary, #3b82f6);
     background: color-mix(in srgb, var(--color-theme-primary), transparent 90%);
@@ -145,13 +153,16 @@
     line-height: 1.5;
     color: var(--color-theme-text);
     overflow-y: auto;
+  }
+
+  .dropzone-container:not(.standalone) .editor {
     max-height: 400px;
   }
 
   /* Placeholder Styling */
   .placeholder {
     position: absolute;
-    top: 50%;
+    top: 40%;
     left: 50%;
     transform: translate(-50%, -50%);
     display: flex;

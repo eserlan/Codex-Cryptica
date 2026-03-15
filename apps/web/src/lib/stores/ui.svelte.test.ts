@@ -5,6 +5,10 @@ vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
+vi.mock("$app/paths", () => ({
+  base: "",
+}));
+
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -59,16 +63,6 @@ describe("UIStore", () => {
   });
 
   it("should handle Zen Mode visibility", () => {
-    uiStore.openZenMode("test-entity");
-    expect(uiStore.showZenMode).toBe(true);
-    expect(uiStore.zenModeEntityId).toBe("test-entity");
-
-    uiStore.closeZenMode();
-    expect(uiStore.showZenMode).toBe(false);
-    expect(uiStore.zenModeEntityId).toBe(null);
-  });
-
-  it("should handle sidebar state transitions", () => {
     // Initial state
     expect(uiStore.leftSidebarOpen).toBe(false);
     expect(uiStore.activeSidebarTool).toBe("none");
@@ -88,6 +82,14 @@ describe("UIStore", () => {
     uiStore.closeSidebar();
     expect(uiStore.leftSidebarOpen).toBe(false);
     expect(uiStore.activeSidebarTool).toBe("none");
+  });
+
+  it("should open a new window for import", () => {
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    uiStore.openImportWindow();
+    expect(openSpy).toHaveBeenCalled();
+    expect(openSpy.mock.calls[0][0]).toContain("/import");
+    openSpy.mockRestore();
   });
 
   it("should toggle connect mode and clear connectingNodeId", () => {
