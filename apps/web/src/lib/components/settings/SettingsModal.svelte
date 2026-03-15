@@ -64,6 +64,20 @@
     }
   });
 
+  $effect(() => {
+    if (uiStore.showSettings && uiStore.activeSettingsSection) {
+      const sectionId = `settings-section-${uiStore.activeSettingsSection}`;
+      // Small delay to ensure the content is rendered
+      const timer = setTimeout(() => {
+        const element = modalElement?.querySelector(`#${sectionId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  });
+
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") close();
     if (e.key === "Tab") {
@@ -239,7 +253,10 @@
               <VaultSettings />
             </section>
 
-            <section class="border-t border-theme-border pt-6">
+            <section
+              id="settings-section-ingestion"
+              class="border-t border-theme-border pt-6"
+            >
               <ImportSettings />
             </section>
           </div>

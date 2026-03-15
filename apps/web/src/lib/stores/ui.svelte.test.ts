@@ -58,7 +58,33 @@ describe("UIStore", () => {
     expect(uiStore.activeSettingsTab).toBe("intelligence");
   });
 
-  it("should handle Zen Mode visibility", () => {
+  it("should open settings to a specific tab and section", () => {
+    uiStore.openSettings("vault", "ingestion");
+    expect(uiStore.showSettings).toBe(true);
+    expect(uiStore.activeSettingsTab).toBe("vault");
+    expect(uiStore.activeSettingsSection).toBe("ingestion");
+  });
+
+  it("should clear activeSettingsSection when closing settings", () => {
+    uiStore.openSettings("vault", "ingestion");
+    uiStore.closeSettings();
+    expect(uiStore.showSettings).toBe(false);
+    expect(uiStore.activeSettingsSection).toBe(null);
+  });
+
+  it("should handle toggleSettings with an optional section", () => {
+    // Toggle on with section
+    uiStore.toggleSettings("vault", "ingestion");
+    expect(uiStore.showSettings).toBe(true);
+    expect(uiStore.activeSettingsSection).toBe("ingestion");
+
+    // Toggle off should clear section
+    uiStore.toggleSettings("vault", "ingestion");
+    expect(uiStore.showSettings).toBe(false);
+    expect(uiStore.activeSettingsSection).toBe(null);
+  });
+
+  it("should update Zen Mode visibility", () => {
     uiStore.openZenMode("test-entity");
     expect(uiStore.showZenMode).toBe(true);
     expect(uiStore.zenModeEntityId).toBe("test-entity");

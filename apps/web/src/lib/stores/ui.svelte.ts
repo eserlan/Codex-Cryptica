@@ -10,6 +10,7 @@ class UIStore {
   showSettings = $state(false);
   showCanvasSelector = $state(false);
   activeSettingsTab = $state<SettingsTab>("vault");
+  activeSettingsSection = $state<string | null>(null);
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
@@ -248,20 +249,24 @@ class UIStore {
     }, 5000);
   }
 
-  openSettings(tab: SettingsTab = "vault") {
+  openSettings(tab: SettingsTab = "vault", section: string | null = null) {
     this.activeSettingsTab = tab;
+    this.activeSettingsSection = section;
     this.showSettings = true;
   }
 
   closeSettings() {
     this.showSettings = false;
+    this.activeSettingsSection = null;
   }
 
-  toggleSettings(tab: SettingsTab = "vault") {
+  toggleSettings(tab: SettingsTab = "vault", section: string | null = null) {
     if (this.showSettings && this.activeSettingsTab === tab) {
       this.showSettings = false;
+      this.activeSettingsSection = null;
     } else {
       this.activeSettingsTab = tab;
+      this.activeSettingsSection = section;
       this.showSettings = true;
     }
   }

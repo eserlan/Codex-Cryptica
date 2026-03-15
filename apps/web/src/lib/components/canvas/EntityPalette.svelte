@@ -10,6 +10,7 @@
     Layout,
     ChevronRight,
     LayoutGrid,
+    FolderInput,
   } from "lucide-svelte";
   import { page } from "$app/state";
 
@@ -142,11 +143,21 @@
     </div>
 
     <div class="p-4 border-b border-theme-border">
-      <h2
-        class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
-      >
-        Entity Palette
-      </h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2
+          class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+        >
+          Entity Palette
+        </h2>
+        <button
+          onclick={() => uiStore.openSettings("vault", "ingestion")}
+          class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
+          title="Import Archive"
+          data-testid="explorer-import-button"
+        >
+          <FolderInput class="w-4 h-4" />
+        </button>
+      </div>
 
       <div class="relative mb-3">
         <Search
