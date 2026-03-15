@@ -1,7 +1,22 @@
 import type { Entity } from "schema";
-import { vault } from "../stores/vault.svelte";
+import { vault as defaultVault } from "../stores/vault.svelte";
 
-export function createEditState(_initialEntity: Entity | null) {
+/**
+ * Minimal interface describing the vault capabilities that `createEditState`
+ * depends on.  Accepting this as an optional parameter (rather than importing
+ * the global singleton directly) makes the hook independently testable without
+ * needing to mock the full `VaultStore`.
+ */
+export interface VaultLike {
+  readonly selectedEntityId: string | null;
+  readonly entities: Record<string, any>;
+  loadEntityContent(id: string): Promise<void>;
+}
+
+export function createEditState(
+  _initialEntity: Entity | null,
+  vaultInstance: VaultLike = defaultVault,
+) {
   let isEditing = $state(false);
   let editTitle = $state(_initialEntity?.title ?? "");
   let editContent = $state(_initialEntity?.content || "");
@@ -27,13 +42,13 @@ export function createEditState(_initialEntity: Entity | null) {
     // If the entity was populated from the graph-entity cache the content
     // field will be ""; loadEntityContent fills it in reactively.
     const entityId = entity.id;
-    vault
+    vaultInstance
       .loadEntityContent(entityId)
       .then(() => {
         // Guard against the user closing the panel or switching entity while
         // the Dexie read was in flight.
-        if (!isEditing || vault.selectedEntityId !== entityId) return;
-        const fresh = vault.entities[entityId];
+        if (!isEditing || vaultInstance.selectedEntityId !== entityId) return;
+        const fresh = vaultInstance.entities[entityId];
         if (fresh) {
           editContent = fresh.content || "";
           editLore = fresh.lore || "";

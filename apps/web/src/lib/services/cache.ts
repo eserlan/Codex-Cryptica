@@ -1,5 +1,4 @@
 import { entityDb } from "../utils/entity-db";
-import type { EntityContentRecord } from "../utils/entity-db";
 import type { LocalEntity } from "../stores/vault/types";
 
 /**
@@ -21,6 +20,9 @@ export class CacheService {
    * In-memory snapshot of the Dexie `graphEntities` table for the currently
    * active vault, keyed by `"<vaultId>:<filePath>"`.  Populated once per
    * vault load via `preloadVault()` and invalidated on vault switch.
+   *
+   * Only graph metadata is preloaded here — content/lore fields are loaded
+   * lazily per-entity via `loadEntityContent` in the vault store.
    */
   private preloaded: Map<
     string,
@@ -28,33 +30,30 @@ export class CacheService {
   > | null = null;
 
   /**
-   * Pre-loaded content records keyed by `entityId`.  Stored separately from
-   * the graph-entity map to avoid attaching undeclared properties to typed
-   * `LocalEntity` objects.  Used by `loadEntityContent` (via `VaultStore`) to
-   * serve Dexie content without an extra round-trip.
-   */
-  private preloadedContent: Map<string, EntityContentRecord> | null = null;
-
-  /**
-   * Bulk-loads all graph entities and their content for the given vault from
-   * Dexie into in-memory maps.  Calling this once before iterating over
-   * individual files reduces N per-file IDB round-trips to a single
-   * parallel pair of queries.
+   * Bulk-loads graph entity metadata from the `graphEntities` table (which
+   * excludes `content` and `lore` fields stored separately in `entityContent`)
+   * for the given vault into an in-memory map.  Calling this once before
+   * iterating over individual OPFS files reduces N per-file IDB round-trips to
+   * a single table scan, significantly speeding up warm cache loads.
+   *
+   * `entityContent` is intentionally excluded from this preload to keep the
+   * startup read lightweight and to preserve the lazy-loading goal for heavy
+   * text fields.
    *
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
    * — any error is swallowed and the service falls back to per-file lookups.
    */
   async preloadVault(vaultId: string): Promise<void> {
     try {
-      const [graphRecords, contentRecords] = await Promise.all([
-        entityDb.graphEntities.where("vaultId").equals(vaultId).toArray(),
-        entityDb.entityContent.where("vaultId").equals(vaultId).toArray(),
-      ]);
+      const graphRecords = await entityDb.graphEntities
+        .where("vaultId")
+        .equals(vaultId)
+        .toArray();
 
-      const contentMap = new Map<string, EntityContentRecord>(
-        contentRecords.map((r) => [r.entityId, r]),
-      );
-      const map = new Map<string, { lastModified: number; entity: LocalEntity }>();
+      const map = new Map<
+        string,
+        { lastModified: number; entity: LocalEntity }
+      >();
 
       for (const record of graphRecords) {
         const { vaultId: _vid, lastModified, filePath, ...graphData } = record;
@@ -68,20 +67,9 @@ export class CacheService {
       }
 
       this.preloaded = map;
-      this.preloadedContent = contentMap;
     } catch {
       this.preloaded = null;
-      this.preloadedContent = null;
     }
-  }
-
-  /**
-   * Returns the pre-loaded content record for an entity, if available.
-   * Used by `VaultStore.loadEntityContent` to serve content without an extra
-   * Dexie round-trip after `preloadVault` has run.
-   */
-  getPreloadedContent(entityId: string): EntityContentRecord | undefined {
-    return this.preloadedContent?.get(entityId);
   }
 
   /**
@@ -109,8 +97,12 @@ export class CacheService {
 
       if (!record) return null;
 
-      const { vaultId: _vid, lastModified, filePath: _fp, ...graphData } =
-        record;
+      const {
+        vaultId: _vid,
+        lastModified,
+        filePath: _fp,
+        ...graphData
+      } = record;
       const entity: LocalEntity = {
         ...graphData,
         content: "",
@@ -125,6 +117,10 @@ export class CacheService {
   /**
    * Persists the graph data and content of an entity to Dexie and updates the
    * in-memory preload cache (if active) so subsequent reads are consistent.
+   *
+   * Both writes are wrapped in a Dexie `transaction` so the graph-metadata
+   * and content rows commit or rollback together, preventing a partial write
+   * where one table succeeds and the other fails.
    */
   async set(
     path: string,
@@ -135,22 +131,26 @@ export class CacheService {
       const { vaultId, filePath } = parseKey(path);
       const { content, lore, ...graphData } = entity;
 
-      await Promise.all([
-        entityDb.graphEntities.put({
-          ...graphData,
-          vaultId,
-          lastModified,
-          filePath,
-        }),
-        entityDb.entityContent.put({
-          entityId: entity.id,
-          vaultId,
-          content: content || "",
-          lore,
-        }),
-      ]);
+      await entityDb.transaction(
+        "rw",
+        [entityDb.graphEntities, entityDb.entityContent],
+        async () => {
+          await entityDb.graphEntities.put({
+            ...graphData,
+            vaultId,
+            lastModified,
+            filePath,
+          });
+          await entityDb.entityContent.put({
+            entityId: entity.id,
+            vaultId,
+            content: content || "",
+            lore,
+          });
+        },
+      );
 
-      // Keep the in-memory snapshots consistent.
+      // Keep the in-memory graph-entity snapshot consistent.
       if (this.preloaded) {
         const graphEntity: LocalEntity = {
           ...graphData,
@@ -158,14 +158,6 @@ export class CacheService {
           lore: undefined,
         };
         this.preloaded.set(path, { lastModified, entity: graphEntity });
-      }
-      if (this.preloadedContent) {
-        this.preloadedContent.set(entity.id, {
-          entityId: entity.id,
-          vaultId,
-          content: content || "",
-          lore,
-        });
       }
     } catch {
       // Non-fatal — the OPFS file is the source of truth.
@@ -178,32 +170,39 @@ export class CacheService {
    */
   async clearVault(vaultId: string): Promise<void> {
     try {
-      await Promise.all([
-        entityDb.graphEntities.where("vaultId").equals(vaultId).delete(),
-        entityDb.entityContent.where("vaultId").equals(vaultId).delete(),
-      ]);
-      // Invalidate the entire preloaded maps — they belong to one vault.
+      await entityDb.transaction(
+        "rw",
+        [entityDb.graphEntities, entityDb.entityContent],
+        async () => {
+          await entityDb.graphEntities
+            .where("vaultId")
+            .equals(vaultId)
+            .delete();
+          await entityDb.entityContent
+            .where("vaultId")
+            .equals(vaultId)
+            .delete();
+        },
+      );
+      // Invalidate the in-memory snapshot — it belongs to one vault.
       this.preloaded = null;
-      this.preloadedContent = null;
     } catch {
       // Non-fatal.
     }
   }
 
   /**
-   * Invalidates the in-memory preload snapshots without touching Dexie.
+   * Invalidates the in-memory preload snapshot without touching Dexie.
    * Call this before switching to a different vault so the next `get` call
    * triggers a fresh Dexie lookup for the new vault.
    */
   invalidatePreload(): void {
     this.preloaded = null;
-    this.preloadedContent = null;
   }
 
   /** @deprecated Use `clearVault` instead. */
   async clear(): Promise<void> {
     this.preloaded = null;
-    this.preloadedContent = null;
   }
 }
 

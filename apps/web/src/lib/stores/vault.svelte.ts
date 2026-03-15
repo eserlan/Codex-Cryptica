@@ -350,10 +350,17 @@ export class VaultStore {
   }
 
   /**
-   * Background task: loads entity content from Dexie for all entities that
-   * were restored from the graph-entity cache (content = "") and re-indexes
-   * them in the search service.  Runs after the initial graph load completes
-   * so it does not block the first render.
+   * Background task: indexes entity content in the search service for all
+   * entities that were restored from the Dexie graph-entity cache and therefore
+   * have `content = ""` (i.e. not yet in `_contentLoadedIds`).  This step is
+   * needed because warm-cache loads skip OPFS file parsing and therefore bypass
+   * the content indexing that happens in the `onProgress` callback.
+   *
+   * Runs after the initial graph render completes so it does not block startup.
+   *
+   * Uses Dexie's `each()` cursor API to process records one at a time without
+   * materialising the full `entityContent` table into a JS array, which keeps
+   * the memory footprint low even for large vaults.
    */
   private indexContentInBackground(): void {
     const vaultId = this.activeVaultId;
@@ -362,22 +369,21 @@ export class VaultStore {
     entityDb.entityContent
       .where("vaultId")
       .equals(vaultId)
-      .toArray()
-      .then((contentRecords) => {
+      .each((record) => {
         if (!this.services || this.activeVaultId !== vaultId) return;
-        const promises = contentRecords.map((record) => {
-          const entity = this.entities[record.entityId];
-          if (!entity || this._contentLoadedIds.has(record.entityId)) {
-            // Already indexed with live content from OPFS.
-            return Promise.resolve();
-          }
-          const path = entity._path?.join("/") || `${entity.id}.md`;
-          const keywords = [
-            ...(entity.tags || []),
-            record.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
-          ].join(" ");
-          return this.services!.search.index({
+        const entity = this.entities[record.entityId];
+        if (!entity || this._contentLoadedIds.has(record.entityId)) {
+          // Already indexed with live content from OPFS.
+          return;
+        }
+        const path = entity._path?.join("/") || `${entity.id}.md`;
+        const keywords = [
+          ...(entity.tags || []),
+          record.lore || "",
+          ...Object.values(entity.metadata || {}).flat(),
+        ].join(" ");
+        this.services.search
+          .index({
             id: entity.id,
             title: entity.title,
             content: record.content,
@@ -385,9 +391,8 @@ export class VaultStore {
             path,
             keywords,
             updatedAt: Date.now(),
-          }).catch(console.warn);
-        });
-        return Promise.all(promises);
+          })
+          .catch(console.warn);
       })
       .catch((err) =>
         debugStore.warn("[VaultStore] Background content indexing failed", err),
@@ -397,11 +402,8 @@ export class VaultStore {
   /**
    * Loads the `content` and `lore` fields for the entity with the given ID
    * and updates `this.entities[id]` in place.  Subsequent calls for the same
-   * ID are no-ops.
-   *
-   * The method first checks the CacheService's pre-loaded content snapshot
-   * (populated during `loadFiles()`) to avoid an extra Dexie round-trip.  If
-   * not available there it falls back to a direct `entityContent` table lookup.
+   * ID are no-ops (unless the previous attempt failed with a transient error,
+   * in which case the next call will retry).
    *
    * This is the primary entry-point for lazy content loading — call it
    * whenever the entity is "opened" (detail panel, read modal, edit mode, etc.)
@@ -411,32 +413,35 @@ export class VaultStore {
     if (!id || !this.activeVaultId) return;
     if (this._contentLoadedIds.has(id)) return;
 
-    const entity = this.entities[id];
-    if (!entity) return;
+    // Verify entity exists before starting async work.
+    if (!this.entities[id]) return;
 
     try {
-      // Fast path: use the content map already fetched during preloadVault.
-      const preloaded = cacheService.getPreloadedContent(id);
-      const record =
-        preloaded ??
-        (await entityDb.entityContent.get([this.activeVaultId, id]));
+      const record = await entityDb.entityContent.get([this.activeVaultId, id]);
 
       if (record) {
-        this.repository.entities = {
-          ...this.repository.entities,
-          [id]: {
-            ...entity,
-            content: record.content,
-            lore: record.lore,
-          },
-        };
+        // Re-read the latest entity reference after the async round-trip to
+        // avoid clobbering fields that may have changed in-flight (e.g. a
+        // concurrent updateEntity call).
+        const currentEntity = this.entities[id];
+        if (currentEntity) {
+          this.repository.entities = {
+            ...this.repository.entities,
+            [id]: {
+              ...currentEntity,
+              content: record.content,
+              lore: record.lore,
+            },
+          };
+        }
       }
-    } catch {
-      // Non-fatal — the entity detail panel will simply show empty content
-      // until the user edits and saves the entity.
-    } finally {
-      // Mark as loaded regardless so we don't retry on every render cycle.
+      // Mark as loaded whether a record was found or not — a missing record
+      // means the entity genuinely has no persisted content yet, so retrying
+      // would be wasteful.
       this._contentLoadedIds.add(id);
+    } catch {
+      // Transient Dexie failure — do NOT mark as loaded so the next call
+      // (e.g. the user closing and reopening the panel) can retry.
     }
   }
 
