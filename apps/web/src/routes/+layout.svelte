@@ -146,9 +146,6 @@
 
     if (!hasBooted) {
       if (!shouldShowLanding || isTesting || isPopup) {
-        if (isPopup) {
-          uiStore.dismissedLandingPage = true;
-        }
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
         uiStore.dismissedLandingPage = true;
