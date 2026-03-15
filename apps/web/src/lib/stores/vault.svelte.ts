@@ -375,6 +375,19 @@ export class VaultStore {
           this.getActiveVaultHandle();
           return;
         }
+
+        if (skipSyncIfWarm) {
+          debugStore.log(
+            "[VaultStore] Cache is warm. Skipping OPFS background sync for instant load.",
+          );
+          this.status = "idle";
+          if (this.activeVaultId) {
+            await mapRegistry.loadFromVault(this.activeVaultId);
+            await canvasRegistry.loadFromVault(this.activeVaultId);
+          }
+          this.indexContentInBackground();
+          return;
+        }
       }
 
       // 2. FS-Sync: Resolve OPFS handle and perform full synchronization
