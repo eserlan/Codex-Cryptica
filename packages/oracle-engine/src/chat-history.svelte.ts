@@ -108,7 +108,6 @@ export class ChatHistoryService {
       imageUrl,
       imageBlob,
       entityId,
-      isLongResponse: true,
     });
   }
 }
