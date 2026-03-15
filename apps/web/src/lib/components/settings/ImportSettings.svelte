@@ -295,17 +295,16 @@
         const asset = extractedAssets.get(imgRef);
 
         width = width || asset.width;
-
         height = height || asset.height;
 
         try {
-          imagePath = await vault.saveImageToVault(
+          const savedAssets = await vault.saveImageToVault(
             asset.blob,
-
             entityId,
-
             asset.originalName,
           );
+          imagePath = savedAssets.image;
+          thumbnailPath = savedAssets.thumbnail;
         } catch (err) {
           console.error("Failed to save imported asset:", err);
         }

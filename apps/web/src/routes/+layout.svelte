@@ -145,7 +145,7 @@
       typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!shouldShowLanding || isTesting) {
+      if (!shouldShowLanding || isTesting || isPopup) {
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
         uiStore.dismissedLandingPage = true;

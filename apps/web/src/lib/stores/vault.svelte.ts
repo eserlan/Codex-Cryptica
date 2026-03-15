@@ -81,6 +81,7 @@ export class VaultStore {
   public services: IVaultServices | null = null;
   private crudManager: VaultCrudManager;
   private lifecycleManager: VaultLifecycleManager;
+  private channel: BroadcastChannel | null = null;
 
   // Delegated Getters
   get entities() {
@@ -141,10 +142,29 @@ export class VaultStore {
       (c) => (this.hasConflictFiles = c),
       (id) => (this.selectedEntityId = id),
     );
-
     if (typeof window !== "undefined") {
+      this.channel = new BroadcastChannel("codex-vault-sync");
+      this.channel.onmessage = (event) => {
+        if (
+          event.data.type === "RELOAD_VAULT" &&
+          event.data.vaultId === this.activeVaultId
+        ) {
+          this.loadFiles();
+        }
+      };
+
       mapRegistry.init(this.repository.saveQueue);
       canvasRegistry.init(this.repository.saveQueue);
+    }
+  }
+
+  // --- External Sync Methods ---
+  broadcastVaultUpdate() {
+    if (this.channel && this.activeVaultId) {
+      this.channel.postMessage({
+        type: "RELOAD_VAULT",
+        vaultId: this.activeVaultId,
+      });
     }
   }
 
@@ -420,8 +440,10 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
-  batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
-    return this.crudManager.batchCreateEntities(newEntitiesList);
+  async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
+    const result = await this.crudManager.batchCreateEntities(newEntitiesList);
+    this.broadcastVaultUpdate();
+    return result;
   }
 
   updateConnection(
