@@ -150,6 +150,8 @@ export class VaultStore {
       () => this.services,
       (c) => (this.hasConflictFiles = c),
       (id) => (this.selectedEntityId = id),
+      vaultRegistry,
+      themeStore,
     );
 
     if (typeof window !== "undefined") {
@@ -717,8 +719,21 @@ export class VaultStore {
   batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
     return this.crudManager.batchUpdate(updates);
   }
-  deleteEntity(id: string) {
-    return this.crudManager.deleteEntity(id);
+  async deleteEntity(id: string) {
+    if (this.onEntityDelete) this.onEntityDelete(id);
+    if (this.services) await this.services.search.remove(id);
+
+    if (uiStore.isDemoMode) {
+      const updated = { ...this.entities };
+      delete updated[id];
+      this.repository.entities = updated;
+      return;
+    }
+
+    const vaultHandle = await this.getActiveVaultHandle();
+    if (vaultHandle) {
+      await this.crudManager.deleteEntity(id, vaultHandle, this.activeVaultId!);
+    }
   }
   addConnection(
     sourceId: string,
