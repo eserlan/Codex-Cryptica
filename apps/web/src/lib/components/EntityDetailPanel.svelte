@@ -23,6 +23,11 @@
   // lazy loading from Dexie.
   let entity = $derived.by(() => {
     const e = _entity ? vault.entities[_entity.id] : null;
+    if (e) {
+      console.log(
+        `[EntityDetailPanel] Derived entity ${e.id}: contentLen=${e.content?.length || 0}, loreLen=${e.lore?.length || 0}`,
+      );
+    }
     return e;
   });
 

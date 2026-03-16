@@ -594,8 +594,6 @@ export class VaultStore {
             `[VaultStore] Tier 1: Loaded chronicle from cache for ${id}`,
           );
         }
-      } else {
-        debugStore.log(`[VaultStore] No Dexie content record found for ${id}`);
       }
 
       // TIER 2 & 3: Load Lore (and fresh Chronicle) from Markdown file
@@ -673,8 +671,6 @@ export class VaultStore {
       this._contentLoadedIds.add(id);
     } catch (err) {
       debugStore.error(`[VaultStore] Failed to load content for ${id}:`, err);
-      // Transient Dexie failure — do NOT mark as loaded so the next call
-      // (e.g. the user closing and reopening the panel) can retry.
     }
   }
 
