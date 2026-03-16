@@ -1,23 +1,35 @@
-import { vault } from "./vault.svelte";
-import { ui } from "./ui.svelte";
+import { vault as defaultVault } from "./vault.svelte";
+import { ui as defaultUi } from "./ui.svelte";
 import { GraphTransformer } from "graph-engine";
 import { isEntityVisible, type Era, type Entity } from "schema";
 import { getDB } from "../utils/idb";
 
-class GraphStore {
+export class GraphStore {
+  // Dependencies
+  private vault: typeof defaultVault;
+  private ui: typeof defaultUi;
+
+  constructor(
+    vault: typeof defaultVault = defaultVault,
+    ui: typeof defaultUi = defaultUi,
+  ) {
+    this.vault = vault;
+    this.ui = ui;
+  }
+
   // Svelte 5 derived state
   activeLabels = $state(new Set<string>());
   activeCategories = $state(new Set<string>());
 
   elements = $derived.by(() => {
-    const allEntities = vault.allEntities;
+    const allEntities = this.vault.allEntities;
     const settings = {
-      sharedMode: ui.sharedMode,
-      defaultVisibility: vault.defaultVisibility,
+      sharedMode: this.ui.sharedMode,
+      defaultVisibility: this.vault.defaultVisibility,
     };
 
     // DEBUG VISIBILITY
-    if (vault.isGuest) {
+    if (this.vault.isGuest) {
       console.log("[GraphStore] Visibility Check:", {
         settings,
         totalEntities: allEntities.length,
@@ -266,4 +278,7 @@ class GraphStore {
   }
 }
 
-export const graph = new GraphStore();
+const GRAPH_KEY = "__codex_graph_instance__";
+export const graph: GraphStore =
+  (globalThis as any)[GRAPH_KEY] ??
+  ((globalThis as any)[GRAPH_KEY] = new GraphStore());

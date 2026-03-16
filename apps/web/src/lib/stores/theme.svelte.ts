@@ -3,8 +3,8 @@ import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
-import { vault } from "./vault.svelte";
-import { uiStore } from "./ui.svelte";
+import { vault as defaultVault } from "./vault.svelte";
+import { uiStore as defaultUiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
@@ -18,9 +18,13 @@ function getInitialTheme(): string {
   }
 }
 
-class ThemeStore {
+export class ThemeStore {
   currentThemeId = $state<string>(getInitialTheme());
   previewThemeId = $state<string | null>(null);
+
+  // Dependencies
+  private vault: typeof defaultVault;
+  private uiStore: typeof defaultUiStore;
 
   activeTheme = $derived(
     this.previewThemeId
@@ -37,7 +41,7 @@ class ThemeStore {
   } as JargonMap);
 
   /**
-   * Helper to resolve a specific jargon key with optional pluralization.
+   * Helper to resolve a jargon key with optional pluralization.
    */
   resolveJargon(key: keyof JargonMap, count?: number): string {
     if (count !== undefined && count !== 1) {
@@ -47,7 +51,13 @@ class ThemeStore {
     return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
   }
 
-  constructor() {
+  constructor(
+    vault: typeof defaultVault = defaultVault,
+    uiStore: typeof defaultUiStore = defaultUiStore,
+  ) {
+    this.vault = vault;
+    this.uiStore = uiStore;
+
     $effect.root(() => {
       $effect(() => {
         this.applyTheme(this.activeTheme);
@@ -60,8 +70,8 @@ class ThemeStore {
 
     // If we have an active vault ID already (from registry init), use it.
     // Otherwise, fall back to global selection until a vault is explicitly switched.
-    if (vault.activeVaultId) {
-      await this.loadForVault(vault.activeVaultId);
+    if (this.vault.activeVaultId) {
+      await this.loadForVault(this.vault.activeVaultId);
     } else {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && THEMES[stored] && this.currentThemeId !== stored) {
@@ -71,7 +81,7 @@ class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || uiStore.isDemoMode) return;
+    if (!browser || this.uiStore.isDemoMode) return;
     try {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
@@ -98,10 +108,10 @@ class ThemeStore {
     this.currentThemeId = id;
     if (browser) {
       // Don't persist theme if in demo mode
-      if (uiStore.isDemoMode) return;
+      if (this.uiStore.isDemoMode) return;
 
       localStorage.setItem(STORAGE_KEY, id);
-      const activeVaultId = vault.activeVaultId;
+      const activeVaultId = this.vault.activeVaultId;
       if (activeVaultId) {
         try {
           const db = await getDB();
@@ -193,4 +203,7 @@ class ThemeStore {
   }
 }
 
-export const themeStore = new ThemeStore();
+const THEME_KEY = "__codex_theme_instance__";
+export const themeStore: ThemeStore =
+  (globalThis as any)[THEME_KEY] ??
+  ((globalThis as any)[THEME_KEY] = new ThemeStore());
