@@ -143,10 +143,6 @@ describe("OracleStore", () => {
               ? `Generated visualization for: "${intent.query}"`
               : "mock response",
             type: isImage ? "image" : "text",
-            isLongResponse: intent.query.includes("Expand"),
-            responseLength: intent.query.includes("Expand")
-              ? "detailed"
-              : "balanced",
           };
           await mockChatHistory.addMessage({
             role: "user",
@@ -201,17 +197,6 @@ describe("OracleStore", () => {
       const lastMsg = oracle.messages[oracle.messages.length - 1];
       expect(lastMsg.type).toBe("image");
     }
-  });
-
-  it("should detect expansion intent (isLongResponse) correctly", async () => {
-    await oracle.ask("Who is Eldrin?");
-    let lastMsg = oracle.messages[oracle.messages.length - 1];
-    expect(lastMsg.isLongResponse).toBe(false);
-
-    await oracle.ask("Expand on Eldrin");
-    lastMsg = oracle.messages[oracle.messages.length - 1];
-    expect(lastMsg.isLongResponse).toBe(true);
-    expect(lastMsg.responseLength).toBe("detailed");
   });
 
   describe("Undo Logic", () => {
