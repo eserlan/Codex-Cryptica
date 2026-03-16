@@ -39,8 +39,6 @@ export interface EntityContentRecord {
   vaultId: string;
   /** Markdown body of the entity (the "chronicle" / status section). */
   content: string;
-  /** Optional deep-lore text field. */
-  lore?: string;
 }
 
 /**

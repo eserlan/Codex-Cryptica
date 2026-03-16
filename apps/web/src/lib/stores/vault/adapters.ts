@@ -50,6 +50,7 @@ export const fileIOAdapter: IFileIOAdapter = {
     const id = parsed.metadata.id || deriveIdFromPath(path);
     const connections = parsed.metadata.connections || [];
     return {
+      ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
       title: parsed.metadata.title || id!,
@@ -57,14 +58,7 @@ export const fileIOAdapter: IFileIOAdapter = {
       labels: parsed.metadata.labels || [],
       connections,
       content: parsed.content,
-      lore: parsed.metadata.lore,
-      image: parsed.metadata.image,
-      thumbnail: parsed.metadata.thumbnail,
-      date: parsed.metadata.date,
-      start_date: parsed.metadata.start_date,
-      end_date: parsed.metadata.end_date,
-      metadata: parsed.metadata.metadata,
-      updatedAt: parsed.metadata.updatedAt,
+      lore: (parsed.metadata as any).lore || "",
       _path: path,
     } as any;
   },

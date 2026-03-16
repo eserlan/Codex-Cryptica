@@ -35,7 +35,11 @@ export function renderMarkdown(
 }
 
 export function parseMarkdown(raw: string): ParseResult {
-  const frontmatterRegex = /^---\n([\s\S]*?)\n---/;
+  // More robust regex:
+  // 1. Handles \r?\n for Windows support
+  // 2. Allows optional whitespace before/after the dashes
+  // 3. Uses 'm' flag for multiline start anchor
+  const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/m;
   const match = raw.match(frontmatterRegex);
 
   let metadata: Partial<Entity> = {};
@@ -51,7 +55,8 @@ export function parseMarkdown(raw: string): ParseResult {
     } catch (e) {
       console.error("Failed to parse frontmatter", e);
     }
-    content = raw.replace(frontmatterRegex, "").trim();
+    // Remove the entire match including surrounding whitespace/newlines
+    content = raw.substring(match[0].length).trim();
   }
 
   return { metadata, content };

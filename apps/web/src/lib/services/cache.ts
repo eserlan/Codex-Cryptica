@@ -145,7 +145,7 @@ export class CacheService {
   ): Promise<void> {
     try {
       const { vaultId, filePath } = parseKey(path);
-      const { content, lore, ...graphData } = entity;
+      const { content, ...graphData } = entity;
 
       await entityDb.transaction(
         "rw",
@@ -161,7 +161,6 @@ export class CacheService {
             entityId: entity.id,
             vaultId,
             content: content || "",
-            lore,
           });
         },
       );
@@ -227,6 +226,41 @@ export class CacheService {
    */
   invalidatePreload(): void {
     this.preloaded = null;
+  }
+
+  /**
+   * Returns the cached chronicle body text for a specific entity.
+   */
+  async getEntityContent(
+    vaultId: string,
+    entityId: string,
+  ): Promise<string | null> {
+    try {
+      const record = await entityDb.entityContent.get([vaultId, entityId]);
+      return record?.content ?? null;
+    } catch (err) {
+      debugStore.warn(
+        `[CacheService] Failed to get content for ${entityId}:`,
+        err,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Checks if the entityContent table is empty for a specific vault.
+   * Useful for detecting if a cache repair sync is needed.
+   */
+  async isVaultContentEmpty(vaultId: string): Promise<boolean> {
+    try {
+      const count = await entityDb.entityContent
+        .where("vaultId")
+        .equals(vaultId)
+        .count();
+      return count === 0;
+    } catch {
+      return true;
+    }
   }
 
   /** @deprecated Use `clearVault` instead. */

@@ -107,7 +107,28 @@ export class VaultRepository {
       // Update incrementally to allow search/UI to work during load.
       // We only spread if there are actual updates.
       if (Object.keys(updatedEntities).length > 0) {
-        this.entities = { ...this.entities, ...updatedEntities };
+        const newMap = { ...this.entities };
+        for (const [id, entity] of Object.entries(updatedEntities)) {
+          const existing = newMap[id];
+
+          // CRITICAL: Metadata-only updates (cache hits) have content = "".
+          // We MUST NOT overwrite an existing entity that already has
+          // content/lore loaded in memory.
+          const finalContent =
+            existing?.content && !entity.content
+              ? existing.content
+              : entity.content;
+
+          const finalLore =
+            existing?.lore && !entity.lore ? existing.lore : entity.lore;
+
+          newMap[id] = {
+            ...entity,
+            content: finalContent,
+            lore: finalLore,
+          };
+        }
+        this.entities = newMap;
       }
 
       if (onProgress) {

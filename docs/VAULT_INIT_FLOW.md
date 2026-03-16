@@ -5,62 +5,63 @@ This document describes the interaction between the `VaultStore`, `CacheService`
 ## High-Level Sequence
 
 ```mermaid
-sequenceDiagram
-    participant UI as Layout/UI
-    participant VS as VaultStore
-    participant CS as CacheService (Dexie)
-    participant VR as VaultRepository (OPFS)
-    participant SE as SearchEngine
+flowchart TD
+    %% Styling Classes
+    classDef ui fill:#e1f5fe,stroke:#0288d1,stroke-width:2px;
+    classDef store fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef db fill:#e8f5e9,stroke:#388e3c,stroke-width:2px;
+    classDef fs fill:#fff3e0,stroke:#f57c00,stroke-width:2px;
+    classDef search fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+    classDef cond fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
 
-    UI->>VS: init()
-    VS->>VS: loadFiles()
-
-    rect rgb(240, 240, 240)
-    Note over VS,CS: Phase 1: Cache-First Render (Warm)
-    VS->>CS: preloadVault(vaultId)
-    CS->>CS: Scan Dexie 'graphEntities' table
-    CS-->>VS: In-memory Metadata Map populated
-    VS->>VS: repository.entities = cachedMetadata
-    Note right of VS: UI renders Graph immediately
-    VS->>SE: index(metadata) [Background]
-    Note right of SE: Search warmed in background
+    %% Phase 1
+    subgraph Phase1 [Phase 1: Cache-First Render Warm]
+        direction TB
+        P1_UI[UI: init]:::ui --> P1_VS1[VaultStore: loadFiles]:::store
+        P1_VS1 --> P1_CS1[(CacheService: Scan 'graphEntities')]:::db
+        P1_CS1 -.->|"In-memory Metadata Map"| P1_VS2[VaultStore: Render Graph]:::store
+        P1_VS2 --> P1_SE{SearchEngine: Index metadata Background}:::search
     end
 
-    alt skipSyncIfWarm is false (or cache was empty)
-    rect rgb(220, 240, 220)
-    Note over VS,VR: Phase 2: Optimized FS Sync (Background)
-    VS->>VS: getActiveVaultHandle()
-    VS->>VR: loadFiles(vaultId, handle)
-    loop For each file in OPFS
-        VR->>CS: getCachedEntity(path)
-        CS-->>VR: cached metadata + lastModified
-        alt Cache HIT (lastModified matches)
-            VR->>VR: Use metadata from cache (No parsing)
-        else Cache MISS
-            VR->>VR: Read & Parse OPFS file
-            VR->>CS: setCachedEntity(metadata + content)
-            CS->>CS: Save to Dexie (Atomic Transaction)
-            VR->>VS: onProgress(newOrChanged)
-            VS->>SE: index(metadata + content)
-        end
-    end
-    end
-    else skipSyncIfWarm is true (Fast Boot)
-    Note over VS: Skip Phase 2 entirely for zero-FS-read startup.
+    %% Sync Condition
+    P1_SE --> Cond{skipSyncIfWarm?}:::cond
+
+    Cond -->|"Yes (Fast Boot)"| SkipSync[Skip Phase 2 entirely]
+    Cond -->|"No (false or empty)"| P2_VS1
+
+    %% Phase 2
+    subgraph Phase2 [Phase 2: Optimized FS Sync Background]
+        direction TB
+        P2_VS1[VaultStore: getActiveVaultHandle]:::store --> P2_VR1([VaultRepository: loadFiles]):::fs
+        P2_VR1 --> P2_Loop[For each OPFS file]
+        P2_Loop --> P2_CS1[(CacheService: getCachedEntity)]:::db
+        P2_CS1 --> P2_Cond{Cache Match?}:::cond
+
+        P2_Cond -->|"HIT"| P2_Hit[Use metadata from cache No parsing]:::store
+        P2_Cond -->|"MISS"| P2_Miss([Read & Parse OPFS file]):::fs
+
+        P2_Miss --> P2_CS2[(CacheService: setCachedEntity)]:::db
+        P2_CS2 --> P2_SE{SearchEngine: index metadata+content}:::search
+
+        P2_Hit --> P2_Next[Next file]
+        P2_SE --> P2_Next
     end
 
-    rect rgb(240, 240, 200)
-    Note over VS,SE: Phase 3: Lazy Content Indexing
-    VS->>VS: indexContentInBackground()
-    loop For each record in Dexie 'entityContent'
-        VS->>SE: index(id, content) [Streaming]
+    SkipSync --> Phase3
+    P2_Next --> Phase3
+
+    %% Phase 3
+    subgraph Phase3 [Phase 3: Lazy Content Indexing]
+        direction TB
+        P3_VS[VaultStore: indexContentInBackground]:::store --> P3_SE{SearchEngine: Streaming Index}:::search
     end
 
-    UI->>VS: selectNode(id)
-    VS->>VS: loadEntityContent(id)
-    VS->>CS: Get content from Dexie 'entityContent'
-    CS-->>VS: content + lore
-    VS->>VS: Reactive update of entity in memory
+    %% User Interaction
+    subgraph Interaction [Lazy Content Loading]
+        direction TB
+        I_UI[UI: selectNode id]:::ui --> I_VS1[VaultStore: loadEntityContent id]:::store
+        I_VS1 --> I_CS[(CacheService: Get 'entityContent')]:::db
+        I_CS -.->|"content + lore"| I_VS2[VaultStore: Reactive update]:::store
     end
 ```
 

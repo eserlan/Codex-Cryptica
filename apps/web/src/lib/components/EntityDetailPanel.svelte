@@ -13,10 +13,23 @@
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
 
-  let { entity, onClose } = $props<{
+  let { entity: _entity, onClose } = $props<{
     entity: Entity | null;
     onClose: () => void;
   }>();
+
+  // We re-derive the entity from the vault store directly to ensure
+  // we pick up reactive updates to its content/lore fields after
+  // lazy loading from Dexie.
+  let entity = $derived.by(() => {
+    const e = _entity ? vault.entities[_entity.id] : null;
+    if (e) {
+      console.log(
+        `[EntityDetailPanel] Derived entity ${e.id}: contentLen=${e.content?.length || 0}, loreLen=${e.lore?.length || 0}`,
+      );
+    }
+    return e;
+  });
 
   let isEditing = $state(false);
   let previousEntityId = $state<string | undefined>(undefined);

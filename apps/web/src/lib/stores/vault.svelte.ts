@@ -284,9 +284,23 @@ export class VaultStore {
       const cachedEntities = cacheService.getPreloadedEntities();
 
       if (cachedEntities.length > 0) {
-        const entityMap: Record<string, LocalEntity> = {};
+        const entityMap: Record<string, LocalEntity> = {
+          ...this.repository.entities,
+        };
         for (const e of cachedEntities) {
-          entityMap[e.id] = e;
+          const existing = entityMap[e.id];
+
+          // Preserve content/lore if they are already loaded in memory
+          const finalContent =
+            existing?.content && !e.content ? existing.content : e.content;
+
+          const finalLore = existing?.lore && !e.lore ? existing.lore : e.lore;
+
+          entityMap[e.id] = {
+            ...e,
+            content: finalContent,
+            lore: finalLore,
+          };
         }
         // Push to repository to trigger immediate UI/Graph rendering
         this.repository.entities = entityMap;
@@ -492,7 +506,7 @@ export class VaultStore {
         const path = entity._path?.join("/") || `${entity.id}.md`;
         const keywords = [
           ...(entity.tags || []),
-          record.lore || "",
+          entity.lore || "",
           ...Object.values(entity.metadata || {}).flat(),
         ].join(" ");
 
@@ -536,42 +550,105 @@ export class VaultStore {
     if (this._contentLoadedIds.has(id)) return;
 
     // Verify entity exists before starting async work.
-    if (!this.entities[id]) return;
+    const currentEntity = this.entities[id];
+    if (!currentEntity) return;
 
     try {
-      debugStore.log(`[VaultStore] Loading content for entity: ${id}`);
       const start = performance.now();
-      const record = await entityDb.entityContent.get([this.activeVaultId, id]);
+      const path = currentEntity._path || [`${id}.md`];
+      const { readFileAsText } = await import("../utils/opfs");
+      const { parseMarkdown } = await import("../utils/markdown");
 
-      if (record) {
-        // Re-read the latest entity reference after the async round-trip to
-        // avoid clobbering fields that may have changed in-flight (e.g. a
-        // concurrent updateEntity call).
-        const currentEntity = this.entities[id];
-        if (currentEntity) {
-          this.repository.entities = {
-            ...this.repository.entities,
-            [id]: {
-              ...currentEntity,
-              content: record.content,
-              lore: record.lore,
-            },
-          };
+      // TIER 1: Try Dexie Cache for immediate Chronicle (content)
+      const cachedContent = await cacheService.getEntityContent(
+        this.activeVaultId,
+        id,
+      );
+      if (cachedContent) {
+        const ent = this.entities[id];
+        if (ent && !ent.content) {
+          this.repository.entities[id] = { ...ent, content: cachedContent };
           debugStore.log(
-            `[VaultStore] Content loaded for ${id} in ${(performance.now() - start).toFixed(2)}ms`,
+            `[VaultStore] Tier 1: Loaded chronicle from cache for ${id}`,
           );
         }
-      } else {
-        debugStore.log(`[VaultStore] No Dexie content record found for ${id}`);
       }
-      // Mark as loaded whether a record was found or not — a missing record
-      // means the entity genuinely has no persisted content yet, so retrying
-      // would be wasteful.
+
+      // TIER 2 & 3: Load Lore (and fresh Chronicle) from Markdown file
+      let text = "";
+      let source = "";
+
+      // 2. Try OPFS (Primary source for Lore)
+      const vaultDir = await this.getActiveVaultHandle();
+      if (vaultDir) {
+        try {
+          text = await readFileAsText(vaultDir, path);
+          if (text) source = "OPFS";
+        } catch {
+          // Fall through to Local FS
+        }
+      }
+
+      // 3. Fallback to Local Filesystem
+      if (!text) {
+        const localHandle = await syncIOAdapter.getLocalHandle(
+          this.activeVaultId,
+        );
+        if (localHandle) {
+          try {
+            if (
+              (await localHandle.queryPermission({ mode: "read" })) ===
+              "granted"
+            ) {
+              text = await readFileAsText(localHandle, path);
+              if (text) source = "Local FS";
+            }
+          } catch (err) {
+            debugStore.warn(
+              `[VaultStore] Failed to read ${id} from Local FS fallback`,
+              err,
+            );
+          }
+        }
+      }
+
+      if (text) {
+        const { metadata, content: freshContent } = parseMarkdown(text);
+        const freshLore = (metadata as any).lore || "";
+
+        // Re-read reference to avoid race conditions
+        const entityToUpdate = this.entities[id];
+        if (entityToUpdate) {
+          this.repository.entities[id] = {
+            ...entityToUpdate,
+            content: freshContent,
+            lore: freshLore,
+          };
+
+          // Background: Update cache if content was missing or changed
+          if (freshContent !== cachedContent) {
+            // We reuse cacheService.set but it expects full entity.
+            // Since we're in background, it's fine.
+            cacheService.set(
+              `${this.activeVaultId}:${path.join("/")}`,
+              Date.now(),
+              this.repository.entities[id],
+            );
+          }
+
+          debugStore.log(
+            `[VaultStore] Tier 2/3: Content verified from ${source} for ${id} in ${(performance.now() - start).toFixed(2)}ms`,
+          );
+        }
+      } else if (!cachedContent) {
+        throw new Error(
+          "Content not found in any storage source (Cache, OPFS, or Local FS)",
+        );
+      }
+
       this._contentLoadedIds.add(id);
     } catch (err) {
       debugStore.error(`[VaultStore] Failed to load content for ${id}:`, err);
-      // Transient Dexie failure — do NOT mark as loaded so the next call
-      // (e.g. the user closing and reopening the panel) can retry.
     }
   }
 
