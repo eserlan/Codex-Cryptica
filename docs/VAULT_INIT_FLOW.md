@@ -56,12 +56,19 @@ flowchart TD
         P3_VS[VaultStore: indexContentInBackground]:::store --> P3_SE{SearchEngine: Streaming Index}:::search
     end
 
-    %% User Interaction
-    subgraph Interaction [Lazy Content Loading]
+    %% Interaction
+    subgraph Interaction [Tiered Content Loading]
         direction TB
         I_UI[UI: selectNode id]:::ui --> I_VS1[VaultStore: loadEntityContent id]:::store
-        I_VS1 --> I_CS[(CacheService: Get 'entityContent')]:::db
-        I_CS -.->|"content + lore"| I_VS2[VaultStore: Reactive update]:::store
+
+        I_VS1 --> I_Tier1[Tier 1: Dexie Cache]:::db
+        I_Tier1 -.->|"chronicle only"| I_VS2[Immediate UI update]:::store
+
+        I_VS2 --> I_Tier2[Tier 2: OPFS file]:::fs
+        I_Tier2 -.->|"chronicle + lore"| I_VS3[Verified update]:::store
+
+        I_Tier2 --"Not found"--> I_Tier3[Tier 3: Local FS fallback]:::fs
+        I_Tier3 -.->|"chronicle + lore"| I_VS3
     end
 ```
 
@@ -84,11 +91,18 @@ flowchart TD
   - If they don't match (**MISS**), the file is re-parsed, the Dexie cache is updated via an **atomic transaction**, and only then is the search engine notified of the change.
 - **Quiet Mode**: On warm loads where no files have changed, this phase is completely silent and consumes minimal CPU/IO.
 
-### Phase 3: Lazy Content Loading & Background Indexing
+### Phase 3: Lazy Content Indexing
 
 - **Background Indexing**: Since metadata-only loads skip file parsing, the full-text search index for `content` is populated by streaming from the Dexie `entityContent` table in the background. It uses the `each()` cursor API to keep memory usage constant.
-- **On-Demand Content**: When a user opens an entity (Detail Panel, Edit Mode, Read Modal), `VaultStore.loadEntityContent(id)` is called.
-- **Dexie Fetch**: It retrieves the heavy `content` and `lore` fields from the dedicated Dexie table and merges them into the reactive Svelte state.
+
+### User Interaction: Tiered Content Loading
+
+When a user opens an entity (Detail Panel, Edit Mode, Read Modal), `VaultStore.loadEntityContent(id)` is called to populate the heavy text fields:
+
+1.  **Tier 1 (Dexie Cache)**: The system first checks the `entityContent` table in Dexie. If found, the **Chronicle** (body text) is applied immediately to the UI.
+2.  **Tier 2 (OPFS)**: In parallel, the app reads the source Markdown file from OPFS. This is the **Source of Truth** for the **Lore** (mythos) and the latest version of the Chronicle.
+3.  **Tier 3 (Local FS Fallback)**: If the file is missing from OPFS (e.g. during an active sync), the app attempts to read directly from the user's linked local folder.
+4.  **Sync**: Once the file is read, the Dexie cache is updated to match the disk state if they differ.
 
 ## Key Performance Design Decisions
 
@@ -99,3 +113,4 @@ flowchart TD
 5.  **Table Splitting**: Metadata is separated from Content/Lore. The graph view only needs metadata, allowing the heavy text to stay on disk until needed.
 6.  **Streaming Indexing**: Avoids `toArray()` when indexing the full vault to prevent JS heap spikes.
 7.  **Timestamp Normalization**: `lastModified` is floored to integer milliseconds to ensure consistent cache hits across different browsers and storage engines.
+8.  **Source-of-Truth Loading**: Lore is never cached in Dexie to keep the DB lightweight; it is always loaded from the source file.
