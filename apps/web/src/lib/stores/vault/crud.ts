@@ -65,7 +65,7 @@ export class VaultCrudManager {
     return true;
   }
 
-  async batchUpdateEntities(
+  async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
     let hasChanges = false;
@@ -246,9 +246,7 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(
-    newEntitiesList: BatchCreateInput[],
-  ): Promise<void> {
+  async batchCreateEntities(newEntitiesList: BatchCreateInput[]): Promise<void> {
     const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,

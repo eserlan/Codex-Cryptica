@@ -736,8 +736,8 @@ export class VaultStore {
   updateEntity(id: string, updates: Partial<LocalEntity>) {
     return this.crudManager.updateEntity(id, updates);
   }
-  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>) {
-    return this.crudManager.batchUpdateEntities(updates);
+  batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
+    return this.crudManager.batchUpdate(updates);
   }
   async deleteEntity(id: string) {
     if (this.onEntityDelete) this.onEntityDelete(id);
