@@ -126,6 +126,21 @@ vi.mock("../utils/opfs", () => ({
   deleteOpfsEntry: vi.fn(),
 }));
 
+// Mock BroadcastChannel
+const mockPostMessage = vi.fn();
+class MockBroadcastChannel {
+  name: string;
+  onmessage: ((event: any) => void) | null = null;
+  constructor(name: string) {
+    this.name = name;
+  }
+  postMessage(message: any) {
+    mockPostMessage(message);
+  }
+  close() {}
+}
+vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
+
 import { VaultStore } from "./vault.svelte";
 import { cacheService } from "../services/cache";
 import { readFileAsText } from "../utils/opfs";
@@ -136,6 +151,7 @@ describe("VaultStore (OPFS)", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockPostMessage.mockClear();
 
     mockRepository = {
       entities: {},
@@ -147,6 +163,11 @@ describe("VaultStore (OPFS)", () => {
         enqueue: vi.fn((id, cb) => cb()),
       },
     };
+
+    // Ensure window is defined for constructor checks
+    if (typeof window === "undefined") {
+      vi.stubGlobal("window", {});
+    }
 
     testVault = new VaultStore(mockRepository);
   });
@@ -237,5 +258,58 @@ describe("VaultStore (OPFS)", () => {
 
     // Verify cache was updated with fresh content
     expect(cacheService.set).toHaveBeenCalled();
+  });
+
+  it("should broadcast a RELOAD_VAULT message when broadcastVaultUpdate is called", () => {
+    testVault.broadcastVaultUpdate();
+    expect(mockPostMessage).toHaveBeenCalledWith({
+      type: "RELOAD_VAULT",
+      vaultId: "test-vault",
+    });
+  });
+
+  it("should reload files when receiving a RELOAD_VAULT message from BroadcastChannel", async () => {
+    // The channel is initialized in the constructor and stored privately, but its onmessage handler is bound.
+    // We can simulate receiving a message by finding the instance of MockBroadcastChannel and calling onmessage.
+    const channelInstance = (testVault as any).channel as MockBroadcastChannel;
+    expect(channelInstance).toBeDefined();
+
+    if (channelInstance && channelInstance.onmessage) {
+      // Mock the async getActiveVaultHandle to prevent the test from getting stuck
+      const loadFilesSpy = vi
+        .spyOn(testVault, "loadFiles")
+        .mockResolvedValue(undefined);
+
+      channelInstance.onmessage(
+        new MessageEvent("message", {
+          data: {
+            type: "RELOAD_VAULT",
+            vaultId: "test-vault",
+          },
+        }),
+      );
+
+      // Wait a tick for async handlers
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(loadFilesSpy).toHaveBeenCalled();
+      loadFilesSpy.mockRestore();
+    }
+  });
+
+  it("should NOT reload files if RELOAD_VAULT message is for a different vault", () => {
+    const channelInstance = (testVault as any).channel as MockBroadcastChannel;
+
+    if (channelInstance && channelInstance.onmessage) {
+      channelInstance.onmessage(
+        new MessageEvent("message", {
+          data: {
+            type: "RELOAD_VAULT",
+            vaultId: "other-vault",
+          },
+        }),
+      );
+      expect(mockRepository.loadFiles).not.toHaveBeenCalled();
+    }
   });
 });

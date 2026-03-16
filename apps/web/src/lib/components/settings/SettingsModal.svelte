@@ -7,7 +7,6 @@
   import CategorySettings from "./CategorySettings.svelte";
   import LabelSettings from "./LabelSettings.svelte";
   import HelpTab from "../help/HelpTab.svelte";
-  import ImportSettings from "./ImportSettings.svelte";
   import VaultSettings from "./VaultSettings.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { base } from "$app/paths";
@@ -240,7 +239,25 @@
             </section>
 
             <section class="border-t border-theme-border pt-6">
-              <ImportSettings />
+              <h3
+                class="text-sm font-bold text-theme-primary uppercase font-header mb-3 tracking-widest"
+              >
+                Archive Importer
+              </h3>
+              <p class="text-sm text-theme-text/70 leading-relaxed mb-6">
+                Import existing documents, lore bibles, or JSON data via the
+                dedicated importer. This allows for continuous imports without
+                interrupting your current session.
+              </p>
+              <button
+                onclick={() => uiStore.openImportWindow()}
+                class="w-full py-4 border border-theme-primary/50 text-theme-primary font-bold uppercase font-header tracking-[0.2em] text-xs rounded-lg hover:bg-theme-primary/10 transition-all active:scale-95 flex items-center justify-center gap-2 group"
+              >
+                <span
+                  class="icon-[lucide--folder-input] w-4 h-4 transition-transform group-hover:-translate-y-1"
+                ></span>
+                Launch Dedicated Importer
+              </button>
             </section>
           </div>
         {:else if uiStore.activeSettingsTab === "intelligence"}

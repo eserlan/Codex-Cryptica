@@ -39,8 +39,12 @@ Every major feature MUST include a corresponding user-facing help description or
 
 To ensure unit-testability and modularity, all services and stores MUST use constructor-based dependency injection. Constructors should provide sensible defaults for production while allowing mocks to be passed in during tests. Export both the class and a default singleton. (See ADR 007).
 
+### IX. Natural Language
+
+All user-facing text MUST use clear, approachable, and accessible language. Avoid unnecessary jargon, pretentious technical terms, or overly complex metaphors (e.g., prefer "Importer" over "Ingestion Terminal", "Break Down" over "Fragment"). Aim for a readability level that is easy to understand for non-technical users.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-01 | **Last Amended**: 2026-02-01
+**Version**: 1.0.7 | **Ratified**: 2026-02-01 | **Last Amended**: 2026-03-15

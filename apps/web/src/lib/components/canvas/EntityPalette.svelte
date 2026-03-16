@@ -4,12 +4,14 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import type { Entity } from "schema";
   import {
     Search,
     Filter,
     Layout,
     ChevronRight,
     LayoutGrid,
+    FolderInput,
   } from "lucide-svelte";
   import { page } from "$app/state";
 
@@ -22,23 +24,51 @@
       "Workspace",
   );
 
-  const types = $derived([
-    "all",
-    ...new Set(vault.allEntities.map((e) => e.type)),
-  ]);
+  const types = $derived.by(() => {
+    // ⚡ Bolt Optimization: Use imperative loop to prevent intermediate array allocation from map()
+    // Cache vault.allEntities to prevent multiple Object.values() allocations
+    const allEntities = vault.allEntities;
+    const typesSet = new Set<string>(["all"]);
+    for (let i = 0; i < allEntities.length; i++) {
+      typesSet.add(allEntities[i].type);
+    }
+    return Array.from(typesSet);
+  });
 
-  const filteredEntities = $derived(
-    vault.allEntities
-      .filter((e) => {
-        const matchesSearch =
-          e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          e.content?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesType =
-          typeFilters.includes("all") || typeFilters.includes(e.type);
-        return matchesSearch && matchesType;
-      })
-      .sort((a, b) => a.title.localeCompare(b.title)),
-  );
+  const filteredEntities = $derived.by(() => {
+    // ⚡ Bolt Optimization: Use imperative loop instead of chained filter().sort()
+    // Cache vault.allEntities to prevent multiple Object.values() allocations
+    const allEntities = vault.allEntities;
+    const filtered: Entity[] = [];
+    const query = searchQuery.trim().toLowerCase();
+    const filterAll = typeFilters.includes("all");
+
+    // Fast path: Just type filtering and sorting if no search query
+    if (!query) {
+      for (let i = 0; i < allEntities.length; i++) {
+        const e = allEntities[i];
+        if (filterAll || typeFilters.includes(e.type)) {
+          filtered.push(e);
+        }
+      }
+      return filtered.sort((a, b) => a.title.localeCompare(b.title));
+    }
+
+    // Full search path
+    for (let i = 0; i < allEntities.length; i++) {
+      const e = allEntities[i];
+      const matchesSearch =
+        e.title.toLowerCase().includes(query) ||
+        e.content.toLowerCase().includes(query);
+      const matchesType = filterAll || typeFilters.includes(e.type);
+
+      if (matchesSearch && matchesType) {
+        filtered.push(e);
+      }
+    }
+
+    return filtered.sort((a, b) => a.title.localeCompare(b.title));
+  });
 
   function onDragStart(event: DragEvent, entityId: string) {
     if (event.dataTransfer) {
@@ -142,11 +172,21 @@
     </div>
 
     <div class="p-4 border-b border-theme-border">
-      <h2
-        class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em] mb-4"
-      >
-        Entity Palette
-      </h2>
+      <div class="flex items-center justify-between mb-4">
+        <h2
+          class="text-xs font-bold text-theme-primary uppercase font-header tracking-[0.2em]"
+        >
+          Entity Palette
+        </h2>
+        <button
+          onclick={() => uiStore.openImportWindow()}
+          class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
+          title="Import Archive"
+          data-testid="explorer-import-button"
+        >
+          <FolderInput class="w-4 h-4" />
+        </button>
+      </div>
 
       <div class="relative mb-3">
         <Search

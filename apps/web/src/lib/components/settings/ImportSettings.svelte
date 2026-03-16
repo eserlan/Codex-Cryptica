@@ -6,6 +6,7 @@
   import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
   import ReviewList from "$lib/features/importer/ReviewList.svelte";
   import ImportProgress from "../import/ImportProgress.svelte";
+  import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
   import {
     TextParser,
     DocxParser,
@@ -23,6 +24,8 @@
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+
+  let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
   let step = $state<"upload" | "processing" | "review" | "complete">("upload");
   let statusMessage = $state("");
@@ -292,17 +295,16 @@
         const asset = extractedAssets.get(imgRef);
 
         width = width || asset.width;
-
         height = height || asset.height;
 
         try {
-          imagePath = await vault.saveImageToVault(
+          const savedAssets = await vault.saveImageToVault(
             asset.blob,
-
             entityId,
-
             asset.originalName,
           );
+          imagePath = savedAssets.image;
+          thumbnailPath = savedAssets.thumbnail;
         } catch (err) {
           console.error("Failed to save imported asset:", err);
         }
@@ -358,7 +360,7 @@
 
     try {
       if (batchData.length > 0) {
-        await vault.batchCreate(batchData);
+        await vault.batchCreateEntities(batchData);
       }
 
       step = "complete";
@@ -380,143 +382,154 @@
   };
 </script>
 
-<div class="space-y-4">
-  <h3
-    class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest"
-  >
-    Archive Ingestion
-  </h3>
+<div class="space-y-4 {isStandalone ? 'flex-1 flex flex-col min-h-0' : ''}">
+  {#if !isStandalone}
+    <h3
+      class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest"
+    >
+      Archive Importer
+    </h3>
 
-  <p class="text-sm text-theme-text/70 leading-relaxed">
-    Import existing documents, lore bibles, or JSON data. The Oracle will
-    automatically fragment monolithic files into distinct entities and extract
-    embedded art.
-  </p>
+    <p class="text-sm text-theme-text/70 leading-relaxed">
+      Import existing documents, lore bibles, or JSON data. The Oracle will
+      automatically break down large files into distinct entities and extract
+      embedded art.
+    </p>
+  {/if}
 
   {#if !oracle.isEnabled}
-    <div
-      class="p-4 bg-red-500/10 border border-red-500/20 rounded flex items-start gap-3"
-    >
-      <span
-        class="icon-[lucide--alert-triangle] w-5 h-5 text-red-400 shrink-0 mt-0.5"
-      ></span>
-
-      <div class="flex flex-col gap-1">
+    {#if isStandalone}
+      <InlineKeySetup />
+    {:else}
+      <div
+        class="p-4 bg-red-500/10 border border-red-500/20 rounded flex items-start gap-3"
+      >
         <span
-          class="text-sm font-bold text-red-400 uppercase font-header tracking-wider"
-          >Oracle Connection Required</span
-        >
+          class="icon-[lucide--alert-triangle] w-5 h-5 text-red-400 shrink-0 mt-0.5"
+        ></span>
 
-        <p class="text-xs text-red-400/80 leading-tight">
-          Intelligent ingestion requires an active Gemini API key. Please
-          configure your access in the
-
-          <button
-            class="underline hover:text-red-300"
-            onclick={() => (uiStore.activeSettingsTab = "intelligence")}
-            >AI</button
-          > tab.
-        </p>
-      </div>
-    </div>
-  {/if}
-
-  {#if showResumeToast}
-    <div
-      transition:slide
-      class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
-    >
-      <div
-        class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
-      >
-        <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
-
-        Resuming previous import
-      </div>
-
-      <button
-        onclick={handleRestart}
-        class="text-[9px] font-bold underline hover:text-theme-text"
-      >
-        START OVER
-      </button>
-    </div>
-  {/if}
-
-  <div
-    class="bg-theme-surface border border-theme-border p-4 rounded-lg min-h-[200px] flex flex-col justify-center relative overflow-hidden"
-  >
-    {#if step === "upload"}
-      <ImportDropzone onFileSelect={handleFiles} />
-    {:else if step === "processing"}
-      <div class="flex flex-col items-center gap-6 py-8">
-        <div class="relative">
-          <div
-            class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
-          ></div>
-
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span
-              class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
-            ></span>
-          </div>
-        </div>
-
-        <div
-          class="text-center space-y-1"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <p
-            class="text-xs font-mono text-theme-primary uppercase tracking-tight"
+        <div class="flex flex-col gap-1">
+          <span
+            class="text-sm font-bold text-red-400 uppercase font-header tracking-wider"
+            >Oracle Connection Required</span
           >
-            {statusMessage}
-          </p>
 
-          <p
-            class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
-          >
-            Oracle is interpreting your notes
+          <p class="text-xs text-red-400/80 leading-tight">
+            Intelligent importing requires an active Gemini API key. Please
+            configure your access in the
+
+            <button
+              class="underline hover:text-red-300"
+              onclick={() => (uiStore.activeSettingsTab = "intelligence")}
+              >AI</button
+            > tab.
           </p>
         </div>
-
-        {#if totalChunks > 0}
-          <div transition:fade class="w-full max-w-md px-4">
-            <ImportProgress {totalChunks} />
-          </div>
-        {/if}
-
-        <button
-          onclick={() => uiStore.abortActiveOperations()}
-          class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
-        >
-          Cancel Import
-        </button>
-      </div>
-    {:else if step === "review"}
-      <ReviewList
-        entities={discoveredEntities}
-        onSave={handleSave}
-        onCancel={() => (step = "upload")}
-      />
-    {:else if step === "complete"}
-      <div
-        class="flex flex-col items-center gap-2 py-8 text-theme-primary"
-        transition:fade
-      >
-        <div
-          class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
-        >
-          <span class="icon-[lucide--check-circle] w-8 h-8"></span>
-        </div>
-        <p class="text-base font-bold uppercase font-header tracking-widest">
-          Import Successful
-        </p>
-        <p class="text-[11px] text-theme-muted uppercase font-mono">
-          Archive updated with {discoveredEntities.length} records
-        </p>
       </div>
     {/if}
-  </div>
+  {:else}
+    {#if showResumeToast}
+      <div
+        transition:slide
+        class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
+      >
+        <div
+          class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+        >
+          <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+
+          Resuming previous import
+        </div>
+
+        <button
+          onclick={handleRestart}
+          class="text-[9px] font-bold underline hover:text-theme-text"
+        >
+          START OVER
+        </button>
+      </div>
+    {/if}
+
+    <div
+      class="flex-1 flex flex-col relative overflow-hidden {isStandalone
+        ? ''
+        : 'bg-theme-surface border border-theme-border p-4 rounded-lg justify-center'}"
+    >
+      {#if step === "upload"}
+        <div class="flex-1 flex flex-col min-h-0">
+          <ImportDropzone onFileSelect={handleFiles} {isStandalone} />
+        </div>
+      {:else if step === "processing"}
+        <div class="flex flex-col items-center gap-6 py-8">
+          <div class="relative">
+            <div
+              class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
+            ></div>
+
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span
+                class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            class="text-center space-y-1"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <p
+              class="text-xs font-mono text-theme-primary uppercase tracking-tight"
+            >
+              {statusMessage}
+            </p>
+
+            <p
+              class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
+            >
+              Oracle is interpreting your notes
+            </p>
+          </div>
+
+          {#if totalChunks > 0}
+            <div transition:fade class="w-full max-w-md px-4">
+              <ImportProgress {totalChunks} />
+            </div>
+          {/if}
+
+          <button
+            onclick={() => uiStore.abortActiveOperations()}
+            class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
+          >
+            Cancel Import
+          </button>
+        </div>
+      {:else if step === "review"}
+        <ReviewList
+          entities={discoveredEntities}
+          onSave={handleSave}
+          onCancel={() => (step = "upload")}
+          {isStandalone}
+        />
+      {:else if step === "complete"}
+        <div
+          class="flex flex-col items-center gap-2 py-8 text-theme-primary"
+          transition:fade
+        >
+          <div
+            class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
+          >
+            <span class="icon-[lucide--check-circle] w-8 h-8"></span>
+          </div>
+          <p class="text-base font-bold uppercase font-header tracking-widest">
+            Import Successful
+          </p>
+          <p class="text-[11px] text-theme-muted uppercase font-mono">
+            Archive updated with {discoveredEntities.length} records
+          </p>
+        </div>
+      {/if}
+    </div>
+  {/if}
 </div>

@@ -123,7 +123,7 @@
           },
           (batchUpdates) => {
             // Real-time batch update from host
-            vault.batchUpdate(batchUpdates);
+            vault.batchUpdateEntities(batchUpdates);
           },
         );
       } catch (err) {

@@ -12,7 +12,6 @@
   import { parseOracleResponse } from "editor-core";
   import { sanitizeId } from "$lib/utils/markdown";
   import { graph } from "$lib/stores/graph.svelte";
-  import { RESPONSE_LENGTH_LABELS } from "../../config/oracle-constants";
 
   import { onMount } from "svelte";
 
@@ -101,9 +100,6 @@
     // Structured response detected
     if (parsed.wasSplit || (parsed.title && parsed.title.length > 3))
       return true;
-
-    // Explicit long response
-    if (message.isLongResponse) return true;
 
     // Content length heuristic (only check after generation finishes)
     if (
@@ -381,17 +377,6 @@
       : 'bg-theme-surface border border-theme-border text-theme-text'}"
   >
     {#if message.role === "assistant" || message.role === "system"}
-      {#if message.responseLength && RESPONSE_LENGTH_LABELS[message.responseLength] && !message.isDrawing}
-        <div class="flex items-center gap-1.5 mb-2 opacity-40 select-none">
-          <span class="icon-[lucide--scroll] w-2.5 h-2.5"></span>
-          <span
-            class="text-[8px] font-bold uppercase tracking-[0.2em] font-header"
-          >
-            {RESPONSE_LENGTH_LABELS[message.responseLength]}
-          </span>
-        </div>
-      {/if}
-
       {#if message.type === "wizard"}
         {#if message.wizardType === "connection"}
           <ConnectionWizard bind:message />

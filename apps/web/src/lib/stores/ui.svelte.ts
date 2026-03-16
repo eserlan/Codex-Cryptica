@@ -1,3 +1,5 @@
+import { base } from "$app/paths";
+
 export type SettingsTab =
   | "vault"
   | "intelligence"
@@ -255,6 +257,21 @@ class UIStore {
 
   closeSettings() {
     this.showSettings = false;
+  }
+
+  openImportWindow() {
+    if (typeof window === "undefined") return;
+
+    const width = 800;
+    const height = 900;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const url = `${window.location.origin}${base}/import`;
+    const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
+
+    const newWin = window.open(url, "CodexCrypticaImport", features);
+    if (newWin) newWin.opener = null;
   }
 
   toggleSettings(tab: SettingsTab = "vault") {

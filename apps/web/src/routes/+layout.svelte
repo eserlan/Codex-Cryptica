@@ -40,7 +40,8 @@
 
   const isPopup = $derived(
     page.url.pathname === `${base}/oracle` ||
-      page.url.pathname === `${base}/help`,
+      page.url.pathname === `${base}/help` ||
+      page.url.pathname === `${base}/import`,
   );
   const MARKETING_ROUTES = ["/blog", "/features", "/privacy", "/terms"];
   const isMarketingPage = $derived(
@@ -144,7 +145,7 @@
       typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!shouldShowLanding || isTesting) {
+      if (!shouldShowLanding || isTesting || isPopup) {
         bootSystem();
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
         uiStore.dismissedLandingPage = true;
@@ -485,6 +486,7 @@
               .url.pathname === `${base}/`
               ? 'bg-theme-primary/10 text-theme-primary'
               : 'text-theme-muted hover:text-theme-text'}"
+            data-testid="nav-graph"
           >
             GRAPH
           </a>
@@ -495,6 +497,7 @@
             )
               ? 'bg-theme-primary/10 text-theme-primary'
               : 'text-theme-muted hover:text-theme-text'}"
+            data-testid="nav-map"
           >
             MAP
           </a>
@@ -505,6 +508,7 @@
             )
               ? 'bg-theme-primary/10 text-theme-primary'
               : 'text-theme-muted hover:text-theme-text'}"
+            data-testid="nav-canvas"
           >
             CANVAS
           </a>

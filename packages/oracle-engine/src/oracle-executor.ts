@@ -553,8 +553,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
-    const isLongResponse = OracleCommandParser.isExpandRequest(query);
-    const responseLength = isLongResponse ? "detailed" : "balanced";
     const isImageRequest = OracleCommandParser.detectImageIntent(query);
 
     const assistantMsg: ChatMessage = {
@@ -562,8 +560,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       role: "assistant",
       content: "",
       type: isImageRequest ? "image" : "text",
-      isLongResponse,
-      responseLength,
     };
     await context.chatHistory.addMessage(assistantMsg);
 

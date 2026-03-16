@@ -129,7 +129,7 @@
           }
         },
         onPositionsUpdated: (updates) => {
-          vault.batchUpdate(updates as any);
+          vault.batchUpdateEntities(updates as any);
         },
       },
       isInitial,

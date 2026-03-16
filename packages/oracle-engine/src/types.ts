@@ -1,4 +1,8 @@
-import type { ContextRetrievalService, TextGenerationService, ImageGenerationService } from "schema";
+import type {
+  ContextRetrievalService,
+  TextGenerationService,
+  ImageGenerationService,
+} from "schema";
 
 export type OracleIntent =
   | { type: "chat"; query: string; isAIIntent: boolean }
@@ -32,8 +36,6 @@ export interface ChatMessage {
   sources?: string[];
   isDrawing?: boolean;
   hasDrawAction?: boolean;
-  isLongResponse?: boolean;
-  responseLength?: "terse" | "balanced" | "detailed";
 }
 
 export interface UndoableAction {

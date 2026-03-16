@@ -6,9 +6,15 @@
     entities: DiscoveredEntity[];
     onSave: (entities: DiscoveredEntity[]) => void;
     onCancel: () => void;
+    isStandalone?: boolean;
   }
 
-  let { entities = [], onSave, onCancel }: Props = $props();
+  let {
+    entities = [],
+    onSave,
+    onCancel,
+    isStandalone = false,
+  }: Props = $props();
 
   let _selectedIds = $state(new Set<string>());
   let _lastEntities = $state<DiscoveredEntity[]>([]);
@@ -52,7 +58,7 @@
   };
 </script>
 
-<div class="review-list">
+<div class="review-list" class:standalone={isStandalone}>
   <div class="header-row">
     <h3>Review Identified Entities</h3>
     <div class="selection-actions">
@@ -123,6 +129,12 @@
     max-height: 60vh;
   }
 
+  .review-list.standalone {
+    max-height: none;
+    flex: 1;
+    min-height: 0;
+  }
+
   .header-row {
     display: flex;
     justify-content: space-between;
@@ -152,6 +164,7 @@
     flex-direction: column;
     gap: 0.5rem;
     padding-right: 0.5rem;
+    flex: 1;
   }
 
   .entity-card {

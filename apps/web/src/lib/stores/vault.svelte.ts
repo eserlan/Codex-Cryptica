@@ -83,6 +83,7 @@ export class VaultStore {
   public services: IVaultServices | null = null;
   private crudManager: VaultCrudManager;
   private lifecycleManager: VaultLifecycleManager;
+  private channel: BroadcastChannel | null = null;
 
   /**
    * Tracks which entity IDs have their `content` and `lore` fields fully
@@ -153,10 +154,29 @@ export class VaultStore {
       vaultRegistry,
       themeStore,
     );
-
     if (typeof window !== "undefined") {
+      this.channel = new BroadcastChannel("codex-vault-sync");
+      this.channel.onmessage = (event) => {
+        if (
+          event.data.type === "RELOAD_VAULT" &&
+          event.data.vaultId === this.activeVaultId
+        ) {
+          this.loadFiles();
+        }
+      };
+
       mapRegistry.init(this.repository.saveQueue);
       canvasRegistry.init(this.repository.saveQueue);
+    }
+  }
+
+  // --- External Sync Methods ---
+  broadcastVaultUpdate() {
+    if (this.channel && this.activeVaultId) {
+      this.channel.postMessage({
+        type: "RELOAD_VAULT",
+        vaultId: this.activeVaultId,
+      });
     }
   }
 
@@ -716,8 +736,8 @@ export class VaultStore {
   updateEntity(id: string, updates: Partial<LocalEntity>) {
     return this.crudManager.updateEntity(id, updates);
   }
-  batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
-    return this.crudManager.batchUpdate(updates);
+  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>) {
+    return this.crudManager.batchUpdateEntities(updates);
   }
   async deleteEntity(id: string) {
     if (this.onEntityDelete) this.onEntityDelete(id);
@@ -766,8 +786,10 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
-  batchCreate(newEntitiesList: BatchCreateInput[]) {
-    return this.crudManager.batchCreate(newEntitiesList);
+  async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
+    const result = await this.crudManager.batchCreateEntities(newEntitiesList);
+    this.broadcastVaultUpdate();
+    return result;
   }
 
   updateConnection(

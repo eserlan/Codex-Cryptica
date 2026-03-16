@@ -243,6 +243,20 @@
             : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
         </button>
 
+        <div class="relative flex items-center">
+          <button
+            class={isVertical
+              ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
+              : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+            onclick={() => ui.openImportWindow()}
+            data-testid="import-vault-button"
+            title="Import markdown notes or JSON data into your archive."
+          >
+            <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
+            IMPORT
+          </button>
+        </div>
+
         <div
           class="flex {isVertical
             ? 'flex-col gap-3'
