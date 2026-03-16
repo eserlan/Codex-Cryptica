@@ -32,8 +32,6 @@ export interface ChatMessage {
   sources?: string[];
   isDrawing?: boolean;
   hasDrawAction?: boolean;
-  isLongResponse?: boolean;
-  responseLength?: "terse" | "balanced" | "detailed";
 }
 
 export interface UndoableAction {

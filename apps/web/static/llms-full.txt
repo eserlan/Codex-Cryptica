@@ -264,7 +264,7 @@ Codex Cryptica can transform your unstructured notes into a structured Knowledge
 
 ## Dedicated Importer
 
-For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window. 
+For uninterrupted world-building, clicking **IMPORT** in the top menu or the Entity Palette opens a dedicated, distraction-free popout window.
 
 - **Seamless Sync**: Any entities you import or review in this popup are instantly saved and synchronized back to your main graph in real-time. No manual refresh required!
 

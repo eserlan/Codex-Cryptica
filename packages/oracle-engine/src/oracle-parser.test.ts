@@ -130,19 +130,4 @@ describe("OracleCommandParser", () => {
       ).toBe(false);
     });
   });
-
-  describe("isExpandRequest", () => {
-    it("should return true for expansion keywords", () => {
-      expect(OracleCommandParser.isExpandRequest("elaborate on this")).toBe(
-        true,
-      );
-      expect(OracleCommandParser.isExpandRequest("describe the tavern")).toBe(
-        true,
-      );
-    });
-
-    it("should return false for other queries", () => {
-      expect(OracleCommandParser.isExpandRequest("hello")).toBe(false);
-    });
-  });
 });

@@ -4,7 +4,6 @@ import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
-import { EXPAND_KEYWORDS } from "../../config/oracle-constants";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 
@@ -137,11 +136,6 @@ export class DefaultTextGenerationService implements TextGenerationService {
     }
   }
 
-  private isExpandRequest(query: string): boolean {
-    const q = query.toLowerCase().trim();
-    return EXPAND_KEYWORDS.some((keyword) => q.includes(keyword));
-  }
-
   async generateResponse(
     apiKey: string,
     query: string,
@@ -198,14 +192,9 @@ export class DefaultTextGenerationService implements TextGenerationService {
     });
 
     try {
-      const isExpand = this.isExpandRequest(query);
-      const instruction = isExpand
-        ? "[INSTRUCTION: PROVIDE DETAILED LORE]"
-        : "[INSTRUCTION: BE CONCISE. SHORT IS PREFERRED, MEDIUM IS ALLOWED IF NEEDED]";
-
       const finalQuery = context
-        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}${instruction}\n[USER QUERY]\n${query}`
-        : `${prefixContext}${instruction}\n${query}`;
+        ? `[NEW LORE CONTEXT]\n${context}\n\n${prefixContext}\n[USER QUERY]\n${query}`
+        : `${prefixContext}\n${query}`;
 
       const result = await chat.sendMessageStream(finalQuery);
 
