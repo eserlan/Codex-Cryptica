@@ -307,3 +307,8 @@ const UI_KEY = "__codex_ui_instance__";
 export const uiStore: UIStore =
   (globalThis as any)[UI_KEY] ?? ((globalThis as any)[UI_KEY] = new UIStore());
 export const ui = uiStore;
+
+if (typeof window !== "undefined") {
+  (window as any).uiStore = uiStore;
+  (window as any).ui = ui;
+}

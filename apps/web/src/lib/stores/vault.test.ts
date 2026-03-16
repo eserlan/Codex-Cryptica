@@ -140,9 +140,12 @@ describe("VaultStore (OPFS)", () => {
     mockRepository = {
       entities: {},
       loadFiles: vi.fn(),
-      scheduleSave: vi.fn(),
+      saveToDisk: vi.fn(),
       clear: vi.fn(),
-      saveQueue: { totalPendingCount: 0 },
+      saveQueue: {
+        totalPendingCount: 0,
+        enqueue: vi.fn((id, cb) => cb()),
+      },
     };
 
     testVault = new VaultStore(mockRepository);
@@ -196,7 +199,7 @@ describe("VaultStore (OPFS)", () => {
   });
 
   it("should create a new entity in OPFS", async () => {
-    mockRepository.scheduleSave.mockResolvedValue(undefined);
+    mockRepository.saveToDisk.mockResolvedValue(undefined);
     await testVault.createEntity("character", "New Character");
     expect(Object.keys(testVault.entities)).toHaveLength(1);
     expect(testVault.entities["new-character"]?.title).toBe("New Character");

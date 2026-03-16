@@ -65,7 +65,7 @@ export class VaultCrudManager {
     return true;
   }
 
-  async batchUpdateEntities(
+  async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
     let hasChanges = false;
@@ -93,14 +93,16 @@ export class VaultCrudManager {
     return false;
   }
 
-  async deleteEntity(id: string): Promise<void> {
+  async deleteEntity(
+    id: string,
+    vaultDir: FileSystemDirectoryHandle,
+    _activeVaultId: string,
+  ): Promise<void> {
     if (this.isGuest()) throw new Error("Cannot delete entities in Guest Mode");
     if (uiStore.isDemoMode) {
       uiStore.notify("Deletion is disabled in Demo Mode.", "info");
       return;
     }
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
 
     const { entities, deletedEntity, modifiedIds } =
       await vaultEntities.deleteEntity(vaultDir, this.getEntities(), id);
@@ -244,9 +246,7 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(
-    newEntitiesList: BatchCreateInput[],
-  ): Promise<void> {
+  async batchCreate(newEntitiesList: BatchCreateInput[]): Promise<void> {
     const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,

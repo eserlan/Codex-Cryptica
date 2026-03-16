@@ -282,3 +282,7 @@ const GRAPH_KEY = "__codex_graph_instance__";
 export const graph: GraphStore =
   (globalThis as any)[GRAPH_KEY] ??
   ((globalThis as any)[GRAPH_KEY] = new GraphStore());
+
+if (typeof window !== "undefined") {
+  (window as any).graph = graph;
+}

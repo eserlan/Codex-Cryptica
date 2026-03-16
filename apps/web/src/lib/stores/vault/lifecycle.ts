@@ -22,7 +22,9 @@ export class VaultLifecycleManager {
     private setInitialized: (val: boolean) => void,
     private getServices: () => any,
     private setHasConflictFiles: (val: boolean) => void,
-    private setSelectedEntityId: (val: string | null) => void,
+    private setSelectedEntityId: (id: string | null) => void,
+    private vaultRegistry: typeof import("../vault-registry.svelte").vaultRegistry,
+    private themeStore: typeof import("../theme.svelte").themeStore,
   ) {}
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {

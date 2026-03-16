@@ -679,28 +679,28 @@ export class VaultStore {
 
     if (uiStore.isDemoMode) return Promise.resolve();
 
-    return vaultRegistry.rootHandle && this.activeVaultId
-      ? vaultRegistry.rootHandle
-          .getDirectoryHandle("vaults")
-          .then((v) => v.getDirectoryHandle(this.activeVaultId!))
-          .then((vaultDir) => {
-            return this.repository.scheduleSave(
-              vaultDir,
-              this.activeVaultId!,
-              entity as LocalEntity,
-              this.isGuest,
-              (s) => (this.status = s),
-            );
-          })
-          .catch((error) => {
-            debugStore.error(
-              "[VaultStore] Failed to schedule save: unable to resolve vault directory handle",
-              error,
-            );
-            this.status = "error";
-            this.errorMessage = "Failed to access storage for saving.";
-          })
-      : Promise.resolve();
+    return this.saveQueue.enqueue(entity.id, async () => {
+      this.status = "saving";
+      try {
+        const vaultHandle = await this.getActiveVaultHandle();
+        if (!vaultHandle) return;
+
+        await this.repository.saveToDisk(
+          vaultHandle,
+          this.activeVaultId!,
+          entity as LocalEntity,
+          this.isGuest,
+        );
+        this.status = "idle";
+      } catch (error) {
+        debugStore.error(
+          "[VaultStore] Failed to schedule save: unable to resolve vault directory handle",
+          error,
+        );
+        this.status = "error";
+        this.errorMessage = "Failed to access storage for saving.";
+      }
+    });
   }
 
   // --- CRUD Delegations ---
@@ -714,8 +714,8 @@ export class VaultStore {
   updateEntity(id: string, updates: Partial<LocalEntity>) {
     return this.crudManager.updateEntity(id, updates);
   }
-  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>) {
-    return this.crudManager.batchUpdateEntities(updates);
+  batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
+    return this.crudManager.batchUpdate(updates);
   }
   deleteEntity(id: string) {
     return this.crudManager.deleteEntity(id);
@@ -751,8 +751,8 @@ export class VaultStore {
   bulkRemoveLabel(ids: string[], label: string) {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
-  batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
-    return this.crudManager.batchCreateEntities(newEntitiesList);
+  batchCreate(newEntitiesList: BatchCreateInput[]) {
+    return this.crudManager.batchCreate(newEntitiesList);
   }
 
   updateConnection(

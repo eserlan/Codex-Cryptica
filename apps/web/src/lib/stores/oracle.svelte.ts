@@ -278,3 +278,7 @@ const ORACLE_KEY = "__codex_oracle_instance__";
 export const oracle: OracleStore =
   (globalThis as any)[ORACLE_KEY] ??
   ((globalThis as any)[ORACLE_KEY] = new OracleStore());
+
+if (typeof window !== "undefined") {
+  (window as any).oracle = oracle;
+}

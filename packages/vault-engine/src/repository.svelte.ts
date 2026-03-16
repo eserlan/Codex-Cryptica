@@ -23,7 +23,7 @@ export interface IFileIOAdapter {
   isNotFoundError(err: any): boolean;
 }
 
-const SKEW_MS = 1000;
+const SKEW_MS = 500;
 
 export class VaultRepository {
   entities = $state<Record<string, LocalEntity>>({});

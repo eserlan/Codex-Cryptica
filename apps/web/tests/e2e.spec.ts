@@ -7,11 +7,25 @@ test.describe("Vault E2E", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
     });
+
+    // Add page error listener
+    page.on("pageerror", (err) => console.log(`PAGE ERROR: ${err.message}`));
+    page.on("console", (msg) => console.log(`PAGE LOG: ${msg.text()}`));
+
     await page.goto("/");
     // Wait for vault initialization (OPFS auto-load)
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
+    await page.waitForFunction(
+      () => {
+        const status = (window as any).vault?.status;
+        console.log(
+          `[E2E Wait] Current vault status: ${status}, isInitialized: ${(window as any).vault?.isInitialized}`,
+        );
+        return status === "idle";
+      },
+      {
+        timeout: 15000,
+      },
+    );
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });
