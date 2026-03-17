@@ -20,7 +20,10 @@ export interface IFileIOAdapter {
     entity: LocalEntity,
   ): Promise<void>;
   parseMarkdown(text: string, filePath: string[]): LocalEntity | null;
+  isNotFoundError(err: any): boolean;
 }
+
+const SKEW_MS = 500;
 
 export class VaultRepository {
   entities = $state<Record<string, LocalEntity>>({});
@@ -39,6 +42,7 @@ export class VaultRepository {
       chunkEntities: Record<string, LocalEntity>,
       current: number,
       total: number,
+      newOrChanged: Record<string, LocalEntity>,
     ) => Promise<void> | void,
   ) {
     const files = await this.ioAdapter.walkDirectory(vaultHandle);
@@ -54,33 +58,32 @@ export class VaultRepository {
     const processFile = async (fileEntry: FileEntry) => {
       const filePath = fileEntry.path.join("/");
       const file = await fileEntry.handle.getFile();
-      const lastModified = file.lastModified;
+      const lastModified = Math.floor(file.lastModified);
 
       const cached = await this.ioAdapter.getCachedEntity(
         activeVaultId,
         filePath,
       );
 
-      let entity: LocalEntity | null;
-
-      if (cached && cached.lastModified === lastModified) {
-        entity = { ...cached.entity, _path: fileEntry.path };
-      } else {
-        const text = await this.ioAdapter.readFileAsText(fileEntry);
-        entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
-
-        if (entity) {
-          await this.ioAdapter.setCachedEntity(
-            activeVaultId,
-            filePath,
-            lastModified,
-            entity,
-          );
-        }
+      if (cached && Math.abs(cached.lastModified - lastModified) <= SKEW_MS) {
+        const entity: LocalEntity = { ...cached.entity, _path: fileEntry.path };
+        return { entity, isHit: true };
       }
 
-      if (!entity || !entity.id) return null;
-      return entity;
+      const text = await this.ioAdapter.readFileAsText(fileEntry);
+      const entity = this.ioAdapter.parseMarkdown(text, fileEntry.path);
+
+      if (entity) {
+        await this.ioAdapter.setCachedEntity(
+          activeVaultId,
+          filePath,
+          lastModified,
+          entity,
+        );
+        return { entity, isHit: false };
+      }
+
+      return null;
     };
 
     const CHUNK_SIZE = 40;
@@ -88,19 +91,53 @@ export class VaultRepository {
       const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
       const chunkResults = await Promise.all(chunk.map(processFile));
 
-      const chunkEntities: Record<string, LocalEntity> = {};
-      for (const entity of chunkResults) {
-        if (entity) {
-          newEntities[entity.id] = entity;
-          chunkEntities[entity.id] = entity;
+      const updatedEntities: Record<string, LocalEntity> = {};
+      const newOrChanged: Record<string, LocalEntity> = {};
+
+      for (const res of chunkResults) {
+        if (res) {
+          newEntities[res.entity.id] = res.entity;
+          updatedEntities[res.entity.id] = res.entity;
+          if (!res.isHit) {
+            newOrChanged[res.entity.id] = res.entity;
+          }
         }
       }
 
-      // Update incrementally to allow search/UI to work during load
-      this.entities = { ...this.entities, ...chunkEntities };
+      // Update incrementally to allow search/UI to work during load.
+      // We only spread if there are actual updates.
+      if (Object.keys(updatedEntities).length > 0) {
+        const newMap = { ...this.entities };
+        for (const [id, entity] of Object.entries(updatedEntities)) {
+          const existing = newMap[id];
+
+          // CRITICAL: Metadata-only updates (cache hits) have content = "".
+          // We MUST NOT overwrite an existing entity that already has
+          // content/lore loaded in memory.
+          const finalContent =
+            existing?.content && !entity.content
+              ? existing.content
+              : entity.content;
+
+          const finalLore =
+            existing?.lore && !entity.lore ? existing.lore : entity.lore;
+
+          newMap[id] = {
+            ...entity,
+            content: finalContent,
+            lore: finalLore,
+          };
+        }
+        this.entities = newMap;
+      }
 
       if (onProgress) {
-        await onProgress(chunkEntities, Math.min(i + CHUNK_SIZE, total), total);
+        await onProgress(
+          updatedEntities,
+          Math.min(i + CHUNK_SIZE, total),
+          total,
+          newOrChanged,
+        );
       }
 
       if (total > CHUNK_SIZE) {

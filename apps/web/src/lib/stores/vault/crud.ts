@@ -93,14 +93,16 @@ export class VaultCrudManager {
     return false;
   }
 
-  async deleteEntity(id: string): Promise<void> {
+  async deleteEntity(
+    id: string,
+    vaultDir: FileSystemDirectoryHandle,
+    _activeVaultId: string,
+  ): Promise<void> {
     if (this.isGuest()) throw new Error("Cannot delete entities in Guest Mode");
     if (uiStore.isDemoMode) {
       uiStore.notify("Deletion is disabled in Demo Mode.", "info");
       return;
     }
-    const vaultDir = await this.getActiveVaultHandle();
-    if (!vaultDir) return;
 
     const { entities, deletedEntity, modifiedIds } =
       await vaultEntities.deleteEntity(vaultDir, this.getEntities(), id);

@@ -2,6 +2,7 @@ import {
   walkOpfsDirectory,
   writeOpfsFile,
   deleteOpfsEntry,
+  isNotFoundError,
 } from "../../utils/opfs";
 import {
   parseMarkdown,
@@ -49,6 +50,7 @@ export const fileIOAdapter: IFileIOAdapter = {
     const id = parsed.metadata.id || deriveIdFromPath(path);
     const connections = parsed.metadata.connections || [];
     return {
+      ...parsed.metadata,
       id: id!,
       type: parsed.metadata.type || DEFAULT_ENTITY_TYPE,
       title: parsed.metadata.title || id!,
@@ -56,17 +58,11 @@ export const fileIOAdapter: IFileIOAdapter = {
       labels: parsed.metadata.labels || [],
       connections,
       content: parsed.content,
-      lore: parsed.metadata.lore,
-      image: parsed.metadata.image,
-      thumbnail: parsed.metadata.thumbnail,
-      date: parsed.metadata.date,
-      start_date: parsed.metadata.start_date,
-      end_date: parsed.metadata.end_date,
-      metadata: parsed.metadata.metadata,
-      updatedAt: parsed.metadata.updatedAt,
+      lore: (parsed.metadata as any).lore || "",
       _path: path,
     } as any;
   },
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const syncIOAdapter: ISyncIOAdapter = {
@@ -90,6 +86,7 @@ export const syncIOAdapter: ISyncIOAdapter = {
     await window.showDirectoryPicker({ mode: "readwrite" }),
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const syncNotifier: ISyncNotifier = {
@@ -104,6 +101,7 @@ export const assetIOAdapter: IAssetIOAdapter = {
   writeOpfsFile: writeOpfsFile as any,
   readOpfsBlob: readOpfsBlob as any,
   getDirectoryHandle: getDirHandle as any,
+  isNotFoundError: (err) => isNotFoundError(err),
 };
 
 export const imageProcessor: IImageProcessor = {

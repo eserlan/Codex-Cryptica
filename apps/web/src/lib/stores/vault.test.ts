@@ -96,6 +96,36 @@ vi.mock("../utils/idb", () => ({
   clearPersistedHandle: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../services/cache", () => ({
+  cacheService: {
+    preloadVault: vi.fn().mockResolvedValue(undefined),
+    getPreloadedEntities: vi.fn().mockReturnValue([]),
+    getEntityContent: vi.fn().mockResolvedValue(null),
+    set: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("./vault/adapters", () => ({
+  fileIOAdapter: {},
+  syncIOAdapter: {
+    getLocalHandle: vi.fn().mockResolvedValue(null),
+  },
+  syncNotifier: {},
+  assetIOAdapter: {},
+  imageProcessor: {},
+  createSyncEngine: vi.fn(),
+}));
+
+vi.mock("../utils/opfs", () => ({
+  readFileAsText: vi.fn(),
+  writeOpfsFile: vi.fn(),
+  walkOpfsDirectory: vi.fn(),
+  getDirHandle: vi.fn(),
+  getVaultDir: vi.fn().mockResolvedValue({}),
+  isNotFoundError: vi.fn(),
+  deleteOpfsEntry: vi.fn(),
+}));
+
 // Mock BroadcastChannel
 const mockPostMessage = vi.fn();
 class MockBroadcastChannel {
@@ -112,6 +142,8 @@ class MockBroadcastChannel {
 vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
 
 import { VaultStore } from "./vault.svelte";
+import { cacheService } from "../services/cache";
+import { readFileAsText } from "../utils/opfs";
 
 describe("VaultStore (OPFS)", () => {
   let testVault: VaultStore;
@@ -124,9 +156,12 @@ describe("VaultStore (OPFS)", () => {
     mockRepository = {
       entities: {},
       loadFiles: vi.fn(),
-      scheduleSave: vi.fn(),
+      saveToDisk: vi.fn(),
       clear: vi.fn(),
-      saveQueue: { totalPendingCount: 0 },
+      saveQueue: {
+        totalPendingCount: 0,
+        enqueue: vi.fn((id, cb) => cb()),
+      },
     };
 
     // Ensure window is defined for constructor checks
@@ -161,11 +196,13 @@ describe("VaultStore (OPFS)", () => {
             { chunk1: { id: "chunk1", title: "Chunk 1" } as any },
             1,
             2,
+            {},
           );
           onProgress(
             { chunk2: { id: "chunk2", title: "Chunk 2" } as any },
             2,
             2,
+            {},
           );
         }
         const entities = {
@@ -183,7 +220,7 @@ describe("VaultStore (OPFS)", () => {
   });
 
   it("should create a new entity in OPFS", async () => {
-    mockRepository.scheduleSave.mockResolvedValue(undefined);
+    mockRepository.saveToDisk.mockResolvedValue(undefined);
     await testVault.createEntity("character", "New Character");
     expect(Object.keys(testVault.entities)).toHaveLength(1);
     expect(testVault.entities["new-character"]?.title).toBe("New Character");
@@ -193,6 +230,34 @@ describe("VaultStore (OPFS)", () => {
     testVault.syncCoordinator = null;
     const result = await testVault.syncToLocal();
     expect(result).toBeUndefined();
+  });
+
+  it("should load content via tiered strategy (Cache -> OPFS)", async () => {
+    const entityId = "test-hero";
+    const cachedChronicle = "Cached Chronicle Content";
+    const opfsMarkdown = "---\nlore: Deep Mythos\n---\nFresh Chronicle Content";
+
+    // Initial state: metadata only
+    mockRepository.entities = {
+      [entityId]: { id: entityId, title: "Hero", content: "" } as any,
+    };
+
+    // Tier 1: Cache hit
+    vi.mocked(cacheService.getEntityContent).mockResolvedValue(cachedChronicle);
+
+    // Tier 2: OPFS hit
+    vi.mocked(readFileAsText).mockResolvedValue(opfsMarkdown);
+
+    await testVault.loadEntityContent(entityId);
+
+    // Verify Tier 1 applied immediately (though we await the whole function here)
+    // Verify Tier 2 applied and combined lore
+    const updated = testVault.entities[entityId];
+    expect(updated?.content).toBe("Fresh Chronicle Content");
+    expect(updated?.lore).toBe("Deep Mythos");
+
+    // Verify cache was updated with fresh content
+    expect(cacheService.set).toHaveBeenCalled();
   });
 
   it("should broadcast a RELOAD_VAULT message when broadcastVaultUpdate is called", () => {

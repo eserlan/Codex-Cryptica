@@ -18,7 +18,7 @@ import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
 import { isEntityVisible } from "schema";
 
 export const initializeShellServices = () => {
-  console.log(`[App] ${APP_NAME} v${VERSION} initialized`);
+  debugStore.log(`[App] ${APP_NAME} v${VERSION} initialized`);
 
   helpStore.init();
   themeStore.init();

@@ -33,6 +33,10 @@ export class GraphImageManager {
 
     if (nodesWithImages.length === 0) return;
 
+    console.debug(
+      `[GraphImageManager] Syncing images for ${nodesWithImages.length} nodes...`,
+    );
+
     // Mark them all as resolving immediately
     nodesWithImages.forEach((n) => {
       this.resolvingIds.add(n.id());
@@ -41,6 +45,7 @@ export class GraphImageManager {
     // Bulk process all images concurrently
     void (async () => {
       try {
+        const start = performance.now();
         const results = await Promise.all(
           nodesWithImages.map(async (node) => {
             const imagePath = node.data("image") || node.data("thumbnail");
@@ -81,6 +86,9 @@ export class GraphImageManager {
         }
 
         this.cy.style().update();
+        console.debug(
+          `[GraphImageManager] Resolved ${results.length} images in ${(performance.now() - start).toFixed(2)}ms`,
+        );
         options.onBatchApplied?.(results.length);
       } catch (err) {
         options.onError?.(err);

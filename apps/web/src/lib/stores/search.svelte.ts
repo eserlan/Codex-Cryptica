@@ -1,11 +1,11 @@
 import type { SearchResult } from "schema";
 import { isEntityVisible } from "schema";
-import { searchService } from "$lib/services/search";
+import { searchService as defaultSearchService } from "$lib/services/search";
 import { debugStore } from "./debug.svelte";
-import { vault } from "./vault.svelte";
-import { ui } from "./ui.svelte";
+import { vault as defaultVault } from "./vault.svelte";
+import { ui as defaultUi } from "./ui.svelte";
 
-class SearchStore {
+export class SearchStore {
   query = $state("");
   results = $state<SearchResult[]>([]);
   isOpen = $state(false);
@@ -13,7 +13,19 @@ class SearchStore {
   isLoading = $state(false);
   recents = $state<SearchResult[]>([]);
 
-  constructor() {
+  // Dependencies
+  private vault: typeof defaultVault;
+  private ui: typeof defaultUi;
+  private searchService: typeof defaultSearchService;
+
+  constructor(
+    vault: typeof defaultVault = defaultVault,
+    ui: typeof defaultUi = defaultUi,
+    searchService: typeof defaultSearchService = defaultSearchService,
+  ) {
+    this.vault = vault;
+    this.ui = ui;
+    this.searchService = searchService;
     this.recents = this.loadRecents();
     if (typeof window !== "undefined") {
       window.addEventListener("vault-switched", () => this.reset());
@@ -32,7 +44,7 @@ class SearchStore {
   }
 
   private getStorageKey(): string {
-    return `search_recents_${vault.activeVaultId || "default"}`;
+    return `search_recents_${this.vault.activeVaultId || "default"}`;
   }
 
   private loadRecents(): SearchResult[] {
@@ -94,17 +106,17 @@ class SearchStore {
       }
 
       debugStore.log(`[SearchStore] Searching for: "${query}"`);
-      const results = await searchService.search(query, { limit: 20 });
+      const results = await this.searchService.search(query, { limit: 20 });
       debugStore.log(`[SearchStore] Found ${results.length} raw results.`);
 
       // Filter results based on visibility settings
       const settings = {
-        sharedMode: ui.sharedMode,
-        defaultVisibility: vault.defaultVisibility,
+        sharedMode: this.ui.sharedMode,
+        defaultVisibility: this.vault.defaultVisibility,
       };
 
       const filteredResults = results.filter((result) => {
-        const entity = vault.entities[result.id];
+        const entity = this.vault.entities[result.id];
         if (!entity) {
           debugStore.warn(
             `[SearchStore] Result entity not found in vault: ${result.id}`,

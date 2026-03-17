@@ -1,4 +1,8 @@
-import type { ContextRetrievalService, TextGenerationService, ImageGenerationService } from "schema";
+import type {
+  ContextRetrievalService,
+  TextGenerationService,
+  ImageGenerationService,
+} from "schema";
 
 export type OracleIntent =
   | { type: "chat"; query: string; isAIIntent: boolean }

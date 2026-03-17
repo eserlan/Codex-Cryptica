@@ -1,19 +1,12 @@
 import {
   writeOpfsFile,
-  walkOpfsDirectory,
   getDirHandle,
   isNotFoundError,
   deleteOpfsEntry,
-  type FileEntry,
 } from "../../utils/opfs";
 import { CanvasSchema } from "@codex/canvas-engine";
 import { debugStore } from "../debug.svelte";
-import { cacheService } from "../../services/cache";
-import {
-  parseMarkdown,
-  sanitizeId,
-  stringifyEntity,
-} from "../../utils/markdown";
+import { stringifyEntity } from "../../utils/markdown";
 import type { LocalEntity } from "./types";
 
 import type { Map } from "schema";
@@ -239,114 +232,6 @@ async function walkAllFiles(
   }
 
   return results;
-}
-
-export async function loadVaultFiles(
-  activeVaultId: string,
-  vaultHandle: FileSystemDirectoryHandle,
-  onProgress?: (
-    chunkEntities: Record<string, LocalEntity>,
-    current: number,
-    total: number,
-  ) => void,
-): Promise<{
-  entities: Record<string, LocalEntity>;
-}> {
-  debugStore.log("Loading files from OPFS...");
-
-  const files = await walkOpfsDirectory(vaultHandle, [], (err, path) => {
-    debugStore.error(`Failed to scan ${path.join("/")}`, err);
-  });
-
-  const mdFiles = files.filter((f) => {
-    const name = f.path[f.path.length - 1].toLowerCase();
-    return name.endsWith(".md") || name.endsWith(".markdown");
-  });
-
-  const total = mdFiles.length;
-  debugStore.log(`Found ${total} markdown files in OPFS.`);
-
-  const entities: Record<string, LocalEntity> = {};
-
-  const processFile = async (fileEntry: FileEntry) => {
-    const filePath = fileEntry.path.join("/");
-    const file = await fileEntry.handle.getFile();
-    const lastModified = file.lastModified;
-    const cacheKey = `${activeVaultId}:${filePath}`;
-    const cached = await cacheService.get(cacheKey);
-
-    let entity: LocalEntity;
-
-    if (cached && cached.lastModified === lastModified) {
-      entity = { ...cached.entity, _path: fileEntry.path };
-    } else {
-      const text = await file.text();
-      const { metadata, content } = parseMarkdown(text || "");
-      const id =
-        metadata.id ||
-        sanitizeId(
-          fileEntry.path[fileEntry.path.length - 1].replace(
-            /\.(md|markdown)$/i,
-            "",
-          ),
-        );
-
-      const connections = metadata.connections || [];
-      entity = {
-        id: id!,
-        type: metadata.type || "character",
-        title: metadata.title || id!,
-        tags: metadata.tags || [],
-        labels: metadata.labels || [],
-        connections,
-        content: content,
-        lore: metadata.lore,
-        image: metadata.image,
-        thumbnail: metadata.thumbnail,
-        date: metadata.date,
-        start_date: metadata.start_date,
-        end_date: metadata.end_date,
-        metadata: metadata.metadata,
-        updatedAt: metadata.updatedAt,
-        _path: fileEntry.path,
-      };
-      const cacheKey = `${activeVaultId}:${filePath}`;
-      await cacheService.set(cacheKey, lastModified, entity);
-    }
-
-    if (!entity.id || entity.id === "undefined") return null;
-    return entity;
-  };
-
-  const CHUNK_SIZE = 40;
-  for (let i = 0; i < mdFiles.length; i += CHUNK_SIZE) {
-    const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
-    const chunkResults = await Promise.all(chunk.map(processFile));
-
-    const chunkEntities: Record<string, LocalEntity> = {};
-    for (const entity of chunkResults) {
-      if (entity) {
-        entities[entity.id] = entity;
-        chunkEntities[entity.id] = entity;
-      }
-    }
-
-    if (onProgress) {
-      onProgress(chunkEntities, Math.min(i + CHUNK_SIZE, total), total);
-    }
-
-    // PERCEIVED PERF: Yield to main thread to allow Svelte and Cytoscape to render.
-    // This makes the "world building" effect visible even if processing is fast.
-    if (total > CHUNK_SIZE) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
-    }
-  }
-
-  debugStore.log(
-    `Vault loaded: ${Object.keys(entities).length} entities from OPFS.`,
-  );
-
-  return { entities };
 }
 
 export async function saveEntityToDisk(

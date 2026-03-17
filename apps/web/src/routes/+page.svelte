@@ -39,6 +39,15 @@
     return id ? vault.entities[id] : null;
   });
 
+  // Lazy-load entity content (content + lore) from Dexie when a node is
+  // opened.  Graph entities start with content = "" to keep the initial
+  // load lightweight; this effect fills in the details so the EntityDetailPanel
+  // can render the full entity without a visible blank flash.
+  $effect(() => {
+    const id = vault.selectedEntityId;
+    if (id) vault.loadEntityContent(id);
+  });
+
   // Check if we're in guest/share mode - guard for prerendering
   const shareId = $derived(
     building ? null : page.url.searchParams.get("shareId"),

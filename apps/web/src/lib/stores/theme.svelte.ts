@@ -4,7 +4,7 @@ import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
 import { vault } from "./vault.svelte";
-import { uiStore } from "./ui.svelte";
+import { uiStore as defaultUiStore } from "./ui.svelte";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
 
@@ -18,9 +18,12 @@ function getInitialTheme(): string {
   }
 }
 
-class ThemeStore {
+export class ThemeStore {
   currentThemeId = $state<string>(getInitialTheme());
   previewThemeId = $state<string | null>(null);
+
+  // Dependencies
+  private uiStore: typeof defaultUiStore;
 
   activeTheme = $derived(
     this.previewThemeId
@@ -37,7 +40,7 @@ class ThemeStore {
   } as JargonMap);
 
   /**
-   * Helper to resolve a specific jargon key with optional pluralization.
+   * Helper to resolve a jargon key with optional pluralization.
    */
   resolveJargon(key: keyof JargonMap, count?: number): string {
     if (count !== undefined && count !== 1) {
@@ -47,7 +50,9 @@ class ThemeStore {
     return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
   }
 
-  constructor() {
+  constructor(uiStore: typeof defaultUiStore = defaultUiStore) {
+    this.uiStore = uiStore;
+
     $effect.root(() => {
       $effect(() => {
         this.applyTheme(this.activeTheme);
@@ -60,6 +65,7 @@ class ThemeStore {
 
     // If we have an active vault ID already (from registry init), use it.
     // Otherwise, fall back to global selection until a vault is explicitly switched.
+    // Note: We access vault singleton here lazily to avoid circular dependency at module load time.
     if (vault.activeVaultId) {
       await this.loadForVault(vault.activeVaultId);
     } else {
@@ -71,7 +77,7 @@ class ThemeStore {
   }
 
   async loadForVault(vaultId: string) {
-    if (!browser || uiStore.isDemoMode) return;
+    if (!browser || this.uiStore.isDemoMode) return;
     try {
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
@@ -98,7 +104,7 @@ class ThemeStore {
     this.currentThemeId = id;
     if (browser) {
       // Don't persist theme if in demo mode
-      if (uiStore.isDemoMode) return;
+      if (this.uiStore.isDemoMode) return;
 
       localStorage.setItem(STORAGE_KEY, id);
       const activeVaultId = vault.activeVaultId;
@@ -193,4 +199,11 @@ class ThemeStore {
   }
 }
 
-export const themeStore = new ThemeStore();
+const THEME_KEY = "__codex_theme_instance__";
+export const themeStore: ThemeStore =
+  (globalThis as any)[THEME_KEY] ??
+  ((globalThis as any)[THEME_KEY] = new ThemeStore());
+
+if (typeof window !== "undefined") {
+  (window as any).themeStore = themeStore;
+}

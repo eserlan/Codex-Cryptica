@@ -13,7 +13,7 @@ function createDebugStore() {
   const addLog = (level: LogEntry["level"], message: string, data?: any) => {
     update((logs) => {
       const newLog = { timestamp: Date.now(), level, message, data };
-      return [newLog, ...logs].slice(0, 100); // Keep last 100 logs
+      return [newLog, ...logs].slice(0, 500); // Keep last 500 logs
     });
   };
 

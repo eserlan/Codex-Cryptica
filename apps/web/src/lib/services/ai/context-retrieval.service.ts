@@ -91,7 +91,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
           { limit: 1 },
         );
         if (styleResults.length > 0 && styleResults[0].score > 0.5) {
-          const styleEntity = vault.entities[styleResults[0].id];
+          const styleId = styleResults[0].id;
+          // Ensure content is loaded from Dexie before reading context.
+          await vault.loadEntityContent?.(styleId);
+          const styleEntity = vault.entities[styleId];
           if (styleEntity) {
             styleContext = `--- GLOBAL ART STYLE ---\n${this.getConsolidatedContext(styleEntity)}\n\n`;
             activeStyleTitle = styleEntity.title;
@@ -155,6 +158,29 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       primaryEntityId = lastEntityId;
     } else {
       primaryEntityId = activeId || topSearchResult?.id;
+    }
+
+    // Pre-load content for all entity IDs that will contribute to the oracle
+    // context.  This is needed because graph entities start with content = ""
+    // (lazy-loaded); the Dexie round-trip is batched here to keep the loop
+    // below synchronous.
+    if (vault.loadEntityContent) {
+      const candidateIds = new Set<string>();
+      if (activeId) candidateIds.add(activeId);
+      if (lastEntityId) candidateIds.add(lastEntityId);
+      for (const res of results) candidateIds.add(res.id);
+      // Also pre-fetch connections of the top 3 results.
+      for (const res of results.slice(0, 3)) {
+        const e = vault.entities[res.id];
+        if (e?.connections) {
+          for (const c of e.connections) {
+            candidateIds.add(c.target);
+          }
+        }
+      }
+      await Promise.all(
+        Array.from(candidateIds).map((id) => vault.loadEntityContent(id)),
+      );
     }
 
     const contextMap = new Map<string, string>();

@@ -1,12 +1,15 @@
-import { contextRetrievalService } from "../services/ai/context-retrieval.service";
-import { textGenerationService } from "../services/ai/text-generation.service";
-import { imageGenerationService } from "../services/ai/image-generation.service";
+import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
+import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
+import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
 import { getDB } from "../utils/idb";
-import { graph } from "./graph.svelte";
-import { vault } from "./vault.svelte";
-import { uiStore } from "./ui.svelte";
-import { diceEngine, diceParser } from "dice-engine";
-import { diceHistory } from "./dice-history.svelte";
+import { graph as defaultGraph } from "./graph.svelte";
+import { vault as defaultVault } from "./vault.svelte";
+import { uiStore as defaultUiStore } from "./ui.svelte";
+import {
+  diceEngine as defaultDiceEngine,
+  diceParser as defaultDiceParser,
+} from "dice-engine";
+import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import {
   ChatHistoryService,
   OracleCommandParser,
@@ -26,14 +29,44 @@ export class OracleStore {
   isModal = $state(false);
   isInitialized = $state(false);
 
+  // Dependencies
+  private vault: typeof defaultVault;
+  private uiStore: typeof defaultUiStore;
+  private graph: typeof defaultGraph;
+  private diceHistory: typeof defaultDiceHistory;
+  private contextRetrieval: typeof defaultContextRetrieval;
+  private textGeneration: typeof defaultTextGeneration;
+  private imageGeneration: typeof defaultImageGeneration;
+  private diceEngine: typeof defaultDiceEngine;
+  private diceParser: typeof defaultDiceParser;
+
   constructor(
     private chatHistory = new ChatHistoryService(),
     private settings = new OracleSettingsService(),
     private undoRedo = new UndoRedoService(),
     private executor = new OracleActionExecutor(),
+    vault: typeof defaultVault = defaultVault,
+    uiStore: typeof defaultUiStore = defaultUiStore,
+    graph: typeof defaultGraph = defaultGraph,
+    diceHistory: typeof defaultDiceHistory = defaultDiceHistory,
+    contextRetrieval: typeof defaultContextRetrieval = defaultContextRetrieval,
+    textGeneration: typeof defaultTextGeneration = defaultTextGeneration,
+    imageGeneration: typeof defaultImageGeneration = defaultImageGeneration,
+    diceEngine: typeof defaultDiceEngine = defaultDiceEngine,
+    diceParser: typeof defaultDiceParser = defaultDiceParser,
   ) {
+    this.vault = vault;
+    this.uiStore = uiStore;
+    this.graph = graph;
+    this.diceHistory = diceHistory;
+    this.contextRetrieval = contextRetrieval;
+    this.textGeneration = textGeneration;
+    this.imageGeneration = imageGeneration;
+    this.diceEngine = diceEngine;
+    this.diceParser = diceParser;
+
     if (typeof window !== "undefined") {
-      diceHistory.init();
+      this.diceHistory.init();
       window.addEventListener("vault-switched", () => this.clearMessages());
     }
   }
@@ -88,7 +121,7 @@ export class OracleStore {
     const key = this.effectiveApiKey;
     if (
       !key &&
-      !uiStore.liteMode &&
+      !this.uiStore.liteMode &&
       !query.toLowerCase().trim().startsWith("/roll")
     )
       return;
@@ -98,7 +131,7 @@ export class OracleStore {
       const { searchService } = await import("../services/search");
       const { nodeMergeService } =
         await import("../services/node-merge.service");
-      const intent = OracleCommandParser.parse(query, uiStore.liteMode);
+      const intent = OracleCommandParser.parse(query, this.uiStore.liteMode);
 
       await this.executor.execute(
         intent,
@@ -141,23 +174,23 @@ export class OracleStore {
     nodeMergeService: any = null,
   ): OracleExecutionContext {
     return {
-      vault,
-      textGeneration: textGenerationService,
-      imageGeneration: imageGenerationService,
-      contextRetrieval: contextRetrievalService,
-      diceEngine,
-      diceParser,
-      diceHistory,
+      vault: this.vault,
+      textGeneration: this.textGeneration,
+      imageGeneration: this.imageGeneration,
+      contextRetrieval: this.contextRetrieval,
+      diceEngine: this.diceEngine,
+      diceParser: this.diceParser,
+      diceHistory: this.diceHistory,
       searchService,
       nodeMergeService,
-      uiStore,
-      graph,
+      uiStore: this.uiStore,
+      graph: this.graph,
       chatHistory: this.chatHistory,
       undoRedo: this.undoRedo,
       tier: this.tier,
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.settings.modelName,
-      isDemoMode: uiStore.isDemoMode,
+      isDemoMode: this.uiStore.isDemoMode,
     };
   }
 
@@ -241,4 +274,11 @@ export class OracleStore {
   }
 }
 
-export const oracle = new OracleStore();
+const ORACLE_KEY = "__codex_oracle_instance__";
+export const oracle: OracleStore =
+  (globalThis as any)[ORACLE_KEY] ??
+  ((globalThis as any)[ORACLE_KEY] = new OracleStore());
+
+if (typeof window !== "undefined") {
+  (window as any).oracle = oracle;
+}

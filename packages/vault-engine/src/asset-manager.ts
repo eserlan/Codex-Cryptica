@@ -16,6 +16,7 @@ export interface IAssetIOAdapter {
     path: string[],
     create?: boolean,
   ): Promise<FileSystemDirectoryHandle>;
+  isNotFoundError(err: any): boolean;
 }
 
 export class AssetManager {
@@ -39,36 +40,31 @@ export class AssetManager {
     const filename = `${baseName}.webp`;
     const thumbFilename = `${baseName}_thumb.webp`;
 
-    try {
-      // Convert original image to WebP and save
-      const webpBlob = await this.imageProcessor.convertToWebP(blob);
-      await this.ioAdapter.writeOpfsFile(
-        ["images", filename],
-        webpBlob,
-        vaultHandle,
-        vaultHandle.name,
-      );
+    // Convert original image to WebP and save
+    const webpBlob = await this.imageProcessor.convertToWebP(blob);
+    await this.ioAdapter.writeOpfsFile(
+      ["images", filename],
+      webpBlob,
+      vaultHandle,
+      vaultHandle.name,
+    );
 
-      // Generate and save thumbnail
-      const thumbnailBlob = await this.imageProcessor.generateThumbnail(
-        blob,
-        200,
-      );
-      await this.ioAdapter.writeOpfsFile(
-        ["images", thumbFilename],
-        thumbnailBlob,
-        vaultHandle,
-        vaultHandle.name,
-      );
+    // Generate and save thumbnail
+    const thumbnailBlob = await this.imageProcessor.generateThumbnail(
+      blob,
+      200,
+    );
+    await this.ioAdapter.writeOpfsFile(
+      ["images", thumbFilename],
+      thumbnailBlob,
+      vaultHandle,
+      vaultHandle.name,
+    );
 
-      return {
-        image: `images/${filename}`,
-        thumbnail: `images/${thumbFilename}`,
-      };
-    } catch (err: any) {
-      console.error("Failed to save image to OPFS", err);
-      throw err;
-    }
+    return {
+      image: `images/${filename}`,
+      thumbnail: `images/${thumbFilename}`,
+    };
   }
 
   async resolveImageUrl(
@@ -119,8 +115,7 @@ export class AssetManager {
             if (!response.ok)
               throw new Error(`Fetch failed: ${response.status}`);
             blob = await response.blob();
-          } catch (err) {
-            console.warn(`Failed to fetch external image ${cleanPath}`, err);
+          } catch {
             return cleanPath;
           }
 
@@ -132,11 +127,7 @@ export class AssetManager {
           );
           return URL.createObjectURL(blob);
         }
-      } catch (err: any) {
-        console.warn(
-          `Failed to process external image cache for ${cleanPath}`,
-          err,
-        );
+      } catch {
         return cleanPath;
       }
     }
@@ -146,8 +137,7 @@ export class AssetManager {
       try {
         const blob = await fileFetcher(cleanPath);
         return URL.createObjectURL(blob);
-      } catch (err) {
-        console.warn(`Failed to fetch remote image: ${cleanPath}`, err);
+      } catch {
         return "";
       }
     }
@@ -164,15 +154,9 @@ export class AssetManager {
       const blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
       return URL.createObjectURL(blob);
     } catch (err: any) {
-      // If the file or directory doesn't exist, just return empty string to avoid crashing the graph.
-      // We check multiple properties because different browsers and our own wrapping can vary.
-      const isNotFound =
-        err.name === "NotFoundError" ||
-        err.code === 8 ||
-        err.message?.toLowerCase().includes("not found") ||
-        err.cause?.name === "NotFoundError";
-
-      if (isNotFound) {
+      // Gracefully handle "Not Found" errors from the File System API.
+      // This prevents the UI from crashing if an entity references a missing image.
+      if (this.ioAdapter.isNotFoundError(err)) {
         return "";
       }
       console.warn(`Failed to resolve image path: ${cleanPath}`, err);
