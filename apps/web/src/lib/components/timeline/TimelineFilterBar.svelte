@@ -60,6 +60,7 @@
   <label class="flex items-center gap-2 cursor-pointer group">
     <input
       type="checkbox"
+      aria-label="Include Undated Entries"
       bind:checked={timelineStore.includeUndated}
       class="sr-only"
     />
