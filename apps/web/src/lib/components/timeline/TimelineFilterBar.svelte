@@ -23,6 +23,7 @@
   <div class="flex items-center gap-2">
     <span class="text-theme-muted uppercase tracking-widest">Filter:</span>
     <select
+      aria-label="Filter Timeline by Type"
       bind:value={timelineStore.filterType}
       class="bg-theme-bg border border-theme-border rounded px-2 py-1 text-theme-text outline-none focus:border-theme-primary transition-colors"
     >
@@ -38,6 +39,7 @@
     <span class="text-theme-muted uppercase tracking-widest">Years:</span>
     <input
       type="number"
+      aria-label="Timeline Filter Start Year"
       bind:value={startYear}
       onchange={applyRange}
       placeholder="Start"
@@ -46,6 +48,7 @@
     <span class="text-theme-muted">→</span>
     <input
       type="number"
+      aria-label="Timeline Filter End Year"
       bind:value={endYear}
       onchange={applyRange}
       placeholder="End"
@@ -57,6 +60,7 @@
   <label class="flex items-center gap-2 cursor-pointer group">
     <input
       type="checkbox"
+      aria-label="Include Undated Entries"
       bind:checked={timelineStore.includeUndated}
       class="sr-only"
     />
