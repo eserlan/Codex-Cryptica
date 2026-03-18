@@ -21,8 +21,8 @@
     },
     { id: "schema", label: "Schema", icon: "icon-[lucide--tags]" },
     {
-      id: "aesthetics",
-      label: "Aesthetics",
+      id: "theme",
+      label: "Theme",
       icon: "icon-[lucide--palette]",
     },
     { id: "help", label: "Help", icon: "icon-[lucide--help-circle]" },
@@ -347,11 +347,11 @@
             </p>
             <LabelSettings />
           </div>
-        {:else if uiStore.activeSettingsTab === "aesthetics"}
+        {:else if uiStore.activeSettingsTab === "theme"}
           <div
             role="tabpanel"
-            id="settings-panel-aesthetics"
-            aria-labelledby="settings-tab-aesthetics"
+            id="settings-panel-theme"
+            aria-labelledby="settings-tab-theme"
             class="space-y-10 max-w-3xl mx-auto"
           >
             <section>

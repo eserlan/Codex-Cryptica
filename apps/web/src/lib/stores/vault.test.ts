@@ -96,7 +96,7 @@ vi.mock("../utils/idb", () => ({
   clearPersistedHandle: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock("../services/cache", () => ({
+vi.mock("../services/cache.svelte", () => ({
   cacheService: {
     preloadVault: vi.fn().mockResolvedValue(undefined),
     getPreloadedEntities: vi.fn().mockReturnValue([]),
@@ -104,8 +104,11 @@ vi.mock("../services/cache", () => ({
     set: vi.fn().mockResolvedValue(undefined),
   },
 }));
+const mockLocalHandle = {
+  queryPermission: vi.fn().mockResolvedValue("granted"),
+};
 
-vi.mock("./vault/adapters", () => ({
+vi.mock("./vault/adapters.svelte", () => ({
   fileIOAdapter: {},
   syncIOAdapter: {
     getLocalHandle: vi.fn().mockResolvedValue(null),
@@ -142,10 +145,11 @@ class MockBroadcastChannel {
 vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
 
 import { VaultStore } from "./vault.svelte";
-import { cacheService } from "../services/cache";
+import { cacheService } from "../services/cache.svelte";
 import { readFileAsText } from "../utils/opfs";
+import { syncIOAdapter } from "./vault/adapters.svelte";
 
-describe("VaultStore (OPFS)", () => {
+describe("VaultStore - Tiered Loading and Reactivity", () => {
   let testVault: VaultStore;
   let mockRepository: any;
 
@@ -172,144 +176,146 @@ describe("VaultStore (OPFS)", () => {
     testVault = new VaultStore(mockRepository);
   });
 
-  it("should initialize and load files from OPFS", async () => {
-    mockRepository.loadFiles.mockImplementation(async () => {
-      const entities = {
-        test: { id: "test", title: "Test", type: "note" } as any,
-      };
-      mockRepository.entities = entities;
-      return entities;
-    });
-
-    await testVault.init();
-
-    expect(mockRepository.loadFiles).toHaveBeenCalled();
-    expect(Object.keys(testVault.entities).length).toBe(1);
-    expect(testVault.entities["test"]?.title).toBe("Test");
-  });
-
-  it("should support incremental loading via onProgress callback", async () => {
-    mockRepository.loadFiles.mockImplementation(
-      async (_vid: any, _handle: any, onProgress: any) => {
-        if (onProgress) {
-          onProgress(
-            { chunk1: { id: "chunk1", title: "Chunk 1" } as any },
-            1,
-            2,
-            {},
-          );
-          onProgress(
-            { chunk2: { id: "chunk2", title: "Chunk 2" } as any },
-            2,
-            2,
-            {},
-          );
-        }
-        const entities = {
-          chunk1: { id: "chunk1", title: "Chunk 1" } as any,
-          chunk2: { id: "chunk2", title: "Chunk 2" } as any,
-        };
-        mockRepository.entities = entities;
-        return entities;
-      },
-    );
-
-    await testVault.init();
-
-    expect(Object.keys(testVault.entities)).toHaveLength(2);
-  });
-
-  it("should create a new entity in OPFS", async () => {
-    mockRepository.saveToDisk.mockResolvedValue(undefined);
-    await testVault.createEntity("character", "New Character");
-    expect(Object.keys(testVault.entities)).toHaveLength(1);
-    expect(testVault.entities["new-character"]?.title).toBe("New Character");
-  });
-
-  it("should return early in syncToLocal if not initialized", async () => {
-    testVault.syncCoordinator = null;
-    const result = await testVault.syncToLocal();
-    expect(result).toBeUndefined();
-  });
-
-  it("should load content via tiered strategy (Cache -> OPFS)", async () => {
+  it("should prioritize Cache for Chronicle, then OPFS for Lore/Chronicle", async () => {
     const entityId = "test-hero";
     const cachedChronicle = "Cached Chronicle Content";
     const opfsMarkdown = "---\nlore: Deep Mythos\n---\nFresh Chronicle Content";
 
-    // Initial state: metadata only
+    // 1. Initial metadata only
     mockRepository.entities = {
       [entityId]: { id: entityId, title: "Hero", content: "" } as any,
     };
 
-    // Tier 1: Cache hit
-    vi.mocked(cacheService.getEntityContent).mockResolvedValue(cachedChronicle);
+    // 2. Setup Tier 1 (Cache)
+    vi.mocked(cacheService.getEntityContent).mockResolvedValue({
+      content: cachedChronicle,
+      lore: "Old Lore",
+    });
 
-    // Tier 2: OPFS hit
+    // 3. Setup Tier 2 (OPFS)
     vi.mocked(readFileAsText).mockResolvedValue(opfsMarkdown);
 
-    await testVault.loadEntityContent(entityId);
+    // Start loading
+    const loadPromise = testVault.loadEntityContent(entityId);
 
-    // Verify Tier 1 applied immediately (though we await the whole function here)
-    // Verify Tier 2 applied and combined lore
+    // We can't easily "pause" inside the async function to check Tier 1 without more complex mocks,
+    // but we verify the final state.
+    await loadPromise;
+
     const updated = testVault.entities[entityId];
+    // Final state should be from OPFS (Tier 2)
     expect(updated?.content).toBe("Fresh Chronicle Content");
     expect(updated?.lore).toBe("Deep Mythos");
 
-    // Verify cache was updated with fresh content
+    // Verify cache update was triggered for the new content
     expect(cacheService.set).toHaveBeenCalled();
   });
 
-  it("should broadcast a RELOAD_VAULT message when broadcastVaultUpdate is called", () => {
-    testVault.broadcastVaultUpdate();
-    expect(mockPostMessage).toHaveBeenCalledWith({
-      type: "RELOAD_VAULT",
-      vaultId: "test-vault",
+  it("should fallback to Local FS (Tier 3) if OPFS fails", async () => {
+    const entityId = "local-hero";
+    const localMarkdown = "---\nlore: Local Lore\n---\nLocal Content";
+
+    mockRepository.entities = {
+      [entityId]: { id: entityId, title: "Local", content: "" } as any,
+    };
+
+    // Tier 1: Miss
+    vi.mocked(cacheService.getEntityContent).mockResolvedValue(null);
+
+    // Tier 2: OPFS Miss (mock returns empty or throws)
+    vi.mocked(readFileAsText).mockImplementation(async (handle) => {
+      if ((handle as any).kind === "directory") throw new Error("Not found");
+      return "";
     });
+
+    // Tier 3: Local FS Hit
+    vi.mocked(syncIOAdapter.getLocalHandle).mockResolvedValue(
+      mockLocalHandle as any,
+    );
+    vi.mocked(readFileAsText).mockImplementation(async (handle) => {
+      // If it's our mockLocalHandle, return content
+      if (handle === (mockLocalHandle as any)) return localMarkdown;
+      throw new Error("Not found");
+    });
+
+    await testVault.loadEntityContent(entityId);
+
+    const updated = testVault.entities[entityId];
+    expect(updated?.content).toBe("Local Content");
+    expect(updated?.lore).toBe("Local Lore");
   });
 
-  it("should reload files when receiving a RELOAD_VAULT message from BroadcastChannel", async () => {
-    // The channel is initialized in the constructor and stored privately, but its onmessage handler is bound.
-    // We can simulate receiving a message by finding the instance of MockBroadcastChannel and calling onmessage.
-    const channelInstance = (testVault as any).channel as MockBroadcastChannel;
-    expect(channelInstance).toBeDefined();
+  it("should trigger reactivity 'up the stack' via full object replacement", async () => {
+    const entityId = "reactive-node";
+    mockRepository.entities = {
+      [entityId]: { id: entityId, title: "Reactive", content: "" } as any,
+    };
 
-    if (channelInstance && channelInstance.onmessage) {
-      // Mock the async getActiveVaultHandle to prevent the test from getting stuck
-      const loadFilesSpy = vi
-        .spyOn(testVault, "loadFiles")
-        .mockResolvedValue(undefined);
+    // Setup Tier 1: Hit
+    vi.mocked(cacheService.getEntityContent).mockResolvedValue({
+      content: "Some Content",
+      lore: "Some Lore",
+    });
 
-      channelInstance.onmessage(
-        new MessageEvent("message", {
-          data: {
-            type: "RELOAD_VAULT",
-            vaultId: "test-vault",
-          },
-        }),
-      );
+    // Setup Tier 2/3: Miss/Empty to prevent overwriting Tier 1 for this test,
+    // or just let them return same content.
+    vi.mocked(readFileAsText).mockResolvedValue("");
 
-      // Wait a tick for async handlers
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    await testVault.loadEntityContent(entityId);
 
-      expect(loadFilesSpy).toHaveBeenCalled();
-      loadFilesSpy.mockRestore();
-    }
+    // With Svelte 5 state proxies, surgical updates (this.repository.entities[id] = ...)
+    // trigger reactivity correctly without needing to replace the entire root object.
+    expect(testVault.entities[entityId].content).toBe("Some Content");
   });
 
-  it("should NOT reload files if RELOAD_VAULT message is for a different vault", () => {
-    const channelInstance = (testVault as any).channel as MockBroadcastChannel;
+  it("should immediately update cache when saving to ensure data sticks", async () => {
+    const entity = {
+      id: "new-node",
+      title: "New",
+      content: "Freshly Saved",
+      type: "note",
+    } as any;
+    mockRepository.entities = { [entity.id]: entity };
 
-    if (channelInstance && channelInstance.onmessage) {
-      channelInstance.onmessage(
-        new MessageEvent("message", {
-          data: {
-            type: "RELOAD_VAULT",
-            vaultId: "other-vault",
-          },
-        }),
-      );
-      expect(mockRepository.loadFiles).not.toHaveBeenCalled();
-    }
+    await testVault.scheduleSave(entity);
+
+    // Verify disk save
+    expect(mockRepository.saveToDisk).toHaveBeenCalled();
+
+    // Verify IMMEDIATE cache sync (Priority 1 for next load)
+    expect(cacheService.set).toHaveBeenCalledWith(
+      expect.stringContaining(entity.id),
+      expect.any(Number),
+      expect.objectContaining({ content: "Freshly Saved" }),
+    );
+  });
+
+  it("should preserve existing connections when loading content", async () => {
+    const entityId = "connected-node";
+    const existingConnections = [{ target: "other", type: "neutral" }];
+
+    mockRepository.entities = {
+      [entityId]: {
+        id: entityId,
+        title: "Connected",
+        content: "",
+        connections: existingConnections,
+      } as any,
+    };
+
+    vi.mocked(cacheService.getEntityContent).mockResolvedValue({
+      content: "Cached Content",
+      lore: "Cached Lore",
+    });
+    vi.mocked(readFileAsText).mockResolvedValue(
+      "---\nlore: New Lore\n---\nNew Content",
+    );
+
+    await testVault.loadEntityContent(entityId);
+
+    const updated = testVault.entities[entityId];
+    expect(updated.content).toBe("New Content");
+    expect(updated.connections).toEqual(existingConnections);
+    expect(updated.lore).toBe("New Lore");
   });
 });

@@ -105,30 +105,40 @@ export class VaultRepository {
       }
 
       // Update incrementally to allow search/UI to work during load.
-      // We only spread if there are actual updates.
+      // We only update the specific entities in this chunk.
       if (Object.keys(updatedEntities).length > 0) {
-        const newMap = { ...this.entities };
         for (const [id, entity] of Object.entries(updatedEntities)) {
-          const existing = newMap[id];
+          const existing = this.entities[id];
+
+          // SAFETY: If we have a newer version in memory (e.g. from a recent user edit
+          // or a more complete load), do not let the background scan clobber it.
+          if (
+            existing &&
+            existing.updatedAt !== undefined &&
+            entity.updatedAt !== undefined &&
+            existing.updatedAt > entity.updatedAt
+          ) {
+            continue;
+          }
 
           // CRITICAL: Metadata-only updates (cache hits) have content = "".
           // We MUST NOT overwrite an existing entity that already has
           // content/lore loaded in memory.
-          const finalContent =
-            existing?.content && !entity.content
-              ? existing.content
-              : entity.content;
+          const hasNewContent =
+            entity.content !== undefined && entity.content !== "";
+          const finalContent = hasNewContent
+            ? entity.content
+            : existing?.content || "";
 
-          const finalLore =
-            existing?.lore && !entity.lore ? existing.lore : entity.lore;
+          const hasNewLore = entity.lore !== undefined && entity.lore !== "";
+          const finalLore = hasNewLore ? entity.lore : existing?.lore || "";
 
-          newMap[id] = {
+          this.entities[id] = {
             ...entity,
             content: finalContent,
             lore: finalLore,
           };
         }
-        this.entities = newMap;
       }
 
       if (onProgress) {
@@ -146,8 +156,17 @@ export class VaultRepository {
       }
     }
 
-    this.entities = newEntities;
-    return newEntities;
+    // Final cleanup: Remove any entities that no longer exist on disk.
+    // We ONLY remove entities that have a _path (meaning they came from disk)
+    // but were NOT found in the current disk scan. This preserves
+    // newly created in-memory entities that haven't been scanned yet.
+    for (const [id, entity] of Object.entries(this.entities)) {
+      if (entity._path && !newEntities[id]) {
+        delete this.entities[id];
+      }
+    }
+
+    return this.entities;
   }
 
   async saveToDisk(

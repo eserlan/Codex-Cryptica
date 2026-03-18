@@ -16,17 +16,42 @@
       `ipt>`,
   );
 
+  const isSpecialEnv =
+    import.meta.env.DEV ||
+    (typeof window !== "undefined" && (window as any).__E2E__) ||
+    import.meta.env.VITE_STAGING === "true";
+
+  const logChunkError = (name: string, error: any) => {
+    if (isSpecialEnv) {
+      console.error(`Failed to load ${name}`, error);
+    } else {
+      import("$lib/stores/debug.svelte")
+        .then((m) => {
+          if (m?.debugStore) {
+            m.debugStore.error(`Failed to lazy-load component: ${name}`, error);
+          }
+        })
+        .catch((e) => {
+          console.error(
+            `Failed to lazy-load component: ${name} (and debug store failed too)`,
+            error,
+            e,
+          );
+        });
+    }
+  };
+
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
     if (!GraphView) {
-      import("../lib/components/GraphView.svelte").then((m) => {
-        GraphView = m.default;
-      });
+      import("../lib/components/GraphView.svelte")
+        .then((m) => (GraphView = m?.default))
+        .catch((err) => logChunkError("GraphView", err));
     }
     if (!EntityDetailPanel) {
-      import("../lib/components/EntityDetailPanel.svelte").then((m) => {
-        EntityDetailPanel = m.default;
-      });
+      import("../lib/components/EntityDetailPanel.svelte")
+        .then((m) => (EntityDetailPanel = m?.default))
+        .catch((err) => logChunkError("EntityDetailPanel", err));
     }
   }
 
@@ -37,15 +62,6 @@
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
     return id ? vault.entities[id] : null;
-  });
-
-  // Lazy-load entity content (content + lore) from Dexie when a node is
-  // opened.  Graph entities start with content = "" to keep the initial
-  // load lightweight; this effect fills in the details so the EntityDetailPanel
-  // can render the full entity without a visible blank flash.
-  $effect(() => {
-    const id = vault.selectedEntityId;
-    if (id) vault.loadEntityContent(id);
   });
 
   // Check if we're in guest/share mode - guard for prerendering
@@ -101,9 +117,11 @@
               vault.defaultVisibility = graph.defaultVisibility;
             }
             // Force shared mode for guests to ensure Fog of War is active
-            import("../lib/stores/ui.svelte").then(({ ui }) => {
-              ui.sharedMode = true;
-            });
+            import("../lib/stores/ui.svelte")
+              .then((m) => {
+                if (m?.ui) m.ui.sharedMode = true;
+              })
+              .catch((err) => console.error("Failed to load ui store", err));
             vault.isInitialized = true; // Mark vault as initialized in guest mode
             vault.status = "idle";
           },

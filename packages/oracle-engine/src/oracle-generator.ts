@@ -8,10 +8,14 @@ export class OracleGenerator {
   async identifyPrimaryEntity(
     query: string,
     context: OracleExecutionContext,
-  ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
+  ): Promise<{
+    primaryEntityId?: string;
+    sourceIds: string[];
+    searchQuery: string;
+  }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
     const apiKey = context.effectiveApiKey;
-    if (!apiKey) return { sourceIds: [] };
+    if (!apiKey) return { sourceIds: [], searchQuery: query };
 
     // 1. Expand query if follow-up
     let searchQuery = query;
@@ -42,7 +46,7 @@ export class OracleGenerator {
         false,
       );
 
-    return { primaryEntityId, sourceIds };
+    return { primaryEntityId, sourceIds, searchQuery };
   }
 
   /**
@@ -67,10 +71,8 @@ export class OracleGenerator {
     }
 
     // 1. Identify primary entity and gather context metadata
-    const { primaryEntityId, sourceIds } = await this.identifyPrimaryEntity(
-      query,
-      context,
-    );
+    const { primaryEntityId, sourceIds, searchQuery } =
+      await this.identifyPrimaryEntity(query, context);
 
     // 2. Retrieve the actual context content for the identified entities
     // (Optimization: we could fold this into identifyPrimaryEntity if needed,
@@ -81,7 +83,7 @@ export class OracleGenerator {
 
     const { content: aiContext } =
       await context.contextRetrieval.retrieveContext(
-        query, // Use original query for specific retrieval here
+        searchQuery, // Use expanded search query for specific retrieval here
         alreadySentTitles,
         context.vault,
         lastEntityId,

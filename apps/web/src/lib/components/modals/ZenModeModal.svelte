@@ -15,6 +15,13 @@
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
+  // Lazy-load content when Zen Mode is opened or navigated
+  $effect(() => {
+    if (entityId) {
+      vault.loadEntityContent(entityId);
+    }
+  });
+
   // Logic & State Hooks
   let editState = $state(createEditState(null));
   const actions = createZenModeActions(() => editState);

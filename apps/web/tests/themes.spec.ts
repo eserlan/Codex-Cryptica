@@ -19,7 +19,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByTestId("settings-button").click();
 
     // 2. Go to Aesthetics tab
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
 
     // 3. Select Fantasy theme
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
@@ -108,7 +108,7 @@ test.describe("Visual Styling Templates", () => {
     await page.getByTestId("settings-button").click();
 
     // 2. Go to Aesthetics tab
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
 
     // 3. Select Horror theme
     await page.getByRole("button", { name: "Blood & Noir" }).click();
@@ -145,7 +145,7 @@ test.describe("Visual Styling Templates", () => {
   test("Timeline button is theme-aware", async ({ page }) => {
     // 1. Open Settings and select Cyberpunk (Neon Night)
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
     await page.getByRole("button", { name: "Neon Night" }).click();
 
     // Wait for the accent color to update to cyberpunk yellow (#facc15)
@@ -168,7 +168,7 @@ test.describe("Visual Styling Templates", () => {
 
   test("Theme selection persists across reloads", async ({ page }) => {
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
     await page.getByRole("button", { name: "Neon Night" }).click();
 
     // Verify cyberpunk color
@@ -193,7 +193,7 @@ test.describe("Visual Styling Templates", () => {
   test("LegalDocument uses theme-aware styling", async ({ page }) => {
     // 1. Switch to Fantasy theme
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
     await page.getByRole("button", { name: "Ancient Parchment" }).click();
     await page.getByLabel("Close Settings").click();
 

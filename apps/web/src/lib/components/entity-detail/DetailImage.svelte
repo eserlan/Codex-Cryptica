@@ -75,6 +75,7 @@
           entity.id,
         );
         await vault.updateEntity(entity.id, { image, thumbnail });
+        return;
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save Oracle image:", err);
         alert("Failed to archive image from Oracle.");

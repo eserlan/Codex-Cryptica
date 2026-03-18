@@ -41,43 +41,43 @@
   $effect(() => {
     if (uiStore.showZenMode && !ZenModeModal) {
       import("$lib/components/modals/ZenModeModal.svelte")
-        .then((m) => (ZenModeModal = m.default))
+        .then((m) => (ZenModeModal = m?.default))
         .catch((e) => logChunkError("ZenModeModal", e));
     }
 
     if (helpStore.activeTour && !TourOverlay) {
       import("$lib/components/help/TourOverlay.svelte")
-        .then((m) => (TourOverlay = m.default))
+        .then((m) => (TourOverlay = m?.default))
         .catch((e) => logChunkError("TourOverlay", e));
     }
 
     if (uiStore.mergeDialog.open && !MergeNodesDialog) {
       import("$lib/components/dialogs/MergeNodesDialog.svelte")
-        .then((m) => (MergeNodesDialog = m.default))
+        .then((m) => (MergeNodesDialog = m?.default))
         .catch((e) => logChunkError("MergeNodesDialog", e));
     }
 
     if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
       import("$lib/components/dialogs/BulkLabelDialog.svelte")
-        .then((m) => (BulkLabelDialog = m.default))
+        .then((m) => (BulkLabelDialog = m?.default))
         .catch((e) => logChunkError("BulkLabelDialog", e));
     }
 
     if (!DiceModal) {
       import("$lib/components/dice/DiceModal.svelte")
-        .then((m) => (DiceModal = m.default))
+        .then((m) => (DiceModal = m?.default))
         .catch((e) => logChunkError("DiceModal", e));
     }
 
     if (!OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
-        .then((m) => (OracleWindow = m.default))
+        .then((m) => (OracleWindow = m?.default))
         .catch((e) => logChunkError("OracleWindow", e));
     }
 
     if (isSpecialEnv && !DebugConsole) {
       import("$lib/components/debug/DebugConsole.svelte")
-        .then((m) => (DebugConsole = m.default))
+        .then((m) => (DebugConsole = m?.default))
         .catch((e) => logChunkError("DebugConsole", e));
     }
   });

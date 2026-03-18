@@ -1,7 +1,7 @@
 ---
 id: themes
 title: Themes
-tags: ["interface", "aesthetics", "customization"]
+tags: ["interface", "themes", "customization"]
 rank: 15
 ---
 
@@ -14,7 +14,7 @@ Codex Cryptica allows you to shift the visual dimension of your workspace using 
 You can switch between available templates at any time:
 
 1.  Open **Settings** (click the gear icon or press `S`).
-2.  Navigate to the **Aesthetics** tab.
+2.  Navigate to the **Theme** tab.
 3.  Select a theme from the **Themes** list.
 
 The changes will be applied instantly across the entire application, including the knowledge graph and all detail panels.

@@ -9,7 +9,7 @@ import {
   stringifyEntity,
   deriveIdFromPath,
 } from "../../utils/markdown";
-import { cacheService } from "../../services/cache";
+import { cacheService } from "../../services/cache.svelte";
 import type { IFileIOAdapter } from "@codex/vault-engine/src/repository.svelte";
 import type {
   ISyncIOAdapter,
@@ -35,7 +35,9 @@ export const fileIOAdapter: IFileIOAdapter = {
   },
   writeEntityFile: async (dir, vaultId, entity) => {
     const path = entity._path || [`${entity.id}.md`];
-    const content = stringifyEntity(entity);
+    // Svelte 5: ensure we have a plain object for YAML serialization
+    const snapshot = $state.snapshot(entity);
+    const content = stringifyEntity(snapshot);
     await writeOpfsFile(path, content, dir, vaultId);
   },
   getCachedEntity: async (vaultId, path) => {

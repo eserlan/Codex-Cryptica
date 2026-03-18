@@ -21,7 +21,7 @@ The landing page highlights several key "Protocols" that define the application:
 ## Navigating the Terminal
 
 - **Enter Workspace**: Click this button to transition from the public landing page into your private workspace.
-- **Hide Welcome Screen**: You can choose to skip the landing page on future visits by checking this box on the terminal or toggling it in **Settings > Aesthetics**.
+- **Hide Welcome Screen**: You can choose to skip the landing page on future visits by checking this box on the terminal or toggling it in **Settings > Theme**.
 - **Features Index**: Visit `/features` at any time for a deep dive into the technical specifications and capabilities of the system.
 
 ## Performance & SEO
