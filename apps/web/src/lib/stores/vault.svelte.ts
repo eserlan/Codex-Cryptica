@@ -415,7 +415,7 @@ export class VaultStore {
       const syncPromise = this.repository.loadFiles(
         this.activeVaultId,
         vaultDir,
-        async (chunk, current, total, newOrChanged) => {
+        async (_chunk, current, total, newOrChanged) => {
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
           this.syncStats.created = current;

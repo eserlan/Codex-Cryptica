@@ -56,10 +56,20 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
 
     if (newNodes.length > 0 || newEdges.length > 0) {
       if (newNodes.length > 0) {
+        // ⚡ Bolt Optimization: Replace O(N^2) nested .forEach + .find with an O(N) Map lookup.
+        // This avoids N array iterations when applying initial node positions.
+        const newNodesMap = new Map();
+        for (let i = 0; i < newNodes.length; i++) {
+          if (!newNodesMap.has(newNodes[i].data.id)) {
+            newNodesMap.set(newNodes[i].data.id, newNodes[i]);
+          }
+        }
+
         const addedNodes = cy.add(newNodes);
+
         addedNodes.forEach((n) => {
           elementMap.set(n.id(), n);
-          const originalNode = newNodes.find((nn) => nn.data.id === n.id());
+          const originalNode = newNodesMap.get(n.id());
           if (originalNode && originalNode.position) {
             n.position(originalNode.position);
           }
