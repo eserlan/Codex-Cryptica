@@ -100,10 +100,10 @@ export async function loadCanvasesFromDisk(
           const raw = JSON.parse(text);
           const parsed = CanvasSchema.parse(raw);
 
-          // Ensure basic metadata is canonical based on filename/actual state
+          // Ensure basic metadata is canonical based on file content first, then filename
           canvases[id] = {
             ...parsed,
-            id,
+            id, // Always use filename as canonical ID
             name: parsed.name || id,
             slug: parsed.slug || id,
             lastModified: parsed.lastModified || file.lastModified,

@@ -33,7 +33,9 @@
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
   const canvas = $derived(
-    canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug),
+    canvasRegistry.allCanvases.find(
+      (c) => c.slug === canvasSlug || c.id === canvasSlug,
+    ),
   );
   const canvasId = $derived(canvas?.id);
 
@@ -426,9 +428,29 @@
     const exportData = engine.export();
     const existing = untrack(() => vault.canvases[currentCanvasId] || {});
 
+    // Helper: is the current name just a UUID or "Untitled"?
+    const isGeneric = (n: string) =>
+      !n || n === currentCanvasId || n.toLowerCase().includes("untitled");
+
     // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
+    // Prioritize meaningful names from 'existing' or reactive 'canvas' props
+    const finalName = !isGeneric(existing.name)
+      ? existing.name
+      : !isGeneric(canvas?.name)
+        ? canvas?.name
+        : existing.name || currentCanvasId;
+
+    const finalSlug = !isGeneric(existing.slug)
+      ? existing.slug
+      : !isGeneric(canvas?.slug)
+        ? canvas?.slug
+        : existing.slug || currentCanvasId;
+
     vault.canvases[currentCanvasId] = {
       ...existing,
+      id: currentCanvasId,
+      name: finalName,
+      slug: finalSlug,
       ...exportData,
       lastModified: Date.now(),
     };

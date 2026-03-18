@@ -1,6 +1,5 @@
 <script lang="ts">
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { Search, Plus, Trash2, Edit2, Layout, X, Check } from "lucide-svelte";
   import { page } from "$app/state";
@@ -42,6 +41,7 @@
   async function confirmCreate() {
     if (!newCanvasName.trim()) return;
     const slug = await canvasRegistry.create(newCanvasName.trim());
+    await tick();
     if (slug) {
       isCreating = false;
       goto(`/canvas/${slug}`);
@@ -65,9 +65,13 @@
       renamingId = null;
       return;
     }
+    const oldCanvas = canvasRegistry.allCanvases.find((c) => c.id === id);
+    const wasActive =
+      activeCanvasId === oldCanvas?.slug || activeCanvasId === id;
+
     const newSlug = await canvasRegistry.rename(id, renamingName.trim());
-    const canvas = canvasRegistry.allCanvases.find((c) => c.id === id);
-    if (activeCanvasId === canvas?.slug && newSlug) {
+
+    if (wasActive && newSlug && activeCanvasId !== newSlug) {
       goto(`/canvas/${newSlug}`, { replaceState: true });
     }
     renamingId = null;
@@ -77,13 +81,12 @@
     e.stopPropagation();
     const canvas = canvasRegistry.allCanvases.find((c) => c.id === id);
     const slug = canvas?.slug;
-    if (
-      confirm(
-        `Are you sure you want to delete "${canvas?.name || "this canvas"}"?`,
-      )
-    ) {
-      await canvasRegistry.delete(id);
-      if (activeCanvasId === slug) goto("/canvas");
+
+    await canvasRegistry.delete(id);
+
+    // If we deleted the current canvas, go back to root
+    if (activeCanvasId === slug || activeCanvasId === id) {
+      goto("/canvas");
     }
   }
 
@@ -92,12 +95,6 @@
       close();
     }
   }
-
-  $effect(() => {
-    if (vault.activeVaultId && uiStore.showCanvasSelector) {
-      canvasRegistry.loadFromVault(vault.activeVaultId);
-    }
-  });
 </script>
 
 {#if uiStore.showCanvasSelector}
