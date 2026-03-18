@@ -12,6 +12,7 @@
     ChevronRight,
     LayoutGrid,
     RefreshCw,
+    Plus,
   } from "lucide-svelte";
   import { page } from "$app/state";
 
@@ -190,6 +191,13 @@
           Entity Palette
         </h2>
         <div class="flex items-center gap-1">
+          <button
+            onclick={() => (uiStore.showCanvasSelector = true)}
+            class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
+            title="New Workspace"
+          >
+            <Plus class="w-4 h-4" />
+          </button>
           <button
             onclick={handleRefresh}
             class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90 {isRefreshing

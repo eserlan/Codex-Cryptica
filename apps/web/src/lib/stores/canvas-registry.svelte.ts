@@ -77,8 +77,28 @@ class CanvasRegistryStore {
   }
 
   async delete(id: string) {
-    delete this.canvases[id];
-    // TODO: Physically delete file?
+    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) return;
+
+    const data = this.canvases[id];
+    if (!data) return;
+
+    if (!confirm(`Are you sure you want to delete canvas "${data.name}"?`)) {
+      return;
+    }
+
+    try {
+      const vaultDir = await getVaultDir(
+        vaultRegistry.rootHandle,
+        vaultRegistry.activeVaultId,
+      );
+      await import("./vault/io").then((io) =>
+        io.deleteCanvasFromDisk(vaultDir, id),
+      );
+      delete this.canvases[id];
+    } catch (e) {
+      console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
+      uiStore.notify("Failed to delete canvas file from disk.", "error");
+    }
   }
 
   async rename(id: string, newName: string): Promise<string | null> {
