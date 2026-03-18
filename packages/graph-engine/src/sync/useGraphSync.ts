@@ -197,7 +197,7 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
         const w = cy.width();
         const h = cy.height();
         cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
-      } else if (!isVaultLoading) {
+      } else if (!isVaultLoading || initialLoaded) {
         options.onLayoutUpdate?.(false, false, "Elements Update");
       }
     }

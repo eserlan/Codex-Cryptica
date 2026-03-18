@@ -4,7 +4,7 @@ export type SettingsTab =
   | "vault"
   | "intelligence"
   | "schema"
-  | "aesthetics"
+  | "theme"
   | "about"
   | "help";
 
@@ -325,7 +325,10 @@ export const uiStore: UIStore =
   (globalThis as any)[UI_KEY] ?? ((globalThis as any)[UI_KEY] = new UIStore());
 export const ui = uiStore;
 
-if (typeof window !== "undefined") {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV || (window as any).__E2E__)
+) {
   (window as any).uiStore = uiStore;
   (window as any).ui = ui;
 }

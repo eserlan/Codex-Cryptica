@@ -20,7 +20,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
 
     // 2. Set Theme to "Neon Night" (Cyberpunk) for Vault A
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
     await page.getByRole("button", { name: "Neon Night" }).click();
     await page.getByLabel("Close Settings").click();
 
@@ -45,7 +45,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
 
     // 4. Set Theme to "Blood & Noir" (Horror) for Vault B
     await page.getByTestId("settings-button").click();
-    await page.getByRole("tab", { name: "Aesthetics" }).click();
+    await page.getByRole("tab", { name: "Theme" }).click();
     await page.getByRole("button", { name: "Blood & Noir" }).click();
     await page.getByLabel("Close Settings").click();
 

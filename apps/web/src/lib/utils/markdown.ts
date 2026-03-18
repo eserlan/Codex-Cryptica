@@ -37,9 +37,9 @@ export function renderMarkdown(
 export function parseMarkdown(raw: string): ParseResult {
   // More robust regex:
   // 1. Handles \r?\n for Windows support
-  // 2. Allows optional whitespace before/after the dashes
-  // 3. Uses 'm' flag for multiline start anchor
-  const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/m;
+  // 2. Allows optional whitespace before the dashes (e.g. for BOMs)
+  // 3. Ensures it matches at the absolute start of the file
+  const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/;
   const match = raw.match(frontmatterRegex);
 
   let metadata: Partial<Entity> = {};
@@ -56,7 +56,7 @@ export function parseMarkdown(raw: string): ParseResult {
       console.error("Failed to parse frontmatter", e);
     }
     // Remove the entire match including surrounding whitespace/newlines
-    content = raw.substring(match[0].length).trim();
+    content = raw.substring((match.index ?? 0) + match[0].length).trim();
   }
 
   return { metadata, content };

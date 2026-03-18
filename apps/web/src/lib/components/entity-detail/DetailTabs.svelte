@@ -45,6 +45,7 @@
     class="flex flex-wrap md:flex-nowrap gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
   >
     <button
+      data-testid="tab-status"
       class={activeTab === "status"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
@@ -52,6 +53,7 @@
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
     <button
+      data-testid="tab-lore"
       class={activeTab === "lore"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
@@ -60,6 +62,7 @@
       }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
     >
     <button
+      data-testid="tab-inventory"
       class={activeTab === "inventory"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
@@ -67,6 +70,7 @@
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
     >
     <button
+      data-testid="tab-map"
       class={activeTab === "map"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}

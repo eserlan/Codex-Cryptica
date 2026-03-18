@@ -4,14 +4,159 @@ import * as Comlink from "comlink";
 import SearchWorker from "../workers/search.worker?worker";
 import type { SearchEngine } from "@codex/search-engine";
 import { debugStore } from "../stores/debug.svelte";
+import { entityDb } from "../utils/entity-db";
+import { vaultEventBus } from "../stores/vault/events";
 
 export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchEngine> | null = null;
+  private isDirty = false;
+  private activeVaultId: string | null = null;
+  private saveTimeout: any = null;
+  private indexQueue: Promise<void> = Promise.resolve();
+  private isInitialized = false;
+  private needsFullContentSweep = false;
 
   constructor() {
     if (typeof window !== "undefined") {
       this.initWorker();
+
+      // Final emergency save on page reload/exit
+      // Note: visibilitychange is more reliable than beforeunload for IDB writes
+      window.addEventListener("visibilitychange", () => {
+        if (
+          document.visibilityState === "hidden" &&
+          this.isDirty &&
+          this.activeVaultId
+        ) {
+          this.saveIndex(this.activeVaultId);
+        }
+      });
+
+      // Subscribe to vault lifecycle events
+      vaultEventBus.subscribe(async (event) => {
+        switch (event.type) {
+          case "VAULT_OPENING":
+            this.activeVaultId = event.vaultId;
+            // Context switch: Clear dirty flag if we are switching vaults
+            this.isDirty = false;
+            // IMPORTANT: Clear the existing index in memory so we don't merge vaults!
+            await this.clear();
+            break;
+
+          case "CACHE_LOADED": {
+            // 1. Try to restore index from disk
+            const restored = await this.loadIndex(event.vaultId);
+
+            // 2. If not restored, perform initial metadata indexing
+            if (!restored) {
+              debugStore.log(
+                `[SearchService] Cold boot: Rebuilding index for ${event.vaultId}`,
+              );
+              await this.indexBatch(Object.values(event.entities));
+              this.needsFullContentSweep = true;
+              debugStore.log(`[SearchService] Metadata indexing complete.`);
+            } else {
+              this.needsFullContentSweep = false;
+              debugStore.log(
+                `[SearchService] Warm boot: Restored index for ${event.vaultId}`,
+              );
+            }
+            break;
+          }
+
+          case "SYNC_CHUNK_READY": {
+            const chunk = event.newOrChangedIds
+              .map((id) => event.entities[id])
+              .filter(Boolean);
+            if (chunk.length > 0) {
+              await this.indexBatch(chunk);
+            }
+            break;
+          }
+
+          case "SYNC_COMPLETE":
+            // Trigger full content indexing sweep in background ONLY if cold boot
+            if (this.needsFullContentSweep) {
+              this.indexContentInBackground(event.vaultId);
+              this.needsFullContentSweep = false;
+            }
+            break;
+
+          case "ENTITY_UPDATED":
+            if (
+              event.patch.title !== undefined ||
+              event.patch.content !== undefined ||
+              event.patch.tags !== undefined ||
+              event.patch.lore !== undefined
+            ) {
+              await this.index(this.mapToSearchEntry(event.entity));
+            }
+            break;
+
+          case "ENTITY_DELETED":
+            await this.remove(event.entityId);
+            break;
+
+          case "BATCH_CREATED":
+            await this.indexBatch(event.entities);
+            break;
+        }
+      }, "search-service");
+    }
+  }
+
+  /**
+   * Background task: indexes entity content for all entities that were
+   * restored from cache and might be missing body text in the FlexSearch index.
+   */
+  private async indexContentInBackground(vaultId: string) {
+    if (!this.api || this.activeVaultId !== vaultId) return;
+
+    debugStore.log(`[SearchService] Starting background content sync...`);
+    const start = performance.now();
+    let indexedCount = 0;
+    const batch: any[] = [];
+    const BATCH_SIZE = 50;
+
+    try {
+      await entityDb.entityContent
+        .where("vaultId")
+        .equals(vaultId)
+        .each(async (record) => {
+          // We need the full metadata to prevent FlexSearch from overwriting the document
+          // with empty fields, as 'add/update' replaces the entire document.
+          const metadata = await entityDb.graphEntities.get([
+            vaultId,
+            record.entityId,
+          ]);
+
+          if (metadata) {
+            batch.push({
+              ...metadata,
+              content: record.content,
+              lore: record.lore,
+            });
+
+            if (batch.length >= BATCH_SIZE) {
+              const currentBatch = [...batch];
+              batch.length = 0;
+              await this.indexBatch(currentBatch);
+              indexedCount += currentBatch.length;
+            }
+          }
+        });
+
+      if (batch.length > 0) {
+        await this.indexBatch(batch);
+        indexedCount += batch.length;
+      }
+
+      debugStore.log(
+        `[SearchService] Background sync complete. Indexed ${indexedCount} content records in ${(performance.now() - start).toFixed(2)}ms`,
+      );
+    } catch (err) {
+      debugStore.warn(`[SearchService] Background content sync failed`, err);
     }
   }
 
@@ -35,8 +180,29 @@ export class SearchService {
       ),
     );
 
+    // Event-based change tracking
+    this.api.setChangeCallback(
+      Comlink.proxy(() => {
+        this.isDirty = true;
+        this.scheduleAutoSave();
+      }),
+    );
+
     // Initialize immediately
-    this.init();
+    this.init().then(() => {
+      this.isInitialized = true;
+    });
+  }
+
+  private scheduleAutoSave() {
+    if (typeof window === "undefined" || !this.activeVaultId) return;
+
+    if (this.saveTimeout) clearTimeout(this.saveTimeout);
+    this.saveTimeout = setTimeout(() => {
+      if (this.isDirty && this.activeVaultId) {
+        this.saveIndex(this.activeVaultId);
+      }
+    }, 2000); // Debounce saves by 2 seconds
   }
 
   terminate() {
@@ -55,12 +221,19 @@ export class SearchService {
 
   async index(entry: SearchEntry): Promise<void> {
     if (!this.api) return;
-    return this.api.add(entry);
+    // Serialize all indexing operations
+    this.indexQueue = this.indexQueue
+      .then(() => this.api!.add(entry))
+      .catch((err) => debugStore.warn("Index error", err));
+    return this.indexQueue;
   }
 
   async remove(id: string): Promise<void> {
     if (!this.api) return;
-    return this.api.remove(id);
+    this.indexQueue = this.indexQueue
+      .then(() => this.api!.remove(id))
+      .catch((err) => debugStore.warn("Index remove error", err));
+    return this.indexQueue;
   }
 
   async search(
@@ -87,7 +260,113 @@ export class SearchService {
 
   async clear(): Promise<void> {
     if (!this.api) return;
+    this.isDirty = false;
     return this.api.clear();
+  }
+
+  /**
+   * Attempts to load a persisted index for the given vault from IndexedDB.
+   * Returns true if successful.
+   */
+  async loadIndex(vaultId: string): Promise<boolean> {
+    if (!this.api) return false;
+
+    // Wait for worker to be ready
+    let retries = 0;
+    while (!this.isInitialized && retries < 20) {
+      await new Promise((r) => setTimeout(r, 100));
+      retries++;
+    }
+
+    this.activeVaultId = vaultId;
+    try {
+      const record = await entityDb.searchIndex.get(vaultId);
+      if (record && record.data) {
+        await this.api.importIndex(record.data);
+        this.isDirty = false; // Reset dirty state after load
+        return true;
+      }
+    } catch (err: any) {
+      debugStore.warn(
+        `[SearchService] Failed to load index for ${vaultId}: ${err?.message || "Unknown error"}`,
+        err,
+      );
+    }
+    return false;
+  }
+
+  /**
+   * Persists the current state of the search index to IndexedDB.
+   */
+  async saveIndex(vaultId: string): Promise<void> {
+    if (!this.api) return;
+    try {
+      debugStore.log(
+        `[SearchService] Save started: Exporting index for ${vaultId}...`,
+      );
+      const start = performance.now();
+      const data = await this.api.exportIndex();
+
+      // Ensure we have actual index data (more than just docCount)
+      const keyCount = Object.keys(data).length;
+      if (data && keyCount > 1) {
+        await entityDb.searchIndex.put({
+          vaultId,
+          data,
+          updatedAt: Date.now(),
+        });
+        this.isDirty = false; // Reset dirty state after successful save
+        debugStore.log(
+          `[SearchService] Save finished: Persisted index for ${vaultId} (${keyCount} keys) in ${(performance.now() - start).toFixed(2)}ms`,
+        );
+      } else {
+        debugStore.log(
+          `[SearchService] Save skipped: Index is empty or export failed.`,
+        );
+      }
+    } catch (err: any) {
+      debugStore.warn(
+        `[SearchService] Failed to save index for ${vaultId}: ${err?.message || "Unknown error"}`,
+        err,
+      );
+    }
+  }
+
+  private mapToSearchEntry(entity: any): SearchEntry {
+    const path = entity._path?.join("/") || `${entity.id}.md`;
+    const keywords = [
+      ...(entity.tags || []),
+      entity.lore || "",
+      ...Object.values(entity.metadata || {}).flat(),
+    ].join(" ");
+
+    return {
+      id: entity.id,
+      title: entity.title,
+      content: entity.content || "",
+      type: entity.type,
+      path,
+      keywords,
+      updatedAt: Date.now(),
+    };
+  }
+
+  private async indexBatch(entities: any[]) {
+    if (!this.api) return;
+
+    // Serialize indexing jobs to prevent overlapping worker updates
+    this.indexQueue = this.indexQueue
+      .then(async () => {
+        const entries = entities.map((e) => this.mapToSearchEntry(e));
+        // Indexing in chunks to avoid blocking the worker for too long
+        for (let i = 0; i < entries.length; i += 50) {
+          const chunk = entries.slice(i, i + 50);
+          await Promise.all(chunk.map((entry) => this.api!.add(entry)));
+        }
+      })
+      .catch((err) => debugStore.warn("Index batch error", err));
+
+    return this.indexQueue;
   }
 }
 

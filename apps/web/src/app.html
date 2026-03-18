@@ -29,14 +29,15 @@
 			 * These are hardcoded here to ensure the fastest possible initial paint (blocking script).
 			 */
 			const themes = {
-				scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80" },
-				fantasy: { bg: "#fdf6e3", surface: "#eee8d5", text: "#2d241e", primary: "#78350f" },
-				modern: { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb" },
-				cyberpunk: { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6" },
-				apocalyptic: { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316" },
-				horror: { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626" },
-				starwars: { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F" },
-				startrek: { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900" }
+				scifi: { bg: "#050505", surface: "#0c0c0c", text: "#86efac", primary: "#4ade80", secondary: "#16a34a", border: "rgba(22, 163, 74, 0.5)" },
+				fantasy: { bg: "#fdf6e3", surface: "#eee8d5", text: "#2d241e", primary: "#78350f", secondary: "#451a03", border: "rgba(120, 53, 15, 0.3)", texture: "parchment.svg" },
+				modern: { bg: "#f8fafc", surface: "#ffffff", text: "#0f172a", primary: "#2563eb", secondary: "#1d4ed8", border: "rgba(203, 213, 225, 1)" },
+				cyberpunk: { bg: "#020617", surface: "#0f172a", text: "#22d3ee", primary: "#f472b6", secondary: "#db2777", border: "rgba(244, 114, 182, 0.6)" },
+				apocalyptic: { bg: "#1c1917", surface: "#292524", text: "#ececec", primary: "#f97316", secondary: "#ea580c", border: "rgba(120, 113, 108, 0.5)", texture: "rust.svg" },
+				horror: { bg: "#050505", surface: "#121212", text: "#f3f4f6", primary: "#dc2626", secondary: "#ef4444", border: "rgba(220, 38, 38, 0.3)", texture: "blood.svg" },
+				fallout: { bg: "#0a0a08", surface: "#111109", text: "#a8ff78", primary: "#39ff14", secondary: "#2db110", border: "rgba(57, 255, 20, 0.4)", texture: "crt.svg" },
+				starwars: { bg: "#000000", surface: "#0F172A", text: "#E2E8F0", primary: "#FFE81F", secondary: "#2D3748", border: "rgba(74, 144, 226, 0.5)" },
+				startrek: { bg: "#000000", surface: "#111111", text: "#FFFFFF", primary: "#FF9900", secondary: "#CC99CC", border: "rgba(255, 153, 0, 0.4)" }
 			};
 			if (theme && themes[theme]) {
 				const t = themes[theme];
@@ -45,8 +46,15 @@
 				root.style.setProperty("--color-bg-surface", t.surface);
 				root.style.setProperty("--color-text-primary", t.text);
 				root.style.setProperty("--color-accent-primary", t.primary);
+				root.style.setProperty("--color-accent-dim", t.secondary);
+				root.style.setProperty("--color-accent-dark", t.secondary);
+				root.style.setProperty("--color-border-primary", t.border);
 				root.style.backgroundColor = t.bg;
 				root.style.color = t.text;
+				if (t.texture) {
+					root.style.setProperty("--bg-texture", `url('/themes/${t.texture}')`);
+					root.style.setProperty("--bg-texture-overlay", `linear-gradient(${t.bg}80, ${t.bg}80), url('/themes/${t.texture}')`);
+				}
 			}
 		} catch (e) { }
 	</script>

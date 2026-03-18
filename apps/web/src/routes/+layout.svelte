@@ -65,6 +65,7 @@
     if (isSpecialEnv) {
       console.error(`Failed to load ${name}`, error);
     } else {
+      // In layout, debugStore is already imported statically
       debugStore.error(`Failed to lazy-load component: ${name}`, error);
     }
   };
@@ -72,49 +73,49 @@
   $effect(() => {
     if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
       import("$lib/components/oracle/OracleSidebarPanel.svelte")
-        .then((module) => (OracleSidebarPanel = module.default))
+        .then((m) => (OracleSidebarPanel = m?.default))
         .catch((error) => logChunkError("OracleSidebarPanel", error));
     }
 
     if (uiStore.showZenMode && !ZenModeModal) {
       import("$lib/components/modals/ZenModeModal.svelte")
-        .then((m) => (ZenModeModal = m.default))
+        .then((m) => (ZenModeModal = m?.default))
         .catch((e) => logChunkError("ZenModeModal", e));
     }
 
     if (helpStore.activeTour && !TourOverlay) {
       import("$lib/components/help/TourOverlay.svelte")
-        .then((m) => (TourOverlay = m.default))
+        .then((m) => (TourOverlay = m?.default))
         .catch((e) => logChunkError("TourOverlay", e));
     }
 
     if (uiStore.mergeDialog.open && !MergeNodesDialog) {
       import("$lib/components/dialogs/MergeNodesDialog.svelte")
-        .then((m) => (MergeNodesDialog = m.default))
+        .then((m) => (MergeNodesDialog = m?.default))
         .catch((e) => logChunkError("MergeNodesDialog", e));
     }
 
     if (uiStore.bulkLabelDialog.open && !BulkLabelDialog) {
       import("$lib/components/dialogs/BulkLabelDialog.svelte")
-        .then((m) => (BulkLabelDialog = m.default))
+        .then((m) => (BulkLabelDialog = m?.default))
         .catch((e) => logChunkError("BulkLabelDialog", e));
     }
 
     if (!DiceModal) {
       import("$lib/components/dice/DiceModal.svelte")
-        .then((m) => (DiceModal = m.default))
+        .then((m) => (DiceModal = m?.default))
         .catch((e) => logChunkError("DiceModal", e));
     }
 
     if (!isPopup && !OracleWindow) {
       import("$lib/components/oracle/OracleWindow.svelte")
-        .then((m) => (OracleWindow = m.default))
+        .then((m) => (OracleWindow = m?.default))
         .catch((e) => logChunkError("OracleWindow", e));
     }
 
     if (isSpecialEnv && !DebugConsole) {
       import("$lib/components/debug/DebugConsole.svelte")
-        .then((m) => (DebugConsole = m.default))
+        .then((m) => (DebugConsole = m?.default))
         .catch((e) => logChunkError("DebugConsole", e));
     }
   });
@@ -208,6 +209,15 @@
         return;
       }
 
+      // Special case: ignore "Cannot read properties of undefined (reading 'default')"
+      // which happens during HMR when modules are swapped.
+      if (
+        reason instanceof TypeError &&
+        reason.message.includes("reading 'default'")
+      ) {
+        return;
+      }
+
       console.error("[Fatal Rejection]", event);
       uiStore.setGlobalError(
         message || "Unhandled Promise Rejection",
@@ -236,20 +246,37 @@
       (window as any).uiStore = uiStore;
       (window as any).isEntityVisible = isEntityVisible;
 
-      import("$lib/stores/oracle.svelte").then((m) => {
-        (window as any).oracle = m.oracle;
-      });
-      import("$lib/services/ai").then((m) => {
-        (window as any).textGeneration = m.textGenerationService;
-        (window as any).imageGeneration = m.imageGenerationService;
-        (window as any).contextRetrieval = m.contextRetrievalService;
-      });
-      import("$lib/cloud-bridge/p2p/host-service.svelte").then((m) => {
-        (window as any).p2pHostService = m.p2pHost;
-      });
-      import("$lib/cloud-bridge/p2p/guest-service").then((m) => {
-        (window as any).p2pGuestService = m.p2pGuestService;
-      });
+      import("$lib/stores/oracle.svelte")
+        .then((m) => {
+          if (m?.oracle) (window as any).oracle = m.oracle;
+        })
+        .catch((e) => debugStore.warn("Failed to attach oracle to window", e));
+      import("$lib/services/ai")
+        .then((m) => {
+          if (m) {
+            (window as any).textGeneration = m.textGenerationService;
+            (window as any).imageGeneration = m.imageGenerationService;
+            (window as any).contextRetrieval = m.contextRetrievalService;
+          }
+        })
+        .catch((e) =>
+          debugStore.warn("Failed to attach AI services to window", e),
+        );
+      import("$lib/cloud-bridge/p2p/host-service.svelte")
+        .then((m) => {
+          if (m?.p2pHost) (window as any).p2pHostService = m.p2pHost;
+        })
+        .catch((e) =>
+          debugStore.warn("Failed to attach p2p host service to window", e),
+        );
+      import("$lib/cloud-bridge/p2p/guest-service")
+        .then((m) => {
+          if (m?.p2pGuestService)
+            (window as any).p2pGuestService = m.p2pGuestService;
+        })
+        .catch((e) =>
+          debugStore.warn("Failed to attach p2p guest service to window", e),
+        );
     }
 
     return () => {
@@ -392,7 +419,10 @@
   />
 </svelte:head>
 
-<div class="app-layout h-screen bg-theme-bg flex flex-col font-body">
+<div
+  class="h-screen bg-theme-bg flex flex-col font-body"
+  class:app-layout={!isMarketingPage && !isLoginRoute}
+>
   <!-- Notifications -->
   {#if uiStore.notification}
     <div

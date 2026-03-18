@@ -23,9 +23,9 @@ import {
   assetIOAdapter,
   imageProcessor,
   createSyncEngine,
-} from "./vault/adapters";
-import { cacheService } from "../services/cache";
-import { entityDb } from "../utils/entity-db";
+} from "./vault/adapters.svelte";
+import { cacheService } from "../services/cache.svelte";
+import { vaultEventBus } from "./vault/events";
 
 export interface IVaultServices {
   search: {
@@ -86,12 +86,28 @@ export class VaultStore {
   private channel: BroadcastChannel | null = null;
 
   /**
+   * Performance optimization: Cache resolved blob URLs for images
+   * to avoid hitting OPFS/AssetManager on every re-render or selection.
+   */
+  private _urlCache = new Map<string, string>();
+
+  /**
+   * Pre-loaded helper modules to avoid dynamic import overhead
+   * during critical user interactions (like clicking a node).
+   */
+  private _helpers: {
+    readFileAsText?: any;
+    parseMarkdown?: any;
+  } = {};
+
+  /**
    * Tracks which entity IDs have their `content` and `lore` fields fully
    * populated in `this.entities`.  Entities loaded from the Dexie graph-entity
    * cache start with `content = ""` to keep the initial load lightweight;
    * calling `loadEntityContent(id)` fills in these fields on demand.
    */
   private _contentLoadedIds = new Set<string>();
+  private _contentVerifiedIds = new Set<string>();
 
   // Delegated Getters
   get entities() {
@@ -131,11 +147,16 @@ export class VaultStore {
       },
       (entity) => this.scheduleSave(entity),
       () => this.getActiveVaultHandle(),
+      () => this.activeVaultId,
       () => this.isGuest,
       () => this.services,
       (id) => this.onEntityDelete && this.onEntityDelete(id),
       (entity) => this.onEntityUpdate && this.onEntityUpdate(entity),
       (updates) => this.onBatchUpdate && this.onBatchUpdate(updates),
+      (path) => {
+        const cacheKey = `${this.activeVaultId}:${path}`;
+        this._urlCache.delete(cacheKey);
+      },
     );
 
     this.lifecycleManager = new VaultLifecycleManager(
@@ -183,20 +204,37 @@ export class VaultStore {
   async init(injectedServices?: IVaultServices) {
     this.isInitialized = false;
     this.status = "loading";
+    this._urlCache.clear();
 
     if (injectedServices) {
       this.services = injectedServices;
     } else if (typeof window !== "undefined") {
-      const { searchService } = await import("../services/search");
-      const { contextRetrievalService, textGenerationService } =
-        await import("../services/ai");
-      this.services = {
-        search: searchService,
-        ai: {
-          clearStyleCache: () => contextRetrievalService.clearStyleCache(),
-          expandQuery: (k, q, h) => textGenerationService.expandQuery(k, q, h),
-        },
-      };
+      // Background: Pre-load modules needed for content loading to eliminate interaction latency
+      import("../utils/opfs")
+        .then((m) => (this._helpers.readFileAsText = m.readFileAsText))
+        .catch(() => {});
+      import("../utils/markdown")
+        .then((m) => (this._helpers.parseMarkdown = m.parseMarkdown))
+        .catch(() => {});
+
+      try {
+        const searchModule = await import("../services/search");
+        const aiModule = await import("../services/ai");
+
+        if (searchModule && aiModule) {
+          this.services = {
+            search: searchModule.searchService,
+            ai: {
+              clearStyleCache: () =>
+                aiModule.contextRetrievalService.clearStyleCache(),
+              expandQuery: (k, q, h) =>
+                aiModule.textGenerationService.expandQuery(k, q, h),
+            },
+          };
+        }
+      } catch (err) {
+        debugStore.error("[VaultStore] Failed to lazy-load services", err);
+      }
 
       if (!this.syncCoordinator) {
         const engine = await createSyncEngine();
@@ -280,6 +318,7 @@ export class VaultStore {
 
     this.status = "loading";
     this._contentLoadedIds = new Set();
+    this._contentVerifiedIds = new Set();
     this._vaultHandle = undefined; // Reset handle on load
     this.syncStats = {
       updated: 0,
@@ -295,10 +334,17 @@ export class VaultStore {
         `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
       );
 
+      // Reset event bus to clear listeners from previous vault sessions (prevent leaks)
+      vaultEventBus.reset();
+
+      // BROADCAST: Opening vault
+      vaultEventBus.emit({
+        type: "VAULT_OPENING",
+        vaultId: this.activeVaultId,
+      });
+
       if (this.services) {
         this.services.ai.clearStyleCache();
-        await this.services.search.clear();
-        debugStore.log("[VaultStore] Search index cleared.");
       }
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
@@ -330,44 +376,26 @@ export class VaultStore {
           `[VaultStore] Cache-First: Populated ${cachedEntities.length} entities from Dexie.`,
         );
 
-        // Metadata indexing for immediate search capability
-        if (this.services) {
-          const indexPromises = cachedEntities.map((entity) => {
-            const path = entity._path?.join("/") || `${entity.id}.md`;
-            return this.services!.search.index({
-              id: entity.id,
-              title: entity.title,
-              content: entity.content,
-              type: entity.type,
-              path,
-              keywords: [
-                ...(entity.tags || []),
-                entity.lore || "",
-                ...Object.values(entity.metadata || {}).flat(),
-              ].join(" "),
-              updatedAt: Date.now(),
-            });
-          });
-          // Do NOT await indexing here - let it happen in background to unblock image resolution
-          Promise.all(indexPromises)
-            .then(() =>
-              debugStore.log(`[VaultStore] Cache-First: Search index warmed.`),
-            )
-            .catch(console.warn);
-        }
+        // BROADCAST: Initial cache data ready
+        vaultEventBus.emit({
+          type: "CACHE_LOADED",
+          vaultId: this.activeVaultId,
+          entities: entityMap,
+        });
+
+        // IMPORTANT: We set status to idle NOW. The graph is visible and interactive.
+        this.status = "idle";
 
         if (skipSyncIfWarm) {
           debugStore.log(
             "[VaultStore] Cache is warm. Skipping OPFS background sync for instant load.",
           );
-          this.status = "idle";
 
           // Start background tasks
           if (this.activeVaultId) {
             mapRegistry.loadFromVault(this.activeVaultId);
             canvasRegistry.loadFromVault(this.activeVaultId);
           }
-          this.indexContentInBackground();
 
           // Resolve handle in background for image resolution
           this.getActiveVaultHandle();
@@ -378,20 +406,21 @@ export class VaultStore {
       // 2. FS-Sync: Resolve OPFS handle and perform full synchronization
       const vaultDir = await this.getActiveVaultHandle();
       if (!vaultDir) {
-        this.status = cachedEntities.length > 0 ? "idle" : "error";
-        if (this.status === "error") {
-          this.errorMessage = "Failed to resolve vault directory handle";
+        if (this.status !== "idle") {
+          this.status = cachedEntities.length > 0 ? "idle" : "error";
+          if (this.status === "error") {
+            this.errorMessage = "Failed to resolve vault directory handle";
+          }
         }
         return;
       }
 
-      // If we already have cached entities, we can set status to idle NOW
-      // and let the sync happen in the background.
+      // Ensure status is idle if we have cache, otherwise keep loading until we get first FS results
       if (cachedEntities.length > 0) {
         this.status = "idle";
       }
 
-      // We don't await this if status is already idle (warm cache)
+      // We don't await this if status is already idle (warm cache or already set to idle above)
       const syncPromise = this.repository.loadFiles(
         this.activeVaultId,
         vaultDir,
@@ -400,44 +429,26 @@ export class VaultStore {
           this.syncStats.progress = Math.round((current / total) * 100);
           this.syncStats.created = current;
 
-          const changedCount = Object.keys(newOrChanged).length;
+          const changedIds = Object.keys(newOrChanged);
 
-          if (this.services && changedCount > 0) {
-            debugStore.log(
-              `[VaultStore] Syncing ${changedCount} changed entities in chunk (${current}/${total})`,
-            );
-            const indexPromises = Object.values(newOrChanged).map((entity) => {
-              // Track entities that arrived from OPFS (cache miss path) — they
-              // already have content populated so no lazy load is needed later.
+          if (changedIds.length > 0) {
+            // Track entities that arrived from OPFS (cache miss path) — they
+            // already have content populated so no lazy load is needed later.
+            for (const id of changedIds) {
+              const entity = newOrChanged[id];
               if (entity.content) {
                 this._contentLoadedIds.add(entity.id);
+                this._contentVerifiedIds.add(entity.id);
               }
+            }
 
-              const path = entity._path?.join("/") || `${entity.id}.md`;
-              const keywords = [
-                ...(entity.tags || []),
-                entity.lore || "",
-                ...Object.values(entity.metadata || {}).flat(),
-              ].join(" ");
-              const promise = this.services!.search.index({
-                id: entity.id,
-                title: entity.title,
-                content: entity.content,
-                type: entity.type,
-                path,
-                keywords,
-                updatedAt: Date.now(),
-              });
-              return promise && promise.catch
-                ? promise.catch((err) => {
-                    debugStore.error(
-                      `[VaultStore] Failed to index entity: ${entity.id}`,
-                      err,
-                    );
-                  })
-                : Promise.resolve();
+            // BROADCAST: Sync chunk ready
+            vaultEventBus.emit({
+              type: "SYNC_CHUNK_READY",
+              vaultId: this.activeVaultId!,
+              entities: this.entities,
+              newOrChangedIds: changedIds,
             });
-            await Promise.all(indexPromises);
           }
         },
       );
@@ -461,100 +472,16 @@ export class VaultStore {
       await mapRegistry.loadFromVault(this.activeVaultId);
       await canvasRegistry.loadFromVault(this.activeVaultId);
 
-      // Re-index entity content in the background for entities whose content
-      // was loaded from the Dexie cache (and therefore omitted from the
-      // initial onProgress chunks above).  This keeps full-text search working
-      // on warm loads without blocking the initial graph render.
-      this.indexContentInBackground();
+      // BROADCAST: Full sync complete
+      vaultEventBus.emit({
+        type: "SYNC_COMPLETE",
+        vaultId: this.activeVaultId,
+      });
     } catch (err: any) {
       debugStore.error("[VaultStore] Load failed", err);
       this.status = "error";
       this.errorMessage = err.message;
     }
-  }
-
-  /**
-   * Background task: indexes entity content in the search service for all
-   * entities that were restored from the Dexie graph-entity cache and therefore
-   * have `content = ""` (i.e. not yet in `_contentLoadedIds`).  This step is
-   * needed because warm-cache loads skip OPFS file parsing and therefore bypass
-   * the content indexing that happens in the `onProgress` callback.
-   *
-   * Runs after the initial graph render completes so it does not block startup.
-   *
-   * Uses Dexie's `each()` cursor API to process records one at a time without
-   * materialising the full `entityContent` table into a JS array, which keeps
-   * the memory footprint low even for large vaults.
-   */
-  private indexContentInBackground(): void {
-    const vaultId = this.activeVaultId;
-    if (!vaultId || !this.services) return;
-
-    debugStore.log(
-      `[VaultStore] Starting background content indexing for: ${vaultId}`,
-    );
-    const start = performance.now();
-    let indexedCount = 0;
-    const batch: any[] = [];
-    const BATCH_SIZE = 50;
-
-    const flushBatch = async () => {
-      if (batch.length === 0) return;
-      if (!this.services) return;
-
-      const currentBatch = [...batch];
-      batch.length = 0;
-
-      try {
-        await Promise.all(
-          currentBatch.map((entry) => this.services!.search.index(entry)),
-        );
-        indexedCount += currentBatch.length;
-      } catch (err) {
-        debugStore.warn("[VaultStore] Batch indexing failed", err);
-      }
-    };
-
-    entityDb.entityContent
-      .where("vaultId")
-      .equals(vaultId)
-      .each(async (record) => {
-        if (!this.services || this.activeVaultId !== vaultId) return;
-        const entity = this.entities[record.entityId];
-        if (!entity || this._contentLoadedIds.has(record.entityId)) {
-          // Already indexed with live content from OPFS.
-          return;
-        }
-        const path = entity._path?.join("/") || `${entity.id}.md`;
-        const keywords = [
-          ...(entity.tags || []),
-          entity.lore || "",
-          ...Object.values(entity.metadata || {}).flat(),
-        ].join(" ");
-
-        batch.push({
-          id: entity.id,
-          title: entity.title,
-          content: record.content,
-          type: entity.type,
-          path,
-          keywords,
-          updatedAt: Date.now(),
-        });
-
-        if (batch.length >= BATCH_SIZE) {
-          await flushBatch();
-        }
-      })
-      .then(async () => {
-        await flushBatch();
-        debugStore.log(
-          `[VaultStore] Background indexing completed. Indexed ${indexedCount} entities in ${(performance.now() - start).toFixed(2)}ms`,
-        );
-      })
-      .catch((err) =>
-        debugStore.warn("[VaultStore] Background content indexing failed", err),
-      );
   }
 
   /**
@@ -569,49 +496,67 @@ export class VaultStore {
    */
   async loadEntityContent(id: string): Promise<void> {
     if (!id || !this.activeVaultId) return;
-    if (this._contentLoadedIds.has(id)) return;
+    if (this._contentVerifiedIds.has(id)) return;
 
     // Verify entity exists before starting async work.
     const currentEntity = this.entities[id];
     if (!currentEntity) return;
 
+    // PRIORITY 1: Try Dexie Cache for immediate Chronicle (content) and Lore
+    // No lock needed for Tier 1 IDB read.
+    let cached: { content: string; lore: string } | null = null;
+    let cacheErrored = false;
     try {
-      const start = performance.now();
-      const path = currentEntity._path || [`${id}.md`];
-      const { readFileAsText } = await import("../utils/opfs");
-      const { parseMarkdown } = await import("../utils/markdown");
-
-      // TIER 1: Try Dexie Cache for immediate Chronicle (content)
-      const cachedContent = await cacheService.getEntityContent(
-        this.activeVaultId,
-        id,
-      );
-      if (cachedContent) {
-        const ent = this.entities[id];
-        if (ent && !ent.content) {
-          this.repository.entities[id] = { ...ent, content: cachedContent };
+      cached = await cacheService.getEntityContent(this.activeVaultId, id);
+      if (cached !== null) {
+        const latest = this.entities[id];
+        if (latest && (!latest.content || latest.lore === undefined)) {
+          // Surgical update to the existing reactive proxy
+          this.repository.entities[id] = {
+            ...latest,
+            content: cached.content,
+            lore: cached.lore,
+          };
+          this._contentLoadedIds.add(id);
           debugStore.log(
-            `[VaultStore] Tier 1: Loaded chronicle from cache for ${id}`,
+            `[VaultStore] Priority 1 hit: Loaded chronicle/lore from cache for ${id}`,
           );
         }
       }
+    } catch (cacheErr) {
+      cacheErrored = true;
+      debugStore.warn(
+        `[VaultStore] Priority 1 cache load failed for ${id}`,
+        cacheErr,
+      );
+    }
 
-      // TIER 2 & 3: Load Lore (and fresh Chronicle) from Markdown file
+    // Re-check after Priority 1
+    if (this._contentVerifiedIds.has(id)) return;
+
+    try {
+      const path = currentEntity._path || [`${id}.md`];
+
+      // Ensure helpers are available (fallback to dynamic import if background load hasn't finished)
+      const readFileAsText =
+        this._helpers.readFileAsText ||
+        (await import("../utils/opfs")).readFileAsText;
+      const parseMarkdown =
+        this._helpers.parseMarkdown ||
+        (await import("../utils/markdown")).parseMarkdown;
+
+      // PRIORITY 2 & 3: Load Lore (and fresh Chronicle) from Markdown file
       let text = "";
-      let source = "";
 
-      // 2. Try OPFS (Primary source for Lore)
       const vaultDir = await this.getActiveVaultHandle();
       if (vaultDir) {
         try {
           text = await readFileAsText(vaultDir, path);
-          if (text) source = "OPFS";
         } catch {
-          // Fall through to Local FS
+          // Fall through
         }
       }
 
-      // 3. Fallback to Local Filesystem
       if (!text) {
         const localHandle = await syncIOAdapter.getLocalHandle(
           this.activeVaultId,
@@ -623,11 +568,10 @@ export class VaultStore {
               "granted"
             ) {
               text = await readFileAsText(localHandle, path);
-              if (text) source = "Local FS";
             }
           } catch (err) {
             debugStore.warn(
-              `[VaultStore] Failed to read ${id} from Local FS fallback`,
+              `[VaultStore] Priority 3 failed for ${id} from Local FS fallback`,
               err,
             );
           }
@@ -638,37 +582,49 @@ export class VaultStore {
         const { metadata, content: freshContent } = parseMarkdown(text);
         const freshLore = (metadata as any).lore || "";
 
-        // Re-read reference to avoid race conditions
         const entityToUpdate = this.entities[id];
         if (entityToUpdate) {
-          this.repository.entities[id] = {
+          // Update the entity surgically. Never overwrite with empty if Tier 1 already had content
+          // and Priority 2/3 somehow returned empty content (unless both are empty).
+          const finalContent = freshContent || entityToUpdate.content || "";
+          const finalLore = freshLore || entityToUpdate.lore || "";
+
+          const updatedEntity = {
             ...entityToUpdate,
-            content: freshContent,
-            lore: freshLore,
+            content: finalContent,
+            lore: finalLore,
           };
 
-          // Background: Update cache if content was missing or changed
-          if (freshContent !== cachedContent) {
-            // We reuse cacheService.set but it expects full entity.
-            // Since we're in background, it's fine.
+          this.repository.entities[id] = updatedEntity;
+
+          this._contentLoadedIds.add(id);
+          this._contentVerifiedIds.add(id);
+
+          debugStore.log(
+            `[VaultStore] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
+          );
+
+          const isStale =
+            finalContent !== (cached?.content ?? null) ||
+            finalLore !== (cached?.lore ?? null);
+          const hasContent = finalContent || finalLore;
+
+          if (isStale && (cached !== null || hasContent)) {
+            // CRITICAL: Pass the plain updatedEntity, not the reactive proxy
+            // Background: No need to await
             cacheService.set(
               `${this.activeVaultId}:${path.join("/")}`,
               Date.now(),
-              this.repository.entities[id],
+              updatedEntity,
             );
           }
-
-          debugStore.log(
-            `[VaultStore] Tier 2/3: Content verified from ${source} for ${id} in ${(performance.now() - start).toFixed(2)}ms`,
-          );
         }
-      } else if (!cachedContent) {
-        throw new Error(
-          "Content not found in any storage source (Cache, OPFS, or Local FS)",
+      } else if (cached === null && !cacheErrored) {
+        this._contentVerifiedIds.add(id); // Even if missing, we verified the absence
+        debugStore.warn(
+          `[VaultStore] Content truly missing for ${id} in all tiers`,
         );
       }
-
-      this._contentLoadedIds.add(id);
     } catch (err) {
       debugStore.error(`[VaultStore] Failed to load content for ${id}:`, err);
     }
@@ -688,20 +644,40 @@ export class VaultStore {
       const promise = this.services.search.index({
         id: entity.id,
         title: entity.title,
-        content: entity.content,
+        content: (entity as LocalEntity).content,
+        lore: (entity as LocalEntity).lore,
         type: entity.type,
         path,
         keywords,
         updatedAt: Date.now(),
       });
       if (promise && promise.catch) {
-        promise.catch((err) => debugStore.warn(`[VaultStore] Error: ${err}`));
+        promise.catch((err) =>
+          debugStore.warn(`[VaultStore] Search index error: ${err}`),
+        );
       }
     }
 
     if (uiStore.isDemoMode) return Promise.resolve();
 
-    return this.saveQueue.enqueue(entity.id, async () => {
+    // Use a per-entity lock for saving to serialize writes to the same file
+    // while allowing concurrent saves to DIFFERENT files.
+    const lockKey = entity.id;
+
+    return this.saveQueue.enqueue(lockKey, async () => {
+      // 1. Always get the absolute latest state from the store
+      let latestEntity = this.entities[entity.id];
+      if (!latestEntity) return;
+
+      // 2. CRITICAL SAFETY: If content hasn't been marked as loaded,
+      // we MUST try to load it before saving to avoid overwriting with empty.
+      if (!this._contentLoadedIds.has(entity.id)) {
+        // Note: loadEntityContent is already queued, but we need it NOW.
+        // We use a separate internal Load helper that avoids the queue to prevent deadlocks.
+        await this.internalLoadContent(entity.id);
+        // Re-fetch after load
+        latestEntity = this.entities[entity.id] || latestEntity;
+      }
       this.status = "saving";
       try {
         const vaultHandle = await this.getActiveVaultHandle();
@@ -710,38 +686,127 @@ export class VaultStore {
         await this.repository.saveToDisk(
           vaultHandle,
           this.activeVaultId!,
-          entity as LocalEntity,
+          latestEntity,
           this.isGuest,
         );
+
+        // Update Dexie cache immediately so it's fresh for Tier 1 lookups
+        const path = latestEntity._path || [`${latestEntity.id}.md`];
+        await cacheService.set(
+          `${this.activeVaultId}:${path.join("/")}`,
+          Date.now(),
+          latestEntity,
+        );
+
+        // Mark as verified since we just wrote it
+        this._contentVerifiedIds.add(latestEntity.id);
+
         this.status = "idle";
       } catch (error) {
-        debugStore.error(
-          "[VaultStore] Failed to schedule save: unable to resolve vault directory handle",
-          error,
-        );
+        debugStore.error("[VaultStore] Failed to save entity to disk", error);
         this.status = "error";
         this.errorMessage = "Failed to access storage for saving.";
       }
     });
   }
 
+  /**
+   * Internal helper to load content WITHOUT using the task queue.
+   * ONLY call this from within a queued task or when you know no write is active.
+   */
+  private async internalLoadContent(id: string): Promise<void> {
+    const currentEntity = this.entities[id];
+    if (!currentEntity) return;
+
+    try {
+      const path = currentEntity._path || [`${id}.md`];
+      const opfsModule = await import("../utils/opfs");
+      const markdownModule = await import("../utils/markdown");
+
+      if (!opfsModule || !markdownModule) {
+        throw new Error("Failed to load helper modules (opfs/markdown)");
+      }
+
+      const readFileAsText = opfsModule.readFileAsText;
+      const parseMarkdown = markdownModule.parseMarkdown;
+
+      if (!readFileAsText || !parseMarkdown) {
+        throw new Error("Missing helper functions in loaded modules");
+      }
+
+      const vaultDir = await this.getActiveVaultHandle();
+      if (!vaultDir) return;
+
+      const text = await readFileAsText(vaultDir, path);
+      if (text) {
+        const { metadata, content } = parseMarkdown(text);
+        const lore = (metadata as any).lore || "";
+
+        this.repository.entities[id] = {
+          ...currentEntity,
+          content,
+          lore,
+        };
+        this._contentLoadedIds.add(id);
+        this._contentVerifiedIds.add(id);
+      }
+    } catch (err) {
+      debugStore.error(
+        `[VaultStore] internalLoadContent failed for ${id}:`,
+        err,
+      );
+    }
+  }
+
   // --- CRUD Delegations ---
-  createEntity(
+  async createEntity(
     type: Entity["type"],
     title: string,
     initialData: Partial<Entity> = {},
   ) {
-    return this.crudManager.createEntity(type, title, initialData);
+    const id = await this.crudManager.createEntity(type, title, initialData);
+    if (id) {
+      this._contentLoadedIds.add(id); // Mark as loaded since it's new
+      this._contentVerifiedIds.add(id); // Mark as verified
+    }
+    return id;
   }
-  updateEntity(id: string, updates: Partial<LocalEntity>) {
-    return this.crudManager.updateEntity(id, updates);
+  async updateEntity(id: string, updates: Partial<LocalEntity>) {
+    const success = await this.crudManager.updateEntity(id, updates);
+    if (
+      success &&
+      (updates.content !== undefined ||
+        updates.lore !== undefined ||
+        updates.title !== undefined ||
+        updates.tags !== undefined)
+    ) {
+      this._contentLoadedIds.add(id);
+      this._contentVerifiedIds.add(id);
+    }
+    return success;
   }
-  batchUpdateEntities(updates: Record<string, Partial<LocalEntity>>) {
-    return this.crudManager.batchUpdateEntities(updates);
+  async batchUpdate(updates: Record<string, Partial<LocalEntity>>) {
+    const success = await this.crudManager.batchUpdate(updates);
+    if (success) {
+      for (const [id, patch] of Object.entries(updates)) {
+        if (
+          patch.content !== undefined ||
+          patch.lore !== undefined ||
+          patch.title !== undefined ||
+          patch.tags !== undefined
+        ) {
+          this._contentLoadedIds.add(id);
+          this._contentVerifiedIds.add(id);
+        }
+      }
+    }
+    return success;
   }
   async deleteEntity(id: string) {
     if (this.onEntityDelete) this.onEntityDelete(id);
-    if (this.services) await this.services.search.remove(id);
+    if (this.services) {
+      await this.services.search.remove(id);
+    }
 
     if (uiStore.isDemoMode) {
       const updated = { ...this.entities };
@@ -750,10 +815,19 @@ export class VaultStore {
       return;
     }
 
-    const vaultHandle = await this.getActiveVaultHandle();
-    if (vaultHandle) {
-      await this.crudManager.deleteEntity(id, vaultHandle, this.activeVaultId!);
-    }
+    // Use the same per-entity lock for deletion to avoid conflicts with saves to that file.
+    const lockKey = id;
+
+    return this.saveQueue.enqueue(lockKey, async () => {
+      const vaultHandle = await this.getActiveVaultHandle();
+      if (vaultHandle) {
+        await this.crudManager.deleteEntity(
+          id,
+          vaultHandle,
+          this.activeVaultId!,
+        );
+      }
+    });
   }
   addConnection(
     sourceId: string,
@@ -787,9 +861,18 @@ export class VaultStore {
     return this.crudManager.bulkRemoveLabel(ids, label);
   }
   async batchCreateEntities(newEntitiesList: BatchCreateInput[]) {
-    const result = await this.crudManager.batchCreateEntities(newEntitiesList);
+    await this.crudManager.batchCreateEntities(newEntitiesList);
+    // Mark all as loaded and verified since they are fresh.
+    // This prevents lazy load clobbering.
+    for (const item of newEntitiesList) {
+      // We might not have the ID if it's an EntityCreationRequest,
+      // but for batch imports it usually is a LocalEntity.
+      if ((item as any).id) {
+        this._contentLoadedIds.add((item as any).id);
+        this._contentVerifiedIds.add((item as any).id);
+      }
+    }
     this.broadcastVaultUpdate();
-    return result;
   }
 
   updateConnection(
@@ -812,11 +895,25 @@ export class VaultStore {
     path: string,
     fileFetcher?: (path: string) => Promise<Blob>,
   ) {
-    return this.assetManager.resolveImageUrl(
+    if (!path) return "";
+
+    // Optimization: Return cached URL if available
+    const cacheKey = `${this.activeVaultId}:${path}`;
+    if (this._urlCache.has(cacheKey)) {
+      return this._urlCache.get(cacheKey)!;
+    }
+
+    const url = await this.assetManager.resolveImageUrl(
       await this.getActiveVaultHandle(),
       path,
       fileFetcher,
     );
+
+    if (url) {
+      this._urlCache.set(cacheKey, url);
+    }
+
+    return url;
   }
 
   async saveImageToVault(
@@ -944,3 +1041,10 @@ const VAULT_KEY = "__codex_vault_instance__";
 export const vault: VaultStore =
   (globalThis as any)[VAULT_KEY] ??
   ((globalThis as any)[VAULT_KEY] = new VaultStore());
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV || (window as any).__E2E__)
+) {
+  (window as any).vault = vault;
+  console.log("[VaultStore] Module loaded, vault attached to window");
+}

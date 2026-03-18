@@ -144,23 +144,49 @@ export class CacheService {
     entity: LocalEntity,
   ): Promise<void> {
     try {
+      // Svelte 5: Ensure we have a non-reactive, serializable clone.
+      // We use JSON.parse/stringify as the absolute filter to strip any
+      // Proxies, Symbols, or non-serializable garbage that Dexie/IndexedDB might reject.
+      const raw = JSON.parse(JSON.stringify($state.snapshot(entity)));
+
       const { vaultId, filePath } = parseKey(path);
-      const { content, ...graphData } = entity;
+
+      // Separate heavy text from graph metadata
+      const { content, lore, ...graphData } = raw;
+
+      // We manually construct the record to be absolutely sure no hidden
+      // non-serializable fields (like Proxies or nested arrays with issues)
+      // are passed to Dexie.
+      const graphRecord = {
+        id: String(raw.id),
+        type: String(raw.type),
+        title: String(raw.title),
+        tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
+        labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+        connections: Array.isArray(raw.connections)
+          ? JSON.parse(JSON.stringify(raw.connections))
+          : [],
+        image: raw.image ? String(raw.image) : undefined,
+        thumbnail: raw.thumbnail ? String(raw.thumbnail) : undefined,
+        metadata: raw.metadata ? JSON.parse(JSON.stringify(raw.metadata)) : {},
+        updatedAt:
+          typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+        _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
+        vaultId: String(vaultId),
+        lastModified: Number(lastModified),
+        filePath: String(filePath),
+      };
 
       await entityDb.transaction(
         "rw",
         [entityDb.graphEntities, entityDb.entityContent],
         async () => {
-          await entityDb.graphEntities.put({
-            ...graphData,
-            vaultId,
-            lastModified,
-            filePath,
-          });
+          await entityDb.graphEntities.put(graphRecord);
           await entityDb.entityContent.put({
-            entityId: entity.id,
-            vaultId,
-            content: content || "",
+            entityId: String(raw.id),
+            vaultId: String(vaultId),
+            content: String(content || ""),
+            lore: String(lore || ""),
           });
         },
       );
@@ -171,7 +197,7 @@ export class CacheService {
           ...graphData,
           content: "",
           lore: undefined,
-        };
+        } as LocalEntity;
         this.preloaded.set(path, { lastModified, entity: graphEntity });
       }
     } catch (err) {
@@ -229,15 +255,16 @@ export class CacheService {
   }
 
   /**
-   * Returns the cached chronicle body text for a specific entity.
+   * Returns the cached chronicle and lore body text for a specific entity.
    */
   async getEntityContent(
     vaultId: string,
     entityId: string,
-  ): Promise<string | null> {
+  ): Promise<{ content: string; lore: string } | null> {
     try {
       const record = await entityDb.entityContent.get([vaultId, entityId]);
-      return record?.content ?? null;
+      if (!record) return null;
+      return { content: record.content, lore: record.lore };
     } catch (err) {
       debugStore.warn(
         `[CacheService] Failed to get content for ${entityId}:`,

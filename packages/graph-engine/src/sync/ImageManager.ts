@@ -5,6 +5,7 @@ export interface ImageManagerOptions {
   resolveImageUrl: (path: string) => Promise<string | null>;
   batchSize?: number;
   onBatchApplied?: (count: number) => void;
+  onLog?: (message: string) => void;
   onError?: (error: any) => void;
 }
 
@@ -33,7 +34,7 @@ export class GraphImageManager {
 
     if (nodesWithImages.length === 0) return;
 
-    console.debug(
+    options.onLog?.(
       `[GraphImageManager] Syncing images for ${nodesWithImages.length} nodes...`,
     );
 
@@ -75,8 +76,9 @@ export class GraphImageManager {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {
             for (const { node, url, oldUrl } of chunk) {
-              if (url && url !== oldUrl) {
-                node.data("resolvedImage", url);
+              const newUrl = url || "failed"; // Mark as failed to avoid infinite retries
+              if (newUrl !== oldUrl) {
+                node.data("resolvedImage", newUrl);
                 if (oldUrl?.startsWith("blob:")) {
                   URL.revokeObjectURL(oldUrl);
                 }
@@ -86,7 +88,7 @@ export class GraphImageManager {
         }
 
         this.cy.style().update();
-        console.debug(
+        options.onLog?.(
           `[GraphImageManager] Resolved ${results.length} images in ${(performance.now() - start).toFixed(2)}ms`,
         );
         options.onBatchApplied?.(results.length);

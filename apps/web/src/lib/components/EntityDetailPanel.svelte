@@ -21,9 +21,13 @@
   // We re-derive the entity from the vault store directly to ensure
   // we pick up reactive updates to its content/lore fields after
   // lazy loading from Dexie.
-  let entity = $derived.by(() => {
-    const e = _entity ? vault.entities[_entity.id] : null;
-    return e;
+  let entity = $derived(_entity?.id ? vault.entities[_entity.id] : null);
+
+  // Lazy-load content when sidebar opens or navigates
+  $effect(() => {
+    if (entity?.id) {
+      vault.loadEntityContent(entity.id);
+    }
   });
 
   let isEditing = $state(false);

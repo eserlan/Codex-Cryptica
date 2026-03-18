@@ -11,6 +11,7 @@ export class VaultCrudManager {
     private getActiveVaultHandle: () => Promise<
       FileSystemDirectoryHandle | undefined
     >,
+    private getActiveVaultId: () => string | null,
     private isGuest: () => boolean,
     private getServices: () => any,
     private onEntityDelete?: (id: string) => void,
@@ -18,6 +19,7 @@ export class VaultCrudManager {
     private onBatchUpdate?: (
       updates: Record<string, Partial<LocalEntity>>,
     ) => void,
+    private invalidateUrlCache?: (path: string) => void,
   ) {}
 
   async createEntity(
@@ -42,14 +44,29 @@ export class VaultCrudManager {
     id: string,
     updates: Partial<LocalEntity>,
   ): Promise<boolean> {
+    const currentEntities = this.getEntities();
+    const existing = currentEntities[id];
+
+    // SAFETY: Never overwrite existing content/lore with null/undefined from a partial update.
+    const safeUpdates = {
+      ...updates,
+      content:
+        updates.content !== undefined ? updates.content : existing?.content,
+      lore: updates.lore !== undefined ? updates.lore : existing?.lore,
+    };
+
     const { entities, updated } = vaultEntities.updateEntity(
-      this.getEntities(),
+      currentEntities,
       id,
-      updates,
+      safeUpdates,
     );
     if (!updated) return false;
 
     this.setEntities(entities);
+
+    if (updates.image && this.invalidateUrlCache) {
+      this.invalidateUrlCache(updates.image);
+    }
 
     const services = this.getServices();
     if (
@@ -65,7 +82,7 @@ export class VaultCrudManager {
     return true;
   }
 
-  async batchUpdateEntities(
+  async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
     let hasChanges = false;
@@ -77,10 +94,25 @@ export class VaultCrudManager {
     for (const [id, patch] of Object.entries(updates)) {
       if (!currentEntities[id]) continue;
       const current = currentEntities[id];
-      const merged = { ...current, ...patch, updatedAt: Date.now() };
+
+      // SAFETY: Preserve content/lore if not in patch.
+      const merged = {
+        ...current,
+        ...patch,
+        content: patch.content !== undefined ? patch.content : current.content,
+        lore: patch.lore !== undefined ? patch.lore : current.lore,
+        updatedAt: Date.now(),
+      };
+
       newEntities[id] = merged;
       appliedUpdates[id] = patch;
       hasChanges = true;
+
+      if (patch.image && this.invalidateUrlCache) {
+        this.invalidateUrlCache(patch.image);
+      }
+
+      // Save to disk (scheduleSave also updates Dexie cache)
       savePromises.push(this.scheduleSave(merged));
     }
 
@@ -254,8 +286,11 @@ export class VaultCrudManager {
       newEntitiesList,
     );
     this.setEntities(entities);
-    for (const entity of created) {
+
+    const savePromises = created.map(async (entity) => {
       await this.scheduleSave(entity);
-    }
+    });
+
+    await Promise.all(savePromises);
   }
 }

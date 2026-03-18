@@ -57,15 +57,18 @@ As a user, I want to manage multiple vaults, maps, and canvases as distinct doma
 - **FR-002**: System MUST isolate local folder synchronization and conflict resolution into a `SyncCoordinator`.
 - **FR-003**: System MUST delegate map and canvas metadata management to specialized registry stores.
 - **FR-004**: System MUST maintain the `IVaultServices` interface for Dependency Injection (Search, AI).
-- **FR-005**: System MUST reduce the `VaultStore` to under 300 lines of code, focusing on UI-facing reactivity and orchestration.
+- **FR-005**: System MUST reduce the `VaultStore` to focus on UI-facing reactivity and data retrieval, delegating side-effects to an event-driven system.
 - **FR-006**: System MUST ensure that all existing unit tests in `vault.test.ts` pass after refactoring.
+- **FR-007**: System MUST implement a `VaultEventBus` to broadcast lifecycle events (CACHE_LOADED, SYNC_COMPLETE, etc.) to autonomous services.
+- **FR-008**: Secondary services (Search, Maps, AI) MUST subscribe to the event bus rather than being manually orchestrated by the store.
 
 ### Key Entities
 
 - **VaultRepository**: Handles low-level entity serialization, OPFS file writes, and chunked file loading.
 - **SyncCoordinator**: Manages the `LocalSyncService` interaction, directory handle persistence, and conflict squashing logic.
 - **AssetManager**: Handles image blob persistence and URL resolution (including Guest mode fallbacks).
-- **VaultStore**: The thin reactive controller coordinating these services for the Svelte UI.
+- **VaultEventBus**: Central communication channel for decoupling the store from side-effect orchestration.
+- **VaultStore**: The thin reactive controller coordinating these services and broadcasting data changes.
 
 ## Success Criteria _(mandatory)_
 

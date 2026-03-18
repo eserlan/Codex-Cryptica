@@ -53,6 +53,12 @@ export class ThemeStore {
   constructor(uiStore: typeof defaultUiStore = defaultUiStore) {
     this.uiStore = uiStore;
 
+    // Apply initial theme immediately if in browser to prevent flash
+    // before the first $effect runs.
+    if (browser) {
+      this.applyTheme(this.activeTheme);
+    }
+
     $effect.root(() => {
       $effect(() => {
         this.applyTheme(this.activeTheme);
@@ -63,11 +69,10 @@ export class ThemeStore {
   async init() {
     if (!browser) return;
 
-    // If we have an active vault ID already (from registry init), use it.
-    // Otherwise, fall back to global selection until a vault is explicitly switched.
-    // Note: We access vault singleton here lazily to avoid circular dependency at module load time.
-    if (vault.activeVaultId) {
-      await this.loadForVault(vault.activeVaultId);
+    // Use current active vault if available, otherwise fall back to localStorage
+    const activeVaultId = vault.activeVaultId;
+    if (activeVaultId) {
+      await this.loadForVault(activeVaultId);
     } else {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored && THEMES[stored] && this.currentThemeId !== stored) {
@@ -87,11 +92,6 @@ export class ThemeStore {
         }
         // Update global hint for the next reload's blocking script
         localStorage.setItem(STORAGE_KEY, stored);
-      } else if (this.currentThemeId !== DEFAULT_THEME.id) {
-        // For new vaults, we want to start with default
-        // instead of inheriting whatever was in localStorage/global state
-        this.currentThemeId = DEFAULT_THEME.id;
-        localStorage.setItem(STORAGE_KEY, DEFAULT_THEME.id);
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
@@ -204,6 +204,9 @@ export const themeStore: ThemeStore =
   (globalThis as any)[THEME_KEY] ??
   ((globalThis as any)[THEME_KEY] = new ThemeStore());
 
-if (typeof window !== "undefined") {
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV || (window as any).__E2E__)
+) {
   (window as any).themeStore = themeStore;
 }
