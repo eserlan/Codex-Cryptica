@@ -111,6 +111,12 @@ apps/web/src/lib/hooks/
 - [x] Verify that all global shortcuts, initializations, and modals still function as expected.
 - [x] Final cleanup of unused imports and variables in `+layout.svelte`.
 
+### Phase 5: Testing
+
+- [x] Create unit tests for `app-init.ts` logic.
+- [x] Create unit tests for `useGlobalShortcuts.svelte.ts` hook logic.
+- [x] Run full test suite to ensure no regressions in layout-dependent features.
+
 ## Expected Outcomes
 
 - **Improved Maintainability**: Logic is isolated into files with clear responsibilities.
