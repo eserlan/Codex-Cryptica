@@ -191,30 +191,6 @@
           Entity Palette
         </h2>
         <div class="flex items-center gap-1">
-          {#if searchQuery.trim() || typeFilters.some((f) => f !== "all")}
-            <button
-              onclick={() => {
-                filteredEntities.forEach((entity, index) => {
-                  window.dispatchEvent(
-                    new CustomEvent("add-to-canvas", {
-                      detail: {
-                        entityId: entity.id,
-                        // Offset slightly to prevent perfect stacking
-                        position: {
-                          x: window.innerWidth / 2 + index * 20,
-                          y: window.innerHeight / 2 + index * 20,
-                        },
-                      },
-                    }),
-                  );
-                });
-              }}
-              class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
-              title="Add all filtered to canvas"
-            >
-              <LayoutGrid class="w-4 h-4" />
-            </button>
-          {/if}
           <button
             onclick={() => (uiStore.showCanvasSelector = true)}
             class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"

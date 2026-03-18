@@ -6,13 +6,45 @@
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
+  import type { Core } from "cytoscape";
 
-  let { selectedEntity, parentEntity, selectedId, isLayoutRunning } = $props<{
-    selectedEntity: Entity | null;
-    parentEntity: Entity | null;
-    selectedId: string | null;
-    isLayoutRunning: boolean;
-  }>();
+  let { selectedEntity, parentEntity, selectedId, isLayoutRunning, cy } =
+    $props<{
+      selectedEntity: Entity | null;
+      parentEntity: Entity | null;
+      selectedId: string | null;
+      isLayoutRunning: boolean;
+      cy: Core | undefined;
+    }>();
+
+  const hasActiveFilters = $derived(
+    graph.activeCategories.size > 0 || graph.activeLabels.size > 0,
+  );
+
+  function addFilteredToCanvas() {
+    if (!cy) return;
+    const visibleNodes = cy.nodes(
+      ":not(.category-filtered-out):not(.label-filtered-out)",
+    );
+    visibleNodes.forEach((node, index) => {
+      const entityId = node.id();
+      window.dispatchEvent(
+        new CustomEvent("add-to-canvas", {
+          detail: {
+            entityId,
+            position: {
+              x: window.innerWidth / 2 + index * 20,
+              y: window.innerHeight / 2 + index * 20,
+            },
+          },
+        }),
+      );
+    });
+    ui.notify(
+      `Added ${visibleNodes.length} entities to active workspace`,
+      "success",
+    );
+  }
 </script>
 
 <div
@@ -49,12 +81,22 @@
     </div>
   {/if}
 
-  <div class="pointer-events-auto">
+  <div class="pointer-events-auto flex items-center gap-2">
     <CategoryFilter
       activeCategories={graph.activeCategories}
       onToggle={(id) => graph.toggleCategoryFilter(id)}
       onClear={() => graph.clearCategoryFilters()}
     />
+
+    {#if hasActiveFilters}
+      <button
+        onclick={addFilteredToCanvas}
+        class="bg-theme-surface/80 backdrop-blur border border-theme-primary/30 p-1.5 rounded text-theme-primary shadow-lg hover:border-theme-primary transition-all active:scale-90"
+        title="Add all results to workspace"
+      >
+        <span class="icon-[lucide--layout-grid] w-4 h-4"></span>
+      </button>
+    {/if}
   </div>
 
   <div class="pointer-events-auto">

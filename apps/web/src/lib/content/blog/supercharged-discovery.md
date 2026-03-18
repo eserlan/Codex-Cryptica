@@ -42,21 +42,21 @@ Think of labels as "adjectives" for your world. While an entity has a **Type** (
 
 ## **2. The Multi-Type Filter: Finding the Needle**
 
-The real power of discovery happens in the **Entity Palette**. We designed it to handle "Multi-Select" filtering.
+The real power of discovery happens when you use "Multi-Select" filtering in the **Knowledge Graph**.
 
-![Multi-type Sidebar Filtering](https://assets.codexcryptica.com/images/blog/sidebar-filter-action.png)
+![Multi-type HUD Filtering](https://assets.codexcryptica.com/images/blog/sidebar-filter-action.png)
 
-By holding **Ctrl (or Cmd)** while clicking types, you can create complex queries instantly:
+By selecting multiple types or labels in the Graph HUD, you can create complex queries instantly:
 
 - **"I need a Map of a Tavern"**: Select `[Map]` + `[Location]`.
-- **"Who is in this City?"**: Select `[Person]` + `[Location]` and type the city name in search.
+- **"Who is in this City?"**: Select `[Person]` + `[Location]` and see them highlighted in the web.
 - **"What Items are relevant to this Faction?"**: Filter by `[Item]` and use your faction label.
 
 This isn't just about finding data; it's about **seeing what’s missing**. If you filter for `[Person]` + `#High-Society` and only three names pop up, you know exactly where your world-building needs more work.
 
 ## **3. Discovery via the Graph**
 
-Filtering in the sidebar also updates your **Relational Graph**. When you apply a filter, the graph highlights those specific entities, making the "invisible lines" between them glow.
+When you apply a filter, the graph highlights those specific entities, making the "invisible lines" between them glow.
 
 ![Filtered Graph Isolation](https://assets.codexcryptica.com/images/blog/graph-filter-highlight.png)
 
@@ -65,15 +65,14 @@ Filtering in the sidebar also updates your **Relational Graph**. When you apply 
 
 ## **4. AI Discovery: The /plot Command**
 
-Sometimes, discovery isn't just about what you've manually organized—it's about what you _missed_. This is where the **Lore Oracle** comes in.
+Once you've used labels and filters to isolate a specific part of your world—say, all the NPCs in the `#Underworld`—it's time to dig deeper. This is where the **Lore Oracle** comes in.
 
-Once you have a network of connections built through labels and filters, you can use the `/plot` command to let the AI analyze the tensions in your world.
+The `/plot` command is specifically designed to analyze the **connections** between your entities. By framing your search with filters first, you provide the Oracle with a high-definition slice of your world to analyze.
 
 ![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
 
-- **Uncover Rivals**: Type `/plot Count Dukoo` to see who in your vault is likely working against him based on their current allegiances.
-- **Find Political Risks**: The Oracle can look at your faction labels and identify which characters are caught in the middle of a brewing conflict.
-- **Hidden Secrets**: Use `/plot secrets around [City Name]` to generate dramatic hooks that link your existing locations and NPCs in ways you hadn't considered.
+- **Analyze Tension**: Filter for `#The-Rebellion` and then type `/plot [Leader Name]`. The AI will look at the existing web of filtered connections to identify rivals, political risks, and hidden secrets that naturally emerge from your data.
+- **Uncover Story Hooks**: Use filters to see the "what" (e.g., `[Location]`), and use `/plot` to explore the "why." Ask the Oracle: `/plot tensions at [The Black Iron Tavern]` to see how its connections to local factions create dramatic possibilities.
 
 ## **5. Pro Tip: The "Canvas" Workflow**
 
@@ -81,11 +80,11 @@ When you discover a group of related entities through filtering or AI analysis, 
 
 ![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
 
-1. Filter for `#Politics` + `[Person]`.
-2. Click the **"Add all filtered to canvas"** button (the Grid icon) in the palette header.
-3. Draw manual links to represent the current power struggle.
+1. Apply your filters in the **Graph View** (e.g., `#Politics` + `[Person]`).
+2. Click the **"Add all results to workspace"** button (the Grid icon) that appears next to the filters.
+3. Switch to your **Canvas** and draw manual links to represent the specific power struggle you just discovered.
 
-You’ve just turned a search result into a tactical "Murder Board" that you can use to plan your next three sessions.
+You’ve just turned a complex graph query into a tactical "Murder Board" that you can use to plan your next three sessions.
 
 ---
 
