@@ -37,12 +37,31 @@ class CanvasRegistryStore {
     }
   }
 
-  async create(name: string): Promise<string | null> {
-    const id = crypto.randomUUID();
-    const slug = name
+  private generateSlug(name: string, id: string): string {
+    const base = name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "");
+
+    // If base is empty (e.g. name only had symbols), fallback to ID
+    if (!base) return id.slice(0, 8);
+
+    // Check for collisions with other canvases (excluding current ID)
+    const exists = Object.values(this.canvases).some(
+      (c) => c.slug === base && c.id !== id,
+    );
+
+    if (exists) {
+      // Append short ID to ensure uniqueness
+      return `${base}-${id.slice(0, 4)}`;
+    }
+
+    return base;
+  }
+
+  async create(name: string): Promise<string | null> {
+    const id = crypto.randomUUID();
+    const slug = this.generateSlug(name, id);
 
     this.canvases[id] = {
       id,
@@ -67,10 +86,7 @@ class CanvasRegistryStore {
     if (!canvas) return null;
 
     canvas.name = newName;
-    canvas.slug = newName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+    canvas.slug = this.generateSlug(newName, id);
     canvas.lastModified = Date.now();
 
     await this.saveCanvas(id);

@@ -243,6 +243,8 @@
                 <div
                   class="flex gap-2 items-center"
                   onclick={(e) => e.stopPropagation()}
+                  onkeydown={(e) => e.stopPropagation()}
+                  role="none"
                 >
                   <input
                     id={`rename-input-${canvas.id}`}
