@@ -47,8 +47,12 @@ export const CanvasEdgeSchema = z.object({
 });
 
 export const CanvasSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().optional(),
+  slug: z.string().optional(),
   nodes: z.array(CanvasNodeSchema),
   edges: z.array(CanvasEdgeSchema),
+  lastModified: z.number().optional(),
 });
 
 export type CanvasNode = z.infer<typeof CanvasNodeSchema>;

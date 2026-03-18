@@ -98,7 +98,16 @@ export async function loadCanvasesFromDisk(
           const file = await (handle as FileSystemFileHandle).getFile();
           const text = await file.text();
           const raw = JSON.parse(text);
-          canvases[id] = CanvasSchema.parse(raw);
+          const parsed = CanvasSchema.parse(raw);
+
+          // Ensure basic metadata exists even if missing in file
+          canvases[id] = {
+            id,
+            name: parsed.name || id,
+            slug: parsed.slug || id,
+            lastModified: parsed.lastModified || file.lastModified,
+            ...parsed,
+          };
         } catch (itemErr) {
           console.error(`[VaultIO] Failed to load canvas ${name}`, itemErr);
         }

@@ -119,9 +119,12 @@
     if (vault.isInitialized && canvasId) {
       // Flush any pending save for the PREVIOUS canvas before loading new data
       untrack(() => {
-        if (saveTimer !== null) {
+        if (saveTimer !== null && targetVaultId && targetCanvasId) {
+          const oldVaultId = targetVaultId;
+          const oldCanvasId = targetCanvasId;
           clearTimeout(saveTimer);
-          saveCanvas();
+          saveTimer = null;
+          saveCanvas(oldVaultId, oldCanvasId);
         }
       });
 
@@ -392,14 +395,17 @@
     ];
   }
 
-  async function saveCanvas() {
-    const currentVaultId = targetVaultId;
-    const currentCanvasId = targetCanvasId;
+  async function saveCanvas(
+    explicitVaultId?: string,
+    explicitCanvasId?: string,
+  ) {
+    const currentVaultId = explicitVaultId || targetVaultId;
+    const currentCanvasId = explicitCanvasId || targetCanvasId;
     if (!currentVaultId || !currentCanvasId) return;
 
     const data = engine.export();
     vault.canvases[currentCanvasId] = data;
-    await vault.saveCanvas(currentCanvasId);
+    await vault.saveCanvas(currentCanvasId, currentVaultId);
     await canvasRegistry.touch(currentCanvasId);
   }
 
@@ -415,7 +421,10 @@
   onDestroy(() => {
     if (saveTimer !== null) {
       clearTimeout(saveTimer);
-      saveCanvas();
+      // Use untracked values for final destroy save
+      untrack(() => {
+        saveCanvas(targetVaultId!, targetCanvasId!);
+      });
     }
   });
 

@@ -84,14 +84,11 @@ class CanvasRegistryStore {
     }
   }
 
-  async saveCanvas(id: string) {
-    if (
-      !vaultRegistry.activeVaultId ||
-      !vaultRegistry.rootHandle ||
-      !this.saveQueue
-    )
-      return;
-    const vaultId = vaultRegistry.activeVaultId;
+  async saveCanvas(id: string, explicitVaultId?: string) {
+    if (!vaultRegistry.rootHandle || !this.saveQueue) return;
+
+    const vaultId = explicitVaultId || vaultRegistry.activeVaultId;
+    if (!vaultId) return;
 
     const data = this.canvases[id];
     if (!data) return;

@@ -958,8 +958,8 @@ export class VaultStore {
   deleteMap(id: string) {
     return mapRegistry.deleteMap(id);
   }
-  saveCanvas(id: string) {
-    return canvasRegistry.saveCanvas(id);
+  saveCanvas(id: string, explicitVaultId?: string) {
+    return canvasRegistry.saveCanvas(id, explicitVaultId);
   }
 
   // --- Sync Delegations ---
