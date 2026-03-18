@@ -4,18 +4,18 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count    | Type                | Status   |
-| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 449 | UI Component        | ✅ FIXED |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 364 | UI Component        | ✅ FIXED |
-| 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
-| 6    | `apps/web/src/routes/+layout.svelte`                        | 795           | UI Layout           | 🔥 NEXT |
-| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 681           | UI Component        | 🔥 NEXT |
-| 8    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         | 🟡 SOON |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
-| 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 632           | UI Component        |          |
+| Rank | File Path                                                   | Line Count     | Type                | Status     |
+| :--- | :---------------------------------------------------------- | :------------- | :------------------ | :--------- |
+| 1    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 1042 | Store (State/Logic) | 🟡 REGRESS |
+| 2    | `apps/web/src/routes/+layout.svelte`                        | 756            | UI Layout           | 🔥 NEXT    |
+| 3    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | ~~618~~ 707    | UI Component        | 🟡 GROWING |
+| 4    | `apps/web/src/lib/components/map/MapView.svelte`            | 681            | UI Component        | 🔥 NEXT    |
+| 5    | `packages/sync-engine/src/SyncService.ts`                   | 663            | Engine Core         | 🟡 SOON    |
+| 6    | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 618            | UI Component        |            |
+| 7    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 486  | UI Component        | ✅ FIXED   |
+| 8    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 364  | UI Component        | ✅ FIXED   |
+| 9    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233  | Store (State/Logic) | ✅ FIXED   |
+| 10   | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1      | Service (API/Logic) | ✅ FIXED   |
 
 ---
 
