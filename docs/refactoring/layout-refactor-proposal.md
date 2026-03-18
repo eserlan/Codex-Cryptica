@@ -89,27 +89,27 @@ apps/web/src/lib/hooks/
 
 ### Phase 1: Foundations
 
-- [ ] Create `apps/web/src/lib/app/init/app-init.ts` with `bootSystem`, `initializeGlobalListeners`, and `setupWindowGlobals`.
-- [ ] Create `apps/web/src/lib/hooks/useGlobalShortcuts.svelte.ts` to handle global keyboard events.
-- [ ] Implement `NotificationToast.svelte` to isolate notification rendering.
+- [x] Create `apps/web/src/lib/app/init/app-init.ts` with `bootSystem`, `initializeGlobalListeners`, and `setupWindowGlobals`.
+- [x] Create `apps/web/src/lib/hooks/useGlobalShortcuts.svelte.ts` to handle global keyboard events.
+- [x] Implement `NotificationToast.svelte` to isolate notification rendering.
 
 ### Phase 2: Component Extraction
 
-- [ ] Create `apps/web/src/lib/components/layout/AppHeader.svelte` (Move `<header>` block).
-- [ ] Create `apps/web/src/lib/components/layout/AppFooter.svelte` (Move `<footer>` block).
-- [ ] Create `apps/web/src/lib/components/layout/FatalErrorOverlay.svelte` (Move system failure UI).
-- [ ] Create `apps/web/src/lib/components/layout/OracleSidebarProvider.svelte` (Handle lazy-loading logic).
+- [x] Create `apps/web/src/lib/components/layout/AppHeader.svelte` (Move `<header>` block).
+- [x] Create `apps/web/src/lib/components/layout/AppFooter.svelte` (Move `<footer>` block).
+- [x] Create `apps/web/src/lib/components/layout/FatalErrorOverlay.svelte` (Move system failure UI).
+- [x] Create `apps/web/src/lib/components/layout/OracleSidebarProvider.svelte` (Handle lazy-loading logic).
 
 ### Phase 3: Consolidation
 
-- [ ] Update `GlobalModalProvider.svelte` to ensure it handles all global dialogs correctly.
-- [ ] Remove duplicate lazy-loading logic and `{#if}` blocks from `+layout.svelte`.
+- [x] Update `GlobalModalProvider.svelte` to ensure it handles all global dialogs correctly.
+- [x] Remove duplicate lazy-loading logic and `{#if}` blocks from `+layout.svelte`.
 
 ### Phase 4: Final Orchestration
 
-- [ ] Refactor `+layout.svelte` to use the new providers and components.
-- [ ] Verify that all global shortcuts, initializations, and modals still function as expected.
-- [ ] Final cleanup of unused imports and variables in `+layout.svelte`.
+- [x] Refactor `+layout.svelte` to use the new providers and components.
+- [x] Verify that all global shortcuts, initializations, and modals still function as expected.
+- [x] Final cleanup of unused imports and variables in `+layout.svelte`.
 
 ## Expected Outcomes
 

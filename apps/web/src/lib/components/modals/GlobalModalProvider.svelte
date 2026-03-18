@@ -15,6 +15,16 @@
     isMobileMenuOpen: boolean;
   } = $props();
 
+  let OracleWindow = $state<any>(null);
+  let ZenModeModal = $state<any>(null);
+  let TourOverlay = $state<any>(null);
+  let DebugConsole = $state<any>(null);
+  let MergeNodesDialog = $state<any>(null);
+  let BulkLabelDialog = $state<any>(null);
+  let DiceModal = $state<any>(null);
+
+  const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
+
   const isSpecialEnv =
     import.meta.env.DEV ||
     (typeof window !== "undefined" && (window as any).__E2E__) ||
@@ -27,16 +37,6 @@
       debugStore.error(`Failed to lazy-load component: ${name}`, error);
     }
   };
-
-  let OracleWindow = $state<any>(null);
-  let ZenModeModal = $state<any>(null);
-  let TourOverlay = $state<any>(null);
-  let DebugConsole = $state<any>(null);
-  let MergeNodesDialog = $state<any>(null);
-  let BulkLabelDialog = $state<any>(null);
-  let DiceModal = $state<any>(null);
-
-  const isLoginRoute = $derived(page.url.pathname === `${base}/login`);
 
   $effect(() => {
     if (uiStore.showZenMode && !ZenModeModal) {
