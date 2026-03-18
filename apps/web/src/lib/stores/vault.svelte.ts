@@ -870,7 +870,7 @@ export class VaultStore {
       vaultEventBus.emit({
         type: "BATCH_CREATED",
         vaultId: this.activeVaultId ?? "unknown",
-        entities: createdEntities,
+        entities: createdEntities as any,
       });
     }
 
