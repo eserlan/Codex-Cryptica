@@ -15,10 +15,16 @@ export function extractIdAndDoc(item: any): { id: string | null; doc: any } {
 
 export class SearchEngine {
   private index: any = null;
-  private docCount = 0;
+  private docIds = new Set<string>();
+  private taskQueue: Promise<void> = Promise.resolve();
   private onLog:
     | ((level: "info" | "warn" | "error", msg: string, data?: any) => void)
     | null = null;
+  private onChange: (() => void) | null = null;
+
+  get docCount() {
+    return this.docIds.size;
+  }
 
   constructor() {
     this.initIndex();
@@ -35,6 +41,10 @@ export class SearchEngine {
     this.log("info", "Logger attached to SearchEngine");
   }
 
+  setChangeCallback(callback: () => void) {
+    this.onChange = callback;
+  }
+
   private log(level: "info" | "warn" | "error", msg: string, data?: any) {
     console[level](`[SearchEngine] ${msg}`, data || "");
     if (this.onLog) {
@@ -42,6 +52,16 @@ export class SearchEngine {
         this.onLog(level, msg, data);
       } catch (err) {
         console.error("Failed to send log to main thread", err);
+      }
+    }
+  }
+
+  private notifyChange() {
+    if (this.onChange) {
+      try {
+        this.onChange();
+      } catch (err) {
+        console.error("Failed to notify index change", err);
       }
     }
   }
@@ -77,24 +97,32 @@ export class SearchEngine {
     this.index = new FlexSearch.Document(config);
   }
 
-  add(doc: SearchEntry) {
-    if (!this.index) {
-      this.log("warn", "Index was null during add(), re-initializing.");
-      this.initIndex();
-    }
-    try {
-      this.index.add(doc);
-      this.docCount++;
-    } catch (err) {
-      this.log("error", `Failed to add document ${doc.id}`, err);
-    }
+  async add(doc: SearchEntry) {
+    this.taskQueue = this.taskQueue.then(async () => {
+      if (!this.index) {
+        this.log("warn", "Index was null during add(), re-initializing.");
+        this.initIndex();
+      }
+      try {
+        this.index.add(doc);
+        this.docIds.add(doc.id);
+        this.notifyChange();
+      } catch (err) {
+        this.log("error", `Failed to add document ${doc.id}`, err);
+      }
+    });
+    return this.taskQueue;
   }
 
-  remove(id: string) {
-    if (!this.index) return;
-    this.log("info", `Removing document: ${id}`);
-    this.index.remove(id);
-    this.docCount = Math.max(0, this.docCount - 1);
+  async remove(id: string) {
+    this.taskQueue = this.taskQueue.then(async () => {
+      if (!this.index) return;
+      this.log("info", `Removing document: ${id}`);
+      this.index.remove(id);
+      this.docIds.delete(id);
+      this.notifyChange();
+    });
+    return this.taskQueue;
   }
 
   async search(
@@ -208,9 +236,68 @@ export class SearchEngine {
   }
 
   clear() {
-    this.log("info", "Clearing index...");
-    this.docCount = 0;
-    this.initIndex();
+    this.taskQueue = this.taskQueue.then(async () => {
+      this.log("info", "Clearing index...");
+      this.docIds.clear();
+      this.initIndex();
+      this.notifyChange();
+    });
+    return this.taskQueue;
+  }
+
+  /**
+   * Exports the index data as a set of key-value pairs.
+   * FlexSearch exports are fragmented, so we collect them into an object.
+   */
+  async exportIndex(): Promise<Record<string, any>> {
+    // Wait for all pending indexing tasks to finish
+    await this.taskQueue;
+
+    if (!this.index) return {};
+
+    const data: Record<string, any> = { _docIds: Array.from(this.docIds) };
+    let count = 0;
+
+    // FlexSearch.Document.export is synchronous.
+    this.index.export((key: any, value: any) => {
+      if (key !== undefined && key !== null && value !== undefined) {
+        data[key] = value;
+        count++;
+        // Periodic progress logging for large indexes
+        if (count % 100 === 0) {
+          this.log("info", `Exporting segments... (${count} so far)`);
+        }
+      }
+    });
+
+    this.log("info", `Export complete. ${count} segments collected.`);
+    return data;
+  }
+
+  /**
+   * Imports a previously exported index.
+   */
+  async importIndex(data: Record<string, any>): Promise<void> {
+    this.taskQueue = this.taskQueue.then(async () => {
+      if (!this.index) this.initIndex();
+      if (data._docIds !== undefined) {
+        this.docIds = new Set(data._docIds);
+      }
+
+      let count = 0;
+      for (const [key, value] of Object.entries(data)) {
+        if (key === "_docIds") continue;
+        // FlexSearch import is synchronous
+        this.index.import(key, value);
+        count++;
+      }
+      this.log(
+        "info",
+        `Index imported with ${this.docCount} documents (${count} segments).`,
+      );
+      this.notifyChange();
+    });
+    return this.taskQueue;
   }
 }
 

@@ -37,8 +37,9 @@ export function renderMarkdown(
 export function parseMarkdown(raw: string): ParseResult {
   // More robust regex:
   // 1. Handles \r?\n for Windows support
-  // 2. Ensures it only matches at the absolute start of the file
-  const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---\s*/;
+  // 2. Allows optional whitespace before the dashes (e.g. for BOMs)
+  // 3. Ensures it matches at the absolute start of the file
+  const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/;
   const match = raw.match(frontmatterRegex);
 
   let metadata: Partial<Entity> = {};

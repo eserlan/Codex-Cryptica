@@ -82,15 +82,18 @@ As a user, I want to read, edit, and query the full content and lore of an entit
 - **FR-008**: Writes to `graphEntities` and `entityContent` MUST be wrapped in a Dexie `transaction('rw', ...)` to ensure atomicity.
 - **FR-009**: `loadEntityContent` MUST NOT mark an entity as loaded if the Dexie read fails with a transient error, allowing the next invocation to retry.
 - **FR-010**: `useEditState.createEditState` MUST accept an optional `VaultLike` parameter for dependency injection to improve testability.
+- **FR-011**: System MUST provide a `search_index` table in IndexedDB to store serialized FlexSearch data.
+- **FR-012**: Search results MUST be available near-instantly after a warm-cache load by restoring the index from Dexie (Search Index Persistence).
 
 ### Key Entities
 
-- **`EntityDb`** (`apps/web/src/lib/utils/entity-db.ts`): Dexie database class with `graphEntities` and `entityContent` tables.
+- **`EntityDb`** (`apps/web/src/lib/utils/entity-db.ts`): Dexie database class with `graphEntities`, `entityContent`, and `search_index` tables.
 - **`GraphEntityRecord`**: Row type for `graphEntities` — entity graph fields plus `vaultId`, `lastModified`, `filePath`.
 - **`EntityContentRecord`**: Row type for `entityContent` — `entityId`, `vaultId`, `content`, `lore`.
+- **`SearchIndexRecord`**: Row type for `search_index` — `vaultId`, `data` (serialized index), `updatedAt`.
 - **`CacheService`** (`apps/web/src/lib/services/cache.ts`): Wraps Dexie; provides `preloadVault`, `get`, `set`, `clearVault`, `invalidatePreload`.
+- **`SearchService`**: Manages the persistence of the search index using the `search_index` table.
 - **`VaultStore.loadEntityContent`** (`apps/web/src/lib/stores/vault.svelte.ts`): Public method for on-demand content loading.
-- **`VaultStore.indexContentInBackground`** (private): Streams `entityContent` via `each()` and re-indexes in FlexSearch.
 
 ## Success Criteria
 

@@ -107,8 +107,9 @@ export class VaultRepository {
       // Update incrementally to allow search/UI to work during load.
       // We only update the specific entities in this chunk.
       if (Object.keys(updatedEntities).length > 0) {
+        const nextEntities = { ...this.entities };
         for (const [id, entity] of Object.entries(updatedEntities)) {
-          const existing = this.entities[id];
+          const existing = nextEntities[id];
 
           // SAFETY: If we have a newer version in memory (e.g. from a recent user edit
           // or a more complete load), do not let the background scan clobber it.
@@ -133,12 +134,13 @@ export class VaultRepository {
           const hasNewLore = entity.lore !== undefined && entity.lore !== "";
           const finalLore = hasNewLore ? entity.lore : existing?.lore || "";
 
-          this.entities[id] = {
+          nextEntities[id] = {
             ...entity,
             content: finalContent,
             lore: finalLore,
           };
         }
+        this.entities = nextEntities;
       }
 
       if (onProgress) {
@@ -160,10 +162,14 @@ export class VaultRepository {
     // We ONLY remove entities that have a _path (meaning they came from disk)
     // but were NOT found in the current disk scan. This preserves
     // newly created in-memory entities that haven't been scanned yet.
-    for (const [id, entity] of Object.entries(this.entities)) {
-      if (entity._path && !newEntities[id]) {
-        delete this.entities[id];
-      }
+    const toDelete = Object.keys(this.entities).filter(
+      (id) => this.entities[id]._path && !newEntities[id],
+    );
+
+    if (toDelete.length > 0) {
+      const nextEntities = { ...this.entities };
+      toDelete.forEach((id) => delete nextEntities[id]);
+      this.entities = nextEntities;
     }
 
     return this.entities;

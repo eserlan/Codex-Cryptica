@@ -169,4 +169,35 @@ describe("SearchEngine Functionality", () => {
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe("murbag-id");
   });
+
+  it("should export and import index data correctly", async () => {
+    // 1. Add data to the original engine
+    await engine.add({
+      id: "export-test-1",
+      title: "Exportable Data",
+      content: "This data should survive export and import.",
+      path: "export.md",
+    });
+    expect(await engine.search("survive")).toHaveLength(1);
+
+    // 2. Export the index
+    const exportedData = await engine.exportIndex();
+
+    // Ensure we got actual flexsearch segments plus our metadata
+    expect(Object.keys(exportedData).length).toBeGreaterThan(1);
+    expect(exportedData._docIds).toContain("export-test-1");
+
+    // 3. Create a new, clean engine
+    const engine2 = new SearchEngine();
+    expect(await engine2.search("survive")).toHaveLength(0);
+
+    // 4. Import the data
+    await engine2.importIndex(exportedData);
+
+    // 5. Verify the data exists in the new engine
+    const results = await engine2.search("survive");
+    expect(results).toHaveLength(1);
+    expect(results[0].id).toBe("export-test-1");
+    expect(engine2.docCount).toBe(1);
+  });
 });

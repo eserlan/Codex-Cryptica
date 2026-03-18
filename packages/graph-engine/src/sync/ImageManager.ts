@@ -76,8 +76,9 @@ export class GraphImageManager {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {
             for (const { node, url, oldUrl } of chunk) {
-              if (url && url !== oldUrl) {
-                node.data("resolvedImage", url);
+              const newUrl = url || "failed"; // Mark as failed to avoid infinite retries
+              if (newUrl !== oldUrl) {
+                node.data("resolvedImage", newUrl);
                 if (oldUrl?.startsWith("blob:")) {
                   URL.revokeObjectURL(oldUrl);
                 }

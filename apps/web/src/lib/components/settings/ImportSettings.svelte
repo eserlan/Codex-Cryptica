@@ -360,7 +360,7 @@
 
     try {
       if (batchData.length > 0) {
-        await vault.batchCreate(batchData);
+        await vault.batchCreateEntities(batchData);
       }
 
       step = "complete";

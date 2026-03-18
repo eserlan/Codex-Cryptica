@@ -298,9 +298,9 @@
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
 
-  // Reset loading state when vault starts loading
+  // Reset loading state when vault starts loading a NEW or EMPTY vault
   $effect(() => {
-    if (vault.status === "loading") {
+    if (vault.status === "loading" && vault.allEntities.length === 0) {
       untrack(() => {
         initialLoaded = false;
         didFinalizeLoad = false;
@@ -358,6 +358,10 @@
         onLayoutUpdate: applyCurrentLayout,
       });
     }
+    // Optimization: Keep graph visible if we have data and it was already loaded
+    if (initialLoaded && !graphVisible) {
+      graphVisible = true;
+    }
   });
 
   $effect(() => {
@@ -395,15 +399,19 @@
   $effect(() => {
     const currentCy = cy;
     if (currentCy && graph.elements && imageManager) {
-      imageManager.sync({
-        showImages: graph.showImages,
-        resolveImageUrl: (path) => vault.resolveImageUrl(path),
-        onBatchApplied: (count) => {
-          debugStore.log(`[GraphView] Applied ${count} images to graph nodes.`);
-        },
-        onLog: (msg) => debugStore.log(msg),
-        onError: (err) =>
-          debugStore.error("Incremental image resolution failed", err),
+      untrack(() => {
+        imageManager!.sync({
+          showImages: graph.showImages,
+          resolveImageUrl: (path) => vault.resolveImageUrl(path),
+          onBatchApplied: (count) => {
+            debugStore.log(
+              `[GraphView] Applied ${count} images to graph nodes.`,
+            );
+          },
+          onLog: (msg) => debugStore.log(msg),
+          onError: (err) =>
+            debugStore.error("Incremental image resolution failed", err),
+        });
       });
     }
   });

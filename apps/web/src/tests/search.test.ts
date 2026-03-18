@@ -12,6 +12,9 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
       .mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
     clear: vi.fn().mockResolvedValue(true),
     setLogger: vi.fn(),
+    setChangeCallback: vi.fn(),
+    exportIndex: vi.fn(),
+    importIndex: vi.fn(),
   };
 
   class MockWorker {
@@ -93,6 +96,64 @@ describe("SearchService", () => {
       "query",
       expect.any(Object),
     );
+  });
+
+  it("should load an index from IndexedDB", async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+
+    // Mock the db response
+    vi.spyOn(entityDb.searchIndex, "get").mockResolvedValueOnce({
+      vaultId: "test-vault",
+      data: { _docIds: ["1"], someSegment: "data" },
+      updatedAt: 123,
+    });
+
+    // We need to bypass the initialization wait loop for testing
+    (service as any).isInitialized = true;
+
+    const result = await service.loadIndex("test-vault");
+    expect(result).toBe(true);
+    expect(mockApi.importIndex).toHaveBeenCalledWith({
+      _docIds: ["1"],
+      someSegment: "data",
+    });
+  });
+
+  it("should skip saving an empty index", async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+
+    // Mock the export to return an empty-ish index (only metadata)
+    mockApi.exportIndex.mockResolvedValueOnce({ _docIds: [] });
+    const putSpy = vi
+      .spyOn(entityDb.searchIndex, "put")
+      .mockResolvedValueOnce(undefined as any);
+
+    await service.saveIndex("test-vault");
+
+    // Should NOT have called put because length is <= 1
+    expect(putSpy).not.toHaveBeenCalled();
+  });
+
+  it("should save a populated index to IndexedDB", async () => {
+    const { entityDb } = await import("$lib/utils/entity-db");
+
+    // Mock the export to return a populated index
+    mockApi.exportIndex.mockResolvedValueOnce({
+      _docIds: ["1"],
+      segment1: "data",
+    });
+    const putSpy = vi
+      .spyOn(entityDb.searchIndex, "put")
+      .mockResolvedValueOnce(undefined as any);
+
+    await service.saveIndex("test-vault");
+
+    // Should have called put because length is > 1
+    expect(putSpy).toHaveBeenCalledWith({
+      vaultId: "test-vault",
+      data: { _docIds: ["1"], segment1: "data" },
+      updatedAt: expect.any(Number),
+    });
   });
 
   it("should bridge logs from worker to debugStore", () => {

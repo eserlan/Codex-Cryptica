@@ -68,14 +68,18 @@ As a user, I want to navigate the search results using arrow keys, so I don't ha
 - **FR-003**: System MUST index note content and allow searching within body text.
 - **FR-004**: System MUST return results ranked by relevance (Exact Title Match > Fuzzy Title Match > Exact Content Match > Fuzzy Content Match).
 - **FR-005**: System MUST highlight the matching terms in the result display.
-- **FR-006**: System MUST update the search index when notes are created, renamed, or deleted.
+- **FR-006**: System MUST update the search index when notes are created, renamed, or deleted via an event-driven architecture (VaultEventBus).
 - **FR-007**: System MUST allow navigating the result list with Up/Down arrow keys and selecting with Enter.
 - **FR-008**: The search interface MUST visually distinguish between matches in the title vs. matches in the content.
 - **FR-009**: System MUST provide a persistent search bar in the application header as a primary input for global navigation and discovery.
+- **FR-010**: System MUST persist the FlexSearch index to IndexedDB to enable near-instant search availability across page reloads (Search Index Persistence).
+- **FR-011**: System MUST automatically manage index serialization and debounced background saves triggered by index modifications.
 
 ### Key Entities
 
-- **SearchIndex**: In-memory structure mapping tokens/ngrams to entity IDs.
+- **SearchIndex**: In-memory structure mapping tokens/ngrams to entity IDs, with support for asynchronous export/import.
+- **SearchService**: Autonomous service that subscribes to vault lifecycle events and manages index persistence.
+- **VaultEventBus**: Central communication channel for broadcasting vault data changes.
 - **SearchResult**: Contains `entityId`, `score`, `matchType` ('title'/'content'), and `highlights`.
 
 ### Assumptions & Dependencies

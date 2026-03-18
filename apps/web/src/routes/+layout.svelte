@@ -250,7 +250,7 @@
         .then((m) => {
           if (m?.oracle) (window as any).oracle = m.oracle;
         })
-        .catch((e) => console.warn("Failed to attach oracle to window", e));
+        .catch((e) => debugStore.warn("Failed to attach oracle to window", e));
       import("$lib/services/ai")
         .then((m) => {
           if (m) {
@@ -260,14 +260,14 @@
           }
         })
         .catch((e) =>
-          console.warn("Failed to attach AI services to window", e),
+          debugStore.warn("Failed to attach AI services to window", e),
         );
       import("$lib/cloud-bridge/p2p/host-service.svelte")
         .then((m) => {
           if (m?.p2pHost) (window as any).p2pHostService = m.p2pHost;
         })
         .catch((e) =>
-          console.warn("Failed to attach p2p host service to window", e),
+          debugStore.warn("Failed to attach p2p host service to window", e),
         );
       import("$lib/cloud-bridge/p2p/guest-service")
         .then((m) => {
@@ -275,7 +275,7 @@
             (window as any).p2pGuestService = m.p2pGuestService;
         })
         .catch((e) =>
-          console.warn("Failed to attach p2p guest service to window", e),
+          debugStore.warn("Failed to attach p2p guest service to window", e),
         );
     }
 

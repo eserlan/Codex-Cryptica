@@ -107,10 +107,10 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 14 to add dice_history store (preventing downgrade errors).
-export const DB_VERSION = 14;
+// DB_VERSION was bumped to 15 to resolve a version conflict during development.
+export const DB_VERSION = 15;
 
-let dbPromise: Promise<IDBPDatabase<CodexDB>>;
+let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
 
 export function getDB() {
   if (!dbPromise) {
@@ -183,7 +183,9 @@ export function getDB() {
       blocking() {
         console.warn("[IDB] Database Open Blocking - closing older connection");
         if (dbPromise) {
-          dbPromise.then((db) => db.close());
+          const promiseToClose = dbPromise;
+          dbPromise = null;
+          promiseToClose.then((db) => db.close()).catch(() => {});
         }
       },
       terminated() {

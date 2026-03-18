@@ -19,6 +19,7 @@ export class VaultCrudManager {
     private onBatchUpdate?: (
       updates: Record<string, Partial<LocalEntity>>,
     ) => void,
+    private invalidateUrlCache?: (path: string) => void,
   ) {}
 
   async createEntity(
@@ -63,6 +64,10 @@ export class VaultCrudManager {
 
     this.setEntities(entities);
 
+    if (updates.image && this.invalidateUrlCache) {
+      this.invalidateUrlCache(updates.image);
+    }
+
     const services = this.getServices();
     if (
       services &&
@@ -102,6 +107,10 @@ export class VaultCrudManager {
       newEntities[id] = merged;
       appliedUpdates[id] = patch;
       hasChanges = true;
+
+      if (patch.image && this.invalidateUrlCache) {
+        this.invalidateUrlCache(patch.image);
+      }
 
       // Save to disk (scheduleSave also updates Dexie cache)
       savePromises.push(this.scheduleSave(merged));
@@ -269,7 +278,9 @@ export class VaultCrudManager {
     return false;
   }
 
-  async batchCreateEntities(newEntitiesList: BatchCreateInput[]): Promise<void> {
+  async batchCreateEntities(
+    newEntitiesList: BatchCreateInput[],
+  ): Promise<void> {
     const { entities, created } = vaultEntities.batchCreateEntities(
       this.getEntities(),
       newEntitiesList,

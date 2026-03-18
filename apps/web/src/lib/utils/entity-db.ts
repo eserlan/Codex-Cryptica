@@ -44,6 +44,18 @@ export interface EntityContentRecord {
 }
 
 /**
+ * Row stored in the `search_index` Dexie table.
+ */
+export interface SearchIndexRecord {
+  /** Vault identifier. Primary key. */
+  vaultId: string;
+  /** Serialized FlexSearch index data. */
+  data: Record<string, any>;
+  /** Last update timestamp. */
+  updatedAt: number;
+}
+
+/**
  * Dexie database used as the primary graph entity store.
  *
  * The database is intentionally separate from the legacy `CodexCryptica`
@@ -52,10 +64,12 @@ export interface EntityContentRecord {
  *
  * Schema version history:
  *  1 — initial: graphEntities + entityContent tables.
+ *  2 — added search_index table for persistence.
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
   entityContent!: Table<EntityContentRecord>;
+  searchIndex!: Table<SearchIndexRecord>;
 
   constructor() {
     super("CodexEntityDb");
@@ -66,6 +80,10 @@ export class EntityDb extends Dexie {
       // Compound primary key [vaultId+entityId]; secondary index for bulk
       // vault queries.
       entityContent: "[vaultId+entityId], vaultId",
+    });
+
+    this.version(2).stores({
+      searchIndex: "vaultId",
     });
   }
 }
