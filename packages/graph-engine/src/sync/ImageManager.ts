@@ -5,6 +5,7 @@ export interface ImageManagerOptions {
   resolveImageUrl: (path: string) => Promise<string | null>;
   batchSize?: number;
   onBatchApplied?: (count: number) => void;
+  onLog?: (message: string) => void;
   onError?: (error: any) => void;
 }
 
@@ -33,6 +34,10 @@ export class GraphImageManager {
 
     if (nodesWithImages.length === 0) return;
 
+    options.onLog?.(
+      `[GraphImageManager] Syncing images for ${nodesWithImages.length} nodes...`,
+    );
+
     // Mark them all as resolving immediately
     nodesWithImages.forEach((n) => {
       this.resolvingIds.add(n.id());
@@ -41,6 +46,7 @@ export class GraphImageManager {
     // Bulk process all images concurrently
     void (async () => {
       try {
+        const start = performance.now();
         const results = await Promise.all(
           nodesWithImages.map(async (node) => {
             const imagePath = node.data("image") || node.data("thumbnail");
@@ -81,6 +87,9 @@ export class GraphImageManager {
         }
 
         this.cy.style().update();
+        options.onLog?.(
+          `[GraphImageManager] Resolved ${results.length} images in ${(performance.now() - start).toFixed(2)}ms`,
+        );
         options.onBatchApplied?.(results.length);
       } catch (err) {
         options.onError?.(err);

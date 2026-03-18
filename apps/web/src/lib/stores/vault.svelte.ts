@@ -690,6 +690,10 @@ export class VaultStore {
           this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
 
+          debugStore.log(
+            `[VaultStore] Verified ${id} from source: contentLen=${finalContent.length}, loreLen=${finalLore.length}`,
+          );
+
           const isStale =
             finalContent !== (cached?.content ?? null) ||
             finalLore !== (cached?.lore ?? null);
@@ -757,6 +761,9 @@ export class VaultStore {
       // 2. CRITICAL SAFETY: If content hasn't been marked as loaded,
       // we MUST try to load it before saving to avoid overwriting with empty.
       if (!this._contentLoadedIds.has(entity.id)) {
+        debugStore.log(
+          `[VaultStore] scheduleSave: Pre-loading content for ${entity.id} to prevent data loss`,
+        );
         // Note: loadEntityContent is already queued, but we need it NOW.
         // We use a separate internal Load helper that avoids the queue to prevent deadlocks.
         await this.internalLoadContent(entity.id);

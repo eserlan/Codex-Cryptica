@@ -401,6 +401,7 @@
         onBatchApplied: (count) => {
           debugStore.log(`[GraphView] Applied ${count} images to graph nodes.`);
         },
+        onLog: (msg) => debugStore.log(msg),
         onError: (err) =>
           debugStore.error("Incremental image resolution failed", err),
       });
