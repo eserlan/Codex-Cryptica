@@ -284,9 +284,7 @@
       layoutManager = undefined;
     }
     if (imageManager) {
-      imageManager.destroy({
-        releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
-      } as any);
+      imageManager.destroy((path: string) => vault.releaseImageUrl(path));
       imageManager = undefined;
     }
     if (cy) {
@@ -307,9 +305,7 @@
         initialLoaded = false;
         didFinalizeLoad = false;
         if (imageManager)
-          imageManager.destroy({
-            releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
-          } as any);
+          imageManager.destroy((path: string) => vault.releaseImageUrl(path));
       });
     }
   });

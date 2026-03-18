@@ -905,7 +905,7 @@ export class VaultStore {
   }
 
   releaseImageUrl(path: string) {
-    this.assetManager.releaseImageUrl(path);
+    this.assetManager.releaseImageUrl(path, this.vaultName);
   }
 
   async saveImageToVault(

@@ -11,7 +11,6 @@ export interface ImageManagerOptions {
 }
 
 export class GraphImageManager {
-  private urlCache = new Map<string, string>();
   private resolvingIds = new Set<string>();
   private nodePathMap = new Map<string, string>();
 
@@ -21,7 +20,7 @@ export class GraphImageManager {
     if (!this.cy || this.cy.destroyed()) return;
 
     if (!options.showImages) {
-      this.clearImages(options);
+      this.clearImages(options.releaseImageUrl);
       return;
     }
 
@@ -52,11 +51,8 @@ export class GraphImageManager {
         const results = await Promise.all(
           nodesWithImages.map(async (node) => {
             const imagePath = node.data("image") || node.data("thumbnail");
-            let url = this.urlCache.get(imagePath);
-            if (!url) {
-              url = (await options.resolveImageUrl(imagePath)) || "";
-              if (url) this.urlCache.set(imagePath, url);
-            }
+            // Always call resolveImageUrl to ensure central ref-counting is bumped per node
+            const url = (await options.resolveImageUrl(imagePath)) || "";
             return {
               node,
               url,
@@ -66,8 +62,13 @@ export class GraphImageManager {
         );
 
         if (this.cy.destroyed() || !options.showImages) {
-          nodesWithImages.forEach((n) => {
-            this.resolvingIds.delete(n.id());
+          // If destroyed/disabled while resolving, release what we just resolved
+          results.forEach((r) => {
+            const path = r.node.data("image") || r.node.data("thumbnail");
+            if (path && r.url.startsWith("blob:")) {
+              options.releaseImageUrl(path);
+            }
+            this.resolvingIds.delete(r.node.id());
           });
           return;
         }
@@ -112,7 +113,7 @@ export class GraphImageManager {
     })();
   }
 
-  private clearImages(options?: ImageManagerOptions) {
+  private clearImages(releaseImageUrl: (path: string) => void) {
     this.resolvingIds.clear();
     this.cy
       .nodes()
@@ -120,8 +121,8 @@ export class GraphImageManager {
       .forEach((node) => {
         const nodeId = node.id();
         const path = this.nodePathMap.get(nodeId);
-        if (path && options) {
-          options.releaseImageUrl(path);
+        if (path) {
+          releaseImageUrl(path);
         }
         this.nodePathMap.delete(nodeId);
         node.removeData("resolvedImage");
@@ -129,13 +130,12 @@ export class GraphImageManager {
     this.cy.style().update();
   }
 
-  destroy(options?: ImageManagerOptions) {
-    if (options) {
+  destroy(releaseImageUrl?: (path: string) => void) {
+    if (releaseImageUrl) {
       this.nodePathMap.forEach((path) => {
-        options.releaseImageUrl(path);
+        releaseImageUrl(path);
       });
     }
-    this.urlCache.clear();
     this.nodePathMap.clear();
     this.resolvingIds.clear();
   }

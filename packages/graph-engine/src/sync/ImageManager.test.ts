@@ -27,6 +27,7 @@ describe("GraphImageManager", () => {
   it("should update style after applying images", async () => {
     const manager = new GraphImageManager(mockCy);
     const resolveImageUrl = vi.fn().mockResolvedValue("blob:url");
+    const releaseImageUrl = vi.fn();
 
     // Setup node data
     mockNode.data.mockImplementation((key: string) => {
@@ -38,6 +39,7 @@ describe("GraphImageManager", () => {
     manager.sync({
       showImages: true,
       resolveImageUrl,
+      releaseImageUrl,
     });
 
     // Wait for the async processing in ImageManager

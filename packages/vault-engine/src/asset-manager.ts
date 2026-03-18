@@ -82,8 +82,16 @@ export class AssetManager {
       return cleanPath;
     }
 
+    // Scope cache key by context (Vault Name or Fetcher identity)
+    const contextId = vaultHandle
+      ? vaultHandle.name
+      : fileFetcher
+        ? "remote"
+        : "global";
+    const cacheKey = `${contextId}:${cleanPath}`;
+
     // Ref-counting cache check
-    const existing = this.urlCache.get(cleanPath);
+    const existing = this.urlCache.get(cacheKey);
     if (existing) {
       existing.refs++;
       return existing.url;
@@ -170,21 +178,39 @@ export class AssetManager {
     }
 
     if (url && url.startsWith("blob:")) {
-      this.urlCache.set(cleanPath, { url, refs: 1 });
+      this.urlCache.set(cacheKey, { url, refs: 1 });
     }
 
     return url || cleanPath;
   }
 
-  releaseImageUrl(path: string) {
+  releaseImageUrl(path: string, vaultName?: string) {
     const cleanPath = path.trim();
-    const entry = this.urlCache.get(cleanPath);
+    const contextId = vaultName || "global"; // Simplified for release if caller doesn't have handle
+
+    // We try to find the key. If we have many vaults with same path, this is ambiguous.
+    // However, AssetManager is usually cleared on vault switch anyway.
+    // Let's support an explicit key search or fallback to global.
+    let cacheKey = `${contextId}:${cleanPath}`;
+    let entry = this.urlCache.get(cacheKey);
+
+    if (!entry) {
+      // Fallback: search all keys for this path if contextId didn't match
+      for (const [key, val] of this.urlCache.entries()) {
+        if (key.endsWith(`:${cleanPath}`)) {
+          cacheKey = key;
+          entry = val;
+          break;
+        }
+      }
+    }
+
     if (!entry) return;
 
     entry.refs--;
     if (entry.refs <= 0) {
       URL.revokeObjectURL(entry.url);
-      this.urlCache.delete(cleanPath);
+      this.urlCache.delete(cacheKey);
     }
   }
 

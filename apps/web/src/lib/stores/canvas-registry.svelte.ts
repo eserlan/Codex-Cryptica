@@ -77,8 +77,6 @@ class CanvasRegistryStore {
   }
 
   async delete(id: string) {
-    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) return;
-
     const data = this.canvases[id];
     if (!data) return;
 
@@ -86,18 +84,25 @@ class CanvasRegistryStore {
       return;
     }
 
-    try {
-      const vaultDir = await getVaultDir(
-        vaultRegistry.rootHandle,
-        vaultRegistry.activeVaultId,
-      );
-      await import("./vault/io").then((io) =>
-        io.deleteCanvasFromDisk(vaultDir, id),
-      );
-      delete this.canvases[id];
-    } catch (e) {
-      console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
-      uiStore.notify("Failed to delete canvas file from disk.", "error");
+    const { activeVaultId, rootHandle } = vaultRegistry;
+
+    // Always remove from memory
+    delete this.canvases[id];
+
+    // Attempt physical deletion if possible
+    if (rootHandle && activeVaultId) {
+      try {
+        const vaultDir = await getVaultDir(rootHandle, activeVaultId);
+        await import("./vault/io").then((io) =>
+          io.deleteCanvasFromDisk(vaultDir, id),
+        );
+      } catch (e) {
+        console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
+        uiStore.notify(
+          "Removed from registry, but failed to delete file from disk.",
+          "error",
+        );
+      }
     }
   }
 
