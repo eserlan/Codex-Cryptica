@@ -14,9 +14,6 @@ class VaultRegistryStore {
   #opfsRoot: FileSystemDirectoryHandle | undefined = undefined;
 
   get rootHandle() {
-    if (!this.isInitialized) {
-      console.warn("[VaultRegistry] rootHandle accessed before initialization");
-    }
     return this.#opfsRoot;
   }
 

@@ -32,9 +32,10 @@
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
-  const canvasId = $derived(
-    canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug)?.id,
+  const canvas = $derived(
+    canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug),
   );
+  const canvasId = $derived(canvas?.id);
 
   const nodeTypes = {
     entity: EntityNode,
@@ -90,17 +91,15 @@
   let targetVaultId = $state<string | null>(null);
   let targetCanvasId = $state<string | null>(null);
 
-  $effect(() => {
-    if (vault.activeVaultId && canvasId) {
-      targetVaultId = vault.activeVaultId;
-      targetCanvasId = canvasId;
-    }
-  });
-
   const { screenToFlowPosition } = useSvelteFlow();
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let skipLoadingSaves = 0;
   function debouncedSave() {
+    if (skipLoadingSaves > 0) {
+      skipLoadingSaves--;
+      return;
+    }
     if (saveTimer !== null) {
       clearTimeout(saveTimer);
     }
@@ -116,40 +115,56 @@
 
   // Sync engine to local state
   $effect(() => {
-    if (vault.isInitialized && canvasId) {
-      // Flush any pending save for the PREVIOUS canvas before loading new data
-      untrack(() => {
-        if (saveTimer !== null) {
-          clearTimeout(saveTimer);
-          saveCanvas();
-        }
-      });
+    if (vault.isInitialized && canvasId && canvasRegistry.isLoaded) {
+      if (targetCanvasId !== canvasId) {
+        // 1. Flush any pending save for the PREVIOUS canvas before loading new data
+        untrack(() => {
+          if (saveTimer !== null && targetVaultId && targetCanvasId) {
+            const oldVaultId = targetVaultId;
+            const oldCanvasId = targetCanvasId;
+            clearTimeout(saveTimer);
+            saveTimer = null;
+            saveCanvas(oldVaultId, oldCanvasId);
+          }
 
-      const data = untrack(() => vault.canvases[canvasId]);
-      if (data) {
-        nodes = data.nodes.map((n: CanvasNode) => ({
-          id: n.id,
-          type: n.type,
-          position: n.position,
-          data: {
-            entityId: n.entityId,
-            width: n.width,
-            height: n.height,
-          },
-        }));
-        edges = data.edges.map((e: CanvasEdge) => ({
-          id: e.id,
-          source: e.source,
-          target: e.target,
-          sourceHandle: e.sourceHandle || null,
-          targetHandle: e.targetHandle || null,
-          label: e.label,
-          type: e.type === "line" || !e.type ? "straight" : (e.type as any),
-          style: e.style,
-        }));
-      } else {
-        nodes = [];
-        edges = [];
+          // 2. Now safe to update the target trackers to the new canvas
+          targetVaultId = vault.activeVaultId;
+          targetCanvasId = canvasId;
+        });
+
+        // 3. Load the new data
+        const data = untrack(() => vault.canvases[canvasId]);
+        if (data) {
+          // Pre-load all entity contents for the canvas to ensure descriptions/images show up
+          for (const node of data.nodes) {
+            vault.loadEntityContent(node.entityId);
+          }
+
+          skipLoadingSaves = 2; // Skip saves triggered by nodes/edges updates
+          nodes = data.nodes.map((n: CanvasNode) => ({
+            id: n.id,
+            type: n.type,
+            position: n.position,
+            data: {
+              entityId: n.entityId,
+              width: n.width,
+              height: n.height,
+            },
+          }));
+          edges = data.edges.map((e: CanvasEdge) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            sourceHandle: e.sourceHandle || null,
+            targetHandle: e.targetHandle || null,
+            label: e.label,
+            type: e.type === "line" || !e.type ? "straight" : (e.type as any),
+            style: e.style,
+          }));
+        } else {
+          nodes = [];
+          edges = [];
+        }
       }
     }
   });
@@ -351,6 +366,9 @@
     });
 
     const newNodeId = engine.addNode(entityId, position);
+    // Ensure the full content (lore, content, image) is loaded for this entity
+    vault.loadEntityContent(entityId);
+
     // Manually add to nodes to trigger sync
     nodes = [
       ...nodes,
@@ -380,6 +398,9 @@
       });
 
     const newNodeId = engine.addNode(entityId, position);
+    // Ensure the full content (lore, content, image) is loaded for this entity
+    vault.loadEntityContent(entityId);
+
     // Manually add to nodes to trigger sync
     nodes = [
       ...nodes,
@@ -392,14 +413,29 @@
     ];
   }
 
-  async function saveCanvas() {
-    const currentVaultId = targetVaultId;
-    const currentCanvasId = targetCanvasId;
+  async function saveCanvas(
+    explicitVaultId?: string,
+    explicitCanvasId?: string,
+  ) {
+    const currentVaultId =
+      explicitVaultId || targetVaultId || vault.activeVaultId;
+    const currentCanvasId = explicitCanvasId || targetCanvasId || canvasId;
+
     if (!currentVaultId || !currentCanvasId) return;
 
-    const data = engine.export();
-    vault.canvases[currentCanvasId] = data;
-    await vault.saveCanvas(currentCanvasId);
+    const exportData = engine.export();
+    const existing = untrack(() => vault.canvases[currentCanvasId] || {});
+
+    // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
+    vault.canvases[currentCanvasId] = {
+      ...existing,
+      ...exportData,
+      lastModified: Date.now(),
+    };
+
+    await vault.saveCanvas(currentCanvasId, {
+      explicitVaultId: currentVaultId,
+    });
     await canvasRegistry.touch(currentCanvasId);
   }
 
@@ -415,7 +451,12 @@
   onDestroy(() => {
     if (saveTimer !== null) {
       clearTimeout(saveTimer);
-      saveCanvas();
+      // Use untracked values for final destroy save
+      untrack(() => {
+        if (targetVaultId && targetCanvasId) {
+          saveCanvas(targetVaultId, targetCanvasId);
+        }
+      });
     }
   });
 
@@ -450,6 +491,34 @@
     role="region"
     aria-label="Canvas Workspace"
   >
+    <!-- Workspace HUD Overlay -->
+    <div
+      class="absolute top-6 left-6 z-40 flex flex-col items-start gap-2 pointer-events-none select-none"
+    >
+      <div
+        class="bg-theme-surface/80 backdrop-blur-md border border-theme-primary/30 px-5 py-2 shadow-[0_0_20px_rgba(var(--theme-primary-rgb),0.15)] pointer-events-auto transition-all hover:border-theme-primary/60 group"
+      >
+        <span
+          class="text-xs font-black text-theme-primary uppercase tracking-[0.4em] group-hover:text-theme-accent transition-colors"
+        >
+          {canvas?.name || "Untitled Workspace"}
+        </span>
+      </div>
+
+      {#if canvasRegistry.status === "saving"}
+        <div
+          class="flex items-center gap-2 px-3 py-1 bg-theme-primary/10 border border-theme-primary/20 backdrop-blur-sm animate-pulse"
+        >
+          <span class="icon-[lucide--save] w-3 h-3 text-theme-primary"></span>
+          <span
+            class="text-[8px] font-bold text-theme-primary tracking-[0.2em] uppercase"
+          >
+            Syncing...
+          </span>
+        </div>
+      {/if}
+    </div>
+
     <SvelteFlow
       bind:nodes
       bind:edges

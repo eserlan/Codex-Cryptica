@@ -20,6 +20,8 @@ export interface IAssetIOAdapter {
 }
 
 export class AssetManager {
+  private urlCache = new Map<string, { url: string; refs: number }>();
+
   constructor(
     private ioAdapter: IAssetIOAdapter,
     private imageProcessor: IImageProcessor,
@@ -80,6 +82,15 @@ export class AssetManager {
       return cleanPath;
     }
 
+    // Ref-counting cache check
+    const existing = this.urlCache.get(cleanPath);
+    if (existing) {
+      existing.refs++;
+      return existing.url;
+    }
+
+    let url = "";
+
     // 2. External URL caching
     if (/^https?:\/\//i.test(cleanPath)) {
       if (!vaultHandle) return cleanPath;
@@ -107,7 +118,7 @@ export class AssetManager {
             [safeName],
             externalDir,
           );
-          return URL.createObjectURL(blob);
+          url = URL.createObjectURL(blob);
         } catch {
           let blob: Blob;
           try {
@@ -125,42 +136,62 @@ export class AssetManager {
             vaultHandle,
             vaultHandle.name,
           );
-          return URL.createObjectURL(blob);
+          url = URL.createObjectURL(blob);
         }
       } catch {
         return cleanPath;
       }
-    }
-
-    // 3. P2P / Guest Mode remote fetcher
-    if (fileFetcher) {
+    } else if (fileFetcher) {
+      // 3. P2P / Guest Mode remote fetcher
       try {
         const blob = await fileFetcher(cleanPath);
-        return URL.createObjectURL(blob);
+        url = URL.createObjectURL(blob);
       } catch {
         return "";
       }
-    }
+    } else if (vaultHandle) {
+      // 4. Local Vault File
+      try {
+        const segments = cleanPath
+          .replace(/^(\.\/|\/)/, "")
+          .split("/")
+          .filter((s) => s && s !== ".");
 
-    // 4. Local Vault File
-    if (!vaultHandle) return cleanPath;
-
-    try {
-      const segments = cleanPath
-        .replace(/^(\.\/|\/)/, "")
-        .split("/")
-        .filter((s) => s && s !== ".");
-
-      const blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
-      return URL.createObjectURL(blob);
-    } catch (err: any) {
-      // Gracefully handle "Not Found" errors from the File System API.
-      // This prevents the UI from crashing if an entity references a missing image.
-      if (this.ioAdapter.isNotFoundError(err)) {
+        const blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
+        url = URL.createObjectURL(blob);
+      } catch (err: any) {
+        // Gracefully handle "Not Found" errors from the File System API.
+        if (this.ioAdapter.isNotFoundError(err)) {
+          return "";
+        }
+        console.warn(`Failed to resolve image path: ${cleanPath}`, err);
         return "";
       }
-      console.warn(`Failed to resolve image path: ${cleanPath}`, err);
-      return "";
     }
+
+    if (url && url.startsWith("blob:")) {
+      this.urlCache.set(cleanPath, { url, refs: 1 });
+    }
+
+    return url || cleanPath;
+  }
+
+  releaseImageUrl(path: string) {
+    const cleanPath = path.trim();
+    const entry = this.urlCache.get(cleanPath);
+    if (!entry) return;
+
+    entry.refs--;
+    if (entry.refs <= 0) {
+      URL.revokeObjectURL(entry.url);
+      this.urlCache.delete(cleanPath);
+    }
+  }
+
+  clear() {
+    this.urlCache.forEach((entry) => {
+      URL.revokeObjectURL(entry.url);
+    });
+    this.urlCache.clear();
   }
 }

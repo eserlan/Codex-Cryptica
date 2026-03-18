@@ -3,6 +3,7 @@ import type { Core } from "cytoscape";
 export interface ImageManagerOptions {
   showImages: boolean;
   resolveImageUrl: (path: string) => Promise<string | null>;
+  releaseImageUrl: (path: string) => void;
   batchSize?: number;
   onBatchApplied?: (count: number) => void;
   onLog?: (message: string) => void;
@@ -12,6 +13,7 @@ export interface ImageManagerOptions {
 export class GraphImageManager {
   private urlCache = new Map<string, string>();
   private resolvingIds = new Set<string>();
+  private nodePathMap = new Map<string, string>();
 
   constructor(private cy: Core) {}
 
@@ -78,10 +80,19 @@ export class GraphImageManager {
             for (const { node, url, oldUrl } of chunk) {
               const newUrl = url || "failed"; // Mark as failed to avoid infinite retries
               if (newUrl !== oldUrl) {
-                node.data("resolvedImage", newUrl);
-                if (oldUrl?.startsWith("blob:")) {
-                  URL.revokeObjectURL(oldUrl);
+                const nodeId = node.id();
+                const oldPath = this.nodePathMap.get(nodeId);
+                if (oldPath) {
+                  options.releaseImageUrl(oldPath);
                 }
+
+                node.data("resolvedImage", newUrl);
+                const currentPath =
+                  node.data("image") || node.data("thumbnail");
+                if (currentPath) {
+                  this.nodePathMap.set(nodeId, currentPath);
+                }
+                // URL revocation is now managed centrally by VaultStore to prevent ERR_FILE_NOT_FOUND
               }
             }
           });
@@ -101,28 +112,31 @@ export class GraphImageManager {
     })();
   }
 
-  private clearImages() {
+  private clearImages(options?: ImageManagerOptions) {
     this.resolvingIds.clear();
     this.cy
       .nodes()
       .filter((n) => n.data("resolvedImage"))
       .forEach((node) => {
-        const oldUrl = node.data("resolvedImage");
-        if (oldUrl?.startsWith("blob:")) {
-          URL.revokeObjectURL(oldUrl);
+        const nodeId = node.id();
+        const path = this.nodePathMap.get(nodeId);
+        if (path && options) {
+          options.releaseImageUrl(path);
         }
+        this.nodePathMap.delete(nodeId);
         node.removeData("resolvedImage");
       });
     this.cy.style().update();
   }
 
-  destroy() {
-    this.urlCache.forEach((url) => {
-      if (url.startsWith("blob:")) {
-        URL.revokeObjectURL(url);
-      }
-    });
+  destroy(options?: ImageManagerOptions) {
+    if (options) {
+      this.nodePathMap.forEach((path) => {
+        options.releaseImageUrl(path);
+      });
+    }
     this.urlCache.clear();
+    this.nodePathMap.clear();
     this.resolvingIds.clear();
   }
 }

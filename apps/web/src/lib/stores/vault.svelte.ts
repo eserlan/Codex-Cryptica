@@ -86,12 +86,6 @@ export class VaultStore {
   private channel: BroadcastChannel | null = null;
 
   /**
-   * Performance optimization: Cache resolved blob URLs for images
-   * to avoid hitting OPFS/AssetManager on every re-render or selection.
-   */
-  private _urlCache = new Map<string, string>();
-
-  /**
    * Pre-loaded helper modules to avoid dynamic import overhead
    * during critical user interactions (like clicking a node).
    */
@@ -153,10 +147,7 @@ export class VaultStore {
       (id) => this.onEntityDelete && this.onEntityDelete(id),
       (entity) => this.onEntityUpdate && this.onEntityUpdate(entity),
       (updates) => this.onBatchUpdate && this.onBatchUpdate(updates),
-      (path) => {
-        const cacheKey = `${this.activeVaultId}:${path}`;
-        this._urlCache.delete(cacheKey);
-      },
+      (path) => this.assetManager.releaseImageUrl(path),
     );
 
     this.lifecycleManager = new VaultLifecycleManager(
@@ -204,7 +195,7 @@ export class VaultStore {
   async init(injectedServices?: IVaultServices) {
     this.isInitialized = false;
     this.status = "loading";
-    this._urlCache.clear();
+    this.assetManager.clear();
 
     if (injectedServices) {
       this.services = injectedServices;
@@ -864,14 +855,25 @@ export class VaultStore {
     await this.crudManager.batchCreateEntities(newEntitiesList);
     // Mark all as loaded and verified since they are fresh.
     // This prevents lazy load clobbering.
+    const createdEntities: Entity[] = [];
     for (const item of newEntitiesList) {
-      // We might not have the ID if it's an EntityCreationRequest,
-      // but for batch imports it usually is a LocalEntity.
       if ((item as any).id) {
-        this._contentLoadedIds.add((item as any).id);
-        this._contentVerifiedIds.add((item as any).id);
+        const id = (item as any).id;
+        this._contentLoadedIds.add(id);
+        this._contentVerifiedIds.add(id);
+        const ent = this.entities[id];
+        if (ent) createdEntities.push(ent);
       }
     }
+
+    if (createdEntities.length > 0) {
+      vaultEventBus.emit({
+        type: "BATCH_CREATED",
+        vaultId: this.activeVaultId ?? "unknown",
+        entities: createdEntities as any,
+      });
+    }
+
     this.broadcastVaultUpdate();
   }
 
@@ -895,25 +897,15 @@ export class VaultStore {
     path: string,
     fileFetcher?: (path: string) => Promise<Blob>,
   ) {
-    if (!path) return "";
-
-    // Optimization: Return cached URL if available
-    const cacheKey = `${this.activeVaultId}:${path}`;
-    if (this._urlCache.has(cacheKey)) {
-      return this._urlCache.get(cacheKey)!;
-    }
-
-    const url = await this.assetManager.resolveImageUrl(
+    return this.assetManager.resolveImageUrl(
       await this.getActiveVaultHandle(),
       path,
       fileFetcher,
     );
+  }
 
-    if (url) {
-      this._urlCache.set(cacheKey, url);
-    }
-
-    return url;
+  releaseImageUrl(path: string) {
+    this.assetManager.releaseImageUrl(path);
   }
 
   async saveImageToVault(
@@ -958,8 +950,8 @@ export class VaultStore {
   deleteMap(id: string) {
     return mapRegistry.deleteMap(id);
   }
-  saveCanvas(id: string) {
-    return canvasRegistry.saveCanvas(id);
+  saveCanvas(id: string, options?: { explicitVaultId?: string }) {
+    return canvasRegistry.saveCanvas(id, options);
   }
 
   // --- Sync Delegations ---

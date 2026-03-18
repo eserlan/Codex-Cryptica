@@ -98,6 +98,7 @@ As a GM, I want a theme-aware interface for labeling my connections, so that the
 - **FR-012**: System MUST provide a themed MiniMap that adheres to the active styling template (colors, viewport mask).
 - **FR-013**: System MUST use a custom themed modal for edge label editing instead of browser prompts.
 - **FR-014**: Edge labels MUST allow empty strings, in which case the label is not rendered.
+- **FR-015**: System MUST provide a themed HUD overlay in the top-left corner displaying the active workspace name and a disk synchronization status indicator.
 
 ### Key Entities
 
@@ -119,3 +120,9 @@ As a GM, I want a theme-aware interface for labeling my connections, so that the
 - Canvases are local-first and stored within the user's vault directory.
 - Visual links on a canvas do NOT create actual relationships in the underlying Markdown files unless explicitly requested (out of scope for MVP).
 - The system will use standard web performance optimization techniques for large datasets.
+
+## Implementation Guardrails
+
+- **Navigation Flushes**: System MUST ensure any pending changes to the active canvas are flushed to disk before loading a new canvas or navigating away to prevent data loss or state bleeding.
+- **Atomic Loading**: When a canvas is loaded, the system MUST trigger lazy-loading for all entity content (text, lore, images) to ensure cards are fully populated immediately upon display.
+- **Blob Lifecycle**: Blob URLs generated for images MUST be managed centrally (e.g., in VaultStore) to prevent `ERR_FILE_NOT_FOUND` errors caused by premature revocation during graph/canvas updates.
