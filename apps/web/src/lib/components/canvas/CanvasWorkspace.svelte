@@ -418,8 +418,8 @@
     explicitCanvasId?: string,
   ) {
     const currentVaultId =
-      explicitVaultId || vault.activeVaultId || targetVaultId;
-    const currentCanvasId = explicitCanvasId || canvasId || targetCanvasId;
+      explicitVaultId || targetVaultId || vault.activeVaultId;
+    const currentCanvasId = explicitCanvasId || targetCanvasId || canvasId;
 
     if (!currentVaultId || !currentCanvasId) return;
 

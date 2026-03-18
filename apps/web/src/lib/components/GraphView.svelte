@@ -284,7 +284,9 @@
       layoutManager = undefined;
     }
     if (imageManager) {
-      imageManager.destroy();
+      imageManager.destroy({
+        releaseImageUrl: (path) => vault.releaseImageUrl(path),
+      } as any);
       imageManager = undefined;
     }
     if (cy) {
@@ -304,7 +306,10 @@
       untrack(() => {
         initialLoaded = false;
         didFinalizeLoad = false;
-        if (imageManager) imageManager.destroy();
+        if (imageManager)
+          imageManager.destroy({
+            releaseImageUrl: (path) => vault.releaseImageUrl(path),
+          } as any);
       });
     }
   });
@@ -403,6 +408,7 @@
         imageManager!.sync({
           showImages: graph.showImages,
           resolveImageUrl: (path) => vault.resolveImageUrl(path),
+          releaseImageUrl: (path) => vault.releaseImageUrl(path),
           onBatchApplied: (count) => {
             debugStore.log(
               `[GraphView] Applied ${count} images to graph nodes.`,

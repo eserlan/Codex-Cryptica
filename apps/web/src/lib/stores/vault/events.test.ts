@@ -1,7 +1,15 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { VaultEventBus } from "./events";
 
 describe("VaultEventBus", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("should subscribe and emit events", () => {
     const bus = new VaultEventBus();
     const listener = vi.fn();
@@ -64,8 +72,8 @@ describe("VaultEventBus", () => {
 
     bus.emit({ type: "SYNC_COMPLETE", vaultId: "test" });
 
-    // Wait for async effect
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    // Advance timers and flush promises
+    await vi.advanceTimersByTimeAsync(20);
     expect(called).toBe(true);
   });
 });
