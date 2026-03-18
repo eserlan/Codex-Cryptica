@@ -76,6 +76,7 @@ The `/plot` command is your narrative analyst. It's most powerful when you've al
 
 ## **5. Pro Tip: The "Murder Board" Workflow**
 
+<<<<<<< HEAD
 When you find a group of related entities through a filter or a `/plot` analysis in the Graph, you can turn them into a **Spatial Canvas** with a single click.
 
 ![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
@@ -83,6 +84,15 @@ When you find a group of related entities through a filter or a `/plot` analysis
 1. Apply your filters in the **Knowledge Graph** to find your "target group."
 2. Click the **"Add all results to workspace"** button (the Grid icon) that appears in the Graph HUD whenever a filter is active.
 3. Switch to your **active Canvas** and draw manual links to represent the power struggle you just uncovered.
+=======
+When you discover a group of related entities through filtering or AI analysis, you can turn them into a **Spatial Canvas** instantly.
+
+![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
+
+1. Filter for `#Politics` + `[Person]`.
+2. Click the **"Add all filtered to canvas"** button (the Grid icon) in the palette header.
+3. Draw manual links to represent the current power struggle.
+>>>>>>> 4b19f71 (✨ feat: implement 'Add All to Canvas' bulk action and update blog post workflow)
 
 You’ve just turned a complex graph query into a tactical "Murder Board" for your next session.
 
