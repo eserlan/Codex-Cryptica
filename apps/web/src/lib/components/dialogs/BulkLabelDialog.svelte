@@ -65,9 +65,20 @@
   let applySuggestions = $derived.by(() => {
     const query = applyInput.trim().toLowerCase();
     if (!query) return [];
-    return vault.labelIndex
-      .filter((l) => l.toLowerCase().includes(query))
-      .slice(0, 5);
+
+    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
+    const maxResults = 5;
+    const matches: string[] = [];
+    const labels = vault.labelIndex;
+
+    for (let i = 0; i < labels.length; i++) {
+      const l = labels[i];
+      if (l.toLowerCase().includes(query)) {
+        matches.push(l);
+        if (matches.length === maxResults) break;
+      }
+    }
+    return matches;
   });
 
   let allSuggestions = $derived.by(() => {
