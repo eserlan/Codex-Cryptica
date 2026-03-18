@@ -77,12 +77,12 @@ Once you have a network of connections built through labels and filters, you can
 
 ## **5. Pro Tip: The "Canvas" Workflow**
 
-When you discover a group of related entities through filtering or AI analysis, drag them all onto a **Spatial Canvas**.
+When you discover a group of related entities through filtering or AI analysis, you can turn them into a **Spatial Canvas** instantly.
 
 ![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
 
 1. Filter for `#Politics` + `[Person]`.
-2. Drag the results onto a new Canvas.
+2. Click the **"Add all filtered to canvas"** button (the Grid icon) in the palette header.
 3. Draw manual links to represent the current power struggle.
 
 You’ve just turned a search result into a tactical "Murder Board" that you can use to plan your next three sessions.
