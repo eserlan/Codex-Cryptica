@@ -63,9 +63,21 @@ Filtering in the sidebar also updates your **Relational Graph**. When you apply 
 - **Spotting Clusters**: Use labels like `#Suspect` to see if all your potential villains are connected to the same noble house.
 - **Isolating Factions**: Filter by a faction label and watch the graph prune away everything else. You’ll see the internal structure of that organization without the noise of the rest of the world.
 
-## **4. Pro Tip: The "Canvas" Workflow**
+## **4. AI Discovery: The /plot Command**
 
-When you discover a group of related entities through filtering, drag them all onto a **Spatial Canvas**.
+Sometimes, discovery isn't just about what you've manually organized—it's about what you _missed_. This is where the **Lore Oracle** comes in.
+
+Once you have a network of connections built through labels and filters, you can use the `/plot` command to let the AI analyze the tensions in your world.
+
+![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
+
+- **Uncover Rivals**: Type `/plot Count Dukoo` to see who in your vault is likely working against him based on their current allegiances.
+- **Find Political Risks**: The Oracle can look at your faction labels and identify which characters are caught in the middle of a brewing conflict.
+- **Hidden Secrets**: Use `/plot secrets around [City Name]` to generate dramatic hooks that link your existing locations and NPCs in ways you hadn't considered.
+
+## **5. Pro Tip: The "Canvas" Workflow**
+
+When you discover a group of related entities through filtering or AI analysis, drag them all onto a **Spatial Canvas**.
 
 ![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
 
@@ -79,7 +91,7 @@ You’ve just turned a search result into a tactical "Murder Board" that you can
 
 ## **Summary: Build for Discovery**
 
-World-building is a marathon, not a sprint. By using **Labels** to describe the "what" and **Filters** to ask the "how," you turn your Codex from a static archive into a living engine.
+World-building is a marathon, not a sprint. By using **Labels** to describe the "what," **Filters** to ask the "how," and the **Lore Oracle** to explore the "why," you turn your Codex from a static archive into a living engine.
 
 Stop searching for your notes. Start discovering your world.
 
