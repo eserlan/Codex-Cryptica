@@ -26,7 +26,7 @@
     const visibleNodes = cy.nodes(
       ":not(.category-filtered-out):not(.label-filtered-out)",
     );
-    visibleNodes.forEach((node, index) => {
+    visibleNodes.forEach((node: any, index: number) => {
       const entityId = node.id();
       window.dispatchEvent(
         new CustomEvent("add-to-canvas", {
