@@ -868,8 +868,18 @@ export class VaultStore {
       // We might not have the ID if it's an EntityCreationRequest,
       // but for batch imports it usually is a LocalEntity.
       if ((item as any).id) {
-        this._contentLoadedIds.add((item as any).id);
-        this._contentVerifiedIds.add((item as any).id);
+        const id = (item as any).id;
+        this._contentLoadedIds.add(id);
+        this._contentVerifiedIds.add(id);
+        const ent = this.entities[id];
+        if (ent) {
+          // BROADCAST to event bus
+          vaultEventBus.emit({
+            type: "BATCH_CREATED",
+            vaultId: this.activeVaultId ?? "unknown",
+            entities: [ent],
+          });
+        }
       }
     }
     this.broadcastVaultUpdate();
@@ -958,8 +968,8 @@ export class VaultStore {
   deleteMap(id: string) {
     return mapRegistry.deleteMap(id);
   }
-  saveCanvas(id: string, explicitVaultId?: string) {
-    return canvasRegistry.saveCanvas(id, explicitVaultId);
+  saveCanvas(id: string, options?: { explicitVaultId?: string }) {
+    return canvasRegistry.saveCanvas(id, options);
   }
 
   // --- Sync Delegations ---

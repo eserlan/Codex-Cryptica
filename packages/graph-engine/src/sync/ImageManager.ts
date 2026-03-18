@@ -79,9 +79,7 @@ export class GraphImageManager {
               const newUrl = url || "failed"; // Mark as failed to avoid infinite retries
               if (newUrl !== oldUrl) {
                 node.data("resolvedImage", newUrl);
-                if (oldUrl?.startsWith("blob:")) {
-                  URL.revokeObjectURL(oldUrl);
-                }
+                // URL revocation is now managed centrally by VaultStore to prevent ERR_FILE_NOT_FOUND
               }
             }
           });
@@ -107,21 +105,12 @@ export class GraphImageManager {
       .nodes()
       .filter((n) => n.data("resolvedImage"))
       .forEach((node) => {
-        const oldUrl = node.data("resolvedImage");
-        if (oldUrl?.startsWith("blob:")) {
-          URL.revokeObjectURL(oldUrl);
-        }
         node.removeData("resolvedImage");
       });
     this.cy.style().update();
   }
 
   destroy() {
-    this.urlCache.forEach((url) => {
-      if (url.startsWith("blob:")) {
-        URL.revokeObjectURL(url);
-      }
-    });
     this.urlCache.clear();
     this.resolvingIds.clear();
   }

@@ -11,18 +11,29 @@
     Layout,
     ChevronRight,
     LayoutGrid,
-    FolderInput,
+    RefreshCw,
   } from "lucide-svelte";
   import { page } from "$app/state";
 
   let searchQuery = $state("");
   let typeFilters = $state<string[]>(["all"]);
+  let isRefreshing = $state(false);
 
   const canvasSlug = $derived(page.params.slug);
   const activeCanvasName = $derived(
     canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug)?.name ||
       "Workspace",
   );
+
+  async function handleRefresh() {
+    if (isRefreshing) return;
+    isRefreshing = true;
+    try {
+      await vault.loadFiles(false); // Force a full sync from disk
+    } finally {
+      isRefreshing = false;
+    }
+  }
 
   const types = $derived.by(() => {
     // ⚡ Bolt Optimization: Use imperative loop to prevent intermediate array allocation from map()
@@ -178,14 +189,17 @@
         >
           Entity Palette
         </h2>
-        <button
-          onclick={() => uiStore.openImportWindow()}
-          class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90"
-          title="Import Archive"
-          data-testid="explorer-import-button"
-        >
-          <FolderInput class="w-4 h-4" />
-        </button>
+        <div class="flex items-center gap-1">
+          <button
+            onclick={handleRefresh}
+            class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all active:scale-90 {isRefreshing
+              ? 'animate-spin text-theme-primary'
+              : ''}"
+            title="Refresh from Disk"
+          >
+            <RefreshCw class="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div class="relative mb-3">

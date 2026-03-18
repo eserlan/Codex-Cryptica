@@ -100,10 +100,10 @@ class CanvasRegistryStore {
     }
   }
 
-  async saveCanvas(id: string, explicitVaultId?: string) {
+  async saveCanvas(id: string, options?: { explicitVaultId?: string }) {
     if (!vaultRegistry.rootHandle || !this.saveQueue) return;
 
-    const vaultId = explicitVaultId || vaultRegistry.activeVaultId;
+    const vaultId = options?.explicitVaultId || vaultRegistry.activeVaultId;
     if (!vaultId) return;
 
     const data = this.canvases[id];

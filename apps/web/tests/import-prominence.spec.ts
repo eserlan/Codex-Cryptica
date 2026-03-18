@@ -31,18 +31,4 @@ test.describe("Prominent Import Feature", () => {
     await expect(newPage).toHaveTitle(/Archive Importer/i);
     await expect(newPage.locator("h1")).toContainText(/Archive Importer/i);
   });
-
-  test("should have an Import button in Entity Palette header", async ({
-    page,
-    context,
-  }) => {
-    const explorerImportBtn = page.getByTestId("explorer-import-button");
-    await expect(explorerImportBtn).toBeVisible({ timeout: 15000 });
-
-    const pagePromise = context.waitForEvent("page");
-    await explorerImportBtn.click();
-
-    const newPage = await pagePromise;
-    await expect(newPage).toHaveTitle(/Archive Importer/i);
-  });
 });

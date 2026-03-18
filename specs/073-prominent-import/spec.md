@@ -22,17 +22,9 @@ As a user, I want a dedicated standalone view for importing my existing markdown
 
 ---
 
-### User Story 2 - Contextual Access from File Explorer (Priority: P2)
+### User Story 2 - Contextual Access from File Explorer (DEPRECATED)
 
-As a user managing my files in the Vault Explorer, I want an import action right in the explorer header, so that I can add files to my current context.
-
-**Why this priority**: Provides contextual relevance. Users in the file explorer are already in a "management" mindset.
-
-**Independent Test**: Click the icon in the explorer header; verify it triggers the dedicated popout importer.
-
-**Acceptance Scenarios**:
-
-1. **Given** the Vault Explorer is visible, **When** I view the header actions, **Then** I should see an "Import" icon button next to the "New Node" icon.
+> **Status**: Deprecated. Removed to reduce header clutter in favor of the primary Vault Controls action.
 
 ---
 
@@ -49,7 +41,7 @@ As a user managing my files in the Vault Explorer, I want an import action right
 - **FR-001**: System MUST provide a standalone route at `/import` for the dedicated Archive Importer.
 - **FR-002**: System MUST hide global navigation (header/footer) in the `/import` route for maximum focus.
 - **FR-003**: System MUST provide a persistent "IMPORT" button in the top navigation menu.
-- **FR-004**: System MUST provide an "Import" icon button in the Vault Explorer header.
+- **FR-004**: [REMOVED] System previously required an "Import" icon button in the Vault Explorer header.
 - **FR-005**: All import triggers MUST launch the Archive Importer in a new centered browser window (800x900).
 - **FR-006**: System MUST automatically synchronize the vault state across browser windows (e.g., via BroadcastChannel) so that imports completed in the popout instantly appear in the main application window without a manual refresh.
 
