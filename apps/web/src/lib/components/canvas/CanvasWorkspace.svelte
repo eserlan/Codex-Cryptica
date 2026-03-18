@@ -29,7 +29,6 @@
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
   import { untrack, onDestroy } from "svelte";
-  import { Layout } from "lucide-svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
@@ -37,7 +36,6 @@
     canvasRegistry.allCanvases.find((c) => c.slug === canvasSlug),
   );
   const canvasId = $derived(canvas?.id);
-  const canvasName = $derived(canvas?.name || "Unnamed Workspace");
 
   const nodeTypes = {
     entity: EntityNode,
@@ -470,51 +468,6 @@
     role="region"
     aria-label="Canvas Workspace"
   >
-    <!-- Workspace Title Overlay -->
-    <div
-      class="absolute top-6 left-6 z-20 flex flex-col pointer-events-none select-none"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 rounded-lg bg-theme-surface border border-theme-primary/30 flex items-center justify-center shadow-lg backdrop-blur-md"
-        >
-          <Layout class="w-5 h-5 text-theme-primary animate-pulse" />
-        </div>
-        <div class="flex flex-col">
-          <div class="flex items-center gap-2">
-            <h1
-              class="text-xl font-bold text-theme-text font-header uppercase tracking-[0.2em] drop-shadow-md"
-            >
-              {canvasName}
-            </h1>
-            {#if canvasRegistry.status !== "idle"}
-              <div
-                class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-theme-primary/10 border border-theme-primary/20"
-              >
-                <div
-                  class="w-1.5 h-1.5 rounded-full bg-theme-primary animate-ping"
-                ></div>
-                <span
-                  class="text-[8px] font-mono text-theme-primary uppercase tracking-widest"
-                  >{canvasRegistry.status}ing...</span
-                >
-              </div>
-            {/if}
-          </div>
-          <div class="flex items-center gap-2 mt-0.5">
-            <span
-              class="text-[9px] text-theme-muted font-mono uppercase tracking-[0.15em]"
-              >Spatial Protocol Active</span
-            >
-            <div class="h-px w-12 bg-theme-border/50"></div>
-            <span class="text-[9px] text-theme-primary/60 font-mono"
-              >SLUG: {canvas?.slug || "none"}</span
-            >
-          </div>
-        </div>
-      </div>
-    </div>
-
     <SvelteFlow
       bind:nodes
       bind:edges
