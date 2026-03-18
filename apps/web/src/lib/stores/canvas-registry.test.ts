@@ -94,7 +94,7 @@ describe("CanvasRegistryStore", () => {
   it("should handle creation with symbol-only names by falling back to ID", async () => {
     const slug = await canvasRegistry.create("!!!@#$%");
     expect(slug).toBeDefined();
-    expect(slug!.length).toBeGreaterThan(0);
+    expect(slug?.length).toBeGreaterThan(0);
     expect(canvasRegistry.allCanvases[0].name).toBe("!!!@#$%");
   });
 

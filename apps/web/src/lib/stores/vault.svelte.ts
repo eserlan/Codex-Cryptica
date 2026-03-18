@@ -855,14 +855,14 @@ export class VaultStore {
     await this.crudManager.batchCreateEntities(newEntitiesList);
     // Mark all as loaded and verified since they are fresh.
     // This prevents lazy load clobbering.
-    const createdEntities: Entity[] = [];
+    const createdEntities: LocalEntity[] = [];
     for (const item of newEntitiesList) {
       if ((item as any).id) {
         const id = (item as any).id;
         this._contentLoadedIds.add(id);
         this._contentVerifiedIds.add(id);
         const ent = this.entities[id];
-        if (ent) createdEntities.push(ent);
+        if (ent) createdEntities.push(ent as LocalEntity);
       }
     }
 
@@ -870,7 +870,7 @@ export class VaultStore {
       vaultEventBus.emit({
         type: "BATCH_CREATED",
         vaultId: this.activeVaultId ?? "unknown",
-        entities: createdEntities as any,
+        entities: createdEntities,
       });
     }
 

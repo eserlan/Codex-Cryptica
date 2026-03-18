@@ -21,7 +21,7 @@ export class GraphImageManager {
     if (!this.cy || this.cy.destroyed()) return;
 
     if (!options.showImages) {
-      this.clearImages();
+      this.clearImages(options);
       return;
     }
 
