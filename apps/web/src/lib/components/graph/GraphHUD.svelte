@@ -3,6 +3,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { ui } from "$lib/stores/ui.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
@@ -27,23 +28,13 @@
     if (!cy) return;
     // Use :visible to correctly catch all display:none filtering (labels, categories, timeline)
     const visibleNodes = cy.nodes(":visible");
-    visibleNodes.forEach((node: NodeSingular, index: number) => {
-      const entityId = node.id();
-      window.dispatchEvent(
-        new CustomEvent("add-to-canvas", {
-          detail: {
-            entityId,
-            // Send screenPosition so CanvasWorkspace can convert correctly
-            screenPosition: {
-              x: window.innerWidth / 2 + index * 20,
-              y: window.innerHeight / 2 + index * 20,
-            },
-          },
-        }),
-      );
-    });
+    const entityIds = visibleNodes.map((node: NodeSingular) => node.id());
+    
+    // ⚡ Optimization: Use canvasRegistry.queueEntities for batch spawning in CanvasWorkspace
+    canvasRegistry.queueEntities(entityIds);
+    
     ui.notify(
-      `Added ${visibleNodes.length} entities to active workspace`,
+      `${entityIds.length} entities queued for active workspace`,
       "success",
     );
   }
