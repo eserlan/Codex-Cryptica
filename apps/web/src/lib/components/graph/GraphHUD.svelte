@@ -6,7 +6,7 @@
   import type { Entity } from "schema";
   import LabelFilter from "$lib/components/labels/LabelFilter.svelte";
   import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
-  import type { Core } from "cytoscape";
+  import type { Core, NodeSingular } from "cytoscape";
 
   let { selectedEntity, parentEntity, selectedId, isLayoutRunning, cy } =
     $props<{
@@ -18,15 +18,18 @@
     }>();
 
   const hasActiveFilters = $derived(
-    graph.activeCategories.size > 0 || graph.activeLabels.size > 0,
+    graph.activeCategories.size > 0 ||
+      graph.activeLabels.size > 0 ||
+      graph.timelineMode,
   );
 
   function addFilteredToCanvas() {
     if (!cy) return;
+    // We exclude everything that has been filtered out by any of the 3 mechanisms
     const visibleNodes = cy.nodes(
-      ":not(.category-filtered-out):not(.label-filtered-out)",
+      ":not(.category-filtered-out):not(.filtered-out):not(.timeline-hidden)",
     );
-    visibleNodes.forEach((node: any, index: number) => {
+    visibleNodes.forEach((node: NodeSingular, index: number) => {
       const entityId = node.id();
       window.dispatchEvent(
         new CustomEvent("add-to-canvas", {

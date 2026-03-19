@@ -46,7 +46,7 @@ The real power of discovery happens in the **Knowledge Graph**. We designed the 
 
 ![Multi-type HUD Filtering](https://assets.codexcryptica.com/images/blog/sidebar-filter-action.png)
 
-By selecting multiple types or labels in the Graph HUD, you can clear the noise and see the signal:
+By toggling specific types or labels in the Graph HUD, you can clear the noise and see the signal:
 
 - **"I need a tactical map for this tavern"**: Select `[Map]` + `[Location]`.
 - **"Who is actually in this city right now?"**: Select `[Person]` + `[Location]` and watch the web illuminate the residents.
@@ -67,7 +67,7 @@ When you apply a filter, the graph doesn't just list results—it **isolates** t
 
 Once you've used labels and filters to slice your world into a high-definition focus—say, all the NPCs in the `#Underworld`—you can use the **Lore Oracle** to explore the "Why."
 
-The `/plot` command is your narrative analyst. It looks at the specific network you've isolated and finds the friction you might have missed.
+The `/plot` command is your narrative analyst. It's most powerful when you've already "narrowed the field" using filters. By telling the Oracle exactly which network to look at, you get far more relevant dramatic tensions.
 
 ![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
 
@@ -76,13 +76,13 @@ The `/plot` command is your narrative analyst. It looks at the specific network 
 
 ## **5. Pro Tip: The "Murder Board" Workflow**
 
-When you find a group of related entities through a filter or a `/plot` analysis, you can turn them into a **Spatial Canvas** with a single click.
+When you find a group of related entities through a filter or a `/plot` analysis in the Graph, you can turn them into a **Spatial Canvas** with a single click.
 
 ![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
 
-1. Apply your filters in the **Graph View** to find your "target group."
-2. Click the **"Add all results to workspace"** button (the Grid icon) in the HUD.
-3. Switch to your **Canvas** and draw manual links to represent the power struggle you just uncovered.
+1. Apply your filters in the **Knowledge Graph** to find your "target group."
+2. Click the **"Add all results to workspace"** button (the Grid icon) that appears in the Graph HUD whenever a filter is active.
+3. Switch to your **active Canvas** and draw manual links to represent the power struggle you just uncovered.
 
 You’ve just turned a complex graph query into a tactical "Murder Board" for your next session.
 
