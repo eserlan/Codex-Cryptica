@@ -27,7 +27,6 @@ export default defineConfig({
   },
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
-    __BUNDLED_DEV__: "true",
   },
   worker: {
     format: "es",
