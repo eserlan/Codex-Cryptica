@@ -218,8 +218,8 @@ describe("NodeMergeService", () => {
       await service.executeMerge(proposal, ["t", "s"]);
 
       const updates = vi.mocked(vault.updateEntity).mock.calls[0][1];
-      expect(updates.connections).toHaveLength(1);
-      expect(updates.connections[0].target).toBe("other");
+      expect(updates.connections!).toHaveLength(1);
+      expect(updates.connections![0].target).toBe("other");
     });
   });
 
