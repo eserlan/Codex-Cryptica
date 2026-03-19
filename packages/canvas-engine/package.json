@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
@@ -20,10 +21,11 @@
     "svelte": "^5.23.0"
   },
   "devDependencies": {
-    "schema": "*",
     "@sveltejs/kit": "^2.54.0",
     "@types/node": "^25.4.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^10.0.3",
+    "schema": "*",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

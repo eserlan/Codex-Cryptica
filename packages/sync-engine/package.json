@@ -6,15 +6,17 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "schema": "*",
-    "idb": "^8.0.3"
+    "idb": "^8.0.3",
+    "schema": "*"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.0",
+    "eslint": "^10.0.3",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18",
-    "eslint": "^10.0.3"
+    "vitest": "^4.0.18"
   }
 }

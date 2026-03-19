@@ -7,10 +7,12 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },
   "devDependencies": {
     "@types/node": "^25.4.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "typescript": "^5.7.3",
     "vitest": "^4.0.18"
   }

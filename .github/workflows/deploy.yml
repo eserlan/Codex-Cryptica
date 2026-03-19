@@ -43,7 +43,17 @@ jobs:
       - name: Lint and Test
         run: |
           npm run lint
-          npm test
+          npm run test:coverage
+
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage-${{ matrix.environment }}
+          path: |
+            apps/*/coverage/
+            packages/*/coverage/
+          retention-days: 7
 
       - name: Build Application
         env:
