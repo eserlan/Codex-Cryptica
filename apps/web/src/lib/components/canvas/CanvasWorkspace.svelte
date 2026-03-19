@@ -467,11 +467,52 @@
     await canvasRegistry.touch(currentCanvasId);
   }
 
+  function handleBulkAddToCanvas(
+    event: CustomEvent<{
+      entities: Array<{
+        entityId: string;
+        screenPosition?: { x: number; y: number };
+        position?: { x: number; y: number };
+      }>;
+    }>,
+  ) {
+    // Signal to the dispatcher that the workspace is mounted and handled the event
+    event.preventDefault();
+
+    const newNodes: Node[] = [];
+    for (const { entityId, screenPosition, position: eventPosition } of event.detail.entities) {
+      const position =
+        (screenPosition && screenToFlowPosition(screenPosition)) ||
+        eventPosition ||
+        screenToFlowPosition({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        });
+
+      const newNodeId = engine.addNode(entityId, position);
+      vault.loadEntityContent(entityId);
+      newNodes.push({
+        id: newNodeId,
+        type: "entity",
+        position,
+        data: { entityId },
+      });
+    }
+    if (newNodes.length > 0) {
+      nodes = [...nodes, ...newNodes];
+    }
+  }
+
   $effect(() => {
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
+    window.addEventListener("bulk-add-to-canvas", handleBulkAddToCanvas as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
     return () => {
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
+      window.removeEventListener(
+        "bulk-add-to-canvas",
+        handleBulkAddToCanvas as any,
+      );
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };
   });
