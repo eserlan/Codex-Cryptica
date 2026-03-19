@@ -10,8 +10,8 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
 | **Core Engines**     | ~75.42%          | 70%                 | 60-90%          | ✅ TARGET MET |
 | **Shared Utilities** | ~72.15%          | 80%                 | 80% (New)       | 🟡 DEBT       |
-| **State Stores**     | ~68.40%          | 50%                 | 50%             | ✅ TARGET MET |
-| **AI Services**      | ~78.50%          | 70%                 | 50% (App level) | ✅ TARGET MET |
+| **State Stores**     | ~72.50%          | 50%                 | 50%             | ✅ TARGET MET |
+| **AI Services**      | ~85.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
 
@@ -21,10 +21,10 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 ### 🔴 Critical Risk (< 30% Coverage)
 
-| Component                | Coverage   | Primary Owner | Issues                          |
-| :----------------------- | :--------- | :------------ | :------------------------------ |
-| `node-merge.service.ts`  | **1.17%**  | AI Services   | Merge logic complex & untested. |
-| `map-registry.svelte.ts` | **20.75%** | State Stores  | Map persistence logic debt.     |
+| Component       | Coverage  | Primary Owner | Issues                    |
+| :-------------- | :-------- | :------------ | :------------------------ |
+| `vault/crud.ts` | **13.6%** | State Stores  | Core CRUD logic untested. |
+| `vault/io.ts`   | **11.8%** | State Stores  | Disk I/O logic debt.      |
 
 ### 🟡 Moderate Risk (30% - 60% Coverage)
 
@@ -53,6 +53,8 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 - [x] Incremental test suite for `sync-engine` (**Actual: 74.56%**).
 - [x] Add mocks for Gemini API to test `text-generation.service.ts` (**Actual: 98.82%**).
+- [x] Implement unit tests for `node-merge.service.ts` (**Actual: 96.47%**).
+- [x] Achieve coverage for `map-registry.svelte.ts` (**Actual: 100%**).
 - [ ] Increase `oracle-engine` floor to **55%**.
 
 ### Phase 3: The Constitutional Push (Sprint 5+)
@@ -61,7 +63,7 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 - [ ] Systematic increase of floors in all `vitest.config.ts` files by +5% per sprint.
 - [ ] Reach **70%** floor for `vault-engine`, `graph-engine`, and `canvas-engine`.
-- [ ] Tackle `node-merge.service.ts` complexity (Target: 50%).
+- [ ] Tackle `vault/crud.ts` and `vault/io.ts` complexity (Target: 50%).
 
 ## 4. Best Practices for Improvement
 
