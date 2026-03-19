@@ -8,10 +8,10 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 
 | Category             | Average Coverage | Constitutional Goal | Enforced Floor  | Status        |
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
-| **Core Engines**     | ~75.42%          | 70%                 | 60-90%          | ✅ TARGET MET |
-| **Shared Utilities** | ~72.15%          | 80%                 | 80% (New)       | 🟡 DEBT       |
-| **State Stores**     | ~72.50%          | 50%                 | 50%             | ✅ TARGET MET |
-| **AI Services**      | ~85.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
+| **Core Engines**     | ~85.40%          | 70%                 | 70-90%          | ✅ TARGET MET |
+| **Shared Utilities** | ~75.12%          | 80%                 | 80% (New)       | 🟡 DEBT       |
+| **State Stores**     | ~65.80%          | 50%                 | 50%             | ✅ TARGET MET |
+| **AI Services**      | ~77.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
 
@@ -74,4 +74,4 @@ The following areas are currently below their **Constitutional Goals**. The **En
 ---
 
 **Last Updated**: 2026-03-19
-**Data Source**: `npm run test:coverage` (Post-Phase 1&2 completion).
+**Data Source**: `npm run test:coverage` (Phase 1 & 2 Completed).

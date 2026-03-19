@@ -24,8 +24,6 @@ export default defineConfig({
         "**/*.config.ts",
         ".svelte-kit/**",
         "src/index.ts",
-        "src/oracle-executor.ts",
-        "src/oracle-generator.ts",
       ],
     },
   },
