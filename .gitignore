@@ -3,6 +3,8 @@ node_modules/
 dist/
 build/
 test-results/
+coverage/
+**/coverage/
 apps/web/test-results/
 apps/web/playwright-report/
 .env
