@@ -10,8 +10,8 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
 | **Core Engines**     | ~85.40%          | 70%                 | 70-90%          | ✅ TARGET MET |
 | **Shared Utilities** | ~75.12%          | 80%                 | 80% (New)       | 🟡 DEBT       |
-| **State Stores**     | ~65.80%          | 50%                 | 50%             | ✅ TARGET MET |
-| **AI Services**      | ~77.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
+| **State Stores**     | ~75.80%          | 50%                 | 50%             | ✅ TARGET MET |
+| **AI Services**      | ~85.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
 
@@ -21,19 +21,18 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 ### 🔴 Critical Risk (< 30% Coverage)
 
-| Component       | Coverage  | Primary Owner | Issues                    |
-| :-------------- | :-------- | :------------ | :------------------------ |
-| `vault/crud.ts` | **13.6%** | State Stores  | Core CRUD logic untested. |
-| `vault/io.ts`   | **11.8%** | State Stores  | Disk I/O logic debt.      |
+| Component            | Coverage  | Primary Owner | Issues                         |
+| :------------------- | :-------- | :------------ | :----------------------------- |
+| `vault/entities.ts`  | **13.8%** | State Stores  | Logic-heavy entity management. |
+| `vault/migration.ts` | **12.2%** | State Stores  | Schema migration logic debt.   |
 
 ### 🟡 Moderate Risk (30% - 60% Coverage)
 
-| Component              | Coverage   | Issues                                          |
-| :--------------------- | :--------- | :---------------------------------------------- |
-| `@codex/oracle-engine` | **44.73%** | Executor and Generator coverage is thin.        |
-| `@codex/graph-engine`  | **54.45%** | Layout and Renderer logic is difficult to test. |
-| `cache.svelte.ts`      | **44.44%** | Persistence layer requires better mocking.      |
-| `opfs.ts`              | **43.84%** | Critical sync primitives need more validation.  |
+| Component             | Coverage   | Issues                                          |
+| :-------------------- | :--------- | :---------------------------------------------- |
+| `@codex/graph-engine` | **54.45%** | Layout and Renderer logic is difficult to test. |
+| `cache.svelte.ts`     | **44.44%** | Persistence layer requires better mocking.      |
+| `opfs.ts`             | **43.84%** | Critical sync primitives need more validation.  |
 
 ---
 
@@ -55,15 +54,17 @@ The following areas are currently below their **Constitutional Goals**. The **En
 - [x] Add mocks for Gemini API to test `text-generation.service.ts` (**Actual: 98.82%**).
 - [x] Implement unit tests for `node-merge.service.ts` (**Actual: 96.47%**).
 - [x] Achieve coverage for `map-registry.svelte.ts` (**Actual: 100%**).
-- [ ] Increase `oracle-engine` floor to **55%**.
+- [x] Increase `oracle-engine` floor to **55%** (**Actual: 82.58%**).
 
 ### Phase 3: The Constitutional Push (Sprint 5+)
 
 **Goal**: Reach the 70% monorepo floor.
 
+- [x] Implement unit tests for `vault/crud.ts` (**Actual: 92.00%**).
+- [x] Implement unit tests for `vault/io.ts` (**Actual: 84.54%**).
 - [ ] Systematic increase of floors in all `vitest.config.ts` files by +5% per sprint.
 - [ ] Reach **70%** floor for `vault-engine`, `graph-engine`, and `canvas-engine`.
-- [ ] Tackle `vault/crud.ts` and `vault/io.ts` complexity (Target: 50%).
+- [ ] Tackle `vault/entities.ts` and `vault/migration.ts` complexity (Target: 50%).
 
 ## 4. Best Practices for Improvement
 
@@ -74,4 +75,4 @@ The following areas are currently below their **Constitutional Goals**. The **En
 ---
 
 **Last Updated**: 2026-03-19
-**Data Source**: `npm run test:coverage` (Phase 1 & 2 Completed).
+**Data Source**: `npm run test:coverage` (Phase 1, 2 & partially 3 Completed).
