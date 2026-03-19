@@ -387,12 +387,18 @@
     event: CustomEvent<{
       entityId: string;
       position?: { x: number; y: number };
+      screenPosition?: { x: number; y: number };
     }>,
   ) {
-    const { entityId, position: eventPosition } = event.detail;
+    const {
+      entityId,
+      position: eventPosition,
+      screenPosition: eventScreenPosition,
+    } = event.detail;
 
-    // Center in flow coordinates or use provided
+    // Prioritize screenPosition (needs conversion), then absolute world position, then center
     const position =
+      (eventScreenPosition && screenToFlowPosition(eventScreenPosition)) ||
       eventPosition ||
       screenToFlowPosition({
         x: window.innerWidth / 2,

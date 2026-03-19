@@ -25,17 +25,16 @@
 
   function addFilteredToCanvas() {
     if (!cy) return;
-    // We exclude everything that has been filtered out by any of the 3 mechanisms
-    const visibleNodes = cy.nodes(
-      ":not(.category-filtered-out):not(.filtered-out):not(.timeline-hidden)",
-    );
+    // Use :visible to correctly catch all display:none filtering (labels, categories, timeline)
+    const visibleNodes = cy.nodes(":visible");
     visibleNodes.forEach((node: NodeSingular, index: number) => {
       const entityId = node.id();
       window.dispatchEvent(
         new CustomEvent("add-to-canvas", {
           detail: {
             entityId,
-            position: {
+            // Send screenPosition so CanvasWorkspace can convert correctly
+            screenPosition: {
               x: window.innerWidth / 2 + index * 20,
               y: window.innerHeight / 2 + index * 20,
             },
@@ -93,9 +92,11 @@
 
     {#if hasActiveFilters}
       <button
+        type="button"
         onclick={addFilteredToCanvas}
         class="bg-theme-surface/80 backdrop-blur border border-theme-primary/30 p-1.5 rounded text-theme-primary shadow-lg hover:border-theme-primary transition-all active:scale-90"
         title="Add all results to workspace"
+        aria-label="Add all filtered results to active workspace"
       >
         <span class="icon-[lucide--layout-grid] w-4 h-4"></span>
       </button>
