@@ -3,6 +3,9 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 export default defineConfig({
   plugins: [svelte({ hot: !process.env.VITEST })],
+  define: {
+    __BUNDLED_DEV__: "true",
+  },
   test: {
     environment: "jsdom",
     globals: true,

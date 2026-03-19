@@ -143,7 +143,7 @@ describe("VaultLifecycleManager", () => {
         async () => ({}) as any,
         mockRepository,
         vi.fn(),
-        () => entities,
+        () => entities as any,
         vi.fn(),
         vi.fn(),
         getServices,
@@ -162,57 +162,41 @@ describe("VaultLifecycleManager", () => {
     });
   });
 
-  describe("persistToIndexedDB", () => {
-    it("should save all entities to disk", async () => {
-      const entities = { e1: { id: "e1" } };
-      manager = new VaultLifecycleManager(
-        mockStatus,
-        mockError,
-        () => "v1",
-        async () => ({}) as any,
-        mockRepository,
-        vi.fn(),
-        () => entities,
-        vi.fn(),
-        vi.fn(),
-        () => ({}),
-        vi.fn(),
-        vi.fn(),
-        vaultRegistry as any,
-        themeStore as any,
-      );
+  describe("importFromFolder", () => {
+    it("should handle successful folder import", async () => {
+      // Mock the dynamic import behavior
+      vi.doMock("./io", () => ({
+        importFromFolder: vi.fn().mockResolvedValue({ success: true }),
+      }));
 
-      await manager.persistToIndexedDB("v1");
-      expect(mockRepository.saveToDisk).toHaveBeenCalled();
-      expect(mockStatus).toHaveBeenCalledWith("saving");
+      await manager.importFromFolder({} as any);
+
+      expect(mockStatus).toHaveBeenCalledWith("loading");
       expect(mockStatus).toHaveBeenCalledWith("idle");
     });
 
-    it("should handle persistence failure", async () => {
-      const entities = { e1: { id: "e1" } };
-      mockRepository.saveToDisk.mockRejectedValue(new Error("Disk full"));
+    it("should handle user cancellation", async () => {
+      vi.doMock("./io", () => ({
+        importFromFolder: vi
+          .fn()
+          .mockResolvedValue({ success: false, error: "User cancelled" }),
+      }));
 
-      manager = new VaultLifecycleManager(
-        mockStatus,
-        mockError,
-        () => "v1",
-        async () => ({}) as any,
-        mockRepository,
-        vi.fn(),
-        () => entities,
-        vi.fn(),
-        vi.fn(),
-        () => ({}),
-        vi.fn(),
-        vi.fn(),
-        vaultRegistry as any,
-        themeStore as any,
-      );
+      await manager.importFromFolder({} as any);
+      expect(mockStatus).toHaveBeenCalledWith("idle");
+      expect(mockError).not.toHaveBeenCalled();
+    });
 
-      await expect(manager.persistToIndexedDB("v1")).rejects.toThrow(
-        "Disk full",
-      );
+    it("should handle import failure", async () => {
+      vi.doMock("./io", () => ({
+        importFromFolder: vi
+          .fn()
+          .mockResolvedValue({ success: false, error: "Disk full" }),
+      }));
+
+      await manager.importFromFolder({} as any);
       expect(mockStatus).toHaveBeenCalledWith("error");
+      expect(mockError).toHaveBeenCalledWith("Disk full");
     });
   });
 
@@ -247,6 +231,60 @@ describe("VaultLifecycleManager", () => {
       );
       expect(importSpy).toHaveBeenCalled();
       expect(result).toBe(true);
+    });
+  });
+
+  describe("persistToIndexedDB", () => {
+    it("should save all entities to disk", async () => {
+      const entities = { e1: { id: "e1" } };
+      manager = new VaultLifecycleManager(
+        mockStatus,
+        mockError,
+        () => "v1",
+        async () => ({}) as any,
+        mockRepository,
+        vi.fn(),
+        () => entities as any,
+        vi.fn(),
+        vi.fn(),
+        () => ({}),
+        vi.fn(),
+        vi.fn(),
+        vaultRegistry as any,
+        themeStore as any,
+      );
+
+      await manager.persistToIndexedDB("v1");
+      expect(mockRepository.saveToDisk).toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith("saving");
+      expect(mockStatus).toHaveBeenCalledWith("idle");
+    });
+
+    it("should handle persistence failure", async () => {
+      const entities = { e1: { id: "e1" } };
+      mockRepository.saveToDisk.mockRejectedValue(new Error("Disk full"));
+
+      manager = new VaultLifecycleManager(
+        mockStatus,
+        mockError,
+        () => "v1",
+        async () => ({}) as any,
+        mockRepository,
+        vi.fn(),
+        () => entities as any,
+        vi.fn(),
+        vi.fn(),
+        () => ({}),
+        vi.fn(),
+        vi.fn(),
+        vaultRegistry as any,
+        themeStore as any,
+      );
+
+      await expect(manager.persistToIndexedDB("v1")).rejects.toThrow(
+        "Disk full",
+      );
+      expect(mockStatus).toHaveBeenCalledWith("error");
     });
   });
 });
