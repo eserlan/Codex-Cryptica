@@ -15,12 +15,12 @@
     "schema": "*"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.0",
-    "jsdom": "^28.1.0",
-    "svelte": "^5.53.7",
+    "jsdom": "^29.0.0",
+    "svelte": "^5.54.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^8.0.1",
     "vitest": "^4.0.18"
   }
 }
