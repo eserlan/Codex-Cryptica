@@ -443,7 +443,13 @@
     style="background-image: radial-gradient(var(--color-theme-secondary) 1px, transparent 1px); background-size: 30px 30px;"
   ></div>
 
-  <GraphHUD {selectedEntity} {parentEntity} {selectedId} {isLayoutRunning} />
+  <GraphHUD
+    {selectedEntity}
+    {parentEntity}
+    {selectedId}
+    {isLayoutRunning}
+    {cy}
+  />
 
   <GraphToolbar
     {cy}
