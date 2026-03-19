@@ -40,21 +40,21 @@ test.describe("Spatial Canvas", () => {
     const modal = page.locator('[role="dialog"][aria-modal="true"]');
     await expect(modal).toBeVisible({ timeout: 5000 });
 
-    // Wait for the transition and "Create New" button to be ready
+    // Click "Create New" to show the inline input
     const createBtn = modal.getByRole("button", { name: "Create New" });
     await expect(createBtn).toBeVisible({ timeout: 5000 });
+    await createBtn.click();
 
-    // Handle the native prompt() dialog that fires when creating a new canvas
-    await Promise.all([
-      page
-        .waitForEvent("dialog", { timeout: 10000 })
-        .then((dialog) => dialog.accept("New Test Canvas")),
-      createBtn.click(),
-    ]);
+    // Fill the inline input
+    const input = modal.locator("#new-canvas-input");
+    await expect(input).toBeVisible();
+    await input.fill("New Test Canvas");
 
-    // The new canvas should appear — either the URL changes or the name appears somewhere
-    await page.waitForTimeout(1000);
-    // URL should reflect the new slug
+    // Click the checkmark/confirm button
+    const confirmBtn = modal.getByTitle("Confirm Creation");
+    await confirmBtn.click();
+
+    // The new canvas should appear — URL should reflect the new slug
     await expect(page).toHaveURL(/new-test-canvas/);
   });
 

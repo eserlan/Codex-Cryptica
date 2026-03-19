@@ -400,10 +400,12 @@
     const position =
       (eventScreenPosition && screenToFlowPosition(eventScreenPosition)) ||
       eventPosition ||
-      screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      });
+      (() => {
+        const paletteWidth = uiStore.showCanvasPalette ? 288 : 48;
+        const centerX = (window.innerWidth - paletteWidth) / 2 + paletteWidth;
+        const centerY = window.innerHeight / 2;
+        return screenToFlowPosition({ x: centerX, y: centerY });
+      })();
 
     const newNodeId = engine.addNode(entityId, position);
     // Ensure the full content (lore, content, image) is loaded for this entity
