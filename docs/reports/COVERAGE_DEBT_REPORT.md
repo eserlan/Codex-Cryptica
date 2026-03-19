@@ -10,7 +10,7 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
 | **Core Engines**     | ~85.40%          | 70%                 | 70-90%          | ✅ TARGET MET |
 | **Shared Utilities** | ~75.12%          | 80%                 | 80% (New)       | 🟡 DEBT       |
-| **State Stores**     | ~75.80%          | 50%                 | 50%             | ✅ TARGET MET |
+| **State Stores**     | ~78.20%          | 50%                 | 50%             | ✅ TARGET MET |
 | **AI Services**      | ~85.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
@@ -23,8 +23,8 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 | Component            | Coverage  | Primary Owner | Issues                         |
 | :------------------- | :-------- | :------------ | :----------------------------- |
-| `vault/entities.ts`  | **13.8%** | State Stores  | Logic-heavy entity management. |
-| `vault/migration.ts` | **12.2%** | State Stores  | Schema migration logic debt.   |
+| `vault/lifecycle.ts` | **25.4%** | State Stores  | Boot/Shutdown logic untracked. |
+| `map-engine/src`     | **~5%**   | Core Engines  | New package lacks unit tests.  |
 
 ### 🟡 Moderate Risk (30% - 60% Coverage)
 
@@ -62,9 +62,11 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 - [x] Implement unit tests for `vault/crud.ts` (**Actual: 92.00%**).
 - [x] Implement unit tests for `vault/io.ts` (**Actual: 84.54%**).
+- [x] Implement unit tests for `vault/entities.ts` (**Actual: 84.55%**).
+- [x] Implement unit tests for `vault/migration.ts` (**Actual: 77.77%**).
 - [ ] Systematic increase of floors in all `vitest.config.ts` files by +5% per sprint.
-- [ ] Reach **70%** floor for `vault-engine`, `graph-engine`, and `canvas-engine`.
-- [ ] Tackle `vault/entities.ts` and `vault/migration.ts` complexity (Target: 50%).
+- [ ] Reach **70%** floor for `graph-engine` and `canvas-engine`.
+- [ ] Tackle `vault/lifecycle.ts` and `map-engine` (Target: 50%).
 
 ## 4. Best Practices for Improvement
 
@@ -75,4 +77,4 @@ The following areas are currently below their **Constitutional Goals**. The **En
 ---
 
 **Last Updated**: 2026-03-19
-**Data Source**: `npm run test:coverage` (Phase 1, 2 & partially 3 Completed).
+**Data Source**: `npm run test:coverage` (Phase 1, 2 & Phase 3 Core Completed).
