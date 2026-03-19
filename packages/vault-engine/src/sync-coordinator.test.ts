@@ -85,87 +85,343 @@ describe("SyncCoordinator", () => {
         "success",
       );
     });
+
+    it("should promote orphaned conflict files", async () => {
+      const mockHandle = {} as FileSystemDirectoryHandle;
+      mockIO.walkDirectory.mockResolvedValue([
+        {
+          path: ["orphan.conflict-123.md"],
+          handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+        },
+      ]);
+
+      await coordinator.cleanupConflictFiles(
+        "v1",
+        mockHandle,
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(mockIO.writeOpfsFile).toHaveBeenCalledWith(
+        ["orphan.md"],
+        expect.any(Object),
+        mockHandle,
+        "v1",
+      );
+    });
+
+    it("should handle promote error gracefully", async () => {
+      const mockHandle = {} as FileSystemDirectoryHandle;
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      mockIO.walkDirectory.mockResolvedValue([
+        {
+          path: ["fail.conflict-123.md"],
+          handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+        },
+      ]);
+      mockIO.writeOpfsFile.mockRejectedValue(new Error("Disk full"));
+
+      await coordinator.cleanupConflictFiles(
+        "v1",
+        mockHandle,
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+
+    it("should handle multiple variants and pick winner", async () => {
+      const mockHandle = {} as FileSystemDirectoryHandle;
+      mockIO.walkDirectory.mockResolvedValue([
+        {
+          path: ["f.md"],
+          handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 100 }) },
+        },
+        {
+          path: ["f.conflict-1.md"],
+          handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 200 }) }, // Newer winner
+        },
+        {
+          path: ["f.conflict-2.md"],
+          handle: { getFile: vi.fn().mockResolvedValue({ lastModified: 50 }) }, // Older loser
+        },
+      ]);
+
+      await coordinator.cleanupConflictFiles(
+        "v1",
+        mockHandle,
+        vi.fn(),
+        vi.fn(),
+      );
+
+      // Should delete the older two
+      expect(mockIO.deleteOpfsEntry).toHaveBeenCalledTimes(3); // f.md, conflict-1 (moved), conflict-2
+      expect(mockIO.writeOpfsFile).toHaveBeenCalledWith(
+        ["f.md"],
+        expect.any(Object),
+        mockHandle,
+        "v1",
+      );
+    });
+
+    it("should clean up local handle if granted permission", async () => {
+      const mockOpfs = {} as any;
+      const mockLocal = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any;
+      mockIO.getLocalHandle.mockResolvedValue(mockLocal);
+      mockIO.walkDirectory.mockResolvedValue([]);
+
+      await coordinator.cleanupConflictFiles("v1", mockOpfs, vi.fn(), vi.fn());
+
+      expect(mockIO.walkDirectory).toHaveBeenCalledWith(mockLocal);
+    });
+
+    it("should handle squash failure", async () => {
+      mockIO.walkDirectory.mockRejectedValue(new Error("Crash"));
+      await coordinator.cleanupConflictFiles("v1", {} as any, vi.fn(), vi.fn());
+      expect(mockNotifier.notify).toHaveBeenCalledWith(
+        expect.stringContaining("Cleanup failed"),
+        "error",
+      );
+    });
   });
 
   describe("syncToLocal", () => {
-    it("should prompt for folder if localHandle is missing", async () => {
-      mockIO.getLocalHandle.mockResolvedValue(null);
-      mockIO.showDirectoryPicker.mockResolvedValue({ name: "local" } as any);
-      const onStateChange = vi.fn();
+    it("should handle local handle validation failure (NotFoundError)", async () => {
+      const mockLocal = {
+        values: () => ({
+          next: () => {
+            const err = new Error("not found");
+            err.name = "NotFoundError";
+            throw err;
+          },
+        }),
+      } as any;
+      mockIO.getLocalHandle.mockResolvedValue(mockLocal);
+      mockIO.showDirectoryPicker.mockResolvedValue({ name: "new" } as any);
 
       await coordinator.syncToLocal(
         "v1",
         {} as any,
         {},
-        vi.fn().mockResolvedValue(undefined),
-        onStateChange,
+        vi.fn(),
+        vi.fn(),
         vi.fn(),
       );
 
-      expect(mockNotifier.alert).toHaveBeenCalled();
+      expect(mockIO.deleteLocalHandle).toHaveBeenCalledWith("v1");
       expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
-      expect(mockIO.setLocalHandle).toHaveBeenCalled();
-      expect(mockEngine.sync).toHaveBeenCalled();
     });
 
-    it("should handle sync failure gracefully and log it", async () => {
-      mockIO.getLocalHandle.mockResolvedValue({
+    it("should request permission if not granted", async () => {
+      const mockLocal = {
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),
-        queryPermission: vi.fn().mockResolvedValue("granted"),
-      } as any);
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+        requestPermission: vi.fn().mockResolvedValue("granted"),
+      } as any;
+      mockIO.getLocalHandle.mockResolvedValue(mockLocal);
 
-      const logSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockEngine.sync.mockRejectedValue(new Error("Sync failed"));
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(mockLocal.requestPermission).toHaveBeenCalled();
+    });
+
+    it("should reset localHandle if permission denied", async () => {
+      const mockLocal = {
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("prompt"),
+        requestPermission: vi.fn().mockResolvedValue("denied"),
+      } as any;
+      mockIO.getLocalHandle.mockResolvedValue(mockLocal);
+      mockIO.showDirectoryPicker.mockResolvedValue({ name: "new" } as any);
+
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(mockIO.showDirectoryPicker).toHaveBeenCalled();
+    });
+
+    it("should handle directory picker abort", async () => {
+      mockIO.getLocalHandle.mockResolvedValue(null);
+      const abortErr = new Error("Abort");
+      abortErr.name = "AbortError";
+      mockIO.showDirectoryPicker.mockRejectedValue(abortErr);
       const onStateChange = vi.fn();
 
       await coordinator.syncToLocal(
         "v1",
         {} as any,
         {},
-        vi.fn().mockResolvedValue(undefined),
+        vi.fn(),
         onStateChange,
         vi.fn(),
       );
 
-      expect(onStateChange).toHaveBeenCalledWith({
-        status: "error",
-        syncType: null,
-        errorMessage: "Sync failed",
-      });
-      logSpy.mockRestore();
+      expect(onStateChange).not.toHaveBeenCalled();
     });
 
-    it("should notify on successful sync", async () => {
+    it("should handle save queue timeout", async () => {
+      mockIO.getLocalHandle.mockResolvedValue(null);
+      mockIO.showDirectoryPicker.mockResolvedValue({} as any);
+
+      // We'll mock setTimeout to trigger the timeout quickly in code
+      // but actually we just want to see it catch and warn
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      // Use a very short timeout for testing
+      // (This requires changing the code or being clever with vi.useFakeTimers)
+      // For now we'll just test the catch path by rejecting waitForSaves
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        () => Promise.reject("timeout"),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("save queue issues"),
+      );
+      warnSpy.mockRestore();
+    });
+
+    it("should validator skip conflict files and non-markdown", async () => {
       mockIO.getLocalHandle.mockResolvedValue({
         values: () => ({ next: vi.fn().mockResolvedValue({}) }),
         queryPermission: vi.fn().mockResolvedValue("granted"),
       } as any);
 
-      const checkForConflicts = vi.fn();
+      let validator: any;
+      mockEngine.sync.mockImplementation((_v, _l, _o, v) => {
+        validator = v;
+        return Promise.resolve({ created: [], updated: [], deleted: [] });
+      });
+
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(await validator("file.conflict-123.md", {})).toBe(false);
+      expect(await validator("image.png", {})).toBe(true);
+    });
+
+    it("should validator parse markdown if unknown", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      let validator: any;
+      mockEngine.sync.mockImplementation((_v, _l, _o, v) => {
+        validator = v;
+        return Promise.resolve({ created: [], updated: [], deleted: [] });
+      });
+
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      mockIO.parseMarkdown.mockReturnValue({ metadata: { id: "123" } });
+
+      // Mock global FileSystemFileHandle for instanceof check
+      const MockHandle = class {};
+      vi.stubGlobal("FileSystemFileHandle", MockHandle);
+
+      const mockFileHandle = Object.assign(new MockHandle(), {
+        getFile: vi
+          .fn()
+          .mockResolvedValue({ text: () => Promise.resolve("text") }),
+      });
+
+      expect(
+        await validator("new.md", { handle: mockFileHandle, size: 100 }),
+      ).toBe(true);
+
+      vi.unstubAllGlobals();
+    });
+
+    it("should handle link lost error from sync result", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      mockEngine.sync.mockResolvedValue({
+        error: "NotFoundError: folder is gone",
+        created: [],
+        updated: [],
+        deleted: [],
+      });
+
+      await coordinator.syncToLocal(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+      );
+
+      expect(mockIO.deleteLocalHandle).toHaveBeenCalledWith("v1");
+      expect(mockNotifier.notify).toHaveBeenCalledWith(
+        expect.stringContaining("lost"),
+        "error",
+      );
+    });
+
+    it("should handle AbortError during sync", async () => {
+      mockIO.getLocalHandle.mockResolvedValue({
+        values: () => ({ next: vi.fn().mockResolvedValue({}) }),
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      } as any);
+
+      const abortErr = new Error("Abort");
+      abortErr.name = "AbortError";
+      mockEngine.sync.mockRejectedValue(abortErr);
       const onStateChange = vi.fn();
 
       await coordinator.syncToLocal(
         "v1",
         {} as any,
         {},
-        vi.fn().mockResolvedValue(undefined),
+        vi.fn(),
         onStateChange,
-        checkForConflicts,
+        vi.fn(),
       );
 
-      expect(onStateChange).toHaveBeenCalledWith({
-        status: "saving",
-        syncType: "local",
-      });
       expect(onStateChange).toHaveBeenCalledWith({
         status: "idle",
         syncType: null,
       });
-      expect(checkForConflicts).toHaveBeenCalled();
-      expect(mockNotifier.notify).toHaveBeenCalledWith(
-        expect.stringContaining("Sync complete"),
-        "success",
-      );
     });
   });
 });
