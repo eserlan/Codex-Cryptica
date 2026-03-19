@@ -10,6 +10,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      thresholds: {
+        statements: 70,
+        branches: 60,
+        functions: 60,
+        lines: 70,
+      },
       exclude: [
         "node_modules/**",
         "tests/**",
@@ -18,6 +24,7 @@ export default defineConfig({
         "**/*.config.ts",
         ".svelte-kit/**",
         "src/index.ts",
+        "src/store.svelte.ts",
       ],
     },
   },
