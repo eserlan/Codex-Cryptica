@@ -5,6 +5,14 @@ export default defineConfig({
   plugins: [svelte({ hot: !process.env.VITEST })],
   define: {
     __BUNDLED_DEV__: "true",
+    __SERVER_FORWARD_CONSOLE__: "false",
+    __HMR_PROTOCOL__: '"ws"',
+    __HMR_HOSTNAME__: '"localhost"',
+    __HMR_PORT__: "3000",
+    __HMR_DIRECT_TARGET__: '"localhost"',
+    __HMR_BASE__: '"/"',
+    __HMR_TIMEOUT__: "30000",
+    __HMR_ENABLE_OVERLAY__: "false",
   },
   test: {
     environment: "jsdom",
@@ -27,7 +35,6 @@ export default defineConfig({
         "**/*.config.ts",
         ".svelte-kit/**",
         "src/index.ts",
-        "src/asset-manager.ts",
       ],
     },
   },
