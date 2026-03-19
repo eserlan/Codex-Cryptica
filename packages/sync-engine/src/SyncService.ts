@@ -195,10 +195,21 @@ export class SyncService {
 
       // Cleanup registry for completely gone files (Only during full sync)
       if (!isDeltaSync) {
+        // ⚡ Bolt: Execute registry deletions concurrently using Promise.all in batches to prevent I/O bottlenecks.
+        // Impact: Reduces full sync cleanup time from O(N) sequential I/O to bounded concurrent execution for deleted files.
+        const BATCH_SIZE = 50;
+        let deletePromises: Promise<void>[] = [];
         for (const path of registryMap.keys()) {
           if (!fsMap.has(path) && !opfsMap.has(path)) {
-            await this.registry.deleteEntry(vaultId, path);
+            deletePromises.push(this.registry.deleteEntry(vaultId, path));
+            if (deletePromises.length >= BATCH_SIZE) {
+              await Promise.all(deletePromises);
+              deletePromises = [];
+            }
           }
+        }
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
         }
       }
 
