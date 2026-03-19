@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { generateThumbnail, convertToWebP } from "./image-processing";
 
 describe("image-processing", () => {
@@ -20,9 +20,13 @@ describe("image-processing", () => {
 
     mockCanvas = {
       getContext: vi.fn().mockReturnValue(mockContext),
-      toBlob: vi.fn().mockImplementation((callback, type, _quality) => {
-        callback(new Blob(["mock-image-data"], { type }));
-      }),
+      toBlob: vi
+        .fn()
+        .mockImplementation(
+          (callback: (blob: Blob | null) => void, type, _quality) => {
+            callback(new Blob(["mock-image-data"], { type }));
+          },
+        ),
       width: 0,
       height: 0,
     };
@@ -76,16 +80,18 @@ describe("image-processing", () => {
     );
 
     // Mock document.createElement
-    vi.stubGlobal("document", {
-      createElement: vi.fn().mockImplementation((tag) => {
-        if (tag === "canvas") return mockCanvas;
-        return {};
-      }),
+    vi.spyOn(document, "createElement").mockImplementation((tag) => {
+      if (tag === "canvas") return mockCanvas;
+      return document.createElement.getMockImplementation()!(tag);
     });
 
     // Mock URL methods
-    global.URL.createObjectURL = vi.fn(() => "mock-url");
-    global.URL.revokeObjectURL = vi.fn();
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("mock-url");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe("generateThumbnail", () => {
@@ -103,8 +109,8 @@ describe("image-processing", () => {
       const result = await promise;
 
       expect(result).toBeInstanceOf(Blob);
-      expect(global.URL.createObjectURL).toHaveBeenCalledWith(inputBlob);
-      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
+      expect(URL.createObjectURL).toHaveBeenCalledWith(inputBlob);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
       expect(mockCanvas.width).toBe(100);
       expect(mockCanvas.height).toBe(80); // 1000/800 = 100/80
       expect(mockContext.drawImage).toHaveBeenCalled();
@@ -173,7 +179,7 @@ describe("image-processing", () => {
       }
 
       await expect(promise).rejects.toThrow("Load failed");
-      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
     });
 
     it("should reject if canvas context cannot be initialized", async () => {
@@ -263,7 +269,7 @@ describe("image-processing", () => {
       }
 
       await expect(promise).rejects.toThrow("WebP Load failed");
-      expect(global.URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith("mock-url");
     });
 
     it("should reject if canvas context fails during WebP conversion", async () => {

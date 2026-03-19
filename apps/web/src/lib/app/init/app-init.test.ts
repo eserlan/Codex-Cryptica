@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -23,8 +23,16 @@ import {
 } from "./app-init";
 
 describe("app-init", () => {
+  let listenersCleanup: (() => void)[] = [];
+
   beforeEach(() => {
     vi.clearAllMocks();
+    listenersCleanup = [];
+  });
+
+  afterEach(() => {
+    listenersCleanup.forEach((cleanup) => cleanup());
+    vi.unstubAllGlobals();
   });
 
   describe("bootSystem", () => {
@@ -79,6 +87,7 @@ describe("app-init", () => {
       const mockCalendarStore = { init: vi.fn() };
 
       const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       expect(addSpy).toHaveBeenCalledWith("error", expect.any(Function));
       expect(addSpy).toHaveBeenCalledWith(
@@ -89,14 +98,13 @@ describe("app-init", () => {
         "vault-switched",
         expect.any(Function),
       );
-
-      cleanup();
     });
 
     it("should handle global error and update uiStore", () => {
       const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       const errorEvent = new ErrorEvent("error", {
         message: "Test Error",
@@ -113,7 +121,8 @@ describe("app-init", () => {
     it("should ignore noisy script/link errors", () => {
       const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       const scriptElement = document.createElement("script");
       const errorEvent = new ErrorEvent("error", {
@@ -129,7 +138,8 @@ describe("app-init", () => {
     it("should ignore specific ignored error messages", () => {
       const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       window.dispatchEvent(
         new ErrorEvent("error", {
@@ -149,7 +159,8 @@ describe("app-init", () => {
     it("should handle unhandled rejection", () => {
       const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       const p = Promise.reject("fail");
       p.catch(() => {}); // Prevent unhandled rejection warning
@@ -169,7 +180,8 @@ describe("app-init", () => {
     it("should handle vault-switched event", () => {
       const mockUiStore = { setGlobalError: vi.fn() };
       const mockCalendarStore = { init: vi.fn() };
-      initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      const cleanup = initializeGlobalListeners(mockUiStore, mockCalendarStore);
+      listenersCleanup.push(cleanup);
 
       window.dispatchEvent(new CustomEvent("vault-switched"));
 
@@ -197,19 +209,16 @@ describe("app-init", () => {
   });
 
   describe("setupWindowGlobals", () => {
-    it("should attach context to window if special env", () => {
-      // Mock import.meta.env
-      vi.stubGlobal("import", { meta: { env: { DEV: true } } });
+    it("should attach context to window if special env (__E2E__)", () => {
+      (window as any).__E2E__ = true;
 
       const mockContext = { searchStore: { name: "search" } };
       setupWindowGlobals(mockContext as any);
 
       expect((window as any).searchStore).toBe(mockContext.searchStore);
-    });
 
-    it("should not attach context if not special env", () => {
-      // This is hard to test because import.meta.env is usually frozen or hard to mock
-      // But we can try to stub it
+      delete (window as any).__E2E__;
+      delete (window as any).searchStore;
     });
   });
 });
