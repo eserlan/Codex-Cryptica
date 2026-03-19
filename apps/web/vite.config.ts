@@ -1,4 +1,5 @@
 import { sveltekit } from "@sveltejs/kit/vite";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -18,7 +19,7 @@ try {
 }
 
 export default defineConfig({
-  plugins: [sveltekit() as any],
+  plugins: [tailwindcss(), sveltekit() as any],
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
