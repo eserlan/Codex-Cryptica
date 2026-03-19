@@ -8,9 +8,9 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 
 | Category             | Average Coverage | Constitutional Goal | Enforced Floor  | Status        |
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
-| **Core Engines**     | ~85.40%          | 70%                 | 70-90%          | ✅ TARGET MET |
+| **Core Engines**     | ~88.40%          | 70%                 | 70-90%          | ✅ TARGET MET |
 | **Shared Utilities** | ~75.12%          | 80%                 | 80% (New)       | 🟡 DEBT       |
-| **State Stores**     | ~78.20%          | 50%                 | 50%             | ✅ TARGET MET |
+| **State Stores**     | ~82.20%          | 50%                 | 50%             | ✅ TARGET MET |
 | **AI Services**      | ~85.20%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
@@ -21,10 +21,10 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 ### 🔴 Critical Risk (< 30% Coverage)
 
-| Component            | Coverage  | Primary Owner | Issues                         |
-| :------------------- | :-------- | :------------ | :----------------------------- |
-| `vault/lifecycle.ts` | **25.4%** | State Stores  | Boot/Shutdown logic untracked. |
-| `map-engine/src`     | **~5%**   | Core Engines  | New package lacks unit tests.  |
+| Component           | Coverage  | Primary Owner | Issues                      |
+| :------------------ | :-------- | :------------ | :-------------------------- |
+| `vault/adapters.ts` | **33.3%** | State Stores  | Low priority wrapper logic. |
+| `opfs.ts`           | **43.8%** | Shared Utils  | Primitives need more tests. |
 
 ### 🟡 Moderate Risk (30% - 60% Coverage)
 
@@ -32,7 +32,6 @@ The following areas are currently below their **Constitutional Goals**. The **En
 | :-------------------- | :--------- | :---------------------------------------------- |
 | `@codex/graph-engine` | **54.45%** | Layout and Renderer logic is difficult to test. |
 | `cache.svelte.ts`     | **44.44%** | Persistence layer requires better mocking.      |
-| `opfs.ts`             | **43.84%** | Critical sync primitives need more validation.  |
 
 ---
 
@@ -64,9 +63,10 @@ The following areas are currently below their **Constitutional Goals**. The **En
 - [x] Implement unit tests for `vault/io.ts` (**Actual: 84.54%**).
 - [x] Implement unit tests for `vault/entities.ts` (**Actual: 84.55%**).
 - [x] Implement unit tests for `vault/migration.ts` (**Actual: 77.77%**).
+- [x] Implement unit tests for `vault/lifecycle.ts` (**Actual: 85.08%**).
+- [x] Implement unit tests for `map-engine` (**Actual: 95.34%**).
 - [ ] Systematic increase of floors in all `vitest.config.ts` files by +5% per sprint.
 - [ ] Reach **70%** floor for `graph-engine` and `canvas-engine`.
-- [ ] Tackle `vault/lifecycle.ts` and `map-engine` (Target: 50%).
 
 ## 4. Best Practices for Improvement
 
@@ -77,4 +77,4 @@ The following areas are currently below their **Constitutional Goals**. The **En
 ---
 
 **Last Updated**: 2026-03-19
-**Data Source**: `npm run test:coverage` (Post-Phase 1, 2 & 3 Core Cleanup).
+**Data Source**: `npm run test:coverage` (Phase 1, 2 & 3 Core Completed).
