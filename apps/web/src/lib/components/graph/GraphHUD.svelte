@@ -29,10 +29,10 @@
     // Use :visible to correctly catch all display:none filtering (labels, categories, timeline)
     const visibleNodes = cy.nodes(":visible");
     const entityIds = visibleNodes.map((node: NodeSingular) => node.id());
-    
+
     // ⚡ Optimization: Use canvasRegistry.queueEntities for batch spawning in CanvasWorkspace
     canvasRegistry.queueEntities(entityIds);
-    
+
     ui.notify(
       `${entityIds.length} entities queued for active workspace`,
       "success",

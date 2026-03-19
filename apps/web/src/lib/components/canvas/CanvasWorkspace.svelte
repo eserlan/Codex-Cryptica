@@ -421,6 +421,39 @@
     ];
   }
 
+  function handleBatchSpawn() {
+    const entityIds = canvasRegistry.consumePending();
+    if (entityIds.length === 0) return;
+
+    const newNodesList: Node[] = [];
+
+    entityIds.forEach((entityId, index) => {
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2 + index * 20,
+        y: window.innerHeight / 2 + index * 20,
+      });
+
+      const newNodeId = engine.addNode(entityId, position);
+      vault.loadEntityContent(entityId);
+
+      newNodesList.push({
+        id: newNodeId,
+        type: "entity",
+        position,
+        data: { entityId },
+      });
+    });
+
+    nodes = [...nodes, ...newNodesList];
+  }
+
+  // Monitor pending entities from registry (e.g. from GraphHUD "Add all results" button)
+  $effect(() => {
+    if (canvasRegistry.pendingEntityIds.length > 0) {
+      untrack(() => handleBatchSpawn());
+    }
+  });
+
   async function saveCanvas(
     explicitVaultId?: string,
     explicitCanvasId?: string,
@@ -474,6 +507,31 @@
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };
+  });
+
+  // Consume entity IDs queued from other routes (e.g. GraphHUD "Add filtered to canvas")
+  $effect(() => {
+    if (canvasRegistry.pendingEntityIds.length === 0) return;
+    const toAdd = canvasRegistry.consumePending();
+    if (toAdd.length === 0) return;
+    toAdd.forEach((entityId, index) => {
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2 + index * 30,
+        y: window.innerHeight / 2 + index * 30,
+      });
+      const newNodeId = engine.addNode(entityId, position);
+      // Fire-and-forget: content loads in background, matching handleQuickSpawn behaviour
+      vault.loadEntityContent(entityId);
+      nodes = [
+        ...nodes,
+        {
+          id: newNodeId,
+          type: "entity",
+          position,
+          data: { entityId },
+        },
+      ];
+    });
   });
 
   onDestroy(() => {
