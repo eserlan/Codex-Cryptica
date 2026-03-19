@@ -27,25 +27,35 @@
     if (!cy) return;
     // Use :visible to correctly catch all display:none filtering (labels, categories, timeline)
     const visibleNodes = cy.nodes(":visible");
-    visibleNodes.forEach((node: NodeSingular, index: number) => {
-      const entityId = node.id();
-      window.dispatchEvent(
-        new CustomEvent("add-to-canvas", {
-          detail: {
-            entityId,
-            // Send screenPosition so CanvasWorkspace can convert correctly
-            screenPosition: {
-              x: window.innerWidth / 2 + index * 20,
-              y: window.innerHeight / 2 + index * 20,
-            },
-          },
-        }),
-      );
+    if (visibleNodes.length === 0) return;
+
+    // Build a single payload so CanvasWorkspace can update nodes state once
+    const entities = visibleNodes.map((node: NodeSingular, index: number) => ({
+      entityId: node.id(),
+      screenPosition: {
+        x: window.innerWidth / 2 + index * 20,
+        y: window.innerHeight / 2 + index * 20,
+      },
+    }));
+
+    // cancelable lets CanvasWorkspace call preventDefault() to signal it handled the event
+    const event = new CustomEvent("bulk-add-to-canvas", {
+      cancelable: true,
+      detail: { entities },
     });
-    ui.notify(
-      `Added ${visibleNodes.length} entities to active workspace`,
-      "success",
-    );
+
+    const handled = !window.dispatchEvent(event);
+    if (handled) {
+      ui.notify(
+        `Added ${entities.length} entities to active workspace`,
+        "success",
+      );
+    } else {
+      ui.notify(
+        "No active canvas workspace found. Open a canvas first.",
+        "info",
+      );
+    }
   }
 </script>
 
