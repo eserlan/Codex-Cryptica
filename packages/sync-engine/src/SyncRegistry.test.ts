@@ -190,7 +190,12 @@ describe("SyncRegistry", () => {
 
   describe("Cloud Metadata", () => {
     it("should manage cloud metadata", async () => {
-      const meta = { vaultId: "v1", lastSyncTime: 100, nextToken: "token" };
+      const meta = {
+        vaultId: "v1",
+        lastSyncTime: 100,
+        remoteFolderId: "folder-1",
+        lastSyncToken: "token-1",
+      };
       await registry.putCloudMetadata(meta);
       expect(await registry.getCloudMetadata("v1")).toEqual(meta);
     });

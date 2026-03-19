@@ -36,24 +36,25 @@ describe("SyncService", () => {
 
   describe("sync", () => {
     it("should handle MATCH_INITIAL when contents are identical", async () => {
+      const content = "same-content";
       const fsMetadata = {
         path: "initial.md",
         lastModified: 1000,
-        size: 10,
+        size: content.length,
         handle: {},
       };
       const opfsMetadata = {
         path: "initial.md",
         lastModified: 1000,
-        size: 10,
+        size: content.length,
         handle: "r1",
         hash: "h1",
       };
 
       mockFsBackend.scan.mockResolvedValue({ files: [fsMetadata] });
       mockOpfsBackend.scan.mockResolvedValue({ files: [opfsMetadata] });
-      mockFsBackend.download.mockResolvedValue(new Blob(["same"]));
-      mockOpfsBackend.download.mockResolvedValue(new Blob(["same"]));
+      mockFsBackend.download.mockResolvedValue(new Blob([content]));
+      mockOpfsBackend.download.mockResolvedValue(new Blob([content]));
 
       await service.sync("v1", mockFsBackend, mockOpfsBackend);
 
@@ -73,6 +74,7 @@ describe("SyncService", () => {
         lastSyncedOpfsHash: "h1",
       };
 
+      // fsMetadata must be > 2000ms newer than registry to be "changed"
       const fsMetadata = {
         path: "changed.md",
         lastModified: 3000,
@@ -114,15 +116,19 @@ describe("SyncService", () => {
         lastSyncedFsSize: 10,
         lastSyncedOpfsHash: "old-hash",
       };
+
+      // Both sides changed relative to registry
+      // FS changed (3000 vs 500)
       const fsMetadata = {
         path: "conflict.md",
-        lastModified: 1000,
+        lastModified: 3000,
         size: 10,
         handle: {},
       };
+      // OPFS changed (hash differs)
       const opfsMetadata = {
         path: "conflict.md",
-        lastModified: 2000,
+        lastModified: 4000, // Newer than FS
         size: 10,
         handle: "r1",
         hash: "new-remote-hash",
@@ -138,7 +144,7 @@ describe("SyncService", () => {
       // Remote is newer, so it should EXPORT_TO_FS (mocking updatedFs)
       mockFsBackend.upload.mockResolvedValue({
         path: "conflict.md",
-        lastModified: 2000,
+        lastModified: 4000,
         size: 10,
         handle: {},
       });
