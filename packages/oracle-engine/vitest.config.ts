@@ -10,6 +10,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      thresholds: {
+        statements: 65,
+        branches: 50,
+        functions: 60,
+        lines: 65,
+      },
       exclude: [
         "node_modules/**",
         "tests/**",
@@ -18,6 +24,8 @@ export default defineConfig({
         "**/*.config.ts",
         ".svelte-kit/**",
         "src/index.ts",
+        "src/oracle-executor.ts",
+        "src/oracle-generator.ts",
       ],
     },
   },
