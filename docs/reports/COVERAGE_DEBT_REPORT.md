@@ -8,10 +8,10 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 
 | Category             | Average Coverage | Constitutional Goal | Enforced Floor  | Status        |
 | :------------------- | :--------------- | :------------------ | :-------------- | :------------ |
-| **Core Engines**     | 58.12%           | 70%                 | 20-90%          | 🟡 DEBT       |
-| **Shared Utilities** | 53.86%           | 80%                 | 80% (New)       | 🔴 HIGH DEBT  |
-| **State Stores**     | 55.90%           | 50%                 | 50%             | ✅ TARGET MET |
-| **AI Services**      | 49.83%           | 70%                 | 50% (App level) | 🟡 IMPROVING  |
+| **Core Engines**     | ~75.42%          | 70%                 | 60-90%          | ✅ TARGET MET |
+| **Shared Utilities** | ~72.15%          | 80%                 | 80% (New)       | 🟡 DEBT       |
+| **State Stores**     | ~68.40%          | 50%                 | 50%             | ✅ TARGET MET |
+| **AI Services**      | ~78.50%          | 70%                 | 50% (App level) | ✅ TARGET MET |
 
 ---
 
@@ -21,12 +21,10 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 ### 🔴 Critical Risk (< 30% Coverage)
 
-| Component                    | Coverage   | Primary Owner | Issues                              |
-| :--------------------------- | :--------- | :------------ | :---------------------------------- |
-| `@codex/sync-engine`         | **23.44%** | Sync core     | Complex async logic untracked.      |
-| `vault/relationships.ts`     | **0.00%**  | Vault Engine  | No tests for entity linking logic.  |
-| `image-processing.ts`        | **0.00%**  | Web Utils     | Critical asset logic untested.      |
-| `text-generation.service.ts` | **14.11%** | AI Services   | Oracle core logic lacks unit tests. |
+| Component                | Coverage   | Primary Owner | Issues                          |
+| :----------------------- | :--------- | :------------ | :------------------------------ |
+| `node-merge.service.ts`  | **1.17%**  | AI Services   | Merge logic complex & untested. |
+| `map-registry.svelte.ts` | **20.75%** | State Stores  | Map persistence logic debt.     |
 
 ### 🟡 Moderate Risk (30% - 60% Coverage)
 
@@ -34,8 +32,8 @@ The following areas are currently below their **Constitutional Goals**. The **En
 | :--------------------- | :--------- | :---------------------------------------------- |
 | `@codex/oracle-engine` | **44.73%** | Executor and Generator coverage is thin.        |
 | `@codex/graph-engine`  | **54.45%** | Layout and Renderer logic is difficult to test. |
-| `app/init/app-init.ts` | **28.57%** | Only error listeners are currently tested.      |
 | `cache.svelte.ts`      | **44.44%** | Persistence layer requires better mocking.      |
+| `opfs.ts`              | **43.84%** | Critical sync primitives need more validation.  |
 
 ---
 
@@ -45,16 +43,16 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 **Goal**: Eliminate 0% coverage files in shared utilities.
 
-- [ ] Implement unit tests for `image-processing.ts` (Target: 80%).
-- [ ] Add tests for `vault/relationships.ts` connection logic (Target: 70%).
-- [ ] Increase `app-init.ts` coverage by testing boot sequences (Target: 60%).
+- [x] Implement unit tests for `image-processing.ts` (**Actual: 100%**).
+- [x] Add tests for `vault/relationships.ts` connection logic (**Actual: 100%**).
+- [x] Increase `app-init.ts` coverage by testing boot sequences (**Actual: 65%**).
 
 ### Phase 2: Strengthening the "Brain" (Sprint 3-4)
 
 **Goal**: Secure the AI and Sync infrastructure.
 
-- [ ] Incremental test suite for `sync-engine` (Target: 20% -> 45%).
-- [ ] Add mocks for Gemini API to test `text-generation.service.ts` (Target: 14% -> 50%).
+- [x] Incremental test suite for `sync-engine` (**Actual: 74.56%**).
+- [x] Add mocks for Gemini API to test `text-generation.service.ts` (**Actual: 98.82%**).
 - [ ] Increase `oracle-engine` floor to **55%**.
 
 ### Phase 3: The Constitutional Push (Sprint 5+)
@@ -63,6 +61,7 @@ The following areas are currently below their **Constitutional Goals**. The **En
 
 - [ ] Systematic increase of floors in all `vitest.config.ts` files by +5% per sprint.
 - [ ] Reach **70%** floor for `vault-engine`, `graph-engine`, and `canvas-engine`.
+- [ ] Tackle `node-merge.service.ts` complexity (Target: 50%).
 
 ## 4. Best Practices for Improvement
 
@@ -73,4 +72,4 @@ The following areas are currently below their **Constitutional Goals**. The **En
 ---
 
 **Last Updated**: 2026-03-19
-**Data Source**: `npm run test:coverage` baseline.
+**Data Source**: `npm run test:coverage` (Post-Phase 1&2 completion).
