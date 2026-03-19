@@ -476,6 +476,31 @@
     };
   });
 
+  // Consume entity IDs queued from other routes (e.g. GraphHUD "Add filtered to canvas")
+  $effect(() => {
+    if (canvasRegistry.pendingEntityIds.length === 0) return;
+    const toAdd = canvasRegistry.consumePending();
+    if (toAdd.length === 0) return;
+    toAdd.forEach((entityId, index) => {
+      const position = screenToFlowPosition({
+        x: window.innerWidth / 2 + index * 30,
+        y: window.innerHeight / 2 + index * 30,
+      });
+      const newNodeId = engine.addNode(entityId, position);
+      // Fire-and-forget: content loads in background, matching handleQuickSpawn behaviour
+      vault.loadEntityContent(entityId);
+      nodes = [
+        ...nodes,
+        {
+          id: newNodeId,
+          type: "entity",
+          position,
+          data: { entityId },
+        },
+      ];
+    });
+  });
+
   onDestroy(() => {
     if (saveTimer !== null) {
       clearTimeout(saveTimer);

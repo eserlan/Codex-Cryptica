@@ -10,7 +10,6 @@ test.describe("Oracle Merge Command E2E", () => {
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem("codex_skip_welcome", "true");
     });
 
     await page.goto("http://localhost:5173/");
@@ -24,13 +23,13 @@ test.describe("Oracle Merge Command E2E", () => {
     );
 
     // Inject fake API key and mock vault methods
-    await page.evaluate(() => {
+    await page.evaluate(async () => {
       const ui = (window as any).uiStore;
       ui.dismissedLandingPage = true;
       ui.skipWelcomeScreen = true;
 
       const oracle = (window as any).oracle;
-      oracle.apiKey = "fake-key";
+      await oracle.setKey("fake-key");
 
       const vault = (window as any).vault;
       // Ensure deleteEntity actually removes from in-memory state for the test
