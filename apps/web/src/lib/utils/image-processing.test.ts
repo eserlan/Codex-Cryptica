@@ -80,9 +80,10 @@ describe("image-processing", () => {
     );
 
     // Mock document.createElement
+    const originalCreateElement = document.createElement.bind(document);
     vi.spyOn(document, "createElement").mockImplementation((tag) => {
       if (tag === "canvas") return mockCanvas;
-      return document.createElement.getMockImplementation()!(tag);
+      return originalCreateElement(tag);
     });
 
     // Mock URL methods
