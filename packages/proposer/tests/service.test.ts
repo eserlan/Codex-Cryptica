@@ -194,7 +194,9 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
@@ -218,7 +220,9 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -238,7 +242,9 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
     const proposal = await service.generateConnectionProposal(
       "key",
       "model",
@@ -264,8 +270,14 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
-    const intent = await service.parseConnectionIntent("key", "model", "Source is rival of Target");
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
+    const intent = await service.parseConnectionIntent(
+      "key",
+      "model",
+      "Source is rival of Target",
+    );
     expect(intent.sourceName).toBe("Source");
     expect(intent.targetName).toBe("Target");
     expect(intent.type).toBe("enemy");
@@ -278,7 +290,9 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
     const intent = await service.parseConnectionIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");
@@ -295,8 +309,14 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
-    const intent = await service.parseMergeIntent("key", "model", "Merge A into B");
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
+    const intent = await service.parseMergeIntent(
+      "key",
+      "model",
+      "Merge A into B",
+    );
     expect(intent.sourceName).toBe("A");
     expect(intent.targetName).toBe("B");
   });
@@ -308,7 +328,9 @@ describe("ProposerService", () => {
       },
     });
     const mockModel = { generateContent };
-    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
     const intent = await service.parseMergeIntent("key", "model", "input");
     expect(intent.sourceName).toBe("");
     expect(intent.targetName).toBe("");

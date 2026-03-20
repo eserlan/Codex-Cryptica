@@ -186,10 +186,7 @@ export class AssetManager {
             // Try primary storage (OPFS)
             if (vaultHandle) {
               try {
-                blob = await this.ioAdapter.readOpfsBlob(
-                  segments,
-                  vaultHandle,
-                );
+                blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
               } catch (err) {
                 // If not found and we have a fallback, keep going
                 if (!fallbackHandle) throw err;

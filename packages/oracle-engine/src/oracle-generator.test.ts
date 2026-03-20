@@ -18,13 +18,11 @@ describe("OracleGenerator", () => {
         generateResponse: vi.fn(),
       },
       contextRetrieval: {
-        retrieveContext: vi
-          .fn()
-          .mockResolvedValue({
-            primaryEntityId: "e1",
-            sourceIds: ["e1"],
-            content: "ctx",
-          }),
+        retrieveContext: vi.fn().mockResolvedValue({
+          primaryEntityId: "e1",
+          sourceIds: ["e1"],
+          content: "ctx",
+        }),
       },
       imageGeneration: {
         distillVisualPrompt: vi.fn().mockResolvedValue("prompt"),

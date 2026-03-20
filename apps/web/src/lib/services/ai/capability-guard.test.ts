@@ -4,8 +4,8 @@ import { uiStore } from "../../stores/ui.svelte";
 
 vi.mock("../../stores/ui.svelte", () => ({
   uiStore: {
-    liteMode: false
-  }
+    liteMode: false,
+  },
 }));
 
 describe("capability-guard", () => {
@@ -20,7 +20,9 @@ describe("capability-guard", () => {
 
     it("should throw if liteMode is true", () => {
       uiStore.liteMode = true;
-      expect(() => assertAIEnabled()).toThrow("AI features are disabled in Lite Mode.");
+      expect(() => assertAIEnabled()).toThrow(
+        "AI features are disabled in Lite Mode.",
+      );
     });
   });
 

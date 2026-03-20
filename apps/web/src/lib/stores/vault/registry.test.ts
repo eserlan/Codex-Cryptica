@@ -70,12 +70,18 @@ describe("Vault Registry", () => {
       const result = await createVault(mockRoot, "My Vault");
 
       expect(sanitizeId).toHaveBeenCalledWith("My Vault");
-      expect(opfs.createVaultDir).toHaveBeenCalledWith(mockRoot, expect.stringContaining("my-vault-"));
-      expect(mockDB.put).toHaveBeenCalledWith("vaults", expect.objectContaining({
-        name: "My Vault",
-        entityCount: 0,
-        syncState: expect.objectContaining({ status: "idle" }),
-      }));
+      expect(opfs.createVaultDir).toHaveBeenCalledWith(
+        mockRoot,
+        expect.stringContaining("my-vault-"),
+      );
+      expect(mockDB.put).toHaveBeenCalledWith(
+        "vaults",
+        expect.objectContaining({
+          name: "My Vault",
+          entityCount: 0,
+          syncState: expect.objectContaining({ status: "idle" }),
+        }),
+      );
       expect(result.name).toBe("My Vault");
       expect(result.id).toMatch(/^my-vault-/);
     });
@@ -96,7 +102,10 @@ describe("Vault Registry", () => {
 
       const result = await renameVault("v1", "New");
 
-      expect(mockDB.put).toHaveBeenCalledWith("vaults", { id: "v1", name: "New" });
+      expect(mockDB.put).toHaveBeenCalledWith("vaults", {
+        id: "v1",
+        name: "New",
+      });
       expect(result?.name).toBe("New");
     });
 
@@ -148,17 +157,22 @@ describe("Vault Registry", () => {
 
       await updateLastOpened("v1");
 
-      expect(mockDB.put).toHaveBeenCalledWith("vaults", expect.objectContaining({
-        id: "v1",
-        lastOpenedAt: expect.any(Number),
-      }));
-      expect(vi.mocked(mockDB.put).mock.calls[0][1].lastOpenedAt).toBeGreaterThan(0);
+      expect(mockDB.put).toHaveBeenCalledWith(
+        "vaults",
+        expect.objectContaining({
+          id: "v1",
+          lastOpenedAt: expect.any(Number),
+        }),
+      );
+      expect(
+        vi.mocked(mockDB.put).mock.calls[0][1].lastOpenedAt,
+      ).toBeGreaterThan(0);
     });
 
     it("should do nothing if vault does not exist", async () => {
-       mockDB.get.mockResolvedValue(null);
-       await updateLastOpened("v1");
-       expect(mockDB.put).not.toHaveBeenCalled();
+      mockDB.get.mockResolvedValue(null);
+      await updateLastOpened("v1");
+      expect(mockDB.put).not.toHaveBeenCalled();
     });
   });
 });

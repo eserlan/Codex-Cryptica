@@ -66,8 +66,15 @@ describe("CanvasStore", () => {
 
   it("should initialize with data", () => {
     const data = {
-      nodes: [{ id: "n1", type: "entity" as const, entityId: "e1", position: { x: 0, y: 0 } }],
-      edges: []
+      nodes: [
+        {
+          id: "n1",
+          type: "entity" as const,
+          entityId: "e1",
+          position: { x: 0, y: 0 },
+        },
+      ],
+      edges: [],
     };
     const store = new CanvasStore(data);
     expect(store.nodes).toHaveLength(1);
@@ -76,8 +83,10 @@ describe("CanvasStore", () => {
   it("should load data from JSON", async () => {
     const store = new CanvasStore();
     const json = JSON.stringify({
-      nodes: [{ id: "n1", type: "entity", entityId: "e1", position: { x: 0, y: 0 } }],
-      edges: []
+      nodes: [
+        { id: "n1", type: "entity", entityId: "e1", position: { x: 0, y: 0 } },
+      ],
+      edges: [],
     });
     await store.load(json);
     expect(store.nodes).toHaveLength(1);

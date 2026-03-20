@@ -19,7 +19,7 @@ describe("search.worker.ts", () => {
 
     // Verify exposeSearchEngine was called with the engine instance
     expect(mockExposeSearchEngine).toHaveBeenCalledWith(
-      expect.any(mockSearchEngine)
+      expect.any(mockSearchEngine),
     );
   });
 });

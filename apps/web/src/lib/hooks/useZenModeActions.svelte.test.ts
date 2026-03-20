@@ -9,7 +9,7 @@ describe("useZenModeActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("confirm", vi.fn());
-    
+
     // Mock stores
     mockUiStore = {
       notify: vi.fn(),
@@ -68,7 +68,9 @@ describe("useZenModeActions", () => {
     });
 
     it("should log error and reset isSaving on failure", async () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockVault.updateEntity.mockRejectedValueOnce(new Error("Save failed"));
 
       const actions = createZenModeActions(mockEditState, {
@@ -124,16 +126,21 @@ describe("useZenModeActions", () => {
       await actions.handleDelete(mockEntity, onDeleted);
 
       expect(mockVault.deleteEntity).toHaveBeenCalledWith("e1");
-      expect(mockUiStore.notify).toHaveBeenCalledWith('"Target" deleted.', "success");
+      expect(mockUiStore.notify).toHaveBeenCalledWith(
+        '"Target" deleted.',
+        "success",
+      );
       expect(onDeleted).toHaveBeenCalled();
       expect(mockEditState.isEditing).toBe(false);
     });
 
     it("should notify error on failure", async () => {
       (global.confirm as any).mockReturnValue(true);
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       mockVault.deleteEntity.mockRejectedValueOnce(new Error("Delete failed"));
-      
+
       const actions = createZenModeActions(mockEditState, {
         uiStore: mockUiStore,
         vault: mockVault,
@@ -141,7 +148,10 @@ describe("useZenModeActions", () => {
 
       await actions.handleDelete(mockEntity, vi.fn());
 
-      expect(mockUiStore.notify).toHaveBeenCalledWith("Error: Delete failed", "error");
+      expect(mockUiStore.notify).toHaveBeenCalledWith(
+        "Error: Delete failed",
+        "error",
+      );
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

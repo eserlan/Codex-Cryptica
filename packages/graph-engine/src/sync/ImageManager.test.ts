@@ -94,7 +94,10 @@ describe("GraphImageManager", () => {
     await vi.waitFor(
       () => {
         expect(resolveImageUrl).toHaveBeenCalledTimes(2);
-        expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+        expect(mockNode.data).toHaveBeenCalledWith(
+          "resolvedImage",
+          "blob:url2",
+        );
       },
       { timeout: 1000 },
     );

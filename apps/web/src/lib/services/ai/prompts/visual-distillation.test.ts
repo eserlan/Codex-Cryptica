@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { buildEnhancePrompt, buildVisualDistillationPrompt } from "./visual-distillation";
+import {
+  buildEnhancePrompt,
+  buildVisualDistillationPrompt,
+} from "./visual-distillation";
 
 describe("visual-distillation prompts", () => {
   describe("buildEnhancePrompt", () => {

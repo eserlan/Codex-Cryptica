@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
-import { 
-  renderMarkdown, 
-  parseMarkdown, 
-  sanitizeId, 
-  stringifyEntity, 
-  deriveIdFromPath 
+import {
+  renderMarkdown,
+  parseMarkdown,
+  sanitizeId,
+  stringifyEntity,
+  deriveIdFromPath,
 } from "./markdown";
 
 describe("markdown.ts utility", () => {
@@ -21,13 +21,17 @@ describe("markdown.ts utility", () => {
     it("should highlight search queries using <mark> tags", () => {
       const text = "The quick brown fox";
       const html = renderMarkdown(text, { query: "quick" });
-      expect(html).toContain('<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">quick</mark>');
+      expect(html).toContain(
+        '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">quick</mark>',
+      );
     });
 
     it("should handle regex special characters in query highlighting", () => {
       const text = "Special characters [ ] ( ) world";
       const html = renderMarkdown(text, { query: "[ ]" });
-      expect(html).toContain('<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">[ ]</mark>');
+      expect(html).toContain(
+        '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">[ ]</mark>',
+      );
     });
 
     it("should support inline rendering mode", () => {
@@ -56,12 +60,17 @@ describe("markdown.ts utility", () => {
     });
 
     it("should handle malformed YAML gracefully", () => {
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
       const raw = "---\n: malformed: yaml\n---\n# Content";
       const result = parseMarkdown(raw);
       expect(result.metadata).toEqual({});
       expect(result.content).toBe("# Content");
-      expect(consoleSpy).toHaveBeenCalledWith("Failed to parse frontmatter", expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to parse frontmatter",
+        expect.any(Error),
+      );
       consoleSpy.mockRestore();
     });
   });
@@ -93,7 +102,7 @@ describe("markdown.ts utility", () => {
         type: "NPC",
         content: "Body",
         updatedAt: 1000,
-        connections: []
+        connections: [],
       };
       const result = stringifyEntity(entity as any);
       expect(result).toContain("---");
@@ -106,7 +115,7 @@ describe("markdown.ts utility", () => {
       const entity = {
         title: "Test",
         updatedAt: 1000,
-        content: "Body"
+        content: "Body",
       };
       const result = stringifyEntity(entity as any);
       const lines = result.split("\n");

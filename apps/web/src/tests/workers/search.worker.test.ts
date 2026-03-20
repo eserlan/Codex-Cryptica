@@ -17,6 +17,8 @@ describe("search.worker", () => {
     await import("../../lib/workers/search.worker");
 
     expect(SearchEngineMock).toHaveBeenCalled();
-    expect(exposeSearchEngineMock).toHaveBeenCalledWith(expect.any(SearchEngineMock));
+    expect(exposeSearchEngineMock).toHaveBeenCalledWith(
+      expect.any(SearchEngineMock),
+    );
   });
 });

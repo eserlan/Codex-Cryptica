@@ -43,7 +43,7 @@ describe("DefaultAIClientManager", () => {
 
   it("should create a model with correct parameters", () => {
     const model = manager.getModel("key1", "gemini-pro", "instruction");
-    
+
     // Get the mocked client instance
     const client = manager.getClient("key1");
     expect(client.getGenerativeModel).toHaveBeenCalledWith({

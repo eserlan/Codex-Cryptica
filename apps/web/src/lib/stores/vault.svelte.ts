@@ -286,13 +286,14 @@ export class VaultStore {
     } catch (err: any) {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
-      
+
       uiStore.isGuestMode = true;
       this.status = "idle";
-      this.errorMessage = err?.name === "QuotaExceededError" 
-        ? "Storage full. Running in Guest Mode (changes will not be saved)."
-        : "Storage access denied. Running in Guest Mode.";
-        
+      this.errorMessage =
+        err?.name === "QuotaExceededError"
+          ? "Storage full. Running in Guest Mode (changes will not be saved)."
+          : "Storage access denied. Running in Guest Mode.";
+
       // Ensure we have at least the welcome content by loading it via fetch
       if (Object.keys(this.entities).length === 0) {
         try {
@@ -939,7 +940,10 @@ export class VaultStore {
     );
   }
 
-  async ensureAssetPersisted(path: string, vaultHandle: FileSystemDirectoryHandle) {
+  async ensureAssetPersisted(
+    path: string,
+    vaultHandle: FileSystemDirectoryHandle,
+  ) {
     // If we are in demo mode, we need a fetcher that knows how to find the sample images
     const fetcher = uiStore.activeDemoTheme
       ? async (p: string) => {

@@ -62,12 +62,12 @@ export class ClipboardService {
         rawLore = await this.marked.parse(entity.lore);
       }
       const loreHtml = entity.lore
-        ? (browser
+        ? browser
           ? this.domPurify.sanitize(rawLore, {
               ALLOWED_URI_REGEXP:
                 /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
             })
-          : rawLore)
+          : rawLore
         : "";
 
       let imageHtml = "";
