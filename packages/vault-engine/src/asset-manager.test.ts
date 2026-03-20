@@ -289,7 +289,13 @@ describe("AssetManager", () => {
 
     it("should migrate from fileFetcher source", async () => {
       mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Missing"));
-      const fetcher = vi.fn().mockResolvedValue(new Blob(["guest-data"]));
+      const blob = new Blob(["guest-data"]);
+      const fetcher = vi.fn().mockResolvedValue(blob);
+      
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        blob: () => Promise.resolve(blob),
+      });
       
       await assetManager.ensureAssetPersisted("images/guest.png", { name: "v1" } as any, fetcher);
       expect(fetcher).toHaveBeenCalledWith("images/guest.png");
