@@ -94,7 +94,7 @@ export class AssetManager {
     const existing = this.urlCache.get(cleanPath);
     if (existing) {
       existing.refs++;
-      return existing.url;
+      return Promise.resolve(existing.url);
     }
 
     // Start resolution and track it
@@ -104,7 +104,20 @@ export class AssetManager {
 
         // 2. External URL caching
         if (/^https?:\/\//i.test(cleanPath)) {
-          if (!vaultHandle) return cleanPath;
+          // If no vault handle, we can't persistent-cache it, but we should still
+          // try to resolve to a blob URL to satisfy CORS requirements for canvas.
+          if (!vaultHandle) {
+            try {
+              const response = await fetch(cleanPath, { mode: "cors" });
+              if (!response.ok) return cleanPath;
+              const blob = await response.blob();
+              url = URL.createObjectURL(blob);
+              this.urlCache.set(cleanPath, { url, refs: 1 });
+              return url;
+            } catch {
+              return cleanPath;
+            }
+          }
 
           try {
             const cacheDir = await this.ioAdapter.getDirectoryHandle(
