@@ -37,6 +37,7 @@ vi.mock("comlink", () => {
     expose: vi.fn(),
     transfer: vi.fn((obj) => obj),
     proxy: vi.fn((fn) => fn),
+    releaseProxy: Symbol("comlink.releaseProxy"),
   };
 });
 
@@ -354,5 +355,148 @@ describe("SearchService", () => {
     expect(terminateSpy).toHaveBeenCalled();
     expect((service as any).api).toBeNull();
     expect((service as any).worker).toBeNull();
+  });
+
+  describe("AutoSave and VisibilityChange", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should debounce auto-save", async () => {
+      const saveIndexSpy = vi
+        .spyOn(service, "saveIndex")
+        .mockResolvedValue(undefined);
+      (service as any).activeVaultId = "v1";
+      (service as any).isDirty = true;
+
+      // Trigger change callback (simulated via API proxy)
+      const changeCallback = (mockApi.setChangeCallback as any).mock.calls[0][0];
+      changeCallback();
+
+      // Should NOT have called saveIndex immediately
+      expect(saveIndexSpy).not.toHaveBeenCalled();
+
+      // Fast-forward time
+      vi.advanceTimersByTime(2000);
+
+      expect(saveIndexSpy).toHaveBeenCalledWith("v1");
+    });
+
+    it("should trigger emergency save on visibilitychange hidden", async () => {
+      const saveIndexSpy = vi
+        .spyOn(service, "saveIndex")
+        .mockResolvedValue(undefined);
+      (service as any).activeVaultId = "v1";
+      (service as any).isDirty = true;
+
+      // Mock visibilityState
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "hidden",
+      });
+
+      window.dispatchEvent(new Event("visibilitychange"));
+
+      expect(saveIndexSpy).toHaveBeenCalledWith("v1");
+    });
+
+    it("should skip emergency save if NOT dirty", async () => {
+      const saveIndexSpy = vi
+        .spyOn(service, "saveIndex")
+        .mockResolvedValue(undefined);
+      (service as any).activeVaultId = "v1";
+      (service as any).isDirty = false;
+
+      Object.defineProperty(document, "visibilityState", {
+        configurable: true,
+        get: () => "hidden",
+      });
+
+      window.dispatchEvent(new Event("visibilitychange"));
+
+      expect(saveIndexSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Mapping and Error Handling", () => {
+    it("should map entity to search entry correctly", () => {
+      const entity = {
+        id: "e1",
+        title: "Title",
+        content: "Content",
+        type: "note",
+        _path: ["folder", "sub"],
+        tags: ["t1", "t2"],
+        lore: "Some lore",
+        metadata: {
+          key: ["val1", "val2"],
+        },
+      };
+
+      const entry = (service as any).mapToSearchEntry(entity);
+
+      expect(entry.id).toBe("e1");
+      expect(entry.path).toBe("folder/sub");
+      expect(entry.keywords).toContain("t1 t2");
+      expect(entry.keywords).toContain("Some lore");
+      expect(entry.keywords).toContain("val1 val2");
+    });
+
+    it("should handle error in loadIndex", async () => {
+      const { entityDb } = await import("$lib/utils/entity-db");
+      vi.spyOn(entityDb.searchIndex, "get").mockRejectedValue(
+        new Error("DB Error"),
+      );
+      (service as any).isInitialized = true;
+
+      const result = await service.loadIndex("v1");
+      expect(result).toBe(false);
+      expect(debugStore.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to load index"),
+        expect.any(Error),
+      );
+    });
+
+    it("should handle error in saveIndex", async () => {
+      mockApi.exportIndex.mockRejectedValue(new Error("Export Error"));
+
+      await service.saveIndex("v1");
+
+      expect(debugStore.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to save index"),
+        expect.any(Error),
+      );
+    });
+
+    it("should handle error in indexContentInBackground", async () => {
+      const { entityDb } = await import("$lib/utils/entity-db");
+      vi.spyOn(entityDb.entityContent, "where").mockImplementation(() => {
+        throw new Error("Query Error");
+      });
+
+      (service as any).api = mockApi;
+      (service as any).activeVaultId = "v1";
+
+      await (service as any).indexContentInBackground("v1");
+
+      expect(debugStore.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Background content sync failed"),
+        expect.any(Error),
+      );
+    });
+
+    it("should catch errors in index queue", async () => {
+      mockApi.add.mockRejectedValueOnce(new Error("Queue Error"));
+      await service.index({ id: "1" } as any);
+      expect(debugStore.warn).toHaveBeenCalledWith("Index error", expect.any(Error));
+
+      mockApi.remove.mockRejectedValueOnce(new Error("Remove Error"));
+      await service.remove("1");
+      expect(debugStore.warn).toHaveBeenCalledWith("Index remove error", expect.any(Error));
+    });
   });
 });
