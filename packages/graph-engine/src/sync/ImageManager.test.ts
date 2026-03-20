@@ -91,10 +91,12 @@ describe("GraphImageManager", () => {
 
     manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
 
-    await vi.waitFor(() => expect(resolveImageUrl).toHaveBeenCalledTimes(2), {
-      timeout: 1000,
-    });
-
-    expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+    await vi.waitFor(
+      () => {
+        expect(resolveImageUrl).toHaveBeenCalledTimes(2);
+        expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+      },
+      { timeout: 1000 },
+    );
   });
 });
