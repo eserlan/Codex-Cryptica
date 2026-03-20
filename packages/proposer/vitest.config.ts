@@ -32,8 +32,6 @@ export default defineConfig({
         "**/*.spec.ts",
         "**/*.config.ts",
         ".svelte-kit/**",
-        "src/index.ts",
-        "src/service.ts",
         "**/*.md",
       ],
     },

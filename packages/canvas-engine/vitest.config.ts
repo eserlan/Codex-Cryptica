@@ -13,7 +13,7 @@ export default defineConfig({
     __HMR_TIMEOUT__: "30000",
     __HMR_ENABLE_OVERLAY__: "false",
   },
-  plugins: [svelte({ hot: !process.env.VITEST })],
+  plugins: [svelte()],
   test: {
     environment: "jsdom",
     globals: true,
@@ -34,8 +34,6 @@ export default defineConfig({
         "**/*.spec.ts",
         "**/*.config.ts",
         ".svelte-kit/**",
-        "src/index.ts",
-        "src/store.svelte.ts",
         "**/*.md",
       ],
     },

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ProposerService } from "../src/service";
 import "fake-indexeddb/auto";
 import { openDB } from "idb";
@@ -164,5 +165,152 @@ describe("ProposerService", () => {
     const pending = await service.getProposals("source1");
     expect(pending).toHaveLength(1);
     expect(pending[0].status).toBe("pending");
+  });
+
+  it("should truncate content intelligently", async () => {
+    const longContent = "A".repeat(15000) + ". More content.";
+    const proposals = await service.analyzeEntity(
+      "fake-key",
+      "gemini-1.5-flash",
+      "source1",
+      longContent,
+      [{ id: "target1", name: "Target One" }],
+    );
+    expect(proposals).toBeDefined();
+  });
+
+  it("should perform robust ID matching for AI hallucinations", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify([
+            {
+              targetId: "target-one",
+              confidence: 0.9,
+              type: "related",
+              reason: "test",
+            },
+          ]),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const proposals = await service.analyzeEntity(
+      "fake-key",
+      "gemini-1.5-flash",
+      "source1",
+      "content",
+      [{ id: "target1", name: "Target One" }],
+    );
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].targetId).toBe("target1");
+  });
+
+  it("should generate connection proposal", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            type: "friendly",
+            label: "Allies",
+            explanation: "They worked together.",
+          }),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const proposal = await service.generateConnectionProposal(
+      "key",
+      "model",
+      "source content",
+      "target content",
+      "Source",
+      "Target",
+    );
+    expect(proposal.type).toBe("friendly");
+    expect(proposal.label).toBe("Allies");
+  });
+
+  it("should return fallback for failed connection proposal JSON", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () => "Invalid JSON",
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const proposal = await service.generateConnectionProposal(
+      "key",
+      "model",
+      "source",
+      "target",
+      "S",
+      "T",
+    );
+    expect(proposal.type).toBe("related_to");
+    expect(proposal.label).toBe("Related");
+  });
+
+  it("should parse connection intent", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            sourceName: "Source",
+            targetName: "Target",
+            type: "enemy",
+            label: "Rivals",
+          }),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const intent = await service.parseConnectionIntent("key", "model", "Source is rival of Target");
+    expect(intent.sourceName).toBe("Source");
+    expect(intent.targetName).toBe("Target");
+    expect(intent.type).toBe("enemy");
+  });
+
+  it("should handle failures in parseConnectionIntent gracefully", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () => "Garbage",
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const intent = await service.parseConnectionIntent("key", "model", "input");
+    expect(intent.sourceName).toBe("");
+    expect(intent.targetName).toBe("");
+  });
+
+  it("should parse merge intent", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            sourceName: "A",
+            targetName: "B",
+          }),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const intent = await service.parseMergeIntent("key", "model", "Merge A into B");
+    expect(intent.sourceName).toBe("A");
+    expect(intent.targetName).toBe("B");
+  });
+
+  it("should handle failures in parseMergeIntent gracefully", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () => "Garbage",
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi.fn().mockReturnValue(mockModel);
+    const intent = await service.parseMergeIntent("key", "model", "input");
+    expect(intent.sourceName).toBe("");
+    expect(intent.targetName).toBe("");
   });
 });
