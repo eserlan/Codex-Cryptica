@@ -13,6 +13,7 @@ describe("GraphImageManager", () => {
     mockNode = {
       id: vi.fn().mockReturnValue("node1"),
       data: vi.fn(),
+      removeData: vi.fn(),
     };
     mockCy = {
       destroyed: vi.fn().mockReturnValue(false),
