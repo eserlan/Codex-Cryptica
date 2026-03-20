@@ -4,9 +4,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 vi.mock("@google/generative-ai", () => {
   return {
-    GoogleGenerativeAI: vi.fn().mockImplementation(() => ({
-      getGenerativeModel: vi.fn().mockReturnValue({}),
-    })),
+    GoogleGenerativeAI: vi.fn().mockImplementation(function () {
+      return {
+        getGenerativeModel: vi.fn().mockReturnValue({}),
+      };
+    }),
   };
 });
 
