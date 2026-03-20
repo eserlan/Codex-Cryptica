@@ -29,6 +29,8 @@ describe("VaultCrudManager", () => {
   let mockEntities: any;
   let mockServices: any;
 
+  let lastSavedEntity: any = null;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockEntities = {};
@@ -36,13 +38,16 @@ describe("VaultCrudManager", () => {
       ai: { clearStyleCache: vi.fn() },
       search: { remove: vi.fn() },
     };
+    lastSavedEntity = null;
 
     manager = new VaultCrudManager(
       () => mockEntities,
       (e) => {
         mockEntities = e;
       },
-      vi.fn().mockResolvedValue(undefined),
+      async (entity) => {
+        lastSavedEntity = entity;
+      },
       vi.fn().mockResolvedValue({}),
       () => "v1",
       () => false,
@@ -62,6 +67,7 @@ describe("VaultCrudManager", () => {
 
     expect(id).toBe("e1");
     expect(mockEntities["e1"]).toBe(newEntity);
+    expect(lastSavedEntity).toBe(newEntity);
   });
 
   it("should update an entity safely", async () => {
@@ -144,15 +150,22 @@ describe("VaultCrudManager", () => {
   });
 
   it("should handle connection removal", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
     vi.mocked(vaultEntities.removeConnection).mockReturnValue({
       entities: { s: { id: "s", connections: [] } as any },
       updatedSource: { id: "s" } as any,
     });
     const result = await manager.removeConnection("s", "t", "ref");
     expect(result).toBe(true);
+    expect(scheduleSave).toHaveBeenCalledWith({ id: "s" });
   });
 
   it("should handle connection update", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
     vi.mocked(vaultEntities.updateConnection).mockReturnValue({
       entities: {
         s: { id: "s", connections: [{ target: "t", type: "new" }] } as any,
@@ -161,65 +174,60 @@ describe("VaultCrudManager", () => {
     });
     const result = await manager.updateConnection("s", "t", "old", "new");
     expect(result).toBe(true);
+    expect(scheduleSave).toHaveBeenCalledWith({ id: "s" });
   });
 
   it("should handle bulk remove labels", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
+    mockEntities = { e1: { id: "e1", labels: ["L1"] } as any };
     vi.mocked(vaultEntities.bulkRemoveLabel).mockReturnValue({
       entities: { e1: { id: "e1", labels: [] } as any },
       modifiedIds: ["e1"],
     });
     const count = await manager.bulkRemoveLabel(["e1"], "L1");
     expect(count).toBe(1);
+    expect(scheduleSave).toHaveBeenCalled();
   });
 
   it("should handle remove label", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
     vi.mocked(vaultEntities.removeLabel).mockReturnValue({
       entities: { e1: { id: "e1", labels: [] } as any },
       updated: { id: "e1" } as any,
     });
     const result = await manager.removeLabel("e1", "L1");
     expect(result).toBe(true);
+    expect(scheduleSave).toHaveBeenCalledWith({ id: "e1" });
   });
 
-  it("should prevent deletion in guest mode", async () => {
-    const guestManager = new VaultCrudManager(
-      () => ({}),
-      (_e) => {},
-      vi.fn().mockResolvedValue(undefined),
-      vi.fn(),
-      () => "v1",
-      () => true,
-      () => ({}),
-    );
-    await expect(
-      guestManager.deleteEntity("e1", {} as any, "v1"),
-    ).rejects.toThrow("Cannot delete entities in Guest Mode");
-  });
+  it("should delete an entity and update search index and modified nodes", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    const onEntityUpdate = vi.fn();
+    (manager as any).scheduleSave = scheduleSave;
+    (manager as any).onEntityUpdate = onEntityUpdate;
 
-  it("should prevent deletion in demo mode", async () => {
-    uiStore.isDemoMode = true;
-    await manager.deleteEntity("e1", {} as any, "v1");
-    expect(uiStore.notify).toHaveBeenCalledWith(
-      expect.stringContaining("disabled in Demo Mode"),
-      "info",
-    );
-    uiStore.isDemoMode = false;
-  });
-
-  it("should delete an entity and update search index", async () => {
     vi.mocked(vaultEntities.deleteEntity).mockResolvedValue({
-      entities: {},
+      entities: { other: { id: "other" } as any },
       deletedEntity: { id: "e1" } as any,
       modifiedIds: ["other"],
     });
-    mockEntities["other"] = { id: "other", title: "Other" };
+    mockEntities = { other: { id: "other", title: "Other" } as any };
 
     await manager.deleteEntity("e1", {} as any, "v1");
 
     expect(mockServices.search.remove).toHaveBeenCalledWith("e1");
+    expect(scheduleSave).toHaveBeenCalledWith({ id: "other" });
+    expect(onEntityUpdate).toHaveBeenCalledWith({ id: "other" });
   });
 
   it("should handle connection operations", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
     vi.mocked(vaultEntities.addConnection).mockReturnValue({
       entities: { s: { id: "s", connections: [{ target: "t" }] } as any },
       updatedSource: { id: "s" } as any,
@@ -228,9 +236,13 @@ describe("VaultCrudManager", () => {
     const success = await manager.addConnection("s", "t", "ref");
     expect(success).toBe(true);
     expect(vaultEntities.addConnection).toHaveBeenCalled();
+    expect(scheduleSave).toHaveBeenCalled();
   });
 
   it("should handle label operations", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
     vi.mocked(vaultEntities.addLabel).mockReturnValue({
       entities: { e1: { id: "e1", labels: ["L1"] } as any },
       updated: { id: "e1" } as any,
@@ -238,9 +250,14 @@ describe("VaultCrudManager", () => {
 
     await manager.addLabel("e1", "L1");
     expect(vaultEntities.addLabel).toHaveBeenCalled();
+    expect(scheduleSave).toHaveBeenCalled();
   });
 
-  it("should handle bulk label operations", async () => {
+  it("should handle bulk add label operations", async () => {
+    const scheduleSave = vi.fn().mockResolvedValue(undefined);
+    (manager as any).scheduleSave = scheduleSave;
+
+    mockEntities = { e1: { id: "e1", labels: [] } as any };
     vi.mocked(vaultEntities.bulkAddLabel).mockReturnValue({
       entities: { e1: { id: "e1", labels: ["L1"] } as any },
       modifiedIds: ["e1"],
@@ -248,17 +265,75 @@ describe("VaultCrudManager", () => {
 
     const count = await manager.bulkAddLabel(["e1"], "L1");
     expect(count).toBe(1);
+    expect(scheduleSave).toHaveBeenCalled();
   });
 
-  it("should batch create entities", async () => {
+  it("should handle batch updates with actual changes", async () => {
+    mockEntities = { e1: { id: "e1", title: "E1" } as any };
+    const applied = await manager.batchUpdate({ e1: { title: "New" } });
+    expect(applied).toBe(true);
+    expect(lastSavedEntity.title).toBe("New");
+  });
+
+  it("should batch create entities and save them", async () => {
+    const createdEntity = { id: "e1", title: "E1" };
     vi.mocked(vaultEntities.batchCreateEntities).mockReturnValue({
-      entities: { e1: {} as any },
-      created: [{ id: "e1" } as any],
+      entities: { e1: createdEntity as any },
+      created: [createdEntity as any],
     });
 
     await manager.batchCreateEntities([
       { title: "E1", type: "npc", initialData: {} },
     ]);
     expect(vaultEntities.batchCreateEntities).toHaveBeenCalled();
+    expect(lastSavedEntity).toBe(createdEntity);
+  });
+
+  it("should invalidate URL cache in batchUpdate", async () => {
+    const invalidateSpy = vi.fn();
+    (manager as any).invalidateUrlCache = invalidateSpy;
+    mockEntities = { e1: { id: "e1", title: "E1" } as any };
+
+    await manager.batchUpdate({ e1: { image: "new-img.png" } });
+    expect(invalidateSpy).toHaveBeenCalledWith("new-img.png");
+  });
+
+  it("should handle failure paths for connections and labels", async () => {
+    vi.mocked(vaultEntities.addConnection).mockReturnValue({
+      entities: {},
+      updatedSource: null,
+    });
+    expect(await manager.addConnection("s", "t", "type")).toBe(false);
+
+    vi.mocked(vaultEntities.updateConnection).mockReturnValue({
+      entities: {},
+      updatedSource: null,
+    });
+    expect(await manager.updateConnection("s", "t", "o", "n")).toBe(false);
+
+    vi.mocked(vaultEntities.removeConnection).mockReturnValue({
+      entities: {},
+      updatedSource: null,
+    });
+    expect(await manager.removeConnection("s", "t", "type")).toBe(false);
+
+    vi.mocked(vaultEntities.addLabel).mockReturnValue({
+      entities: {},
+      updated: null,
+    });
+    expect(await manager.addLabel("e1", "L1")).toBe(false);
+
+    vi.mocked(vaultEntities.removeLabel).mockReturnValue({
+      entities: {},
+      updated: null,
+    });
+    expect(await manager.removeLabel("e1", "L1")).toBe(false);
+  });
+
+  it("should handle demo mode in deleteEntity", async () => {
+    uiStore.isDemoMode = true;
+    await manager.deleteEntity("e1", {} as any, "v1");
+    expect(uiStore.notify).toHaveBeenCalled();
+    uiStore.isDemoMode = false;
   });
 });

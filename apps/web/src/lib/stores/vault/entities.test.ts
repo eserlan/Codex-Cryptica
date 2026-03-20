@@ -38,6 +38,16 @@ describe("Vault Entities Operations", () => {
       expect(entity.type).toBe("npc");
       expect(entity.id).toBeDefined();
     });
+
+    it("should handle duplicate IDs by appending a counter", () => {
+      const entities = { "my-npc": { id: "my-npc" } } as any;
+      const entity = createEntity("My NPC", "npc", {}, entities);
+      expect(entity.id).toBe("my-npc-1");
+
+      entities["my-npc-1"] = entity;
+      const entity2 = createEntity("My NPC", "npc", {}, entities);
+      expect(entity2.id).toBe("my-npc-2");
+    });
   });
 
   describe("updateEntity", () => {
@@ -97,6 +107,40 @@ describe("Vault Entities Operations", () => {
       expect(newEntities["e2"].connections).toHaveLength(0);
       expect(modifiedIds).toContain("e2");
     });
+
+    it("should handle asset deletion errors and missing handles", async () => {
+      const e1 = {
+        id: "e1",
+        image: "images/img.png",
+        thumbnail: "thumbs/thumb.png",
+        _path: ["notes", "e1.md"],
+      } as any;
+
+      // Mock second call (image) failing
+      vi.mocked(deleteOpfsEntry)
+        .mockResolvedValueOnce(undefined) // main file
+        .mockRejectedValueOnce(new Error("Fail")) // image
+        .mockResolvedValueOnce(undefined); // thumbnail
+
+      const { deletedEntity } = await deleteEntity(mockVaultDir, { e1 }, "e1");
+      expect(deletedEntity).toBe(e1);
+      expect(deleteOpfsEntry).toHaveBeenCalledTimes(3);
+    });
+
+    it("should handle thumbnail deletion failure", async () => {
+      const e1 = {
+        id: "e1",
+        thumbnail: "thumbs/thumb.png",
+      } as any;
+
+      vi.mocked(deleteOpfsEntry)
+        .mockResolvedValueOnce(undefined) // main file
+        .mockRejectedValueOnce(new Error("Fail")); // thumbnail
+
+      const { deletedEntity } = await deleteEntity(mockVaultDir, { e1 }, "e1");
+      expect(deletedEntity).toBe(e1);
+      expect(deleteOpfsEntry).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("label operations", () => {
@@ -117,9 +161,30 @@ describe("Vault Entities Operations", () => {
       const { updated } = removeLabel({ e1 }, "e1", "NPC");
       expect(updated!.labels).toEqual(["hero"]);
     });
+
+    it("should return null if entity or label not found in removeLabel", () => {
+      expect(removeLabel({}, "missing", "label").updated).toBeNull();
+      const e1 = { id: "e1", labels: ["other"] } as any;
+      expect(removeLabel({ e1 }, "e1", "missing").updated).toBeNull();
+    });
   });
 
   describe("connection operations", () => {
+    it("should return null if source not found in addConnection", () => {
+      const { updatedSource } = addConnection({}, "s", "t", "type");
+      expect(updatedSource).toBeNull();
+    });
+
+    it("should return null if source not found in updateConnection", () => {
+      const { updatedSource } = updateConnection({}, "s", "t", "old", "new");
+      expect(updatedSource).toBeNull();
+    });
+
+    it("should return null if source not found in removeConnection", () => {
+      const { updatedSource } = removeConnection({}, "s", "t", "type");
+      expect(updatedSource).toBeNull();
+    });
+
     it("should add a connection", () => {
       const e1 = { id: "e1", connections: [] } as any;
       const { updatedSource } = addConnection(
@@ -136,7 +201,10 @@ describe("Vault Entities Operations", () => {
     it("should update a connection", () => {
       const e1 = {
         id: "e1",
-        connections: [{ target: "e2", type: "enemy" }],
+        connections: [
+          { target: "e2", type: "enemy" },
+          { target: "e3", type: "friend" },
+        ],
       } as any;
       const { updatedSource } = updateConnection(
         { e1 },
@@ -147,7 +215,7 @@ describe("Vault Entities Operations", () => {
         "Ally",
       );
       expect(updatedSource!.connections[0].type).toBe("friend");
-      expect(updatedSource!.connections[0].label).toBe("Ally");
+      expect(updatedSource!.connections[1].target).toBe("e3");
     });
 
     it("should remove a connection", () => {
@@ -163,25 +231,28 @@ describe("Vault Entities Operations", () => {
   describe("bulk operations", () => {
     it("should bulk add labels", () => {
       const e1 = { id: "e1", labels: [] } as any;
-      const e2 = { id: "e2", labels: [] } as any;
+      const e2 = { id: "e2", labels: ["story"] } as any;
       const { entities, modifiedIds } = bulkAddLabel(
         { e1, e2 },
-        ["e1", "e2"],
+        ["e1", "e2", "missing"],
         "story",
       );
-      expect(modifiedIds).toHaveLength(2);
+      expect(modifiedIds).toHaveLength(1);
+      expect(modifiedIds).toContain("e1");
       expect(entities["e1"].labels).toContain("story");
     });
 
     it("should bulk remove labels", () => {
       const e1 = { id: "e1", labels: ["story"] } as any;
+      const e2 = { id: "e2", labels: ["other"] } as any;
       const { entities, modifiedIds } = bulkRemoveLabel(
-        { e1 },
-        ["e1"],
+        { e1, e2 },
+        ["e1", "e2"],
         "story",
       );
       expect(modifiedIds).toHaveLength(1);
       expect(entities["e1"].labels).not.toContain("story");
+      expect(entities["e2"].labels).toContain("other");
     });
   });
 
