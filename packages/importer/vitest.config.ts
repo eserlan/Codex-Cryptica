@@ -33,6 +33,7 @@ export default defineConfig({
         "**/*.config.ts",
         ".svelte-kit/**",
         "src/index.ts",
+        "**/*.md",
       ],
     },
   },

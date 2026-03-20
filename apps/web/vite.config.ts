@@ -70,6 +70,7 @@ export default defineConfig({
         ".svelte-kit/**",
         "build/**",
         "dist/**",
+        "**/*.md",
       ],
     },
   },

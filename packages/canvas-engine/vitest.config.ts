@@ -36,6 +36,7 @@ export default defineConfig({
         ".svelte-kit/**",
         "src/index.ts",
         "src/store.svelte.ts",
+        "**/*.md",
       ],
     },
   },

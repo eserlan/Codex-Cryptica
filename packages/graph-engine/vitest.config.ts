@@ -37,6 +37,7 @@ export default defineConfig({
         "src/events/useGraphEvents.ts",
         "src/renderer/overlays.ts",
         "src/sync/useGraphSync.ts",
+        "**/*.md",
       ],
     },
   },
