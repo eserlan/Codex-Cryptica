@@ -1,7 +1,8 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
   import { marked } from "marked";
-  import DOMPurify from "isomorphic-dompurify";
+  import DOMPurify from "dompurify";
+  import { browser } from "$app/environment";
   import type { Entity } from "schema";
 
   let { hoveredEntity, hoverPosition } = $props<{
@@ -11,7 +12,9 @@
 
   let tooltipContent = $derived(
     hoveredEntity?.content
-      ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
+      ? browser
+        ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string)
+        : (marked.parse(hoveredEntity.content) as string)
       : '<span class="italic text-theme-muted">No data available</span>',
   );
 </script>

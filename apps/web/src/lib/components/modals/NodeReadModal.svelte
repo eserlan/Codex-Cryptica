@@ -2,7 +2,8 @@
   import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { parserService } from "$lib/services/parser";
-  import DOMPurify from "isomorphic-dompurify";
+  import DOMPurify from "dompurify";
+  import { browser } from "$app/environment";
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
 
@@ -54,7 +55,7 @@
     renderTimeout = setTimeout(async () => {
       try {
         const html = await parserService.parse(content);
-        const sanitized = DOMPurify.sanitize(html);
+        const sanitized = browser ? DOMPurify.sanitize(html) : html;
         renderCache.set(cacheKey, sanitized);
 
         // Only update if the entity/content is still the same
@@ -224,7 +225,7 @@
               </h4>
               <div class="prose prose-invert prose-sm max-w-none text-gray-300">
                 {#await parserService.parse(entity.lore) then html}
-                  {@html DOMPurify.sanitize(html)}
+                  {@html browser ? DOMPurify.sanitize(html) : html}
                 {/await}
               </div>
             </div>
