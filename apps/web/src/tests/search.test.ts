@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const { MockWorker, mockApi, releaseProxySymbol } = vi.hoisted(() => {
-  const releaseProxySymbol = Symbol("comlink.releaseProxy");
+  const releaseProxySymbol = Symbol.for("comlink.releaseProxy");
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
@@ -39,7 +39,7 @@ vi.mock("comlink", () => {
     expose: vi.fn(),
     transfer: vi.fn((obj) => obj),
     proxy: vi.fn((fn) => fn),
-    releaseProxy: releaseProxySymbol,
+    releaseProxy: Symbol.for("comlink.releaseProxy"),
   };
 });
 
