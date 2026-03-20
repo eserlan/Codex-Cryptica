@@ -86,6 +86,7 @@ describe("VaultLifecycleManager", () => {
       vi.fn(),
       vaultRegistry as any,
       themeStore as any,
+      vi.fn().mockResolvedValue(undefined),
     );
   });
 
@@ -151,6 +152,7 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        vi.fn().mockResolvedValue(undefined),
       );
 
       await manager.loadDemoData("Demo", entities as any);
@@ -252,6 +254,7 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        vi.fn().mockResolvedValue(undefined),
       );
 
       await manager.persistToIndexedDB("v1");
@@ -279,6 +282,7 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        vi.fn().mockResolvedValue(undefined),
       );
 
       await expect(manager.persistToIndexedDB("v1")).rejects.toThrow(

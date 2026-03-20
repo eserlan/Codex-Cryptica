@@ -287,7 +287,7 @@ export class VaultStore {
       debugStore.error("[VaultStore] Init failed", err);
       console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
       
-      this.isGuest = true;
+      uiStore.isGuestMode = true;
       this.status = "idle";
       this.errorMessage = err?.name === "QuotaExceededError" 
         ? "Storage full. Running in Guest Mode (changes will not be saved)."
@@ -306,7 +306,7 @@ export class VaultStore {
     } finally {
       this.isInitialized = true;
       await this.checkForConflicts();
-      if (this.status !== "error") {
+      if ((this.status as string) !== "error") {
         this.status = "idle";
         if (this.activeVaultId) {
           window.dispatchEvent(
