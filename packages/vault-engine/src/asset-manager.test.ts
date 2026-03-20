@@ -165,9 +165,20 @@ describe("AssetManager", () => {
     });
 
     describe("external URLs", () => {
-      it("should return original URL if no vaultHandle", async () => {
-        const result = await assetManager.resolveImageUrl(undefined, "https://example.com/img.png");
-        expect(result).toBe("https://example.com/img.png");
+      it("should return blob URL if no vaultHandle and fetch succeeds (Demo Mode)", async () => {
+        (global.fetch as any).mockResolvedValueOnce({
+          ok: true,
+          blob: () => Promise.resolve(new Blob(["remote-demo"])),
+        });
+        const result = await assetManager.resolveImageUrl(undefined, "https://example.com/demo.png");
+        expect(global.fetch).toHaveBeenCalled();
+        expect(result).toBe("blob:mock-url");
+      });
+
+      it("should return original URL if no vaultHandle and fetch fails (Demo Mode)", async () => {
+        (global.fetch as any).mockResolvedValueOnce({ ok: false });
+        const result = await assetManager.resolveImageUrl(undefined, "https://example.com/fail.png");
+        expect(result).toBe("https://example.com/fail.png");
       });
 
       it("should fetch and cache external https URLs", async () => {
