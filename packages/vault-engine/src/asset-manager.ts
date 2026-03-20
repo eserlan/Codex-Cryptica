@@ -185,14 +185,10 @@ export class AssetManager {
 
             // Try fallback storage (Local FS)
             if (!blob && fallbackHandle) {
-              try {
-                blob = await this.ioAdapter.readOpfsBlob(
-                  segments,
-                  fallbackHandle,
-                );
-              } catch (err) {
-                throw err;
-              }
+              blob = await this.ioAdapter.readOpfsBlob(
+                segments,
+                fallbackHandle,
+              );
             }
 
             if (blob) {
@@ -274,7 +270,7 @@ export class AssetManager {
       return;
     } catch {
       // 2. Not in OPFS, resolve it to get a Blob (or at least a source path)
-      let source = await this.resolveImageUrl(
+      const source = await this.resolveImageUrl(
         undefined,
         cleanPath,
         fileFetcher,
