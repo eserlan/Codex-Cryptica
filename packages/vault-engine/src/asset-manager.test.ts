@@ -197,6 +197,7 @@ describe("AssetManager", () => {
       });
 
       it("should return original URL if external fetch fails", async () => {
+        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
         (global.fetch as any).mockResolvedValue({ ok: false });
         const result = await assetManager.resolveImageUrl({ name: "v1" } as any, "https://example.com/fail.png");
         expect(result).toBe("https://example.com/fail.png");
