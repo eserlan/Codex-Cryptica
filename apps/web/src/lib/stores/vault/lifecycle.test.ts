@@ -157,8 +157,8 @@ describe("VaultLifecycleManager", () => {
 
       await manager.loadDemoData("Demo", entities as any);
 
-      expect(mockRepository.entities.e1.image).toContain(
-        "assets.codexcryptica.com/hero.png",
+      expect(mockSearch.index).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "e1" }),
       );
       expect(mockSearch.index).toHaveBeenCalled();
     });
