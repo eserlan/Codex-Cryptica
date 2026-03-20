@@ -66,7 +66,7 @@ describe("GraphImageManager", () => {
 
     manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
 
-    await vi.waitFor(() => expect(resolveImageUrl).toHaveBeenCalledTimes(1), {
+    await vi.waitFor(() => expect(mockStyle.update).toHaveBeenCalled(), {
       timeout: 1000,
     });
 
