@@ -13,6 +13,7 @@ describe("GraphImageManager", () => {
     mockNode = {
       id: vi.fn().mockReturnValue("node1"),
       data: vi.fn(),
+      removeData: vi.fn(),
     };
     mockCy = {
       destroyed: vi.fn().mockReturnValue(false),
@@ -49,5 +50,53 @@ describe("GraphImageManager", () => {
     );
 
     expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url");
+  });
+
+  it("should clear the local urlCache when clearImages is called", async () => {
+    const manager = new GraphImageManager(mockCy);
+    const resolveImageUrl = vi.fn().mockResolvedValue("blob:url1");
+    const releaseImageUrl = vi.fn();
+
+    // 1st Sync
+    mockNode.data.mockImplementation((key: string) => {
+      if (key === "image") return "path/to/image.png";
+      if (key === "resolvedImage") return null;
+      return null;
+    });
+
+    manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
+
+    await vi.waitFor(() => expect(mockStyle.update).toHaveBeenCalled(), {
+      timeout: 1000,
+    });
+
+    // Setup node for being "resolved" for the clear step
+    mockNode.data.mockImplementation((key: string) => {
+      if (key === "image") return "path/to/image.png";
+      if (key === "resolvedImage") return "blob:url1";
+      return null;
+    });
+
+    // Clear Images
+    manager.sync({ showImages: false, resolveImageUrl, releaseImageUrl });
+    expect(releaseImageUrl).toHaveBeenCalledWith("path/to/image.png");
+
+    // 2nd Sync - should call resolveImageUrl again because cache was cleared
+    resolveImageUrl.mockResolvedValue("blob:url2");
+    mockNode.data.mockImplementation((key: string) => {
+      if (key === "image") return "path/to/image.png";
+      if (key === "resolvedImage") return null;
+      return null;
+    });
+
+    manager.sync({ showImages: true, resolveImageUrl, releaseImageUrl });
+
+    await vi.waitFor(
+      () => {
+        expect(resolveImageUrl).toHaveBeenCalledTimes(2);
+        expect(mockNode.data).toHaveBeenCalledWith("resolvedImage", "blob:url2");
+      },
+      { timeout: 1000 },
+    );
   });
 });

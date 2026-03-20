@@ -50,23 +50,61 @@ vi.mock("graph-engine", () => ({
   },
 }));
 
-import { graph } from "./graph.svelte";
+// Mock schema
+vi.mock("schema", () => ({
+  isEntityVisible: vi.fn().mockReturnValue(true),
+}));
+
+import { graph, GraphStore } from "./graph.svelte";
+import { vault } from "./vault.svelte";
+import { ui } from "./ui.svelte";
+import { GraphTransformer } from "graph-engine";
+import { isEntityVisible } from "schema";
 
 describe("GraphStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (isEntityVisible as any).mockReturnValue(true);
     // Reset graph state
     graph.showLabels = true;
     graph.showImages = true;
     graph.stableLayout = true;
     graph.timelineMode = false;
     graph.orbitMode = false;
+    graph.activeLabels = new Set();
+    graph.activeCategories = new Set();
+    graph.recentLabels = [];
+    graph.eras = [];
+    graph.centralNodeId = null;
+    graph.labelFilterMode = "OR"; // Reset this explicitly
+
+    // Reset mocks
+    (vault as any).allEntities = [];
+    (vault as any).isGuest = false;
+    (ui as any).sharedMode = false;
   });
 
   it("should initialize with default values", () => {
     expect(graph.showLabels).toBe(true);
     expect(graph.showImages).toBe(true);
     expect(graph.stableLayout).toBe(true);
+    expect(graph.timelineMode).toBe(false);
+    expect(graph.orbitMode).toBe(false);
+    expect(graph.labelFilterMode).toBe("OR");
+  });
+
+  it("should calculate elements and stats based on vault entities", () => {
+    const mockEntities = [{ id: "1", type: "node" } as any];
+    (vault as any).allEntities = mockEntities;
+
+    const mockElements = [
+      { id: "1", group: "nodes" },
+      { id: "e1", group: "edges" },
+    ];
+    (GraphTransformer.entitiesToElements as any).mockReturnValue(mockElements);
+
+    expect(graph.elements).toEqual(mockElements);
+    expect(graph.stats).toEqual({ nodeCount: 1, edgeCount: 1 });
   });
 
   it("should toggle stableLayout and persist it", async () => {
@@ -114,13 +152,19 @@ describe("GraphStore", () => {
       if (key === "graphShowLabels") return Promise.resolve(false);
       if (key === "graphShowImages") return Promise.resolve(false);
       if (key === "graphStableLayout") return Promise.resolve(false);
+      if (key === "graphRecentLabels") return Promise.resolve(["old"]);
+      if (key === "graphLabelFilterMode") return Promise.resolve("AND");
       return Promise.resolve(undefined);
     });
+    vi.spyOn(db, "getAll").mockResolvedValue([{ id: "era1", name: "Era 1" }]);
 
     await graph.init();
     expect(graph.showLabels).toBe(false);
     expect(graph.showImages).toBe(false);
     expect(graph.stableLayout).toBe(false);
+    expect(graph.recentLabels).toEqual(["old"]);
+    expect(graph.labelFilterMode).toBe("AND");
+    expect(graph.eras).toEqual([{ id: "era1", name: "Era 1" }]);
   });
 
   it("should add recent labels and persist them", async () => {
@@ -148,6 +192,12 @@ describe("GraphStore", () => {
     expect(graph.recentLabels).toHaveLength(5);
     expect(graph.recentLabels[0]).toBe("f");
     expect(graph.recentLabels).not.toContain("b");
+
+    // Should ignore empty/whitespace
+    const lengthBefore = graph.recentLabels.length;
+    await graph.addRecentLabel("");
+    await graph.addRecentLabel("  ");
+    expect(graph.recentLabels).toHaveLength(lengthBefore);
   });
 
   it("should toggle labelFilterMode and persist it", async () => {
@@ -170,6 +220,124 @@ describe("GraphStore", () => {
       "settings",
       "OR",
       "graphLabelFilterMode",
+    );
+  });
+
+  it("should handle fit requests", () => {
+    const initial = graph.fitRequest;
+    graph.requestFit();
+    expect(graph.fitRequest).toBe(initial + 1);
+  });
+
+  it("should manage eras", async () => {
+    const era = { id: "era-1", name: "New Era" } as any;
+
+    await graph.addEra(era);
+    expect(graph.eras.some((e) => e.id === "era-1")).toBe(true);
+
+    await graph.removeEra("era-1");
+    expect(graph.eras.some((e) => e.id === "era-1")).toBe(false);
+  });
+
+  it("should manage label filters", () => {
+    graph.toggleLabelFilter("label1");
+    expect(graph.activeLabels.has("label1")).toBe(true);
+
+    graph.toggleLabelFilter("label1");
+    expect(graph.activeLabels.has("label1")).toBe(false);
+
+    graph.toggleLabelFilter("label2");
+    graph.clearLabelFilters();
+    expect(graph.activeLabels.size).toBe(0);
+  });
+
+  it("should manage category filters", () => {
+    graph.toggleCategoryFilter("cat1");
+    expect(graph.activeCategories.has("cat1")).toBe(true);
+
+    graph.toggleCategoryFilter("cat1");
+    expect(graph.activeCategories.has("cat1")).toBe(false);
+
+    graph.toggleCategoryFilter("cat2");
+    graph.clearCategoryFilters();
+    expect(graph.activeCategories.size).toBe(0);
+  });
+
+  it("should manage timeline state", () => {
+    graph.toggleTimeline();
+    expect(graph.timelineMode).toBe(true);
+
+    graph.setTimelineAxis("y");
+    expect(graph.timelineAxis).toBe("y");
+
+    graph.toggleTimeline();
+    expect(graph.timelineMode).toBe(false);
+  });
+
+  it("should manage orbit state", () => {
+    graph.toggleOrbit();
+    expect(graph.orbitMode).toBe(true);
+
+    graph.setCentralNode("node1");
+    expect(graph.centralNodeId).toBe("node1");
+    expect(graph.orbitMode).toBe(true);
+    expect(graph.timelineMode).toBe(false);
+
+    graph.toggleOrbit();
+    expect(graph.orbitMode).toBe(false);
+    expect(graph.centralNodeId).toBe(null);
+  });
+
+  it("should log visibility check for guests", () => {
+    const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    const testVault = {
+      ...vault,
+      isGuest: true,
+      allEntities: [{ id: "1" } as any],
+    };
+    const testGraph = new GraphStore(testVault as any, ui as any);
+
+    // Trigger elements derivation
+    const _ = testGraph.elements;
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[GraphStore] Visibility Check:"),
+      expect.anything(),
+    );
+  });
+
+  it("should handle IDB errors gracefully in toggle methods", async () => {
+    const db = await getDB();
+    vi.spyOn(db, "put").mockRejectedValue(new Error("IDB Error"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await graph.toggleLabels();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphShowLabels"),
+      expect.anything(),
+    );
+
+    await graph.toggleImages();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphShowImages"),
+      expect.anything(),
+    );
+
+    await graph.toggleStableLayout();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphStableLayout"),
+      expect.anything(),
+    );
+
+    await graph.toggleLabelFilterMode();
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphLabelFilterMode"),
+      expect.anything(),
+    );
+
+    await graph.addRecentLabel("test");
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to persist graphRecentLabels"),
+      expect.anything(),
     );
   });
 });

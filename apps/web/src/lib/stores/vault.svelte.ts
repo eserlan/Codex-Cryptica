@@ -1,4 +1,5 @@
 import { uiStore } from "./ui.svelte";
+import { base } from "$app/paths";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
@@ -165,6 +166,7 @@ export class VaultStore {
       (id) => (this.selectedEntityId = id),
       vaultRegistry,
       themeStore,
+      (path, handle) => this.ensureAssetPersisted(path, handle),
     );
     if (typeof window !== "undefined") {
       this.channel = new BroadcastChannel("codex-vault-sync");
@@ -281,15 +283,30 @@ export class VaultStore {
           await this.loadFiles();
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       debugStore.error("[VaultStore] Init failed", err);
-      this.status = "error";
-      this.errorMessage =
-        "Failed to initialize storage. Please check browser support for OPFS.";
+      console.warn("[VaultStore] Init failed, falling back to Guest Mode", err);
+      
+      uiStore.isGuestMode = true;
+      this.status = "idle";
+      this.errorMessage = err?.name === "QuotaExceededError" 
+        ? "Storage full. Running in Guest Mode (changes will not be saved)."
+        : "Storage access denied. Running in Guest Mode.";
+        
+      // Ensure we have at least the welcome content by loading it via fetch
+      if (Object.keys(this.entities).length === 0) {
+        try {
+          const response = await fetch("/vault-samples/welcome.json");
+          const data = await response.json();
+          await this.loadDemoData("Welcome", data.entities || data);
+        } catch (e) {
+          console.warn("Failed to load fallback demo data", e);
+        }
+      }
     } finally {
       this.isInitialized = true;
       await this.checkForConflicts();
-      if (this.status !== "error") {
+      if ((this.status as string) !== "error") {
         this.status = "idle";
         if (this.activeVaultId) {
           window.dispatchEvent(
@@ -901,6 +918,7 @@ export class VaultStore {
       await this.getActiveVaultHandle(),
       path,
       fileFetcher,
+      await this.getActiveSyncHandle(),
     );
   }
 
@@ -918,6 +936,27 @@ export class VaultStore {
       blob,
       entityId,
       originalName,
+    );
+  }
+
+  async ensureAssetPersisted(path: string, vaultHandle: FileSystemDirectoryHandle) {
+    // If we are in demo mode, we need a fetcher that knows how to find the sample images
+    const fetcher = uiStore.activeDemoTheme
+      ? async (p: string) => {
+          const url = p.startsWith("vault-samples/")
+            ? `${base}/${p}`
+            : `${base}/vault-samples/${p}`;
+          const r = await fetch(url);
+          if (!r.ok) throw new Error(`Failed to fetch sample asset: ${url}`);
+          return r.blob();
+        }
+      : undefined;
+
+    return this.assetManager.ensureAssetPersisted(
+      path,
+      vaultHandle,
+      fetcher,
+      await this.getActiveSyncHandle(),
     );
   }
 
@@ -939,6 +978,20 @@ export class VaultStore {
       return this._vaultHandle;
     } catch (err) {
       debugStore.warn("[VaultStore] Failed to get active vault handle", err);
+      return undefined;
+    }
+  }
+
+  async getActiveSyncHandle(): Promise<FileSystemDirectoryHandle | undefined> {
+    if (!this.activeVaultId) return undefined;
+    try {
+      const db = await getDB();
+      const handle = await db.get(
+        "settings",
+        `syncHandle_${this.activeVaultId}`,
+      );
+      return handle as FileSystemDirectoryHandle | undefined;
+    } catch {
       return undefined;
     }
   }

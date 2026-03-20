@@ -6,7 +6,7 @@ export interface ContextualRollResult extends RollResult {
   context: "chat" | "modal";
 }
 
-class DiceHistoryStore {
+export class DiceHistoryStore {
   history = $state<ContextualRollResult[]>([]);
   private _initStarted = false;
 
@@ -17,8 +17,8 @@ class DiceHistoryStore {
     }
   }
 
-  async init() {
-    if (this._initStarted) {
+  async init(force = false) {
+    if (this._initStarted && !force) {
       return;
     }
     this._initStarted = true;

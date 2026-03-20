@@ -1,7 +1,8 @@
 import yaml from "js-yaml";
 import type { Entity } from "schema";
 import { marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
+import { browser } from "$app/environment";
 
 export interface ParseResult {
   metadata: Partial<Entity>;
@@ -28,9 +29,13 @@ export function renderMarkdown(
     ? (marked.parseInline(content) as string)
     : (marked.parse(content) as string);
 
+  if (!browser) return rawHtml;
+
   return DOMPurify.sanitize(rawHtml, {
     ADD_TAGS: ["mark"],
     ADD_ATTR: ["class"],
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
   });
 }
 

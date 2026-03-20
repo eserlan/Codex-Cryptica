@@ -25,6 +25,10 @@ export class VaultLifecycleManager {
     private setSelectedEntityId: (id: string | null) => void,
     private vaultRegistry: typeof import("../vault-registry.svelte").vaultRegistry,
     private themeStore: typeof import("../theme.svelte").themeStore,
+    private ensureAssetPersisted: (
+      path: string,
+      handle: FileSystemDirectoryHandle,
+    ) => Promise<void>,
   ) {}
 
   async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
@@ -122,36 +126,10 @@ export class VaultLifecycleManager {
   }
 
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
-    const CDN_BASE = "https://assets.codexcryptica.com";
-    for (const entity of Object.values(entities) as LocalEntity[]) {
-      const fixUrl = (url: string | undefined) => {
-        if (!url) return url;
-        url = url.replace(/\/cdn-cgi\/image\/[^/]+\//, "/");
-        if (
-          url.startsWith("https://assets.codexcryptica.com") ||
-          url.startsWith("data:") ||
-          url.startsWith("blob:")
-        )
-          return url;
-        if (
-          url.includes("vault-samples/images/") ||
-          url.includes("localhost:5173")
-        ) {
-          const parts = url.split("vault-samples/images/");
-          return `${CDN_BASE}/vault-samples/images/${parts[parts.length - 1]}`;
-        }
-        if (!url.startsWith("http") && !url.startsWith("/"))
-          return `${CDN_BASE}/${url.replace(/^\.\//, "")}`;
-        return url;
-      };
-      entity.image = fixUrl(entity.image);
-      entity.thumbnail = fixUrl(entity.thumbnail || entity.image);
-    }
     this.repository.entities = entities;
     this.setDemoVaultName(name || null);
     this.setInitialized(true);
     this.setStatus("idle");
-
     const services = this.getServices();
     if (services?.search) {
       await services.search.clear();
@@ -180,9 +158,25 @@ export class VaultLifecycleManager {
     try {
       await vaultRegistry.setActiveVault(vaultId);
       const vaultDir = await this.getActiveVaultHandle();
-      for (const entity of Object.values(this.getEntities())) {
+      if (!vaultDir) throw new Error("Could not get vault handle");
+
+      const entities = Object.values(this.getEntities());
+
+      // 1. Migrate associated assets (images/thumbnails) to the new vault folder
+      for (const entity of entities) {
+        if (entity.image) {
+          await this.ensureAssetPersisted(entity.image, vaultDir);
+        }
+        if (entity.thumbnail) {
+          await this.ensureAssetPersisted(entity.thumbnail, vaultDir);
+        }
+      }
+
+      // 2. Save entities as Markdown files in the new vault
+      for (const entity of entities) {
         await this.repository.saveToDisk(vaultDir, vaultId, entity, false);
       }
+
       this.setDemoVaultName(null);
       this.setStatus("idle");
     } catch (err: any) {

@@ -1,6 +1,17 @@
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  define: {
+    __BUNDLED_DEV__: "true",
+    __SERVER_FORWARD_CONSOLE__: "false",
+    __HMR_PROTOCOL__: '"ws"',
+    __HMR_HOSTNAME__: '"localhost"',
+    __HMR_PORT__: "3000",
+    __HMR_DIRECT_TARGET__: '"localhost"',
+    __HMR_BASE__: '"/"',
+    __HMR_TIMEOUT__: "30000",
+    __HMR_ENABLE_OVERLAY__: "false",
+  },
   test: {
     environment: "jsdom",
     globals: true,
@@ -26,6 +37,7 @@ export default defineConfig({
         "src/events/useGraphEvents.ts",
         "src/renderer/overlays.ts",
         "src/sync/useGraphSync.ts",
+        "**/*.md",
       ],
     },
   },

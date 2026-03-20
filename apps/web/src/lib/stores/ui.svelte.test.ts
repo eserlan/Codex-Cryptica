@@ -92,22 +92,105 @@ describe("UIStore", () => {
     openSpy.mockRestore();
   });
 
-  it("should toggle connect mode and clear connectingNodeId", () => {
-    // Initial state
-    expect(uiStore.isConnecting).toBe(false);
-    expect(uiStore.connectingNodeId).toBe(null);
+  it("should handle notifications with timeout", () => {
+    vi.useFakeTimers();
+    uiStore.notify("Success!", "success");
+    expect(uiStore.notification).toEqual({
+      message: "Success!",
+      type: "success",
+    });
 
-    // Toggle on
-    uiStore.toggleConnectMode();
-    expect(uiStore.isConnecting).toBe(true);
+    vi.advanceTimersByTime(5000);
+    expect(uiStore.notification).toBe(null);
+    vi.useRealTimers();
+  });
 
-    // Set a connecting node
-    uiStore.connectingNodeId = "test-node";
-    expect(uiStore.connectingNodeId).toBe("test-node");
+  it("should handle global errors", () => {
+    uiStore.setGlobalError("Oops", "stack trace");
+    expect(uiStore.globalError).toEqual({
+      message: "Oops",
+      stack: "stack trace",
+    });
 
-    // Toggle off
-    uiStore.toggleConnectMode();
-    expect(uiStore.isConnecting).toBe(false);
-    expect(uiStore.connectingNodeId).toBe(null);
+    uiStore.clearGlobalError();
+    expect(uiStore.globalError).toBe(null);
+  });
+
+  it("should handle abort signals", () => {
+    const signal = uiStore.abortSignal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal.aborted).toBe(false);
+
+    uiStore.abortActiveOperations();
+    expect(signal.aborted).toBe(true);
+
+    const newSignal = uiStore.abortSignal;
+    expect(newSignal.aborted).toBe(false);
+    expect(newSignal).not.toBe(signal);
+  });
+
+  it("should manage connection labels and history", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.setLastConnectionLabel("Friend");
+
+    expect(uiStore.lastConnectionLabel).toBe("Friend");
+    expect(uiStore.recentConnectionLabels).toContain("Friend");
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_last_connection_label",
+      "Friend",
+    );
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_recent_connection_labels",
+      expect.any(String),
+    );
+  });
+
+  it("should handle Zen Mode operations", () => {
+    uiStore.openZenMode("entity-1", "inventory");
+    expect(uiStore.showZenMode).toBe(true);
+    expect(uiStore.zenModeEntityId).toBe("entity-1");
+    expect(uiStore.zenModeActiveTab).toBe("inventory");
+
+    uiStore.closeZenMode();
+    expect(uiStore.showZenMode).toBe(false);
+    expect(uiStore.zenModeEntityId).toBe(null);
+  });
+
+  it("should manage Merge and Bulk Label dialogs", () => {
+    uiStore.openMergeDialog(["1", "2"]);
+    expect(uiStore.mergeDialog).toEqual({ open: true, sourceIds: ["1", "2"] });
+    uiStore.closeMergeDialog();
+    expect(uiStore.mergeDialog.open).toBe(false);
+
+    uiStore.openBulkLabelDialog(["3", "4"]);
+    expect(uiStore.bulkLabelDialog).toEqual({
+      open: true,
+      entityIds: ["3", "4"],
+    });
+    uiStore.closeBulkLabelDialog();
+    expect(uiStore.bulkLabelDialog.open).toBe(false);
+  });
+
+  it("should toggle lite mode and save to localStorage", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.toggleLiteMode(true);
+    expect(uiStore.liteMode).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_lite_mode", "true");
+  });
+
+  it("should toggle welcome screen preference", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.toggleWelcomeScreen(true);
+    expect(uiStore.skipWelcomeScreen).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_skip_landing", "true");
+  });
+
+  it("should calculate landing page visibility", () => {
+    uiStore.skipWelcomeScreen = false;
+    uiStore.dismissedLandingPage = false;
+    expect(uiStore.isLandingPageVisible).toBe(true);
+
+    uiStore.skipWelcomeScreen = true;
+    expect(uiStore.isLandingPageVisible).toBe(false);
   });
 });

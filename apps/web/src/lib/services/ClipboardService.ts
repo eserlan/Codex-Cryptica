@@ -1,6 +1,7 @@
 import { marked as defaultMarked } from "marked";
-import defaultDOMPurify from "isomorphic-dompurify";
+import defaultDOMPurify from "dompurify";
 import type { Entity } from "schema";
+import { browser } from "$app/environment";
 
 export interface ClipboardDependencies {
   clipboard?: Clipboard;
@@ -48,11 +49,25 @@ export class ClipboardService {
         .replace(/'/g, "&#039;");
 
       // Render Markdown
-      const chronicleHtml = this.domPurify.sanitize(
-        await this.marked.parse(entity.content || ""),
-      );
+      const rawChronicle = await this.marked.parse(entity.content || "");
+      const chronicleHtml = browser
+        ? this.domPurify.sanitize(rawChronicle, {
+            ALLOWED_URI_REGEXP:
+              /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+          })
+        : rawChronicle;
+
+      let rawLore = "";
+      if (entity.lore) {
+        rawLore = await this.marked.parse(entity.lore);
+      }
       const loreHtml = entity.lore
-        ? this.domPurify.sanitize(await this.marked.parse(entity.lore))
+        ? (browser
+          ? this.domPurify.sanitize(rawLore, {
+              ALLOWED_URI_REGEXP:
+                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+            })
+          : rawLore)
         : "";
 
       let imageHtml = "";
