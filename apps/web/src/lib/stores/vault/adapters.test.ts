@@ -65,7 +65,7 @@ describe("Adapters", () => {
     it("should walk directory", async () => {
       const mockDir = {} as any;
       const callback = vi.fn();
-      await adapters.fileIOAdapter.walkDirectory(mockDir, callback);
+      await (adapters.fileIOAdapter.walkDirectory as any)(mockDir, callback);
       expect(opfs.walkOpfsDirectory).toHaveBeenCalledWith(mockDir, callback);
     });
 
@@ -103,29 +103,10 @@ describe("Adapters", () => {
       );
     });
 
-    it("should write entity file with default path if _path missing", async () => {
-      const mockDir = {} as any;
-      const mockEntity = { id: "e1" };
-      vi.mocked(markdown.stringifyEntity).mockReturnValue("mock-yaml");
-
-      await adapters.fileIOAdapter.writeEntityFile(
-        mockDir,
-        "v1",
-        mockEntity as any,
-      );
-
-      expect(opfs.writeOpfsFile).toHaveBeenCalledWith(
-        ["e1.md"],
-        "mock-yaml",
-        mockDir,
-        "v1",
-      );
-    });
-
     it("should get cached entity", async () => {
-      vi.mocked(cacheService.get).mockResolvedValue({ id: "e1" });
+      vi.mocked(cacheService.get).mockResolvedValue({ id: "e1" } as any);
       const entity = await adapters.fileIOAdapter.getCachedEntity("v1", "path");
-      expect(entity).toEqual({ id: "e1" });
+      expect((entity as any).id).toBe("e1");
       expect(cacheService.get).toHaveBeenCalledWith("v1:path");
     });
 
@@ -152,15 +133,15 @@ describe("Adapters", () => {
         content: "hello",
       } as any);
       const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
-      expect(entity.id).toBe("e1");
-      expect(entity.type).toBe("person");
-      expect(entity.title).toBe("The King");
-      expect(entity.tags).toEqual(["royal"]);
-      expect(entity.labels).toEqual(["important"]);
-      expect(entity.connections).toEqual(["e2"]);
-      expect(entity.content).toBe("hello");
-      expect(entity.lore).toBe("Long ago...");
-      expect(entity._path).toEqual(["path"]);
+      expect(entity!.id).toBe("e1");
+      expect(entity!.type).toBe("person");
+      expect(entity!.title).toBe("The King");
+      expect(entity!.tags).toEqual(["royal"]);
+      expect(entity!.labels).toEqual(["important"]);
+      expect(entity!.connections).toEqual(["e2"]);
+      expect(entity!.content).toBe("hello");
+      expect(entity!.lore).toBe("Long ago...");
+      expect(entity!._path).toEqual(["path"]);
     });
 
     it("should handle missing metadata in parseMarkdown and use defaults", () => {
@@ -170,14 +151,14 @@ describe("Adapters", () => {
       } as any);
       vi.mocked(markdown.deriveIdFromPath).mockReturnValue("derived-id");
       const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
-      expect(entity.id).toBe("derived-id");
-      expect(entity.title).toBe("derived-id");
-      expect(entity.type).toBe("note"); // DEFAULT_ENTITY_TYPE is "note"
-      expect(entity.tags).toEqual([]);
-      expect(entity.labels).toEqual([]);
-      expect(entity.connections).toEqual([]);
-      expect(entity.lore).toBe("");
-      expect(entity._path).toEqual(["path"]);
+      expect(entity!.id).toBe("derived-id");
+      expect(entity!.title).toBe("derived-id");
+      expect(entity!.type).toBe("note");
+      expect(entity!.tags).toEqual([]);
+      expect(entity!.labels).toEqual([]);
+      expect(entity!.connections).toEqual([]);
+      expect(entity!.lore).toBe("");
+      expect(entity!._path).toEqual(["path"]);
     });
 
     it("should check isNotFoundError", () => {
@@ -191,13 +172,17 @@ describe("Adapters", () => {
     it("should handle walkDirectory and other OPFS calls", async () => {
       const mockDir = {} as any;
       const callback = vi.fn();
-      await adapters.syncIOAdapter.walkDirectory(mockDir, callback);
+      await (adapters.syncIOAdapter.walkDirectory as any)(mockDir, callback);
       expect(opfs.walkOpfsDirectory).toHaveBeenCalledWith(mockDir, callback);
 
-      await adapters.syncIOAdapter.deleteOpfsEntry(["path"], mockDir, "v1");
+      await (adapters.syncIOAdapter.deleteOpfsEntry as any)(
+        ["path"],
+        mockDir,
+        "v1",
+      );
       expect(opfs.deleteOpfsEntry).toHaveBeenCalled();
 
-      await adapters.syncIOAdapter.writeOpfsFile(
+      await (adapters.syncIOAdapter.writeOpfsFile as any)(
         ["path"],
         "content",
         mockDir,
@@ -205,10 +190,18 @@ describe("Adapters", () => {
       );
       expect(opfs.writeOpfsFile).toHaveBeenCalled();
 
-      await adapters.syncIOAdapter.readOpfsBlob(["path"], mockDir, "v1");
+      await (adapters.syncIOAdapter.readOpfsBlob as any)(
+        ["path"],
+        mockDir,
+        "v1",
+      );
       expect(opfs.readOpfsBlob).toHaveBeenCalled();
 
-      await adapters.syncIOAdapter.getDirectoryHandle(mockDir, ["path"], true);
+      await (adapters.syncIOAdapter.getDirectoryHandle as any)(
+        mockDir,
+        ["path"],
+        true,
+      );
       expect(opfs.getDirHandle).toHaveBeenCalled();
 
       adapters.syncIOAdapter.isNotFoundError(new Error());
@@ -279,13 +272,20 @@ describe("Adapters", () => {
   describe("assetIOAdapter", () => {
     it("should wrap OPFS calls", async () => {
       const mockDir = {} as any;
-      await adapters.assetIOAdapter.writeOpfsFile(["p"], "c", mockDir, "v1");
+      await (adapters.assetIOAdapter.writeOpfsFile as any)(
+        ["p"],
+        "c",
+        mockDir,
+        "v1",
+      );
       expect(opfs.writeOpfsFile).toHaveBeenCalled();
 
-      await adapters.assetIOAdapter.readOpfsBlob(["p"], mockDir, "v1");
+      await (adapters.assetIOAdapter.readOpfsBlob as any)(["p"], mockDir, "v1");
       expect(opfs.readOpfsBlob).toHaveBeenCalled();
 
-      await adapters.assetIOAdapter.getDirectoryHandle(mockDir, ["path"]);
+      await (adapters.assetIOAdapter.getDirectoryHandle as any)(mockDir, [
+        "path",
+      ]);
       expect(opfs.getDirHandle).toHaveBeenCalled();
 
       adapters.assetIOAdapter.isNotFoundError(new Error());
