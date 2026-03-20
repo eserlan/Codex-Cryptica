@@ -535,11 +535,11 @@ describe("VaultStore", () => {
       const mockVaultsDir = {
         getDirectoryHandle: vi.fn().mockResolvedValue({ name: "v1" }),
       };
-      mockRoot.getDirectoryHandle = vi.fn().mockResolvedValue(mockVaultsDir);
+      mockRoot!.getDirectoryHandle = vi.fn().mockResolvedValue(mockVaultsDir);
 
       const handle = await testVault.getActiveVaultHandle();
       expect(handle).toBeDefined();
-      expect(mockRoot.getDirectoryHandle).toHaveBeenCalledWith("vaults", {
+      expect(mockRoot!.getDirectoryHandle).toHaveBeenCalledWith("vaults", {
         create: true,
       });
     });
@@ -547,7 +547,7 @@ describe("VaultStore", () => {
     it("should handle error in getActiveVaultHandle", async () => {
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       const mockRoot = vaultRegistry.rootHandle;
-      mockRoot.getDirectoryHandle = vi
+      mockRoot!.getDirectoryHandle = vi
         .fn()
         .mockRejectedValue(new Error("IO Error"));
 
@@ -613,10 +613,16 @@ describe("VaultStore", () => {
 
       const _ensureSpy = vi
         .spyOn((testVault as any).assetManager, "ensureAssetPersisted")
-        .mockImplementation(async (path, handle, fetcher) => {
-          if (fetcher) await fetcher(path);
-          return true;
-        });
+        .mockImplementation(
+          async (
+            path: string,
+            _handle: any,
+            fetcher?: (p: string) => Promise<Blob>,
+          ) => {
+            if (fetcher) await fetcher(path);
+            return true;
+          },
+        );
 
       const result = await testVault.ensureAssetPersisted(
         "test.png",

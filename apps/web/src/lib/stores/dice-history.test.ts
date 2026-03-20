@@ -7,12 +7,12 @@ import type { RollResult } from "dice-engine";
 const createRollResult = (
   total: number,
   timestamp: number = Date.now(),
-): RollResult => ({
-  total,
-  timestamp,
-  expression: "1d20",
-  results: [{ type: "die", sides: 20, value: total, modifier: 0, count: 1 }],
-});
+): RollResult =>
+  ({
+    total,
+    timestamp,
+    results: [{ type: "die", sides: 20, value: total, modifier: 0, count: 1 }],
+  }) as any;
 
 describe("DiceHistoryStore", () => {
   let store: DiceHistoryStore;
@@ -149,7 +149,6 @@ describe("DiceHistoryStore", () => {
 
   it("should use fallback for ID generation if crypto.randomUUID is not available", async () => {
     const originalUUID = crypto.randomUUID;
-    // @ts-expect-error - testing fallback when randomUUID is missing
     delete (crypto as any).randomUUID;
 
     const result = createRollResult(15);

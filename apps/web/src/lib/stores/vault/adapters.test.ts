@@ -65,12 +65,8 @@ describe("Adapters", () => {
     it("should walk directory", async () => {
       const mockDir = {} as any;
       const callback = vi.fn();
-      await adapters.fileIOAdapter.walkDirectory(mockDir, "v1", callback);
-      expect(opfs.walkOpfsDirectory).toHaveBeenCalledWith(
-        mockDir,
-        "v1",
-        callback,
-      );
+      await adapters.fileIOAdapter.walkDirectory(mockDir, callback);
+      expect(opfs.walkOpfsDirectory).toHaveBeenCalledWith(mockDir, callback);
     });
 
     it("should read file as text", async () => {
@@ -155,7 +151,7 @@ describe("Adapters", () => {
         },
         content: "hello",
       } as any);
-      const entity = adapters.fileIOAdapter.parseMarkdown("text", "path");
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
       expect(entity.id).toBe("e1");
       expect(entity.type).toBe("person");
       expect(entity.title).toBe("The King");
@@ -164,7 +160,7 @@ describe("Adapters", () => {
       expect(entity.connections).toEqual(["e2"]);
       expect(entity.content).toBe("hello");
       expect(entity.lore).toBe("Long ago...");
-      expect(entity._path).toBe("path");
+      expect(entity._path).toEqual(["path"]);
     });
 
     it("should handle missing metadata in parseMarkdown and use defaults", () => {
@@ -173,7 +169,7 @@ describe("Adapters", () => {
         content: "hello",
       } as any);
       vi.mocked(markdown.deriveIdFromPath).mockReturnValue("derived-id");
-      const entity = adapters.fileIOAdapter.parseMarkdown("text", "path");
+      const entity = adapters.fileIOAdapter.parseMarkdown("text", ["path"]);
       expect(entity.id).toBe("derived-id");
       expect(entity.title).toBe("derived-id");
       expect(entity.type).toBe("note"); // DEFAULT_ENTITY_TYPE is "note"
@@ -181,7 +177,7 @@ describe("Adapters", () => {
       expect(entity.labels).toEqual([]);
       expect(entity.connections).toEqual([]);
       expect(entity.lore).toBe("");
-      expect(entity._path).toBe("path");
+      expect(entity._path).toEqual(["path"]);
     });
 
     it("should check isNotFoundError", () => {
@@ -194,8 +190,9 @@ describe("Adapters", () => {
   describe("syncIOAdapter", () => {
     it("should handle walkDirectory and other OPFS calls", async () => {
       const mockDir = {} as any;
-      await adapters.syncIOAdapter.walkDirectory(mockDir, "v1", vi.fn());
-      expect(opfs.walkOpfsDirectory).toHaveBeenCalled();
+      const callback = vi.fn();
+      await adapters.syncIOAdapter.walkDirectory(mockDir, callback);
+      expect(opfs.walkOpfsDirectory).toHaveBeenCalledWith(mockDir, callback);
 
       await adapters.syncIOAdapter.deleteOpfsEntry(["path"], mockDir, "v1");
       expect(opfs.deleteOpfsEntry).toHaveBeenCalled();
@@ -211,7 +208,7 @@ describe("Adapters", () => {
       await adapters.syncIOAdapter.readOpfsBlob(["path"], mockDir, "v1");
       expect(opfs.readOpfsBlob).toHaveBeenCalled();
 
-      await adapters.syncIOAdapter.getDirectoryHandle(mockDir, "v1", true);
+      await adapters.syncIOAdapter.getDirectoryHandle(mockDir, ["path"], true);
       expect(opfs.getDirHandle).toHaveBeenCalled();
 
       adapters.syncIOAdapter.isNotFoundError(new Error());
@@ -230,7 +227,7 @@ describe("Adapters", () => {
       expect(handle).toBe("handle");
       expect(mockDB.get).toHaveBeenCalledWith("settings", "syncHandle_v1");
 
-      await adapters.syncIOAdapter.setLocalHandle("v1", "new-handle");
+      await adapters.syncIOAdapter.setLocalHandle("v1", "new-handle" as any);
       expect(mockDB.put).toHaveBeenCalledWith(
         "settings",
         "new-handle",
@@ -288,7 +285,7 @@ describe("Adapters", () => {
       await adapters.assetIOAdapter.readOpfsBlob(["p"], mockDir, "v1");
       expect(opfs.readOpfsBlob).toHaveBeenCalled();
 
-      await adapters.assetIOAdapter.getDirectoryHandle(mockDir, "v1");
+      await adapters.assetIOAdapter.getDirectoryHandle(mockDir, ["path"]);
       expect(opfs.getDirHandle).toHaveBeenCalled();
 
       adapters.assetIOAdapter.isNotFoundError(new Error());
@@ -303,7 +300,7 @@ describe("Adapters", () => {
     });
 
     it("should generate thumbnail", async () => {
-      await adapters.imageProcessor.generateThumbnail({} as any);
+      await adapters.imageProcessor.generateThumbnail({} as any, 100);
       expect(imageProcessing.generateThumbnail).toHaveBeenCalled();
     });
   });

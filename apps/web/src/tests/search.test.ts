@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { MockWorker, mockApi, releaseProxySymbol } = vi.hoisted(() => {
+const { MockWorker, mockApi } = vi.hoisted(() => {
   const releaseProxySymbol = Symbol.for("comlink.releaseProxy");
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
@@ -332,9 +332,13 @@ describe("SearchService", () => {
     } as any);
 
     // Mock metadata lookup
-    vi.spyOn(entityDb.graphEntities, "get").mockImplementation(
-      async ([_v, id]) => ({ id, title: `Title ${id}` }),
-    );
+    vi.spyOn(entityDb.graphEntities, "get").mockImplementation((async ([
+      _v,
+      id,
+    ]: [string, string]) => ({
+      id,
+      title: `Title ${id}`,
+    })) as any);
 
     await (service as any).indexContentInBackground("v1");
 
@@ -376,7 +380,8 @@ describe("SearchService", () => {
       (service as any).isDirty = true;
 
       // Trigger change callback (simulated via API proxy)
-      const changeCallback = (mockApi.setChangeCallback as any).mock.calls[0][0];
+      const changeCallback = (mockApi.setChangeCallback as any).mock
+        .calls[0][0];
       changeCallback();
 
       // Should NOT have called saveIndex immediately
@@ -494,11 +499,17 @@ describe("SearchService", () => {
     it("should catch errors in index queue", async () => {
       mockApi.add.mockRejectedValueOnce(new Error("Queue Error"));
       await service.index({ id: "1" } as any);
-      expect(debugStore.warn).toHaveBeenCalledWith("Index error", expect.any(Error));
+      expect(debugStore.warn).toHaveBeenCalledWith(
+        "Index error",
+        expect.any(Error),
+      );
 
       mockApi.remove.mockRejectedValueOnce(new Error("Remove Error"));
       await service.remove("1");
-      expect(debugStore.warn).toHaveBeenCalledWith("Index remove error", expect.any(Error));
+      expect(debugStore.warn).toHaveBeenCalledWith(
+        "Index remove error",
+        expect.any(Error),
+      );
     });
   });
 });
