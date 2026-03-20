@@ -21,6 +21,7 @@ export interface IAssetIOAdapter {
 
 export class AssetManager {
   private urlCache = new Map<string, { url: string; refs: number }>();
+  private resolving = new Map<string, Promise<string>>();
 
   constructor(
     private ioAdapter: IAssetIOAdapter,
@@ -73,6 +74,7 @@ export class AssetManager {
     vaultHandle: FileSystemDirectoryHandle | undefined,
     path: string,
     fileFetcher?: (path: string) => Promise<Blob>,
+    fallbackHandle?: FileSystemDirectoryHandle,
   ): Promise<string> {
     if (!path) return "";
     const cleanPath = path.trim();
@@ -82,6 +84,12 @@ export class AssetManager {
       return cleanPath;
     }
 
+    // Check if already resolving this path
+    const ongoing = this.resolving.get(cleanPath);
+    if (ongoing) {
+      return ongoing;
+    }
+
     // Ref-counting cache check
     const existing = this.urlCache.get(cleanPath);
     if (existing) {
@@ -89,91 +97,135 @@ export class AssetManager {
       return existing.url;
     }
 
-    let url = "";
-
-    // 2. External URL caching
-    if (/^https?:\/\//i.test(cleanPath)) {
-      if (!vaultHandle) return cleanPath;
-
+    // Start resolution and track it
+    const resolutionPromise = (async () => {
       try {
-        const cacheDir = await this.ioAdapter.getDirectoryHandle(
-          vaultHandle,
-          [".cache"],
-          true,
-        );
-        const externalDir = await this.ioAdapter.getDirectoryHandle(
-          cacheDir,
-          ["external_images"],
-          true,
-        );
+        let url = "";
 
-        const safeName =
-          cleanPath
-            .replace(/[^a-z0-9]/gi, "_")
-            .toLowerCase()
-            .slice(-100) + ".cache";
+        // 2. External URL caching
+        if (/^https?:\/\//i.test(cleanPath)) {
+          if (!vaultHandle) return cleanPath;
 
-        try {
-          const blob = await this.ioAdapter.readOpfsBlob(
-            [safeName],
-            externalDir,
-          );
-          url = URL.createObjectURL(blob);
-        } catch {
-          let blob: Blob;
           try {
-            const response = await fetch(cleanPath, { mode: "cors" });
-            if (!response.ok)
-              throw new Error(`Fetch failed: ${response.status}`);
-            blob = await response.blob();
+            const cacheDir = await this.ioAdapter.getDirectoryHandle(
+              vaultHandle,
+              [".cache"],
+              true,
+            );
+            const externalDir = await this.ioAdapter.getDirectoryHandle(
+              cacheDir,
+              ["external_images"],
+              true,
+            );
+
+            const safeName =
+              cleanPath
+                .replace(/[^a-z0-9]/gi, "_")
+                .toLowerCase()
+                .slice(-100) + ".cache";
+
+            try {
+              const blob = await this.ioAdapter.readOpfsBlob(
+                [safeName],
+                externalDir,
+              );
+              url = URL.createObjectURL(blob);
+            } catch {
+              let blob: Blob;
+              try {
+                const response = await fetch(cleanPath, { mode: "cors" });
+                if (!response.ok)
+                  throw new Error(`Fetch failed: ${response.status}`);
+                blob = await response.blob();
+              } catch {
+                return cleanPath;
+              }
+
+              await this.ioAdapter.writeOpfsFile(
+                [".cache", "external_images", safeName],
+                blob,
+                vaultHandle,
+                vaultHandle.name,
+              );
+              url = URL.createObjectURL(blob);
+            }
           } catch {
             return cleanPath;
           }
+        } else if (fileFetcher) {
+          // 3. P2P / Guest Mode remote fetcher
+          try {
+            const blob = await fileFetcher(cleanPath);
+            url = URL.createObjectURL(blob);
+          } catch {
+            return "";
+          }
+        } else if (vaultHandle || fallbackHandle) {
+          // 4. Local Vault File (with fallback to Local FS for synced vaults)
+          try {
+            const segments = cleanPath
+              .replace(/^(\.\/|\/)/, "")
+              .split("/")
+              .filter((s) => s && s !== ".");
 
-          await this.ioAdapter.writeOpfsFile(
-            [".cache", "external_images", safeName],
-            blob,
-            vaultHandle,
-            vaultHandle.name,
-          );
-          url = URL.createObjectURL(blob);
+            let blob: Blob | undefined;
+
+            // Try primary storage (OPFS)
+            if (vaultHandle) {
+              try {
+                blob = await this.ioAdapter.readOpfsBlob(
+                  segments,
+                  vaultHandle,
+                );
+              } catch (err) {
+                // If not found and we have a fallback, keep going
+                if (!fallbackHandle) throw err;
+              }
+            }
+
+            // Try fallback storage (Local FS)
+            if (!blob && fallbackHandle) {
+              try {
+                blob = await this.ioAdapter.readOpfsBlob(
+                  segments,
+                  fallbackHandle,
+                );
+              } catch (err) {
+                throw err;
+              }
+            }
+
+            if (blob) {
+              url = URL.createObjectURL(blob);
+            }
+          } catch (err: any) {
+            // Gracefully handle "Not Found" errors from the File System API.
+            if (this.ioAdapter.isNotFoundError(err)) {
+              return "";
+            }
+            return "";
+          }
         }
-      } catch {
-        return cleanPath;
-      }
-    } else if (fileFetcher) {
-      // 3. P2P / Guest Mode remote fetcher
-      try {
-        const blob = await fileFetcher(cleanPath);
-        url = URL.createObjectURL(blob);
-      } catch {
-        return "";
-      }
-    } else if (vaultHandle) {
-      // 4. Local Vault File
-      try {
-        const segments = cleanPath
-          .replace(/^(\.\/|\/)/, "")
-          .split("/")
-          .filter((s) => s && s !== ".");
 
-        const blob = await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
-        url = URL.createObjectURL(blob);
-      } catch (err: any) {
-        // Gracefully handle "Not Found" errors from the File System API.
-        if (this.ioAdapter.isNotFoundError(err)) {
-          return "";
+        if (url && url.startsWith("blob:")) {
+          // Double check cache in case another resolution finished while we were async
+          const inCache = this.urlCache.get(cleanPath);
+          if (inCache) {
+            URL.revokeObjectURL(url); // Clean up our redundant URL
+            inCache.refs++;
+            return inCache.url;
+          }
+          this.urlCache.set(cleanPath, { url, refs: 1 });
         }
-        console.warn(`Failed to resolve image path: ${cleanPath}`, err);
-        return "";
+
+        return url || cleanPath;
+      } finally {
+        this.resolving.delete(cleanPath);
       }
-    }
+    })();
 
-    if (url && url.startsWith("blob:")) {
-      this.urlCache.set(cleanPath, { url, refs: 1 });
-    }
-
-    return url || cleanPath;
+    this.resolving.set(cleanPath, resolutionPromise);
+    return resolutionPromise;
   }
 
   releaseImageUrl(path: string) {
@@ -193,5 +245,76 @@ export class AssetManager {
       URL.revokeObjectURL(entry.url);
     });
     this.urlCache.clear();
+  }
+
+  /**
+   * Ensures that an asset (image/thumbnail) at the given path is physically present
+   * in the specified vault's OPFS. If missing, it attempts to resolve it (fetching
+   * from source if needed) and writes it to the vault.
+   */
+  async ensureAssetPersisted(
+    path: string,
+    vaultHandle: FileSystemDirectoryHandle,
+    fileFetcher?: (path: string) => Promise<Blob>,
+    fallbackHandle?: FileSystemDirectoryHandle,
+  ) {
+    if (!path) return;
+    const cleanPath = path.trim();
+    if (/^(data:|blob:|https?:)/i.test(cleanPath)) return;
+
+    const segments = cleanPath
+      .replace(/^(\.\/|\/)/, "")
+      .split("/")
+      .filter((s) => s && s !== ".");
+
+    // 1. Check if it already exists in OPFS
+    try {
+      await this.ioAdapter.readOpfsBlob(segments, vaultHandle);
+      // If no error, it's already there.
+      return;
+    } catch {
+      // 2. Not in OPFS, resolve it to get a Blob (or at least a source path)
+      let source = await this.resolveImageUrl(
+        undefined,
+        cleanPath,
+        fileFetcher,
+        fallbackHandle,
+      );
+
+      let blob: Blob | undefined;
+
+      if (source && source.startsWith("blob:")) {
+        try {
+          const response = await fetch(source);
+          blob = await response.blob();
+        } catch (err) {
+          console.warn(
+            `[AssetManager] Failed to fetch blob from ${source}`,
+            err,
+          );
+        }
+      } else if (source && !source.startsWith("http") && fileFetcher) {
+        // Source is a relative path (common in demo mode)
+        try {
+          blob = await fileFetcher(source);
+        } catch (err) {
+          console.warn(
+            `[AssetManager] Failed to fetch via fileFetcher: ${source}`,
+            err,
+          );
+        }
+      }
+
+      if (blob) {
+        // 3. Write to this vault
+        await this.ioAdapter.writeOpfsFile(
+          segments,
+          blob,
+          vaultHandle,
+          vaultHandle.name,
+        );
+        console.log(`[AssetManager] Migrated asset to vault: ${cleanPath}`);
+      }
+    }
   }
 }
