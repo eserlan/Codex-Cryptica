@@ -70,18 +70,18 @@ export class AssetManager {
     };
   }
 
-  async resolveImageUrl(
+  resolveImageUrl(
     vaultHandle: FileSystemDirectoryHandle | undefined,
     path: string,
     fileFetcher?: (path: string) => Promise<Blob>,
     fallbackHandle?: FileSystemDirectoryHandle,
   ): Promise<string> {
-    if (!path) return "";
+    if (!path) return Promise.resolve("");
     const cleanPath = path.trim();
 
     // 1. Data URI or existing Blob URL
     if (/^(data:|blob:)/i.test(cleanPath)) {
-      return cleanPath;
+      return Promise.resolve(cleanPath);
     }
 
     // Check if already resolving this path
