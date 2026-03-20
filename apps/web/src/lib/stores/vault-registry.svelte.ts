@@ -55,6 +55,8 @@ class VaultRegistryStore {
     } catch (err) {
       console.error("[VaultRegistry] Init failed", err);
       debugStore.error("Vault Registry initialization failed", err);
+      this.isInitialized = true; // Mark initialized even on failure to avoid hangs
+      throw err;
     } finally {
       this.isLoading = false;
     }

@@ -1,7 +1,7 @@
-## 2025-02-14 - The Power of Native CSS Custom Properties
+## 2024-03-03 - Tiptap Bubble Menu Selection Nuances
 
-**Learning:** Svelte `bind:this` for setting CSS variables is often slower and more complex than using inline styles with CSS variables: `style="--brand-color: {activeColor}"`.
-**Action:** Prefer native CSS custom properties via `style:` directives for reactive styling over complex `bind:this` logic or JS-in-CSS.
+**Learning:** Tiptap's Bubble Menu extension (and Svelte 5's wrapping of it) only renders the floating toolbar into the DOM when valid, formattable text is actively selected. It remains completely detached from the DOM otherwise. When testing or designing micro-interactions for it, double-clicking empty blocks or attempting to trigger the menu programmatically via native DOM selection fails to mount the component.
+**Action:** When creating tests or verifying a11y attributes on Bubble Menu buttons, always inject realistic text into the editor and simulate an explicit user mouse selection (drag/drop) over that text rather than relying on `focus()` or `dblclick()` on empty `.ProseMirror` nodes.
 
 ## 2025-03-04 - Editor Toolbar Toggle Buttons Accessibility
 

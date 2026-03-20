@@ -114,6 +114,7 @@ export class GraphImageManager {
 
   private clearImages(options?: ImageManagerOptions) {
     this.resolvingIds.clear();
+    this.urlCache.clear(); // Ensure we don't hold onto stale/revoked blob URLs
     this.cy
       .nodes()
       .filter((n) => n.data("resolvedImage"))

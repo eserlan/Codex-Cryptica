@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   GraphTransformer,
+  getGraphStyle,
   type GraphEdge,
   type GraphNode,
 } from "./transformer";
@@ -315,5 +316,32 @@ describe("GraphTransformer", () => {
     const elements = GraphTransformer.entitiesToElements(entities);
     expect(elements).toHaveLength(1);
     expect(elements[0].data.id).toBe("valid-1");
+  });
+
+  it("should include background-image-crossorigin in getGraphStyle", () => {
+    const mockTemplate = {
+      tokens: {
+        primary: "#000",
+        background: "#fff",
+        text: "#333",
+        surface: "#eee",
+        fontHeader: "Arial",
+        fontBody: "Arial",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 1,
+        edgeWidth: 1,
+        edgeColor: "#ccc",
+        edgeStyle: "solid",
+      },
+    } as any;
+    const style = getGraphStyle(mockTemplate, [], true);
+    const resolvedImageStyle = style.find((s: any) =>
+      s.selector.includes("resolvedImage"),
+    );
+    expect(resolvedImageStyle.style["background-image-crossorigin"]).toBe(
+      "null",
+    );
   });
 });

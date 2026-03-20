@@ -4,7 +4,8 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { fade } from "svelte/transition";
   import { parserService } from "$lib/services/parser";
-  import DOMPurify from "isomorphic-dompurify";
+  import { browser } from "$app/environment";
+  import DOMPurify from "dompurify";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
@@ -314,7 +315,12 @@
         .parse(message.content)
         .then((html) => {
           if (currentContent !== message.content) return;
-          htmlCache = DOMPurify.sanitize(html);
+          htmlCache = browser
+            ? DOMPurify.sanitize(html, {
+                ALLOWED_URI_REGEXP:
+                  /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+              })
+            : html;
           lastParsedContent = currentContent;
         })
         .catch((err) => {
@@ -332,7 +338,12 @@
         let contentToCopy = htmlCache;
         if (!contentToCopy) {
           const rawHtml = await parserService.parse(message.content);
-          contentToCopy = DOMPurify.sanitize(rawHtml);
+          contentToCopy = browser
+            ? DOMPurify.sanitize(rawHtml, {
+                ALLOWED_URI_REGEXP:
+                  /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+              })
+            : rawHtml;
         }
         const blobHtml = new Blob([contentToCopy], { type: "text/html" });
         const blobText = new Blob([message.content], { type: "text/plain" });

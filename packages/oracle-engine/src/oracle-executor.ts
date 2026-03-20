@@ -7,8 +7,11 @@ import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
 
 export class OracleActionExecutor {
-  private generator = new OracleGenerator();
+  private generator: OracleGenerator;
 
+  constructor(generator?: OracleGenerator) {
+    this.generator = generator || new OracleGenerator();
+  }
   async execute(
     intent: OracleIntent,
     context: OracleExecutionContext,
