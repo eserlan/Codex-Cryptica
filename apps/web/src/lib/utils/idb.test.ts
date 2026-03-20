@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { 
-  getDB, 
-  persistHandle, 
-  getPersistedHandle, 
+import { describe, it, expect, beforeEach } from "vitest";
+import {
+  getDB,
+  persistHandle,
+  getPersistedHandle,
   clearPersistedHandle,
-  setCachedFile, 
-  getCachedFile, 
+  setCachedFile,
+  getCachedFile,
   clearCache,
-  DB_NAME
+  DB_NAME,
 } from "./idb";
 
 describe("idb.ts utility", () => {
@@ -35,7 +35,7 @@ describe("idb.ts utility", () => {
     expect(storeNames).toContain("proposals");
     expect(storeNames).toContain("canvases");
     expect(storeNames).toContain("dice_history");
-    
+
     // Check indexes for a few
     const tx = db.transaction("sync_registry", "readonly");
     const syncStore = tx.objectStore("sync_registry");
@@ -46,7 +46,7 @@ describe("idb.ts utility", () => {
   it("should persist and retrieve a directory handle", async () => {
     const mockHandle = { name: "test-vault", kind: "directory" };
     await persistHandle(mockHandle as any);
-    
+
     const retrieved = await getPersistedHandle();
     expect(retrieved).toEqual(mockHandle);
   });
@@ -55,7 +55,7 @@ describe("idb.ts utility", () => {
     const mockHandle = { name: "test-vault", kind: "directory" };
     await persistHandle(mockHandle as any);
     await clearPersistedHandle();
-    
+
     const retrieved = await getPersistedHandle();
     expect(retrieved).toBeNull();
   });
@@ -64,9 +64,9 @@ describe("idb.ts utility", () => {
     const mockEntity = { id: "e1", title: "Test Entity" };
     const path = "vault/test.md";
     const lastModified = Date.now();
-    
+
     await setCachedFile(path, lastModified, mockEntity as any);
-    
+
     const cached = await getCachedFile(path);
     expect(cached).toBeDefined();
     expect(cached?.entity).toEqual(mockEntity);
@@ -76,9 +76,9 @@ describe("idb.ts utility", () => {
   it("should clear the vault cache", async () => {
     const mockEntity = { id: "e1" };
     await setCachedFile("path1", 123, mockEntity as any);
-    
+
     await clearCache();
-    
+
     const cached = await getCachedFile("path1");
     expect(cached).toBeUndefined();
   });
