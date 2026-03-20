@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-const { MockWorker, mockApi } = vi.hoisted(() => {
+const { MockWorker, mockApi, releaseProxySymbol } = vi.hoisted(() => {
+  const releaseProxySymbol = Symbol("comlink.releaseProxy");
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
@@ -15,6 +16,7 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     setChangeCallback: vi.fn(),
     exportIndex: vi.fn(),
     importIndex: vi.fn(),
+    [releaseProxySymbol]: vi.fn(),
   };
 
   class MockWorker {
@@ -25,7 +27,7 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
     removeEventListener() {}
   }
 
-  return { MockWorker, mockApi };
+  return { MockWorker, mockApi, releaseProxySymbol };
 });
 
 vi.stubGlobal("Worker", MockWorker);
@@ -37,7 +39,7 @@ vi.mock("comlink", () => {
     expose: vi.fn(),
     transfer: vi.fn((obj) => obj),
     proxy: vi.fn((fn) => fn),
-    releaseProxy: Symbol("comlink.releaseProxy"),
+    releaseProxy: releaseProxySymbol,
   };
 });
 
