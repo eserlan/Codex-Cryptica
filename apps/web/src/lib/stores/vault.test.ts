@@ -613,16 +613,14 @@ describe("VaultStore", () => {
 
       const _ensureSpy = vi
         .spyOn((testVault as any).assetManager, "ensureAssetPersisted")
-        .mockImplementation(
-          async (
-            path: string,
-            _handle: any,
-            fetcher?: (p: string) => Promise<Blob>,
-          ) => {
-            if (fetcher) await fetcher(path);
-            return true;
-          },
-        );
+        .mockImplementation((async (
+          path: string,
+          _handle: any,
+          fetcher?: (p: string) => Promise<Blob>,
+        ) => {
+          if (fetcher) await fetcher(path);
+          return true;
+        }) as any);
 
       const result = await testVault.ensureAssetPersisted(
         "test.png",
