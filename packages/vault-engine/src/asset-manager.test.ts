@@ -171,6 +171,7 @@ describe("AssetManager", () => {
       });
 
       it("should fetch and cache external https URLs", async () => {
+        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
         (global.fetch as any).mockResolvedValue({
           ok: true,
           blob: () => Promise.resolve(new Blob(["remote"])),
@@ -202,6 +203,7 @@ describe("AssetManager", () => {
       });
 
       it("should return original URL if fetch throws", async () => {
+        mockIO.readOpfsBlob.mockRejectedValueOnce(new Error("Not in cache"));
         (global.fetch as any).mockRejectedValueOnce(new Error("Fetch failed"));
         const result = await assetManager.resolveImageUrl({ name: "v1" } as any, "https://example.com/error.png");
         expect(result).toBe("https://example.com/error.png");
