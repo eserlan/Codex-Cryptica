@@ -47,6 +47,10 @@ describe("CacheService", () => {
     service = new CacheService();
   });
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe("preloadVault", () => {
     it("should load entities into memory", async () => {
       const mockRecord = {

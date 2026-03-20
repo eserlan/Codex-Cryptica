@@ -2,8 +2,7 @@
   import { helpStore } from "$lib/stores/help.svelte";
   import { fly } from "svelte/transition";
   import { marked } from "marked";
-  import DOMPurify from "dompurify";
-  import { browser } from "$app/environment";
+  import DOMPurify from "isomorphic-dompurify";
   import type { GuideStep } from "$lib/config/help-content";
 
   let { step, targetRect, isLast, current, total } = $props<{
@@ -20,11 +19,11 @@
   const parsedContent = $derived.by(() => {
     try {
       const html = marked.parse(step.content) as string;
-      return browser ? DOMPurify.sanitize(html) : html;
+      return DOMPurify.sanitize(html);
     } catch (e) {
       console.error("Failed to parse guide content", e);
       // Fallback: still sanitize the original content before injecting via {@html}
-      return browser ? DOMPurify.sanitize(step.content) : step.content;
+      return DOMPurify.sanitize(step.content);
     }
   });
 

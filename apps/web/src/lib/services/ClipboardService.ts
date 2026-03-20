@@ -1,6 +1,5 @@
 import { marked as defaultMarked } from "marked";
-import defaultDOMPurify from "dompurify";
-import { browser } from "$app/environment";
+import defaultDOMPurify from "isomorphic-dompurify";
 import type { Entity } from "schema";
 
 export interface ClipboardDependencies {
@@ -49,13 +48,11 @@ export class ClipboardService {
         .replace(/'/g, "&#039;");
 
       // Render Markdown
-      const chronicleHtml = browser
-        ? this.domPurify.sanitize(await this.marked.parse(entity.content || ""))
-        : await this.marked.parse(entity.content || "");
+      const chronicleHtml = this.domPurify.sanitize(
+        await this.marked.parse(entity.content || ""),
+      );
       const loreHtml = entity.lore
-        ? browser
-          ? this.domPurify.sanitize(await this.marked.parse(entity.lore))
-          : await this.marked.parse(entity.lore)
+        ? this.domPurify.sanitize(await this.marked.parse(entity.lore))
         : "";
 
       let imageHtml = "";

@@ -19,14 +19,34 @@ We use a two-tier system: **Constitutional Goals** (where we want to be) and **E
 
 All high-priority targets from Phase 1, 2, and 3 have been successfully addressed. There are currently no components under 30% in critical infrastructure.
 
+### ✅ Components Meeting Goals (> 65%)
+
+| Component                    | Coverage   | Status      |
+| :--------------------------- | :--------- | :---------- |
+| `image-processing.ts`        | **100%**   | Target Met. |
+| `vault/relationships.ts`     | **100%**   | Target Met. |
+| `map-registry.svelte.ts`     | **100%**   | Target Met. |
+| `SyncRegistry.ts`            | **100%**   | Target Met. |
+| `LocalSyncService.ts`        | **100%**   | Target Met. |
+| `text-generation.service.ts` | **98.82%** | Target Met. |
+| `node-merge.service.ts`      | **96.47%** | Target Met. |
+| `map-engine/src`             | **95.34%** | Target Met. |
+| `vault/crud.ts`              | **92.00%** | Target Met. |
+| `vault/lifecycle.ts`         | **85.08%** | Target Met. |
+| `vault/entities.ts`          | **84.55%** | Target Met. |
+| `vault/io.ts`                | **84.54%** | Target Met. |
+| `@codex/oracle-engine`       | **82.58%** | Target Met. |
+| `opfs.ts`                    | **75.38%** | Target Met. |
+| `@codex/sync-engine`         | **74.56%** | Target Met. |
+| `cache.svelte.ts`            | **68.25%** | Target Met. |
+
 ### 🟡 Remaining Debt (Moderate Risk 30% - 60%)
 
-| Component                  | Coverage   | Issues                           |
-| :------------------------- | :--------- | :------------------------------- |
-| `dice-history.svelte.ts`   | **31.57%** | Secondary feature, low priority. |
-| `vault/adapters.svelte.ts` | **33.33%** | Wrapper logic, low risk.         |
-| `cache.svelte.ts`          | **68.25%** | **Target Met.**                  |
-| `opfs.ts`                  | **75.38%** | **Target Met.**                  |
+| Component                  | Coverage   | Issues                                          |
+| :------------------------- | :--------- | :---------------------------------------------- |
+| `dice-history.svelte.ts`   | **31.57%** | Secondary feature, low priority.                |
+| `vault/adapters.svelte.ts` | **33.33%** | Wrapper logic, low risk.                        |
+| `@codex/graph-engine`      | **54.45%** | Layout and Renderer logic is difficult to test. |
 
 ---
 
@@ -72,5 +92,5 @@ All high-priority targets from Phase 1, 2, and 3 have been successfully addresse
 
 ---
 
-**Last Updated**: 2026-03-19
+**Last Updated**: 2026-03-20
 **Data Source**: `npm run test:coverage` (Infrastructure Cleanup Complete).

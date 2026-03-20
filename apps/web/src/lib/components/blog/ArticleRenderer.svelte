@@ -1,8 +1,7 @@
 <script lang="ts">
   import { marked } from "marked";
   import { gfmHeadingId } from "marked-gfm-heading-id";
-  import DOMPurify from "dompurify";
-  import { browser } from "$app/environment";
+  import DOMPurify from "isomorphic-dompurify";
   import { base } from "$app/paths";
 
   // Enable heading IDs for table of contents anchors
@@ -20,9 +19,7 @@
       .replace(/src="\//g, `src="${base}/`),
   );
   const renderedHtml = $derived(marked.parse(processedContent));
-  const sanitizedHtml = $derived(
-    browser ? DOMPurify.sanitize(renderedHtml as string) : renderedHtml,
-  );
+  const sanitizedHtml = $derived(DOMPurify.sanitize(renderedHtml as string));
 </script>
 
 <article

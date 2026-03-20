@@ -46,6 +46,7 @@ describe("Map Engine Renderer", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("should clear canvas and return if no image", () => {
