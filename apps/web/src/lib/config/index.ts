@@ -19,7 +19,8 @@ export const IS_STAGING =
   import.meta.env.VITE_APP_ENV === "staging" ||
   import.meta.env.MODE === "staging" ||
   (typeof window !== "undefined" &&
-    window.location.hostname.includes("staging"));
+    (window.location.hostname.includes("staging") ||
+      window.location.pathname.includes("/staging")));
 
 export const SCHEMA_ORG = {
   "@context": "https://schema.org",
