@@ -25,6 +25,9 @@ class UIStore {
   // Responsive State
   isMobile = $state(false);
 
+  // Staging State
+  isStaging = $state(false);
+
   // Demo Mode State
   isDemoMode = $state(false);
   activeDemoTheme = $state<string | null>(null);

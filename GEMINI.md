@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4 (074-staging-indicator)
+- N/A (Transient UI State) (074-staging-indicator)
+
 - TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4 (073-prominent-import)
 - OPFS (via Importer package) (073-prominent-import)
 
@@ -132,10 +135,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 074-staging-indicator: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4
+
 - 073-prominent-import: Added TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4
 
 - 069-pop-out-help-window: Added TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
-
-- 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
 
 <!-- MANUAL ADDITIONS START -->

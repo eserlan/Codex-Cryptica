@@ -15,6 +15,10 @@ export const APP_NAME = "Codex Cryptica";
 export const PATREON_URL = "https://patreon.com/EspenE";
 export const DISCORD_URL = "https://discord.gg/5UUMCChF2u";
 
+export const IS_STAGING =
+  import.meta.env.VITE_APP_ENV === "staging" ||
+  import.meta.env.MODE === "staging";
+
 export const SCHEMA_ORG = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
