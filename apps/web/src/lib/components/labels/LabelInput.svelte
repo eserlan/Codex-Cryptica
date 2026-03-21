@@ -32,13 +32,21 @@
     const currentLabels = (vault.entities[entityId]?.labels || []).map((l) =>
       l.toLowerCase(),
     );
-    return vault.labelIndex
-      .filter(
-        (l) =>
-          l.toLowerCase().includes(query) &&
-          !currentLabels.includes(l.toLowerCase()),
-      )
-      .slice(0, 5);
+
+    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
+    const maxResults = 5;
+    const matches: string[] = [];
+    const labels = vault.labelIndex;
+
+    for (let i = 0; i < labels.length; i++) {
+      const l = labels[i];
+      const lowerL = l.toLowerCase();
+      if (lowerL.includes(query) && !currentLabels.includes(lowerL)) {
+        matches.push(l);
+        if (matches.length === maxResults) break;
+      }
+    }
+    return matches;
   });
 
   $effect(() => {
