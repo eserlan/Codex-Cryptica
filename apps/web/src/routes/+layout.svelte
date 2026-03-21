@@ -29,7 +29,6 @@
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
   import OracleSidebarProvider from "$lib/components/layout/OracleSidebarProvider.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
-  import StagingIndicator from "$lib/components/layout/StagingIndicator.svelte";
 
   // Logic & Hooks
   import {
@@ -231,7 +230,6 @@
   class="h-screen bg-theme-bg flex flex-col font-body"
   class:app-layout={!isMarketingPage && !isLoginRoute}
 >
-  <StagingIndicator />
   <NotificationToast />
 
   {#if !isPopup}

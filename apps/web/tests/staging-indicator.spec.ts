@@ -18,7 +18,7 @@ test.describe("Staging Indicator", () => {
 
     const indicator = page.getByTestId("staging-indicator");
     await expect(indicator).toBeVisible();
-    await expect(indicator).toContainText("STAGING ENVIRONMENT");
+    await expect(indicator).toContainText("Codex Cryptica");
   });
 
   test("should not show indicator when not in staging mode", async ({
@@ -31,6 +31,9 @@ test.describe("Staging Indicator", () => {
 
     const indicator = page.getByTestId("staging-indicator");
     await expect(indicator).not.toBeVisible();
+
+    const title = page.getByTestId("header-title");
+    await expect(title).toBeVisible();
   });
 
   test("should be visible on mobile viewport", async ({ page }) => {
@@ -42,9 +45,8 @@ test.describe("Staging Indicator", () => {
     const indicator = page.getByTestId("staging-indicator");
     await expect(indicator).toBeVisible();
 
-    // Check it's in a floating position (bottom-right)
+    // Check it's in the header (near top)
     const box = await indicator.boundingBox();
-    expect(box?.y).toBeGreaterThan(500); // Near bottom
-    expect(box?.x).toBeGreaterThan(100); // Near right
+    expect(box?.y).toBeLessThan(100);
   });
 });
