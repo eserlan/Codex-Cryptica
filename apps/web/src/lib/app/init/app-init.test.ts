@@ -16,6 +16,11 @@ vi.mock("../../stores/debug.svelte", () => ({
   },
 }));
 
+// Mock config to avoid actual env dependency
+vi.mock("../../config", () => ({
+  IS_STAGING: true,
+}));
+
 import {
   bootSystem,
   initializeGlobalListeners,
@@ -37,16 +42,17 @@ describe("app-init", () => {
   });
 
   describe("bootSystem", () => {
-    it("should initialize all passed stores", () => {
+    it("should initialize all passed stores and set isStaging", () => {
       const mockStores = {
         categories: { init: vi.fn() },
         timeline: { init: vi.fn() },
         graph: { init: vi.fn() },
         calendar: { init: vi.fn() },
         vault: { init: vi.fn().mockResolvedValue(undefined) },
+        uiStore: { isStaging: false },
       };
 
-      const result = bootSystem(mockStores);
+      const result = bootSystem(mockStores as any);
 
       expect(result).toBe(true);
       expect(mockStores.categories.init).toHaveBeenCalled();
@@ -54,6 +60,7 @@ describe("app-init", () => {
       expect(mockStores.graph.init).toHaveBeenCalled();
       expect(mockStores.calendar.init).toHaveBeenCalled();
       expect(mockStores.vault.init).toHaveBeenCalled();
+      expect(mockStores.uiStore.isStaging).toBe(true);
     });
 
     it("should handle vault initialization failure", async () => {
@@ -66,9 +73,10 @@ describe("app-init", () => {
         graph: { init: vi.fn() },
         calendar: { init: vi.fn() },
         vault: { init: vi.fn().mockRejectedValue(new Error("Vault fail")) },
+        uiStore: { isStaging: false },
       };
 
-      bootSystem(mockStores);
+      bootSystem(mockStores as any);
 
       // Wait for the microtask to finish (the .catch block)
       await new Promise((resolve) => setTimeout(resolve, 0));

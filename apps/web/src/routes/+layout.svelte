@@ -80,6 +80,7 @@
           graph,
           calendar: calendarStore,
           vault,
+          uiStore,
         });
       } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
         uiStore.dismissedLandingPage = true;
@@ -89,6 +90,7 @@
           graph,
           calendar: calendarStore,
           vault,
+          uiStore,
         });
       }
     }
