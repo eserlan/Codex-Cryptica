@@ -4,33 +4,38 @@
 
 ### Decision
 
-Use `import.meta.env.MODE === 'staging'` or a custom environment variable `VITE_APP_ENV === 'staging'`.
+Check multiple sources in order of precedence:
+
+1. `import.meta.env.VITE_APP_ENV === 'staging'`
+2. `import.meta.env.MODE === 'staging'`
+3. `window.location.hostname.includes("staging")`
+4. `window.location.pathname.includes("/staging")`
 
 ### Rationale
 
-Vite provides `import.meta.env.MODE` which defaults to `development` or `production`. By adding a `staging` mode to the build process, we can easily detect it at runtime. Alternatively, checking `window.location.hostname` for patterns like `staging.codex-cryptica.com` is a robust fallback for client-side only detection.
+While build-time variables are the most robust, they often fail in GitHub Pages deployments or subfolder environments where the build process might not match the URL structure. Checking the `hostname` and `pathname` ensures the indicator works correctly even when the app is "drag-and-dropped" into a staging folder.
 
 ### Alternatives Considered
 
-- **Build-time injection**: Injecting a `__IS_STAGING__` global via `vite.config.ts`.
-- **Hostname check**: Directly checking `window.location.hostname`. While simple, it's less flexible than environment variables.
+- **URL Parameter**: Checking for `?env=staging`. Too easy to bookmark or share accidentally.
+- **Cookie/LocalStorage**: Requires manual setup by the user.
 
 ## UI Placement
 
 ### Decision
 
-A fixed, high-contrast banner at the top or a floating badge in a corner. Given the request for small screens, a floating badge or a thin top banner that can be dismissed or is non-obstructive is preferred.
+Apply styling directly to the `<H1>` brand title in the `AppHeader`.
 
 ### Rationale
 
-A top banner is the most standard way to show environment status. However, to satisfy "small screen visibility" without obstructing the header, a small floating badge (e.g., bottom-right) might be better, or a very thin top strip above the header.
+Initially, a separate banner or floating badge was considered. However, the brand title is the most stable and prominent element in the UI. By wrapping it in a red high-contrast "pill", we achieve maximum visibility with zero layout shift and no obstruction of other UI elements (like search or navigation).
 
 ## Design System Integration
 
 ### Decision
 
-Use `var(--color-danger)` (#ef4444) or a custom amber/warning color to ensure high visibility.
+Use Tailwind 4 conditional classes: `bg-red-600 text-white px-3 py-1 rounded-full border-2 border-white shadow-[0_0_15px_rgba(220,38,38,0.5)]`.
 
 ### Rationale
 
-Staging indicators should be "loud" to prevent accidents. Red or deep amber provides the necessary contrast against the standard Solarized-inspired theme of Codex Cryptica.
+The red color (#dc2626) provides an immediate "warning" association. The white border and red glow ensure it stands out against the various themes (Solarized Dark/Light) without blending in.

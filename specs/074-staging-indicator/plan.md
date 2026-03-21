@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement a visual environment indicator for the staging environment to prevent accidental data modification. This will be a thin UI layer detecting the environment via Vite build-time variables or URL patterns.
+Implement a visual environment indicator by applying distinct "Staging" styling directly to the brand title in the application header. This prevents environment confusion while maintaining a clean, responsive UI.
 
 ## Technical Context
 
@@ -15,23 +15,21 @@ Implement a visual environment indicator for the staging environment to prevent 
 **Testing**: Vitest (Unit), Playwright (E2E)
 **Target Platform**: Web (Responsive for Mobile)
 **Project Type**: Web Application
-**Performance Goals**: <50ms impact on render time
-**Constraints**: Must not obstruct main navigation on mobile
+**Performance Goals**: 0ms CLS impact, <10ms render impact
+**Constraints**: MUST NOT use additional vertical or horizontal space.
 
 ## Constitution Check
 
-| Principle            | Check                                                                   |
-| -------------------- | ----------------------------------------------------------------------- |
-| Library-First        | UI only, no package required.                                           |
-| TDD                  | Plan includes unit tests for environment detection and visual presence. |
-| Simplicity & YAGNI   | Simple banner/badge, no complex state needed.                           |
-| AI-First Extraction  | N/A                                                                     |
-| Privacy              | All processing is local/client-side.                                    |
-| Clean Implementation | Svelte 5 Runes and Tailwind 4 standards followed.                       |
-| User Documentation   | Help article update in `help-content.ts` (minimal).                     |
-| Dependency Injection | UI store pattern followed.                                              |
-| Natural Language     | "STAGING" text used.                                                    |
-| Quality & Coverage   | 100% test coverage for this feature.                                    |
+| Principle            | Check                                                          |
+| -------------------- | -------------------------------------------------------------- |
+| Library-First        | UI only, no package required.                                  |
+| TDD                  | Implementation verified with unit and E2E tests.               |
+| Simplicity & YAGNI   | Inline styling instead of a new component layer.               |
+| AI-First Extraction  | N/A                                                            |
+| Privacy              | All processing is local/client-side.                           |
+| Clean Implementation | Svelte 5 Runes and Tailwind 4 conditional classes used.        |
+| Dependency Injection | UI store pattern followed for global state.                    |
+| Quality & Coverage   | High coverage achieved across detection logic and UI presence. |
 
 ## Project Structure
 
@@ -39,9 +37,9 @@ Implement a visual environment indicator for the staging environment to prevent 
 
 ```text
 specs/074-staging-indicator/
-├── spec.md              # Feature Spec
+├── spec.md              # Updated Feature Spec
 ├── plan.md              # This file
-├── research.md          # Research findings
+├── research.md          # Research findings (Hostname/Pathname detection)
 ├── data-model.md        # No entities
 └── quickstart.md        # Testing instructions
 ```
@@ -53,14 +51,15 @@ apps/web/src/
 ├── lib/
 │   ├── components/
 │   │   └── layout/
-│   │       └── StagingIndicator.svelte  # NEW component
+│   │       └── AppHeader.svelte        # Apply conditional styling
+│   ├── config/
+│   │   └── index.ts                    # IS_STAGING logic (Hostname + Pathname)
 │   └── stores/
-│       └── ui.svelte.ts                # Update with isStaging state
-└── routes/
-    └── +layout.svelte                  # Include StagingIndicator
+│       └── ui.svelte.ts                # isStaging reactive state
+└── app/
+    └── init/
+        └── app-init.ts                 # Boot sequence integration
 ```
-
-**Structure Decision**: Integrated directly into the existing web app layout as it's a small UI-only feature.
 
 ## Complexity Tracking
 
