@@ -1,7 +1,7 @@
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
-import { getDB } from "../utils/idb";
+import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
@@ -85,6 +85,9 @@ export class OracleStore {
   get tier() {
     return this.settings.tier;
   }
+  get connectionMode() {
+    return this.settings.connectionMode;
+  }
   get isLoading() {
     return this.settings.isLoading;
   }
@@ -110,10 +113,17 @@ export class OracleStore {
 
   async init() {
     if (this.isInitialized) return;
-    const db = await getDB();
-    await this.settings.init(db);
-    await this.chatHistory.init(db);
+    await this.settings.init(entityDb);
+    await this.chatHistory.init(entityDb);
     this.isInitialized = true;
+  }
+
+  /**
+   * Cleanup method to revoke blob URLs and prevent memory leaks.
+   * Should be called when the application unloads.
+   */
+  destroy() {
+    this.chatHistory.destroy();
   }
 
   async ask(query: string) {

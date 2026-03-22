@@ -2,6 +2,7 @@ import { browser } from "$app/environment";
 import { base } from "$app/paths";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
+import { entityDb } from "../../utils/entity-db";
 
 /**
  * Core system bootstrapping.
@@ -14,6 +15,7 @@ export function bootSystem(stores: {
   calendar: any;
   vault: any;
   uiStore: any;
+  oracle?: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
   stores.categories.init();
@@ -27,6 +29,13 @@ export function bootSystem(stores: {
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
   });
+
+  // Initialize Oracle Settings Service with Dexie
+  if (stores.oracle?.settings) {
+    stores.oracle.settings.init(entityDb).catch((error: any) => {
+      console.error("Oracle settings initialization failed", error);
+    });
+  }
 
   return true;
 }

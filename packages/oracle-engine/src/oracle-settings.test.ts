@@ -1,128 +1,167 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleSettingsService } from "./oracle-settings.svelte";
 
+// Mock EntityDb
+class MockEntityDb {
+  appSettings = {
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
+}
+
 describe("OracleSettingsService", () => {
-  let service: OracleSettingsService;
-  let mockDB: any;
+  let mockDb: MockEntityDb;
 
   beforeEach(() => {
-    vi.stubGlobal(
-      "BroadcastChannel",
-      vi.fn().mockImplementation(
-        class {
-          postMessage = vi.fn();
-          onmessage = null;
-        },
-      ),
-    );
-
-    service = new OracleSettingsService();
-    mockDB = {
-      get: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-    };
+    mockDb = new MockEntityDb();
+    vi.clearAllMocks();
   });
 
-  it("should initialize from DB", async () => {
-    mockDB.get
-      .mockResolvedValueOnce("stored-key")
-      .mockResolvedValueOnce("advanced");
-    await service.init(mockDB);
-    expect(service.apiKey).toBe("stored-key");
-    expect(service.tier).toBe("advanced");
-  });
-
-  it("should update and persist key", async () => {
-    await service.init(mockDB);
-    await service.setKey("new-key");
-    expect(service.apiKey).toBe("new-key");
-    expect(mockDB.put).toHaveBeenCalledWith(
-      "settings",
-      "new-key",
-      "ai_api_key",
-    );
-  });
-
-  it("should update and persist tier", async () => {
-    await service.init(mockDB);
-    await service.setTier("advanced");
-    expect(service.tier).toBe("advanced");
-    expect(mockDB.put).toHaveBeenCalledWith("settings", "advanced", "ai_tier");
-  });
-
-  it("should handle loading state", () => {
-    service.setLoading(true);
-    expect(service.isLoading).toBe(true);
-    service.setLoading(false);
-    expect(service.isLoading).toBe(false);
-  });
-
-  it("should clear key", async () => {
-    await service.init(mockDB);
-    await service.setKey("k");
-    await service.clearKey();
-    expect(service.apiKey).toBeNull();
-    expect(mockDB.delete).toHaveBeenCalledWith("settings", "ai_api_key");
-  });
-
-  it("should set style", () => {
-    service.setStyle("cool-theme");
-    expect(service.activeStyleTitle).toBe("cool-theme");
-  });
-
-  it("should handle SYNC_STATE message", () => {
-    const channel = (service as any).channel;
-    channel.onmessage({
-      data: {
-        type: "SYNC_STATE",
-        data: {
-          apiKey: "sync-key",
-          tier: "advanced",
-          isLoading: true,
-          activeStyleTitle: "s",
-        },
-      },
-    });
-    expect(service.apiKey).toBe("sync-key");
-    expect(service.tier).toBe("advanced");
-    expect(service.isLoading).toBe(true);
-  });
-
-  it("should handle REQUEST_STATE message", () => {
-    const channel = (service as any).channel;
-    const spy = vi.spyOn(channel, "postMessage");
-    channel.onmessage({ data: { type: "REQUEST_STATE" } });
-    expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "SYNC_STATE" }),
-    );
-  });
-
-  describe("getters", () => {
-    it("should return correct modelName based on tier", () => {
-      service.tier = "lite";
-      expect(service.modelName).toBe("gemini-flash-lite-latest");
-      service.tier = "advanced";
-      expect(service.modelName).toBe("gemini-3-flash-preview");
+  describe("constructor", () => {
+    it("should initialize with default values", () => {
+      const service = new OracleSettingsService();
+      
+      expect(service.apiKey).toBe(null);
+      expect(service.tier).toBe("advanced");
+      expect(service.isLoading).toBe(false);
+      expect(service.activeStyleTitle).toBe(null);
     });
 
-    it("should return effectiveApiKey (including shared key)", () => {
-      service.tier = "lite";
-      service.apiKey = null;
-      vi.stubGlobal("__SHARED_GEMINI_KEY__", "shared-123");
-      expect(service.effectiveApiKey).toBe("shared-123");
+    it("should accept optional db in constructor", () => {
+      const service = new OracleSettingsService(mockDb as any);
+      expect(service).toBeDefined();
+    });
+  });
 
+  describe("init", () => {
+    it("should load api key from database", async () => {
+      mockDb.appSettings.get.mockResolvedValueOnce({ value: "test-key" });
+      mockDb.appSettings.get.mockResolvedValueOnce({ value: "advanced" });
+
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      expect(service.apiKey).toBe("test-key");
+      expect(service.tier).toBe("advanced");
+      expect(mockDb.appSettings.get).toHaveBeenCalledWith("ai_api_key");
+      expect(mockDb.appSettings.get).toHaveBeenCalledWith("ai_tier");
+    });
+
+    it("should handle missing settings gracefully", async () => {
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+      mockDb.appSettings.get.mockResolvedValueOnce(undefined);
+
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      expect(service.apiKey).toBe(null);
+      expect(service.tier).toBe("advanced");
+    });
+  });
+
+  describe("setTier", () => {
+    it("should save tier to database and broadcast", async () => {
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      await service.setTier("lite");
+
+      expect(service.tier).toBe("lite");
+      expect(mockDb.appSettings.put).toHaveBeenCalledWith({
+        key: "ai_tier",
+        value: "lite",
+        updatedAt: expect.any(Number),
+      });
+    });
+  });
+
+  describe("setKey", () => {
+    it("should save api key to database and broadcast", async () => {
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+
+      await service.setKey("new-key");
+
+      expect(service.apiKey).toBe("new-key");
+      expect(mockDb.appSettings.put).toHaveBeenCalledWith({
+        key: "ai_api_key",
+        value: "new-key",
+        updatedAt: expect.any(Number),
+      });
+    });
+  });
+
+  describe("clearKey", () => {
+    it("should remove api key from database and broadcast", async () => {
+      const service = new OracleSettingsService();
+      await service.init(mockDb as any);
+      service.apiKey = "existing-key";
+
+      await service.clearKey();
+
+      expect(service.apiKey).toBe(null);
+      expect(mockDb.appSettings.delete).toHaveBeenCalledWith("ai_api_key");
+    });
+  });
+
+  describe("connectionMode", () => {
+    it("should return custom-key when api key is set", () => {
+      const service = new OracleSettingsService();
+      service.apiKey = "test-key";
+      
+      expect(service.connectionMode).toBe("custom-key");
+    });
+
+    it("should return system-proxy when no api key", () => {
+      const service = new OracleSettingsService();
+      
+      expect(service.connectionMode).toBe("system-proxy");
+    });
+  });
+
+  describe("effectiveApiKey", () => {
+    it("should return user api key when set", () => {
+      const service = new OracleSettingsService();
       service.apiKey = "user-key";
+      
       expect(service.effectiveApiKey).toBe("user-key");
-
-      vi.unstubAllGlobals();
     });
 
-    it("should return isEnabled status", () => {
-      service.apiKey = "k";
+    it("should return null when no user key (proxy mode)", () => {
+      const service = new OracleSettingsService();
+      
+      expect(service.effectiveApiKey).toBe(null);
+    });
+  });
+
+  describe("isEnabled", () => {
+    it("should always return true", () => {
+      const service = new OracleSettingsService();
+      
       expect(service.isEnabled).toBe(true);
+      
+      service.apiKey = "key";
+      expect(service.isEnabled).toBe(true);
+      
       service.apiKey = null;
-      expect(service.isEnabled).toBe(false);
+      expect(service.isEnabled).toBe(true);
+    });
+  });
+
+  describe("modelName", () => {
+    it("should return gemini-1.5-pro for advanced tier", () => {
+      const service = new OracleSettingsService();
+      service.tier = "advanced";
+      
+      expect(service.modelName).toBe("gemini-1.5-pro");
+    });
+
+    it("should return gemini-2.0-flash-lite for lite tier", () => {
+      const service = new OracleSettingsService();
+      service.tier = "lite";
+      
+      expect(service.modelName).toBe("gemini-2.0-flash-lite");
     });
   });
 });

@@ -1,17 +1,31 @@
 import type { ChatMessage } from "./types";
-import type { IDBPDatabase } from "idb";
+import type { EntityDb } from "../../../apps/web/src/lib/utils/entity-db";
+
+/**
+ * Internal type for chat history records stored in IndexedDB.
+ * Extends ChatMessage with database-specific fields.
+ */
+interface ChatHistoryRecord extends Omit<ChatMessage, "imageBlob"> {
+  imageBlob?: Blob;
+  [key: string]: any; // Allow additional fields for flexibility
+}
 
 export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
-  private db: IDBPDatabase<any> | null = null;
+  private db: EntityDb | null = null;
 
-  async init(db: IDBPDatabase<any>) {
+  /**
+   * Initialize the chat history service by loading saved messages from IndexedDB.
+   * Restores blob URLs for any persisted image blobs.
+   * @param db - The EntityDb instance for persistence
+   */
+  async init(db: EntityDb) {
     this.db = db;
-    const savedMessages = await db.getAll("chat_history");
-    if (savedMessages && savedMessages.length > 0) {
+    const savedMessages = await db.appSettings.get("chat_history");
+    if (savedMessages?.value && Array.isArray(savedMessages.value)) {
       // Restore blob URLs for persisted blobs
-      const messages = savedMessages.map((msg) => {
+      const messages = savedMessages.value.map((msg: ChatHistoryRecord) => {
         if (msg.imageBlob && !msg.imageUrl) {
           msg.imageUrl = URL.createObjectURL(msg.imageBlob);
         }
@@ -19,6 +33,18 @@ export class ChatHistoryService {
       });
       this.messages = messages;
     }
+  }
+
+  /**
+   * Cleanup method to revoke blob URLs and prevent memory leaks.
+   * Should be called when the service is destroyed or messages are cleared.
+   */
+  destroy() {
+    this.messages.forEach((m) => {
+      if (m.imageUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(m.imageUrl);
+      }
+    });
   }
 
   async addMessage(msg: ChatMessage) {
@@ -48,23 +74,31 @@ export class ChatHistoryService {
     await this.saveToDB();
   }
 
+  /**
+   * Save current messages to IndexedDB.
+   * Strips blob URLs before persistence (they are regenerated on init).
+   * Failures are silently ignored as chat history is non-critical.
+   */
   async saveToDB() {
     if (!this.db) return;
     try {
-      const tx = this.db.transaction("chat_history", "readwrite");
-      await tx.store.clear();
-      for (const msg of $state.snapshot(this.messages)) {
+      const messagesToPersist = $state.snapshot(this.messages).map((msg) => {
         const toPersist = { ...msg };
-        // We keep imageBlob (it's a Blob, IndexedDB can store it)
+        // We keep imageBlob (it's a Blob, can store in IndexedDB)
         // But we MUST remove imageUrl if it's a blob URL because they expire
         if (toPersist.imageUrl?.startsWith("blob:")) {
           delete toPersist.imageUrl;
         }
-        await tx.store.put(toPersist);
-      }
-      await tx.done;
-    } catch (e) {
-      console.warn("[ChatHistoryService] Failed to save to DB:", e);
+        return toPersist;
+      });
+      await this.db.appSettings.put({
+        key: "chat_history",
+        value: messagesToPersist,
+        updatedAt: Date.now(),
+      });
+    } catch {
+      // [ChatHistoryService] Silently fail - chat history is not critical data
+      // User can still interact with messages even if persistence fails
     }
   }
 

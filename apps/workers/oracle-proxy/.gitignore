@@ -1,0 +1,7 @@
+# Oracle Proxy Worker
+node_modules/
+.wrangler/
+.dev/
+*.log
+.env
+.DS_Store

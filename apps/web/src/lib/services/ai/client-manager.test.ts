@@ -1,55 +1,183 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { DefaultAIClientManager } from "./client-manager";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+// Mock @google/generative-ai with proper class structure
 vi.mock("@google/generative-ai", () => {
-  return {
-    GoogleGenerativeAI: vi.fn().mockImplementation(function () {
+  class MockGoogleGenerativeAI {
+    constructor(_apiKey: string) {}
+    
+    getGenerativeModel() {
       return {
-        getGenerativeModel: vi.fn().mockReturnValue({}),
+        model: "gemini-1.5-pro",
+        generateContent: vi.fn(),
       };
-    }),
+    }
+  }
+  
+  return {
+    GoogleGenerativeAI: MockGoogleGenerativeAI,
   };
 });
+
+import { DefaultAIClientManager } from "./client-manager";
 
 describe("DefaultAIClientManager", () => {
   let manager: DefaultAIClientManager;
 
   beforeEach(() => {
     manager = new DefaultAIClientManager();
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
 
-  it("should create a new client when getClient is called for the first time", () => {
-    const client = manager.getClient("key1");
-    expect(GoogleGenerativeAI).toHaveBeenCalledWith("key1");
-    expect(client).toBeDefined();
-  });
-
-  it("should reuse the client when called with the same API key", () => {
-    const client1 = manager.getClient("key1");
-    const client2 = manager.getClient("key1");
-    expect(GoogleGenerativeAI).toHaveBeenCalledTimes(1);
-    expect(client1).toBe(client2);
-  });
-
-  it("should create a new client when the API key changes", () => {
-    const client1 = manager.getClient("key1");
-    const client2 = manager.getClient("key2");
-    expect(GoogleGenerativeAI).toHaveBeenCalledTimes(2);
-    expect(GoogleGenerativeAI).toHaveBeenLastCalledWith("key2");
-    expect(client1).not.toBe(client2);
-  });
-
-  it("should create a model with correct parameters", () => {
-    const model = manager.getModel("key1", "gemini-pro", "instruction");
-
-    // Get the mocked client instance
-    const client = manager.getClient("key1");
-    expect(client.getGenerativeModel).toHaveBeenCalledWith({
-      model: "gemini-pro",
-      systemInstruction: "instruction",
+  describe("getModel", () => {
+    it("should return proxy model when no API key provided", () => {
+      const model = manager.getModel("", "gemini-1.5-pro");
+      
+      expect(model).toBeDefined();
+      expect(model.model).toBe("gemini-1.5-pro");
+      expect(typeof model.generateContent).toBe("function");
     });
-    expect(model).toBeDefined();
+
+    it("should return direct client model when API key is provided", () => {
+      const model = manager.getModel("test-api-key", "gemini-1.5-pro");
+      
+      expect(model).toBeDefined();
+      expect(model.model).toBe("gemini-1.5-pro");
+    });
+  });
+
+  describe("createProxyModel", () => {
+    it("should forward requests to proxy URL", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{ text: "Test response" }]
+            }
+          }]
+        })
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent("Test message");
+      
+      expect(fetch).toHaveBeenCalledWith(
+        "https://oracle-proxy.codexcryptica.workers.dev",
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
+      );
+      
+      expect(result.response.text()).toBe("Test response");
+    });
+
+    it("should throw error on invalid response structure", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{}] // Missing content.parts[0].text
+        })
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      
+      await expect(model.generateContent("Test"))
+        .rejects.toThrow("[OracleProxy] Invalid response: missing content in candidates");
+    });
+
+    it("should throw error on proxy request failure", async () => {
+      const mockResponse = {
+        ok: false,
+        json: vi.fn().mockResolvedValue({
+          error: { message: "Service unavailable" }
+        })
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      
+      await expect(model.generateContent("Test"))
+        .rejects.toThrow("[OracleProxy] Request failed: Service unavailable");
+    });
+
+    it("should handle malformed proxy response gracefully", async () => {
+      const mockResponse = {
+        ok: false,
+        json: vi.fn().mockRejectedValue(new Error("Invalid JSON"))
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      
+      await expect(model.generateContent("Test"))
+        .rejects.toThrow("[OracleProxy] Request failed: Proxy request failed");
+    });
+
+    it("should include system instruction when provided", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{ text: "Response with system instruction" }]
+            }
+          }]
+        })
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro", "You are a helpful assistant");
+      await model.generateContent("Test");
+      
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      
+      expect(body.generationConfig).toEqual({
+        systemInstruction: "You are a helpful assistant"
+      });
+    });
+
+    it("should handle array of content blobs", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [{
+            content: {
+              parts: [{ text: "Multi-part response" }]
+            }
+          }]
+        })
+      };
+      
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent([
+        { text: "Text part" },
+        { inlineData: { mimeType: "image/png", data: "base64data" } }
+      ]);
+      
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+      
+      expect(body.contents).toHaveLength(2);
+      expect(body.contents[0].parts[0].text).toBe("Text part");
+      expect(body.contents[1].parts[0].inlineData).toBeDefined();
+    });
   });
 });

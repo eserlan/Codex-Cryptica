@@ -1,0 +1,31 @@
+# Oracle Proxy Worker Configuration
+# https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "oracle-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Account ID (optional - will prompt if not set)
+# account_id = "your-account-id"
+
+# Environment variables (non-sensitive)
+[vars]
+# Comma-separated list of allowed origins
+# Leave empty to use defaults (codex-cryptica.com, staging, pages.dev)
+ALLOWED_ORIGINS = ""
+
+# Secrets (must be set via `wrangler secret put`)
+# - GEMINI_API_KEY: Your Google Gemini API key
+
+# Development configuration
+[dev]
+port = 8787
+local_protocol = "http"
+
+# Build configuration
+[build]
+command = ""  # No build step needed for TypeScript
+
+# Minification (optional, reduces bundle size)
+[minify]
+bundle = false
