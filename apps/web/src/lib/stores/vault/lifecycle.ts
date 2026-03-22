@@ -1,8 +1,4 @@
 import { getDB } from "../../utils/idb";
-import { vaultRegistry } from "../vault-registry.svelte";
-import { themeStore } from "../theme.svelte";
-import { mapRegistry } from "../map-registry.svelte";
-import { canvasRegistry } from "../canvas-registry.svelte";
 import type { LocalEntity } from "./types";
 
 export class VaultLifecycleManager {
@@ -16,6 +12,7 @@ export class VaultLifecycleManager {
       FileSystemDirectoryHandle | undefined
     >,
     private repository: any,
+    private assetManager: any,
     private loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>,
     private getEntities: () => Record<string, LocalEntity>,
     private setDemoVaultName: (name: string | null) => void,
@@ -25,65 +22,81 @@ export class VaultLifecycleManager {
     private setSelectedEntityId: (id: string | null) => void,
     private vaultRegistry: typeof import("../vault-registry.svelte").vaultRegistry,
     private themeStore: typeof import("../theme.svelte").themeStore,
+    private mapRegistry: typeof import("../map-registry.svelte").mapRegistry,
+    private canvasRegistry: typeof import("../canvas-registry.svelte").canvasRegistry,
     private ensureAssetPersisted: (
       path: string,
       handle: FileSystemDirectoryHandle,
     ) => Promise<void>,
   ) {}
 
-  async importFromFolder(handle?: FileSystemDirectoryHandle): Promise<boolean> {
-    const vaultDir = await this.getActiveVaultHandle();
-    const activeVaultId = this.getActiveVaultId();
-    if (!activeVaultId || !vaultDir) {
-      this.setStatus("error");
-      this.setErrorMessage("Vault not open");
-      return false;
-    }
-
+  async importFromFolder(handle: FileSystemDirectoryHandle) {
     this.setStatus("loading");
     try {
-      const { importFromFolder } = await import("./io");
-      const result = await importFromFolder(activeVaultId, vaultDir, handle);
-      if (result.success) {
-        await this.loadFiles(false);
-        const db = await getDB();
-        const entityCount = Object.keys(this.getEntities()).length;
-        const record = await db.get("vaults", activeVaultId);
-        if (record) {
-          record.entityCount = entityCount;
-          await db.put("vaults", record);
-          await vaultRegistry.listVaults();
-        }
-        this.setStatus("idle");
-        return true;
-      } else {
-        if (result.error !== "User cancelled") {
-          this.setStatus("error");
-          this.setErrorMessage(result.error || "Import failed");
-        } else {
-          this.setStatus("idle");
-        }
-        return false;
-      }
-    } catch (e: any) {
+      const db = await getDB();
+      const vaultId = await this.vaultRegistry.createVault(handle.name);
+      await db.put("sync_registry", { id: vaultId, handle } as any);
+      await this.vaultRegistry.setActiveVault(vaultId);
+      await this.loadFiles(false);
+      this.setStatus("idle");
+      return vaultId;
+    } catch (err: any) {
+      console.error("[VaultStore] Import failed:", err);
       this.setStatus("error");
-      this.setErrorMessage(e.message);
-      return false;
+      this.setErrorMessage(err.message || "Failed to import vault.");
+      throw err;
     }
   }
 
-  async loadFromFolder(handle: FileSystemDirectoryHandle): Promise<boolean> {
-    let id: string;
+  async persistToIndexedDB(vaultId: string) {
+    this.setStatus("saving");
     try {
-      id = await this.createVault(handle.name);
-    } catch {
+      const handle = await this.getActiveVaultHandle();
+      if (!handle) throw new Error("No vault handle available");
+
+      const entities = this.getEntities();
+      for (const entity of Object.values(entities)) {
+        await this.repository.saveToDisk(handle, vaultId, entity, false);
+        await this.ensureAssetPersisted(entity.id, handle);
+      }
+
+      const db = await getDB();
+      await db.put("sync_registry", { id: vaultId, handle } as any);
+      this.setStatus("idle");
+    } catch (err: any) {
+      console.error("[VaultStore] Persistence failed:", err);
       this.setStatus("error");
-      this.setErrorMessage("Failed to create vault from folder");
-      return false;
+      this.setErrorMessage(err.message || "Failed to persist vault.");
+      throw err;
     }
+  }
+
+  async createVault(name: string) {
+    const newId = await this.vaultRegistry.createVault(name);
+    await this.switchVault(newId);
+    return newId;
+  }
+
+  async deleteVault(id: string) {
+    await this.vaultRegistry.deleteVault(id);
+    if (this.getActiveVaultId() === id) {
+      this.repository.clear();
+      this.assetManager.clear();
+      this.mapRegistry.maps = {};
+      this.canvasRegistry.clear();
+      const nextVault = this.vaultRegistry.availableVaults[0];
+      if (nextVault) {
+        await this.switchVault(nextVault.id);
+      }
+    }
+  }
+
+  async setupSync(handle: FileSystemDirectoryHandle) {
+    const activeId = this.getActiveVaultId();
+    if (!activeId) return;
     try {
       const db = await getDB();
-      await db.put("settings", handle, `syncHandle_${id}`);
+      await db.put("sync_registry", { id: activeId, handle } as any);
     } catch {
       console.warn("[VaultStore] Could not persist sync handle");
     }
@@ -92,92 +105,51 @@ export class VaultLifecycleManager {
 
   async switchVault(id: string) {
     if (this.getActiveVaultId() === id) return;
+
+    // Ensure all pending changes are written to the current vault before switching
+    await this.repository.waitForAllSaves();
+
     this.repository.clear();
-    mapRegistry.maps = {};
-    canvasRegistry.clear();
+    this.assetManager.clear();
+    this.mapRegistry.maps = {};
+    this.canvasRegistry.clear();
     this.setSelectedEntityId(null);
     this.setHasConflictFiles(false);
     this.setStatus("loading");
 
-    await vaultRegistry.setActiveVault(id);
+    await this.vaultRegistry.setActiveVault(id);
     await this.loadFiles(true);
-    await themeStore.loadForVault(id);
+    await this.themeStore.loadForVault(id);
     this.setStatus("idle");
     window.dispatchEvent(new CustomEvent("vault-switched", { detail: { id } }));
   }
 
-  async createVault(name: string): Promise<string> {
-    const newId = await vaultRegistry.createVault(name);
-    await this.switchVault(newId);
-    return newId;
-  }
-
-  async deleteVault(id: string) {
-    await vaultRegistry.deleteVault(id);
-    if (this.getActiveVaultId() === id) {
-      this.repository.clear();
-      mapRegistry.maps = {};
-      canvasRegistry.clear();
-      const nextVault = vaultRegistry.availableVaults[0];
-      if (nextVault) {
-        await this.switchVault(nextVault.id);
-      }
-    }
-  }
-
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
-    this.repository.entities = entities;
-    this.setDemoVaultName(name || null);
-    this.setInitialized(true);
-    this.setStatus("idle");
-    const services = this.getServices();
-    if (services?.search) {
-      await services.search.clear();
-      for (const entity of Object.values(
-        this.repository.entities,
-      ) as LocalEntity[]) {
-        await services.search.index({
-          id: entity.id,
-          title: entity.title,
-          content: entity.content,
-          type: entity.type,
-          path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
-          keywords: [
-            ...(entity.tags || []),
-            entity.lore || "",
-            ...Object.values(entity.metadata || {}).flat(),
-          ].join(" "),
-          updatedAt: Date.now(),
-        });
-      }
-    }
-  }
-
-  async persistToIndexedDB(vaultId: string) {
-    this.setStatus("saving");
+    this.setStatus("loading");
     try {
-      await vaultRegistry.setActiveVault(vaultId);
-      const vaultDir = await this.getActiveVaultHandle();
-      if (!vaultDir) throw new Error("Could not get vault handle");
+      this.setDemoVaultName(name);
+      this.repository.entities = entities;
+      this.setInitialized(true);
 
-      const entities = Object.values(this.getEntities());
-
-      // 1. Migrate associated assets (images/thumbnails) to the new vault folder
-      for (const entity of entities) {
-        if (entity.image) {
-          await this.ensureAssetPersisted(entity.image, vaultDir);
-        }
-        if (entity.thumbnail) {
-          await this.ensureAssetPersisted(entity.thumbnail, vaultDir);
+      const services = this.getServices();
+      if (services?.search) {
+        for (const entity of Object.values(entities)) {
+          await services.search.index({
+            id: entity.id,
+            title: entity.title,
+            content: entity.content,
+            type: entity.type,
+            path: (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`,
+            keywords: [
+              ...(entity.tags || []),
+              entity.lore || "",
+              ...Object.values(entity.metadata || {}).flat(),
+            ].join(" "),
+            updatedAt: Date.now(),
+          });
         }
       }
 
-      // 2. Save entities as Markdown files in the new vault
-      for (const entity of entities) {
-        await this.repository.saveToDisk(vaultDir, vaultId, entity, false);
-      }
-
-      this.setDemoVaultName(null);
       this.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);

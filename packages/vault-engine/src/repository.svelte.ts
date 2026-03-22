@@ -28,6 +28,7 @@ const SKEW_MS = 500;
 export class VaultRepository {
   entities = $state<Record<string, LocalEntity>>({});
   saveQueue = new KeyedTaskQueue();
+  private _currentLoadId = 0;
 
   constructor(private ioAdapter: IFileIOAdapter) {}
 
@@ -45,6 +46,7 @@ export class VaultRepository {
       newOrChanged: Record<string, LocalEntity>,
     ) => Promise<void> | void,
   ) {
+    const loadId = ++this._currentLoadId;
     const files = await this.ioAdapter.walkDirectory(vaultHandle);
 
     const mdFiles = files.filter((f) => {
@@ -88,8 +90,12 @@ export class VaultRepository {
 
     const CHUNK_SIZE = 40;
     for (let i = 0; i < mdFiles.length; i += CHUNK_SIZE) {
+      if (this._currentLoadId !== loadId) return this.entities;
+
       const chunk = mdFiles.slice(i, i + CHUNK_SIZE);
       const chunkResults = await Promise.all(chunk.map(processFile));
+
+      if (this._currentLoadId !== loadId) return this.entities;
 
       const updatedEntities: Record<string, LocalEntity> = {};
       const newOrChanged: Record<string, LocalEntity> = {};
@@ -157,6 +163,8 @@ export class VaultRepository {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
     }
+
+    if (this._currentLoadId !== loadId) return this.entities;
 
     // Final cleanup: Remove any entities that no longer exist on disk.
     // We ONLY remove entities that have a _path (meaning they came from disk)

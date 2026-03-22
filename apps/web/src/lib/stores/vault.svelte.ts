@@ -157,6 +157,7 @@ export class VaultStore {
       () => this.activeVaultId,
       () => this.getActiveVaultHandle(),
       this.repository,
+      this.assetManager,
       (skipSync) => this.loadFiles(skipSync),
       () => this.entities,
       (n) => (this.demoVaultName = n),
@@ -166,6 +167,8 @@ export class VaultStore {
       (id) => (this.selectedEntityId = id),
       vaultRegistry,
       themeStore,
+      mapRegistry,
+      canvasRegistry,
       (path, handle) => this.ensureAssetPersisted(path, handle),
     );
     if (typeof window !== "undefined") {
@@ -325,6 +328,7 @@ export class VaultStore {
 
   async loadFiles(skipSyncIfWarm = true) {
     if (!this.activeVaultId) return;
+    const vaultIdAtStart = this.activeVaultId;
 
     this.status = "loading";
     this._contentLoadedIds = new Set();
@@ -359,6 +363,10 @@ export class VaultStore {
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
       await cacheService.preloadVault(this.activeVaultId);
+
+      // Race check after async preload
+      if (this.activeVaultId !== vaultIdAtStart) return;
+
       const cachedEntities = cacheService.getPreloadedEntities();
 
       if (cachedEntities.length > 0) {
@@ -415,6 +423,10 @@ export class VaultStore {
 
       // 2. FS-Sync: Resolve OPFS handle and perform full synchronization
       const vaultDir = await this.getActiveVaultHandle();
+
+      // Race check after async handle resolution
+      if (this.activeVaultId !== vaultIdAtStart) return;
+
       if (!vaultDir) {
         if (this.status !== "idle") {
           this.status = cachedEntities.length > 0 ? "idle" : "error";
@@ -643,6 +655,9 @@ export class VaultStore {
   scheduleSave(entity: LocalEntity | Entity): Promise<void> {
     if (this.onEntityUpdate) this.onEntityUpdate(entity as LocalEntity);
 
+    const vaultIdAtStart = this.activeVaultId;
+    if (!vaultIdAtStart) return Promise.resolve();
+
     if (this.services) {
       const path =
         (entity as LocalEntity)._path?.join("/") || `${entity.id}.md`;
@@ -690,12 +705,13 @@ export class VaultStore {
       }
       this.status = "saving";
       try {
-        const vaultHandle = await this.getActiveVaultHandle();
+        // Resolution must happen per-save to ensure we use the correct handle for the vaultIdAtStart
+        const vaultHandle = await this.getSpecificVaultHandle(vaultIdAtStart);
         if (!vaultHandle) return;
 
         await this.repository.saveToDisk(
           vaultHandle,
-          this.activeVaultId!,
+          vaultIdAtStart,
           latestEntity,
           this.isGuest,
         );
@@ -703,7 +719,7 @@ export class VaultStore {
         // Update Dexie cache immediately so it's fresh for Tier 1 lookups
         const path = latestEntity._path || [`${latestEntity.id}.md`];
         await cacheService.set(
-          `${this.activeVaultId}:${path.join("/")}`,
+          `${vaultIdAtStart}:${path.join("/")}`,
           Date.now(),
           latestEntity,
         );
@@ -718,6 +734,28 @@ export class VaultStore {
         this.errorMessage = "Failed to access storage for saving.";
       }
     });
+  }
+
+  async getSpecificVaultHandle(
+    vaultId: string,
+  ): Promise<FileSystemDirectoryHandle | undefined> {
+    if (!vaultId || !vaultRegistry.rootHandle) return undefined;
+
+    try {
+      const vaultsDir = await vaultRegistry.rootHandle.getDirectoryHandle(
+        "vaults",
+        { create: true },
+      );
+      return await vaultsDir.getDirectoryHandle(vaultId, {
+        create: true,
+      });
+    } catch (err) {
+      debugStore.warn(
+        `[VaultStore] Failed to get handle for vault: ${vaultId}`,
+        err,
+      );
+      return undefined;
+    }
   }
 
   /**
@@ -1059,10 +1097,8 @@ export class VaultStore {
 
   // --- Lifecycle Delegations ---
   importFromFolder(handle?: FileSystemDirectoryHandle) {
+    if (!handle) return Promise.resolve();
     return this.lifecycleManager.importFromFolder(handle);
-  }
-  loadFromFolder(handle: FileSystemDirectoryHandle) {
-    return this.lifecycleManager.loadFromFolder(handle);
   }
   switchVault(id: string) {
     return this.lifecycleManager.switchVault(id);

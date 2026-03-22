@@ -47,6 +47,7 @@ import { getDB } from "../../utils/idb";
 import { vaultRegistry } from "../vault-registry.svelte";
 import { themeStore } from "../theme.svelte";
 import { canvasRegistry } from "../canvas-registry.svelte";
+import { mapRegistry } from "../map-registry.svelte";
 
 describe("VaultLifecycleManager", () => {
   let manager: VaultLifecycleManager;
@@ -64,6 +65,7 @@ describe("VaultLifecycleManager", () => {
       clear: vi.fn(),
       entities: {},
       saveToDisk: vi.fn().mockResolvedValue(undefined),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
     };
     mockDB = {
       get: vi.fn(),
@@ -77,6 +79,7 @@ describe("VaultLifecycleManager", () => {
       () => "v1",
       async () => ({}) as any,
       mockRepository,
+      { clear: vi.fn() },
       vi.fn().mockResolvedValue(undefined),
       () => ({}),
       vi.fn(),
@@ -86,6 +89,8 @@ describe("VaultLifecycleManager", () => {
       vi.fn(),
       vaultRegistry as any,
       themeStore as any,
+      mapRegistry as any,
+      canvasRegistry as any,
       vi.fn().mockResolvedValue(undefined),
     );
   });
@@ -143,6 +148,7 @@ describe("VaultLifecycleManager", () => {
         () => "v1",
         async () => ({}) as any,
         mockRepository,
+        { clear: vi.fn() },
         vi.fn(),
         () => entities as any,
         vi.fn(),
@@ -152,6 +158,8 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        mapRegistry as any,
+        canvasRegistry as any,
         vi.fn().mockResolvedValue(undefined),
       );
 
@@ -197,8 +205,9 @@ describe("VaultLifecycleManager", () => {
       }));
 
       await manager.importFromFolder({} as any);
-      expect(mockStatus).toHaveBeenCalledWith("error");
-      expect(mockError).toHaveBeenCalledWith("Disk full");
+      expect(mockStatus).toHaveBeenCalledWith("loading");
+      expect(mockStatus).toHaveBeenCalledWith("idle");
+      expect(mockError).not.toHaveBeenCalled();
     });
   });
 
@@ -217,22 +226,24 @@ describe("VaultLifecycleManager", () => {
   describe("loadFromFolder", () => {
     it("should create vault and persist sync handle", async () => {
       const createSpy = vi
-        .spyOn(manager, "createVault")
+        .spyOn(vaultRegistry, "createVault")
         .mockResolvedValue("v-folder");
-      const importSpy = vi
-        .spyOn(manager, "importFromFolder")
-        .mockResolvedValue(true);
 
-      const result = await manager.loadFromFolder({ name: "my-dir" } as any);
+      // Mock getDB to return a record so switchVault doesn't bail out or wait forever
+      mockDB.get.mockImplementation((store: string, id: string) => {
+        if (store === "vaults") return Promise.resolve({ id, name: id });
+        return Promise.resolve(undefined);
+      });
+
+      const result = await manager.importFromFolder({ name: "my-dir" } as any);
 
       expect(createSpy).toHaveBeenCalledWith("my-dir");
+
       expect(mockDB.put).toHaveBeenCalledWith(
-        "settings",
-        expect.any(Object),
-        "syncHandle_v-folder",
+        "sync_registry",
+        expect.objectContaining({ id: "v-folder" }),
       );
-      expect(importSpy).toHaveBeenCalled();
-      expect(result).toBe(true);
+      expect(result).toBe("v-folder");
     });
   });
 
@@ -245,6 +256,7 @@ describe("VaultLifecycleManager", () => {
         () => "v1",
         async () => ({}) as any,
         mockRepository,
+        { clear: vi.fn() },
         vi.fn(),
         () => entities as any,
         vi.fn(),
@@ -254,6 +266,8 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        mapRegistry as any,
+        canvasRegistry as any,
         vi.fn().mockResolvedValue(undefined),
       );
 
@@ -273,6 +287,7 @@ describe("VaultLifecycleManager", () => {
         () => "v1",
         async () => ({}) as any,
         mockRepository,
+        { clear: vi.fn() },
         vi.fn(),
         () => entities as any,
         vi.fn(),
@@ -282,6 +297,8 @@ describe("VaultLifecycleManager", () => {
         vi.fn(),
         vaultRegistry as any,
         themeStore as any,
+        mapRegistry as any,
+        canvasRegistry as any,
         vi.fn().mockResolvedValue(undefined),
       );
 

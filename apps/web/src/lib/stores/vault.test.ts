@@ -652,15 +652,13 @@ describe("VaultStore", () => {
     it("should delegate lifecycle operations", async () => {
       const lm = (testVault as any).lifecycleManager;
       vi.spyOn(lm, "importFromFolder").mockResolvedValue(undefined);
-      vi.spyOn(lm, "loadFromFolder").mockResolvedValue(undefined);
       vi.spyOn(lm, "switchVault").mockResolvedValue(undefined);
       vi.spyOn(lm, "createVault").mockResolvedValue("v1");
       vi.spyOn(lm, "deleteVault").mockResolvedValue(undefined);
       vi.spyOn(lm, "loadDemoData").mockResolvedValue(undefined);
       vi.spyOn(lm, "persistToIndexedDB").mockResolvedValue(undefined);
 
-      await testVault.importFromFolder();
-      await testVault.loadFromFolder({} as any);
+      await testVault.importFromFolder({} as any);
       await testVault.switchVault("v1");
       await testVault.createVault("name");
       await testVault.deleteVault("v1");
@@ -668,8 +666,8 @@ describe("VaultStore", () => {
       await testVault.persistToIndexedDB("v1");
 
       expect(lm.importFromFolder).toHaveBeenCalled();
-      expect(lm.loadFromFolder).toHaveBeenCalled();
       expect(lm.switchVault).toHaveBeenCalledWith("v1");
+
       expect(lm.createVault).toHaveBeenCalledWith("name");
       expect(lm.deleteVault).toHaveBeenCalledWith("v1");
       expect(lm.loadDemoData).toHaveBeenCalled();
