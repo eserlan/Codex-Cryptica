@@ -4,8 +4,28 @@ vi.mock("$app/environment", () => ({
   browser: true,
 }));
 
+// Mock OPFS utils
+const mockOpfsMethods = vi.hoisted(() => ({
+  getOpfsRoot: vi.fn(),
+  getVaultDir: vi.fn(),
+  readFileAsText: vi.fn(),
+  writeOpfsFile: vi.fn(),
+}));
+
+vi.mock("../utils/opfs", async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    getOpfsRoot: mockOpfsMethods.getOpfsRoot,
+    getVaultDir: mockOpfsMethods.getVaultDir,
+    readFileAsText: mockOpfsMethods.readFileAsText,
+    writeOpfsFile: mockOpfsMethods.writeOpfsFile,
+  };
+});
+
 import { themeStore } from "./theme.svelte";
 import { DEFAULT_JARGON } from "schema";
+import { vault } from "./vault.svelte";
 
 describe("ThemeStore Jargon", () => {
   beforeEach(() => {
@@ -85,6 +105,65 @@ describe("ThemeStore Persistence", () => {
     expect(themeStore.currentThemeId).toBe("cyberpunk");
     expect(localStorage.getItem("codex-cryptica-active-theme")).toBe(
       "cyberpunk",
+    );
+  });
+});
+
+describe("ThemeStore OPFS Persistence", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    localStorage.clear();
+  });
+
+  it("should load theme from OPFS config.json", async () => {
+    mockOpfsMethods.getOpfsRoot.mockResolvedValue({});
+    mockOpfsMethods.getVaultDir.mockResolvedValue({});
+    mockOpfsMethods.readFileAsText.mockResolvedValue(
+      JSON.stringify({ theme: "scifi" }),
+    );
+
+    await themeStore.loadForVault("vault-1");
+
+    expect(themeStore.currentThemeId).toBe("scifi");
+    expect(localStorage.getItem("codex-cryptica-active-theme")).toBe("scifi");
+  });
+
+  it("should fallback to IDB if OPFS config is missing", async () => {
+    mockOpfsMethods.getOpfsRoot.mockResolvedValue({});
+    mockOpfsMethods.getVaultDir.mockResolvedValue({});
+    mockOpfsMethods.readFileAsText.mockRejectedValue(new Error("Not found"));
+
+    const { getDB } = await import("../utils/idb");
+    const db = await getDB();
+    await db.put("settings", "horror", "theme_vault-2");
+
+    await themeStore.loadForVault("vault-2");
+
+    expect(themeStore.currentThemeId).toBe("horror");
+  });
+
+  it("should save theme to both IDB and OPFS", async () => {
+    mockOpfsMethods.getOpfsRoot.mockResolvedValue({});
+    mockOpfsMethods.getVaultDir.mockResolvedValue({});
+    mockOpfsMethods.readFileAsText.mockRejectedValue(new Error("Not found")); // First save
+
+    // Set active vault so setTheme knows where to save
+    vi.spyOn(vault, "activeVaultId", "get").mockReturnValue("vault-3");
+
+    await themeStore.setTheme("cyberpunk");
+
+    // Verify IDB
+    const { getDB } = await import("../utils/idb");
+    const db = await getDB();
+    const idbStored = await db.get("settings", "theme_vault-3");
+    expect(idbStored).toBe("cyberpunk");
+
+    // Verify OPFS call
+    expect(mockOpfsMethods.writeOpfsFile).toHaveBeenCalledWith(
+      [".codex", "config.json"],
+      expect.stringContaining('"theme": "cyberpunk"'),
+      expect.any(Object),
+      "vault-3",
     );
   });
 });
