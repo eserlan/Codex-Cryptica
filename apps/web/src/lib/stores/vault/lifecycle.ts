@@ -37,7 +37,10 @@ export class VaultLifecycleManager {
       const vaultId = await this.vaultRegistry.createVault(handle.name);
       await db.put("settings", handle, `syncHandle_${vaultId}`);
       await this.vaultRegistry.setActiveVault(vaultId);
+
+      // Force a reload of files which will now find the sync handle we just put
       await this.loadFiles(false);
+
       this.setStatus("idle");
       return vaultId;
     } catch (err: any) {

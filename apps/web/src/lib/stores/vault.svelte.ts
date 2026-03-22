@@ -197,6 +197,38 @@ export class VaultStore {
     }
   }
 
+  async ensureServicesInitialized() {
+    if (this.services && this.syncCoordinator) return;
+
+    try {
+      const searchModule = await import("../services/search");
+      const aiModule = await import("../services/ai");
+
+      if (searchModule && aiModule) {
+        this.services = {
+          search: searchModule.searchService,
+          ai: {
+            clearStyleCache: () =>
+              aiModule.contextRetrievalService.clearStyleCache(),
+            expandQuery: (k, q, h) =>
+              aiModule.textGenerationService.expandQuery(k, q, h),
+          },
+        };
+      }
+    } catch (err) {
+      debugStore.error("[VaultStore] Failed to lazy-load services", err);
+    }
+
+    if (!this.syncCoordinator && typeof window !== "undefined") {
+      const engine = await createSyncEngine();
+      this.syncCoordinator = new SyncCoordinator(
+        syncIOAdapter,
+        engine,
+        syncNotifier,
+      );
+    }
+  }
+
   async init(injectedServices?: IVaultServices) {
     this.isInitialized = false;
     this.status = "loading";
@@ -214,33 +246,7 @@ export class VaultStore {
         .then((m) => (this._helpers.parseMarkdown = m.parseMarkdown))
         .catch(() => {});
 
-      try {
-        const searchModule = await import("../services/search");
-        const aiModule = await import("../services/ai");
-
-        if (searchModule && aiModule) {
-          this.services = {
-            search: searchModule.searchService,
-            ai: {
-              clearStyleCache: () =>
-                aiModule.contextRetrievalService.clearStyleCache(),
-              expandQuery: (k, q, h) =>
-                aiModule.textGenerationService.expandQuery(k, q, h),
-            },
-          };
-        }
-      } catch (err) {
-        debugStore.error("[VaultStore] Failed to lazy-load services", err);
-      }
-
-      if (!this.syncCoordinator) {
-        const engine = await createSyncEngine();
-        this.syncCoordinator = new SyncCoordinator(
-          syncIOAdapter,
-          engine,
-          syncNotifier,
-        );
-      }
+      await this.ensureServicesInitialized();
     }
 
     try {
@@ -435,6 +441,34 @@ export class VaultStore {
           }
         }
         return;
+      }
+
+      // 3. Local-Sync: If a local directory handle is persisted, sync it to OPFS first.
+      const localHandle = await this.getActiveSyncHandle();
+      if (localHandle) {
+        debugStore.log(
+          `[VaultStore] Local sync handle found for ${this.activeVaultId}. Synchronizing...`,
+        );
+        await this.ensureServicesInitialized();
+        if (this.syncCoordinator) {
+          try {
+            await this.syncCoordinator.syncToLocal(
+              this.activeVaultId,
+              vaultDir,
+              this.entities,
+              () => this.repository.waitForAllSaves(),
+              (state) => {
+                this.status = state.status;
+                if (state.errorMessage) this.errorMessage = state.errorMessage;
+              },
+              () => this.checkForConflicts(),
+            );
+            debugStore.log("[VaultStore] Local sync complete.");
+          } catch (err) {
+            debugStore.error("[VaultStore] Local sync failed", err);
+            // We continue anyway, maybe OPFS has some data
+          }
+        }
       }
 
       // Ensure status is idle if we have cache, otherwise keep loading until we get first FS results
