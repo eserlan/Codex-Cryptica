@@ -62,9 +62,6 @@ export default tseslint.config(
       "**/coverage/**",
       "**/playwright-report/**",
       "**/test-results/**",
-      "**/audit-report/**",
-      "**/audit-report-prod/**",
-      "**/.unlighthouse/**",
     ],
   },
 );

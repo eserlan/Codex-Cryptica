@@ -1,6 +1,7 @@
 import { browser } from "$app/environment";
 import { base } from "$app/paths";
 import { debugStore } from "../../stores/debug.svelte";
+import { IS_STAGING } from "../../config";
 
 /**
  * Core system bootstrapping.
@@ -12,12 +13,16 @@ export function bootSystem(stores: {
   graph: any;
   calendar: any;
   vault: any;
+  uiStore: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
   stores.categories.init();
   stores.timeline.init();
   stores.graph.init();
   stores.calendar.init();
+
+  // Initialize staging state
+  stores.uiStore.isStaging = IS_STAGING;
 
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);

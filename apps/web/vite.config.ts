@@ -1,4 +1,5 @@
 import { sveltekit } from "@sveltejs/kit/vite";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vitest/config";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -18,7 +19,7 @@ try {
 }
 
 export default defineConfig({
-  plugins: [sveltekit() as any],
+  plugins: [tailwindcss(), sveltekit() as any],
   resolve: {
     alias: {
       "dice-engine": resolve(__dirname, "../../packages/dice-engine/src"),
@@ -26,6 +27,19 @@ export default defineConfig({
   },
   define: {
     __APP_VERSION__: JSON.stringify(`${pkg.version}+${gitHash}`),
+    ...(process.env.VITEST
+      ? {
+          __BUNDLED_DEV__: "true",
+          __SERVER_FORWARD_CONSOLE__: "false",
+          __HMR_PROTOCOL__: '"ws"',
+          __HMR_HOSTNAME__: '"localhost"',
+          __HMR_PORT__: "3000",
+          __HMR_DIRECT_TARGET__: '"localhost"',
+          __HMR_BASE__: '"/"',
+          __HMR_TIMEOUT__: "30000",
+          __HMR_ENABLE_OVERLAY__: "false",
+        }
+      : {}),
   },
   worker: {
     format: "es",
@@ -42,6 +56,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
+      thresholds: {
+        statements: 40,
+        branches: 35,
+        functions: 40,
+        lines: 40,
+      },
       exclude: [
         "**/node_modules/**",
         "**/tests/**",
@@ -50,6 +70,7 @@ export default defineConfig({
         ".svelte-kit/**",
         "build/**",
         "dist/**",
+        "**/*.md",
       ],
     },
   },

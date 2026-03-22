@@ -43,8 +43,16 @@ To ensure unit-testability and modularity, all services and stores MUST use cons
 
 All user-facing text MUST use clear, approachable, and accessible language. Avoid unnecessary jargon, pretentious technical terms, or overly complex metaphors (e.g., prefer "Importer" over "Ingestion Terminal", "Break Down" over "Fragment"). Aim for a readability level that is easy to understand for non-technical users.
 
+### X. Quality & Coverage Enforcement
+
+To maintain long-term stability, every merge MUST maintain or improve test coverage.
+
+- **Goals**: We aim for **80%** coverage for utilities, **70%** for engines, and **50%** for stores.
+- **Enforcement**: CI enforces a "Floor" based on each component's current baseline. Dropping below the floor requires explicit justification.
+- **New Code**: New packages and major logic extractions MUST meet the **70% Goal** upon introduction.
+
 ## Governance
 
 This constitution is the ultimate arbiter of engineering quality. All implementation plans and code reviews must verify alignment with these principles.
 
-**Version**: 1.0.7 | **Ratified**: 2026-02-01 | **Last Amended**: 2026-03-15
+**Version**: 1.0.9 | **Ratified**: 2026-03-19 | **Last Amended**: 2026-03-19

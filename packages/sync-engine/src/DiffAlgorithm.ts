@@ -82,9 +82,19 @@ export class DiffAlgorithm {
     // 1. No Registry Entry (Initial Encounter)
     if (!registry) {
       if (opfsExists && !fsExists)
-        return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+        return {
+          type: "EXPORT_TO_FS",
+          path,
+          opfsMetadata: opfs,
+          registryEntry: registry,
+        };
       if (!opfsExists && fsExists)
-        return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+        return {
+          type: "IMPORT_TO_OPFS",
+          path,
+          fsMetadata: fs,
+          registryEntry: registry,
+        };
       if (opfsExists && fsExists) {
         // Exists in both but no record. Assume conflict unless sizes perfectly match.
         // A true hash check would be ideal here, but we default to conflict for safety.
@@ -96,6 +106,7 @@ export class DiffAlgorithm {
             path,
             fsMetadata: fs,
             opfsMetadata: opfs,
+            registryEntry: registry,
           };
         }
         return {
@@ -104,19 +115,31 @@ export class DiffAlgorithm {
           fsMetadata: fs,
           opfsMetadata: opfs,
           isConflict: true,
+          registryEntry: registry,
         };
       }
+
       return { type: "SKIP", path };
     }
 
     // 2. A) Only OPFS changed -> Export to FS
     if (opfsChanged && !fsChanged && opfsExists && fsExists) {
-      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+      return {
+        type: "EXPORT_TO_FS",
+        path,
+        opfsMetadata: opfs,
+        registryEntry: registry,
+      };
     }
 
     // 3. B) Only FS changed -> Import to OPFS
     if (!opfsChanged && fsChanged && opfsExists && fsExists) {
-      return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+      return {
+        type: "IMPORT_TO_OPFS",
+        path,
+        fsMetadata: fs,
+        registryEntry: registry,
+      };
     }
 
     // 4. C) Both changed -> Conflict
@@ -127,23 +150,39 @@ export class DiffAlgorithm {
         fsMetadata: fs,
         opfsMetadata: opfs,
         isConflict: true,
+        registryEntry: registry,
       };
     }
 
     // 5. F) New file on FS (not in manifest) -> Import to OPFS
     if (!opfsExists && fsExists && fsChanged) {
-      return { type: "IMPORT_TO_OPFS", path, fsMetadata: fs };
+      return {
+        type: "IMPORT_TO_OPFS",
+        path,
+        fsMetadata: fs,
+        registryEntry: registry,
+      };
     }
 
     // 6. G) New file in OPFS (exists in manifest but not in FS) -> Export to FS
     if (opfsExists && !fsExists && opfsChanged) {
-      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+      return {
+        type: "EXPORT_TO_FS",
+        path,
+        opfsMetadata: opfs,
+        registryEntry: registry,
+      };
     }
 
     // 7. D) FS deleted (missing) and OPFS unchanged -> Recreate FS from OPFS
     if (opfsExists && !fsExists && !opfsChanged) {
       // Treat FS deletion as "user removed replica". Recreate from primary OPFS.
-      return { type: "EXPORT_TO_FS", path, opfsMetadata: opfs };
+      return {
+        type: "EXPORT_TO_FS",
+        path,
+        opfsMetadata: opfs,
+        registryEntry: registry,
+      };
     }
 
     // 8. E) OPFS deleted and FS unchanged -> Delete in FS

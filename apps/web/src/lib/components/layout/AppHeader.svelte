@@ -57,11 +57,22 @@
     </button>
 
     <h1
-      class="text-lg md:text-xl font-bold text-theme-text font-header tracking-wide flex items-center gap-2 md:gap-3 shrink-0"
+      class="text-lg md:text-xl font-bold text-theme-text font-header tracking-wide flex items-center gap-2 md:gap-3 shrink-0 transition-all duration-300 {uiStore.isStaging
+        ? 'bg-red-600 text-white px-3 py-1 rounded-full border-2 border-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
+        : ''}"
+      data-testid={uiStore.isStaging ? "staging-indicator" : "header-title"}
     >
-      <span class="icon-[lucide--book-open] text-theme-primary w-5 h-5"></span>
+      <span
+        class="icon-[lucide--book-open] w-5 h-5 {uiStore.isStaging
+          ? 'text-white'
+          : 'text-theme-primary'}"
+      ></span>
       <span class="hidden sm:inline">Codex Cryptica</span>
-      <span class="sm:hidden text-theme-primary">CC</span>
+      <span
+        class="sm:hidden {uiStore.isStaging
+          ? 'text-white'
+          : 'text-theme-primary'}">CC</span
+      >
     </h1>
 
     <nav
