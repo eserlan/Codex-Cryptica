@@ -81,6 +81,7 @@
           graph,
           calendar: calendarStore,
           vault,
+          uiStore,
         });
       }
     }
