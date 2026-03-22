@@ -88,29 +88,27 @@
   });
 
   onMount(() => {
-    helpStore.init();
-    themeStore.init();
-    oracle.init();
+    (async () => {
+      helpStore.init();
+      await themeStore.init();
+      oracle.init();
 
-    registerServiceWorker();
+      registerServiceWorker();
 
-    setupWindowGlobals({
-      searchStore,
-      vault,
-      vaultRegistry,
-      canvasRegistry,
-      graph,
-      oracle,
-      calendarStore,
-      helpStore,
-      categories,
-      uiStore,
-      isEntityVisible,
-    });
-
-    return () => {
-      globalListenersCleanup?.();
-    };
+      setupWindowGlobals({
+        searchStore,
+        vault,
+        vaultRegistry,
+        canvasRegistry,
+        graph,
+        oracle,
+        calendarStore,
+        helpStore,
+        categories,
+        uiStore,
+        isEntityVisible,
+      });
+    })();
   });
 
   // Help Hash Navigation

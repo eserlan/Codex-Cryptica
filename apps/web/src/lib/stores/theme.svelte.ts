@@ -5,8 +5,15 @@ import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
 import { vault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
+import {
+  getOpfsRoot,
+  getVaultDir,
+  readFileAsText,
+  writeOpfsFile,
+} from "../utils/opfs";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
+const CONFIG_PATH = [".codex", "config.json"];
 
 function getInitialTheme(): string {
   if (!browser) return DEFAULT_THEME.id;
@@ -83,14 +90,27 @@ export class ThemeStore {
 
   async loadForVault(vaultId: string) {
     if (!browser || this.uiStore.isDemoMode) return;
+
+    this.previewThemeId = null; // Clear any preview on vault switch
+
     try {
+      // Priority 1: OPFS (Vault Source of Truth)
+      const opfsTheme = await this.loadFromDisk(vaultId);
+      if (opfsTheme && THEMES[opfsTheme]) {
+        if (this.currentThemeId !== opfsTheme) {
+          this.currentThemeId = opfsTheme;
+        }
+        localStorage.setItem(STORAGE_KEY, opfsTheme);
+        return;
+      }
+
+      // Priority 2: IndexedDB (Local Cache)
       const db = await getDB();
       const stored = await db.get("settings", `theme_${vaultId}`);
       if (stored && THEMES[stored]) {
         if (this.currentThemeId !== stored) {
           this.currentThemeId = stored;
         }
-        // Update global hint for the next reload's blocking script
         localStorage.setItem(STORAGE_KEY, stored);
       }
     } catch (e) {
@@ -110,12 +130,53 @@ export class ThemeStore {
       const activeVaultId = vault.activeVaultId;
       if (activeVaultId) {
         try {
+          // 1. Save to IDB for fast local lookup
           const db = await getDB();
           await db.put("settings", id, `theme_${activeVaultId}`);
+
+          // 2. Save to OPFS for sync/persistence
+          await this.saveToDisk(activeVaultId, id);
         } catch (e) {
           console.warn("[ThemeStore] Failed to save vault-specific theme", e);
         }
       }
+    }
+  }
+
+  private async loadFromDisk(vaultId: string): Promise<string | null> {
+    try {
+      const root = await getOpfsRoot();
+      const vaultDir = await getVaultDir(root, vaultId);
+      const json = await readFileAsText(vaultDir, CONFIG_PATH);
+      const config = JSON.parse(json);
+      return config.theme || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async saveToDisk(vaultId: string, themeId: string) {
+    try {
+      const root = await getOpfsRoot();
+      const vaultDir = await getVaultDir(root, vaultId);
+
+      let config: any = {};
+      try {
+        const json = await readFileAsText(vaultDir, CONFIG_PATH);
+        config = JSON.parse(json);
+      } catch {
+        // New config
+      }
+
+      config.theme = themeId;
+      await writeOpfsFile(
+        CONFIG_PATH,
+        JSON.stringify(config, null, 2),
+        vaultDir,
+        vaultId,
+      );
+    } catch (err) {
+      console.warn("[ThemeStore] Failed to save theme to disk", err);
     }
   }
 
