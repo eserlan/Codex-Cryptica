@@ -503,10 +503,17 @@ Keep current layout structure but lazy-import everything.
 
 | Metric                           | Before         | After   |
 | -------------------------------- | -------------- | ------- |
-| Root layout lines                | 261            | ~25     |
+| Root layout lines                | 261            | ~32     |
 | Store imports in root            | 13             | 0       |
 | Component imports in root        | 6              | 0       |
 | Marketing page JS bundle         | Full workspace | Minimal |
 | bootSystem() on marketing        | Yes            | No      |
-| Race condition on vault-switched | Yes            | No      |
-| timeline.init() calls            | Yes            | No      |
+| Race condition on vault-switched | Yes            | Fixed\* |
+| timeline.init() calls            | Yes            | Yes     |
+| Duplicate `<svelte:head>` tags   | N/A            | Fixed\* |
+
+\*Fixed in post-review patches:
+
+- Race condition: listeners now set up via `$effect.pre()` before `bootSystem()` calls `vault.init()`
+- Duplicate meta tags: `(app)/+layout.svelte` no longer declares `<svelte:head>` — only root layout does
+- `timeline.init()`: still called in `bootSystem()` — stub present for future use, not dead code in the strict sense

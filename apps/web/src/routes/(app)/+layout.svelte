@@ -46,6 +46,7 @@
   let hasBooted = $state(false);
   let lastDemoQueryParam: string | null = null;
   let headerEl = $state<HTMLElement>();
+  let globalListenersCleanup: (() => void) | null = null;
 
   // Derived
   const isPopup = $derived(
@@ -54,28 +55,26 @@
       page.url.pathname === `${base}/import`,
   );
 
+  // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
+  $effect(() => {
+    if (browser && !globalListenersCleanup) {
+      globalListenersCleanup = initializeGlobalListeners(
+        uiStore,
+        calendarStore,
+      );
+    }
+  });
+
   // Initialization Logic
   $effect(() => {
-    const isWorkspaceRoute =
-      page.url.pathname === `${base}/` ||
-      page.url.pathname.startsWith(`${base}/map`) ||
-      page.url.pathname.startsWith(`${base}/canvas`);
-
+    // This layout only serves workspace routes — always boot except on landing page
+    const isLandingPage = page.url.pathname === `${base}/`;
     const shouldShowLanding = uiStore.isLandingPageVisible;
     const isTesting =
       typeof window !== "undefined" && (window as any).DISABLE_ONBOARDING;
 
     if (!hasBooted) {
-      if (!shouldShowLanding || isTesting || isPopup) {
-        hasBooted = bootSystem({
-          categories,
-          timeline: timelineStore,
-          graph,
-          calendar: calendarStore,
-          vault,
-        });
-      } else if (isWorkspaceRoute && page.url.pathname !== `${base}/`) {
-        uiStore.dismissedLandingPage = true;
+      if (!isLandingPage || !shouldShowLanding || isTesting || isPopup) {
         hasBooted = bootSystem({
           categories,
           timeline: timelineStore,
@@ -94,8 +93,6 @@
 
     registerServiceWorker();
 
-    const cleanupListeners = initializeGlobalListeners(uiStore, calendarStore);
-
     setupWindowGlobals({
       searchStore,
       vault,
@@ -111,7 +108,7 @@
     });
 
     return () => {
-      cleanupListeners();
+      globalListenersCleanup?.();
     };
   });
 
@@ -192,30 +189,6 @@
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
-
-<svelte:head>
-  <title>Codex Cryptica | AI RPG Campaign Manager</title>
-  <meta
-    name="description"
-    content="AI-assisted, local-first RPG campaign manager. Organize your lore, visualize your world's knowledge graph, and generate content with Google Gemini."
-  />
-  <meta
-    property="og:title"
-    content="Codex Cryptica | AI RPG Campaign Manager"
-  />
-  <meta
-    property="og:description"
-    content="Local-first RPG campaign manager with graph visualization and AI intelligence."
-  />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <link
-    rel="sitemap"
-    type="application/xml"
-    title="Sitemap"
-    href="{base}/sitemap.xml"
-  />
-</svelte:head>
 
 <div class="h-screen bg-theme-bg flex flex-col font-body app-layout">
   <NotificationToast />
