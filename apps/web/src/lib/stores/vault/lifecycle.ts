@@ -35,7 +35,7 @@ export class VaultLifecycleManager {
     try {
       const db = await getDB();
       const vaultId = await this.vaultRegistry.createVault(handle.name);
-      await db.put("sync_registry", { id: vaultId, handle } as any);
+      await db.put("settings", handle, `syncHandle_${vaultId}`);
       await this.vaultRegistry.setActiveVault(vaultId);
       await this.loadFiles(false);
       this.setStatus("idle");
@@ -61,7 +61,7 @@ export class VaultLifecycleManager {
       }
 
       const db = await getDB();
-      await db.put("sync_registry", { id: vaultId, handle } as any);
+      await db.put("settings", handle, `syncHandle_${vaultId}`);
       this.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);
@@ -96,7 +96,7 @@ export class VaultLifecycleManager {
     if (!activeId) return;
     try {
       const db = await getDB();
-      await db.put("sync_registry", { id: activeId, handle } as any);
+      await db.put("settings", handle, `syncHandle_${activeId}`);
     } catch {
       console.warn("[VaultStore] Could not persist sync handle");
     }

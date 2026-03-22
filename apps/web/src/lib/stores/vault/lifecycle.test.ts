@@ -240,8 +240,9 @@ describe("VaultLifecycleManager", () => {
       expect(createSpy).toHaveBeenCalledWith("my-dir");
 
       expect(mockDB.put).toHaveBeenCalledWith(
-        "sync_registry",
-        expect.objectContaining({ id: "v-folder" }),
+        "settings",
+        expect.any(Object),
+        "syncHandle_v-folder",
       );
       expect(result).toBe("v-folder");
     });
