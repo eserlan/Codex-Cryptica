@@ -198,6 +198,7 @@ export class VaultStore {
     this.isInitialized = false;
     this.status = "loading";
     this.assetManager.clear();
+    this.repository.clear();
 
     if (injectedServices) {
       this.services = injectedServices;
