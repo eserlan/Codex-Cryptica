@@ -123,7 +123,9 @@ export class VaultLifecycleManager {
     await this.vaultRegistry.setActiveVault(id);
     await this.loadFiles(true);
     await this.themeStore.loadForVault(id);
+    this.setInitialized(true);
     this.setStatus("idle");
+
     window.dispatchEvent(new CustomEvent("vault-switched", { detail: { id } }));
   }
 
