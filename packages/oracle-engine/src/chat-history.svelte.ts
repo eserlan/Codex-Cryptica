@@ -1,5 +1,15 @@
 import type { ChatMessage } from "./types";
-import type { EntityDb } from "../../../apps/web/src/lib/utils/entity-db";
+
+/**
+ * Minimal interface for app settings persistence.
+ * Defined here to avoid cross-package coupling with web app's EntityDb.
+ */
+interface AppSettingsStore {
+  appSettings: {
+    get(key: string): Promise<{ value: any } | undefined>;
+    put(record: { key: string; value: any; updatedAt: number }): Promise<void>;
+  };
+}
 
 /**
  * Internal type for chat history records stored in IndexedDB.
@@ -13,14 +23,14 @@ interface ChatHistoryRecord extends Omit<ChatMessage, "imageBlob"> {
 export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
-  private db: EntityDb | null = null;
+  private db: AppSettingsStore | null = null;
 
   /**
    * Initialize the chat history service by loading saved messages from IndexedDB.
    * Restores blob URLs for any persisted image blobs.
    * @param db - The EntityDb instance for persistence
    */
-  async init(db: EntityDb) {
+  async init(db: AppSettingsStore) {
     this.db = db;
     const savedMessages = await db.appSettings.get("chat_history");
     if (savedMessages?.value && Array.isArray(savedMessages.value)) {

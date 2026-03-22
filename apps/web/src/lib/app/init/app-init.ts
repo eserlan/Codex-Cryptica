@@ -2,7 +2,6 @@ import { browser } from "$app/environment";
 import { base } from "$app/paths";
 import { debugStore } from "../../stores/debug.svelte";
 import { IS_STAGING } from "../../config";
-import { entityDb } from "../../utils/entity-db";
 
 /**
  * Core system bootstrapping.
@@ -30,11 +29,10 @@ export function bootSystem(stores: {
     console.error("Vault initialization failed", error);
   });
 
-  // Initialize Oracle Settings Service with Dexie
-  if (stores.oracle?.settings) {
-    stores.oracle.settings.init(entityDb).catch((error: any) => {
-      console.error("Oracle settings initialization failed", error);
-    });
+  // Initialize Oracle Settings Service with Dexie (if oracle store provided)
+  if (stores.oracle) {
+    // Oracle initialization is handled by OracleStore.init()
+    // This is just a placeholder for future oracle initialization needs
   }
 
   return true;

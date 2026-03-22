@@ -21,13 +21,16 @@ export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
-  type?: "text" | "image" | "wizard";
+  type?: "text" | "image" | "wizard" | "roll";
   imageUrl?: string;
   imageBlob?: Blob;
   entityId?: string;
   archiveTargetId?: string;
   wizardType?: "connection" | "merge";
   timestamp?: number;
+  rollResult?: string;
+  hasDrawAction?: boolean;
+  isDrawing?: boolean;
 }
 
 /**
@@ -39,9 +42,13 @@ export type OracleIntentType =
   | "update"
   | "delete"
   | "connect"
+  | "connect-ai"
   | "merge"
   | "roll"
-  | "wizard";
+  | "wizard"
+  | "help"
+  | "clear"
+  | "error";
 
 /**
  * Parsed Oracle command intent
@@ -53,6 +60,11 @@ export interface OracleIntent {
   entityId?: string;
   wizardType?: "connection" | "merge";
   rollExpression?: string;
+  formula?: string;
+  sourceName?: string;
+  targetName?: string;
+  label?: string;
+  message?: string;
 }
 
 /**
@@ -62,15 +74,25 @@ export interface UndoableAction {
   id: string;
   type: string;
   timestamp: number;
-  inverse: () => Promise<void>;
-  forward: () => Promise<void>;
+  description: string;
+  messageId?: string;
+  undo: () => Promise<void>;
+  redo: () => Promise<void>;
 }
 
 /**
  * Oracle execution context
+ * Provides all services needed for Oracle operations
  */
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
   liteMode?: boolean;
+  tier?: "lite" | "advanced";
+  effectiveApiKey?: string | null;
+  isDemoMode?: boolean;
+  vault?: any;
+  uiStore?: any;
+  textGeneration?: any;
+  chatHistory?: any;
 }

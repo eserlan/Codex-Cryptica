@@ -108,7 +108,7 @@ export class DefaultAIClientManager {
           : [{ role: "user", parts: [{ text: request }] }];
 
         const response = await fetch(
-          `https://oracle-proxy.codexcryptica.workers.dev`,
+          this.PROXY_URL,
           {
             method: "POST",
             headers: {

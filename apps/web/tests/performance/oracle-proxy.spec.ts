@@ -43,19 +43,23 @@ test('proxy call overhead is under 200ms', async ({ page }) => {
   }
 
   // Verify we captured some response times
-  if (responseTimes.length > 0) {
-    const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
-    const maxTime = Math.max(...responseTimes);
-    
-    // Average overhead should be under 200ms
-    expect(avgTime).toBeLessThan(200);
-    
-    // Log for debugging
-    console.log(`Proxy performance - Avg: ${avgTime.toFixed(2)}ms, Max: ${maxTime.toFixed(2)}ms, Samples: ${responseTimes.length}`);
-  } else {
-    // If no proxy requests were made (e.g., user has custom key), skip this test
-    console.log('No proxy requests detected - test skipped (user may be in Custom API Key mode)');
+  if (responseTimes.length === 0) {
+    // Fail the test if no proxy requests were observed
+    throw new Error(
+      'No oracle-proxy requests detected. ' +
+      'Ensure the app is running in system-proxy mode (no custom API key) ' +
+      'when executing this performance test.'
+    );
   }
+  
+  const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+  const maxTime = Math.max(...responseTimes);
+
+  // Average overhead should be under 200ms
+  expect(avgTime).toBeLessThan(200);
+
+  // Log for debugging
+  console.log(`Proxy performance - Avg: ${avgTime.toFixed(2)}ms, Max: ${maxTime.toFixed(2)}ms, Samples: ${responseTimes.length}`);
 });
 
 test('Oracle UI renders without layout shift', async ({ page }) => {

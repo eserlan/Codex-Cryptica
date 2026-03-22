@@ -10,20 +10,19 @@
    */
 
   // Get connection mode from oracle settings
-  $: connectionMode = oracle.connectionMode;
-  $: apiKey = oracle.apiKey;
+  const connectionMode = oracle.connectionMode;
   
   // Derive display text and icon based on mode
-  $: statusText = connectionMode === "custom-key" 
+  const statusText = connectionMode === "custom-key" 
     ? "Direct Connection: Custom Key" 
     : "System Proxy";
   
-  $: statusIcon = connectionMode === "custom-key" 
+  const statusIcon = connectionMode === "custom-key" 
     ? "🔐"  // Lock icon for custom key (secure, private)
     : "☁️";  // Cloud icon for system proxy
   
   // Derive accessible description
-  $: accessibleDescription = connectionMode === "custom-key"
+  const accessibleDescription = connectionMode === "custom-key"
     ? "Using your personal API key for direct connection"
     : "Using free system proxy";
 </script>

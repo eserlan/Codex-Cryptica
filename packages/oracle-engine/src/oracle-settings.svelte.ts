@@ -1,4 +1,14 @@
-import type { EntityDb } from "../../../apps/web/src/lib/utils/entity-db";
+/**
+ * Minimal interface for app settings persistence.
+ * Defined here to avoid cross-package coupling with web app's EntityDb.
+ */
+interface AppSettingsStore {
+  appSettings: {
+    get(key: string): Promise<{ value: any } | undefined>;
+    put(record: { key: string; value: any; updatedAt: number }): Promise<void>;
+    delete(key: string): Promise<void>;
+  };
+}
 
 /**
  * Connection mode for the Oracle service.
@@ -9,13 +19,13 @@ export type ConnectionMode = "system-proxy" | "custom-key";
 
 /**
  * OracleSettingsService manages Oracle configuration and state.
- * 
+ *
  * Features:
  * - Dual-path support (System Proxy or Custom API Key)
  * - Cross-tab synchronization via BroadcastChannel
  * - Persistent storage via EntityDb (Dexie)
  * - Reactive state using Svelte 5 runes
- * 
+ *
  * @example
  * ```typescript
  * const settings = new OracleSettingsService();
@@ -44,14 +54,14 @@ export class OracleSettingsService {
   activeStyleTitle = $state<string | null>(null);
 
   private channel: BroadcastChannel | null = null;
-  private db: EntityDb | null = null;
+  private db: AppSettingsStore | null = null;
 
   /**
    * Creates a new OracleSettingsService instance.
-   * 
+   *
    * @param db - Optional EntityDb instance for persistence (can be provided later via init)
    */
-  constructor(db?: EntityDb) {
+  constructor(db?: AppSettingsStore) {
     if (db) {
       this.db = db;
     }
@@ -75,10 +85,10 @@ export class OracleSettingsService {
   /**
    * Initializes the service by loading settings from IndexedDB.
    * Also requests current state from other tabs via BroadcastChannel.
-   * 
+   *
    * @param db - The EntityDb instance for persistence
    */
-  async init(db: EntityDb) {
+  async init(db: AppSettingsStore) {
     this.db = db;
     const setting = await db.appSettings.get("ai_api_key");
     this.apiKey = setting?.value ?? null;

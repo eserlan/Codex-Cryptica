@@ -13,9 +13,8 @@ test.describe('Oracle Status', () => {
   test('should display System Proxy status when no API key is set', async ({ page }) => {
     // Open Oracle sidebar
     const oracleToggle = page.locator('[data-testid="oracle-toggle"]');
-    if (await oracleToggle.isVisible()) {
-      await oracleToggle.click();
-    }
+    await expect(oracleToggle).toBeVisible();
+    await oracleToggle.click();
 
     // Check for System Proxy indicator
     const statusIndicator = page.locator('.oracle-status');

@@ -23,8 +23,6 @@ const DEFAULT_ALLOWED_ORIGINS = [
 
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
-    const url = new URL(request.url);
-    
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
       return handleCorsPreflight(request, env);
@@ -52,16 +50,19 @@ export default {
       const body = await request.json();
       
       // Validate required fields
-      if (!body.contents || !body.generationConfig) {
+      if (!body.contents || !Array.isArray(body.contents)) {
         return new Response(JSON.stringify({
           error: {
-            message: "Invalid request format. Required: contents, generationConfig",
+            message: "Invalid request format. Required: contents (array)",
           },
         }), {
           status: 400,
           headers: { ...getCorsHeaders(request.headers, env), "Content-Type": "application/json" },
         });
       }
+
+      // Default generationConfig to empty object if not provided
+      const generationConfig = body.generationConfig || {};
 
       // Forward to Google Gemini API
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${body.model || "gemini-1.5-pro"}:generateContent?key=${env.GEMINI_API_KEY}`;
@@ -73,7 +74,7 @@ export default {
         },
         body: JSON.stringify({
           contents: body.contents,
-          generationConfig: body.generationConfig,
+          generationConfig,
           safetySettings: body.safetySettings,
         }),
       });
