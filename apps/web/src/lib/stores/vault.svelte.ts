@@ -452,7 +452,7 @@ export class VaultStore {
         await this.ensureServicesInitialized();
         if (this.syncCoordinator) {
           try {
-            await this.syncCoordinator.syncToLocal(
+            await this.syncCoordinator.syncWithLocalFolder(
               this.activeVaultId,
               vaultDir,
               this.entities,
@@ -1086,10 +1086,10 @@ export class VaultStore {
 
   // --- Sync Delegations ---
 
-  async syncToLocal() {
+  async syncWithLocalFolder() {
     if (!this.syncCoordinator || !this.activeVaultId) return;
     const opfsHandle = await this.getActiveVaultHandle();
-    await this.syncCoordinator.syncToLocal(
+    await this.syncCoordinator.syncWithLocalFolder(
       this.activeVaultId,
       opfsHandle,
       this.entities,

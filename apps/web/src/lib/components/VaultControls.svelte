@@ -269,7 +269,7 @@
             'local'
               ? 'opacity-75 cursor-wait'
               : ''}"
-            onclick={() => vault.syncToLocal()}
+            onclick={() => vault.syncWithLocalFolder()}
             title="Mirror internal archive with a local folder."
             aria-label={isVertical
               ? "SYNC - Mirror internal archive with a local folder."

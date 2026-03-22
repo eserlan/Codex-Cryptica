@@ -197,7 +197,7 @@ export class SyncCoordinator {
     }
   }
 
-  async syncToLocal(
+  async syncWithLocalFolder(
     activeVaultId: string,
     opfsHandle: FileSystemDirectoryHandle | undefined,
     currentEntities: Record<string, LocalEntity>,
