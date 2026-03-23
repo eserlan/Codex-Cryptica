@@ -131,6 +131,7 @@
           onclick={() => openPicker(cat.id)}
           class="w-8 h-8 flex items-center justify-center bg-theme-bg/30 border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary"
           title="Change Icon"
+          aria-label="Change icon for {cat.label}"
         >
           <span class="{getIconClass(cat.icon)} w-4 h-4"></span>
         </button>
@@ -176,6 +177,7 @@
         onclick={() => openPicker("new")}
         class="w-9 h-9 flex items-center justify-center bg-theme-surface border border-theme-border rounded hover:border-theme-primary transition-all text-theme-primary shrink-0"
         title="Select Icon"
+        aria-label="Select icon for new category"
       >
         <span class="{getIconClass(newIcon)} w-5 h-5"></span>
       </button>
@@ -244,6 +246,7 @@
             onclick={() => selectIcon(icon)}
             class="aspect-square flex items-center justify-center rounded border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 text-theme-muted hover:text-theme-primary transition-all"
             title={icon}
+            aria-label="Select {icon} icon"
           >
             <span class="{getIconClass(icon)} w-5 h-5"></span>
           </button>
