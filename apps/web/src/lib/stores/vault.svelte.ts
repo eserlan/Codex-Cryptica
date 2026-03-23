@@ -350,9 +350,7 @@ export class VaultStore {
     };
 
     try {
-      debugStore.log(
-        `[VaultStore] Loading files for vault: ${this.activeVaultId}`,
-      );
+      debugStore.log(`[VaultStore] Loading files for vault: ${vaultIdAtStart}`);
 
       // Reset event bus to clear listeners from previous vault sessions (prevent leaks)
       vaultEventBus.reset();
@@ -360,7 +358,7 @@ export class VaultStore {
       // BROADCAST: Opening vault
       vaultEventBus.emit({
         type: "VAULT_OPENING",
-        vaultId: this.activeVaultId,
+        vaultId: vaultIdAtStart,
       });
 
       if (this.services) {
@@ -368,18 +366,16 @@ export class VaultStore {
       }
 
       // 1. Cache-First: Preload graph metadata from Dexie immediately.
-      await cacheService.preloadVault(this.activeVaultId);
+      const cachedMap = await cacheService.preloadVault(vaultIdAtStart);
 
       // Race check after async preload
       if (this.activeVaultId !== vaultIdAtStart) return;
 
-      const cachedEntities = cacheService.getPreloadedEntities();
-
-      if (cachedEntities.length > 0) {
+      if (cachedMap.size > 0) {
         const entityMap: Record<string, LocalEntity> = {
           ...this.repository.entities,
         };
-        for (const e of cachedEntities) {
+        for (const { entity: e } of cachedMap.values()) {
           const existing = entityMap[e.id];
 
           // Preserve content/lore if they are already loaded in memory
@@ -397,13 +393,13 @@ export class VaultStore {
         // Push to repository to trigger immediate UI/Graph rendering
         this.repository.entities = entityMap;
         debugStore.log(
-          `[VaultStore] Cache-First: Populated ${cachedEntities.length} entities from Dexie.`,
+          `[VaultStore] Cache-First: Populated ${cachedMap.size} entities from Dexie.`,
         );
 
         // BROADCAST: Initial cache data ready
         vaultEventBus.emit({
           type: "CACHE_LOADED",
-          vaultId: this.activeVaultId,
+          vaultId: vaultIdAtStart,
           entities: entityMap,
         });
 
@@ -416,10 +412,8 @@ export class VaultStore {
           );
 
           // Start background tasks
-          if (this.activeVaultId) {
-            mapRegistry.loadFromVault(this.activeVaultId);
-            canvasRegistry.loadFromVault(this.activeVaultId);
-          }
+          mapRegistry.loadFromVault(vaultIdAtStart);
+          canvasRegistry.loadFromVault(vaultIdAtStart);
 
           // Resolve handle in background for image resolution
           this.getActiveVaultHandle();
@@ -435,7 +429,7 @@ export class VaultStore {
 
       if (!vaultDir) {
         if (this.status !== "idle") {
-          this.status = cachedEntities.length > 0 ? "idle" : "error";
+          this.status = cachedMap.size > 0 ? "idle" : "error";
           if (this.status === "error") {
             this.errorMessage = "Failed to resolve vault directory handle";
           }
@@ -447,19 +441,23 @@ export class VaultStore {
       const localHandle = await this.getActiveSyncHandle();
       if (localHandle) {
         debugStore.log(
-          `[VaultStore] Local sync handle found for ${this.activeVaultId}. Synchronizing...`,
+          `[VaultStore] Local sync handle found for ${vaultIdAtStart}. Synchronizing...`,
         );
         await this.ensureServicesInitialized();
         if (this.syncCoordinator) {
           try {
             await this.syncCoordinator.syncWithLocalFolder(
-              this.activeVaultId,
+              vaultIdAtStart,
               vaultDir,
               this.entities,
               () => this.repository.waitForAllSaves(),
               (state) => {
-                this.status = state.status;
-                if (state.errorMessage) this.errorMessage = state.errorMessage;
+                // ONLY update status if we are still on the same vault
+                if (this.activeVaultId === vaultIdAtStart) {
+                  this.status = state.status;
+                  if (state.errorMessage)
+                    this.errorMessage = state.errorMessage;
+                }
               },
               () => this.checkForConflicts(),
             );
@@ -471,16 +469,21 @@ export class VaultStore {
         }
       }
 
+      // Final race check before starting repository scan
+      if (this.activeVaultId !== vaultIdAtStart) return;
+
       // Ensure status is idle if we have cache, otherwise keep loading until we get first FS results
-      if (cachedEntities.length > 0) {
+      if (cachedMap.size > 0) {
         this.status = "idle";
       }
 
-      // We don't await this if status is already idle (warm cache or already set to idle above)
       const syncPromise = this.repository.loadFiles(
-        this.activeVaultId,
+        vaultIdAtStart,
         vaultDir,
         async (_chunk, current, total, newOrChanged) => {
+          // Race check inside progress callback
+          if (this.activeVaultId !== vaultIdAtStart) return;
+
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
           this.syncStats.created = current;
@@ -498,10 +501,10 @@ export class VaultStore {
               }
             }
 
-            // BROADCAST: Sync chunk ready
+            // BROADCAST: Chunk indexed
             vaultEventBus.emit({
               type: "SYNC_CHUNK_READY",
-              vaultId: this.activeVaultId!,
+              vaultId: vaultIdAtStart,
               entities: this.entities,
               newOrChangedIds: changedIds,
             });
@@ -525,13 +528,13 @@ export class VaultStore {
         this.status = "idle";
       }
 
-      await mapRegistry.loadFromVault(this.activeVaultId);
-      await canvasRegistry.loadFromVault(this.activeVaultId);
+      await mapRegistry.loadFromVault(vaultIdAtStart);
+      await canvasRegistry.loadFromVault(vaultIdAtStart);
 
       // BROADCAST: Full sync complete
       vaultEventBus.emit({
         type: "SYNC_COMPLETE",
-        vaultId: this.activeVaultId,
+        vaultId: vaultIdAtStart,
       });
     } catch (err: any) {
       debugStore.error("[VaultStore] Load failed", err);
@@ -1088,16 +1091,20 @@ export class VaultStore {
 
   async syncWithLocalFolder() {
     if (!this.syncCoordinator || !this.activeVaultId) return;
+    const vaultIdAtStart = this.activeVaultId;
     const opfsHandle = await this.getActiveVaultHandle();
     await this.syncCoordinator.syncWithLocalFolder(
-      this.activeVaultId,
+      vaultIdAtStart,
       opfsHandle,
       this.entities,
       () => this.repository.waitForAllSaves(),
       (state) => {
-        this.status = state.status;
-        this.syncType = state.syncType;
-        if (state.errorMessage) this.errorMessage = state.errorMessage;
+        // ONLY update status if we are still on the same vault
+        if (this.activeVaultId === vaultIdAtStart) {
+          this.status = state.status;
+          this.syncType = state.syncType;
+          if (state.errorMessage) this.errorMessage = state.errorMessage;
+        }
       },
       () => this.checkForConflicts(),
     );

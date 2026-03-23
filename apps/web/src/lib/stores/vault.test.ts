@@ -104,7 +104,7 @@ vi.mock("../utils/idb", () => ({
 
 vi.mock("../services/cache.svelte", () => ({
   cacheService: {
-    preloadVault: vi.fn().mockResolvedValue(undefined),
+    preloadVault: vi.fn().mockResolvedValue(new Map()),
     getPreloadedEntities: vi.fn().mockReturnValue([]),
     getEntityContent: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
@@ -314,10 +314,12 @@ describe("VaultStore", () => {
 
   describe("Loading Files", () => {
     it("should load files from cache if available", async () => {
-      const cachedEntities = [{ id: "e1", title: "Cached" }];
-      vi.mocked(cacheService.getPreloadedEntities).mockReturnValue(
-        cachedEntities as any,
-      );
+      const mockMap = new Map();
+      mockMap.set("test-vault:e1.md", {
+        lastModified: Date.now(),
+        entity: { id: "e1", title: "Cached" },
+      });
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(mockMap);
 
       await testVault.loadFiles(true);
 
@@ -326,7 +328,7 @@ describe("VaultStore", () => {
     });
 
     it("should perform full sync if cache is empty or skipSyncIfWarm is false", async () => {
-      vi.mocked(cacheService.getPreloadedEntities).mockReturnValue([]);
+      vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
 
       await testVault.loadFiles(false);
 
