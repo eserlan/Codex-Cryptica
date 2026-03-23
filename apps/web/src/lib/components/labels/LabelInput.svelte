@@ -29,11 +29,12 @@
   let suggestions = $derived.by(() => {
     const query = inputValue.trim().toLowerCase();
     if (!query) return [];
-    const currentLabels = (vault.entities[entityId]?.labels || []).map((l) =>
-      l.toLowerCase(),
+
+    // ⚡ Bolt Optimization: Use a Set for O(1) membership checks instead of an array.
+    const currentLabelsSet = new Set(
+      (vault.entities[entityId]?.labels || []).map((l) => l.toLowerCase()),
     );
 
-    // ⚡ Bolt Optimization: Replace full array .filter().slice() with an early-exit imperative loop.
     const maxResults = 5;
     const matches: string[] = [];
     const labels = vault.labelIndex;
@@ -41,7 +42,7 @@
     for (let i = 0; i < labels.length; i++) {
       const l = labels[i];
       const lowerL = l.toLowerCase();
-      if (lowerL.includes(query) && !currentLabels.includes(lowerL)) {
+      if (lowerL.includes(query) && !currentLabelsSet.has(lowerL)) {
         matches.push(l);
         if (matches.length === maxResults) break;
       }
