@@ -1,7 +1,8 @@
 <script lang="ts">
   import { helpStore } from "$lib/stores/help.svelte";
   import { parserService } from "$lib/services/parser";
-  import DOMPurify from "isomorphic-dompurify";
+  import { browser } from "$app/environment";
+  import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
   import HelpHeader from "./HelpHeader.svelte";
 
@@ -14,10 +15,20 @@
     const promise = (async () => {
       try {
         const html = await parserService.parse(content);
-        return DOMPurify.sanitize(html);
+        return browser
+          ? DOMPurify.sanitize(html, {
+              ALLOWED_URI_REGEXP:
+                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+            })
+          : html;
       } catch (e) {
         console.error("Failed to parse help article", e);
-        return DOMPurify.sanitize(content);
+        return browser
+          ? DOMPurify.sanitize(content, {
+              ALLOWED_URI_REGEXP:
+                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+            })
+          : content;
       }
     })();
 

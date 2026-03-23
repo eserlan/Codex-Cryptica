@@ -32,13 +32,14 @@ Any guidance ($ARGUMENTS).
 6. Execute implementation following the task plan:
    - **Phase-by-phase execution**.
    - **Sequential**: Run T001, then T002...
-   - **TDD**: Write tests before code if tests are specified in tasks.
-   - **Validation**: Verify each phase completion.
-   - **Mark as Done**: After completing a task, update `tasks.md` marking it `[x]`.
+   - **Mandatory Testing**: For every code task, you MUST either create a new test file or update an existing one. Code without tests is incomplete.
+   - **TDD Preferred**: Write tests before code whenever possible.
+   - **Validation**: Verify each phase completion by running the updated test suite.
+   - **Mark as Done**: After completing a task AND verifying its tests, update `tasks.md` marking it `[x]`.
 
 7. Implementation execution rules:
    - Setup first.
-   - Tests before code.
+   - **Tests are part of the task**: Even if not explicitly listed in `tasks.md`, tests must be created for every logic change.
    - Report progress after each task.
 
 8. Completion validation:

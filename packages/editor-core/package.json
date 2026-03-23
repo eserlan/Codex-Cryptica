@@ -7,16 +7,18 @@
   "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@tiptap/core": "^3.20.0",
+    "@tiptap/core": "^3.20.4",
     "@tiptap/pm": "^3.19.0",
-    "@tiptap/starter-kit": "^3.20.1",
+    "@tiptap/starter-kit": "^3.20.4",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
-    "jsdom": "^28.1.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "jsdom": "^29.0.0",
     "typescript": "^5.7.3",
     "vitest": "^4.0.18"
   }

@@ -3,7 +3,13 @@ node_modules/
 dist/
 build/
 test-results/
+coverage/
+**/coverage/
+coverage/
+**/coverage/
 apps/web/test-results/
+coverage/
+**/coverage/
 apps/web/playwright-report/
 .env
 .env.local

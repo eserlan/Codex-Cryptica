@@ -423,6 +423,44 @@
     ];
   }
 
+  function handleBatchSpawn() {
+    const toAdd = canvasRegistry.consumePending();
+    if (toAdd.length === 0) return;
+
+    const newNodesList: Node[] = [];
+
+    toAdd.forEach((item, index) => {
+      const { id: entityId, position: eventPosition } = item;
+
+      // Use provided position (screen coords) or default to staggered center
+      const position = eventPosition
+        ? screenToFlowPosition(eventPosition)
+        : screenToFlowPosition({
+            x: window.innerWidth / 2 + index * 30,
+            y: window.innerHeight / 2 + index * 30,
+          });
+
+      const newNodeId = engine.addNode(entityId, position);
+      vault.loadEntityContent(entityId);
+
+      newNodesList.push({
+        id: newNodeId,
+        type: "entity",
+        position,
+        data: { entityId },
+      });
+    });
+
+    nodes = [...nodes, ...newNodesList];
+  }
+
+  // Monitor pending entities from registry (e.g. from GraphHUD "Add all results" button)
+  $effect(() => {
+    if (canvasRegistry.pendingEntities.length > 0) {
+      untrack(() => handleBatchSpawn());
+    }
+  });
+
   async function saveCanvas(
     explicitVaultId?: string,
     explicitCanvasId?: string,

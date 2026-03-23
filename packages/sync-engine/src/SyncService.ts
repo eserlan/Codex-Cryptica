@@ -32,7 +32,10 @@ export class SyncService {
       failed: number;
       total: number;
     }) => void,
+    signal?: AbortSignal,
   ): Promise<SyncResult & { nextToken?: string }> {
+    if (signal?.aborted) throw new Error("AbortError");
+
     const result: SyncResult & { nextToken?: string } = {
       updated: [],
       created: [],
@@ -46,16 +49,19 @@ export class SyncService {
         `[${this.getTs()}] [Sync] Starting sync for vault: ${vaultId}`,
       );
       const fsScan = await fsBackend.scan(vaultId);
+      if (signal?.aborted) throw new Error("AbortError");
       console.log(
         `[${this.getTs()}] [Sync] FS Scan complete: ${fsScan.files.length} files found.`,
       );
 
       const opfsScan = await opfsBackend.scan(vaultId, sinceToken);
+      if (signal?.aborted) throw new Error("AbortError");
       console.log(
         `[${this.getTs()}] [Sync] OPFS Scan complete: ${opfsScan.files.length} files found.`,
       );
 
       const registryEntries = await this.registry.getEntriesByVault(vaultId);
+      if (signal?.aborted) throw new Error("AbortError");
       console.log(
         `[${this.getTs()}] [Sync] Registry loaded: ${registryEntries.length} entries.`,
       );
@@ -101,6 +107,7 @@ export class SyncService {
 
       const actions: SyncAction[] = [];
       for (const path of allPaths) {
+        if (signal?.aborted) throw new Error("AbortError");
         let opfsMetadata = opfsMap.get(path);
         const registryEntry = registryMap.get(path);
 
@@ -168,20 +175,20 @@ export class SyncService {
       await Promise.all(
         Array.from({ length: CONCURRENCY }).map(async () => {
           while (nextActionIndex < actions.length) {
+            if (signal?.aborted) throw new Error("AbortError");
             const action = actions[nextActionIndex++];
             if (!action) continue;
             try {
-              console.log(
-                `[${this.getTs()}] [Sync] Executing ${action.type} for: ${action.path}`,
-              );
               await this.executeAction(
                 action,
                 vaultId,
                 fsBackend,
                 opfsBackend,
                 result,
+                signal,
               );
             } catch (err: any) {
+              if (err.message === "AbortError") throw err;
               console.error(
                 `[${this.getTs()}] [Sync] Failed ${action.type} for ${action.path}: ${err.message}`,
               );
@@ -195,10 +202,22 @@ export class SyncService {
 
       // Cleanup registry for completely gone files (Only during full sync)
       if (!isDeltaSync) {
+        // ⚡ Bolt: Execute registry deletions concurrently using Promise.all in batches to prevent I/O bottlenecks.
+        // Impact: Reduces full sync cleanup time from O(N) sequential I/O to bounded concurrent execution for deleted files.
+        const BATCH_SIZE = 50;
+        let deletePromises: Promise<void>[] = [];
         for (const path of registryMap.keys()) {
+          if (signal?.aborted) throw new Error("AbortError");
           if (!fsMap.has(path) && !opfsMap.has(path)) {
-            await this.registry.deleteEntry(vaultId, path);
+            deletePromises.push(this.registry.deleteEntry(vaultId, path));
+            if (deletePromises.length >= BATCH_SIZE) {
+              await Promise.all(deletePromises);
+              deletePromises = [];
+            }
           }
+        }
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
         }
       }
 
@@ -229,7 +248,9 @@ export class SyncService {
     fsBackend: ISyncBackend,
     opfsBackend: ISyncBackend,
     result: SyncResult,
+    signal?: AbortSignal,
   ) {
+    if (signal?.aborted) throw new Error("AbortError");
     try {
       switch (action.type) {
         case "MATCH_INITIAL": {
@@ -246,20 +267,23 @@ export class SyncService {
               opfsBackend,
               action.fsMetadata,
               action.opfsMetadata,
+              undefined,
+              undefined,
+              signal,
             );
           }
 
+          if (signal?.aborted) throw new Error("AbortError");
+
           if (!contentsIdentical) {
             // If they weren't actually identical, treat as conflict instead
-            console.log(
-              `[${this.getTs()}] [Sync] Initial match failed content verification for ${action.path}. Treating as conflict.`,
-            );
             await this.executeAction(
               { ...action, type: "HANDLE_CONFLICT" },
               vaultId,
               fsBackend,
               opfsBackend,
               result,
+              signal,
             );
             return;
           }
@@ -296,6 +320,8 @@ export class SyncService {
               : undefined,
           );
 
+          if (signal?.aborted) throw new Error("AbortError");
+
           let shouldUpload = true;
 
           // CONTENT EQUALITY FAST-PATH
@@ -311,14 +337,15 @@ export class SyncService {
                 action.fsMetadata,
                 action.opfsMetadata,
                 opfsContent,
+                undefined,
+                signal,
               )
             ) {
               shouldUpload = false;
-              console.log(
-                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping export to FS.`,
-              );
             }
           }
+
+          if (signal?.aborted) throw new Error("AbortError");
 
           const updatedFs = shouldUpload
             ? await fsBackend.upload(
@@ -329,6 +356,8 @@ export class SyncService {
                   : undefined,
               )
             : action.fsMetadata!;
+
+          if (signal?.aborted) throw new Error("AbortError");
 
           await this.persistOpfsStateIfNeeded(
             vaultId,
@@ -366,6 +395,8 @@ export class SyncService {
               : undefined,
           );
 
+          if (signal?.aborted) throw new Error("AbortError");
+
           let shouldUpload = true;
 
           if (
@@ -381,14 +412,14 @@ export class SyncService {
                 action.opfsMetadata,
                 undefined,
                 fsContent,
+                signal,
               )
             ) {
               shouldUpload = false;
-              console.log(
-                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping import to OPFS.`,
-              );
             }
           }
+
+          if (signal?.aborted) throw new Error("AbortError");
 
           const updatedOpfs = shouldUpload
             ? await opfsBackend.upload(
@@ -399,6 +430,8 @@ export class SyncService {
                   : undefined,
               )
             : action.opfsMetadata!;
+
+          if (signal?.aborted) throw new Error("AbortError");
 
           await this.persistOpfsStateIfNeeded(
             vaultId,
@@ -442,11 +475,11 @@ export class SyncService {
                 opfsBackend,
                 action.fsMetadata,
                 action.opfsMetadata,
+                undefined,
+                undefined,
+                signal,
               )
             ) {
-              console.log(
-                `[${this.getTs()}] [Sync] Conflict resolution: Contents of ${action.path} are actually identical. Updating registry.`,
-              );
               // Mark as synced and update fingerprints
               await this.registry.putEntry({
                 filePath: action.path,
@@ -465,24 +498,29 @@ export class SyncService {
             }
           }
 
+          if (signal?.aborted) throw new Error("AbortError");
+
           // User wants "Last version of every file" (Last Write Wins)
           const fsTime = action.fsMetadata?.lastModified || 0;
           const opfsTime = action.opfsMetadata?.lastModified || 0;
 
           if (fsTime > opfsTime) {
-            console.log(
-              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using LOCAL (FS) version (newer).`,
-            );
             const fsContent = await fsBackend.download(
               action.path,
               typeof action.fsMetadata?.handle === "string"
                 ? action.fsMetadata.handle
                 : undefined,
             );
+
+            if (signal?.aborted) throw new Error("AbortError");
+
             const updatedOpfs = await opfsBackend.upload(
               action.path,
               fsContent,
             );
+
+            if (signal?.aborted) throw new Error("AbortError");
+
             await this.persistOpfsStateIfNeeded(
               vaultId,
               opfsBackend,
@@ -504,16 +542,19 @@ export class SyncService {
             });
             result.updated.push(action.path);
           } else {
-            console.log(
-              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using INTERNAL (OPFS) version.`,
-            );
             const opfsContent = await opfsBackend.download(
               action.path,
               typeof action.opfsMetadata?.handle === "string"
                 ? action.opfsMetadata.handle
                 : undefined,
             );
+
+            if (signal?.aborted) throw new Error("AbortError");
+
             const updatedFs = await fsBackend.upload(action.path, opfsContent);
+
+            if (signal?.aborted) throw new Error("AbortError");
+
             await this.persistOpfsStateIfNeeded(
               vaultId,
               fsBackend,
@@ -574,8 +615,10 @@ export class SyncService {
     opfsMetadata?: FileMetadata,
     opfsBlob?: Blob,
     fsBlob?: Blob,
+    signal?: AbortSignal,
   ): Promise<boolean> {
     try {
+      if (signal?.aborted) throw new Error("AbortError");
       const fs =
         fsBlob ||
         (await fsBackend.download(
@@ -584,6 +627,9 @@ export class SyncService {
             ? fsMetadata.handle
             : undefined,
         ));
+
+      if (signal?.aborted) throw new Error("AbortError");
+
       const opfs =
         opfsBlob ||
         (await opfsBackend.download(
@@ -603,6 +649,7 @@ export class SyncService {
 
         const CHUNK_SIZE = 1024 * 1024; // 1 MiB
         for (let offset = 0; offset < fs.size; offset += CHUNK_SIZE) {
+          if (signal?.aborted) throw new Error("AbortError");
           const end = Math.min(offset + CHUNK_SIZE, fs.size);
           const fsChunkBuf = await fs.slice(offset, end).arrayBuffer();
           const opfsChunkBuf = await opfs.slice(offset, end).arrayBuffer();
@@ -618,7 +665,8 @@ export class SyncService {
         }
         return true;
       }
-    } catch {
+    } catch (err: any) {
+      if (err.message === "AbortError") throw err;
       return false;
     }
   }

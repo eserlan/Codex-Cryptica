@@ -2,48 +2,47 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Oracle Merge Command E2E", () => {
   test.beforeEach(async ({ page }) => {
+    // Set desktop viewport to avoid mobile UI hiding elements
+    await page.setViewportSize({ width: 1280, height: 800 });
+
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
       localStorage.setItem("codex_skip_landing", "true");
-      (window as any).showDirectoryPicker = async () => ({
-        kind: "directory",
-        name: "test-vault",
-        requestPermission: async () => "granted",
-        queryPermission: async () => "granted",
-        values: () => [],
-        getDirectoryHandle: async () => ({
-          kind: "directory",
-          getFileHandle: async () => ({
-            kind: "file",
-            createWritable: async () => ({
-              write: async () => {},
-              close: async () => {},
-            }),
-          }),
-        }),
-      });
     });
 
     await page.goto("http://localhost:5173/");
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+
+    // Wait for vault and oracle initialization
+    await page.waitForFunction(
+      () =>
+        (window as any).vault?.status === "idle" &&
+        (window as any).oracle !== undefined,
+      { timeout: 15000 },
+    );
 
     // Inject fake API key and mock vault methods
-    await page.evaluate(() => {
-      (window as any).oracle.apiKey = "fake-key";
-      const v = (window as any).vault;
+    await page.evaluate(async () => {
+      const ui = (window as any).uiStore;
+      ui.dismissedLandingPage = true;
+      ui.skipWelcomeScreen = true;
 
-      // Mock directory handle to prevent early returns in deleteEntity
-      v.getActiveVaultHandle = async () => ({ kind: "directory" });
+      const oracle = (window as any).oracle;
+      await oracle.setKey("fake-key");
 
+      const vault = (window as any).vault;
       // Ensure deleteEntity actually removes from in-memory state for the test
-      v.deleteEntity = async (id: string) => {
-        delete v.entities[id];
-        // Trigger any listeners if necessary (though reactivity handles most)
-        v.entities = { ...v.entities };
+      vault.deleteEntity = async (id: string) => {
+        delete vault.repository.entities[id];
+        vault.repository.entities = { ...vault.repository.entities };
         return Promise.resolve();
       };
+    });
+
+    // Final wait for UI to stabilize
+    await expect(page.getByTestId("new-entity-button")).toBeVisible({
+      timeout: 15000,
     });
   });
 
@@ -108,7 +107,7 @@ test.describe("Oracle Merge Command E2E", () => {
     });
 
     const entities = await page.evaluate(() =>
-      Object.keys((window as any).vault.entities),
+      Object.keys((window as any).vault.repository.entities),
     );
     expect(entities).toContain("legendary-hero");
     expect(entities).not.toContain("old-hero");
@@ -127,8 +126,8 @@ test.describe("Oracle Merge Command E2E", () => {
     // Add content via evaluate to bypass editor interaction for speed
     await page.evaluate(() => {
       const v = (window as any).vault;
-      v.entities["source-node"].content = "Source content";
-      v.entities["target-node"].content = "Target content";
+      v.repository.entities["source-node"].content = "Source content";
+      v.repository.entities["target-node"].content = "Target content";
     });
 
     // 2. Trigger wizard
@@ -215,7 +214,7 @@ test.describe("Oracle Merge Command E2E", () => {
     // Capture pre-merge state from the in-memory vault
     const preMergeState = await page.evaluate(() => {
       const v = (window as any).vault;
-      const entities = Object.values(v.entities || {}) as any[];
+      const entities = Object.values(v.repository.entities || {}) as any[];
       const minion = entities.find((e) => e.title === "Minion");
       const boss = entities.find((e) => e.title === "Boss");
       return {
@@ -243,7 +242,7 @@ test.describe("Oracle Merge Command E2E", () => {
     // Sanity check: source entity should be gone after merge
     const postMergeState = await page.evaluate(() => {
       const v = (window as any).vault;
-      const entities = Object.values(v.entities || {}) as any[];
+      const entities = Object.values(v.repository.entities || {}) as any[];
       return {
         hasMinion: entities.some((e) => e.title === "Minion"),
         entityIds: entities.map((e) => e.id),
@@ -252,9 +251,6 @@ test.describe("Oracle Merge Command E2E", () => {
     expect(postMergeState.hasMinion).toBeFalsy();
 
     // 3. Trigger undo via the Oracle store's undo mechanism (accessed through the UI or directly)
-    // In our app, Oracle undo is separate from global undo?
-    // Actually, ChatMessage.svelte calls oracle.undo().
-    // The E2E environment has access to 'oracle' singleton.
     await page.evaluate(async () => {
       const oracle = (window as any).oracle;
       await oracle.undo();
@@ -269,7 +265,7 @@ test.describe("Oracle Merge Command E2E", () => {
     // restored the target entity to its pre-merge state, and restored connections.
     const undoState = await page.evaluate(() => {
       const v = (window as any).vault;
-      const entities = Object.values(v.entities || {}) as any[];
+      const entities = Object.values(v.repository.entities || {}) as any[];
       const byId: Record<string, any> = {};
       for (const e of entities) {
         byId[e.id] = e;
@@ -287,11 +283,10 @@ test.describe("Oracle Merge Command E2E", () => {
     expect(minionAfterUndo).toBeTruthy();
 
     // 4.2 Undoing a merge restores the target entity to its pre-merge state
-    // Compare a deep clone of the original boss state with the current one.
     const bossRestored = await page.evaluate(
       ({ preBoss, bossId }) => {
         const v = (window as any).vault;
-        const current = v.entities[bossId];
+        const current = v.repository.entities[bossId];
         if (!preBoss || !current) return false;
         // Compare serialized forms to catch differences in fields & connections
         const snapshot = (obj: any) => {
@@ -306,8 +301,6 @@ test.describe("Oracle Merge Command E2E", () => {
     expect(bossRestored).toBeTruthy();
 
     // 4.3 Undoing a merge restores connections properly
-    // (connections are part of bossState; already checked above).
-    // As an extra guard, ensure the boss entity still exists and has connections field.
     expect(bossAfterUndo).toBeTruthy();
     expect(typeof bossAfterUndo.connections !== "undefined").toBeTruthy();
   });

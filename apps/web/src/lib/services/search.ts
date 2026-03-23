@@ -35,6 +35,16 @@ export class SearchService {
 
       // Subscribe to vault lifecycle events
       vaultEventBus.subscribe(async (event) => {
+        // VALIDATION: All sync/load events MUST match the current active vault ID
+        // to prevent cross-vault index contamination during rapid switches.
+        if (
+          "vaultId" in event &&
+          event.vaultId !== this.activeVaultId &&
+          event.type !== "VAULT_OPENING"
+        ) {
+          return;
+        }
+
         switch (event.type) {
           case "VAULT_OPENING":
             this.activeVaultId = event.vaultId;

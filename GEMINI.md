@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4 (074-staging-indicator)
+- N/A (Transient UI State) (074-staging-indicator)
+
 - TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4 (073-prominent-import)
 - OPFS (via Importer package) (073-prominent-import)
 
@@ -123,6 +126,7 @@ TypeScript: Follow standard conventions
 
 ## Implementation Guardrails (AI Guidelines)
 
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `npm test` passes with your changes.
 - **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
 - **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
 - **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
@@ -132,10 +136,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 074-staging-indicator: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4
+
 - 073-prominent-import: Added TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4
 
 - 069-pop-out-help-window: Added TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
-
-- 067-oracle-store-refactor: Added TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`)
 
 <!-- MANUAL ADDITIONS START -->

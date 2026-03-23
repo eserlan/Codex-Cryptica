@@ -58,6 +58,23 @@ This project uses **GitHub Actions** for continuous integration. Every push and 
 3.  **Testing**: Running unit and integration tests across all packages.
 4.  **Building**: Ensuring the production build succeeds.
 
+### Testing & Coverage
+
+Testing is managed by [Vitest](https://vitest.dev/). You can run tests for the entire project or for specific workspaces.
+
+```bash
+# Run all unit tests
+npm test
+
+# Run tests with coverage reports
+npm run test:coverage
+
+# Run E2E tests (Playwright)
+npm run test:e2e
+```
+
+Coverage reports are generated in the `coverage/` directory of each package and the `apps/web/` directory. An HTML report is also available for visual inspection.
+
 ### Tech Stack
 
 - **Framework**: [SvelteKit](https://kit.svelte.dev/)

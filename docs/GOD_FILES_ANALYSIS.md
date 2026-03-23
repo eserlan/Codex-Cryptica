@@ -11,9 +11,9 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 449 | UI Component        | ✅ FIXED |
 | 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 364 | UI Component        | ✅ FIXED |
 | 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
-| 6    | `apps/web/src/routes/+layout.svelte`                        | 795           | UI Layout           | 🔥 NEXT |
-| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 681           | UI Component        | 🔥 NEXT |
-| 8    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         | 🟡 SOON |
+| 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 261   | UI Layout           | ✅ FIXED |
+| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 681           | UI Component        | 🔥 NEXT  |
+| 8    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         | 🟡 SOON  |
 | 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
 | 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 632           | UI Component        |          |
 
@@ -51,14 +51,23 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 **Summary:** Decomposed into specialized services under `services/ai/` for orchestration, prompts, generation, and retrieval.
 **Outcome:** `ai.ts` now serves as a compatibility/export shim (1 line), dramatically reducing coupling and making AI capabilities independently testable.
 
-### 6. `+layout.svelte` (795 lines)
+### 6. `+layout.svelte` (Refactored)
 
-**Current State:** The root layout handles global app initialization (checking OS, setting up OPFS, checking tokens), the main shell layout, sidebar toggling, global keyboard shortcuts, and mounting all global modals.
-**Refactoring Strategy:**
+**Status:** ✅ **COMPLETED (2026-03-22)**
+**Summary:** Restructured layout architecture using SvelteKit route groups. Created `(app)` route group for workspace routes, moved workspace routes into it, and stripped root layout to minimal shell.
+**Outcome:**
 
-- **Extract Modal Registry:** Move all the `{#if ui.showModal}` blocks into a single `GlobalModalProvider.svelte` component to clean up the layout DOM.
-- **Extract Keyboard Shortcuts:** Move the global `window.onkeydown` logic into a Svelte action or a dedicated `ShortcutManager` module.
-- **Extract Init Logic:** Move the heavy asynchronous bootstrapping (OPFS checks, migration scripts) into a dedicated `app-init.ts` function called in `onMount`.
+- Root `+layout.svelte` reduced from 261 lines to ~25 lines
+- Marketing pages no longer load workspace JS (stores, bootSystem, modals)
+- Clean separation between marketing routes (`(marketing)`) and workspace routes (`(app)`)
+- Build passes, all 152 tests pass
+
+**Changes:**
+
+- Created `routes/(app)/` route group with full workspace layout
+- Moved `+page.svelte`, `map/`, `canvas/`, `oracle/`, `help/`, `timeline/`, `import/` into `(app)`
+- Stripped root `+layout.svelte` to minimal HTML shell with SEO meta tags
+- Fixed relative imports in moved pages
 
 ---
 
