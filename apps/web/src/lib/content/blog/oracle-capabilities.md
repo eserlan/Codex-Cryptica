@@ -25,15 +25,12 @@ The Oracle is the AI engine embedded directly in your Codex. It's not a chatbot 
 
 ---
 
-## **Modes, Tiers, and When the Oracle Is Online**
+## **Restricted Mode vs. AI-Powered Mode**
 
-Before diving into commands, it's important to understand how the Oracle is switched on and which model it uses:
+Before diving into commands, it's important to understand the Oracle's two states:
 
-- **Lite Mode (No AI)** — This global toggle in **Settings > Intelligence** turns the AI engine off. When Lite Mode is enabled, AI features (like natural language chat, `/plot`, and `/draw`) are disabled, and the Oracle operates in **Restricted Mode**.
-- **Oracle Tier: Lite vs Advanced** — When Lite Mode is off and an API key is available, the tier controls which model the Oracle uses. The **Lite** tier uses a faster, efficient model; the **Advanced** tier uses your own Gemini API key and the most capable model you configure.
-- **API Keys & "Oracle Offline"** — The Oracle is considered online only when there is an effective key (either your personal Gemini key or a shared key for the Lite tier). If no key is available, the chat UI will show **Oracle Offline**, and AI commands won't run until a working key is present again.
-
-Utility commands like `/roll`, `/create`, and `/connect` always work in **Restricted Mode** (Lite Mode enabled), even without an internet connection or API key.
+- **Restricted Mode (Lite Mode)** — This global toggle in **Settings > Intelligence** turns the AI engine off. In this mode, natural language chat, `/plot`, and `/draw` are disabled. Utility commands like `/roll`, `/create`, and `/connect` still work instantly and offline.
+- **AI-Powered Mode** — When Lite Mode is off and a Gemini API key is active (either your personal key or system-provided shared access), the Oracle is **Online**. This unlocks full natural language reasoning, narrative analysis, and image generation using our most advanced model.
 
 ---
 
@@ -131,9 +128,9 @@ The source entity's connections are transferred to the target, and the duplicate
 
 ---
 
-## **AI-Powered Commands: Advanced Mode**
+## **AI-Powered Commands: Your Co-GM Online**
 
-These commands require Advanced Mode and a valid Gemini API key. They transform the Oracle from a utility tool into a genuine creative collaborator.
+These commands require the Oracle to be in **AI-Powered Mode** with an active API key. They transform the Oracle from a utility tool into a genuine creative collaborator.
 
 ---
 
