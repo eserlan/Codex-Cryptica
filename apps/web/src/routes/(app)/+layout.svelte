@@ -95,6 +95,7 @@
 
       registerServiceWorker();
 
+      console.log("[Layout] Calling setupWindowGlobals");
       setupWindowGlobals({
         searchStore,
         vault,

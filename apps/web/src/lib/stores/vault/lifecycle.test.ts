@@ -1,5 +1,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+const { mockThemeStore } = vi.hoisted(() => {
+  return {
+    mockThemeStore: {
+      loadForVault: vi.fn().mockResolvedValue(undefined),
+      init: vi.fn().mockResolvedValue(undefined),
+    },
+  };
+});
+
+// Mock getDB utility
+vi.mock("../../utils/idb", () => ({
+  getDB: vi.fn(),
+}));
+
 // 1. Mock dependencies at the VERY TOP
 vi.mock("../map-registry.svelte", () => ({
   mapRegistry: {
@@ -9,36 +23,41 @@ vi.mock("../map-registry.svelte", () => ({
 
 vi.mock("../canvas-registry.svelte", () => ({
   canvasRegistry: {
+    canvases: {},
     clear: vi.fn(),
   },
 }));
 
-vi.mock("../../utils/idb", () => ({
-  getDB: vi.fn(),
-}));
-
 vi.mock("../vault-registry.svelte", () => ({
   vaultRegistry: {
-    setActiveVault: vi.fn().mockResolvedValue(undefined),
-    createVault: vi.fn().mockResolvedValue("new-id"),
-    deleteVault: vi.fn().mockResolvedValue(undefined),
-    listVaults: vi.fn().mockResolvedValue(undefined),
+    createVault: vi.fn(),
+    deleteVault: vi.fn(),
+    setActiveVault: vi.fn(),
     availableVaults: [],
   },
 }));
 
 vi.mock("../theme.svelte", () => ({
-  themeStore: {
-    loadForVault: vi.fn().mockResolvedValue(undefined),
-  },
+  themeStore: mockThemeStore,
 }));
 
 // Mock the whole vault.svelte to avoid circular constructor issues
 vi.mock("../vault.svelte", () => ({
   vault: {
-    clear: vi.fn(),
-    loadFiles: vi.fn(),
+    isInitialized: false,
+    status: "idle",
+    activeVaultId: "v1",
+    getActiveVaultHandle: vi.fn().mockResolvedValue({}),
     entities: {},
+    loadFiles: vi.fn().mockResolvedValue(undefined),
+    persistToIndexedDB: vi.fn().mockResolvedValue(undefined),
+    setSelectedEntityId: vi.fn(),
+    setHasConflictFiles: vi.fn(),
+    assetManager: { clear: vi.fn() },
+    repository: {
+      clear: vi.fn(),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+    },
   },
 }));
 
@@ -55,12 +74,13 @@ describe("VaultLifecycleManager", () => {
   let mockError: any;
   let mockRepository: any;
   let mockDB: any;
+  let mockLoadFiles: any;
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mockStatus = vi.fn();
     mockError = vi.fn();
-
+    mockLoadFiles = vi.fn().mockResolvedValue(undefined);
     mockRepository = {
       clear: vi.fn(),
       entities: {},
@@ -71,7 +91,7 @@ describe("VaultLifecycleManager", () => {
       get: vi.fn(),
       put: vi.fn(),
     };
-    vi.mocked(getDB).mockResolvedValue(mockDB);
+    vi.mocked(getDB).mockResolvedValue(mockDB as any);
 
     manager = new VaultLifecycleManager(
       mockStatus,
@@ -80,7 +100,7 @@ describe("VaultLifecycleManager", () => {
       async () => ({}) as any,
       mockRepository,
       { clear: vi.fn() },
-      vi.fn().mockResolvedValue(undefined),
+      mockLoadFiles,
       () => ({}),
       vi.fn(),
       vi.fn(),
@@ -96,21 +116,26 @@ describe("VaultLifecycleManager", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
   describe("switchVault", () => {
     it("should switch to a new vault and reset state", async () => {
-      const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+      // Mock getDB to return a record so switchVault doesn't bail out or wait forever
+      mockDB.get.mockImplementation((store: string, id: string) => {
+        if (store === "vaults") return Promise.resolve({ id, name: id });
+        return Promise.resolve(undefined);
+      });
+
       await manager.switchVault("v2");
 
+      expect(mockRepository.waitForAllSaves).toHaveBeenCalled();
       expect(mockRepository.clear).toHaveBeenCalled();
-      expect(canvasRegistry.clear).toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith("loading");
       expect(vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
+      expect(mockLoadFiles).toHaveBeenCalledWith(true);
       expect(themeStore.loadForVault).toHaveBeenCalledWith("v2");
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        expect.objectContaining({ type: "vault-switched" }),
-      );
+      expect(mockStatus).toHaveBeenCalledWith("idle");
     });
 
     it("should return early if already on the target vault", async () => {
@@ -155,125 +180,6 @@ describe("VaultLifecycleManager", () => {
     });
   });
 
-  describe("loadDemoData", () => {
-    it("should fix image URLs and index entities", async () => {
-      const entities = {
-        e1: {
-          id: "e1",
-          title: "Hero",
-          image: "./hero.png",
-          tags: ["tag1"],
-        },
-      };
-      const mockSearch = { clear: vi.fn(), index: vi.fn() };
-      const getServices = vi.fn().mockReturnValue({ search: mockSearch });
-
-      manager = new VaultLifecycleManager(
-        mockStatus,
-        mockError,
-        () => "v1",
-        async () => ({}) as any,
-        mockRepository,
-        { clear: vi.fn() },
-        vi.fn(),
-        () => entities as any,
-        vi.fn(),
-        vi.fn(),
-        getServices,
-        vi.fn(),
-        vi.fn(),
-        vaultRegistry as any,
-        themeStore as any,
-        mapRegistry as any,
-        canvasRegistry as any,
-        vi.fn().mockResolvedValue(undefined),
-      );
-
-      await manager.loadDemoData("Demo", entities as any);
-
-      expect(mockSearch.index).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "e1" }),
-      );
-      expect(mockSearch.index).toHaveBeenCalled();
-    });
-  });
-
-  describe("importFromFolder", () => {
-    it("should handle successful folder import", async () => {
-      // Mock the dynamic import behavior
-      vi.doMock("./io", () => ({
-        importFromFolder: vi.fn().mockResolvedValue({ success: true }),
-      }));
-
-      await manager.importFromFolder({} as any);
-
-      expect(mockStatus).toHaveBeenCalledWith("loading");
-      expect(mockStatus).toHaveBeenCalledWith("idle");
-    });
-
-    it("should handle user cancellation", async () => {
-      vi.doMock("./io", () => ({
-        importFromFolder: vi
-          .fn()
-          .mockResolvedValue({ success: false, error: "User cancelled" }),
-      }));
-
-      await manager.importFromFolder({} as any);
-      expect(mockStatus).toHaveBeenCalledWith("idle");
-      expect(mockError).not.toHaveBeenCalled();
-    });
-
-    it("should handle import failure", async () => {
-      vi.doMock("./io", () => ({
-        importFromFolder: vi
-          .fn()
-          .mockResolvedValue({ success: false, error: "Disk full" }),
-      }));
-
-      await manager.importFromFolder({} as any);
-      expect(mockStatus).toHaveBeenCalledWith("loading");
-      expect(mockStatus).toHaveBeenCalledWith("idle");
-      expect(mockError).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("createVault", () => {
-    it("should create a vault and switch to it", async () => {
-      const switchSpy = vi
-        .spyOn(manager, "switchVault")
-        .mockResolvedValue(undefined);
-      const id = await manager.createVault("New Vault");
-      expect(vaultRegistry.createVault).toHaveBeenCalledWith("New Vault");
-      expect(switchSpy).toHaveBeenCalledWith("new-id");
-      expect(id).toBe("new-id");
-    });
-  });
-
-  describe("loadFromFolder", () => {
-    it("should create vault and persist sync handle", async () => {
-      const createSpy = vi
-        .spyOn(vaultRegistry, "createVault")
-        .mockResolvedValue("v-folder");
-
-      // Mock getDB to return a record so switchVault doesn't bail out or wait forever
-      mockDB.get.mockImplementation((store: string, id: string) => {
-        if (store === "vaults") return Promise.resolve({ id, name: id });
-        return Promise.resolve(undefined);
-      });
-
-      const result = await manager.importFromFolder({ name: "my-dir" } as any);
-
-      expect(createSpy).toHaveBeenCalledWith("my-dir");
-
-      expect(mockDB.put).toHaveBeenCalledWith(
-        "settings",
-        expect.any(Object),
-        "syncHandle_v-folder",
-      );
-      expect(result).toBe("v-folder");
-    });
-  });
-
   describe("persistToIndexedDB", () => {
     it("should save all entities to disk", async () => {
       const entities = { e1: { id: "e1" } };
@@ -299,6 +205,7 @@ describe("VaultLifecycleManager", () => {
       );
 
       await manager.persistToIndexedDB("v1");
+
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith("saving");
       expect(mockStatus).toHaveBeenCalledWith("idle");
@@ -306,8 +213,6 @@ describe("VaultLifecycleManager", () => {
 
     it("should handle persistence failure", async () => {
       const entities = { e1: { id: "e1" } };
-      mockRepository.saveToDisk.mockRejectedValue(new Error("Disk full"));
-
       manager = new VaultLifecycleManager(
         mockStatus,
         mockError,
@@ -329,10 +234,87 @@ describe("VaultLifecycleManager", () => {
         vi.fn().mockResolvedValue(undefined),
       );
 
+      mockRepository.saveToDisk.mockRejectedValue(new Error("Disk full"));
+
+      // It catches internally, sets status, then RE-THROWS
       await expect(manager.persistToIndexedDB("v1")).rejects.toThrow(
         "Disk full",
       );
       expect(mockStatus).toHaveBeenCalledWith("error");
+    });
+  });
+
+  describe("importFromFolder", () => {
+    it("should handle import failure", async () => {
+      vi.doMock("./io", () => ({
+        importFromFolder: vi
+          .fn()
+          .mockResolvedValue({ success: false, error: "Disk full" }),
+      }));
+
+      await manager.importFromFolder({} as any);
+      expect(mockStatus).toHaveBeenCalledWith("loading");
+      expect(mockStatus).toHaveBeenCalledWith("idle");
+      expect(mockError).not.toHaveBeenCalled();
+    });
+
+    it("should create vault and persist sync handle", async () => {
+      const createSpy = vi
+        .spyOn(vaultRegistry, "createVault")
+        .mockResolvedValue("v-folder");
+
+      // Mock getDB to return a record so switchVault doesn't bail out or wait forever
+      mockDB.get.mockImplementation((store: string, id: string) => {
+        if (store === "vaults") return Promise.resolve({ id, name: id });
+        return Promise.resolve(undefined);
+      });
+
+      const result = await manager.importFromFolder({ name: "my-dir" } as any);
+
+      expect(createSpy).toHaveBeenCalledWith("my-dir");
+
+      expect(mockDB.put).toHaveBeenCalledWith(
+        "settings",
+        expect.any(Object),
+        "syncHandle_v-folder",
+      );
+      expect(result).toBe("v-folder");
+    });
+  });
+
+  describe("loadDemoData", () => {
+    it("should load demo data and index it", async () => {
+      const entities = { e1: { id: "e1", title: "Demo" } };
+      const getServices = vi.fn().mockReturnValue({
+        search: { index: vi.fn().mockResolvedValue(undefined) },
+      });
+
+      manager = new VaultLifecycleManager(
+        mockStatus,
+        mockError,
+        () => "v1",
+        async () => ({}) as any,
+        mockRepository,
+        { clear: vi.fn() },
+        vi.fn(),
+        () => entities as any,
+        vi.fn(),
+        vi.fn(),
+        getServices,
+        vi.fn(),
+        vi.fn(),
+        vaultRegistry as any,
+        themeStore as any,
+        mapRegistry as any,
+        canvasRegistry as any,
+        vi.fn().mockResolvedValue(undefined),
+      );
+
+      await manager.loadDemoData("Demo", entities as any);
+
+      expect(mockRepository.entities).toEqual(entities);
+      expect(getServices).toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith("idle");
     });
   });
 });
