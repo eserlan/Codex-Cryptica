@@ -8,7 +8,7 @@ class CanvasRegistryStore {
   canvases = $state<Record<string, any>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isLoaded = $state(false);
-  isMounted = $state(false);
+  isWorkspaceMounted = $state(false);
   pendingEntities = $state<
     { id: string; position?: { x: number; y: number } }[]
   >([]);

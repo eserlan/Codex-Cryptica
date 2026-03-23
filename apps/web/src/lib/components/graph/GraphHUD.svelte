@@ -49,9 +49,9 @@
       ),
     );
 
-    if (canvasRegistry.isMounted) {
+    if (canvasRegistry.isWorkspaceMounted) {
       ui.notify(
-        `${entitiesToQueue.length} entities added to active workspace`,
+        `${entitiesToQueue.length} entities queued for active workspace`,
         "success",
       );
     } else {
