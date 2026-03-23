@@ -25,20 +25,21 @@ The Oracle is the AI engine embedded directly in your Codex. It's not a chatbot 
 
 ---
 
-## **Two Modes, One Oracle**
+## **Modes, Tiers, and When the Oracle Is Online**
 
-Before diving into commands, it's important to understand the Oracle's two operating modes:
+Before diving into commands, it's important to understand how the Oracle is switched on and which model it uses:
 
-- **Lite Mode** — Fully functional without any API key. All utility commands (`/roll`, `/create`, `/connect`, `/merge`) work offline, locally, and for free.
-- **Advanced Mode** — Unlocks the full AI engine. Add your Gemini API key in **Settings** to activate natural language chat, `/plot`, `/draw`, and AI-guided wizards.
+- **Lite Mode (No AI)** — This global toggle in **Settings > Intelligence** turns the AI engine off. When Lite Mode is enabled, AI features (like natural language chat, `/plot`, and `/draw`) are disabled, and the Oracle operates in **Restricted Mode**.
+- **Oracle Tier: Lite vs Advanced** — When Lite Mode is off and an API key is available, the tier controls which model the Oracle uses. The **Lite** tier uses a faster, efficient model; the **Advanced** tier uses your own Gemini API key and the most capable model you configure.
+- **API Keys & "Oracle Offline"** — The Oracle is considered online only when there is an effective key (either your personal Gemini key or a shared key for the Lite tier). If no key is available, the chat UI will show **Oracle Offline**, and AI commands won't run until a working key is present again.
 
-You choose the mode that fits your session. Running a quick solo prep session with no internet? Lite Mode has you covered. Running a complex, AI-assisted story arc? Switch to Advanced.
+Utility commands like `/roll`, `/create`, and `/connect` always work in **Restricted Mode** (Lite Mode enabled), even without an internet connection or API key.
 
 ---
 
 ## **Utility Commands: Always Available**
 
-These commands are deterministic, instant, and work in any mode.
+These commands are deterministic, instant, and work even in **Restricted Mode**. When the Oracle is online, you can trigger them from chat using slash commands.
 
 ### **`/roll` — The Built-In Dice Tower**
 
@@ -55,6 +56,7 @@ The Oracle's dice engine understands standard RPG notation, including advantage,
 ![Oracle Dice Roll](https://assets.codexcryptica.com/images/blog/oracle-roll-command.png)
 
 **Why use it?**
+
 - Zero context-switching. Your players roll, you immediately respond.
 - Fair, cryptographically randomized results—no loaded dice.
 - Full history log for contested roll disputes.
@@ -66,16 +68,17 @@ The Oracle's dice engine understands standard RPG notation, including advantage,
 When you invent a new NPC mid-session, don't fumble through a menu. Just tell the Oracle.
 
 ```
-/create "Mira Valdris" as "Person"
+/create "Mira Valdris" as "Character"
 /create "The Shattered Crown" as "Item"
 /create "The Iron Compact" as "Faction"
 ```
 
-Supported entity types include **Person**, **NPC**, **Faction**, **Location**, **Item**, **Event**, and **Concept**. The entity is created instantly, added to your vault and graph, and ready for you to fill in the details after the session.
+Supported entity types include **Character**, **NPC**, **Faction**, **Location**, **Item**, **Event**, and **Concept**. The entity is created instantly, added to your vault and graph, and ready for you to fill in the details after the session.
 
 ![Oracle Create Entity](https://assets.codexcryptica.com/images/blog/oracle-create-command.png)
 
 **Why use it?**
+
 - Session improvisation becomes permanent world-building.
 - No interruption to narrative flow.
 - Entities appear immediately in the Knowledge Graph.
@@ -87,15 +90,16 @@ Supported entity types include **Person**, **NPC**, **Faction**, **Location**, *
 Relationships are the lifeblood of world-building. The `/connect` command creates a labeled edge between any two entities in your vault.
 
 ```
-/connect "Mira Valdris" label "owes a debt to" "The Iron Compact"
-/connect "The Shattered Crown" label "last seen at" "The Vault of Ash"
+/connect "Mira Valdris" owes a debt to "The Iron Compact"
+/connect "The Shattered Crown" last seen at "The Vault of Ash"
 ```
 
-The label you write becomes the relationship text visible on the graph edge. It's fast, precise, and permanent.
+The text between the two quoted entity names becomes the relationship label visible on the graph edge. It's fast, precise, and permanent.
 
 ![Oracle Connect Entities](https://assets.codexcryptica.com/images/blog/oracle-connect-command.png)
 
 **Why use it?**
+
 - Capture relationship dynamics exactly as they emerge in play.
 - The labeled edge becomes part of your world's documented history.
 - No clicking through menus—one line, one connection.
@@ -113,6 +117,7 @@ Six sessions in, you realize you have "Harkon the Grey," "Harkon," and "The Grey
 The source entity's connections are transferred to the target, and the duplicate is removed. Your graph stays clean without losing any relationship data.
 
 **Why use it?**
+
 - Tidy up the inevitable duplicate notes from fast-moving sessions.
 - Connections and references are preserved during the merge.
 - Works offline with no AI assistance required.
@@ -147,6 +152,7 @@ The Oracle doesn't just chat. It performs **Retrieval-Augmented Generation (RAG)
 ![Oracle Natural Language Chat](https://assets.codexcryptica.com/images/blog/oracle-chat-example.png)
 
 **Why use it?**
+
 - Brainstorm plot hooks, NPC motivations, and faction dynamics.
 - Get in-character descriptions and dialogue tailored to your lore.
 - The more notes you've written, the smarter and more specific it becomes.
@@ -166,7 +172,7 @@ The Oracle doesn't invent drama—it **excavates** it from the connections and l
 
 ![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
 
-**Best practice**: Use the Knowledge Graph's **filters and labels** to narrow the field before running `/plot`. Focus the Oracle on your "active" entities—the ones labeled `#Session-Active` or belonging to a specific faction—and the tension analysis becomes surgical rather than broad.
+**Best practice**: Use the Knowledge Graph's **filters and labels** to help you choose which entity to run `/plot` on. For example, filter to your "active" entities—those labeled `#Session-Active` or belonging to a specific faction—then pick one of those entities as the `/plot` target so the Oracle stays focused on the parts of your world that are currently in play.
 
 ---
 
@@ -185,6 +191,7 @@ The generated image is saved to your vault, linked to the relevant entity, and a
 ![Oracle Image Generation](https://assets.codexcryptica.com/images/blog/oracle-draw-command.png)
 
 **Why use it?**
+
 - Visual props deepen player immersion instantly.
 - No art skills required—just describe what you see in your mind.
 - Images are stored locally in your vault, not in the cloud.
@@ -200,6 +207,7 @@ These are the Oracle's collaboration modes for complex decisions.
 **`/merge oracle`** — When you're not sure which entities should be consolidated, the Oracle reviews your duplicates and near-duplicates and suggests the most coherent merge targets. It explains its reasoning for each proposed merge.
 
 **Why use them?**
+
 - Discover non-obvious connections in large vaults.
 - Avoid losing lore during merges by getting AI-reviewed recommendations.
 - Ideal for post-session cleanup sessions when your vault has grown complex.
@@ -213,7 +221,7 @@ The Oracle's commands are not isolated tools—they compose into a workflow.
 ### **The Improv-to-Lore Pipeline**
 
 1. During the session, fire `/create "Zareth Voss" as "NPC"` the moment you invent him.
-2. Wire up his relationships: `/connect "Zareth Voss" label "blackmails" "The Iron Compact"`.
+2. Wire up his relationships: `/connect "Zareth Voss" blackmails "The Iron Compact"`.
 3. After the session, run `/plot Zareth Voss` to generate next session's dramatic hook from what you've already written.
 4. Run `/draw Zareth Voss, menacing merchant in a fur-lined coat` and pin the image to his entity card.
 
@@ -232,19 +240,19 @@ The Oracle knows your world. The more you give it, the more it gives back.
 
 ## **Summary: Your Oracle Command Reference**
 
-| Command | Mode | What it Does |
-|---|---|---|
-| `/roll 2d6+3` | Both | Rolls dice with formula support |
-| `/create "Name" as "Type"` | Both | Creates a new vault entity |
-| `/connect "A" label "..." "B"` | Both | Creates a labeled relationship |
-| `/merge "A" into "B"` | Both | Merges entity A into B |
-| `/help` | Both | Displays command reference |
-| `/clear` | Both | Clears chat history |
-| Natural language chat | Advanced | RAG-powered world Q&A |
-| `/plot [entity]` | Advanced | Story tension analysis |
-| `/draw [subject]` | Advanced | AI image generation |
-| `/connect oracle` | Advanced | AI-guided connection proposals |
-| `/merge oracle` | Advanced | AI-guided merge suggestions |
+| Command                         | Mode                   | What it Does                    |
+| ------------------------------- | ---------------------- | ------------------------------- |
+| `/roll 2d6+3`                   | Any (incl. Restricted) | Rolls dice with formula support |
+| `/create "Name" as "Type"`      | Any (incl. Restricted) | Creates a new vault entity      |
+| `/connect "A" relationship "B"` | Any (incl. Restricted) | Creates a labeled relationship  |
+| `/merge "A" into "B"`           | Any (incl. Restricted) | Merges entity A into B          |
+| `/help`                         | Any (incl. Restricted) | Displays command reference      |
+| `/clear`                        | Any (incl. Restricted) | Clears chat history             |
+| Natural language chat           | AI-Powered             | RAG-powered world Q&A           |
+| `/plot [entity]`                | AI-Powered             | Story tension analysis          |
+| `/draw [subject]`               | AI-Powered             | AI image generation             |
+| `/connect oracle`               | AI-Powered             | AI-guided connection proposals  |
+| `/merge oracle`                 | AI-Powered             | AI-guided merge suggestions     |
 
 ---
 
