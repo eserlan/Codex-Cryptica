@@ -28,7 +28,7 @@
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
-  import { untrack, onDestroy } from "svelte";
+  import { untrack, onDestroy, onMount } from "svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
@@ -506,11 +506,13 @@
     });
     await canvasRegistry.touch(currentCanvasId);
   }
-
-  $effect(() => {
+  onMount(() => {
+    canvasRegistry.isMounted = true;
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
+
     return () => {
+      canvasRegistry.isMounted = false;
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };
