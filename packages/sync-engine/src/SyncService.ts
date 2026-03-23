@@ -179,9 +179,6 @@ export class SyncService {
             const action = actions[nextActionIndex++];
             if (!action) continue;
             try {
-              console.log(
-                `[${this.getTs()}] [Sync] Executing ${action.type} for: ${action.path}`,
-              );
               await this.executeAction(
                 action,
                 vaultId,
@@ -280,9 +277,6 @@ export class SyncService {
 
           if (!contentsIdentical) {
             // If they weren't actually identical, treat as conflict instead
-            console.log(
-              `[${this.getTs()}] [Sync] Initial match failed content verification for ${action.path}. Treating as conflict.`,
-            );
             await this.executeAction(
               { ...action, type: "HANDLE_CONFLICT" },
               vaultId,
@@ -348,9 +342,6 @@ export class SyncService {
               )
             ) {
               shouldUpload = false;
-              console.log(
-                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping export to FS.`,
-              );
             }
           }
 
@@ -425,9 +416,6 @@ export class SyncService {
               )
             ) {
               shouldUpload = false;
-              console.log(
-                `[${this.getTs()}] [Sync] Fast-Path: Contents of ${action.path} are identical. Skipping import to OPFS.`,
-              );
             }
           }
 
@@ -492,9 +480,6 @@ export class SyncService {
                 signal,
               )
             ) {
-              console.log(
-                `[${this.getTs()}] [Sync] Conflict resolution: Contents of ${action.path} are actually identical. Updating registry.`,
-              );
               // Mark as synced and update fingerprints
               await this.registry.putEntry({
                 filePath: action.path,
@@ -520,9 +505,6 @@ export class SyncService {
           const opfsTime = action.opfsMetadata?.lastModified || 0;
 
           if (fsTime > opfsTime) {
-            console.log(
-              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using LOCAL (FS) version (newer).`,
-            );
             const fsContent = await fsBackend.download(
               action.path,
               typeof action.fsMetadata?.handle === "string"
@@ -560,9 +542,6 @@ export class SyncService {
             });
             result.updated.push(action.path);
           } else {
-            console.log(
-              `[${this.getTs()}] [Sync] Resolving conflict for ${action.path} using INTERNAL (OPFS) version.`,
-            );
             const opfsContent = await opfsBackend.download(
               action.path,
               typeof action.opfsMetadata?.handle === "string"
