@@ -29,6 +29,8 @@ export interface ISyncEngine {
     localHandle: FileSystemDirectoryHandle,
     opfsHandle: FileSystemDirectoryHandle,
     validator: (path: string, meta: any) => Promise<boolean>,
+    onProgress?: (stats: any) => void,
+    signal?: AbortSignal,
   ): Promise<{
     error?: string;
     failed?: { error: string }[];
@@ -50,8 +52,10 @@ export class SyncCoordinator {
     opfsHandle: FileSystemDirectoryHandle,
     onStatusChange: (status: "saving" | "idle" | "error") => void,
     reloadFiles: () => Promise<void>,
+    signal?: AbortSignal,
   ) {
     if (!activeVaultId || !opfsHandle) return;
+    if (signal?.aborted) return;
 
     const localHandle = await this.ioAdapter.getLocalHandle(activeVaultId);
 
@@ -208,10 +212,14 @@ export class SyncCoordinator {
       errorMessage?: string;
     }) => void,
     checkForConflicts: () => Promise<void>,
+    signal?: AbortSignal,
+    onProgress?: (stats: any) => void,
   ) {
     if (!opfsHandle) return;
+    if (signal?.aborted) return;
 
     let localHandle = await this.ioAdapter.getLocalHandle(activeVaultId);
+    if (signal?.aborted) return;
 
     if (localHandle) {
       try {
@@ -308,6 +316,8 @@ export class SyncCoordinator {
             return false;
           }
         },
+        onProgress,
+        signal,
       );
 
       const isHandleError = (msg: string) =>

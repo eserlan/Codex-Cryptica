@@ -85,6 +85,7 @@ export class VaultStore {
   private crudManager: VaultCrudManager;
   private lifecycleManager: VaultLifecycleManager;
   private channel: BroadcastChannel | null = null;
+  private syncAbortController: AbortController | null = null;
 
   /**
    * Pre-loaded helper modules to avoid dynamic import overhead
@@ -230,6 +231,10 @@ export class VaultStore {
   }
 
   async init(injectedServices?: IVaultServices) {
+    // Separate controller for init path to allow independent cancellation
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     this.isInitialized = false;
     this.status = "loading";
     this.assetManager.clear();
@@ -316,8 +321,10 @@ export class VaultStore {
       }
     } finally {
       this.isInitialized = true;
-      await this.checkForConflicts();
-      if ((this.status as string) !== "error") {
+      if (!signal.aborted) {
+        await this.checkForConflicts(signal);
+      }
+      if ((this.status as string) !== "error" && !signal.aborted) {
         this.status = "idle";
         if (this.activeVaultId) {
           window.dispatchEvent(
@@ -335,6 +342,13 @@ export class VaultStore {
   async loadFiles(skipSyncIfWarm = true) {
     if (!this.activeVaultId) return;
     const vaultIdAtStart = this.activeVaultId;
+
+    // ABORT: Cancel any ongoing background sync from a previous vault switch
+    if (this.syncAbortController) {
+      this.syncAbortController.abort();
+    }
+    this.syncAbortController = new AbortController();
+    const signal = this.syncAbortController.signal;
 
     this.status = "loading";
     this._contentLoadedIds = new Set();
@@ -369,7 +383,7 @@ export class VaultStore {
       const cachedMap = await cacheService.preloadVault(vaultIdAtStart);
 
       // Race check after async preload
-      if (this.activeVaultId !== vaultIdAtStart) return;
+      if (this.activeVaultId !== vaultIdAtStart || signal.aborted) return;
 
       if (cachedMap.size > 0) {
         // CRITICAL: We start with a FRESH map.
@@ -425,7 +439,7 @@ export class VaultStore {
       const vaultDir = await this.getActiveVaultHandle();
 
       // Race check after async handle resolution
-      if (this.activeVaultId !== vaultIdAtStart) return;
+      if (this.activeVaultId !== vaultIdAtStart || signal.aborted) return;
 
       if (!vaultDir) {
         if (this.status !== "idle") {
@@ -452,15 +466,22 @@ export class VaultStore {
               this.entities,
               () => this.repository.waitForAllSaves(),
               (state) => {
-                // ONLY update status if we are still on the same vault
-                if (this.activeVaultId === vaultIdAtStart) {
+                // ONLY update status if we are still on the same vault AND not aborted
+                if (this.activeVaultId === vaultIdAtStart && !signal.aborted) {
                   this.status = state.status;
                   if (state.errorMessage)
                     this.errorMessage = state.errorMessage;
                 }
               },
               () => this.checkForConflicts(),
+              signal,
+              (stats) => {
+                if (this.activeVaultId === vaultIdAtStart && !signal.aborted) {
+                  this.syncStats = { ...this.syncStats, ...stats };
+                }
+              },
             );
+            if (signal.aborted) return;
             debugStore.log("[VaultStore] Local sync complete.");
           } catch (err) {
             debugStore.error("[VaultStore] Local sync failed", err);
@@ -470,7 +491,7 @@ export class VaultStore {
       }
 
       // Final race check before starting repository scan
-      if (this.activeVaultId !== vaultIdAtStart) return;
+      if (this.activeVaultId !== vaultIdAtStart || signal.aborted) return;
 
       // Ensure status is idle if we have cache, otherwise keep loading until we get first FS results
       if (cachedMap.size > 0) {
@@ -482,7 +503,7 @@ export class VaultStore {
         vaultDir,
         async (_chunk, current, total, newOrChanged) => {
           // Race check inside progress callback
-          if (this.activeVaultId !== vaultIdAtStart) return;
+          if (this.activeVaultId !== vaultIdAtStart || signal.aborted) return;
 
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
@@ -540,6 +561,21 @@ export class VaultStore {
       debugStore.error("[VaultStore] Load failed", err);
       this.status = "error";
       this.errorMessage = err.message;
+    } finally {
+      this.isInitialized = true;
+      if (!signal.aborted) {
+        await this.checkForConflicts(signal);
+      }
+      if ((this.status as string) !== "error" && !signal.aborted) {
+        this.status = "idle";
+        if (this.activeVaultId) {
+          window.dispatchEvent(
+            new CustomEvent("vault-switched", {
+              detail: { id: this.activeVaultId },
+            }),
+          );
+        }
+      }
     }
   }
 
@@ -1110,24 +1146,28 @@ export class VaultStore {
     );
   }
 
-  async cleanupConflictFiles() {
+  async cleanupConflictFiles(signal?: AbortSignal) {
     if (!this.syncCoordinator || !this.activeVaultId) return;
     const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
+    if (!opfsHandle || signal?.aborted) return;
 
     await this.syncCoordinator.cleanupConflictFiles(
       this.activeVaultId,
       opfsHandle,
-      (status) => (this.status = status),
+      (status) => {
+        if (!signal?.aborted) this.status = status;
+      },
       () => this.loadFiles(),
+      signal,
     );
   }
 
-  async checkForConflicts() {
+  async checkForConflicts(signal?: AbortSignal) {
     const opfsHandle = await this.getActiveVaultHandle();
-    if (!opfsHandle) return;
+    if (!opfsHandle || signal?.aborted) return;
     try {
       const files = await fileIOAdapter.walkDirectory(opfsHandle);
+      if (signal?.aborted) return;
       this.hasConflictFiles = files.some((f: any) =>
         f.path[f.path.length - 1].includes(".conflict-"),
       );

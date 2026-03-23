@@ -423,5 +423,22 @@ describe("SyncCoordinator", () => {
         syncType: null,
       });
     });
+
+    it("should abort sync if signal is aborted", async () => {
+      const onStateChange = vi.fn();
+      const signal = AbortSignal.abort();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        onStateChange,
+        vi.fn(),
+        signal,
+      );
+
+      expect(mockEngine.sync).not.toHaveBeenCalled();
+    });
   });
 });
