@@ -117,6 +117,32 @@ describe("VaultLifecycleManager", () => {
       await manager.switchVault("v1");
       expect(vaultRegistry.setActiveVault).not.toHaveBeenCalled();
     });
+
+    it("should serialize multiple switchVault calls using a lock", async () => {
+      const callOrder: string[] = [];
+
+      // Mock setActiveVault to take some time and record order
+      vi.mocked(vaultRegistry.setActiveVault).mockImplementation(async (id) => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        callOrder.push(`start-${id}`);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        callOrder.push(`end-${id}`);
+      });
+
+      // Trigger two rapid switches
+      const p1 = manager.switchVault("vault-1");
+      const p2 = manager.switchVault("vault-2");
+
+      await Promise.all([p1, p2]);
+
+      // If locked correctly, they must not interleave
+      expect(callOrder).toEqual([
+        "start-vault-1",
+        "end-vault-1",
+        "start-vault-2",
+        "end-vault-2",
+      ]);
+    });
   });
 
   describe("deleteVault", () => {

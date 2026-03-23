@@ -334,6 +334,24 @@ describe("VaultStore", () => {
 
       expect(mockRepository.loadFiles).toHaveBeenCalled();
     });
+
+    it("should abort loading if vault changes during async operations", async () => {
+      // Mock a slow preload
+      vi.mocked(cacheService.preloadVault).mockImplementation(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        return new Map();
+      });
+
+      const loadPromise = testVault.loadFiles(false);
+
+      // Simulate rapid switch before preload finishes
+      vi.mocked(vaultRegistry).activeVaultId = "new-vault" as any;
+
+      await loadPromise;
+
+      // Should have aborted and NOT called repository.loadFiles for the old vault
+      expect(mockRepository.loadFiles).not.toHaveBeenCalled();
+    });
   });
 
   describe("CRUD Operations", () => {
