@@ -372,9 +372,9 @@ export class VaultStore {
       if (this.activeVaultId !== vaultIdAtStart) return;
 
       if (cachedMap.size > 0) {
-        const entityMap: Record<string, LocalEntity> = {
-          ...this.repository.entities,
-        };
+        // CRITICAL: We start with a FRESH map.
+        // Do NOT spread this.repository.entities as it might contain stale data from previous vault.
+        const entityMap: Record<string, LocalEntity> = {};
         for (const { entity: e } of cachedMap.values()) {
           const existing = entityMap[e.id];
 

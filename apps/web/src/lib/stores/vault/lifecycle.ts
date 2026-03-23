@@ -2,6 +2,8 @@ import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
 
 export class VaultLifecycleManager {
+  private switchLock: Promise<void> = Promise.resolve();
+
   constructor(
     private setStatus: (
       status: "idle" | "loading" | "saving" | "error",
@@ -107,26 +109,32 @@ export class VaultLifecycleManager {
   }
 
   async switchVault(id: string) {
-    if (this.getActiveVaultId() === id) return;
+    this.switchLock = this.switchLock.then(async () => {
+      if (this.getActiveVaultId() === id) return;
 
-    // Ensure all pending changes are written to the current vault before switching
-    await this.repository.waitForAllSaves();
+      // Ensure all pending changes are written to the current vault before switching
+      await this.repository.waitForAllSaves();
 
-    this.repository.clear();
-    this.assetManager.clear();
-    this.mapRegistry.maps = {};
-    this.canvasRegistry.clear();
-    this.setSelectedEntityId(null);
-    this.setHasConflictFiles(false);
-    this.setStatus("loading");
+      this.repository.clear();
+      this.assetManager.clear();
+      this.mapRegistry.maps = {};
+      this.canvasRegistry.clear();
+      this.setSelectedEntityId(null);
+      this.setHasConflictFiles(false);
+      this.setStatus("loading");
 
-    await this.vaultRegistry.setActiveVault(id);
-    await this.loadFiles(true);
-    await this.themeStore.loadForVault(id);
-    this.setInitialized(true);
-    this.setStatus("idle");
+      await this.vaultRegistry.setActiveVault(id);
+      await this.loadFiles(true);
+      await this.themeStore.loadForVault(id);
+      this.setInitialized(true);
+      this.setStatus("idle");
 
-    window.dispatchEvent(new CustomEvent("vault-switched", { detail: { id } }));
+      window.dispatchEvent(
+        new CustomEvent("vault-switched", { detail: { id } }),
+      );
+    });
+
+    return this.switchLock;
   }
 
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
