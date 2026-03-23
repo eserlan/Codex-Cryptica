@@ -49,10 +49,17 @@
       ),
     );
 
-    ui.notify(
-      `${entitiesToQueue.length} entities queued for active workspace`,
-      "success",
-    );
+    if (canvasRegistry.isWorkspaceMounted) {
+      ui.notify(
+        `${entitiesToQueue.length} entities queued for active workspace`,
+        "success",
+      );
+    } else {
+      ui.notify(
+        "Entities queued. Open a canvas workspace to place them.",
+        "info",
+      );
+    }
   }
 </script>
 
