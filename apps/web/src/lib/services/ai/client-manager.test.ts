@@ -83,7 +83,7 @@ describe("DefaultAIClientManager", () => {
       expect(result.response.text()).toBe("Test response");
     });
 
-    it("should throw error on invalid response structure", async () => {
+    it("should handle empty response structure gracefully", async () => {
       const mockResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -94,10 +94,10 @@ describe("DefaultAIClientManager", () => {
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
       const model = manager.getModel("", "gemini-1.5-pro");
+      const result = await model.generateContent("Test");
 
-      await expect(model.generateContent("Test")).rejects.toThrow(
-        "[OracleProxy] Invalid response: missing content in candidates",
-      );
+      expect(result.response.text()).toBe("");
+      expect(result.response.candidates).toHaveLength(1);
     });
 
     it("should throw error on proxy request failure", async () => {
@@ -158,12 +158,12 @@ describe("DefaultAIClientManager", () => {
       const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
       const body = JSON.parse(callArgs.body as string);
 
-      expect(body.generationConfig).toEqual({
-        systemInstruction: "You are a helpful assistant",
+      expect(body.system_instruction).toEqual({
+        parts: [{ text: "You are a helpful assistant" }],
       });
     });
 
-    it("should handle array of content blobs", async () => {
+    it("should handle array of content blobs as multiple parts", async () => {
       const mockResponse = {
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -188,9 +188,11 @@ describe("DefaultAIClientManager", () => {
       const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
       const body = JSON.parse(callArgs.body as string);
 
-      expect(body.contents).toHaveLength(2);
+      // Now it's a single role:user content with multiple parts
+      expect(body.contents).toHaveLength(1);
+      expect(body.contents[0].parts).toHaveLength(2);
       expect(body.contents[0].parts[0].text).toBe("Text part");
-      expect(body.contents[1].parts[0].inlineData).toBeDefined();
+      expect(body.contents[0].parts[1].inlineData).toBeDefined();
     });
   });
 });
