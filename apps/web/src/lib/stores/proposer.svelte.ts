@@ -125,8 +125,9 @@ class ProposerStore {
         existingConnectedIds.add(inbound.sourceId);
       }
 
-      // ⚡ Bolt Optimization: Replace full array Object.values().filter().map() with a single imperative loop.
-      // Avoids intermediate array allocations and reduces iterations from 3 to 1, reducing GC pressure.
+      // ⚡ Bolt Optimization: Use a single imperative loop over vault.allEntities instead of chaining .filter().map().
+      // vault.allEntities is already Object.values(...), so we still pay for that pass, but we avoid extra arrays and
+      // two additional traversals over the entities, which reduces allocations and GC pressure.
       const allEntities = vault.allEntities;
       const count = allEntities.length;
       const targets: { id: string; name: string }[] = [];
