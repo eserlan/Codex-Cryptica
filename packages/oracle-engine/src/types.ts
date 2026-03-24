@@ -79,7 +79,7 @@ export interface OracleIntent {
  */
 export interface UndoableAction {
   id: string;
-  type: string;
+  type?: string;
   timestamp: number;
   description: string;
   messageId?: string;

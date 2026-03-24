@@ -25,35 +25,43 @@ export class OracleActionExecutor {
         await context.chatHistory.clearMessages();
         break;
       case "roll":
-        await this.executeRoll(intent.formula, context);
+        await this.executeRoll(intent.formula!, context);
         break;
       case "create":
-        await this.executeCreate(intent.entityName, intent.entityType, context);
+        await this.executeCreate(
+          intent.entityName!,
+          intent.entityType!,
+          context,
+        );
         break;
       case "connect":
         await this.executeConnect(
-          intent.sourceName,
-          intent.label,
-          intent.targetName,
+          intent.sourceName!,
+          intent.label!,
+          intent.targetName!,
           context,
         );
         break;
       case "merge":
-        await this.executeMerge(intent.sourceName, intent.targetName, context);
+        await this.executeMerge(
+          intent.sourceName!,
+          intent.targetName!,
+          context,
+        );
         break;
       case "connect-ai":
-        await this.executeConnectAI(intent.query, context);
+        await this.executeConnectAI(intent.query!, context);
         break;
       case "merge-ai":
-        await this.executeMergeAI(intent.query, context);
+        await this.executeMergeAI(intent.query!, context);
         break;
       case "plot":
-        await this.executePlot(intent.query, context);
+        await this.executePlot(intent.query!, context);
         break;
       case "chat":
         await this.executeChat(
-          intent.query,
-          intent.isAIIntent,
+          intent.query!,
+          intent.isAIIntent!,
           context,
           onPartialResponse,
         );
@@ -62,7 +70,7 @@ export class OracleActionExecutor {
         await context.chatHistory.addMessage({
           id: crypto.randomUUID(),
           role: "system",
-          content: intent.message.startsWith("❌")
+          content: intent.message?.startsWith("❌")
             ? intent.message
             : `❌ ${intent.message}`,
         });
