@@ -65,7 +65,6 @@ export class OracleSettingsService {
       this.channel.onmessage = (event) => {
         const { type, data } = event.data;
         if (type === "SYNC_STATE") {
-          this.isLoading = data.isLoading;
           this.apiKey = data.apiKey;
           this.tier = data.tier || "advanced";
           this.activeStyleTitle = data.activeStyleTitle || null;
@@ -101,7 +100,6 @@ export class OracleSettingsService {
     this.channel?.postMessage({
       type: "SYNC_STATE",
       data: {
-        isLoading: this.isLoading,
         apiKey: this.apiKey,
         tier: this.tier,
         activeStyleTitle: this.activeStyleTitle,
