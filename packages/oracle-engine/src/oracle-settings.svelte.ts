@@ -30,12 +30,12 @@ export type ConnectionMode = "system-proxy" | "custom-key";
  * ```typescript
  * const settings = new OracleSettingsService();
  * await settings.init(entityDb);
- * 
+ *
  * // Check connection mode
  * if (settings.connectionMode === "system-proxy") {
  *   console.log("Using free system proxy");
  * }
- * 
+ *
  * // Set user's API key
  * await settings.setKey("user-api-key");
  * ```
@@ -43,13 +43,13 @@ export type ConnectionMode = "system-proxy" | "custom-key";
 export class OracleSettingsService {
   /** Current API key (null for system proxy mode) */
   apiKey = $state<string | null>(null);
-  
+
   /** Model tier: "lite" or "advanced" */
   tier = $state<"lite" | "advanced">("advanced");
-  
+
   /** Loading state for async operations */
   isLoading = $state(false);
-  
+
   /** Currently active style title (for AI art generation) */
   activeStyleTitle = $state<string | null>(null);
 
@@ -116,7 +116,7 @@ export class OracleSettingsService {
 
   /**
    * Sets the model tier and persists to IndexedDB.
-   * 
+   *
    * @param tier - The model tier ("lite" or "advanced")
    */
   async setTier(tier: "lite" | "advanced") {
@@ -134,7 +134,7 @@ export class OracleSettingsService {
   /**
    * Sets the user's API key and persists to IndexedDB.
    * Switches to "custom-key" connection mode.
-   * 
+   *
    * @param key - The Google Gemini API key
    */
   async setKey(key: string) {
@@ -163,7 +163,7 @@ export class OracleSettingsService {
 
   /**
    * Sets the loading state for async operations.
-   * 
+   *
    * @param val - The loading state (true = loading, false = idle)
    */
   setLoading(val: boolean) {
@@ -173,7 +173,7 @@ export class OracleSettingsService {
 
   /**
    * Sets the active style title for AI art generation.
-   * 
+   *
    * @param title - The style title (e.g., "Fantasy Portrait", "Sci-Fi Landscape")
    */
   setStyle(title: string | null) {
@@ -183,7 +183,7 @@ export class OracleSettingsService {
 
   /**
    * Gets the current connection mode.
-   * 
+   *
    * @returns "custom-key" if user has API key, "system-proxy" otherwise
    */
   get connectionMode(): ConnectionMode {
@@ -192,22 +192,22 @@ export class OracleSettingsService {
 
   /**
    * Gets the model name for the current tier.
-   * 
+   *
    * @returns The Gemini model identifier
    */
   get modelName() {
     return this.tier === "advanced"
-      ? "gemini-1.5-pro"
+      ? "gemini-3-flash-preview"
       : "gemini-2.0-flash-lite";
   }
 
   /**
    * Gets the effective API key for requests.
-   * 
+   *
    * Returns:
    * - User's API key if in "custom-key" mode
    * - null if in "system-proxy" mode (proxy handles authentication)
-   * 
+   *
    * @returns The API key or null for proxy mode
    */
   get effectiveApiKey() {
@@ -221,7 +221,7 @@ export class OracleSettingsService {
 
   /**
    * Checks if the Oracle is enabled.
-   * 
+   *
    * @returns Always true - Oracle works in both proxy and custom key modes
    */
   get isEnabled() {

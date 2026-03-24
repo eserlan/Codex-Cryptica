@@ -16,6 +16,7 @@ As a **New User**, I want to use the high-capability **Advanced Tier** Lore Orac
 **Independent Test**: Load the app, open the Oracle sidebar, and send a complex message. Verify the Oracle responds using the Advanced model capabilities via the "System" path.
 
 **Acceptance Scenarios**:
+
 1. **Given** I have no API key configured, **When** I send an Oracle message, **Then** the request is successfully processed via the system proxy using Advanced Tier models.
 2. **Given** the "System" path is active, **When** I look at the Oracle UI, **Then** I see an indicator that I am using "System Proxy".
 
@@ -30,6 +31,7 @@ As a **Power User**, I want to connect my own Gemini Key to ensure 100% data sov
 **Independent Test**: Enter a valid Gemini API key in settings, verify the UI reflects "Custom API Key", and check that network requests go directly to Google APIs.
 
 **Acceptance Scenarios**:
+
 1. **Given** I have entered my own API key, **When** I send a message, **Then** the request is sent directly to Google APIs using my key, bypassing the proxy.
 2. **Given** I am using a Custom API Key, **When** I open the Oracle sidebar, **Then** I see a "Direct Connection: Custom Key" badge.
 
@@ -48,11 +50,11 @@ As a **Power User**, I want to connect my own Gemini Key to ensure 100% data sov
 ### Functional Requirements
 
 - **FR-001**: Implement a **"Dual-Path" fetch service** that defaults to **Advanced Tier** capabilities:
-    - **Path A (Custom Key)**: If a user API key exists, POST directly to Google APIs using that key.
-    - **Path B (System)**: If no user API key exists, POST to the system proxy at `https://oracle-proxy.codexcryptica.workers.dev`.
+  - **Path A (Custom Key)**: If a user API key exists, POST directly to Google APIs using that key.
+  - **Path B (System)**: If no user API key exists, POST to the system proxy at `https://oracle-proxy.espen-erlandsen.workers.dev`.
 - **FR-002**: Update the Oracle Sidebar UI to display the current connection status:
-    - "System Proxy" (System Path)
-    - "Custom API Key" (Direct Path with User Key)
+  - "System Proxy" (System Path)
+  - "Custom API Key" (Direct Path with User Key)
 - **FR-003**: Ensure the system Gemini API key is never exposed to the client; it MUST remain a secret within the Cloudflare Worker environment.
 - **FR-004**: The Cloudflare Worker MUST forward requests to the Google API using an Advanced Tier model (Gemini 1.5 Pro or better).
 

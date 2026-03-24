@@ -37,7 +37,7 @@ jobs:
     
     environment:
       name: ${{ github.event.inputs.environment || 'production' }}
-      url: https://oracle-proxy.codexcryptica.workers.dev
+      url: https://oracle-proxy.espen-erlandsen.workers.dev
     
     steps:
       - name: Checkout Repository
@@ -67,7 +67,7 @@ jobs:
         run: |
           echo "Deploying worker to ${{ github.event.inputs.environment || 'production' }}..."
           wrangler deploy --commit-dirty=true
-          echo "worker_url=https://oracle-proxy.codexcryptica.workers.dev" >> $GITHUB_OUTPUT
+          echo "worker_url=https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_OUTPUT
       
       - name: Verify Deployment
         run: |
@@ -76,7 +76,7 @@ jobs:
           
           # Simple health check
           response=$(curl -s -o /dev/null -w "%{http_code}" \
-            -X POST https://oracle-proxy.codexcryptica.workers.dev \
+            -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
             -H "Content-Type: application/json" \
             -H "Origin: https://codex-cryptica.com" \
             -d '{"contents":[{"role":"user","parts":[{"text":"health check"}]}],"generationConfig":{}}')
@@ -99,6 +99,6 @@ jobs:
           echo "**Worker**: oracle-proxy" >> $GITHUB_STEP_SUMMARY
           echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "**URL**: https://oracle-proxy.codexcryptica.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "**URL**: https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_STEP_SUMMARY
           echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
           echo "**Triggered by**: ${{ github.triggering_actor }}" >> $GITHUB_STEP_SUMMARY

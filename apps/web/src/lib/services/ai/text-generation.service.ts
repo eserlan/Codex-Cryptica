@@ -187,9 +187,24 @@ export class DefaultTextGenerationService implements TextGenerationService {
       prefixContext = `[PREVIOUS UNANSWERED QUERY]:\n${lastUser!.parts[0].text}\n\n`;
     }
 
-    const chat = model.startChat({
-      history: sanitizedHistory,
-    });
+    const chat = (model as any).startChat
+      ? model.startChat({
+          history: sanitizedHistory,
+        })
+      : {
+          sendMessageStream: async (q: string) => {
+            console.error(
+              "[TextGenerationService] model.startChat missing! Falling back to generateContent",
+              model,
+            );
+            const res = await model.generateContent(q);
+            return {
+              stream: (async function* () {
+                yield { text: () => res.response.text() };
+              })(),
+            };
+          },
+        };
 
     try {
       const finalQuery = context

@@ -29,7 +29,7 @@ wrangler deploy
 wrangler secret put GEMINI_API_KEY
 
 # 4. Verify deployment
-curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
+curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
   -H "Content-Type: application/json" \
   -H "Origin: https://codex-cryptica.com" \
   -d '{"contents":[{"role":"user","parts":[{"text":"Hello"}]}],"generationConfig":{},"model":"gemini-1.5-pro"}'
@@ -43,14 +43,15 @@ Production deployments are automated via GitHub Actions. See `.github/workflows/
 
 ### Environment Variables
 
-| Variable | Type | Required | Description |
-|----------|------|----------|-------------|
-| `GEMINI_API_KEY` | Secret | ✅ | Google Gemini API key (set via `wrangler secret put`) |
-| `ALLOWED_ORIGINS` | Var | ⚠️ | Comma-separated list of allowed origins (optional, has defaults) |
+| Variable          | Type   | Required | Description                                                      |
+| ----------------- | ------ | -------- | ---------------------------------------------------------------- |
+| `GEMINI_API_KEY`  | Secret | ✅       | Google Gemini API key (set via `wrangler secret put`)            |
+| `ALLOWED_ORIGINS` | Var    | ⚠️       | Comma-separated list of allowed origins (optional, has defaults) |
 
 ### Default Allowed Origins
 
 If `ALLOWED_ORIGINS` is not set, the worker allows:
+
 - `https://codex-cryptica.com`
 - `https://staging.codex-cryptica.com`
 - `https://codex-cryptica.pages.dev`
@@ -75,7 +76,7 @@ npx playwright test oracle-proxy-integration
 
 ```bash
 # Test with valid origin
-curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
+curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
   -H "Content-Type: application/json" \
   -H "Origin: https://codex-cryptica.com" \
   -d '{
@@ -85,7 +86,7 @@ curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
   }'
 
 # Test with invalid origin (should fail with 403)
-curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
+curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
   -H "Content-Type: application/json" \
   -H "Origin: https://evil.com" \
   -d '{
@@ -139,7 +140,8 @@ curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
 
 **Cause**: Invalid Gemini API key or network error
 
-**Fix**: 
+**Fix**:
+
 1. Check `GEMINI_API_KEY` secret is set correctly
 2. Verify Google API key has Gemini API enabled
 3. Check worker logs: `wrangler tail`
@@ -167,6 +169,7 @@ wrangler status
 ### Metrics
 
 View worker metrics in Cloudflare Dashboard:
+
 - Requests count
 - Errors count
 - CPU time
@@ -175,13 +178,16 @@ View worker metrics in Cloudflare Dashboard:
 ## Cost Estimation
 
 Cloudflare Workers free tier:
+
 - 100,000 requests/day
 - 10ms CPU time per request
 
 Google Gemini API pricing:
+
 - Check current pricing at https://ai.google.dev/pricing
 
 **Estimated monthly cost** (1000 users, 100 requests/user/month):
+
 - Cloudflare: $0 (free tier)
 - Google Gemini: ~$50-100 (depends on usage)
 

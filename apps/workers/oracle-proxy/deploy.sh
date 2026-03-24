@@ -15,7 +15,7 @@ NC='\033[0m' # No Color
 # Configuration
 WORKER_DIR="apps/workers/oracle-proxy"
 WORKER_NAME="oracle-proxy"
-WORKER_URL="https://oracle-proxy.codexcryptica.workers.dev"
+WORKER_URL="https://oracle-proxy.espen-erlandsen.workers.dev"
 
 # Helper functions
 print_header() {
@@ -93,14 +93,20 @@ deploy_worker() {
 check_secret() {
     print_header "Checking API Key Secret"
     
+    cd "$WORKER_DIR"
+    
     # Try to list secrets (will fail if not set)
-    if wrangler secret list 2>&1 | grep -q "GEMINI_API_KEY"; then
+    # Redirect stderr to stdout to catch "No secrets set" or errors
+    # wrangler secret list returns JSON by default or empty []
+    secrets_list=$(wrangler secret list 2>&1)
+    
+    if echo "$secrets_list" | grep -q "GEMINI_API_KEY"; then
         print_success "GEMINI_API_KEY secret is configured"
+        cd - > /dev/null
     else
         print_error "GEMINI_API_KEY secret is not set"
         print_info "Setting up secret now..."
         
-        cd "$WORKER_DIR"
         wrangler secret put GEMINI_API_KEY
         cd - > /dev/null
         
@@ -130,7 +136,7 @@ health_check() {
         -d '{
             "contents": [{"role": "user", "parts": [{"text": "health check"}]}],
             "generationConfig": {},
-            "model": "gemini-1.5-pro"
+            "model": "gemini-3-flash-preview"
         }')
     
     # Extract status code (last line)

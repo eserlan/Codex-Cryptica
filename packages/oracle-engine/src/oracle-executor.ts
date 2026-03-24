@@ -344,16 +344,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     query: string,
     context: OracleExecutionContext,
   ) {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /connect command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       const { ProposerService } = await import("@codex/proposer");
@@ -387,16 +378,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   private async executeMergeAI(query: string, context: OracleExecutionContext) {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /merge command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       const { ProposerService } = await import("@codex/proposer");
@@ -434,16 +416,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /plot command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       if (!subject) {
@@ -634,7 +607,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    if (!context.effectiveApiKey) return;
     const entity = context.vault.entities[entityId];
     if (!entity) return;
 
@@ -675,7 +647,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   async drawMessage(messageId: string, context: OracleExecutionContext) {
-    if (!context.effectiveApiKey) return;
     const msgIndex = context.chatHistory.messages.findIndex(
       (m: any) => m.id === messageId,
     );

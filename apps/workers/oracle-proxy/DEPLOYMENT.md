@@ -39,10 +39,10 @@ wrangler secret put GEMINI_API_KEY
 
 ```bash
 # The worker URL will be shown after deployment
-# Should be: https://oracle-proxy.codexcryptica.workers.dev
+# Should be: https://oracle-proxy.espen-erlandsen.workers.dev
 
 # Test with curl
-curl -X POST https://oracle-proxy.codexcryptica.workers.dev \
+curl -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
   -H "Content-Type: application/json" \
   -H "Origin: https://codex-cryptica.com" \
   -d '{
@@ -64,6 +64,7 @@ For easier deployment, use the included script:
 ```
 
 This script will:
+
 1. Check prerequisites (Wrangler installed, authenticated)
 2. Deploy the worker
 3. Prompt for API key if not set
@@ -116,6 +117,7 @@ Production deployments are automated via GitHub Actions.
 Go to GitHub Actions → "Deploy Oracle Proxy Worker" → "Run workflow"
 
 Select environment:
+
 - **production**: Deploys to production
 - **staging**: Deploys to staging (if configured)
 
@@ -191,11 +193,13 @@ Add your origin to `ALLOWED_ORIGINS` in `wrangler.toml`
 ### Worker returns 500
 
 Check logs:
+
 ```bash
 wrangler tail
 ```
 
 Common causes:
+
 - Invalid API key
 - Network timeout
 - Google API rate limiting
@@ -207,6 +211,7 @@ Common causes:
 ### Cloudflare Workers
 
 Free tier includes:
+
 - 100,000 requests/day
 - 10ms CPU time per request
 
@@ -217,6 +222,7 @@ Monitor usage in Cloudflare Dashboard.
 Check current pricing at: https://ai.google.dev/pricing
 
 Estimated costs (1000 users, 100 requests/user/month):
+
 - **Free tier**: 60 requests/minute (sufficient for small deployments)
 - **Paid tier**: ~$50-100/month for higher rate limits
 
@@ -225,6 +231,7 @@ Estimated costs (1000 users, 100 requests/user/month):
 ## Security Best Practices
 
 1. **Rotate API Keys Regularly**:
+
    ```bash
    wrangler secret put GEMINI_API_KEY
    ```
@@ -258,6 +265,7 @@ After deployment:
 ## Support
 
 For issues or questions:
+
 - Check logs: `wrangler tail`
 - Review worker code: `apps/workers/oracle-proxy/src/index.ts`
 - See full documentation: `README.md`

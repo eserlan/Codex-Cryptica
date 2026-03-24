@@ -128,13 +128,13 @@ export class OracleStore {
 
   async ask(query: string) {
     if (!query.trim()) return;
-    const key = this.effectiveApiKey;
-    if (
-      !key &&
-      !this.uiStore.liteMode &&
-      !query.toLowerCase().trim().startsWith("/roll")
-    )
+
+    // Allow proceeding if we have an API key OR if we are NOT in lite mode (proxy mode)
+    // Roll commands are always allowed.
+    const isRoll = query.toLowerCase().trim().startsWith("/roll");
+    if (!this.effectiveApiKey && this.uiStore.liteMode && !isRoll) {
       return;
+    }
 
     this.settings.setLoading(true);
     try {
@@ -154,13 +154,21 @@ export class OracleStore {
           }
         },
       );
+    } catch (err: any) {
+      console.error("[OracleStore] Ask failed:", err);
+      await this.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Error: ${err.message || "Failed to generate response"}`,
+      });
     } finally {
       this.settings.setLoading(false);
     }
   }
 
   async drawEntity(entityId: string) {
-    if (!this.effectiveApiKey || this.isLoading) return;
+    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+      return;
     this.settings.setLoading(true);
     try {
       await this.executor.drawEntity(entityId, this.getExecutionContext());
@@ -170,7 +178,8 @@ export class OracleStore {
   }
 
   async drawMessage(messageId: string) {
-    if (!this.effectiveApiKey || this.isLoading) return;
+    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+      return;
     this.settings.setLoading(true);
     try {
       await this.executor.drawMessage(messageId, this.getExecutionContext());
