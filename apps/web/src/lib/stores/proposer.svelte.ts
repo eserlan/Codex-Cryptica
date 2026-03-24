@@ -125,9 +125,19 @@ class ProposerStore {
         existingConnectedIds.add(inbound.sourceId);
       }
 
-      const targets = Object.values(vault.entities)
-        .filter((e) => e.id !== entityId && !existingConnectedIds.has(e.id))
-        .map((e) => ({ id: e.id, name: e.title }));
+      // ⚡ Bolt Optimization: Use a single imperative loop over vault.allEntities instead of chaining .filter().map().
+      // vault.allEntities is already Object.values(...), so we still pay for that pass, but we avoid extra arrays and
+      // two additional traversals over the entities, which reduces allocations and GC pressure.
+      const allEntities = vault.allEntities;
+      const count = allEntities.length;
+      const targets: { id: string; name: string }[] = [];
+
+      for (let i = 0; i < count; i++) {
+        const e = allEntities[i];
+        if (e.id !== entityId && !existingConnectedIds.has(e.id)) {
+          targets.push({ id: e.id, name: e.title });
+        }
+      }
 
       // Use the lite model for background tasks to save cost/latency
       const modelName = TIER_MODES["lite"];
