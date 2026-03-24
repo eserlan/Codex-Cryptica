@@ -308,45 +308,86 @@ test.describe("Entity Labeling System", () => {
     // Wait for graph to render
     await page.waitForTimeout(1000);
 
-    // 4. Get initial visible node count
-    const getVisibleNodeCount = async () => {
+    // 4. Helper to get visibility of specific nodes by label
+    const getNodeVisibilities = async () => {
       return await page.evaluate(() => {
         const cy = (window as any).cy;
-        if (!cy) return 0;
-        return cy.nodes(":visible").length;
+        if (!cy) {
+          return {
+            nodeAVisible: false,
+            nodeBVisible: false,
+            nodeCVisible: false,
+          };
+        }
+
+        const isNodeWithLabelVisible = (label: string) => {
+          const nodes = cy.nodes(`node[label = "${label}"]`);
+          if (nodes.length === 0) return false;
+          // At least one matching node must be visible
+          return nodes.some((n: any) => n.visible());
+        };
+
+        return {
+          nodeAVisible: isNodeWithLabelVisible("Node A"),
+          nodeBVisible: isNodeWithLabelVisible("Node B"),
+          nodeCVisible: isNodeWithLabelVisible("Node C"),
+        };
       });
     };
 
-    const initialCount = await getVisibleNodeCount();
-    expect(initialCount).toBeGreaterThanOrEqual(3);
+    const waitForVisibilities = async (expected: {
+      nodeAVisible: boolean;
+      nodeBVisible: boolean;
+      nodeCVisible: boolean;
+    }) => {
+      await expect
+        .poll(async () => await getNodeVisibilities(), {
+          timeout: 5000,
+        })
+        .toEqual(expected);
+    };
+
+    await waitForVisibilities({
+      nodeAVisible: true,
+      nodeBVisible: true,
+      nodeCVisible: true,
+    });
 
     // 5. Filter by "faction-a" - should hide Node B
     await page.getByRole("button", { name: /Labels \(0\)/ }).click();
-    await page.getByRole("button", { name: "faction-a" }).click();
-    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "faction-a", exact: true }).click();
 
-    const countAfterFilterA = await getVisibleNodeCount();
-    expect(countAfterFilterA).toBe(2); // Node A and Node C should be visible
+    await waitForVisibilities({
+      nodeAVisible: true,
+      nodeBVisible: false,
+      nodeCVisible: true,
+    });
 
     // 6. Add "faction-b" filter in OR mode - should show all 3
-    await page.getByRole("button", { name: "faction-b" }).click();
-    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: "faction-b", exact: true }).click();
 
-    const countAfterFilterB = await getVisibleNodeCount();
-    expect(countAfterFilterB).toBe(3); // All nodes should be visible
+    await waitForVisibilities({
+      nodeAVisible: true,
+      nodeBVisible: true,
+      nodeCVisible: true,
+    });
 
     // 7. Switch to AND mode - should only show Node C
     await page.getByRole("button", { name: /AND\s*\/\s*OR/ }).click();
-    await page.waitForTimeout(500);
 
-    const countAfterAndMode = await getVisibleNodeCount();
-    expect(countAfterAndMode).toBe(1); // Only Node C has both labels
+    await waitForVisibilities({
+      nodeAVisible: false,
+      nodeBVisible: false,
+      nodeCVisible: true,
+    });
 
     // 8. Clear all filters - should show all 3
     await page.getByRole("button", { name: "Clear All" }).click();
-    await page.waitForTimeout(500);
 
-    const countAfterClear = await getVisibleNodeCount();
-    expect(countAfterClear).toBe(3);
+    await waitForVisibilities({
+      nodeAVisible: true,
+      nodeBVisible: true,
+      nodeCVisible: true,
+    });
   });
 });

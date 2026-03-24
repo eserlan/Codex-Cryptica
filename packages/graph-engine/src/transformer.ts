@@ -56,6 +56,8 @@ const formatDate = (date?: TemporalMetadata) => {
   return str;
 };
 
+const EMPTY_LABELS: string[] = [];
+
 export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
@@ -129,7 +131,7 @@ export class GraphTransformer {
         start_date: entity.start_date,
         end_date: entity.end_date,
         dateLabel,
-        labels: entity.labels || [],
+        labels: entity.labels ?? EMPTY_LABELS,
       };
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
