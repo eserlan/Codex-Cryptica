@@ -57,7 +57,7 @@
       </h1>
 
       <p
-        class="text-theme-muted text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
+        class="text-theme-text/70 text-xl italic leading-relaxed border-l-4 border-theme-primary pl-6"
       >
         {article.description}
       </p>
