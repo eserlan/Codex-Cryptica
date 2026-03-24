@@ -17,11 +17,11 @@
   <div class="max-w-4xl mx-auto px-6 py-20 md:py-32">
     <header class="mb-16 md:mb-24">
       <h1
-        class="text-4xl md:text-6xl font-header font-bold uppercase tracking-[0.2em] mb-6 bg-gradient-to-r from-theme-text to-theme-text/40 bg-clip-text text-transparent"
+        class="text-4xl md:text-6xl font-header font-bold uppercase tracking-[0.2em] mb-6 bg-gradient-to-r from-theme-text to-theme-text/60 bg-clip-text text-transparent"
       >
         The Archive
       </h1>
-      <p class="text-theme-muted max-w-2xl text-lg leading-relaxed">
+      <p class="text-theme-text/70 max-w-2xl text-lg leading-relaxed">
         Deep dives into the technology and philosophy behind Codex Cryptica.
         Learn how to secure your lore and master the spatial brain.
       </p>
@@ -56,7 +56,7 @@
             </a>
           </h2>
 
-          <p class="text-theme-muted line-clamp-3 text-lg leading-relaxed">
+          <p class="text-theme-text/70 line-clamp-3 text-lg leading-relaxed">
             {article.description}
           </p>
 
