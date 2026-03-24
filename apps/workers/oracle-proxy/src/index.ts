@@ -17,6 +17,7 @@ interface Env {
 // Allowed origins for CORS
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://codex-cryptica.com",
+  "https://codexcryptica.com",
   "https://staging.codex-cryptica.com",
   "https://codex-cryptica.pages.dev",
   "http://localhost:5173",
