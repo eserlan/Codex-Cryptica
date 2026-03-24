@@ -29,16 +29,25 @@
   let suggestions = $derived.by(() => {
     const query = inputValue.trim().toLowerCase();
     if (!query) return [];
-    const currentLabels = (vault.entities[entityId]?.labels || []).map((l) =>
-      l.toLowerCase(),
+
+    // ⚡ Bolt Optimization: Use a Set for O(1) membership checks instead of an array.
+    const currentLabelsSet = new Set(
+      (vault.entities[entityId]?.labels || []).map((l) => l.toLowerCase()),
     );
-    return vault.labelIndex
-      .filter(
-        (l) =>
-          l.toLowerCase().includes(query) &&
-          !currentLabels.includes(l.toLowerCase()),
-      )
-      .slice(0, 5);
+
+    const maxResults = 5;
+    const matches: string[] = [];
+    const labels = vault.labelIndex;
+
+    for (let i = 0; i < labels.length; i++) {
+      const l = labels[i];
+      const lowerL = l.toLowerCase();
+      if (lowerL.includes(query) && !currentLabelsSet.has(lowerL)) {
+        matches.push(l);
+        if (matches.length === maxResults) break;
+      }
+    }
+    return matches;
   });
 
   $effect(() => {

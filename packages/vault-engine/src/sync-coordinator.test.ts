@@ -191,7 +191,7 @@ describe("SyncCoordinator", () => {
     });
   });
 
-  describe("syncToLocal", () => {
+  describe("syncWithLocalFolder", () => {
     it("should handle local handle validation failure (NotFoundError)", async () => {
       const mockLocal = {
         values: () => ({
@@ -205,7 +205,7 @@ describe("SyncCoordinator", () => {
       mockIO.getLocalHandle.mockResolvedValue(mockLocal);
       mockIO.showDirectoryPicker.mockResolvedValue({ name: "new" } as any);
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -226,7 +226,7 @@ describe("SyncCoordinator", () => {
       } as any;
       mockIO.getLocalHandle.mockResolvedValue(mockLocal);
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -247,7 +247,7 @@ describe("SyncCoordinator", () => {
       mockIO.getLocalHandle.mockResolvedValue(mockLocal);
       mockIO.showDirectoryPicker.mockResolvedValue({ name: "new" } as any);
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -266,7 +266,7 @@ describe("SyncCoordinator", () => {
       mockIO.showDirectoryPicker.mockRejectedValue(abortErr);
       const onStateChange = vi.fn();
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -289,7 +289,7 @@ describe("SyncCoordinator", () => {
       // Use a very short timeout for testing
       // (This requires changing the code or being clever with vi.useFakeTimers)
       // For now we'll just test the catch path by rejecting waitForSaves
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -316,7 +316,7 @@ describe("SyncCoordinator", () => {
         return Promise.resolve({ created: [], updated: [], deleted: [] });
       });
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -341,7 +341,7 @@ describe("SyncCoordinator", () => {
         return Promise.resolve({ created: [], updated: [], deleted: [] });
       });
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -382,7 +382,7 @@ describe("SyncCoordinator", () => {
         deleted: [],
       });
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -409,7 +409,7 @@ describe("SyncCoordinator", () => {
       mockEngine.sync.mockRejectedValue(abortErr);
       const onStateChange = vi.fn();
 
-      await coordinator.syncToLocal(
+      await coordinator.syncWithLocalFolder(
         "v1",
         {} as any,
         {},
@@ -422,6 +422,23 @@ describe("SyncCoordinator", () => {
         status: "idle",
         syncType: null,
       });
+    });
+
+    it("should abort sync if signal is aborted", async () => {
+      const onStateChange = vi.fn();
+      const signal = AbortSignal.abort();
+
+      await coordinator.syncWithLocalFolder(
+        "v1",
+        {} as any,
+        {},
+        vi.fn(),
+        onStateChange,
+        vi.fn(),
+        signal,
+      );
+
+      expect(mockEngine.sync).not.toHaveBeenCalled();
     });
   });
 });

@@ -140,6 +140,16 @@ export class GraphStore {
     if (savedLabelFilterMode !== undefined) {
       this.labelFilterMode = savedLabelFilterMode;
     }
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("vault-switched", () => {
+        this.clearLabelFilters();
+        this.clearCategoryFilters();
+        this.orbitMode = false;
+        this.centralNodeId = null;
+        // Keep timelineMode as it's a global preference usually
+      });
+    }
   }
 
   async saveEras() {

@@ -30,6 +30,8 @@ export class CacheService {
     { lastModified: number; entity: LocalEntity }
   > | null = null;
 
+  private _preloadedVaultId: string | null = null;
+
   /**
    * Bulk-loads graph entity metadata from the `graphEntities` table (which
    * excludes `content` and `lore` fields stored separately in `entityContent`)
@@ -44,7 +46,9 @@ export class CacheService {
    * Safe to call even when Dexie is unavailable (e.g. in test environments)
    * — any error is swallowed and the service falls back to per-file lookups.
    */
-  async preloadVault(vaultId: string): Promise<void> {
+  async preloadVault(
+    vaultId: string,
+  ): Promise<Map<string, { lastModified: number; entity: LocalEntity }>> {
     try {
       debugStore.log(`[CacheService] Preloading vault: ${vaultId}`);
       const start = performance.now();
@@ -70,12 +74,16 @@ export class CacheService {
       }
 
       this.preloaded = map;
+      this._preloadedVaultId = vaultId;
       debugStore.log(
         `[CacheService] Preloaded ${map.size} graph entities in ${(performance.now() - start).toFixed(2)}ms`,
       );
+      return map;
     } catch (err) {
       debugStore.error("[CacheService] Preload failed:", err);
       this.preloaded = null;
+      this._preloadedVaultId = null;
+      return new Map();
     }
   }
 
@@ -240,9 +248,10 @@ export class CacheService {
    * Returns all preloaded entities from the in-memory metadata map.
    * Useful for immediately populating the UI before OPFS sync starts.
    */
-  getPreloadedEntities(): LocalEntity[] {
+  getPreloadedEntities(vaultId?: string): LocalEntity[] {
+    if (vaultId && this._preloadedVaultId !== vaultId) return [];
     if (!this.preloaded) return [];
-    return Array.from(this.preloaded.values()).map((entry) => entry.entity);
+    return Array.from(this.preloaded.values()).map((v) => v.entity);
   }
 
   /**

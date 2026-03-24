@@ -28,7 +28,7 @@
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
-  import { untrack, onDestroy } from "svelte";
+  import { untrack, onDestroy, onMount } from "svelte";
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
@@ -400,10 +400,12 @@
     const position =
       (eventScreenPosition && screenToFlowPosition(eventScreenPosition)) ||
       eventPosition ||
-      screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      });
+      (() => {
+        const paletteWidth = uiStore.showCanvasPalette ? 288 : 48;
+        const centerX = (window.innerWidth - paletteWidth) / 2 + paletteWidth;
+        const centerY = window.innerHeight / 2;
+        return screenToFlowPosition({ x: centerX, y: centerY });
+      })();
 
     const newNodeId = engine.addNode(entityId, position);
     // Ensure the full content (lore, content, image) is loaded for this entity
@@ -422,16 +424,21 @@
   }
 
   function handleBatchSpawn() {
-    const entityIds = canvasRegistry.consumePending();
-    if (entityIds.length === 0) return;
+    const toAdd = canvasRegistry.consumePending();
+    if (toAdd.length === 0) return;
 
     const newNodesList: Node[] = [];
 
-    entityIds.forEach((entityId, index) => {
-      const position = screenToFlowPosition({
-        x: window.innerWidth / 2 + index * 20,
-        y: window.innerHeight / 2 + index * 20,
-      });
+    toAdd.forEach((item, index) => {
+      const { id: entityId, position: eventPosition } = item;
+
+      // Use provided position (screen coords) or default to staggered center
+      const position = eventPosition
+        ? screenToFlowPosition(eventPosition)
+        : screenToFlowPosition({
+            x: window.innerWidth / 2 + index * 30,
+            y: window.innerHeight / 2 + index * 30,
+          });
 
       const newNodeId = engine.addNode(entityId, position);
       vault.loadEntityContent(entityId);
@@ -449,7 +456,7 @@
 
   // Monitor pending entities from registry (e.g. from GraphHUD "Add all results" button)
   $effect(() => {
-    if (canvasRegistry.pendingEntityIds.length > 0) {
+    if (canvasRegistry.pendingEntities.length > 0) {
       untrack(() => handleBatchSpawn());
     }
   });
@@ -499,39 +506,16 @@
     });
     await canvasRegistry.touch(currentCanvasId);
   }
-
-  $effect(() => {
+  onMount(() => {
+    canvasRegistry.isWorkspaceMounted = true;
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
+
     return () => {
+      canvasRegistry.isWorkspaceMounted = false;
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };
-  });
-
-  // Consume entity IDs queued from other routes (e.g. GraphHUD "Add filtered to canvas")
-  $effect(() => {
-    if (canvasRegistry.pendingEntityIds.length === 0) return;
-    const toAdd = canvasRegistry.consumePending();
-    if (toAdd.length === 0) return;
-    toAdd.forEach((entityId, index) => {
-      const position = screenToFlowPosition({
-        x: window.innerWidth / 2 + index * 30,
-        y: window.innerHeight / 2 + index * 30,
-      });
-      const newNodeId = engine.addNode(entityId, position);
-      // Fire-and-forget: content loads in background, matching handleQuickSpawn behaviour
-      vault.loadEntityContent(entityId);
-      nodes = [
-        ...nodes,
-        {
-          id: newNodeId,
-          type: "entity",
-          position,
-          data: { entityId },
-        },
-      ];
-    });
   });
 
   onDestroy(() => {

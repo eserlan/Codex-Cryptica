@@ -2,7 +2,12 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Category Architecture Modal", () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    await page.addInitScript(() => {
+      (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
+      localStorage.setItem("codex_skip_landing", "true");
+    });
+    page.on("console", (msg) => console.log(`PAGE LOG: ${msg.text()}`));
     await page.goto("http://localhost:5173/");
 
     // Wait for vault to initialize automatically
@@ -108,13 +113,11 @@ test.describe("Category Architecture Modal", () => {
     await expect(page.getByText("Glyph Library")).toBeVisible();
 
     // Verify icons are present
-    const iconCount = await page
-      .locator('button[title^="icon-[lucide"]')
-      .count();
+    const iconCount = await page.locator('button[title^="Select "]').count();
     expect(iconCount).toBeGreaterThan(10);
 
     // Close by clicking outside or selecting an icon
-    await page.getByTitle("icon-[lucide--star]").click();
+    await page.getByTitle("Select star icon").click();
     await expect(page.getByText("Glyph Library")).not.toBeVisible();
   });
 

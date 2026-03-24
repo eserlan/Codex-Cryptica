@@ -143,6 +143,7 @@ export function setupWindowGlobals(context: {
 
   if (!isSpecialEnv) return;
 
+  console.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
 
   // Lazy-load dynamic store attachments

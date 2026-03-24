@@ -17,7 +17,7 @@
     isLoading = true;
     try {
       const handle = await window.showDirectoryPicker({ mode: "readwrite" });
-      const success = await vault.loadFromFolder(handle);
+      const success = await vault.importFromFolder(handle);
       if (success) {
         onClose();
       } else if (vault.errorMessage) {

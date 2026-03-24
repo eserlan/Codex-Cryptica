@@ -97,6 +97,13 @@
     }
     categories.updateCategory(id, { label: trimmed });
   };
+
+  const formatIconName = (icon: string) => {
+    return icon
+      .replace("icon-[lucide--", "")
+      .replace("]", "")
+      .replace(/-/g, " ");
+  };
 </script>
 
 <div class="space-y-6">
@@ -240,10 +247,12 @@
         class="grid grid-cols-6 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar"
       >
         {#each selectableIcons as icon}
+          {@const label = formatIconName(icon)}
           <button
             onclick={() => selectIcon(icon)}
             class="aspect-square flex items-center justify-center rounded border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 text-theme-muted hover:text-theme-primary transition-all"
-            title={icon}
+            title="Select {label} icon"
+            aria-label="Select {label} icon"
           >
             <span class="{getIconClass(icon)} w-5 h-5"></span>
           </button>
