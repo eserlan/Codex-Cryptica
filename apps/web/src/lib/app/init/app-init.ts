@@ -146,13 +146,7 @@ export function setupWindowGlobals(context: {
   console.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
 
-  // Lazy-load dynamic store attachments
-  import("../../stores/oracle.svelte")
-    .then((m) => {
-      if (m?.oracle) (window as any).oracle = m.oracle;
-    })
-    .catch((e) => debugStore.warn("Failed to attach oracle to window", e));
-
+  // Lazy-load dynamic AI services if not already present
   import("../../services/ai")
     .then((m) => {
       if (m) {
