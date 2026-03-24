@@ -28,15 +28,38 @@
     if (!cy) return;
     // Use :visible to correctly catch all display:none filtering (labels, categories, timeline)
     const visibleNodes = cy.nodes(":visible");
-    const entityIds = visibleNodes.map((node: NodeSingular) => node.id());
+    const entitiesToQueue = visibleNodes.map(
+      (node: NodeSingular, index: number) => ({
+        id: node.id(),
+        // Send screenPosition so CanvasWorkspace can convert correctly
+        screenPosition: {
+          x: window.innerWidth / 2 + index * 20,
+          y: window.innerHeight / 2 + index * 20,
+        },
+      }),
+    );
 
     // ⚡ Optimization: Use canvasRegistry.queueEntities for batch spawning in CanvasWorkspace
-    canvasRegistry.queueEntities(entityIds);
-
-    ui.notify(
-      `${entityIds.length} entities queued for active workspace`,
-      "success",
+    canvasRegistry.queueEntities(
+      entitiesToQueue.map(
+        (e: { id: string; screenPosition: { x: number; y: number } }) => ({
+          id: e.id,
+          position: e.screenPosition,
+        }),
+      ),
     );
+
+    if (canvasRegistry.isWorkspaceMounted) {
+      ui.notify(
+        `${entitiesToQueue.length} entities queued for active workspace`,
+        "success",
+      );
+    } else {
+      ui.notify(
+        "Entities queued. Open a canvas workspace to place them.",
+        "info",
+      );
+    }
   }
 </script>
 

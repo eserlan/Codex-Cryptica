@@ -22,6 +22,14 @@ export interface FeatureHint {
   icon?: string;
 }
 
+/**
+ * LocalStorage keys for feature hints.
+ * Used to track which hints the user has already seen.
+ */
+export const HINT_KEYS = {
+  ORACLE_CONNECTION: "oracle-hint-seen",
+} as const;
+
 export const ONBOARDING_TOUR: GuideStep[] = [
   {
     id: "welcome",
@@ -110,8 +118,15 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "lore-oracle",
     title: "AI Oracle",
     content:
-      "Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes.",
+      "Chat with the AI about your world. Ask questions, brainstorm ideas, or get help writing descriptions directly from your notes. Use the system proxy for free access, or add your own API key for direct connection.",
     icon: "icon-[lucide--sparkles]",
+  },
+  "oracle-connection-modes": {
+    id: "oracle-connection-modes",
+    title: "Oracle Connection Modes",
+    content:
+      "The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.",
+    icon: "icon-[lucide--cloud]",
   },
   "visual-graph": {
     id: "visual-graph",

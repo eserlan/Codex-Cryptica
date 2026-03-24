@@ -62,6 +62,7 @@ vi.mock("$lib/stores/debug.svelte", () => ({
 // Import after mock
 import { SearchService } from "$lib/services/search";
 import { debugStore } from "$lib/stores/debug.svelte";
+import { vaultEventBus } from "$lib/stores/vault/events";
 
 describe("SearchService", () => {
   let service: SearchService;
@@ -187,21 +188,34 @@ describe("SearchService", () => {
   });
 
   describe("Vault Events", () => {
-    let eventCallback: any;
-
     beforeEach(async () => {
-      const { vaultEventBus } = await import("$lib/stores/vault/events");
-      const subscribeSpy = vi.spyOn(vaultEventBus, "subscribe");
-      // Create a new service instance to trigger subscription
-      new SearchService();
-      eventCallback = subscribeSpy.mock.calls.find(
-        (call) => call[1] === "search-service",
-      )?.[0];
+      // Reset the bus and recreate the service to ensure clean slate
+      vaultEventBus.reset(false);
+      service = new SearchService();
+      await service.init();
+
+      // Initialize the vault ID
+      vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });
+      // Small wait for the async listener to process
+      await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
     it("should clear index on VAULT_OPENING", async () => {
-      await eventCallback({ type: "VAULT_OPENING", vaultId: "new-vault" });
+      await vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "new-vault" });
       expect(mockApi.clear).toHaveBeenCalled();
+      expect((service as any).activeVaultId).toBe("new-vault");
+    });
+
+    it("should ignore events from other vaults", async () => {
+      const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
+      vaultEventBus.emit({
+        type: "SYNC_CHUNK_READY",
+        vaultId: "WRONG_VAULT",
+        entities: { "1": { id: "1", title: "T1" } } as any,
+        newOrChangedIds: ["1"],
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(indexBatchSpy).not.toHaveBeenCalled();
     });
 
     it("should rebuild index on CACHE_LOADED if loadIndex fails", async () => {
@@ -210,8 +224,9 @@ describe("SearchService", () => {
 
       const entities = {
         "1": { id: "1", title: "Note 1", content: "body", type: "note" },
-      };
-      await eventCallback({ type: "CACHE_LOADED", vaultId: "v1", entities });
+      } as any;
+      vaultEventBus.emit({ type: "CACHE_LOADED", vaultId: "v1", entities });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(indexBatchSpy).toHaveBeenCalledWith(Object.values(entities));
       expect((service as any).needsFullContentSweep).toBe(true);
@@ -219,14 +234,18 @@ describe("SearchService", () => {
 
     it("should index chunks on SYNC_CHUNK_READY", async () => {
       const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
-      const entities = { "1": { id: "1", title: "T1" }, "2": { id: "2" } };
+      const entities = {
+        "1": { id: "1", title: "T1" },
+        "2": { id: "2" },
+      } as any;
 
-      await eventCallback({
+      vaultEventBus.emit({
         type: "SYNC_CHUNK_READY",
         vaultId: "v1",
         entities,
         newOrChangedIds: ["1"],
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(indexBatchSpy).toHaveBeenCalledWith([{ id: "1", title: "T1" }]);
     });
@@ -237,7 +256,8 @@ describe("SearchService", () => {
         .spyOn(service as any, "indexContentInBackground")
         .mockResolvedValue(undefined);
 
-      await eventCallback({ type: "SYNC_COMPLETE", vaultId: "v1" });
+      vaultEventBus.emit({ type: "SYNC_COMPLETE", vaultId: "v1" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(syncSpy).toHaveBeenCalledWith("v1");
       expect((service as any).needsFullContentSweep).toBe(false);
@@ -247,44 +267,48 @@ describe("SearchService", () => {
       const indexSpy = vi.spyOn(service, "index");
       const entity = { id: "1", title: "Updated" };
 
-      await eventCallback({
+      vaultEventBus.emit({
         type: "ENTITY_UPDATED",
         vaultId: "v1",
-        entity,
+        entity: entity as any,
         patch: { title: "Updated" },
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(indexSpy).toHaveBeenCalled();
     });
 
     it("should skip index on ENTITY_UPDATED if no relevant fields changed", async () => {
       const indexSpy = vi.spyOn(service, "index");
-      await eventCallback({
+      vaultEventBus.emit({
         type: "ENTITY_UPDATED",
         vaultId: "v1",
-        entity: { id: "1" },
-        patch: { someOtherField: "val" },
+        entity: { id: "1" } as any,
+        patch: { someOtherField: "val" } as any,
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(indexSpy).not.toHaveBeenCalled();
     });
 
     it("should remove on ENTITY_DELETED", async () => {
       const removeSpy = vi.spyOn(service, "remove");
-      await eventCallback({
+      vaultEventBus.emit({
         type: "ENTITY_DELETED",
         vaultId: "v1",
         entityId: "1",
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(removeSpy).toHaveBeenCalledWith("1");
     });
 
     it("should index batch on BATCH_CREATED", async () => {
       const indexBatchSpy = vi.spyOn(service as any, "indexBatch");
-      await eventCallback({
+      vaultEventBus.emit({
         type: "BATCH_CREATED",
         vaultId: "v1",
-        entities: [{ id: "1" }],
+        entities: [{ id: "1" }] as any,
       });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       expect(indexBatchSpy).toHaveBeenCalledWith([{ id: "1" }]);
     });
   });

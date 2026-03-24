@@ -312,14 +312,22 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should require AI key for plot", async () => {
+    it("should allow plot without key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;
+      // Setup mock to prevent the "Cannot read properties of undefined (reading '0')" error
+      mockContext.searchService.search.mockResolvedValue([
+        { id: "e1", title: "Hero" },
+      ]);
+      mockContext.vault.entities["e1"] = {
+        id: "e1",
+        title: "Hero",
+        connections: [],
+      };
+
       await executor.execute({ type: "plot", query: "Hero" }, mockContext);
-      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining("requires an AI API key"),
-        }),
-      );
+      expect(
+        mockContext.textGeneration.generatePlotAnalysis,
+      ).toHaveBeenCalled();
     });
 
     it("should disable plot in lite mode", async () => {
@@ -334,20 +342,20 @@ describe("OracleActionExecutor - Detailed", () => {
   });
 
   describe("executeConnectAI and executeMergeAI", () => {
-    it("should handle missing key for connect-ai", async () => {
+    it("should allow connect-ai without key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;
       await executor.execute({ type: "connect-ai", query: "q" }, mockContext);
-      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
         expect.objectContaining({
           content: expect.stringContaining("requires an AI API key"),
         }),
       );
     });
 
-    it("should handle missing key for merge-ai", async () => {
+    it("should allow merge-ai without key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;
       await executor.execute({ type: "merge-ai", query: "q" }, mockContext);
-      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
+      expect(mockContext.chatHistory.addMessage).not.toHaveBeenCalledWith(
         expect.objectContaining({
           content: expect.stringContaining("requires an AI API key"),
         }),

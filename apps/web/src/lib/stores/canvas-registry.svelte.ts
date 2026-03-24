@@ -8,7 +8,10 @@ class CanvasRegistryStore {
   canvases = $state<Record<string, any>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isLoaded = $state(false);
-  pendingEntityIds = $state<string[]>([]);
+  isWorkspaceMounted = $state(false);
+  pendingEntities = $state<
+    { id: string; position?: { x: number; y: number } }[]
+  >([]);
   private saveQueue: KeyedTaskQueue | null = null;
 
   init(saveQueue: KeyedTaskQueue) {
@@ -24,13 +27,15 @@ class CanvasRegistryStore {
     this.isLoaded = false;
   }
 
-  queueEntities(ids: string[]) {
-    this.pendingEntityIds = [...this.pendingEntityIds, ...ids];
+  queueEntities(
+    entities: { id: string; position?: { x: number; y: number } }[],
+  ) {
+    this.pendingEntities = [...this.pendingEntities, ...entities];
   }
 
-  consumePending(): string[] {
-    const pending = this.pendingEntityIds;
-    this.pendingEntityIds = [];
+  consumePending(): { id: string; position?: { x: number; y: number } }[] {
+    const pending = this.pendingEntities;
+    this.pendingEntities = [];
     return pending;
   }
 

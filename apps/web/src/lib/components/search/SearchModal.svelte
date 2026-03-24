@@ -119,6 +119,7 @@
     role="dialog"
     aria-modal="true"
     tabindex="-1"
+    data-testid="search-modal"
   >
     <div
       class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body"

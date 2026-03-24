@@ -269,7 +269,7 @@
             'local'
               ? 'opacity-75 cursor-wait'
               : ''}"
-            onclick={() => vault.syncToLocal()}
+            onclick={() => vault.syncWithLocalFolder()}
             title="Mirror internal archive with a local folder."
             aria-label={isVertical
               ? "SYNC - Mirror internal archive with a local folder."
@@ -328,6 +328,7 @@
         bind:value={newTitle}
         aria-label={`New ${themeStore.jargon.entity} Title`}
         placeholder={`${themeStore.jargon.entity} Title...`}
+        data-testid="new-entity-title-input"
         class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 font-body {isVertical
           ? 'py-3 text-sm'
           : ''}"

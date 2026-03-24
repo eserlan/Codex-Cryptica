@@ -14,12 +14,11 @@ export class OracleGenerator {
     searchQuery: string;
   }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) return { sourceIds: [], searchQuery: query };
+    const apiKey = context.effectiveApiKey || "";
 
     // 1. Expand query if follow-up
     let searchQuery = query;
-    if (context.chatHistory.messages.length > 2) {
+    if (context.chatHistory.messages.length > 2 && context.textGeneration) {
       searchQuery = await context.textGeneration.expandQuery(
         apiKey,
         query,
@@ -59,16 +58,7 @@ export class OracleGenerator {
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
 
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ AI features require an API key. Please configure one in Settings.",
-      });
-      return { sourceIds: [] };
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     // 1. Identify primary entity and gather context metadata
     const { primaryEntityId, sourceIds, searchQuery } =
@@ -111,8 +101,7 @@ export class OracleGenerator {
     entityId: string,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) throw new Error("API key missing");
+    const apiKey = context.effectiveApiKey || "";
 
     const entity = context.vault.entities[entityId];
     const { content: aiContext } =
@@ -135,7 +124,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview", // Use Nano Banana 2 specifically for IMAGE modality
+      "gemini-3.1-flash-image-preview",
     );
   }
 
@@ -146,8 +135,7 @@ export class OracleGenerator {
     message: ChatMessage,
     context: OracleExecutionContext,
   ): Promise<Blob> {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) throw new Error("API key missing");
+    const apiKey = context.effectiveApiKey || "";
 
     const entity = message.entityId
       ? context.vault.entities[message.entityId]
@@ -174,7 +162,7 @@ export class OracleGenerator {
     return await context.imageGeneration.generateImage(
       apiKey,
       visualPrompt,
-      "gemini-3.1-flash-image-preview", // Use Nano Banana 2 specifically for IMAGE modality
+      "gemini-3.1-flash-image-preview",
     );
   }
 

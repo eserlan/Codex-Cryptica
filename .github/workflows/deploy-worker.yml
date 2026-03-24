@@ -1,0 +1,104 @@
+name: Deploy Oracle Proxy Worker
+
+# Deploy the Oracle Proxy Cloudflare Worker on push to main branch
+# Only triggers when files in the worker directory change
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'apps/workers/oracle-proxy/**'
+      - '.github/workflows/deploy-worker.yml'
+  
+  # Allow manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+# Prevent concurrent deployments
+concurrency:
+  group: deploy-oracle-proxy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    environment:
+      name: ${{ github.event.inputs.environment || 'production' }}
+      url: https://oracle-proxy.espen-erlandsen.workers.dev
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install Wrangler CLI
+        run: npm install -g wrangler@latest
+      
+      - name: Verify Wrangler Installation
+        run: wrangler --version
+      
+      - name: Deploy Worker
+        id: deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Worker name from wrangler.toml
+          WORKER_NAME: oracle-proxy
+        working-directory: apps/workers/oracle-proxy
+        run: |
+          echo "Deploying worker to ${{ github.event.inputs.environment || 'production' }}..."
+          wrangler deploy --commit-dirty=true
+          echo "worker_url=https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_OUTPUT
+      
+      - name: Verify Deployment
+        run: |
+          echo "Waiting 10 seconds for deployment to propagate..."
+          sleep 10
+          
+          # Simple health check
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST https://oracle-proxy.espen-erlandsen.workers.dev \
+            -H "Content-Type: application/json" \
+            -H "Origin: https://codex-cryptica.com" \
+            -d '{"contents":[{"role":"user","parts":[{"text":"health check"}]}],"generationConfig":{}}')
+          
+          echo "Health check response code: $response"
+          
+          # Accept 200 (success), 400 (invalid body but worker responding), or 401 (auth error but worker responding)
+          if [[ "$response" =~ ^(200|400|401)$ ]]; then
+            echo "✅ Worker is responding correctly"
+          else
+            echo "❌ Worker health check failed with code: $response"
+            exit 1
+          fi
+      
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Worker**: oracle-proxy" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment**: ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**URL**: https://oracle-proxy.espen-erlandsen.workers.dev" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: ${{ github.triggering_actor }}" >> $GITHUB_STEP_SUMMARY

@@ -8,7 +8,7 @@ Every major feature (Importer, Search, Graph Engine) MUST be implemented as a st
 
 ### II. Test-Driven Development (TDD)
 
-No feature logic shall be committed without corresponding unit tests. We follow the Red-Green-Refactor cycle: define the interface, write failing tests, implement the logic, and refactor for elegance.
+No code logic (features, bug fixes, or improvements) shall be committed without corresponding unit tests. We follow the Red-Green-Refactor cycle: define the interface, write failing tests, implement the logic, and refactor for elegance.
 
 ### III. Simplicity & YAGNI
 

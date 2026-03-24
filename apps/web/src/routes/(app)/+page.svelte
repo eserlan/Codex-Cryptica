@@ -44,12 +44,12 @@
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
     if (!GraphView) {
-      import("../lib/components/GraphView.svelte")
+      import("../../lib/components/GraphView.svelte")
         .then((m) => (GraphView = m?.default))
         .catch((err) => logChunkError("GraphView", err));
     }
     if (!EntityDetailPanel) {
-      import("../lib/components/EntityDetailPanel.svelte")
+      import("../../lib/components/EntityDetailPanel.svelte")
         .then((m) => (EntityDetailPanel = m?.default))
         .catch((err) => logChunkError("EntityDetailPanel", err));
     }
@@ -117,7 +117,7 @@
               vault.defaultVisibility = graph.defaultVisibility;
             }
             // Force shared mode for guests to ensure Fog of War is active
-            import("../lib/stores/ui.svelte")
+            import("../../lib/stores/ui.svelte")
               .then((m) => {
                 if (m?.ui) m.ui.sharedMode = true;
               })

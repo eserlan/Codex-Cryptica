@@ -7,7 +7,18 @@
           {
             "name": "speckit-completion-discord",
             "type": "command",
-            "command": "/bin/bash -c \"./scripts/discord-notify.sh\"",
+            "command": "/bin/bash -c './scripts/discord-notify.sh'",
+            "description": "Notify Discord after speckit implementation"
+          }
+        ]
+      },
+      {
+        "matcher": "<!-- CODEX_CMD: speckit.implement -->",
+        "hooks": [
+          {
+            "name": "speckit-completion-discord",
+            "type": "command",
+            "command": "/bin/bash -c './scripts/discord-notify.sh'",
             "description": "Notify Discord after speckit implementation"
           }
         ]

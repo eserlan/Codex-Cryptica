@@ -5,25 +5,32 @@ import { getDB } from "../utils/idb";
 import { hexToRgb } from "../utils/color";
 import { vault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
+import {
+  getOpfsRoot,
+  getVaultDir,
+  readFileAsText,
+  writeOpfsFile,
+} from "../utils/opfs";
 
 const STORAGE_KEY = "codex-cryptica-active-theme";
+const CONFIG_PATH = [".codex", "config.json"];
 
-function getInitialTheme(): string {
-  if (!browser) return DEFAULT_THEME.id;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored && THEMES[stored] ? stored : DEFAULT_THEME.id;
-  } catch {
-    return DEFAULT_THEME.id;
-  }
+export interface IThemeStorage {
+  loadLocal(): string | null;
+  saveLocal(id: string): void;
+  loadFromCache(vaultId: string): Promise<string | null>;
+  saveToCache(vaultId: string, id: string): Promise<void>;
+  loadFromDisk(vaultId: string): Promise<string | null>;
+  saveToDisk(vaultId: string, id: string): Promise<void>;
 }
 
 export class ThemeStore {
-  currentThemeId = $state<string>(getInitialTheme());
+  currentThemeId = $state<string>(DEFAULT_THEME.id); // Will be set in constructor/init
   previewThemeId = $state<string | null>(null);
 
   // Dependencies
   private uiStore: typeof defaultUiStore;
+  private storage: IThemeStorage;
 
   activeTheme = $derived(
     this.previewThemeId
@@ -50,8 +57,70 @@ export class ThemeStore {
     return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
   }
 
-  constructor(uiStore: typeof defaultUiStore = defaultUiStore) {
+  constructor(
+    uiStore: typeof defaultUiStore = defaultUiStore,
+    storage: IThemeStorage = {
+      loadLocal() {
+        if (!browser) return null;
+        return localStorage.getItem(STORAGE_KEY);
+      },
+      saveLocal(id) {
+        if (!browser) return;
+        localStorage.setItem(STORAGE_KEY, id);
+      },
+      async loadFromCache(vaultId) {
+        const db = await getDB();
+        return await db.get("settings", `theme_${vaultId}`);
+      },
+      async saveToCache(vaultId, id) {
+        const db = await getDB();
+        await db.put("settings", id, `theme_${vaultId}`);
+      },
+      async loadFromDisk(vaultId) {
+        try {
+          const root = await getOpfsRoot();
+          const vaultDir = await getVaultDir(root, vaultId);
+          const json = await readFileAsText(vaultDir, CONFIG_PATH);
+          const config = JSON.parse(json);
+          return config.theme || null;
+        } catch {
+          return null;
+        }
+      },
+      async saveToDisk(vaultId, themeId) {
+        try {
+          const root = await getOpfsRoot();
+          const vaultDir = await getVaultDir(root, vaultId);
+
+          let config: any = {};
+          try {
+            const json = await readFileAsText(vaultDir, CONFIG_PATH);
+            config = JSON.parse(json);
+          } catch {
+            // New config
+          }
+
+          config.theme = themeId;
+          await writeOpfsFile(
+            CONFIG_PATH,
+            JSON.stringify(config, null, 2),
+            vaultDir,
+            vaultId,
+          );
+        } catch (err) {
+          console.warn("[ThemeStore] Failed to save theme to disk", err);
+        }
+      },
+    },
+  ) {
     this.uiStore = uiStore;
+    this.storage = storage;
+
+    // Apply initial theme
+    const initial = this.storage.loadLocal();
+    if (initial && THEMES[initial]) {
+      this.currentThemeId = initial;
+    }
 
     // Apply initial theme immediately if in browser to prevent flash
     // before the first $effect runs.
@@ -74,7 +143,7 @@ export class ThemeStore {
     if (activeVaultId) {
       await this.loadForVault(activeVaultId);
     } else {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = this.storage.loadLocal();
       if (stored && THEMES[stored] && this.currentThemeId !== stored) {
         this.currentThemeId = stored;
       }
@@ -83,15 +152,27 @@ export class ThemeStore {
 
   async loadForVault(vaultId: string) {
     if (!browser || this.uiStore.isDemoMode) return;
+
+    this.previewThemeId = null; // Clear any preview on vault switch
+
     try {
-      const db = await getDB();
-      const stored = await db.get("settings", `theme_${vaultId}`);
+      // Priority 1: OPFS (Vault Source of Truth)
+      const opfsTheme = await this.storage.loadFromDisk(vaultId);
+      if (opfsTheme && THEMES[opfsTheme]) {
+        if (this.currentThemeId !== opfsTheme) {
+          this.currentThemeId = opfsTheme;
+        }
+        this.storage.saveLocal(opfsTheme);
+        return;
+      }
+
+      // Priority 2: IndexedDB (Local Cache)
+      const stored = await this.storage.loadFromCache(vaultId);
       if (stored && THEMES[stored]) {
         if (this.currentThemeId !== stored) {
           this.currentThemeId = stored;
         }
-        // Update global hint for the next reload's blocking script
-        localStorage.setItem(STORAGE_KEY, stored);
+        this.storage.saveLocal(stored);
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);
@@ -106,12 +187,15 @@ export class ThemeStore {
       // Don't persist theme if in demo mode
       if (this.uiStore.isDemoMode) return;
 
-      localStorage.setItem(STORAGE_KEY, id);
+      this.storage.saveLocal(id);
       const activeVaultId = vault.activeVaultId;
       if (activeVaultId) {
         try {
-          const db = await getDB();
-          await db.put("settings", id, `theme_${activeVaultId}`);
+          // 1. Save to IDB for fast local lookup
+          await this.storage.saveToCache(activeVaultId, id);
+
+          // 2. Save to OPFS for sync/persistence
+          await this.storage.saveToDisk(activeVaultId, id);
         } catch (e) {
           console.warn("[ThemeStore] Failed to save vault-specific theme", e);
         }

@@ -14,6 +14,7 @@ export function bootSystem(stores: {
   calendar: any;
   vault: any;
   uiStore: any;
+  oracle?: any;
 }): boolean {
   debugStore.log("System booting: Initializing heavy stores...");
   stores.categories.init();
@@ -27,6 +28,12 @@ export function bootSystem(stores: {
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
   });
+
+  // Initialize Oracle Settings Service with Dexie (if oracle store provided)
+  if (stores.oracle) {
+    // Oracle initialization is handled by OracleStore.init()
+    // This is just a placeholder for future oracle initialization needs
+  }
 
   return true;
 }
@@ -136,6 +143,7 @@ export function setupWindowGlobals(context: {
 
   if (!isSpecialEnv) return;
 
+  console.log("[WindowGlobals] Attaching:", Object.keys(context));
   Object.assign(window, context);
 
   // Lazy-load dynamic store attachments
