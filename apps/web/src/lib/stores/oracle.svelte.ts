@@ -1,7 +1,7 @@
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
-import { getDB } from "../utils/idb";
+import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
@@ -85,6 +85,9 @@ export class OracleStore {
   get tier() {
     return this.settings.tier;
   }
+  get connectionMode() {
+    return this.settings.connectionMode;
+  }
   get isLoading() {
     return this.settings.isLoading;
   }
@@ -110,21 +113,28 @@ export class OracleStore {
 
   async init() {
     if (this.isInitialized) return;
-    const db = await getDB();
-    await this.settings.init(db);
-    await this.chatHistory.init(db);
+    await this.settings.init(entityDb);
+    await this.chatHistory.init(entityDb);
     this.isInitialized = true;
+  }
+
+  /**
+   * Cleanup method to revoke blob URLs and prevent memory leaks.
+   * Should be called when the application unloads.
+   */
+  destroy() {
+    this.chatHistory.destroy();
   }
 
   async ask(query: string) {
     if (!query.trim()) return;
-    const key = this.effectiveApiKey;
-    if (
-      !key &&
-      !this.uiStore.liteMode &&
-      !query.toLowerCase().trim().startsWith("/roll")
-    )
+
+    // Allow proceeding if we have an API key OR if we are NOT in lite mode (proxy mode)
+    // Roll commands are always allowed.
+    const isRoll = query.toLowerCase().trim().startsWith("/roll");
+    if (!this.effectiveApiKey && this.uiStore.liteMode && !isRoll) {
       return;
+    }
 
     this.settings.setLoading(true);
     try {
@@ -144,13 +154,21 @@ export class OracleStore {
           }
         },
       );
+    } catch (err: any) {
+      console.error("[OracleStore] Ask failed:", err);
+      await this.chatHistory.addMessage({
+        id: crypto.randomUUID(),
+        role: "system",
+        content: `❌ Error: ${err.message || "Failed to generate response"}`,
+      });
     } finally {
       this.settings.setLoading(false);
     }
   }
 
   async drawEntity(entityId: string) {
-    if (!this.effectiveApiKey || this.isLoading) return;
+    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+      return;
     this.settings.setLoading(true);
     try {
       await this.executor.drawEntity(entityId, this.getExecutionContext());
@@ -160,7 +178,8 @@ export class OracleStore {
   }
 
   async drawMessage(messageId: string) {
-    if (!this.effectiveApiKey || this.isLoading) return;
+    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+      return;
     this.settings.setLoading(true);
     try {
       await this.executor.drawMessage(messageId, this.getExecutionContext());

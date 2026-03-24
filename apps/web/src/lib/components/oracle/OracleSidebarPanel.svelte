@@ -2,6 +2,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import OracleChat from "./OracleChat.svelte";
+  import OracleStatus from "./OracleStatus.svelte";
   import { demoService } from "$lib/services/demo";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
@@ -9,9 +10,17 @@
   import { base } from "$app/paths";
   import { fly } from "svelte/transition";
   import { onMount } from "svelte";
+  import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
+
+  let showHint = $state(false);
 
   onMount(() => {
-    // Component initialization logic if any
+    // Show hint on first open
+    const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
+    if (!hasSeenHint) {
+      showHint = true;
+      localStorage.setItem(HINT_KEYS.ORACLE_CONNECTION, "true");
+    }
   });
 
   const popOut = () => {
@@ -50,6 +59,7 @@
           >LITE</span
         >
       {/if}
+      <OracleStatus />
     </div>
 
     <div class="flex items-center gap-1">
@@ -104,6 +114,39 @@
       }}
     />
   </div>
+
+  <!-- Feature Hint Modal -->
+  {#if showHint}
+    <div
+      class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
+      onclick={() => (showHint = false)}
+    >
+      <div
+        class="bg-theme-surface border border-theme-border rounded-lg p-5 max-w-sm shadow-2xl"
+        onclick={(e) => e.stopPropagation()}
+      >
+        <div class="flex items-start gap-3 mb-3">
+          <div class="w-8 h-8 rounded-full bg-theme-primary/20 flex items-center justify-center text-theme-primary shrink-0">
+            <span class={FEATURE_HINTS["oracle-connection-modes"].icon + " w-5 h-5"}></span>
+          </div>
+          <div class="flex-1">
+            <h4 class="text-sm font-bold text-theme-text uppercase font-header tracking-wider mb-1">
+              {FEATURE_HINTS["oracle-connection-modes"].title}
+            </h4>
+            <p class="text-xs text-theme-text/80 leading-relaxed">
+              {FEATURE_HINTS["oracle-connection-modes"].content}
+            </p>
+          </div>
+        </div>
+        <button
+          onclick={() => (showHint = false)}
+          class="w-full py-2 bg-theme-primary/10 border border-theme-primary/30 text-theme-primary text-[10px] font-bold uppercase font-header tracking-widest rounded hover:bg-theme-primary/20 transition-colors"
+        >
+          Got It
+        </button>
+      </div>
+    </div>
+  {/if}
 
   <!-- Demo Mode CTA -->
   {#if uiStore.isDemoMode}

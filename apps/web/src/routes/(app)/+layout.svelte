@@ -82,6 +82,7 @@
           calendar: calendarStore,
           vault,
           uiStore,
+          oracle,
         });
       }
     }

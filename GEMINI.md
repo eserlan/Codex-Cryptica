@@ -4,6 +4,9 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 
 ## Active Technologies
 
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai` (075-free-oracle-use)
+- IndexedDB (Settings) (075-free-oracle-use)
+
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4 (074-staging-indicator)
 - N/A (Transient UI State) (074-staging-indicator)
 
@@ -135,6 +138,8 @@ TypeScript: Follow standard conventions
 - **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
 
 ## Recent Changes
+
+- 075-free-oracle-use: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`
 
 - 074-staging-indicator: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4
 
