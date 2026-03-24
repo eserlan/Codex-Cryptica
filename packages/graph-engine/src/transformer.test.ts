@@ -163,6 +163,40 @@ describe("GraphTransformer", () => {
     expect(edge?.data.connectionType).toBe("related_to");
   });
 
+  it("should include labels in node data", () => {
+    const entities: any[] = [
+      {
+        id: "n1",
+        type: "npc",
+        title: "Node 1",
+        tags: [],
+        labels: ["faction-a", "important"],
+        connections: [],
+        content: "",
+      },
+      {
+        id: "n2",
+        type: "npc",
+        title: "Node 2",
+        labels: [],
+        connections: [],
+        content: "",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(entities);
+
+    const node1 = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n1",
+    );
+    const node2 = elements.find(
+      (e): e is GraphNode => e.group === "nodes" && e.data.id === "n2",
+    );
+
+    expect(node1?.data.labels).toEqual(["faction-a", "important"]);
+    expect(node2?.data.labels).toEqual([]);
+  });
+
   it("should mark nodes as revealed if tags or labels contain 'revealed' or 'visible'", () => {
     const entities: any[] = [
       {

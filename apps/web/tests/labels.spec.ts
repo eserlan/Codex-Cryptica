@@ -257,4 +257,96 @@ test.describe("Entity Labeling System", () => {
       page.getByTestId("label-badge").filter({ hasText: "internal" }),
     ).toBeVisible();
   });
+
+  test("should visually filter nodes on the graph by label", async ({
+    page,
+  }) => {
+    // 1. Create first entity with label "faction-a"
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Node A");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Node A");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Node A" })
+      .click();
+    await page.getByPlaceholder("Add label...").fill("faction-a");
+    await page.getByPlaceholder("Add label...").press("Enter");
+
+    // 2. Create second entity with label "faction-b"
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Node B");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Node B");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Node B" })
+      .click();
+    await page.getByPlaceholder("Add label...").fill("faction-b");
+    await page.getByPlaceholder("Add label...").press("Enter");
+
+    // 3. Create third entity with both labels
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Node C");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.keyboard.press("Control+k");
+    await page.getByTestId("search-modal-input").fill("Node C");
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "Node C" })
+      .click();
+    await page.getByPlaceholder("Add label...").fill("faction-a");
+    await page.getByPlaceholder("Add label...").press("Enter");
+    await page.getByPlaceholder("Add label...").fill("faction-b");
+    await page.getByPlaceholder("Add label...").press("Enter");
+
+    // Wait for graph to render
+    await page.waitForTimeout(1000);
+
+    // 4. Get initial visible node count
+    const getVisibleNodeCount = async () => {
+      return await page.evaluate(() => {
+        const cy = (window as any).cy;
+        if (!cy) return 0;
+        return cy.nodes(":visible").length;
+      });
+    };
+
+    const initialCount = await getVisibleNodeCount();
+    expect(initialCount).toBeGreaterThanOrEqual(3);
+
+    // 5. Filter by "faction-a" - should hide Node B
+    await page.getByRole("button", { name: /Labels \(0\)/ }).click();
+    await page.getByRole("button", { name: "faction-a" }).click();
+    await page.waitForTimeout(500);
+
+    const countAfterFilterA = await getVisibleNodeCount();
+    expect(countAfterFilterA).toBe(2); // Node A and Node C should be visible
+
+    // 6. Add "faction-b" filter in OR mode - should show all 3
+    await page.getByRole("button", { name: "faction-b" }).click();
+    await page.waitForTimeout(500);
+
+    const countAfterFilterB = await getVisibleNodeCount();
+    expect(countAfterFilterB).toBe(3); // All nodes should be visible
+
+    // 7. Switch to AND mode - should only show Node C
+    await page.getByRole("button", { name: /AND\s*\/\s*OR/ }).click();
+    await page.waitForTimeout(500);
+
+    const countAfterAndMode = await getVisibleNodeCount();
+    expect(countAfterAndMode).toBe(1); // Only Node C has both labels
+
+    // 8. Clear all filters - should show all 3
+    await page.getByRole("button", { name: "Clear All" }).click();
+    await page.waitForTimeout(500);
+
+    const countAfterClear = await getVisibleNodeCount();
+    expect(countAfterClear).toBe(3);
+  });
 });

@@ -129,6 +129,7 @@ export class GraphTransformer {
         start_date: entity.start_date,
         end_date: entity.end_date,
         dateLabel,
+        labels: entity.labels || [],
       };
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
