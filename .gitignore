@@ -63,3 +63,6 @@ apps/web/audit-report/
 apps/web/audit-report-prod/
 test_output.txt
 *.log
+
+# Blog screenshots (manual upload to CDN)
+blogPics/

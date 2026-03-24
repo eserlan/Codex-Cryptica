@@ -17,7 +17,7 @@ keywords:
 publishedAt: 2026-03-22T15:00:00Z
 ---
 
-![Lore Oracle Interface](https://assets.codexcryptica.com/images/blog/oracle-capabilities-hero.png)
+![Lore Oracle Interface](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)
 
 You're mid-session. Your players just cornered an NPC you invented on the spot, demanded to know his backstory, and are now asking for a portrait. Thirty years of lore, a dice roll, an improvised family tree, and a generated image—in thirty seconds. That's not sorcery. That's the **Lore Oracle**.
 
@@ -50,7 +50,7 @@ Never leave your Codex to roll dice again.
 
 The Oracle's dice engine understands standard RPG notation, including advantage, disadvantage, keep-highest, and keep-lowest modifiers. Every roll is logged to a persistent **Roll History**, so you can review the carnage long after the session ends.
 
-![Oracle Dice Roll](https://assets.codexcryptica.com/images/blog/oracle-roll-command.png)
+![Oracle Dice Roll](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-roll-command.png)
 
 **Why use it?**
 
@@ -72,7 +72,7 @@ When you invent a new NPC mid-session, don't fumble through a menu. Just tell th
 
 Supported entity types include **Character**, **NPC**, **Faction**, **Location**, **Item**, **Event**, and **Concept**. The entity is created instantly, added to your vault and graph, and ready for you to fill in the details after the session.
 
-![Oracle Create Entity](https://assets.codexcryptica.com/images/blog/oracle-create-command.png)
+![Oracle Create Entity](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-create-command.png)
 
 **Why use it?**
 
@@ -93,7 +93,7 @@ Relationships are the lifeblood of world-building. The `/connect` command create
 
 The text between the two quoted entity names becomes the relationship label visible on the graph edge. It's fast, precise, and permanent.
 
-![Oracle Connect Entities](https://assets.codexcryptica.com/images/blog/oracle-connect-command.png)
+![Oracle Connect Entities](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-connect-command.png)
 
 **Why use it?**
 
@@ -146,7 +146,7 @@ The Oracle doesn't just chat. It performs **Retrieval-Augmented Generation (RAG)
 >
 > _"Help me write a monologue for Harkon the Grey that hints at his secret without revealing it."_
 
-![Oracle Natural Language Chat](https://assets.codexcryptica.com/images/blog/oracle-chat-example.png)
+![Oracle Natural Language Chat](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-chat-example.png)
 
 **Why use it?**
 
@@ -167,7 +167,7 @@ The `/plot` command is your dramatic friction engine. Give it an entity name, an
 
 The Oracle doesn't invent drama—it **excavates** it from the connections and lore already in your vault. It returns structured dramatic hooks: antagonists, exposed vulnerabilities, hidden alliances, and narrative powder kegs.
 
-![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
+![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-plot-command.png)
 
 **Best practice**: Use the Knowledge Graph's **filters and labels** to help you choose which entity to run `/plot` on. For example, filter to your "active" entities—those labeled `#Session-Active` or belonging to a specific faction—then pick one of those entities as the `/plot` target so the Oracle stays focused on the parts of your world that are currently in play.
 
@@ -185,7 +185,7 @@ Generate visual artwork without leaving your Codex. The `/draw` command (also `/
 
 The generated image is saved to your vault, linked to the relevant entity, and available for use at the table immediately.
 
-![Oracle Image Generation](https://assets.codexcryptica.com/images/blog/oracle-draw-command.png)
+![Oracle Image Generation](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-draw-command.png)
 
 **Why use it?**
 
