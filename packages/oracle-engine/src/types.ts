@@ -28,7 +28,7 @@ export interface ChatMessage {
   archiveTargetId?: string;
   wizardType?: "connection" | "merge";
   timestamp?: number;
-  rollResult?: string;
+  rollResult?: any;
   hasDrawAction?: boolean;
   isDrawing?: boolean;
 }
@@ -36,7 +36,7 @@ export interface ChatMessage {
 /**
  * Oracle intent types for command parsing
  */
-export type OracleIntentType = 
+export type OracleIntentType =
   | "query"
   | "create"
   | "update"
@@ -44,6 +44,9 @@ export type OracleIntentType =
   | "connect"
   | "connect-ai"
   | "merge"
+  | "merge-ai"
+  | "plot"
+  | "chat"
   | "roll"
   | "wizard"
   | "help"
@@ -58,6 +61,10 @@ export interface OracleIntent {
   query?: string;
   data?: any;
   entityId?: string;
+  entityName?: string;
+  entityType?: string;
+  isDrawing?: boolean;
+  isAIIntent?: boolean;
   wizardType?: "connection" | "merge";
   rollExpression?: string;
   formula?: string;
@@ -90,9 +97,19 @@ export interface OracleExecutionContext {
   liteMode?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
+  modelName: string;
   isDemoMode?: boolean;
-  vault?: any;
-  uiStore?: any;
+  vault: any;
+  uiStore: any;
+  chatHistory: any;
   textGeneration?: any;
-  chatHistory?: any;
+  imageGeneration?: any;
+  contextRetrieval?: any;
+  searchService?: any;
+  nodeMergeService?: any;
+  diceParser?: any;
+  diceEngine?: any;
+  diceHistory?: any;
+  graph?: any;
+  undoRedo?: any;
 }

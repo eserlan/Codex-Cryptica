@@ -1,3 +1,5 @@
+import type { ConnectionMode } from "./types";
+
 /**
  * Minimal interface for app settings persistence.
  * Defined here to avoid cross-package coupling with web app's EntityDb.
@@ -9,13 +11,6 @@ interface AppSettingsStore {
     delete(key: string): Promise<void>;
   };
 }
-
-/**
- * Connection mode for the Oracle service.
- * - `system-proxy`: Uses the Cloudflare Worker proxy (no user API key required)
- * - `custom-key`: Uses the user's own Gemini API key directly
- */
-export type ConnectionMode = "system-proxy" | "custom-key";
 
 /**
  * OracleSettingsService manages Oracle configuration and state.
