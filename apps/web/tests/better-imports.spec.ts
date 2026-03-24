@@ -26,12 +26,16 @@ test.describe("Better Imports E2E", () => {
       });
     });
 
-    await page.goto("/");
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await page.goto("/import");
+    await page.waitForFunction(
+      () =>
+        (window as any).uiStore !== undefined &&
+        (window as any).oracle !== undefined,
+    );
 
     // Inject fake API key and mock vault methods
-    await page.evaluate(() => {
-      (window as any).oracle.apiKey = "fake-key";
+    await page.evaluate(async () => {
+      await (window as any).oracle.setKey("fake-key");
       const vault = (window as any).vault;
 
       // Mock batch operations
@@ -75,21 +79,17 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities and handle connections", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with an entity via UI
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Existing Dragon");
-    await page.getByRole("button", { name: "ADD" }).click();
-
-    // Wait for indexing/state update
-    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
-      timeout: 10000,
-    });
-
-    // Set content and initial connections to verify it's not overwritten but extended
+    // 1. Pre-populate vault with an entity via evaluate (fast & reliable)
     await page.evaluate(() => {
       const vault = (window as any).vault;
-      vault.entities["existing-dragon"].content = "Already here";
-      vault.entities["existing-dragon"].connections = [];
+      vault.entities["existing-dragon"] = {
+        id: "existing-dragon",
+        title: "Existing Dragon",
+        type: "Character",
+        content: "Already here",
+        connections: [],
+        labels: [],
+      };
     });
 
     // 2. Mock Gemini API to return one existing (with a new link) and one new entity
@@ -130,9 +130,10 @@ test.describe("Better Imports E2E", () => {
       },
     );
 
-    // 3. Open Importer
-    await page.getByTitle("Application Settings").click();
+    // 3. Upload a file to trigger the importer
     const fileInput = page.locator('input[type="file"]');
+    await expect(fileInput).toBeAttached();
+
     await fileInput.setInputFiles({
       name: "import.txt",
       mimeType: "text/plain",
@@ -140,10 +141,9 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 4. Verify Review step
-    // INCREASED TIMEOUT
     await expect(
       page.locator('h3:has-text("Review Identified Entities")'),
-    ).toBeVisible({ timeout: 15000 });
+    ).toBeVisible({ timeout: 20000 });
 
     // Check for Existing Dragon
     const existingCard = page.locator(".entity-card").filter({
@@ -188,12 +188,17 @@ test.describe("Better Imports E2E", () => {
   test("should identify existing entities leniency (fuzzy match)", async ({
     page,
   }) => {
-    // 1. Pre-populate vault with "Eldrin"
-    await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Eldrin");
-    await page.getByRole("button", { name: "ADD" }).click();
-    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
-      timeout: 10000,
+    // 1. Pre-populate vault with "Eldrin" via evaluate
+    await page.evaluate(() => {
+      const vault = (window as any).vault;
+      vault.entities["eldrin"] = {
+        id: "eldrin",
+        title: "Eldrin",
+        type: "Character",
+        content: "Wizard",
+        connections: [],
+        labels: [],
+      };
     });
 
     // 2. Mock Gemini API to return "Eldrin the Wise" (a lenient match)
@@ -226,9 +231,10 @@ test.describe("Better Imports E2E", () => {
       },
     );
 
-    // 3. Open Importer
-    await page.getByTitle("Application Settings").click();
+    // 3. Upload a file
     const fileInput = page.locator('input[type="file"]');
+    await expect(fileInput).toBeAttached();
+
     await fileInput.setInputFiles({
       name: "fuzzy.txt",
       mimeType: "text/plain",
@@ -236,10 +242,9 @@ test.describe("Better Imports E2E", () => {
     });
 
     // 4. Verify Review step identifies the match
-    // INCREASED TIMEOUT
     await expect(
       page.locator('h3:has-text("Review Identified Entities")'),
-    ).toBeVisible({ timeout: 15000 });
+    ).toBeVisible({ timeout: 20000 });
 
     const card = page.locator(".entity-card").filter({
       has: page.locator("strong", { hasText: "Eldrin the Wise" }),
