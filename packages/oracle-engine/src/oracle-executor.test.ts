@@ -318,6 +318,11 @@ describe("OracleActionExecutor - Detailed", () => {
       mockContext.searchService.search.mockResolvedValue([
         { id: "e1", title: "Hero" },
       ]);
+      mockContext.vault.entities["e1"] = {
+        id: "e1",
+        title: "Hero",
+        connections: [],
+      };
 
       await executor.execute({ type: "plot", query: "Hero" }, mockContext);
       expect(
