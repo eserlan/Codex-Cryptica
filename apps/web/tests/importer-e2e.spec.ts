@@ -61,9 +61,7 @@ test.describe("Intelligent Importer E2E", () => {
     });
   });
 
-  test("should block page navigation during active import and allow abort", async ({
-    page,
-  }) => {
+  test("should allow aborting an active import", async ({ page }) => {
     // 2. Mock Gemini API with a slow response
     let resolveRequest: any;
     const requestHold = new Promise((resolve) => (resolveRequest = resolve));
