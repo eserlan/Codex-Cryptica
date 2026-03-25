@@ -81,4 +81,41 @@ test.describe("Orbit Layout", () => {
     await page.getByTestId("orbit-exit-button").click();
     await expect(page.locator(".orbit-status")).not.toBeVisible();
   });
+
+  test("should activate orbit mode via context menu", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("graph-canvas")).toBeVisible();
+    await page.waitForFunction(() => (window as any).vault?.status === "idle");
+
+    // 1. Create a node
+    await page.evaluate(async () => {
+      await (window as any).vault.createEntity(
+        "character",
+        "Center Candidate",
+        {
+          content: "I will be the center",
+        },
+      );
+    });
+
+    await page.waitForFunction(
+      () => (window as any).cy?.$id("center-candidate").length > 0,
+    );
+
+    // 2. Open context menu on the node programmatically
+    await page.evaluate(() => {
+      const cy = (window as any).cy;
+      const node = cy.$id("center-candidate");
+      node.trigger("cxttap", { renderedPosition: node.renderedPosition() });
+    });
+
+    // 3. Click "Set as Central Node"
+    await page.getByRole("menuitem", { name: /Set as Central Node/i }).click();
+
+    // 4. Verify Orbit Mode activated immediately
+    await expect(page.locator(".orbit-status")).toContainText(
+      "Orbit Mode Active",
+    );
+    await expect(page.getByText("Center Candidate")).toBeVisible();
+  });
 });

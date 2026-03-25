@@ -23,7 +23,6 @@ export interface LayoutOptions {
 
 export class LayoutManager {
   private currentLayout: any;
-  private lastOrientation: "landscape" | "portrait" | null = null;
 
   constructor(private cy: Core) {}
 
@@ -34,15 +33,6 @@ export class LayoutManager {
     caller = "unknown",
   ) {
     if (!this.cy || this.cy.destroyed()) return;
-
-    const width = this.cy.width();
-    const height = this.cy.height();
-    const ar = width / height;
-    const currentOrientation = ar > 1.2 ? "landscape" : "portrait";
-    const orientationChanged =
-      this.lastOrientation !== null &&
-      this.lastOrientation !== currentOrientation;
-    this.lastOrientation = currentOrientation;
 
     if (this.currentLayout) {
       try {
@@ -83,10 +73,7 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        // Trigger layout if orientation changed, even if stableLayout is on
-        const forceRearrange =
-          isForced || (caller === "Window Resize" && orientationChanged);
-        await this.applyForceLayout(options, isInitial, forceRearrange, caller);
+        await this.applyForceLayout(options, isInitial, isForced, caller);
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -161,7 +148,11 @@ export class LayoutManager {
 
     const isExitingTimeline =
       caller === "Timeline Toggle" && !options.timelineMode;
-    let randomize = isExitingTimeline;
+    const isExitingMode =
+      caller === "Mode Change Effect" &&
+      !options.timelineMode &&
+      !options.orbitMode;
+    let randomize = isExitingTimeline || isExitingMode;
 
     // Clump detection
     if (!randomize && cyNodes.length > 1) {
@@ -175,13 +166,7 @@ export class LayoutManager {
       }
     }
 
-    if (
-      options.stableLayout &&
-      !isForced &&
-      !isExitingTimeline &&
-      !randomize &&
-      !hasNewNodes
-    ) {
+    if (options.stableLayout && !isForced && !randomize && !hasNewNodes) {
       if (
         isInitial ||
         caller === "Load Finalized" ||
@@ -208,21 +193,15 @@ export class LayoutManager {
     const baseOptions = getDynamicLayoutOptions(cyNodes.length);
 
     // Scale gravity based on aspect ratio but don't let it get too high (clumping)
-    // Landscape: needs less gravity to allow horizontal spread
-    // Portrait: needs slightly more to prevent extreme vertical drift
     const gravity = isLandscape
-      ? Math.min(baseOptions.gravity, 0.25)
+      ? Math.min(baseOptions.gravity, 0.1)
       : Math.min(baseOptions.gravity, 0.4);
 
-    // If forced from UI, we almost always want some randomization to break clumps
     const shouldRandomize = randomize || (isForced && caller.includes("UI"));
-
-    // Increase bounding box for larger graphs to allow them to breathe
-    const boxSize = Math.max(2000, 1000 + Math.sqrt(cyNodes.length) * 100);
 
     this.currentLayout = this.cy.layout({
       ...baseOptions,
-      boundingBox: { x1: -boxSize, y1: -boxSize, x2: boxSize, y2: boxSize },
+      boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
       gravity,
       randomize: shouldRandomize,
       animate: false,

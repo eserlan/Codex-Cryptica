@@ -2,36 +2,43 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   name: "fcose",
   animate: false,
   animationDuration: 800,
-  quality: "default",
+  quality: "default", // will be dynamically set to 'proof' for large graphs
   randomize: true,
-  packComponents: true, // Enable tiling to manage disconnected components efficiently
-  nodeDimensionsIncludeLabels: true,
-  nodeRepulsion: 25000, // Base maximum repulsion
-  idealEdgeLength: 80,
-  nodeSeparation: 100,
-  gravity: 0.5,
-  gravityRange: 3.8,
-  numIter: 3500, // Reverted for better complex graph quality
+  packComponents: true,
   tile: true,
+  tilingPaddingVertical: 100,
+  tilingPaddingHorizontal: 100,
+  gravity: 0.1,
+  nodeRepulsion: 45000,
+  idealEdgeLength: 150,
+  nodeSeparation: 150,
+  numIter: 5000,
 };
 
 /**
  * Generates layout options tuned for the specific size of the graph.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
-  // Scale repulsion and separation based on density
-  // More nodes -> need more repulsion to prevent overlap
-  const repulsion = Math.min(80000, 15000 + nodeCount * 150);
-  const separation = Math.min(300, 60 + Math.sqrt(nodeCount) * 10);
-  const edgeLength = Math.min(250, 60 + Math.sqrt(nodeCount) * 8);
+  // Use higher quality for complex graphs
+  const quality = nodeCount > 100 ? "proof" : "default";
+
+  // Scale repulsion significantly to prevent clumping
+  const repulsion = Math.min(250000, 45000 + nodeCount * 500);
+
+  // Increase separation and edge length to give cards room
+  const separation = Math.min(500, 150 + Math.sqrt(nodeCount) * 15);
+  const edgeLength = Math.min(400, 150 + Math.sqrt(nodeCount) * 12);
+
+  // Very light gravity to prevent "the ball" effect
+  const gravity = Math.max(0.01, 0.2 - nodeCount * 0.0005);
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,
+    quality,
     nodeRepulsion: repulsion,
     nodeSeparation: separation,
     idealEdgeLength: edgeLength,
-    // Reduce gravity for larger graphs to allow them to breathe
-    gravity: Math.max(0.1, 0.8 - nodeCount * 0.001),
+    gravity,
   };
 };
 

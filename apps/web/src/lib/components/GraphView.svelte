@@ -115,6 +115,7 @@
         orbitMode: graph.orbitMode,
         centralNodeId: graph.centralNodeId,
         stableLayout: graph.stableLayout,
+        layoutEngine: graph.layoutEngine,
         isGuest: vault.isGuest,
         onLayoutStart: () => {
           isLayoutRunning = true;
@@ -316,6 +317,19 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
+
+  // Trigger layout when switching modes (Orbit, Timeline)
+  $effect(() => {
+    const _mode = graph.orbitMode;
+    const _node = graph.centralNodeId;
+    const _timeline = graph.timelineMode;
+
+    if (cy && didFinalizeLoad) {
+      untrack(() => {
+        applyCurrentLayout(false, true, "Mode Change Effect");
+      });
+    }
+  });
 
   // Reset loading state when vault starts loading a NEW or EMPTY vault
   $effect(() => {
