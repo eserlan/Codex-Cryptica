@@ -49,6 +49,7 @@ test.describe("Intelligent Importer E2E", () => {
             content: item.initialData.content,
             lore: item.initialData.lore,
             labels: item.initialData.labels,
+            tags: item.initialData.tags || [],
             connections: item.initialData.connections,
           };
         });
