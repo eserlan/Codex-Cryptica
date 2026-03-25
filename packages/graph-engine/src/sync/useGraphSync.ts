@@ -201,14 +201,20 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
     });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
-    if (newNodes.length > 0 || isFirstElements) {
+    const hasDeletions = elementsToRemove.length > 0;
+    const hasNewEdges = newEdges.length > 0;
+    const hasNewNodes = newNodes.length > 0;
+
+    if (hasNewNodes || hasNewEdges || hasDeletions || isFirstElements) {
       if (isFirstElements) {
         options.onFirstElements?.();
         const w = cy.width();
         const h = cy.height();
         cy.viewport({ zoom: 0.15, pan: { x: w / 2, y: h / 2 } });
       } else if (!isVaultLoading || initialLoaded) {
-        options.onLayoutUpdate?.(false, false, "Elements Update");
+        // Force layout if we have deletions or new edges to ensure constraints are respected
+        const force = hasDeletions || hasNewEdges;
+        options.onLayoutUpdate?.(false, force, "Elements Update");
       }
     }
   } catch (err) {

@@ -23,6 +23,7 @@ export interface LayoutOptions {
 
 export class LayoutManager {
   private currentLayout: any;
+  private lastOrientation: "landscape" | "portrait" | null = null;
 
   constructor(private cy: Core) {}
 
@@ -33,6 +34,15 @@ export class LayoutManager {
     caller = "unknown",
   ) {
     if (!this.cy || this.cy.destroyed()) return;
+
+    const width = this.cy.width();
+    const height = this.cy.height();
+    const ar = width / height;
+    const currentOrientation = ar > 1.2 ? "landscape" : "portrait";
+    const orientationChanged =
+      this.lastOrientation !== null &&
+      this.lastOrientation !== currentOrientation;
+    this.lastOrientation = currentOrientation;
 
     if (this.currentLayout) {
       try {
@@ -73,7 +83,10 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        await this.applyForceLayout(options, isInitial, isForced, caller);
+        // Trigger layout if orientation changed, even if stableLayout is on
+        const forceRearrange =
+          isForced || (caller === "Window Resize" && orientationChanged);
+        await this.applyForceLayout(options, isInitial, forceRearrange, caller);
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -169,7 +182,11 @@ export class LayoutManager {
       !randomize &&
       !hasNewNodes
     ) {
-      if (isInitial || caller === "Load Finalized") {
+      if (
+        isInitial ||
+        caller === "Load Finalized" ||
+        caller === "Window Resize"
+      ) {
         this.cy.resize();
         this.cy.animate({
           fit: { eles: this.cy.elements(), padding: 20 },
@@ -188,11 +205,26 @@ export class LayoutManager {
     const ar = width / height;
     const isLandscape = ar > 1.2;
 
+    const baseOptions = getDynamicLayoutOptions(cyNodes.length);
+
+    // Scale gravity based on aspect ratio but don't let it get too high (clumping)
+    // Landscape: needs less gravity to allow horizontal spread
+    // Portrait: needs slightly more to prevent extreme vertical drift
+    const gravity = isLandscape
+      ? Math.min(baseOptions.gravity, 0.25)
+      : Math.min(baseOptions.gravity, 0.4);
+
+    // If forced from UI, we almost always want some randomization to break clumps
+    const shouldRandomize = randomize || (isForced && caller.includes("UI"));
+
+    // Increase bounding box for larger graphs to allow them to breathe
+    const boxSize = Math.max(2000, 1000 + Math.sqrt(cyNodes.length) * 100);
+
     this.currentLayout = this.cy.layout({
-      ...getDynamicLayoutOptions(cyNodes.length),
-      boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
-      gravity: isLandscape ? 0.1 : 0.8,
-      randomize,
+      ...baseOptions,
+      boundingBox: { x1: -boxSize, y1: -boxSize, x2: boxSize, y2: boxSize },
+      gravity,
+      randomize: shouldRandomize,
       animate: false,
       fit: false,
     } as any);

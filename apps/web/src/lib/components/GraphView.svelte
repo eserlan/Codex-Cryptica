@@ -178,8 +178,20 @@
   };
 
   let initTimer: ReturnType<typeof setTimeout> | null = null;
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const handleResize = () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (cy && !isLayoutRunning) {
+        debugStore.log("[GraphView] Window resized, updating layout...");
+        applyCurrentLayout(false, false, "Window Resize");
+      }
+    }, 250);
+  };
 
   onMount(() => {
+    window.addEventListener("resize", handleResize);
     if (container) {
       initTimer = setTimeout(async () => {
         if (!container) return;
@@ -271,9 +283,14 @@
   });
 
   onDestroy(() => {
+    window.removeEventListener("resize", handleResize);
     if (initTimer) {
       clearTimeout(initTimer);
       initTimer = null;
+    }
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+      resizeTimer = null;
     }
     if (cleanupEvents) {
       cleanupEvents();
