@@ -112,7 +112,10 @@ export class VaultStore {
 
   // ⚡ Bolt Optimization: Use a derived array to avoid per-node allocations via Object.values()
   // in hot loops (e.g., timeline, search, graph syncing).
-  allEntities = $derived(Object.values(this.repository.entities));
+  allEntities = $derived.by(() => {
+    if (!this.repository) return [];
+    return Object.values(this.repository.entities);
+  });
 
   get maps() {
     return mapRegistry.maps;
