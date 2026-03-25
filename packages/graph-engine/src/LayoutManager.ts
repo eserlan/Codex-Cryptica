@@ -21,6 +21,8 @@ export interface LayoutOptions {
   onPositionsUpdated?: (updates: Record<string, any>) => void;
 }
 
+const ORIENTATION_THRESHOLD = 1.2;
+
 export class LayoutManager {
   private currentLayout: any;
 
@@ -187,8 +189,7 @@ export class LayoutManager {
 
     const width = this.cy.width();
     const height = this.cy.height();
-    const ar = width / height;
-    const isLandscape = ar > 1.2;
+    const isLandscape = width / height > ORIENTATION_THRESHOLD;
 
     const baseOptions = getDynamicLayoutOptions(cyNodes.length);
 
@@ -212,7 +213,6 @@ export class LayoutManager {
     layout.one("layoutstop", () => {
       if (this.currentLayout !== layout || this.cy.destroyed()) return;
 
-      this.cy.resize();
       this.cy.animate({
         fit: { eles: this.cy.elements(), padding: 20 },
         duration: 800,

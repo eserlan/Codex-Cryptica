@@ -115,7 +115,6 @@
         orbitMode: graph.orbitMode,
         centralNodeId: graph.centralNodeId,
         stableLayout: graph.stableLayout,
-        layoutEngine: graph.layoutEngine,
         isGuest: vault.isGuest,
         onLayoutStart: () => {
           isLayoutRunning = true;
@@ -184,7 +183,7 @@
   const handleResize = () => {
     if (resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (cy && !isLayoutRunning) {
+      if (cy) {
         debugStore.log("[GraphView] Window resized, updating layout...");
         applyCurrentLayout(false, false, "Window Resize");
       }

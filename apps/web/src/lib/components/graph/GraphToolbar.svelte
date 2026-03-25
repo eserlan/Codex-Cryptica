@@ -96,20 +96,6 @@
             : 'icon-[lucide--pin-off]'} w-4 h-4"
         ></span></button
       >
-      <button
-        class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-        onclick={() => {
-          void graph.toggleLayoutEngine().then(() => {
-            onApplyLayout(false, true, "Layout Engine Toggle");
-          });
-        }}
-        title="Switch Layout Engine (Current: {graph.layoutEngine})"
-        aria-label="Switch Layout Engine"
-      >
-        <span class="text-[10px] font-bold">
-          {graph.layoutEngine === "fcose" ? "F" : "E"}
-        </span>
-      </button>
       {#if !ui.isGuestMode}
         <button
           class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {isConnecting
