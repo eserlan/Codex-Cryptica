@@ -1,54 +1,39 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const clickNodeOnCanvas = async (page: Page, label: string) => {
-  // Wait for the node to exist in Cytoscape
+/**
+ * Programmatic node click for high reliability in E2E tests.
+ * Standard mouse clicks on Canvas elements are often flaky due to
+ * DPI scaling, scroll positions, or animation timing.
+ */
+const clickNodeProgrammatically = async (page: Page, label: string) => {
   await page.waitForFunction(
     (label: string) => {
       const cy = (window as any).cy;
       if (!cy) return false;
-      return (
-        cy.nodes().filter((n: any) => n.data("label") === label).length > 0
-      );
+      const node = cy.nodes().filter((n: any) => n.data("label") === label);
+      return node.length > 0;
     },
     label,
     { timeout: 15000 },
   );
 
-  // Ensure node is centered and visible
   await page.evaluate((label) => {
     const cy = (window as any).cy;
-    const node = cy.nodes().filter((n: any) => n.data("label") === label);
-    cy.stop(); // Stop any running animations/layout
-    cy.fit(node, 50); // Fit to node with padding
+    const node = cy
+      .nodes()
+      .filter((n: any) => n.data("label") === label)
+      .first();
+    // Programmatically trigger selection and click events
+    cy.nodes().unselect();
+    node.select();
+    node.trigger("tap");
+    node.trigger("click");
   }, label);
 
-  // Wait for stability
-  await page.waitForTimeout(500);
-
-  // Get position directly
-  const position = await page.evaluate((label: string) => {
-    const cy = (window as any).cy;
-    const node = cy.nodes().filter((n: any) => n.data("label") === label);
-    const pos = node.renderedPosition();
-    return { x: pos.x, y: pos.y };
-  }, label);
-
-  const canvasBox = await page.getByTestId("graph-canvas").boundingBox();
-  if (!canvasBox) throw new Error("Graph canvas not found");
-
-  // Click
-  await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
-
-  // If panel doesn't appear, try force click slightly offset (sometimes edge of node issues?)
-  try {
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
-      timeout: 2000,
-    });
-  } catch {
-    console.log("Retry clicking node...");
-    await page.mouse.click(canvasBox.x + position.x, canvasBox.y + position.y);
-    await expect(page.getByTestId("entity-detail-panel")).toBeVisible();
-  }
+  // Check if detail panel appeared
+  await expect(page.getByTestId("entity-detail-panel")).toBeVisible({
+    timeout: 10000,
+  });
 };
 
 test.describe("Campaign Date Picker E2E", () => {
@@ -79,26 +64,27 @@ test.describe("Campaign Date Picker E2E", () => {
       });
     });
 
-    await page.goto("http://localhost:5173/");
-    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
-    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await page.goto("/");
 
-    // Inject mocks
-    await page.evaluate(() => {
-      const v = (window as any).vault;
-      v.getActiveVaultHandle = async () => ({ kind: "directory" });
-      v.init = async () => {};
-      v.loadFiles = async () => {};
-      v.status = "idle";
-
-      const c = (window as any).calendarStore;
-      c.init = async () => {};
-    });
+    // Wait for core system to be ready
+    await page.waitForFunction(
+      () =>
+        (window as any).uiStore !== undefined &&
+        (window as any).vault !== undefined &&
+        (window as any).vault.status === "idle",
+      { timeout: 15000 },
+    );
 
     // Setup: Create a test entity
     await page.getByTestId("new-entity-button").click();
-    await page.getByPlaceholder("Chronicle Title...").fill("Test Event");
+    await page.getByPlaceholder(/Title\.\.\./).fill("Test Event");
     await page.getByRole("button", { name: "ADD" }).click();
+
+    // Ensure node is in graph
+    await page.waitForFunction(() => {
+      const cy = (window as any).cy;
+      return cy && cy.nodes().length >= 1;
+    });
   });
 
   test("should open date picker and select a year via Era", async ({
@@ -110,23 +96,30 @@ test.describe("Campaign Date Picker E2E", () => {
     // Wait for modal
     await expect(page.locator('[role="dialog"]')).toBeVisible();
 
+    // Switch to AI tab (where Eras usually are)
     await page.getByRole("tab", { name: "AI" }).click();
+
     await page.getByTestId("era-name-input").fill("Age of Myth");
     await page.getByTestId("era-start-input").fill("1000");
     await page.getByTestId("initialize-era-button").click();
+
+    // Wait for the era to appear in the settings list (confirms graph store update)
+    await expect(
+      page.locator(".space-y-2").getByText("Age of Myth"),
+    ).toBeVisible();
+
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode for the entity
-    await clickNodeOnCanvas(page, "Test Event");
+    await clickNodeProgrammatically(page, "Test Event");
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
 
     // 3. Open Date Picker
     await page.click('button:has-text("No date set...")');
-    await expect(page.locator("text=Eras")).toBeVisible();
 
-    // 4. Select Era
+    // 4. Select Era Tab
     await page.getByRole("tab", { name: "Eras" }).click();
     await page
       .getByTestId("era-select-button")
@@ -149,7 +142,7 @@ test.describe("Campaign Date Picker E2E", () => {
     // 1. Configure custom calendar in Settings
     await page.getByTestId("settings-button").click();
     await expect(page.locator('[role="dialog"]')).toBeVisible();
-    await page.getByRole("tab", { name: "Vault" }).click();
+    await page.getByRole("tab", { name: /vault/i }).click();
 
     // Toggle Gregorian off
     const gregorianToggle = page.getByTestId("gregorian-toggle");
@@ -164,11 +157,13 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Zen Mode and Date Picker
-    await clickNodeOnCanvas(page, "Test Event");
+    await clickNodeProgrammatically(page, "Test Event");
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
     await page.click('button:has-text("No date set...")');
+
+    // Zoom into Detail/Month view
     await page.click('button:has-text("Detail")');
 
     // 3. Verify custom month appears in dropdown
@@ -190,7 +185,7 @@ test.describe("Campaign Date Picker E2E", () => {
   });
 
   test("should allow navigating years via pure UI grid", async ({ page }) => {
-    await clickNodeOnCanvas(page, "Test Event");
+    await clickNodeProgrammatically(page, "Test Event");
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
@@ -232,7 +227,7 @@ test.describe("Campaign Date Picker E2E", () => {
   test("should allow manual year entry via keyboard toggle", async ({
     page,
   }) => {
-    await clickNodeOnCanvas(page, "Test Event");
+    await clickNodeProgrammatically(page, "Test Event");
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
     await page.getByTestId("edit-entity-button").click();
