@@ -49,6 +49,7 @@ test.describe("Better Imports E2E", () => {
             content: item.initialData.content,
             lore: item.initialData.lore,
             labels: item.initialData.labels,
+            tags: item.initialData.tags || [],
             connections: item.initialData.connections || [],
           };
         });
@@ -89,6 +90,7 @@ test.describe("Better Imports E2E", () => {
         content: "Already here",
         connections: [],
         labels: [],
+        tags: [],
       };
     });
 
@@ -198,6 +200,7 @@ test.describe("Better Imports E2E", () => {
         content: "Wizard",
         connections: [],
         labels: [],
+        tags: [],
       };
     });
 

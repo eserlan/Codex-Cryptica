@@ -150,7 +150,6 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       page.getByTestId("label-badge").filter({ hasText: "tag1" }),
     ).toBeVisible({ timeout: 10000 });
 
-    await page.waitForTimeout(300);
     await labelInput.fill("tag2");
     await labelInput.press("Enter");
     await expect(
@@ -227,12 +226,11 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       await labelInput.fill(l);
       await labelInput.press("Enter");
       // Wait for label to be added to the entity (reactive update)
-      // We use a longer timeout here because rapid additions might be queued
       await expect(
         page.getByTestId("label-badge").filter({ hasText: l }),
       ).toBeVisible({ timeout: 10000 });
-      // Add a small delay between additions to avoid race conditions in VaultStore
-      await page.waitForTimeout(500);
+      // Small delay to prevent race conditions in VaultStore when adding many labels rapidly
+      await page.waitForTimeout(100);
     }
 
     // 2. Open filter
