@@ -15,7 +15,7 @@ class TimelineStore {
 
   entries = $derived.by(() => {
     const list: TimelineEntry[] = [];
-    // ⚡ Bolt Optimization: Use pre-allocated vault.allEntities array with an imperative loop
+    // ⚡ Bolt Optimization: Use derived vault.allEntities array with an imperative loop
     // to prevent continuous Object.values() allocations during frequent reactive updates.
     const allEntities = vault.allEntities;
     const count = allEntities.length;
