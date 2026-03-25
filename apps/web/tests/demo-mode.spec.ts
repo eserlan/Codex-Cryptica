@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Interactive Demo Mode", () => {
+  test.describe.configure({ mode: "serial" });
   test.use({ viewport: { width: 1280, height: 720 } });
 
   test.beforeEach(async ({ page }) => {

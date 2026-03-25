@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Bulk Labeling and Selection Actions", () => {
+  test.describe.configure({ mode: "serial" });
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem("codex_skip_landing", "true");
