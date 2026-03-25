@@ -642,6 +642,7 @@
             class="p-1.5 text-theme-primary hover:text-theme-text transition-colors rounded-md hover:bg-theme-primary/10 group/map mx-0.5"
             onclick={() => mapStore.selectMap(subMapForSelected!.id, true)}
             title="Enter Sub-map"
+            aria-label="Enter Sub-map"
           >
             <span
               class="icon-[lucide--map] w-3.5 h-3.5 group-hover/map:scale-110 transition-transform"
