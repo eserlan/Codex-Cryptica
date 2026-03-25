@@ -7,16 +7,17 @@ test.describe("Category Architecture Modal", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
     });
-    page.on("console", (msg) => console.log(`PAGE LOG: ${msg.text()}`));
-    await page.goto("http://localhost:5173/");
+
+    await page.goto("/");
 
     // Wait for vault to initialize automatically
-    await page.waitForFunction(() => (window as any).vault?.status === "idle");
-
-    // Ensure categories are initialized (they should be, but let's be safe)
-    await page.evaluate(async () => {
-      await (window as any).categories.init();
-    });
+    await page.waitForFunction(
+      () =>
+        (window as any).uiStore !== undefined &&
+        (window as any).vault !== undefined &&
+        (window as any).vault.status === "idle",
+      { timeout: 15000 },
+    );
   });
 
   test("should open Category Architecture modal and display default categories", async ({
@@ -24,99 +25,84 @@ test.describe("Category Architecture Modal", () => {
   }) => {
     // 1. Open main Settings
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Vault" })).toBeVisible();
+
+    const modal = page.getByTestId("settings-modal");
+    await expect(modal).toBeVisible();
+    await expect(modal.locator("h2", { hasText: "Vault" })).toBeVisible();
 
     // 2. Open Schema tab via sidebar
-    await page.click('[role="tab"]:has-text("Schema")');
+    await page.getByRole("tab", { name: "Schema" }).click();
 
     // 3. Verify Schema heading is visible
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
+    await expect(modal.locator("h2", { hasText: "Schema" })).toBeVisible();
 
-    // 4. Verify default categories are loaded (check for Character which is a default category)
-    const hasCharacter = await page.evaluate(() => {
+    // 4. Verify default categories are loaded (Character is a default)
+    await page.waitForFunction(() => {
       const inputs = Array.from(
         document.querySelectorAll('input[type="text"]'),
-      );
-      return inputs.some(
-        (input) =>
-          (input as HTMLInputElement).value.toLowerCase() === "character",
-      );
+      ) as HTMLInputElement[];
+      return inputs.some((i) => i.value === "Character");
     });
-    expect(hasCharacter).toBe(true);
 
     // 5. Verify the new category input and ADD button exist
     await expect(page.getByPlaceholder("New category...")).toBeVisible();
     await expect(page.getByRole("button", { name: "ADD" })).toBeVisible();
 
     // 6. Close modal
-    await page.click('button[aria-label="Close Settings"]');
-    await expect(page.locator('[role="dialog"]')).not.toBeVisible();
+    await page.getByLabel("Close Settings").click();
+    await expect(modal).not.toBeVisible();
   });
 
   test("should add a new category in session", async ({ page }) => {
     // Open settings and go to Schema
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await page.click('[role="tab"]:has-text("Schema")');
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
+    const modal = page.getByTestId("settings-modal");
+    await page.getByRole("tab", { name: "Schema" }).click();
+    await expect(modal.locator("h2", { hasText: "Schema" })).toBeVisible();
 
     // Count initial categories
-    const initialCount = await page.evaluate(() => {
-      const inputs = Array.from(
-        document.querySelectorAll('input[type="text"]'),
-      );
-      return inputs.filter((input) => (input as HTMLInputElement).value).length;
-    });
+    const initialCount = await page
+      .locator('[data-testid^="category-row-"]')
+      .count();
 
     // Add new category
     await page.getByPlaceholder("New category...").fill("Artifact");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // Wait a bit for the UI to update
-    await page.waitForTimeout(300);
+    // Wait for list update
+    await page.waitForFunction(
+      () => {
+        const inputs = Array.from(
+          document.querySelectorAll('input[type="text"]'),
+        ) as HTMLInputElement[];
+        return inputs.some((i) => i.value === "Artifact");
+      },
+      { timeout: 5000 },
+    );
 
-    // Verify new category was added
-    const newCount = await page.evaluate(() => {
-      const inputs = Array.from(
-        document.querySelectorAll('input[type="text"]'),
-      );
-      return inputs.filter((input) => (input as HTMLInputElement).value).length;
-    });
+    // Verify new category was added to count
+    const newCount = await page
+      .locator('[data-testid^="category-row-"]')
+      .count();
     expect(newCount).toBe(initialCount + 1);
-
-    // Verify "Artifact" exists in the list
-    const hasArtifact = await page.evaluate(() => {
-      const inputs = Array.from(
-        document.querySelectorAll('input[type="text"]'),
-      );
-      return inputs.some(
-        (input) => (input as HTMLInputElement).value === "Artifact",
-      );
-    });
-    expect(hasArtifact).toBe(true);
   });
 
   test("should open and close glyph library picker", async ({ page }) => {
     // Open settings and go to Schema
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await page.click('[role="tab"]:has-text("Schema")');
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
+    await page.getByRole("tab", { name: "Schema" }).click();
+    const modal = page.getByTestId("settings-modal");
+    await expect(modal.locator("h2", { hasText: "Schema" })).toBeVisible();
 
     // Open glyph library via "Select Icon" button
-    await page.getByTitle("Select Icon").click();
-    await page.waitForSelector("text=Glyph Library", { state: "visible" });
+    await page.getByTitle("Select Icon").first().click();
     await expect(page.getByText("Glyph Library")).toBeVisible();
 
     // Verify icons are present
     const iconCount = await page.locator('button[title^="Select "]').count();
     expect(iconCount).toBeGreaterThan(10);
 
-    // Close by clicking outside or selecting an icon
+    // Close by selecting an icon
     await page.getByTitle("Select star icon").click();
     await expect(page.getByText("Glyph Library")).not.toBeVisible();
   });
@@ -124,10 +110,7 @@ test.describe("Category Architecture Modal", () => {
   test("should reset categories to defaults", async ({ page }) => {
     // Open settings and go to Schema
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await page.click('[role="tab"]:has-text("Schema")');
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
+    await page.getByRole("tab", { name: "Schema" }).click();
 
     // Delete character category naturally
     const characterRow = page.getByTestId("category-row-character");
@@ -149,19 +132,13 @@ test.describe("Category Architecture Modal", () => {
     page,
   }) => {
     // 1. Create an entity first so we have a node in the graph
-    // Open vault if not already open
-    const openVaultBtn = page.getByRole("button", { name: /OPEN/ });
-    if (await openVaultBtn.isVisible()) {
-      // Skip if no vault - this test requires a vault with entities
-      test.skip();
-    }
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder(/Title\.\.\./).fill("Color Test");
+    await page.getByRole("button", { name: "ADD" }).click();
 
     // 2. Open settings and go to Schema
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await page.click('[role="tab"]:has-text("Schema")');
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
-    await expect(page.locator("h2", { hasText: "Schema" })).toBeVisible();
+    await page.getByRole("tab", { name: "Schema" }).click();
 
     // 3. Find character category color input and change it to a distinct color
     const characterRow = page.getByTestId("category-row-character");
@@ -175,13 +152,11 @@ test.describe("Category Architecture Modal", () => {
     await colorInput.fill(newColor);
 
     // 4. Close modal and verify color was saved
-    await page.click('button[aria-label="Close Settings"]');
+    await page.getByLabel("Close Settings").click();
 
     // 5. Reopen and verify the color persisted
     await page.getByTestId("settings-button").click();
-    await page.waitForSelector('h2:has-text("Vault")', { state: "visible" });
-    await page.click('[role="tab"]:has-text("Schema")');
-    await page.waitForSelector('h2:has-text("Schema")', { state: "visible" });
+    await page.getByRole("tab", { name: "Schema" }).click();
 
     const updatedColorInput = page
       .getByTestId("category-row-character")
@@ -195,6 +170,6 @@ test.describe("Category Architecture Modal", () => {
 
     // 6. Clean up - reset to defaults
     await page.getByRole("button", { name: /RESET TO DEFAULTS/i }).click();
-    await page.click('button[aria-label="Close Settings"]');
+    await page.getByLabel("Close Settings").click();
   });
 });
