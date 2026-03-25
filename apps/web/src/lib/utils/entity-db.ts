@@ -56,6 +56,18 @@ export interface SearchIndexRecord {
 }
 
 /**
+ * Row stored in the `appSettings` Dexie table.
+ */
+export interface AppSettingRecord {
+  /** Setting key. Primary key. */
+  key: string;
+  /** Setting value. */
+  value: any;
+  /** Last update timestamp. */
+  updatedAt: number;
+}
+
+/**
  * Dexie database used as the primary graph entity store.
  *
  * The database is intentionally separate from the legacy `CodexCryptica`
@@ -65,11 +77,13 @@ export interface SearchIndexRecord {
  * Schema version history:
  *  1 — initial: graphEntities + entityContent tables.
  *  2 — added search_index table for persistence.
+ *  3 — added appSettings table for global configuration (AI keys, tiers).
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
   entityContent!: Table<EntityContentRecord>;
   searchIndex!: Table<SearchIndexRecord>;
+  appSettings!: Table<AppSettingRecord>;
 
   constructor() {
     super("CodexEntityDb");
@@ -84,6 +98,10 @@ export class EntityDb extends Dexie {
 
     this.version(2).stores({
       searchIndex: "vaultId",
+    });
+
+    this.version(3).stores({
+      appSettings: "key",
     });
   }
 }

@@ -25,35 +25,43 @@ export class OracleActionExecutor {
         await context.chatHistory.clearMessages();
         break;
       case "roll":
-        await this.executeRoll(intent.formula, context);
+        await this.executeRoll(intent.formula!, context);
         break;
       case "create":
-        await this.executeCreate(intent.entityName, intent.entityType, context);
+        await this.executeCreate(
+          intent.entityName!,
+          intent.entityType!,
+          context,
+        );
         break;
       case "connect":
         await this.executeConnect(
-          intent.sourceName,
-          intent.label,
-          intent.targetName,
+          intent.sourceName!,
+          intent.label!,
+          intent.targetName!,
           context,
         );
         break;
       case "merge":
-        await this.executeMerge(intent.sourceName, intent.targetName, context);
+        await this.executeMerge(
+          intent.sourceName!,
+          intent.targetName!,
+          context,
+        );
         break;
       case "connect-ai":
-        await this.executeConnectAI(intent.query, context);
+        await this.executeConnectAI(intent.query!, context);
         break;
       case "merge-ai":
-        await this.executeMergeAI(intent.query, context);
+        await this.executeMergeAI(intent.query!, context);
         break;
       case "plot":
-        await this.executePlot(intent.query, context);
+        await this.executePlot(intent.query!, context);
         break;
       case "chat":
         await this.executeChat(
-          intent.query,
-          intent.isAIIntent,
+          intent.query!,
+          intent.isAIIntent!,
           context,
           onPartialResponse,
         );
@@ -62,7 +70,7 @@ export class OracleActionExecutor {
         await context.chatHistory.addMessage({
           id: crypto.randomUUID(),
           role: "system",
-          content: intent.message.startsWith("❌")
+          content: intent.message?.startsWith("❌")
             ? intent.message
             : `❌ ${intent.message}`,
         });
@@ -344,16 +352,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     query: string,
     context: OracleExecutionContext,
   ) {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /connect command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       const { ProposerService } = await import("@codex/proposer");
@@ -387,16 +386,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   private async executeMergeAI(query: string, context: OracleExecutionContext) {
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /merge command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       const { ProposerService } = await import("@codex/proposer");
@@ -434,16 +424,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
-    const apiKey = context.effectiveApiKey;
-    if (!apiKey) {
-      await context.chatHistory.addMessage({
-        id: crypto.randomUUID(),
-        role: "system",
-        content:
-          "⚠️ The /plot command requires an AI API key. Please configure one in Settings.",
-      });
-      return;
-    }
+    const apiKey = context.effectiveApiKey || "";
 
     try {
       if (!subject) {
@@ -634,7 +615,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   async drawEntity(entityId: string, context: OracleExecutionContext) {
-    if (!context.effectiveApiKey) return;
     const entity = context.vault.entities[entityId];
     if (!entity) return;
 
@@ -675,7 +655,6 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   async drawMessage(messageId: string, context: OracleExecutionContext) {
-    if (!context.effectiveApiKey) return;
     const msgIndex = context.chatHistory.messages.findIndex(
       (m: any) => m.id === messageId,
     );

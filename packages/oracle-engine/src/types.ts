@@ -1,68 +1,115 @@
-import type {
-  ContextRetrievalService,
-  TextGenerationService,
-  ImageGenerationService,
-} from "schema";
+/**
+ * Oracle Engine Type Definitions
+ */
 
-export type OracleIntent =
-  | { type: "chat"; query: string; isAIIntent: boolean }
-  | { type: "roll"; formula: string; title?: string }
-  | {
-      type: "create";
-      entityName: string;
-      entityType: string;
-      isDrawing: boolean;
-    }
-  | { type: "connect"; sourceName: string; label: string; targetName: string }
-  | { type: "merge"; sourceName: string; targetName: string }
-  | { type: "connect-ai"; query: string }
-  | { type: "merge-ai"; query: string }
-  | { type: "plot"; query: string }
-  | { type: "help" }
-  | { type: "clear" }
-  | { type: "error"; message: string };
+/**
+ * Connection mode for the Oracle service.
+ * - `system-proxy`: Uses the Cloudflare Worker proxy (no user API key required)
+ * - `custom-key`: Uses the user's own Gemini API key directly
+ */
+export type ConnectionMode = "system-proxy" | "custom-key";
 
+/**
+ * Oracle message role types
+ */
+export type MessageRole = "user" | "assistant" | "system";
+
+/**
+ * Oracle message structure
+ */
 export interface ChatMessage {
   id: string;
-  role: "user" | "assistant" | "system";
+  role: MessageRole;
   content: string;
   type?: "text" | "image" | "wizard" | "roll";
-  wizardType?: "connection" | "merge";
-  rollResult?: any;
   imageUrl?: string;
   imageBlob?: Blob;
   entityId?: string;
   archiveTargetId?: string;
-  sources?: string[];
-  isDrawing?: boolean;
+  wizardType?: "connection" | "merge";
+  timestamp?: number;
+  rollResult?: any;
   hasDrawAction?: boolean;
+  isDrawing?: boolean;
 }
 
+/**
+ * Oracle intent types for command parsing
+ */
+export type OracleIntentType =
+  | "query"
+  | "create"
+  | "update"
+  | "delete"
+  | "connect"
+  | "connect-ai"
+  | "merge"
+  | "merge-ai"
+  | "plot"
+  | "chat"
+  | "roll"
+  | "wizard"
+  | "help"
+  | "clear"
+  | "error";
+
+/**
+ * Parsed Oracle command intent
+ */
+export interface OracleIntent {
+  type: OracleIntentType;
+  query?: string;
+  data?: any;
+  entityId?: string;
+  entityName?: string;
+  entityType?: string;
+  isDrawing?: boolean;
+  isAIIntent?: boolean;
+  wizardType?: "connection" | "merge";
+  rollExpression?: string;
+  formula?: string;
+  sourceName?: string;
+  targetName?: string;
+  label?: string;
+  message?: string;
+}
+
+/**
+ * Undoable action for history management
+ */
 export interface UndoableAction {
   id: string;
-  messageId?: string;
+  type?: string;
+  timestamp: number;
   description: string;
+  messageId?: string;
   undo: () => Promise<void>;
   redo: () => Promise<void>;
-  timestamp: number;
 }
 
+/**
+ * Oracle execution context
+ * Provides all services needed for Oracle operations
+ */
 export interface OracleExecutionContext {
-  vault: any;
-  textGeneration: TextGenerationService;
-  imageGeneration: ImageGenerationService;
-  contextRetrieval: ContextRetrievalService;
-  diceEngine: any;
-  diceParser: any;
-  diceHistory: any;
-  searchService: any;
-  nodeMergeService: any;
-  uiStore: any;
-  graph: any;
-  chatHistory: any;
-  undoRedo: any;
-  tier: "lite" | "advanced";
+  userId?: string;
+  vaultId?: string;
+  liteMode?: boolean;
+  tier?: "lite" | "advanced";
+  effectiveApiKey?: string | null;
   modelName: string;
-  effectiveApiKey: string | null;
-  isDemoMode: boolean;
+  isDemoMode?: boolean;
+  vault: any;
+  uiStore: any;
+  chatHistory: any;
+  textGeneration?: any;
+  imageGeneration?: any;
+  contextRetrieval?: any;
+  searchService?: any;
+  nodeMergeService?: any;
+  diceParser?: any;
+  diceEngine?: any;
+  diceHistory?: any;
+  graph?: any;
+  undoRedo?: any;
 }

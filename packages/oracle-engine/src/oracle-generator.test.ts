@@ -37,13 +37,14 @@ describe("OracleGenerator", () => {
   });
 
   describe("identifyPrimaryEntity", () => {
-    it("should return early if no api key", async () => {
+    it("should proceed even if no api key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;
       const result = await generator.identifyPrimaryEntity(
         "query",
         mockContext,
       );
-      expect(result.sourceIds).toHaveLength(0);
+      expect(mockContext.contextRetrieval.retrieveContext).toHaveBeenCalled();
+      expect(result.sourceIds).toContain("e1");
     });
 
     it("should expand query if messages > 2", async () => {
@@ -72,14 +73,10 @@ describe("OracleGenerator", () => {
   });
 
   describe("generateChatResponse", () => {
-    it("should handle missing key", async () => {
+    it("should proceed even if no api key (proxy mode)", async () => {
       mockContext.effectiveApiKey = null;
       await generator.generateChatResponse("q", mockContext, vi.fn());
-      expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
-        expect.objectContaining({
-          content: expect.stringContaining("require an API key"),
-        }),
-      );
+      expect(mockContext.textGeneration.generateResponse).toHaveBeenCalled();
     });
 
     it("should call generateResponse", async () => {

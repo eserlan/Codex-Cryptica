@@ -44,10 +44,13 @@
     "typescript": "5.9.3",
     "typescript-eslint": "^8.57.1",
     "vitefu": "^1.1.2",
-    "wrangler": "^4.75.0"
+    "wrangler": "^4.76.0"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  }
 }

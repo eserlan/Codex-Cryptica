@@ -83,7 +83,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Sci-Fi Terminal",
     tokens: {
       primary: "#4ade80",
-      secondary: "#16a34a",
+      secondary: "#86efac",
       background: "#050505",
       surface: "#0c0c0c",
       text: "#86efac",
@@ -189,7 +189,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Neon Night",
     tokens: {
       primary: "#f472b6",
-      secondary: "#db2777",
+      secondary: "#f9a8d4",
       background: "#020617",
       surface: "#0f172a",
       text: "#22d3ee",
@@ -229,7 +229,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Wasteland",
     tokens: {
       primary: "#f97316",
-      secondary: "#ea580c",
+      secondary: "#fdba74",
       background: "#1c1917",
       surface: "#292524",
       text: "#ececec",
@@ -270,7 +270,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Blood & Noir",
     tokens: {
       primary: "#dc2626", // Blood Red (Vibrant)
-      secondary: "#ef4444", // Bright Red (Readable muted labels)
+      secondary: "#f87171",
       background: "#050505",
       surface: "#121212",
       text: "#f3f4f6", // Off-white (Body)
@@ -311,8 +311,9 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Pip-Boy Terminal",
     tokens: {
       primary: "#39ff14", // Pip-Boy neon green
-      secondary: "#2db110", // Darker terminal green
-      background: "#0a0a08", // Near-black CRT background
+      secondary: "#86efac",
+      background: "#0a0a08",
+      // Near-black CRT background
       surface: "#111109", // Slightly lighter terminal surface
       text: "#a8ff78", // Soft phosphor green text
       border: "rgba(57, 255, 20, 0.4)",
@@ -352,7 +353,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "Galactic Holocron",
     tokens: {
       primary: "#FFE81F", // Star Wars Yellow
-      secondary: "#2D3748", // Imperial Grey
+      secondary: "#cbd5e1", // Light Grey
       background: "#000000", // Space Black
       surface: "#0F172A", // Star Destroyer Interior
       text: "#E2E8F0", // Starlight White
@@ -392,7 +393,7 @@ export const THEMES: Record<string, StylingTemplate> = {
     name: "LCARS Interface",
     tokens: {
       primary: "#FF9900", // Okudagram Orange
-      secondary: "#CC99CC", // LCARS Purple
+      secondary: "#fbcfe8", // Light Purple
       background: "#000000", // Space Black
       surface: "#111111", // Console Background
       text: "#FFFFFF", // Standard White
