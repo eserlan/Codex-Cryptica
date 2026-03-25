@@ -104,6 +104,7 @@
     isInitial = false,
     isForced = false,
     caller = "unknown",
+    randomizeForced = false,
   ) => {
     if (!layoutManager) return;
 
@@ -135,6 +136,7 @@
       isInitial,
       isForced,
       caller,
+      randomizeForced,
     );
   };
 
@@ -179,13 +181,27 @@
 
   let initTimer: ReturnType<typeof setTimeout> | null = null;
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastOrientation: "landscape" | "portrait" | null = null;
 
   const handleResize = () => {
     if (resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (cy) {
-        debugStore.log("[GraphView] Window resized, updating layout...");
-        applyCurrentLayout(false, false, "Window Resize");
+        const width = cy.width();
+        const height = cy.height();
+        const currentOrientation = width > height ? "landscape" : "portrait";
+
+        // Only log and potentially rearrange if orientation changed
+        if (lastOrientation && currentOrientation !== lastOrientation) {
+          debugStore.log(
+            `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
+          );
+          applyCurrentLayout(false, true, "Window Resize", true);
+        } else {
+          applyCurrentLayout(false, false, "Window Resize", false);
+        }
+
+        lastOrientation = currentOrientation;
       }
     }, 250);
   };

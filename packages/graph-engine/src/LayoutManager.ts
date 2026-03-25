@@ -33,6 +33,7 @@ export class LayoutManager {
     isInitial = false,
     isForced = false,
     caller = "unknown",
+    randomizeForced = false,
   ) {
     if (!this.cy || this.cy.destroyed()) return;
 
@@ -75,7 +76,13 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        await this.applyForceLayout(options, isInitial, isForced, caller);
+        await this.applyForceLayout(
+          options,
+          isInitial,
+          isForced,
+          caller,
+          randomizeForced,
+        );
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -136,6 +143,7 @@ export class LayoutManager {
     isInitial: boolean,
     isForced: boolean,
     caller: string,
+    randomizeForced = false,
   ) {
     const cyNodes = this.cy.nodes();
     let hasNewNodes = false;
@@ -189,16 +197,19 @@ export class LayoutManager {
 
     const width = this.cy.width();
     const height = this.cy.height();
-    const isLandscape = width / height > ORIENTATION_THRESHOLD;
+    const ar = width / height;
+    const isLandscape = ar > ORIENTATION_THRESHOLD;
 
     const baseOptions = getDynamicLayoutOptions(cyNodes.length);
 
-    // Scale gravity based on aspect ratio but don't let it get too high (clumping)
+    // Cap gravity based on aspect ratio to avoid excessive clumping
+    // Landscape: use a lower max gravity to allow horizontal spread
+    // Portrait: allow a slightly higher max to reduce extreme vertical drift
     const gravity = isLandscape
       ? Math.min(baseOptions.gravity, 0.1)
       : Math.min(baseOptions.gravity, 0.4);
 
-    const shouldRandomize = randomize || (isForced && caller.includes("UI"));
+    const shouldRandomize = randomize || (isForced && randomizeForced);
 
     this.currentLayout = this.cy.layout({
       ...baseOptions,
