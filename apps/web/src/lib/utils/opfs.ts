@@ -331,12 +331,32 @@ export async function deleteVaultDir(
   }
 
   // Best-effort cache cleanup for the entire vault
+  // Use cursor with bounded concurrency to avoid memory spikes on large vaults
   try {
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    const keys = await index.getAllKeys(normalized);
-    await Promise.all(keys.map((key) => tx.store.delete(key)));
+    const cursor = await index.openKeyCursor(normalized);
+    if (cursor) {
+      // Delete in chunks of 50 to balance performance and memory usage
+      const chunkSize = 50;
+      let chunk: IDBValidKey[] = [];
+      let currentKey: IDBValidKey | null = cursor.primaryKey;
+
+      while (currentKey) {
+        chunk.push(currentKey);
+        if (chunk.length >= chunkSize) {
+          await Promise.all(chunk.map((key) => tx.store.delete(key)));
+          chunk = [];
+        }
+        currentKey = await cursor.continue();
+      }
+
+      // Delete remaining keys in final chunk
+      if (chunk.length > 0) {
+        await Promise.all(chunk.map((key) => tx.store.delete(key)));
+      }
+    }
     await tx.done;
   } catch (err) {
     console.warn(

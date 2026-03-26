@@ -20,6 +20,8 @@ vi.mock("./idb", () => ({
       store: {
         index: vi.fn().mockReturnValue({
           openCursor: vi.fn().mockResolvedValue(null),
+          openKeyCursor: vi.fn().mockResolvedValue(null),
+          getAllKeys: vi.fn().mockResolvedValue([]),
         }),
         put: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
@@ -291,6 +293,97 @@ describe("opfs - utility functions", () => {
       await expect(deleteVaultDir(mockRoot as any, "vault-1")).rejects.toThrow(
         "Permission Denied",
       );
+    });
+
+    it("should clear IDB cache with cursor-based chunked deletion", async () => {
+      const mockDelete = vi.fn().mockResolvedValue(undefined);
+      const mockContinue = vi.fn();
+      const mockCursor = {
+        primaryKey: "key1",
+        continue: mockContinue,
+      };
+
+      // Simulate cursor returning 3 keys
+      let callCount = 0;
+      mockContinue.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) return Promise.resolve("key2");
+        if (callCount === 2) return Promise.resolve("key3");
+        return Promise.resolve(null);
+      });
+
+      const mockIndex = {
+        openKeyCursor: vi.fn().mockResolvedValue(mockCursor),
+      };
+      const mockStore = {
+        index: vi.fn().mockReturnValue(mockIndex),
+        delete: mockDelete,
+      };
+      const mockTx = {
+        store: mockStore,
+        done: Promise.resolve(),
+      };
+      const mockDB = {
+        transaction: vi.fn().mockReturnValue(mockTx),
+      };
+      const { getDB } = await import("./idb");
+      vi.mocked(getDB).mockResolvedValue(mockDB as any);
+
+      // Mock OPFS root for directory deletion
+      const mockVaultDir = {
+        removeEntry: vi.fn().mockResolvedValue(undefined),
+      };
+      const mockRoot = {
+        getDirectoryHandle: vi.fn().mockImplementation((name) => {
+          if (name === "vaults") return Promise.resolve(mockVaultDir);
+          return Promise.reject({ name: "NotFoundError" });
+        }),
+      };
+
+      await deleteVaultDir(mockRoot as any, "test-vault");
+
+      // Verify cursor was used
+      expect(mockIndex.openKeyCursor).toHaveBeenCalledWith("test-vault");
+      // Verify delete was called for each key
+      expect(mockDelete).toHaveBeenCalledTimes(3);
+      expect(mockDelete).toHaveBeenCalledWith("key1");
+      expect(mockDelete).toHaveBeenCalledWith("key2");
+      expect(mockDelete).toHaveBeenCalledWith("key3");
+    });
+
+    it("should handle empty cursor result", async () => {
+      const mockIndex = {
+        openKeyCursor: vi.fn().mockResolvedValue(null),
+      };
+      const mockStore = {
+        index: vi.fn().mockReturnValue(mockIndex),
+        delete: vi.fn(),
+      };
+      const mockTx = {
+        store: mockStore,
+        done: Promise.resolve(),
+      };
+      const mockDB = {
+        transaction: vi.fn().mockReturnValue(mockTx),
+      };
+      const { getDB } = await import("./idb");
+      vi.mocked(getDB).mockResolvedValue(mockDB as any);
+
+      // Mock OPFS root for directory deletion
+      const mockVaultDir = {
+        removeEntry: vi.fn().mockResolvedValue(undefined),
+      };
+      const mockRoot = {
+        getDirectoryHandle: vi.fn().mockImplementation((name) => {
+          if (name === "vaults") return Promise.resolve(mockVaultDir);
+          return Promise.reject({ name: "NotFoundError" });
+        }),
+      };
+
+      await deleteVaultDir(mockRoot as any, "empty-vault");
+
+      expect(mockIndex.openKeyCursor).toHaveBeenCalledWith("empty-vault");
+      expect(mockStore.delete).not.toHaveBeenCalled();
     });
   });
 });
