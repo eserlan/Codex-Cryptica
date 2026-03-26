@@ -349,6 +349,7 @@ export async function deleteVaultDir(
           await Promise.all(chunk.map((key) => tx.store.delete(key)));
           chunk = [];
         }
+
         const nextCursor =
           (await cursor.continue()) as IDBCursorWithValue | null;
         if (!nextCursor) break;
