@@ -41,6 +41,43 @@ describe("markdown.ts utility", () => {
       expect(html).toContain("<strong>bold</strong>");
       expect(html).not.toContain("<p>");
     });
+
+    it("should handle marked.parse errors and return sanitized fallback", async () => {
+      // Mock marked.parse to throw an error to test the catch block
+      const { marked } = await import("marked");
+      const parseSpy = vi.spyOn(marked, "parse").mockImplementation(() => {
+        throw new Error("Simulated parse error");
+      });
+      const parseInlineSpy = vi
+        .spyOn(marked, "parseInline")
+        .mockImplementation(() => {
+          throw new Error("Simulated parseInline error");
+        });
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+
+      // Test with malicious input to verify sanitization in fallback
+      const maliciousText = '<script>alert("xss")</script>Safe text';
+
+      // The function should not throw
+      const result = renderMarkdown(maliciousText);
+
+      // Verify error was logged
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Markdown rendering failed",
+        expect.any(Error),
+      );
+
+      // Verify the result is sanitized (script tag removed)
+      expect(result).not.toContain("<script>");
+      expect(result).toContain("Safe text");
+
+      // Clean up spies
+      parseSpy.mockRestore();
+      parseInlineSpy.mockRestore();
+      consoleSpy.mockRestore();
+    });
   });
 
   describe("parseMarkdown", () => {

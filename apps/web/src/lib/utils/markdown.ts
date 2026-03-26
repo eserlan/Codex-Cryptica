@@ -40,13 +40,12 @@ export function renderMarkdown(
     });
   } catch (e) {
     console.error("Markdown rendering failed", e);
-    // Fallback: still sanitize the original content before injecting via {@html}
-    return browser
-      ? DOMPurify.sanitize(text, {
-          ALLOWED_URI_REGEXP:
-            /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-        })
-      : text;
+    // Fallback: sanitize the original content before injecting via {@html}
+    // Always sanitize in fallback mode for security, even in SSR
+    return DOMPurify.sanitize(text, {
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+    });
   }
 }
 

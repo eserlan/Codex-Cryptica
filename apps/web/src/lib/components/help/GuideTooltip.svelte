@@ -1,7 +1,6 @@
 <script lang="ts">
   import { helpStore } from "$lib/stores/help.svelte";
   import { fly } from "svelte/transition";
-  import { browser } from "$app/environment";
   import { renderMarkdown } from "$lib/utils/markdown";
   import type { GuideStep } from "$lib/config/help-content";
 
