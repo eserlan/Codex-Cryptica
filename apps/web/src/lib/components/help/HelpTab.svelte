@@ -2,6 +2,7 @@
   import { helpStore } from "$lib/stores/help.svelte";
   import { parserService } from "$lib/services/parser";
   import { browser } from "$app/environment";
+  import { renderMarkdown } from "$lib/utils/markdown";
   import DOMPurify from "dompurify";
   import { slide } from "svelte/transition";
   import HelpHeader from "./HelpHeader.svelte";
@@ -15,20 +16,16 @@
     const promise = (async () => {
       try {
         const html = await parserService.parse(content);
-        return browser
-          ? DOMPurify.sanitize(html, {
-              ALLOWED_URI_REGEXP:
-                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-            })
-          : html;
+        if (!browser) return html;
+        return DOMPurify.sanitize(html, {
+          ADD_TAGS: ["mark"],
+          ADD_ATTR: ["class"],
+          ALLOWED_URI_REGEXP:
+            /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+        });
       } catch (e) {
         console.error("Failed to parse help article", e);
-        return browser
-          ? DOMPurify.sanitize(content, {
-              ALLOWED_URI_REGEXP:
-                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-            })
-          : content;
+        return renderMarkdown(content);
       }
     })();
 

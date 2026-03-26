@@ -15,28 +15,38 @@ export function renderMarkdown(
 ): string {
   if (!text) return "";
 
-  let content = text;
-  if (options.query) {
-    const safeQuery = options.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const regex = new RegExp(`(${safeQuery})`, "gi");
-    content = text.replace(
-      regex,
-      '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
-    );
+  try {
+    let content = text;
+    if (options.query) {
+      const safeQuery = options.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(${safeQuery})`, "gi");
+      content = text.replace(
+        regex,
+        '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
+      );
+    }
+
+    const rawHtml = options.inline
+      ? (marked.parseInline(content) as string)
+      : (marked.parse(content) as string);
+
+    if (!browser) return rawHtml;
+
+    return DOMPurify.sanitize(rawHtml, {
+      ADD_TAGS: ["mark"],
+      ADD_ATTR: ["class"],
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+    });
+  } catch (e) {
+    console.error("Markdown rendering failed", e);
+    // Fallback: sanitize the original content before injecting via {@html}
+    // Always sanitize in fallback mode for security, even in SSR
+    return DOMPurify.sanitize(text, {
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+    });
   }
-
-  const rawHtml = options.inline
-    ? (marked.parseInline(content) as string)
-    : (marked.parse(content) as string);
-
-  if (!browser) return rawHtml;
-
-  return DOMPurify.sanitize(rawHtml, {
-    ADD_TAGS: ["mark"],
-    ADD_ATTR: ["class"],
-    ALLOWED_URI_REGEXP:
-      /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-  });
 }
 
 export function parseMarkdown(raw: string): ParseResult {
