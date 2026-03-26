@@ -335,11 +335,8 @@ export async function deleteVaultDir(
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    let cursor = await index.openCursor(normalized);
-    while (cursor) {
-      await cursor.delete();
-      cursor = await cursor.continue();
-    }
+    const keys = await index.getAllKeys(normalized);
+    await Promise.all(keys.map((key) => tx.store.delete(key)));
     await tx.done;
   } catch (err) {
     console.warn(
