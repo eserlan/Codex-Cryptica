@@ -2,7 +2,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   name: "fcose",
   animate: false,
   animationDuration: 800,
-  quality: "default", // will be dynamically set to 'proof' for large graphs
+  quality: "default",
   randomize: true,
   packComponents: true,
   tile: true,
@@ -12,15 +12,18 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   nodeRepulsion: 45000,
   idealEdgeLength: 150,
   nodeSeparation: 150,
-  numIter: 5000,
+  numIter: 2500, // Reduced from 5000 for faster convergence
+  nodeDimensionsIncludeLabels: false, // Significant speed boost
+  nestingReprGrpFactor: 1.1,
+  initialEnergyOnIncremental: 0.3,
 };
 
 /**
  * Generates layout options tuned for the specific size of the graph.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
-  // Use higher quality for complex graphs
-  const quality = nodeCount > 100 ? "proof" : "default";
+  // Use 'default' for most, 'draft' for very large graphs. Avoid 'proof' as it's too slow.
+  const quality = nodeCount > 300 ? "draft" : "default";
 
   // Scale repulsion significantly to prevent clumping
   const repulsion = Math.min(250000, 45000 + nodeCount * 500);
