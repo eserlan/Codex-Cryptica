@@ -10,7 +10,10 @@ ${context}
 User visualization request: ${query}`;
 }
 
-export function buildVisualDistillationPrompt(query: string, context: string): string {
+export function buildVisualDistillationPrompt(
+  query: string,
+  context: string,
+): string {
   return `--- CONTEXT ---
 ${context}
 
