@@ -281,19 +281,25 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
 
     let finalContent = Array.from(contextMap.values()).join("\n\n");
     if (contextMap.size === 0 && excludeTitles.size === 0) {
-      // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and an imperative loop
-      // to avoid Object.values() and .map() array allocations, reducing GC overhead.
+      // ⚡ Bolt Optimization: Use pre-derived vault.allEntities and build string in a single pass
+      // to avoid an extra titles array from .map(), reducing GC overhead.
+      // When vault.allEntities is present, this also avoids an Object.values() allocation.
       // Fallback to Object.values(vault.entities) if allEntities is not available (e.g. in some tests)
       const allEntities =
         vault.allEntities || Object.values(vault.entities || {});
       const count = allEntities.length;
-      const titleParts = [];
+      let allTitles = "";
+      let first = true;
       for (let i = 0; i < count; i++) {
-        if (allEntities[i].title) {
-          titleParts.push(allEntities[i].title);
+        const title = allEntities[i].title;
+        if (title) {
+          if (!first) {
+            allTitles += ", ";
+          }
+          allTitles += title;
+          first = false;
         }
       }
-      const allTitles = titleParts.join(", ");
       if (allTitles) {
         finalContent = `--- Available Records ---\nYou have records on the following subjects: ${allTitles}. None specifically matched, but they are available.`;
       }
