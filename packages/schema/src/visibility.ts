@@ -40,8 +40,7 @@ export function isEntityVisible(
     for (let i = 0; i < entity.labels.length; i++) {
       const label = entity.labels[i].toLowerCase();
       if (label === "hidden") return false; // Early exit
-      if (label === "revealed" || label === "visible")
-        explicitlyRevealed = true;
+      if (label === "revealed" || label === "visible") explicitlyRevealed = true;
     }
   }
 
