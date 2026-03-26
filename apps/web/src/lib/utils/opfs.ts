@@ -344,15 +344,12 @@ export async function deleteVaultDir(
       // Iterate through all keys using cursor
 
       while (true) {
-        // @ts-expect-error - cursor is non-null due to outer if check and loop structure
         chunk.push(cursor.primaryKey as [string, string]);
         if (chunk.length >= chunkSize) {
           await Promise.all(chunk.map((key) => tx.store.delete(key)));
           chunk = [];
         }
-        // @ts-expect-error - continue() returns next cursor or undefined
-        const nextCursor =
-          (await cursor.continue()) as IDBCursorWithValue | null;
+        const nextCursor = await cursor.continue();
         if (!nextCursor) break;
         cursor = nextCursor;
       }
