@@ -295,20 +295,20 @@ describe("opfs - utility functions", () => {
       );
     });
 
-    it("should clear IDB cache with cursor-based chunked deletion", async () => {
+    it("should clear IDB cache with cursor-based sequential deletion", async () => {
       const deletedKeys: IDBValidKey[] = [];
 
-      // Mock cursor that properly simulates IDB cursor behavior
-      // continue() returns the cursor (or null when exhausted)
+      // Mock cursor that simulates IDB cursor behavior
+      // continue() advances cursor, returns cursor or null when exhausted
       let cursorCallCount = 0;
-      const mockCursor = {
+      const mockCursor: any = {
         primaryKey: "key1",
         continue: vi.fn().mockImplementation(() => {
           cursorCallCount++;
           if (cursorCallCount === 1) {
-            (mockCursor as any).primaryKey = "key2";
+            mockCursor.primaryKey = "key2";
           } else if (cursorCallCount === 2) {
-            (mockCursor as any).primaryKey = "key3";
+            mockCursor.primaryKey = "key3";
           } else {
             return Promise.resolve(null);
           }
@@ -390,10 +390,8 @@ describe("opfs - utility functions", () => {
       expect(mockStore.delete).not.toHaveBeenCalled();
     });
 
-    it("should delete in chunks to avoid memory spikes", async () => {
+    it("should delete many keys sequentially", async () => {
       const deletedKeys: IDBValidKey[] = [];
-
-      // Generate 120 keys to test chunking (chunkSize = 50)
       const totalKeys = 120;
       const keys = Array.from({ length: totalKeys }, (_, i) => `key-${i}`);
       let currentKeyIndex = 0;
@@ -452,11 +450,10 @@ describe("opfs - utility functions", () => {
 
       await deleteVaultDir(mockRoot as any, "large-vault");
 
-      // Verify all 120 keys were deleted
+      // Verify all 120 keys were deleted sequentially
       expect(deletedKeys).toHaveLength(totalKeys);
       expect(deletedKeys).toEqual(keys);
-
-      // Verify delete was called for each key
+      // Verify sequential deletion (each key deleted individually)
       expect(mockDelete).toHaveBeenCalledTimes(totalKeys);
     });
   });
