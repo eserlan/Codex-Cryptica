@@ -262,7 +262,9 @@
           role="menu"
           aria-label="Canvas selection"
           tabindex="0"
-          class="absolute left-full top-0 z-[100] ml-1 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+          class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+          style:top="{position.y - 40}px"
+          style:left="{position.x + 180}px"
           onmouseenter={showCanvasPicker}
           onmouseleave={hideCanvasPicker}
         >
