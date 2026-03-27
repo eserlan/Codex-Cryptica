@@ -72,7 +72,7 @@
 - [x] T015 [US1] Implement "Choose Canvas..." modal for full canvas list in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
 - [x] T016 [US1] Wire up context menu click handler to call `canvasStore.addEntities()` in `apps/web/src/lib/components/graph/ContextMenu.svelte`
 - [x] T017 [US1] Add unified toast notification service for success, duplicate, and error messages in `apps/web/src/lib/components/graph/ContextMenu.svelte`
-- [ ] T018 [US1] Add keyboard navigation for submenu (arrow keys, Enter, Escape) in `CanvasPicker.svelte`
+- [x] T018 [US1] Add keyboard navigation for submenu (arrow keys, Enter, Escape) in `CanvasPicker.svelte`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -86,15 +86,15 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T019 [P] [US2] Unit test for `addEntities()` with multiple entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T020 [P] [US2] Unit test for partial duplicates (some exist, some new) in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T019 [P] [US2] Unit test for `addEntities()` with multiple entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T020 [P] [US2] Unit test for partial duplicates (some exist, some new) in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [ ] T021 [US2] E2E test: Add multiple entities to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T022 [P] [US2] Update context menu handler to pass all selected entity IDs in `GraphContextMenu.svelte`
-- [ ] T023 [US2] Update toast notification to show count ("Added 5 entities to 'Canvas Name'") in `apps/web/src/lib/components/graph/GraphView.svelte`
-- [ ] T024 [US2] Update duplicate notification to show count ("Skipped 2 duplicates") in `apps/web/src/lib/components/graph/GraphView.svelte`
+- [x] T022 [P] [US2] Update context menu handler to pass all selected entity IDs in `GraphContextMenu.svelte`
+- [x] T023 [US2] Update toast notification to show count ("Added 5 entities to 'Canvas Name'") in `apps/web/src/lib/components/graph/ContextMenu.svelte`
+- [x] T024 [US2] Update duplicate notification to show count ("Skipped 2 duplicates") in `apps/web/src/lib/components/graph/ContextMenu.svelte`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -108,19 +108,19 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T025 [P] [US3] Unit test for `createCanvas()` with entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T026 [P] [US3] Unit test for cancel flow in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T025 [P] [US3] Unit test for `createCanvas()` with entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T026 [P] [US3] Unit test for cancel flow in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [ ] T027 [US3] E2E test: Create new canvas from selection via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T028 [P] [US3] Add "+ New Canvas" option to `CanvasPicker.svelte` submenu
-- [ ] T029 [US3] Implement canvas name prompt dialog in `apps/web/src/lib/components/canvas/CanvasNamePrompt.svelte`
-- [ ] T030 [US3] Wire up "New Canvas" click to call `canvasStore.createCanvas()` in `CanvasPicker.svelte`
-- [ ] T031 [US3] Generate default canvas name (e.g., "5 entities" or first entity title) in `canvas-registry.svelte.ts`
-- [ ] T032 [US3] Handle cancel flow (no canvas created) in `CanvasNamePrompt.svelte`
-- [ ] T033 [US3] Show "Create New Canvas" as only option when no canvases exist in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
-- [ ] T034 [US3] Implement error toast for storage failures and "Canvas is full" scenario in `apps/web/src/lib/components/graph/GraphView.svelte`
+- [x] T028 [P] [US3] Add "+ New Canvas" option to `CanvasPicker.svelte` submenu
+- [x] T029 [US3] Implement canvas name prompt dialog in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [x] T030 [US3] Wire up "New Canvas" click to call `canvasStore.createCanvas()` in `CanvasPicker.svelte`
+- [x] T031 [US3] Generate default canvas name (e.g., "5 entities" or first entity title) in `canvas-registry.svelte.ts`
+- [x] T032 [US3] Handle cancel flow (no canvas created) in `CanvasPicker.svelte`
+- [x] T033 [US3] Show "Create New Canvas" as only option when no canvases exist in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [x] T034 [US3] Implement error toast for storage failures and "Canvas is full" scenario in `apps/web/src/lib/components/graph/ContextMenu.svelte`
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -235,11 +235,21 @@ With multiple developers:
 
 **Total Tasks**: 41 tasks across 6 phases
 
-| Phase   | Description                            | Task Count |
-| ------- | -------------------------------------- | ---------- |
-| Phase 1 | Setup (verify existing patterns)       | 3 tasks    |
-| Phase 2 | Foundational (canvas store methods)    | 5 tasks    |
-| Phase 3 | User Story 1 - Single entity add (MVP) | 10 tasks   |
-| Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    |
-| Phase 5 | User Story 3 - Create new canvas       | 10 tasks   |
-| Phase 6 | Polish & cross-cutting                 | 7 tasks    |
+| Phase   | Description                            | Task Count | Complete |
+| ------- | -------------------------------------- | ---------- | -------- |
+| Phase 1 | Setup (verify existing patterns)       | 3 tasks    | ✅ 3/3   |
+| Phase 2 | Foundational (canvas store methods)    | 5 tasks    | ✅ 5/5   |
+| Phase 3 | User Story 1 - Single entity add (MVP) | 10 tasks   | ✅ 10/10 |
+| Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    | ✅ 5/6   |
+| Phase 5 | User Story 3 - Create new canvas       | 10 tasks   | ✅ 9/10  |
+| Phase 6 | Polish & cross-cutting                 | 7 tasks    | ⏳ 0/7   |
+
+**Remaining**: 3 E2E tests (T011, T021, T027) + 7 polish tasks (T035-T041)
+
+**MVP Status**: ✅ COMPLETE - All core functionality implemented
+
+- ✅ Add single entity to canvas
+- ✅ Add multiple entities to canvas
+- ✅ Create new canvas from selection
+- ✅ Duplicate detection with notifications
+- ✅ Error handling with toast messages
