@@ -240,16 +240,17 @@ With multiple developers:
 | Phase 1 | Setup (verify existing patterns)       | 3 tasks    | ✅ 3/3   |
 | Phase 2 | Foundational (canvas store methods)    | 5 tasks    | ✅ 5/5   |
 | Phase 3 | User Story 1 - Single entity add (MVP) | 10 tasks   | ✅ 10/10 |
-| Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    | ✅ 5/6   |
-| Phase 5 | User Story 3 - Create new canvas       | 10 tasks   | ✅ 9/10  |
+| Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    | ✅ 6/6   |
+| Phase 5 | User Story 3 - Create new canvas       | 10 tasks   | ✅ 10/10 |
 | Phase 6 | Polish & cross-cutting                 | 7 tasks    | ⏳ 0/7   |
 
-**Remaining**: 3 E2E tests (T011, T021, T027) + 7 polish tasks (T035-T041)
+**Remaining**: 7 polish tasks (T035-T041)
 
-**MVP Status**: ✅ COMPLETE - All core functionality implemented
+**Feature Status**: ✅ COMPLETE - All core functionality + E2E tests implemented
 
-- ✅ Add single entity to canvas
-- ✅ Add multiple entities to canvas
-- ✅ Create new canvas from selection
+- ✅ Add single entity to canvas (unit + E2E tests)
+- ✅ Add multiple entities to canvas (unit + E2E tests)
+- ✅ Create new canvas from selection (unit + E2E tests)
 - ✅ Duplicate detection with notifications
 - ✅ Error handling with toast messages
+- ✅ 6 comprehensive E2E test scenarios
