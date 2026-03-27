@@ -269,3 +269,12 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 - For AI-dependent tests, create mock fixtures that don't require real API keys
 - Always run tests after modifying auth-related files or API integration code
 - Document test limitations in comments when real API calls can't be mocked
+
+## Active Technologies
+
+- TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine (076-add-canvas-context-menu)
+- OPFS (Origin Private File System) via canvas-engine (076-add-canvas-context-menu)
+
+## Recent Changes
+
+- 076-add-canvas-context-menu: Added TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine
