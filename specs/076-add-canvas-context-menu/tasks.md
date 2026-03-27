@@ -69,9 +69,9 @@
 - [ ] T012 [P] [US1] Create `CanvasPicker.svelte` component with submenu structure in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
 - [ ] T013 [P] [US1] Add "Add to Canvas" menu item to `GraphContextMenu.svelte` in `apps/web/src/lib/components/graph/GraphContextMenu.svelte`
 - [ ] T014 [US1] Implement canvas list fetching (up to 5 recents) in `CanvasPicker.svelte`
-- [ ] T015 [US1] Wire up context menu click handler to call `canvasStore.addEntities()` in `GraphContextMenu.svelte`
-- [ ] T016 [US1] Add toast notification on success in `apps/web/src/lib/components/graph/GraphView.svelte`
-- [ ] T017 [US1] Add toast notification for skipped duplicates in `apps/web/src/lib/components/graph/GraphView.svelte`
+- [ ] T015 [US1] Implement "Choose Canvas..." modal for full canvas list in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [ ] T016 [US1] Wire up context menu click handler to call `canvasStore.addEntities()` in `GraphContextMenu.svelte`
+- [ ] T017 [US1] Add unified toast notification service for success, duplicate, and error messages in `apps/web/src/lib/components/graph/GraphView.svelte`
 - [ ] T018 [US1] Add keyboard navigation for submenu (arrow keys, Enter, Escape) in `CanvasPicker.svelte`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
@@ -119,7 +119,8 @@
 - [ ] T030 [US3] Wire up "New Canvas" click to call `canvasStore.createCanvas()` in `CanvasPicker.svelte`
 - [ ] T031 [US3] Generate default canvas name (e.g., "5 entities" or first entity title) in `canvas-registry.svelte.ts`
 - [ ] T032 [US3] Handle cancel flow (no canvas created) in `CanvasNamePrompt.svelte`
-- [ ] T033 [US3] Show "Create New Canvas" as only option when no canvases exist in `CanvasPicker.svelte`
+- [ ] T033 [US3] Show "Create New Canvas" as only option when no canvases exist in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [ ] T034 [US3] Implement error toast for storage failures and "Canvas is full" scenario in `apps/web/src/lib/components/graph/GraphView.svelte`
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -129,13 +130,13 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T034 [P] Add help article to `apps/web/src/lib/config/help-content.ts` with title "Adding Entities to Canvas"
-- [ ] T035 [P] Add FeatureHint component for first-time context menu usage in `apps/web/src/lib/components/help/FeatureHint.svelte`
-- [ ] T036 [P] Update quickstart.md with actual implementation details
-- [ ] T037 Code cleanup and refactoring
-- [ ] T038 [P] Run full test suite and fix any regressions
-- [ ] T039 [P] Verify accessibility (keyboard navigation, screen reader labels)
-- [ ] T040 [P] Performance check: context menu appears <200ms
+- [ ] T035 [P] Add help article to `apps/web/src/lib/config/help-content.ts` with title "Adding Entities to Canvas"
+- [ ] T036 [P] Add FeatureHint component for first-time context menu usage in `apps/web/src/lib/components/help/FeatureHint.svelte`
+- [ ] T037 [P] Update quickstart.md with actual implementation details
+- [ ] T038 Code cleanup and refactoring
+- [ ] T039 [P] Run full test suite and fix any regressions
+- [ ] T040 [P] Verify accessibility (keyboard navigation, screen reader labels)
+- [ ] T041 [P] Performance check: context menu appears <200ms
 
 ---
 
@@ -227,3 +228,18 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
+
+---
+
+## Summary
+
+**Total Tasks**: 41 tasks across 6 phases
+
+| Phase   | Description                            | Task Count |
+| ------- | -------------------------------------- | ---------- |
+| Phase 1 | Setup (verify existing patterns)       | 3 tasks    |
+| Phase 2 | Foundational (canvas store methods)    | 5 tasks    |
+| Phase 3 | User Story 1 - Single entity add (MVP) | 10 tasks   |
+| Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    |
+| Phase 5 | User Story 3 - Create new canvas       | 10 tasks   |
+| Phase 6 | Polish & cross-cutting                 | 7 tasks    |
