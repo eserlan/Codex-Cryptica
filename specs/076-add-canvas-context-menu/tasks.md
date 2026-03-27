@@ -62,7 +62,7 @@
 
 - [x] T009 [P] [US1] Unit test for `addEntities()` with single entity in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [x] T010 [P] [US1] Unit test for duplicate detection in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T011 [US1] E2E test: Add single entity to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
+- [x] T011 [US1] E2E test: Add single entity to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 1
 
@@ -88,7 +88,7 @@
 
 - [x] T019 [P] [US2] Unit test for `addEntities()` with multiple entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [x] T020 [P] [US2] Unit test for partial duplicates (some exist, some new) in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T021 [US2] E2E test: Add multiple entities to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
+- [x] T021 [US2] E2E test: Add multiple entities to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 2
 
@@ -110,7 +110,7 @@
 
 - [x] T025 [P] [US3] Unit test for `createCanvas()` with entities in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [x] T026 [P] [US3] Unit test for cancel flow in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T027 [US3] E2E test: Create new canvas from selection via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
+- [x] T027 [US3] E2E test: Create new canvas from selection via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 3
 
