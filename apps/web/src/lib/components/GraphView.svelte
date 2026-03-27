@@ -387,7 +387,7 @@
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
       // Force layout with fitting when loading is finalized
-      applyCurrentLayout(false, true, "Load Finalized");
+      applyCurrentLayout(false, true, "Load Finalized", true);
     }
   });
 
