@@ -507,12 +507,10 @@
     await canvasRegistry.touch(currentCanvasId);
   }
   onMount(() => {
-    canvasRegistry.isWorkspaceMounted = true;
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
 
     return () => {
-      canvasRegistry.isWorkspaceMounted = false;
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };

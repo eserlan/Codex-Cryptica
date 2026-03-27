@@ -60,18 +60,18 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T009 [P] [US1] Unit test for `addEntities()` with single entity in `apps/web/src/lib/stores/canvas-registry.test.ts`
-- [ ] T010 [P] [US1] Unit test for duplicate detection in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T009 [P] [US1] Unit test for `addEntities()` with single entity in `apps/web/src/lib/stores/canvas-registry.test.ts`
+- [x] T010 [P] [US1] Unit test for duplicate detection in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [ ] T011 [US1] E2E test: Add single entity to canvas via context menu in `apps/web/tests/canvas-add-context-menu.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create `CanvasPicker.svelte` component with submenu structure in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
-- [ ] T013 [P] [US1] Add "Add to Canvas" menu item to `GraphContextMenu.svelte` in `apps/web/src/lib/components/graph/GraphContextMenu.svelte`
-- [ ] T014 [US1] Implement canvas list fetching (up to 5 recents) in `CanvasPicker.svelte`
-- [ ] T015 [US1] Implement "Choose Canvas..." modal for full canvas list in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
-- [ ] T016 [US1] Wire up context menu click handler to call `canvasStore.addEntities()` in `GraphContextMenu.svelte`
-- [ ] T017 [US1] Add unified toast notification service for success, duplicate, and error messages in `apps/web/src/lib/components/graph/GraphView.svelte`
+- [x] T012 [P] [US1] Create `CanvasPicker.svelte` component with submenu structure in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [x] T013 [P] [US1] Add "Add to Canvas" menu item to ContextMenu.svelte in `apps/web/src/lib/components/graph/ContextMenu.svelte`
+- [x] T014 [US1] Implement canvas list fetching (up to 5 recents) in `CanvasPicker.svelte`
+- [x] T015 [US1] Implement "Choose Canvas..." modal for full canvas list in `apps/web/src/lib/components/canvas/CanvasPicker.svelte`
+- [x] T016 [US1] Wire up context menu click handler to call `canvasStore.addEntities()` in `apps/web/src/lib/components/graph/ContextMenu.svelte`
+- [x] T017 [US1] Add unified toast notification service for success, duplicate, and error messages in `apps/web/src/lib/components/graph/ContextMenu.svelte`
 - [ ] T018 [US1] Add keyboard navigation for submenu (arrow keys, Enter, Escape) in `CanvasPicker.svelte`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently

@@ -119,4 +119,137 @@ describe("CanvasRegistryStore", () => {
       "test-vault",
     );
   });
+
+  describe("addEntities", () => {
+    beforeEach(async () => {
+      await canvasRegistry.create("Test Canvas");
+    });
+
+    it("should add single entity to canvas", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+      const result = await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+
+      expect(result.added).toEqual(["entity-1"]);
+      expect(result.skipped).toEqual([]);
+      expect(result.errors).toEqual([]);
+      expect(canvasRegistry.allCanvases[0].nodes).toContain("entity-1");
+    });
+
+    it("should skip duplicate entities", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+
+      await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+      const result = await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+
+      expect(result.added).toEqual([]);
+      expect(result.skipped).toEqual(["entity-1"]);
+    });
+
+    it("should handle mixed new and duplicate entities", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+
+      await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+      const result = await canvasRegistry.addEntities(canvasId, [
+        "entity-1",
+        "entity-2",
+        "entity-3",
+      ]);
+
+      expect(result.added).toEqual(["entity-2", "entity-3"]);
+      expect(result.skipped).toEqual(["entity-1"]);
+    });
+
+    it("should return error for non-existent canvas", async () => {
+      const result = await canvasRegistry.addEntities("non-existent-id", [
+        "entity-1",
+      ]);
+
+      expect(result.added).toEqual([]);
+      expect(result.skipped).toEqual([]);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].error).toBe("Canvas not found");
+    });
+
+    it("should return empty result for empty entityIds array", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+      const result = await canvasRegistry.addEntities(canvasId, []);
+
+      expect(result.added).toEqual([]);
+      expect(result.skipped).toEqual([]);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("should report invalid entity IDs in errors", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+      const result = await canvasRegistry.addEntities(canvasId, [
+        "valid-id",
+        "",
+        "   ",
+      ]);
+
+      expect(result.added).toEqual(["valid-id"]);
+      expect(result.errors).toHaveLength(2);
+      expect(result.errors.map((e) => e.error)).toContain("Invalid entity ID");
+    });
+
+    it("should update lastModified timestamp", async () => {
+      const canvasId = canvasRegistry.allCanvases[0].id;
+      const before = canvasRegistry.allCanvases[0].lastModified;
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+
+      const after = canvasRegistry.allCanvases[0].lastModified;
+      expect(after).toBeGreaterThan(before);
+    });
+  });
+
+  describe("createCanvas with entities", () => {
+    it("should create canvas with entities", async () => {
+      const result = await canvasRegistry.createCanvas([
+        "entity-1",
+        "entity-2",
+      ]);
+
+      expect(result).not.toBeNull();
+      expect(result?.name).toBe("2 entities");
+      expect(canvasRegistry.allCanvases[0].nodes).toEqual([
+        "entity-1",
+        "entity-2",
+      ]);
+    });
+
+    it("should deduplicate entities in createCanvas", async () => {
+      const result = await canvasRegistry.createCanvas([
+        "entity-1",
+        "entity-1",
+        "entity-2",
+      ]);
+
+      expect(result).not.toBeNull();
+      expect(canvasRegistry.allCanvases[0].nodes).toEqual([
+        "entity-1",
+        "entity-2",
+      ]);
+    });
+
+    it("should use custom title if provided", async () => {
+      const result = await canvasRegistry.createCanvas(
+        ["entity-1"],
+        "My Custom Canvas",
+      );
+
+      expect(result?.name).toBe("My Custom Canvas");
+    });
+
+    it("should return null for empty entityIds", async () => {
+      const result = await canvasRegistry.createCanvas([]);
+      expect(result).toBeNull();
+    });
+
+    it("should use singular 'entity' for single entity", async () => {
+      const result = await canvasRegistry.createCanvas(["entity-1"]);
+      expect(result?.name).toBe("1 entity");
+    });
+  });
 });

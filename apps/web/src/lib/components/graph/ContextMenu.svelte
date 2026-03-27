@@ -2,11 +2,14 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
 
   let { cy } = $props<{ cy: Core }>();
 
   let contextMenuOpen = $state(false);
+  let canvasPickerOpen = $state(false);
   let position = $state({ x: 0, y: 0 });
   let targetId = $state<string | null>(null);
   let selectedNodes = $state<string[]>([]);
@@ -109,6 +112,54 @@
     }
   };
 
+  const openCanvasPicker = () => {
+    canvasPickerOpen = true;
+    contextMenuOpen = false;
+  };
+
+  const handleAddToCanvas = async (canvasId: string) => {
+    canvasPickerOpen = false;
+    try {
+      const result = await canvasRegistry.addEntities(canvasId, selectedNodes);
+
+      if (result.added.length > 0) {
+        const msg =
+          result.added.length === 1
+            ? `Added to "${canvasRegistry.canvases[canvasId]?.name || "canvas"}"`
+            : `Added ${result.added.length} entities to "${canvasRegistry.canvases[canvasId]?.name || "canvas"}"`;
+        ui.notify(msg, "success");
+      }
+
+      if (result.skipped.length > 0) {
+        const msg =
+          result.skipped.length === 1
+            ? "1 entity already on canvas"
+            : `${result.skipped.length} entities already on canvas`;
+        ui.notify(msg, "info");
+      }
+    } catch (err: any) {
+      console.error("Failed to add entities to canvas", err);
+      ui.notify(`Failed to add to canvas: ${err.message}`, "error");
+    }
+  };
+
+  const handleCreateCanvas = async () => {
+    canvasPickerOpen = false;
+    try {
+      const result = await canvasRegistry.createCanvas(selectedNodes);
+
+      if (result) {
+        ui.notify(
+          `Created canvas "${result.name}" with ${selectedNodes.length} entit${selectedNodes.length === 1 ? "y" : "ies"}`,
+          "success",
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to create canvas", err);
+      ui.notify(`Failed to create canvas: ${err.message}`, "error");
+    }
+  };
+
   const deleteNodes = async () => {
     const count = selectedNodes.length;
     const message =
@@ -184,6 +235,14 @@
         ? `Label ${selectedNodes.length} Nodes…`
         : "Label…"}
     </button>
+    <button
+      role="menuitem"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+      onclick={openCanvasPicker}
+      aria-label="Add to Canvas"
+    >
+      Add to Canvas
+    </button>
     {#if !vault.isGuest}
       <button
         role="menuitem"
@@ -199,4 +258,17 @@
       </button>
     {/if}
   </div>
+
+  {#if canvasPickerOpen}
+    <div
+      class="absolute z-[60]"
+      style:top="{position.y}px"
+      style:left="{position.x + 10}px"
+    >
+      <CanvasPicker
+        onSelect={handleAddToCanvas}
+        onCreateNew={handleCreateCanvas}
+      />
+    </div>
+  {/if}
 {/if}
