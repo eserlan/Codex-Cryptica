@@ -68,5 +68,10 @@ export const initGraph = async (options: GraphOptions) => {
     layout: {
       name: "preset",
     },
+    // Rendering Optimizations
+    hideLabelsOnViewport: true,
+    textureOnViewport: true,
+    pixelRatio: "auto",
+    wheelSensitivity: 0.1,
   });
 };
