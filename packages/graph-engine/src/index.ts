@@ -42,6 +42,13 @@ export const initGraph = async (options: GraphOptions) => {
 
   const cytoscape = await corePromise;
 
+  const nodeCount = (options.elements || []).filter(
+    (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
+  ).length;
+
+  const minZoom = Math.max(0.05, 0.3 - nodeCount * 0.0005);
+  const maxZoom = Math.min(4.0, 1.2 + nodeCount * 0.005);
+
   return (cytoscape as any)({
     container: options.container,
     headless: options.headless,
@@ -73,7 +80,7 @@ export const initGraph = async (options: GraphOptions) => {
     textureOnViewport: true,
     pixelRatio: "auto",
     wheelSensitivity: 0.1,
-    minZoom: 0.02,
-    maxZoom: 1.5,
+    minZoom,
+    maxZoom,
   });
 };
