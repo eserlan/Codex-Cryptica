@@ -44,5 +44,28 @@ export const getGraphStyles = (
         ]
       : [];
 
-  return [...baseStyle, ...filteringStyles, ...labelOverrides];
+  const lodStyles = [
+    {
+      selector: "node.lod-low",
+      style: {
+        label: "",
+        "background-image": "none",
+      },
+    },
+    {
+      selector: "node.lod-medium",
+      style: {
+        label: "",
+      },
+    },
+    {
+      selector: "edge.lod-low",
+      style: {
+        label: "",
+        "curve-style": "straight",
+      },
+    },
+  ];
+
+  return [...baseStyle, ...filteringStyles, ...labelOverrides, ...lodStyles];
 };
