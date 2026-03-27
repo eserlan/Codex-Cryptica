@@ -331,16 +331,20 @@ export async function deleteVaultDir(
   }
 
   // Best-effort cache cleanup for the entire vault
+  // Use cursor with sequential deletes to avoid transaction timeout on large vaults
   try {
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    let cursor = await index.openCursor(normalized);
-    while (cursor) {
-      await cursor.delete();
-      cursor = await cursor.continue();
+    const cursor = await index.openKeyCursor(normalized);
+    if (cursor) {
+      // Iterate through all keys using cursor, deleting sequentially to keep transaction alive
+      do {
+        await tx.store.delete(cursor.primaryKey);
+      } while (await cursor.continue());
+
+      await tx.done;
     }
-    await tx.done;
   } catch (err) {
     console.warn(
       `[OPFS] Failed to clear fingerprint cache for vault ${normalized}`,

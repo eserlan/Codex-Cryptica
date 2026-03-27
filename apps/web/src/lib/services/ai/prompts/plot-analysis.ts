@@ -1,7 +1,7 @@
 export function buildPlotAnalysisPrompt(
   subjectContext: string,
   connectionsContext: string,
-  userQuery: string
+  userQuery: string,
 ): string {
   return `You are a master storyteller and dramaturgy analyst. Analyze the following entity and its network of connections to identify dramatic tension.
 

@@ -310,6 +310,7 @@
         handleSubmit();
       }}
       class="flex gap-2"
+      aria-busy={oracle.isLoading}
     >
       <textarea
         bind:this={textArea}
@@ -328,7 +329,14 @@
         disabled={!input.trim() || oracle.isLoading}
         aria-label="Send Message"
       >
-        ➤
+        {#if oracle.isLoading}
+          <span
+            class="icon-[lucide--loader-2] w-5 h-5 animate-spin"
+            aria-hidden="true"
+          ></span>
+        {:else}
+          ➤
+        {/if}
       </button>
     </form>
   </div>

@@ -1,6 +1,6 @@
 export function buildMergeProposalPrompt(
   targetContext: string,
-  sourceContext: string
+  sourceContext: string,
 ): string {
   return `You are a master archivist. Merge the following records into a single cohesive entry.
     

@@ -1,9 +1,7 @@
 <script lang="ts">
   import { helpStore } from "$lib/stores/help.svelte";
   import { fly } from "svelte/transition";
-  import { marked } from "marked";
-  import { browser } from "$app/environment";
-  import DOMPurify from "dompurify";
+  import { renderMarkdown } from "$lib/utils/markdown";
   import type { GuideStep } from "$lib/config/help-content";
 
   let { step, targetRect, isLast, current, total } = $props<{
@@ -17,26 +15,7 @@
   // ⚡ Bolt Optimization: Memoize expensive markdown parsing and sanitization.
   // Previously, this ran inline on every template evaluation (e.g., when tooltipStyle updated).
   // Using $derived.by ensures it only recomputes when step.content actually changes.
-  const parsedContent = $derived.by(() => {
-    try {
-      const html = marked.parse(step.content) as string;
-      return browser
-        ? DOMPurify.sanitize(html, {
-            ALLOWED_URI_REGEXP:
-              /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-          })
-        : html;
-    } catch (e) {
-      console.error("Failed to parse guide content", e);
-      // Fallback: still sanitize the original content before injecting via {@html}
-      return browser
-        ? DOMPurify.sanitize(step.content, {
-            ALLOWED_URI_REGEXP:
-              /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-          })
-        : step.content;
-    }
-  });
+  const parsedContent = $derived.by(() => renderMarkdown(step.content));
 
   let tooltipStyle = $derived.by(() => {
     if (!targetRect || step.targetSelector === "body") {
