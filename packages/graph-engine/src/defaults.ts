@@ -9,7 +9,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   tilingPaddingVertical: 100,
   tilingPaddingHorizontal: 100,
   gravity: 0.1,
-  nodeRepulsion: 35000, // Reduced baseline repulsion for tighter groups
+  nodeRepulsion: 35000, // Increased baseline repulsion to reduce overlap in dense areas
   idealEdgeLength: 80, // Tighter from 120
   nodeSeparation: 80, // Tighter from 120
   numIter: 3500, // Balanced iterations for speed/quality

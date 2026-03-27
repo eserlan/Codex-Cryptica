@@ -187,11 +187,12 @@
     if (resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
       if (cy) {
+        cy.resize(); // Ensure Cytoscape knows about the new container size
         const width = cy.width();
         const height = cy.height();
         const currentOrientation = width > height ? "landscape" : "portrait";
 
-        // Only log and potentially rearrange if orientation changed
+        // Only rearrange if orientation changed
         if (lastOrientation && currentOrientation !== lastOrientation) {
           debugStore.log(
             `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
@@ -387,7 +388,7 @@
         "[GraphView] Vault load finalized, unlocking all updates.",
       );
       // Force layout with fitting when loading is finalized
-      applyCurrentLayout(false, true, "Load Finalized", true);
+      applyCurrentLayout(false, true, "Load Finalized");
     }
   });
 
