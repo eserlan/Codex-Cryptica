@@ -2,6 +2,10 @@
   "name": "codex-cryptica",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=11.0.0"
+  },
   "packageManager": "npm@11.10.0",
   "scripts": {
     "build": "turbo run build",
@@ -27,12 +31,13 @@
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
     "@eslint/js": "^10.0.1",
-    "@typescript-eslint/eslint-plugin": "^8.57.1",
-    "@typescript-eslint/parser": "^8.57.1",
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
     "commitlint-config-gitmoji": "^2.3.1",
     "deepmerge": "^4.3.1",
-    "eslint": "10.0.3",
-    "eslint-plugin-svelte": "^3.15.2",
+    "esbuild": "^0.27.4",
+    "eslint": "10.1.0",
+    "eslint-plugin-svelte": "^3.16.0",
     "gitmoji-cli": "^9.7.0",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
@@ -41,16 +46,18 @@
     "prettier-plugin-svelte": "^3.5.1",
     "svelte-eslint-parser": "^1.6.0",
     "turbo": "^2.8.20",
-    "typescript": "5.9.3",
-    "typescript-eslint": "^8.57.1",
+    "typescript": "6.0.2",
+    "typescript-eslint": "^8.57.2",
+    "vite": "^8.0.3",
     "vitefu": "^1.1.2",
-    "wrangler": "^4.76.0"
+    "wrangler": "^4.77.0"
   },
   "workspaces": [
     "apps/*",
     "packages/*"
   ],
   "dependencies": {
-    "@google/generative-ai": "^0.24.1"
+    "@google/generative-ai": "^0.24.1",
+    "@tiptap/extension-bubble-menu": "^3.20.5"
   }
 }
