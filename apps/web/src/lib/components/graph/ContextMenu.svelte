@@ -279,8 +279,8 @@
       role="menu"
       aria-label="Canvas selection"
       class="fixed z-[100]"
-      style:top="{position.y - 100}px"
-      style:left="{position.x + 150}px"
+      style:top="{position.y - 40}px"
+      style:left="{position.x + 180}px"
       onmouseenter={showCanvasPicker}
       onmouseleave={hideCanvasPicker}
     >
