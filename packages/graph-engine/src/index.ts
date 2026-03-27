@@ -74,6 +74,6 @@ export const initGraph = async (options: GraphOptions) => {
     pixelRatio: "auto",
     wheelSensitivity: 0.1,
     minZoom: 0.02,
-    maxZoom: 2.0,
+    maxZoom: 1.5,
   });
 };
