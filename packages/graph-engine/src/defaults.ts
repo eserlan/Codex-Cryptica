@@ -9,12 +9,12 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   tilingPaddingVertical: 100,
   tilingPaddingHorizontal: 100,
   gravity: 0.1,
-  nodeRepulsion: 45000,
-  idealEdgeLength: 150,
-  nodeSeparation: 150,
-  numIter: 2500, // Reduced from 5000 for faster convergence
-  nodeDimensionsIncludeLabels: false, // Significant speed boost
-  nestingReprGrpFactor: 1.1,
+  nodeRepulsion: 55000, // Slightly higher baseline repulsion
+  idealEdgeLength: 120, // Tightened from 200
+  nodeSeparation: 120, // Tightened from 200
+  numIter: 3500, // Balanced iterations for speed/quality
+  nodeDimensionsIncludeLabels: true, // Essential for large entity cards to prevent overlap
+  nestingReprGrpFactor: 1.2, // Default value is more stable
   initialEnergyOnIncremental: 0.3,
 };
 
@@ -22,18 +22,18 @@ export const DEFAULT_LAYOUT_OPTIONS = {
  * Generates layout options tuned for the specific size of the graph.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
-  // Use 'default' for most, 'draft' for very large graphs. Avoid 'proof' as it's too slow.
-  const quality = nodeCount > 300 ? "draft" : "default";
+  // Always use 'default' quality unless it's a massive graph (> 500 nodes)
+  const quality = nodeCount > 500 ? "draft" : "default";
 
-  // Scale repulsion significantly to prevent clumping
-  const repulsion = Math.min(250000, 45000 + nodeCount * 500);
+  // Scale repulsion significantly to prevent clumping in dense areas
+  const repulsion = Math.min(300000, 55000 + nodeCount * 600);
 
-  // Increase separation and edge length to give cards room
-  const separation = Math.min(500, 150 + Math.sqrt(nodeCount) * 15);
-  const edgeLength = Math.min(400, 150 + Math.sqrt(nodeCount) * 12);
+  // Increase separation and edge length to give large cards room
+  const separation = Math.min(400, 120 + Math.sqrt(nodeCount) * 12);
+  const edgeLength = Math.min(350, 120 + Math.sqrt(nodeCount) * 10);
 
-  // Very light gravity to prevent "the ball" effect
-  const gravity = Math.max(0.01, 0.2 - nodeCount * 0.0005);
+  // Very light gravity to prevent the "hairball" effect
+  const gravity = Math.max(0.01, 0.15 - nodeCount * 0.0003);
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,
