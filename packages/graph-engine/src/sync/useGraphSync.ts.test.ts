@@ -267,4 +267,39 @@ describe("syncGraphElements", () => {
     expect(mockNode1.removeClass).toHaveBeenCalledWith("filtered-out");
     expect(mockNode2.addClass).toHaveBeenCalledWith("filtered-out");
   });
+
+  it("should force layout on deletion", () => {
+    const onLayoutUpdate = vi.fn();
+    const existingNode = { id: vi.fn().mockReturnValue("old-node") };
+    mockCy.elements.mockReturnValue([existingNode]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [], // Empty list = deletion of "old-node"
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      onLayoutUpdate,
+    });
+
+    expect(onLayoutUpdate).toHaveBeenCalledWith(false, true, "Elements Update");
+  });
+
+  it("should NOT force layout on addition (incremental)", () => {
+    const onLayoutUpdate = vi.fn();
+    mockCy.elements.mockReturnValue([]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [{ group: "nodes", data: { id: "new-node" } }] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      onLayoutUpdate,
+    });
+
+    expect(onLayoutUpdate).toHaveBeenCalledWith(
+      false,
+      false,
+      "Elements Update",
+    );
+  });
 });

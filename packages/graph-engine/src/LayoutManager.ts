@@ -21,6 +21,8 @@ export interface LayoutOptions {
   onPositionsUpdated?: (updates: Record<string, any>) => void;
 }
 
+const ORIENTATION_THRESHOLD = 1.2;
+
 export class LayoutManager {
   private currentLayout: any;
 
@@ -31,6 +33,7 @@ export class LayoutManager {
     isInitial = false,
     isForced = false,
     caller = "unknown",
+    randomizeForced = false,
   ) {
     if (!this.cy || this.cy.destroyed()) return;
 
@@ -73,7 +76,13 @@ export class LayoutManager {
       } else if (options.orbitMode && options.centralNodeId) {
         await this.applyOrbitLayout(options, isInitial);
       } else {
-        await this.applyForceLayout(options, isInitial, isForced, caller);
+        await this.applyForceLayout(
+          options,
+          isInitial,
+          isForced,
+          caller,
+          randomizeForced,
+        );
       }
     } catch (error) {
       console.error("[LayoutManager] Unexpected error in apply", error);
@@ -134,6 +143,7 @@ export class LayoutManager {
     isInitial: boolean,
     isForced: boolean,
     caller: string,
+    randomizeForced = false,
   ) {
     const cyNodes = this.cy.nodes();
     let hasNewNodes = false;
@@ -148,7 +158,11 @@ export class LayoutManager {
 
     const isExitingTimeline =
       caller === "Timeline Toggle" && !options.timelineMode;
-    let randomize = isExitingTimeline;
+    const isExitingMode =
+      caller === "Mode Change Effect" &&
+      !options.timelineMode &&
+      !options.orbitMode;
+    let randomize = isExitingTimeline || isExitingMode;
 
     // Clump detection
     if (!randomize && cyNodes.length > 1) {
@@ -162,14 +176,12 @@ export class LayoutManager {
       }
     }
 
-    if (
-      options.stableLayout &&
-      !isForced &&
-      !isExitingTimeline &&
-      !randomize &&
-      !hasNewNodes
-    ) {
-      if (isInitial || caller === "Load Finalized") {
+    if (options.stableLayout && !isForced && !randomize && !hasNewNodes) {
+      if (
+        isInitial ||
+        caller === "Load Finalized" ||
+        caller === "Window Resize"
+      ) {
         this.cy.resize();
         this.cy.animate({
           fit: { eles: this.cy.elements(), padding: 20 },
@@ -186,13 +198,24 @@ export class LayoutManager {
     const width = this.cy.width();
     const height = this.cy.height();
     const ar = width / height;
-    const isLandscape = ar > 1.2;
+    const isLandscape = ar > ORIENTATION_THRESHOLD;
+
+    const baseOptions = getDynamicLayoutOptions(cyNodes.length);
+
+    // Cap gravity based on aspect ratio to avoid excessive clumping
+    // Landscape: use a lower max gravity to allow horizontal spread
+    // Portrait: allow a slightly higher max to reduce extreme vertical drift
+    const gravity = isLandscape
+      ? Math.min(baseOptions.gravity, 0.1)
+      : Math.min(baseOptions.gravity, 0.4);
+
+    const shouldRandomize = randomize || (isForced && randomizeForced);
 
     this.currentLayout = this.cy.layout({
-      ...getDynamicLayoutOptions(cyNodes.length),
+      ...baseOptions,
       boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
-      gravity: isLandscape ? 0.1 : 0.8,
-      randomize,
+      gravity,
+      randomize: shouldRandomize,
       animate: false,
       fit: false,
     } as any);
@@ -201,7 +224,6 @@ export class LayoutManager {
     layout.one("layoutstop", () => {
       if (this.currentLayout !== layout || this.cy.destroyed()) return;
 
-      this.cy.resize();
       this.cy.animate({
         fit: { eles: this.cy.elements(), padding: 20 },
         duration: 800,

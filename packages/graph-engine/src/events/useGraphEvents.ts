@@ -36,10 +36,30 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
     handlers.onPositionChange?.(evt.target.id(), renderedPos);
   });
 
+  let lastLod: "low" | "medium" | "high" | null = null;
+
   cy.on("pan zoom", () => {
     if (handlers.onViewportChange) {
       handlers.onViewportChange(null);
-      // Logic for updating hover position during pan/zoom if needed
+    }
+
+    // ⚡ LOD (Level of Detail) Optimization
+    const zoom = cy.zoom();
+    let currentLod: typeof lastLod = "high";
+    if (zoom < 0.2) currentLod = "low";
+    else if (zoom < 0.5) currentLod = "medium";
+
+    if (currentLod !== lastLod) {
+      cy.batch(() => {
+        if (currentLod === "low") {
+          cy.elements().addClass("lod-low").removeClass("lod-medium");
+        } else if (currentLod === "medium") {
+          cy.elements().addClass("lod-medium").removeClass("lod-low");
+        } else {
+          cy.elements().removeClass("lod-low lod-medium");
+        }
+      });
+      lastLod = currentLod;
     }
   });
 

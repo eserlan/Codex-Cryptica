@@ -104,6 +104,7 @@
     isInitial = false,
     isForced = false,
     caller = "unknown",
+    randomizeForced = false,
   ) => {
     if (!layoutManager) return;
 
@@ -135,6 +136,7 @@
       isInitial,
       isForced,
       caller,
+      randomizeForced,
     );
   };
 
@@ -178,8 +180,35 @@
   };
 
   let initTimer: ReturnType<typeof setTimeout> | null = null;
+  let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+  let lastOrientation: "landscape" | "portrait" | null = null;
+
+  const handleResize = () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (cy) {
+        cy.resize(); // Ensure Cytoscape knows about the new container size
+        const width = cy.width();
+        const height = cy.height();
+        const currentOrientation = width > height ? "landscape" : "portrait";
+
+        // Only rearrange if orientation changed
+        if (lastOrientation && currentOrientation !== lastOrientation) {
+          debugStore.log(
+            `[GraphView] Orientation changed to ${currentOrientation}, updating layout...`,
+          );
+          applyCurrentLayout(false, true, "Window Resize", true);
+        } else {
+          applyCurrentLayout(false, false, "Window Resize", false);
+        }
+
+        lastOrientation = currentOrientation;
+      }
+    }, 250);
+  };
 
   onMount(() => {
+    window.addEventListener("resize", handleResize);
     if (container) {
       initTimer = setTimeout(async () => {
         if (!container) return;
@@ -271,9 +300,14 @@
   });
 
   onDestroy(() => {
+    window.removeEventListener("resize", handleResize);
     if (initTimer) {
       clearTimeout(initTimer);
       initTimer = null;
+    }
+    if (resizeTimer) {
+      clearTimeout(resizeTimer);
+      resizeTimer = null;
     }
     if (cleanupEvents) {
       cleanupEvents();
@@ -299,6 +333,19 @@
   let initialLoaded = $state(false);
   let _layoutReady = $state(false);
   let didFinalizeLoad = $state(false);
+
+  // Trigger layout when switching modes (Orbit, Timeline)
+  $effect(() => {
+    const _mode = graph.orbitMode;
+    const _node = graph.centralNodeId;
+    const _timeline = graph.timelineMode;
+
+    if (cy && didFinalizeLoad) {
+      untrack(() => {
+        applyCurrentLayout(false, true, "Mode Change Effect");
+      });
+    }
+  });
 
   // Reset loading state when vault starts loading a NEW or EMPTY vault
   $effect(() => {

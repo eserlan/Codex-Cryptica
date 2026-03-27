@@ -83,7 +83,7 @@ export const setCentralNode = (
     animationEasing: "ease-in-out-cubic",
     minNodeSpacing: options.minNodeSpacing ?? 50,
     avoidOverlap: true,
-    nodeDimensionsIncludeLabels: true,
+    nodeDimensionsIncludeLabels: false,
     concentric: (node: NodeSingular) => {
       const distance = distances.get(node.id());
       if (distance === undefined) {

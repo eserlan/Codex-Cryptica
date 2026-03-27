@@ -150,6 +150,7 @@ test.describe("Bulk Labeling and Selection Actions", () => {
       page.getByTestId("label-badge").filter({ hasText: "tag1" }),
     ).toBeVisible({ timeout: 10000 });
 
+    await expect(labelInput).toHaveValue("");
     await labelInput.fill("tag2");
     await labelInput.press("Enter");
     await expect(
