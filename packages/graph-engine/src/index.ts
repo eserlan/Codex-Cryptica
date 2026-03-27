@@ -46,7 +46,7 @@ export const initGraph = async (options: GraphOptions) => {
     (el) => el.group === "nodes" || (!el.group && el.data && !el.data.source),
   ).length;
 
-  const minZoom = Math.max(0.05, 0.3 - nodeCount * 0.0005);
+  const minZoom = Math.max(0.01, 0.3 - nodeCount * 0.0005);
   const maxZoom = Math.min(4.0, 1.2 + nodeCount * 0.005);
 
   return (cytoscape as any)({
@@ -79,7 +79,7 @@ export const initGraph = async (options: GraphOptions) => {
     hideLabelsOnViewport: true,
     textureOnViewport: true,
     pixelRatio: "auto",
-    wheelSensitivity: 0.1,
+    wheelSensitivity: 0.05,
     minZoom,
     maxZoom,
   });

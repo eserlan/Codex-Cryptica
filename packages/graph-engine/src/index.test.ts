@@ -42,8 +42,8 @@ describe("initGraph adaptive zoom", () => {
 
     const callArgs = (cytoscape as any).mock.calls[1][0];
     // nodeCount = 1000
-    // minZoom = max(0.05, 0.3 - 1000 * 0.0005) = max(0.05, -0.2) = 0.05
-    expect(callArgs.minZoom).toBe(0.05);
+    // minZoom = max(0.01, 0.3 - 1000 * 0.0005) = max(0.01, -0.2) = 0.01
+    expect(callArgs.minZoom).toBe(0.01);
   });
 
   it("should calculate higher maxZoom for large graphs", async () => {
