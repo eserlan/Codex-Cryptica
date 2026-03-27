@@ -261,9 +261,9 @@
 
   {#if canvasPickerOpen}
     <div
-      class="absolute z-[60]"
+      class="fixed z-[100]"
       style:top="{position.y}px"
-      style:left="{position.x + 10}px"
+      style:left="{position.x + 200}px"
     >
       <CanvasPicker
         onSelect={handleAddToCanvas}

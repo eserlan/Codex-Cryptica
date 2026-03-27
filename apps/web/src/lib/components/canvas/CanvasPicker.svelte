@@ -17,7 +17,7 @@
 <div
   role="menu"
   aria-label="Add to canvas"
-  class="bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+  class="fixed z-[110] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
 >
   {#if noCanvases}
     <button
