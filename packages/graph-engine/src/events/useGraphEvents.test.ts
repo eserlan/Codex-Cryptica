@@ -23,4 +23,73 @@ describe("setupGraphEvents", () => {
     cleanup();
     expect(mockCy.off).toHaveBeenCalled();
   });
+
+  it("should apply lod-low classes when zoomed out far", () => {
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    // Find the zoom handler
+    const zoomHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "pan zoom",
+    )[1];
+
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.1);
+    mockCy.batch = vi.fn((cb) => cb());
+
+    zoomHandler();
+
+    expect(mockElements.addClass).toHaveBeenCalledWith("lod-low");
+    expect(mockElements.removeClass).toHaveBeenCalledWith("lod-medium");
+  });
+
+  it("should apply lod-medium classes at medium zoom", () => {
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    const zoomHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "pan zoom",
+    )[1];
+
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.3);
+    mockCy.batch = vi.fn((cb) => cb());
+
+    zoomHandler();
+
+    expect(mockElements.addClass).toHaveBeenCalledWith("lod-medium");
+    expect(mockElements.removeClass).toHaveBeenCalledWith("lod-low");
+  });
+
+  it("should remove all lod classes when zoomed in", () => {
+    setupGraphEvents(mockCy as unknown as Core, {});
+
+    const zoomHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "pan zoom",
+    )[1];
+
+    const mockElements = {
+      addClass: vi.fn().mockReturnThis(),
+      removeClass: vi.fn().mockReturnThis(),
+    };
+    mockCy.elements = vi.fn().mockReturnValue(mockElements);
+    mockCy.zoom = vi.fn().mockReturnValue(0.8);
+    mockCy.batch = vi.fn((cb) => cb());
+
+    // First zoom out to set a state
+    mockCy.zoom.mockReturnValue(0.1);
+    zoomHandler();
+
+    // Zoom in
+    mockCy.zoom.mockReturnValue(0.8);
+    zoomHandler();
+
+    expect(mockElements.removeClass).toHaveBeenCalledWith("lod-low lod-medium");
+  });
 });
