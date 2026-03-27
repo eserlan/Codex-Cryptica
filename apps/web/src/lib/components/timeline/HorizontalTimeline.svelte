@@ -14,10 +14,14 @@
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div 
   bind:this={container}
   onwheel={handleWheel}
-  class="h-full flex items-center overflow-x-auto overflow-y-hidden custom-scrollbar bg-[radial-gradient(circle_at_center,_#0a0a0a_0%,_#000_100%)] p-8 gap-12 select-none"
+  role="region"
+  aria-label="Horizontal Timeline"
+  tabindex="0"
+  class="h-full flex items-center overflow-x-auto overflow-y-hidden custom-scrollbar bg-[radial-gradient(circle_at_center,_#0a0a0a_0%,_#000_100%)] p-8 gap-12 select-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none focus-visible:ring-inset"
   transition:fade
 >
   {#each timelineStore.filteredEntries as entry, i}

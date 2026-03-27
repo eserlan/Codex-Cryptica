@@ -24,8 +24,12 @@
   };
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-  class="h-full overflow-y-auto custom-scrollbar p-6 space-y-12"
+  role="region"
+  aria-label="Vertical Timeline"
+  tabindex="0"
+  class="h-full overflow-y-auto custom-scrollbar p-6 space-y-12 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none focus-visible:ring-inset"
   transition:fade
 >
   <div class="max-w-2xl mx-auto relative">
