@@ -28,9 +28,9 @@
 
 **Purpose**: Project initialization and verify existing patterns
 
-- [ ] T001 Verify existing context menu pattern in `apps/web/src/lib/components/graph/GraphContextMenu.svelte`
-- [ ] T002 Verify canvas store structure in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
-- [ ] T003 [P] Verify toast notification pattern exists in codebase
+- [x] T001 Verify existing context menu pattern in `apps/web/src/lib/components/graph/ContextMenu.svelte`
+- [x] T002 Verify canvas store structure in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
+- [x] T003 [P] Verify toast notification pattern exists in codebase
 
 ---
 
@@ -40,11 +40,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 [P] Add `addEntities(canvasId, entityIds)` method to canvas store in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
-- [ ] T005 [P] Add `createCanvas(entityIds, title?)` method to canvas store in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
-- [ ] T006 [P] Create `CanvasAddResult` type definition in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
-- [ ] T007 [P] Implement duplicate detection logic in canvas store `addEntities()` method
-- [ ] T008 [P] Update `lastUsedAt` timestamp when canvas is accessed
+- [x] T004 [P] Add `addEntities(canvasId, entityIds)` method to canvas store in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
+- [x] T005 [P] Add `createCanvas(entityIds, title?)` method to canvas store in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
+- [x] T006 [P] Create `CanvasAddResult` type definition in `apps/web/src/lib/stores/canvas-registry.svelte.ts`
+- [x] T007 [P] Implement duplicate detection logic in canvas store `addEntities()` method
+- [x] T008 [P] Update `lastModified` timestamp when canvas is accessed
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

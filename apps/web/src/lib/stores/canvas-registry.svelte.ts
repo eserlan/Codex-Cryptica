@@ -4,11 +4,26 @@ import { uiStore } from "./ui.svelte";
 import { saveCanvasToDisk, loadCanvasesFromDisk } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
 
+interface Canvas {
+  id: string;
+  name: string;
+  slug: string;
+  nodes: string[];
+  edges: any[];
+  lastModified: number;
+}
+
+export interface CanvasAddResult {
+  canvasId: string;
+  added: string[];
+  skipped: string[];
+  errors: Array<{ entityId: string; error: string }>;
+}
+
 class CanvasRegistryStore {
-  canvases = $state<Record<string, any>>({});
+  canvases = $state<Record<string, Canvas>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isLoaded = $state(false);
-  isWorkspaceMounted = $state(false);
   pendingEntities = $state<
     { id: string; position?: { x: number; y: number } }[]
   >([]);
@@ -160,6 +175,79 @@ class CanvasRegistryStore {
         );
       }
     });
+  }
+
+  async addEntities(
+    canvasId: string,
+    entityIds: string[],
+  ): Promise<CanvasAddResult> {
+    const canvas = this.canvases[canvasId];
+    if (!canvas) {
+      return {
+        canvasId,
+        added: [],
+        skipped: [],
+        errors: [{ entityId: "", error: "Canvas not found" }],
+      };
+    }
+
+    if (!entityIds || entityIds.length === 0) {
+      return { canvasId, added: [], skipped: [], errors: [] };
+    }
+
+    const existingEntityIds = canvas.nodes ? new Set(canvas.nodes) : new Set();
+    const added: string[] = [];
+    const skipped: string[] = [];
+    const errors: Array<{ entityId: string; error: string }> = [];
+
+    // Batch updates to avoid triggering reactivity on every iteration
+    const newNodes = [...(canvas.nodes || [])];
+    for (const entityId of entityIds) {
+      if (!entityId || !entityId.trim()) {
+        errors.push({ entityId, error: "Invalid entity ID" });
+        continue;
+      }
+      if (existingEntityIds.has(entityId)) {
+        skipped.push(entityId);
+      } else {
+        newNodes.push(entityId);
+        existingEntityIds.add(entityId);
+        added.push(entityId);
+      }
+    }
+    canvas.nodes = newNodes;
+
+    canvas.lastModified = Date.now();
+    await this.saveCanvas(canvasId);
+
+    return { canvasId, added, skipped, errors };
+  }
+
+  async createCanvas(
+    entityIds: string[],
+    title?: string,
+  ): Promise<{ id: string; slug: string; name: string } | null> {
+    if (!entityIds || entityIds.length === 0) {
+      return null;
+    }
+
+    const name =
+      title ||
+      `${entityIds.length} ${entityIds.length === 1 ? "entity" : "entities"}`;
+    const id = crypto.randomUUID();
+    const slug = this.generateSlug(name, id);
+
+    this.canvases[id] = {
+      id,
+      name,
+      slug,
+      nodes: [...new Set(entityIds)],
+      edges: [],
+      lastModified: Date.now(),
+    };
+
+    await this.saveCanvas(id);
+    return { id, slug, name };
   }
 }
 
