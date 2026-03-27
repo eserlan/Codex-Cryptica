@@ -248,7 +248,7 @@
     </button>
     <button
       role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative"
       onmouseenter={showCanvasPicker}
       onmouseleave={hideCanvasPicker}
       onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
@@ -257,6 +257,21 @@
       aria-haspopup="true"
     >
       Add to Canvas
+      {#if canvasPickerOpen}
+        <div
+          role="menu"
+          aria-label="Canvas selection"
+          tabindex="0"
+          class="absolute left-full top-0 z-[100] ml-1 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+          onmouseenter={showCanvasPicker}
+          onmouseleave={hideCanvasPicker}
+        >
+          <CanvasPicker
+            onSelect={handleAddToCanvas}
+            onCreateNew={handleCreateCanvas}
+          />
+        </div>
+      {/if}
     </button>
     {#if !vault.isGuest}
       <button
@@ -273,21 +288,4 @@
       </button>
     {/if}
   </div>
-
-  {#if canvasPickerOpen}
-    <div
-      role="menu"
-      aria-label="Canvas selection"
-      class="fixed z-[100]"
-      style:top="{position.y - 40}px"
-      style:left="{position.x + 180}px"
-      onmouseenter={showCanvasPicker}
-      onmouseleave={hideCanvasPicker}
-    >
-      <CanvasPicker
-        onSelect={handleAddToCanvas}
-        onCreateNew={handleCreateCanvas}
-      />
-    </div>
-  {/if}
 {/if}
