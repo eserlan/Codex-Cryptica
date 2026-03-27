@@ -13,6 +13,7 @@
   let position = $state({ x: 0, y: 0 });
   let targetId = $state<string | null>(null);
   let selectedNodes = $state<string[]>([]);
+  let pickerTimeout: ReturnType<typeof setTimeout> | null = null;
 
   $effect(() => {
     if (cy) {
@@ -34,6 +35,7 @@
 
       const closeHandler = () => {
         contextMenuOpen = false;
+        canvasPickerOpen = false;
       };
 
       cy.on("cxttap", "node", openHandler);
@@ -71,14 +73,13 @@
       e.preventDefault();
       e.stopPropagation();
       contextMenuOpen = false;
+      canvasPickerOpen = false;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const nextIdx = (idx + 1) % items.length;
       items[nextIdx]?.focus();
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      // If nothing is focused (idx === -1), go to last item.
-      // Otherwise, cycle backwards.
       const prevIdx = idx <= 0 ? items.length - 1 : idx - 1;
       items[prevIdx]?.focus();
     }
@@ -112,9 +113,18 @@
     }
   };
 
-  const openCanvasPicker = () => {
-    canvasPickerOpen = true;
-    contextMenuOpen = false;
+  const showCanvasPicker = () => {
+    if (pickerTimeout) clearTimeout(pickerTimeout);
+    pickerTimeout = setTimeout(() => {
+      canvasPickerOpen = true;
+    }, 100);
+  };
+
+  const hideCanvasPicker = () => {
+    if (pickerTimeout) clearTimeout(pickerTimeout);
+    pickerTimeout = setTimeout(() => {
+      canvasPickerOpen = false;
+    }, 150);
   };
 
   const handleAddToCanvas = async (canvasId: string) => {
@@ -169,6 +179,7 @@
 
     if (window.confirm(message)) {
       contextMenuOpen = false;
+      canvasPickerOpen = false;
       try {
         for (const id of selectedNodes) {
           await vault.deleteEntity(id);
@@ -238,8 +249,12 @@
     <button
       role="menuitem"
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
-      onclick={openCanvasPicker}
+      onmouseenter={showCanvasPicker}
+      onmouseleave={hideCanvasPicker}
+      onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
       aria-label="Add to Canvas"
+      aria-expanded={canvasPickerOpen}
+      aria-haspopup="true"
     >
       Add to Canvas
     </button>
@@ -261,9 +276,13 @@
 
   {#if canvasPickerOpen}
     <div
+      role="menu"
+      aria-label="Canvas selection"
       class="fixed z-[100]"
       style:top="{position.y}px"
       style:left="{position.x + 200}px"
+      onmouseenter={showCanvasPicker}
+      onmouseleave={hideCanvasPicker}
     >
       <CanvasPicker
         onSelect={handleAddToCanvas}
