@@ -73,5 +73,7 @@ export const initGraph = async (options: GraphOptions) => {
     textureOnViewport: true,
     pixelRatio: "auto",
     wheelSensitivity: 0.1,
+    minZoom: 0.02,
+    maxZoom: 2.0,
   });
 };
