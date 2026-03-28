@@ -268,6 +268,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.",
     icon: "icon-[lucide--dices]",
   },
+  "canvas-context-menu": {
+    id: "canvas-context-menu",
+    title: "Add to Canvas",
+    content:
+      "Quickly bring your lore onto a Spatial Canvas. Right-click any entity on the graph to add it to an existing board or create a new one instantly.",
+    icon: "icon-[lucide--layout-dashboard]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

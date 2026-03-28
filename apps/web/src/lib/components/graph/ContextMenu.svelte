@@ -4,6 +4,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
+  import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
 
   let { cy } = $props<{ cy: Core }>();
@@ -197,6 +198,14 @@
 </script>
 
 {#if contextMenuOpen}
+  <div
+    class="absolute z-40 pointer-events-none"
+    style:top="{position.y - 130}px"
+    style:left="{position.x - 110}px"
+  >
+    <FeatureHint hintId="canvas-context-menu" />
+  </div>
+
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     bind:this={menuEl}
@@ -248,6 +257,7 @@
     </button>
     <button
       role="menuitem"
+      data-testid="add-to-canvas-button"
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative"
       onmouseenter={showCanvasPicker}
       onmouseleave={hideCanvasPicker}
