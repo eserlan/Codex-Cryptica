@@ -21,7 +21,7 @@
 
 <button
   onclick={handleClick}
-  aria-current={vault.selectedEntityId === entry.entityId ? "true" : undefined}
+  aria-pressed={vault.selectedEntityId === entry.entityId ? "true" : "false"}
   class="w-full text-left p-4 bg-theme-surface/50 border border-theme-border hover:border-theme-primary/50 hover:bg-theme-primary/10 transition-all rounded group relative focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
 >
   <div class="flex items-start justify-between gap-4">

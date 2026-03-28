@@ -22,10 +22,25 @@
     );
     return era ? era.name : null;
   };
+
+  let container = $state<HTMLDivElement>();
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (!container) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      container.scrollBy({ top: 300, behavior: "smooth" });
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      container.scrollBy({ top: -300, behavior: "smooth" });
+    }
+  };
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
+  bind:this={container}
+  onkeydown={handleKeydown}
   role="region"
   aria-label="Vertical Timeline"
   tabindex="0"
