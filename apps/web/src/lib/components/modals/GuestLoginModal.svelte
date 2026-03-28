@@ -4,8 +4,14 @@
   let username = $state("");
   let error = $state<string | null>(null);
 
+  // Clear error when user types
+  $effect(() => {
+    if (username) error = null;
+  });
+
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
+    error = null;
     if (!username.trim()) {
       error = "Username is required";
       return;
@@ -42,9 +48,7 @@
 
     <form onsubmit={handleSubmit} class="space-y-6">
       <div class="relative">
-        <label for="username-input" class="sr-only">
-          Username
-        </label>
+        <label for="username-input" class="sr-only"> Username </label>
         <input
           id="username-input"
           bind:value={username}
@@ -56,6 +60,7 @@
         {#if error}
           <p
             id="username-error"
+            role="alert"
             class="absolute -bottom-5 left-0 right-0 text-[10px] text-red-500 uppercase tracking-tighter"
           >
             {error}

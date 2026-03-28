@@ -181,6 +181,11 @@ class UIStore {
 
   // Guest Mode State
   isGuestMode = $state(false);
+  guestUsername = $state<string | null>(null);
+
+  setGuestUsername(username: string) {
+    this.guestUsername = username;
+  }
 
   // Connection Label State
   lastConnectionLabel = $state("");

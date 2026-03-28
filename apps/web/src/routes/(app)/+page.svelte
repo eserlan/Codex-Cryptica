@@ -10,6 +10,7 @@
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
+  import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
 
   const jsonLdScript = $derived(
     `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
@@ -85,13 +86,19 @@
     }
   });
 
-  onMount(async () => {
-    if (isGuestMode && shareId && shareId.startsWith("p2p-")) {
+  // Guest Mode Connection Logic - Triggers once username is provided
+  $effect(() => {
+    if (
+      isGuestMode &&
+      shareId &&
+      shareId.startsWith("p2p-") &&
+      uiStore.guestUsername
+    ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
       uiStore.isGuestMode = true; // Activate guest mode
 
-      try {
-        await p2pGuestService.connectToHost(
+      p2pGuestService
+        .connectToHost(
           peerId,
           (graph) => {
             console.log("[Guest Page] Received graph data:", {
@@ -143,14 +150,18 @@
             // Real-time batch update from host
             vault.batchUpdate(batchUpdates);
           },
-        );
-      } catch (err) {
-        console.error("[Guest Mode] Failed to connect to host:", err);
-        uiStore.isGuestMode = false;
-        vault.status = "error";
-        vault.errorMessage = "Failed to connect to shared campaign.";
-      }
+        )
+        .catch((err) => {
+          console.error("[Guest Mode] Failed to connect to host:", err);
+          uiStore.isGuestMode = false;
+          vault.status = "error";
+          vault.errorMessage = "Failed to connect to shared campaign.";
+        });
     }
+  });
+
+  onMount(async () => {
+    // onMount logic removed - moved to reactive $effect above
   });
 </script>
 
@@ -184,6 +195,12 @@
     <EntityDetailPanel
       entity={selectedEntity}
       onClose={() => (vault.selectedEntityId = null)}
+    />
+  {/if}
+
+  {#if isGuestMode && !uiStore.guestUsername && !building}
+    <GuestLoginModal
+      onJoin={(username) => uiStore.setGuestUsername(username)}
     />
   {/if}
 
