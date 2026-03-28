@@ -42,13 +42,20 @@
 
     <form onsubmit={handleSubmit} class="space-y-6">
       <div class="relative">
+        <label for="username-input" class="sr-only">
+          Username
+        </label>
         <input
+          id="username-input"
           bind:value={username}
           placeholder="Enter Username..."
           class="w-full bg-black border-b border-green-900 py-3 text-center text-green-400 focus:outline-none focus:border-green-500 transition-colors uppercase tracking-widest placeholder:text-green-900/50"
+          aria-invalid={!!error}
+          aria-describedby={error ? "username-error" : undefined}
         />
         {#if error}
           <p
+            id="username-error"
             class="absolute -bottom-5 left-0 right-0 text-[10px] text-red-500 uppercase tracking-tighter"
           >
             {error}
