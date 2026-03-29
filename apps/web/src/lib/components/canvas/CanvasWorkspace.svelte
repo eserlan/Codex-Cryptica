@@ -92,6 +92,7 @@
 
   let targetVaultId = $state<string | null>(null);
   let targetCanvasId = $state<string | null>(null);
+  let hasInitialized = $state(false);
 
   const { screenToFlowPosition } = useSvelteFlow();
 
@@ -119,6 +120,7 @@
   $effect(() => {
     if (vault.isInitialized && canvasId && canvasRegistry.isLoaded) {
       if (targetCanvasId !== canvasId) {
+        hasInitialized = false;
         // 1. Flush any pending save for the PREVIOUS canvas before loading new data
         untrack(() => {
           if (saveTimer !== null && targetVaultId && targetCanvasId) {
@@ -136,6 +138,7 @@
 
         // 3. Load the new data
         const data = untrack(() => vault.canvases[canvasId]);
+
         if (data) {
           // Pre-load all entity contents for the canvas to ensure descriptions/images show up
           for (const node of data.nodes) {
@@ -163,9 +166,11 @@
             type: e.type === "line" || !e.type ? "straight" : (e.type as any),
             style: e.style,
           }));
+          hasInitialized = true;
         } else {
           nodes = [];
           edges = [];
+          hasInitialized = true;
         }
       }
     }
@@ -312,6 +317,7 @@
 
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
   $effect(() => {
+    if (!hasInitialized) return;
     const snapshot = edges;
     untrack(() => {
       if (vault.isInitialized && canvasId) {
@@ -332,6 +338,7 @@
 
   // Keep engine state in sync whenever SvelteFlow's nodes change (drag/add/remove).
   $effect(() => {
+    if (!hasInitialized) return;
     const snapshot = nodes;
     untrack(() => {
       if (vault.isInitialized && canvasId) {
