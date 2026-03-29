@@ -132,7 +132,11 @@ describe("CanvasRegistryStore", () => {
       expect(result.added).toEqual(["entity-1"]);
       expect(result.skipped).toEqual([]);
       expect(result.errors).toEqual([]);
-      expect(canvasRegistry.allCanvases[0].nodes).toContain("entity-1");
+
+      const nodes = canvasRegistry.allCanvases[0].nodes;
+      expect(nodes).toHaveLength(1);
+      expect(nodes[0].entityId).toBe("entity-1");
+      expect(nodes[0].position).toBeDefined();
     });
 
     it("should skip duplicate entities", async () => {
@@ -143,6 +147,7 @@ describe("CanvasRegistryStore", () => {
 
       expect(result.added).toEqual([]);
       expect(result.skipped).toEqual(["entity-1"]);
+      expect(canvasRegistry.allCanvases[0].nodes).toHaveLength(1);
     });
 
     it("should handle mixed new and duplicate entities", async () => {
@@ -157,6 +162,10 @@ describe("CanvasRegistryStore", () => {
 
       expect(result.added).toEqual(["entity-2", "entity-3"]);
       expect(result.skipped).toEqual(["entity-1"]);
+      expect(canvasRegistry.allCanvases[0].nodes).toHaveLength(3);
+      expect(
+        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
+      ).toEqual(["entity-1", "entity-2", "entity-3"]);
     });
 
     it("should return error for non-existent canvas", async () => {
@@ -213,10 +222,10 @@ describe("CanvasRegistryStore", () => {
 
       expect(result).not.toBeNull();
       expect(result?.name).toBe("2 entities");
-      expect(canvasRegistry.allCanvases[0].nodes).toEqual([
-        "entity-1",
-        "entity-2",
-      ]);
+      expect(
+        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
+      ).toEqual(["entity-1", "entity-2"]);
+      expect(canvasRegistry.allCanvases[0].nodes[0].position).toBeDefined();
     });
 
     it("should deduplicate entities in createCanvas", async () => {
@@ -227,10 +236,9 @@ describe("CanvasRegistryStore", () => {
       ]);
 
       expect(result).not.toBeNull();
-      expect(canvasRegistry.allCanvases[0].nodes).toEqual([
-        "entity-1",
-        "entity-2",
-      ]);
+      expect(
+        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
+      ).toEqual(["entity-1", "entity-2"]);
     });
 
     it("should use custom title if provided", async () => {

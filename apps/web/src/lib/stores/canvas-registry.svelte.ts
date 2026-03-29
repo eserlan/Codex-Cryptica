@@ -3,15 +3,7 @@ import { vaultRegistry } from "./vault-registry.svelte";
 import { uiStore } from "./ui.svelte";
 import { saveCanvasToDisk, loadCanvasesFromDisk } from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
-
-interface Canvas {
-  id: string;
-  name: string;
-  slug: string;
-  nodes: string[];
-  edges: any[];
-  lastModified: number;
-}
+import type { Canvas, CanvasNode } from "@codex/canvas-engine";
 
 export interface CanvasAddResult {
   canvasId: string;
@@ -195,7 +187,7 @@ class CanvasRegistryStore {
       return { canvasId, added: [], skipped: [], errors: [] };
     }
 
-    const existingEntityIds = canvas.nodes ? new Set(canvas.nodes) : new Set();
+    const existingEntityIds = new Set(canvas.nodes.map((n) => n.entityId));
     const added: string[] = [];
     const skipped: string[] = [];
     const errors: Array<{ entityId: string; error: string }> = [];
@@ -210,7 +202,13 @@ class CanvasRegistryStore {
       if (existingEntityIds.has(entityId)) {
         skipped.push(entityId);
       } else {
-        newNodes.push(entityId);
+        const newNode: CanvasNode = {
+          id: `node-${crypto.randomUUID()}`,
+          type: "entity",
+          entityId,
+          position: { x: 400, y: 300 }, // Default center-ish position
+        };
+        newNodes.push(newNode);
         existingEntityIds.add(entityId);
         added.push(entityId);
       }
@@ -237,11 +235,18 @@ class CanvasRegistryStore {
     const id = crypto.randomUUID();
     const slug = this.generateSlug(name, id);
 
+    const nodes: CanvasNode[] = [...new Set(entityIds)].map((entityId) => ({
+      id: `node-${crypto.randomUUID()}`,
+      type: "entity",
+      entityId,
+      position: { x: 400, y: 300 },
+    }));
+
     this.canvases[id] = {
       id,
       name,
       slug,
-      nodes: [...new Set(entityIds)],
+      nodes,
       edges: [],
       lastModified: Date.now(),
     };
