@@ -123,3 +123,10 @@ class TimelineStore {
 }
 
 export const timelineStore = new TimelineStore();
+
+if (
+  typeof window !== "undefined" &&
+  (import.meta.env.DEV || (window as any).__E2E__)
+) {
+  (window as any).timelineStore = timelineStore;
+}
