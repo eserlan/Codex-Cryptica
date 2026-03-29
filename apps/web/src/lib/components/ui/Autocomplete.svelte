@@ -209,7 +209,9 @@
         <button
           id="{finalId}-option-{i}"
           role="option"
+          tabindex="-1"
           aria-selected={i === selectedIndex}
+          aria-label={result.title}
           class="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors
             {i === selectedIndex
             ? 'bg-theme-primary/20 text-theme-primary'

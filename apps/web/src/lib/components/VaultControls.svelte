@@ -113,16 +113,23 @@
           }
         }}
         data-testid="save-as-campaign-button"
+        aria-label={`Save as ${themeStore.jargon.vault}`}
+        aria-describedby="save-as-campaign-desc-text"
         title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
       >
         <span class="icon-[lucide--save] w-3 h-3"></span>
         SAVE AS {themeStore.jargon.vault.toUpperCase()}
       </button>
+      <div class="sr-only" id="save-as-campaign-desc-text">
+        Save this demo exploration as your own persistent {themeStore.jargon
+          .vault}
+      </div>
       <button
         class={isVertical
           ? `${btnGhost} py-3 text-sm justify-center gap-2`
           : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={() => demoService.exitDemo()}
+        aria-label="Exit Demo"
       >
         <span class="icon-[lucide--log-out] w-3 h-3"></span>
         EXIT DEMO
@@ -216,6 +223,7 @@
               window.location.origin + window.location.pathname;
           }}
           data-testid="exit-guest-mode-button"
+          aria-label="Exit Guest Mode"
         >
           <span class="icon-[lucide--log-out] w-3 h-3"></span>
           EXIT GUEST MODE
@@ -251,6 +259,7 @@
             onclick={() => ui.openImportWindow()}
             data-testid="import-vault-button"
             title="Import markdown notes or JSON data into your archive."
+            aria-label="Import Data"
           >
             <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
             IMPORT
