@@ -21,12 +21,14 @@ class CanvasRegistryStore {
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
 
+  allCanvases = $derived(
+    Object.values(this.canvases).sort(
+      (a, b) => (b.lastModified || 0) - (a.lastModified || 0),
+    ),
+  );
+
   init(saveQueue: KeyedTaskQueue) {
     this.saveQueue = saveQueue;
-  }
-
-  get allCanvases() {
-    return Object.values(this.canvases);
   }
 
   clear() {
@@ -100,10 +102,20 @@ class CanvasRegistryStore {
   }
 
   async delete(id: string) {
-    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) return;
+    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) {
+      console.warn(
+        "[CanvasRegistryStore] Cannot delete: rootHandle or activeVaultId missing",
+      );
+      return;
+    }
 
     const data = this.canvases[id];
-    if (!data) return;
+    if (!data) {
+      console.warn(
+        `[CanvasRegistryStore] Cannot delete: canvas with id ${id} not found`,
+      );
+      return;
+    }
 
     if (!confirm(`Are you sure you want to delete canvas "${data.name}"?`)) {
       return;
@@ -114,13 +126,17 @@ class CanvasRegistryStore {
         vaultRegistry.rootHandle,
         vaultRegistry.activeVaultId,
       );
-      await import("./vault/io").then((io) =>
-        io.deleteCanvasFromDisk(vaultDir, id),
-      );
-      delete this.canvases[id];
-    } catch (e) {
+      const io = await import("./vault/io");
+      await io.deleteCanvasFromDisk(vaultDir, id);
+
+      const nextCanvases = { ...this.canvases };
+      delete nextCanvases[id];
+      this.canvases = nextCanvases;
+
+      uiStore.notify(`Deleted workspace "${data.name}"`, "success");
+    } catch (e: any) {
       console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
-      uiStore.notify("Failed to delete canvas file from disk.", "error");
+      uiStore.notify(`Failed to delete canvas: ${e.message}`, "error");
     }
   }
 
