@@ -12,27 +12,51 @@ test.describe("Blog Screenshots: How Import Works", () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    // Skip onboarding and set up clean state
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      (window as any).__SHARED_GEMINI_KEY__ = "fake-test-key";
+      (window as any).DISABLE_ERROR_OVERLAY = true;
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("codex_oracle_api_key", "fake-key");
+
+      (window as any).OracleAnalyzer = class {
+        async analyze(_text, _options) {
+          if ((window as any).__MOCK_REVIEW_DATA__) {
+            return { entities: (window as any).__MOCK_REVIEW_DATA__ };
+          }
+          return new Promise(() => {});
+        }
+      };
     });
+  });
 
-    // Go to import page
-    await page.goto("http://localhost:5173/import");
-
-    // Wait for vault to be ready
+  test("00 - Start Importer Button", async ({ page }) => {
+    await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
       timeout: 15000,
+    });
+
+    await page.setViewportSize({ width: 1200, height: 400 });
+
+    // Focus on the vault controls in the header
+    const importButton = page.getByTestId("import-vault-button");
+    await importButton.focus(); // Highlight it
+
+    // Capture the top part of the app where the header is
+    await page.screenshot({
+      path: path.join(outputDir, "how-import-works-start.png"),
+      clip: { x: 0, y: 0, width: 1200, height: 150 },
     });
   });
 
   test("01 - Import Dropzone", async ({ page }) => {
-    await page.setViewportSize({ width: 1000, height: 700 });
+    await page.goto("http://localhost:5173/import");
+    await page.waitForFunction(
+      () => (window as any).importQueue !== undefined,
+      { timeout: 15000 },
+    );
 
-    // Just capture the dropzone area
+    await page.setViewportSize({ width: 1000, height: 700 });
     const dropzone = page.locator(".dropzone-container");
     await dropzone.screenshot({
       path: path.join(outputDir, "import-dropzone.png"),
@@ -40,35 +64,13 @@ test.describe("Blog Screenshots: How Import Works", () => {
   });
 
   test("02 - Import Processing", async ({ page }) => {
+    await page.goto("http://localhost:5173/import");
+    await page.waitForFunction(
+      () => (window as any).importQueue !== undefined,
+      { timeout: 15000 },
+    );
     await page.setViewportSize({ width: 1000, height: 700 });
 
-    // Inject state to show processing
-    await page.evaluate(() => {
-      // Find the ImportSettings component state via internal Svelte 5 mechanisms if possible,
-      // or just mock the stores it relies on.
-      // Since 'step' is internal to ImportSettings, we might need to trigger it via handleFiles if we can't inject.
-      // But for a screenshot, we can often just CSS-manipulate or use the fact that it's a tool and we can 'cheat'.
-
-      // Let's try to mock the store that triggers the progress bar
-      const { importQueue } = window as any;
-      importQueue.activeItemChunks = {
-        0: "completed",
-        1: "completed",
-        2: "completed",
-        3: "active",
-        4: "pending",
-        5: "pending",
-      };
-
-      // We need to reach into the component. If we can't, we can try to click something.
-      // But since we are in E2E, let's just use the 'Analyze Text' path which is easier to trigger.
-    });
-
-    // Fill some text to show 'Analyze Text' button
-    await page.locator(".editor").fill("Some campaign notes about Eldrin...");
-    await page.getByRole("button", { name: "Analyze Text" }).click();
-
-    // Now it should be in processing state (mocking the analyzer to stay in this state)
     await page.evaluate(() => {
       (window as any).importQueue.activeItemChunks = {
         0: "completed",
@@ -80,10 +82,45 @@ test.describe("Blog Screenshots: How Import Works", () => {
         6: "pending",
         7: "pending",
       };
-    });
 
-    // Capture the processing view
-    await page.waitForSelector("text=Oracle is interpreting your notes");
+      const container = document.querySelector(
+        ".flex-1.flex.flex-col.relative.overflow-hidden",
+      );
+      if (container) {
+        container.innerHTML = `
+                <div class="flex flex-col items-center gap-6 py-8">
+                    <div class="relative">
+                        <div class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"></span>
+                        </div>
+                    </div>
+                    <div class="text-center space-y-1">
+                        <p class="text-xs font-mono text-theme-primary uppercase tracking-tight">Analyzing chunk 4/8...</p>
+                        <p class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header">Oracle is interpreting your notes</p>
+                    </div>
+                    <div class="w-full max-w-md px-4">
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-[10px] font-bold uppercase font-header tracking-widest text-theme-muted">
+                                <span>Analysis Progress</span>
+                                <span>3 / 8 Chunks</span>
+                            </div>
+                            <div class="grid gap-1 h-3 w-full" style="grid-template-columns: repeat(8, 1fr)">
+                                <div class="rounded-sm bg-theme-primary shadow-[0_0_8px_rgba(var(--color-primary),0.4)]"></div>
+                                <div class="rounded-sm bg-theme-primary shadow-[0_0_8px_rgba(var(--color-primary),0.4)]"></div>
+                                <div class="rounded-sm bg-theme-primary shadow-[0_0_8px_rgba(var(--color-primary),0.4)]"></div>
+                                <div class="rounded-sm bg-theme-secondary animate-pulse"></div>
+                                <div class="rounded-sm bg-theme-bg border border-theme-border/20"></div>
+                                <div class="rounded-sm bg-theme-bg border border-theme-border/20"></div>
+                                <div class="rounded-sm bg-theme-bg border border-theme-border/20"></div>
+                                <div class="rounded-sm bg-theme-bg border border-theme-border/20"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+      }
+    });
 
     const processingArea = page.locator(
       ".flex-1.flex.flex-col.relative.overflow-hidden",
@@ -94,73 +131,90 @@ test.describe("Blog Screenshots: How Import Works", () => {
   });
 
   test("03 - Review Queue", async ({ page }) => {
+    await page.goto("http://localhost:5173/import");
+    await page.waitForFunction(
+      () => (window as any).importQueue !== undefined,
+      { timeout: 15000 },
+    );
     await page.setViewportSize({ width: 1000, height: 800 });
 
-    // We want a clean review queue screenshot with mock entities
-    await page.evaluate(async () => {
-      // Mock vault to show 'Already in Vault' for one entity
-      const v = (window as any).vault;
-      await v.createEntity("character", "Eldrin the Archivist", {
-        id: "eldrin",
-      });
+    await page.evaluate(() => {
+      const container = document.querySelector(
+        ".flex-1.flex.flex-col.relative.overflow-hidden",
+      );
+      if (container) {
+        container.innerHTML = `
+                <div class="review-list standalone" style="display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0;">
+                    <div class="header-row" style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <h3 style="font-family: var(--font-header); font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.9rem;">Review Identified Entities</h3>
+                        <div class="selection-actions" style="display: flex; gap: 0.5rem;">
+                            <button style="background: none; border: none; color: #3b82f6; font-size: 0.65rem; cursor: pointer; text-decoration: underline;">Select All</button>
+                            <button style="background: none; border: none; color: #3b82f6; font-size: 0.65rem; cursor: pointer; text-decoration: underline;">Deselect All</button>
+                        </div>
+                    </div>
 
-      // We can't easily set 'step' because it's internal.
-      // But we can mock OracleAnalyzer to return immediately with our mock entities.
+                    <div class="entities" style="overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; flex: 1;">
+                        <div class="entity-card existing" style="border: 1px solid #3b82f6; padding: 1rem; border-radius: 4px; background: rgba(59, 130, 246, 0.05);">
+                            <label style="display: flex; gap: 1rem; cursor: pointer; align-items: center;">
+                                <input type="checkbox" checked />
+                                <div class="info" style="display: flex; flex-grow: 1; justify-content: space-between; align-items: center;">
+                                    <div class="title-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <strong style="font-size: 0.9rem;">Eldrin the Archivist</strong>
+                                        <span class="existing-badge" style="font-size: 0.6rem; background: #3b82f6; color: #fff; padding: 0.1rem 0.4rem; border-radius: 10px; font-weight: bold; text-transform: uppercase;">Already in Vault</span>
+                                    </div>
+                                    <span class="badge" style="background: rgba(0,0,0,0.2); color: var(--color-theme-text); border: 1px solid var(--color-theme-border); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Character</span>
+                                </div>
+                            </label>
+                            <div class="preview" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--color-theme-muted); font-family: var(--font-mono);">The head archivist of the Silver Archive, keeper of the Great Ledger and witness to the Valdris Fall...</div>
+                        </div>
 
-      // However, a simpler way for a screenshot tool is to just inject the HTML directly
-      // or use a mock store if the component allowed it.
-      // Let's try to trigger a real (mocked) analysis.
+                        <div class="entity-card" style="border: 1px solid var(--color-theme-border); padding: 1rem; border-radius: 4px; background: var(--color-theme-surface);">
+                            <label style="display: flex; gap: 1rem; cursor: pointer; align-items: center;">
+                                <input type="checkbox" checked />
+                                <div class="info" style="display: flex; flex-grow: 1; justify-content: space-between; align-items: center;">
+                                    <div class="title-group">
+                                        <strong style="font-size: 0.9rem;">Silver Archive</strong>
+                                    </div>
+                                    <span class="badge" style="background: rgba(0,0,0,0.2); color: var(--color-theme-text); border: 1px solid var(--color-theme-border); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Location</span>
+                                </div>
+                            </label>
+                            <div class="preview" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--color-theme-muted); font-family: var(--font-mono);">A vast repository of magical knowledge located deep beneath the city of Valdris...</div>
+                        </div>
 
-      const mockEntities = [
-        {
-          id: "eldrin-new",
-          suggestedTitle: "Eldrin the Archivist",
-          suggestedType: "Character",
-          chronicle: "The head archivist of the Silver Archive.",
-          matchedEntityId: "eldrin",
-        },
-        {
-          id: "silver-archive",
-          suggestedTitle: "Silver Archive",
-          suggestedType: "Location",
-          chronicle:
-            "A vast repository of magical knowledge located beneath Valdris.",
-        },
-        {
-          id: "arcane-council",
-          suggestedTitle: "Arcane Council",
-          suggestedType: "Faction",
-          chronicle: "The ruling body of mages in the region.",
-        },
-      ];
+                        <div class="entity-card" style="border: 1px solid var(--color-theme-border); padding: 1rem; border-radius: 4px; background: var(--color-theme-surface);">
+                            <label style="display: flex; gap: 1rem; cursor: pointer; align-items: center;">
+                                <input type="checkbox" checked />
+                                <div class="info" style="display: flex; flex-grow: 1; justify-content: space-between; align-items: center;">
+                                    <div class="title-group">
+                                        <strong style="font-size: 0.9rem;">Arcane Council</strong>
+                                    </div>
+                                    <span class="badge" style="background: rgba(0,0,0,0.2); color: var(--color-theme-text); border: 1px solid var(--color-theme-border); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Faction</span>
+                                </div>
+                            </label>
+                            <div class="preview" style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--color-theme-muted); font-family: var(--font-mono);">The ruling body of mages who oversee the ethical use of high-sorcery in the Northmarch...</div>
+                        </div>
+                    </div>
 
-      // Trigger the review state by mocking the internal 'step' is hard,
-      // so we'll just mock the analyzer and 'paste' a long text.
-      (window as any).OracleAnalyzer = class {
-        async analyze() {
-          return { entities: mockEntities };
-        }
-      };
+                    <div class="actions" style="display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--color-theme-border);">
+                        <button style="background: var(--color-theme-surface); border: 1px solid var(--color-theme-border); color: var(--color-theme-text); padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Cancel</button>
+                        <button class="primary" style="background: #3b82f6; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">Import 3 Items</button>
+                    </div>
+                </div>
+            `;
+      }
     });
 
-    await page
-      .locator(".editor")
-      .fill("Eldrin, Silver Archive, Arcane Council...");
-    await page.getByRole("button", { name: "Analyze Text" }).click();
-
-    // Wait for review list
-    await page.waitForSelector("text=Review Identified Entities");
-
-    const reviewArea = page.locator(".review-list");
+    const reviewArea = page.locator(
+      ".flex-1.flex.flex-col.relative.overflow-hidden",
+    );
     await reviewArea.screenshot({
       path: path.join(outputDir, "import-review-queue.png"),
     });
   });
 
   test("04 - Hero Image / Full Pipeline", async ({ page }) => {
+    await page.goto("http://localhost:5173/import");
     await page.setViewportSize({ width: 1200, height: 800 });
-
-    // Capture the whole standalone page for the 'Hero' vibe
     await page.screenshot({
       path: path.join(outputDir, "import-hero.png"),
     });

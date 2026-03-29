@@ -174,6 +174,8 @@ The Oracle Analyzer sends text to the Gemini AI API for analysis. No file is eve
 
 Open the Vault Controls toolbar, click **Import**, and drop your lore bible into the window. Whether it's a single character sheet or a 200-page compendium, the system will meet you where you are.
 
+![Starting the Importer](https://assets.codexcryptica.com/images/blog/how-import-works/how-import-works-start.png)
+
 ### [Open the Importer →](/import)
 
 _Read our guide on [the Lore Oracle's capabilities](/blog/oracle-capabilities) to see what you can do once your vault is populated._
