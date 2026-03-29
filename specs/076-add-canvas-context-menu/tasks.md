@@ -131,7 +131,6 @@
 ## Phase 6: Polish & Cross-Cutting Concerns (Priority: P3)
 
 - [x] T035 [P] Add help article to `apps/web/src/lib/content/help/canvas-add-entities.md`
-- [x] T036 [P] Add FeatureHint component for first-time context menu usage in `apps/web/src/lib/components/graph/ContextMenu.svelte`
 - [x] T037 [P] Update quickstart.md with actual implementation details
 - [x] T038 Code cleanup and refactoring
 - [x] T039 [P] Run unit tests and verify core logic (E2E skipping due to environment limitations)
@@ -233,7 +232,7 @@ With multiple developers:
 
 ## Summary
 
-**Total Tasks**: 41 tasks across 6 phases
+**Total Tasks**: 40 tasks across 6 phases
 
 | Phase   | Description                            | Task Count | Complete |
 | ------- | -------------------------------------- | ---------- | -------- |
@@ -242,9 +241,9 @@ With multiple developers:
 | Phase 3 | User Story 1 - Single entity add (MVP) | 10 tasks   | ✅ 10/10 |
 | Phase 4 | User Story 2 - Multi-entity add        | 6 tasks    | ✅ 6/6   |
 | Phase 5 | User Story 3 - Create new canvas       | 10 tasks   | ✅ 10/10 |
-| Phase 6 | Polish & cross-cutting                 | 7 tasks    | ⏳ 0/7   |
+| Phase 6 | Polish & cross-cutting                 | 6 tasks    | ✅ 6/6   |
 
-**Remaining**: 7 polish tasks (T035-T041)
+**Remaining**: 0 tasks
 
 **Feature Status**: ✅ COMPLETE - All core functionality + E2E tests implemented
 

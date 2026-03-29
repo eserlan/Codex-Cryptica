@@ -27,13 +27,13 @@ Allows users to right-click selected entities in the graph view and quickly add 
 
 ## Key Components
 
-| Component                   | Location                              | Purpose                              |
-| --------------------------- | ------------------------------------- | ------------------------------------ |
-| `ContextMenu.svelte`        | `apps/web/src/lib/components/graph/`  | Add "Add to Canvas" menu item        |
-| `CanvasPicker.svelte`       | `apps/web/src/lib/components/canvas/` | Submenu with canvas list             |
-| `canvas-registry.svelte.ts` | `apps/web/src/lib/stores/`            | Add `addEntities()` method           |
-| `canvas-add-entities.md`    | `apps/web/src/lib/content/help/`      | Help article                         |
-| `help-content.ts`           | `apps/web/src/lib/config/`            | Register help article & feature hint |
+| Component                   | Location                              | Purpose                       |
+| --------------------------- | ------------------------------------- | ----------------------------- |
+| `ContextMenu.svelte`        | `apps/web/src/lib/components/graph/`  | Add "Add to Canvas" menu item |
+| `CanvasPicker.svelte`       | `apps/web/src/lib/components/canvas/` | Submenu with canvas list      |
+| `canvas-registry.svelte.ts` | `apps/web/src/lib/stores/`            | Add `addEntities()` method    |
+| `canvas-add-entities.md`    | `apps/web/src/lib/content/help/`      | Help article                  |
+| `help-content.ts`           | `apps/web/src/lib/config/`            | Register help article         |
 
 ## Implementation Checklist
 
@@ -45,7 +45,7 @@ Allows users to right-click selected entities in the graph view and quickly add 
 - [x] Add keyboard navigation
 - [x] Write unit tests in `apps/web/src/lib/stores/canvas-registry.test.ts`
 - [x] Write E2E test in `apps/web/tests/canvas-add-context-menu.spec.ts`
-- [x] Add help article and `FeatureHint`
+- [x] Add help article
 
 ## Testing Commands
 
