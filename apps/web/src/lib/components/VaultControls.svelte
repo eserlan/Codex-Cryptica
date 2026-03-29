@@ -113,12 +113,17 @@
           }
         }}
         data-testid="save-as-campaign-button"
+        aria-label={`Save as ${themeStore.jargon.vault}`}
+        aria-describedby="save-as-campaign-desc-text"
         title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
-        aria-label={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
       >
         <span class="icon-[lucide--save] w-3 h-3"></span>
         SAVE AS {themeStore.jargon.vault.toUpperCase()}
       </button>
+      <div class="sr-only" id="save-as-campaign-desc-text">
+        Save this demo exploration as your own persistent {themeStore.jargon
+          .vault}
+      </div>
       <button
         class={isVertical
           ? `${btnGhost} py-3 text-sm justify-center gap-2`
