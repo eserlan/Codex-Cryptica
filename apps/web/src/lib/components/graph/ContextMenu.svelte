@@ -212,7 +212,7 @@
     role="menu"
     aria-label="Node actions"
     tabindex="-1"
-    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[150px]"
+    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[150px] w-max"
     style:top="{position.y}px"
     style:left="{position.x}px"
     onkeydown={handleMenuKeydown}
@@ -275,7 +275,7 @@
         role="menu"
         aria-label="Canvas selection"
         tabindex="0"
-        class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+        class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
         style:top="{pickerPosition.y}px"
         style:left="{pickerPosition.x}px"
         onmouseenter={showCanvasPicker}

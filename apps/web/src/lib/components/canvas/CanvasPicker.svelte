@@ -18,7 +18,7 @@
   role="menu"
   aria-label="Add to canvas"
   data-testid="canvas-picker"
-  class="fixed z-[110] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+  class="fixed z-[110] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
 >
   {#if noCanvases}
     <button
