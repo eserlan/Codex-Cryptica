@@ -14,5 +14,6 @@
 **Action:** When working on Svelte components or reviewing existing ones, ensure that `aria-label` is populated using context variables (e.g., `{era.name}`) to provide clear actions for screen readers.
 
 ## 2026-03-27 - Timeline Keyboard Scrolling
-**Learning:** Svelte's `a11y_no_noninteractive_tabindex` will flag scrollable `div` containers if given `tabindex="0"`. While generally a good rule, WCAG guidelines *require* custom scrollable regions (overflow containers without natively focusable children) to be keyboard focusable so users can scroll them with arrow keys.
+
+**Learning:** Svelte's `a11y_no_noninteractive_tabindex` will flag scrollable `div` containers if given `tabindex="0"`. While generally a good rule, WCAG guidelines _require_ custom scrollable regions (overflow containers without natively focusable children) to be keyboard focusable so users can scroll them with arrow keys.
 **Action:** When adding `tabindex="0"`, `role="region"`, and `aria-label` to custom scrollable containers, use `<!-- svelte-ignore a11y_no_noninteractive_tabindex -->` alongside `focus-visible` ring styles to ensure accessibility without breaking the build.
