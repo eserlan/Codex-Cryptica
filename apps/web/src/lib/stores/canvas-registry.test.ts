@@ -159,15 +159,22 @@ describe("CanvasRegistryStore", () => {
         "entity-2",
         "entity-3",
       ]);
-
       expect(result.added).toEqual(["entity-2", "entity-3"]);
       expect(result.skipped).toEqual(["entity-1"]);
       expect(canvasRegistry.allCanvases[0].nodes).toHaveLength(3);
-      expect(
-        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
-      ).toEqual(["entity-1", "entity-2", "entity-3"]);
-    });
 
+      const nodes = canvasRegistry.allCanvases[0].nodes;
+      expect(nodes.map((n) => n.entityId)).toEqual([
+        "entity-1",
+        "entity-2",
+        "entity-3",
+      ]);
+
+      // Verify spread (entity-2 and entity-3 should have different positions)
+      expect(nodes[1].position).not.toEqual(nodes[2].position);
+      expect(nodes[1].position.x).toBe(400 + (1 % 3) * 250);
+      expect(nodes[2].position.x).toBe(400 + (2 % 3) * 250);
+    });
     it("should return error for non-existent canvas", async () => {
       const result = await canvasRegistry.addEntities("non-existent-id", [
         "entity-1",
@@ -222,10 +229,12 @@ describe("CanvasRegistryStore", () => {
 
       expect(result).not.toBeNull();
       expect(result?.name).toBe("2 entities");
-      expect(
-        canvasRegistry.allCanvases[0].nodes.map((n) => n.entityId),
-      ).toEqual(["entity-1", "entity-2"]);
-      expect(canvasRegistry.allCanvases[0].nodes[0].position).toBeDefined();
+      const nodes = canvasRegistry.allCanvases[0].nodes;
+      expect(nodes.map((n) => n.entityId)).toEqual(["entity-1", "entity-2"]);
+
+      // Verify spread
+      expect(nodes[0].position.x).toBe(400);
+      expect(nodes[1].position.x).toBe(400 + 250);
     });
 
     it("should deduplicate entities in createCanvas", async () => {

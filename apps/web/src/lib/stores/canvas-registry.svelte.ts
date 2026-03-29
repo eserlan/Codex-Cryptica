@@ -194,6 +194,9 @@ class CanvasRegistryStore {
 
     // Batch updates to avoid triggering reactivity on every iteration
     const newNodes = [...(canvas.nodes || [])];
+    const spacing = 250;
+    const itemsPerRow = 3;
+
     for (const entityId of entityIds) {
       if (!entityId || !entityId.trim()) {
         errors.push({ entityId, error: "Invalid entity ID" });
@@ -202,11 +205,18 @@ class CanvasRegistryStore {
       if (existingEntityIds.has(entityId)) {
         skipped.push(entityId);
       } else {
+        const index = newNodes.length;
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+
         const newNode: CanvasNode = {
           id: `node-${crypto.randomUUID()}`,
           type: "entity",
           entityId,
-          position: { x: 400, y: 300 }, // Default center-ish position
+          position: {
+            x: 400 + col * spacing,
+            y: 300 + row * spacing,
+          },
         };
         newNodes.push(newNode);
         existingEntityIds.add(entityId);
@@ -235,12 +245,23 @@ class CanvasRegistryStore {
     const id = crypto.randomUUID();
     const slug = this.generateSlug(name, id);
 
-    const nodes: CanvasNode[] = [...new Set(entityIds)].map((entityId) => ({
-      id: `node-${crypto.randomUUID()}`,
-      type: "entity",
-      entityId,
-      position: { x: 400, y: 300 },
-    }));
+    const spacing = 250;
+    const itemsPerRow = 3;
+    const nodes: CanvasNode[] = [...new Set(entityIds)].map(
+      (entityId, index) => {
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+        return {
+          id: `node-${crypto.randomUUID()}`,
+          type: "entity",
+          entityId,
+          position: {
+            x: 400 + col * spacing,
+            y: 300 + row * spacing,
+          },
+        };
+      },
+    );
 
     this.canvases[id] = {
       id,
