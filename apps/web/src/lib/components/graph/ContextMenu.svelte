@@ -212,7 +212,7 @@
     role="menu"
     aria-label="Node actions"
     tabindex="-1"
-    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[150px] w-max"
+    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[120px] w-max"
     style:top="{position.y}px"
     style:left="{position.x}px"
     onkeydown={handleMenuKeydown}
@@ -270,23 +270,6 @@
       Add to Canvas
     </button>
 
-    {#if canvasPickerOpen}
-      <div
-        role="menu"
-        aria-label="Canvas selection"
-        tabindex="0"
-        class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
-        style:top="{pickerPosition.y}px"
-        style:left="{pickerPosition.x}px"
-        onmouseenter={showCanvasPicker}
-        onmouseleave={hideCanvasPicker}
-      >
-        <CanvasPicker
-          onSelect={handleAddToCanvas}
-          onCreateNew={handleCreateCanvas}
-        />
-      </div>
-    {/if}
     {#if !vault.isGuest}
       <button
         role="menuitem"
@@ -302,4 +285,22 @@
       </button>
     {/if}
   </div>
+
+  {#if canvasPickerOpen}
+    <div
+      role="menu"
+      aria-label="Canvas selection"
+      tabindex="0"
+      class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[160px] w-max"
+      style:top="{pickerPosition.y}px"
+      style:left="{pickerPosition.x}px"
+      onmouseenter={showCanvasPicker}
+      onmouseleave={hideCanvasPicker}
+    >
+      <CanvasPicker
+        onSelect={handleAddToCanvas}
+        onCreateNew={handleCreateCanvas}
+      />
+    </div>
+  {/if}
 {/if}
