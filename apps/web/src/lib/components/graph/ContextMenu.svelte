@@ -11,9 +11,11 @@
   let contextMenuOpen = $state(false);
   let canvasPickerOpen = $state(false);
   let position = $state({ x: 0, y: 0 });
+  let pickerPosition = $state({ x: 0, y: 0 });
   let targetId = $state<string | null>(null);
   let selectedNodes = $state<string[]>([]);
   let pickerTimeout: ReturnType<typeof setTimeout> | null = null;
+  let pickerAnchor = $state<HTMLButtonElement>();
 
   $effect(() => {
     if (cy) {
@@ -116,6 +118,13 @@
   const showCanvasPicker = () => {
     if (pickerTimeout) clearTimeout(pickerTimeout);
     pickerTimeout = setTimeout(() => {
+      if (pickerAnchor) {
+        const rect = pickerAnchor.getBoundingClientRect();
+        pickerPosition = {
+          x: rect.right + 4,
+          y: rect.top,
+        };
+      }
       canvasPickerOpen = true;
     }, 100);
   };
@@ -247,6 +256,7 @@
         : "Label…"}
     </button>
     <button
+      bind:this={pickerAnchor}
       role="menuitem"
       data-testid="add-to-canvas-button"
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative"
@@ -258,22 +268,25 @@
       aria-haspopup="true"
     >
       Add to Canvas
-      {#if canvasPickerOpen}
-        <div
-          role="menu"
-          aria-label="Canvas selection"
-          tabindex="0"
-          class="absolute left-full top-0 ml-1 z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
-          onmouseenter={showCanvasPicker}
-          onmouseleave={hideCanvasPicker}
-        >
-          <CanvasPicker
-            onSelect={handleAddToCanvas}
-            onCreateNew={handleCreateCanvas}
-          />
-        </div>
-      {/if}
     </button>
+
+    {#if canvasPickerOpen}
+      <div
+        role="menu"
+        aria-label="Canvas selection"
+        tabindex="0"
+        class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px]"
+        style:top="{pickerPosition.y}px"
+        style:left="{pickerPosition.x}px"
+        onmouseenter={showCanvasPicker}
+        onmouseleave={hideCanvasPicker}
+      >
+        <CanvasPicker
+          onSelect={handleAddToCanvas}
+          onCreateNew={handleCreateCanvas}
+        />
+      </div>
+    {/if}
     {#if !vault.isGuest}
       <button
         role="menuitem"
