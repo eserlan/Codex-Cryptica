@@ -26,6 +26,34 @@ describe("OracleAnalyzer", () => {
     });
   });
 
+  it("can be initialized with a model factory function", async () => {
+    const customMockGenerateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify([
+            {
+              title: "Factory Hero",
+              type: "Character",
+              chronicle: "A brave warrior from factory.",
+            },
+          ]),
+      },
+    });
+
+    const factory = vi.fn().mockImplementation((modelName: string) => ({
+      model: modelName,
+      generateContent: customMockGenerateContent,
+    }));
+
+    const factoryAnalyzer = new OracleAnalyzer(factory);
+
+    const result = await factoryAnalyzer.analyze("Hero is a brave warrior.");
+
+    expect(factory).toHaveBeenCalled();
+    expect(result.entities).toHaveLength(1);
+    expect(result.entities[0].suggestedTitle).toBe("Factory Hero");
+  });
+
   it("analyzes text and returns entities", async () => {
     const mockResponse = JSON.stringify([
       {
