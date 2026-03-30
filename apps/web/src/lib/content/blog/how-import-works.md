@@ -4,18 +4,16 @@ slug: how-import-works
 title: "From Lore Bible to Living Graph: How the Import Feature Works"
 description: "A deep dive into the Codex Cryptica import pipeline — from dropping a PDF onto the screen to having a fully linked, AI-extracted knowledge graph ready for your next session."
 keywords:
-  [
-    "RPG Lore Importer",
-    "World Building Import",
-    "AI Document Analysis",
-    "DOCX PDF Import RPG",
-    "Codex Cryptica Import",
-    "World Building Knowledge Graph",
-    "Lore Management Tool",
-    "Dungeon Master Tools",
-    "AI Entity Extraction",
-    "Local-First RPG Tool",
-  ]
+  - "RPG Lore Importer"
+  - "World Building Import"
+  - "AI Document Analysis"
+  - "DOCX PDF Import RPG"
+  - "Codex Cryptica Import"
+  - "World Building Knowledge Graph"
+  - "Lore Management Tool"
+  - "Dungeon Master Tools"
+  - "AI Entity Extraction"
+  - "Local-First RPG Tool"
 publishedAt: 2026-03-27T14:00:00Z
 ---
 
@@ -37,7 +35,7 @@ The import process is not a single action—it's a four-stage intelligent pipeli
 
 1. **Parsing** — Your file is opened and its raw text (and embedded images) is extracted.
 2. **Analysis** — The Oracle (the AI engine) reads the extracted text, identifies entities, and discovers relationships.
-3. **Deduplication & Progress Tracking** — The system checks whether this file (or any of its chunks) has been processed before, resumes where it left off, and prevents duplicate entries.
+3. **Deduplication & Progress Tracking** — The system checks whether this file has been processed before, resumes where it left off, and prevents duplicate entries.
 4. **Vault Import** — The discovered entities are woven into your vault as properly formatted Markdown files, complete with YAML metadata and wiki-style links.
 
 Each stage is designed to be resilient, resumable, and reversible.
