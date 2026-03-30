@@ -48,7 +48,7 @@ As a user who has selected entities, I want to create a new canvas containing th
 
 **Acceptance Scenarios**:
 
-1. **Given** entities are selected, **When** user chooses "Create New Canvas", **Then** user is prompted for a canvas name and the new canvas is created with selected entities
+1. **Given** entities are selected, **When** user chooses "Create New Canvas", **Then** user is prompted for a canvas name (via browser prompt for P1, modal for final) and the new canvas is created with selected entities
 2. **Given** user cancels the name prompt, **When** creating new canvas, **Then** no canvas is created and user returns to graph view
 3. **Given** no canvases exist yet, **When** user right-clicks selected entities, **Then** "Create New Canvas" is the primary option shown
 
@@ -56,28 +56,30 @@ As a user who has selected entities, I want to create a new canvas containing th
 
 ### Edge Cases
 
-- What happens when the target canvas is currently open in another tab? → Entity is added, will appear when canvas is refreshed
-- How does system handle entities already on the canvas? → Skip duplicates, notify user in summary
-- What if the user has no canvases yet? → Show "Create New Canvas" as the only option
-- What if the canvas is at capacity (if limits exist)? → Show error message "Canvas is full"
-- What happens if network/storage fails during add? → Show error toast, entity not added, user can retry
+- What happens when the target canvas is currently open in another tab? → Entity is added to storage; active tabs will see updates via reactive state synchronization (Vault Registry).
+- How does system handle entities already on the canvas? → Skip duplicates, notify user in summary.
+- What if the user has no canvases yet? → Show "Create New Canvas" as the only option.
+- What if the canvas is at capacity (if limits exist)? → Show error message "Canvas is full".
+- What happens if network/storage fails during add? → Show error toast, entity not added, user can retry.
+- **Layout of added entities**: Multiple entities added at once are spread out in a grid (3 items per row, 250px spacing) starting from the center-ish area (400, 300) or appended to the existing grid to avoid overlapping.
 
 ## Requirements
 
 ### Functional Requirements
 
 - **FR-001**: System MUST display "Add to Canvas" option in the graph entity context menu when one or more entities are selected
-- **FR-002**: System MUST show a list of up to 5 most recently used canvases in the context menu submenu
-- **FR-003**: System MUST provide "Choose Canvas..." option to view all available canvases when more than 5 exist
+- **FR-002**: System MUST show a list of up to 5 most recently modified canvases in the context menu submenu
+- **FR-003**: System MUST provide "Choose Canvas..." option which opens the full search modal, preserving the selection for the "Add" operation
 - **FR-004**: System MUST provide "+ New Canvas" option to create a canvas from the selection
 - **FR-005**: System MUST add all selected entities to the target canvas in a single operation
 - **FR-006**: System MUST skip entities that are already on the target canvas (no duplicates)
 - **FR-007**: System MUST display a confirmation notification showing how many entities were added and to which canvas
 - **FR-008**: System MUST notify user if any entities were skipped due to being duplicates
-- **FR-009**: System MUST prompt for canvas name when creating a new canvas, with a sensible default name
+- **FR-009**: System MUST prompt for canvas name when creating a new canvas, with a sensible default name (e.g., "5 entities")
 - **FR-010**: System MUST allow user to cancel canvas creation without any changes being made
 - **FR-011**: System MUST handle errors gracefully (storage failure, etc.) and display appropriate error message
 - **FR-012**: System MUST support keyboard navigation for context menu (arrow keys, Enter to select, Escape to cancel)
+- **FR-013**: System MUST spread out multiple newly added entities in a grid layout to prevent overlapping state.
 
 ### Key Entities
 
