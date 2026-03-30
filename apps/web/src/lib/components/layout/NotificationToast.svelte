@@ -7,6 +7,7 @@
 
 {#if notification}
   <div
+    data-testid="toast-{notification.type}"
     class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-2xl border flex items-center gap-3 animate-in slide-in-from-top-4 fade-in"
     class:bg-theme-surface={true}
     class:border-theme-primary={notification.type === "success"}

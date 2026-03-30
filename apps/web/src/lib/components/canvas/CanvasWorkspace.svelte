@@ -92,6 +92,7 @@
 
   let targetVaultId = $state<string | null>(null);
   let targetCanvasId = $state<string | null>(null);
+  let hasInitialized = $state(false);
 
   const { screenToFlowPosition } = useSvelteFlow();
 
@@ -119,6 +120,7 @@
   $effect(() => {
     if (vault.isInitialized && canvasId && canvasRegistry.isLoaded) {
       if (targetCanvasId !== canvasId) {
+        hasInitialized = false;
         // 1. Flush any pending save for the PREVIOUS canvas before loading new data
         untrack(() => {
           if (saveTimer !== null && targetVaultId && targetCanvasId) {
@@ -136,6 +138,7 @@
 
         // 3. Load the new data
         const data = untrack(() => vault.canvases[canvasId]);
+
         if (data) {
           // Pre-load all entity contents for the canvas to ensure descriptions/images show up
           for (const node of data.nodes) {
@@ -161,11 +164,13 @@
             targetHandle: e.targetHandle || null,
             label: e.label,
             type: e.type === "line" || !e.type ? "straight" : (e.type as any),
-            style: e.style,
-          }));
+            style: typeof e.style === "string" ? e.style : undefined,
+          })) as any;
+          hasInitialized = true;
         } else {
           nodes = [];
           edges = [];
+          hasInitialized = true;
         }
       }
     }
@@ -312,6 +317,7 @@
 
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
   $effect(() => {
+    if (!hasInitialized) return;
     const snapshot = edges;
     untrack(() => {
       if (vault.isInitialized && canvasId) {
@@ -321,9 +327,9 @@
           target: e.target,
           sourceHandle: undefined,
           targetHandle: undefined,
-          label: e.label as string,
+          label: (e.label as string) || "",
           type: "straight",
-          style: e.style as string,
+          style: (e.style as string) || "",
         }));
         debouncedSave();
       }
@@ -332,6 +338,7 @@
 
   // Keep engine state in sync whenever SvelteFlow's nodes change (drag/add/remove).
   $effect(() => {
+    if (!hasInitialized) return;
     const snapshot = nodes;
     untrack(() => {
       if (vault.isInitialized && canvasId) {
@@ -339,7 +346,7 @@
           id: n.id,
           type: n.type as "entity",
           position: n.position,
-          entityId: n.data?.entityId as string,
+          entityId: (n.data?.entityId as string) || "",
           width: n.data?.width as number,
           height: n.data?.height as number,
         }));
@@ -480,16 +487,16 @@
 
     // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
     // Prioritize meaningful names from 'existing' or reactive 'canvas' props
-    const finalName = !isGeneric(existing.name)
-      ? existing.name
-      : !isGeneric(canvas?.name)
-        ? canvas?.name
+    const finalName: string = !isGeneric(existing.name || "")
+      ? existing.name!
+      : !isGeneric(canvas?.name || "")
+        ? canvas!.name!
         : existing.name || currentCanvasId;
 
-    const finalSlug = !isGeneric(existing.slug)
-      ? existing.slug
-      : !isGeneric(canvas?.slug)
-        ? canvas?.slug
+    const finalSlug: string = !isGeneric(existing.slug || "")
+      ? existing.slug!
+      : !isGeneric(canvas?.slug || "")
+        ? canvas!.slug!
         : existing.slug || currentCanvasId;
 
     vault.canvases[currentCanvasId] = {
@@ -507,12 +514,10 @@
     await canvasRegistry.touch(currentCanvasId);
   }
   onMount(() => {
-    canvasRegistry.isWorkspaceMounted = true;
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
 
     return () => {
-      canvasRegistry.isWorkspaceMounted = false;
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
     };

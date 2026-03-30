@@ -1,25 +1,38 @@
 import { getVaultDir } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { uiStore } from "./ui.svelte";
-import { saveCanvasToDisk, loadCanvasesFromDisk } from "./vault/io";
+import {
+  saveCanvasToDisk,
+  loadCanvasesFromDisk,
+  deleteCanvasFromDisk,
+} from "./vault/io";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
+import type { Canvas, CanvasNode } from "@codex/canvas-engine";
+
+export interface CanvasAddResult {
+  canvasId: string;
+  added: string[];
+  skipped: string[];
+  errors: Array<{ entityId: string; error: string }>;
+}
 
 class CanvasRegistryStore {
-  canvases = $state<Record<string, any>>({});
+  canvases = $state<Record<string, Canvas>>({});
   status = $state<"idle" | "loading" | "saving" | "error">("idle");
   isLoaded = $state(false);
-  isWorkspaceMounted = $state(false);
   pendingEntities = $state<
     { id: string; position?: { x: number; y: number } }[]
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
 
+  allCanvases = $derived(
+    Object.values(this.canvases).sort(
+      (a, b) => (b.lastModified || 0) - (a.lastModified || 0),
+    ),
+  );
+
   init(saveQueue: KeyedTaskQueue) {
     this.saveQueue = saveQueue;
-  }
-
-  get allCanvases() {
-    return Object.values(this.canvases);
   }
 
   clear() {
@@ -93,10 +106,20 @@ class CanvasRegistryStore {
   }
 
   async delete(id: string) {
-    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) return;
+    if (!vaultRegistry.rootHandle || !vaultRegistry.activeVaultId) {
+      console.warn(
+        "[CanvasRegistryStore] Cannot delete: rootHandle or activeVaultId missing",
+      );
+      return;
+    }
 
     const data = this.canvases[id];
-    if (!data) return;
+    if (!data) {
+      console.warn(
+        `[CanvasRegistryStore] Cannot delete: canvas with id ${id} not found`,
+      );
+      return;
+    }
 
     if (!confirm(`Are you sure you want to delete canvas "${data.name}"?`)) {
       return;
@@ -107,13 +130,16 @@ class CanvasRegistryStore {
         vaultRegistry.rootHandle,
         vaultRegistry.activeVaultId,
       );
-      await import("./vault/io").then((io) =>
-        io.deleteCanvasFromDisk(vaultDir, id),
-      );
-      delete this.canvases[id];
-    } catch (e) {
+      await deleteCanvasFromDisk(vaultDir, id);
+
+      const nextCanvases = { ...this.canvases };
+      delete nextCanvases[id];
+      this.canvases = nextCanvases;
+
+      uiStore.notify(`Deleted workspace "${data.name}"`, "success");
+    } catch (e: any) {
       console.error("[CanvasRegistryStore] Failed to delete canvas file", e);
-      uiStore.notify("Failed to delete canvas file from disk.", "error");
+      uiStore.notify(`Failed to delete canvas: ${e.message}`, "error");
     }
   }
 
@@ -160,6 +186,122 @@ class CanvasRegistryStore {
         );
       }
     });
+  }
+
+  async addEntities(
+    canvasId: string,
+    entityIds: string[],
+  ): Promise<CanvasAddResult> {
+    const canvas = this.canvases[canvasId];
+    if (!canvas) {
+      return {
+        canvasId,
+        added: [],
+        skipped: [],
+        errors: [{ entityId: "", error: "Canvas not found" }],
+      };
+    }
+
+    if (!entityIds || entityIds.length === 0) {
+      return { canvasId, added: [], skipped: [], errors: [] };
+    }
+
+    const existingEntityIds = new Set(canvas.nodes.map((n) => n.entityId));
+    const added: string[] = [];
+    const skipped: string[] = [];
+    const errors: Array<{ entityId: string; error: string }> = [];
+
+    // Batch updates to avoid triggering reactivity on every iteration
+    const newNodes = [...(canvas.nodes || [])];
+    const spacing = 250;
+    const itemsPerRow = 3;
+
+    for (const entityId of entityIds) {
+      if (!entityId || !entityId.trim()) {
+        errors.push({ entityId, error: "Invalid entity ID" });
+        continue;
+      }
+      if (existingEntityIds.has(entityId)) {
+        skipped.push(entityId);
+      } else {
+        const index = newNodes.length;
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+
+        const newNode: CanvasNode = {
+          id: `node-${crypto.randomUUID()}`,
+          type: "entity",
+          entityId,
+          position: {
+            x: 400 + col * spacing,
+            y: 300 + row * spacing,
+          },
+        };
+        newNodes.push(newNode);
+        existingEntityIds.add(entityId);
+        added.push(entityId);
+      }
+    }
+    canvas.nodes = newNodes;
+
+    canvas.lastModified = Date.now();
+    await this.saveCanvas(canvasId);
+
+    return { canvasId, added, skipped, errors };
+  }
+
+  async createCanvas(
+    entityIds: string[],
+    title?: string,
+  ): Promise<{ id: string; slug: string; name: string } | null> {
+    // Normalize entity IDs: trim, filter invalid/empty, and deduplicate
+    const normalizedEntityIds = Array.from(
+      new Set(
+        entityIds
+          .map((id) => (id ? id.trim() : ""))
+          .filter((id): id is string => !!id),
+      ),
+    );
+
+    if (normalizedEntityIds.length === 0) {
+      return null;
+    }
+
+    const name =
+      title ||
+      `${normalizedEntityIds.length} ${
+        normalizedEntityIds.length === 1 ? "entity" : "entities"
+      }`;
+    const id = crypto.randomUUID();
+    const slug = this.generateSlug(name, id);
+
+    const spacing = 250;
+    const itemsPerRow = 3;
+    const nodes: CanvasNode[] = normalizedEntityIds.map((entityId, index) => {
+      const row = Math.floor(index / itemsPerRow);
+      const col = index % itemsPerRow;
+      return {
+        id: `node-${crypto.randomUUID()}`,
+        type: "entity",
+        entityId,
+        position: {
+          x: 400 + col * spacing,
+          y: 300 + row * spacing,
+        },
+      };
+    });
+
+    this.canvases[id] = {
+      id,
+      name,
+      slug,
+      nodes,
+      edges: [],
+      lastModified: Date.now(),
+    };
+
+    await this.saveCanvas(id);
+    return { id, slug, name };
   }
 }
 

@@ -23,7 +23,7 @@
   );
 
   function close() {
-    uiStore.showCanvasSelector = false;
+    uiStore.closeCanvasSelection();
     isCreating = false;
     renamingId = null;
   }
@@ -40,12 +40,25 @@
 
   async function confirmCreate() {
     if (!newCanvasName.trim()) return;
-    const slug = await canvasRegistry.create(newCanvasName.trim());
-    await tick();
-    if (slug) {
-      isCreating = false;
-      goto(`/canvas/${slug}`);
-      close();
+
+    if (uiStore.pendingCanvasEntities.length > 0) {
+      const result = await canvasRegistry.createCanvas(
+        uiStore.pendingCanvasEntities,
+        newCanvasName.trim(),
+      );
+      if (result) {
+        uiStore.notify(`Created workspace "${result.name}"`, "success");
+        isCreating = false;
+        goto(`/canvas/${result.slug}`);
+        close();
+      }
+    } else {
+      const slug = await canvasRegistry.create(newCanvasName.trim());
+      if (slug) {
+        isCreating = false;
+        goto(`/canvas/${slug}`);
+        close();
+      }
     }
   }
 
@@ -208,8 +221,28 @@
         {#each filteredCanvases as canvas}
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
-            onclick={() => {
+            onclick={async () => {
               if (renamingId === canvas.id) return;
+
+              if (uiStore.pendingCanvasEntities.length > 0 && canvas.id) {
+                const result = await canvasRegistry.addEntities(
+                  canvas.id,
+                  uiStore.pendingCanvasEntities,
+                );
+                if (result.added.length > 0) {
+                  uiStore.notify(
+                    `Added ${result.added.length} entities to "${canvas.name}"`,
+                    "success",
+                  );
+                }
+                if (result.skipped.length > 0) {
+                  uiStore.notify(
+                    `${result.skipped.length} entities already on canvas`,
+                    "info",
+                  );
+                }
+              }
+
               goto(`/canvas/${canvas.slug}`);
               close();
             }}
@@ -249,12 +282,13 @@
                     bind:value={renamingName}
                     class="flex-1 bg-theme-bg border border-theme-border rounded-lg px-2 py-1 text-sm text-theme-text focus:outline-none focus:border-theme-primary"
                     onkeydown={(e) => {
-                      if (e.key === "Enter") confirmRename(canvas.id);
+                      if (e.key === "Enter" && canvas.id)
+                        confirmRename(canvas.id);
                       if (e.key === "Escape") renamingId = null;
                     }}
                   />
                   <button
-                    onclick={() => confirmRename(canvas.id)}
+                    onclick={() => canvas.id && confirmRename(canvas.id)}
                     class="p-1.5 bg-theme-primary text-theme-bg rounded-lg hover:brightness-110"
                   >
                     <Check class="w-3 h-3" />
@@ -265,7 +299,7 @@
                   <span
                     class="text-sm font-bold text-theme-text truncate group-hover:text-theme-primary transition-colors"
                   >
-                    {canvas.name}
+                    {canvas.name || "Untitled Canvas"}
                   </span>
                   {#if activeCanvasId === canvas.slug}
                     <span
@@ -287,18 +321,19 @@
             >
               {#if renamingId !== canvas.id}
                 <button
-                  onclick={(e) => startRename(canvas.id, canvas.name, e)}
+                  onclick={(e) =>
+                    canvas.id && startRename(canvas.id, canvas.name || "", e)}
                   class="p-2 rounded-lg hover:bg-theme-bg text-theme-muted hover:text-theme-text transition-colors"
                   title="Rename Workspace"
-                  aria-label={`Rename ${canvas.name}`}
+                  aria-label={`Rename ${canvas.name || "Canvas"}`}
                 >
                   <Edit2 class="w-4 h-4" />
                 </button>
                 <button
-                  onclick={(e) => deleteCanvas(canvas.id, e)}
+                  onclick={(e) => canvas.id && deleteCanvas(canvas.id, e)}
                   class="p-2 rounded-lg hover:bg-red-500/10 text-theme-muted hover:text-red-500 transition-colors"
                   title="Delete Workspace"
-                  aria-label={`Delete ${canvas.name}`}
+                  aria-label={`Delete ${canvas.name || "Canvas"}`}
                 >
                   <Trash2 class="w-4 h-4" />
                 </button>
