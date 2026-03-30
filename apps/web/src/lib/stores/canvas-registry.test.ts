@@ -27,6 +27,7 @@ vi.mock("../utils/opfs", () => ({
   getVaultDir: vi
     .fn()
     .mockResolvedValue({ kind: "directory", name: "test-vault" }),
+  walkOpfsDirectory: vi.fn().mockResolvedValue([]),
 }));
 
 // Mock confirm for deletion
