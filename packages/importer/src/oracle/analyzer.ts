@@ -1,4 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import {
+  GoogleGenerativeAI,
+  type GenerativeModel,
+} from "@google/generative-ai";
 import type {
   AnalysisResult,
   DiscoveredEntity,
@@ -12,12 +15,14 @@ const CHUNK_SIZE = 50000;
 const OVERLAP_SIZE = 2000;
 
 export class OracleAnalyzer implements OracleAnalyzerEngine {
-  private modelFactory: (modelName: string) => any;
+  private modelFactory: (modelName: string) => GenerativeModel;
 
   /**
    * @param apiKeyOrFactory Either a Google Gemini API key string, or a factory function that returns a GenerativeModel.
    */
-  constructor(apiKeyOrFactory: string | ((modelName: string) => any)) {
+  constructor(
+    apiKeyOrFactory: string | ((modelName: string) => GenerativeModel),
+  ) {
     if (typeof apiKeyOrFactory === "string") {
       const genAI = new GoogleGenerativeAI(apiKeyOrFactory);
       this.modelFactory = (modelName: string) =>

@@ -24,7 +24,7 @@
   import { sanitizeId } from "$lib/utils/markdown";
   import { slide, fade } from "svelte/transition";
   import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
-  import { DefaultAIClientManager } from "$lib/services/ai/client-manager";
+  import { aiClientManager } from "$lib/services/ai/client-manager";
 
   let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
 
@@ -60,14 +60,12 @@
     new PdfParser(pdfWorker),
   ];
 
-  const clientManager = new DefaultAIClientManager();
-
   const handleFiles = async (files: File[]) => {
     const apiKey = oracle.effectiveApiKey || "";
 
     step = "processing";
     const analyzer = new OracleAnalyzer((modelName: string) =>
-      clientManager.getModel(apiKey, modelName),
+      aiClientManager.getModel(apiKey, modelName),
     );
 
     discoveredEntities = [];
