@@ -168,6 +168,10 @@ class CanvasRegistryStore {
     const data = this.canvases[id];
     if (!data) return;
 
+    // CRITICAL: Sync registry state to the main vault canvases state so standard IO flows pick it up
+    const { vault } = await import("./vault.svelte");
+    vault.canvases[id] = $state.snapshot(data);
+
     this.status = "saving";
     return this.saveQueue.enqueue(`canvas-${id}`, async () => {
       try {
