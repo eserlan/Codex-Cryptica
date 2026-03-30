@@ -11,6 +11,7 @@ export type SettingsTab =
 class UIStore {
   showSettings = $state(false);
   showCanvasSelector = $state(false);
+  pendingCanvasEntities = $state<string[]>([]);
   activeSettingsTab = $state<SettingsTab>("vault");
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
@@ -251,6 +252,16 @@ class UIStore {
     setTimeout(() => {
       this.notification = null;
     }, 5000);
+  }
+
+  openCanvasSelection(pendingEntities: string[] = []) {
+    this.pendingCanvasEntities = pendingEntities;
+    this.showCanvasSelector = true;
+  }
+
+  closeCanvasSelection() {
+    this.showCanvasSelector = false;
+    this.pendingCanvasEntities = [];
   }
 
   openSettings(tab: SettingsTab = "vault") {

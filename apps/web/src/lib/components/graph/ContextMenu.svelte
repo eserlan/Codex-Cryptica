@@ -315,7 +315,6 @@
   {#if canvasPickerOpen}
     <div
       role="none"
-      aria-label="Canvas selection"
       class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[160px] w-max"
       style:top="{pickerPosition.y}px"
       style:left="{pickerPosition.x}px"

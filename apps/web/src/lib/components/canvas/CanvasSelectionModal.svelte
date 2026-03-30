@@ -23,7 +23,7 @@
   );
 
   function close() {
-    uiStore.showCanvasSelector = false;
+    uiStore.closeCanvasSelection();
     isCreating = false;
     renamingId = null;
   }
@@ -40,12 +40,25 @@
 
   async function confirmCreate() {
     if (!newCanvasName.trim()) return;
-    const slug = await canvasRegistry.create(newCanvasName.trim());
-    await tick();
-    if (slug) {
-      isCreating = false;
-      goto(`/canvas/${slug}`);
-      close();
+
+    if (uiStore.pendingCanvasEntities.length > 0) {
+      const result = await canvasRegistry.createCanvas(
+        uiStore.pendingCanvasEntities,
+        newCanvasName.trim(),
+      );
+      if (result) {
+        uiStore.notify(`Created workspace "${result.name}"`, "success");
+        isCreating = false;
+        goto(`/canvas/${result.slug}`);
+        close();
+      }
+    } else {
+      const slug = await canvasRegistry.create(newCanvasName.trim());
+      if (slug) {
+        isCreating = false;
+        goto(`/canvas/${slug}`);
+        close();
+      }
     }
   }
 
@@ -208,8 +221,28 @@
         {#each filteredCanvases as canvas}
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div
-            onclick={() => {
+            onclick={async () => {
               if (renamingId === canvas.id) return;
+
+              if (uiStore.pendingCanvasEntities.length > 0 && canvas.id) {
+                const result = await canvasRegistry.addEntities(
+                  canvas.id,
+                  uiStore.pendingCanvasEntities,
+                );
+                if (result.added.length > 0) {
+                  uiStore.notify(
+                    `Added ${result.added.length} entities to "${canvas.name}"`,
+                    "success",
+                  );
+                }
+                if (result.skipped.length > 0) {
+                  uiStore.notify(
+                    `${result.skipped.length} entities already on canvas`,
+                    "info",
+                  );
+                }
+              }
+
               goto(`/canvas/${canvas.slug}`);
               close();
             }}
