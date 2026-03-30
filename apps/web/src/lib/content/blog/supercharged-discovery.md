@@ -18,7 +18,7 @@ publishedAt: 2026-03-18T12:00:00Z
 
 ![Knowledge Graph Discovery](https://assets.codexcryptica.com/images/blog/filter-discovery-hero.png)
 
-We’ve all been there. Your vault is overflowing with three hundred notes on NPCs, locations, and forgotten historical scraps. You know the "killer hook" is buried in there somewhere, but finding that specific thread during a live session feels like digging through a digital junk drawer in the dark. It’s frustrating, slow, and it kills the creative flow.
+We’ve all been there. Your archive is overflowing with three hundred notes on NPCs, locations, and forgotten historical scraps. You know the "killer hook" is buried in there somewhere, but finding that specific thread during a live session feels like digging through a digital junk drawer in the dark. It’s frustrating, slow, and it kills the creative flow.
 
 In **Codex Cryptica**, we solved this by moving past simple lists. We built a dual-engine system: **Labels** and **Smart Filters**. When you use them together, they don't just organize your chaos—they breathe life into your world, turning static notes into a living web of discovery.
 

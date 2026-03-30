@@ -54,7 +54,7 @@ While the Graph is automated, **Canvas Mode** gives you total manual control. Th
 ![Custom Strategy Board](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/fantasy%20canvas.png)
 
 - **Manual Layouts**: Arrange characters and clues however you want. It’s perfect for visualizing a political hierarchy, a family tree, or a complex criminal conspiracy.
-- **Abstract Brainstorming**: Unlike the Map, the Canvas isn't bound by geography. You can cluster entities together just to see how they look, while they remain linked to your actual vault data.
+- **Abstract Brainstorming**: Unlike the Map, the Canvas isn't bound by geography. You can cluster entities together just to see how they look, while they remain linked to your actual archive data.
 
 ## **4\. The Synergy: It All Stays in Sync**
 

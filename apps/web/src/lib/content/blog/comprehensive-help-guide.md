@@ -32,11 +32,11 @@ While your data is local, you can easily access it across different machines by 
 ### Setting up a Cloud Mirror:
 
 1.  **Install a Cloud Client:** Install a service like **Google Drive for Desktop**, **Dropbox**, or **iCloud** on your computer.
-2.  **Sync to a Local Folder:** In Codex, go to **Settings > Vault** and click **Sync to Folder**.
+2.  **Sync to a Local Folder:** In Codex, go to **Settings > Archive** and click **Sync to Folder**.
 3.  **Choose your Cloud Directory:** Select a folder inside your Google Drive or Dropbox directory.
 4.  **Automatic Updates:** Codex will now keep your internal archives mirrored to that folder, and your OS will handle the cloud sync automatically.
 
-To open your world on a second device, simply use the **Open Folder** button in the Vault Selector and choose that same synced directory.
+To open your world on a second device, simply use the **Open Folder** button in the Archive Selector and choose that same synced directory.
 
 ## 3. Working with the Lore Oracle
 

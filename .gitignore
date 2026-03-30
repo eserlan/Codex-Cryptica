@@ -66,3 +66,6 @@ test_output.txt
 
 # Blog screenshots (manual upload to CDN)
 blogPics/
+
+# Cloudflare Wrangler
+.wrangler/
