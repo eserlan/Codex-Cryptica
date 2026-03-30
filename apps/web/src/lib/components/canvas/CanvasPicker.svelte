@@ -4,9 +4,11 @@
   let {
     onSelect,
     onCreateNew,
+    onChooseFull,
   }: {
     onSelect: (canvasId: string) => void;
     onCreateNew: () => void;
+    onChooseFull?: () => void;
   } = $props();
 
   let recentCanvases = $derived(canvasRegistry.allCanvases.slice(0, 5));
@@ -18,7 +20,7 @@
   role="menu"
   aria-label="Add to canvas"
   data-testid="canvas-picker"
-  class="fixed z-[110] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
+  class="bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
 >
   {#if noCanvases}
     <button
@@ -45,11 +47,14 @@
     {/each}
 
     {#if hasMoreCanvases}
-      <div
-        class="w-full text-left px-4 py-2 text-sm text-theme-text/50 border-t border-theme-border"
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+        onclick={onChooseFull}
+        aria-label="Choose Canvas"
       >
-        {canvasRegistry.allCanvases.length} canvases total
-      </div>
+        Choose Canvas...
+      </button>
     {/if}
 
     <button

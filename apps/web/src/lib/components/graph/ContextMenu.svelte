@@ -36,6 +36,8 @@
       };
 
       const closeHandler = () => {
+        if (pickerTimeout) clearTimeout(pickerTimeout);
+        pickerTimeout = null;
         contextMenuOpen = false;
         canvasPickerOpen = false;
       };
@@ -44,6 +46,8 @@
       cy.on("tap", closeHandler);
 
       return () => {
+        if (pickerTimeout) clearTimeout(pickerTimeout);
+        pickerTimeout = null;
         cy.off("cxttap", "node", openHandler);
         cy.off("tap", closeHandler);
       };
@@ -51,6 +55,13 @@
   });
 
   let menuEl = $state<HTMLDivElement>();
+
+  const clearPickerTimeout = () => {
+    if (pickerTimeout) {
+      clearTimeout(pickerTimeout);
+      pickerTimeout = null;
+    }
+  };
 
   // Focus first menu item when menu opens
   $effect(() => {
@@ -74,6 +85,7 @@
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
+      clearPickerTimeout();
       contextMenuOpen = false;
       canvasPickerOpen = false;
     } else if (e.key === "ArrowDown") {
@@ -115,6 +127,13 @@
     }
   };
 
+  const handleChooseFull = () => {
+    clearPickerTimeout();
+    canvasPickerOpen = false;
+    contextMenuOpen = false;
+    ui.openCanvasSelection(selectedNodes);
+  };
+
   const showCanvasPicker = () => {
     if (pickerTimeout) clearTimeout(pickerTimeout);
     pickerTimeout = setTimeout(() => {
@@ -137,7 +156,9 @@
   };
 
   const handleAddToCanvas = async (canvasId: string) => {
+    clearPickerTimeout();
     canvasPickerOpen = false;
+    contextMenuOpen = false;
     try {
       const result = await canvasRegistry.addEntities(canvasId, selectedNodes);
 
@@ -163,9 +184,14 @@
   };
 
   const handleCreateCanvas = async () => {
+    clearPickerTimeout();
     canvasPickerOpen = false;
+    contextMenuOpen = false;
     try {
-      const result = await canvasRegistry.createCanvas(selectedNodes);
+      const title = window.prompt("Enter canvas name (optional):");
+      if (title === null) return; // Cancelled
+
+      const result = await canvasRegistry.createCanvas(selectedNodes, title);
 
       if (result) {
         ui.notify(
@@ -288,9 +314,8 @@
 
   {#if canvasPickerOpen}
     <div
-      role="menu"
+      role="none"
       aria-label="Canvas selection"
-      tabindex="0"
       class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[160px] w-max"
       style:top="{pickerPosition.y}px"
       style:left="{pickerPosition.x}px"
@@ -300,6 +325,7 @@
       <CanvasPicker
         onSelect={handleAddToCanvas}
         onCreateNew={handleCreateCanvas}
+        onChooseFull={handleChooseFull}
       />
     </div>
   {/if}

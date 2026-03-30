@@ -171,10 +171,6 @@ class CanvasRegistryStore {
     const data = this.canvases[id];
     if (!data) return;
 
-    // CRITICAL: Sync registry state to the main vault canvases state so standard IO flows pick it up
-    const { vault } = await import("./vault.svelte");
-    vault.canvases[id] = $state.snapshot(data);
-
     this.status = "saving";
     return this.saveQueue.enqueue(`canvas-${id}`, async () => {
       try {
@@ -258,33 +254,42 @@ class CanvasRegistryStore {
     entityIds: string[],
     title?: string,
   ): Promise<{ id: string; slug: string; name: string } | null> {
-    if (!entityIds || entityIds.length === 0) {
+    // Normalize entity IDs: trim, filter invalid/empty, and deduplicate
+    const normalizedEntityIds = Array.from(
+      new Set(
+        entityIds
+          .map((id) => (id ? id.trim() : ""))
+          .filter((id): id is string => !!id),
+      ),
+    );
+
+    if (normalizedEntityIds.length === 0) {
       return null;
     }
 
     const name =
       title ||
-      `${entityIds.length} ${entityIds.length === 1 ? "entity" : "entities"}`;
+      `${normalizedEntityIds.length} ${
+        normalizedEntityIds.length === 1 ? "entity" : "entities"
+      }`;
     const id = crypto.randomUUID();
     const slug = this.generateSlug(name, id);
 
     const spacing = 250;
     const itemsPerRow = 3;
-    const nodes: CanvasNode[] = [...new Set(entityIds)].map(
-      (entityId, index) => {
-        const row = Math.floor(index / itemsPerRow);
-        const col = index % itemsPerRow;
-        return {
-          id: `node-${crypto.randomUUID()}`,
-          type: "entity",
-          entityId,
-          position: {
-            x: 400 + col * spacing,
-            y: 300 + row * spacing,
-          },
-        };
-      },
-    );
+    const nodes: CanvasNode[] = normalizedEntityIds.map((entityId, index) => {
+      const row = Math.floor(index / itemsPerRow);
+      const col = index % itemsPerRow;
+      return {
+        id: `node-${crypto.randomUUID()}`,
+        type: "entity",
+        entityId,
+        position: {
+          x: 400 + col * spacing,
+          y: 300 + row * spacing,
+        },
+      };
+    });
 
     this.canvases[id] = {
       id,

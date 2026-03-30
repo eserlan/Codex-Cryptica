@@ -126,8 +126,6 @@
 
 ---
 
-## Phase 6: Polish & Cross-Cutting Concerns
-
 ## Phase 6: Polish & Cross-Cutting Concerns (Priority: P3)
 
 - [x] T035 [P] Add help article to `apps/web/src/lib/content/help/canvas-add-entities.md`
