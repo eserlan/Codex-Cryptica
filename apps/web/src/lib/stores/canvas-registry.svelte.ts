@@ -6,7 +6,6 @@ import {
   loadCanvasesFromDisk,
   deleteCanvasFromDisk,
 } from "./vault/io";
-import { vault } from "./vault.svelte";
 import type { KeyedTaskQueue } from "@codex/vault-engine";
 import type { Canvas, CanvasNode } from "@codex/canvas-engine";
 
@@ -173,6 +172,7 @@ class CanvasRegistryStore {
     if (!data) return;
 
     // CRITICAL: Sync registry state to the main vault canvases state so standard IO flows pick it up
+    const { vault } = await import("./vault.svelte");
     vault.canvases[id] = $state.snapshot(data);
 
     this.status = "saving";
