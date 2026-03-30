@@ -2,7 +2,7 @@
 
 **Feature Branch**: `076-add-canvas-context-menu`
 **Created**: 2026-03-27
-**Status**: Draft
+**Status**: Merged
 **Input**: Issue #470 - When entities are selected in the graph, allow users to easily add them to existing or new canvas
 
 ## User Scenarios & Testing
