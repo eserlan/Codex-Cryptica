@@ -30,6 +30,9 @@ vi.mock("../utils/opfs", () => ({
   walkOpfsDirectory: vi.fn().mockResolvedValue([]),
   deleteOpfsEntry: vi.fn().mockResolvedValue(undefined),
   writeOpfsFile: vi.fn().mockResolvedValue(undefined),
+  readOpfsBlob: vi.fn().mockResolvedValue(new Blob()),
+  getDirHandle: vi.fn().mockResolvedValue({ kind: "directory" }),
+  isNotFoundError: vi.fn().mockReturnValue(false),
 }));
 
 // Mock confirm for deletion
