@@ -164,8 +164,8 @@
             targetHandle: e.targetHandle || null,
             label: e.label,
             type: e.type === "line" || !e.type ? "straight" : (e.type as any),
-            style: e.style,
-          }));
+            style: typeof e.style === "string" ? e.style : undefined,
+          })) as any;
           hasInitialized = true;
         } else {
           nodes = [];
@@ -327,9 +327,9 @@
           target: e.target,
           sourceHandle: undefined,
           targetHandle: undefined,
-          label: e.label as string,
+          label: (e.label as string) || "",
           type: "straight",
-          style: e.style as string,
+          style: (e.style as string) || "",
         }));
         debouncedSave();
       }
@@ -346,7 +346,7 @@
           id: n.id,
           type: n.type as "entity",
           position: n.position,
-          entityId: n.data?.entityId as string,
+          entityId: (n.data?.entityId as string) || "",
           width: n.data?.width as number,
           height: n.data?.height as number,
         }));
@@ -487,16 +487,16 @@
 
     // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
     // Prioritize meaningful names from 'existing' or reactive 'canvas' props
-    const finalName = !isGeneric(existing.name)
-      ? existing.name
-      : !isGeneric(canvas?.name)
-        ? canvas?.name
+    const finalName: string = !isGeneric(existing.name || "")
+      ? existing.name!
+      : !isGeneric(canvas?.name || "")
+        ? canvas!.name!
         : existing.name || currentCanvasId;
 
-    const finalSlug = !isGeneric(existing.slug)
-      ? existing.slug
-      : !isGeneric(canvas?.slug)
-        ? canvas?.slug
+    const finalSlug: string = !isGeneric(existing.slug || "")
+      ? existing.slug!
+      : !isGeneric(canvas?.slug || "")
+        ? canvas!.slug!
         : existing.slug || currentCanvasId;
 
     vault.canvases[currentCanvasId] = {

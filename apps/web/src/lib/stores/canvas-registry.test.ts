@@ -71,11 +71,11 @@ describe("CanvasRegistryStore", () => {
     const canvas = canvasRegistry.allCanvases[0];
     const id = canvas.id;
 
-    const newSlug = await canvasRegistry.rename(id, "Updated Name");
+    const newSlug = await canvasRegistry.rename(id!, "Updated Name");
 
     expect(newSlug).toBe("updated-name");
-    expect(canvasRegistry.canvases[id].name).toBe("Updated Name");
-    expect(canvasRegistry.canvases[id].slug).toBe("updated-name");
+    expect(canvasRegistry.canvases[id!].name).toBe("Updated Name");
+    expect(canvasRegistry.canvases[id!].slug).toBe("updated-name");
     expect(vaultIO.saveCanvasToDisk).toHaveBeenCalledTimes(2);
   });
 
@@ -84,9 +84,9 @@ describe("CanvasRegistryStore", () => {
     const canvas = canvasRegistry.allCanvases[0];
     const id = canvas.id;
 
-    await canvasRegistry.delete(id);
+    await canvasRegistry.delete(id!);
 
-    expect(canvasRegistry.canvases[id]).toBeUndefined();
+    expect(canvasRegistry.canvases[id!]).toBeUndefined();
     expect(canvasRegistry.allCanvases).toHaveLength(0);
     expect(vaultIO.deleteCanvasFromDisk).toHaveBeenCalled();
   });
@@ -126,7 +126,7 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should add single entity to canvas", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
       const result = await canvasRegistry.addEntities(canvasId, ["entity-1"]);
 
       expect(result.added).toEqual(["entity-1"]);
@@ -140,7 +140,7 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should skip duplicate entities", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
 
       await canvasRegistry.addEntities(canvasId, ["entity-1"]);
       const result = await canvasRegistry.addEntities(canvasId, ["entity-1"]);
@@ -151,7 +151,7 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should handle mixed new and duplicate entities", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
 
       await canvasRegistry.addEntities(canvasId, ["entity-1"]);
       const result = await canvasRegistry.addEntities(canvasId, [
@@ -187,7 +187,7 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should return empty result for empty entityIds array", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
       const result = await canvasRegistry.addEntities(canvasId, []);
 
       expect(result.added).toEqual([]);
@@ -196,7 +196,7 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should report invalid entity IDs in errors", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
       const result = await canvasRegistry.addEntities(canvasId, [
         "valid-id",
         "",
@@ -209,13 +209,13 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should update lastModified timestamp", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id;
-      const before = canvasRegistry.allCanvases[0].lastModified;
+      const canvasId = canvasRegistry.allCanvases[0].id!;
+      const before = canvasRegistry.allCanvases[0].lastModified || 0;
 
       await new Promise((resolve) => setTimeout(resolve, 10));
       await canvasRegistry.addEntities(canvasId, ["entity-1"]);
 
-      const after = canvasRegistry.allCanvases[0].lastModified;
+      const after = canvasRegistry.allCanvases[0].lastModified || 0;
       expect(after).toBeGreaterThan(before);
     });
   });
