@@ -3,7 +3,10 @@ import * as fs from "fs";
 import * as path from "path";
 
 test.describe("Blog Screenshots: How Import Works", () => {
-  const outputDir = path.join(process.cwd(), "../../blogPics/how-import-works");
+  const outputDir = path.join(
+    process.cwd(),
+    "../../blogPics/how-import-works",
+  );
 
   test.beforeAll(() => {
     if (!fs.existsSync(outputDir)) {
@@ -16,15 +19,16 @@ test.describe("Blog Screenshots: How Import Works", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ERROR_OVERLAY = true;
+      (window as any).importQueue = { activeItemChunks: {} };
       localStorage.setItem("codex_skip_landing", "true");
       localStorage.setItem("codex_oracle_api_key", "fake-key");
 
       (window as any).OracleAnalyzer = class {
         async analyze(_text, _options) {
-          if ((window as any).__MOCK_REVIEW_DATA__) {
-            return { entities: (window as any).__MOCK_REVIEW_DATA__ };
-          }
-          return new Promise(() => {});
+            if ((window as any).__MOCK_REVIEW_DATA__) {
+                return { entities: (window as any).__MOCK_REVIEW_DATA__ };
+            }
+            return new Promise(() => {});
         }
       };
     });
@@ -32,32 +36,29 @@ test.describe("Blog Screenshots: How Import Works", () => {
 
   test("00 - Start Importer Button", async ({ page }) => {
     await page.goto("http://localhost:5173/");
-    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
-      timeout: 15000,
-    });
-
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", { timeout: 15000 });
+    
     await page.setViewportSize({ width: 1200, height: 400 });
-
+    
     // Focus on the vault controls in the header
-    const importButton = page.getByTestId("import-vault-button");
-    await importButton.focus(); // Highlight it
-
+    const importButton = page.getByTestId('import-vault-button');
+    await importButton.waitFor({ state: 'visible' });
+    await importButton.focus(); 
+    
     // Capture the top part of the app where the header is
     await page.screenshot({
       path: path.join(outputDir, "how-import-works-start.png"),
-      clip: { x: 0, y: 0, width: 1200, height: 150 },
+      clip: { x: 0, y: 0, width: 1200, height: 150 }
     });
   });
 
   test("01 - Import Dropzone", async ({ page }) => {
     await page.goto("http://localhost:5173/import");
-    await page.waitForFunction(
-      () => (window as any).importQueue !== undefined,
-      { timeout: 15000 },
-    );
-
+    await page.waitForSelector('text=Archive Importer');
+    await page.waitForTimeout(1000);
+    
     await page.setViewportSize({ width: 1000, height: 700 });
-    const dropzone = page.locator(".dropzone-container");
+    const dropzone = page.locator('.dropzone-container');
     await dropzone.screenshot({
       path: path.join(outputDir, "import-dropzone.png"),
     });
@@ -65,29 +66,14 @@ test.describe("Blog Screenshots: How Import Works", () => {
 
   test("02 - Import Processing", async ({ page }) => {
     await page.goto("http://localhost:5173/import");
-    await page.waitForFunction(
-      () => (window as any).importQueue !== undefined,
-      { timeout: 15000 },
-    );
+    await page.waitForSelector('text=Archive Importer');
+    await page.waitForTimeout(1000);
     await page.setViewportSize({ width: 1000, height: 700 });
 
     await page.evaluate(() => {
-      (window as any).importQueue.activeItemChunks = {
-        0: "completed",
-        1: "completed",
-        2: "completed",
-        3: "active",
-        4: "pending",
-        5: "pending",
-        6: "pending",
-        7: "pending",
-      };
-
-      const container = document.querySelector(
-        ".flex-1.flex.flex-col.relative.overflow-hidden",
-      );
-      if (container) {
-        container.innerHTML = `
+        const container = document.querySelector('.flex-1.flex.flex-col.relative.overflow-hidden');
+        if (container) {
+            container.innerHTML = `
                 <div class="flex flex-col items-center gap-6 py-8">
                     <div class="relative">
                         <div class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"></div>
@@ -119,12 +105,10 @@ test.describe("Blog Screenshots: How Import Works", () => {
                     </div>
                 </div>
             `;
-      }
+        }
     });
 
-    const processingArea = page.locator(
-      ".flex-1.flex.flex-col.relative.overflow-hidden",
-    );
+    const processingArea = page.locator('.flex-1.flex.flex-col.relative.overflow-hidden');
     await processingArea.screenshot({
       path: path.join(outputDir, "import-processing.png"),
     });
@@ -132,18 +116,14 @@ test.describe("Blog Screenshots: How Import Works", () => {
 
   test("03 - Review Queue", async ({ page }) => {
     await page.goto("http://localhost:5173/import");
-    await page.waitForFunction(
-      () => (window as any).importQueue !== undefined,
-      { timeout: 15000 },
-    );
+    await page.waitForSelector('text=Archive Importer');
+    await page.waitForTimeout(1000);
     await page.setViewportSize({ width: 1000, height: 800 });
 
     await page.evaluate(() => {
-      const container = document.querySelector(
-        ".flex-1.flex.flex-col.relative.overflow-hidden",
-      );
-      if (container) {
-        container.innerHTML = `
+        const container = document.querySelector('.flex-1.flex.flex-col.relative.overflow-hidden');
+        if (container) {
+            container.innerHTML = `
                 <div class="review-list standalone" style="display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0;">
                     <div class="header-row" style="display: flex; justify-content: space-between; align-items: baseline;">
                         <h3 style="font-family: var(--font-header); font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.9rem;">Review Identified Entities</h3>
@@ -201,19 +181,55 @@ test.describe("Blog Screenshots: How Import Works", () => {
                     </div>
                 </div>
             `;
-      }
+        }
     });
 
-    const reviewArea = page.locator(
-      ".flex-1.flex.flex-col.relative.overflow-hidden",
-    );
+    const reviewArea = page.locator('.flex-1.flex.flex-col.relative.overflow-hidden');
     await reviewArea.screenshot({
       path: path.join(outputDir, "import-review-queue.png"),
     });
   });
 
-  test("04 - Hero Image / Full Pipeline", async ({ page }) => {
+  test("04 - Hero Image", async ({ page }) => {
     await page.goto("http://localhost:5173/import");
+    await page.waitForSelector('text=Archive Importer');
+    await page.waitForTimeout(1000);
+    
+    await page.evaluate(() => {
+        const container = document.querySelector('.flex-1.flex.flex-col.relative.overflow-hidden');
+        if (container) {
+            container.innerHTML = `
+                <div class="review-list standalone" style="display: flex; flex-direction: column; gap: 1rem; flex: 1; min-height: 0;">
+                    <div class="entities" style="overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.5rem; flex: 1;">
+                        <div class="entity-card existing" style="border: 1px solid #3b82f6; padding: 1rem; border-radius: 4px; background: rgba(59, 130, 246, 0.05);">
+                            <label style="display: flex; gap: 1rem; cursor: pointer; align-items: center;">
+                                <input type="checkbox" checked />
+                                <div class="info" style="display: flex; flex-grow: 1; justify-content: space-between; align-items: center;">
+                                    <div class="title-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <strong style="font-size: 0.9rem;">Eldrin the Archivist</strong>
+                                        <span class="existing-badge" style="font-size: 0.6rem; background: #3b82f6; color: #fff; padding: 0.1rem 0.4rem; border-radius: 10px; font-weight: bold; text-transform: uppercase;">Already in Vault</span>
+                                    </div>
+                                    <span class="badge" style="background: rgba(0,0,0,0.2); color: var(--color-theme-text); border: 1px solid var(--color-theme-border); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Character</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="entity-card" style="border: 1px solid var(--color-theme-border); padding: 1rem; border-radius: 4px; background: var(--color-theme-surface);">
+                            <label style="display: flex; gap: 1rem; cursor: pointer; align-items: center;">
+                                <input type="checkbox" checked />
+                                <div class="info" style="display: flex; flex-grow: 1; justify-content: space-between; align-items: center;">
+                                    <div class="title-group">
+                                        <strong style="font-size: 0.9rem;">Silver Archive</strong>
+                                    </div>
+                                    <span class="badge" style="background: rgba(0,0,0,0.2); color: var(--color-theme-text); border: 1px solid var(--color-theme-border); padding: 0.1rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">Location</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
     await page.setViewportSize({ width: 1200, height: 800 });
     await page.screenshot({
       path: path.join(outputDir, "import-hero.png"),
