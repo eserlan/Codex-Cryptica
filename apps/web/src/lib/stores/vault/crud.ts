@@ -177,9 +177,6 @@ export class VaultCrudManager {
         vaultId: activeVaultId,
         entityId: id,
       });
-
-      const services = this.getServices();
-      if (services) await services.search.remove(id);
     }
   }
 

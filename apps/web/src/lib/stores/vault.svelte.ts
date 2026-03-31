@@ -966,20 +966,14 @@ export class VaultStore {
             if (permission === "granted") {
               const fileName = path[path.length - 1];
               const dirPath = path.slice(0, -1);
-              let targetDir: FileSystemDirectoryHandle | null = localHandle;
+              let targetDir: FileSystemDirectoryHandle | undefined =
+                localHandle;
 
-              if (dirPath.length > 0) {
-                // Try to find the subdirectory
-                for (const part of dirPath) {
-                  try {
-                    targetDir = await targetDir!.getDirectoryHandle(part, {
-                      create: false,
-                    });
-                  } catch {
-                    targetDir = null;
-                    break;
-                  }
-                }
+              for (const part of dirPath) {
+                targetDir = await targetDir
+                  ?.getDirectoryHandle(part, { create: false })
+                  .catch(() => undefined);
+                if (!targetDir) break;
               }
 
               if (targetDir) {

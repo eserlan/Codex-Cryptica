@@ -219,7 +219,7 @@
         // If it's not an entity node, keep it
         if (node.type !== "entity") return true;
         // If the entity still exists in the vault, keep it
-        return entityIds.has(node.data.entityId);
+        return entityIds.has(node.data.entityId as string);
       });
 
       if (remainingNodes.length !== nodes.length) {
