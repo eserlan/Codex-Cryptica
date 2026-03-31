@@ -24,6 +24,9 @@ vi.mock("../utils/entity-db", () => ({
       first: vi.fn().mockResolvedValue(null),
       count: vi.fn().mockResolvedValue(0),
     },
+    searchIndex: {
+      delete: vi.fn().mockResolvedValue(undefined),
+    },
     transaction: vi.fn().mockImplementation((_mode, _stores, task) => task()),
   },
 }));
@@ -91,10 +94,46 @@ describe("CacheService", () => {
     });
   });
 
+  describe("remove", () => {
+    it("should remove entity from DB and in-memory cache", async () => {
+      // 1. Setup in-memory cache
+      const mockRecord = {
+        vaultId: "v1",
+        filePath: "f1.md",
+        id: "e1",
+        title: "E1",
+        lastModified: 100,
+      };
+      vi.mocked(entityDb.graphEntities.toArray).mockResolvedValue([mockRecord]);
+      await service.preloadVault("v1");
+
+      // Verify it's there
+      expect(await service.get("v1:f1.md")).toBeDefined();
+
+      // 2. Remove it
+      await service.remove("v1:f1.md");
+
+      // 3. Verify it's gone from memory
+      expect(await service.get("v1:f1.md")).toBeNull();
+
+      // 4. Verify DB was called
+      expect(entityDb.graphEntities.delete).toHaveBeenCalled();
+      expect(entityDb.entityContent.delete).toHaveBeenCalledWith(["v1", "e1"]);
+    });
+
+    it("should handle removal without entityId from preloaded hit", async () => {
+      await service.remove("v1:f1.md");
+      expect(entityDb.graphEntities.delete).toHaveBeenCalled();
+      // entityContent.delete shouldn't be called if entityId not found in memory
+      expect(entityDb.entityContent.delete).not.toHaveBeenCalled();
+    });
+  });
+
   describe("clearVault", () => {
     it("should delete all records for vault", async () => {
       await service.clearVault("v1");
       expect(entityDb.transaction).toHaveBeenCalled();
+      expect(entityDb.searchIndex.delete).toHaveBeenCalledWith("v1");
     });
   });
 
