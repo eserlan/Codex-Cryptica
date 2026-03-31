@@ -44,11 +44,15 @@
   <div
     class="w-full max-w-md bg-theme-surface border border-theme-border rounded-xl shadow-2xl overflow-hidden"
     transition:scale
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="pin-linker-title"
   >
     <header
       class="p-4 border-b border-theme-border flex justify-between items-center bg-theme-bg/20"
     >
       <h3
+        id="pin-linker-title"
         class="text-sm font-bold text-theme-text uppercase font-header tracking-widest"
       >
         Link Lore Pin
@@ -68,6 +72,7 @@
         type="text"
         bind:value={query}
         placeholder="Search for an entity..."
+        aria-label="Search for an entity"
         class="w-full bg-theme-bg border border-theme-border text-theme-text px-4 py-2 rounded-lg focus:border-theme-primary outline-none transition-colors mb-4 text-sm"
       />
 
