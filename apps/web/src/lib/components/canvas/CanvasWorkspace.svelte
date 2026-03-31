@@ -690,6 +690,8 @@
       zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
       connectionLineComponent={ConnectionLine}
+      minZoom={0.01}
+      maxZoom={9}
       fitView
     >
       <Background gap={20} />

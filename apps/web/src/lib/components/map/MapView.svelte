@@ -54,14 +54,19 @@
       img.crossOrigin = "anonymous";
       let blobUrl = "";
 
+      const assetPath = activeMap.assetPath;
+
       vault
-        .resolveImageUrl(activeMap.assetPath)
+        .resolveImageUrl(assetPath)
         .then((url) => {
-          if (canceled) return;
+          if (canceled) {
+            if (url) vault.releaseImageUrl(assetPath);
+            return;
+          }
           if (!url) {
             console.error(
               "[MapView] Failed to resolve image URL for:",
-              activeMap.assetPath,
+              assetPath,
             );
             return;
           }
@@ -109,8 +114,8 @@
         _drawImage = null;
         maskCanvas = null;
         _drawMask = null;
-        if (blobUrl.startsWith("blob:")) {
-          URL.revokeObjectURL(blobUrl);
+        if (blobUrl) {
+          vault.releaseImageUrl(assetPath);
         }
       };
     } else {
