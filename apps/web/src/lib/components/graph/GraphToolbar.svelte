@@ -17,6 +17,20 @@
   }>();
 
   let showMinimap = $state(false);
+  let currentZoom = $state(1);
+
+  $effect(() => {
+    if (cy) {
+      const updateZoom = () => {
+        currentZoom = cy.zoom();
+      };
+      cy.on("zoom", updateZoom);
+      updateZoom();
+      return () => {
+        cy.off("zoom", updateZoom);
+      };
+    }
+  });
 
   const canConnect = $derived(selectedCount === 2);
   const isConnecting = $derived(ui.showSelectionConnector || ui.isConnecting);
@@ -164,5 +178,20 @@
       aria-pressed={graph.showImages}
       ><span class="icon-[lucide--image] w-4 h-4"></span></button
     >
+
+    <div
+      class="flex items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
+    >
+      <span class="text-[9px] font-mono text-theme-primary font-bold"
+        >{currentZoom.toFixed(2)}x</span
+      >
+      <button
+        class="text-[8px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
+        onclick={() => cy?.animate({ zoom: 9, duration: 500, easing: "ease-in-out-cubic" })}
+        title="Jump to Maximum Zoom (9x)"
+      >
+        MAX
+      </button>
+    </div>
   </div>
 </div>
