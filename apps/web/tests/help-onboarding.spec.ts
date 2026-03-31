@@ -12,7 +12,7 @@ test.describe("Help Onboarding Walkthrough", () => {
     // Clear localStorage after initial load to reset state, but don't put it in initScript
     // so it doesn't clear on subsequent reloads within the same test.
     await page.evaluate(() => {
-      localStorage.clear();
+      try { localStorage.clear(); } catch { /* ignore */ }
     });
     // Reload to apply the cleared state
     await page.reload();

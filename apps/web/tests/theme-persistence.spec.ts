@@ -5,7 +5,7 @@ test.describe("Campaign-Specific Theme Persistence", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
     });
     await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).vault?.isInitialized);

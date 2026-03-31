@@ -5,7 +5,7 @@ test.describe("Oracle UI - Elastic Input", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
     });
     await page.goto("http://localhost:5173/");

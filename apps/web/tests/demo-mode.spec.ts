@@ -9,14 +9,14 @@ test.describe("Interactive Demo Mode", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      localStorage.removeItem("codex_was_converted");
-      localStorage.removeItem("codex_active_vault_id");
+      try { localStorage.removeItem("codex_was_converted"); } catch { /* ignore */ }
+      try { localStorage.removeItem("codex_active_vault_id"); } catch { /* ignore */ }
     });
   });
 
   test("should start demo from landing page", async ({ page }) => {
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "false");
+      try { localStorage.setItem("codex_skip_landing", "false"); } catch { /* ignore */ }
     });
 
     await page.goto("/?s=" + Date.now());
@@ -61,7 +61,7 @@ test.describe("Interactive Demo Mode", () => {
   test("should start theme-specific demo via URL", async ({ page }) => {
     // For URL-based demo, we want to bypass landing page
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
     });
 
     await page.goto("/?demo=vampire&s=" + Date.now());

@@ -6,7 +6,7 @@ test.describe("Node Merging", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
     });
     await page.goto("/");
     // Wait for vault to initialize
@@ -191,7 +191,7 @@ test.describe("Node Merging", () => {
       );
       // Clear help state to ensure hints appear
       await page.evaluate(() => {
-        localStorage.clear();
+        try { localStorage.clear(); } catch { /* ignore */ }
       });
       await page.reload();
       await page.waitForFunction(
