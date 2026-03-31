@@ -110,6 +110,8 @@ export default defineConfig({
       "editor-core",
       "schema",
       "chronology-engine",
+    ],
+    include: [
       "@codex/canvas-engine",
       "@xyflow/svelte",
     ],

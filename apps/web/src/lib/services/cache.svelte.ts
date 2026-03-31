@@ -237,11 +237,7 @@ export class CacheService {
             .delete();
 
           if (entityId) {
-            await entityDb.entityContent
-              .get([vaultId, entityId])
-              .then((record) => {
-                if (record) entityDb.entityContent.delete([vaultId, entityId]);
-              });
+            await entityDb.entityContent.delete([vaultId, entityId]);
           }
         },
       );

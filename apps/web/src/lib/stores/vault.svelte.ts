@@ -214,8 +214,10 @@ export class VaultStore {
         this.services = {
           search: searchModule.searchService,
           ai: {
-            clearStyleCache(): void;
-            expandQuery(apiKey: string, query: string, history: any[]): Promise<string>;
+            clearStyleCache: () =>
+              aiModule.contextRetrievalService.clearStyleCache(),
+            expandQuery: (k, q, h) =>
+              aiModule.textGenerationService.expandQuery(k, q, h),
           },
         };
       }
