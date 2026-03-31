@@ -1,5 +1,6 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
+import { cacheService } from "../../services/cache.svelte";
 
 export class VaultLifecycleManager {
   private switchLock: Promise<void> = Promise.resolve();
@@ -84,6 +85,7 @@ export class VaultLifecycleManager {
 
   async deleteVault(id: string) {
     await this.vaultRegistry.deleteVault(id);
+    await cacheService.clearVault(id);
     if (this.getActiveVaultId() === id) {
       this.repository.clear();
       this.assetManager.clear();

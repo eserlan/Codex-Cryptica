@@ -2,6 +2,7 @@ import * as vaultEntities from "./entities";
 import type { LocalEntity, BatchCreateInput } from "./types";
 import type { Entity } from "schema";
 import { uiStore } from "../ui.svelte";
+import { vaultEventBus } from "./events";
 
 export class VaultCrudManager {
   constructor(
@@ -37,6 +38,13 @@ export class VaultCrudManager {
     entities[newEntity.id] = newEntity;
     this.setEntities(entities);
     await this.scheduleSave(newEntity);
+
+    vaultEventBus.emit({
+      type: "BATCH_CREATED",
+      vaultId: this.getActiveVaultId() || "unknown",
+      entities: [newEntity],
+    });
+
     return newEntity.id;
   }
 
@@ -79,6 +87,14 @@ export class VaultCrudManager {
     }
 
     await this.scheduleSave(updated);
+
+    vaultEventBus.emit({
+      type: "ENTITY_UPDATED",
+      vaultId: this.getActiveVaultId() || "unknown",
+      entity: updated,
+      patch: updates,
+    });
+
     return true;
   }
 
@@ -114,6 +130,13 @@ export class VaultCrudManager {
 
       // Save to disk (scheduleSave also updates Dexie cache)
       savePromises.push(this.scheduleSave(merged));
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: merged,
+        patch,
+      });
     }
 
     if (hasChanges) {
@@ -128,7 +151,7 @@ export class VaultCrudManager {
   async deleteEntity(
     id: string,
     vaultDir: FileSystemDirectoryHandle,
-    _activeVaultId: string,
+    activeVaultId: string,
   ): Promise<void> {
     if (this.isGuest()) throw new Error("Cannot delete entities in Guest Mode");
     if (uiStore.isDemoMode) {
@@ -148,6 +171,13 @@ export class VaultCrudManager {
           if (this.onEntityUpdate) this.onEntityUpdate(entity);
         }
       });
+
+      vaultEventBus.emit({
+        type: "ENTITY_DELETED",
+        vaultId: activeVaultId,
+        entityId: id,
+      });
+
       const services = this.getServices();
       if (services) await services.search.remove(id);
     }
@@ -171,6 +201,14 @@ export class VaultCrudManager {
     if (updatedSource) {
       this.setEntities(entities);
       await this.scheduleSave(updatedSource);
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: updatedSource,
+        patch: { connections: updatedSource.connections },
+      });
+
       return true;
     }
     return false;
@@ -194,6 +232,14 @@ export class VaultCrudManager {
     if (updatedSource) {
       this.setEntities(entities);
       await this.scheduleSave(updatedSource);
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: updatedSource,
+        patch: { connections: updatedSource.connections },
+      });
+
       return true;
     }
     return false;
@@ -213,6 +259,14 @@ export class VaultCrudManager {
     if (updatedSource) {
       this.setEntities(entities);
       await this.scheduleSave(updatedSource);
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: updatedSource,
+        patch: { connections: updatedSource.connections },
+      });
+
       return true;
     }
     return false;
@@ -227,6 +281,14 @@ export class VaultCrudManager {
     if (updated) {
       this.setEntities(entities);
       await this.scheduleSave(updated);
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: updated,
+        patch: { labels: updated.labels },
+      });
+
       return true;
     }
     return false;
@@ -242,7 +304,15 @@ export class VaultCrudManager {
       this.setEntities(entities);
       for (const id of modifiedIds) {
         const entity = entities[id];
-        if (entity) await this.scheduleSave(entity);
+        if (entity) {
+          await this.scheduleSave(entity);
+          vaultEventBus.emit({
+            type: "ENTITY_UPDATED",
+            vaultId: this.getActiveVaultId() || "unknown",
+            entity,
+            patch: { labels: entity.labels },
+          });
+        }
       }
     }
     return modifiedIds.length;
@@ -258,7 +328,15 @@ export class VaultCrudManager {
       this.setEntities(entities);
       for (const id of modifiedIds) {
         const entity = entities[id];
-        if (entity) await this.scheduleSave(entity);
+        if (entity) {
+          await this.scheduleSave(entity);
+          vaultEventBus.emit({
+            type: "ENTITY_UPDATED",
+            vaultId: this.getActiveVaultId() || "unknown",
+            entity,
+            patch: { labels: entity.labels },
+          });
+        }
       }
     }
     return modifiedIds.length;
@@ -273,6 +351,14 @@ export class VaultCrudManager {
     if (updated) {
       this.setEntities(entities);
       await this.scheduleSave(updated);
+
+      vaultEventBus.emit({
+        type: "ENTITY_UPDATED",
+        vaultId: this.getActiveVaultId() || "unknown",
+        entity: updated,
+        patch: { labels: updated.labels },
+      });
+
       return true;
     }
     return false;
@@ -292,5 +378,11 @@ export class VaultCrudManager {
     });
 
     await Promise.all(savePromises);
+
+    vaultEventBus.emit({
+      type: "BATCH_CREATED",
+      vaultId: this.getActiveVaultId() || "unknown",
+      entities: created,
+    });
   }
 }
