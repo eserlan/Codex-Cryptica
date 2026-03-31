@@ -41,6 +41,12 @@ vi.mock("../theme.svelte", () => ({
   themeStore: mockThemeStore,
 }));
 
+vi.mock("../../services/cache.svelte", () => ({
+  cacheService: {
+    clearVault: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
 // Mock the whole vault.svelte to avoid circular constructor issues
 vi.mock("../vault.svelte", () => ({
   vault: {
@@ -67,6 +73,7 @@ import { vaultRegistry } from "../vault-registry.svelte";
 import { themeStore } from "../theme.svelte";
 import { canvasRegistry } from "../canvas-registry.svelte";
 import { mapRegistry } from "../map-registry.svelte";
+import { cacheService } from "../../services/cache.svelte";
 
 describe("VaultLifecycleManager", () => {
   let manager: VaultLifecycleManager;
@@ -171,11 +178,12 @@ describe("VaultLifecycleManager", () => {
   });
 
   describe("deleteVault", () => {
-    it("should delete and switch to next available vault", async () => {
+    it("should delete, clear cache and switch to next available vault", async () => {
       (vaultRegistry as any).availableVaults = [{ id: "v2" }];
       await manager.deleteVault("v1");
 
       expect(vaultRegistry.deleteVault).toHaveBeenCalledWith("v1");
+      expect(cacheService.clearVault).toHaveBeenCalledWith("v1");
       expect(vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
     });
   });

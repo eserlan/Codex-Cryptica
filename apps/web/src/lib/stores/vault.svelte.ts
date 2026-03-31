@@ -930,9 +930,6 @@ export class VaultStore {
   }
   async deleteEntity(id: string) {
     if (this.onEntityDelete) this.onEntityDelete(id);
-    if (this.services) {
-      await this.services.search.remove(id);
-    }
 
     if (uiStore.isDemoMode) {
       const updated = { ...this.entities };
@@ -946,12 +943,58 @@ export class VaultStore {
 
     return this.saveQueue.enqueue(lockKey, async () => {
       const vaultHandle = await this.getActiveVaultHandle();
+      const localHandle = await this.getActiveSyncHandle();
+
       if (vaultHandle) {
+        // Resolve path before deletion from memory
+        const entity = this.entities[id];
+        const path = entity?._path || [`${id}.md`];
+
+        // 1. Delete from OPFS (Source of truth)
         await this.crudManager.deleteEntity(
           id,
           vaultHandle,
           this.activeVaultId!,
         );
+
+        // 2. Delete from Local Filesystem (if attached)
+        if (localHandle) {
+          try {
+            const permission = await localHandle.queryPermission({
+              mode: "readwrite",
+            });
+            if (permission === "granted") {
+              const fileName = path[path.length - 1];
+              const dirPath = path.slice(0, -1);
+              let targetDir: FileSystemDirectoryHandle | undefined =
+                localHandle;
+
+              for (const part of dirPath) {
+                targetDir = await targetDir
+                  ?.getDirectoryHandle(part, { create: false })
+                  .catch(() => undefined);
+                if (!targetDir) break;
+              }
+
+              if (targetDir) {
+                await targetDir.removeEntry(fileName, { recursive: true });
+                debugStore.log(
+                  `[VaultStore] Deleted ${path.join("/")} from local filesystem`,
+                );
+              }
+            }
+          } catch (e) {
+            debugStore.warn(
+              `[VaultStore] Failed to delete ${path.join("/")} from local filesystem`,
+              e,
+            );
+          }
+        }
+
+        // 3. CRITICAL: Remove from Dexie cache to prevent "resurrection" on reload
+        if (this.activeVaultId) {
+          await cacheService.remove(`${this.activeVaultId}:${path.join("/")}`);
+        }
       }
     });
   }
@@ -990,23 +1033,12 @@ export class VaultStore {
     await this.crudManager.batchCreateEntities(newEntitiesList);
     // Mark all as loaded and verified since they are fresh.
     // This prevents lazy load clobbering.
-    const createdEntities: LocalEntity[] = [];
     for (const item of newEntitiesList) {
       if ((item as any).id) {
         const id = (item as any).id;
         this._contentLoadedIds.add(id);
         this._contentVerifiedIds.add(id);
-        const ent = this.entities[id];
-        if (ent) createdEntities.push(ent as LocalEntity);
       }
-    }
-
-    if (createdEntities.length > 0) {
-      vaultEventBus.emit({
-        type: "BATCH_CREATED",
-        vaultId: this.activeVaultId ?? "unknown",
-        entities: createdEntities,
-      });
     }
 
     this.broadcastVaultUpdate();

@@ -238,14 +238,14 @@
     role="menu"
     aria-label="Node actions"
     tabindex="-1"
-    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[120px] w-max"
+    class="absolute z-50 bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col"
     style:top="{position.y}px"
     style:left="{position.x}px"
     onkeydown={handleMenuKeydown}
   >
     <button
       role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition whitespace-nowrap"
       onclick={setCentralNode}
       aria-label="Set as Central Node"
     >
@@ -254,7 +254,7 @@
     {#if selectedNodes.length === 2}
       <button
         role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
         onclick={handleConnectSelection}
         aria-label="Connect 2 Nodes"
       >
@@ -264,7 +264,7 @@
     {#if selectedNodes.length > 1}
       <button
         role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
         onclick={handleMerge}
         aria-label="Merge {selectedNodes.length} Nodes"
       >
@@ -273,7 +273,7 @@
     {/if}
     <button
       role="menuitem"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
       onclick={handleBulkLabel}
       aria-label="Apply / Remove Label"
     >
@@ -285,7 +285,7 @@
       bind:this={pickerAnchor}
       role="menuitem"
       data-testid="add-to-canvas-button"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative whitespace-nowrap"
       onmouseenter={showCanvasPicker}
       onmouseleave={hideCanvasPicker}
       onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
@@ -299,7 +299,7 @@
     {#if !vault.isGuest}
       <button
         role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border"
+        class="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition border-t border-theme-border whitespace-nowrap"
         onclick={deleteNodes}
         aria-label="Delete {selectedNodes.length > 1
           ? `${selectedNodes.length} Nodes`
@@ -315,7 +315,7 @@
   {#if canvasPickerOpen}
     <div
       role="none"
-      class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[160px] w-max"
+      class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max"
       style:top="{pickerPosition.y}px"
       style:left="{pickerPosition.x}px"
       onmouseenter={showCanvasPicker}

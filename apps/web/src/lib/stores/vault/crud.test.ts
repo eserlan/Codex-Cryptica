@@ -2,6 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { VaultCrudManager } from "./crud";
 import * as vaultEntities from "./entities";
 import { uiStore } from "../ui.svelte";
+import { vaultEventBus } from "./events";
+
+vi.mock("./events", () => ({
+  vaultEventBus: {
+    emit: vi.fn(),
+  },
+}));
 
 vi.mock("./entities", () => ({
   createEntity: vi.fn(),
@@ -219,7 +226,11 @@ describe("VaultCrudManager", () => {
 
     await manager.deleteEntity("e1", {} as any, "v1");
 
-    expect(mockServices.search.remove).toHaveBeenCalledWith("e1");
+    expect(vaultEventBus.emit).toHaveBeenCalledWith({
+      type: "ENTITY_DELETED",
+      vaultId: "v1",
+      entityId: "e1",
+    });
     expect(scheduleSave).toHaveBeenCalledWith({ id: "other" });
     expect(onEntityUpdate).toHaveBeenCalledWith({ id: "other" });
   });
