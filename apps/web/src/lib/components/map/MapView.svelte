@@ -59,7 +59,10 @@
       vault
         .resolveImageUrl(assetPath)
         .then((url) => {
-          if (canceled) return;
+          if (canceled) {
+            if (url) vault.releaseImageUrl(assetPath);
+            return;
+          }
           if (!url) {
             console.error(
               "[MapView] Failed to resolve image URL for:",
