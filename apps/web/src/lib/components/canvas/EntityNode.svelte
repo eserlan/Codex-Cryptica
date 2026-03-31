@@ -9,8 +9,11 @@
 
   let { data }: NodeProps = $props();
 
-  const entity = $derived(vault.entities[data.entityId as string]);
-  const category = $derived(categories.getCategory(entity?.type || ""));
+  const entityId = $derived(data?.entityId as string | undefined);
+  const entity = $derived(entityId ? vault.entities[entityId] : undefined);
+  const category = $derived(
+    entity?.type ? categories.getCategory(entity.type) : undefined,
+  );
   let imageUrl = $state<string | null>(null);
 
   // Access global state to detect if we are currently connecting anywhere on the canvas
@@ -91,15 +94,15 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="bg-theme-surface border rounded-lg shadow-lg min-w-[200px] max-w-[300px] transition-all group select-none flex flex-col focus:outline-none relative
-    {isConnecting && isHovered && uiStore.connectingNodeId !== data.id
+    {isConnecting && isHovered && uiStore.connectingNodeId !== data?.id
     ? 'border-[3px] border-red-400 ring-4 ring-red-400/50 cursor-crosshair scale-[1.02]'
     : isCtrlPressed && isHovered
       ? 'nodrag border-[3px] border-amber-400 ring-4 ring-amber-400/50 cursor-crosshair'
       : isCtrlPressed
         ? 'nodrag border-theme-border'
         : 'border-theme-border hover:border-theme-primary focus:ring-2 focus:ring-theme-primary'}"
-  style:width={data.width ? `${data.width}px` : "auto"}
-  style:height={data.height ? `${data.height}px` : "auto"}
+  style:width={data?.width ? `${data.width}px` : "auto"}
+  style:height={data?.height ? `${data.height}px` : "auto"}
   ondblclick={onDoubleClick}
   onkeydown={(e) => (e.key === "Enter" || e.key === " ") && onDoubleClick()}
   onmouseenter={() => (isHovered = true)}

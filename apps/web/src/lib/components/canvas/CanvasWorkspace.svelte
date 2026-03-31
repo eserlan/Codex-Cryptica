@@ -94,7 +94,14 @@
   let targetCanvasId = $state<string | null>(null);
   let hasInitialized = $state(false);
 
-  const { screenToFlowPosition } = useSvelteFlow();
+  const svelteFlow = useSvelteFlow();
+  const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
+
+  console.debug("[CanvasWorkspace] Internal initialization started", {
+    engine: !!engine,
+    canvas: !!canvas,
+    svelteFlow: !!svelteFlow,
+  });
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let skipLoadingSaves = 0;
@@ -140,33 +147,40 @@
         const data = untrack(() => vault.canvases[canvasId]);
 
         if (data) {
+          console.debug("[CanvasWorkspace] Mounting canvas data", canvasId, {
+            nodes: data.nodes?.length,
+            edges: data.edges?.length,
+          });
+
           // Pre-load all entity contents for the canvas to ensure descriptions/images show up
-          for (const node of data.nodes) {
+          for (const node of data.nodes || []) {
             vault.loadEntityContent(node.entityId);
           }
 
           skipLoadingSaves = 2; // Skip saves triggered by nodes/edges updates
-          nodes = data.nodes.map((n: CanvasNode) => ({
+          nodes = (data.nodes || []).map((n: CanvasNode) => ({
             id: n.id,
-            type: n.type,
-            position: n.position,
+            type: n.type || "entity",
+            position: n.position || { x: 0, y: 0 },
             data: {
               entityId: n.entityId,
               width: n.width,
               height: n.height,
             },
           }));
-          edges = data.edges.map((e: CanvasEdge) => ({
+          edges = (data.edges || []).map((e: CanvasEdge) => ({
             id: e.id,
             source: e.source,
             target: e.target,
             sourceHandle: e.sourceHandle || null,
             targetHandle: e.targetHandle || null,
-            label: e.label,
+            label: e.label || "",
             type: e.type === "line" || !e.type ? "straight" : (e.type as any),
             style: typeof e.style === "string" ? e.style : undefined,
           })) as any;
+
           hasInitialized = true;
+          console.debug("[CanvasWorkspace] Canvas data mount successful");
         } else {
           nodes = [];
           edges = [];

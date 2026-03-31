@@ -20,13 +20,13 @@
   role="menu"
   aria-label="Add to canvas"
   data-testid="canvas-picker"
-  class="bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden min-w-[200px] w-max"
+  class="bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col"
 >
   {#if noCanvases}
     <button
       role="menuitem"
       data-testid="canvas-picker-create"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition whitespace-nowrap"
       onclick={onCreateNew}
       aria-label="Create New Canvas"
     >
@@ -38,7 +38,7 @@
         role="menuitem"
         data-testid="canvas-picker-item"
         data-canvas-id={canvas.id}
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border first:border-t-0"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border first:border-t-0 whitespace-nowrap"
         onclick={() => canvas.id && onSelect(canvas.id)}
         aria-label="Add to {canvas.name || 'Canvas'}"
       >
@@ -49,7 +49,7 @@
     {#if hasMoreCanvases}
       <button
         role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
         onclick={onChooseFull}
         aria-label="Choose Canvas"
       >
@@ -60,7 +60,7 @@
     <button
       role="menuitem"
       data-testid="canvas-picker-create"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border whitespace-nowrap"
       onclick={onCreateNew}
       aria-label="Create New Canvas"
     >
