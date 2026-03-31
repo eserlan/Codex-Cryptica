@@ -1,5 +1,6 @@
 import type { SerializedGraph } from "../types";
 import { vault } from "../../stores/vault.svelte";
+import { themeStore } from "../../stores/theme.svelte";
 import type { Entity } from "schema";
 import Peer from "peerjs";
 
@@ -24,6 +25,9 @@ export class P2PHostService {
     };
     vault.onBatchUpdate = (updates) => {
       this.broadcastBatchUpdate(updates);
+    };
+    themeStore.onThemeUpdate = (id) => {
+      this.broadcastThemeUpdate(id);
     };
 
     return new Promise((resolve, reject) => {
@@ -120,6 +124,7 @@ export class P2PHostService {
       assets,
       defaultVisibility: vault.defaultVisibility,
       sharedMode: true, // Always force shared mode for guests
+      themeId: themeStore.currentThemeId,
     };
   }
 
@@ -316,10 +321,28 @@ export class P2PHostService {
     });
   }
 
+  private broadcastThemeUpdate(themeId: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting theme update:", themeId);
+
+    const message = {
+      type: "THEME_UPDATE",
+      payload: themeId,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
   stopHosting() {
     vault.onEntityUpdate = undefined;
     vault.onEntityDelete = undefined;
     vault.onBatchUpdate = undefined;
+    themeStore.onThemeUpdate = undefined;
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;

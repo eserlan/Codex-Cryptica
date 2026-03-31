@@ -15,6 +15,7 @@ export class P2PGuestService {
     onEntityUpdate: (entity: any) => void,
     onEntityDelete: (id: string) => void,
     onBatchUpdate: (updates: Record<string, any>) => void,
+    onThemeUpdate: (themeId: string) => void,
   ): Promise<void> {
     if (this.connection?.open && this.connection?.peer === hostId) {
       console.log("[P2P Guest] Already connected to host:", hostId);
@@ -68,6 +69,8 @@ export class P2PGuestService {
             onBatchUpdate(data.payload);
           } else if (data.type === "ENTITY_DELETE") {
             onEntityDelete(data.payload);
+          } else if (data.type === "THEME_UPDATE") {
+            onThemeUpdate(data.payload);
           }
         });
 

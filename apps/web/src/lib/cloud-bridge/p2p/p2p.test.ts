@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { P2PHostService } from "./host-service.svelte";
 import { P2PGuestService } from "./guest-service";
 import { P2PClientAdapter } from "./client-adapter";
@@ -258,6 +258,7 @@ describe("P2P Services", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
+        vi.fn(),
       );
 
       vi.advanceTimersByTime(15000);
@@ -283,6 +284,7 @@ describe("P2P Services", () => {
         vi.fn(),
         vi.fn(),
         vi.fn(),
+        vi.fn(),
       );
       await expect(promise).rejects.toThrow("Peer init error");
     });
@@ -292,6 +294,7 @@ describe("P2P Services", () => {
       const onEntityUpdate = vi.fn();
       const onEntityDelete = vi.fn();
       const onBatchUpdate = vi.fn();
+      const onThemeUpdate = vi.fn();
 
       const connectPromise = guestService.connectToHost(
         "host-id",
@@ -299,6 +302,7 @@ describe("P2P Services", () => {
         onEntityUpdate,
         onEntityDelete,
         onBatchUpdate,
+        onThemeUpdate,
       );
 
       const peerInstance = (guestService as any).peer;
@@ -323,6 +327,9 @@ describe("P2P Services", () => {
 
       mockConn.emit("data", { type: "ENTITY_DELETE", payload: "1" });
       expect(onEntityDelete).toHaveBeenCalledWith("1");
+
+      mockConn.emit("data", { type: "THEME_UPDATE", payload: "cyberpunk" });
+      expect(onThemeUpdate).toHaveBeenCalledWith("cyberpunk");
     });
   });
 
