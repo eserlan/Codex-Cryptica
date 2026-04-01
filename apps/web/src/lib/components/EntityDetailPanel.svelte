@@ -53,6 +53,12 @@
   let activeTab = $state<"status" | "lore" | "inventory" | "map">("status");
   let isSaving = $state(false);
 
+  $effect(() => {
+    if (vault.isGuest && activeTab === "lore") {
+      activeTab = "status";
+    }
+  });
+
   const startEditing = () => {
     if (!entity) return;
     editTitle = entity.title;
@@ -156,7 +162,7 @@
             bind:editStartDate
             bind:editEndDate
           />
-        {:else if activeTab === "lore"}
+        {:else if activeTab === "lore" && !vault.isGuest}
           <DetailLoreTab {entity} {isEditing} bind:editLore />
         {:else if activeTab === "inventory"}
           <div class="text-theme-muted italic text-sm">

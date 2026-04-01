@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { categories } from "$lib/stores/categories.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
 
   let {
@@ -28,7 +29,7 @@
         bind:value={editType}
         class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1.5 text-xs focus:outline-none focus:border-theme-primary w-full rounded"
       >
-        {#each categories.list as cat}
+        {#each categories.list as cat (cat.id)}
           <option value={cat.id}>{cat.label}</option>
         {/each}
       </select>
@@ -52,15 +53,17 @@
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
-    <button
-      data-testid="tab-lore"
-      class={activeTab === "lore"
-        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : "hover:text-theme-text transition"}
-      onclick={() => {
-        activeTab = "lore";
-      }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
-    >
+    {#if !vault.isGuest}
+      <button
+        data-testid="tab-lore"
+        class={activeTab === "lore"
+          ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : "hover:text-theme-text transition"}
+        onclick={() => {
+          activeTab = "lore";
+        }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
+      >
+    {/if}
     <button
       data-testid="tab-inventory"
       class={activeTab === "inventory"

@@ -1,0 +1,87 @@
+import type { Entity } from "schema";
+import type { SerializedGraph } from "../types";
+import type { GuestPresenceStatus, GuestSession } from "../../stores/guest";
+
+type GuestRoster = Record<string, GuestSession>;
+
+export function normalizeGuestName(name: unknown, fallback: string) {
+  if (typeof name !== "string") return fallback;
+  const trimmed = name.trim();
+  if (!trimmed) return fallback;
+  return trimmed.slice(0, 32);
+}
+
+export function deriveGuestPresenceStatus(
+  payloadStatus: unknown,
+  currentEntityId: string | null,
+): GuestPresenceStatus {
+  if (payloadStatus === "viewing") return "viewing";
+  return currentEntityId ? "viewing" : "connected";
+}
+
+export function upsertGuestRoster(
+  current: GuestRoster,
+  peerId: string,
+  patch: Partial<{
+    displayName: string;
+    status: GuestPresenceStatus;
+    currentEntityId: string | null;
+    currentEntityTitle: string | null;
+  }>,
+  now = Date.now(),
+) {
+  const existing = current[peerId];
+  const base = existing ?? {
+    peerId,
+    displayName: peerId,
+    joinedAt: now,
+    lastSeenAt: now,
+    status: "connected" as const,
+    currentEntityId: null,
+    currentEntityTitle: null,
+  };
+
+  return {
+    ...current,
+    [peerId]: {
+      ...base,
+      ...patch,
+      peerId,
+      lastSeenAt: now,
+    },
+  };
+}
+
+export function removeGuestFromRoster(current: GuestRoster, peerId: string) {
+  if (!current[peerId]) return current;
+  const next = { ...current };
+  delete next[peerId];
+  return next;
+}
+
+export function buildSharedGraphPayload(
+  rawEntities: Record<string, Entity>,
+  defaultVisibility: SerializedGraph["defaultVisibility"],
+  themeId: string,
+): SerializedGraph {
+  const entities: Record<string, Entity> = {};
+  const assets: Record<string, string> = {};
+
+  for (const [id, localEntity] of Object.entries(rawEntities)) {
+    const { _fsHandle, ...safeEntity } = localEntity as any;
+    entities[id] = safeEntity;
+
+    if (safeEntity.image && !safeEntity.image.startsWith("http")) {
+      assets[safeEntity.image] = safeEntity.image;
+    }
+  }
+
+  return {
+    version: 1,
+    entities,
+    assets,
+    defaultVisibility,
+    sharedMode: true,
+    themeId,
+  };
+}

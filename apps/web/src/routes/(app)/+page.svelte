@@ -98,6 +98,7 @@
       console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
       vault.status = "loading";
+      vault.selectedEntityId = null;
 
       p2pGuestService
         .connectToHost(
@@ -128,7 +129,7 @@
             if (graph.themeId) {
               import("../../lib/stores/theme.svelte")
                 .then((m) => {
-                  if (m?.themeStore) m.themeStore.setTheme(graph.themeId);
+                  if (m?.themeStore) m.themeStore.previewTheme(graph.themeId);
                 })
                 .catch((err) =>
                   console.error("Failed to load theme store", err),
@@ -165,18 +166,36 @@
             // Real-time theme update from host
             import("../../lib/stores/theme.svelte")
               .then((m) => {
-                if (m?.themeStore) m.themeStore.setTheme(themeId);
+                if (m?.themeStore) m.themeStore.previewTheme(themeId);
               })
               .catch((err) => console.error("Failed to load theme store", err));
           },
+          uiStore.guestUsername ?? undefined,
         )
         .catch((err) => {
           console.error("[Guest Mode] Failed to connect to host:", err);
+          vault.selectedEntityId = null;
+          uiStore.guestUsername = null;
           uiStore.isGuestMode = false;
           vault.status = "error";
           vault.errorMessage = "Failed to connect to shared campaign.";
         });
     }
+  });
+
+  $effect(() => {
+    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
+      return;
+    }
+
+    const selectedId = vault.selectedEntityId;
+    p2pGuestService.updateGuestStatus({
+      status: selectedId ? "viewing" : "connected",
+      currentEntityId: selectedId,
+      currentEntityTitle: selectedId
+        ? (vault.entities[selectedId]?.title ?? selectedId)
+        : null,
+    });
   });
 
   onMount(async () => {

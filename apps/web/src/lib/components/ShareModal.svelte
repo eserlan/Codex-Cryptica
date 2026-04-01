@@ -1,5 +1,9 @@
 <script lang="ts">
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import {
+    buildP2PShareLink,
+    copyTextToClipboard,
+  } from "$lib/utils/share-link";
 
   let { close }: { close: () => void } = $props();
 
@@ -10,20 +14,20 @@
   let p2pLink = $state<string | null>(null);
   let p2pCopied = $state(false);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    p2pCopied = true;
-    setTimeout(() => (p2pCopied = false), 2000);
-  };
-
   const handleP2PStart = async () => {
     p2pLoading = true;
     try {
       const peerId = await p2pHost.startHosting();
-      const url = new URL(window.location.origin + window.location.pathname);
-      // Use p2p- prefix to routing
-      url.searchParams.set("shareId", `p2p-${peerId}`);
-      p2pLink = url.toString();
+      p2pLink = buildP2PShareLink(
+        window.location.origin,
+        window.location.pathname,
+        peerId,
+      );
+      const copied = await copyTextToClipboard(p2pLink, navigator.clipboard);
+      p2pCopied = copied;
+      if (copied) {
+        setTimeout(() => (p2pCopied = false), 2000);
+      }
     } catch (err) {
       console.error(err);
       error = "Failed to start P2P session";
@@ -87,7 +91,16 @@
                 onclick={(e) => e.currentTarget.select()}
               />
               <button
-                onclick={() => copyToClipboard(p2pLink!)}
+                onclick={async () => {
+                  const copied = await copyTextToClipboard(
+                    p2pLink!,
+                    navigator.clipboard,
+                  );
+                  p2pCopied = copied;
+                  if (copied) {
+                    setTimeout(() => (p2pCopied = false), 2000);
+                  }
+                }}
                 class="px-4 py-1 border rounded text-xs transition-colors {p2pCopied
                   ? 'bg-cyan-500 border-cyan-400 text-black font-bold'
                   : 'bg-cyan-900/30 border-cyan-800 text-cyan-400 hover:bg-cyan-800 hover:text-white'}"
