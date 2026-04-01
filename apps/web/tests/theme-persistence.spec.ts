@@ -8,9 +8,11 @@ test.describe("Campaign-Specific Theme Persistence", () => {
       localStorage.setItem("codex_skip_landing", "true");
     });
 
-    page.on("console", (msg) => {
-      console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
-    });
+    if (process.env.PW_DEBUG_CONSOLE === "1") {
+      page.on("console", (msg) => {
+        console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
+      });
+    }
 
     await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).vault?.isInitialized);

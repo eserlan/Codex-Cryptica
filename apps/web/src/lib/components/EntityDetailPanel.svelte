@@ -12,11 +12,17 @@
   import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
+  import {
+    createEntityDetailTabIds,
+    type EntityDetailTab,
+  } from "./entity-detail/detail-tabs";
 
   let { entity: _entity, onClose } = $props<{
     entity: Entity | null;
     onClose: () => void;
   }>();
+
+  const tabInstanceId = $props.id();
 
   // We re-derive the entity from the vault store directly to ensure
   // we pick up reactive updates to its content/lore fields after
@@ -50,8 +56,9 @@
   let editStartDate = $state<Entity["start_date"]>();
   let editEndDate = $state<Entity["end_date"]>();
 
-  let activeTab = $state<"status" | "lore" | "inventory" | "map">("status");
+  let activeTab = $state<EntityDetailTab>("status");
   let isSaving = $state(false);
+  const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
 
   const startEditing = () => {
     if (!entity) return;
@@ -143,28 +150,65 @@
       >
         <DetailImage {entity} {isEditing} bind:editImage />
 
-        <DetailTabs {entity} bind:activeTab {isEditing} bind:editType />
+        <DetailTabs
+          {entity}
+          bind:activeTab
+          {isEditing}
+          bind:editType
+          idPrefix={tabInstanceId}
+        />
       </div>
 
       <div class="p-4 md:p-6 flex-1">
-        {#if activeTab === "status"}
-          <DetailStatusTab
-            {entity}
-            {isEditing}
-            {editType}
-            bind:editContent
-            bind:editStartDate
-            bind:editEndDate
-          />
-        {:else if activeTab === "lore"}
-          <DetailLoreTab {entity} {isEditing} bind:editLore />
-        {:else if activeTab === "inventory"}
-          <div class="text-theme-muted italic text-sm">
-            Inventory coming soon...
-          </div>
-        {:else if activeTab === "map"}
-          <DetailMapTab {entity} />
-        {/if}
+        <div
+          role="tabpanel"
+          id={panelIds.status}
+          aria-labelledby={tabIds.status}
+          hidden={activeTab !== "status"}
+        >
+          {#if activeTab === "status"}
+            <DetailStatusTab
+              {entity}
+              {isEditing}
+              {editType}
+              bind:editContent
+              bind:editStartDate
+              bind:editEndDate
+            />
+          {/if}
+        </div>
+        <div
+          role="tabpanel"
+          id={panelIds.lore}
+          aria-labelledby={tabIds.lore}
+          hidden={activeTab !== "lore"}
+        >
+          {#if activeTab === "lore"}
+            <DetailLoreTab {entity} {isEditing} bind:editLore />
+          {/if}
+        </div>
+        <div
+          role="tabpanel"
+          id={panelIds.inventory}
+          aria-labelledby={tabIds.inventory}
+          hidden={activeTab !== "inventory"}
+        >
+          {#if activeTab === "inventory"}
+            <div class="text-theme-muted italic text-sm">
+              Inventory coming soon...
+            </div>
+          {/if}
+        </div>
+        <div
+          role="tabpanel"
+          id={panelIds.map}
+          aria-labelledby={tabIds.map}
+          hidden={activeTab !== "map"}
+        >
+          {#if activeTab === "map"}
+            <DetailMapTab {entity} />
+          {/if}
+        </div>
       </div>
     </div>
 

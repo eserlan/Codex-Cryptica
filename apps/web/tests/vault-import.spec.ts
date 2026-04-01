@@ -372,11 +372,17 @@ test.describe("Vault Import E2E", () => {
                 }
               }
 
-              // Force vault store to notify subscribers
-              v.activeVaultId = activeId;
-              v.vaultName = "My Local Vault";
-              v.entities = { ...v.repository.entities };
-              v.allEntities = Object.values(v.entities);
+              // Inform the registry about the active vault via its API if available
+              if (
+                vaultRegistry &&
+                typeof (vaultRegistry as any).setActiveVault === "function" &&
+                activeId
+              ) {
+                (vaultRegistry as any).setActiveVault(activeId);
+              }
+
+              // Re-assign repository.entities to trigger derived updates in the vault store
+              v.repository.entities = { ...fakeEntities };
               v.status = "idle";
               v.isInitialized = true;
 

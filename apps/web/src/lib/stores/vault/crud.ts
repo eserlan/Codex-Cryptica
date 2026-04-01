@@ -87,7 +87,6 @@ export class VaultCrudManager {
   async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
-    console.log("[VaultCrud] batchUpdate called with:", Object.keys(updates));
     let hasChanges = false;
     const currentEntities = this.getEntities();
     const newEntities = { ...currentEntities };

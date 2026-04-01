@@ -49,10 +49,6 @@ class UIStore {
       if (saved !== null) {
         this.skipWelcomeScreen = saved === "true";
       }
-      console.log(
-        "[UIStore] Constructor - skipWelcomeScreen:",
-        this.skipWelcomeScreen,
-      );
 
       const lite = localStorage.getItem("codex_lite_mode");
       if (lite !== null) {

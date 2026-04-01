@@ -1,5 +1,10 @@
 import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
-console.error("[ThemeStore] Script executing");
+if (
+  import.meta.env.DEV ||
+  (typeof window !== "undefined" && (window as any).__E2E__)
+) {
+  console.error("[ThemeStore] Script executing");
+}
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
@@ -153,12 +158,6 @@ export class ThemeStore {
 
   async loadForVault(vaultId: string) {
     if (!browser || this.uiStore.isDemoMode) return;
-    console.error(
-      "[ThemeStore] Loading for vault:",
-      vaultId,
-      "current:",
-      this.currentThemeId,
-    );
 
     this.previewThemeId = null; // Clear any preview on vault switch
 
@@ -166,7 +165,6 @@ export class ThemeStore {
       // Priority 1: OPFS (Vault Source of Truth)
       const opfsTheme = await this.storage.loadFromDisk(vaultId);
       if (opfsTheme && THEMES[opfsTheme]) {
-        console.error("[ThemeStore] Found in OPFS:", opfsTheme);
         if (this.currentThemeId !== opfsTheme) {
           this.currentThemeId = opfsTheme;
         }
@@ -178,7 +176,6 @@ export class ThemeStore {
       // Priority 2: IndexedDB (Local Cache)
       const stored = await this.storage.loadFromCache(vaultId);
       if (stored && THEMES[stored]) {
-        console.error("[ThemeStore] Found in IDB:", stored);
         if (this.currentThemeId !== stored) {
           this.currentThemeId = stored;
         }
@@ -188,7 +185,6 @@ export class ThemeStore {
       }
 
       // Fallback: Reset to default for new/empty vaults
-      console.error("[ThemeStore] Resetting to default for vault:", vaultId);
       if (this.currentThemeId !== DEFAULT_THEME.id) {
         this.currentThemeId = DEFAULT_THEME.id;
         this.storage.saveLocal(DEFAULT_THEME.id);

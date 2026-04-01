@@ -258,7 +258,7 @@ export class NodeMergeService {
           );
           const regex = new RegExp(`\\[\\[${escapedTitle}\\]\\]`, "g");
           if (new RegExp(`\\[\\[${escapedTitle}\\]\\]`, "g").test(newContent)) {
-            newContent = newContent.replace(regex, `[[${targetTitle}]]`);
+            newContent = newContent.replace(regex, () => `[[${targetTitle}]]`);
             contentModified = true;
           }
         }

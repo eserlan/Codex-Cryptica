@@ -9,9 +9,11 @@ test.describe("Node Merging", () => {
       localStorage.setItem("codex_skip_landing", "true");
     });
 
-    page.on("console", (msg) => {
-      console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
-    });
+    if (process.env.PWDEBUG || process.env.DEBUG_E2E_LOGS) {
+      page.on("console", (msg) => {
+        console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
+      });
+    }
 
     await page.goto("/");
     // Wait for vault to initialize

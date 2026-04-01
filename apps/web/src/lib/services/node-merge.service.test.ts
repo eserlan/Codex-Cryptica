@@ -279,5 +279,25 @@ describe("NodeMergeService", () => {
         service.updateBacklinks(["s"], "t"),
       ).resolves.toBeUndefined();
     });
+
+    it("should preserve dollar signs in target titles when rewriting wikilinks", async () => {
+      vault.entities["t"] = { id: "t", title: "Cost $1" } as any;
+      vault.entities["s"] = { id: "s", title: "Source" } as any;
+      vault.entities["o"] = {
+        id: "o",
+        title: "Other",
+        content: "See [[Source]] for details.",
+      } as any;
+
+      await service.updateBacklinks(["s"], "t");
+
+      expect(vault.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          o: expect.objectContaining({
+            content: "See [[Cost $1]] for details.",
+          }),
+        }),
+      );
+    });
   });
 });
