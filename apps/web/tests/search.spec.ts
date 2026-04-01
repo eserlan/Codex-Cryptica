@@ -241,6 +241,49 @@ test.describe("Fuzzy Search", () => {
     expect(url).not.toContain("file=");
   });
 
+  test("selecting a searched entity zooms the graph to level 2", async ({
+    page,
+  }) => {
+    await page.goto("http://localhost:5173/");
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
+      timeout: 20000,
+    });
+
+    await page.keyboard.press("Control+k");
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
+
+    await page.getByPlaceholder("Search notes...").fill("Note");
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" });
+    await expect(resultItem).toBeVisible();
+
+    await resultItem.click();
+
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+
+    await page.waitForFunction(
+      () => {
+        const cy = (window as any).cy;
+        return cy && Math.abs(cy.zoom() - 2) < 0.15;
+      },
+      null,
+      { timeout: 10000 },
+    );
+
+    const zoom = await page.evaluate(() => (window as any).cy?.zoom());
+    expect(zoom).toBeGreaterThan(1.8);
+    expect(zoom).toBeLessThan(2.2);
+  });
+
   test("shows recent searches from localStorage when opening with empty query", async ({
     page,
   }) => {
