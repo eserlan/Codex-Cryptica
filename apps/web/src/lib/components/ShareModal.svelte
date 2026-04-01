@@ -1,8 +1,8 @@
 <script lang="ts">
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import {
-    buildP2PShareLink,
     copyTextToClipboard,
+    startShareSession,
   } from "$lib/utils/share-link";
 
   let { close }: { close: () => void } = $props();
@@ -17,17 +17,21 @@
   const handleP2PStart = async () => {
     p2pLoading = true;
     try {
-      const peerId = await p2pHost.startHosting();
-      p2pLink = buildP2PShareLink(
-        window.location.origin,
-        window.location.pathname,
-        peerId,
-      );
-      const copied = await copyTextToClipboard(p2pLink, navigator.clipboard);
-      p2pCopied = copied;
-      if (copied) {
-        setTimeout(() => (p2pCopied = false), 2000);
-      }
+      await startShareSession({
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        clipboard: navigator.clipboard,
+        startHosting: p2pHost.startHosting.bind(p2pHost),
+        onLink: (shareLink) => {
+          p2pLink = shareLink;
+        },
+        onCopied: (copied) => {
+          p2pCopied = copied;
+          if (copied) {
+            setTimeout(() => (p2pCopied = false), 2000);
+          }
+        },
+      });
     } catch (err) {
       console.error(err);
       error = "Failed to start P2P session";

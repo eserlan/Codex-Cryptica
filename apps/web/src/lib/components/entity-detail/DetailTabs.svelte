@@ -5,7 +5,8 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import {
     createEntityDetailTabIds,
-    getNextEntityDetailTab,
+    getNextEntityDetailTabInList,
+    entityDetailTabs,
     type EntityDetailTab,
   } from "./detail-tabs";
 
@@ -25,6 +26,11 @@
 
   let tabIds = $derived.by(() => createEntityDetailTabIds(idPrefix).tabIds);
   let panelIds = $derived.by(() => createEntityDetailTabIds(idPrefix).panelIds);
+  let visibleTabs = $derived.by(() =>
+    vault.isGuest
+      ? entityDetailTabs.filter((tab) => tab !== "lore")
+      : entityDetailTabs,
+  );
 
   const handleTabKeydown = (event: KeyboardEvent) => {
     if (
@@ -37,7 +43,11 @@
     }
 
     event.preventDefault();
-    const nextTab = getNextEntityDetailTab(activeTab, event.key);
+    const nextTab = getNextEntityDetailTabInList(
+      visibleTabs,
+      activeTab,
+      event.key,
+    );
     activeTab = nextTab;
     document.getElementById(tabIds[nextTab])?.focus();
   };

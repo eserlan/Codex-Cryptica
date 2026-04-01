@@ -46,6 +46,24 @@ describe("setupGraphEvents", () => {
     expect(mockElements.removeClass).toHaveBeenCalledWith("lod-medium");
   });
 
+  it("should register a double-click node handler", () => {
+    const onNodeDoubleTap = vi.fn();
+    setupGraphEvents(mockCy as unknown as Core, { onNodeDoubleTap });
+
+    const doubleClickHandler = mockCy.on.mock.calls.find(
+      (call: any) => call[0] === "dblclick dbltap",
+    )[2];
+
+    doubleClickHandler({ target: { id: () => "node-1" } });
+
+    expect(onNodeDoubleTap).toHaveBeenCalledWith(
+      "node-1",
+      expect.objectContaining({
+        id: expect.any(Function),
+      }),
+    );
+  });
+
   it("should apply lod-medium classes at medium zoom", () => {
     setupGraphEvents(mockCy as unknown as Core, {});
 

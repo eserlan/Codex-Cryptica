@@ -9,7 +9,7 @@
 
 ### User Story 1 - Maintain Reliable Entity Management (Priority: P1)
 
-As a user, I want to be able to view and edit entity metadata (title, content, lore, dates, images) exactly as I did before the refactor, so that my workflow remains uninterrupted.
+As a campaign owner, I want to be able to view and edit entity metadata (title, content, lore, dates, images) exactly as I did before the refactor, so that my workflow remains uninterrupted.
 
 **Why this priority**: Core functionality must remain stable during internal architectural changes.
 
@@ -19,12 +19,13 @@ As a user, I want to be able to view and edit entity metadata (title, content, l
 
 1. **Given** a selected entity, **When** I open Zen Mode, **Then** I should see the correct title, category, and content rendered.
 2. **Given** I am in Edit mode, **When** I change the title and click "Save", **Then** the vault should update and the new title should be displayed in View mode.
+3. **Given** I am a guest viewing a shared campaign, **When** I open Zen Mode, **Then** chronicle content should remain visible but GM-only lore should be hidden.
 
 ---
 
 ### User Story 2 - Seamless Content Sharing (Priority: P2)
 
-As a user, I want to copy the entity's chronicle and lore to my clipboard with all formatting and images preserved, so that I can easily share or document my world outside the application.
+As a campaign owner, I want to copy the entity's chronicle and lore to my clipboard with all formatting and images preserved, so that I can easily share or document my world outside the application.
 
 **Why this priority**: The "Copy to Clipboard" feature is a high-value utility that involves complex multi-format processing.
 
@@ -48,6 +49,19 @@ As a user, I want to view entity images in a full-screen lightbox with proper fo
 
 1. **Given** an entity with an image, **When** I click the image, **Then** a full-screen lightbox should open.
 2. **Given** the lightbox is open, **When** I press "Escape", **Then** the lightbox should close and return focus to the trigger button.
+
+### User Story 4 - Guest-Safe Zen Viewing (Priority: P2)
+
+As a guest in a shared campaign, I want Zen Mode to hide GM-only lore while still showing the rest of the entity content, so that I only see information intended for shared viewing.
+
+**Why this priority**: Shared sessions should preserve the owner's private notes while still giving guests a polished read-only Zen experience.
+
+**Independent Test**: Can be tested by opening a shared campaign as a guest and verifying the chronicle remains visible while the lore section is absent.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am viewing a shared campaign as a guest, **When** I open Zen Mode, **Then** I should see the chronicle and media sections.
+2. **Given** I am viewing a shared campaign as a guest, **When** I open Zen Mode, **Then** the lore section should not be shown.
 
 ---
 

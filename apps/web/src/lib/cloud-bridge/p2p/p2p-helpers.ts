@@ -85,3 +85,20 @@ export function buildSharedGraphPayload(
     themeId,
   };
 }
+
+export function buildGuestPresencePayload(options: {
+  selectedEntityId: string | null;
+  zenModeEntityId: string | null;
+  entities: Record<string, Pick<Entity, "title">>;
+}) {
+  const currentEntityId =
+    options.selectedEntityId ?? options.zenModeEntityId ?? null;
+
+  return {
+    status: currentEntityId ? ("viewing" as const) : ("connected" as const),
+    currentEntityId,
+    currentEntityTitle: currentEntityId
+      ? (options.entities[currentEntityId]?.title ?? currentEntityId)
+      : null,
+  };
+}

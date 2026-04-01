@@ -11,6 +11,7 @@
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
   import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
+  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
   const jsonLdScript = $derived(
     `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
@@ -95,7 +96,6 @@
       uiStore.guestUsername
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
-      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
       vault.status = "loading";
       vault.selectedEntityId = null;
@@ -104,10 +104,6 @@
         .connectToHost(
           peerId,
           (graph) => {
-            console.log("[Guest Page] Received graph data:", {
-              entityCount: Object.keys(graph.entities).length,
-              defaultVisibility: graph.defaultVisibility,
-            });
             // Update vault entities with received data
             vault.repository.entities = Object.fromEntries(
               Object.entries(graph.entities).map(
@@ -188,13 +184,17 @@
       return;
     }
 
-    const selectedId = vault.selectedEntityId;
+    const { status, currentEntityId, currentEntityTitle } =
+      buildGuestPresencePayload({
+        selectedEntityId: vault.selectedEntityId,
+        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
+        entities: vault.entities,
+      });
+
     p2pGuestService.updateGuestStatus({
-      status: selectedId ? "viewing" : "connected",
-      currentEntityId: selectedId,
-      currentEntityTitle: selectedId
-        ? (vault.entities[selectedId]?.title ?? selectedId)
-        : null,
+      status,
+      currentEntityId,
+      currentEntityTitle,
     });
   });
 

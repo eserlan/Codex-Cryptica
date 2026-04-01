@@ -90,6 +90,8 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+  let nodeSelectTimer: number | null = null;
+  const NODE_SELECT_DELAY_MS = 300;
 
   let editingEdge = $state<{
     source: string;
@@ -145,6 +147,13 @@
       cy?.$(".selected-source").removeClass("selected-source");
     }
   });
+
+  const clearNodeSelectTimer = () => {
+    if (nodeSelectTimer !== null) {
+      clearTimeout(nodeSelectTimer);
+      nodeSelectTimer = null;
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     const target = document.activeElement;
@@ -263,8 +272,17 @@
                   ui.toggleConnectMode();
                 }
               } else {
-                selectedId = id;
+                clearNodeSelectTimer();
+                nodeSelectTimer = window.setTimeout(() => {
+                  selectedId = id;
+                  nodeSelectTimer = null;
+                }, NODE_SELECT_DELAY_MS);
               }
+            },
+            onNodeDoubleTap: (id) => {
+              clearNodeSelectTimer();
+              ui.openZenMode(id);
+              selectedId = null;
             },
             onEdgeTap: (data) => {
               editingEdge = {
@@ -275,6 +293,7 @@
               };
             },
             onBackgroundTap: () => {
+              clearNodeSelectTimer();
               selectedId = null;
               if (ui.isConnecting) ui.toggleConnectMode();
             },
@@ -313,6 +332,7 @@
       cleanupEvents();
       cleanupEvents = undefined;
     }
+    clearNodeSelectTimer();
     if (layoutManager) {
       layoutManager.stop();
       layoutManager = undefined;
