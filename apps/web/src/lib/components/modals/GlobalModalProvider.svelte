@@ -8,16 +8,6 @@
   import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
   import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
 
-  // Direct imports instead of lazy loading for better E2E reliability
-  import ZenModeModal from "./ZenModeModal.svelte";
-  import TourOverlay from "$lib/components/help/TourOverlay.svelte";
-  import MergeNodesDialog from "$lib/components/dialogs/MergeNodesDialog.svelte";
-  import BulkLabelDialog from "$lib/components/dialogs/BulkLabelDialog.svelte";
-  import DiceModal from "$lib/components/dice/DiceModal.svelte";
-  import OracleWindow from "$lib/components/oracle/OracleWindow.svelte";
-  import DebugConsole from "$lib/components/debug/DebugConsole.svelte";
-  import CanvasSelectionModal from "$lib/components/canvas/CanvasSelectionModal.svelte";
-
   let {
     isMobileMenuOpen = $bindable(false),
   }: {
@@ -30,47 +20,93 @@
     import.meta.env.DEV ||
     (typeof window !== "undefined" && (window as any).__E2E__) ||
     import.meta.env.VITE_STAGING === "true";
+
+  const loadModal = async (
+    loader: () => Promise<{ default: any }>,
+    name: string,
+  ) => {
+    try {
+      const module = await loader();
+      return module.default;
+    } catch (err) {
+      console.error(`[GlobalModalProvider] Failed to load ${name}:`, err);
+      return null;
+    }
+  };
 </script>
 
 <SearchModal />
 
 {#if !isLoginRoute}
-  <OracleWindow />
+  {#await loadModal(() => import("$lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
+    {#if OracleWindow}
+      <OracleWindow />
+    {/if}
+  {/await}
 
   {#if browser}
     <SettingsModal />
 
     {#if uiStore.showZenMode}
-      <ZenModeModal />
+      {#await loadModal(() => import("./ZenModeModal.svelte"), "ZenModeModal") then ZenModeModal}
+        {#if ZenModeModal}
+          <ZenModeModal />
+        {/if}
+      {/await}
     {/if}
 
     {#if helpStore.activeTour}
-      <TourOverlay />
+      {#await loadModal(() => import("$lib/components/help/TourOverlay.svelte"), "TourOverlay") then TourOverlay}
+        {#if TourOverlay}
+          <TourOverlay />
+        {/if}
+      {/await}
     {/if}
 
     <MobileMenu bind:isOpen={isMobileMenuOpen} />
 
     {#if uiStore.mergeDialog.open}
-      <MergeNodesDialog
-        isOpen={uiStore.mergeDialog.open}
-        sourceNodeIds={uiStore.mergeDialog.sourceIds}
-        onClose={() => uiStore.closeMergeDialog()}
-      />
+      {#await loadModal(() => import("$lib/components/dialogs/MergeNodesDialog.svelte"), "MergeNodesDialog") then MergeNodesDialog}
+        {#if MergeNodesDialog}
+          <MergeNodesDialog
+            isOpen={uiStore.mergeDialog.open}
+            sourceNodeIds={uiStore.mergeDialog.sourceIds}
+            onClose={() => uiStore.closeMergeDialog()}
+          />
+        {/if}
+      {/await}
     {/if}
 
     {#if uiStore.bulkLabelDialog.open}
-      <BulkLabelDialog
-        isOpen={uiStore.bulkLabelDialog.open}
-        entityIds={uiStore.bulkLabelDialog.entityIds}
-        onClose={() => uiStore.closeBulkLabelDialog()}
-      />
+      {#await loadModal(() => import("$lib/components/dialogs/BulkLabelDialog.svelte"), "BulkLabelDialog") then BulkLabelDialog}
+        {#if BulkLabelDialog}
+          <BulkLabelDialog
+            isOpen={uiStore.bulkLabelDialog.open}
+            entityIds={uiStore.bulkLabelDialog.entityIds}
+            onClose={() => uiStore.closeBulkLabelDialog()}
+          />
+        {/if}
+      {/await}
     {/if}
 
-    <DiceModal />
-    <CanvasSelectionModal />
+    {#await loadModal(() => import("$lib/components/dice/DiceModal.svelte"), "DiceModal") then DiceModal}
+      {#if DiceModal}
+        <DiceModal />
+      {/if}
+    {/await}
+
+    {#await loadModal(() => import("$lib/components/canvas/CanvasSelectionModal.svelte"), "CanvasSelectionModal") then CanvasSelectionModal}
+      {#if CanvasSelectionModal}
+        <CanvasSelectionModal />
+      {/if}
+    {/await}
 
     {#if isSpecialEnv}
-      <DebugConsole />
+      {#await loadModal(() => import("$lib/components/debug/DebugConsole.svelte"), "DebugConsole") then DebugConsole}
+        {#if DebugConsole}
+          <DebugConsole />
+        {/if}
+      {/await}
     {/if}
   {/if}
 {/if}
