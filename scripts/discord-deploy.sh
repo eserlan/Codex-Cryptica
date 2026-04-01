@@ -81,6 +81,32 @@ else
 ${DESCRIPTION}"
 fi
 
+if [ "$TYPE" == "release" ]; then
+  RELEASE_BODY=""
+
+  if command -v gh >/dev/null 2>&1; then
+    RELEASE_BODY=$(gh release view --json body --jq '.body' 2>/dev/null || true)
+  fi
+
+  if [ -n "$RELEASE_BODY" ]; then
+    RELEASE_BODY=$(printf '%s' "$RELEASE_BODY" | sed '/^<!--/d' | sed '/^$/N;/^\n$/D')
+    if [ ${#RELEASE_BODY} -gt 1600 ]; then
+      RELEASE_BODY="${RELEASE_BODY:0:1600}... [Truncated]"
+    fi
+
+    MESSAGE="${EMOJI} **${TITLE}**
+
+**Environment:** ${TYPE}
+**URL:** ${PAGE_URL:-"https://github.com/${GITHUB_REPOSITORY:-eserlan/Codex-Cryptica}/releases/latest"}
+**Triggered by:** \`${REAL_HASH}\` (**${COMMIT_AUTHOR}**)
+
+**Release Notes:**
+${RELEASE_BODY}
+
+${DESCRIPTION}"
+  fi
+fi
+
 # Use jq -c to safely construct compact JSON payload
 PAYLOAD=$(jq -nc --arg content "$MESSAGE" '{content: $content}')
 
