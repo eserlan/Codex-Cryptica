@@ -142,6 +142,14 @@ async function githubRequest(method, url, token, body) {
   return response.json();
 }
 
+function isLabelWritePermissionError(error) {
+  return (
+    error instanceof Error &&
+    (error.message.includes("Resource not accessible by integration") ||
+      error.message.includes("(403)"))
+  );
+}
+
 async function listPullRequestFiles(repo, pullNumber, token) {
   const files = [];
   let page = 1;
@@ -169,19 +177,39 @@ async function listIssueLabels(repo, issueNumber, token) {
 async function removeLabel(repo, issueNumber, label, token) {
   const encoded = encodeURIComponent(label);
   const url = `https://api.github.com/repos/${repo}/issues/${issueNumber}/labels/${encoded}`;
-  await githubRequest("DELETE", url, token);
+  try {
+    await githubRequest("DELETE", url, token);
+    return true;
+  } catch (error) {
+    if (isLabelWritePermissionError(error)) {
+      console.warn(`Skipping label removal for #${issueNumber} (${label}): ${error.message}`);
+      return false;
+    }
+
+    throw error;
+  }
 }
 
 async function addLabels(repo, issueNumber, labels, token) {
   if (labels.length === 0) {
-    return;
+    return true;
   }
 
   const url = `https://api.github.com/repos/${repo}/issues/${issueNumber}/labels`;
-  await githubRequest("POST", url, token, { labels });
+  try {
+    await githubRequest("POST", url, token, { labels });
+    return true;
+  } catch (error) {
+    if (isLabelWritePermissionError(error)) {
+      console.warn(`Skipping label add for #${issueNumber} (${labels.join(", ")}): ${error.message}`);
+      return false;
+    }
+
+    throw error;
+  }
 }
 
-async function main() {
+export async function main() {
   const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
   const eventPath = process.env.GITHUB_EVENT_PATH;
   const repo = process.env.GITHUB_REPOSITORY;
@@ -214,15 +242,25 @@ async function main() {
   const currentLabels = await listIssueLabels(repo, pullRequest.number, token);
   const managedCurrentLabels = currentLabels.filter((label) => MANAGED_LABELS.includes(label));
   const currentSet = new Set(currentLabels);
+  let labelWritesSkipped = false;
 
   for (const label of managedCurrentLabels) {
     if (!desiredLabels.includes(label)) {
-      await removeLabel(repo, pullRequest.number, label, token);
+      const removed = await removeLabel(repo, pullRequest.number, label, token);
+      labelWritesSkipped ||= !removed;
     }
   }
 
   const labelsToAdd = desiredLabels.filter((label) => !currentSet.has(label));
-  await addLabels(repo, pullRequest.number, labelsToAdd, token);
+  const added = await addLabels(repo, pullRequest.number, labelsToAdd, token);
+  labelWritesSkipped ||= !added;
+
+  if (labelWritesSkipped) {
+    console.warn(
+      `Label sync skipped for #${pullRequest.number} because the workflow token cannot mutate labels.`,
+    );
+    return;
+  }
 
   console.log(
     desiredLabels.length > 0
@@ -237,4 +275,3 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.exit(1);
   });
 }
-
