@@ -95,7 +95,9 @@
       uiStore.guestUsername
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
+      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
+      vault.status = "loading";
 
       p2pGuestService
         .connectToHost(
@@ -122,6 +124,15 @@
             );
             if (graph.defaultVisibility) {
               vault.defaultVisibility = graph.defaultVisibility;
+            }
+            if (graph.themeId) {
+              import("../../lib/stores/theme.svelte")
+                .then((m) => {
+                  if (m?.themeStore) m.themeStore.setTheme(graph.themeId);
+                })
+                .catch((err) =>
+                  console.error("Failed to load theme store", err),
+                );
             }
             // Force shared mode for guests to ensure Fog of War is active
             import("../../lib/stores/ui.svelte")
