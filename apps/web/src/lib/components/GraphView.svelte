@@ -90,6 +90,7 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+  let findNodeCounter = $derived(ui.findNodeCounter);
 
   let editingEdge = $state<{
     source: string;
@@ -432,6 +433,21 @@
           );
         }
       }
+    }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
+    const findCounter = findNodeCounter;
+    if (!currentCy || !selectedId) return;
+
+    const node = currentCy.$id(selectedId);
+    if (node.length === 0) return;
+
+    if (findCounter >= 0) {
+      untrack(() => {
+        currentCy.center(node);
+      });
     }
   });
 

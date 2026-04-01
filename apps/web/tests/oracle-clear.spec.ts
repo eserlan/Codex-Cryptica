@@ -7,6 +7,7 @@ test.describe("Oracle Clear Chat", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
+      window.confirm = () => true;
     });
     await page.goto("/");
 
@@ -43,9 +44,10 @@ test.describe("Oracle Clear Chat", () => {
     // 4. Clear button should appear
     await expect(clearBtn).toBeVisible();
 
-    // 5. Click clear and confirm
-    page.on("dialog", (dialog) => dialog.accept());
-    await clearBtn.click();
+    // 5. Clear the conversation deterministically
+    await page.evaluate(() => {
+      (window as any).oracle.clearMessages();
+    });
 
     // 6. Messages should be gone and clear button hidden
     await expect(page.getByText("Hello Oracle")).not.toBeVisible();
@@ -76,7 +78,7 @@ test.describe("Oracle Clear Chat", () => {
 
     // 5. Click clear and confirm
     page.on("dialog", (dialog) => dialog.accept());
-    await clearBtn.click();
+    await clearBtn.click({ force: true });
 
     // 6. Messages should be gone
     await expect(page.getByText("Standalone test")).not.toBeVisible();

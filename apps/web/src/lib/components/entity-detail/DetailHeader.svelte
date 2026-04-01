@@ -34,6 +34,19 @@
       sharedMode: ui.sharedMode,
     } as any);
   });
+
+  const handleFindInGraph = () => {
+    ui.findInGraph();
+
+    const cy = (window as any).cy;
+    const nodeId = vault.selectedEntityId;
+    if (!cy || !nodeId) return;
+
+    const node = cy.$id(nodeId);
+    if (node.length > 0) {
+      cy.center(node);
+    }
+  };
 </script>
 
 {#if isObscured}
@@ -88,7 +101,7 @@
       {#if !isEditing}
         {#if isGraphView}
           <button
-            onclick={() => ui.findInGraph()}
+            onclick={handleFindInGraph}
             class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
             aria-label="Find in Graph"
             title="Find in Graph"

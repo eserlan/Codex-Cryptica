@@ -6,6 +6,7 @@ test.describe("Oracle Undo", () => {
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ONBOARDING = true;
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("oracle-hint-seen", "true");
 
       // Mock File System Access API
       (window as any).showDirectoryPicker = async () => {
@@ -113,6 +114,7 @@ test.describe("Oracle Undo", () => {
       name: /SMART APPLY TO ELDRIN/i,
     });
     await expect(smartApplyBtn).toBeVisible();
+    await smartApplyBtn.scrollIntoViewIfNeeded();
     await smartApplyBtn.click();
 
     // 4. Verify saved state and original content changed
@@ -130,6 +132,7 @@ test.describe("Oracle Undo", () => {
 
     const undoBtn = page.getByRole("button", { name: /UNDO/i });
     await expect(undoBtn).toBeVisible();
+    await undoBtn.scrollIntoViewIfNeeded();
     await undoBtn.click();
 
     // Debug logging
@@ -172,6 +175,7 @@ test.describe("Oracle Undo", () => {
       name: /CREATE AS CHARACTER/i,
     });
     await expect(createBtn).toBeVisible();
+    await createBtn.scrollIntoViewIfNeeded();
     await createBtn.click();
 
     // 3. Verify node exists
@@ -184,6 +188,7 @@ test.describe("Oracle Undo", () => {
     // 4. Click Undo
     const undoBtn = page.getByRole("button", { name: /UNDO/i });
     await expect(undoBtn).toBeVisible();
+    await undoBtn.scrollIntoViewIfNeeded();
     await undoBtn.click();
 
     // 5. Verify node removed

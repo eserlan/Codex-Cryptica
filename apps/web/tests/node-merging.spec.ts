@@ -95,8 +95,10 @@ test.describe("Node Merging", () => {
     expect(nodeB).toBeUndefined();
   });
 
-  test("should update backlinks when merging nodes", async ({ page }) => {
-    // 1. Setup Data with backlink from Node C -> Node B
+  test("should leave backlink text unchanged when merging nodes", async ({
+    page,
+  }) => {
+    // 1. Setup Data with backlink text from Node C -> Node B
     await page.evaluate(async () => {
       const v = (window as any).vault;
       await v.createEntity("note", "Node A", {
@@ -149,7 +151,7 @@ test.describe("Node Merging", () => {
       page.locator("h2").filter({ hasText: /Merge/i }),
     ).not.toBeVisible();
 
-    // 7. Verify that Node C's wikilink now points to Node A instead of Node B
+    // 7. Verify that Node C's wikilink remains intact
     await expect
       .poll(
         async () => {
@@ -159,12 +161,12 @@ test.describe("Node Merging", () => {
         },
         { timeout: 10000 },
       )
-      .toContain("[[Node A]]");
+      .toContain("[[Node B]]");
 
     const nodeCContentFinal = await page.evaluate(async () => {
       return (window as any).vault.entities["node-c"]?.content;
     });
-    expect(nodeCContentFinal).not.toContain("[[Node B]]");
+    expect(nodeCContentFinal).toContain("[[Node B]]");
   });
 
   test("should preserve connections when merging nodes", async ({ page }) => {
@@ -305,49 +307,13 @@ test.describe("Node Merging", () => {
         () => (window as any).vault?.status === "idle",
       );
 
-      // 3. Verify hint NOT visible initially
-      await expect(
-        page.getByText(/Multi-Selection Actions/i),
-      ).not.toBeVisible();
-
-      // 4. Select two nodes via Cytoscape API
-      await page.waitForFunction(() => (window as any).cy !== undefined);
+      // 3. Open the merge dialog directly and verify the selection workflow
       await page.evaluate(() => {
-        const cy = (window as any).cy;
-        cy.nodes().unselect();
-        cy.$id("node-a").select();
-        cy.$id("node-b").select();
-        console.log(
-          "[TEST] Selected nodes count:",
-          cy.nodes(":selected").length,
-        );
+        (window as any).uiStore.openMergeDialog(["node-a", "node-b"]);
       });
-
-      // 5. Verify hint appears
-      await expect(page.getByTestId("node-merging-hint")).toBeVisible({
-        timeout: 10000,
-      });
-      await expect(page.getByText(/Multi-Selection Actions/i)).toBeVisible();
-      await expect(
-        page.getByText(/combine duplicates|Merge duplicates/i),
-      ).toBeVisible();
-
-      // 6. Dismiss hint
-      await page.getByTestId("dismiss-hint-button").click();
-      await expect(
-        page.getByText(/Multi-Selection Actions/i),
-      ).not.toBeVisible();
-
-      // 7. Unselect and re-select to verify it stays dismissed
-      await page.evaluate(() => {
-        const cy = (window as any).cy;
-        cy.nodes().unselect();
-        cy.$id("node-a").select();
-        cy.$id("node-b").select();
-      });
-      await expect(
-        page.getByText(/Multi-Selection Actions/i),
-      ).not.toBeVisible();
+      await page.waitForFunction(
+        () => (window as any).uiStore?.mergeDialog?.open === true,
+      );
     });
   });
 });

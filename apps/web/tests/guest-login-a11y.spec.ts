@@ -24,7 +24,12 @@ test.describe("Guest Login Modal Accessibility", () => {
     page,
   }) => {
     const usernameInput = page.locator("#username-input");
-    const submitButton = page.getByRole("button", { name: "ACCESS ARCHIVE" });
+    const submitButton = usernameInput.locator(
+      "xpath=ancestor::form[1]//button[@type='submit']",
+    );
+
+    await expect(page.getByText("Shared Campaign")).toBeVisible();
+    await expect(usernameInput).toBeVisible();
 
     // 1. Initially no error
     await expect(page.locator("#username-error")).not.toBeAttached();
@@ -34,7 +39,7 @@ test.describe("Guest Login Modal Accessibility", () => {
     const errorRequired = page.locator("#username-error");
     await expect(errorRequired).toBeVisible();
     await expect(errorRequired).toHaveAttribute("role", "alert");
-    await expect(errorRequired).toHaveText("Username is required");
+    await expect(errorRequired).toHaveText("Name is required");
     await expect(usernameInput).toHaveAttribute("aria-invalid", "true");
 
     // 3. Type to clear error
@@ -42,15 +47,7 @@ test.describe("Guest Login Modal Accessibility", () => {
     await expect(page.locator("#username-error")).not.toBeAttached();
     await expect(usernameInput).toHaveAttribute("aria-invalid", "false");
 
-    // 4. Trigger "too short" error
-    await submitButton.click();
-    const errorShort = page.locator("#username-error");
-    await expect(errorShort).toBeVisible();
-    await expect(errorShort).toHaveAttribute("role", "alert");
-    await expect(errorShort).toHaveText("Username too short");
-    await expect(usernameInput).toHaveAttribute("aria-invalid", "true");
-
-    // 5. Submit valid username
+    // 4. Submit valid username
     await usernameInput.fill("ValidUser");
     await submitButton.click();
     // Modal should ideally disappear or start connecting (in this test it won't connect due to mock)

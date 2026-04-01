@@ -46,9 +46,7 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     await input.press("Enter");
 
     // Check for roll result message (rich component labels)
-    const resultMsg = page
-      .locator('[data-testid="chat-message"][data-role="system"]')
-      .last();
+    const resultMsg = page.locator('[data-testid="chat-message"]').last();
     await expect(resultMsg).toContainText("Result", { timeout: 15000 });
     await expect(resultMsg).toContainText("Formula", { timeout: 15000 });
 
@@ -63,9 +61,7 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     await input.fill("/roll 2d6 + 10");
     await input.press("Enter");
 
-    const resultMsg = page
-      .locator('[data-testid="chat-message"][data-role="system"]')
-      .last();
+    const resultMsg = page.locator('[data-testid="chat-message"]').last();
     await expect(resultMsg).toContainText("Result", { timeout: 15000 });
 
     const content = await resultMsg.textContent();
@@ -81,9 +77,7 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     await input.fill("/roll invalid");
     await input.press("Enter");
 
-    const errorMsg = page
-      .locator('[data-testid="chat-message"][data-role="system"]')
-      .last();
+    const errorMsg = page.locator('[data-testid="chat-message"]').last();
     // Errors still use the system message content block
     await expect(errorMsg).toContainText("Roll failed", { timeout: 15000 });
   });

@@ -64,20 +64,32 @@ test.describe("Help Onboarding Walkthrough", () => {
     await page.waitForTimeout(500);
 
     // 3. Check if Vault step is highlighted (Vault info should be visible)
-    await expect(page.locator("h3").getByText("Open a Vault")).toBeVisible({
+    await expect(page.locator("h3").getByText("Vault Management")).toBeVisible({
       timeout: 10000,
     });
 
     // 4. Navigate through all steps
-    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Search
-    await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Quick Search")).toBeVisible({
-      timeout: 10000,
-    });
-
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Graph
     await page.waitForTimeout(500);
     await expect(page.locator("h3").getByText("Knowledge Graph")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Map
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Tactical Maps")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Canvas
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Spatial Canvas")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Search
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Quick Search")).toBeVisible({
       timeout: 10000,
     });
 
@@ -87,9 +99,21 @@ test.describe("Help Onboarding Walkthrough", () => {
       timeout: 10000,
     });
 
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Dice
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Polyhedral Dice")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: "Next" }).click({ force: true }); // Importer
+    await page.waitForTimeout(500);
+    await expect(page.locator("h3").getByText("Archive Importer")).toBeVisible({
+      timeout: 10000,
+    });
+
     await page.getByRole("button", { name: "Next" }).click({ force: true }); // Settings
     await page.waitForTimeout(500);
-    await expect(page.locator("h3").getByText("Settings")).toBeVisible({
+    await expect(page.locator("h3").getByText("System Settings")).toBeVisible({
       timeout: 10000,
     });
 
@@ -118,7 +142,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
     // Click Next to go to Vault step which HAS a specific target
     await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByText("Open a Vault")).toBeVisible();
+    await expect(page.getByText("Vault Management")).toBeVisible();
 
     // Now the dimming overlay SHOULD be visible (spotlight on vault button)
     await expect(dimmingOverlay).toBeVisible();

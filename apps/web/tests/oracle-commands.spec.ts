@@ -32,7 +32,6 @@ test.describe("Oracle Chat Commands", () => {
   test("Slash Command Menu discovery", async ({ page }) => {
     const input = page.getByTestId("oracle-input");
     await expect(input).toBeVisible();
-    await input.click();
     await input.fill("/");
 
     await expect(page.getByText("FROM", { exact: true })).toBeVisible();

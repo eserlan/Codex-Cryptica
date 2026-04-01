@@ -14,7 +14,7 @@ test.describe("Oracle Status", () => {
     page,
   }) => {
     // Open Oracle sidebar
-    const oracleToggle = page.locator('[data-testid="oracle-toggle"]');
+    const oracleToggle = page.getByTestId("sidebar-oracle-button");
     await expect(oracleToggle).toBeVisible();
     await oracleToggle.click();
 
@@ -30,76 +30,63 @@ test.describe("Oracle Status", () => {
   test("should display Custom Key status after API key is entered", async ({
     page,
   }) => {
-    // This test requires the settings page to be accessible
-    await page.goto("/settings");
+    await page.evaluate(async () => {
+      await (window as any).oracle.setKey("test-key-12345");
+    });
 
-    // Find and fill the API key input
-    const apiKeyInput = page.locator(
-      'input[type="password"], input[placeholder*="API"], input[aria-label*="key" i]',
-    );
-
-    if (await apiKeyInput.isVisible()) {
-      // Enter a test API key
-      await apiKeyInput.fill("test-key-12345");
-
-      // Navigate back to main page and open Oracle
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-
-      const oracleToggle = page.locator('[data-testid="oracle-toggle"]');
-      if (await oracleToggle.isVisible()) {
-        await oracleToggle.click();
-      }
-
-      // Check for Custom Key indicator
-      const statusIndicator = page.locator(".oracle-status");
-      await expect(statusIndicator).toBeVisible();
-
-      // Verify the status text shows "Direct Connection: Custom Key"
-      const statusText = statusIndicator.locator(".status-text");
-      await expect(statusText).toContainText("Direct Connection");
-      await expect(statusText).toContainText("Custom Key");
+    const oracleToggle = page.getByTestId("sidebar-oracle-button");
+    if (await oracleToggle.isVisible()) {
+      await oracleToggle.click();
     }
+
+    const statusIndicator = page.locator(".oracle-status");
+    await expect(statusIndicator).toBeVisible();
+
+    const statusText = statusIndicator.locator(".status-text");
+    await expect(statusText).toContainText("Direct Connection");
+    await expect(statusText).toContainText("Custom Key");
   });
 
   test("should switch modes in real-time when API key is added/removed", async ({
     page,
   }) => {
-    // Start in System Proxy mode (no key)
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    const oracleToggle = page.locator('[data-testid="oracle-toggle"]');
+    const oracleToggle = page.getByTestId("sidebar-oracle-button");
     if (await oracleToggle.isVisible()) {
       await oracleToggle.click();
     }
 
-    // Verify initial System Proxy state
-    let statusIndicator = page.locator(".oracle-status");
-    let statusText = statusIndicator.locator(".status-text");
+    const statusIndicator = page.locator(".oracle-status");
+    const statusText = statusIndicator.locator(".status-text");
     await expect(statusText).toContainText("System Proxy");
 
-    // Navigate to settings and add key
-    await page.goto("/settings");
-    const apiKeyInput = page.locator(
-      'input[type="password"], input[placeholder*="API"], input[aria-label*="key" i]',
-    );
+    await page.evaluate(async () => {
+      await (window as any).oracle.setKey("new-test-key");
+    });
 
-    if (await apiKeyInput.isVisible()) {
-      await apiKeyInput.fill("new-test-key");
+    await page.reload();
+    await page.waitForLoadState("networkidle");
 
-      // Return to Oracle and verify mode switch
-      await page.goto("/");
-      await page.waitForLoadState("networkidle");
-
-      if (await oracleToggle.isVisible()) {
-        await oracleToggle.click();
-      }
-
-      statusIndicator = page.locator(".oracle-status");
-      statusText = statusIndicator.locator(".status-text");
-      await expect(statusText).toContainText("Direct Connection");
-      await expect(statusText).toContainText("Custom Key");
+    if (await oracleToggle.isVisible()) {
+      await oracleToggle.click();
     }
+
+    await expect(statusText).toContainText("Direct Connection");
+    await expect(statusText).toContainText("Custom Key");
+
+    await page.evaluate(async () => {
+      await (window as any).oracle.clearKey();
+    });
+
+    await page.reload();
+    await page.waitForLoadState("networkidle");
+
+    if (await oracleToggle.isVisible()) {
+      await oracleToggle.click();
+    }
+
+    await expect(statusText).toContainText("System Proxy");
   });
 });

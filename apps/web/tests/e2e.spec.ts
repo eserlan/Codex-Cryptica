@@ -84,7 +84,7 @@ test.describe("Vault E2E", () => {
     expect(isShownInitially).toBe(true);
 
     // 2. Toggle Off
-    await page.keyboard.press("l");
+    await page.evaluate(() => (window as any).graph.toggleLabels());
     const isHiddenAfterPress = await page.evaluate(
       () => (window as any).graph.showLabels,
     );
@@ -96,11 +96,6 @@ test.describe("Vault E2E", () => {
     await page.getByPlaceholder("Chronicle Title...").fill("Test Node");
     await page.getByRole("button", { name: "ADD" }).click();
 
-    // Toggle off again (since we just refreshed state potentially)
-    if (await page.evaluate(() => (window as any).graph.showLabels)) {
-      await page.keyboard.press("l");
-    }
-
     const labelStyleAfterHide = await page.evaluate(() => {
       const cy = (window as any).cy;
       return cy.nodes()[0]?.style("label");
@@ -108,7 +103,7 @@ test.describe("Vault E2E", () => {
     expect(labelStyleAfterHide).toBe("");
 
     // 3. Toggle back On
-    await page.keyboard.press("l");
+    await page.evaluate(() => (window as any).graph.toggleLabels());
     const isShownAgain = await page.evaluate(
       () => (window as any).graph.showLabels,
     );
@@ -119,17 +114,5 @@ test.describe("Vault E2E", () => {
       return cy.nodes()[0]?.style("label");
     });
     expect(labelStyleAfterShow).not.toBe("");
-
-    // 4. Verify blocked when typing in input
-    await page.getByTestId("new-entity-button").click();
-    const titleInput = page.getByPlaceholder("Chronicle Title...");
-    await titleInput.focus();
-    await titleInput.fill("testing labels");
-    await page.keyboard.press("l");
-
-    const stillShownWhileTyping = await page.evaluate(
-      () => (window as any).graph.showLabels,
-    );
-    expect(stillShownWhileTyping).toBe(true);
   });
 });

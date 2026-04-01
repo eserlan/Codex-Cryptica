@@ -38,6 +38,7 @@ test.describe("Advanced Draw Button", () => {
 
     // Wait for generation placeholder
     await expect(page.getByText("Consulting archives...")).toBeVisible();
+    await page.waitForFunction(() => !(window as any).oracle?.isLoading);
     await expect(page.getByText("Consulting archives...")).not.toBeVisible();
 
     // Verify button absent

@@ -9,25 +9,19 @@
    * - "Direct Connection: Custom Key" when using user's own API key
    */
 
-  // Get connection mode from oracle settings
-  const connectionMode = oracle.connectionMode;
-
-  // Derive display text and icon based on mode
-  const statusText =
+  // Keep the connection badge reactive as the oracle settings change.
+  const connectionMode = $derived(oracle.connectionMode);
+  const statusText = $derived(
     connectionMode === "custom-key"
       ? "Direct Connection: Custom Key"
-      : "System Proxy";
-
-  const statusIcon =
-    connectionMode === "custom-key"
-      ? "🔐" // Lock icon for custom key (secure, private)
-      : "☁️"; // Cloud icon for system proxy
-
-  // Derive accessible description
-  const accessibleDescription =
+      : "System Proxy",
+  );
+  const statusIcon = $derived(connectionMode === "custom-key" ? "🔐" : "☁️");
+  const accessibleDescription = $derived(
     connectionMode === "custom-key"
       ? "Using your personal API key for direct connection"
-      : "Using free system proxy";
+      : "Using free system proxy",
+  );
 </script>
 
 <div class="oracle-status" aria-live="polite" role="status">
