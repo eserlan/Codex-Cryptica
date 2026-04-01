@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildGuestPresencePayload,
   buildSharedGraphPayload,
   deriveGuestPresenceStatus,
   normalizeGuestName,
@@ -74,6 +75,22 @@ describe("p2p helpers", () => {
       defaultVisibility: "hidden",
       sharedMode: true,
       themeId: "theme-1",
+    });
+  });
+
+  it("should prefer zen mode presence when selection is cleared", () => {
+    expect(
+      buildGuestPresencePayload({
+        selectedEntityId: null,
+        zenModeEntityId: "entity-zen",
+        entities: {
+          "entity-zen": { title: "Zen Entity" },
+        },
+      }),
+    ).toEqual({
+      status: "viewing",
+      currentEntityId: "entity-zen",
+      currentEntityTitle: "Zen Entity",
     });
   });
 });

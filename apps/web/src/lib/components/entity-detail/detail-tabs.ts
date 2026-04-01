@@ -22,19 +22,30 @@ export function getNextEntityDetailTab(
   currentTab: EntityDetailTab,
   key: "ArrowLeft" | "ArrowRight" | "Home" | "End",
 ): EntityDetailTab {
+  return getNextEntityDetailTabInList(entityDetailTabs, currentTab, key);
+}
+
+export function getNextEntityDetailTabInList(
+  tabs: readonly EntityDetailTab[],
+  currentTab: EntityDetailTab,
+  key: "ArrowLeft" | "ArrowRight" | "Home" | "End",
+): EntityDetailTab {
+  if (tabs.length === 0) {
+    return currentTab;
+  }
+
   if (key === "Home") {
-    return entityDetailTabs[0];
+    return tabs[0];
   }
 
   if (key === "End") {
-    return entityDetailTabs[entityDetailTabs.length - 1];
+    return tabs[tabs.length - 1];
   }
 
-  const currentIndex = entityDetailTabs.indexOf(currentTab);
+  const currentIndex = tabs.indexOf(currentTab);
   const direction = key === "ArrowRight" ? 1 : -1;
-  const nextIndex =
-    (currentIndex + direction + entityDetailTabs.length) %
-    entityDetailTabs.length;
+  const safeIndex = currentIndex >= 0 ? currentIndex : 0;
+  const nextIndex = (safeIndex + direction + tabs.length) % tabs.length;
 
-  return entityDetailTabs[nextIndex];
+  return tabs[nextIndex];
 }

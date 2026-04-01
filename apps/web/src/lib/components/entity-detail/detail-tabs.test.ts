@@ -3,6 +3,7 @@ import {
   createEntityDetailTabIds,
   entityDetailTabs,
   getNextEntityDetailTab,
+  getNextEntityDetailTabInList,
 } from "./detail-tabs";
 
 describe("entity detail tab ids", () => {
@@ -28,5 +29,19 @@ describe("entity detail tab ids", () => {
     expect(getNextEntityDetailTab("inventory", "ArrowLeft")).toBe("lore");
     expect(getNextEntityDetailTab("inventory", "Home")).toBe("status");
     expect(getNextEntityDetailTab("status", "End")).toBe("map");
+  });
+
+  it("skips hidden tabs when navigating a guest-visible subset", () => {
+    const visibleTabs = entityDetailTabs.filter((tab) => tab !== "lore");
+
+    expect(
+      getNextEntityDetailTabInList(visibleTabs, "status", "ArrowRight"),
+    ).toBe("inventory");
+    expect(
+      getNextEntityDetailTabInList(visibleTabs, "inventory", "ArrowLeft"),
+    ).toBe("status");
+    expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
+      "map",
+    );
   });
 });

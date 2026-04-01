@@ -41,8 +41,12 @@ const { MockConnection, MockPeer } = vi.hoisted(() => {
 
   class MockPeer {
     handlers: Record<string, ((...args: any[]) => any)[]> = {};
-    id = "mock-peer-id";
+    id: string;
     open = true;
+
+    constructor(id = "mock-peer-id") {
+      this.id = id;
+    }
 
     on(event: string, handler: (...args: any[]) => any) {
       if (!this.handlers[event]) this.handlers[event] = [];
@@ -130,16 +134,34 @@ describe("P2P Services", () => {
         vault,
         themeStore,
         guestRoster,
-        peerFactory: () => new MockPeer(),
+        peerFactory: (id?: string) => new MockPeer(id ?? "mock-peer-id"),
       });
     });
 
     it("should start hosting and return a peer ID", async () => {
-      const idPromise = hostService.startHosting();
+      const seenIds: string[] = [];
+      const idPromise = hostService.startHosting((peerId) => {
+        seenIds.push(peerId);
+      });
       const peerInstance = (hostService as any).peer;
-      peerInstance.emit("open", "mock-peer-id");
+      expect(seenIds).toHaveLength(1);
+      expect(peerInstance.id).toBe(seenIds[0]);
+      peerInstance.emit("open", seenIds[0]);
       const id = await idPromise;
-      expect(id).toBe("mock-peer-id");
+      expect(id).toBe(seenIds[0]);
+    });
+
+    it("should expose the peer id immediately when already hosting", async () => {
+      (hostService as any)._isHosting = true;
+      (hostService as any).peerId = "existing-peer";
+
+      const seenIds: string[] = [];
+      await expect(
+        hostService.startHosting((peerId) => {
+          seenIds.push(peerId);
+        }),
+      ).resolves.toBe("existing-peer");
+      expect(seenIds).toEqual(["existing-peer"]);
     });
 
     it("should return the existing peer id when already hosting", async () => {

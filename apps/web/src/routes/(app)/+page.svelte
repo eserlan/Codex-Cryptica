@@ -11,6 +11,7 @@
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
   import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
+  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
   const jsonLdScript = $derived(
     `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
@@ -188,13 +189,17 @@
       return;
     }
 
-    const selectedId = vault.selectedEntityId;
+    const { status, currentEntityId, currentEntityTitle } =
+      buildGuestPresencePayload({
+        selectedEntityId: vault.selectedEntityId,
+        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
+        entities: vault.entities,
+      });
+
     p2pGuestService.updateGuestStatus({
-      status: selectedId ? "viewing" : "connected",
-      currentEntityId: selectedId,
-      currentEntityTitle: selectedId
-        ? (vault.entities[selectedId]?.title ?? selectedId)
-        : null,
+      status,
+      currentEntityId,
+      currentEntityTitle,
     });
   });
 

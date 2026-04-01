@@ -36,12 +36,18 @@ export class P2PHostService {
     this.peerFactory = deps.peerFactory ?? createPeer;
   }
 
-  async startHosting(): Promise<string> {
-    if (this._isHosting && this.peerId) return this.peerId;
+  async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
+    if (this._isHosting && this.peerId) {
+      onPeerId?.(this.peerId);
+      return this.peerId;
+    }
+
+    const peerId = crypto.randomUUID();
+    onPeerId?.(peerId);
 
     return new Promise((resolve, reject) => {
       // Generate a random ID with a prefix
-      this.peer = this.peerFactory(undefined, {
+      this.peer = this.peerFactory(peerId, {
         debug: 1,
       });
 
