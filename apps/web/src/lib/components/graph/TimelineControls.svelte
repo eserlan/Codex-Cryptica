@@ -20,7 +20,7 @@
 
   // ⚡ Bolt Optimization: Calculate min and max in a single pass over the entities.
   let yearRange = $derived.by(() => {
-    const allEntities = Object.values(vault.entities);
+    const allEntities = vault.allEntities;
     const count = allEntities.length;
     let min = Infinity;
     let max = -Infinity;
