@@ -6,6 +6,16 @@ export type SearchResultEntityRef = {
   path?: string | null;
 };
 
+type SearchEntityFocusDetail = {
+  entityId: string;
+  zoom: number;
+  requestId: number;
+};
+
+let pendingSearchEntityFocus: SearchEntityFocusDetail | null = null;
+let lastHandledSearchEntityFocusRequestId = 0;
+let nextSearchEntityFocusRequestId = 0;
+
 export function resolveSearchResultEntityId(result: SearchResultEntityRef) {
   if (result.id) return result.id;
   if (!result.path) return null;
@@ -16,15 +26,48 @@ export function resolveSearchResultEntityId(result: SearchResultEntityRef) {
   return derivedId || null;
 }
 
+export function markSearchEntityFocusHandled(requestId: number) {
+  lastHandledSearchEntityFocusRequestId = Math.max(
+    lastHandledSearchEntityFocusRequestId,
+    requestId,
+  );
+}
+
+export function consumePendingSearchEntityFocus() {
+  if (
+    pendingSearchEntityFocus &&
+    pendingSearchEntityFocus.requestId <= lastHandledSearchEntityFocusRequestId
+  ) {
+    pendingSearchEntityFocus = null;
+  }
+
+  const detail = pendingSearchEntityFocus;
+  pendingSearchEntityFocus = null;
+  return detail
+    ? {
+        entityId: detail.entityId,
+        zoom: detail.zoom,
+      }
+    : null;
+}
+
 export function dispatchSearchEntityFocus(
   entityId: string,
   zoom = DEFAULT_SEARCH_ENTITY_ZOOM,
 ) {
+  const detail = {
+    entityId,
+    zoom,
+    requestId: ++nextSearchEntityFocusRequestId,
+  };
+
+  pendingSearchEntityFocus = detail;
+
   if (typeof window === "undefined") return;
 
   window.dispatchEvent(
     new CustomEvent(SEARCH_ENTITY_FOCUS_EVENT, {
-      detail: { entityId, zoom },
+      detail,
     }),
   );
 }

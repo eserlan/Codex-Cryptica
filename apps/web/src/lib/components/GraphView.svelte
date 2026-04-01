@@ -28,7 +28,9 @@
   import GraphToolbar from "./graph/GraphToolbar.svelte";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
+    consumePendingSearchEntityFocus,
     SEARCH_ENTITY_FOCUS_EVENT,
+    markSearchEntityFocusHandled,
   } from "./search/search-focus";
 
   let container: HTMLElement;
@@ -94,10 +96,11 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
-  let pendingSearchFocus = $state<{
+  let pendingSearchFocus: {
     entityId: string;
     zoom: number;
-  } | null>(null);
+  } | null = null;
+  let pendingSearchFocusRevision = $state(0);
   let nodeSelectTimer: number | null = null;
   const NODE_SELECT_DELAY_MS = 300;
 
@@ -232,16 +235,27 @@
         event as CustomEvent<{
           entityId?: string;
           zoom?: number;
+          requestId?: number;
         }>
       ).detail;
       if (!detail?.entityId) return;
+      if (typeof detail.requestId === "number") {
+        markSearchEntityFocusHandled(detail.requestId);
+      }
       pendingSearchFocus = {
         entityId: detail.entityId,
         zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
       };
+      pendingSearchFocusRevision += 1;
     };
 
     window.addEventListener(SEARCH_ENTITY_FOCUS_EVENT, searchFocusListener);
+
+    const bufferedSearchFocus = consumePendingSearchEntityFocus();
+    if (bufferedSearchFocus) {
+      pendingSearchFocus = bufferedSearchFocus;
+      pendingSearchFocusRevision += 1;
+    }
 
     if (container) {
       initTimer = setTimeout(async () => {
@@ -469,6 +483,7 @@
   });
 
   $effect(() => {
+    void pendingSearchFocusRevision;
     const currentCy = cy;
     if (currentCy) {
       applyFocus(selectedId);
