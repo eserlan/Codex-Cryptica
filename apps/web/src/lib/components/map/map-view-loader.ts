@@ -53,7 +53,7 @@ export class MapViewAssetLoader {
         if (!url) {
           this.deps.onError(
             "[MapView] Failed to resolve image URL for:",
-            activeMap.assetPath,
+            requestedAssetPath,
           );
           return;
         }
@@ -74,14 +74,29 @@ export class MapViewAssetLoader {
             if (loadId !== this.currentLoadId) return;
 
             this.deps.onMaskLoaded(mask);
-            await this.deps.onDimensionsLoaded(image.width, image.height);
           } catch (err) {
             this.deps.onError("[MapView] Failed to load mask for:", err);
+            return;
+          }
+
+          try {
+            await this.deps.onDimensionsLoaded(image.width, image.height);
+          } catch (err) {
+            if (loadId !== this.currentLoadId) return;
+            this.deps.onError(
+              "[MapView] Failed to persist map dimensions for:",
+              err,
+            );
           }
         };
 
         image.onerror = (err) => {
           if (loadId !== this.currentLoadId) return;
+          if (this.currentBlobUrl) {
+            this.deps.vault.releaseImageUrl(this.currentAssetPath);
+            this.currentBlobUrl = "";
+            this.currentAssetPath = "";
+          }
           this.deps.onError("[MapView] Image load failed:", err);
         };
       })

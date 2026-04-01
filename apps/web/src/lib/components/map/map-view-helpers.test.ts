@@ -8,7 +8,7 @@ import {
 } from "./map-view-helpers";
 
 describe("map-view helpers", () => {
-  it("findClickedPin should return the closest pin within range", () => {
+  it("findClickedPin should return a pin within range", () => {
     const pins = [
       { id: "1", coordinates: { x: 10, y: 10 } },
       { id: "2", coordinates: { x: 100, y: 100 } },
