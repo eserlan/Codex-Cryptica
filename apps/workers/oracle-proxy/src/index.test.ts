@@ -1,47 +1,44 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
+import { isOriginAllowed } from "./index";
 
-// Mock the worker
-vi.mock("./index", () => ({
-  default: {
-    fetch: vi.fn(),
-  },
-}));
+describe("Oracle Proxy Worker CORS", () => {
+  const emptyEnv = {};
 
-describe("Oracle Proxy Worker", () => {
-  describe("CORS handling", () => {
-    it("should allow requests from authorized origins", () => {
-      // Test will be validated when worker is deployed
-      expect(true).toBe(true);
-    });
-
-    it("should reject requests from unauthorized origins", () => {
-      expect(true).toBe(true);
-    });
+  it("allows the production origins", () => {
+    expect(
+      isOriginAllowed("https://codex-cryptica.com", emptyEnv),
+    ).toBeTruthy();
+    expect(isOriginAllowed("https://codexcryptica.com", emptyEnv)).toBeTruthy();
+    expect(
+      isOriginAllowed("https://staging.codex-cryptica.com", emptyEnv),
+    ).toBeTruthy();
+    expect(
+      isOriginAllowed("https://codex-cryptica.pages.dev", emptyEnv),
+    ).toBeTruthy();
   });
 
-  describe("Request forwarding", () => {
-    it("should forward valid requests to Gemini API", () => {
-      // Integration test - requires actual worker deployment
-      expect(true).toBe(true);
-    });
-
-    it("should return 400 for invalid request format", () => {
-      expect(true).toBe(true);
-    });
-
-    it("should only accept POST requests", () => {
-      expect(true).toBe(true);
-    });
+  it("allows any localhost or loopback dev origin", () => {
+    expect(isOriginAllowed("http://localhost:4173", emptyEnv)).toBeTruthy();
+    expect(isOriginAllowed("http://localhost:5173", emptyEnv)).toBeTruthy();
+    expect(isOriginAllowed("http://127.0.0.1:4173", emptyEnv)).toBeTruthy();
+    expect(isOriginAllowed("http://127.0.0.1:9999", emptyEnv)).toBeTruthy();
   });
 
-  describe("Security", () => {
-    it("should never expose API key to client", () => {
-      // API key is stored in worker environment, never sent to client
-      expect(true).toBe(true);
-    });
+  it("honors explicit allowlist overrides", () => {
+    expect(
+      isOriginAllowed("http://localhost:4173", {
+        ALLOWED_ORIGINS: "https://example.com,http://localhost:4173",
+      }),
+    ).toBeTruthy();
+    expect(
+      isOriginAllowed("https://codex-cryptica.com", {
+        ALLOWED_ORIGINS: "https://example.com",
+      }),
+    ).toBeTruthy();
+  });
 
-    it("should handle errors gracefully", () => {
-      expect(true).toBe(true);
-    });
+  it("rejects non-loopback origins that are not allowlisted", () => {
+    expect(isOriginAllowed("https://evil.com", emptyEnv)).toBeFalsy();
+    expect(isOriginAllowed("http://192.168.0.15:4173", emptyEnv)).toBeFalsy();
   });
 });

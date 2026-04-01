@@ -194,5 +194,43 @@ describe("DefaultAIClientManager", () => {
       expect(body.contents[0].parts[0].text).toBe("Text part");
       expect(body.contents[0].parts[1].inlineData).toBeDefined();
     });
+
+    it("should preserve object-shaped requests without Svelte runes", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "Object request response" }],
+              },
+            },
+          ],
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const request: any = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: "Prompt text" }],
+          },
+        ],
+        generationConfig: {
+          response_modalities: ["IMAGE"],
+        },
+      };
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent(request);
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body.contents).toEqual(request.contents);
+      expect(body.generationConfig).toEqual(request.generationConfig);
+    });
   });
 });

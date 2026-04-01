@@ -135,12 +135,12 @@ export class DefaultAIClientManager {
       ) {
         console.log(`[OracleProxy] Request for model: ${modelName}`);
 
-        // 1. Deep unwrap and clone to strip ANY reactivity proxies using Svelte 5 built-in
-        // Fallback to identity if $state is not available (e.g. in non-Svelte contexts)
+        // 1. Deep clone request data so any reactive proxies are removed
+        // before the payload is normalized and serialized.
         const raw =
           typeof request === "object" && request !== null
-            ? typeof (globalThis as any).$state?.snapshot === "function"
-              ? (globalThis as any).$state.snapshot(request)
+            ? typeof structuredClone === "function"
+              ? structuredClone(request)
               : JSON.parse(JSON.stringify(request))
             : request;
 

@@ -55,6 +55,7 @@ If `ALLOWED_ORIGINS` is not set, the worker allows:
 - `https://codex-cryptica.com`
 - `https://staging.codex-cryptica.com`
 - `https://codex-cryptica.pages.dev`
+- `http://localhost` and `http://127.0.0.1` on any development port
 
 ## Testing
 

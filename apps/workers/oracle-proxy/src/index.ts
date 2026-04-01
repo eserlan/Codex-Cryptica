@@ -20,10 +20,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "https://codexcryptica.com",
   "https://staging.codex-cryptica.com",
   "https://codex-cryptica.pages.dev",
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:5174",
+  "http://localhost",
+  "http://127.0.0.1",
 ];
 
 export default {
@@ -252,7 +250,7 @@ function getCorsHeaders(
 /**
  * Check if origin is allowed
  */
-function isOriginAllowed(origin: string, env: Env): boolean {
+export function isOriginAllowed(origin: string, env: Env): boolean {
   if (!origin) return false;
 
   // Check environment variable first
@@ -264,5 +262,20 @@ function isOriginAllowed(origin: string, env: Env): boolean {
   }
 
   // Check default origins
-  return DEFAULT_ALLOWED_ORIGINS.includes(origin);
+  if (DEFAULT_ALLOWED_ORIGINS.includes(origin)) {
+    return true;
+  }
+
+  // Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
+  return isLoopbackOrigin(origin);
+}
+
+function isLoopbackOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname.toLowerCase();
+    return hostname === "localhost" || hostname === "127.0.0.1";
+  } catch {
+    return false;
+  }
 }
