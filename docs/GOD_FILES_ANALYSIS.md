@@ -12,7 +12,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 364 | UI Component        | ✅ FIXED |
 | 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
 | 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 261   | UI Layout           | ✅ FIXED |
-| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 681           | UI Component        | 🔥 NEXT  |
+| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 447           | UI Component        | ✅ FIXED |
 | 8    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         | 🟡 SOON  |
 | 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
 | 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 632           | UI Component        |          |
@@ -69,8 +69,14 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 - Stripped root `+layout.svelte` to minimal HTML shell with SEO meta tags
 - Fixed relative imports in moved pages
 
+### 7. `MapView.svelte` (Refactored)
+
+**Status:** ✅ **COMPLETED (2026-04-01)**
+**Summary:** Split into a thin composition shell with extracted loader, fog painter, pin popover, and pure interaction helpers. The remaining component now focuses on orchestration and rendering glue rather than owning every map concern directly.
+**Outcome:** Reduced from 681 lines to 447 lines. The map-specific logic is now more testable and less tightly coupled.
+
 ---
 
 ## Conclusion
 
-The highest priority for refactoring should now shift to **`+layout.svelte`** and **`MapView.svelte`**, followed by **`SyncService.ts`**. The successful refactors of `oracle.svelte.ts`, `vault.svelte.ts`, `GraphView.svelte`, `ZenModeModal.svelte`, and `ai.ts` have validated a modular extraction strategy that should now be applied to global shell orchestration, map interactions, and sync-core responsibilities.
+The highest priority for refactoring should now shift to **`SyncService.ts`**, followed by any remaining large UI shells such as `CanvasWorkspace.svelte` and `ChatMessage.svelte`. The successful refactors of `oracle.svelte.ts`, `vault.svelte.ts`, `GraphView.svelte`, `ZenModeModal.svelte`, `ai.ts`, and `MapView.svelte` have validated a modular extraction strategy that should now be applied to sync-core responsibilities and any remaining high-entropy UI containers.
