@@ -191,7 +191,18 @@ test.describe("Node Merging", () => {
       );
       // Clear help state to ensure hints appear
       await page.evaluate(() => {
-        try { localStorage.clear(); } catch { /* ignore */ }
+        try {
+          localStorage.clear();
+        } catch (error) {
+          if (
+            error instanceof DOMException &&
+            error.name === "SecurityError"
+          ) {
+            return;
+          }
+
+          throw error;
+        }
       });
       await page.reload();
       await page.waitForFunction(
