@@ -505,7 +505,11 @@
           if (focusZoom !== null) {
             pendingSearchFocus = null;
           }
+        } else if (pendingSearchFocus?.entityId === selectedId) {
+          pendingSearchFocus = null;
         }
+      } else if (pendingSearchFocus) {
+        pendingSearchFocus = null;
       }
     }
   });
