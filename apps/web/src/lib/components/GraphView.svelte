@@ -266,6 +266,10 @@
                 selectedId = id;
               }
             },
+            onNodeDoubleTap: (id) => {
+              ui.openZenMode(id);
+              selectedId = null;
+            },
             onEdgeTap: (data) => {
               editingEdge = {
                 source: data.source,
