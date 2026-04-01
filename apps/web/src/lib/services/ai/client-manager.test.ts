@@ -194,5 +194,90 @@ describe("DefaultAIClientManager", () => {
       expect(body.contents[0].parts[0].text).toBe("Text part");
       expect(body.contents[0].parts[1].inlineData).toBeDefined();
     });
+
+    it("should preserve object-shaped requests without Svelte runes", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "Object request response" }],
+              },
+            },
+          ],
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+
+      const request: any = {
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: "Prompt text" }],
+          },
+        ],
+        generationConfig: {
+          response_modalities: ["IMAGE"],
+        },
+      };
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent(request);
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body.contents).toEqual(request.contents);
+      expect(body.generationConfig).toEqual(request.generationConfig);
+    });
+
+    it("should fall back when structuredClone cannot clone the request", async () => {
+      const mockResponse = {
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          candidates: [
+            {
+              content: {
+                parts: [{ text: "Proxy fallback response" }],
+              },
+            },
+          ],
+        }),
+      };
+
+      vi.mocked(fetch).mockResolvedValue(mockResponse as any);
+      vi.stubGlobal(
+        "structuredClone",
+        vi.fn(() => {
+          throw new DOMException("Cannot clone proxy", "DataCloneError");
+        }),
+      );
+
+      const request: any = new Proxy(
+        {
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: "Proxy prompt" }],
+            },
+          ],
+          generationConfig: {
+            response_modalities: ["IMAGE"],
+          },
+        },
+        {},
+      );
+
+      const model = manager.getModel("", "gemini-1.5-pro");
+      await model.generateContent(request);
+
+      const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
+      const body = JSON.parse(callArgs.body as string);
+
+      expect(body.contents).toEqual(request.contents);
+      expect(body.generationConfig).toEqual(request.generationConfig);
+    });
   });
 });
