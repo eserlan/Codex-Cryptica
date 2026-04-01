@@ -96,7 +96,6 @@
       uiStore.guestUsername
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
-      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
       vault.status = "loading";
       vault.selectedEntityId = null;
@@ -105,10 +104,6 @@
         .connectToHost(
           peerId,
           (graph) => {
-            console.log("[Guest Page] Received graph data:", {
-              entityCount: Object.keys(graph.entities).length,
-              defaultVisibility: graph.defaultVisibility,
-            });
             // Update vault entities with received data
             vault.repository.entities = Object.fromEntries(
               Object.entries(graph.entities).map(

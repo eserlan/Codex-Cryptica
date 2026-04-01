@@ -91,6 +91,7 @@
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
   let nodeSelectTimer: number | null = null;
+  const NODE_SELECT_DELAY_MS = 300;
 
   let editingEdge = $state<{
     source: string;
@@ -275,7 +276,7 @@
                 nodeSelectTimer = window.setTimeout(() => {
                   selectedId = id;
                   nodeSelectTimer = null;
-                }, 180);
+                }, NODE_SELECT_DELAY_MS);
               }
             },
             onNodeDoubleTap: (id) => {
