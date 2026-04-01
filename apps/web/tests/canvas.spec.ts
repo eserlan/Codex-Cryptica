@@ -5,11 +5,31 @@ test.describe("Spatial Canvas", () => {
     // Inject global flag BEFORE goto so +layout.svelte sees it immediately
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
+
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "Test Hero", {
+        id: "test-hero",
+        content: "Test hero content",
+      });
+      await vault.createEntity("character", "Eldrin the Wise", {
+        id: "eldrin-the-wise",
+        content: "Eldrin content",
+      });
+    });
 
     // Expand the palette if it is collapsed, since many tests rely on palette text and buttons
     const expandBtn = page.getByTitle("Expand Palette");

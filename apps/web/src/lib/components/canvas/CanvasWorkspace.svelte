@@ -12,11 +12,7 @@
     type Edge,
     type Connection,
   } from "@xyflow/svelte";
-  import {
-    CanvasStore,
-    type CanvasNode,
-    type CanvasEdge,
-  } from "@codex/canvas-engine";
+  import { CanvasStore } from "@codex/canvas-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
@@ -30,6 +26,14 @@
   import { page } from "$app/state";
   import { untrack, onDestroy, onMount, tick } from "svelte";
   import { browser } from "$app/environment";
+  import {
+    buildCanvasSavePayload,
+    createFlowEdgeFromConnection,
+    createFlowEntityNode,
+    hydrateCanvasGraph,
+    pruneCanvasGraph,
+    resolveSpawnPosition,
+  } from "$lib/components/canvas/canvas-workspace-helpers";
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
@@ -177,26 +181,9 @@
             }
 
             skipLoadingSaves = 2; // Skip saves triggered by nodes/edges updates
-            nodes = (data.nodes || []).map((n: CanvasNode) => ({
-              id: n.id,
-              type: n.type || "entity",
-              position: n.position || { x: 0, y: 0 },
-              data: {
-                entityId: n.entityId,
-                width: n.width,
-                height: n.height,
-              },
-            }));
-            edges = (data.edges || []).map((e: CanvasEdge) => ({
-              id: e.id,
-              source: e.source,
-              target: e.target,
-              sourceHandle: e.sourceHandle || null,
-              targetHandle: e.targetHandle || null,
-              label: e.label || "",
-              type: e.type === "line" || !e.type ? "straight" : (e.type as any),
-              style: typeof e.style === "string" ? e.style : undefined,
-            })) as any;
+            const graph = hydrateCanvasGraph(data);
+            nodes = graph.nodes;
+            edges = graph.edges;
 
             hasInitialized = true;
             console.debug("[CanvasWorkspace] Canvas mount complete");
@@ -215,23 +202,14 @@
   $effect(() => {
     const entityIds = new Set(vault.allEntities.map((e) => e.id));
     if (hasInitialized && nodes.length > 0) {
-      const remainingNodes = nodes.filter((node) => {
-        // If it's not an entity node, keep it
-        if (node.type !== "entity") return true;
-        // If the entity still exists in the vault, keep it
-        return entityIds.has(node.data.entityId as string);
-      });
+      const pruned = pruneCanvasGraph(nodes, edges, entityIds);
 
-      if (remainingNodes.length !== nodes.length) {
+      if (pruned.nodes.length !== nodes.length) {
         console.debug(
-          `[CanvasWorkspace] Removing ${nodes.length - remainingNodes.length} nodes due to vault deletion`,
+          `[CanvasWorkspace] Removing ${nodes.length - pruned.nodes.length} nodes due to vault deletion`,
         );
-        nodes = remainingNodes;
-        // Filter edges that were connected to deleted nodes
-        const nodeIds = new Set(nodes.map((n) => n.id));
-        edges = edges.filter(
-          (edge) => nodeIds.has(edge.source) && nodeIds.has(edge.target),
-        );
+        nodes = pruned.nodes;
+        edges = pruned.edges;
         saveCanvas();
       }
     }
@@ -240,16 +218,7 @@
   function onConnect(connection: Connection) {
     const edgeId = `edge-${crypto.randomUUID()}`;
     // Explicitly add the edge to our state to ensure reactivity and sync
-    edges = addXyEdge(
-      {
-        ...connection,
-        id: edgeId,
-        type: "straight",
-        animated: true,
-        style: "stroke: var(--color-theme-primary); stroke-width: 2;",
-      },
-      edges,
-    );
+    edges = addXyEdge(createFlowEdgeFromConnection(connection, edgeId), edges);
     // Structural change: save immediately
     untrack(() => saveCanvas());
   }
@@ -310,15 +279,7 @@
       });
 
       const newNodeId = engine.addNode(id, position);
-      nodes = [
-        ...nodes,
-        {
-          id: newNodeId,
-          type: "entity",
-          position,
-          data: { entityId: id },
-        },
-      ];
+      nodes = [...nodes, createFlowEntityNode(id, position, newNodeId)];
       saveCanvas();
     } catch (err) {
       console.error("Failed to create entity from canvas", err);
@@ -446,15 +407,7 @@
     vault.loadEntityContent(entityId);
 
     // Manually add to nodes to trigger sync
-    nodes = [
-      ...nodes,
-      {
-        id: newNodeId,
-        type: "entity",
-        position,
-        data: { entityId },
-      },
-    ];
+    nodes = [...nodes, createFlowEntityNode(entityId, position, newNodeId)];
     saveCanvas();
   }
 
@@ -475,27 +428,21 @@
     const position =
       (eventScreenPosition && screenToFlowPosition(eventScreenPosition)) ||
       eventPosition ||
-      (() => {
-        const paletteWidth = uiStore.showCanvasPalette ? 288 : 48;
-        const centerX = (window.innerWidth - paletteWidth) / 2 + paletteWidth;
-        const centerY = window.innerHeight / 2;
-        return screenToFlowPosition({ x: centerX, y: centerY });
-      })();
+      resolveSpawnPosition({
+        screenToFlowPosition,
+        paletteVisible: uiStore.showCanvasPalette,
+        windowSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+      });
 
     const newNodeId = engine.addNode(entityId, position);
     // Ensure the full content (lore, content, image) is loaded for this entity
     vault.loadEntityContent(entityId);
 
     // Manually add to nodes to trigger sync
-    nodes = [
-      ...nodes,
-      {
-        id: newNodeId,
-        type: "entity",
-        position,
-        data: { entityId },
-      },
-    ];
+    nodes = [...nodes, createFlowEntityNode(entityId, position, newNodeId)];
     saveCanvas();
   }
 
@@ -553,31 +500,13 @@
     const existing = untrack(() => vault.canvases[currentCanvasId] || {});
 
     // Helper: is the current name just a UUID or "Untitled"?
-    const isGeneric = (n: string) =>
-      !n || n === currentCanvasId || n.toLowerCase().includes("untitled");
-
-    // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
-    // Prioritize meaningful names from 'existing' or reactive 'canvas' props
-    const finalName: string = !isGeneric(existing.name || "")
-      ? existing.name!
-      : !isGeneric(canvas?.name || "")
-        ? canvas!.name!
-        : existing.name || currentCanvasId;
-
-    const finalSlug: string = !isGeneric(existing.slug || "")
-      ? existing.slug!
-      : !isGeneric(canvas?.slug || "")
-        ? canvas!.slug!
-        : existing.slug || currentCanvasId;
-
-    vault.canvases[currentCanvasId] = {
-      ...existing,
-      id: currentCanvasId,
-      name: finalName,
-      slug: finalSlug,
-      ...exportData,
+    vault.canvases[currentCanvasId] = buildCanvasSavePayload({
+      existing,
+      currentCanvas: canvas,
+      exported: exportData,
+      canvasId: currentCanvasId,
       lastModified: Date.now(),
-    };
+    });
 
     await vault.saveCanvas(currentCanvasId, {
       explicitVaultId: currentVaultId,
