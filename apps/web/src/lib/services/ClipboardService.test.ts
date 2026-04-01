@@ -63,4 +63,15 @@ describe("ClipboardService", () => {
     expect(result).toBe(true);
     expect(mockClipboard.write).toHaveBeenCalled();
   });
+
+  it("should copy arbitrary rich text and plain text", async () => {
+    const result = await service.copyHtmlAndText(
+      "<p>Chronicle</p>",
+      "Chronicle",
+    );
+
+    expect(result).toBe(true);
+    expect(mockClipboard.write).toHaveBeenCalledTimes(1);
+    expect(mockClipboard.writeText).not.toHaveBeenCalled();
+  });
 });

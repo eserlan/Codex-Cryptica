@@ -1,38 +1,55 @@
 <script lang="ts">
+  import { browser } from "$app/environment";
+  import DOMPurify from "dompurify";
+  import { onMount } from "svelte";
+  import { fade } from "svelte/transition";
+  import { parseOracleResponse } from "editor-core";
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { fade } from "svelte/transition";
+  import { graph } from "$lib/stores/graph.svelte";
   import { parserService } from "$lib/services/parser";
-  import { browser } from "$app/environment";
-  import DOMPurify from "dompurify";
+  import { ClipboardService } from "$lib/services/ClipboardService";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
   import MergeWizard from "./MergeWizard.svelte";
-  import { parseOracleResponse } from "editor-core";
+  import {
+    canOverrideTarget,
+    getTargetEntityId,
+    isLoreMessage,
+    renderMessageHtml,
+    shouldShowActions,
+    shouldShowCreateAction,
+  } from "./chat-message.helpers";
+  import { ChatMessageActions } from "./chat-message.actions";
   import { sanitizeId } from "$lib/utils/markdown";
-  import { graph } from "$lib/stores/graph.svelte";
-
-  import { onMount } from "svelte";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
+  const chatMessageActions = new ChatMessageActions({
+    oracle,
+    vault,
+    graph,
+  });
+  const clipboardService = new ClipboardService();
 
   let targetEntity = $derived(
-    message.archiveTargetId || message.entityId
-      ? vault.entities[message.archiveTargetId || message.entityId!]
+    getTargetEntityId(message, vault.selectedEntityId)
+      ? vault.entities[getTargetEntityId(message, vault.selectedEntityId)!]
       : null,
   );
   let activeEntity = $derived(
     vault.selectedEntityId ? vault.entities[vault.selectedEntityId] : null,
   );
   let canOverride = $derived(
-    activeEntity && (!targetEntity || activeEntity.id !== targetEntity.id),
+    canOverrideTarget(targetEntity?.id ?? null, activeEntity?.id ?? null),
   );
 
   let isSaved = $state(false);
+  let isCopied = $state(false);
+  let htmlCache = $state("");
+  let lastParsedContent = "";
 
-  // Sync isSaved with global undo events
   onMount(() => {
     const channel = new BroadcastChannel("codex-oracle-sync");
     channel.onmessage = (event) => {
@@ -44,283 +61,30 @@
     return () => channel.close();
   });
 
-  const LORE_THRESHOLD = 400; // Character limit: summary (Chronicle) vs detailed (Lore).
-
-  // Only show UNDO button if this message was the last one to perform an action
   let isLastAction = $derived(
     oracle.undoStack.length > 0 &&
       oracle.undoStack[oracle.undoStack.length - 1].messageId === message.id,
   );
-
-  // Intelligent intent detection for archival type
-  let isLore = $derived.by(() => {
-    // 1. Check if user explicitly asked for a short format in the PREVIOUS message
-    const msgIndex = oracle.messages.findIndex((m) => m.id === message.id);
-    if (msgIndex > 0) {
-      const prevMsg = oracle.messages[msgIndex - 1];
-      if (prevMsg.role === "user") {
-        const query = prevMsg.content.toLowerCase();
-        if (
-          query.includes("blurb") ||
-          query.includes("chronicle") ||
-          query.includes("short desc")
-        ) {
-          return false;
-        }
-        if (
-          query.includes("expansive") ||
-          query.includes("detailed") ||
-          query.includes("lore") ||
-          query.includes("deep dive")
-        ) {
-          return true;
-        }
-      }
-    }
-
-    // 2. Default to length-based heuristic
-    return message.content.length >= LORE_THRESHOLD;
-  });
-
   let parsed = $derived(parseOracleResponse(message.content || ""));
   let detectedId = $derived(parsed.title ? sanitizeId(parsed.title) : null);
   let alreadyExists = $derived(
     detectedId ? !!vault.entities[detectedId] : false,
   );
-  let showCreate = $derived(parsed.title && !alreadyExists && !isSaved);
+  let showCreate = $derived(
+    shouldShowCreateAction(parsed, alreadyExists, isSaved),
+  );
+  let isLore = $derived(isLoreMessage(message, oracle.messages));
+  let showActions = $derived(
+    shouldShowActions(message, parsed, oracle.isLoading),
+  );
 
-  let showActions = $derived.by(() => {
-    if (message.role !== "assistant") return false;
-    if (
-      message.type === "image" ||
-      message.type === "roll" ||
-      message.type === "wizard"
-    )
-      return false;
-
-    // Structured response detected
-    if (parsed.wasSplit || (parsed.title && parsed.title.length > 3))
-      return true;
-
-    // Content length heuristic (only check after generation finishes)
-    if (
-      !oracle.isLoading &&
-      message.content &&
-      message.content.length > LORE_THRESHOLD
-    )
-      return true;
-
-    return false;
-  });
-
-  // Capture state helper
-  const captureState = (entityId: string) => {
-    const entity = vault.entities[entityId];
-    if (!entity) return null;
-    try {
-      return structuredClone($state.snapshot(entity));
-    } catch (e) {
-      console.warn(
-        "Failed to structuredClone entity, falling back to JSON parse/stringify",
-        e,
-      );
-      return JSON.parse(JSON.stringify($state.snapshot(entity)));
-    }
-  };
-
-  const applySmart = async () => {
-    const finalTargetId =
-      message.archiveTargetId ||
-      message.entityId ||
-      (activeEntity ? activeEntity.id : null);
-
-    console.log("[Oracle] Smart Apply triggered for:", finalTargetId);
-
-    if (!finalTargetId || !message.content) {
-      console.warn("[Oracle] Smart Apply aborted: Missing target or content");
-      return;
-    }
-
-    // We want to update both fields if they exist in the parsed result
-    const updates: Partial<{ content: string; lore: string }> = {};
-    const entity = vault.entities[finalTargetId];
-    if (!entity) {
-      console.error(
-        "[Oracle] Smart Apply failed: Entity not found in vault",
-        finalTargetId,
-      );
-      return;
-    }
-
-    if (parsed.chronicle) {
-      updates.content = parsed.chronicle;
-    }
-
-    if (parsed.lore) {
-      updates.lore = parsed.lore;
-    }
-
-    console.log("[Oracle] Smart Apply updates:", updates);
-
-    if (Object.keys(updates).length > 0) {
-      // 1. Capture State
-      const beforeState = captureState(finalTargetId);
-
-      vault.selectedEntityId = finalTargetId;
-      await vault.updateEntity(finalTargetId, updates);
-      isSaved = true;
-
-      // 2. Push Undo
-      if (beforeState) {
-        oracle.pushUndoAction(
-          `Smart Apply to ${beforeState.title}`,
-          async () => {
-            // Granular revert: only restore the fields we changed
-            const undoUpdates: any = {};
-            if (parsed.chronicle) undoUpdates.content = beforeState.content;
-            if (parsed.lore) undoUpdates.lore = beforeState.lore;
-            await vault.updateEntity(beforeState.id, undoUpdates);
-            isSaved = false;
-          },
-          message.id,
-        );
-      }
-    } else {
-      console.warn("[Oracle] Smart Apply aborted: No updates extracted");
-    }
-  };
-
-  const createAsNode = async () => {
-    if (!parsed.title || vault.isGuest) return;
-    try {
-      const type = (parsed.type || "character") as any;
-      const connections = [
-        ...(parsed.connections || []).map((conn) => {
-          const targetName = typeof conn === "string" ? conn : conn.target;
-          const label =
-            typeof conn === "string" ? conn : conn.label || conn.target;
-          return {
-            target: sanitizeId(targetName),
-            label: label,
-            type: "related_to",
-            strength: 1.0,
-          };
-        }),
-      ];
-
-      const id = await vault.createEntity(type, parsed.title, {
-        content: parsed.chronicle,
-        lore: parsed.lore,
-        connections,
-        image: parsed.image,
-        thumbnail: parsed.thumbnail,
-      });
-
-      vault.selectedEntityId = id;
-      isSaved = true;
-
-      // Update message to point to new entity so further applies work
-      oracle.updateMessageEntity(message.id, id);
-
-      // Refit the graph to show the new node
-      graph.requestFit();
-
-      // Push Undo (Delete)
-      oracle.pushUndoAction(
-        `Create Node ${parsed.title}`,
-        async () => {
-          await vault.deleteEntity(id);
-          // Reset message to point back to nothing or its original entity
-          oracle.updateMessageEntity(message.id, null);
-          isSaved = false;
-        },
-        message.id,
-      );
-    } catch (e) {
-      console.error("Failed to create node from chat", e);
-    }
-  };
-
-  const copyToChronicle = async () => {
-    const finalTargetId =
-      message.archiveTargetId ||
-      message.entityId ||
-      (activeEntity ? activeEntity.id : null);
-    if (!finalTargetId || !message.content) return;
-    const newContent = message.content;
-
-    // 1. Capture State
-    const beforeState = captureState(finalTargetId);
-
-    vault.selectedEntityId = finalTargetId;
-    await vault.updateEntity(finalTargetId, { content: newContent });
-    isSaved = true;
-
-    // 2. Push Undo
-    if (beforeState) {
-      oracle.pushUndoAction(
-        `Update Chronicle: ${beforeState.title}`,
-        async () => {
-          await vault.updateEntity(beforeState.id, {
-            content: beforeState.content,
-          });
-          isSaved = false;
-        },
-        message.id,
-      );
-    }
-  };
-
-  const copyToLore = async () => {
-    const finalTargetId =
-      message.archiveTargetId ||
-      message.entityId ||
-      (activeEntity ? activeEntity.id : null);
-    if (!finalTargetId || !message.content) return;
-    const newContent = message.content;
-
-    // 1. Capture State
-    const beforeState = captureState(finalTargetId);
-
-    vault.selectedEntityId = finalTargetId;
-    await vault.updateEntity(finalTargetId, { lore: newContent });
-    isSaved = true;
-
-    // 2. Push Undo
-    if (beforeState) {
-      oracle.pushUndoAction(
-        `Update Lore: ${beforeState.title}`,
-        async () => {
-          await vault.updateEntity(beforeState.id, { lore: beforeState.lore });
-          isSaved = false;
-        },
-        message.id,
-      );
-    }
-  };
-
-  const handleUndo = async () => {
-    await oracle.undo();
-  };
-
-  let isCopied = $state(false);
-
-  // Cache parsed HTML for both display and clipboard
-  let htmlCache = $state("");
-  let lastParsedContent = "";
   $effect(() => {
     if (message.content && message.content !== lastParsedContent) {
       const currentContent = message.content;
-      parserService
-        .parse(message.content)
+      renderMessageHtml(currentContent, parserService, browser, DOMPurify)
         .then((html) => {
           if (currentContent !== message.content) return;
-          htmlCache = browser
-            ? DOMPurify.sanitize(html, {
-                ALLOWED_URI_REGEXP:
-                  /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-              })
-            : html;
+          htmlCache = html;
           lastParsedContent = currentContent;
         })
         .catch((err) => {
@@ -333,45 +97,75 @@
   async function copyToClipboard() {
     if (!message.content) return;
 
-    if (typeof ClipboardItem !== "undefined" && navigator.clipboard?.write) {
-      try {
-        let contentToCopy = htmlCache;
-        if (!contentToCopy) {
-          const rawHtml = await parserService.parse(message.content);
-          contentToCopy = browser
-            ? DOMPurify.sanitize(rawHtml, {
-                ALLOWED_URI_REGEXP:
-                  /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-              })
-            : rawHtml;
-        }
-        const blobHtml = new Blob([contentToCopy], { type: "text/html" });
-        const blobText = new Blob([message.content], { type: "text/plain" });
-        const data = [
-          new ClipboardItem({
-            "text/html": blobHtml,
-            "text/plain": blobText,
-          }),
-        ];
-        await navigator.clipboard.write(data);
-        isCopied = true;
-        setTimeout(() => (isCopied = false), 2000);
-        return;
-      } catch (err) {
-        console.warn("[ChatMessage] Rich text copy failed, falling back:", err);
-      }
-    }
-
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(message.content);
+      let contentToCopy = htmlCache;
+      if (!contentToCopy) {
+        contentToCopy = await renderMessageHtml(
+          message.content,
+          parserService,
+          browser,
+          DOMPurify,
+        );
+      }
+
+      const success = await clipboardService.copyHtmlAndText(
+        contentToCopy,
+        message.content,
+      );
+
+      if (success) {
         isCopied = true;
         setTimeout(() => (isCopied = false), 2000);
       }
-    } catch (e) {
-      console.error("[ChatMessage] Clipboard fallback failed:", e);
+    } catch (err) {
+      console.error("[ChatMessage] Clipboard copy failed:", err);
     }
   }
+
+  const applySmart = async () => {
+    await chatMessageActions.applySmart({
+      message,
+      parsed,
+      activeEntityId: activeEntity?.id ?? null,
+      setSaved: (saved) => {
+        isSaved = saved;
+      },
+    });
+  };
+
+  const createAsNode = async () => {
+    await chatMessageActions.createAsNode({
+      message,
+      parsed,
+      setSaved: (saved) => {
+        isSaved = saved;
+      },
+    });
+  };
+
+  const copyToChronicle = async () => {
+    await chatMessageActions.copyToChronicle({
+      message,
+      activeEntityId: activeEntity?.id ?? null,
+      setSaved: (saved) => {
+        isSaved = saved;
+      },
+    });
+  };
+
+  const copyToLore = async () => {
+    await chatMessageActions.copyToLore({
+      message,
+      activeEntityId: activeEntity?.id ?? null,
+      setSaved: (saved) => {
+        isSaved = saved;
+      },
+    });
+  };
+
+  const handleUndo = async () => {
+    await chatMessageActions.undo();
+  };
 </script>
 
 <div
