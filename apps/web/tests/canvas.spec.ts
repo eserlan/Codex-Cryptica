@@ -5,7 +5,7 @@ test.describe("Spatial Canvas", () => {
     // Inject global flag BEFORE goto so +layout.svelte sees it immediately
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
     });
 
     await page.goto("/canvas");

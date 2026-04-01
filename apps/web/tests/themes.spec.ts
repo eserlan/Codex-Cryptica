@@ -5,7 +5,7 @@ test.describe("Visual Styling Templates", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
     });
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
@@ -70,7 +70,7 @@ test.describe("Visual Styling Templates", () => {
     // We need to ensure we haven't set 'codex_skip_landing' in localStorage.
 
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "false");
+      try { localStorage.setItem("codex_skip_landing", "false"); } catch { /* ignore */ }
     });
     await page.reload();
     // In landing page mode, vault might not be idle if it doesn't boot.
