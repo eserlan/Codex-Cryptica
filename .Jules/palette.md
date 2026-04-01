@@ -24,5 +24,4 @@
 **Action:** Always link dynamically rendered error messages to their inputs using `aria-invalid` and `aria-describedby` with matching IDs, alongside an explicit `<label>`.
 ## 2026-04-01 - Enhanced Entity Detail Tabs Accessibility
 **Learning:** Added ARIA roles, states, and keyboard navigation (arrow keys) to standard `<button>` based tabs to improve screen reader accessibility and keyboard usability within Svelte components.
-**Action:** Ensure all custom tab lists follow the W3C ARIA authoring practices by implementing `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, and  along with appropriate keyboard handlers.
 **Action:** Ensure all custom tab lists follow the W3C ARIA authoring practices by implementing `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, and `tabindex` along with appropriate keyboard handlers.
