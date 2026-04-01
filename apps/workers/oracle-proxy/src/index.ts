@@ -253,12 +253,12 @@ function getCorsHeaders(
 export function isOriginAllowed(origin: string, env: Env): boolean {
   if (!origin) return false;
 
-  // Check environment variable first
+  // When configured, ALLOWED_ORIGINS is an exact allowlist.
   if (env.ALLOWED_ORIGINS) {
-    const allowedOrigins = env.ALLOWED_ORIGINS.split(",").map((o) => o.trim());
-    if (allowedOrigins.includes(origin)) {
-      return true;
-    }
+    return env.ALLOWED_ORIGINS.split(",")
+      .map((o) => o.trim())
+      .filter(Boolean)
+      .includes(origin);
   }
 
   // Check default origins
@@ -273,6 +273,9 @@ export function isOriginAllowed(origin: string, env: Env): boolean {
 function isLoopbackOrigin(origin: string): boolean {
   try {
     const url = new URL(origin);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return false;
+    }
     const hostname = url.hostname.toLowerCase();
     return hostname === "localhost" || hostname === "127.0.0.1";
   } catch {
