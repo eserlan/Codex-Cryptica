@@ -219,7 +219,7 @@
           {/if}
 
           <!-- Lore / Metadata Fields -->
-          {#if entity.lore}
+          {#if !vault.isGuest && entity.lore}
             <div
               class="mb-8 p-4 bg-green-900/10 border-l-2 border-green-500 rounded-r"
             >

@@ -60,6 +60,12 @@
   let isSaving = $state(false);
   const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
 
+  $effect(() => {
+    if (vault.isGuest && activeTab === "lore") {
+      activeTab = "status";
+    }
+  });
+
   const startEditing = () => {
     if (!entity) return;
     editTitle = entity.title;
@@ -181,9 +187,9 @@
           role="tabpanel"
           id={panelIds.lore}
           aria-labelledby={tabIds.lore}
-          hidden={activeTab !== "lore"}
+          hidden={activeTab !== "lore" || vault.isGuest}
         >
-          {#if activeTab === "lore"}
+          {#if activeTab === "lore" && !vault.isGuest}
             <DetailLoreTab {entity} {isEditing} bind:editLore />
           {/if}
         </div>

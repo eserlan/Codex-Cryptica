@@ -1,4 +1,5 @@
 import { uiStore } from "./ui.svelte";
+import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 import { base } from "$app/paths";
 import { vaultRegistry } from "./vault-registry.svelte";
 import { mapRegistry } from "./map-registry.svelte";
@@ -1064,10 +1065,15 @@ export class VaultStore {
     path: string,
     fileFetcher?: (path: string) => Promise<Blob>,
   ) {
+    // If we are in guest mode, we need to fetch files from the host
+    const effectiveFetcher =
+      fileFetcher ||
+      (this.isGuest ? (p: string) => p2pGuestService.getFile(p) : undefined);
+
     return this.assetManager.resolveImageUrl(
       await this.getActiveVaultHandle(),
       path,
-      fileFetcher,
+      effectiveFetcher,
       await this.getActiveSyncHandle(),
     );
   }

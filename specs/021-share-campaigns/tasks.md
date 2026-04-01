@@ -42,6 +42,7 @@
 - [x] T008 [US1] Extend `GoogleDriveAdapter` in `apps/web/src/lib/cloud-bridge/google-drive/adapter.ts` to implement `shareFilePublicly` and `revokeShare`
 - [x] T009 [US1] Add "Share" button and status UI to `apps/web/src/lib/components/VaultControls.svelte` or a new `ShareModal.svelte`
 - [x] T010 [US1] Implement sharing logic in UI: call adapter, update metadata, show link to user
+- [x] T010b [US1] Auto-copy the generated share link to the owner's clipboard when a session starts
 - [x] T010a [US1] Implement visual distinction (badge/icon) for shared campaigns in the dashboard
 - [x] T011 [US1] Implement revoke logic in UI: call adapter, clear metadata
 
@@ -60,6 +61,8 @@
 - [x] T012 [US2] Implement `GuestLoginModal.svelte` in `apps/web/src/lib/components/modals/` to capture temporary username
 - [x] T013 [US2] Implement "Guest Entry" logic in `apps/web/src/routes/+layout.svelte` or `+page.svelte`: detect `shareId` in URL, show modal, init Guest Mode
 - [x] T013a [US2] Update Service Worker configuration to cache fetched Guest content for offline resilience
+- [x] T013b [US2] Surface an active guest roster to the host with temporary display names and live status
+- [x] T013c [US2] Remove guests from the host roster when they disconnect
 - [x] T014 [US2] Implement read-only UI enforcement: Disable all inputs and action buttons when `vault.isGuest` is true
 - [x] T015 [US2] Update `EntityDetailPanel.svelte` and `MarkdownEditor.svelte` to respect the read-only flag
 

@@ -11,7 +11,20 @@ test.describe("Guest Login Modal Accessibility", () => {
       (window as any).Peer = class MockPeer {
         on() {}
         connect() {
-          return { on: () => {}, send: () => {}, close: () => {} };
+          const handlers: Record<string, (...args: any[]) => void> = {};
+          const conn = {
+            open: true,
+            on(event: string, handler: (...args: any[]) => void) {
+              handlers[event] = handler;
+            },
+            send: () => {},
+            close: () => {},
+            emit(event: string, ...args: any[]) {
+              handlers[event]?.(...args);
+            },
+          };
+          (window as any).__guestConn = conn;
+          return conn;
         }
         destroy() {}
       };
@@ -24,7 +37,7 @@ test.describe("Guest Login Modal Accessibility", () => {
     page,
   }) => {
     const usernameInput = page.locator("#username-input");
-    const submitButton = page.getByRole("button", { name: "ACCESS ARCHIVE" });
+    const submitButton = page.getByRole("button", { name: "JOIN" });
 
     // 1. Initially no error
     await expect(page.locator("#username-error")).not.toBeAttached();
@@ -34,26 +47,34 @@ test.describe("Guest Login Modal Accessibility", () => {
     const errorRequired = page.locator("#username-error");
     await expect(errorRequired).toBeVisible();
     await expect(errorRequired).toHaveAttribute("role", "alert");
-    await expect(errorRequired).toHaveText("Username is required");
+    await expect(errorRequired).toHaveText("Name is required");
     await expect(usernameInput).toHaveAttribute("aria-invalid", "true");
 
     // 3. Type to clear error
-    await usernameInput.fill("A");
+    await usernameInput.fill("Baddy");
     await expect(page.locator("#username-error")).not.toBeAttached();
     await expect(usernameInput).toHaveAttribute("aria-invalid", "false");
 
-    // 4. Trigger "too short" error
+    // 4. Submit valid username
     await submitButton.click();
-    const errorShort = page.locator("#username-error");
-    await expect(errorShort).toBeVisible();
-    await expect(errorShort).toHaveAttribute("role", "alert");
-    await expect(errorShort).toHaveText("Username too short");
-    await expect(usernameInput).toHaveAttribute("aria-invalid", "true");
-
-    // 5. Submit valid username
-    await usernameInput.fill("ValidUser");
-    await submitButton.click();
-    // Modal should ideally disappear or start connecting (in this test it won't connect due to mock)
     await expect(page.locator("#username-error")).not.toBeAttached();
+  });
+
+  test("should reopen the guest modal if the connection fails", async ({
+    page,
+  }) => {
+    const usernameInput = page.locator("#username-input");
+    const submitButton = page.getByRole("button", { name: "JOIN" });
+
+    await usernameInput.fill("Baddy");
+    await submitButton.click();
+
+    await page.evaluate(() => {
+      const conn = (window as any).__guestConn;
+      conn?.emit("error", new Error("Connection failed"));
+    });
+
+    await expect(page.locator("#username-input")).toBeVisible();
+    await expect(page.locator("#username-input")).toHaveValue("Baddy");
   });
 });

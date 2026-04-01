@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { categories } from "$lib/stores/categories.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import {
     createEntityDetailTabIds,
@@ -88,22 +89,23 @@
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
-    <button
-      id={tabIds.lore}
-      type="button"
-      role="tab"
-      aria-selected={activeTab === "lore"}
-      aria-controls={panelIds.lore}
-      tabindex={activeTab === "lore" ? 0 : -1}
-      data-testid="tab-lore"
-      class={activeTab === "lore"
-        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : "hover:text-theme-text transition"}
-      onclick={() => {
-        activeTab = "lore";
-      }}
-      >{themeStore.jargon.tab_lore.toUpperCase()}</button
-    >
+    {#if !vault.isGuest}
+      <button
+        id={tabIds.lore}
+        type="button"
+        role="tab"
+        aria-selected={activeTab === "lore"}
+        aria-controls={panelIds.lore}
+        tabindex={activeTab === "lore" ? 0 : -1}
+        data-testid="tab-lore"
+        class={activeTab === "lore"
+          ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : "hover:text-theme-text transition"}
+        onclick={() => {
+          activeTab = "lore";
+        }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
+      >
+    {/if}
     <button
       id={tabIds.inventory}
       type="button"
@@ -129,8 +131,7 @@
       class={activeTab === "map"
         ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : "hover:text-theme-text transition"}
-      onclick={() => (activeTab = "map")}
-      >MAP</button
+      onclick={() => (activeTab = "map")}>MAP</button
     >
   </div>
 </div>

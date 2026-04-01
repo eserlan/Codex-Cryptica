@@ -18,7 +18,8 @@ A campaign owner wants to give another user read-only access to their campaign s
 **Acceptance Scenarios**:
 
 1. **Given** I am the owner of a campaign, **When** I click "Share Campaign", **Then** the system generates a unique URL.
-2. **Given** I have a generated link, **When** I copy it, **Then** it is ready to be pasted to another user.
+2. **Given** I have a generated link, **When** it is created, **Then** the system automatically copies it to my clipboard.
+3. **Given** I have a generated link, **When** I manually copy it, **Then** it is ready to be pasted to another user.
 
 ### User Story 2 - Recipient Views Shared Campaign (Priority: P1)
 
@@ -33,6 +34,7 @@ A user receives a campaign link and wants to view the campaign contents.
 1. **Given** I am a visitor with a share link, **When** I navigate to the link, **Then** I am prompted to enter a temporary username.
 2. **Given** I have entered a username, **When** I submit, **Then** I see the campaign details in read-only mode.
 3. **Given** I am viewing a shared campaign, **When** I try to edit a field, **Then** the UI prevents me (read-only mode).
+4. **Given** I am connected as a guest, **When** the host views the session, **Then** my temporary display name and live status are visible in a small guest roster.
 
 ### User Story 3 - Owner Revokes Access (Priority: P2)
 
@@ -62,7 +64,10 @@ The owner decides to stop sharing the campaign.
 - **FR-003**: System MUST allow public access via link but REQUIRE visitors to provide a temporary username before viewing.
 - **FR-004**: System MUST allow owners to invalidate or regenerate the share link, effectively revoking access for previous links.
 - **FR-005**: System MUST visually distinguish shared campaigns from owned campaigns in the dashboard (e.g., "Shared with me" filter or badge).
-- **FR-006**: System MUST prevent any modification (updates, creates, deletes) of campaign entities by share-link recipients.
+- **FR-006**: System MUST automatically copy a newly generated share link to the owner's clipboard.
+- **FR-007**: System MUST show the host a lightweight active guest roster with each guest's temporary display name and current session status.
+- **FR-008**: System MUST remove guests from the active roster when they disconnect.
+- **FR-009**: System MUST prevent any modification (updates, creates, deletes) of campaign entities by share-link recipients.
 
 ### Key Entities
 

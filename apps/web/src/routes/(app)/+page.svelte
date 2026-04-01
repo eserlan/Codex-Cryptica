@@ -95,7 +95,10 @@
       uiStore.guestUsername
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
+      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
+      vault.status = "loading";
+      vault.selectedEntityId = null;
 
       p2pGuestService
         .connectToHost(
@@ -122,6 +125,15 @@
             );
             if (graph.defaultVisibility) {
               vault.defaultVisibility = graph.defaultVisibility;
+            }
+            if (graph.themeId) {
+              import("../../lib/stores/theme.svelte")
+                .then((m) => {
+                  if (m?.themeStore) m.themeStore.previewTheme(graph.themeId);
+                })
+                .catch((err) =>
+                  console.error("Failed to load theme store", err),
+                );
             }
             // Force shared mode for guests to ensure Fog of War is active
             import("../../lib/stores/ui.svelte")
@@ -150,14 +162,40 @@
             // Real-time batch update from host
             vault.batchUpdate(batchUpdates);
           },
+          (themeId) => {
+            // Real-time theme update from host
+            import("../../lib/stores/theme.svelte")
+              .then((m) => {
+                if (m?.themeStore) m.themeStore.previewTheme(themeId);
+              })
+              .catch((err) => console.error("Failed to load theme store", err));
+          },
+          uiStore.guestUsername ?? undefined,
         )
         .catch((err) => {
           console.error("[Guest Mode] Failed to connect to host:", err);
+          vault.selectedEntityId = null;
+          uiStore.guestUsername = null;
           uiStore.isGuestMode = false;
           vault.status = "error";
           vault.errorMessage = "Failed to connect to shared campaign.";
         });
     }
+  });
+
+  $effect(() => {
+    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
+      return;
+    }
+
+    const selectedId = vault.selectedEntityId;
+    p2pGuestService.updateGuestStatus({
+      status: selectedId ? "viewing" : "connected",
+      currentEntityId: selectedId,
+      currentEntityTitle: selectedId
+        ? (vault.entities[selectedId]?.title ?? selectedId)
+        : null,
+    });
   });
 
   onMount(async () => {

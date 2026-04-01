@@ -1,5 +1,5 @@
 import type { IStorageAdapter, SerializedGraph } from "../types";
-import Peer from "peerjs";
+import { createPeer, type PeerFactory } from "./peer-factory";
 
 export class P2PClientAdapter implements IStorageAdapter {
   private hostId: string;
@@ -7,6 +7,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   private conn: any;
   private graphPromise: Promise<SerializedGraph>;
   private graphResolver!: (g: SerializedGraph) => void;
+  private readonly peerFactory: PeerFactory;
 
   // Request tracking
   private pendingRequests = new Map<
@@ -14,8 +15,9 @@ export class P2PClientAdapter implements IStorageAdapter {
     { resolve: (b: Blob) => void; reject: (e: any) => void }
   >();
 
-  constructor(hostId: string) {
+  constructor(hostId: string, deps: { peerFactory?: PeerFactory } = {}) {
     this.hostId = hostId;
+    this.peerFactory = deps.peerFactory ?? createPeer;
     this.graphPromise = new Promise((resolve) => {
       this.graphResolver = resolve;
     });
@@ -27,8 +29,7 @@ export class P2PClientAdapter implements IStorageAdapter {
 
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      // @ts-expect-error - PeerJS constructor types
-      this.peer = new Peer(undefined, { debug: 1 });
+      this.peer = this.peerFactory(undefined, { debug: 1 });
 
       this.peer.on("open", () => {
         console.log("[P2P Client] Connected to signaling server.");

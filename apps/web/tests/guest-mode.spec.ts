@@ -10,6 +10,8 @@ test.describe("Guest Mode (P2P Share)", () => {
         title: "Shared Mountain",
         type: "location",
         content: "A tall, craggy mountain shared via P2P.",
+        image:
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=",
         connections: [],
       },
       "test-entity-2": {
@@ -105,6 +107,10 @@ test.describe("Guest Mode (P2P Share)", () => {
     page,
   }) => {
     await page.goto("/?shareId=p2p-mock-peer-host");
+    await page.waitForFunction(() => !!(window as any).uiStore);
+    await page.evaluate(() => {
+      (window as any).uiStore?.setGuestUsername("Guest Tester");
+    });
 
     // 1. Wait for guest mode to activate and initialize
     await page.waitForFunction(
@@ -138,6 +144,9 @@ test.describe("Guest Mode (P2P Share)", () => {
       page.locator("h2", { hasText: "Shared Mountain" }),
     ).toBeVisible();
 
+    // Lore should stay hidden for guests.
+    await expect(page.getByTestId("tab-lore")).toHaveCount(0);
+
     // Check if the title input is disabled
     const entityTitleInput = page.locator("input[placeholder='Title']");
     if ((await entityTitleInput.count()) > 0) {
@@ -148,6 +157,16 @@ test.describe("Guest Mode (P2P Share)", () => {
     await expect(
       page.getByRole("button", { name: "SAVE CHANGES" }),
     ).not.toBeVisible();
+
+    // The graph should still resolve node images.
+    await page.waitForFunction(
+      () => {
+        const node = (window as any).cy?.$id("test-entity-1");
+        return !!node?.data("resolvedImage");
+      },
+      null,
+      { timeout: 10000 },
+    );
 
     // 5. Verify image save button in oracle is not visible
     const imageUrl =

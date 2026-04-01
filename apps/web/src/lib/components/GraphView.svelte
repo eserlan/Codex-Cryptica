@@ -450,10 +450,12 @@
 
   $effect(() => {
     const currentCy = cy;
-    if (currentCy && graph.elements && imageManager) {
+    const currentElements = graph.elements;
+    const showImages = graph.showImages;
+    if (currentCy && currentElements && imageManager) {
       untrack(() => {
         imageManager!.sync({
-          showImages: graph.showImages,
+          showImages,
           resolveImageUrl: (path) => vault.resolveImageUrl(path),
           releaseImageUrl: (path: string) => vault.releaseImageUrl(path),
           onBatchApplied: (count) => {

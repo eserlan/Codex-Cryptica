@@ -75,7 +75,7 @@ test.describe("Node Read Mode", () => {
     // 1. Setup Data with Image
     await page.evaluate(async () => {
       const base64Image =
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAC1HAQAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
       const id = await (window as any).vault.createEntity(
         "character",
         "HeroImg",

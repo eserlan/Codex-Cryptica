@@ -9,6 +9,7 @@ export interface SerializedGraph {
   // Visibility Settings
   defaultVisibility?: "visible" | "hidden";
   sharedMode?: boolean;
+  themeId?: string;
 }
 
 export interface IStorageAdapter {
