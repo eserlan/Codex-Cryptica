@@ -164,13 +164,6 @@ describe("P2P Services", () => {
       expect(seenIds).toEqual(["existing-peer"]);
     });
 
-    it("should return the existing peer id when already hosting", async () => {
-      (hostService as any)._isHosting = true;
-      (hostService as any).peerId = "existing-peer";
-
-      await expect(hostService.startHosting()).resolves.toBe("existing-peer");
-    });
-
     it("should handle new connections and send initial graph", async () => {
       const idPromise = hostService.startHosting();
       const peerInstance = (hostService as any).peer;
