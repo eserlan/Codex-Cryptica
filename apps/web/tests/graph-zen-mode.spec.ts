@@ -61,6 +61,7 @@ test.describe("Graph Zen Mode", () => {
     await expect(modal.getByTestId("entity-title")).toHaveText(
       "Double Click Node",
     );
+    await page.waitForTimeout(300);
     await expect(page.getByRole("complementary")).toBeHidden();
   });
 });
