@@ -36,7 +36,7 @@
   let yearPositions = $derived.by(() => {
     // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
     // to prevent intermediate array allocations and reduce GC pressure during rapid UI updates.
-    const allEntities = Object.values(vault.entities);
+    const allEntities = vault.allEntities;
     const count = allEntities.length;
     const years: number[] = [];
 
