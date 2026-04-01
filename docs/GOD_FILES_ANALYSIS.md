@@ -4,18 +4,18 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Top 10 Largest Files (Excluding Tests & Generated Code)
 
-| Rank | File Path                                                   | Line Count    | Type                | Status   |
-| :--- | :---------------------------------------------------------- | :------------ | :------------------ | :------- |
-| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 233 | Store (State/Logic) | ✅ FIXED |
-| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 364 | Store (State/Logic) | ✅ FIXED |
-| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 449 | UI Component        | ✅ FIXED |
-| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 364 | UI Component        | ✅ FIXED |
-| 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1     | Service (API/Logic) | ✅ FIXED |
-| 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 261   | UI Layout           | ✅ FIXED |
-| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 447           | UI Component        | ✅ FIXED |
-| 8    | `packages/sync-engine/src/SyncService.ts`                   | 663           | Engine Core         | 🟡 SOON  |
-| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 618           | UI Component        |          |
-| 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 632           | UI Component        |          |
+| Rank | File Path                                                   | Line Count      | Type                | Status   |
+| :--- | :---------------------------------------------------------- | :-------------- | :------------------ | :------- |
+| 1    | `apps/web/src/lib/stores/oracle.svelte.ts`                  | ~~1,484~~ 303   | Store (State/Logic) | ✅ FIXED |
+| 2    | `apps/web/src/lib/stores/vault.svelte.ts`                   | ~~1,381~~ 1,260 | Store (State/Logic) | ✅ FIXED |
+| 3    | `apps/web/src/lib/components/GraphView.svelte`              | ~~1,371~~ 560   | UI Component        | ✅ FIXED |
+| 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 371   | UI Component        | ✅ FIXED |
+| 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1       | Service (API/Logic) | ✅ FIXED |
+| 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 221     | UI Layout           | ✅ FIXED |
+| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 447             | UI Component        | ✅ FIXED |
+| 8    | `packages/sync-engine/src/SyncService.ts`                   | 711             | Engine Core         | 🟡 SOON  |
+| 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 835             | UI Component        |          |
+| 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 629             | UI Component        |          |
 
 ---
 
@@ -25,25 +25,25 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 **Status:** ✅ **COMPLETED (2026-03-11)**
 **Summary:** Refactored into `@codex/oracle-engine`. Logic isolated into `ChatHistoryService`, `OracleSettingsService`, `OracleCommandParser`, `OracleActionExecutor`, `OracleGenerator`, and `UndoRedoService`.
-**Outcome:** Reduced from ~1,600 lines to 233 lines. Established Dependency Injection as a core principle.
+**Outcome:** Reduced from ~1,600 lines to 303 lines. Established Dependency Injection as a core principle.
 
 ### 2. `vault.svelte.ts` (Refactored)
 
 **Status:** ✅ **COMPLETED (2026-03-11)**
 **Summary:** Refactored into `@codex/vault-engine` and specialized stores. Logic decoupled into `VaultRegistryStore`, `MapRegistryStore`, `CanvasRegistryStore`, and `VaultRepository`.
-**Outcome:** Reduced from ~1,400 lines to 364 lines. Improved data separation and persistence logic.
+**Outcome:** Reduced from ~1,400 lines to 1,260 lines. Improved data separation and persistence logic.
 
 ### 3. `GraphView.svelte` (Refactored)
 
 **Status:** ✅ **COMPLETED (2026-03-12)**
 **Summary:** Refactored into modular components and decoupled logic. Extracted `GraphHUD`, `GraphToolbar`, `GraphTooltip`, and `EdgeEditorModal` UI components. Moved layout execution to `LayoutManager`, styling to `GraphStyles`, event handling to `useGraphEvents`, and element synchronization to `useGraphSync`.
-**Outcome:** Reduced from 1,371 lines to 449 lines. Improved viewport stability and eliminated image loading jitter. Established a clear separation between the UI layer and the visualization engine.
+**Outcome:** Reduced from 1,371 lines to 560 lines. Improved viewport stability and eliminated image loading jitter. Established a clear separation between the UI layer and the visualization engine.
 
 ### 4. `ZenModeModal.svelte` (Refactored)
 
 **Status:** ✅ **COMPLETED (2026-03-12)**
 **Summary:** Refactored into a modal orchestration shell with extracted editor/view subcomponents and isolated state handling.
-**Outcome:** Reduced from 1,058 lines to 364 lines and aligned with the modular component patterns established by GraphView.
+**Outcome:** Reduced from 1,058 lines to 371 lines and aligned with the modular component patterns established by GraphView.
 
 ### 5. `ai.ts` (Refactored)
 
@@ -57,7 +57,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 **Summary:** Restructured layout architecture using SvelteKit route groups. Created `(app)` route group for workspace routes, moved workspace routes into it, and stripped root layout to minimal shell.
 **Outcome:**
 
-- Root `+layout.svelte` reduced from 261 lines to ~25 lines
+- Root `+layout.svelte` reduced from 261 lines to 221 lines
 - Marketing pages no longer load workspace JS (stores, bootSystem, modals)
 - Clean separation between marketing routes (`(marketing)`) and workspace routes (`(app)`)
 - Build passes, all 152 tests pass
