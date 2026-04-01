@@ -298,8 +298,10 @@ export class SyncActionExecutor {
             await this.registry.putEntry({
               filePath: action.path,
               vaultId,
-              lastSyncedFsModified: updatedOpfs.lastModified,
-              lastSyncedFsSize: updatedOpfs.size,
+              lastSyncedFsModified:
+                action.fsMetadata?.lastModified ?? updatedOpfs.lastModified,
+              lastSyncedFsSize:
+                action.fsMetadata?.size ?? updatedOpfs.size,
               lastSyncedOpfsHash: updatedOpfs.hash,
               status: "SYNCED",
               remoteId: this.persistence.getSerializableId(
