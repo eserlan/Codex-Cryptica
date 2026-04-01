@@ -26,6 +26,12 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
+  import {
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+    consumePendingSearchEntityFocus,
+    SEARCH_ENTITY_FOCUS_EVENT,
+    markSearchEntityFocusHandled,
+  } from "./search/search-focus";
 
   let container: HTMLElement;
   let cy: Core | undefined = $state();
@@ -90,6 +96,11 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+  let pendingSearchFocus: {
+    entityId: string;
+    zoom: number;
+  } | null = null;
+  let pendingSearchFocusRevision = $state(0);
   let nodeSelectTimer: number | null = null;
   const NODE_SELECT_DELAY_MS = 300;
 
@@ -101,6 +112,7 @@
   } | null>(null);
 
   let cleanupEvents: (() => void) | undefined;
+  let searchFocusListener: ((event: Event) => void) | null = null;
 
   const applyCurrentLayout = async (
     isInitial = false,
@@ -218,6 +230,33 @@
 
   onMount(() => {
     window.addEventListener("resize", handleResize);
+    searchFocusListener = (event: Event) => {
+      const detail = (
+        event as CustomEvent<{
+          entityId?: string;
+          zoom?: number;
+          requestId?: number;
+        }>
+      ).detail;
+      if (!detail?.entityId) return;
+      if (typeof detail.requestId === "number") {
+        markSearchEntityFocusHandled(detail.requestId);
+      }
+      pendingSearchFocus = {
+        entityId: detail.entityId,
+        zoom: detail.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM,
+      };
+      pendingSearchFocusRevision += 1;
+    };
+
+    window.addEventListener(SEARCH_ENTITY_FOCUS_EVENT, searchFocusListener);
+
+    const bufferedSearchFocus = consumePendingSearchEntityFocus();
+    if (bufferedSearchFocus) {
+      pendingSearchFocus = bufferedSearchFocus;
+      pendingSearchFocusRevision += 1;
+    }
+
     if (container) {
       initTimer = setTimeout(async () => {
         if (!container) return;
@@ -328,6 +367,13 @@
       clearTimeout(resizeTimer);
       resizeTimer = null;
     }
+    if (searchFocusListener) {
+      window.removeEventListener(
+        SEARCH_ENTITY_FOCUS_EVENT,
+        searchFocusListener,
+      );
+      searchFocusListener = null;
+    }
     if (cleanupEvents) {
       cleanupEvents();
       cleanupEvents = undefined;
@@ -437,20 +483,33 @@
   });
 
   $effect(() => {
+    void pendingSearchFocusRevision;
     const currentCy = cy;
     if (currentCy) {
       applyFocus(selectedId);
       if (selectedId) {
         const node = currentCy.$id(selectedId);
         if (node.length > 0) {
+          const focusZoom =
+            pendingSearchFocus?.entityId === selectedId
+              ? (pendingSearchFocus?.zoom ?? DEFAULT_SEARCH_ENTITY_ZOOM)
+              : null;
           untrack(() =>
             currentCy.animate({
               center: { eles: node },
+              ...(focusZoom !== null ? { zoom: focusZoom } : {}),
               duration: 800,
               easing: "ease-out-cubic",
             }),
           );
+          if (focusZoom !== null) {
+            pendingSearchFocus = null;
+          }
+        } else if (pendingSearchFocus?.entityId === selectedId) {
+          pendingSearchFocus = null;
         }
+      } else if (pendingSearchFocus) {
+        pendingSearchFocus = null;
       }
     }
   });
