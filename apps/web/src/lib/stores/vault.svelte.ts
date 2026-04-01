@@ -680,7 +680,7 @@ export class VaultStore {
       }
 
       if (text) {
-        const { metadata: data, content: body } = this._helpers.parseMarkdown(content);
+        const { metadata: data, content: body } = this._helpers.parseMarkdown(text);
         const freshLore = (data as any).lore || "";
 
         const entityToUpdate = this.entities[id];
@@ -866,7 +866,7 @@ export class VaultStore {
 
       const text = await readFileAsText(vaultDir, path);
       if (text) {
-        const { metadata: data, content: body } = this._helpers.parseMarkdown(content);
+        const { metadata: data, content: body } = parseMarkdown(text);
         const lore = (data as any).lore || "";
 
         this.repository.entities[id] = {

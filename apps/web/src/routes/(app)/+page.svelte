@@ -95,7 +95,9 @@
       uiStore.guestUsername
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
+      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true; // Activate guest mode
+      vault.status = "loading";
 
       p2pGuestService
         .connectToHost(
