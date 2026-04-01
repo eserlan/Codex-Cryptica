@@ -63,4 +63,28 @@ describe("ClipboardService", () => {
     expect(result).toBe(true);
     expect(mockClipboard.write).toHaveBeenCalled();
   });
+
+  it("should copy arbitrary rich text and plain text", async () => {
+    const result = await service.copyHtmlAndText(
+      "<p>Chronicle</p>",
+      "Chronicle",
+    );
+
+    expect(result).toBe(true);
+    expect(mockClipboard.write).toHaveBeenCalledTimes(1);
+    expect(mockClipboard.writeText).not.toHaveBeenCalled();
+  });
+
+  it("should fall back to plain text when rich clipboard write fails", async () => {
+    mockClipboard.write.mockRejectedValueOnce(new Error("denied"));
+
+    const result = await service.copyHtmlAndText(
+      "<p>Chronicle</p>",
+      "Chronicle",
+    );
+
+    expect(result).toBe(true);
+    expect(mockClipboard.write).toHaveBeenCalledTimes(1);
+    expect(mockClipboard.writeText).toHaveBeenCalledWith("Chronicle");
+  });
 });

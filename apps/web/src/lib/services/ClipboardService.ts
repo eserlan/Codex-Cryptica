@@ -161,6 +161,30 @@ export class ClipboardService {
       }
     }
   }
+
+  async copyHtmlAndText(html: string, text: string): Promise<boolean> {
+    try {
+      const data = [
+        new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" }),
+        }),
+      ];
+
+      await this.clipboard.write(data);
+      return true;
+    } catch (err) {
+      console.error("[ClipboardService] Failed to copy rich text", err);
+
+      try {
+        await this.clipboard.writeText(text);
+        return true;
+      } catch (innerErr) {
+        console.error("[ClipboardService] Total copy failure", innerErr);
+        return false;
+      }
+    }
+  }
 }
 
 export const clipboardService = new ClipboardService();
