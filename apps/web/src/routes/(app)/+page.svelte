@@ -7,20 +7,20 @@
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
   import GraphView from "$lib/components/GraphView.svelte";
   import VaultControls from "$lib/components/VaultControls.svelte";
-  import FeatureHint from "$lib/components/hints/FeatureHint.svelte";
   import { THEMES } from "schema";
 
-  const hostId = $derived(page.url.searchParams.get("host"));
+  const shareId = $derived(page.url.searchParams.get("shareId"));
 
   onMount(() => {
-    if (hostId) {
-      console.log("[Guest Mode] Host ID detected:", hostId);
+    if (shareId && shareId.startsWith("p2p-")) {
+      const peerId = shareId.substring(4);
+      console.log("[Guest Mode] Host ID detected:", peerId);
       uiStore.isGuestMode = true;
       vault.status = "loading";
 
       p2pGuestService
         .connectToHost(
-          hostId,
+          peerId,
           (graph) => {
             console.log("[Guest Page] Received graph data:", {
               entityCount: Object.keys(graph.entities).length,

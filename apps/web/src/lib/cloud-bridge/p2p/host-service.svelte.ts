@@ -16,20 +16,6 @@ export class P2PHostService {
   async startHosting(): Promise<string> {
     if (this._isHosting && this.peerId) return this.peerId;
 
-    // Subscribe to local vault updates
-    vault.onEntityUpdate = (entity) => {
-      this.broadcastEntityUpdate(entity);
-    };
-    vault.onEntityDelete = (id) => {
-      this.broadcastEntityDelete(id);
-    };
-    vault.onBatchUpdate = (updates) => {
-      this.broadcastBatchUpdate(updates);
-    };
-    themeStore.onThemeUpdate = (id) => {
-      this.broadcastThemeUpdate(id);
-    };
-
     return new Promise((resolve, reject) => {
       // Generate a random ID with a prefix
       // @ts-expect-error - PeerJS constructor types
@@ -41,6 +27,21 @@ export class P2PHostService {
         console.log("[P2P Host] Hosting started. ID:", id);
         this.peerId = id;
         this._isHosting = true;
+        
+        // Subscribe to local vault updates
+        vault.onEntityUpdate = (entity) => {
+          this.broadcastEntityUpdate(entity);
+        };
+        vault.onEntityDelete = (delId) => {
+          this.broadcastEntityDelete(delId);
+        };
+        vault.onBatchUpdate = (updates) => {
+          this.broadcastBatchUpdate(updates);
+        };
+        themeStore.onThemeUpdate = (themeId) => {
+          this.broadcastThemeUpdate(themeId);
+        };
+
         resolve(id);
       });
 

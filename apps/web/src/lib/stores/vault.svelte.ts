@@ -160,7 +160,7 @@ export class VaultStore {
     return this.repository.allMaps;
   }
   get canvases() {
-    return this.repository.canvases;
+    return this.repository.canenses;
   }
   get allCanvases() {
     return this.repository.allCanvases;
@@ -329,7 +329,7 @@ export class VaultStore {
         content = await this._helpers.readFileAsText(handle, path);
       }
 
-      const { data, content: body } = this._helpers.parseMarkdown(content);
+      const { metadata: data, content: body } = this._helpers.parseMarkdown(content);
 
       this.repository.entities[id] = {
         ...entity,
@@ -389,6 +389,11 @@ export class VaultStore {
             ? `${base}/${p}`
             : `${base}/vault-samples/${p}`;
           const res = await fetch(url);
+          if (!res.ok) {
+            throw new Error(
+              `Failed to fetch sample asset "${p}" (HTTP ${res.status} ${res.statusText}) from ${url}`,
+            );
+          }
           return await res.blob();
         }
       : undefined;
@@ -402,7 +407,10 @@ export class VaultStore {
   }
 }
 
-export const vault = new VaultStore();
+const VAULT_KEY = "__codex_vault_instance__";
+export const vault: VaultStore =
+  (globalThis as any)[VAULT_KEY] ??
+  ((globalThis as any)[VAULT_KEY] = new VaultStore());
 
 if (typeof window !== "undefined") {
   (window as any).vault = vault;
