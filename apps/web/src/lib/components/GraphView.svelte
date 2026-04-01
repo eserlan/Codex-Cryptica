@@ -523,6 +523,11 @@
     <SelectionConnector {cy} />
   {/if}
   <FeatureHint hintId="graph-controls" />
+  {#if selectedCount === 2}
+    <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
+      <FeatureHint hintId="node-merging" />
+    </div>
+  {/if}
   {#if ui.isConnecting}
     <FeatureHint hintId="connect-mode" />
   {/if}

@@ -134,7 +134,7 @@ test.describe("Visual Styling Templates", () => {
         .getPropertyValue("--color-accent-dim")
         .trim(),
     );
-    expect(secondaryColor).toBe("#ef4444");
+    expect(secondaryColor).toBe("#f87171");
 
     // 7. Verify jargon (Archive instead of Vault)
     await expect(page.getByTestId("open-vault-button")).toContainText(

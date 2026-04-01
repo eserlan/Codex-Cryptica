@@ -23,7 +23,9 @@ test.describe("Mobile Header Responsiveness", () => {
 
     // Verify desktop vault controls are hidden
     const desktopControls = page.locator("header .hidden.md\\:flex");
-    await expect(desktopControls).not.toBeVisible();
+    for (const control of await desktopControls.all()) {
+      await expect(control).not.toBeVisible();
+    }
 
     // Verify hamburger menu is visible
     await expect(page.getByLabel("Toggle menu")).toBeVisible();

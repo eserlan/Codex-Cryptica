@@ -45,8 +45,9 @@ test("system API key is never exposed in client network traffic", async ({
   // If using system proxy, requests should go to proxy, not direct to Google
   if (proxyRequests.length === 0) {
     // If no proxy requests, ensure no Google API requests with keys either
-    const anyGoogleRequests = requestUrls.filter((url) =>
-      url.includes("googleapis.com"),
+    const anyGoogleRequests = requestUrls.filter(
+      (url) =>
+        url.includes("googleapis.com") && !url.includes("fonts.googleapis.com"),
     );
     expect(anyGoogleRequests).toHaveLength(0);
   }

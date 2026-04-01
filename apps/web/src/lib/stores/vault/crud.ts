@@ -20,7 +20,9 @@ export class VaultCrudManager {
       updates: Record<string, Partial<LocalEntity>>,
     ) => void,
     private invalidateUrlCache?: (path: string) => void,
-  ) {}
+  ) {
+    console.log("[VaultCrud] Constructor called");
+  }
 
   async createEntity(
     type: Entity["type"],
@@ -85,6 +87,7 @@ export class VaultCrudManager {
   async batchUpdate(
     updates: Record<string, Partial<LocalEntity>>,
   ): Promise<boolean> {
+    console.log("[VaultCrud] batchUpdate called with:", Object.keys(updates));
     let hasChanges = false;
     const currentEntities = this.getEntities();
     const newEntities = { ...currentEntities };

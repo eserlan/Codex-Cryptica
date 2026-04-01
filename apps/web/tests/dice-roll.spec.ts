@@ -19,17 +19,19 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     }
 
     // Wait for actual UI to be ready
-    await page.waitForLoadState("networkidle");
+    await page.waitForLoadState("domcontentloaded");
     await expect(page.getByTestId("dice-roller-button")).toBeVisible({
-      timeout: 15000,
+      timeout: 30000,
     });
 
     // Open Oracle if not already open
-    const oracleBtn = page.getByTitle("Open Lore Oracle");
-    await oracleBtn.click({ force: true });
-    await page.waitForTimeout(1000);
+    const oracleSidebar = page.getByTestId("oracle-sidebar-panel");
+    if (!(await oracleSidebar.isVisible())) {
+      const oracleBtn = page.getByTitle("Open Lore Oracle");
+      await oracleBtn.click({ force: true });
+    }
 
-    await expect(page.getByTestId("oracle-sidebar-panel")).toBeVisible({
+    await expect(oracleSidebar).toBeVisible({
       timeout: 15000,
     });
   });

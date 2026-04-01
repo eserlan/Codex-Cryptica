@@ -6,6 +6,7 @@ test.describe("Oracle Sidebar", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
+      localStorage.setItem("oracle-hint-seen", "true");
     });
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");

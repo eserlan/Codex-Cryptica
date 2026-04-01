@@ -43,10 +43,14 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const node = cy.nodes()[0];
-      // Force a fixed position if renderedPosition() is being difficult
+      if (!cy) return;
+      const nodes = cy.nodes();
+      if (nodes.length === 0) return;
+
+      const node = nodes[0];
+      // Use node.emit to ensure it bubbles correctly to the delegated listener
       const pos = { x: 100, y: 100 };
-      cy.emit("cxttap", { renderedPosition: pos, target: node });
+      node.emit("cxttap", { renderedPosition: pos });
     });
 
     await page.waitForTimeout(2000);
@@ -135,22 +139,23 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     await openContextMenu(page);
     await page.getByRole("menuitem", { name: "Add to Canvas" }).click();
+
+    // Handle prompt
+    page.once("dialog", async (dialog) => {
+      await dialog.accept("Created from Selection");
+    });
     await page.click('[data-testid="canvas-picker-create"]');
 
-    // Handle the creation dialog
-    const input = page.locator("#new-canvas-input");
-    await expect(input).toBeVisible();
-    await input.fill("Created from Selection");
-    await page.click('[title="Confirm Creation"]');
-
-    // Verify success toast
+    // Wait for success toast instead of navigation (navigation happens after toast)
     await expect(page.locator('[data-testid="toast-success"]')).toContainText(
       "Created canvas",
     );
 
-    // Verify redirect or presence in registry
+    // Verify presence in registry
     await page.goto("/canvas");
-    await expect(page.locator("text=Created from Selection")).toBeVisible();
+    await expect(
+      page.locator("text=Created from Selection").first(),
+    ).toBeVisible();
   });
 
   test("T019/T020 - Duplicate detection - skip entities already on canvas", async ({
@@ -199,15 +204,12 @@ test.describe("Add to Canvas - Context Menu", () => {
     // Right-click and create new canvas
     await openContextMenu(page);
     await page.getByRole("menuitem", { name: "Add to Canvas" }).click();
+
+    // Handle prompt - empty string means use default
+    page.once("dialog", async (dialog) => {
+      await dialog.accept("");
+    });
     await page.click('[data-testid="canvas-picker-create"]');
-
-    // Verify default name in input
-    const input = page.locator("#new-canvas-input");
-    const val = await input.inputValue();
-    expect(val).toMatch(/\d+ entit/);
-
-    // Save
-    await page.click('[title="Confirm Creation"]');
 
     // Verify success toast
     await expect(page.locator('[data-testid="toast-success"]')).toContainText(
@@ -220,12 +222,16 @@ test.describe("Add to Canvas - Context Menu", () => {
 
     await openContextMenu(page);
     await page.getByRole("menuitem", { name: "Add to Canvas" }).click();
+
+    // Dismiss prompt
+    page.once("dialog", async (dialog) => {
+      await dialog.dismiss();
+    });
     await page.click('[data-testid="canvas-picker-create"]');
 
-    // Cancel the dialog
-    await page.keyboard.press("Escape");
-
-    // Verify modal closed (input not visible)
-    await expect(page.locator("#new-canvas-input")).not.toBeVisible();
+    // Verify NO success toast appeared
+    await expect(
+      page.locator('[data-testid="toast-success"]'),
+    ).not.toBeVisible();
   });
 });

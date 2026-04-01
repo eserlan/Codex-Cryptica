@@ -7,6 +7,11 @@ test.describe("Campaign-Specific Theme Persistence", () => {
       (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
     });
+
+    page.on("console", (msg) => {
+      console.log(`[PAGE] ${msg.type()}: ${msg.text()}`);
+    });
+
     await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).vault?.isInitialized);
   });
@@ -32,12 +37,25 @@ test.describe("Campaign-Specific Theme Persistence", () => {
 
     // 3. Create/Switch to Vault B
     const vaultBId = await page.evaluate(async () => {
-      return await (window as any).vault.createVault("Campaign B");
+      const id = await (window as any).vault.createVault("Campaign B");
+      await (window as any).themeStore.loadForVault(id);
+      return id;
     });
     await page.waitForFunction(() => (window as any).vault.status === "idle");
 
     // Verify Vault B starts with default theme (Ancient Parchment)
     // Fantasy primary is #78350f -> rgb(120, 53, 15)
+    await expect
+      .poll(
+        async () => {
+          return await page.evaluate(
+            () => (window as any).themeStore.currentThemeId,
+          );
+        },
+        { timeout: 10000 },
+      )
+      .toBe("fantasy");
+
     await expect(page.locator("html")).toHaveCSS(
       "--color-accent-primary",
       "#78350f",

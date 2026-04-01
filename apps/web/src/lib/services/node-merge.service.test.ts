@@ -11,6 +11,7 @@ vi.mock("../stores/vault.svelte", () => ({
     selectedEntityId: null,
     entities: {},
     updateEntity: vi.fn().mockResolvedValue(undefined),
+    batchUpdate: vi.fn().mockResolvedValue(undefined),
     deleteEntity: vi.fn().mockResolvedValue(undefined),
   },
 }));
@@ -235,10 +236,11 @@ describe("NodeMergeService", () => {
 
       await service.updateBacklinks(["s"], "t");
 
-      expect(vault.updateEntity).toHaveBeenCalledWith(
-        "o",
+      expect(vault.batchUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          connections: [{ target: "t", label: "points-to-source" }],
+          o: expect.objectContaining({
+            connections: [{ target: "t", label: "points-to-source" }],
+          }),
         }),
       );
     });
@@ -257,13 +259,14 @@ describe("NodeMergeService", () => {
 
       await service.updateBacklinks(["s"], "t");
 
-      expect(vault.updateEntity).toHaveBeenCalledWith(
-        "o",
+      expect(vault.batchUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
-          connections: [
-            { target: "t", label: "points-to-source" },
-            { target: "valid", label: "stable" },
-          ],
+          o: expect.objectContaining({
+            connections: [
+              { target: "t", label: "points-to-source" },
+              { target: "valid", label: "stable" },
+            ],
+          }),
         }),
       );
     });

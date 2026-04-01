@@ -40,6 +40,7 @@
   import { useGlobalShortcuts } from "$lib/hooks/useGlobalShortcuts.svelte";
 
   let { children } = $props();
+  console.error("[Layout] Script executing (error log)");
 
   // State
   let isMobileMenuOpen = $state(false);

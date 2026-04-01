@@ -5,8 +5,23 @@ test.describe("Spatial Canvas", () => {
     // Inject global flag BEFORE goto so +layout.svelte sees it immediately
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
+      (window as any).__E2E__ = true;
       localStorage.setItem("codex_skip_landing", "true");
     });
+
+    // Pre-create entities so they exist in the vault
+    await page.goto("/");
+    await page.waitForSelector('[data-testid="graph-canvas"]');
+
+    // Create test entities
+    const createEnt = async (title: string) => {
+      await page.click('[data-testid="new-entity-button"]');
+      await page.fill('[data-testid="new-entity-title-input"]', title);
+      await page.keyboard.press("Enter");
+      await page.waitForTimeout(1000);
+    };
+    await createEnt("Test Hero");
+    await createEnt("Eldrin the Wise");
 
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
