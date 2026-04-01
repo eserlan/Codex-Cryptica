@@ -12,7 +12,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 | 4    | `apps/web/src/lib/components/modals/ZenModeModal.svelte`    | ~~1,058~~ 371   | UI Component        | ✅ FIXED |
 | 5    | `apps/web/src/lib/services/ai.ts`                           | ~~819~~ 1       | Service (API/Logic) | ✅ FIXED |
 | 6    | `apps/web/src/routes/(app)/+layout.svelte`                  | ~~795~~ 221     | UI Layout           | ✅ FIXED |
-| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | 447             | UI Component        | ✅ FIXED |
+| 7    | `apps/web/src/lib/components/map/MapView.svelte`            | ~~681~~ 447     | UI Component        | ✅ FIXED |
 | 8    | `packages/sync-engine/src/SyncService.ts`                   | 711             | Engine Core         | 🟡 SOON  |
 | 9    | `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte` | 835             | UI Component        |          |
 | 10   | `apps/web/src/lib/components/oracle/ChatMessage.svelte`     | 629             | UI Component        |          |
@@ -73,7 +73,7 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 **Status:** ✅ **COMPLETED (2026-04-01)**
 **Summary:** Split into a thin composition shell with extracted loader, fog painter, pin popover, and pure interaction helpers. The remaining component now focuses on orchestration and rendering glue rather than owning every map concern directly.
-**Outcome:** Reduced from 681 lines to 447 lines. The map-specific logic is now more testable and less tightly coupled.
+**Outcome:** Reduced from ~~681~~ 447 lines. The map-specific logic is now more testable and less tightly coupled.
 
 ---
 
