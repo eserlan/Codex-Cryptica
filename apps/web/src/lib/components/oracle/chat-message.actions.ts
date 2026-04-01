@@ -59,15 +59,16 @@ export class ChatMessageActions {
   private captureState(entityId: string) {
     const entity = this.vault.entities[entityId] as EntityLike | undefined;
     if (!entity) return null;
+    const snapshot = { ...entity } as EntityLike;
 
     try {
-      return structuredClone(entity) as EntityLike;
+      return structuredClone(snapshot) as EntityLike;
     } catch (error) {
       console.warn(
         "Failed to structuredClone entity, falling back to JSON parse/stringify",
         error,
       );
-      return JSON.parse(JSON.stringify(entity)) as EntityLike;
+      return JSON.parse(JSON.stringify(snapshot)) as EntityLike;
     }
   }
 
@@ -162,19 +163,23 @@ export class ChatMessageActions {
 
     try {
       const type = (params.parsed.type || "character") as any;
-      const connections: ConnectionLike[] = [
-        ...(params.parsed.connections || []).map((conn) => {
+      const connections: ConnectionLike[] = (params.parsed.connections || [])
+        .flatMap((conn) => {
           const targetName = typeof conn === "string" ? conn : conn.target;
+          const targetId = sanitizeId(targetName || "");
+          if (!targetId) return [];
           const label =
             typeof conn === "string" ? conn : conn.label || conn.target;
-          return {
-            target: sanitizeId(targetName || ""),
-            label: label || undefined,
-            type: "related_to",
-            strength: 1.0,
-          };
-        }),
-      ];
+          return [
+            {
+              target: targetId,
+              label: label || undefined,
+              type: "related_to",
+              strength: 1.0,
+            },
+          ];
+        })
+        .map((conn) => conn as ConnectionLike);
 
       const id = await this.vault.createEntity(type, params.parsed.title, {
         content: params.parsed.chronicle ?? undefined,

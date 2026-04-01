@@ -9,7 +9,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { graph } from "$lib/stores/graph.svelte";
   import { parserService } from "$lib/services/parser";
-  import { ClipboardService } from "$lib/services/ClipboardService";
+  import { clipboardService } from "$lib/services/ClipboardService";
   import ImageMessage from "./ImageMessage.svelte";
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
@@ -31,7 +31,6 @@
     vault,
     graph,
   });
-  const clipboardService = new ClipboardService();
 
   let targetEntity = $derived(
     getTargetEntityId(message, vault.selectedEntityId)
