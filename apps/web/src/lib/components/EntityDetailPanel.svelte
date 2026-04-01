@@ -146,7 +146,12 @@
         <DetailTabs {entity} bind:activeTab {isEditing} bind:editType />
       </div>
 
-      <div class="p-4 md:p-6 flex-1">
+      <div
+        class="p-4 md:p-6 flex-1"
+        role="tabpanel"
+        id="panel-{activeTab}"
+        aria-labelledby="tab-{activeTab}"
+      >
         {#if activeTab === "status"}
           <DetailStatusTab
             {entity}
