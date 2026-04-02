@@ -140,21 +140,23 @@ test.describe("Map Mode", () => {
   }) => {
     await ensureTestMap(page);
 
-    // 1. Verify HUD controls
-    await expect(page.getByText("PLAYER VIEW")).toBeVisible();
+    const sharedModeToggle = page.getByTestId("shared-mode-toggle");
+    const startedInSharedMode = await page.evaluate(
+      () => (window as any).uiStore.sharedMode,
+    );
+
+    // 1. Normalize to GM mode and verify the GM controls appear.
+    await expect(sharedModeToggle).toHaveText(
+      startedInSharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW",
+    );
+    if (startedInSharedMode) {
+      await sharedModeToggle.click();
+    }
+    await expect(sharedModeToggle).toHaveText("PLAYER VIEW");
+    await expect(page.getByText("Brush Size")).toBeVisible();
     await expect(page.getByText("FOG: ON")).toBeVisible();
 
-    // 2. Click Player View (enters shared mode, hides GM tools)
-    await page.getByRole("button", { name: "PLAYER VIEW" }).click();
-    await expect(page.getByText("EXIT PLAYER VIEW")).toBeVisible();
-    await expect(page.getByText("Brush Size")).not.toBeVisible();
-
-    // 3. Toggle back
-    await page.getByRole("button", { name: "EXIT PLAYER VIEW" }).click();
-    await expect(page.getByText("PLAYER VIEW")).toBeVisible();
-    await expect(page.getByText("Brush Size")).toBeVisible();
-
-    // 4. Toggle Fog (GM Tool)
+    // 3. Toggle Fog (GM Tool)
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll("button")).find((b) =>
         b.textContent?.includes("FOG: ON"),
@@ -162,6 +164,11 @@ test.describe("Map Mode", () => {
       if (btn) btn.click();
     });
     await expect(page.getByText("FOG: OFF")).toBeVisible();
+
+    // 4. Return to shared/player view and ensure GM controls hide again.
+    await sharedModeToggle.click();
+    await expect(sharedModeToggle).toHaveText("EXIT PLAYER VIEW");
+    await expect(page.getByText("Brush Size")).not.toBeVisible();
   });
 
   test("should allow deleting a map via Zen Mode", async ({ page }) => {
@@ -199,7 +206,7 @@ test.describe("Map Mode", () => {
     await fileChooser.setFiles(testImagePath);
 
     // 4. Verify the map was uploaded and the delete button is visible
-    const deleteBtn = page.getByRole("button", { name: "DELETE", exact: true });
+    const deleteBtn = page.getByRole("button", { name: "Delete map" });
     await expect(deleteBtn).toBeVisible({ timeout: 20000 });
 
     // 5. Click delete and handle the confirm dialog

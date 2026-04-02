@@ -16,6 +16,15 @@
 
   onMount(() => {
     // Show hint on first open
+    const isTesting =
+      typeof window !== "undefined" &&
+      ((window as any).DISABLE_ONBOARDING || (window as any).__E2E__);
+
+    if (isTesting) {
+      showHint = false;
+      return;
+    }
+
     const hasSeenHint = localStorage.getItem(HINT_KEYS.ORACLE_CONNECTION);
     if (!hasSeenHint) {
       showHint = true;

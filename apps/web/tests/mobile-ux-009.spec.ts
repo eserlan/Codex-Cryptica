@@ -11,7 +11,11 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       const files = [
         {
           name: "TestEntity.md",
@@ -93,8 +97,9 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
     test("entity detail panel area should be full-width on mobile viewport", async ({
       page,
     }) => {
-      // Wait for app to load (Mobile branding "CC")
-      await expect(page.getByRole("heading", { name: "CC" })).toBeVisible();
+      // Wait for the mobile header to render.
+      await expect(page.getByTestId("header-title")).toBeVisible();
+      await expect(page.locator("span.sm\\:hidden")).toContainText("CC");
 
       // The detail panel container (right side) should either be hidden or full-width on mobile
       // Check that the main content area layout is mobile-appropriate

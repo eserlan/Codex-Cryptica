@@ -6,7 +6,11 @@ test.describe("Intelligent Importer E2E", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       // Mock directory picker
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",

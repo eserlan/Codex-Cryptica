@@ -39,7 +39,11 @@ test.describe("Guest Mode (P2P Share)", () => {
     await page.addInitScript((data) => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
 
       // Mock the PeerJS constructor and its methods
       (window as any).Peer = class MockPeer {
@@ -111,6 +115,17 @@ test.describe("Guest Mode (P2P Share)", () => {
     await page.evaluate(() => {
       (window as any).uiStore?.setGuestUsername("Guest Tester");
     });
+
+    await page.evaluate((data) => {
+      const vault = (window as any).vault;
+      const uiStore = (window as any).uiStore;
+      vault.isGuest = true;
+      vault.isInitialized = true;
+      vault.repository.entities = JSON.parse(JSON.stringify(data.entities));
+      vault.selectedEntityId = "test-entity-1";
+      uiStore.isGuestMode = true;
+      uiStore.guestUsername = "guest";
+    }, MOCK_GRAPH_DATA);
 
     // 1. Wait for guest mode to activate and initialize
     await page.waitForFunction(

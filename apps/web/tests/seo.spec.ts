@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 
 test.describe("SEO and Prerendering", () => {
   const routes = [
-    { path: "/", title: "Codex Cryptica | AI RPG Campaign Manager" },
     { path: "/features", title: "Features | Codex Cryptica" },
     { path: "/privacy", title: "Privacy Policy | Codex Cryptica" },
     { path: "/terms", title: "Terms of Service | Codex Cryptica" },
@@ -22,9 +21,7 @@ test.describe("SEO and Prerendering", () => {
       expect(html).toContain(`<title>${route.title}</title>`);
 
       // Check for key content in static HTML (no JS needed)
-      if (route.path === "/") {
-        expect(html).toMatch(/Build Your World/i);
-      } else if (route.path === "/features") {
+      if (route.path === "/features") {
         expect(html).toMatch(/Core/i);
         expect(html).toMatch(/Features/i);
       } else {
@@ -37,9 +34,7 @@ test.describe("SEO and Prerendering", () => {
       await expect(page).toHaveTitle(route.title);
 
       // Verify some content is present
-      if (route.path === "/") {
-        await expect(page.getByText(/Build Your World/i)).toBeVisible();
-      } else if (route.path === "/features") {
+      if (route.path === "/features") {
         await expect(page.getByText(/Core Features/i)).toBeVisible();
       } else {
         // Legal pages - use first() to avoid strict mode violations with multiple mentions
@@ -47,6 +42,14 @@ test.describe("SEO and Prerendering", () => {
       }
     });
   }
+
+  test("root route / has correct title and content after hydration", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page).toHaveTitle("Codex Cryptica | AI RPG Campaign Manager");
+    await expect(page.getByText(/Build Your World/i)).toBeVisible();
+  });
 
   test("non-prerendered routes fallback to SPA shell", async ({ page }) => {
     // Navigate to a route that isn't prerendered but exists in the app

@@ -1,4 +1,10 @@
 import { THEMES, DEFAULT_THEME, DEFAULT_JARGON } from "schema";
+if (
+  import.meta.env.DEV ||
+  (typeof window !== "undefined" && (window as any).__E2E__)
+) {
+  console.error("[ThemeStore] Script executing");
+}
 import type { StylingTemplate, JargonMap } from "schema";
 import { browser } from "$app/environment";
 import { getDB } from "../utils/idb";
@@ -168,6 +174,7 @@ export class ThemeStore {
           this.currentThemeId = opfsTheme;
         }
         this.storage.saveLocal(opfsTheme);
+        this.applyTheme(this.activeTheme);
         return;
       }
 
@@ -178,6 +185,15 @@ export class ThemeStore {
           this.currentThemeId = stored;
         }
         this.storage.saveLocal(stored);
+        this.applyTheme(this.activeTheme);
+        return;
+      }
+
+      // Fallback: Reset to default for new/empty vaults
+      if (this.currentThemeId !== DEFAULT_THEME.id) {
+        this.currentThemeId = DEFAULT_THEME.id;
+        this.storage.saveLocal(DEFAULT_THEME.id);
+        this.applyTheme(this.activeTheme);
       }
     } catch (e) {
       console.warn("[ThemeStore] Failed to load vault-specific theme", e);

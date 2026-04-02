@@ -6,7 +6,11 @@ test.describe("Mobile UX Fixes", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("/");
 
@@ -19,26 +23,28 @@ test.describe("Mobile UX Fixes", () => {
   }) => {
     await page.waitForFunction(() => (window as any).vault);
 
-    await page.evaluate(() => {
+    const entityId = await page.evaluate(async () => {
       const vault = (window as any).vault;
       vault.isInitialized = true;
       vault.rootHandle = {};
-
-      vault.entities = {
-        "test-id": {
-          id: "test-id",
-          title: "Test Entity",
-          type: "npc",
-          content: "Content",
-          tags: [],
-          labels: [],
-          connections: [],
-        },
-      };
-      vault.selectedEntityId = "test-id";
+      return await vault.createEntity("npc", "Test Entity", {
+        content: "Content",
+      });
     });
+    await page.evaluate((id) => {
+      (window as any).vault.selectedEntityId = id;
+    }, entityId);
 
-    const panel = page.locator("aside").first();
+    await page.waitForFunction(
+      (id) => (window as any).vault?.selectedEntityId === id,
+      entityId,
+    );
+    await page.waitForFunction(
+      (id) => !!(window as any).vault?.entities?.[id],
+      entityId,
+    );
+
+    const panel = page.getByTestId("entity-detail-panel");
     await expect(panel).toBeVisible({ timeout: 5000 });
     await expect(panel).toHaveCSS("z-index", "50");
 

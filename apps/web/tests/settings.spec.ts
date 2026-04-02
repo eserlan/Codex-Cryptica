@@ -4,7 +4,11 @@ test.describe("Settings Modal", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      try { (window as any).localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        (window as any).localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("/");
     // Wait for app to be ready

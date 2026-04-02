@@ -96,6 +96,7 @@
 
   let hoveredEntityId = $state<string | null>(null);
   let hoverPosition = $state<{ x: number; y: number } | null>(null);
+  let findNodeCounter = $derived(ui.findNodeCounter);
   let pendingSearchFocus: {
     entityId: string;
     zoom: number;
@@ -516,6 +517,21 @@
 
   $effect(() => {
     const currentCy = cy;
+    const findCounter = findNodeCounter;
+    if (!currentCy || !selectedId) return;
+
+    const node = currentCy.$id(selectedId);
+    if (node.length === 0) return;
+
+    if (findCounter >= 0) {
+      untrack(() => {
+        currentCy.center(node);
+      });
+    }
+  });
+
+  $effect(() => {
+    const currentCy = cy;
     if (currentCy && graph.fitRequest > 0) {
       untrack(() =>
         currentCy.animate({
@@ -604,6 +620,11 @@
     <SelectionConnector {cy} />
   {/if}
   <FeatureHint hintId="graph-controls" />
+  {#if selectedCount === 2}
+    <div class="fixed top-20 right-4 z-[60]" data-testid="node-merging-hint">
+      <FeatureHint hintId="node-merging" />
+    </div>
+  {/if}
   {#if ui.isConnecting}
     <FeatureHint hintId="connect-mode" />
   {/if}

@@ -227,10 +227,42 @@ export class NodeMergeService {
     const targetEntity = vault.entities[targetId];
     if (!targetEntity) return;
 
-    const allEntities = Object.values(vault.entities);
+    // Pre-calculate source titles to ensure they are available
+    const sourceTitlesMap: Record<string, string> = {};
+    for (const sId of sourceIds) {
+      if (vault.entities[sId]) {
+        sourceTitlesMap[sId] = vault.entities[sId].title;
+      }
+    }
 
-    for (const entity of allEntities) {
+    const updates: Record<string, Partial<LocalEntity>> = {};
+
+    for (const id in vault.entities) {
+      const entity = vault.entities[id];
       if (sourceIds.includes(entity.id) || entity.id === targetId) continue;
+
+      let contentModified = false;
+      let newContent = entity.content || "";
+
+      // 1. Wikilink Re-mapping (Text content)
+      for (const sId of sourceIds) {
+        const sourceTitle = sourceTitlesMap[sId];
+        if (!sourceTitle) continue;
+
+        const targetTitle = targetEntity.title;
+
+        if (sourceTitle && targetTitle) {
+          const escapedTitle = sourceTitle.replace(
+            /[.*+?^${}()|[\]\\]/g,
+            "\\$&",
+          );
+          const regex = new RegExp(`\\[\\[${escapedTitle}\\]\\]`, "g");
+          if (new RegExp(`\\[\\[${escapedTitle}\\]\\]`, "g").test(newContent)) {
+            newContent = newContent.replace(regex, () => `[[${targetTitle}]]`);
+            contentModified = true;
+          }
+        }
+      }
 
       let connectionsModified = false;
       const newConnections = [...(entity.connections || [])];
@@ -259,11 +291,18 @@ export class NodeMergeService {
         newConnections.splice(0, newConnections.length, ...unique);
       }
 
-      if (connectionsModified) {
-        await vault.updateEntity(entity.id, {
-          connections: newConnections,
-        });
+      if (contentModified || connectionsModified) {
+        updates[entity.id] = {
+          content: contentModified ? newContent : entity.content,
+          connections: connectionsModified
+            ? newConnections
+            : entity.connections,
+        };
       }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await vault.batchUpdate(updates);
     }
   }
 }

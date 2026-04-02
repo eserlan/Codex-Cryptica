@@ -21,7 +21,9 @@ export class VaultCrudManager {
       updates: Record<string, Partial<LocalEntity>>,
     ) => void,
     private invalidateUrlCache?: (path: string) => void,
-  ) {}
+  ) {
+    console.log("[VaultCrud] Constructor called");
+  }
 
   async createEntity(
     type: Entity["type"],

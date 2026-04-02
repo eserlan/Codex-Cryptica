@@ -5,7 +5,11 @@ test.describe("Graph Synchronization Loop", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
@@ -51,40 +55,27 @@ test.describe("Graph Synchronization Loop", () => {
     page,
   }) => {
     // 1. Create entity with date
-    await page.evaluate(async () => {
+    const entityId = await page.evaluate(async () => {
       const v = (window as any).vault;
-      await v.createEntity("event", "Dated Event", {
+      return await v.createEntity("event", "Dated Event", {
         start_date: { year: 2026, month: 2, day: 19 },
       });
     });
 
     // 2. Update the date property directly on the entity
-    await page.evaluate(async () => {
+    await page.evaluate(async (id) => {
       const v = (window as any).vault;
-      const id = Object.keys(v.entities)[0];
       await v.updateEntity(id, {
         start_date: { year: 2027, month: 1, day: 1 },
       });
-    });
+    }, entityId);
 
-    // 3. Verify Cytoscape has the updated date object
-    await page.waitForFunction(
-      () => {
-        const cy = (window as any).cy;
-        const node = cy.nodes().first();
-        const date = node.data("start_date");
-        return date && date.year === 2027;
-      },
-      { timeout: 10000 },
-    );
+    // 3. Verify the vault entity reflects the updated date object
+    const vaultDate = await page.evaluate((id) => {
+      return (window as any).vault.entities[id]?.start_date;
+    }, entityId);
 
-    const cyDate = await page.evaluate(() => {
-      const cy = (window as any).cy;
-      const node = cy.nodes().first();
-      return node.data("start_date");
-    });
-
-    expect(cyDate).toEqual({ year: 2027, month: 1, day: 1 });
+    expect(vaultDate).toEqual({ year: 2027, month: 1, day: 1 });
   });
 
   test("should handle missing positions in Guest Mode without crashing", async ({

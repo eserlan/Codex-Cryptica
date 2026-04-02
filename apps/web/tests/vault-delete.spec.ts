@@ -4,7 +4,11 @@ test.describe("Vault Node Deletion", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
-      try { (window as any).localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        (window as any).localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     // Create a fresh vault for each test if possible, or clear existing
     await page.goto("http://localhost:5173/");

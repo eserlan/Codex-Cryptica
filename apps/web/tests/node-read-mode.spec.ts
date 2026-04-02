@@ -6,7 +6,11 @@ test.describe("Node Read Mode", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("http://localhost:5173/");
     // Wait for vault to be ready
@@ -32,7 +36,6 @@ test.describe("Node Read Mode", () => {
       );
 
       await (window as any).vault.addConnection(heroId, villainId, "enemy");
-
       (window as any).__TEST_IDS__ = { heroId, villainId };
     });
 
@@ -73,7 +76,7 @@ test.describe("Node Read Mode", () => {
 
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
-    await page.evaluate(async () => {
+    const id = await page.evaluate(async () => {
       const base64Image =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAC1HAQAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
       const id = await (window as any).vault.createEntity(
@@ -85,7 +88,12 @@ test.describe("Node Read Mode", () => {
         },
       );
       (window as any).__TEST_IDS__ = { id };
+      return id;
     });
+    await page.waitForFunction(
+      (entityId) => !!(window as any).vault?.entities?.[entityId],
+      id,
+    );
 
     // 2. Open Zen Mode
     await page.evaluate(() => {

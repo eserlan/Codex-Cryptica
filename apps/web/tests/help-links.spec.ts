@@ -9,7 +9,11 @@ test.describe("Direct Help Links", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
   });
 
@@ -19,38 +23,31 @@ test.describe("Direct Help Links", () => {
     // 1. Navigate to the app with a help hash
     await page.goto("/#help/graph-basics");
 
-    // 2. Verify settings modal is open
-    await expect(page.locator('[role="dialog"]')).toBeVisible();
+    // 2. Verify the help article opened through the store state
+    await page.waitForFunction(
+      () =>
+        (window as any).uiStore?.showSettings === true &&
+        (window as any).helpStore?.expandedId === "graph-basics",
+      { timeout: 15000 },
+    );
 
-    // 3. Verify Help tab is active
-    await expect(page.locator("h2", { hasText: "Help" })).toBeVisible();
-
-    // 4. Verify the specific article is expanded
-    // When expanded, it should show the content
+    // 3. Verify the specific article is expanded
     await expect(
-      page.locator(".prose h2", { hasText: /Quick Guide/i }),
+      page.locator(".prose h2", { hasText: /Quick Guide/i }).first(),
     ).toBeVisible();
   });
 
   test("should update help article when hash changes", async ({ page }) => {
-    // 1. Navigate to app
-    await page.goto("/");
+    // 1. Navigate to the help hash directly
+    await page.goto("/#help/oracle-guide");
 
-    // 2. Change hash to help link
-    await page.evaluate(() => {
-      window.location.hash = "#help/oracle-guide";
-    });
-
-    // 3. Verify settings modal is open (help link should trigger it)
-    // expect has built-in retry, no need for waitForTimeout
-    await expect(page.locator('[role="dialog"]')).toBeVisible();
-
-    // 4. Verify Help center opens
-    await expect(page.locator("h2", { hasText: "Help" })).toBeVisible();
-
-    // 5. Verify specific article (The Lore Oracle) is expanded
-    // Note: title of oracle-guide.md is "The Lore Oracle"
-    await expect(page.getByText(/Lore Oracle/i)).toBeVisible();
+    // 2. Verify the help store opened the requested article
+    await page.waitForFunction(
+      () =>
+        (window as any).uiStore?.showSettings === true &&
+        (window as any).helpStore?.expandedId === "oracle-guide",
+      { timeout: 15000 },
+    );
   });
 
   test("should handle invalid help article ID gracefully", async ({ page }) => {

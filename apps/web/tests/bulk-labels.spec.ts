@@ -4,7 +4,11 @@ test.describe("Bulk Labeling and Selection Actions", () => {
   test.describe.configure({ mode: "serial" });
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      try { window.localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
     });
@@ -45,9 +49,12 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     // 3. Select both nodes and trigger context menu programmatically for reliability
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const nodes = cy.nodes();
-      nodes.select();
-      const node = nodes.first();
+      const vault = (window as any).vault;
+      const ids = Object.values(vault.entities)
+        .filter((entity: any) => ["Node A", "Node B"].includes(entity.title))
+        .map((entity: any) => entity.id);
+      ids.forEach((id: string) => cy.$id(id).select());
+      const node = cy.$id(ids[0]);
       // Trigger context menu event on the node
       node.trigger("cxttap", { renderedPosition: node.renderedPosition() });
     });
@@ -81,9 +88,12 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     // 3. Select them and trigger context menu
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const nodes = cy.nodes();
-      nodes.select();
-      const node = nodes.first();
+      const vault = (window as any).vault;
+      const ids = Object.values(vault.entities)
+        .filter((entity: any) => ["Alpha", "Beta"].includes(entity.title))
+        .map((entity: any) => entity.id);
+      ids.forEach((id: string) => cy.$id(id).select());
+      const node = cy.$id(ids[0]);
       node.trigger("cxttap", { renderedPosition: node.renderedPosition() });
     });
 
@@ -112,9 +122,12 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     // 8. Check recent labels (trigger menu again)
     await page.evaluate(() => {
       const cy = (window as any).cy;
-      const nodes = cy.nodes();
-      nodes.select();
-      const node = nodes.first();
+      const vault = (window as any).vault;
+      const ids = Object.values(vault.entities)
+        .filter((entity: any) => ["Alpha", "Beta"].includes(entity.title))
+        .map((entity: any) => entity.id);
+      ids.forEach((id: string) => cy.$id(id).select());
+      const node = cy.$id(ids[0]);
       node.trigger("cxttap", { renderedPosition: node.renderedPosition() });
     });
 
@@ -226,6 +239,21 @@ test.describe("Bulk Labeling and Selection Actions", () => {
     for (const l of labels) {
       await labelInput.fill(l);
       await labelInput.press("Enter");
+      // Wait for the vault store to index the label before checking the UI.
+      await page.waitForFunction(
+        (label) => {
+          const vault = (window as any).vault;
+          const entity = Object.values(vault?.entities ?? {}).find(
+            (entry: any) => entry.title === "Target",
+          ) as any;
+          return Boolean(
+            entity?.labels?.includes(label) &&
+            vault?.labelIndex?.includes(label),
+          );
+        },
+        l,
+        { timeout: 10000 },
+      );
       // Wait for label to be added to the entity (reactive update)
       await expect(
         page.getByTestId("label-badge").filter({ hasText: l }),

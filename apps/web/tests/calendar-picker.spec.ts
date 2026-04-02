@@ -41,7 +41,11 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.addInitScript(() => {
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ONBOARDING = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       (window as any).DISABLE_ERROR_OVERLAY = true;
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
@@ -117,14 +121,16 @@ test.describe("Campaign Date Picker E2E", () => {
     await page.getByTestId("edit-entity-button").click();
 
     // 3. Open Date Picker
-    await page.click('button:has-text("No date set...")');
+    await page.locator('button:has-text("No date set...")').first().click({
+      force: true,
+    });
 
     // 4. Select Era Tab
-    await page.getByRole("tab", { name: "Eras" }).click();
+    await page.locator("#era-tab").click({ force: true });
     await page
       .getByTestId("era-select-button")
       .filter({ hasText: "Age of Myth" })
-      .click();
+      .click({ force: true });
 
     // 5. Verify Year grid highlights 1000
     await expect(
@@ -160,14 +166,16 @@ test.describe("Campaign Date Picker E2E", () => {
     await clickNodeProgrammatically(page, "Test Event");
     await page.getByTestId("enter-zen-mode-button").click();
     await expect(page.getByTestId("zen-mode-modal")).toBeVisible();
-    await page.getByTestId("edit-entity-button").click();
-    await page.click('button:has-text("No date set...")');
+    await page.getByTestId("edit-entity-button").click({ force: true });
+    await page.locator('button:has-text("No date set...")').first().click({
+      force: true,
+    });
 
     // Zoom into Detail/Month view
-    await page.click('button:has-text("Detail")');
+    await page.locator("#manual-tab").click({ force: true });
 
     // 3. Verify custom month appears in dropdown
-    await page.getByRole("button", { name: "month" }).click();
+    await page.getByRole("button", { name: "month", exact: true }).click();
     await page.getByTestId("month-selector").selectOption({ label: "Hammer" });
     await page.getByTestId("apply-date-button").click();
 
@@ -178,7 +186,7 @@ test.describe("Campaign Date Picker E2E", () => {
 
     // 5. Verify the underlying year value is explicitly set to 0 in the grid view.
     await page.click('button:has-text("Hammer 0")');
-    await page.click('button:has-text("Detail")');
+    await page.getByRole("tab", { name: "Detail" }).click({ force: true });
     await expect(
       page.getByRole("button", { name: "0", exact: true }),
     ).toHaveClass(/bg-theme-primary/);

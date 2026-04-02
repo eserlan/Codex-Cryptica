@@ -9,7 +9,12 @@ test.describe("Oracle Merge Command E2E", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("oracle-hint-seen", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("http://localhost:5173/");
@@ -141,12 +146,12 @@ test.describe("Oracle Merge Command E2E", () => {
 
     // 4. Select Source
     await page.getByPlaceholder(/Type source .* name/i).type("Source");
-    await page.locator('button:has-text("Source Node")').click();
+    await page.locator('button:has-text("Source Node")').click({ force: true });
     await page.click('button:has-text("Next")');
 
     // 5. Select Target
     await page.getByPlaceholder(/Type target .* name/i).type("Target");
-    await page.locator('button:has-text("Target Node")').click();
+    await page.locator('button:has-text("Target Node")').click({ force: true });
     await page.click('button:has-text("Next")');
 
     // 6. Review and Confirm

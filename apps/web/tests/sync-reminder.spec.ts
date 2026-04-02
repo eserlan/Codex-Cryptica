@@ -3,7 +3,11 @@ import { test, expect } from "@playwright/test";
 test.describe("Sync Reminder System", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      try { window.localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        window.localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
     });

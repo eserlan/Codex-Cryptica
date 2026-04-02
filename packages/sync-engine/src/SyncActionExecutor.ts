@@ -300,8 +300,7 @@ export class SyncActionExecutor {
               vaultId,
               lastSyncedFsModified:
                 action.fsMetadata?.lastModified ?? updatedOpfs.lastModified,
-              lastSyncedFsSize:
-                action.fsMetadata?.size ?? updatedOpfs.size,
+              lastSyncedFsSize: action.fsMetadata?.size ?? updatedOpfs.size,
               lastSyncedOpfsHash: updatedOpfs.hash,
               status: "SYNCED",
               remoteId: this.persistence.getSerializableId(

@@ -6,7 +6,11 @@ test.describe("Better Imports E2E", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       (window as any).showDirectoryPicker = async () => ({
         kind: "directory",
         name: "test-vault",
@@ -31,6 +35,110 @@ test.describe("Better Imports E2E", () => {
       () =>
         (window as any).uiStore !== undefined &&
         (window as any).oracle !== undefined,
+    );
+
+    // Mock BOTH direct and proxy paths to ensure reliability
+    const mockResponse = (entities: any[]) => ({
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: JSON.stringify(entities),
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    // Mock Gemini API
+    await page.route(
+      /.*\/v1beta\/models\/.*:generateContent.*/,
+      async (route) => {
+        const payload = route.request().postDataJSON();
+        const text = JSON.stringify(payload);
+        if (text.includes("Existing Dragon")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(
+              mockResponse([
+                {
+                  title: "Existing Dragon",
+                  type: "Character",
+                  chronicle: "New lore that should be ignored",
+                  detectedLinks: [{ target: "New Kingdom", label: "lives in" }],
+                },
+                {
+                  title: "New Kingdom",
+                  type: "Location",
+                  chronicle: "A fresh start.",
+                },
+              ]),
+            ),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(
+              mockResponse([
+                {
+                  title: "Eldrin the Wise",
+                  type: "Character",
+                  chronicle: "An older, wiser version?",
+                },
+              ]),
+            ),
+          });
+        }
+      },
+    );
+
+    // Mock Proxy
+    await page.route(
+      "https://oracle-proxy.espen-erlandsen.workers.dev",
+      async (route) => {
+        const payload = route.request().postDataJSON();
+        const text = JSON.stringify(payload);
+
+        if (text.includes("Existing Dragon")) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(
+              mockResponse([
+                {
+                  title: "Existing Dragon",
+                  type: "Character",
+                  chronicle: "New lore that should be ignored",
+                  detectedLinks: [{ target: "New Kingdom", label: "lives in" }],
+                },
+                {
+                  title: "New Kingdom",
+                  type: "Location",
+                  chronicle: "A fresh start.",
+                },
+              ]),
+            ),
+          });
+        } else {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(
+              mockResponse([
+                {
+                  title: "Eldrin the Wise",
+                  type: "Character",
+                  chronicle: "An older, wiser version?",
+                },
+              ]),
+            ),
+          });
+        }
+      },
     );
 
     // Inject fake API key and mock vault methods
@@ -93,44 +201,6 @@ test.describe("Better Imports E2E", () => {
         tags: [],
       };
     });
-
-    // 2. Mock Gemini API to return one existing (with a new link) and one new entity
-    await page.route(
-      /.*\/v1beta\/models\/.*:generateContent.*/,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            candidates: [
-              {
-                content: {
-                  parts: [
-                    {
-                      text: JSON.stringify([
-                        {
-                          title: "Existing Dragon",
-                          type: "Character",
-                          chronicle: "New lore that should be ignored",
-                          detectedLinks: [
-                            { target: "New Kingdom", label: "lives in" },
-                          ],
-                        },
-                        {
-                          title: "New Kingdom",
-                          type: "Location",
-                          chronicle: "A fresh start.",
-                        },
-                      ]),
-                    },
-                  ],
-                },
-              },
-            ],
-          }),
-        });
-      },
-    );
 
     // 3. Upload a file to trigger the importer
     const fileInput = page.locator('input[type="file"]');
@@ -203,36 +273,6 @@ test.describe("Better Imports E2E", () => {
         tags: [],
       };
     });
-
-    // 2. Mock Gemini API to return "Eldrin the Wise" (a lenient match)
-    await page.route(
-      /.*\/v1beta\/models\/.*:generateContent.*/,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            candidates: [
-              {
-                content: {
-                  parts: [
-                    {
-                      text: JSON.stringify([
-                        {
-                          title: "Eldrin the Wise",
-                          type: "Character",
-                          chronicle: "An older, wiser version?",
-                        },
-                      ]),
-                    },
-                  ],
-                },
-              },
-            ],
-          }),
-        });
-      },
-    );
 
     // 3. Upload a file
     const fileInput = page.locator('input[type="file"]');

@@ -5,7 +5,11 @@ test.describe("Guest Login Modal Accessibility", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
 
       // Mock PeerJS connection to trigger the GuestLoginModal
       (window as any).Peer = class MockPeer {

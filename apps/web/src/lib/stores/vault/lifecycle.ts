@@ -126,8 +126,8 @@ export class VaultLifecycleManager {
       this.setStatus("loading");
 
       await this.vaultRegistry.setActiveVault(id);
-      await this.loadFiles(true);
       await this.themeStore.loadForVault(id);
+      await this.loadFiles(true);
       this.setInitialized(true);
       this.setStatus("idle");
 
