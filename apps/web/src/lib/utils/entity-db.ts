@@ -56,6 +56,25 @@ export interface SearchIndexRecord {
 }
 
 /**
+ * Row stored in the `vaultMetadata` Dexie table.
+ * Holds the campaign-level landing page data for a vault.
+ */
+export interface VaultMetadataRecord {
+  /** Vault identifier. Primary key. */
+  id: string;
+  /** Optional campaign/world title shown in the header. */
+  name?: string;
+  /** Optional short tagline shown under the title. */
+  tagline?: string;
+  /** Optional campaign summary shown on the front page. */
+  description?: string;
+  /** Local OPFS path or external URL to the campaign cover art. */
+  coverImage?: string;
+  /** Last update timestamp. */
+  lastModified: number;
+}
+
+/**
  * Row stored in the `appSettings` Dexie table.
  */
 export interface AppSettingRecord {
@@ -78,12 +97,15 @@ export interface AppSettingRecord {
  *  1 — initial: graphEntities + entityContent tables.
  *  2 — added search_index table for persistence.
  *  3 — added appSettings table for global configuration (AI keys, tiers).
+ *  4 — added vaultMetadata table and graphEntity indexes for front page lookups.
+ *  5 — added compound lastModified and label indexes for front page queries.
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
   entityContent!: Table<EntityContentRecord>;
   searchIndex!: Table<SearchIndexRecord>;
   appSettings!: Table<AppSettingRecord>;
+  vaultMetadata!: Table<VaultMetadataRecord>;
 
   constructor() {
     super("CodexEntityDb");
@@ -102,6 +124,28 @@ export class EntityDb extends Dexie {
 
     this.version(3).stores({
       appSettings: "key",
+    });
+
+    this.version(4)
+      .stores({
+        graphEntities:
+          "[vaultId+id], vaultId, [vaultId+filePath], lastModified, *tags",
+        entityContent: "[vaultId+entityId], vaultId",
+        searchIndex: "vaultId",
+        appSettings: "key",
+        vaultMetadata: "id, lastModified",
+      })
+      .upgrade(async (_tx) => {
+        // Migration logic for vaultMetadata if needed
+      });
+
+    this.version(5).stores({
+      graphEntities:
+        "[vaultId+id], vaultId, [vaultId+filePath], [vaultId+lastModified], lastModified, *tags, *labels",
+      entityContent: "[vaultId+entityId], vaultId",
+      searchIndex: "vaultId",
+      appSettings: "key",
+      vaultMetadata: "id, lastModified",
     });
   }
 }

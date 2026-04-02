@@ -16,6 +16,7 @@ class UIStore {
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
+  dismissedCampaignPage = $state(false);
   liteMode = $state(false);
   showDiceModal = $state(false);
 

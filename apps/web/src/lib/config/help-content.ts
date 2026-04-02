@@ -28,6 +28,7 @@ export interface FeatureHint {
  */
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
+  FRONT_PAGE: "front-page-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -134,6 +135,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
     icon: "icon-[lucide--share-2]",
+  },
+  "front-page": {
+    id: "front-page",
+    title: "Campaign Front Page",
+    content:
+      "Use the title field to rename the campaign, and use the summary field to edit the campaign blurb directly. If it is empty, the Generate Summary button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Summary. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
+    icon: "icon-[lucide--house]",
   },
   "local-folder-sync": {
     id: "local-folder-sync",

@@ -101,6 +101,10 @@ export class OracleStore {
     return this.settings.isEnabled;
   }
 
+  get modelName() {
+    return this.settings.modelName;
+  }
+
   get undoStack() {
     return this.undoRedo.undoStack;
   }

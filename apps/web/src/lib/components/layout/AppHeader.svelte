@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { base } from "$app/paths";
   import { page } from "$app/state";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
+  import { openFrontPage } from "./app-header-actions";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -12,11 +14,16 @@
     isMobileMenuOpen: boolean;
     headerEl?: HTMLElement;
   } = $props();
+
+  const handleBrandClick = () => {
+    openFrontPage();
+    void goto(`${base}/`);
+  };
 </script>
 
 <header
   bind:this={headerEl}
-  class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-50 gap-2 md:gap-4"
+  class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border flex items-center justify-between sticky top-0 z-[70] gap-2 md:gap-4"
 >
   <!-- Mobile: Left (Menu + Brand) -->
   <div class="flex items-center gap-2 md:gap-3 shrink-0">
@@ -62,17 +69,28 @@
         : ''}"
       data-testid={uiStore.isStaging ? "staging-indicator" : "header-title"}
     >
-      <span
-        class="icon-[lucide--book-open] w-5 h-5 {uiStore.isStaging
-          ? 'text-white'
-          : 'text-theme-primary'}"
-      ></span>
-      <span class="hidden sm:inline">Codex Cryptica</span>
-      <span
-        class="sm:hidden {uiStore.isStaging
-          ? 'text-white'
-          : 'text-theme-primary'}">CC</span
+      <button
+        type="button"
+        class="relative z-[70] flex items-center gap-2 md:gap-3 text-inherit hover:text-theme-primary transition-colors cursor-pointer text-left"
+        onclick={handleBrandClick}
+        aria-label="Go to front page"
+        title="Go to front page"
+        data-testid="header-front-page-button"
       >
+        <span
+          class="icon-[lucide--book-open] w-5 h-5 {uiStore.isStaging
+            ? 'text-white'
+            : 'text-theme-primary'}"
+        ></span>
+        <span class="hidden sm:inline">Codex Cryptica</span>
+        <span
+          class="sm:hidden {uiStore.isStaging
+            ? 'text-white'
+            : 'text-theme-primary'}"
+        >
+          CC
+        </span>
+      </button>
     </h1>
 
     <nav

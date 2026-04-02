@@ -31,6 +31,9 @@ describe("UIStore", () => {
     // Reset state before each test
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
+    uiStore.skipWelcomeScreen = false;
+    uiStore.dismissedLandingPage = false;
+    uiStore.dismissedCampaignPage = false;
   });
 
   it("should open settings to a specific tab", () => {
@@ -191,6 +194,10 @@ describe("UIStore", () => {
     expect(uiStore.isLandingPageVisible).toBe(true);
 
     uiStore.skipWelcomeScreen = true;
+    expect(uiStore.isLandingPageVisible).toBe(false);
+
+    uiStore.skipWelcomeScreen = false;
+    uiStore.dismissedLandingPage = true;
     expect(uiStore.isLandingPageVisible).toBe(false);
   });
 });

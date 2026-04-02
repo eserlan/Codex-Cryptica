@@ -68,6 +68,7 @@ describe("GraphTransformer", () => {
 
   it("should generate style sheet with connection type colors", () => {
     const mockTemplate: StylingTemplate = {
+      description: "A dark, terminal-inspired science-fiction interface.",
       tokens: {
         background: "#000",
         primary: "#f00",
@@ -102,6 +103,7 @@ describe("GraphTransformer", () => {
 
   it("should conditionally include image selectors based on showImages", () => {
     const mockTemplate: StylingTemplate = {
+      description: "A dark, terminal-inspired science-fiction interface.",
       tokens: {
         background: "#000",
         primary: "#f00",

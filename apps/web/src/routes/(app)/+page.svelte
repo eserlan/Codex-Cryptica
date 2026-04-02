@@ -13,15 +13,23 @@
   import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
   import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
-  const jsonLdScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
-      `ipt>`,
-  );
-
   const isSpecialEnv =
     import.meta.env.DEV ||
     (typeof window !== "undefined" && (window as any).__E2E__) ||
     import.meta.env.VITE_STAGING === "true";
+
+  const demoThemes = [
+    "vampire",
+    "scifi",
+    "cyberpunk",
+    "wasteland",
+    "modern",
+    "fallout",
+    "starwars",
+    "startrek",
+  ];
+  const schemaOrg = SCHEMA_ORG;
+  void schemaOrg;
 
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
@@ -50,6 +58,11 @@
         .then((m) => (GraphView = m?.default))
         .catch((err) => logChunkError("GraphView", err));
     }
+    if (!FrontPage) {
+      import("../../lib/components/campaign/FrontPage.svelte")
+        .then((m) => (FrontPage = m?.default))
+        .catch((err) => logChunkError("FrontPage", err));
+    }
     if (!EntityDetailPanel) {
       import("../../lib/components/EntityDetailPanel.svelte")
         .then((m) => (EntityDetailPanel = m?.default))
@@ -59,12 +72,28 @@
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
+  let FrontPage = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
     return id ? vault.entities[id] : null;
   });
+
+  const dismissFrontPageOverlay = () => {
+    uiStore.dismissedCampaignPage = true;
+  };
+
+  const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
+    if (
+      event.key === "Escape" &&
+      !uiStore.isLandingPageVisible &&
+      !uiStore.dismissedCampaignPage &&
+      !selectedEntity
+    ) {
+      dismissFrontPageOverlay();
+    }
+  };
 
   // Check if we're in guest/share mode - guard for prerendering
   const shareId = $derived(
@@ -81,7 +110,7 @@
 
     if (
       (isSkippingLanding || isVaultReady) &&
-      (!GraphView || !EntityDetailPanel)
+      (!GraphView || !FrontPage || !EntityDetailPanel)
     ) {
       loadHeavyComponents();
     }
@@ -205,9 +234,13 @@
 
 <svelte:head>
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
-    {@html jsonLdScript}
+    <script type="application/ld+json">
+      {JSON.stringify(schemaOrg)}
+    </script>
   {/if}
 </svelte:head>
+
+<svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
@@ -242,7 +275,35 @@
     />
   {/if}
 
-  <!-- Landing Page / Marketing Layer -->
+  <!-- Vault Front Page Overlay -->
+  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage && !selectedEntity}
+    <div
+      data-testid="front-page-overlay"
+      class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}
+      style:background-image="var(--bg-texture-overlay)"
+      role="button"
+      tabindex="0"
+      aria-label="Dismiss front page"
+      onclick={(event) => {
+        if (event.currentTarget === event.target) {
+          dismissFrontPageOverlay();
+        }
+      }}
+      onkeydown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          dismissFrontPageOverlay();
+        }
+      }}
+      transition:fade
+    >
+      <div class="max-w-7xl mx-auto w-full">
+        <FrontPage onClose={dismissFrontPageOverlay} />
+      </div>
+    </div>
+  {/if}
+
+  <!-- Marketing Layer -->
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
       class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
@@ -277,7 +338,9 @@
             class="flex flex-col md:flex-row items-center justify-center gap-6"
           >
             <button
-              onclick={() => (uiStore.dismissedLandingPage = true)}
+              onclick={() => {
+                uiStore.dismissedLandingPage = true;
+              }}
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
               Enter the Codex
@@ -394,7 +457,7 @@
             Try it as:
           </h3>
           <div class="flex flex-wrap justify-center gap-4">
-            {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern", "fallout", "starwars", "startrek"] as theme}
+            {#each demoThemes as theme (theme)}
               <button
                 onclick={() => demoService.startDemo(theme)}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"
