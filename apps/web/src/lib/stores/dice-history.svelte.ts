@@ -84,7 +84,11 @@ export class DiceHistoryStore {
 
       this.history = newHistory;
 
-      await Promise.all(toRemove.map((r) => db.delete("dice_history", r.id)));
+      const tx = db.transaction("dice_history", "readwrite");
+      for (const r of toRemove) {
+        await tx.store.delete(r.id);
+      }
+      await tx.done;
     }
   }
 }
