@@ -105,6 +105,13 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ["graph-engine", "editor-core", "schema", "chronology-engine"],
+    exclude: [
+      "graph-engine",
+      "editor-core",
+      "schema",
+      "chronology-engine",
+      "@codex/canvas-engine",
+    ],
+    include: ["@xyflow/svelte"],
   },
 });

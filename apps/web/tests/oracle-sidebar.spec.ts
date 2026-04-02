@@ -5,8 +5,12 @@ test.describe("Oracle Sidebar", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem("oracle-hint-seen", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("oracle-hint-seen", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto("/");

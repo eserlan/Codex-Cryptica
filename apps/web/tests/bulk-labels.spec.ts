@@ -4,7 +4,11 @@ test.describe("Bulk Labeling and Selection Actions", () => {
   test.describe.configure({ mode: "serial" });
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
-      window.localStorage.setItem("codex_skip_landing", "true");
+      try {
+        window.localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
     });

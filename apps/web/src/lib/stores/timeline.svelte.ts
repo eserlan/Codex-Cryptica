@@ -76,17 +76,27 @@ class TimelineStore {
   filterYearEnd = $state<number | null>(null);
 
   filteredEntries = $derived.by(() => {
-    return this.entries.filter((entry) => {
-      if (this.filterType && entry.type !== this.filterType) return false;
+    // ⚡ Bolt Optimization: Use an imperative loop instead of .filter()
+    // to avoid per-element callback overhead and allow a tighter loop during frequent reactive updates.
+    const entries = this.entries;
+    const len = entries.length;
+    const filtered: TimelineEntry[] = [];
+
+    for (let i = 0; i < len; i++) {
+      const entry = entries[i];
+      if (this.filterType && entry.type !== this.filterType) continue;
       if (
         this.filterYearStart !== null &&
         entry.date.year < this.filterYearStart
       )
-        return false;
+        continue;
       if (this.filterYearEnd !== null && entry.date.year > this.filterYearEnd)
-        return false;
-      return true;
-    });
+        continue;
+
+      filtered.push(entry);
+    }
+
+    return filtered;
   });
 
   isLoading = $derived(vault.status === "loading");

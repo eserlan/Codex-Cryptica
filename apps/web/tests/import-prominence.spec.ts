@@ -4,7 +4,11 @@ test.describe("Prominent Import Feature", () => {
   test.beforeEach(async ({ page }) => {
     // Inject mock state before navigation
     await page.addInitScript(() => {
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("/");

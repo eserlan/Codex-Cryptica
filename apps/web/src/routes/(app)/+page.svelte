@@ -11,6 +11,7 @@
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
   import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
+  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
   const jsonLdScript = $derived(
     `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
@@ -96,15 +97,13 @@
     ) {
       const peerId = shareId.substring(4); // Remove "p2p-" prefix
       uiStore.isGuestMode = true; // Activate guest mode
+      vault.status = "loading";
+      vault.selectedEntityId = null;
 
       p2pGuestService
         .connectToHost(
           peerId,
           (graph) => {
-            console.log("[Guest Page] Received graph data:", {
-              entityCount: Object.keys(graph.entities).length,
-              defaultVisibility: graph.defaultVisibility,
-            });
             // Update vault entities with received data
             vault.repository.entities = Object.fromEntries(
               Object.entries(graph.entities).map(
@@ -122,6 +121,15 @@
             );
             if (graph.defaultVisibility) {
               vault.defaultVisibility = graph.defaultVisibility;
+            }
+            if (graph.themeId) {
+              import("../../lib/stores/theme.svelte")
+                .then((m) => {
+                  if (m?.themeStore) m.themeStore.previewTheme(graph.themeId);
+                })
+                .catch((err) =>
+                  console.error("Failed to load theme store", err),
+                );
             }
             // Force shared mode for guests to ensure Fog of War is active
             import("../../lib/stores/ui.svelte")
@@ -150,14 +158,44 @@
             // Real-time batch update from host
             vault.batchUpdate(batchUpdates);
           },
+          (themeId) => {
+            // Real-time theme update from host
+            import("../../lib/stores/theme.svelte")
+              .then((m) => {
+                if (m?.themeStore) m.themeStore.previewTheme(themeId);
+              })
+              .catch((err) => console.error("Failed to load theme store", err));
+          },
+          uiStore.guestUsername ?? undefined,
         )
         .catch((err) => {
           console.error("[Guest Mode] Failed to connect to host:", err);
+          vault.selectedEntityId = null;
+          uiStore.guestUsername = null;
           uiStore.isGuestMode = false;
           vault.status = "error";
           vault.errorMessage = "Failed to connect to shared campaign.";
         });
     }
+  });
+
+  $effect(() => {
+    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
+      return;
+    }
+
+    const { status, currentEntityId, currentEntityTitle } =
+      buildGuestPresencePayload({
+        selectedEntityId: vault.selectedEntityId,
+        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
+        entities: vault.entities,
+      });
+
+    p2pGuestService.updateGuestStatus({
+      status,
+      currentEntityId,
+      currentEntityTitle,
+    });
   });
 
   onMount(async () => {

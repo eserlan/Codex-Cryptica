@@ -6,7 +6,11 @@ test.describe("Node Merging", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     if (process.env.PWDEBUG || process.env.DEBUG_E2E_LOGS) {
@@ -263,7 +267,15 @@ test.describe("Node Merging", () => {
       );
       // Clear help state to ensure hints appear
       await page.evaluate(() => {
-        localStorage.clear();
+        try {
+          localStorage.clear();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "SecurityError") {
+            return;
+          }
+
+          throw error;
+        }
         localStorage.setItem("codex_skip_landing", "true");
       });
       await page.reload();
@@ -307,13 +319,32 @@ test.describe("Node Merging", () => {
         () => (window as any).vault?.status === "idle",
       );
 
-      // 3. Open the merge dialog directly and verify the selection workflow
+      // 3. Verify hint NOT visible initially
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
+
+      // 4. Select two nodes via Cytoscape API
       await page.evaluate(() => {
-        (window as any).uiStore.openMergeDialog(["node-a", "node-b"]);
+        const cy = (window as any).cy;
+        cy.$id("node-a").select();
+        cy.$id("node-b").select();
       });
-      await page.waitForFunction(
-        () => (window as any).uiStore?.mergeDialog?.open === true,
-      );
+
+      // 5. Verify hint appears
+      await expect(page.getByText("Merging Nodes")).toBeVisible();
+      await expect(page.getByText("You can combine duplicates.")).toBeVisible();
+
+      // 6. Dismiss hint
+      await page.getByTestId("dismiss-hint-button").click();
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
+
+      // 7. Unselect and re-select to verify it stays dismissed
+      await page.evaluate(() => {
+        const cy = (window as any).cy;
+        cy.nodes().unselect();
+        cy.$id("node-a").select();
+        cy.$id("node-b").select();
+      });
+      await expect(page.getByText("Merging Nodes")).not.toBeVisible();
     });
   });
 });

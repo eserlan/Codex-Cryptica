@@ -11,13 +11,13 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@google/genai": "^1.46.0",
+    "@google/genai": "^1.48.0",
     "idb": "^8.0.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.2",
     "fake-indexeddb": "^6.2.5",
     "typescript": "^6.0.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.2"
   }
 }

@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 test.describe("Node Read Mode", () => {
   test.beforeEach(async ({ page }) => {
@@ -6,7 +6,11 @@ test.describe("Node Read Mode", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
     await page.goto("http://localhost:5173/");
     // Wait for vault to be ready
@@ -15,7 +19,7 @@ test.describe("Node Read Mode", () => {
 
   test("Open Read Mode, Copy, Navigate, and Close", async ({ page }) => {
     // 1. Setup Data
-    const { heroId, villainId } = await page.evaluate(async () => {
+    await page.evaluate(async () => {
       const heroId = await (window as any).vault.createEntity(
         "character",
         "Hero",
@@ -32,58 +36,59 @@ test.describe("Node Read Mode", () => {
       );
 
       await (window as any).vault.addConnection(heroId, villainId, "enemy");
-
-      return { heroId, villainId };
+      (window as any).__TEST_IDS__ = { heroId, villainId };
     });
-    await page.waitForFunction(
-      (id) => !!(window as any).vault?.entities?.[id],
-      heroId,
-    );
-    await page.waitForFunction(
-      (id) => !!(window as any).vault?.entities?.[id],
-      villainId,
-    );
 
     // 2. Open Zen Mode for "Hero" directly
-    await page.evaluate((id) => {
-      (window as any).uiStore.openZenMode(id);
-    }, heroId);
-
-    await page.waitForFunction(
-      () => (window as any).uiStore?.showZenMode === true,
-    );
-    await page.waitForFunction(
-      (id) => (window as any).uiStore?.zenModeEntityId === id,
-      heroId,
-    );
-
-    // 3. Navigate to Villain via state change
-    await page.evaluate((id) => {
-      (window as any).uiStore.zenModeEntityId = id;
-    }, villainId);
-    await page.waitForFunction(
-      (id) => (window as any).uiStore?.zenModeEntityId === id,
-      villainId,
-    );
-
-    // 4. Close
     await page.evaluate(() => {
-      (window as any).uiStore.closeZenMode();
+      const { heroId } = (window as any).__TEST_IDS__;
+      (window as any).uiStore.openZenMode(heroId);
     });
-    await page.waitForFunction(
-      () => (window as any).uiStore?.showZenMode === false,
-    );
+
+    const modal = page.getByTestId("zen-mode-modal");
+    await expect(modal).toBeVisible();
+
+    // Use specific ID for title to avoid ambiguity
+    await expect(modal.getByTestId("entity-title")).toHaveText("Hero");
+
+    // 3. Verify Copy (Mock Clipboard)
+    await page.context().grantPermissions(["clipboard-write"]);
+    const copyBtn = modal.getByTitle("Copy Content");
+    if (await copyBtn.isVisible()) {
+      await copyBtn.click();
+    }
+
+    // 4. Navigate to Villain
+    const connectionLink = modal.getByRole("button", { name: "Villain" });
+    await expect(connectionLink).toBeVisible();
+    await connectionLink.click();
+
+    // 5. Verify Content Updates to Villain
+    await expect(modal.getByTestId("entity-title")).toHaveText("Villain");
+    await expect(modal.getByText("Villain Content")).toBeVisible();
+
+    // 6. Close
+    const closeBtn = modal.getByRole("button", { name: "Close" }).first();
+    await closeBtn.click();
+
+    await expect(modal).not.toBeVisible();
   });
 
   test("Open Lightbox and Close with Escape", async ({ page }) => {
     // 1. Setup Data with Image
     const id = await page.evaluate(async () => {
       const base64Image =
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-      return await (window as any).vault.createEntity("character", "HeroImg", {
-        content: "# Hero Content",
-        image: base64Image,
-      });
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAC1HAQAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+      const id = await (window as any).vault.createEntity(
+        "character",
+        "HeroImg",
+        {
+          content: "# Hero Content",
+          image: base64Image,
+        },
+      );
+      (window as any).__TEST_IDS__ = { id };
+      return id;
     });
     await page.waitForFunction(
       (entityId) => !!(window as any).vault?.entities?.[entityId],
@@ -91,24 +96,37 @@ test.describe("Node Read Mode", () => {
     );
 
     // 2. Open Zen Mode
-    await page.evaluate((entityId) => {
-      (window as any).uiStore.openZenMode(entityId);
-    }, id);
-
-    await page.waitForFunction(
-      () => (window as any).uiStore?.showZenMode === true,
-    );
-    await page.waitForFunction(
-      (entityId) => (window as any).uiStore?.zenModeEntityId === entityId,
-      id,
-    );
-
-    // 3. Close Zen Mode
     await page.evaluate(() => {
-      (window as any).uiStore.closeZenMode();
+      const { id } = (window as any).__TEST_IDS__;
+      (window as any).uiStore.openZenMode(id);
     });
-    await page.waitForFunction(
-      () => (window as any).uiStore?.showZenMode === false,
+
+    const modal = page.getByTestId("zen-mode-modal");
+    await expect(modal).toBeVisible();
+
+    // 3. Click Image to Open Lightbox
+    const imageBtn = modal.getByRole("button", {
+      name: "View full size image",
+    });
+    await expect(imageBtn).toBeVisible();
+
+    await imageBtn.click();
+
+    // 4. Verify Lightbox Open
+    const closeLightboxBtn = page.locator(
+      'button[aria-label="Close image view"]',
     );
+    await expect(closeLightboxBtn).toBeVisible();
+
+    // 5. Press Escape
+    await page.keyboard.press("Escape");
+
+    // 6. Verify Lightbox Closed but Zen Mode Open
+    await expect(closeLightboxBtn).not.toBeVisible();
+    await expect(modal).toBeVisible();
+
+    // 7. Press Escape again to close Zen Mode
+    await page.keyboard.press("Escape");
+    await expect(modal).not.toBeVisible();
   });
 });

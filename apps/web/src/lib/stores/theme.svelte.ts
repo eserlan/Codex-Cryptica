@@ -34,6 +34,11 @@ export class ThemeStore {
   currentThemeId = $state<string>(DEFAULT_THEME.id); // Will be set in constructor/init
   previewThemeId = $state<string | null>(null);
 
+  /**
+   * Optional callback for when the theme is explicitly changed.
+   */
+  onThemeUpdate?: (id: string) => void;
+
   // Dependencies
   private uiStore: typeof defaultUiStore;
   private storage: IThemeStorage;
@@ -199,6 +204,7 @@ export class ThemeStore {
     if (!THEMES[id]) return;
 
     this.currentThemeId = id;
+    this.onThemeUpdate?.(id);
     if (browser) {
       // Don't persist theme if in demo mode
       if (this.uiStore.isDemoMode) return;

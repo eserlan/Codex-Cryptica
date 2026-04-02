@@ -147,4 +147,6 @@ TypeScript: Follow standard conventions
 
 - 069-pop-out-help-window: Added TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
 
+- chore: Updated Turborepo to v2.9.1
+
 <!-- MANUAL ADDITIONS START -->

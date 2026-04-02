@@ -9,8 +9,12 @@ test.describe("Oracle Merge Command E2E", () => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
       (window as any).__SHARED_GEMINI_KEY__ = "fake-key";
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem("oracle-hint-seen", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("oracle-hint-seen", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("http://localhost:5173/");

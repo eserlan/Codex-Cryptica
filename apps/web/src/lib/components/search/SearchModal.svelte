@@ -7,6 +7,11 @@
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
   import { page } from "$app/state";
+  import {
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+    dispatchSearchEntityFocus,
+    resolveSearchResultEntityId,
+  } from "./search-focus";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
@@ -71,25 +76,16 @@
       event.stopPropagation();
     }
 
-    if (!result.id) {
-      console.warn(
-        "Search result missing ID, falling back to path lookup:",
-        result,
-      );
-      // Fallback: If we have a path, derive an ID from the basename without the .md extension
-      if (result.path) {
-        const pathSegments = result.path.split("/");
-        const basename = pathSegments[pathSegments.length - 1] || result.path;
-        const derivedId = basename.replace(/\.md$/, "");
-        vault.selectedEntityId = derivedId;
-      } else {
-        console.error("CRITICAL: Selected a search result with no ID or path!");
-        return;
-      }
-    } else {
-      vault.selectedEntityId = result.id;
+    const selectedEntityId = resolveSearchResultEntityId(result);
+
+    if (!selectedEntityId) {
+      console.warn("Search result missing ID and path:", result);
+      console.error("CRITICAL: Selected a search result with no ID or path!");
+      return;
     }
 
+    dispatchSearchEntityFocus(selectedEntityId, DEFAULT_SEARCH_ENTITY_ZOOM);
+    vault.selectedEntityId = selectedEntityId;
     searchStore.close();
   };
 

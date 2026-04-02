@@ -5,7 +5,11 @@ test.describe("Dice Modal UI and Isolation", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("/");
@@ -99,18 +103,22 @@ test.describe("Dice Modal UI and Isolation", () => {
       .filter({ hasText: /2d8/i })
       .first();
     await expect(secondRoll).toBeVisible();
+    await expect(modal.getByTestId("roll-formula").first()).toContainText(
+      "2d8",
+      { timeout: 10000 },
+    );
 
     // 2. Press ArrowUp to get "2d8" (the last roll)
     await input.focus();
-    await page.keyboard.press("ArrowUp");
+    await input.press("ArrowUp");
     await expect(input).toHaveValue("2d8");
 
     // 3. Press ArrowUp again to get "1d4" (the one before)
-    await page.keyboard.press("ArrowUp");
+    await input.press("ArrowUp");
     await expect(input).toHaveValue("1d4");
 
     // 4. Press ArrowDown to get back to "2d8"
-    await page.keyboard.press("ArrowDown");
+    await input.press("ArrowDown");
     await expect(input).toHaveValue("2d8");
   });
 

@@ -5,8 +5,12 @@ test.describe("Oracle Undo", () => {
     await page.addInitScript(() => {
       (window as any).__E2E__ = true;
       (window as any).DISABLE_ONBOARDING = true;
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem("oracle-hint-seen", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+        localStorage.setItem("oracle-hint-seen", "true");
+      } catch {
+        /* ignore */
+      }
 
       // Mock File System Access API
       (window as any).showDirectoryPicker = async () => {

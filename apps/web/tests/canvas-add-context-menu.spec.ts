@@ -8,7 +8,11 @@ test.describe("Add to Canvas - Context Menu", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     // Navigate to graph view
@@ -62,7 +66,6 @@ test.describe("Add to Canvas - Context Menu", () => {
       await selectEntitiesByTitle(page, titles);
     }
 
-    // Wait for nodes to be actually available in cytoscape
     await page.waitForFunction(
       () => {
         const cy = (window as any).cy;
@@ -71,18 +74,34 @@ test.describe("Add to Canvas - Context Menu", () => {
       { timeout: 15000 },
     );
 
-    await page.evaluate(() => {
+    const targetId = await page.evaluate((wantedTitles) => {
       const cy = (window as any).cy;
-      if (!cy) return;
-      const nodes =
-        cy.$("node:selected").length > 0 ? cy.$("node:selected") : cy.nodes();
-      if (nodes.length === 0) return;
+      if (!cy) return null;
 
-      const node = nodes[0];
-      // Use node.emit to ensure it bubbles correctly to the delegated listener
-      const pos = { x: 100, y: 100 };
-      node.emit("cxttap", { renderedPosition: pos });
-    });
+      const selected = cy.$("node:selected");
+      const nodes =
+        selected.length > 0
+          ? selected
+          : cy.nodes().filter((node: any) => {
+              const vault = (window as any).vault;
+              const entity = Object.values(vault?.entities ?? {}).find(
+                (entry: any) => entry.id === node.id(),
+              ) as any;
+              return wantedTitles.includes(entity?.title);
+            });
+
+      const node = nodes[0] || cy.nodes()[0];
+      return node ? node.id() : null;
+    }, titles);
+
+    expect(targetId).toBeTruthy();
+    await page.evaluate((nodeId) => {
+      const cy = (window as any).cy;
+      if (!cy || !nodeId) return;
+      const node = cy.$id(nodeId);
+      if (node.length === 0) return;
+      node.emit("cxttap", { renderedPosition: node.renderedPosition() });
+    }, targetId);
 
     await page.waitForTimeout(2000);
     await page.waitForSelector('[role="menu"]', { timeout: 15000 });

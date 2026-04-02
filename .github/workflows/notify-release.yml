@@ -1,0 +1,33 @@
+name: Notify Release Channel
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_url:
+        description: Release URL to include in the Discord message
+        required: false
+        default: https://github.com/eserlan/Codex-Cryptica/releases/tag/v0.17.0
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Notify Discord release channel
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_RELEASE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/discord-deploy.sh "release" "$DISCORD_WEBHOOK_URL" "${{ inputs.release_url }}"

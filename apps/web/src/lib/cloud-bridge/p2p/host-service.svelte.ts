@@ -1,7 +1,22 @@
-import type { SerializedGraph } from "../types";
-import { vault } from "../../stores/vault.svelte";
+import { vault as defaultVault } from "../../stores/vault.svelte";
+import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
+import { guestRoster as defaultGuestRoster } from "../../stores/guest";
 import type { Entity } from "schema";
-import Peer from "peerjs";
+import {
+  buildSharedGraphPayload,
+  deriveGuestPresenceStatus,
+  normalizeGuestName,
+  removeGuestFromRoster,
+  upsertGuestRoster,
+} from "./p2p-helpers";
+import { createPeer, type PeerFactory } from "./peer-factory";
+
+type HostDeps = {
+  vault?: typeof defaultVault;
+  themeStore?: typeof defaultThemeStore;
+  guestRoster?: typeof defaultGuestRoster;
+  peerFactory?: PeerFactory;
+};
 
 export class P2PHostService {
   private peer: any;
@@ -9,27 +24,30 @@ export class P2PHostService {
   connections = $state<any[]>([]);
   private _isHosting = false;
   private unsubscribe: (() => void) | null = null;
+  private readonly vault: typeof defaultVault;
+  private readonly themeStore: typeof defaultThemeStore;
+  private readonly guestRoster: typeof defaultGuestRoster;
+  private readonly peerFactory: PeerFactory;
 
-  constructor() {}
+  constructor(deps: HostDeps = {}) {
+    this.vault = deps.vault ?? defaultVault;
+    this.themeStore = deps.themeStore ?? defaultThemeStore;
+    this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
+    this.peerFactory = deps.peerFactory ?? createPeer;
+  }
 
-  async startHosting(): Promise<string> {
-    if (this._isHosting && this.peerId) return this.peerId;
+  async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
+    if (this._isHosting && this.peerId) {
+      onPeerId?.(this.peerId);
+      return this.peerId;
+    }
 
-    // Subscribe to local vault updates
-    vault.onEntityUpdate = (entity) => {
-      this.broadcastEntityUpdate(entity);
-    };
-    vault.onEntityDelete = (id) => {
-      this.broadcastEntityDelete(id);
-    };
-    vault.onBatchUpdate = (updates) => {
-      this.broadcastBatchUpdate(updates);
-    };
+    const peerId = crypto.randomUUID();
+    onPeerId?.(peerId);
 
     return new Promise((resolve, reject) => {
       // Generate a random ID with a prefix
-      // @ts-expect-error - PeerJS constructor types
-      this.peer = new Peer(undefined, {
+      this.peer = this.peerFactory(peerId, {
         debug: 1,
       });
 
@@ -37,6 +55,22 @@ export class P2PHostService {
         console.log("[P2P Host] Hosting started. ID:", id);
         this.peerId = id;
         this._isHosting = true;
+
+        // Subscribe to local vault updates
+        this.vault.onEntityUpdate = (entity) => {
+          this.broadcastEntityUpdate(entity);
+        };
+        this.vault.onEntityDelete = (delId) => {
+          this.broadcastEntityDelete(delId);
+        };
+        this.vault.onBatchUpdate = (updates) => {
+          this.broadcastBatchUpdate(updates);
+        };
+        this.themeStore.onThemeUpdate = (themeId) => {
+          this.broadcastThemeUpdate(themeId);
+        };
+        this.guestRoster.set({});
+
         resolve(id);
       });
 
@@ -85,42 +119,65 @@ export class P2PHostService {
 
       if (data.type === "GET_FILE") {
         await this.handleFileRequest(conn, data.path, data.requestId);
+      } else if (data.type === "GUEST_JOIN") {
+        this.handleGuestJoin(conn.peer, data.payload);
+      } else if (data.type === "GUEST_STATUS") {
+        this.handleGuestStatus(conn.peer, data.payload);
       }
     });
 
     conn.on("close", () => {
       console.log("[P2P Host] Guest disconnected:", conn.peer);
       this.connections = this.connections.filter((c) => c !== conn);
+      this.guestRoster.update((current) =>
+        removeGuestFromRoster(current, conn.peer),
+      );
     });
   }
 
-  private async prepareGraphPayload(): Promise<SerializedGraph> {
-    // Serialize current vault state
-    // We must sanitize entities to remove non-serializable objects like FileSystemHandles through destructuring
-    const rawEntities = $state.snapshot(vault.entities);
-    const entities: Record<string, Entity> = {};
-    const assets: Record<string, string> = {};
+  private handleGuestJoin(peerId: string, payload: any) {
+    this.guestRoster.update((current) =>
+      upsertGuestRoster(current, peerId, {
+        displayName: normalizeGuestName(payload?.displayName, peerId),
+        status: "connected",
+        currentEntityId: null,
+        currentEntityTitle: null,
+      }),
+    );
+  }
 
-    // Build a mapping for assets and sanitize entities
-    for (const [id, localEntity] of Object.entries(rawEntities)) {
-      // Strip _fsHandle and other runtime-only props that PeerJS can't serialize
-      const { _fsHandle, ...safeEntity } = localEntity as any;
-      entities[id] = safeEntity;
+  private handleGuestStatus(peerId: string, payload: any) {
+    const currentEntityId =
+      typeof payload?.currentEntityId === "string" && payload.currentEntityId
+        ? payload.currentEntityId
+        : null;
+    const currentEntityTitle =
+      typeof payload?.currentEntityTitle === "string" &&
+      payload.currentEntityTitle
+        ? payload.currentEntityTitle
+        : currentEntityId
+          ? this.vault.entities[currentEntityId]?.title || currentEntityId
+          : null;
+    this.guestRoster.update((current) =>
+      upsertGuestRoster(current, peerId, {
+        displayName: normalizeGuestName(
+          payload?.displayName,
+          current[peerId]?.displayName || peerId,
+        ),
+        status: deriveGuestPresenceStatus(payload?.status, currentEntityId),
+        currentEntityId,
+        currentEntityTitle,
+      }),
+    );
+  }
 
-      // If we have an image path, map it
-      if (safeEntity.image && !safeEntity.image.startsWith("http")) {
-        // We'll use the path as the key
-        assets[safeEntity.image] = safeEntity.image;
-      }
-    }
-
-    return {
-      version: 1,
-      entities,
-      assets,
-      defaultVisibility: vault.defaultVisibility,
-      sharedMode: true, // Always force shared mode for guests
-    };
+  private async prepareGraphPayload() {
+    const rawEntities = $state.snapshot(this.vault.entities);
+    return buildSharedGraphPayload(
+      rawEntities,
+      this.vault.defaultVisibility,
+      this.themeStore.currentThemeId,
+    );
   }
 
   private async handleFileRequest(conn: any, path: string, requestId: string) {
@@ -128,8 +185,8 @@ export class P2PHostService {
       console.log(`[P2P Host] Handling file request for: ${path}`);
 
       // Use the active vault handle
-      const vaultHandle = await vault.getActiveVaultHandle();
-      console.log(`[P2P Host] Active Vault ID: ${vault.activeVaultId}`);
+      const vaultHandle = await this.vault.getActiveVaultHandle();
+      console.log(`[P2P Host] Active Vault ID: ${this.vault.activeVaultId}`);
 
       if (!vaultHandle) {
         console.error("[P2P Host] No active vault handle!");
@@ -316,10 +373,29 @@ export class P2PHostService {
     });
   }
 
+  private broadcastThemeUpdate(themeId: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting theme update:", themeId);
+
+    const message = {
+      type: "THEME_UPDATE",
+      payload: themeId,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
   stopHosting() {
-    vault.onEntityUpdate = undefined;
-    vault.onEntityDelete = undefined;
-    vault.onBatchUpdate = undefined;
+    this.vault.onEntityUpdate = undefined;
+    this.vault.onEntityDelete = undefined;
+    this.vault.onBatchUpdate = undefined;
+    this.themeStore.onThemeUpdate = undefined;
+    this.guestRoster.set({});
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;

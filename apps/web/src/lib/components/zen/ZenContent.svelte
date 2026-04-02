@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
@@ -146,30 +147,29 @@
       {/if}
     </div>
 
-    <!-- Deep Lore -->
-    <div>
-      <h2
-        class="text-xl font-header font-bold text-theme-accent mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
-      >
-        <span class="icon-[lucide--scroll] w-5 h-5"></span>
-        {themeStore.jargon.lore_secrets}
-      </h2>
-      {#if editState.isEditing}
-        <MarkdownEditor
-          content={editState.lore}
-          editable={true}
-          onUpdate={(md) => (editState.lore = md)}
-        />
-      {:else}
-        <div
-          class="bg-theme-accent/5 border border-theme-border p-6 rounded-lg min-h-[100px] prose-container"
+    {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
+      <div>
+        <h2
+          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
         >
+          <span class="icon-[lucide--scroll-text] w-5 h-5"></span>
+          {themeStore.jargon.lore_header}
+        </h2>
+        {#if editState.isEditing}
           <MarkdownEditor
-            content={entity?.lore || "No deep lore recorded."}
-            editable={false}
+            content={editState.lore}
+            editable={true}
+            onUpdate={(md) => (editState.lore = md)}
           />
-        </div>
-      {/if}
-    </div>
+        {:else}
+          <div class="prose-container">
+            <MarkdownEditor
+              content={entity?.lore || "No detailed lore available."}
+              editable={false}
+            />
+          </div>
+        {/if}
+      </div>
+    {/if}
   </div>
 </div>

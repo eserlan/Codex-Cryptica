@@ -33,13 +33,16 @@
     data-testid="category-filter-toggle"
   >
     <Filter class="w-3.5 h-3.5" />
-    {#if !expanded && activeCategories.size > 0}
-      <span
-        class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary text-theme-bg text-[8px] font-bold flex items-center justify-center leading-none"
-      >
-        {activeCategories.size}
-      </span>
-    {/if}
+    <span
+      class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary text-theme-bg text-[8px] font-bold flex items-center justify-center leading-none transition-all {expanded ||
+      activeCategories.size === 0
+        ? 'opacity-0 scale-75 pointer-events-none'
+        : 'opacity-100'}"
+      data-testid="category-filter-count"
+      aria-hidden={activeCategories.size === 0}
+    >
+      {activeCategories.size > 0 ? activeCategories.size : ""}
+    </span>
   </button>
 
   {#if expanded}

@@ -6,25 +6,35 @@ test.describe("Spatial Canvas", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
-
-    // Pre-create entities so they exist in the vault
-    await page.goto("/");
-    await page.waitForSelector('[data-testid="graph-canvas"]');
-
-    // Create test entities
-    const createEnt = async (title: string) => {
-      await page.click('[data-testid="new-entity-button"]');
-      await page.fill('[data-testid="new-entity-title-input"]', title);
-      await page.keyboard.press("Enter");
-      await page.waitForTimeout(1000);
-    };
-    await createEnt("Test Hero");
-    await createEnt("Eldrin the Wise");
 
     await page.goto("/canvas");
     await page.waitForURL(/\/canvas\/.+/);
+
+    await page.waitForFunction(() => (window as any).vault?.status === "idle", {
+      timeout: 15000,
+    });
+    await expect(page.locator(".svelte-flow")).toBeVisible({
+      timeout: 15000,
+    });
+    await page.waitForTimeout(250);
+
+    await page.evaluate(async () => {
+      const vault = (window as any).vault;
+      await vault.createEntity("character", "Test Hero", {
+        id: "test-hero",
+        content: "Test hero content",
+      });
+      await vault.createEntity("character", "Eldrin the Wise", {
+        id: "eldrin-the-wise",
+        content: "Eldrin content",
+      });
+    });
 
     // Expand the palette if it is collapsed, since many tests rely on palette text and buttons
     const expandBtn = page.getByTitle("Expand Palette");
@@ -52,7 +62,7 @@ test.describe("Spatial Canvas", () => {
     await switchBtn.click();
 
     // The CanvasSelectionModal appears with role="dialog"
-    const modal = page.locator('[role="dialog"][aria-modal="true"]');
+    const modal = page.locator('[role="dialog"][aria-modal="true"]').last();
     await expect(modal).toBeVisible({ timeout: 5000 });
 
     // Click "Create New" to show the inline input

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "./**/*.{svelte,ts,html}";
+@source "../../packages/*/src/**/*.{svelte,ts}";
 @plugin "@iconify/tailwind4";
 
 @theme {

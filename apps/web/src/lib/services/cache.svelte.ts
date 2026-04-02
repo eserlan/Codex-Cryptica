@@ -218,6 +218,42 @@ export class CacheService {
   }
 
   /**
+   * Removes a specific entity from the graph metadata and content tables in Dexie.
+   * Format of `path` is `"<vaultId>:<filePath>"`.
+   */
+  async remove(path: string): Promise<void> {
+    try {
+      const { vaultId, filePath } = parseKey(path);
+      const hit = this.preloaded?.get(path);
+      const entityId = hit?.entity.id;
+
+      await entityDb.transaction(
+        "rw",
+        [entityDb.graphEntities, entityDb.entityContent],
+        async () => {
+          await entityDb.graphEntities
+            .where("[vaultId+filePath]")
+            .equals([vaultId, filePath])
+            .delete();
+
+          if (entityId) {
+            await entityDb.entityContent.delete([vaultId, entityId]);
+          }
+        },
+      );
+
+      if (this.preloaded) {
+        this.preloaded.delete(path);
+      }
+    } catch (err) {
+      debugStore.error(
+        `[CacheService] Failed to remove ${path} from Dexie:`,
+        err,
+      );
+    }
+  }
+
+  /**
    * Removes all cached entries for the given vault from Dexie.  Called when
    * a vault is deleted or explicitly cleared.
    */
@@ -225,7 +261,7 @@ export class CacheService {
     try {
       await entityDb.transaction(
         "rw",
-        [entityDb.graphEntities, entityDb.entityContent],
+        [entityDb.graphEntities, entityDb.entityContent, entityDb.searchIndex],
         async () => {
           await entityDb.graphEntities
             .where("vaultId")
@@ -235,6 +271,7 @@ export class CacheService {
             .where("vaultId")
             .equals(vaultId)
             .delete();
+          await entityDb.searchIndex.delete(vaultId);
         },
       );
       // Invalidate the in-memory snapshot — it belongs to one vault.

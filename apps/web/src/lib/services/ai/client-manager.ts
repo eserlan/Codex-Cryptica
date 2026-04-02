@@ -135,14 +135,9 @@ export class DefaultAIClientManager {
       ) {
         console.log(`[OracleProxy] Request for model: ${modelName}`);
 
-        // 1. Deep unwrap and clone to strip ANY reactivity proxies using Svelte 5 built-in
-        // Fallback to identity if $state is not available (e.g. in non-Svelte contexts)
-        const raw =
-          typeof request === "object" && request !== null
-            ? typeof (globalThis as any).$state?.snapshot === "function"
-              ? (globalThis as any).$state.snapshot(request)
-              : JSON.parse(JSON.stringify(request))
-            : request;
+        // 1. Deep clone request data so any reactive proxies are removed
+        // before the payload is normalized and serialized.
+        const raw = cloneRequestPayload(request);
 
         // 2. Normalize to standard Google "Contents" array
         let contents: any[];
@@ -248,3 +243,30 @@ export class DefaultAIClientManager {
 }
 
 export const aiClientManager = new DefaultAIClientManager();
+
+function cloneRequestPayload<T>(request: T): T {
+  if (typeof request !== "object" || request === null) {
+    return request;
+  }
+
+  try {
+    if (typeof structuredClone === "function") {
+      return structuredClone(request);
+    }
+  } catch (error) {
+    console.warn(
+      "[OracleProxy] structuredClone failed, falling back to JSON clone:",
+      error,
+    );
+  }
+
+  try {
+    return JSON.parse(JSON.stringify(request));
+  } catch (error) {
+    console.warn(
+      "[OracleProxy] JSON clone failed, using original request object:",
+      error,
+    );
+    return request;
+  }
+}

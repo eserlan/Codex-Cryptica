@@ -4,6 +4,7 @@ export interface GraphEventHandlers {
   onNodeMouseOver?: (id: string, renderedPos: { x: number; y: number }) => void;
   onNodeMouseOut?: () => void;
   onNodeTap?: (id: string, node: NodeSingular) => void;
+  onNodeDoubleTap?: (id: string, node: NodeSingular) => void;
   onEdgeTap?: (data: any) => void;
   onBackgroundTap?: () => void;
   onPositionChange?: (
@@ -67,6 +68,10 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
     handlers.onNodeTap?.(evt.target.id(), evt.target);
   });
 
+  cy.on("dblclick dbltap", "node", (evt: any) => {
+    handlers.onNodeDoubleTap?.(evt.target.id(), evt.target);
+  });
+
   cy.on("tap", "edge", (evt: any) => {
     handlers.onEdgeTap?.(evt.target.data());
   });
@@ -79,6 +84,6 @@ export function setupGraphEvents(cy: Core, handlers: GraphEventHandlers) {
 
   return () => {
     clearTimeout(hoverTimeout);
-    cy.off("mouseover mouseout position pan zoom tap");
+    cy.off("mouseover mouseout position pan zoom tap dblclick dbltap");
   };
 }

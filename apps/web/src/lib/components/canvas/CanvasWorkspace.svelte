@@ -12,11 +12,7 @@
     type Edge,
     type Connection,
   } from "@xyflow/svelte";
-  import {
-    CanvasStore,
-    type CanvasNode,
-    type CanvasEdge,
-  } from "@codex/canvas-engine";
+  import { CanvasStore } from "@codex/canvas-engine";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
@@ -28,7 +24,16 @@
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
   import { page } from "$app/state";
-  import { untrack, onDestroy, onMount } from "svelte";
+  import { untrack, onDestroy, onMount, tick } from "svelte";
+  import { browser } from "$app/environment";
+  import {
+    buildCanvasSavePayload,
+    createFlowEdgeFromConnection,
+    createFlowEntityNode,
+    hydrateCanvasGraph,
+    pruneCanvasGraph,
+    resolveSpawnPosition,
+  } from "$lib/components/canvas/canvas-workspace-helpers";
 
   let { engine }: { engine: CanvasStore } = $props();
   const canvasSlug = $derived(page.params.slug);
@@ -94,10 +99,33 @@
   let targetCanvasId = $state<string | null>(null);
   let hasInitialized = $state(false);
 
-  const { screenToFlowPosition } = useSvelteFlow();
+  const svelteFlow = useSvelteFlow();
+  const screenToFlowPosition = $derived(svelteFlow?.screenToFlowPosition);
+
+  $effect(() => {
+    if (browser && engine && canvas) {
+      console.debug("[CanvasWorkspace] Mounting for canvas:", canvas.name, {
+        canvasId: canvas.id,
+        hasSvelteFlow: !!svelteFlow,
+      });
+    }
+  });
 
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let skipLoadingSaves = 0;
+
+  function flushSave() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      untrack(() => {
+        if (targetVaultId && targetCanvasId) {
+          saveCanvas(targetVaultId, targetCanvasId);
+        }
+      });
+    }
+  }
+
   function debouncedSave() {
     if (skipLoadingSaves > 0) {
       skipLoadingSaves--;
@@ -106,13 +134,15 @@
     if (saveTimer !== null) {
       clearTimeout(saveTimer);
     }
-    saveTimer = setTimeout(saveCanvas, 1000);
+    saveTimer = setTimeout(() => {
+      untrack(() => saveCanvas());
+    }, 500);
   }
 
   // Ensure registry is loaded for slug resolution (critical for reload/deep-link)
   $effect(() => {
     if (vault.activeVaultId && !canvasRegistry.isLoaded) {
-      canvasRegistry.loadFromVault(vault.activeVaultId);
+      untrack(() => canvasRegistry.loadFromVault(vault.activeVaultId!));
     }
   });
 
@@ -120,9 +150,10 @@
   $effect(() => {
     if (vault.isInitialized && canvasId && canvasRegistry.isLoaded) {
       if (targetCanvasId !== canvasId) {
-        hasInitialized = false;
-        // 1. Flush any pending save for the PREVIOUS canvas before loading new data
+        // ...
         untrack(() => {
+          hasInitialized = false;
+          // 1. Flush any pending save for the PREVIOUS canvas before loading new data
           if (saveTimer !== null && targetVaultId && targetCanvasId) {
             const oldVaultId = targetVaultId;
             const oldCanvasId = targetCanvasId;
@@ -134,44 +165,52 @@
           // 2. Now safe to update the target trackers to the new canvas
           targetVaultId = vault.activeVaultId;
           targetCanvasId = canvasId;
-        });
 
-        // 3. Load the new data
-        const data = untrack(() => vault.canvases[canvasId]);
+          // 3. Load the new data
+          const data = vault.canvases[canvasId];
 
-        if (data) {
-          // Pre-load all entity contents for the canvas to ensure descriptions/images show up
-          for (const node of data.nodes) {
-            vault.loadEntityContent(node.entityId);
+          if (data) {
+            console.debug("[CanvasWorkspace] Rendering canvas data", canvasId, {
+              nodes: data.nodes?.length,
+              edges: data.edges?.length,
+            });
+
+            // Pre-load all entity contents for the canvas to ensure descriptions/images show up
+            for (const node of data.nodes || []) {
+              vault.loadEntityContent(node.entityId);
+            }
+
+            skipLoadingSaves = 2; // Skip saves triggered by nodes/edges updates
+            const graph = hydrateCanvasGraph(data);
+            nodes = graph.nodes;
+            edges = graph.edges;
+
+            hasInitialized = true;
+            console.debug("[CanvasWorkspace] Canvas mount complete");
+          } else {
+            nodes = [];
+            edges = [];
+            hasInitialized = true;
           }
+        });
+      }
+    }
+  });
 
-          skipLoadingSaves = 2; // Skip saves triggered by nodes/edges updates
-          nodes = data.nodes.map((n: CanvasNode) => ({
-            id: n.id,
-            type: n.type,
-            position: n.position,
-            data: {
-              entityId: n.entityId,
-              width: n.width,
-              height: n.height,
-            },
-          }));
-          edges = data.edges.map((e: CanvasEdge) => ({
-            id: e.id,
-            source: e.source,
-            target: e.target,
-            sourceHandle: e.sourceHandle || null,
-            targetHandle: e.targetHandle || null,
-            label: e.label,
-            type: e.type === "line" || !e.type ? "straight" : (e.type as any),
-            style: typeof e.style === "string" ? e.style : undefined,
-          })) as any;
-          hasInitialized = true;
-        } else {
-          nodes = [];
-          edges = [];
-          hasInitialized = true;
-        }
+  // CRITICAL: Monitor vault deletions and remove corresponding nodes from the canvas.
+  // This ensures that deleting an entity in the Graph View also cleans up any active Canvas.
+  $effect(() => {
+    const entityIds = new Set(vault.allEntities.map((e) => e.id));
+    if (hasInitialized && nodes.length > 0) {
+      const pruned = pruneCanvasGraph(nodes, edges, entityIds);
+
+      if (pruned.nodes.length !== nodes.length) {
+        console.debug(
+          `[CanvasWorkspace] Removing ${nodes.length - pruned.nodes.length} nodes due to vault deletion`,
+        );
+        nodes = pruned.nodes;
+        edges = pruned.edges;
+        saveCanvas();
       }
     }
   });
@@ -179,16 +218,9 @@
   function onConnect(connection: Connection) {
     const edgeId = `edge-${crypto.randomUUID()}`;
     // Explicitly add the edge to our state to ensure reactivity and sync
-    edges = addXyEdge(
-      {
-        ...connection,
-        id: edgeId,
-        type: "straight",
-        animated: true,
-        style: "stroke: var(--color-theme-primary); stroke-width: 2;",
-      },
-      edges,
-    );
+    edges = addXyEdge(createFlowEdgeFromConnection(connection, edgeId), edges);
+    // Structural change: save immediately
+    untrack(() => saveCanvas());
   }
 
   function onNodeContextMenu({
@@ -247,15 +279,8 @@
       });
 
       const newNodeId = engine.addNode(id, position);
-      nodes = [
-        ...nodes,
-        {
-          id: newNodeId,
-          type: "entity",
-          position,
-          data: { entityId: id },
-        },
-      ];
+      nodes = [...nodes, createFlowEntityNode(id, position, newNodeId)];
+      saveCanvas();
     } catch (err) {
       console.error("Failed to create entity from canvas", err);
     }
@@ -273,6 +298,8 @@
       edges = edges.filter((e) => e.id !== targetId);
     }
     contextMenu = null;
+    // Structural change: save immediately
+    untrack(() => saveCanvas());
   }
 
   function handleRename() {
@@ -313,6 +340,7 @@
   function saveLabelModal(newLabel: string) {
     const { edgeId } = labelModal;
     edges = edges.map((e) => (e.id === edgeId ? { ...e, label: newLabel } : e));
+    saveCanvas();
   }
 
   // Keep engine state in sync whenever SvelteFlow's edges change (add/remove).
@@ -379,15 +407,8 @@
     vault.loadEntityContent(entityId);
 
     // Manually add to nodes to trigger sync
-    nodes = [
-      ...nodes,
-      {
-        id: newNodeId,
-        type: "entity",
-        position,
-        data: { entityId },
-      },
-    ];
+    nodes = [...nodes, createFlowEntityNode(entityId, position, newNodeId)];
+    saveCanvas();
   }
 
   function handleQuickSpawn(
@@ -407,27 +428,22 @@
     const position =
       (eventScreenPosition && screenToFlowPosition(eventScreenPosition)) ||
       eventPosition ||
-      (() => {
-        const paletteWidth = uiStore.showCanvasPalette ? 288 : 48;
-        const centerX = (window.innerWidth - paletteWidth) / 2 + paletteWidth;
-        const centerY = window.innerHeight / 2;
-        return screenToFlowPosition({ x: centerX, y: centerY });
-      })();
+      resolveSpawnPosition({
+        screenToFlowPosition,
+        paletteVisible: uiStore.showCanvasPalette,
+        windowSize: {
+          width: window.innerWidth,
+          height: window.innerHeight,
+        },
+      });
 
     const newNodeId = engine.addNode(entityId, position);
     // Ensure the full content (lore, content, image) is loaded for this entity
     vault.loadEntityContent(entityId);
 
     // Manually add to nodes to trigger sync
-    nodes = [
-      ...nodes,
-      {
-        id: newNodeId,
-        type: "entity",
-        position,
-        data: { entityId },
-      },
-    ];
+    nodes = [...nodes, createFlowEntityNode(entityId, position, newNodeId)];
+    saveCanvas();
   }
 
   function handleBatchSpawn() {
@@ -459,6 +475,7 @@
     });
 
     nodes = [...nodes, ...newNodesList];
+    saveCanvas();
   }
 
   // Monitor pending entities from registry (e.g. from GraphHUD "Add all results" button)
@@ -472,6 +489,7 @@
     explicitVaultId?: string,
     explicitCanvasId?: string,
   ) {
+    await tick();
     const currentVaultId =
       explicitVaultId || targetVaultId || vault.activeVaultId;
     const currentCanvasId = explicitCanvasId || targetCanvasId || canvasId;
@@ -482,31 +500,13 @@
     const existing = untrack(() => vault.canvases[currentCanvasId] || {});
 
     // Helper: is the current name just a UUID or "Untitled"?
-    const isGeneric = (n: string) =>
-      !n || n === currentCanvasId || n.toLowerCase().includes("untitled");
-
-    // CRITICAL: Merge metadata (name, slug) with exported nodes/edges
-    // Prioritize meaningful names from 'existing' or reactive 'canvas' props
-    const finalName: string = !isGeneric(existing.name || "")
-      ? existing.name!
-      : !isGeneric(canvas?.name || "")
-        ? canvas!.name!
-        : existing.name || currentCanvasId;
-
-    const finalSlug: string = !isGeneric(existing.slug || "")
-      ? existing.slug!
-      : !isGeneric(canvas?.slug || "")
-        ? canvas!.slug!
-        : existing.slug || currentCanvasId;
-
-    vault.canvases[currentCanvasId] = {
-      ...existing,
-      id: currentCanvasId,
-      name: finalName,
-      slug: finalSlug,
-      ...exportData,
+    vault.canvases[currentCanvasId] = buildCanvasSavePayload({
+      existing,
+      currentCanvas: canvas,
+      exported: exportData,
+      canvasId: currentCanvasId,
       lastModified: Date.now(),
-    };
+    });
 
     await vault.saveCanvas(currentCanvasId, {
       explicitVaultId: currentVaultId,
@@ -517,22 +517,24 @@
     window.addEventListener("add-to-canvas", handleQuickSpawn as any);
     window.addEventListener("edit-edge-label", handleEditLabel as any);
 
+    const handleBeforeUnload = () => flushSave();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       window.removeEventListener("add-to-canvas", handleQuickSpawn as any);
       window.removeEventListener("edit-edge-label", handleEditLabel as any);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   });
 
   onDestroy(() => {
-    if (saveTimer !== null) {
-      clearTimeout(saveTimer);
-      // Use untracked values for final destroy save
-      untrack(() => {
-        if (targetVaultId && targetCanvasId) {
-          saveCanvas(targetVaultId, targetCanvasId);
-        }
-      });
-    }
+    flushSave();
   });
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -617,6 +619,8 @@
       zoomOnDoubleClick={false}
       proOptions={{ hideAttribution: true }}
       connectionLineComponent={ConnectionLine}
+      minZoom={0.01}
+      maxZoom={9}
       fitView
     >
       <Background gap={20} />

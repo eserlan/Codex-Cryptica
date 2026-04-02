@@ -1,13 +1,26 @@
-import Peer from "peerjs";
 import type { SerializedGraph } from "../types";
+import type { GuestPresenceStatus } from "../../stores/guest";
+import { createPeer, type PeerFactory } from "./peer-factory";
+
+type GuestStatusPayload = {
+  status: GuestPresenceStatus;
+  currentEntityId: string | null;
+  currentEntityTitle: string | null;
+};
 
 export class P2PGuestService {
   private peer: any;
   private connection: any | null = null;
   private isConnecting = false;
   private dataCallback: ((graph: SerializedGraph) => void) | null = null;
+  private guestDisplayName: string | null = null;
+  private pendingStatus: GuestStatusPayload | null = null;
+  private isConnected = false;
+  private readonly peerFactory: PeerFactory;
 
-  constructor() {}
+  constructor(deps: { peerFactory?: PeerFactory } = {}) {
+    this.peerFactory = deps.peerFactory ?? createPeer;
+  }
 
   async connectToHost(
     hostId: string,
@@ -15,6 +28,8 @@ export class P2PGuestService {
     onEntityUpdate: (entity: any) => void,
     onEntityDelete: (id: string) => void,
     onBatchUpdate: (updates: Record<string, any>) => void,
+    onThemeUpdate: (themeId: string) => void,
+    guestName?: string,
   ): Promise<void> {
     if (this.connection?.open && this.connection?.peer === hostId) {
       console.log("[P2P Guest] Already connected to host:", hostId);
@@ -27,12 +42,12 @@ export class P2PGuestService {
     }
 
     if (!this.peer) {
-      const PeerClass = (window as any).Peer || Peer;
-      this.peer = new PeerClass(undefined, { debug: 1 });
+      this.peer = this.peerFactory(undefined, { debug: 1 });
     }
 
     this.isConnecting = true;
     this.dataCallback = onGraphData;
+    this.guestDisplayName = guestName?.trim() || null;
 
     let timeoutHandle: any = null;
     const connectionPromise = new Promise<void>((resolve, reject) => {
@@ -48,7 +63,21 @@ export class P2PGuestService {
         this.connection.on("open", () => {
           console.log(`[P2P Guest] Connected to host: ${hostId}`);
           this.isConnecting = false;
+          this.isConnected = true;
           if (timeoutHandle) clearTimeout(timeoutHandle);
+          if (this.guestDisplayName) {
+            this.connection.send({
+              type: "GUEST_JOIN",
+              payload: { displayName: this.guestDisplayName },
+            });
+          }
+          if (this.pendingStatus) {
+            this.connection.send({
+              type: "GUEST_STATUS",
+              payload: this.pendingStatus,
+            });
+            this.pendingStatus = null;
+          }
           resolve();
         });
 
@@ -68,12 +97,15 @@ export class P2PGuestService {
             onBatchUpdate(data.payload);
           } else if (data.type === "ENTITY_DELETE") {
             onEntityDelete(data.payload);
+          } else if (data.type === "THEME_UPDATE") {
+            onThemeUpdate(data.payload);
           }
         });
 
         this.connection.on("close", () => {
           console.log("[P2P Guest] Connection closed");
           this.isConnecting = false;
+          this.isConnected = false;
           this.disconnect();
         });
 
@@ -116,6 +148,7 @@ export class P2PGuestService {
 
   disconnect() {
     this.isConnecting = false;
+    this.isConnected = false;
     if (this.connection) {
       this.connection.close();
       this.connection = null;
@@ -124,6 +157,8 @@ export class P2PGuestService {
       this.peer.destroy();
       this.peer = null;
     }
+    this.pendingStatus = null;
+    this.guestDisplayName = null;
   }
 
   async getFile(path: string): Promise<Blob> {
@@ -159,6 +194,21 @@ export class P2PGuestService {
         requestId,
       });
     });
+  }
+
+  updateGuestStatus(status: GuestStatusPayload) {
+    this.pendingStatus = status;
+    if (this.connection?.open) {
+      this.connection.send({
+        type: "GUEST_STATUS",
+        payload: status,
+      });
+      this.pendingStatus = null;
+    }
+  }
+
+  get connected() {
+    return this.isConnected;
   }
 }
 

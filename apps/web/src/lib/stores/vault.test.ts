@@ -108,6 +108,7 @@ vi.mock("../services/cache.svelte", () => ({
     getPreloadedEntities: vi.fn().mockReturnValue([]),
     getEntityContent: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
     clear: vi.fn(),
   },
 }));
@@ -378,6 +379,44 @@ describe("VaultStore", () => {
       await testVault.deleteEntity("d1");
 
       expect(deleteSpy).toHaveBeenCalledWith("d1", expect.any(Object), "v1");
+    });
+
+    it("should handle entity deletion with local sync handle", async () => {
+      vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
+      const mockOpfsHandle = { name: "v1" } as any;
+      const mockLocalHandle = {
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+        getDirectoryHandle: vi.fn().mockRejectedValue(new Error("Not found")), // Simulates deep path not found
+        removeEntry: vi.fn().mockResolvedValue(undefined),
+      } as any;
+
+      vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue(
+        mockOpfsHandle,
+      );
+      vi.spyOn(testVault, "getActiveSyncHandle").mockResolvedValue(
+        mockLocalHandle,
+      );
+
+      const deleteSpy = vi
+        .spyOn((testVault as any).crudManager, "deleteEntity")
+        .mockResolvedValue(undefined);
+
+      // Setup entity with path
+      testVault.entities["d1"] = {
+        id: "d1",
+        _path: ["folder", "d1.md"],
+      } as any;
+
+      await testVault.deleteEntity("d1");
+
+      expect(deleteSpy).toHaveBeenCalled();
+      expect(mockLocalHandle.queryPermission).toHaveBeenCalled();
+      // Should have tried to get "folder"
+      expect(mockLocalHandle.getDirectoryHandle).toHaveBeenCalledWith(
+        "folder",
+        { create: false },
+      );
+      expect(cacheService.remove).toHaveBeenCalled();
     });
 
     it("should handle entity deletion in demo mode and with callback", async () => {

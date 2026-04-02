@@ -44,6 +44,8 @@ describe("ThemeStore", () => {
       store.currentThemeId = "modern";
       store.previewTheme("fantasy");
       expect(store.resolveJargon("entity")).toBe("Chronicle");
+      expect(store.currentThemeId).toBe("modern");
+      expect(mockStorage.saveLocal).not.toHaveBeenCalled();
     });
   });
 

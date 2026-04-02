@@ -5,13 +5,30 @@ test.describe("Guest Login Modal Accessibility", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
 
       // Mock PeerJS connection to trigger the GuestLoginModal
       (window as any).Peer = class MockPeer {
         on() {}
         connect() {
-          return { on: () => {}, send: () => {}, close: () => {} };
+          const handlers: Record<string, (...args: any[]) => void> = {};
+          const conn = {
+            open: true,
+            on(event: string, handler: (...args: any[]) => void) {
+              handlers[event] = handler;
+            },
+            send: () => {},
+            close: () => {},
+            emit(event: string, ...args: any[]) {
+              handlers[event]?.(...args);
+            },
+          };
+          (window as any).__guestConn = conn;
+          return conn;
         }
         destroy() {}
       };
@@ -24,12 +41,7 @@ test.describe("Guest Login Modal Accessibility", () => {
     page,
   }) => {
     const usernameInput = page.locator("#username-input");
-    const submitButton = usernameInput.locator(
-      "xpath=ancestor::form[1]//button[@type='submit']",
-    );
-
-    await expect(page.getByText("Shared Campaign")).toBeVisible();
-    await expect(usernameInput).toBeVisible();
+    const submitButton = page.getByRole("button", { name: "JOIN" });
 
     // 1. Initially no error
     await expect(page.locator("#username-error")).not.toBeAttached();
@@ -43,14 +55,30 @@ test.describe("Guest Login Modal Accessibility", () => {
     await expect(usernameInput).toHaveAttribute("aria-invalid", "true");
 
     // 3. Type to clear error
-    await usernameInput.fill("A");
+    await usernameInput.fill("Baddy");
     await expect(page.locator("#username-error")).not.toBeAttached();
     await expect(usernameInput).toHaveAttribute("aria-invalid", "false");
 
     // 4. Submit valid username
-    await usernameInput.fill("ValidUser");
     await submitButton.click();
-    // Modal should ideally disappear or start connecting (in this test it won't connect due to mock)
     await expect(page.locator("#username-error")).not.toBeAttached();
+  });
+
+  test("should reopen the guest modal if the connection fails", async ({
+    page,
+  }) => {
+    const usernameInput = page.locator("#username-input");
+    const submitButton = page.getByRole("button", { name: "JOIN" });
+
+    await usernameInput.fill("Baddy");
+    await submitButton.click();
+
+    await page.evaluate(() => {
+      const conn = (window as any).__guestConn;
+      conn?.emit("error", new Error("Connection failed"));
+    });
+
+    await expect(page.locator("#username-input")).toBeVisible();
+    await expect(page.locator("#username-input")).toHaveValue("Baddy");
   });
 });

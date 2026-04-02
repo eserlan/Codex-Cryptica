@@ -2,9 +2,11 @@
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { goto } from "$app/navigation";
+  import { untrack } from "svelte";
 
   let showFallback = $state(false);
   let initializationError = $state<string | null>(null);
+  let hasNavigated = false;
 
   $effect(() => {
     const timer = setTimeout(() => {
@@ -15,7 +17,10 @@
   });
 
   $effect(() => {
+    if (hasNavigated) return;
+
     if (vault.isInitialized && !vault.activeVaultId) {
+      hasNavigated = true;
       goto("/");
       return;
     }
@@ -30,13 +35,19 @@
     }
 
     if (vault.activeVaultId && canvasRegistry.isLoaded) {
-      if (canvasRegistry.allCanvases.length > 0) {
-        goto(`/canvas/${canvasRegistry.allCanvases[0].slug}`);
+      const allCanvases = untrack(() => canvasRegistry.allCanvases);
+
+      if (allCanvases.length > 0) {
+        hasNavigated = true;
+        goto(`/canvas/${allCanvases[0].slug}`);
       } else {
         canvasRegistry
           .create("Primary Workspace")
           .then((slug) => {
-            if (slug) goto(`/canvas/${slug}`);
+            if (slug) {
+              hasNavigated = true;
+              goto(`/canvas/${slug}`);
+            }
           })
           .catch((err: unknown) => {
             initializationError = "Failed to create initial canvas";

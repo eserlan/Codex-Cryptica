@@ -5,8 +5,16 @@ test.describe("Dice Rolling (Oracle Command)", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_skip_landing", "true");
-      localStorage.setItem("codex_lite_mode", "true");
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
+      try {
+        localStorage.setItem("codex_lite_mode", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.setViewportSize({ width: 1440, height: 900 });

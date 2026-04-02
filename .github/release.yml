@@ -3,7 +3,6 @@ changelog:
     labels:
       - skip-changelog
       - dependencies
-      - chore
       - github_actions
     authors:
       - github-actions[bot]
@@ -11,37 +10,18 @@ changelog:
     - title: "✨ New Features"
       labels:
         - enhancement
-        - feat
-        - minor
-        - major
-    - title: "⚡ Performance (Bolt)"
-      labels:
-        - performance
-        - perf
-    - title: "🎨 User Experience (Palette)"
-      labels:
-        - ux
-        - a11y
-        - style
     - title: "🐛 Bug Fixes"
       labels:
         - bug
-        - fix
     - title: "📚 Documentation"
       labels:
         - documentation
-        - docs
     - title: "🧹 Other Improvements"
       labels:
-        - refactor
-        - internal
-    - title: "🌐 Web"
+        - improvement
+    - title: "📦 Dependencies"
       labels:
-        - web
-    - title: "📦 Packages"
+        - dependencies
+    - title: "⚙️ GitHub Actions"
       labels:
-        - packages
-    - title: "⚙️ Infrastructure & Scripts"
-      labels:
-        - infrastructure
-        - scripts
+        - github_actions

@@ -1,7 +1,10 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
   import type { Core } from "cytoscape";
   import { graph } from "$lib/stores/graph.svelte";
   import { ui } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { guestRoster } from "$lib/stores/guest";
   import Minimap from "./Minimap.svelte";
   import TimelineControls from "./TimelineControls.svelte";
 
@@ -17,6 +20,20 @@
   }>();
 
   let showMinimap = $state(false);
+  let currentZoom = $state(1);
+
+  $effect(() => {
+    if (cy) {
+      const updateZoom = () => {
+        currentZoom = cy.zoom();
+      };
+      cy.on("zoom", updateZoom);
+      updateZoom();
+      return () => {
+        cy.off("zoom", updateZoom);
+      };
+    }
+  });
 
   const canConnect = $derived(selectedCount === 2);
   const isConnecting = $derived(ui.showSelectionConnector || ui.isConnecting);
@@ -26,6 +43,16 @@
       : ui.isConnecting
         ? "Exit Connect Mode"
         : "Enter Connect Mode (C)",
+  );
+
+  const activeGuests = $derived.by(() =>
+    Object.values($guestRoster).sort((a, b) => a.joinedAt - b.joinedAt),
+  );
+
+  const guestPanelHeight = $derived(
+    activeGuests.length === 0
+      ? 0
+      : Math.min(64 + activeGuests.length * 48, 280),
   );
 </script>
 
@@ -41,6 +68,57 @@
         height={128}
         isExpanded={showMinimap}
       />
+    </div>
+  {/if}
+
+  {#if !vault.isGuest && activeGuests.length > 0}
+    <div
+      class="pointer-events-auto w-[320px] max-w-[calc(100vw-3rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-[10px] text-theme-text shadow-lg backdrop-blur overflow-hidden"
+      style:height={`${guestPanelHeight}px`}
+      style:max-height="calc(100vh - 6rem)"
+      transition:fade
+    >
+      <div class="flex items-center justify-between gap-3 mb-2">
+        <div
+          class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono"
+        >
+          <span class="icon-[lucide--users] w-3 h-3"></span>
+          Active Guests
+        </div>
+        <span class="text-theme-muted font-mono">{activeGuests.length}</span>
+      </div>
+      <div
+        class="space-y-1.5 overflow-y-auto pr-1"
+        style:max-height="calc(100% - 1.75rem)"
+      >
+        {#each activeGuests as guest (guest.peerId)}
+          <div class="flex items-start gap-2">
+            <span
+              class="mt-1 w-2 h-2 rounded-full shrink-0 {guest.status ===
+              'viewing'
+                ? 'bg-theme-primary'
+                : 'bg-theme-muted'}"
+            ></span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-theme-text truncate"
+                  >{guest.displayName}</span
+                >
+                <span
+                  class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[8px] text-theme-muted"
+                >
+                  {guest.status === "viewing" ? "viewing" : "connected"}
+                </span>
+              </div>
+              <div class="truncate text-theme-text/70">
+                {guest.currentEntityTitle
+                  ? `Viewing ${guest.currentEntityTitle}`
+                  : "Connected"}
+              </div>
+            </div>
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 
@@ -164,5 +242,21 @@
       aria-pressed={graph.showImages}
       ><span class="icon-[lucide--image] w-4 h-4"></span></button
     >
+
+    <div
+      class="flex items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
+    >
+      <span class="text-[9px] font-mono text-theme-primary font-bold"
+        >{currentZoom.toFixed(2)}x</span
+      >
+      <button
+        class="text-[8px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
+        onclick={() =>
+          cy?.animate({ zoom: 9, duration: 500, easing: "ease-in-out-cubic" })}
+        title="Jump to Maximum Zoom (9x)"
+      >
+        MAX
+      </button>
+    </div>
   </div>
 </div>
