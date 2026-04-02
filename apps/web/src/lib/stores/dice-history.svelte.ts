@@ -71,11 +71,24 @@ export class DiceHistoryStore {
       this.history = [];
       await db.clear("dice_history");
     } else {
-      const toRemove = this.history.filter((r) => r.context === context);
-      this.history = this.history.filter((r) => r.context !== context);
-      for (const r of toRemove) {
-        await db.delete("dice_history", r.id);
+      const toRemove: ContextualRollResult[] = [];
+      const newHistory: ContextualRollResult[] = [];
+
+      for (const r of this.history) {
+        if (r.context === context) {
+          toRemove.push(r);
+        } else {
+          newHistory.push(r);
+        }
       }
+
+      this.history = newHistory;
+
+      const tx = db.transaction("dice_history", "readwrite");
+      for (const r of toRemove) {
+        await tx.store.delete(r.id);
+      }
+      await tx.done;
     }
   }
 }
