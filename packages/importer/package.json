@@ -11,11 +11,11 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "@google/genai": "^1.46.0",
+    "@google/genai": "^1.48.0",
     "@types/turndown": "^5.0.6",
     "idb": "^8.0.3",
     "mammoth": "^1.12.0",
-    "pdfjs-dist": "^5.5.207",
+    "pdfjs-dist": "^5.6.205",
     "turndown": "^7.2.2"
   },
   "devDependencies": {
@@ -24,6 +24,6 @@
     "fake-indexeddb": "^6.0.0",
     "jsdom": "^29.0.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.2"
   }
 }

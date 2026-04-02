@@ -13,13 +13,13 @@
   "dependencies": {
     "@tiptap/core": "^3.20.5",
     "@tiptap/pm": "^3.19.0",
-    "@tiptap/starter-kit": "^3.20.5",
+    "@tiptap/starter-kit": "^3.22.0",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.2",
     "jsdom": "^29.0.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.2"
   }
 }

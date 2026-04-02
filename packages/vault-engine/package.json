@@ -18,9 +18,9 @@
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",
     "jsdom": "^29.0.0",
-    "svelte": "^5.55.0",
+    "svelte": "^5.55.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.2"
   }
 }
