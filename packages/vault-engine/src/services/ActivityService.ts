@@ -4,6 +4,7 @@ import type { RecentActivity } from "./CampaignService";
 interface GraphEntityRecord {
   id: string;
   title: string;
+  vaultId: string;
   type?: string;
   tags?: string[];
   labels?: string[];

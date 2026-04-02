@@ -8,6 +8,8 @@
   import EntityCard from "./EntityCard.svelte";
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
 
+  let { onClose }: { onClose?: () => void } = $props();
+
   const stripMarkdown = (value: string) =>
     value
       .replace(/[`*_~>#-]/g, "")
@@ -573,6 +575,16 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
         <div
           class="flex flex-wrap justify-end gap-2 xl:absolute xl:right-0 xl:top-0 xl:gap-3"
         >
+          {#if onClose}
+            <button
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              onclick={onClose}
+              aria-label="Close front page"
+              title="Close front page"
+            >
+              <span class="icon-[lucide--x] h-4 w-4"></span>
+            </button>
+          {/if}
           <button
             class="rounded-full border border-theme-border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/50 hover:text-theme-primary"
             onclick={startEditingTitle}

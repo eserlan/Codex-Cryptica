@@ -3,13 +3,19 @@ import { openFrontPage } from "./app-header-actions";
 import { uiStore } from "$lib/stores/ui.svelte";
 import { vault } from "$lib/stores/vault.svelte";
 
+const mocks = vi.hoisted(() => ({
+  closeSidebar: vi.fn(),
+  closeZenMode: vi.fn(),
+  toggleWelcomeScreen: vi.fn(),
+}));
+
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     dismissedLandingPage: false,
     dismissedCampaignPage: true,
-    closeSidebar: vi.fn(),
-    closeZenMode: vi.fn(),
-    toggleWelcomeScreen: vi.fn(),
+    closeSidebar: mocks.closeSidebar,
+    closeZenMode: mocks.closeZenMode,
+    toggleWelcomeScreen: mocks.toggleWelcomeScreen,
   },
 }));
 
@@ -23,9 +29,9 @@ describe("openFrontPage", () => {
   beforeEach(() => {
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedCampaignPage = true;
-    uiStore.closeSidebar.mockClear();
-    uiStore.closeZenMode.mockClear();
-    uiStore.toggleWelcomeScreen.mockClear();
+    mocks.closeSidebar.mockClear();
+    mocks.closeZenMode.mockClear();
+    mocks.toggleWelcomeScreen.mockClear();
     vault.selectedEntityId = "entity-1";
   });
 

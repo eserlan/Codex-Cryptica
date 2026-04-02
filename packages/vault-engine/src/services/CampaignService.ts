@@ -3,6 +3,7 @@ import Dexie from "dexie";
 interface GraphEntityRecord {
   id: string;
   title: string;
+  vaultId: string;
   type?: string;
   tags?: string[];
   labels?: string[];

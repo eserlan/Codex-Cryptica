@@ -297,19 +297,8 @@
       }}
       transition:fade
     >
-      <div class="mx-auto mb-3 flex w-full max-w-7xl justify-end">
-        <button
-          type="button"
-          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-theme-border bg-theme-bg/90 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-          onclick={dismissFrontPageOverlay}
-          aria-label="Close front page"
-          title="Close front page"
-        >
-          <span class="icon-[lucide--x] h-4 w-4"></span>
-        </button>
-      </div>
       <div class="max-w-7xl mx-auto w-full">
-        <FrontPage />
+        <FrontPage onClose={dismissFrontPageOverlay} />
       </div>
     </div>
   {/if}
