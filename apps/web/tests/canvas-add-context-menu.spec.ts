@@ -36,7 +36,7 @@ test.describe("Add to Canvas - Context Menu", () => {
   }
 
   async function selectEntitiesByTitle(page: any, titles: string[]) {
-    await page.evaluate((wantedTitles) => {
+    await page.evaluate((wantedTitles: string[]) => {
       const cy = (window as any).cy;
       const vault = (window as any).vault;
       if (!cy || !vault?.entities) return;
@@ -52,7 +52,7 @@ test.describe("Add to Canvas - Context Menu", () => {
   }
 
   async function getEntityIdByTitle(page: any, title: string) {
-    return page.evaluate((wantedTitle) => {
+    return page.evaluate((wantedTitle: string) => {
       const vault = (window as any).vault;
       const entity = Object.values(vault?.entities ?? {}).find(
         (entry: any) => entry.title === wantedTitle,
@@ -74,7 +74,7 @@ test.describe("Add to Canvas - Context Menu", () => {
       { timeout: 15000 },
     );
 
-    const targetId = await page.evaluate((wantedTitles) => {
+    const targetId = await page.evaluate((wantedTitles: string[]) => {
       const cy = (window as any).cy;
       if (!cy) return null;
 
@@ -95,7 +95,7 @@ test.describe("Add to Canvas - Context Menu", () => {
     }, titles);
 
     expect(targetId).toBeTruthy();
-    await page.evaluate((nodeId) => {
+    await page.evaluate((nodeId: string) => {
       const cy = (window as any).cy;
       if (!cy || !nodeId) return;
       const node = cy.$id(nodeId);
