@@ -1,6 +1,53 @@
 import { describe, expect, it, vi } from "vitest";
 import { CampaignServiceImplementation } from "./CampaignService";
 
+const createGraphEntitiesMock = ({
+  tagRecords = [],
+  labelRecords = [],
+  recentRecords = [],
+}: {
+  tagRecords?: any[];
+  labelRecords?: any[];
+  recentRecords?: any[];
+} = {}) => ({
+  where: vi.fn((index: string) => {
+    if (index === "tags") {
+      return {
+        equals: vi.fn().mockReturnValue({
+          and: vi.fn().mockReturnValue({
+            toArray: vi.fn().mockResolvedValue(tagRecords),
+          }),
+        }),
+      };
+    }
+
+    if (index === "labels") {
+      return {
+        equals: vi.fn().mockReturnValue({
+          and: vi.fn().mockReturnValue({
+            toArray: vi.fn().mockResolvedValue(labelRecords),
+          }),
+        }),
+      };
+    }
+
+    if (index === "[vaultId+lastModified]") {
+      return {
+        between: vi.fn().mockReturnValue({
+          reverse: vi.fn().mockReturnValue({
+            limit: vi.fn().mockReturnValue({
+              toArray: vi.fn().mockResolvedValue(recentRecords),
+            }),
+          }),
+        }),
+      };
+    }
+
+    throw new Error(`Unexpected graphEntities index: ${index}`);
+  }),
+  orderBy: vi.fn(),
+});
+
 describe("CampaignServiceImplementation", () => {
   it("returns vault metadata with fallbacks", async () => {
     const get = vi.fn().mockResolvedValue({
@@ -35,7 +82,7 @@ describe("CampaignServiceImplementation", () => {
     const service = new CampaignServiceImplementation({
       db: {
         vaultMetadata: { get, put: vi.fn() } as any,
-        graphEntities: { where: vi.fn() } as any,
+        graphEntities: createGraphEntitiesMock() as any,
         entityContent: { get: vi.fn() } as any,
       },
     });
@@ -72,7 +119,7 @@ describe("CampaignServiceImplementation", () => {
     const service = new CampaignServiceImplementation({
       db: {
         vaultMetadata: { get, put } as any,
-        graphEntities: { where: vi.fn() } as any,
+        graphEntities: createGraphEntitiesMock() as any,
         entityContent: { get: vi.fn() } as any,
       },
     });
@@ -91,22 +138,30 @@ describe("CampaignServiceImplementation", () => {
     );
   });
 
-  it("selects the most recently modified frontpage entity", async () => {
+  it("selects the most recently modified frontpage entity from tag and label indexes", async () => {
     const records = [
-      { id: "older", title: "Older", tags: ["frontpage"], lastModified: 10 },
-      { id: "newer", title: "Newer", tags: ["frontpage"], lastModified: 20 },
+      {
+        id: "older",
+        title: "Older",
+        type: "npc",
+        tags: ["frontpage"],
+        lastModified: 10,
+      },
+      {
+        id: "newer",
+        title: "Newer",
+        type: "location",
+        labels: ["frontpage"],
+        lastModified: 20,
+      },
     ];
-    const where = vi.fn().mockReturnValue({
-      equals: vi.fn().mockReturnValue({
-        and: vi.fn().mockReturnValue({
-          toArray: vi.fn().mockResolvedValue(records),
-        }),
-      }),
-    });
     const service = new CampaignServiceImplementation({
       db: {
         vaultMetadata: { get: vi.fn(), put: vi.fn() } as any,
-        graphEntities: { where } as any,
+        graphEntities: createGraphEntitiesMock({
+          tagRecords: [records[0]],
+          labelRecords: [records[1]],
+        }) as any,
         entityContent: {
           get: vi.fn().mockResolvedValue({ content: "Front page body" }),
         } as any,
@@ -123,49 +178,64 @@ describe("CampaignServiceImplementation", () => {
   });
 
   it("returns recent activity cards from graph data and entity content", async () => {
-    const where = vi.fn().mockReturnValue({
-      equals: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue([
-          {
-            id: "a",
-            title: "A",
-            tags: ["npc"],
-            filePath: "a.md",
-            lastModified: 1,
-          },
-          {
-            id: "b",
-            title: "B",
-            tags: ["location"],
-            filePath: "b.md",
-            lastModified: 2,
-          },
-        ]),
-      }),
-    });
     const service = new CampaignServiceImplementation({
       db: {
         vaultMetadata: { get: vi.fn(), put: vi.fn() } as any,
-        graphEntities: { where } as any,
+        graphEntities: createGraphEntitiesMock({
+          tagRecords: [
+            {
+              id: "front",
+              title: "Front",
+              type: "npc",
+              labels: ["frontpage"],
+              filePath: "front.md",
+              lastModified: 3,
+            },
+          ],
+          recentRecords: [
+            {
+              id: "b",
+              title: "B",
+              type: "location",
+              tags: ["location"],
+              filePath: "b.md",
+              lastModified: 2,
+            },
+            {
+              id: "a",
+              title: "A",
+              type: "npc",
+              tags: ["npc"],
+              filePath: "a.md",
+              lastModified: 1,
+            },
+          ],
+        }) as any,
         entityContent: {
           get: vi
             .fn()
+            .mockResolvedValueOnce({ content: "Front content." })
             .mockResolvedValueOnce({ content: "First content paragraph." })
-            .mockResolvedValueOnce({
-              content:
-                "Second content paragraph with extra detail that should be trimmed when it gets too long.",
-            }),
+            .mockResolvedValueOnce({ content: "Second content paragraph." }),
         } as any,
       },
     });
 
-    const result = await service.getRecentActivity("vault-1", 2);
+    const result = await service.getRecentActivity("vault-1", 3);
 
     expect(result).toEqual([
+      expect.objectContaining({
+        id: "front",
+        path: "front.md",
+        type: "npc",
+        labels: ["frontpage"],
+        lastModified: 3,
+      }),
       expect.objectContaining({
         id: "b",
         title: "B",
         path: "b.md",
+        type: "location",
         tags: ["location"],
         lastModified: 2,
       }),
@@ -173,6 +243,7 @@ describe("CampaignServiceImplementation", () => {
         id: "a",
         title: "A",
         path: "a.md",
+        type: "npc",
         tags: ["npc"],
         lastModified: 1,
       }),

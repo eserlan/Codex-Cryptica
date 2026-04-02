@@ -44,7 +44,8 @@ const campaignMock = vi.hoisted(() => ({
       id: "entity-1",
       title: "Captain Ril",
       path: "characters/ril.md",
-      excerpt: "Captain of the moon guard.",
+      excerpt: "Captain of the **moon** guard.",
+      type: "npc",
       tags: ["npc"],
       lastModified: Date.now(),
       image: "images/captain.webp",
@@ -54,13 +55,23 @@ const campaignMock = vi.hoisted(() => ({
       id: "front-1",
       title: "Front Page Chronicle",
       path: "frontpage.md",
-      excerpt: "The moon breaks over the city.",
+      excerpt: "The **moon** breaks over the city.",
+      type: "location",
       tags: ["frontpage"],
       lastModified: Date.now() + 1,
       image: "images/frontpage.webp",
       thumbnail: "images/frontpage-thumb.webp",
     },
   ],
+}));
+
+const campaignStoreMock = vi.hoisted(() => ({
+  metadata: campaignMock.metadata,
+  frontPageEntity: campaignMock.frontPageEntity,
+  recentActivity: campaignMock.recentActivity,
+  isLoading: false,
+  isSaving: false,
+  error: null as string | null,
 }));
 
 if (!HTMLElement.prototype.animate) {
@@ -114,12 +125,7 @@ vi.mock("$lib/stores/ui.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/campaign.svelte", () => ({
-  campaignStore: {
-    metadata: campaignMock.metadata,
-    frontPageEntity: campaignMock.frontPageEntity,
-    recentActivity: campaignMock.recentActivity,
-    isLoading: false,
-    isSaving: false,
+  campaignStore: Object.assign(campaignStoreMock, {
     load: mocks.load,
     saveTitle: mocks.saveTitle,
     saveTagline: mocks.saveTagline,
@@ -127,7 +133,7 @@ vi.mock("$lib/stores/campaign.svelte", () => ({
     generateDescription: mocks.generateDescription,
     generateCoverImage: mocks.generateCoverImage,
     setCoverImage: mocks.setCoverImage,
-  },
+  }),
 }));
 
 describe("FrontPage", () => {
@@ -135,6 +141,7 @@ describe("FrontPage", () => {
     vi.clearAllMocks();
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedCampaignPage = false;
+    campaignStoreMock.error = null;
     window.localStorage.removeItem("codex_front_page_recent_limit:vault-1");
     Object.assign(campaignMock.metadata, {
       id: "vault-1",
@@ -151,6 +158,7 @@ describe("FrontPage", () => {
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
 
     expect(screen.getByText("Moonfall")).toBeTruthy();
+    expect(screen.queryByPlaceholderText("Campaign title")).toBeNull();
     expect(screen.getByText("capital").tagName).toBe("STRONG");
     expect(screen.getByText("Front Page Chronicle")).toBeTruthy();
     await waitFor(() =>
@@ -197,6 +205,10 @@ describe("FrontPage", () => {
     expect(
       cards[0].querySelector("div[style*='background-image']"),
     ).toBeTruthy();
+    expect(
+      within(cards[0]).getByTestId("entity-card-category-icon"),
+    ).toBeTruthy();
+    expect(within(cards[0]).getByText("moon").tagName).toBe("STRONG");
     const cardButton = within(cards[0]).getByRole("button");
     vi.useFakeTimers();
     await fireEvent.click(cardButton);
@@ -247,6 +259,30 @@ describe("FrontPage", () => {
       screen.queryByPlaceholderText("Write a short campaign summary..."),
     ).toBeNull();
     expect(screen.getByText("Captain Ril")).toBeTruthy();
+  });
+
+  it("keeps summary actions visible even when the summary is empty and being edited", async () => {
+    Object.assign(campaignMock.metadata, {
+      id: "vault-1",
+      name: "Moonfall",
+      tagline: "A city caught between collapse and light.",
+      description: "",
+      coverImage: "images/cover.webp",
+    });
+
+    render(FrontPage);
+
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+
+    await fireEvent.click(screen.getByLabelText("Edit summary"));
+    await waitFor(() =>
+      expect(
+        screen.getByPlaceholderText("Write a short campaign summary..."),
+      ).toBeTruthy(),
+    );
+
+    expect(screen.getByRole("button", { name: "Save Summary" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
   });
 
   it("falls back to the tagged front page entity when no summary metadata exists", async () => {
@@ -328,6 +364,41 @@ describe("FrontPage", () => {
       screen.queryByPlaceholderText("Write a short campaign summary..."),
     ).toBeNull();
     expect(screen.getByTestId("summary-preview")).toBeTruthy();
+  });
+
+  it("keeps the summary editor open when saving fails", async () => {
+    mocks.saveDescription.mockImplementationOnce(async () => {
+      campaignStoreMock.error = "Failed to save campaign summary.";
+    });
+
+    render(FrontPage);
+
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+    await fireEvent.click(screen.getByLabelText("Edit summary"));
+    await waitFor(() =>
+      expect(
+        screen.getByPlaceholderText("Write a short campaign summary..."),
+      ).toBeTruthy(),
+    );
+
+    const textarea = screen.getByPlaceholderText(
+      "Write a short campaign summary...",
+    ) as HTMLTextAreaElement;
+    await fireEvent.input(textarea, {
+      target: {
+        value: "A broken moon hangs over the capital, now with unrest.",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Save Summary" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByPlaceholderText("Write a short campaign summary..."),
+      ).toBeTruthy(),
+    );
+    expect(screen.queryByTestId("summary-preview")).toBeNull();
+    expect(campaignStoreMock.error).toBe("Failed to save campaign summary.");
   });
 
   it("shows a working state while cover art is generating", async () => {
@@ -445,6 +516,30 @@ describe("FrontPage", () => {
       expect.stringContaining(
         "Description: Cyberpunk, neon-noir, corporate control",
       ),
+    );
+  });
+
+  it("keeps the current summary when generation fails", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mocks.generateDescription.mockImplementationOnce(async () => {
+      campaignStoreMock.error = "Failed to generate campaign summary.";
+      return "";
+    });
+
+    render(FrontPage);
+
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+    await fireEvent.click(screen.getByLabelText("Generate summary"));
+
+    await waitFor(() =>
+      expect(screen.getByTestId("summary-preview")).toBeTruthy(),
+    );
+    expect(screen.getByText("capital").tagName).toBe("STRONG");
+    expect(
+      screen.queryByPlaceholderText("Write a short campaign summary..."),
+    ).toBeNull();
+    expect(campaignStoreMock.error).toBe(
+      "Failed to generate campaign summary.",
     );
   });
 

@@ -65,17 +65,6 @@ test.describe("Vault E2E", () => {
     await page.keyboard.press("Escape");
   });
 
-  test("Dismiss front page by clicking the backdrop", async ({ page }) => {
-    await expect(page.getByTestId("front-page-overlay")).toBeVisible();
-
-    await page.getByTestId("front-page-overlay").click({
-      position: { x: 12, y: 12 },
-    });
-
-    await expect(page.getByTestId("front-page-overlay")).toHaveCount(0);
-    await expect(page.getByTestId("graph-canvas")).toBeVisible();
-  });
-
   test("Connect Mode UI", async ({ page }) => {
     // Need at least one node to connect
     await page.getByTestId("new-entity-button").click();
@@ -146,5 +135,27 @@ test.describe("Vault E2E", () => {
       () => (window as any).graph.showLabels,
     );
     expect(stillShownWhileTyping).toBe(true);
+  });
+
+  test("Header brand restores the front page overlay", async ({ page }) => {
+    const marketingLayer = page.locator(".marketing-layer");
+    const overlay = page.getByTestId("front-page-overlay");
+
+    await page.evaluate(() => {
+      const uiStore = (window as any).uiStore;
+      uiStore.toggleWelcomeScreen(false);
+      uiStore.dismissedLandingPage = false;
+      uiStore.dismissedCampaignPage = false;
+      document.documentElement.classList.remove("skip-landing");
+      localStorage.removeItem("codex_skip_landing");
+    });
+
+    await expect(marketingLayer).toBeVisible({ timeout: 10000 });
+
+    await page.getByTestId("header-front-page-button").click();
+    await expect(overlay).toBeVisible({ timeout: 10000 });
+
+    await page.reload();
+    await expect(overlay).toBeVisible({ timeout: 10000 });
   });
 });

@@ -13,11 +13,6 @@
   import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
   import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
-  const jsonLdScript = $derived(
-    `<script type="application/ld+json">${JSON.stringify(SCHEMA_ORG)}</scr` +
-      `ipt>`,
-  );
-
   const isSpecialEnv =
     import.meta.env.DEV ||
     (typeof window !== "undefined" && (window as any).__E2E__) ||
@@ -33,6 +28,8 @@
     "starwars",
     "startrek",
   ];
+  const schemaOrg = SCHEMA_ORG;
+  void schemaOrg;
 
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
@@ -82,6 +79,21 @@
     const id = vault.selectedEntityId;
     return id ? vault.entities[id] : null;
   });
+
+  const dismissFrontPageOverlay = () => {
+    uiStore.dismissedCampaignPage = true;
+  };
+
+  const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
+    if (
+      event.key === "Escape" &&
+      !uiStore.isLandingPageVisible &&
+      !uiStore.dismissedCampaignPage &&
+      !selectedEntity
+    ) {
+      dismissFrontPageOverlay();
+    }
+  };
 
   // Check if we're in guest/share mode - guard for prerendering
   const shareId = $derived(
@@ -222,9 +234,13 @@
 
 <svelte:head>
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
-    {@html jsonLdScript}
+    <script type="application/ld+json">
+      {JSON.stringify(schemaOrg)}
+    </script>
   {/if}
 </svelte:head>
+
+<svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
 <div
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
@@ -260,18 +276,38 @@
   {/if}
 
   <!-- Vault Front Page Overlay -->
-  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage}
+  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage && !selectedEntity}
     <div
       data-testid="front-page-overlay"
-      class="absolute inset-0 z-40 bg-theme-bg/96 backdrop-blur-sm overflow-y-auto p-4 md:p-6"
+      class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}
       style:background-image="var(--bg-texture-overlay)"
+      role="button"
+      tabindex="0"
+      aria-label="Dismiss front page"
       onclick={(event) => {
         if (event.currentTarget === event.target) {
-          uiStore.dismissedCampaignPage = true;
+          dismissFrontPageOverlay();
+        }
+      }}
+      onkeydown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          dismissFrontPageOverlay();
         }
       }}
       transition:fade
     >
+      <div class="mx-auto mb-3 flex w-full max-w-7xl justify-end">
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-theme-border bg-theme-bg/90 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+          onclick={dismissFrontPageOverlay}
+          aria-label="Close front page"
+          title="Close front page"
+        >
+          <span class="icon-[lucide--x] h-4 w-4"></span>
+        </button>
+      </div>
       <div class="max-w-7xl mx-auto w-full">
         <FrontPage />
       </div>

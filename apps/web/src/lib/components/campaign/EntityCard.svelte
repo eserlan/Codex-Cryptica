@@ -3,6 +3,9 @@
   import type { RecentActivity } from "@codex/vault-engine";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
+  import { renderMarkdown } from "$lib/utils/markdown";
 
   let { activity } = $props<{ activity: RecentActivity }>();
   let imageUrl = $state("");
@@ -25,6 +28,12 @@
   });
 
   const excerpt = $derived(activity.excerpt || "No excerpt available yet.");
+  const renderedExcerpt = $derived(
+    excerpt ? renderMarkdown(excerpt, { inline: true }) : "",
+  );
+  const category = $derived(
+    activity.type ? categories.getCategory(activity.type) : undefined,
+  );
 
   const openInGraph = () => {
     uiStore.dismissedCampaignPage = true;
@@ -105,16 +114,22 @@
   <div class="relative z-20 flex min-h-[17rem] h-full flex-col justify-between">
     <div class="p-2.5 md:p-3">
       <header
-        class="flex items-start justify-between gap-3 rounded-2xl bg-[rgba(2,6,23,0.62)] border border-white/10 backdrop-blur-md px-3 py-2"
+        class="flex items-center justify-between gap-3 rounded-2xl bg-[rgba(2,6,23,0.62)] border border-white/10 backdrop-blur-md px-3 py-2"
       >
-        <div class="min-w-0">
+        <div
+          class="min-w-0 flex items-center gap-1.5 text-theme-primary/90 flex-1"
+        >
+          <span
+            class="{getIconClass(category?.icon)} h-3 w-3 shrink-0"
+            data-testid="entity-card-category-icon"
+          ></span>
           <h3
-            class="font-header text-sm md:text-base uppercase tracking-[0.14em] text-theme-text truncate"
+            class="min-w-0 font-header text-sm md:text-base uppercase tracking-[0.14em] text-theme-text truncate"
           >
             {activity.title}
           </h3>
         </div>
-        <span class="text-[10px] text-theme-muted whitespace-nowrap">
+        <span class="shrink-0 text-[10px] text-theme-muted whitespace-nowrap">
           {relativeTime}
         </span>
       </header>
@@ -127,7 +142,7 @@
         <p
           class="text-sm leading-relaxed min-h-[4.5rem] text-theme-text/95 line-clamp-4"
         >
-          {excerpt}
+          {@html renderedExcerpt}
         </p>
 
         {#if activity.tags.length > 0}

@@ -45,12 +45,16 @@ export class CampaignStore {
     private activityServiceImpl: ActivityServiceImplementation = activityService,
   ) {}
 
+  private loadSequence = 0;
+
   async load(vaultId: string | null, limit = 6) {
+    const loadId = ++this.loadSequence;
     this.activeVaultId = vaultId;
     if (!vaultId) {
       this.metadata = null;
       this.frontPageEntity = null;
       this.recentActivity = [];
+      this.isLoading = false;
       return;
     }
 
@@ -63,13 +67,22 @@ export class CampaignStore {
         this.activityServiceImpl.getRecentActivity(vaultId, limit),
       ]);
 
+      if (loadId !== this.loadSequence || this.activeVaultId !== vaultId) {
+        return;
+      }
+
       this.metadata = metadata;
       this.frontPageEntity = frontPageEntity;
       this.recentActivity = recentActivity;
     } catch (err: any) {
+      if (loadId !== this.loadSequence || this.activeVaultId !== vaultId) {
+        return;
+      }
       this.error = err?.message || "Failed to load campaign front page.";
     } finally {
-      this.isLoading = false;
+      if (loadId === this.loadSequence && this.activeVaultId === vaultId) {
+        this.isLoading = false;
+      }
     }
   }
 

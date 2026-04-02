@@ -6,6 +6,7 @@ The `CampaignService` and `ActivityService` MUST be implemented as **classes** t
 export interface CampaignMetadata {
   id: string;
   name: string;
+  tagline?: string;
   description?: string;
   coverImage?: string;
 }
@@ -16,7 +17,18 @@ export interface RecentActivity {
   path: string;
   excerpt: string;
   tags: string[];
+  labels?: string[];
   lastModified: number;
+  image?: string;
+  thumbnail?: string;
+}
+
+export interface FrontPageEntity {
+  id: string;
+  content: string;
+  chronicle: string;
+  image?: string;
+  thumbnail?: string;
 }
 
 /**
@@ -38,12 +50,10 @@ export interface CampaignService {
   ): Promise<void>;
 
   /**
-   * Searches for the entity designated as the front page via the "frontpage" tag.
+   * Searches for the entity designated as the front page via the "frontpage" marker.
    * Returns null if no such entity exists.
    */
-  getFrontPageEntity(
-    vaultId: string,
-  ): Promise<{ id: string; content: string } | null>;
+  getFrontPageEntity(vaultId: string): Promise<FrontPageEntity | null>;
 
   /**
    * Retrieves a list of recently modified entities as summary "cards".

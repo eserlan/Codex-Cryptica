@@ -98,6 +98,7 @@ export interface AppSettingRecord {
  *  2 — added search_index table for persistence.
  *  3 — added appSettings table for global configuration (AI keys, tiers).
  *  4 — added vaultMetadata table and graphEntity indexes for front page lookups.
+ *  5 — added compound lastModified and label indexes for front page queries.
  */
 export class EntityDb extends Dexie {
   graphEntities!: Table<GraphEntityRecord>;
@@ -137,6 +138,15 @@ export class EntityDb extends Dexie {
       .upgrade(async (_tx) => {
         // Migration logic for vaultMetadata if needed
       });
+
+    this.version(5).stores({
+      graphEntities:
+        "[vaultId+id], vaultId, [vaultId+filePath], [vaultId+lastModified], lastModified, *tags, *labels",
+      entityContent: "[vaultId+entityId], vaultId",
+      searchIndex: "vaultId",
+      appSettings: "key",
+      vaultMetadata: "id, lastModified",
+    });
   }
 }
 

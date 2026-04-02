@@ -186,9 +186,10 @@ Art direction:
     if (!isEditingSummary && !isDraftDirty) {
       draftDescription = summarySource;
     }
-    draftTitle = metadata?.name || vault.vaultName || "";
+    if (!isEditingTitle && !isTitleDirty) {
+      draftTitle = title;
+    }
     isTitleDirty = false;
-    isEditingTitle = !metadata?.name?.trim();
     if (!isEditingTagline) {
       draftTagline =
         metadata?.tagline?.trim() ||
@@ -230,20 +231,26 @@ Art direction:
 
   const handleSaveDescription = async () => {
     await campaignStore.saveDescription(draftDescription);
-    isDraftDirty = false;
-    isEditingSummary = false;
+    if (!campaignStore.error) {
+      isDraftDirty = false;
+      isEditingSummary = false;
+    }
   };
 
   const handleSaveTitle = async () => {
     await campaignStore.saveTitle(draftTitle.trim());
-    isTitleDirty = false;
-    isEditingTitle = false;
+    if (!campaignStore.error) {
+      isTitleDirty = false;
+      isEditingTitle = false;
+    }
   };
 
   const handleSaveTagline = async () => {
     await campaignStore.saveTagline(draftTagline.trim());
-    isTaglineDirty = false;
-    isEditingTagline = false;
+    if (!campaignStore.error) {
+      isTaglineDirty = false;
+      isEditingTagline = false;
+    }
   };
 
   const handleGenerateSummary = async () => {
@@ -275,12 +282,18 @@ Requirements:
 
 Match the summary to the theme's atmosphere and visual identity, and focus on what a new player or returning GM needs to know at a glance.`,
     );
-    draftDescription = generated;
-    isDraftDirty = false;
-    isEditingSummary = false;
-    if (!existingTagline) {
-      draftTagline = createCampaignTagline(generated, title, activeTheme.name);
-      await campaignStore.saveTagline(draftTagline);
+    if (generated.trim() && !campaignStore.error) {
+      draftDescription = generated;
+      isDraftDirty = false;
+      isEditingSummary = false;
+      if (!existingTagline) {
+        draftTagline = createCampaignTagline(
+          generated,
+          title,
+          activeTheme.name,
+        );
+        await campaignStore.saveTagline(draftTagline);
+      }
     }
   };
 
@@ -289,6 +302,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
   };
 
   const startEditingTitle = async () => {
+    draftTitle = title;
     isEditingTitle = true;
   };
 
@@ -313,7 +327,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
   };
 
   const cancelEditingTitle = () => {
-    draftTitle = metadata?.name || vault.vaultName || "";
+    draftTitle = title;
     isTitleDirty = false;
     isEditingTitle = false;
   };
@@ -587,8 +601,6 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
             </button>
           {/if}
         </div>
-
-        <div class="flex flex-wrap gap-2"></div>
       </header>
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
@@ -677,7 +689,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
             {/if}
           </div>
 
-          {#if hasSummary && isEditingSummary}
+          {#if isEditingSummary}
             <div class="mt-3 flex flex-wrap gap-2">
               <button
                 class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
