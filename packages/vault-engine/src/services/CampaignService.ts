@@ -1,0 +1,320 @@
+interface GraphEntityRecord {
+  id: string;
+  title: string;
+  tags?: string[];
+  labels?: string[];
+  lastModified: number;
+  filePath?: string;
+  image?: string;
+  thumbnail?: string;
+}
+
+export interface VaultMetadataRecord {
+  id: string;
+  name?: string;
+  tagline?: string;
+  description?: string;
+  coverImage?: string;
+  lastModified: number;
+}
+
+export interface CampaignMetadata {
+  id: string;
+  name: string;
+  tagline?: string;
+  description?: string;
+  coverImage?: string;
+}
+
+export interface RecentActivity {
+  id: string;
+  title: string;
+  path: string;
+  excerpt: string;
+  tags: string[];
+  labels?: string[];
+  lastModified: number;
+  image?: string;
+  thumbnail?: string;
+}
+
+export interface FrontPageEntity {
+  id: string;
+  content: string;
+  chronicle: string;
+  image?: string;
+  thumbnail?: string;
+}
+
+export interface CampaignServiceDependencies {
+  db?: {
+    vaultMetadata: {
+      get(id: string): Promise<VaultMetadataRecord | undefined>;
+      put(record: VaultMetadataRecord): Promise<unknown>;
+    };
+    graphEntities: {
+      where(index: string): any;
+      orderBy(index: string): any;
+    };
+    entityContent: {
+      get(key: [string, string]): Promise<{ content: string } | undefined>;
+    };
+  };
+  recentActivityService?: {
+    getRecentActivity(
+      vaultId: string,
+      limit: number,
+    ): Promise<RecentActivity[]>;
+  };
+  imageGenerator?: {
+    generateImage(
+      apiKey: string,
+      prompt: string,
+      modelName: string,
+    ): Promise<Blob>;
+  };
+  assetManager?: {
+    saveImageToVault(
+      blob: Blob,
+      entityId: string,
+      originalName?: string,
+    ): Promise<{ image: string; thumbnail: string }>;
+  };
+  getApiKey?: () => string;
+  getImageModel?: () => string;
+  getSummaryModel?: () => string;
+  getSummaryGenerator?: () => {
+    generateResponse(
+      apiKey: string,
+      query: string,
+      history: any[],
+      context: string,
+      modelName: string,
+      onUpdate: (partial: string) => void,
+      demoMode?: boolean,
+    ): Promise<void>;
+  } | null;
+}
+
+const createMissingDb = (): CampaignServiceDependencies["db"] => {
+  const fail = (method: string) => () => {
+    throw new Error(
+      `CampaignService requires an EntityDb instance with ${method} support`,
+    );
+  };
+
+  return {
+    vaultMetadata: {
+      get: fail("vaultMetadata.get") as any,
+      put: fail("vaultMetadata.put") as any,
+    } as any,
+    graphEntities: {
+      where: fail("graphEntities.where") as any,
+      orderBy: fail("graphEntities.orderBy") as any,
+    } as any,
+    entityContent: {
+      get: fail("entityContent.get") as any,
+    } as any,
+  };
+};
+
+function getEntityPath(
+  record: Partial<GraphEntityRecord> & { filePath?: string },
+) {
+  return record.filePath || (record as any)._path?.join("/") || "";
+}
+
+function getExcerpt(content: string, max = 150): string {
+  const trimmed = content.trim().replace(/\s+/g, " ");
+  if (trimmed.length <= max) return trimmed;
+  return `${trimmed.slice(0, max).trimEnd()}…`;
+}
+
+function hasFrontpageMarker(tags?: string[], labels?: string[]) {
+  const values = [...(tags || []), ...(labels || [])];
+  return values.some((tag) => tag?.trim().toLowerCase() === "frontpage");
+}
+
+export class CampaignServiceImplementation {
+  constructor(private deps: CampaignServiceDependencies = {}) {}
+
+  private get db() {
+    return this.deps.db ?? createMissingDb()!;
+  }
+
+  async getMetadata(vaultId: string): Promise<CampaignMetadata> {
+    const record = (await this.db.vaultMetadata.get(vaultId)) as
+      | VaultMetadataRecord
+      | undefined;
+
+    return {
+      id: vaultId,
+      name: record?.name?.trim() || "",
+      tagline: record?.tagline,
+      description: record?.description,
+      coverImage: record?.coverImage,
+    };
+  }
+
+  async updateMetadata(
+    vaultId: string,
+    metadata: Partial<CampaignMetadata>,
+  ): Promise<void> {
+    const existing = (await this.db.vaultMetadata.get(vaultId)) as
+      | VaultMetadataRecord
+      | undefined;
+
+    const next: VaultMetadataRecord = {
+      id: vaultId,
+      name: metadata.name ?? existing?.name ?? undefined,
+      tagline: metadata.tagline ?? existing?.tagline ?? undefined,
+      description: metadata.description ?? existing?.description ?? undefined,
+      coverImage: metadata.coverImage ?? existing?.coverImage ?? undefined,
+      lastModified: Date.now(),
+    };
+
+    await this.db.vaultMetadata.put(next);
+  }
+
+  async getFrontPageEntity(vaultId: string): Promise<FrontPageEntity | null> {
+    const records = (await this.db.graphEntities
+      .where("vaultId")
+      .equals(vaultId)
+      .and((record: GraphEntityRecord) =>
+        hasFrontpageMarker(record.tags, record.labels),
+      )
+      .toArray()) as GraphEntityRecord[];
+
+    if (records.length === 0) return null;
+
+    records.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+    const selected = records[0];
+    const contentRecord = await this.db.entityContent.get([
+      vaultId,
+      selected.id,
+    ]);
+
+    return {
+      id: selected.id,
+      content: contentRecord?.content?.trim() || "",
+      chronicle: contentRecord?.content?.trim() || "",
+      image: selected.image,
+      thumbnail: selected.thumbnail,
+    };
+  }
+
+  async getRecentActivity(
+    vaultId: string,
+    limit: number,
+  ): Promise<RecentActivity[]> {
+    if (this.deps.recentActivityService) {
+      return this.deps.recentActivityService.getRecentActivity(vaultId, limit);
+    }
+
+    const records = (await this.db.graphEntities
+      .where("vaultId")
+      .equals(vaultId)
+      .toArray()) as GraphEntityRecord[];
+
+    const recent = records
+      .sort((a, b) => {
+        const aPinned = hasFrontpageMarker(a.tags, a.labels);
+        const bPinned = hasFrontpageMarker(b.tags, b.labels);
+        if (aPinned !== bPinned) return aPinned ? -1 : 1;
+        return (b.lastModified || 0) - (a.lastModified || 0);
+      })
+      .slice(0, limit);
+
+    const contentRecords = await Promise.all(
+      recent.map((record) =>
+        this.db.entityContent.get([vaultId, record.id]).catch(() => null),
+      ),
+    );
+
+    return recent.map((record, index) => {
+      const content = contentRecords[index]?.content ?? "";
+      const path = getEntityPath(record);
+      return {
+        id: record.id,
+        title: record.title,
+        path,
+        excerpt: getExcerpt(content || ""),
+        tags: record.tags || [],
+        labels: record.labels || [],
+        lastModified: record.lastModified,
+        image: record.image,
+        thumbnail: record.thumbnail,
+      };
+    });
+  }
+
+  async generateCoverImage(
+    vaultId: string,
+    promptBase: string,
+  ): Promise<string> {
+    const imageGenerator = this.deps.imageGenerator;
+    const assetManager = this.deps.assetManager;
+    if (!imageGenerator || !assetManager) {
+      throw new Error(
+        "CampaignService.generateCoverImage requires imageGenerator and assetManager dependencies",
+      );
+    }
+
+    const apiKey = this.deps.getApiKey?.() ?? "";
+    const modelName =
+      this.deps.getImageModel?.() ?? "gemini-2.0-flash-exp-image-generation";
+    const blob = await imageGenerator.generateImage(
+      apiKey,
+      promptBase,
+      modelName,
+    );
+    const assetName = `campaign-${vaultId}-${Date.now()}`;
+    const saved = await assetManager.saveImageToVault(
+      blob,
+      assetName,
+      assetName,
+    );
+
+    await this.updateMetadata(vaultId, { coverImage: saved.image });
+    return saved.image;
+  }
+
+  async generateCampaignDescription(
+    vaultId: string,
+    promptBase: string,
+  ): Promise<string> {
+    const generator = this.deps.getSummaryGenerator?.();
+    if (!generator) {
+      throw new Error(
+        "CampaignService.generateCampaignDescription requires getSummaryGenerator dependency",
+      );
+    }
+
+    const recent = await this.getRecentActivity(vaultId, 10);
+    const context = recent
+      .map(
+        (item) =>
+          `- ${item.title} (${item.tags.join(", ") || "untagged"}): ${item.excerpt}`,
+      )
+      .join("\n");
+
+    let result = "";
+    await generator.generateResponse(
+      this.deps.getApiKey?.() ?? "",
+      promptBase,
+      [],
+      context,
+      this.deps.getSummaryModel?.() ?? "gemini-2.0-flash",
+      (partial) => {
+        result = partial;
+      },
+      false,
+    );
+
+    const description = result.trim();
+    await this.updateMetadata(vaultId, { description });
+    return description;
+  }
+}
+
+export const campaignService = new CampaignServiceImplementation();

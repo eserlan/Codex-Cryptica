@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-26
+Auto-generated from all feature plans. Last updated: 2026-04-02
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte` (077-vault-front-page)
+- OPFS (Vault Files, Local Images), IndexedDB (Metadata, Activity History) (077-vault-front-page)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai` (075-free-oracle-use)
 - IndexedDB (Settings) (075-free-oracle-use)
@@ -139,14 +142,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 077-vault-front-page: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte`
+
 - 075-free-oracle-use: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`
 
 - 074-staging-indicator: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4
-
-- 073-prominent-import: Added TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4
-
-- 069-pop-out-help-window: Added TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte
-
-- chore: Updated Turborepo to v2.9.1
 
 <!-- MANUAL ADDITIONS START -->

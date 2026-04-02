@@ -51,6 +51,7 @@ export const JargonMapSchema = z
 export const StylingTemplateSchema = z.object({
   id: z.string(),
   name: z.string(),
+  description: z.string().optional().default(""),
   tokens: ThemeTokensSchema,
   graph: GraphStyleConfigSchema,
   jargon: JargonMapSchema.optional(),
@@ -81,6 +82,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   scifi: {
     id: "scifi",
     name: "Sci-Fi Terminal",
+    description:
+      "Science fiction, terminal-style interfaces, advanced technology, AI systems, and frontier operations in a futuristic setting.",
     tokens: {
       primary: "#4ade80",
       secondary: "#86efac",
@@ -121,6 +124,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   fantasy: {
     id: "fantasy",
     name: "Ancient Parchment",
+    description:
+      "Classic fantasy, magic, kingdoms, quests, ancient relics, and the broad language of swords, sorcery, and legend.",
     tokens: {
       primary: "#78350f", // Burnt Umber
       secondary: "#451a03", // Deep Brown
@@ -162,6 +167,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   modern: {
     id: "modern",
     name: "Clean Modern",
+    description:
+      "Contemporary, grounded stories set in the present day, with a clean modern tone suited to realism, institutions, and everyday life.",
     tokens: {
       primary: "#2563eb",
       secondary: "#1d4ed8",
@@ -187,6 +194,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   cyberpunk: {
     id: "cyberpunk",
     name: "Neon Night",
+    description:
+      "Cyberpunk, neon-noir, corporate control, street-level rebellion, hackers, implants, and high-tech urban danger.",
     tokens: {
       primary: "#f472b6",
       secondary: "#f9a8d4",
@@ -227,6 +236,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   apocalyptic: {
     id: "apocalyptic",
     name: "Wasteland",
+    description:
+      "Post-apocalyptic survival, scavenging, ruined worlds, harsh frontiers, collapse, and the struggle to rebuild after catastrophe.",
     tokens: {
       primary: "#f97316",
       secondary: "#fdba74",
@@ -268,6 +279,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   horror: {
     id: "horror",
     name: "Blood & Noir",
+    description:
+      "Gothic horror, vampires, occult secrecy, predation, noir investigation, and the moral decay of the damned.",
     tokens: {
       primary: "#dc2626", // Blood Red (Vibrant)
       secondary: "#f87171",
@@ -309,6 +322,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   fallout: {
     id: "fallout",
     name: "Pip-Boy Terminal",
+    description:
+      "Retro-futurist wasteland survival, vault culture, radiation scars, scavenged technology, and the afterlife of a broken civilization.",
     tokens: {
       primary: "#39ff14", // Pip-Boy neon green
       secondary: "#86efac",
@@ -351,6 +366,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   starwars: {
     id: "starwars",
     name: "Galactic Holocron",
+    description:
+      "Space opera, galactic conflict, ancient orders, rebellion, destiny, mysticism, and sweeping interstellar drama.",
     tokens: {
       primary: "#FFE81F", // Star Wars Yellow
       secondary: "#cbd5e1", // Light Grey
@@ -391,6 +408,8 @@ export const THEMES: Record<string, StylingTemplate> = {
   startrek: {
     id: "startrek",
     name: "LCARS Interface",
+    description:
+      "Optimistic science fiction, starship exploration, diplomacy, discovery, and a hopeful future guided by reason and curiosity.",
     tokens: {
       primary: "#FF9900", // Okudagram Orange
       secondary: "#fbcfe8", // Light Purple

@@ -5,7 +5,11 @@ test.describe("Vault E2E", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try { localStorage.setItem("codex_skip_landing", "true"); } catch { /* ignore */ }
+      try {
+        localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     // Add page error listener
@@ -59,6 +63,17 @@ test.describe("Vault E2E", () => {
       "Node A",
     );
     await page.keyboard.press("Escape");
+  });
+
+  test("Dismiss front page by clicking the backdrop", async ({ page }) => {
+    await expect(page.getByTestId("front-page-overlay")).toBeVisible();
+
+    await page.getByTestId("front-page-overlay").click({
+      position: { x: 12, y: 12 },
+    });
+
+    await expect(page.getByTestId("front-page-overlay")).toHaveCount(0);
+    await expect(page.getByTestId("graph-canvas")).toBeVisible();
   });
 
   test("Connect Mode UI", async ({ page }) => {

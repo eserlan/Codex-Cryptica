@@ -23,6 +23,17 @@
     (typeof window !== "undefined" && (window as any).__E2E__) ||
     import.meta.env.VITE_STAGING === "true";
 
+  const demoThemes = [
+    "vampire",
+    "scifi",
+    "cyberpunk",
+    "wasteland",
+    "modern",
+    "fallout",
+    "starwars",
+    "startrek",
+  ];
+
   const logChunkError = (name: string, error: any) => {
     if (isSpecialEnv) {
       console.error(`Failed to load ${name}`, error);
@@ -50,6 +61,11 @@
         .then((m) => (GraphView = m?.default))
         .catch((err) => logChunkError("GraphView", err));
     }
+    if (!FrontPage) {
+      import("../../lib/components/campaign/FrontPage.svelte")
+        .then((m) => (FrontPage = m?.default))
+        .catch((err) => logChunkError("FrontPage", err));
+    }
     if (!EntityDetailPanel) {
       import("../../lib/components/EntityDetailPanel.svelte")
         .then((m) => (EntityDetailPanel = m?.default))
@@ -59,6 +75,7 @@
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
+  let FrontPage = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
@@ -81,7 +98,7 @@
 
     if (
       (isSkippingLanding || isVaultReady) &&
-      (!GraphView || !EntityDetailPanel)
+      (!GraphView || !FrontPage || !EntityDetailPanel)
     ) {
       loadHeavyComponents();
     }
@@ -242,7 +259,26 @@
     />
   {/if}
 
-  <!-- Landing Page / Marketing Layer -->
+  <!-- Vault Front Page Overlay -->
+  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage}
+    <div
+      data-testid="front-page-overlay"
+      class="absolute inset-0 z-40 bg-theme-bg/96 backdrop-blur-sm overflow-y-auto p-4 md:p-6"
+      style:background-image="var(--bg-texture-overlay)"
+      onclick={(event) => {
+        if (event.currentTarget === event.target) {
+          uiStore.dismissedCampaignPage = true;
+        }
+      }}
+      transition:fade
+    >
+      <div class="max-w-7xl mx-auto w-full">
+        <FrontPage />
+      </div>
+    </div>
+  {/if}
+
+  <!-- Marketing Layer -->
   {#if !isGuestMode && uiStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
       class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
@@ -277,7 +313,9 @@
             class="flex flex-col md:flex-row items-center justify-center gap-6"
           >
             <button
-              onclick={() => (uiStore.dismissedLandingPage = true)}
+              onclick={() => {
+                uiStore.dismissedLandingPage = true;
+              }}
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
               Enter the Codex
@@ -394,7 +432,7 @@
             Try it as:
           </h3>
           <div class="flex flex-wrap justify-center gap-4">
-            {#each ["vampire", "scifi", "cyberpunk", "wasteland", "modern", "fallout", "starwars", "startrek"] as theme}
+            {#each demoThemes as theme (theme)}
               <button
                 onclick={() => demoService.startDemo(theme)}
                 class="px-4 py-2 text-[10px] font-bold border border-theme-border hover:border-theme-primary text-theme-muted hover:text-theme-primary rounded uppercase font-header tracking-widest transition-all"

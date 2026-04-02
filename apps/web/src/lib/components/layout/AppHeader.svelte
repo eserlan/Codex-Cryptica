@@ -62,17 +62,29 @@
         : ''}"
       data-testid={uiStore.isStaging ? "staging-indicator" : "header-title"}
     >
-      <span
-        class="icon-[lucide--book-open] w-5 h-5 {uiStore.isStaging
-          ? 'text-white'
-          : 'text-theme-primary'}"
-      ></span>
-      <span class="hidden sm:inline">Codex Cryptica</span>
-      <span
-        class="sm:hidden {uiStore.isStaging
-          ? 'text-white'
-          : 'text-theme-primary'}">CC</span
+      <a
+        href="{base}/"
+        class="flex items-center gap-2 md:gap-3 text-inherit hover:text-theme-primary transition-colors"
+        onclick={() => {
+          uiStore.dismissedCampaignPage = false;
+        }}
+        aria-label="Go to front page"
+        title="Go to front page"
       >
+        <span
+          class="icon-[lucide--book-open] w-5 h-5 {uiStore.isStaging
+            ? 'text-white'
+            : 'text-theme-primary'}"
+        ></span>
+        <span class="hidden sm:inline">Codex Cryptica</span>
+        <span
+          class="sm:hidden {uiStore.isStaging
+            ? 'text-white'
+            : 'text-theme-primary'}"
+        >
+          CC
+        </span>
+      </a>
     </h1>
 
     <nav
