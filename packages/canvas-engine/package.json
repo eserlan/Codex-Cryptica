@@ -17,8 +17,8 @@
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "@xyflow/svelte": "^1.5.1",
-    "svelte": "^5.23.0"
+    "@xyflow/svelte": "^1.5.2",
+    "svelte": "^5.55.1"
   },
   "devDependencies": {
     "@sveltejs/kit": "^2.55.0",
@@ -27,6 +27,6 @@
     "eslint": "^10.1.0",
     "schema": "*",
     "typescript": "^6.0.2",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.2"
   }
 }
