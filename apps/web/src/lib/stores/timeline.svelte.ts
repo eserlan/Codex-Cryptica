@@ -76,8 +76,8 @@ class TimelineStore {
   filterYearEnd = $state<number | null>(null);
 
   filteredEntries = $derived.by(() => {
-    // ⚡ Bolt Optimization: Replace full array .filter() with an imperative loop
-    // to prevent unnecessary intermediate array allocations during frequent reactive updates.
+    // ⚡ Bolt Optimization: Use an imperative loop instead of .filter()
+    // to avoid per-element callback overhead and allow a tighter loop during frequent reactive updates.
     const entries = this.entries;
     const len = entries.length;
     const filtered: TimelineEntry[] = [];
