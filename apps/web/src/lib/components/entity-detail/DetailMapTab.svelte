@@ -171,13 +171,13 @@
       </p>
 
       <label
-        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-[10px] font-bold rounded uppercase font-header tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95"
+        class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-text text-[10px] font-bold rounded uppercase font-header tracking-widest cursor-pointer hover:border-theme-primary transition-all active:scale-95 focus-within:ring-2 focus-within:ring-theme-primary focus-within:outline-none focus-within:ring-offset-2 focus-within:ring-offset-theme-bg"
       >
         Upload Map
         <input
           type="file"
           accept="image/*"
-          class="hidden"
+          class="sr-only"
           onchange={handleUpload}
           bind:files
         />
