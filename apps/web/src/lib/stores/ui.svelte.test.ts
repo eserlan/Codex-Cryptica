@@ -38,6 +38,29 @@ describe("UIStore", () => {
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedCampaignPage = false;
+    uiStore.closeSidebar();
+    uiStore.showCanvasPalette = true;
+  });
+
+  it("should make Entity Explorer and Canvas Palette mutually exclusive", () => {
+    // 1. Initial state: Palette is open, Sidebar is closed
+    expect(uiStore.showCanvasPalette).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // 2. Open Explorer -> Palette should close
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+    expect(uiStore.showCanvasPalette).toBe(false);
+
+    // 3. Open Palette -> Explorer should close
+    uiStore.showCanvasPalette = true;
+    expect(uiStore.showCanvasPalette).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // 4. Opening Oracle should NOT close Palette (they are NOT mutually exclusive)
+    uiStore.toggleSidebarTool("oracle");
+    expect(uiStore.activeSidebarTool).toBe("oracle");
+    expect(uiStore.showCanvasPalette).toBe(true);
   });
 
   it("should open settings to a specific tab", () => {

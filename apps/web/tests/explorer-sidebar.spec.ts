@@ -71,20 +71,18 @@ test.describe("Entity Explorer Sidebar", () => {
     // If no entities, we might need to create one first
     const entityRow = page.locator("button:has-text('Entry')").first();
 
-    // Check if we have entities, if not skip or create
-    if ((await entityRow.count()) > 0) {
-      await entityRow.click();
+    await expect(entityRow).toBeVisible({ timeout: 10000 });
+    await entityRow.click();
 
-      // 3. Verify Embedded View is visible
-      await expect(page.getByTestId("embedded-entity-view")).toBeVisible();
+    // 3. Verify Embedded View is visible
+    await expect(page.getByTestId("embedded-entity-view")).toBeVisible();
 
-      // 4. Verify Graph is NOT visible
-      await expect(page.getByTestId("graph-canvas")).not.toBeVisible();
+    // 4. Verify Graph is NOT visible
+    await expect(page.getByTestId("graph-canvas")).not.toBeVisible();
 
-      // 5. Close focus mode
-      await page.getByLabel("Close").click();
-      await expect(page.getByTestId("embedded-entity-view")).not.toBeVisible();
-      await expect(page.getByTestId("graph-canvas")).toBeVisible();
-    }
+    // 5. Close focus mode
+    await page.getByLabel("Close").click();
+    await expect(page.getByTestId("embedded-entity-view")).not.toBeVisible();
+    await expect(page.getByTestId("graph-canvas")).toBeVisible();
   });
 });

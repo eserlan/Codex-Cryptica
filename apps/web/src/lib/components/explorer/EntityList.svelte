@@ -125,35 +125,38 @@
 
   <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
     {#each filteredEntities as entity}
+      {@const cat = categories.getCategory(entity.type)}
       <button
         type="button"
         draggable={!!onDragStart}
         ondragstart={(e) => onDragStart?.(e, entity.id)}
         onclick={() => onSelect?.(entity)}
-        class="w-full text-left p-3 bg-theme-bg border border-theme-border rounded-lg hover:border-theme-primary transition-all group focus:ring-2 focus:ring-theme-primary focus:outline-none"
+        class="w-full text-left p-2.5 bg-theme-bg border border-theme-border rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5 transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none"
       >
-        <div class="flex items-center justify-between mb-1">
+        <div class="flex items-center gap-2">
           <span
-            class="text-[9px] font-mono text-theme-muted uppercase tracking-tighter"
-          >
-            {entity.type}
-          </span>
+            class="{getIconClass(
+              cat?.icon,
+            )} w-3.5 h-3.5 shrink-0 text-theme-primary/70 group-hover:text-theme-primary transition-colors"
+          ></span>
+          <div class="flex-1 min-w-0">
+            <div
+              class="text-xs font-bold text-theme-text group-hover:text-theme-primary transition-colors truncate uppercase font-header tracking-widest"
+            >
+              {entity.title}
+            </div>
+          </div>
           {#if entity.labels && entity.labels.length > 0}
-            <div class="flex gap-1 overflow-hidden">
-              {#each entity.labels.slice(0, 2) as label}
+            <div class="flex gap-1 shrink-0 ml-auto flex-wrap justify-end">
+              {#each entity.labels as label}
                 <span
-                  class="text-[8px] px-1 bg-theme-primary/10 text-theme-primary rounded uppercase tracking-widest truncate max-w-[40px]"
+                  class="text-[7px] px-1 bg-theme-primary/10 text-theme-primary rounded uppercase tracking-[0.1em] truncate max-w-[40px] font-mono"
                 >
                   {label}
                 </span>
               {/each}
             </div>
           {/if}
-        </div>
-        <div
-          class="text-xs font-bold text-theme-text group-hover:text-theme-primary transition-colors truncate"
-        >
-          {entity.title}
         </div>
       </button>
     {:else}

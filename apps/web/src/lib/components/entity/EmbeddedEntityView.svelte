@@ -29,8 +29,10 @@
 
     untrack(() => {
       if (currentEntity && !editState.isEditing) {
-        editState.start(currentEntity);
-        editState.isEditing = false; // We just want to sync values, not open editor
+        // Only sync metadata fields to avoid triggering incomplete async hydration
+        editState.title = currentEntity.title;
+        editState.type = currentEntity.type;
+        editState.image = currentEntity.image || "";
       }
     });
   });
@@ -44,13 +46,19 @@
 
   // Resolve image URL
   $effect(() => {
+    let isStale = false;
     if (entity?.image) {
       void vault.resolveImageUrl(entity.image).then((url) => {
-        resolvedImageUrl = url;
+        if (!isStale) {
+          resolvedImageUrl = url;
+        }
       });
     } else {
       resolvedImageUrl = "";
     }
+    return () => {
+      isStale = true;
+    };
   });
 
   function handleNavigate(id: string) {

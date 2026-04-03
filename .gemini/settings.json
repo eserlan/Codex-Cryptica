@@ -1,4 +1,7 @@
 {
+  "hooksConfig": {
+    "enabled": false
+  },
   "hooks": {
     "AfterAgent": [
       {

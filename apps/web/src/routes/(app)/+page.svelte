@@ -91,13 +91,30 @@
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
-    if (
-      event.key === "Escape" &&
-      !uiStore.isLandingPageVisible &&
-      !uiStore.dismissedCampaignPage &&
-      !selectedEntity
-    ) {
-      dismissFrontPageOverlay();
+    if (event.key === "Escape") {
+      // 0. If settings or dice modal is open, let them handle Escape
+      if (uiStore.showSettings || uiStore.showDiceModal) return;
+
+      // 1. If an entity is focused (EmbeddedEntityView), close it
+      if (uiStore.mainViewMode === "focus") {
+        uiStore.focusEntity(null);
+        return;
+      }
+
+      // 2. If an entity is selected in the graph (EntityDetailPanel), deselect it
+      if (vault.selectedEntityId) {
+        vault.selectedEntityId = null;
+        return;
+      }
+
+      // 3. If the front page is visible, dismiss it
+      if (
+        !uiStore.isLandingPageVisible &&
+        !uiStore.dismissedCampaignPage &&
+        !selectedEntity
+      ) {
+        dismissFrontPageOverlay();
+      }
     }
   };
 

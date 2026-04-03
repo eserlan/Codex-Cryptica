@@ -19,6 +19,8 @@ export function createEditState(
   vaultInstance: VaultLike = defaultVault,
 ) {
   let isEditing = $state(false);
+  let activeEditEntityId = $state<string | null>(null);
+  let editSession = 0;
   let editTitle = $state(_initialEntity?.title ?? "");
   let editContent = $state(_initialEntity?.content || "");
   let editLore = $state(_initialEntity?.lore || "");
@@ -29,6 +31,8 @@ export function createEditState(
   let editEndDate = $state<Entity["end_date"]>(_initialEntity?.end_date);
 
   function start(entity: Entity) {
+    const session = ++editSession;
+    activeEditEntityId = entity.id;
     editTitle = entity.title;
     editContent = entity.content || "";
     editLore = entity.lore || "";
@@ -43,17 +47,28 @@ export function createEditState(
     // If the entity was populated from the graph-entity cache the content
     // field will be ""; loadEntityContent fills it in reactively.
     const entityId = entity.id;
+    const initialContent = entity.content || "";
+    const initialLore = entity.lore || "";
     vaultInstance
       .loadEntityContent(entityId)
       .then(() => {
         // Guard against the user closing the panel, switching entity, or
         // starting a different edit cycle while the Dexie read was in flight.
-        // We use isEditing check and ensure the ID still matches the one we started with.
-        if (!isEditing || vaultInstance.selectedEntityId !== entityId) return;
+        if (
+          !isEditing ||
+          activeEditEntityId !== entityId ||
+          editSession !== session
+        )
+          return;
 
         const fresh = vaultInstance.entities[entityId];
-        if (fresh && fresh.content) {
-          editContent = fresh.content;
+        if (!fresh) return;
+
+        // Preserve any text the user has already typed while hydration was in flight.
+        if (editContent === initialContent) {
+          editContent = fresh.content || "";
+        }
+        if (editLore === initialLore) {
           editLore = fresh.lore || "";
         }
       })
@@ -63,6 +78,8 @@ export function createEditState(
   }
 
   function cancel() {
+    editSession++;
+    activeEditEntityId = null;
     isEditing = false;
   }
 
