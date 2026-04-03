@@ -32,4 +32,4 @@
 ## Notes
 
 - The branch number has been corrected to `077` following the project's sequence.
-- All image storage options (Local, URL, Oracle) have been incorporated into the functional requirements.
+- The shipped front page uses local drag-and-drop cover replacement plus Oracle generation; direct URL-based cover entry was intentionally dropped.

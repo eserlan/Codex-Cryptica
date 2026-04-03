@@ -365,9 +365,10 @@
               >
                 <div class="flex items-center justify-between pb-4">
                   <div>
-                    <span
-                      class="block text-sm font-bold text-theme-text uppercase font-header"
-                      >Skip Welcome Screen</span
+                    <label
+                      class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
+                      for="skip-welcome-screen-toggle"
+                      >Skip Welcome Screen</label
                     >
                     <p class="text-[11px] text-theme-muted">
                       Hide the marketing landing page on startup even when no
@@ -375,6 +376,7 @@
                     </p>
                   </div>
                   <input
+                    id="skip-welcome-screen-toggle"
                     type="checkbox"
                     checked={uiStore.skipWelcomeScreen}
                     onchange={(e) =>

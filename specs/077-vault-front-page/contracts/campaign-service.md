@@ -38,6 +38,8 @@ export interface FrontPageEntity {
 export interface CampaignService {
   /**
    * Fetches the primary metadata for the campaign.
+   * Returns an empty `name` when no saved vault title exists so the UI can
+   * fall back to the readable vault name.
    */
   getMetadata(vaultId: string): Promise<CampaignMetadata>;
 
@@ -50,7 +52,8 @@ export interface CampaignService {
   ): Promise<void>;
 
   /**
-   * Searches for the entity designated as the front page via the "frontpage" marker.
+   * Searches for the entity designated as the front page via the "frontpage" marker
+   * in either tags or labels.
    * Returns null if no such entity exists.
    */
   getFrontPageEntity(vaultId: string): Promise<FrontPageEntity | null>;
@@ -61,7 +64,8 @@ export interface CampaignService {
   getRecentActivity(vaultId: string, limit: number): Promise<RecentActivity[]>;
 
   /**
-   * Generates a campaign cover image via the Oracle.
+   * Generates a campaign cover image via the Oracle using the current summary
+   * and theme context.
    */
   generateCoverImage(vaultId: string, promptBase: string): Promise<string>;
 }

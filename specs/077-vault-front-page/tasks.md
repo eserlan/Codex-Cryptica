@@ -33,9 +33,9 @@
 
 ## Phase 3: User Story 1 - Campaign Overview (Priority: P1) 🎯 MVP
 
-**Goal**: Display basic vault title and description on a new landing page.
+**Goal**: Display the vault title, tagline, and summary on a new landing page.
 
-**Independent Test**: Opening a vault should show the "Front Page" component with the vault's name and summary.
+**Independent Test**: Opening a vault should show the "Front Page" component with the vault's title, tagline, and summary.
 
 ### Tests for User Story 1 (TDD with Mocks)
 
@@ -45,15 +45,15 @@
 ### Implementation for User Story 1
 
 - [x] T009 [US1] Implement `getMetadata` using `this.db.vaultMetadata` in `packages/vault-engine/src/services/CampaignService.ts`
-- [x] T010 [US1] Create `FrontPage.svelte` in `apps/web/src/lib/components/campaign/FrontPage.svelte` with Markdown rendering for metadata (FR-002, FR-007)
-- [x] T011 [US1] Implement description editing UI and save logic in `FrontPage.svelte` (FR-006)
-- [x] T012 [US1] Update `apps/web/src/routes/(app)/vault/[id]/+page.svelte` to render `FrontPage` when no entity is active
+- [x] T010 [US1] Create `FrontPage.svelte` in `apps/web/src/lib/components/campaign/FrontPage.svelte` with Markdown rendering for the summary and frontpage entity fallback
+- [x] T011 [US1] Implement title, tagline, and summary editing UI and save logic in `FrontPage.svelte`
+- [x] T012 [US1] Update `apps/web/src/routes/(app)/+page.svelte` and `apps/web/src/routes/(app)/vault/[id]/+page.svelte` to render the front page overlay and entity detail shell
 
 ---
 
 ## Phase 4: User Story 2 - Customizable Front Page via Tag (Priority: P1)
 
-**Goal**: Use an entity tagged with "frontpage" as the main landing page content.
+**Goal**: Use an entity marked `frontpage` as the main landing page content.
 
 **Independent Test**: Tag an entity with "frontpage", edit its content, and verify it appears on the front page instead of the default summary.
 
@@ -63,14 +63,14 @@
 
 ### Implementation for User Story 2
 
-- [x] T014 [US2] Implement `getFrontPageEntity` using `this.db.graphEntities` query in `packages/vault-engine/src/services/CampaignService.ts`
-- [x] T015 [US2] Update `FrontPage.svelte` to fetch and render the tagged entity content using `ArticleRenderer`
+- [x] T014 [US2] Implement `getFrontPageEntity` using `this.db.graphEntities` queries in `packages/vault-engine/src/services/CampaignService.ts`
+- [x] T015 [US2] Update `FrontPage.svelte` to fetch and render the marked entity content using `ArticleRenderer`
 
 ---
 
 ## Phase 5: User Story 3 - Cohesive Entity Visualization (Priority: P2)
 
-**Goal**: Display recently modified entities as styled cards in a responsive grid.
+**Goal**: Display recently modified entities as styled cards in a responsive grid, with `frontpage` items pinned first.
 
 **Independent Test**: Edit multiple entities and verify they appear as cards on the front page, adjusting layout on window resize.
 
@@ -80,48 +80,48 @@
 
 ### Implementation for User Story 3
 
-- [x] T017 [US3] Implement `getRecentActivity` using `this.db.graphEntities.orderBy('lastModified')` query in `packages/vault-engine/src/services/ActivityService.ts`
+- [x] T017 [US3] Implement `getRecentActivity` using Dexie queries in `packages/vault-engine/src/services/ActivityService.ts`
 - [x] T018 [P] [US3] Create `EntityCard.svelte` component in `apps/web/src/lib/components/campaign/EntityCard.svelte`
 - [x] T019 [US3] Integrate `EntityCard` grid into `FrontPage.svelte` with Tailwind 4 responsive classes
 
 ---
 
-## Phase 6: User Story 4 - Navigation to Core Views (Priority: P2)
+## Phase 6: User Story 4 - Front Page Dismissal and Restore (Priority: P2)
 
-**Goal**: Provide quick-access buttons to Graph, Files, and Oracle views.
+**Goal**: Provide clear controls to dismiss the front page and return to the graph, then restore it from the header brand when needed.
 
-**Independent Test**: Click navigation buttons on the front page and verify they switch the application to the correct view.
+**Independent Test**: Click the front-page close control or backdrop, then click the header brand to restore the front page.
 
 ### Implementation for User Story 4
 
-- [x] T020 [US4] Add navigation action buttons to `FrontPage.svelte` (Graph, Vault, Oracle)
+- [x] T020 [US4] Add front-page session controls to `FrontPage.svelte` (close control, title, tagline, cover-image, and lightbox actions)
 
 ---
 
 ## Phase 7: User Story 5 - Visual World Identity (Priority: P2)
 
-**Goal**: Support cover images via local upload, URL, or AI generation.
+**Goal**: Support cover images via local drag-and-drop replacement or AI generation.
 
-**Independent Test**: Set a cover image using all three methods and verify correct display and persistence.
+**Independent Test**: Replace a cover image with drag-and-drop or Oracle generation and verify correct display and persistence.
 
 ### Implementation for User Story 5
 
 - [x] T021 [US5] Implement `generateCoverImage` using Oracle and Dexie persistence in `packages/vault-engine/src/services/CampaignService.ts`
 - [x] T022 [P] [US5] Create `CoverImage.svelte` component in `apps/web/src/lib/components/campaign/CoverImage.svelte`
-- [x] T023 [US5] Add image management modal/controls to `FrontPage.svelte`
+- [x] T023 [US5] Add inline cover image management, lightbox, and generator controls to `FrontPage.svelte`
 
 ---
 
 ## Phase 8: User Story 6 - AI-Powered Campaign Summary (Priority: P2)
 
-**Goal**: Generate or refine the campaign description using the Lore Oracle.
+**Goal**: Generate or refine the campaign summary and tagline using the Oracle.
 
-**Independent Test**: Click "AI Generate" and verify the description is updated with relevant vault content.
+**Independent Test**: Click "Generate Summary" and verify the summary or tagline is updated with relevant vault content and theme context.
 
 ### Implementation for User Story 6
 
 - [x] T024 [US6] Implement AI description generation logic in `CampaignService.ts` (Deriving prompt from existing entities)
-- [x] T025 [US6] Add "Generate Summary" button and loading state to `FrontPage.svelte`
+- [x] T025 [US6] Add summary/tagline generation controls and loading state to `FrontPage.svelte`
 
 ---
 
@@ -171,7 +171,7 @@
 ### Incremental Delivery
 
 1. Add Recent Activity cards (US3).
-2. Add Navigation buttons (US4).
+2. Add front page session controls and dismissal flow (US4).
 3. Add Cover Image system (US5).
-4. Add AI Description Generation (US6).
+4. Add AI summary and tagline generation (US6).
 5. Documentation and polish.
