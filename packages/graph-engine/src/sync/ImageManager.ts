@@ -78,7 +78,7 @@ export class GraphImageManager {
           const chunk = results.slice(i, i + batchSize);
           this.cy.batch(() => {
             for (const { node, url, oldUrl } of chunk) {
-              const newUrl = url || "failed"; // Mark as failed to avoid infinite retries
+              const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
               if (newUrl !== oldUrl) {
                 const nodeId = node.id();
                 const oldPath = this.nodePathMap.get(nodeId);
@@ -92,7 +92,6 @@ export class GraphImageManager {
                 if (currentPath) {
                   this.nodePathMap.set(nodeId, currentPath);
                 }
-                // URL revocation is now managed centrally by VaultStore to prevent ERR_FILE_NOT_FOUND
               }
             }
           });

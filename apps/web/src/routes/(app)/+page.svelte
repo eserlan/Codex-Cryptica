@@ -68,12 +68,18 @@
         .then((m) => (EntityDetailPanel = m?.default))
         .catch((err) => logChunkError("EntityDetailPanel", err));
     }
+    if (!EmbeddedEntityView) {
+      import("../../lib/components/entity/EmbeddedEntityView.svelte")
+        .then((m) => (EmbeddedEntityView = m?.default))
+        .catch((err) => logChunkError("EmbeddedEntityView", err));
+    }
   }
 
   // Dynamic imports for heavy components
   let GraphView = $state<any>(null);
   let FrontPage = $state<any>(null);
   let EntityDetailPanel = $state<any>(null);
+  let EmbeddedEntityView = $state<any>(null);
 
   let selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
@@ -85,13 +91,30 @@
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
-    if (
-      event.key === "Escape" &&
-      !uiStore.isLandingPageVisible &&
-      !uiStore.dismissedCampaignPage &&
-      !selectedEntity
-    ) {
-      dismissFrontPageOverlay();
+    if (event.key === "Escape") {
+      // 0. If settings or dice modal is open, let them handle Escape
+      if (uiStore.showSettings || uiStore.showDiceModal) return;
+
+      // 1. If an entity is focused (EmbeddedEntityView), close it
+      if (uiStore.mainViewMode === "focus") {
+        uiStore.focusEntity(null);
+        return;
+      }
+
+      // 2. If an entity is selected in the graph (EntityDetailPanel), deselect it
+      if (vault.selectedEntityId) {
+        vault.selectedEntityId = null;
+        return;
+      }
+
+      // 3. If the front page is visible, dismiss it
+      if (
+        !uiStore.isLandingPageVisible &&
+        !uiStore.dismissedCampaignPage &&
+        !selectedEntity
+      ) {
+        dismissFrontPageOverlay();
+      }
     }
   };
 
@@ -110,7 +133,7 @@
 
     if (
       (isSkippingLanding || isVaultReady) &&
-      (!GraphView || !FrontPage || !EntityDetailPanel)
+      (!GraphView || !FrontPage || !EntityDetailPanel || !EmbeddedEntityView)
     ) {
       loadHeavyComponents();
     }
@@ -246,7 +269,9 @@
   class="h-[calc(100vh-var(--header-height,65px))] flex bg-theme-bg overflow-hidden relative"
 >
   <div class="flex-1 relative overflow-hidden">
-    {#if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
+    {#if uiStore.mainViewMode === "focus" && uiStore.focusedEntityId && EmbeddedEntityView}
+      <EmbeddedEntityView entityId={uiStore.focusedEntityId} />
+    {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
       <GraphView bind:selectedId={vault.selectedEntityId} />
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div

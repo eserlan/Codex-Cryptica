@@ -2,12 +2,9 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
-  import { categories } from "$lib/stores/categories.svelte";
-  import { getIconClass } from "$lib/utils/icon";
+  import EntityList from "../explorer/EntityList.svelte";
   import type { Entity } from "schema";
   import {
-    Search,
-    Filter,
     Layout,
     ChevronRight,
     LayoutGrid,
@@ -16,8 +13,6 @@
   } from "lucide-svelte";
   import { page } from "$app/state";
 
-  let searchQuery = $state("");
-  let typeFilters = $state<string[]>(["all"]);
   let isRefreshing = $state(false);
 
   const canvasSlug = $derived(page.params.slug);
@@ -36,52 +31,6 @@
     }
   }
 
-  const types = $derived.by(() => {
-    // ⚡ Bolt Optimization: Use imperative loop to prevent intermediate array allocation from map()
-    // Cache vault.allEntities to prevent multiple Object.values() allocations
-    const allEntities = vault.allEntities;
-    const typesSet = new Set<string>(["all"]);
-    for (let i = 0; i < allEntities.length; i++) {
-      typesSet.add(allEntities[i].type);
-    }
-    return Array.from(typesSet);
-  });
-
-  const filteredEntities = $derived.by(() => {
-    // ⚡ Bolt Optimization: Use imperative loop instead of chained filter().sort()
-    // Cache vault.allEntities to prevent multiple Object.values() allocations
-    const allEntities = vault.allEntities;
-    const filtered: Entity[] = [];
-    const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.includes("all");
-
-    // Fast path: Just type filtering and sorting if no search query
-    if (!query) {
-      for (let i = 0; i < allEntities.length; i++) {
-        const e = allEntities[i];
-        if (filterAll || typeFilters.includes(e.type)) {
-          filtered.push(e);
-        }
-      }
-      return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
-    // Full search path
-    for (let i = 0; i < allEntities.length; i++) {
-      const e = allEntities[i];
-      const matchesSearch =
-        e.title.toLowerCase().includes(query) ||
-        e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.includes(e.type);
-
-      if (matchesSearch && matchesType) {
-        filtered.push(e);
-      }
-    }
-
-    return filtered.sort((a, b) => a.title.localeCompare(b.title));
-  });
-
   function onDragStart(event: DragEvent, entityId: string) {
     if (event.dataTransfer) {
       event.dataTransfer.setData("application/codex-entity", entityId);
@@ -89,34 +38,12 @@
     }
   }
 
-  function toggleTypeFilter(type: string, event: MouseEvent) {
-    const isMulti = event.ctrlKey || event.metaKey;
-
-    if (type === "all") {
-      typeFilters = ["all"];
-      return;
-    }
-
-    if (isMulti) {
-      // Remove 'all' if we're adding a specific filter
-      let newFilters = typeFilters.filter((f) => f !== "all");
-
-      if (newFilters.includes(type)) {
-        newFilters = newFilters.filter((f) => f !== type);
-      } else {
-        newFilters.push(type);
-      }
-
-      // If empty, revert to all
-      typeFilters = newFilters.length === 0 ? ["all"] : newFilters;
-    } else {
-      // Normal click: toggle single filter
-      if (typeFilters.length === 1 && typeFilters[0] === type) {
-        typeFilters = ["all"];
-      } else {
-        typeFilters = [type];
-      }
-    }
+  function handleSelect(entity: Entity) {
+    window.dispatchEvent(
+      new CustomEvent("add-to-canvas", {
+        detail: { entityId: entity.id },
+      }),
+    );
   }
 </script>
 
@@ -209,89 +136,8 @@
           </button>
         </div>
       </div>
-
-      <div class="relative mb-3">
-        <Search
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted"
-        />
-        <input
-          type="text"
-          bind:value={searchQuery}
-          placeholder="Search entities..."
-          aria-label="Search entities"
-          class="w-full bg-theme-bg border border-theme-border rounded-md pl-9 pr-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary transition-colors"
-        />
-      </div>
-
-      <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
-        <Filter class="w-3 h-3 text-theme-muted shrink-0 mr-1" />
-        {#each types as type}
-          <button
-            onclick={(e) => toggleTypeFilter(type, e)}
-            aria-label={`Filter by ${type}`}
-            title={type.toUpperCase()}
-            class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.includes(
-              type,
-            )
-              ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
-              : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-          >
-            {#if type === "all"}
-              <LayoutGrid class="w-4 h-4" />
-            {:else}
-              {@const cat = categories.getCategory(type)}
-              <span class="{getIconClass(cat?.icon)} w-4 h-4"></span>
-            {/if}
-          </button>
-        {/each}
-      </div>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-      {#each filteredEntities as entity}
-        <div
-          draggable="true"
-          ondragstart={(e) => onDragStart(e, entity.id)}
-          role="button"
-          tabindex="0"
-          aria-label={`Drag ${entity.title} to canvas`}
-          onkeydown={(e) =>
-            e.key === "Enter" &&
-            window.dispatchEvent(
-              new CustomEvent("add-to-canvas", {
-                detail: { entityId: entity.id },
-              }),
-            )}
-          class="p-3 bg-theme-bg border border-theme-border rounded-lg cursor-grab active:cursor-grabbing hover:border-theme-primary transition-all group focus:ring-2 focus:ring-theme-primary focus:outline-none"
-        >
-          <div class="flex items-center justify-between mb-1">
-            <span
-              class="text-[9px] font-mono text-theme-muted uppercase tracking-tighter"
-            >
-              {entity.type}
-            </span>
-          </div>
-          <div
-            class="text-xs font-bold text-theme-text group-hover:text-theme-primary transition-colors truncate"
-          >
-            {entity.title}
-          </div>
-        </div>
-      {:else}
-        <div class="text-center py-10 px-4">
-          <p class="text-xs text-theme-muted">No entities found</p>
-        </div>
-      {/each}
-    </div>
+    <EntityList onSelect={handleSelect} {onDragStart} />
   {/if}
 </div>
-
-<style>
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-</style>

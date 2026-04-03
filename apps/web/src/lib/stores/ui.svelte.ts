@@ -22,7 +22,11 @@ class UIStore {
 
   // Sidebar State
   leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<"oracle" | "none">("none");
+  activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+
+  // Main View State
+  mainViewMode = $state<"visualization" | "focus">("visualization");
+  focusedEntityId = $state<string | null>(null);
 
   // Responsive State
   isMobile = $state(false);
@@ -98,13 +102,54 @@ class UIStore {
     }
   }
 
-  toggleSidebarTool(tool: "oracle" | "none") {
+  toggleSidebarTool(tool: "oracle" | "explorer" | "none") {
     if (tool === "none" || this.activeSidebarTool === tool) {
       this.leftSidebarOpen = false;
       this.activeSidebarTool = "none";
     } else {
       this.leftSidebarOpen = true;
       this.activeSidebarTool = tool;
+
+      // If we're opening the explorer, close the canvas palette
+      if (tool === "explorer") {
+        this.showCanvasPalette = false;
+      }
+    }
+  }
+
+  focusEntity(entityId: string | null) {
+    if (entityId) {
+      if (this.focusedEntityId === entityId && this.mainViewMode === "focus")
+        return;
+
+      this.focusedEntityId = entityId;
+      this.mainViewMode = "focus";
+      // Close the right-side entity sidebar if it was open
+      if (this.mainViewMode === "focus") {
+        void import("./vault.svelte").then((m) => {
+          if (
+            m?.vault &&
+            this.mainViewMode === "focus" &&
+            this.focusedEntityId === entityId
+          ) {
+            m.vault.selectedEntityId = null;
+          }
+        });
+      }
+    } else {
+      if (this.mainViewMode !== "focus") return;
+
+      const previouslyFocused = this.focusedEntityId;
+      this.focusedEntityId = null;
+      this.mainViewMode = "visualization";
+
+      // If we were looking at an entity, select it in the graph upon return
+      if (previouslyFocused) {
+        void import("./vault.svelte").then((m) => {
+          if (m?.vault && this.mainViewMode === "visualization")
+            m.vault.selectedEntityId = previouslyFocused;
+        });
+      }
     }
   }
 
@@ -195,7 +240,16 @@ class UIStore {
   showSelectionConnector = $state(false);
 
   // Canvas Palette State
-  showCanvasPalette = $state(true);
+  private _showCanvasPalette = $state(true);
+  get showCanvasPalette() {
+    return this._showCanvasPalette;
+  }
+  set showCanvasPalette(value: boolean) {
+    this._showCanvasPalette = value;
+    if (value && this.activeSidebarTool === "explorer") {
+      this.closeSidebar();
+    }
+  }
 
   // Find in Graph State
   findNodeCounter = $state(0);

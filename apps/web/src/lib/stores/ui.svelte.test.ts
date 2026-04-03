@@ -9,6 +9,10 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
+vi.mock("./vault.svelte", () => ({
+  vault: { selectedEntityId: null },
+}));
+
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -34,6 +38,29 @@ describe("UIStore", () => {
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedCampaignPage = false;
+    uiStore.closeSidebar();
+    uiStore.showCanvasPalette = true;
+  });
+
+  it("should make Entity Explorer and Canvas Palette mutually exclusive", () => {
+    // 1. Initial state: Palette is open, Sidebar is closed
+    expect(uiStore.showCanvasPalette).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // 2. Open Explorer -> Palette should close
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+    expect(uiStore.showCanvasPalette).toBe(false);
+
+    // 3. Open Palette -> Explorer should close
+    uiStore.showCanvasPalette = true;
+    expect(uiStore.showCanvasPalette).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("none");
+
+    // 4. Opening Oracle should NOT close Palette (they are NOT mutually exclusive)
+    uiStore.toggleSidebarTool("oracle");
+    expect(uiStore.activeSidebarTool).toBe("oracle");
+    expect(uiStore.showCanvasPalette).toBe(true);
   });
 
   it("should open settings to a specific tab", () => {
@@ -85,6 +112,27 @@ describe("UIStore", () => {
     uiStore.closeSidebar();
     expect(uiStore.leftSidebarOpen).toBe(false);
     expect(uiStore.activeSidebarTool).toBe("none");
+
+    // Toggle explorer
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+  });
+
+  it("should handle main view mode transitions", () => {
+    // Initial state
+    expect(uiStore.mainViewMode).toBe("visualization");
+    expect(uiStore.focusedEntityId).toBe(null);
+
+    // Focus entity
+    uiStore.focusEntity("hero-123");
+    expect(uiStore.mainViewMode).toBe("focus");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+
+    // Clear focus
+    uiStore.focusEntity(null);
+    expect(uiStore.mainViewMode).toBe("visualization");
+    expect(uiStore.focusedEntityId).toBe(null);
   });
 
   it("should open a new window for import", () => {

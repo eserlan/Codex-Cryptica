@@ -34,6 +34,60 @@ describe("ZenMode Hooks", () => {
       state.cancel();
       expect(state.isEditing).toBe(false);
     });
+
+    it("hydrates content for the active edit session even without a selected entity", async () => {
+      const mockVault = {
+        selectedEntityId: null,
+        entities: {
+          "test-id": {
+            ...mockEntity,
+            content: "Hydrated Content",
+            lore: "Hydrated Lore",
+          },
+        },
+        loadEntityContent: vi.fn().mockResolvedValue(undefined),
+      };
+
+      const state = createEditState(null, mockVault);
+      state.start({ ...mockEntity, content: "", lore: "" });
+
+      await Promise.resolve();
+
+      expect(mockVault.loadEntityContent).toHaveBeenCalledWith("test-id");
+      expect(state.content).toBe("Hydrated Content");
+      expect(state.lore).toBe("Hydrated Lore");
+    });
+
+    it("does not overwrite user edits when hydration finishes late", async () => {
+      let resolveLoad!: () => void;
+      const mockVault = {
+        selectedEntityId: null,
+        entities: {
+          "test-id": {
+            ...mockEntity,
+            content: "Hydrated Content",
+            lore: "Hydrated Lore",
+          },
+        },
+        loadEntityContent: vi.fn(
+          () =>
+            new Promise<void>((resolve) => {
+              resolveLoad = resolve;
+            }),
+        ),
+      };
+
+      const state = createEditState(null, mockVault);
+      state.start({ ...mockEntity, content: "", lore: "" });
+      state.content = "User draft";
+      state.lore = "User lore";
+
+      resolveLoad();
+      await Promise.resolve();
+
+      expect(state.content).toBe("User draft");
+      expect(state.lore).toBe("User lore");
+    });
   });
 
   describe("useZenModeActions", () => {

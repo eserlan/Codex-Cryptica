@@ -82,10 +82,18 @@ export const ONBOARDING_TOUR: GuideStep[] = [
   },
   {
     id: "oracle",
-    targetSelector: '[data-testid="sidebar-oracle-button"]',
+    targetSelector: '[data-testid="activity-bar-oracle"]',
     title: "Lore Oracle",
     content:
       "Consult the AI about your world or perform utility tasks like /roll and /create.",
+    position: "right",
+  },
+  {
+    id: "explorer",
+    targetSelector: '[data-testid="activity-bar-explorer"]',
+    title: "Entity Explorer",
+    content:
+      "Quickly find and filter your characters and locations via the persistent sidebar.",
     position: "right",
   },
   {
@@ -275,6 +283,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.",
     icon: "icon-[lucide--dices]",
+  },
+  "entity-explorer": {
+    id: "entity-explorer",
+    title: "Entity Explorer",
+    content:
+      "Quickly browse and filter all your campaign entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.",
+    icon: "icon-[lucide--database]",
+  },
+  "activity-bar": {
+    id: "activity-bar",
+    title: "Navigation Hub",
+    content:
+      "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
+    icon: "icon-[lucide--layout-sidebar]",
   },
 };
 

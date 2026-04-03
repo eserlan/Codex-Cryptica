@@ -27,7 +27,8 @@
   import AppFooter from "$lib/components/layout/AppFooter.svelte";
   import NotificationToast from "$lib/components/layout/NotificationToast.svelte";
   import FatalErrorOverlay from "$lib/components/layout/FatalErrorOverlay.svelte";
-  import OracleSidebarProvider from "$lib/components/layout/OracleSidebarProvider.svelte";
+  import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
+  import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
 
   // Logic & Hooks
@@ -198,8 +199,13 @@
     <AppHeader bind:isMobileMenuOpen bind:headerEl />
   {/if}
 
-  <div class="flex-1 flex flex-row min-h-0 relative overflow-hidden">
-    <OracleSidebarProvider />
+  <div
+    class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
+  >
+    {#if !isPopup}
+      <ActivityBar />
+      <SidebarPanelHost />
+    {/if}
 
     <main class="flex-1 relative flex flex-col min-h-0 overflow-y-auto">
       {@render children()}

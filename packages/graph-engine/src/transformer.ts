@@ -258,7 +258,7 @@ export const getGraphStyle = (
 
     baseStyle.push({
       selector:
-        "node[resolvedImage], node[image][resolvedImage], node[thumbnail][resolvedImage]",
+        "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
       style: {
         "background-fit": "cover",
         "background-clip": "node",
@@ -380,7 +380,7 @@ export const getGraphStyle = (
 
   if (showImages) {
     revealedStyles.push({
-      selector: "node[isRevealed][resolvedImage]",
+      selector: "node[isRevealed][resolvedImage][resolvedImage != 'none']",
       style: {
         "background-image": "data(resolvedImage)",
         "background-clip": "node",

@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
-  import { page } from "$app/state";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
@@ -34,21 +33,6 @@
     >
       <span class="icon-[lucide--menu] w-6 h-6"></span>
     </button>
-
-    <!-- Oracle Toggle (Sidebar) -->
-    {#if !uiStore.leftSidebarOpen}
-      <button
-        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
-        onclick={() => uiStore.toggleSidebarTool("oracle")}
-        aria-label="Open Lore Oracle"
-        title="Open Lore Oracle"
-        data-testid="sidebar-oracle-button"
-      >
-        <span
-          class="icon-[heroicons--sparkles] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
-        ></span>
-      </button>
-    {/if}
 
     <!-- Die Roller Toggle -->
     <button
@@ -92,43 +76,6 @@
         </span>
       </button>
     </h1>
-
-    <nav
-      class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4 relative z-10"
-    >
-      <a
-        href="{base}/"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page
-          .url.pathname === `${base}/`
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-graph"
-      >
-        GRAPH
-      </a>
-      <a
-        href="{base}/map"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
-          `${base}/map`,
-        )
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-map"
-      >
-        MAP
-      </a>
-      <a
-        href="{base}/canvas"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
-          `${base}/canvas`,
-        )
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-canvas"
-      >
-        CANVAS
-      </a>
-    </nav>
   </div>
 
   <!-- Search (Desktop: Input, Mobile: Button) -->
