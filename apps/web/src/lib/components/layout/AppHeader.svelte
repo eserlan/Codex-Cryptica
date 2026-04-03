@@ -35,21 +35,6 @@
       <span class="icon-[lucide--menu] w-6 h-6"></span>
     </button>
 
-    <!-- Oracle Toggle (Sidebar) -->
-    {#if !uiStore.leftSidebarOpen}
-      <button
-        class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"
-        onclick={() => uiStore.toggleSidebarTool("oracle")}
-        aria-label="Open Lore Oracle"
-        title="Open Lore Oracle"
-        data-testid="sidebar-oracle-button"
-      >
-        <span
-          class="icon-[heroicons--sparkles] w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:scale-110"
-        ></span>
-      </button>
-    {/if}
-
     <!-- Die Roller Toggle -->
     <button
       class="w-8 h-8 md:w-9 md:h-9 flex items-center justify-center rounded-lg bg-theme-surface border border-theme-border text-theme-primary shadow-lg hover:bg-theme-primary/10 transition-all duration-300 group relative"

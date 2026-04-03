@@ -1,6 +1,6 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-02
+Auto-generated from all feature plans. Last updated: 2026-04-03
 
 ## Active Technologies
 
@@ -142,10 +142,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 078-entity-traditional-view: Added persistent Entity Explorer sidebar and embedded focus mode with Dexie-backed metadata caching.
+
 - 077-vault-front-page: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte`
 
 - 075-free-oracle-use: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`
-
-- 074-staging-indicator: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4
 
 <!-- MANUAL ADDITIONS START -->

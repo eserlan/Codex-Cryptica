@@ -22,7 +22,11 @@ class UIStore {
 
   // Sidebar State
   leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<"oracle" | "none">("none");
+  activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+
+  // Main View State
+  mainViewMode = $state<"visualization" | "focus">("visualization");
+  focusedEntityId = $state<string | null>(null);
 
   // Responsive State
   isMobile = $state(false);
@@ -98,13 +102,35 @@ class UIStore {
     }
   }
 
-  toggleSidebarTool(tool: "oracle" | "none") {
+  toggleSidebarTool(tool: "oracle" | "explorer" | "none") {
     if (tool === "none" || this.activeSidebarTool === tool) {
       this.leftSidebarOpen = false;
       this.activeSidebarTool = "none";
     } else {
       this.leftSidebarOpen = true;
       this.activeSidebarTool = tool;
+    }
+  }
+
+  focusEntity(entityId: string | null) {
+    if (entityId) {
+      this.focusedEntityId = entityId;
+      this.mainViewMode = "focus";
+      // Close the right-side entity sidebar if it was open
+      import("./vault.svelte").then((m) => {
+        if (m?.vault) m.vault.selectedEntityId = null;
+      });
+    } else {
+      const previouslyFocused = this.focusedEntityId;
+      this.focusedEntityId = null;
+      this.mainViewMode = "visualization";
+
+      // If we were looking at an entity, select it in the graph upon return
+      if (previouslyFocused) {
+        import("./vault.svelte").then((m) => {
+          if (m?.vault) m.vault.selectedEntityId = previouslyFocused;
+        });
+      }
     }
   }
 

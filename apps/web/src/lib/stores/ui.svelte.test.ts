@@ -85,6 +85,27 @@ describe("UIStore", () => {
     uiStore.closeSidebar();
     expect(uiStore.leftSidebarOpen).toBe(false);
     expect(uiStore.activeSidebarTool).toBe("none");
+
+    // Toggle explorer
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+  });
+
+  it("should handle main view mode transitions", () => {
+    // Initial state
+    expect(uiStore.mainViewMode).toBe("visualization");
+    expect(uiStore.focusedEntityId).toBe(null);
+
+    // Focus entity
+    uiStore.focusEntity("hero-123");
+    expect(uiStore.mainViewMode).toBe("focus");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+
+    // Clear focus
+    uiStore.focusEntity(null);
+    expect(uiStore.mainViewMode).toBe("visualization");
+    expect(uiStore.focusedEntityId).toBe(null);
   });
 
   it("should open a new window for import", () => {
