@@ -9,6 +9,10 @@ vi.mock("$app/paths", () => ({
   base: "",
 }));
 
+vi.mock("./vault.svelte", () => ({
+  vault: { selectedEntityId: null },
+}));
+
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
