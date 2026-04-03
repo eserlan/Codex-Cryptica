@@ -1,7 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
-  import { page } from "$app/state";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import VaultControls from "../VaultControls.svelte";
@@ -77,43 +76,6 @@
         </span>
       </button>
     </h1>
-
-    <nav
-      class="hidden md:flex items-center gap-1 ml-4 border-l border-theme-border pl-4 relative z-10"
-    >
-      <a
-        href="{base}/"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page
-          .url.pathname === `${base}/`
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-graph"
-      >
-        GRAPH
-      </a>
-      <a
-        href="{base}/map"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
-          `${base}/map`,
-        )
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-map"
-      >
-        MAP
-      </a>
-      <a
-        href="{base}/canvas"
-        class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-colors font-header {page.url.pathname.startsWith(
-          `${base}/canvas`,
-        )
-          ? 'bg-theme-primary/10 text-theme-primary'
-          : 'text-theme-muted hover:text-theme-text'}"
-        data-testid="nav-canvas"
-      >
-        CANVAS
-      </a>
-    </nav>
   </div>
 
   <!-- Search (Desktop: Input, Mobile: Button) -->
