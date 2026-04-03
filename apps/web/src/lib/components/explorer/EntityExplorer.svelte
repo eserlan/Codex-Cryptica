@@ -10,7 +10,10 @@
   }
 </script>
 
-<div class="flex flex-col h-full bg-theme-surface font-body">
+<div
+  class="flex flex-col h-full bg-theme-surface font-body"
+  data-testid="entity-explorer-panel"
+>
   <!-- Header -->
   <div
     class="p-4 border-b border-theme-border flex items-center justify-between shrink-0"

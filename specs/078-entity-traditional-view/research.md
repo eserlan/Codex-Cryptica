@@ -14,7 +14,7 @@
 
 ## Decision: mainViewMode for Content Swapping
 
-**Decision**: Introduce a `mainViewMode` property in `uiStore` with values: `'visualization'` (default) and `'entity-focus'`.
+**Decision**: Introduce a `mainViewMode` property in `uiStore` with values: `'visualization'` (default) and `'focus'`.
 
 **Rationale**: Allows the application to reactively swap the central area between Graph/Map/Canvas and the new `EmbeddedEntityView`. This maintains the same URL structure while providing a "Zen-like" experience within the main app shell.
 

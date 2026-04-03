@@ -127,7 +127,13 @@ class UIStore {
       // Close the right-side entity sidebar if it was open
       if (this.mainViewMode === "focus") {
         void import("./vault.svelte").then((m) => {
-          if (m?.vault) m.vault.selectedEntityId = null;
+          if (
+            m?.vault &&
+            this.mainViewMode === "focus" &&
+            this.focusedEntityId === entityId
+          ) {
+            m.vault.selectedEntityId = null;
+          }
         });
       }
     } else {

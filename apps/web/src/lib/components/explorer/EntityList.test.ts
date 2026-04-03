@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 
 describe("EntityList Filtering Logic Performance", () => {
-  it("should calculate filtered list of 1,000 entities in under 10ms", async () => {
+  it("should calculate filtered list of 1,000 entities in under 50ms", async () => {
     // 1. Generate 1,000 mock entities
     const mockEntities = Array.from({ length: 1000 }, (_, i) => ({
       id: `entity-${i}`,
@@ -39,10 +39,6 @@ describe("EntityList Filtering Logic Performance", () => {
 
     const end = performance.now();
     const duration = end - start;
-
-    console.log(
-      `Pure filtering of 1,000 entities took: ${duration.toFixed(2)}ms`,
-    );
 
     // In node/vitest, 10ms is a safe bet for pure logic
     expect(duration).toBeLessThan(50);

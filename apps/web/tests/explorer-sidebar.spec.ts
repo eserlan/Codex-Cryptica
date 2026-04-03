@@ -11,7 +11,37 @@ test.describe("Entity Explorer Sidebar", () => {
         /* ignore */
       }
     });
-    await page.setViewportSize({ width: 1280, height: 720 });
+
+    // Seed a known entity and dismiss front page for testing focus mode
+    await page.addInitScript(() => {
+      const checkVaultAndUI = () => {
+        const v = (window as any).vault;
+        const ui = (window as any).uiStore;
+        if (v && v.repository && ui) {
+          // Manually populate repository entities to trigger reactivity
+          v.repository.entities = {
+            "test-entry": {
+              id: "test-entry",
+              title: "Test Entry",
+              type: "npc",
+              content: "Test content",
+              lore: "Test lore",
+              labels: ["test"],
+              connections: [],
+              updatedAt: Date.now(),
+              _path: ["test-entry.md"],
+            },
+          };
+          v.isInitialized = true;
+          v.status = "idle";
+          ui.dismissedCampaignPage = true;
+        } else {
+          setTimeout(checkVaultAndUI, 20);
+        }
+      };
+      checkVaultAndUI();
+    });
+
     await page.goto("/");
     // Wait for vault to be idle
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
@@ -67,9 +97,41 @@ test.describe("Entity Explorer Sidebar", () => {
     // 1. Open Explorer
     await page.getByTestId("activity-bar-explorer").click();
 
-    // 2. Click an entity (assuming some exist in the test environment)
-    // If no entities, we might need to create one first
-    const entityRow = page.locator("button:has-text('Entry')").first();
+    // Ensure explorer is loaded
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+
+    // Re-seed to ensure it's there after vault init
+    await page.evaluate(() => {
+      const v = (window as any).vault;
+      if (v && v.repository) {
+        v.repository.entities = {
+          "test-entry": {
+            id: "test-entry",
+            title: "Test Entry",
+            type: "npc",
+            content: "Test content",
+            lore: "Test lore",
+            labels: ["test"],
+            connections: [],
+            updatedAt: Date.now(),
+            _path: ["test-entry.md"],
+          },
+        };
+        v.isInitialized = true;
+        v.status = "idle";
+      }
+    });
+
+    // 2. Click the seeded entity
+    const entityRow = page.getByTestId("entity-list-item").first();
+
+    const isVisible = await entityRow.isVisible().catch(() => false);
+    if (!isVisible) {
+      const noEntities = page.getByTestId("no-entities-found");
+      if (await noEntities.isVisible()) {
+        console.log("Empty state visible instead of seeded entity");
+      }
+    }
 
     await expect(entityRow).toBeVisible({ timeout: 10000 });
     await entityRow.click();
@@ -81,7 +143,7 @@ test.describe("Entity Explorer Sidebar", () => {
     await expect(page.getByTestId("graph-canvas")).not.toBeVisible();
 
     // 5. Close focus mode
-    await page.getByLabel("Close").click();
+    await page.getByTestId("embedded-entity-view").getByLabel("Close").click();
     await expect(page.getByTestId("embedded-entity-view")).not.toBeVisible();
     await expect(page.getByTestId("graph-canvas")).toBeVisible();
   });
