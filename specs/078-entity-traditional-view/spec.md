@@ -2,7 +2,7 @@
 
 **Feature Branch**: `078-entity-traditional-view`  
 **Created**: 2026-04-02  
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: User description: "a more traditional view/listing of entities, organized around categories and labels. List view as left sidebar (to the right of the Oracle). Clicking opens in a Zen-mode-like view in the main area while sidebars remain visible. The list view should be similar to the entity palette in the canvas."
 
 ## User Scenarios & Testing _(mandatory)_
