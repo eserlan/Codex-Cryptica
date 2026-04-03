@@ -57,3 +57,6 @@ apps/web/audit-report/
 apps/web/audit-report-prod/
 test_output.txt
 *.log
+
+.gemini/
+gha-creds-*.json
