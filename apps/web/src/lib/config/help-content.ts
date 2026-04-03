@@ -148,7 +148,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "front-page",
     title: "Campaign Front Page",
     content:
-      "Use the title field to rename the campaign, and use the summary field to edit the campaign blurb directly. If it is empty, the Generate Summary button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Summary. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
+      "Use the summary field to edit the campaign blurb directly. If it is empty, the Generate Summary button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Summary. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
     icon: "icon-[lucide--house]",
   },
   "local-folder-sync": {

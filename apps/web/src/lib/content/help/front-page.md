@@ -11,7 +11,6 @@ The front page is the first thing you see when a vault opens. It gives you a cam
 
 ### What You Can Do
 
-- Rename the campaign/world/setting from the title field.
 - Edit the campaign summary directly from the page.
 - Upload a cover image, paste an image URL, or ask the Oracle to generate one.
 - Tag any markdown entity with `frontpage` to pin it to the top of recent entities and use its chronicle/body text in the card preview.

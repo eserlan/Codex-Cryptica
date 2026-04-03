@@ -106,38 +106,6 @@ export class CampaignStore {
     }
   }
 
-  async saveTitle(name: string) {
-    if (!this.activeVaultId) return;
-    this.isSaving = true;
-    this.error = null;
-    try {
-      await this.campaignServiceImpl.updateMetadata(this.activeVaultId, {
-        name: name.trim(),
-      });
-      await this.refresh();
-    } catch (err: any) {
-      this.error = err?.message || "Failed to save campaign title.";
-    } finally {
-      this.isSaving = false;
-    }
-  }
-
-  async saveTagline(tagline: string) {
-    if (!this.activeVaultId) return;
-    this.isSaving = true;
-    this.error = null;
-    try {
-      await this.campaignServiceImpl.updateMetadata(this.activeVaultId, {
-        tagline: tagline.trim(),
-      });
-      await this.refresh();
-    } catch (err: any) {
-      this.error = err?.message || "Failed to save campaign tagline.";
-    } finally {
-      this.isSaving = false;
-    }
-  }
-
   async setCoverImage(coverImage: string) {
     if (!this.activeVaultId) return;
     this.isSaving = true;

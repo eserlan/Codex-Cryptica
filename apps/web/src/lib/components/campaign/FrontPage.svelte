@@ -4,59 +4,35 @@
   import { campaignStore } from "$lib/stores/campaign.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
+  import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";
   import CoverImage from "./CoverImage.svelte";
   import EntityCard from "./EntityCard.svelte";
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
-  const stripMarkdown = (value: string) =>
-    value
-      .replace(/[`*_~>#-]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-
-  const createCampaignTagline = (
-    summary: string,
-    campaignTitle: string,
-    themeName: string,
-  ) => {
-    const cleanSummary = stripMarkdown(summary);
-    if (cleanSummary) {
-      const sentences = cleanSummary.split(/(?<=[.!?])\s+/);
-      const firstSentence = sentences[0] || cleanSummary;
-      const words = firstSentence.split(/\s+/).filter(Boolean);
-      const truncated =
-        words.length > 14 ? words.slice(0, 14).join(" ") + "…" : firstSentence;
-      return truncated.replace(/[.!?…]+$/, "");
-    }
-
-    const title = campaignTitle.trim() || "this vault";
-    const themeLabel = themeName.trim();
-    return themeLabel
-      ? `${themeLabel} world waiting for its first story`
-      : `${title} is waiting for its first story`;
-  };
-
   const createCampaignCoverPrompt = (
-    campaignTitle: string,
+    campaignName: string,
     themeName: string,
     themeDescription: string,
     summary: string,
-    tagline: string,
+    worldContext: string,
   ) => {
     const safeSummary = summary.trim() || "An unexplored campaign setting.";
-    const safeTagline = tagline.trim() || "A world waiting to be entered.";
+    const safeName = campaignName.trim() || "this campaign world";
+    const safeWorldContext =
+      worldContext.trim() || "No additional world context was retrieved.";
 
-    return `Create atmospheric portrait cover art for the campaign "${campaignTitle}".
+    return `Create atmospheric portrait cover art for "${safeName}".
 
 Theme:
 - Name: ${themeName}
 - Thematic scope: ${themeDescription}
 
 World cues:
-- Tagline: ${safeTagline}
 - Summary: ${safeSummary}
+- Retrieved world context:
+${safeWorldContext}
 
 Art direction:
 - Portrait composition, vertical framing, approximately 2:3 aspect ratio.
@@ -69,12 +45,7 @@ Art direction:
 
   let lastLoadedVaultId: string | null = null;
   let draftDescription = $state("");
-  let draftTitle = $state("");
-  let draftTagline = $state("");
   let isDraftDirty = $state(false);
-  let isTitleDirty = $state(false);
-  let isEditingTagline = $state(false);
-  let isTaglineDirty = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
   const metadata = $derived(campaignStore.metadata);
@@ -104,17 +75,13 @@ Art direction:
     return [...pinned, ...unpinned].slice(0, recentLimit);
   });
   const coverImage = $derived(metadata?.coverImage || "");
-  const title = $derived(metadata?.name || vault.vaultName || "Vault");
+  const campaignName = $derived(
+    metadata?.name?.trim() || vault.vaultName || "",
+  );
   const hasSummary = $derived(!!draftDescription.trim());
   const summaryPreview = $derived(draftDescription.trim());
-  const hasTitle = $derived(!!draftTitle.trim());
-  const taglinePreview = $derived(
-    metadata?.tagline?.trim() ||
-      createCampaignTagline(summaryPreview, title, themeStore.activeTheme.name),
-  );
 
   let isEditingSummary = $state(false);
-  let isEditingTitle = $state(false);
   let showCoverEditor = $state(false);
   let coverImageUrl = $state("");
   let lastCoverImage = "";
@@ -188,19 +155,6 @@ Art direction:
     if (!isEditingSummary && !isDraftDirty) {
       draftDescription = summarySource;
     }
-    if (!isEditingTitle && !isTitleDirty) {
-      draftTitle = title;
-    }
-    isTitleDirty = false;
-    if (!isEditingTagline) {
-      draftTagline =
-        metadata?.tagline?.trim() ||
-        createCampaignTagline(
-          summarySource,
-          title,
-          themeStore.activeTheme.name,
-        );
-    }
     if (!isEditingSummary && summarySource) isDraftDirty = false;
     if (coverImage !== lastCoverImage) {
       lastCoverImage = coverImage;
@@ -239,24 +193,37 @@ Art direction:
     }
   };
 
-  const handleSaveTitle = async () => {
-    await campaignStore.saveTitle(draftTitle.trim());
-    if (!campaignStore.error) {
-      isTitleDirty = false;
-      isEditingTitle = false;
-    }
-  };
+  const buildRetrievedWorldContext = async (isImage = false) => {
+    const campaignRef = campaignName.trim();
+    const themeRef = themeStore.activeTheme.name.trim();
+    const baseTerms = [campaignRef, themeRef].filter(Boolean).join(" ").trim();
+    const queries = [
+      `${baseTerms} setting world campaign overview premise tone central conflict`,
+      `${baseTerms} major players factions antagonists allies plot hooks current threats`,
+    ];
 
-  const handleSaveTagline = async () => {
-    await campaignStore.saveTagline(draftTagline.trim());
-    if (!campaignStore.error) {
-      isTaglineDirty = false;
-      isEditingTagline = false;
+    try {
+      const retrievedParts = await Promise.all(
+        queries.map(async (query) => {
+          const retrieved = await contextRetrievalService.retrieveContext(
+            query,
+            new Set<string>(),
+            vault,
+            campaignStore.frontPageEntity?.id,
+            isImage,
+          );
+          return retrieved.content.trim();
+        }),
+      );
+
+      const uniqueParts = [...new Set(retrievedParts.filter(Boolean))];
+      return uniqueParts.join("\n\n");
+    } catch {
+      return "";
     }
   };
 
   const handleGenerateSummary = async () => {
-    const existingTagline = metadata?.tagline?.trim() || "";
     if (hasSummary) {
       const confirmed = window.confirm(
         "Generate a new summary and replace the existing one?",
@@ -266,8 +233,11 @@ Art direction:
 
     const activeTheme = themeStore.activeTheme;
     const themeDescription = activeTheme.description.trim();
+    const retrievedWorldContext = await buildRetrievedWorldContext();
     const generated = await campaignStore.generateDescription(
-      `Write a front-page campaign summary for "${title}".
+      `Write a front-page campaign summary for "${
+        campaignName.trim() || "this campaign world"
+      }".
 
 Theme:
 - Name: ${activeTheme.name}
@@ -275,12 +245,17 @@ Theme:
 - Mood colors: primary ${activeTheme.tokens.primary}, accent ${activeTheme.tokens.accent}, background ${activeTheme.tokens.background}
 
 Requirements:
-- 2 to 4 short paragraphs or a compact single paragraph.
+- Start with 1 short atmospheric intro paragraph.
+- Follow with 3 to 5 markdown bullet points using bold labels such as **Current Conflict:**, **Key Players:**, **Immediate Hook:**, or **Threat Level:** when they fit the setting.
 - Clearly explain the setting, mood, and immediate premise.
 - Use specific details from the campaign instead of generic fantasy language.
 - Keep it readable, welcoming, and easy to scan.
-- Avoid headings, bullet points, and meta commentary.
+- Keep each bullet to one compact sentence.
+- Avoid headings and meta commentary.
 - Do not mention that you are an AI.
+
+Retrieved world context:
+${retrievedWorldContext || "No additional world context was retrieved."}
 
 Match the summary to the theme's atmosphere and visual identity, and focus on what a new player or returning GM needs to know at a glance.`,
     );
@@ -288,30 +263,11 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
       draftDescription = generated;
       isDraftDirty = false;
       isEditingSummary = false;
-      if (!existingTagline) {
-        draftTagline = createCampaignTagline(
-          generated,
-          title,
-          activeTheme.name,
-        );
-        await campaignStore.saveTagline(draftTagline);
-      }
     }
   };
 
   const startEditingSummary = async () => {
     isEditingSummary = true;
-  };
-
-  const startEditingTitle = async () => {
-    draftTitle = title;
-    isEditingTitle = true;
-  };
-
-  const startEditingTagline = () => {
-    draftTagline = taglinePreview;
-    isTaglineDirty = false;
-    isEditingTagline = true;
   };
 
   const openCoverEditor = () => {
@@ -326,18 +282,6 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
     draftDescription = summarySource;
     isDraftDirty = false;
     isEditingSummary = false;
-  };
-
-  const cancelEditingTitle = () => {
-    draftTitle = title;
-    isTitleDirty = false;
-    isEditingTitle = false;
-  };
-
-  const cancelEditingTagline = () => {
-    draftTagline = metadata?.tagline?.trim() || taglinePreview;
-    isTaglineDirty = false;
-    isEditingTagline = false;
   };
 
   const closeCoverEditor = () => {
@@ -358,15 +302,15 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
     const themeName = themeStore.activeTheme.name;
     const themeDescription = themeStore.activeTheme.description.trim();
     const summaryText = summaryPreview || "No campaign summary provided yet.";
-    const taglineText = taglinePreview;
+    const retrievedWorldContext = await buildRetrievedWorldContext(true);
     try {
       await campaignStore.generateCoverImage(
         createCampaignCoverPrompt(
-          title,
+          campaignName,
           themeName,
           themeDescription,
           summaryText,
-          taglineText,
+          retrievedWorldContext,
         ),
       );
     } catch {
@@ -474,127 +418,26 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
       >
         <div class="w-full space-y-4 xl:pr-56">
           <div
-            class="inline-flex items-center gap-2 rounded-full border border-theme-primary/30 bg-theme-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary"
+            class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] backdrop-blur-sm"
           >
             <span class="w-2 h-2 rounded-full bg-theme-primary animate-pulse"
             ></span>
             Front Page
           </div>
 
-          <div class="space-y-2">
-            {#if isEditingTitle}
-              <div class="flex flex-col gap-3">
-                <input
-                  bind:value={draftTitle}
-                  class="w-full rounded-2xl border border-theme-border bg-theme-bg/80 px-4 py-3 font-header text-2xl md:text-4xl uppercase tracking-[0.08em] text-theme-text leading-none placeholder:text-theme-muted/60 focus:border-theme-primary focus:outline-none"
-                  placeholder="Campaign title"
-                  oninput={() => (isTitleDirty = true)}
-                />
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
-                    onclick={handleSaveTitle}
-                    disabled={campaignStore.isSaving ||
-                      !hasTitle ||
-                      !isTitleDirty}
-                  >
-                    Save Title
-                  </button>
-                  <button
-                    class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
-                    onclick={cancelEditingTitle}
-                    disabled={campaignStore.isSaving}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            {:else}
-              <div class="flex items-start gap-3">
-                <h1
-                  class="font-header text-4xl sm:text-5xl lg:text-6xl 2xl:text-7xl uppercase tracking-[0.08em] text-theme-text leading-none"
-                >
-                  {title}
-                </h1>
-              </div>
-              <ZenImageLightbox
-                bind:show={showCoverLightbox}
-                imageUrl={coverImageUrl}
-                {title}
-              />
-            {/if}
-            {#if isEditingTagline}
-              <div class="flex flex-col gap-3">
-                <input
-                  bind:value={draftTagline}
-                  class="w-full rounded-2xl border border-theme-border bg-theme-bg/80 px-4 py-3 text-sm md:text-base italic text-theme-text/75 leading-relaxed placeholder:text-theme-muted/60 focus:border-theme-primary focus:outline-none"
-                  placeholder="Campaign tagline"
-                  oninput={() => (isTaglineDirty = true)}
-                />
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
-                    onclick={handleSaveTagline}
-                    disabled={campaignStore.isSaving ||
-                      !draftTagline.trim() ||
-                      !isTaglineDirty}
-                  >
-                    Save Tagline
-                  </button>
-                  <button
-                    class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
-                    onclick={cancelEditingTagline}
-                    disabled={campaignStore.isSaving}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            {:else}
-              <div class="flex items-start gap-2">
-                <p
-                  class="max-w-none text-sm md:text-base italic text-theme-text/75 leading-relaxed"
-                >
-                  {taglinePreview}
-                </p>
-                <button
-                  type="button"
-                  class="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-theme-border text-theme-muted transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-                  onclick={startEditingTagline}
-                  disabled={campaignStore.isSaving}
-                  title="Edit tagline"
-                  aria-label="Edit tagline"
-                >
-                  <span class="icon-[lucide--pencil] h-3.5 w-3.5"></span>
-                </button>
-              </div>
-            {/if}
-          </div>
+          <ZenImageLightbox
+            bind:show={showCoverLightbox}
+            imageUrl={coverImageUrl}
+            title="Campaign cover"
+          />
         </div>
 
         <div
           class="flex flex-wrap justify-end gap-2 xl:absolute xl:right-0 xl:top-0 xl:gap-3"
         >
-          {#if onClose}
-            <button
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-              onclick={onClose}
-              aria-label="Close front page"
-              title="Close front page"
-            >
-              <span class="icon-[lucide--x] h-4 w-4"></span>
-            </button>
-          {/if}
-          <button
-            class="rounded-full border border-theme-border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:border-theme-primary/50 hover:text-theme-primary"
-            onclick={startEditingTitle}
-            disabled={campaignStore.isSaving}
-          >
-            Edit Title
-          </button>
           {#if coverImage}
             <button
-              class="rounded-full border border-theme-primary/40 bg-theme-primary/10 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary hover:bg-theme-primary/20"
+              class="rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60"
               onclick={openCoverEditor}
               disabled={campaignStore.isSaving}
             >
@@ -610,6 +453,16 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
               disabled={!coverImageUrl}
             >
               <span class="icon-[lucide--maximize-2] h-4 w-4"></span>
+            </button>
+          {/if}
+          {#if onClose}
+            <button
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              onclick={onClose}
+              aria-label="Close front page"
+              title="Close front page"
+            >
+              <span class="icon-[lucide--x] h-4 w-4"></span>
             </button>
           {/if}
         </div>
@@ -635,93 +488,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
         {/if}
 
         <section
-          class="flex flex-col rounded-3xl border border-theme-border bg-theme-surface/80 p-4 sm:p-5 md:p-6"
-        >
-          <div class="relative overflow-hidden rounded-2xl bg-theme-bg/80">
-            {#if isEditingSummary}
-              <textarea
-                bind:this={summaryTextarea}
-                bind:value={draftDescription}
-                oninput={() => (isDraftDirty = true)}
-                rows="1"
-                class="min-h-[12rem] w-full resize-none border-0 bg-transparent px-4 py-4 pr-32 pb-16 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted/60 focus:outline-none sm:text-base overflow-hidden"
-                placeholder="Write a short campaign summary..."
-              ></textarea>
-            {:else}
-              <div class="relative w-full px-4 py-4 pr-16 sm:pr-20">
-                <div
-                  data-testid="summary-preview"
-                  role="region"
-                  aria-label="Campaign summary preview"
-                  class={`relative flex-1 overflow-hidden prose prose-invert max-w-none prose-p:my-0 prose-strong:text-theme-primary prose-a:text-theme-primary transition-[max-height] duration-300 ease-out ${isSummaryExpanded ? "max-h-[48rem]" : "max-h-[11rem]"}`}
-                  onmouseenter={beginSummaryPreviewHover}
-                  onmouseleave={endSummaryPreviewHover}
-                  onfocusin={beginSummaryPreviewHover}
-                  onfocusout={endSummaryPreviewHover}
-                >
-                  {#if hasSummary}
-                    <ArticleRenderer content={summaryPreview} />
-                    {#if !isSummaryExpanded}
-                      <div
-                        class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-theme-bg/95"
-                      ></div>
-                    {/if}
-                  {:else}
-                    <div
-                      class="flex min-h-[12rem] items-center justify-center px-4 py-8 text-center text-sm text-theme-muted/70"
-                    >
-                      No campaign summary yet. Use the edit or generate button
-                      to add one.
-                    </div>
-                  {/if}
-                </div>
-                <div
-                  class="absolute right-3 top-3 z-20 flex flex-wrap justify-end gap-1"
-                >
-                  <button
-                    class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border text-theme-muted transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-                    onclick={startEditingSummary}
-                    disabled={campaignStore.isSaving}
-                    title="Edit summary"
-                    aria-label="Edit summary"
-                  >
-                    <span class="icon-[lucide--pencil] h-4 w-4"></span>
-                  </button>
-                  <button
-                    class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-primary/10 text-theme-primary transition-colors hover:bg-theme-primary/20 disabled:opacity-50"
-                    onclick={handleGenerateSummary}
-                    disabled={campaignStore.isSaving}
-                    title="Generate summary"
-                    aria-label="Generate summary"
-                  >
-                    <span class="icon-[lucide--sparkles] h-4 w-4"></span>
-                  </button>
-                </div>
-              </div>
-            {/if}
-          </div>
-
-          {#if isEditingSummary}
-            <div class="mt-3 flex flex-wrap gap-2">
-              <button
-                class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
-                onclick={handleSaveDescription}
-                disabled={campaignStore.isSaving || !isDraftDirty}
-              >
-                Save Summary
-              </button>
-              <button
-                class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
-                onclick={cancelEditingSummary}
-                disabled={campaignStore.isSaving}
-              >
-                Cancel
-              </button>
-            </div>
-          {/if}
-        </section>
-
-        <section
+          data-testid="entities-section"
           class="flex flex-1 flex-col rounded-3xl border border-theme-border bg-theme-surface/80 p-4 sm:p-5 md:p-6"
         >
           <div class="mb-4 flex items-center justify-between">
@@ -780,6 +547,96 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
               class="rounded-2xl border border-dashed border-theme-border px-4 py-10 text-center text-sm text-theme-muted"
             >
               No recent entities yet. Create or import a note to see it here.
+            </div>
+          {/if}
+        </section>
+
+        <section
+          data-testid="summary-section"
+          class="flex flex-col overflow-hidden rounded-3xl border border-theme-border bg-theme-surface/80"
+        >
+          <div class="relative overflow-hidden bg-theme-bg/80">
+            {#if isEditingSummary}
+              <textarea
+                bind:this={summaryTextarea}
+                bind:value={draftDescription}
+                oninput={() => (isDraftDirty = true)}
+                rows="1"
+                class="min-h-[12rem] w-full resize-none border-0 bg-transparent px-5 py-5 pb-16 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted/60 focus:outline-none sm:px-6 sm:py-6 sm:text-base overflow-hidden"
+                placeholder="Write a short campaign summary..."
+              ></textarea>
+            {:else}
+              <div class="relative w-full px-5 py-5 sm:px-6 sm:py-6">
+                <div
+                  data-testid="summary-preview"
+                  role="region"
+                  aria-label="Campaign summary preview"
+                  class={`relative flex-1 overflow-hidden prose prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-ul:my-4 prose-ul:list-disc prose-ul:pl-5 prose-li:my-1 prose-li:marker:text-theme-primary prose-strong:text-theme-primary prose-a:text-theme-primary transition-[max-height] duration-300 ease-out ${isSummaryExpanded ? "max-h-[48rem]" : "max-h-[14rem]"}`}
+                  onmouseenter={beginSummaryPreviewHover}
+                  onmouseleave={endSummaryPreviewHover}
+                  onfocusin={beginSummaryPreviewHover}
+                  onfocusout={endSummaryPreviewHover}
+                >
+                  {#if hasSummary}
+                    <ArticleRenderer content={summaryPreview} />
+                    {#if !isSummaryExpanded}
+                      <div
+                        class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-theme-bg/95"
+                      ></div>
+                    {/if}
+                  {:else}
+                    <div
+                      class="flex min-h-[12rem] items-center justify-center px-4 py-8 text-center text-sm text-theme-muted/70"
+                    >
+                      No world brief yet. Use the edit or generate button to add
+                      one.
+                    </div>
+                  {/if}
+                </div>
+                <div
+                  class="absolute right-3 top-3 z-20 flex flex-wrap justify-end gap-1"
+                >
+                  <button
+                    class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+                    onclick={startEditingSummary}
+                    disabled={campaignStore.isSaving}
+                    title="Edit summary"
+                    aria-label="Edit summary"
+                  >
+                    <span class="icon-[lucide--pencil] h-4 w-4"></span>
+                  </button>
+                  <button
+                    class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
+                    onclick={handleGenerateSummary}
+                    disabled={campaignStore.isSaving}
+                    title="Generate summary"
+                    aria-label="Generate summary"
+                  >
+                    <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+                  </button>
+                </div>
+              </div>
+            {/if}
+          </div>
+
+          {#if isEditingSummary}
+            <div
+              class="flex flex-wrap gap-2 border-t border-theme-border/60 px-5 py-4 sm:px-6"
+            >
+              <button
+                class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
+                onclick={handleSaveDescription}
+                disabled={campaignStore.isSaving || !isDraftDirty}
+              >
+                Save Summary
+              </button>
+              <button
+                class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
+                onclick={cancelEditingSummary}
+                disabled={campaignStore.isSaving}
+              >
+                Cancel
+              </button>
             </div>
           {/if}
         </section>

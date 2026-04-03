@@ -16,19 +16,20 @@ vi.mock("svelte", async () => {
 
 const mocks = vi.hoisted(() => ({
   load: vi.fn(),
-  saveTitle: vi.fn(),
-  saveTagline: vi.fn(),
   saveDescription: vi.fn(),
   generateDescription: vi.fn().mockResolvedValue("Generated summary"),
   generateCoverImage: vi.fn().mockResolvedValue("images/cover.webp"),
   setCoverImage: vi.fn(),
+  retrieveContext: vi.fn().mockResolvedValue({
+    content: "--- File: World Primer ---\nSky-market politics and drone wars.",
+    sourceIds: ["front-1"],
+  }),
 }));
 
 const campaignMock = vi.hoisted(() => ({
   metadata: {
     id: "vault-1",
     name: "Moonfall",
-    tagline: "A city caught between collapse and light.",
     description: "A broken moon hangs over the **capital**.",
     coverImage: "images/cover.webp",
   },
@@ -48,8 +49,8 @@ const campaignMock = vi.hoisted(() => ({
       type: "npc",
       tags: ["npc"],
       lastModified: Date.now(),
-      image: "images/captain.webp",
-      thumbnail: "images/captain-thumb.webp",
+      image: "",
+      thumbnail: "",
     },
     {
       id: "front-1",
@@ -96,6 +97,12 @@ vi.mock("$lib/stores/theme.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/services/ai/context-retrieval.service", () => ({
+  contextRetrievalService: {
+    retrieveContext: mocks.retrieveContext,
+  },
+}));
+
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     activeVaultId: "vault-1",
@@ -127,8 +134,6 @@ vi.mock("$lib/stores/ui.svelte", () => ({
 vi.mock("$lib/stores/campaign.svelte", () => ({
   campaignStore: Object.assign(campaignStoreMock, {
     load: mocks.load,
-    saveTitle: mocks.saveTitle,
-    saveTagline: mocks.saveTagline,
     saveDescription: mocks.saveDescription,
     generateDescription: mocks.generateDescription,
     generateCoverImage: mocks.generateCoverImage,
@@ -139,6 +144,11 @@ vi.mock("$lib/stores/campaign.svelte", () => ({
 describe("FrontPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.retrieveContext.mockResolvedValue({
+      content:
+        "--- File: World Primer ---\nSky-market politics and drone wars.",
+      sourceIds: ["front-1"],
+    });
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedCampaignPage = false;
     campaignStoreMock.error = null;
@@ -146,7 +156,6 @@ describe("FrontPage", () => {
     Object.assign(campaignMock.metadata, {
       id: "vault-1",
       name: "Moonfall",
-      tagline: "A city caught between collapse and light.",
       description: "A broken moon hangs over the **capital**.",
       coverImage: "images/cover.webp",
     });
@@ -157,8 +166,8 @@ describe("FrontPage", () => {
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
 
-    expect(screen.getByText("Moonfall")).toBeTruthy();
-    expect(screen.queryByPlaceholderText("Campaign title")).toBeNull();
+    expect(screen.getByText("Front Page")).toBeTruthy();
+    expect(screen.getByText("Relevant Entities")).toBeTruthy();
     expect(screen.getByText("capital").tagName).toBe("STRONG");
     expect(screen.getByText("Front Page Chronicle")).toBeTruthy();
     await waitFor(() =>
@@ -168,7 +177,7 @@ describe("FrontPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("dialog", { name: "Image View" })).toBeTruthy(),
     );
-    expect(screen.getByAltText("Moonfall")).toBeTruthy();
+    expect(screen.getByAltText("Campaign cover")).toBeTruthy();
     await fireEvent.click(screen.getByLabelText("Close image view"));
     expect(
       (screen.getByTestId("front-page-hero-background") as HTMLElement).style
@@ -182,8 +191,10 @@ describe("FrontPage", () => {
       screen.getByText("Drop a new image to replace the current cover."),
     ).toBeTruthy();
     await fireEvent.click(screen.getByText("Generate Art"));
-    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
-      expect.stringContaining("Create atmospheric portrait cover art"),
+    await waitFor(() =>
+      expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+        expect.stringContaining("Create atmospheric portrait cover art"),
+      ),
     );
     expect(mocks.generateCoverImage).toHaveBeenCalledWith(
       expect.stringContaining(
@@ -200,6 +211,32 @@ describe("FrontPage", () => {
         "Summary: A broken moon hangs over the **capital**.",
       ),
     );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'Create atmospheric portrait cover art for "Moonfall".',
+      ),
+    );
+    expect(mocks.generateCoverImage).toHaveBeenCalledWith(
+      expect.stringContaining("Sky-market politics and drone wars."),
+    );
+    expect(mocks.retrieveContext).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Moonfall Neon Night setting world campaign overview premise tone central conflict",
+      ),
+      expect.any(Set),
+      expect.anything(),
+      "front-1",
+      true,
+    );
+    expect(mocks.retrieveContext).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Moonfall Neon Night major players factions antagonists allies plot hooks current threats",
+      ),
+      expect.any(Set),
+      expect.anything(),
+      "front-1",
+      true,
+    );
     const cards = screen.getAllByTestId("entity-card");
     expect(within(cards[0]).getByText("Front Page Chronicle")).toBeTruthy();
     expect(
@@ -207,6 +244,12 @@ describe("FrontPage", () => {
     ).toBeTruthy();
     expect(
       within(cards[0]).getByTestId("entity-card-category-icon"),
+    ).toBeTruthy();
+    expect(
+      within(cards[1]).getByTestId("entity-card-placeholder"),
+    ).toBeTruthy();
+    expect(
+      within(cards[1]).getByTestId("entity-card-placeholder-icon"),
     ).toBeTruthy();
     expect(within(cards[0]).getByText("moon").tagName).toBe("STRONG");
     const cardButton = within(cards[0]).getByRole("button");
@@ -217,21 +260,6 @@ describe("FrontPage", () => {
     expect(uiStore.dismissedCampaignPage).toBe(true);
     expect(uiStore.openZenMode).not.toHaveBeenCalled();
     vi.useRealTimers();
-    await fireEvent.click(screen.getByText("Edit Title"));
-    await waitFor(() =>
-      expect(screen.getByPlaceholderText("Campaign title")).toBeTruthy(),
-    );
-    const titleInput = screen.getByPlaceholderText("Campaign title");
-    await fireEvent.input(titleInput, { target: { value: "Moonfall Prime" } });
-    expect(screen.getByText("Save Title")).toBeTruthy();
-    screen.getByText("Save Title").click();
-    await waitFor(() =>
-      expect(mocks.saveTitle).toHaveBeenCalledWith("Moonfall Prime"),
-    );
-    expect(screen.getByText("Moonfall")).toBeTruthy();
-    expect(
-      screen.getByText("A city caught between collapse and light."),
-    ).toBeTruthy();
     screen.getByLabelText("Edit summary").click();
     await waitFor(() =>
       expect(
@@ -261,11 +289,23 @@ describe("FrontPage", () => {
     expect(screen.getByText("Captain Ril")).toBeTruthy();
   });
 
+  it("places relevant entities before the world brief", async () => {
+    render(FrontPage);
+
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+
+    const entitiesSection = screen.getByTestId("entities-section");
+    const summarySection = screen.getByTestId("summary-section");
+
+    expect(entitiesSection.compareDocumentPosition(summarySection)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
   it("keeps summary actions visible even when the summary is empty and being edited", async () => {
     Object.assign(campaignMock.metadata, {
       id: "vault-1",
       name: "Moonfall",
-      tagline: "A city caught between collapse and light.",
       description: "",
       coverImage: "images/cover.webp",
     });
@@ -289,7 +329,6 @@ describe("FrontPage", () => {
     Object.assign(campaignMock.metadata, {
       id: "vault-1",
       name: "Moonfall",
-      tagline: "A city caught between collapse and light.",
       description: "",
       coverImage: "images/cover.webp",
     });
@@ -419,7 +458,7 @@ describe("FrontPage", () => {
     );
     await fireEvent.click(screen.getByText("Generate Art"));
 
-    expect(screen.getByText("Working...")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Working...")).toBeTruthy());
     expect(
       screen.getByRole("status", { name: "Image generation in progress" }),
     ).toBeTruthy();
@@ -427,29 +466,6 @@ describe("FrontPage", () => {
     resolveGenerateCover?.();
 
     await waitFor(() => expect(screen.getByText("Generate Art")).toBeTruthy());
-  });
-
-  it("lets the user edit the campaign tagline", async () => {
-    render(FrontPage);
-
-    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
-
-    await fireEvent.click(screen.getByLabelText("Edit tagline"));
-    await waitFor(() =>
-      expect(screen.getByPlaceholderText("Campaign tagline")).toBeTruthy(),
-    );
-
-    const taglineInput = screen.getByPlaceholderText("Campaign tagline");
-    await fireEvent.input(taglineInput, {
-      target: { value: "A city balanced on the edge of collapse." },
-    });
-    screen.getByText("Save Tagline").click();
-
-    await waitFor(() =>
-      expect(mocks.saveTagline).toHaveBeenCalledWith(
-        "A city balanced on the edge of collapse.",
-      ),
-    );
   });
 
   it("opens zen mode on double click before the single-click action runs", async () => {
@@ -482,11 +498,11 @@ describe("FrontPage", () => {
     render(FrontPage);
 
     expect(screen.getByText("Loading front page")).toBeTruthy();
-    expect(screen.queryByText("Moonfall")).toBeNull();
+    expect(screen.queryByText("Front Page")).toBeNull();
 
     resolveLoad?.();
 
-    await waitFor(() => expect(screen.getByText("Moonfall")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Front Page")).toBeTruthy());
     expect(screen.queryByText("Loading front page")).toBeNull();
   });
 
@@ -512,10 +528,43 @@ describe("FrontPage", () => {
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
     await fireEvent.click(screen.getByLabelText("Generate summary"));
 
+    await waitFor(() =>
+      expect(mocks.generateDescription).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "Description: Cyberpunk, neon-noir, corporate control",
+        ),
+      ),
+    );
     expect(mocks.generateDescription).toHaveBeenCalledWith(
       expect.stringContaining(
-        "Description: Cyberpunk, neon-noir, corporate control",
+        'Write a front-page campaign summary for "Moonfall".',
       ),
+    );
+    expect(mocks.generateDescription).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Follow with 3 to 5 markdown bullet points using bold labels",
+      ),
+    );
+    expect(mocks.generateDescription).toHaveBeenCalledWith(
+      expect.stringContaining("Sky-market politics and drone wars."),
+    );
+    expect(mocks.retrieveContext).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Moonfall Neon Night setting world campaign overview premise tone central conflict",
+      ),
+      expect.any(Set),
+      expect.anything(),
+      "front-1",
+      false,
+    );
+    expect(mocks.retrieveContext).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Moonfall Neon Night major players factions antagonists allies plot hooks current threats",
+      ),
+      expect.any(Set),
+      expect.anything(),
+      "front-1",
+      false,
     );
   });
 
@@ -540,27 +589,6 @@ describe("FrontPage", () => {
     ).toBeNull();
     expect(campaignStoreMock.error).toBe(
       "Failed to generate campaign summary.",
-    );
-  });
-
-  it("seeds a tagline when generating a new summary without one", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    mocks.saveTagline.mockClear();
-    Object.assign(campaignMock.metadata, {
-      id: "vault-1",
-      name: "Moonfall",
-      tagline: "",
-      description: "A broken moon hangs over the **capital**.",
-      coverImage: "images/cover.webp",
-    });
-
-    render(FrontPage);
-
-    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
-    await fireEvent.click(screen.getByLabelText("Generate summary"));
-
-    await waitFor(() =>
-      expect(mocks.saveTagline).toHaveBeenCalledWith("Generated summary"),
     );
   });
 
@@ -608,13 +636,13 @@ describe("FrontPage", () => {
     vi.useFakeTimers();
 
     await fireEvent.mouseEnter(summaryPreview);
-    expect(summaryPreview.className).toContain("max-h-[11rem]");
+    expect(summaryPreview.className).toContain("max-h-[14rem]");
 
     await vi.advanceTimersByTimeAsync(800);
     expect(summaryPreview.className).toContain("max-h-[48rem]");
 
     await fireEvent.mouseLeave(summaryPreview);
-    expect(summaryPreview.className).toContain("max-h-[11rem]");
+    expect(summaryPreview.className).toContain("max-h-[14rem]");
     vi.useRealTimers();
   });
 });

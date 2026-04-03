@@ -87,7 +87,7 @@
 </script>
 
 <article
-  class={`group relative overflow-hidden rounded-2xl border border-theme-border bg-theme-bg/20 shadow-[0_12px_40px_rgba(0,0,0,0.12)] transition-all hover:-translate-y-0.5 hover:border-theme-primary/50 hover:shadow-[0_18px_48px_rgba(0,0,0,0.18)] ${imageUrl ? "text-theme-text" : ""}`}
+  class="group relative overflow-hidden rounded-2xl border border-theme-border/80 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_48%),linear-gradient(180deg,color-mix(in_srgb,var(--color-theme-surface)_82%,black),color-mix(in_srgb,var(--color-theme-bg)_92%,black))] text-theme-text shadow-[0_12px_40px_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:border-theme-primary/55 hover:shadow-[0_18px_48px_rgba(0,0,0,0.24)]"
   data-testid="entity-card"
 >
   {#if imageUrl}
@@ -96,9 +96,32 @@
       style={`background-image: url("${imageUrl}")`}
     ></div>
     <div
-      class="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.06),rgba(2,6,23,0.16),rgba(2,6,23,0.58))]"
+      class="absolute inset-0 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-theme-primary)_8%,transparent),rgba(2,6,23,0.14),rgba(2,6,23,0.68))]"
     ></div>
-    <div class="absolute inset-0 border border-theme-border/30"></div>
+    <div
+      class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_46%)]"
+    ></div>
+    <div class="absolute inset-0 border border-theme-border/40"></div>
+  {:else}
+    <div
+      class="absolute inset-0 bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--color-theme-primary)_18%,transparent),transparent_52%),linear-gradient(180deg,color-mix(in_srgb,var(--color-theme-surface)_78%,black),color-mix(in_srgb,var(--color-theme-bg)_94%,black))]"
+      data-testid="entity-card-placeholder"
+    ></div>
+    <div
+      class="absolute inset-0 bg-[linear-gradient(transparent_0,color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)_1px,transparent_1px),linear-gradient(90deg,transparent_0,color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)_1px,transparent_1px)] bg-[size:20px_20px] opacity-40"
+    ></div>
+    <div
+      class="absolute inset-x-0 top-[12%] h-[58%] flex items-center justify-center"
+    >
+      <div
+        class="flex h-28 w-28 items-center justify-center rounded-full border border-theme-primary/30 bg-[color-mix(in_srgb,var(--color-theme-primary)_14%,transparent)] text-theme-primary/75 shadow-[0_0_60px_color-mix(in_srgb,var(--color-theme-primary)_18%,transparent)] backdrop-blur-sm"
+      >
+        <span
+          class="{getIconClass(category?.icon)} h-14 w-14"
+          data-testid="entity-card-placeholder-icon"
+        ></span>
+      </div>
+    </div>
   {/if}
 
   <button
@@ -114,13 +137,15 @@
   <div class="relative z-20 flex min-h-[17rem] h-full flex-col justify-between">
     <div class="p-2.5 md:p-3">
       <header
-        class="flex items-center justify-between gap-3 rounded-2xl bg-[rgba(2,6,23,0.62)] border border-white/10 backdrop-blur-md px-3 py-2"
+        class="flex items-center justify-between gap-3 rounded-2xl border border-theme-primary/15 bg-[color-mix(in_srgb,var(--color-theme-bg)_74%,transparent)] backdrop-blur-md px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
       >
         <div
           class="min-w-0 flex items-center gap-1.5 text-theme-primary/90 flex-1"
         >
           <span
-            class="{getIconClass(category?.icon)} h-3 w-3 shrink-0"
+            class="{getIconClass(
+              category?.icon,
+            )} h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_0.35px_currentColor]"
             data-testid="entity-card-category-icon"
           ></span>
           <h3
@@ -137,7 +162,7 @@
 
     <div class="p-2.5 md:p-3">
       <div
-        class="rounded-xl bg-[rgba(2,6,23,0.68)] border border-white/10 backdrop-blur-md p-3"
+        class="rounded-xl border border-theme-border/50 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-theme-bg)_78%,transparent),color-mix(in_srgb,var(--color-theme-surface)_76%,transparent))] backdrop-blur-md p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
       >
         <p
           class="text-sm leading-relaxed min-h-[4.5rem] text-theme-text/95 line-clamp-4"
@@ -149,7 +174,7 @@
           <div class="mt-4 flex flex-wrap gap-2">
             {#each activity.tags as tag (tag)}
               <span
-                class="rounded-full border border-theme-border bg-theme-bg/60 px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
+                class="rounded-full border border-theme-primary/20 bg-[color-mix(in_srgb,var(--color-theme-primary)_10%,var(--color-theme-bg))] px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-theme-secondary backdrop-blur-sm"
               >
                 {tag}
               </span>
