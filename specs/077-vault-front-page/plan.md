@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement a dedicated landing page for vaults that provides a cohesive campaign overview. This includes rendering campaign metadata, a rich description (optionally from a "frontpage" tagged entity), a responsive "recent entities" card grid, and a cover image system supporting local files, external URLs, and AI generation via the Lore Oracle. All metadata and activity queries will be powered by **Dexie** (`CodexEntityDb`).
+Implement a dedicated landing layer for vaults that provides a cohesive campaign overview. The shipped front page now renders vault metadata, a theme-aware tagline, a summary that can fall back to a `frontpage` entity, a responsive relevant-entities card grid, and a cover image hero that supports local drag-and-drop replacement, AI generation, and a lightbox. All metadata and activity queries are powered by **Dexie** (`CodexEntityDb`), while entity selection and dismissal flow through the workspace shell.
 
 ## Technical Context
 
@@ -54,14 +54,15 @@ apps/web/src/
 │   ├── components/
 │   │   ├── campaign/
 │   │   │   ├── FrontPage.svelte      # Main landing view
-│   │   │   ├── EntityCard.svelte    # Component for recent items
-│   │   │   └── CoverImage.svelte    # Header image component
+│   │   │   ├── EntityCard.svelte    # Card for relevant recent items
+│   │   │   └── CoverImage.svelte    # Cover art drop zone / generator
 │   ├── stores/
 │   │   └── campaign.svelte.ts       # UI state for front page (Uses DI for Services)
 │   ├── utils/
 │   │   └── entity-db.ts             # UPDATED: Dexie Schema Version 4
 └── routes/
-    └── (app)/vault/[id]/+page.svelte # Default to FrontPage if no entity selected
+    ├── (app)/+page.svelte            # Front page overlay + graph/entity shell
+    └── (app)/vault/[id]/+page.svelte  # Vault entry route with front page + detail panel
 
 packages/
 ├── vault-engine/
