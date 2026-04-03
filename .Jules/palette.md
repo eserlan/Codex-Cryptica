@@ -27,3 +27,7 @@
 
 **Learning:** Added ARIA roles, states, and keyboard navigation (arrow keys) to standard `<button>` based tabs to improve screen reader accessibility and keyboard usability within Svelte components.
 **Action:** Ensure all custom tab lists follow the W3C ARIA authoring practices by implementing `role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, and `tabindex` along with appropriate keyboard handlers.
+
+## 2026-04-03 - Missing Checkbox Labels
+**Learning:** Standalone checkbox inputs grouped with text blocks need explicit `<label for="...">` associations, as relying on proximity is insufficient for both screen readers and click hit areas. Some toggles in the app followed this pattern, but others used unlinked `<span>`s.
+**Action:** Always wrap text descriptions for checkboxes in a `<label>` tag and link it via the `for` and `id` attributes to improve both accessibility and click target area.
