@@ -103,7 +103,7 @@
           : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
         onclick={async () => {
           try {
-            await demoService.convertToCampaign();
+            await demoService.convertToWorld();
           } catch (error) {
             console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
             ui.notify(

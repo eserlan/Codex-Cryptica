@@ -34,7 +34,7 @@ test.describe("Entity Explorer Sidebar", () => {
           };
           v.isInitialized = true;
           v.status = "idle";
-          ui.dismissedCampaignPage = true;
+          ui.dismissedWorldPage = true;
         } else {
           setTimeout(checkVaultAndUI, 20);
         }

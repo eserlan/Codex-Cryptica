@@ -44,9 +44,12 @@
   async function handleDeleteMap() {
     if (!linkedMap) return;
     if (
-      confirm(
-        "Are you sure you want to delete this map? This action cannot be undone.",
-      )
+      await uiStore.confirm({
+        title: "Clear Points",
+        message:
+          "Are you sure you want to delete this map? This action cannot be undone.",
+        isDangerous: true,
+      })
     ) {
       try {
         await vault.deleteMap(linkedMap.id);

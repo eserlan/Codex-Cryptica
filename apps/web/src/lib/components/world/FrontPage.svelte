@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { campaignStore } from "$lib/stores/campaign.svelte";
+  import { worldStore } from "$lib/stores/world.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
   import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";
   import CoverImage from "./CoverImage.svelte";
@@ -11,17 +12,17 @@
 
   let { onClose }: { onClose?: () => void } = $props();
 
-  const createCampaignCoverPrompt = (
-    campaignName: string,
+  const createWorldCoverPrompt = (
+    worldName: string,
     themeName: string,
     themeDescription: string,
-    summary: string,
+    briefing: string,
     worldContext: string,
   ) => {
-    const safeSummary = summary.trim() || "An unexplored campaign setting.";
-    const safeName = campaignName.trim() || "this campaign world";
+    const safeBriefing = briefing.trim() || "An unexplored setting.";
+    const safeName = worldName.trim() || "this world";
     const safeWorldContext =
-      worldContext.trim() || "No additional world context was retrieved.";
+      worldContext.trim() || "No additional context was retrieved.";
 
     return `Create atmospheric portrait cover art for "${safeName}".
 
@@ -30,8 +31,8 @@ Theme:
 - Thematic scope: ${themeDescription}
 
 World cues:
-- Summary: ${safeSummary}
-- Retrieved world context:
+- Briefing: ${safeBriefing}
+- Retrieved context:
 ${safeWorldContext}
 
 Art direction:
@@ -39,7 +40,7 @@ Art direction:
 - Focus on the tone, mood, and symbolic atmosphere of the setting.
 - Depict the world itself more than a single action scene.
 - Emphasize place, tension, and identity through lighting, silhouette, color, and environment.
-- Make it feel like the frontispiece to a living campaign world.
+- Make it feel like the frontispiece to a living world.
 - No text, no title lettering, no UI, no borders.`;
   };
 
@@ -48,14 +49,14 @@ Art direction:
   let isDraftDirty = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
-  const metadata = $derived(campaignStore.metadata);
-  const summarySource = $derived(
+  const metadata = $derived(worldStore.metadata);
+  const briefingSource = $derived(
     metadata?.description?.trim() ||
-      campaignStore.frontPageEntity?.chronicle?.trim() ||
-      campaignStore.frontPageEntity?.content?.trim() ||
+      worldStore.frontPageEntity?.chronicle?.trim() ||
+      worldStore.frontPageEntity?.content?.trim() ||
       "",
   );
-  const recentActivity = $derived(campaignStore.recentActivity);
+  const recentActivity = $derived(worldStore.recentActivity);
   const displayedRecentActivity = $derived.by(() => {
     const isPinned = (
       tags: string[] | undefined,
@@ -75,25 +76,25 @@ Art direction:
     return [...pinned, ...unpinned].slice(0, recentLimit);
   });
   const coverImage = $derived(metadata?.coverImage || "");
-  const campaignName = $derived(
-    metadata?.name?.trim() || vault.vaultName || "",
-  );
-  const hasSummary = $derived(!!draftDescription.trim());
-  const summaryPreview = $derived(draftDescription.trim());
+  const worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
+  const hasBriefing = $derived(!!draftDescription.trim());
+  const briefingPreview = $derived(draftDescription.trim());
 
-  let isEditingSummary = $state(false);
+  let isEditingBriefing = $state(false);
   let showCoverEditor = $state(false);
   let coverImageUrl = $state("");
   let lastCoverImage = "";
-  let isCampaignReady = $state(false);
-  let summaryTextarea = $state<HTMLTextAreaElement | null>(null);
+  let isWorldReady = $state(false);
+  let briefingTextarea = $state<HTMLTextAreaElement | null>(null);
   let recentLimit = $state(6);
   let isEditingRecentLimit = $state(false);
   let recentLimitInput = $state("6");
   let lastLoadedRecentLimit = 6;
-  let isSummaryExpanded = $state(false);
-  let summaryHoverTimer: ReturnType<typeof setTimeout> | null = null;
+  let isBriefingExpanded = $state(false);
+  let briefingHoverTimer: ReturnType<typeof setTimeout> | null = null;
   let showCoverLightbox = $state(false);
+  const FRONTPAGE_CONTEXT_MAX_CHARS = 2400;
+  const FRONTPAGE_ENTITY_SNIPPET_MAX_CHARS = 900;
 
   const getRecentLimitStorageKey = (vaultId: string) =>
     `codex_front_page_recent_limit:${vaultId}`;
@@ -124,27 +125,25 @@ Art direction:
 
   $effect(() => {
     if (!activeVaultId) {
-      isCampaignReady = false;
+      isWorldReady = false;
       return;
     }
 
     if (
       lastLoadedVaultId === activeVaultId &&
       lastLoadedRecentLimit === recentLimit &&
-      isCampaignReady
+      isWorldReady
     )
       return;
 
     let stale = false;
-    isCampaignReady = false;
+    isWorldReady = false;
     lastLoadedVaultId = activeVaultId;
     lastLoadedRecentLimit = recentLimit;
 
-    Promise.resolve(campaignStore.load(activeVaultId, recentLimit)).finally(
-      () => {
-        if (!stale) isCampaignReady = true;
-      },
-    );
+    Promise.resolve(worldStore.load(activeVaultId, recentLimit)).finally(() => {
+      if (!stale) isWorldReady = true;
+    });
 
     return () => {
       stale = true;
@@ -152,10 +151,10 @@ Art direction:
   });
 
   $effect(() => {
-    if (!isEditingSummary && !isDraftDirty) {
-      draftDescription = summarySource;
+    if (!isEditingBriefing && !isDraftDirty) {
+      draftDescription = briefingSource;
     }
-    if (!isEditingSummary && summarySource) isDraftDirty = false;
+    if (!isEditingBriefing && briefingSource) isDraftDirty = false;
     if (coverImage !== lastCoverImage) {
       lastCoverImage = coverImage;
       showCoverEditor = !coverImage;
@@ -179,95 +178,167 @@ Art direction:
   });
 
   $effect(() => {
-    if (!summaryTextarea || (!isEditingSummary && hasSummary)) return;
+    if (!briefingTextarea || (!isEditingBriefing && hasBriefing)) return;
 
-    summaryTextarea.style.height = "auto";
-    summaryTextarea.style.height = `${summaryTextarea.scrollHeight}px`;
+    briefingTextarea.style.height = "auto";
+    briefingTextarea.style.height = `${briefingTextarea.scrollHeight}px`;
   });
 
   const handleSaveDescription = async () => {
-    await campaignStore.saveDescription(draftDescription);
-    if (!campaignStore.error) {
+    await worldStore.saveDescription(draftDescription);
+    if (!worldStore.error) {
       isDraftDirty = false;
-      isEditingSummary = false;
+      isEditingBriefing = false;
     }
   };
 
+  const isFrontpageEntity = (entity: { tags?: string[]; labels?: string[] }) =>
+    [...(entity.tags || []), ...(entity.labels || [])].some(
+      (tag) => tag?.trim().toLowerCase() === "frontpage",
+    );
+
+  const buildFrontpageEntityContext = async () => {
+    const frontpageEntities = vault.allEntities
+      .filter(isFrontpageEntity)
+      .sort(
+        (a, b) =>
+          ((b as any).lastModified || 0) - ((a as any).lastModified || 0),
+      );
+    if (frontpageEntities.length === 0) return "";
+
+    if (vault.loadEntityContent) {
+      await Promise.all(
+        frontpageEntities.map((entity) => vault.loadEntityContent(entity.id)),
+      );
+    }
+
+    const sections: string[] = [];
+    let currentLength = 0;
+    let omittedCount = 0;
+
+    for (const entity of frontpageEntities) {
+      const loadedEntity = vault.entities[entity.id] || entity;
+      if (!loadedEntity?.title) continue;
+      const content = (
+        (loadedEntity as any).chronicle?.trim() ||
+        loadedEntity.content?.trim() ||
+        ""
+      ).trim();
+      if (!content) continue;
+
+      const header = `--- FRONTPAGE ENTITY: ${loadedEntity.title} ---\n`;
+      const remainingBudget = FRONTPAGE_CONTEXT_MAX_CHARS - currentLength;
+      if (remainingBudget <= header.length + 40) {
+        omittedCount += 1;
+        continue;
+      }
+
+      const bodyBudget = Math.min(
+        FRONTPAGE_ENTITY_SNIPPET_MAX_CHARS,
+        remainingBudget - header.length,
+      );
+      let body = content;
+      if (body.length > bodyBudget) {
+        body =
+          body.slice(0, Math.max(0, bodyBudget - 16)).trimEnd() +
+          "... [truncated]";
+      }
+
+      const snippet = `${header}${body}`;
+      sections.push(snippet);
+      currentLength += snippet.length + 2;
+    }
+
+    const joined = sections.join("\n\n");
+    if (!omittedCount) return joined;
+
+    const suffix = `\n\n[${omittedCount} additional frontpage ${
+      omittedCount === 1 ? "entity" : "entities"
+    } omitted for brevity.]`;
+    return `${joined}${suffix}`;
+  };
+
   const buildRetrievedWorldContext = async (isImage = false) => {
-    const campaignRef = campaignName.trim();
+    const worldRef = worldName.trim();
     const themeRef = themeStore.activeTheme.name.trim();
-    const baseTerms = [campaignRef, themeRef].filter(Boolean).join(" ").trim();
+    const baseTerms = [worldRef, themeRef].filter(Boolean).join(" ").trim();
     const queries = [
-      `${baseTerms} setting world campaign overview premise tone central conflict`,
+      `${baseTerms} setting world overview premise tone central conflict`,
       `${baseTerms} major players factions antagonists allies plot hooks current threats`,
     ];
 
     try {
-      const retrievedParts = await Promise.all(
-        queries.map(async (query) => {
-          const retrieved = await contextRetrievalService.retrieveContext(
-            query,
-            new Set<string>(),
-            vault,
-            campaignStore.frontPageEntity?.id,
-            isImage,
-          );
-          return retrieved.content.trim();
-        }),
-      );
+      const [retrievedParts, frontpageContext] = await Promise.all([
+        Promise.all(
+          queries.map(async (query) => {
+            const retrieved = await contextRetrievalService.retrieveContext(
+              query,
+              new Set<string>(),
+              vault,
+              worldStore.frontPageEntity?.id,
+              isImage,
+            );
+            return retrieved.content.trim();
+          }),
+        ),
+        buildFrontpageEntityContext(),
+      ]);
 
-      const uniqueParts = [...new Set(retrievedParts.filter(Boolean))];
+      const uniqueParts = [
+        ...new Set([...retrievedParts, frontpageContext].filter(Boolean)),
+      ];
       return uniqueParts.join("\n\n");
     } catch {
       return "";
     }
   };
 
-  const handleGenerateSummary = async () => {
-    if (hasSummary) {
-      const confirmed = window.confirm(
-        "Generate a new summary and replace the existing one?",
-      );
+  const handleGenerateBriefing = async () => {
+    if (hasBriefing) {
+      const confirmed = await uiStore.confirm({
+        title: "Regenerate Briefing",
+        message:
+          "This will replace your current world briefing with a new one generated from your notes. Continue?",
+        confirmLabel: "Regenerate",
+        cancelLabel: "Keep Existing",
+      });
       if (!confirmed) return;
     }
 
     const activeTheme = themeStore.activeTheme;
     const themeDescription = activeTheme.description.trim();
     const retrievedWorldContext = await buildRetrievedWorldContext();
-    const generated = await campaignStore.generateDescription(
-      `Write a front-page campaign summary for "${
-        campaignName.trim() || "this campaign world"
-      }".
+    const generated = await worldStore.generateBriefing(
+      `Write a high-level briefing for "${worldName.trim() || "this world"}".
 
 Theme:
 - Name: ${activeTheme.name}
 - Description: ${themeDescription}
-- Mood colors: primary ${activeTheme.tokens.primary}, accent ${activeTheme.tokens.accent}, background ${activeTheme.tokens.background}
 
 Requirements:
 - Start with 1 short atmospheric intro paragraph.
-- Follow with 3 to 5 markdown bullet points using bold labels such as **Current Conflict:**, **Key Players:**, **Immediate Hook:**, or **Threat Level:** when they fit the setting.
+- Follow with 3 to 5 markdown bullet points using bold labels such as **The Setting:**, **Current Conflict:**, **Key Players:**, or **Immediate Hook:** when they fit the world.
 - Clearly explain the setting, mood, and immediate premise.
-- Use specific details from the campaign instead of generic fantasy language.
+- Use specific details from the world instead of generic language.
 - Keep it readable, welcoming, and easy to scan.
 - Keep each bullet to one compact sentence.
 - Avoid headings and meta commentary.
 - Do not mention that you are an AI.
 
-Retrieved world context:
-${retrievedWorldContext || "No additional world context was retrieved."}
+Retrieved context:
+${retrievedWorldContext || "No additional context was retrieved."} 
 
-Match the summary to the theme's atmosphere and visual identity, and focus on what a new player or returning GM needs to know at a glance.`,
+Match the briefing to the theme atmosphere and visual identity, and focus on what a player or GM needs to know at a glance.`,
     );
-    if (generated.trim() && !campaignStore.error) {
+    if (generated.trim() && !worldStore.error) {
       draftDescription = generated;
       isDraftDirty = false;
-      isEditingSummary = false;
+      isEditingBriefing = false;
     }
   };
 
-  const startEditingSummary = async () => {
-    isEditingSummary = true;
+  const startEditingBriefing = async () => {
+    isEditingBriefing = true;
   };
 
   const openCoverEditor = () => {
@@ -278,10 +349,10 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
     showCoverLightbox = true;
   };
 
-  const cancelEditingSummary = () => {
-    draftDescription = summarySource;
+  const cancelEditingBriefing = () => {
+    draftDescription = briefingSource;
     isDraftDirty = false;
-    isEditingSummary = false;
+    isEditingBriefing = false;
   };
 
   const closeCoverEditor = () => {
@@ -292,24 +363,24 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
     if (!activeVaultId) return;
     const saved = await vault.saveImageToVault(
       file,
-      `campaign-${activeVaultId}`,
+      `world-${activeVaultId}`,
       file.name,
     );
-    await campaignStore.setCoverImage(saved.image);
+    await worldStore.setCoverImage(saved.image);
   };
 
   const handleGenerateCover = async () => {
     const themeName = themeStore.activeTheme.name;
     const themeDescription = themeStore.activeTheme.description.trim();
-    const summaryText = summaryPreview || "No campaign summary provided yet.";
+    const briefingText = briefingPreview || "No world briefing provided yet.";
     const retrievedWorldContext = await buildRetrievedWorldContext(true);
     try {
-      await campaignStore.generateCoverImage(
-        createCampaignCoverPrompt(
-          campaignName,
+      await worldStore.generateCoverImage(
+        createWorldCoverPrompt(
+          worldName,
           themeName,
           themeDescription,
-          summaryText,
+          briefingText,
           retrievedWorldContext,
         ),
       );
@@ -340,34 +411,34 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
     isEditingRecentLimit = false;
   };
 
-  const clearSummaryHoverTimer = () => {
-    if (summaryHoverTimer) {
-      clearTimeout(summaryHoverTimer);
-      summaryHoverTimer = null;
+  const clearBriefingHoverTimer = () => {
+    if (briefingHoverTimer) {
+      clearTimeout(briefingHoverTimer);
+      briefingHoverTimer = null;
     }
   };
 
-  const beginSummaryPreviewHover = () => {
-    if (!hasSummary || isEditingSummary) return;
-    clearSummaryHoverTimer();
-    summaryHoverTimer = setTimeout(() => {
-      isSummaryExpanded = true;
-      summaryHoverTimer = null;
+  const beginBriefingPreviewHover = () => {
+    if (!hasBriefing || isEditingBriefing) return;
+    clearBriefingHoverTimer();
+    briefingHoverTimer = setTimeout(() => {
+      isBriefingExpanded = true;
+      briefingHoverTimer = null;
     }, 800);
   };
 
-  const endSummaryPreviewHover = () => {
-    clearSummaryHoverTimer();
-    isSummaryExpanded = false;
+  const endBriefingPreviewHover = () => {
+    clearBriefingHoverTimer();
+    isBriefingExpanded = false;
   };
 
   onDestroy(() => {
-    clearSummaryHoverTimer();
+    clearBriefingHoverTimer();
   });
 
   $effect(() => {
-    if (!hasSummary || isEditingSummary) {
-      isSummaryExpanded = false;
+    if (!hasBriefing || isEditingBriefing) {
+      isBriefingExpanded = false;
     }
   });
 </script>
@@ -376,7 +447,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
   data-testid="front-page-shell"
   class="relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_48%),linear-gradient(180deg,rgba(10,10,10,0.92),rgba(5,5,8,0.98))] p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
 >
-  {#if !isCampaignReady}
+  {#if !isWorldReady}
     <div
       class="relative z-10 flex min-h-[inherit] items-center justify-center py-20"
     >
@@ -390,7 +461,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
           >
             Loading front page
           </p>
-          <p class="mt-2 text-sm text-theme-muted">Preparing campaign data…</p>
+          <p class="mt-2 text-sm text-theme-muted">Preparing data…</p>
         </div>
       </div>
     </div>
@@ -428,7 +499,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
           <ZenImageLightbox
             bind:show={showCoverLightbox}
             imageUrl={coverImageUrl}
-            title="Campaign cover"
+            title="World cover"
           />
         </div>
 
@@ -439,7 +510,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
             <button
               class="rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60"
               onclick={openCoverEditor}
-              disabled={campaignStore.isSaving}
+              disabled={worldStore.isSaving}
             >
               Change Image
             </button>
@@ -472,18 +543,18 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
         {#if showCoverEditor || !coverImage}
           <CoverImage
             hasImage={!!coverImage}
-            isSaving={campaignStore.isSaving}
+            isSaving={worldStore.isSaving}
             onDrop={handleUploadCover}
             onGenerate={handleGenerateCover}
             onCancel={coverImage ? closeCoverEditor : undefined}
           />
         {/if}
 
-        {#if campaignStore.error}
+        {#if worldStore.error}
           <p
             class="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
           >
-            {campaignStore.error}
+            {worldStore.error}
           </p>
         {/if}
 
@@ -492,11 +563,34 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
           class="flex flex-1 flex-col rounded-3xl border border-theme-border bg-theme-surface/80 p-4 sm:p-5 md:p-6"
         >
           <div class="mb-4 flex items-center justify-between">
-            <h2
-              class="font-header text-xs uppercase tracking-[0.22em] text-theme-muted"
-            >
-              Relevant Entities
-            </h2>
+            <div class="flex items-center gap-2">
+              <h2
+                class="font-header text-xs uppercase tracking-[0.22em] text-theme-muted"
+              >
+                Relevant Entities
+              </h2>
+              <div class="group relative flex items-center">
+                <span
+                  class="icon-[lucide--info] h-3.5 w-3.5 text-theme-muted/60 transition-colors hover:text-theme-primary cursor-help"
+                ></span>
+                <div
+                  class="absolute bottom-full left-0 mb-2 w-56 p-3 bg-theme-surface/95 backdrop-blur-md border border-theme-primary/30 rounded-xl text-[10px] leading-relaxed text-theme-text shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 translate-y-1 group-hover:translate-y-0"
+                >
+                  <p>
+                    Entities tagged or labeled with <strong
+                      class="text-theme-primary">frontpage</strong
+                    > will be pinned to the top of this section.
+                  </p>
+                  <!-- Decorative Corner -->
+                  <div
+                    class="absolute -top-px -left-px w-2 h-2 border-t border-l border-theme-primary/40 rounded-tl-lg"
+                  ></div>
+                  <div
+                    class="absolute -bottom-px -right-px w-2 h-2 border-b border-r border-theme-primary/40 rounded-br-lg"
+                  ></div>
+                </div>
+              </div>
+            </div>
             <div class="flex items-center gap-2">
               {#if isEditingRecentLimit}
                 <input
@@ -532,7 +626,7 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
             </div>
           </div>
 
-          {#if campaignStore.isLoading}
+          {#if worldStore.isLoading}
             <div class="py-10 text-center text-sm text-theme-muted">
               Loading front page…
             </div>
@@ -552,34 +646,34 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
         </section>
 
         <section
-          data-testid="summary-section"
+          data-testid="briefing-content-section"
           class="flex flex-col overflow-hidden rounded-3xl border border-theme-border bg-theme-surface/80"
         >
           <div class="relative overflow-hidden bg-theme-bg/80">
-            {#if isEditingSummary}
+            {#if isEditingBriefing}
               <textarea
-                bind:this={summaryTextarea}
+                bind:this={briefingTextarea}
                 bind:value={draftDescription}
                 oninput={() => (isDraftDirty = true)}
                 rows="1"
                 class="min-h-[12rem] w-full resize-none border-0 bg-transparent px-5 py-5 pb-16 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted/60 focus:outline-none sm:px-6 sm:py-6 sm:text-base overflow-hidden"
-                placeholder="Write a short campaign summary..."
+                placeholder="Write a short world briefing…"
               ></textarea>
             {:else}
               <div class="relative w-full px-5 py-5 sm:px-6 sm:py-6">
                 <div
-                  data-testid="summary-preview"
+                  data-testid="briefing-preview"
                   role="region"
-                  aria-label="Campaign summary preview"
-                  class={`relative flex-1 overflow-hidden prose prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-ul:my-4 prose-ul:list-disc prose-ul:pl-5 prose-li:my-1 prose-li:marker:text-theme-primary prose-strong:text-theme-primary prose-a:text-theme-primary transition-[max-height] duration-300 ease-out ${isSummaryExpanded ? "max-h-[48rem]" : "max-h-[14rem]"}`}
-                  onmouseenter={beginSummaryPreviewHover}
-                  onmouseleave={endSummaryPreviewHover}
-                  onfocusin={beginSummaryPreviewHover}
-                  onfocusout={endSummaryPreviewHover}
+                  aria-label="World briefing preview"
+                  class={`relative flex-1 overflow-hidden prose prose-invert max-w-none prose-p:my-0 prose-p:leading-relaxed prose-ul:my-4 prose-ul:list-disc prose-ul:pl-5 prose-li:my-1 prose-li:marker:text-theme-primary prose-strong:text-theme-primary prose-a:text-theme-primary transition-[max-height] duration-300 ease-out ${isBriefingExpanded ? "max-h-[48rem]" : "max-h-[14rem]"}`}
+                  onmouseenter={beginBriefingPreviewHover}
+                  onmouseleave={endBriefingPreviewHover}
+                  onfocusin={beginBriefingPreviewHover}
+                  onfocusout={endBriefingPreviewHover}
                 >
-                  {#if hasSummary}
-                    <ArticleRenderer content={summaryPreview} />
-                    {#if !isSummaryExpanded}
+                  {#if hasBriefing}
+                    <ArticleRenderer content={briefingPreview} />
+                    {#if !isBriefingExpanded}
                       <div
                         class="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-theme-bg/95"
                       ></div>
@@ -588,8 +682,8 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
                     <div
                       class="flex min-h-[12rem] items-center justify-center px-4 py-8 text-center text-sm text-theme-muted/70"
                     >
-                      No world brief yet. Use the edit or generate button to add
-                      one.
+                      No world briefing yet. Use the edit or generate button to
+                      add one.
                     </div>
                   {/if}
                 </div>
@@ -598,19 +692,19 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
                 >
                   <button
                     class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-                    onclick={startEditingSummary}
-                    disabled={campaignStore.isSaving}
-                    title="Edit summary"
-                    aria-label="Edit summary"
+                    onclick={startEditingBriefing}
+                    disabled={worldStore.isSaving}
+                    title="Edit briefing"
+                    aria-label="Edit briefing"
                   >
                     <span class="icon-[lucide--pencil] h-4 w-4"></span>
                   </button>
                   <button
                     class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
-                    onclick={handleGenerateSummary}
-                    disabled={campaignStore.isSaving}
-                    title="Generate summary"
-                    aria-label="Generate summary"
+                    onclick={handleGenerateBriefing}
+                    disabled={worldStore.isSaving}
+                    title="Generate briefing"
+                    aria-label="Generate briefing"
                   >
                     <span class="icon-[lucide--sparkles] h-4 w-4"></span>
                   </button>
@@ -619,21 +713,21 @@ Match the summary to the theme's atmosphere and visual identity, and focus on wh
             {/if}
           </div>
 
-          {#if isEditingSummary}
+          {#if isEditingBriefing}
             <div
               class="flex flex-wrap gap-2 border-t border-theme-border/60 px-5 py-4 sm:px-6"
             >
               <button
                 class="rounded-lg bg-theme-primary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-bg disabled:opacity-50"
                 onclick={handleSaveDescription}
-                disabled={campaignStore.isSaving || !isDraftDirty}
+                disabled={worldStore.isSaving || !isDraftDirty}
               >
-                Save Summary
+                Save Briefing
               </button>
               <button
                 class="rounded-lg px-4 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted hover:text-theme-text disabled:opacity-50"
-                onclick={cancelEditingSummary}
-                disabled={campaignStore.isSaving}
+                onclick={cancelEditingBriefing}
+                disabled={worldStore.isSaving}
               >
                 Cancel
               </button>

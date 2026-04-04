@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     dismissedLandingPage: false,
-    dismissedCampaignPage: true,
+    dismissedWorldPage: true,
     closeSidebar: mocks.closeSidebar,
     closeZenMode: mocks.closeZenMode,
     toggleWelcomeScreen: mocks.toggleWelcomeScreen,
@@ -28,7 +28,7 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 describe("openFrontPage", () => {
   beforeEach(() => {
     uiStore.dismissedLandingPage = false;
-    uiStore.dismissedCampaignPage = true;
+    uiStore.dismissedWorldPage = true;
     mocks.closeSidebar.mockClear();
     mocks.closeZenMode.mockClear();
     mocks.toggleWelcomeScreen.mockClear();
@@ -42,7 +42,7 @@ describe("openFrontPage", () => {
     expect(uiStore.closeZenMode).toHaveBeenCalled();
     expect(uiStore.toggleWelcomeScreen).toHaveBeenCalledWith(true);
     expect(uiStore.dismissedLandingPage).toBe(true);
-    expect(uiStore.dismissedCampaignPage).toBe(false);
+    expect(uiStore.dismissedWorldPage).toBe(false);
     expect(vault.selectedEntityId).toBe(null);
   });
 });

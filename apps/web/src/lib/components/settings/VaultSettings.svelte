@@ -81,7 +81,7 @@
       <button
         onclick={async () => {
           try {
-            await demoService.convertToCampaign();
+            await demoService.convertToWorld();
             const url = new URL(page.url.href);
             url.searchParams.delete("demo");
             goto(url.toString(), { replaceState: true });
@@ -150,11 +150,15 @@
             <button
               class="px-4 py-2 border border-amber-500/50 text-amber-500 hover:bg-amber-500/10 rounded transition-colors text-xs font-bold uppercase tracking-wider flex items-center gap-2"
               onclick={async () => {
-                if (
-                  confirm(
+                const confirmed = await uiStore.confirm({
+                  title: "Squash History",
+                  message:
                     "This will scan for .conflict files, keep only the newest version of each file, and remove the rest. Continue?",
-                  )
-                ) {
+                  confirmLabel: "Squash",
+                  cancelLabel: "Cancel",
+                  isDangerous: true,
+                });
+                if (confirmed) {
                   await vault.cleanupConflictFiles();
                 }
               }}

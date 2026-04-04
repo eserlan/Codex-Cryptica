@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { chatCommands } from "./chat-commands";
 import { oracle } from "../stores/oracle.svelte";
+import { uiStore } from "../stores/ui.svelte";
 
 // Mock the oracle store
 vi.mock("../stores/oracle.svelte", () => ({
@@ -8,6 +9,13 @@ vi.mock("../stores/oracle.svelte", () => ({
     ask: vi.fn(),
     startWizard: vi.fn(),
     clearMessages: vi.fn(),
+  },
+}));
+
+// Mock uiStore
+vi.mock("../stores/ui.svelte", () => ({
+  uiStore: {
+    confirm: vi.fn(),
   },
 }));
 
@@ -83,17 +91,17 @@ describe("chatCommands", () => {
   });
 
   describe("/clear", () => {
-    it("should clear messages if confirmed", () => {
-      vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    it("should clear messages if confirmed", async () => {
+      vi.mocked(uiStore.confirm).mockResolvedValue(true);
       const cmd = chatCommands.find((c) => c.name === "/clear");
-      cmd?.handler("");
+      await cmd?.handler("");
       expect(oracle.clearMessages).toHaveBeenCalled();
     });
 
-    it("should NOT clear messages if cancelled", () => {
-      vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    it("should NOT clear messages if cancelled", async () => {
+      vi.mocked(uiStore.confirm).mockResolvedValue(false);
       const cmd = chatCommands.find((c) => c.name === "/clear");
-      cmd?.handler("");
+      await cmd?.handler("");
       expect(oracle.clearMessages).not.toHaveBeenCalled();
     });
   });

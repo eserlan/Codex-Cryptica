@@ -111,11 +111,15 @@
 
   const handleDelete = async () => {
     if (!entity) return;
-    if (
-      confirm(
-        `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
-      )
-    ) {
+    const confirmed = await uiStore.confirm({
+      title: "Delete Entity",
+      message: `Are you sure you want to permanently delete "${entity.title}"? This action cannot be undone.`,
+      confirmLabel: "Delete permanently",
+      cancelLabel: "Keep entity",
+      isDangerous: true,
+    });
+
+    if (confirmed) {
       try {
         await vault.deleteEntity(entity.id);
         onClose();

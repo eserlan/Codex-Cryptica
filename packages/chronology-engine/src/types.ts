@@ -20,7 +20,7 @@ export interface CalendarMonth {
 /**
  * Rules for how time is structured in a campaign vault.
  */
-export interface CampaignCalendar {
+export interface WorldCalendar {
   useGregorian: boolean;
   months: CalendarMonth[];
   daysPerWeek: number;

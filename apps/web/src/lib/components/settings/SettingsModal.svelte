@@ -29,12 +29,16 @@
     { id: "about", label: "About", icon: "icon-[lucide--info]" },
   ];
 
-  const close = () => {
+  const close = async () => {
     if (uiStore.isImporting) {
       if (
-        confirm(
-          "An import is in progress or pending review. Closing now will cancel the process and you may lose identified entities. Are you sure you want to abort?",
-        )
+        await uiStore.confirm({
+          title: "Confirm Change",
+          message:
+            "An import is in progress or pending review. Closing now will cancel the process and you may lose identified entities. Are you sure you want to abort?",
+          confirmLabel: "Abort",
+          isDangerous: false,
+        })
       ) {
         uiStore.abortActiveOperations();
         uiStore.closeSettings();

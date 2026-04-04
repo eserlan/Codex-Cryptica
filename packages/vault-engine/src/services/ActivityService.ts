@@ -1,5 +1,5 @@
 import Dexie from "dexie";
-import type { RecentActivity } from "./CampaignService";
+import type { RecentActivity } from "./WorldService";
 
 interface GraphEntityRecord {
   id: string;

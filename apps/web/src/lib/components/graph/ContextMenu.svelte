@@ -212,7 +212,14 @@
         ? `Are you sure you want to delete ${count} nodes and all their connections? This cannot be undone.`
         : "Are you sure you want to delete this node and all its connections? This cannot be undone.";
 
-    if (window.confirm(message)) {
+    if (
+      await ui.confirm({
+        title: "Confirm Action",
+        message,
+        confirmLabel: "Delete",
+        isDangerous: true,
+      })
+    ) {
       contextMenuOpen = false;
       canvasPickerOpen = false;
       try {

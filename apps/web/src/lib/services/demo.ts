@@ -59,7 +59,7 @@ class DemoService implements IDemoActions {
     }
   }
 
-  async convertToCampaign(): Promise<string> {
+  async convertToWorld(): Promise<string> {
     try {
       const theme = uiStore.activeDemoTheme || "fantasy";
       const name = `My ${theme.charAt(0).toUpperCase() + theme.slice(1)} Campaign`;

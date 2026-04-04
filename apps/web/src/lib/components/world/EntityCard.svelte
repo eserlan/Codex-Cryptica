@@ -36,12 +36,12 @@
   );
 
   const openInGraph = () => {
-    uiStore.dismissedCampaignPage = true;
+    uiStore.dismissedWorldPage = true;
     vault.selectedEntityId = activity.id;
   };
 
   const openInZenMode = () => {
-    uiStore.dismissedCampaignPage = true;
+    uiStore.dismissedWorldPage = true;
     vault.selectedEntityId = activity.id;
     uiStore.openZenMode(activity.id);
   };

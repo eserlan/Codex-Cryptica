@@ -4,6 +4,7 @@ import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
+import { buildContextDistillationPrompt } from "./prompts/context-distillation";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 
@@ -41,6 +42,30 @@ export class DefaultTextGenerationService implements TextGenerationService {
         err,
       );
       return query;
+    }
+  }
+
+  async distillContext(
+    apiKey: string,
+    context: string,
+    modelName: string,
+  ): Promise<string> {
+    if (!isAIEnabled()) return context;
+    if (!context.trim()) return context;
+
+    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const prompt = buildContextDistillationPrompt(context);
+
+    try {
+      const result = await model.generateContent(prompt);
+      const distilled = result.response.text().trim();
+      return distilled || context;
+    } catch (err) {
+      console.warn(
+        "[TextGenerationService] Context distillation failed, using raw context.",
+        err,
+      );
+      return context;
     }
   }
 

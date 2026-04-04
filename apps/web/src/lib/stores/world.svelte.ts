@@ -1,7 +1,7 @@
 import {
   ActivityServiceImplementation,
-  CampaignServiceImplementation,
-  type CampaignMetadata,
+  WorldServiceImplementation,
+  type WorldMetadata,
   type FrontPageEntity,
   type RecentActivity,
 } from "@codex/vault-engine";
@@ -11,9 +11,9 @@ import { oracle } from "$lib/stores/oracle.svelte";
 import { imageGenerationService } from "$lib/services/ai/image-generation.service";
 import { textGenerationService } from "$lib/services/ai/text-generation.service";
 
-const CAMPAIGN_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+const WORLD_IMAGE_MODEL = "gemini-3.1-flash-image-preview";
 
-const campaignService = new CampaignServiceImplementation({
+const worldService = new WorldServiceImplementation({
   db: entityDb,
   imageGenerator: imageGenerationService,
   assetManager: {
@@ -22,7 +22,7 @@ const campaignService = new CampaignServiceImplementation({
     },
   },
   getApiKey: () => oracle.effectiveApiKey || "",
-  getImageModel: () => CAMPAIGN_IMAGE_MODEL,
+  getImageModel: () => WORLD_IMAGE_MODEL,
   getSummaryModel: () => oracle.modelName,
   getSummaryGenerator: () => textGenerationService,
 });
@@ -31,9 +31,9 @@ const activityService = new ActivityServiceImplementation({
   db: entityDb,
 });
 
-export class CampaignStore {
+export class WorldStore {
   activeVaultId = $state<string | null>(null);
-  metadata = $state<CampaignMetadata | null>(null);
+  metadata = $state<WorldMetadata | null>(null);
   frontPageEntity = $state<FrontPageEntity | null>(null);
   recentActivity = $state<RecentActivity[]>([]);
   isLoading = $state(false);
@@ -41,7 +41,7 @@ export class CampaignStore {
   error = $state<string | null>(null);
 
   constructor(
-    private campaignServiceImpl: CampaignServiceImplementation = campaignService,
+    private worldServiceImpl: WorldServiceImplementation = worldService,
     private activityServiceImpl: ActivityServiceImplementation = activityService,
   ) {}
 
@@ -62,8 +62,8 @@ export class CampaignStore {
     this.error = null;
     try {
       const [metadata, frontPageEntity, recentActivity] = await Promise.all([
-        this.campaignServiceImpl.getMetadata(vaultId),
-        this.campaignServiceImpl.getFrontPageEntity(vaultId),
+        this.worldServiceImpl.getMetadata(vaultId),
+        this.worldServiceImpl.getFrontPageEntity(vaultId),
         this.activityServiceImpl.getRecentActivity(vaultId, limit),
       ]);
 
@@ -78,7 +78,7 @@ export class CampaignStore {
       if (loadId !== this.loadSequence || this.activeVaultId !== vaultId) {
         return;
       }
-      this.error = err?.message || "Failed to load campaign front page.";
+      this.error = err?.message || "Failed to load world front page.";
     } finally {
       if (loadId === this.loadSequence && this.activeVaultId === vaultId) {
         this.isLoading = false;
@@ -95,12 +95,12 @@ export class CampaignStore {
     this.isSaving = true;
     this.error = null;
     try {
-      await this.campaignServiceImpl.updateMetadata(this.activeVaultId, {
+      await this.worldServiceImpl.updateMetadata(this.activeVaultId, {
         description,
       });
       await this.refresh();
     } catch (err: any) {
-      this.error = err?.message || "Failed to save campaign summary.";
+      this.error = err?.message || "Failed to save world briefing.";
     } finally {
       this.isSaving = false;
     }
@@ -111,31 +111,30 @@ export class CampaignStore {
     this.isSaving = true;
     this.error = null;
     try {
-      await this.campaignServiceImpl.updateMetadata(this.activeVaultId, {
+      await this.worldServiceImpl.updateMetadata(this.activeVaultId, {
         coverImage,
       });
       await this.refresh();
     } catch (err: any) {
-      this.error = err?.message || "Failed to save campaign image.";
+      this.error = err?.message || "Failed to save world image.";
     } finally {
       this.isSaving = false;
     }
   }
 
-  async generateDescription(promptBase: string) {
+  async generateBriefing(promptBase: string) {
     if (!this.activeVaultId) return "";
     this.isSaving = true;
     this.error = null;
     try {
-      const generated =
-        await this.campaignServiceImpl.generateCampaignDescription(
-          this.activeVaultId,
-          promptBase,
-        );
+      const generated = await this.worldServiceImpl.generateWorldBriefing(
+        this.activeVaultId,
+        promptBase,
+      );
       await this.refresh();
       return generated;
     } catch (err: any) {
-      this.error = err?.message || "Failed to generate campaign summary.";
+      this.error = err?.message || "Failed to generate world briefing.";
       return "";
     } finally {
       this.isSaving = false;
@@ -147,14 +146,14 @@ export class CampaignStore {
     this.isSaving = true;
     this.error = null;
     try {
-      const image = await this.campaignServiceImpl.generateCoverImage(
+      const image = await this.worldServiceImpl.generateCoverImage(
         this.activeVaultId,
         promptBase,
       );
       await this.refresh();
       return image;
     } catch (err: any) {
-      this.error = err?.message || "Failed to generate cover image.";
+      this.error = err?.message || "Failed to generate world image.";
       return "";
     } finally {
       this.isSaving = false;
@@ -162,7 +161,7 @@ export class CampaignStore {
   }
 }
 
-const CAMPAIGN_KEY = "__codex_campaign_store_instance__";
-export const campaignStore: CampaignStore =
-  (globalThis as any)[CAMPAIGN_KEY] ??
-  ((globalThis as any)[CAMPAIGN_KEY] = new CampaignStore());
+const WORLD_KEY = "__codex_world_store_instance__";
+export const worldStore: WorldStore =
+  (globalThis as any)[WORLD_KEY] ??
+  ((globalThis as any)[WORLD_KEY] = new WorldStore());

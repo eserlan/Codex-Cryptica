@@ -113,9 +113,12 @@
           class="px-3 py-1.5 bg-theme-surface border border-theme-border text-red-500/70 text-[10px] font-bold rounded-lg hover:text-red-400 hover:border-red-400 transition-colors flex items-center gap-2"
           onclick={async () => {
             if (
-              confirm(
-                "Are you sure you want to delete this map? This action cannot be undone.",
-              )
+              await uiStore.confirm({
+                title: "Clear Map",
+                message:
+                  "Are you sure you want to delete this map? This action cannot be undone.",
+                isDangerous: true,
+              })
             ) {
               await vault.deleteMap(mapStore.activeMapId!);
             }

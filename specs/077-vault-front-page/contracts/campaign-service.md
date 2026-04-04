@@ -1,9 +1,9 @@
-# Contract: CampaignService
+# Contract: WorldService
 
-The `CampaignService` and `ActivityService` MUST be implemented as **classes** that accept their dependencies via the constructor, allowing for unit tests to pass in mock databases or other mocked services.
+The `WorldService` and `ActivityService` MUST be implemented as **classes** that accept their dependencies via the constructor, allowing for unit tests to pass in mock databases or other mocked services.
 
 ```typescript
-export interface CampaignMetadata {
+export interface WorldMetadata {
   id: string;
   name: string;
   tagline?: string;
@@ -32,23 +32,23 @@ export interface FrontPageEntity {
 }
 
 /**
- * Interface definition for CampaignService.
+ * Interface definition for WorldService.
  * Implementation class must be exported alongside a default singleton instance.
  */
-export interface CampaignService {
+export interface WorldService {
   /**
    * Fetches the primary metadata for the campaign.
    * Returns an empty `name` when no saved vault title exists so the UI can
    * fall back to the readable vault name.
    */
-  getMetadata(vaultId: string): Promise<CampaignMetadata>;
+  getMetadata(vaultId: string): Promise<WorldMetadata>;
 
   /**
    * Updates vault-level metadata (description, cover image).
    */
   updateMetadata(
     vaultId: string,
-    metadata: Partial<CampaignMetadata>,
+    metadata: Partial<WorldMetadata>,
   ): Promise<void>;
 
   /**
@@ -74,14 +74,14 @@ export interface CampaignService {
 ## Implementation Example (with DI)
 
 ```typescript
-export class CampaignServiceImplementation implements CampaignService {
+export class WorldServiceImplementation implements WorldService {
   constructor(private db: EntityDb = entityDb) {}
 
-  async getMetadata(vaultId: string): Promise<CampaignMetadata> {
+  async getMetadata(vaultId: string): Promise<WorldMetadata> {
     const record = await this.db.vaultMetadata.get(vaultId);
     // ... logic
   }
 }
 
-export const campaignService = new CampaignServiceImplementation();
+export const worldService = new WorldServiceImplementation();
 ```

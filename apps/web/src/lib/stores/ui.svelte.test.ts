@@ -37,7 +37,7 @@ describe("UIStore", () => {
     uiStore.activeSettingsTab = "vault";
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = false;
-    uiStore.dismissedCampaignPage = false;
+    uiStore.dismissedWorldPage = false;
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
   });

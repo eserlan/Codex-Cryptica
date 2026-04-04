@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { CampaignServiceImplementation } from "./CampaignService";
+import { WorldServiceImplementation } from "./WorldService";
 
 const createGraphEntitiesMock = ({
   tagRecords = [],
@@ -48,7 +48,7 @@ const createGraphEntitiesMock = ({
   orderBy: vi.fn(),
 });
 
-describe("CampaignServiceImplementation", () => {
+describe("WorldServiceImplementation", () => {
   it("returns vault metadata with fallbacks", async () => {
     const get = vi.fn().mockResolvedValue({
       id: "vault-1",
@@ -59,7 +59,7 @@ describe("CampaignServiceImplementation", () => {
       lastModified: 123,
     });
     const put = vi.fn().mockResolvedValue(undefined);
-    const service = new CampaignServiceImplementation({
+    const service = new WorldServiceImplementation({
       db: {
         vaultMetadata: { get, put } as any,
         graphEntities: { where: vi.fn() } as any,
@@ -79,7 +79,7 @@ describe("CampaignServiceImplementation", () => {
 
   it("returns an empty name when vault metadata is missing", async () => {
     const get = vi.fn().mockResolvedValue(undefined);
-    const service = new CampaignServiceImplementation({
+    const service = new WorldServiceImplementation({
       db: {
         vaultMetadata: { get, put: vi.fn() } as any,
         graphEntities: createGraphEntitiesMock() as any,
@@ -116,7 +116,7 @@ describe("CampaignServiceImplementation", () => {
         lastModified: 10,
       });
     const put = vi.fn().mockResolvedValue(undefined);
-    const service = new CampaignServiceImplementation({
+    const service = new WorldServiceImplementation({
       db: {
         vaultMetadata: { get, put } as any,
         graphEntities: createGraphEntitiesMock() as any,
@@ -155,7 +155,7 @@ describe("CampaignServiceImplementation", () => {
         lastModified: 20,
       },
     ];
-    const service = new CampaignServiceImplementation({
+    const service = new WorldServiceImplementation({
       db: {
         vaultMetadata: { get: vi.fn(), put: vi.fn() } as any,
         graphEntities: createGraphEntitiesMock({
@@ -178,7 +178,7 @@ describe("CampaignServiceImplementation", () => {
   });
 
   it("returns recent activity cards from graph data and entity content", async () => {
-    const service = new CampaignServiceImplementation({
+    const service = new WorldServiceImplementation({
       db: {
         vaultMetadata: { get: vi.fn(), put: vi.fn() } as any,
         graphEntities: createGraphEntitiesMock({

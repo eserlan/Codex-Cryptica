@@ -1,5 +1,6 @@
 <script lang="ts">
   import { oracle } from "$lib/stores/oracle.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { onMount } from "svelte";
   import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
 
@@ -9,9 +10,13 @@
 
   const handleClear = async () => {
     if (
-      confirm(
-        "Are you sure you want to remove your API key? The Oracle will continue working via the system proxy.",
-      )
+      await uiStore.confirm({
+        title: "Reset Settings",
+        message:
+          "Are you sure you want to remove your API key? The Oracle will continue working via the system proxy.",
+        confirmLabel: "Remove Key",
+        isDangerous: true,
+      })
     ) {
       await oracle.clearKey();
     }

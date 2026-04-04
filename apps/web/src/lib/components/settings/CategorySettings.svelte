@@ -1,5 +1,6 @@
 <script lang="ts">
   import { categories } from "$lib/stores/categories.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { sanitizeId } from "$lib/utils/markdown";
   import { getIconClass } from "$lib/utils/icon";
   import { fade, scale } from "svelte/transition";
@@ -144,11 +145,14 @@
 
         <!-- Delete -->
         <button
-          onclick={() => {
+          onclick={async () => {
             if (
-              confirm(
-                `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
-              )
+              await uiStore.confirm({
+                title: "Delete Category",
+                message: `Delete category "${cat.label}"? Entities using this category will fallback to default style.`,
+                confirmLabel: "Delete",
+                isDangerous: true,
+              })
             ) {
               categories.removeCategory(cat.id);
             }
