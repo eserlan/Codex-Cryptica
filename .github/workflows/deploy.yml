@@ -2,7 +2,11 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["**"]
+    branches-ignore: ["blog-content"]
+    paths-ignore:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
   workflow_dispatch:
 
 concurrency:
