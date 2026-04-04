@@ -131,6 +131,9 @@ export class WorldStore {
         this.activeVaultId,
         promptBase,
       );
+      if (!generated) {
+        throw new Error("AI returned an empty world briefing.");
+      }
       await this.refresh();
       return generated;
     } catch (err: any) {

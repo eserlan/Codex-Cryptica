@@ -37,7 +37,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: "body",
     title: "Welcome to Codex Cryptica",
     content:
-      "This tool gives you absolute control over your campaign notes. Everything stays on your computer for total privacy.",
+      "This tool gives you absolute control over your world notes. Everything stays on your computer for total privacy.",
     position: "bottom",
   },
   {
@@ -45,7 +45,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="open-vault-button"]',
     title: "Vault Management",
     content:
-      "This is your active story. Click here to switch between different campaigns or create a new vault.",
+      "This is your active story. Click here to switch between different worlds or create a new vault.",
     position: "bottom",
   },
   {
@@ -61,7 +61,7 @@ export const ONBOARDING_TOUR: GuideStep[] = [
     targetSelector: '[data-testid="nav-map"]',
     title: "Tactical Maps",
     content:
-      "Plot your campaign data onto geographic or tactical canvases with persistent pins and Fog of War.",
+      "Plot your world data onto geographic or tactical canvases with persistent pins and Fog of War.",
     position: "bottom",
   },
   {
@@ -146,16 +146,16 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
   },
   "front-page": {
     id: "front-page",
-    title: "Campaign Front Page",
+    title: "World Front Page",
     content:
-      "Use the summary field to edit the campaign blurb directly. If it is empty, the Generate Summary button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Summary. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
+      "Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.",
     icon: "icon-[lucide--house]",
   },
   "local-folder-sync": {
     id: "local-folder-sync",
     title: "Local Folder Sync",
     content:
-      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.",
+      "Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your world data seamlessly.",
     icon: "icon-[lucide--folder-sync]",
   },
   "total-privacy": {
@@ -204,7 +204,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "vault-switcher",
     title: "Switching Stories",
     content:
-      "Change your campaign. Click the folder name at the top to switch to a different story.",
+      "Change your world. Click the folder name at the top to switch to a different story.",
     icon: "icon-[lucide--folder-sync]",
   },
   "era-date-picker": {
@@ -239,7 +239,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "demo-mode",
     title: "Demo Mode",
     content:
-      "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.",
+      "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
   "lite-mode": {
@@ -260,7 +260,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "map-mode",
     title: "Map Mode",
     content:
-      "Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
+      "Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
     icon: "icon-[lucide--map]",
   },
   "spatial-canvas": {
@@ -288,7 +288,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your campaign entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {

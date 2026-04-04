@@ -62,7 +62,7 @@ class DemoService implements IDemoActions {
   async convertToWorld(): Promise<string> {
     try {
       const theme = uiStore.activeDemoTheme || "fantasy";
-      const name = `My ${theme.charAt(0).toUpperCase() + theme.slice(1)} Campaign`;
+      const name = `My ${theme.charAt(0).toUpperCase() + theme.slice(1)} World`;
 
       // 1. Create a real vault
       const vaultId = await vaultRegistry.createVault(name);

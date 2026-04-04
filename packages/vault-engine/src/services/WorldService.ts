@@ -337,7 +337,9 @@ export class WorldServiceImplementation {
     );
 
     const description = result.trim();
-    await this.updateMetadata(vaultId, { description });
+    if (description) {
+      await this.updateMetadata(vaultId, { description });
+    }
     return description;
   }
 }
