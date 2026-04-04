@@ -1,8 +1,8 @@
 ---
 id: why-codex-cryptica-over-obsidian
 slug: why-codex-cryptica-over-obsidian
-title: "Why I Built Codex Cryptica Instead of Just Using Obsidian"
-description: "A practical look at why Codex Cryptica exists, and why a purpose-built worldbuilding tool can feel better than assembling a workflow inside Obsidian."
+title: "Why Codex Cryptica Takes a Different Approach Than Obsidian"
+description: "Why Codex Cryptica is shaped around worldbuilding from the start, instead of asking you to assemble the workflow yourself."
 keywords:
   [
     "Obsidian Alternative",
@@ -15,126 +15,57 @@ keywords:
 publishedAt: 2026-04-05T12:00:00Z
 ---
 
-I like Obsidian.
+![Why Codex Cryptica](https://assets.codexcryptica.com/images/blog/cc-over-obsidian/cc-over-obsidian-hero.png)
 
-It is flexible, local-first, and very good at what it does.
+Obsidian is a strong tool. It is flexible, local-first, and clearly works well for a lot of people.
 
-But after a while I realized I was spending too much time building a system inside Obsidian, and not enough time actually building my world.
+But as I looked at how people were using it for worldbuilding, the tradeoff became hard to ignore: many were spending as much time assembling the system as building the setting. That is where Codex Cryptica comes from. Not from the idea that Obsidian is bad, but from the idea that worldbuilding deserves a tool shaped around it from the start.
 
-That was a big part of why I started Codex Cryptica.
+## 1. The Setup Tax
 
-Not because Obsidian is bad. It clearly is not.
+Obsidian gives you a blank slate. For some people, that is the appeal.
 
-But because some of the things people regularly run into with Obsidian are exactly the things I wanted to solve.
+For worldbuilding, it also means a lot of the workflow has to be built by hand: templates, metadata conventions, folder structures, naming rules, and plugins. That can be satisfying if you like designing systems. It is less satisfying if you just want to start building your world.
 
-## 1. Too Much Setup Before You Can Really Use It
+Codex Cryptica takes a different approach. Structure is built in. Entities, relationships, and graph-based exploration are part of the product from the start.
 
-One of Obsidian's strengths is flexibility.
+## 2. Product Versus Kit
 
-It is also one of its biggest weaknesses.
+A lot of Obsidian’s power comes from plugins. That is both its strength and its weakness.
 
-You do not just open it and start with a complete worldbuilding workflow. You usually have to assemble one:
+Once your workflow depends on a stack of add-ons for core tasks, the experience can start to feel less like a product and more like a kit. Codex Cryptica is built around native worldbuilding workflows. The important parts are built into the core, not assembled later.
 
-- templates
-- frontmatter conventions
-- folder structures
-- naming rules
-- plugin combinations
+## 3. A Graph You Can Work In
 
-That can be fun for some people.
+Obsidian’s graph is visually impressive, but for many people, it is more of a visual layer than a real workspace. It shows that things are connected, but does less to help you work through those connections directly.
 
-But it also means a lot of users spend time building the system before they can build inside the system.
+In Codex Cryptica, the graph is the workspace. It is where you explore, navigate, and understand the structure of your setting.
 
-In Codex Cryptica, structure is there from the start. You do not need to design your own framework just to begin.
+## 4. Relationships as Structure
 
-## 2. Too Much Depends on Plugins
+In a standard note-taking tool, relationships are usually implied through links in text. That works, but it also means the structure of the world is often buried inside prose.
 
-A lot of what makes Obsidian powerful comes from plugins.
+Codex Cryptica treats entities and connections as first-class structure. The point is not just to link information, but to make the world itself easier to navigate.
 
-That is great until your workflow starts depending on a stack of community add-ons to do things that feel central to the way you work.
+## 5. Growth Should Increase Discovery
 
-At that point, the tool can start to feel less like a product and more like a kit.
+As a note system grows, so does the maintenance burden. More notes, more links, and more metadata mean more chances for drift.
 
-Codex Cryptica is built around the core worldbuilding workflow from the beginning. The important stuff is meant to be native, not something you patch together afterward.
-
-## 3. The Graph Is Cool, but Often Not That Useful
-
-This is probably the biggest one for me.
-
-Obsidian has a graph view, and it looks great.
-
-But in practice, for many people, it is more of a visual extra than an actual working surface. It shows that things are connected, but it does not do enough to help you work through those connections in a useful way.
-
-In Codex Cryptica, the graph is the main interface.
-
-Not a decoration. Not a bonus view. Not a thing you open once in a while to admire the shape of your vault.
-
-It is the place where you explore, navigate, and understand your setting.
-
-## 4. Relationships Are Implied Instead of Explicit
-
-In Obsidian, a relationship is usually just a link in text.
-
-That works, but it also means the meaning of the relationship is often buried inside the note itself.
-
-Codex Cryptica is built around entities and connections as first-class parts of the model.
-
-That means the structure of the world is not something hidden in paragraphs. It is visible and navigable.
-
-## 5. Scale Becomes Messy
-
-Obsidian works very well when your system is under control.
-
-The problem is that keeping it under control is often your job.
-
-As the vault grows, so does the burden of maintaining consistency. More notes, more links, more metadata, more chances for drift.
-
-Codex Cryptica is built around the idea that growth should increase discovery, not increase maintenance.
-
-The larger your world gets, the more important it becomes to see structure clearly instead of managing chaos manually.
-
-## What I Wanted Instead
-
-I wanted a tool where:
-
-- setup is minimal
-- structure exists from the start
-- relationships matter as much as notes
-- the graph is actually usable
-- adding more content makes the world richer, not harder to manage
-
-That is the direction behind Codex Cryptica.
-
-Not a replacement for everything Obsidian does.
-
-But a tool built specifically for people who hit the point where note-taking stops being enough.
+Codex Cryptica is built around a different idea: growth should increase discovery, not maintenance. The larger the setting gets, the more important it becomes for the tool to surface structure clearly instead of forcing you to manage it by hand.
 
 ## The Real Difference
 
-For me, the difference is not that Obsidian is wrong.
+Obsidian gives you a flexible foundation. Codex Cryptica aims to give you a worldbuilding architecture.
 
-It is that Obsidian asks you to assemble your own workflow, while Codex Cryptica tries to make the worldbuilding workflow the product itself.
+That means:
 
-That changes a lot:
+- Less setup
+- Less plugin hunting
+- Less manual maintenance
+- More time spent building the world
 
-- less setup
-- less plugin hunting
-- less manual maintenance
-- more structure visible by default
-- more time spent building the world instead of the system around it
+That is why Codex Cryptica exists.
 
-That is the reason it exists.
+## Enter the Codex
 
-## Curious How Many Other People Hit the Same Wall
-
-If you have used Obsidian for worldbuilding, where did it start to break down for you?
-
-Was it setup?
-
-Plugins?
-
-Graph usability?
-
-Scale?
-
-Or something else entirely?
+If you have reached the point where note-taking is no longer enough, Codex Cryptica is built for what comes next.
