@@ -1,10 +1,10 @@
-import { getBlogIndex } from "$lib/content/loader";
+import { loadBlogIndex } from "$lib/content/blog-content";
 import type { PageLoad } from "./$types";
 
-export const prerender = true;
+export const prerender = false;
 
 export const load: PageLoad = async () => {
-  const articles = getBlogIndex();
+  const articles = await loadBlogIndex();
   return {
     articles,
   };

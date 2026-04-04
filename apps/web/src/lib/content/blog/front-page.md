@@ -15,7 +15,7 @@ keywords:
 publishedAt: 2026-04-04T12:00:00Z
 ---
 
-![The Front Page](https://assets.codexchronica.com/images/blog/front-page/front-page-hero.png)
+![The Front Page](https://assets.codexcryptica.com/images/blog/front-page/front-page-hero.png)
 
 Your archive can hold a lot of lore, but the front page is where the shape of the world becomes readable again.
 
@@ -32,7 +32,7 @@ The front page pulls together the details you need fastest:
 
 That combination matters because world-building is rarely static. A setting evolves one note at a time. The front page gives you a place to see that movement without digging through the whole archive.
 
-![Briefing and Cover](https://assets.codexchronica.com/images/blog/front-page/front-page-theme.png)
+![Briefing and Cover](https://assets.codexcryptica.com/images/blog/front-page/front-page-theme.png)
 
 ## Theme Comes First
 

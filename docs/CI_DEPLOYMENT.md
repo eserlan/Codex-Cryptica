@@ -39,6 +39,12 @@ When a Pull Request is merged into `main`:
 
 **Note:** Because of the `concurrency` setting in `deploy.yml`, you may see "Cancelled" runs in your Actions tab after a merge. This is normal behavior; the system is simply cancelling the "Merge" deployment in favor of the "Version Bump" deployment to ensure the live site always shows the correct version number.
 
+## Blog Content Deployment
+
+The blog now has its own content-only deployment path that publishes markdown into a dedicated `blog-content` branch.
+
+See [`docs/BLOG_DEPLOYMENT.md`](/home/espen/proj/Codex-Arcana/docs/BLOG_DEPLOYMENT.md) for the workflow, runtime fetch path, and branch layout.
+
 ## Environment Variables
 
 The following secrets must be configured in GitHub for the build to succeed:

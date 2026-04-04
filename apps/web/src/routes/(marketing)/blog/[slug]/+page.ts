@@ -1,11 +1,11 @@
-import { getBlogArticle } from "$lib/content/loader";
+import { loadBlogArticle } from "$lib/content/blog-content";
 import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
 
-export const prerender = true;
+export const prerender = false;
 
 export const load: PageLoad = async ({ params }) => {
-  const article = getBlogArticle(params.slug);
+  const article = await loadBlogArticle(params.slug);
 
   if (!article) {
     throw error(404, "Transmission not found in the archive.");

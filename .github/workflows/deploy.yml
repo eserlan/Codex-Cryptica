@@ -60,6 +60,7 @@ jobs:
           BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
         run: |
           npm run build --workspace=web
           cp apps/web/build/index.html apps/web/build/404.html
