@@ -31,6 +31,7 @@ The workflow in [`.github/workflows/deploy-blog-content.yml`](/home/espen/proj/C
 into the `blog/` directory on the `blog-content` branch.
 
 That keeps blog updates decoupled from the full web build and deploy.
+The blog publish job also disables local git hooks, so it does not run the repo-wide lint/test pipeline when it commits the generated branch.
 
 ## Existing app deploys
 

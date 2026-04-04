@@ -41,6 +41,7 @@ jobs:
       - name: Commit and Push Blog Branch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HUSKY: 0
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -50,5 +51,5 @@ jobs:
             echo "No blog content changes to publish."
             exit 0
           fi
-          git commit -m "📝 Update blog content"
-          git push --force-with-lease origin blog-content
+          git commit --no-verify -m "📝 Update blog content"
+          git push --no-verify --force-with-lease origin blog-content
