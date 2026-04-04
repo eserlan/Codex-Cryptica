@@ -21,6 +21,8 @@ Obsidian is a strong tool. It is flexible, local-first, and clearly works well f
 
 But as I looked at how people were using it for worldbuilding, the tradeoff became hard to ignore: many were spending as much time assembling the system as building the setting. That is where Codex Cryptica comes from. Not from the idea that Obsidian is bad, but from the idea that worldbuilding deserves a tool shaped around it from the start.
 
+_Note: the images in this post are illustrative concepts, not literal screenshots from Codex Cryptica._
+
 ## 1. The Setup Tax
 
 Obsidian gives you a blank slate. For some people, that is the appeal.
