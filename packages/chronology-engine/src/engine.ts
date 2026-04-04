@@ -1,8 +1,4 @@
-import type {
-  TemporalMetadata,
-  CampaignCalendar,
-  CalendarMonth,
-} from "./types";
+import type { TemporalMetadata, WorldCalendar, CalendarMonth } from "./types";
 
 export const GREGORIAN_MONTHS: CalendarMonth[] = [
   { id: "january", name: "January", days: 31 },
@@ -19,19 +15,19 @@ export const GREGORIAN_MONTHS: CalendarMonth[] = [
   { id: "december", name: "December", days: 31 },
 ];
 
-export const DEFAULT_CALENDAR: CampaignCalendar = {
+export const DEFAULT_CALENDAR: WorldCalendar = {
   useGregorian: true,
   months: GREGORIAN_MONTHS,
   daysPerWeek: 7,
 };
 
-const daysInYearCache = new WeakMap<CampaignCalendar, number>();
+const daysInYearCache = new WeakMap<WorldCalendar, number>();
 
 export class CalendarEngine {
   /**
    * Get the active month list for a configuration.
    */
-  getMonths(config: CampaignCalendar): CalendarMonth[] {
+  getMonths(config: WorldCalendar): CalendarMonth[] {
     return config.useGregorian ? GREGORIAN_MONTHS : config.months;
   }
 
@@ -39,7 +35,7 @@ export class CalendarEngine {
    * Get the total days in a year for the given configuration.
    * Results are cached to avoid redundant reductions in performance-critical loops.
    */
-  getDaysInYear(config: CampaignCalendar): number {
+  getDaysInYear(config: WorldCalendar): number {
     if (daysInYearCache.has(config)) {
       return daysInYearCache.get(config)!;
     }
@@ -51,7 +47,7 @@ export class CalendarEngine {
   /**
    * Validate if a date structure is valid under the given calendar rules.
    */
-  isValid(date: TemporalMetadata, config: CampaignCalendar): boolean {
+  isValid(date: TemporalMetadata, config: WorldCalendar): boolean {
     if (date.year === undefined || date.year === null) return false;
 
     const months = this.getMonths(config);
@@ -74,7 +70,7 @@ export class CalendarEngine {
   /**
    * Format a date for human readability.
    */
-  format(date: TemporalMetadata, config: CampaignCalendar): string {
+  format(date: TemporalMetadata, config: WorldCalendar): string {
     if (date.label) return date.label;
 
     const months = this.getMonths(config);
@@ -104,7 +100,7 @@ export class CalendarEngine {
    *
    * Note: This uses ISO 8601 style numbering (including Year 0).
    */
-  getTimelineValue(date: TemporalMetadata, config: CampaignCalendar): number {
+  getTimelineValue(date: TemporalMetadata, config: WorldCalendar): number {
     const months = this.getMonths(config);
     const daysInYear = this.getDaysInYear(config);
 

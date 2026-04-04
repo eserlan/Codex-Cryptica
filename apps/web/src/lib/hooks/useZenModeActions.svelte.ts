@@ -45,9 +45,11 @@ export function createZenModeActions(
 
   const handleDelete = async (entity: Entity, onDeleted: () => void) => {
     if (
-      confirm(
-        `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
-      )
+      await uiStore.confirm({
+        title: "Delete Entity",
+        message: `Are you sure you want to permanently delete "${entity.title}"? This cannot be undone.`,
+        isDangerous: true,
+      })
     ) {
       try {
         await vault.deleteEntity(entity.id);
@@ -61,10 +63,18 @@ export function createZenModeActions(
     }
   };
 
-  const handleClose = (onClose: () => void) => {
+  const handleClose = async (onClose: () => void) => {
     const editState = getEditState();
     if (editState.isEditing) {
-      if (!confirm("Discard unsaved changes?")) return;
+      if (
+        !(await uiStore.confirm({
+          title: "Discard Changes",
+          message: "Discard unsaved changes?",
+          isDangerous: true,
+        }))
+      ) {
+        return;
+      }
     }
     onClose();
     editState.isEditing = false;

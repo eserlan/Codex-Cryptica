@@ -54,13 +54,13 @@
       <h3
         class="font-header text-xs uppercase tracking-[0.25em] text-theme-muted"
       >
-        Campaign Image
+        World Image
       </h3>
       <p class="mt-1 text-sm text-theme-text/70">
         {#if hasImage}
           Drop a new image to replace the current cover.
         {:else}
-          Drop an image to set the campaign cover.
+          Drop an image to set the world cover.
         {/if}
       </p>
     </div>
@@ -79,7 +79,7 @@
   <div
     class={`flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition-colors border-theme-border bg-theme-bg/70 ${isDragging ? "border-theme-primary bg-theme-primary/5" : ""}`}
     role="region"
-    aria-label="Campaign image drop zone"
+    aria-label="World image drop zone"
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}
     ondrop={handleDrop}
@@ -94,7 +94,7 @@
       {#if hasImage}
         Drag a fresh cover image onto this zone to replace the current one.
       {:else}
-        Drag a cover image here to give the campaign a stronger identity.
+        Drag a cover image here to give your world a stronger identity.
       {/if}
     </p>
 

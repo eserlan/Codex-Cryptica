@@ -59,7 +59,7 @@
         .catch((err) => logChunkError("GraphView", err));
     }
     if (!FrontPage) {
-      import("../../lib/components/campaign/FrontPage.svelte")
+      import("../../lib/components/world/FrontPage.svelte")
         .then((m) => (FrontPage = m?.default))
         .catch((err) => logChunkError("FrontPage", err));
     }
@@ -87,7 +87,7 @@
   });
 
   const dismissFrontPageOverlay = () => {
-    uiStore.dismissedCampaignPage = true;
+    uiStore.dismissedWorldPage = true;
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
@@ -110,7 +110,7 @@
       // 3. If the front page is visible, dismiss it
       if (
         !uiStore.isLandingPageVisible &&
-        !uiStore.dismissedCampaignPage &&
+        !uiStore.dismissedWorldPage &&
         !selectedEntity
       ) {
         dismissFrontPageOverlay();
@@ -301,7 +301,7 @@
   {/if}
 
   <!-- Vault Front Page Overlay -->
-  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedCampaignPage && !selectedEntity}
+  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedWorldPage && !selectedEntity}
     <div
       data-testid="front-page-overlay"
       class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}

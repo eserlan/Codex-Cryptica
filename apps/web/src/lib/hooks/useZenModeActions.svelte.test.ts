@@ -13,6 +13,7 @@ describe("useZenModeActions", () => {
     // Mock stores
     mockUiStore = {
       notify: vi.fn(),
+      confirm: vi.fn().mockResolvedValue(true),
     };
     mockVault = {
       updateEntity: vi.fn().mockResolvedValue(undefined),
@@ -102,7 +103,7 @@ describe("useZenModeActions", () => {
     const mockEntity = { id: "e1", title: "Target" } as any;
 
     it("should do nothing if confirm is cancelled", async () => {
-      (global.confirm as any).mockReturnValue(false);
+      mockUiStore.confirm.mockResolvedValue(false);
       const onDeleted = vi.fn();
       const actions = createZenModeActions(mockEditState, {
         uiStore: mockUiStore,
@@ -116,7 +117,7 @@ describe("useZenModeActions", () => {
     });
 
     it("should delete entity and notify on success", async () => {
-      (global.confirm as any).mockReturnValue(true);
+      mockUiStore.confirm.mockResolvedValue(true);
       const onDeleted = vi.fn();
       const actions = createZenModeActions(mockEditState, {
         uiStore: mockUiStore,
@@ -135,7 +136,7 @@ describe("useZenModeActions", () => {
     });
 
     it("should notify error on failure", async () => {
-      (global.confirm as any).mockReturnValue(true);
+      mockUiStore.confirm.mockResolvedValue(true);
       const consoleSpy = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
@@ -158,7 +159,7 @@ describe("useZenModeActions", () => {
   });
 
   describe("handleClose", () => {
-    it("should call onClose immediately if not editing", () => {
+    it("should call onClose immediately if not editing", async () => {
       mockEditState.isEditing = false;
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
@@ -166,34 +167,34 @@ describe("useZenModeActions", () => {
         vault: mockVault,
       });
 
-      actions.handleClose(onClose);
+      await actions.handleClose(onClose);
       expect(onClose).toHaveBeenCalled();
     });
 
-    it("should ask for confirmation if editing", () => {
+    it("should ask for confirmation if editing", async () => {
       mockEditState.isEditing = true;
-      (global.confirm as any).mockReturnValue(false); // User says "Keep editing"
+      mockUiStore.confirm.mockResolvedValue(false); // User says "Keep editing"
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
         uiStore: mockUiStore,
         vault: mockVault,
       });
 
-      actions.handleClose(onClose);
+      await actions.handleClose(onClose);
       expect(onClose).not.toHaveBeenCalled();
       expect(mockEditState.isEditing).toBe(true);
     });
 
-    it("should close and stop editing if user confirms discard", () => {
+    it("should close and stop editing if user confirms discard", async () => {
       mockEditState.isEditing = true;
-      (global.confirm as any).mockReturnValue(true); // User says "Discard"
+      mockUiStore.confirm.mockResolvedValue(true); // User says "Discard"
       const onClose = vi.fn();
       const actions = createZenModeActions(mockEditState, {
         uiStore: mockUiStore,
         vault: mockVault,
       });
 
-      actions.handleClose(onClose);
+      await actions.handleClose(onClose);
       expect(onClose).toHaveBeenCalled();
       expect(mockEditState.isEditing).toBe(false);
     });

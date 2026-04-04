@@ -5,6 +5,7 @@
   } from "$lib/services/node-merge.service";
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
 
   let {
     isOpen = false,
@@ -60,9 +61,12 @@
     // Check for unsaved changes (T011)
     if (nodeMergeService.checkUnsavedChanges(sourceNodeIds)) {
       if (
-        !confirm(
-          "Some nodes might be open in the editor with unsaved changes. Proceeding might lose recent edits. Continue?",
-        )
+        !(await uiStore.confirm({
+          title: "Unsaved Changes",
+          message:
+            "Some nodes might be open in the editor with unsaved changes. Proceeding might lose recent edits. Continue?",
+          isDangerous: false,
+        }))
       ) {
         return;
       }

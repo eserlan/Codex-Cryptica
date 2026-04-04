@@ -7,7 +7,7 @@
 The `Campaign` (or `Vault`) metadata entity needs extension to support sharing.
 
 ```typescript
-interface CampaignMetadata {
+interface WorldMetadata {
   id: string;
   name: string;
   // ... existing fields

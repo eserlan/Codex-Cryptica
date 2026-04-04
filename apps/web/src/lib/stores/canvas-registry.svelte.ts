@@ -121,7 +121,14 @@ class CanvasRegistryStore {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete canvas "${data.name}"?`)) {
+    if (
+      !(await uiStore.confirm({
+        title: "Delete Canvas",
+        message: `Are you sure you want to delete canvas "${data.name}"?`,
+        confirmLabel: "Delete",
+        isDangerous: true,
+      }))
+    ) {
       return;
     }
 

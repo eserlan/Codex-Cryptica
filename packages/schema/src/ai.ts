@@ -45,6 +45,11 @@ export interface TextGenerationService {
     query: string,
     history: ChatHistoryMessage[],
   ): Promise<string>;
+  distillContext?(
+    apiKey: string,
+    context: string,
+    modelName: string,
+  ): Promise<string>;
   generateResponse(
     apiKey: string,
     query: string,

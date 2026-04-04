@@ -23,9 +23,9 @@
 
 **Purpose**: Core logic and service interfaces with **Constructor DI**
 
-- [x] T004 [P] Create `CampaignService.ts` as a class with **Constructor DI** for `EntityDb` in `packages/vault-engine/src/services/CampaignService.ts`
+- [x] T004 [P] Create `WorldService.ts` as a class with **Constructor DI** for `EntityDb` in `packages/vault-engine/src/services/WorldService.ts`
 - [x] T005 [P] Create `ActivityService.ts` as a class with **Constructor DI** for `EntityDb` in `packages/vault-engine/src/services/ActivityService.ts`
-- [x] T006 Create `CampaignStore` class in `apps/web/src/lib/stores/campaign.svelte.ts` using **Constructor DI** for `CampaignService` and `ActivityService`
+- [x] T006 Create `WorldStore` class in `apps/web/src/lib/stores/world.svelte.ts` using **Constructor DI** for `WorldService` and `ActivityService`
 
 **Checkpoint**: Core services and stores initialized with clean DI patterns.
 
@@ -39,12 +39,12 @@
 
 ### Tests for User Story 1 (TDD with Mocks)
 
-- [x] T007 [P] [US1] Unit test for `CampaignService.getMetadata` using a mocked `EntityDb` in `packages/vault-engine/src/services/CampaignService.test.ts`
-- [x] T008 [P] [US1] Component test for `FrontPage.svelte` using a mocked `CampaignStore` in `apps/web/src/lib/components/campaign/FrontPage.test.ts`
+- [x] T007 [P] [US1] Unit test for `WorldService.getMetadata` using a mocked `EntityDb` in `packages/vault-engine/src/services/WorldService.test.ts`
+- [x] T008 [P] [US1] Component test for `FrontPage.svelte` using a mocked `WorldStore` in `apps/web/src/lib/components/campaign/FrontPage.test.ts`
 
 ### Implementation for User Story 1
 
-- [x] T009 [US1] Implement `getMetadata` using `this.db.vaultMetadata` in `packages/vault-engine/src/services/CampaignService.ts`
+- [x] T009 [US1] Implement `getMetadata` using `this.db.vaultMetadata` in `packages/vault-engine/src/services/WorldService.ts`
 - [x] T010 [US1] Create `FrontPage.svelte` in `apps/web/src/lib/components/campaign/FrontPage.svelte` with Markdown rendering for the summary and frontpage entity fallback
 - [x] T011 [US1] Implement title, tagline, and summary editing UI and save logic in `FrontPage.svelte`
 - [x] T012 [US1] Update `apps/web/src/routes/(app)/+page.svelte` and `apps/web/src/routes/(app)/vault/[id]/+page.svelte` to render the front page overlay and entity detail shell
@@ -59,11 +59,11 @@
 
 ### Tests for User Story 2
 
-- [x] T013 [P] [US2] Unit test for `CampaignService.getFrontPageEntity` using mocked `EntityDb` in `packages/vault-engine/src/services/CampaignService.test.ts`
+- [x] T013 [P] [US2] Unit test for `WorldService.getFrontPageEntity` using mocked `EntityDb` in `packages/vault-engine/src/services/WorldService.test.ts`
 
 ### Implementation for User Story 2
 
-- [x] T014 [US2] Implement `getFrontPageEntity` using `this.db.graphEntities` queries in `packages/vault-engine/src/services/CampaignService.ts`
+- [x] T014 [US2] Implement `getFrontPageEntity` using `this.db.graphEntities` queries in `packages/vault-engine/src/services/WorldService.ts`
 - [x] T015 [US2] Update `FrontPage.svelte` to fetch and render the marked entity content using `ArticleRenderer`
 
 ---
@@ -106,7 +106,7 @@
 
 ### Implementation for User Story 5
 
-- [x] T021 [US5] Implement `generateCoverImage` using Oracle and Dexie persistence in `packages/vault-engine/src/services/CampaignService.ts`
+- [x] T021 [US5] Implement `generateCoverImage` using Oracle and Dexie persistence in `packages/vault-engine/src/services/WorldService.ts`
 - [x] T022 [P] [US5] Create `CoverImage.svelte` component in `apps/web/src/lib/components/campaign/CoverImage.svelte`
 - [x] T023 [US5] Add inline cover image management, lightbox, and generator controls to `FrontPage.svelte`
 
@@ -120,7 +120,7 @@
 
 ### Implementation for User Story 6
 
-- [x] T024 [US6] Implement AI description generation logic in `CampaignService.ts` (Deriving prompt from existing entities)
+- [x] T024 [US6] Implement AI description generation logic in `WorldService.ts` (Deriving prompt from existing entities)
 - [x] T025 [US6] Add summary/tagline generation controls and loading state to `FrontPage.svelte`
 
 ---

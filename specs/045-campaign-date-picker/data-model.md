@@ -2,7 +2,7 @@
 
 ## Entities
 
-### CampaignCalendar
+### WorldCalendar
 
 Represents the rules for time in the specific campaign vault.
 
@@ -23,8 +23,8 @@ Represents the rules for time in the specific campaign vault.
 
 ## Relationships
 
-- **Campaign** (Vault Metadata) `1 -- 1` **CampaignCalendar**
-- **TemporalMetadata** (Entity Field) `N -- 1` **CampaignCalendar** (via validation logic)
+- **Campaign** (Vault Metadata) `1 -- 1` **WorldCalendar**
+- **TemporalMetadata** (Entity Field) `N -- 1` **WorldCalendar** (via validation logic)
 
 ## State Transitions
 

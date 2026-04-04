@@ -10,7 +10,7 @@
 1.  **Dexie Update**: Modify `apps/web/src/lib/utils/entity-db.ts`.
     - Add `vaultMetadata` table to the schema.
     - Bump to `version(4)`.
-2.  **CampaignService**: Implement in `packages/vault-engine/src/services/CampaignService.ts`.
+2.  **WorldService**: Implement in `packages/vault-engine/src/services/WorldService.ts`.
     - `getRecentActivity`: query recent entities, pin any `frontpage`-marked records, and include title/type/image metadata.
     - `getFrontPageEntity`: query `entityDb.graphEntities` for `frontpage` markers in both tags and labels, then use the newest match.
     - `generateCoverImage`: feed the current summary and theme context into the image prompt, then persist the generated asset locally.

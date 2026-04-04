@@ -12,7 +12,7 @@ export interface IDemoActions {
    * Persists the current transient demo state to IndexedDB.
    * Returns the new vault ID.
    */
-  convertToCampaign(): Promise<string>;
+  convertToWorld(): Promise<string>;
 
   /**
    * Exits demo mode and reloads the previous campaign or returns to landing.

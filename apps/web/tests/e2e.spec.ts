@@ -128,7 +128,7 @@ test.describe("Vault E2E", () => {
       const uiStore = (window as any).uiStore;
       uiStore.toggleWelcomeScreen(false);
       uiStore.dismissedLandingPage = false;
-      uiStore.dismissedCampaignPage = false;
+      uiStore.dismissedWorldPage = false;
       document.documentElement.classList.remove("skip-landing");
       localStorage.removeItem("codex_skip_landing");
     });

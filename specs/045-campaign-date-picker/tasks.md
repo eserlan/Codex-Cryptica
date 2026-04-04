@@ -9,7 +9,7 @@
 
 ## Phase 2: Foundational (Chronology Engine)
 
-- [x] T005 [P] Define `TemporalMetadata`, `CampaignCalendar`, and `CalendarMonth` types in `packages/chronology-engine/src/types.ts`
+- [x] T005 [P] Define `TemporalMetadata`, `WorldCalendar`, and `CalendarMonth` types in `packages/chronology-engine/src/types.ts`
 - [x] T006 Implement `CalendarEngine` class with `isValid` and `format` methods in `packages/chronology-engine/src/engine.ts`
 - [x] T007 Implement Gregorian template constants and toggle logic in `CalendarEngine`
 - [x] T008 Implement `getTimelineValue` in `packages/chronology-engine/src/engine.ts` for linear timeline mapping

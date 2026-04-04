@@ -14,6 +14,7 @@ vi.mock("./vault-registry.svelte", () => ({
 vi.mock("./ui.svelte", () => ({
   uiStore: {
     notify: vi.fn(),
+    confirm: vi.fn().mockResolvedValue(true),
   },
 }));
 

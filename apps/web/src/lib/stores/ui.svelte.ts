@@ -16,7 +16,7 @@ class UIStore {
   isImporting = $state(false);
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
-  dismissedCampaignPage = $state(false);
+  dismissedWorldPage = $state(false);
   liteMode = $state(false);
   showDiceModal = $state(false);
 
@@ -297,6 +297,56 @@ class UIStore {
   /** @deprecated Use showZenMode */
   get showReadModal() {
     return this.showZenMode;
+  }
+
+  // Confirmation Dialog State
+  confirmationDialog = $state<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    isDangerous?: boolean;
+    resolve: ((result: boolean) => void) | null;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    resolve: null,
+  });
+
+  async confirm(options: {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    isDangerous?: boolean;
+  }): Promise<boolean> {
+    if (this.confirmationDialog.open) {
+      return false;
+    }
+
+    this.confirmationDialog = {
+      open: true,
+      ...options,
+      resolve: null,
+    };
+
+    return new Promise<boolean>((resolve) => {
+      this.confirmationDialog.resolve = resolve;
+    });
+  }
+
+  resolveConfirmation(result: boolean) {
+    if (this.confirmationDialog.resolve) {
+      this.confirmationDialog.resolve(result);
+    }
+    this.confirmationDialog = {
+      open: false,
+      title: "",
+      message: "",
+      resolve: null,
+    };
   }
 
   setGlobalError(message: string, stack?: string) {

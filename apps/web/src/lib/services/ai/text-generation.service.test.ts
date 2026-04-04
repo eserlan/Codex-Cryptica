@@ -23,6 +23,9 @@ vi.mock("./prompts/merge-proposal", () => ({
 vi.mock("./prompts/plot-analysis", () => ({
   buildPlotAnalysisPrompt: vi.fn((s, c, q) => `plot:${s}:${c}:${q}`),
 }));
+vi.mock("./prompts/context-distillation", () => ({
+  buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
+}));
 
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
@@ -87,6 +90,37 @@ describe("DefaultTextGenerationService", () => {
       const result = await service.expandQuery("key", "Original query", []);
 
       expect(result).toBe("Original query");
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
+
+  describe("distillContext", () => {
+    it("should distill a long context block", async () => {
+      const result = await service.distillContext(
+        "key",
+        "Raw campaign context",
+        "model",
+      );
+
+      expect(result).toBe("Generated content");
+      expect(mockAiClientManager.getModel).toHaveBeenCalledWith("key", "model");
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "distill:Raw campaign context",
+      );
+    });
+
+    it("should return the original context if distillation fails", async () => {
+      const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      mockModel.generateContent.mockRejectedValue(new Error("AI error"));
+
+      const result = await service.distillContext(
+        "key",
+        "Raw campaign context",
+        "model",
+      );
+
+      expect(result).toBe("Raw campaign context");
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });

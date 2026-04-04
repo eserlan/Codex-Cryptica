@@ -22,7 +22,7 @@ export interface VaultMetadataRecord {
   lastModified: number;
 }
 
-export interface CampaignMetadata {
+export interface WorldMetadata {
   id: string;
   name: string;
   tagline?: string;
@@ -51,7 +51,7 @@ export interface FrontPageEntity {
   thumbnail?: string;
 }
 
-export interface CampaignServiceDependencies {
+export interface WorldServiceDependencies {
   db?: {
     vaultMetadata: {
       get(id: string): Promise<VaultMetadataRecord | undefined>;
@@ -101,10 +101,10 @@ export interface CampaignServiceDependencies {
   } | null;
 }
 
-const createMissingDb = (): CampaignServiceDependencies["db"] => {
+const createMissingDb = (): WorldServiceDependencies["db"] => {
   const fail = (method: string) => () => {
     throw new Error(
-      `CampaignService requires an EntityDb instance with ${method} support`,
+      `WorldService requires an EntityDb instance with ${method} support`,
     );
   };
 
@@ -136,7 +136,7 @@ function getExcerpt(content: string, max = 150): string {
 }
 
 async function fetchFrontpageRecords(
-  db: NonNullable<CampaignServiceDependencies["db"]>,
+  db: NonNullable<WorldServiceDependencies["db"]>,
   vaultId: string,
 ) {
   const [tagged, labeled] = await Promise.all([
@@ -162,14 +162,14 @@ async function fetchFrontpageRecords(
   );
 }
 
-export class CampaignServiceImplementation {
-  constructor(private deps: CampaignServiceDependencies = {}) {}
+export class WorldServiceImplementation {
+  constructor(private deps: WorldServiceDependencies = {}) {}
 
   private get db() {
     return this.deps.db ?? createMissingDb()!;
   }
 
-  async getMetadata(vaultId: string): Promise<CampaignMetadata> {
+  async getMetadata(vaultId: string): Promise<WorldMetadata> {
     const record = (await this.db.vaultMetadata.get(vaultId)) as
       | VaultMetadataRecord
       | undefined;
@@ -185,7 +185,7 @@ export class CampaignServiceImplementation {
 
   async updateMetadata(
     vaultId: string,
-    metadata: Partial<CampaignMetadata>,
+    metadata: Partial<WorldMetadata>,
   ): Promise<void> {
     const existing = (await this.db.vaultMetadata.get(vaultId)) as
       | VaultMetadataRecord
@@ -289,7 +289,7 @@ export class CampaignServiceImplementation {
     const assetManager = this.deps.assetManager;
     if (!imageGenerator || !assetManager) {
       throw new Error(
-        "CampaignService.generateCoverImage requires imageGenerator and assetManager dependencies",
+        "WorldService.generateCoverImage requires imageGenerator and assetManager dependencies",
       );
     }
 
@@ -301,7 +301,7 @@ export class CampaignServiceImplementation {
       promptBase,
       modelName,
     );
-    const assetName = `campaign-${vaultId}-${Date.now()}`;
+    const assetName = `world-${vaultId}-${Date.now()}`;
     const saved = await assetManager.saveImageToVault(
       blob,
       assetName,
@@ -312,32 +312,24 @@ export class CampaignServiceImplementation {
     return saved.image;
   }
 
-  async generateCampaignDescription(
+  async generateWorldBriefing(
     vaultId: string,
     promptBase: string,
   ): Promise<string> {
     const generator = this.deps.getSummaryGenerator?.();
     if (!generator) {
       throw new Error(
-        "CampaignService.generateCampaignDescription requires getSummaryGenerator dependency",
+        "WorldService.generateWorldBriefing requires getSummaryGenerator dependency",
       );
     }
-
-    const recent = await this.getRecentActivity(vaultId, 10);
-    const context = recent
-      .map(
-        (item) =>
-          `- ${item.title} (${item.tags.join(", ") || "untagged"}): ${item.excerpt}`,
-      )
-      .join("\n");
 
     let result = "";
     await generator.generateResponse(
       this.deps.getApiKey?.() ?? "",
       promptBase,
       [],
-      context,
-      this.deps.getSummaryModel?.() ?? "gemini-2.0-flash",
+      "",
+      this.deps.getSummaryModel?.() || "gemini-2.0-flash",
       (partial) => {
         result = partial;
       },
@@ -345,9 +337,11 @@ export class CampaignServiceImplementation {
     );
 
     const description = result.trim();
-    await this.updateMetadata(vaultId, { description });
+    if (description) {
+      await this.updateMetadata(vaultId, { description });
+    }
     return description;
   }
 }
 
-export const campaignService = new CampaignServiceImplementation();
+export const worldService = new WorldServiceImplementation();

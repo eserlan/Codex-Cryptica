@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { CampaignStore } from "./campaign.svelte";
+import { WorldStore } from "./world.svelte";
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -11,7 +11,7 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-describe("CampaignStore", () => {
+describe("WorldStore", () => {
   it("ignores stale load results when a newer vault load finishes first", async () => {
     const firstMetadata = deferred<any>();
     const firstFrontPage = deferred<any>();
@@ -20,7 +20,7 @@ describe("CampaignStore", () => {
     const secondFrontPage = deferred<any>();
     const secondRecent = deferred<any>();
 
-    const store = new CampaignStore(
+    const store = new WorldStore(
       {
         getMetadata: vi.fn((vaultId: string) =>
           vaultId === "vault-1"

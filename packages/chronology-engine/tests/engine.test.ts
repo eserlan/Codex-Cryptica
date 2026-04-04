@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { calendarEngine, DEFAULT_CALENDAR } from "../src/engine";
-import type { CampaignCalendar } from "../src/types";
+import type { WorldCalendar } from "../src/types";
 
 describe("CalendarEngine", () => {
-  const customCalendar: CampaignCalendar = {
+  const customCalendar: WorldCalendar = {
     useGregorian: false,
     months: [
       { id: "month1", name: "Alpha", days: 20 },

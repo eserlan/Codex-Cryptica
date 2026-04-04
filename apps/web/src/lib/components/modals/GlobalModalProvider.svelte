@@ -65,6 +65,14 @@
 
     <MobileMenu bind:isOpen={isMobileMenuOpen} />
 
+    {#if uiStore.confirmationDialog.open}
+      {#await loadModal(() => import("./ConfirmationModal.svelte"), "ConfirmationModal") then ConfirmationModal}
+        {#if ConfirmationModal}
+          <ConfirmationModal />
+        {/if}
+      {/await}
+    {/if}
+
     {#if uiStore.mergeDialog.open}
       {#await loadModal(() => import("$lib/components/dialogs/MergeNodesDialog.svelte"), "MergeNodesDialog") then MergeNodesDialog}
         {#if MergeNodesDialog}

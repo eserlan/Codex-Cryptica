@@ -96,9 +96,17 @@
     });
   };
 
-  const navigateTo = (id: string) => {
+  const navigateTo = async (id: string) => {
     if (editState.isEditing) {
-      if (!confirm("Discard unsaved changes to navigate?")) return;
+      if (
+        !(await uiStore.confirm({
+          title: "Unsaved Changes",
+          message: "Discard unsaved changes to navigate?",
+          confirmLabel: "Discard",
+          isDangerous: true,
+        }))
+      )
+        return;
       editState.cancel();
     }
     uiStore.zenModeEntityId = id;
