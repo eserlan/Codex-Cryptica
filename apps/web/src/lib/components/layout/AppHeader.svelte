@@ -87,6 +87,7 @@
       <input
         type="text"
         placeholder="Search (Cmd+K)..."
+        aria-label="Search notes"
         class="w-full bg-theme-bg border border-theme-border hover:border-theme-primary/50 focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/50 rounded py-1.5 pl-10 pr-4 text-sm font-body text-theme-text transition-all placeholder:text-theme-muted/50"
         onfocus={() => searchStore.open()}
         value={searchStore.query}
