@@ -50,5 +50,5 @@ jobs:
             echo "No blog content changes to publish."
             exit 0
           fi
-          git commit -m "Update blog content"
+          git commit -m "📝 Update blog content"
           git push --force-with-lease origin blog-content
