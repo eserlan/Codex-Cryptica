@@ -1,7 +1,4 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/h"
-
-[ "${HUSKY-}" = "0" ] && exit 0
 
 skip_pattern='^(apps/web/src/lib/content/blog/|scripts/publish-blog-content\.mjs$|\.github/workflows/deploy-blog-content\.yml$|docs/BLOG_DEPLOYMENT\.md$|docs/CI_DEPLOYMENT\.md$)'
 blog_only=true
