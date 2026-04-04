@@ -35,6 +35,8 @@ A lot of Obsidian’s power comes from plugins. That is both its strength and it
 
 Once your workflow depends on a stack of add-ons for core tasks, the experience can start to feel less like a product and more like a kit. Codex Cryptica is built around native worldbuilding workflows. The important parts are built into the core, not assembled later.
 
+![Product Versus Kit](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/cc-over-obsidian/cc-over-obsidian-product-kit.jpg)
+
 ## 3. A Graph You Can Work In
 
 Obsidian’s graph is visually impressive, but for many people, it is more of a visual layer than a real workspace. It shows that things are connected, but does less to help you work through those connections directly.
