@@ -15,7 +15,7 @@ keywords:
 publishedAt: 2026-04-05T12:00:00Z
 ---
 
-![Why Codex Cryptica](https://assets.codexcryptica.com/images/blog/cc-over-obsidian/cc-over-obsidian-hero.png)
+![Why Codex Cryptica](https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/images/blog/cc-over-obsidian/cc-over-obsidian-hero.png)
 
 Obsidian is a strong tool. It is flexible, local-first, and clearly works well for a lot of people.
 
