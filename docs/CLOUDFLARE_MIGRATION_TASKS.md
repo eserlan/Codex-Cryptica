@@ -2,6 +2,8 @@
 
 Goal: move the app and blog delivery onto Cloudflare in a way that keeps blogs easy to publish, easy to crawl, and avoids rebuilding the whole site for every post when possible.
 
+For the recommended order of operations and priorities, see [CLOUDFLARE_MIGRATION_PLAN.md](./CLOUDFLARE_MIGRATION_PLAN.md).
+
 ## Phase 1: Decide the hosting shape
 
 - [ ] Choose the final Cloudflare hosting model:
