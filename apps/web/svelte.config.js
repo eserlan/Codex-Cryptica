@@ -11,7 +11,14 @@ const config = {
       strict: false,
     }),
     prerender: {
-      entries: ["/", "/features", "/terms", "/privacy", "/blog"],
+      entries: [
+        "/",
+        "/features",
+        "/terms",
+        "/privacy",
+        "/blog",
+        "/sitemap.xml",
+      ],
       handleUnseenRoutes: "ignore",
       handleHttpError: ({ path, message }) => {
         // llms.txt is a static file served at the domain root; ignore 404s
