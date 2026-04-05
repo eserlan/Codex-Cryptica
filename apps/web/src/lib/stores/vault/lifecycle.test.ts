@@ -159,6 +159,37 @@ describe("VaultLifecycleManager", () => {
       expect(deps.vaultRegistry.deleteVault).toHaveBeenCalledWith("v1");
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
     });
+
+    it("should switch away from the active vault before deleting it", async () => {
+      deps.activeVaultId.mockReturnValue("active-vault");
+      deps.vaultRegistry.availableVaults = [{ id: "other-vault" }];
+
+      await manager.deleteVault("active-vault");
+
+      // Should clear state before switching
+      expect(deps.repository.clear).toHaveBeenCalled();
+      expect(deps.assetStore.clear).toHaveBeenCalled();
+      expect(deps.setSelectedEntityId).toHaveBeenCalledWith(null);
+      // Should switch to the next available vault
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
+        "other-vault",
+      );
+      // Then delete the original vault
+      expect(deps.vaultRegistry.deleteVault).toHaveBeenCalledWith(
+        "active-vault",
+      );
+    });
+
+    it("should clear initialized state when deleting the last vault", async () => {
+      deps.activeVaultId.mockReturnValue("only-vault");
+      deps.vaultRegistry.availableVaults = [];
+
+      await manager.deleteVault("only-vault");
+
+      expect(deps.setInitialized).toHaveBeenCalledWith(false);
+      expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
+      expect(deps.vaultRegistry.deleteVault).toHaveBeenCalledWith("only-vault");
+    });
   });
 
   describe("persistToIndexedDB", () => {
@@ -214,6 +245,91 @@ describe("VaultLifecycleManager", () => {
       expect(deps.ensureServicesInitialized).toHaveBeenCalled();
       expect(deps.repository.entities).toEqual(entities);
       expect(deps.syncStore.setStatus).toHaveBeenCalledWith("idle");
+    });
+  });
+
+  describe("setupSync", () => {
+    it("should persist sync handle and import from folder", async () => {
+      deps.vaultRegistry.createVault.mockResolvedValue("v1");
+      const handle = { name: "my-sync-folder" } as any;
+
+      await manager.setupSync(handle);
+
+      expect(mockDB.put).toHaveBeenCalledWith(
+        "settings",
+        handle,
+        "syncHandle_v1",
+      );
+      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+    });
+
+    it("should return early when no active vault", async () => {
+      deps.activeVaultId.mockReturnValue(null);
+      const handle = { name: "my-sync-folder" } as any;
+
+      const result = await manager.setupSync(handle);
+
+      expect(result).toBeUndefined();
+      expect(mockDB.put).not.toHaveBeenCalled();
+    });
+
+    it("should warn but continue when persisting sync handle fails", async () => {
+      const consoleWarnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => {});
+      deps.vaultRegistry.createVault.mockResolvedValue("v1");
+      // First put (setupSync's sync handle) rejects, second put (importFromFolder) succeeds
+      mockDB.put
+        .mockRejectedValueOnce(new Error("IDB blocked"))
+        .mockResolvedValue(undefined);
+
+      const handle = { name: "my-sync-folder" } as any;
+      await manager.setupSync(handle);
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "[VaultStore] Could not persist sync handle",
+      );
+      // Should still proceed to import
+      expect(deps.loadFiles).toHaveBeenCalledWith(false);
+      consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe("runMigration", () => {
+    it("should return undefined when no active vault", async () => {
+      deps.activeVaultId.mockReturnValue(null);
+      const result = await manager.runMigration();
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe("importFromFolder", () => {
+    it("should handle import failure gracefully", async () => {
+      const error = new Error("Import failed");
+      deps.vaultRegistry.createVault.mockRejectedValue(error);
+
+      await expect(
+        manager.importFromFolder({ name: "bad-folder" } as any),
+      ).rejects.toThrow("Import failed");
+
+      expect(deps.syncStore.setStatus).toHaveBeenCalledWith("error");
+      expect(deps.syncStore.setErrorMessage).toHaveBeenCalledWith(
+        "Import failed",
+      );
+    });
+  });
+
+  describe("createVault", () => {
+    it("should create a vault and switch to it", async () => {
+      deps.vaultRegistry.createVault.mockResolvedValue("new-vault-id");
+
+      const result = await manager.createVault("New Vault");
+
+      expect(result).toBe("new-vault-id");
+      expect(deps.vaultRegistry.createVault).toHaveBeenCalledWith("New Vault");
+      expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith(
+        "new-vault-id",
+      );
     });
   });
 });

@@ -64,3 +64,34 @@ describe("ServiceRegistry", () => {
     expect(second).not.toBe(first);
   });
 });
+
+describe("ServiceRegistry graceful degradation", () => {
+  it("returns a no-op services object when dynamic imports fail", async () => {
+    vi.resetModules();
+
+    // Poison the mocked modules so the dynamic import throws
+    vi.doMock("../../services/search", () => {
+      throw new Error("chunk load error");
+    });
+    vi.doMock("../../services/ai", () => {
+      throw new Error("chunk load error");
+    });
+
+    const { ServiceRegistry } = await import("./service-registry");
+    const r = new ServiceRegistry();
+
+    // Should NOT throw; should return a minimal services object
+    const services = await r.ensureInitialized();
+
+    expect(services.search).toBeDefined();
+    expect(services.ai).toBeDefined();
+
+    // No-ops should resolve without error
+    await expect(services.search.index({} as any)).resolves.toBeUndefined();
+    await expect(services.search.remove("x")).resolves.toBeUndefined();
+    await expect(services.search.clear()).resolves.toBeUndefined();
+    await expect(services.search.search("q")).resolves.toEqual([]);
+    expect(() => services.ai.clearStyleCache()).not.toThrow();
+    await expect(services.ai.expandQuery("key", "q", [])).resolves.toBe("");
+  });
+});

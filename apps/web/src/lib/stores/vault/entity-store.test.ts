@@ -206,4 +206,62 @@ describe("EntityStore", () => {
     expect(success).toBe(true);
     expect(repository.saveQueue.enqueue).toHaveBeenCalled();
   });
+
+  describe("scheduleSave", () => {
+    it("should reset status to idle when vault handle is missing", async () => {
+      const setStatus = vi.fn();
+      const storeWithNoHandle = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus,
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      await storeWithNoHandle.scheduleSave(repository.entities.hero);
+
+      // Status should be set to "saving" first, then reset to "idle"
+      expect(setStatus).toHaveBeenCalledWith("saving");
+      expect(setStatus).toHaveBeenCalledWith("idle");
+    });
+
+    it("should set status to error on save failure", async () => {
+      const setStatus = vi.fn();
+      const setErrorMessage = vi.fn();
+      repository.saveQueue.enqueue = vi.fn((_key, fn) => {
+        return fn();
+      });
+
+      const storeWithSaveError = new EntityStore({
+        repository: {
+          ...repository,
+          saveToDisk: vi.fn().mockRejectedValue(new Error("Disk error")),
+        } as any,
+        activeVaultId: () => "vault-1",
+        isGuest: () => false,
+        setStatus,
+        setErrorMessage,
+        getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      vi.mocked(vaultEntities.updateEntity).mockReturnValue({
+        entities: { ...repository.entities, hero: repository.entities.hero },
+        updated: repository.entities.hero,
+      });
+
+      // Trigger a save that will fail
+      await storeWithSaveError.scheduleSave(repository.entities.hero);
+
+      expect(setStatus).toHaveBeenCalledWith("saving");
+      // The error path should set status to "error"
+      expect(setStatus).toHaveBeenCalledWith("error");
+    });
+  });
 });
