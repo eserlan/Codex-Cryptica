@@ -113,7 +113,7 @@
 ### Tests for User Story 3
 
 - [ ] T034 [P] [US3] Unit test for initiative cycling logic in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
-- [ ] T035 [US3] Unit test for turn advancement and round counting in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
+- [ ] T035 [US3] Unit test for turn advancement and round counting in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing) — verify round starts at 1, increments on full cycle, never decrements
 
 ### Implementation for User Story 3
 
@@ -122,7 +122,7 @@
 - [ ] T038 [US3] Add drag-reorder capability to initiative list entries in InitiativePanel.svelte
 - [ ] T039 [US3] Render active token highlight in `renderTokens()` when session is in combat mode
 - [ ] T040 [US3] Add round counter display in InitiativePanel.svelte
-- [ ] T041 [US3] Implement mode toggle (exploration ↔ combat) in MapSession store and VTTControls.svelte
+- [ ] T041 [US3] Implement mode toggle (exploration ↔ combat) in MapSession store and VTTControls.svelte — mode values are `"exploration"` (free movement) and `"combat"` (turn-locked movement)
 - [ ] T042 [US3] Lock token movement to active token when in combat mode (non-active tokens cannot be moved)
 
 **Checkpoint**: Full turn order system works. Can manage initiative, advance turns, see active token highlight, track rounds.
@@ -173,9 +173,9 @@
 - [ ] T057 [US5] Implement TURN_ADVANCE broadcast from MapSession store through host-service when host advances turn
 - [ ] T058 [US5] Add token ownership assignment UI in TokenDetail.svelte (GM assigns tokens to connected guests)
 - [ ] T059 [US5] Implement guest permission enforcement in MapView.svelte drag handler (check ownerPeerId before allowing drag)
-- [ ] T060 [US5] Implement session fog reveal sync (host paints fog → broadcasts FOG_REVEAL → guests apply session mask delta)
+- [ ] T060 [US5] Implement session fog reveal sync (host paints fog using existing MapFogPainter brush → broadcasts FOG_REVEAL stroke deltas → guests apply to in-memory session mask)
 - [ ] T061 [US5] Implement MAP_PING broadcast for guest/host cursor pings
-- [ ] T062 [US5] Handle host disconnection (detect peer disconnect, end session for all guests, clear session state immediately)
+- [ ] T062 [US5] Handle host disconnection (detect peer disconnect, broadcast SESSION_ENDED to guests so they see a disconnected UI state, then clear session state immediately)
 
 **Checkpoint**: Multiplayer VTT works. Host and guests share token positions, turn order, and fog state in real-time.
 
