@@ -7,6 +7,8 @@ import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
+const INDEX_BATCH_SIZE = 50;
+
 export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchEngine> | null = null;
@@ -127,7 +129,7 @@ export class SearchService {
     const start = performance.now();
     let indexedCount = 0;
     const batch: any[] = [];
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
       await entityDb.entityContent
@@ -370,9 +372,9 @@ export class SearchService {
         // ⚡ Bolt Optimization: Replace full array .map() with incremental imperative loop processing.
         // Avoids allocating a massive intermediate array for all entities during cold boot,
         // reducing peak memory and GC pressure.
-        for (let i = 0; i < entities.length; i += 50) {
+        for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
           const chunkPromises: Promise<void>[] = [];
-          const end = Math.min(i + 50, entities.length);
+          const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
           for (let j = i; j < end; j++) {
             const entry = this.mapToSearchEntry(entities[j]);
             chunkPromises.push(this.api!.add(entry));

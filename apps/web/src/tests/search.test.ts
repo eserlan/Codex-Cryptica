@@ -92,6 +92,49 @@ describe("SearchService", () => {
     expect(mockApi.add).toHaveBeenCalledWith(entry);
   });
 
+  it("should chunk indexBatch work sequentially without eager full-array allocation", async () => {
+    const originalAdd = mockApi.add.getMockImplementation();
+    const pendingAdds: Array<() => void> = [];
+    try {
+      mockApi.add.mockImplementation(
+        () =>
+          new Promise<void>((resolve) => {
+            pendingAdds.push(resolve);
+          }),
+      );
+
+      (service as any).api = mockApi;
+
+      const entities = Array.from({ length: 52 }, (_, index) => ({
+        id: `${index}`,
+        title: `Entity ${index}`,
+        content: `Content ${index}`,
+        type: "note",
+      }));
+
+      const batchPromise = (service as any).indexBatch(entities);
+
+      await Promise.resolve();
+
+      expect(mockApi.add).toHaveBeenCalledTimes(50);
+      expect(pendingAdds).toHaveLength(50);
+
+      pendingAdds.splice(0).forEach((resolve) => resolve());
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(mockApi.add).toHaveBeenCalledTimes(52);
+      expect(pendingAdds).toHaveLength(2);
+
+      pendingAdds.splice(0).forEach((resolve) => resolve());
+
+      await expect(batchPromise).resolves.toBeUndefined();
+    } finally {
+      mockApi.add.mockImplementation(originalAdd as any);
+    }
+  });
+
   it("should perform a search", async () => {
     const results = await service.search("query");
     expect(results).toHaveLength(1);
