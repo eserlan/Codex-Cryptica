@@ -46,7 +46,7 @@ You can preview the production build with `npm run preview`.
 This project uses a hybrid SPA/SSG (Static Site Generation) approach:
 
 - **Marketing Routes**: Pages like `/`, `/features`, `/privacy`, and `/terms` are prerendered as static HTML files during the build process. This ensures optimal SEO indexability and fast initial loads.
-- **Application Routes**: The main workspace remains an SPA (Single Page Application) using the `fallback: 'index.html'` setting in `adapter-static`.
+- **Application Routes**: The main workspace remains an SPA (Single Page Application) using the `fallback: 'index.html'` setting in `adapter-static`, which works cleanly on Cloudflare Pages.
 
 ### Prerender Safety
 

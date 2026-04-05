@@ -1,8 +1,8 @@
-name: Deploy to GitHub Pages
+name: Deploy to Cloudflare Pages
 
 on:
   push:
-    branches-ignore: ["blog-content"]
+    branches: [main, staging]
     paths-ignore:
       - "apps/web/src/lib/content/blog/**"
       - "scripts/publish-blog-content.mjs"
@@ -11,29 +11,22 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: "pages"
+  group: "cloudflare-pages"
   cancel-in-progress: true
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-  actions: write
+  deployments: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [production, staging]
     env:
       HUSKY: 0
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          # Production always builds from main; Staging builds from the current ref
-          ref: ${{ matrix.environment == 'production' && 'main' || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -54,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: coverage-${{ matrix.environment }}
+          name: coverage
           path: |
             apps/*/coverage/
             packages/*/coverage/
@@ -62,18 +55,15 @@ jobs:
 
       - name: Build Application
         env:
-          BASE_PATH: ${{ matrix.environment == 'staging' && '/staging' || '' }}
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
-        run: |
-          npm run build --workspace=web
-          cp apps/web/build/index.html apps/web/build/404.html
+        run: npm run build --workspace=web
 
       - name: Upload intermediate artifact
         uses: actions/upload-artifact@v7
         with:
-          name: dist-${{ matrix.environment }}
+          name: dist
           path: apps/web/build/
           include-hidden-files: true
           retention-days: 1
@@ -82,46 +72,31 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - name: Download Production Build
+      - name: Download Build
         uses: actions/download-artifact@v8
         with:
-          name: dist-production
+          name: dist
           path: dist/
 
-      - name: Download Staging Build
-        uses: actions/download-artifact@v8
+      - name: Deploy Production to Cloudflare Pages
+        if: github.ref_name == 'main'
+        uses: cloudflare/wrangler-action@v3
         with:
-          name: dist-staging
-          path: dist/staging/
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica
 
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v4
+      - name: Deploy Staging to Cloudflare Pages
+        if: github.ref_name == 'staging'
+        uses: cloudflare/wrangler-action@v3
         with:
-          path: "dist/"
-
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v5
-
-      - name: Notify Staging
-        if: success() && github.ref != 'refs/heads/main'
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
-        run: |
-          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}staging"
-
-      - name: Notify Production
-        if: success() && github.ref == 'refs/heads/main'
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "${{ steps.deployment.outputs.page_url }}"
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=staging
