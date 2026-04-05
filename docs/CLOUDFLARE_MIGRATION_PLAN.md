@@ -17,6 +17,8 @@ Why this comes first:
 - A content branch alone does not solve indexing.
 - If the blog pages are not real HTML, the rest of the migration does not matter yet.
 
+For the exact execution order and files to touch, see [CLOUDFLARE_IMPLEMENTATION_CHECKLIST.md](./CLOUDFLARE_IMPLEMENTATION_CHECKLIST.md).
+
 ## Priority 1: Move the app hosting to Cloudflare
 
 Do this once the blog pages are known to be indexable.

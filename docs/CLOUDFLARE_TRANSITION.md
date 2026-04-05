@@ -77,3 +77,5 @@ For maximum safety, we can eventually move to **Artifact Promotion**:
 See [CLOUDFLARE_MIGRATION_TASKS.md](./CLOUDFLARE_MIGRATION_TASKS.md) for the working checklist for the full move.
 
 For a more opinionated order of operations, see [CLOUDFLARE_MIGRATION_PLAN.md](./CLOUDFLARE_MIGRATION_PLAN.md).
+
+For the concrete repo/workflow execution order, see [CLOUDFLARE_IMPLEMENTATION_CHECKLIST.md](./CLOUDFLARE_IMPLEMENTATION_CHECKLIST.md).
