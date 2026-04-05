@@ -63,17 +63,19 @@ apps/web/src/
 │   │   └── vault.svelte.ts             # Existing: encounter snapshot save/load
 │   ├── components/
 │   │   ├── map/
-│   │   │   ├── MapView.svelte           # Existing: token overlay layer added
+│   │   │   ├── MapView.svelte           # Existing: token overlay + drag handling added
 │   │   │   ├── TokenOverlay.svelte      # New: renders tokens on map
-│   │   │   ├── TokenDragLayer.svelte    # New: handles drag interactions
 │   │   │   ├── MeasurementTool.svelte   # New: distance ruler overlay
-│   │   │   └── VTTControls.svelte       # New: VTT mode toggle, tool selection
+│   │   │   ├── VTTControls.svelte       # New: VTT mode toggle, tool selection
+│   │   │   └── TokenAddDialog.svelte    # New: token placement dialog
 │   │   └── vtt/
 │   │       ├── InitiativePanel.svelte   # New: turn order sidebar
 │   │       ├── TokenDetail.svelte       # New: selected token info panel
 │   │       └── EncounterManager.svelte  # New: save/load encounter UI
 │   ├── services/
-│   │   └── vtt-session.ts              # New: P2P session sync protocol
+│   │   └── (VTT messages extend existing P2P host-service and guest-service)
+│   ├── utils/
+│   │   └── vtt-helpers.ts               # New: grid snapping, distance calc, hit-testing
 │   └── config/
 │       └── help-content.ts              # Updated: VTT help entries
 ├── types/
@@ -82,9 +84,12 @@ tests/
 ├── unit/
 │   ├── stores/map-session.test.ts       # Session store operations
 │   ├── services/vtt-session.test.ts     # P2P sync protocol
-│   └── types/vtt.test.ts               # Type validation
+│   ├── lib/vtt-helpers.test.ts          # Grid snapping, distance, hit-testing
+│   └── renderer/render-tokens.test.ts   # Token rendering coordinate transforms
 └── e2e/
-    └── vtt-session.spec.ts              # Shared session flow (Playwright)
+    ├── vtt-token-drag.spec.ts           # Token drag interaction
+    ├── vtt-session.spec.ts              # Shared session flow
+    └── vtt-combat-round.spec.ts         # Full combat round flow
 ```
 
 **Structure Decision**: Single-project web application feature. New store (`map-session.svelte.ts`), components, and service layer added within `apps/web/src/lib/`. Types in a dedicated `vtt.ts` module. If the session layer grows beyond the web app scope, it can be extracted to a `packages/vtt-session/` later (per Library-First principle).
