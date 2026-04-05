@@ -25,6 +25,19 @@ The deployment job uploads the static build to Cloudflare Pages:
 - `main` deploys to production
 - `staging` deploys to the staging Pages branch
 
+## Branch Flow
+
+The intended GitHub flow is:
+
+1. Create a feature branch and open a PR into `staging`.
+2. Let the `auto-merge-staging` workflow enable merge-on-green for that PR.
+3. Test the deployed result on `staging.codexcryptica.com`.
+4. Push fixes to the same feature branch and let the PR update and redeploy to staging.
+5. When the staging result is good, open a promotion PR from `staging` into `main`.
+6. Merge that promotion PR to release the same validated changes to production.
+
+For release promotion PRs, the goal is to move already-validated staging work into `main`, not to re-review the feature implementation from scratch.
+
 ## The Version Bump Workflow (`auto-bump-web-version.yml`)
 
 When a Pull Request is merged into `main`:
