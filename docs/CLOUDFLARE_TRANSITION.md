@@ -1,32 +1,34 @@
-# Proposed Transition: GitHub Pages to Cloudflare Pages
+# Transition: GitHub Pages to Cloudflare Pages
 
 ## Overview
 
-Currently, Codex Cryptica uses GitHub Pages for hosting, which requires a "sub-folder" strategy for staging (e.g., `/staging`). This document proposes migrating to **Cloudflare Pages** to enable dedicated subdomains, environment isolation, and a professional promotion-based deployment workflow.
+Codex Cryptica now uses **Cloudflare Pages** for hosting. This document records the migration shape and the remaining cleanup work so staging, production, and blog publishing stay aligned.
+
+GitHub Pages and the old `/staging` path model are no longer the active host. The current staging target is `staging.codexcryptica.com`.
 
 ## Current vs. Proposed Architecture
 
-| Feature            | Current (GitHub Pages)       | Proposed (Cloudflare Pages)           |
-| :----------------- | :--------------------------- | :------------------------------------ |
-| **Production URL** | `codexcryptica.com/`         | `codexcryptica.com/`                  |
-| **Staging URL**    | `codexcryptica.com/staging/` | `staging.codexcryptica.com/`          |
-| **Isolation**      | Shared build artifact        | Completely separate environments      |
-| **Promotion**      | Matrix build (dual deploy)   | Branch merge (Promotion from Staging) |
-| **Build Limits**   | Unlimited                    | 500 builds / month (Free Tier)        |
-| **Performance**    | Standard GitHub CDN          | Global Cloudflare Edge Network        |
+| Feature            | Current State                  | Target State                      |
+| :----------------- | :----------------------------- | :-------------------------------- |
+| **Production URL** | `codexcryptica.com/`           | `codexcryptica.com/`              |
+| **Staging URL**    | `staging.codexcryptica.com/`   | `staging.codexcryptica.com/`      |
+| **Isolation**      | Separate Cloudflare envs       | Separate Cloudflare envs          |
+| **Promotion**      | Branch-based deploys           | Branch merge / promotion workflow |
+| **Build Limits**   | Cloudflare Pages quotas        | Cloudflare Pages quotas           |
+| **Performance**    | Global Cloudflare Edge Network | Global Cloudflare Edge Network    |
 
 ## The New Deployment Workflow
 
 ### 1. Feature Development
 
-Developers create feature branches (e.g., `feat/new-ui`). Pushing to these branches can trigger "Preview Deployments" on Cloudflare with unique URLs for testing.
+Developers create feature branches (e.g., `feat/new-ui`). Cloudflare preview deployments can be used for unique URLs during testing.
 
 ### 2. Staging Deployment
 
-When code is ready for "Staging", it is merged into a dedicated `staging` branch.
+When code is ready for staging, it is merged into a dedicated `staging` branch.
 
 - **Trigger**: Push to `staging` branch.
-- **Action**: GitHub Actions builds the app and pushes to Cloudflare.
+- **Action**: GitHub Actions builds the app and pushes to Cloudflare Pages.
 - **Result**: Visible at `staging.codexcryptica.com`.
 
 ### 3. Production Promotion
@@ -34,7 +36,7 @@ When code is ready for "Staging", it is merged into a dedicated `staging` branch
 Once verified on staging, the `staging` branch is merged into `main`.
 
 - **Trigger**: Push to `main` branch.
-- **Action**: GitHub Actions builds the app and pushes to Cloudflare.
+- **Action**: GitHub Actions builds the app and pushes to Cloudflare Pages.
 - **Result**: Visible at `codexcryptica.com`.
 
 ## Why Cloudflare Pages?
@@ -48,20 +50,20 @@ Once verified on staging, the `staging` branch is merged into `main`.
 
 ### Phase 1: Cloudflare Setup
 
-1. Connect GitHub repository to Cloudflare Pages.
-2. Configure custom domains: `codexcryptica.com` (Production) and `staging.codexcryptica.com` (Preview/Staging).
-3. Set environment variables in Cloudflare (Gemini API keys, Discord webhooks).
+1. Keep the GitHub repo connected to Cloudflare Pages.
+2. Keep the custom domains attached: `codexcryptica.com` and `staging.codexcryptica.com`.
+3. Keep the environment variables in GitHub Actions / Cloudflare as needed for the build.
 
 ### Phase 2: GitHub Action Migration
 
-1. Create `.github/workflows/cloudflare-deploy.yml`.
+1. Keep `.github/workflows/deploy.yml` as the Cloudflare deploy path.
 2. Use `cloudflare/wrangler-action` to upload the build output.
-3. Remove the `BASE_PATH="/staging"` logic, as both environments will now live at the root of their respective domains.
+3. Keep staging and production rooted at their own domains.
 
 ### Phase 3: Retirement
 
-1. Disable GitHub Pages in repository settings.
-2. Delete `.github/workflows/deploy.yml`.
+1. GitHub Pages is already retired.
+2. Keep the old `/staging` path out of the app.
 
 ## Future State: Build-less Promotion
 

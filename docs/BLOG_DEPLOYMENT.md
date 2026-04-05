@@ -44,3 +44,9 @@ https://raw.githubusercontent.com/<owner>/<repo>/blog-content/blog
 If you change the branch name or host, update both the workflow and `VITE_BLOG_CONTENT_BASE_URL` together.
 
 Blog-only pushes to `main` and pushes to the `blog-content` branch are excluded from the normal deploy workflow, so blog publishing can run without kicking off a full site deploy.
+
+## Sitemap and indexing
+
+The production build also generates `apps/web/static/sitemap.xml` from the blog index during `prebuild`. That keeps the sitemap aligned with newly published posts on the next app deploy without requiring a separate sitemap workflow.
+
+Staging builds set `noindex, nofollow`, so `staging.codexcryptica.com` stays out of search results while still giving you a public preview URL.
