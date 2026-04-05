@@ -25,6 +25,30 @@ The deployment job uploads the static build to Cloudflare Pages:
 - `main` deploys to production
 - `staging` deploys to the staging Pages branch
 
+## Branch Flow
+
+The intended GitHub flow is:
+
+1. Create a feature branch and open a PR into `staging`.
+2. Let the `auto-merge-staging` workflow enable merge-on-green for that PR.
+3. Test the deployed result on `staging.codexcryptica.com`.
+4. Push fixes to the same feature branch and let the PR update and redeploy to staging.
+5. When the staging result is good, open a promotion PR from `staging` into `main`.
+6. Merge that promotion PR to release the same validated changes to production.
+
+For release promotion PRs, the goal is to move already-validated staging work into `main`, not to re-review the feature implementation from scratch.
+
+```mermaid
+flowchart TD
+  A[Feature branch] --> B[PR into staging]
+  B --> C[staging]
+  C --> D[staging.codexcryptica.com]
+  C --> E[Promotion PR into main]
+  E --> F[main]
+  F --> G[codexcryptica.com]
+  D --> A
+```
+
 ## The Version Bump Workflow (`auto-bump-web-version.yml`)
 
 When a Pull Request is merged into `main`:
@@ -35,6 +59,16 @@ When a Pull Request is merged into `main`:
 4. **Manual Dispatch:** The bot can also execute `gh workflow run deploy.yml`.
 
 **Note:** Because of the `concurrency` setting in `deploy.yml`, you may see "Cancelled" runs in your Actions tab after a merge. This is normal behavior; the system is simply cancelling the earlier deployment in favor of the later one.
+
+## Staging Promotion Workflow
+
+Pull requests targeting `staging` can be promoted automatically once they are ready.
+
+- [`/.github/workflows/auto-merge-staging.yml`](/home/espen/proj/Codex-Arcana/.github/workflows/auto-merge-staging.yml) enables GitHub auto-merge for non-draft PRs that target `staging`.
+- GitHub repository settings must allow auto-merge for the workflow to take effect.
+- The workflow only applies to PRs from the same repository, so forked contributions are left alone.
+
+Once auto-merge is enabled, GitHub will merge the PR into `staging` after the required checks and review conditions pass.
 
 ## Blog Content Deployment
 

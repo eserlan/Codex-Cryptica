@@ -1,0 +1,90 @@
+name: Auto Merge PRs Into Staging
+
+on:
+  pull_request_target:
+    branches: [staging]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+concurrency:
+  group: auto-merge-staging-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enable auto-merge for staging PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const sameRepo =
+              pr.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}`;
+
+            if (!sameRepo) {
+              core.info(
+                `Skipping PR #${pr.number} because it comes from a fork.`,
+              );
+              return;
+            }
+
+            const { repository } = await github.graphql(
+              `
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $number) {
+                      id
+                      isDraft
+                      autoMergeRequest {
+                        enabledAt
+                      }
+                    }
+                  }
+                }
+              `,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                number: pr.number,
+              },
+            );
+
+            const pullRequest = repository?.pullRequest;
+            if (!pullRequest) {
+              throw new Error(`Pull request #${pr.number} could not be found.`);
+            }
+
+            if (pullRequest.isDraft) {
+              core.info(`PR #${pr.number} is still a draft; skipping auto-merge.`);
+              return;
+            }
+
+            if (pullRequest.autoMergeRequest) {
+              core.info(`Auto-merge is already enabled for PR #${pr.number}.`);
+              return;
+            }
+
+            await github.graphql(
+              `
+                mutation($pullRequestId: ID!) {
+                  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId }) {
+                    pullRequest {
+                      number
+                      autoMergeRequest {
+                        enabledAt
+                      }
+                    }
+                  }
+                }
+              `,
+              {
+                pullRequestId: pullRequest.id,
+              },
+            );
+
+            core.info(`Enabled auto-merge for PR #${pr.number}.`);
