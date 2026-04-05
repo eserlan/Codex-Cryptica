@@ -89,18 +89,27 @@ export class VaultLifecycleManager {
   }
 
   async deleteVault(id: string) {
-    await this.deps.vaultRegistry.deleteVault(id);
-    await cacheService.clearVault(id);
+    // VaultRegistryStore.deleteVault throws if attempting to delete the active vault,
+    // so we must switch away from it first if it's the one being deleted.
     if (this.deps.activeVaultId() === id) {
       this.deps.repository.clear();
       this.deps.assetStore.clear();
       this.deps.mapRegistry.maps = {};
       this.deps.canvasRegistry.clear();
+      this.deps.setSelectedEntityId(null);
+
       const nextVault = this.deps.vaultRegistry.availableVaults[0];
       if (nextVault) {
         await this.switchVault(nextVault.id);
+      } else {
+        // No other vaults remain; clear active state.
+        this.deps.setInitialized(false);
+        this.deps.syncStore.setStatus("idle");
       }
     }
+
+    await this.deps.vaultRegistry.deleteVault(id);
+    await cacheService.clearVault(id);
   }
 
   async setupSync(handle: FileSystemDirectoryHandle) {

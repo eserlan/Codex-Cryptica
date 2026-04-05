@@ -120,7 +120,10 @@ export class EntityStore {
       try {
         const vaultHandle =
           await this.deps.getSpecificVaultHandle(vaultIdAtStart);
-        if (!vaultHandle) return;
+        if (!vaultHandle) {
+          this.deps.setStatus("idle");
+          return;
+        }
 
         await this.deps.repository.saveToDisk(
           vaultHandle,

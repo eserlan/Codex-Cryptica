@@ -33,8 +33,24 @@ export class ServiceRegistry {
 
       return this._services;
     } catch (err) {
-      console.error("[ServiceRegistry] Failed to lazy-load services", err);
-      throw err;
+      console.warn(
+        "[ServiceRegistry] Failed to lazy-load services, operating in degraded mode",
+        err,
+      );
+      // Return a minimal services object so features not requiring AI/search can proceed
+      this._services = {
+        search: {
+          index: async () => {},
+          remove: async () => {},
+          clear: async () => {},
+          search: async () => [],
+        },
+        ai: {
+          clearStyleCache: () => {},
+          expandQuery: async () => "",
+        },
+      };
+      return this._services;
     }
   }
 

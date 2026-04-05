@@ -8,6 +8,7 @@ export interface MessengerDependencies {
 
 export class VaultMessenger {
   private channel: BroadcastChannel | null = null;
+  private unsubscribe: (() => void) | null = null;
 
   constructor(private deps: MessengerDependencies) {
     if (typeof window !== "undefined") {
@@ -21,7 +22,7 @@ export class VaultMessenger {
         }
       };
 
-      vaultEventBus.subscribe((event) => {
+      this.unsubscribe = vaultEventBus.subscribe((event) => {
         if (event.type === "BATCH_CREATED" || event.type === "ENTITY_DELETED") {
           this.deps.broadcastCallback();
         }
@@ -42,6 +43,11 @@ export class VaultMessenger {
   destroy() {
     if (this.channel) {
       this.channel.close();
+      this.channel = null;
+    }
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
     }
   }
 }
