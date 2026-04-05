@@ -39,18 +39,14 @@ The intended GitHub flow is:
 For release promotion PRs, the goal is to move already-validated staging work into `main`, not to re-review the feature implementation from scratch.
 
 ```mermaid
-flowchart LR
-  feature[Feature branch]
-  prStaging[PR into staging]
-  staging[staging branch]
-  stagingSite[staging.codexcryptica.com]
-  prMain[Promotion PR into main]
-  main[main branch]
-  prodSite[codexcryptica.com]
-
-  feature --> prStaging --> staging --> stagingSite
-  stagingSite -->|iterate fixes| feature
-  staging --> prMain --> main --> prodSite
+graph LR
+  A[Feature branch] --> B[PR into staging]
+  B --> C[staging branch]
+  C --> D[staging.codexcryptica.com]
+  C --> E[Promotion PR into main]
+  E --> F[main branch]
+  F --> G[codexcryptica.com]
+  D -->|iterate fixes| A
 ```
 
 ## The Version Bump Workflow (`auto-bump-web-version.yml`)
