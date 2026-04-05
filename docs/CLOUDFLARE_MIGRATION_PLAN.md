@@ -6,10 +6,10 @@ Goal: move the site to Cloudflare in a way that keeps blog pages indexable, keep
 
 Do this first. If this step is wrong, everything else is noise.
 
-- [ ] Make sure `/blog` and `/blog/[slug]` are prerendered as real HTML pages.
-- [ ] Confirm the blog archive is not returning `404` in production.
-- [ ] Verify Google Search Console can fetch and index the blog pages.
-- [ ] Decide whether the blog should be served from the main app build or from a separate blog deployment target.
+- [x] Make sure `/blog` and `/blog/[slug]` are prerendered as real HTML pages.
+- [x] Confirm the blog archive is not returning `404` in production.
+- [x] Verify Google Search Console can fetch and index the blog pages.
+- [x] Decide whether the blog should be served from the main app build or from a separate blog deployment target.
 
 Why this comes first:
 
@@ -23,11 +23,11 @@ For the exact execution order and files to touch, see [CLOUDFLARE_IMPLEMENTATION
 
 Do this once the blog pages are known to be indexable.
 
-- [ ] Create the Cloudflare Pages project for the app.
-- [ ] Point production to `codexcryptica.com`.
-- [ ] Point staging to a separate Cloudflare-hosted URL.
-- [ ] Move the current GitHub Pages deployment over to Cloudflare Pages.
-- [ ] Keep the same static output model unless there is a hard reason to change it.
+- [x] Create the Cloudflare Pages project for the app.
+- [x] Point production to `codexcryptica.com`.
+- [x] Point staging to a separate Cloudflare-hosted URL.
+- [x] Move the current GitHub Pages deployment over to Cloudflare Pages.
+- [x] Keep the same static output model unless there is a hard reason to change it.
 
 Why this comes next:
 
@@ -39,10 +39,10 @@ Why this comes next:
 
 Do this after the app is safely hosted.
 
-- [ ] Decide whether `blog-content` remains the blog publishing source.
-- [ ] Keep blog content generation separate from the full app release cycle.
-- [ ] Preserve the ability to publish a new blog post without a manual site-wide rebuild.
-- [ ] Keep blog images on `assets.codexcryptica.com`.
+- [x] Decide whether `blog-content` remains the blog publishing source.
+- [x] Keep blog content generation separate from the full app release cycle.
+- [x] Preserve the ability to publish a new blog post without a manual site-wide rebuild.
+- [x] Keep blog images on `assets.codexcryptica.com`.
 
 Why this matters:
 
@@ -54,9 +54,9 @@ Why this matters:
 
 Do this once hosting and publishing are stable.
 
-- [ ] Remove GitHub Pages deploy logic when it is no longer needed.
-- [ ] Simplify or remove old staging path logic.
-- [ ] Confirm redirects and canonical URLs are correct.
+- [x] Remove GitHub Pages deploy logic when it is no longer needed.
+- [x] Simplify or remove old staging path logic.
+- [x] Confirm redirects and canonical URLs are correct.
 - [ ] Make sure cache headers are sane for blog pages and assets.
 
 Why this comes later:
@@ -68,11 +68,11 @@ Why this comes later:
 
 Do this before declaring the move complete.
 
-- [ ] Test the homepage, blog archive, and individual blog posts.
-- [ ] Validate image loading from Cloudflare.
-- [ ] Test a fresh blog publish end to end.
-- [ ] Run live index checks again after deployment.
-- [ ] Document the final production path in `docs/`.
+- [x] Test the homepage, blog archive, and individual blog posts.
+- [x] Validate image loading from Cloudflare.
+- [x] Test a fresh blog publish end to end.
+- [x] Run live index checks again after deployment.
+- [x] Document the final production path in `docs/`.
 
 ## Recommended End State
 

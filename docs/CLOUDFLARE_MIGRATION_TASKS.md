@@ -6,67 +6,67 @@ For the recommended order of operations and priorities, see [CLOUDFLARE_MIGRATIO
 
 ## Phase 1: Decide the hosting shape
 
-- [ ] Choose the final Cloudflare hosting model:
-  - [ ] `codexcryptica.com` on Cloudflare Pages
-  - [ ] staging on a separate Cloudflare Pages branch or subdomain
-  - [ ] assets on `assets.codexcryptica.com`
-- [ ] Confirm whether GitHub Pages will be retired or kept as a fallback.
-- [ ] Decide whether `blog-content` stays as a published content branch or is removed after the move.
+- [x] Choose the final Cloudflare hosting model:
+  - [x] `codexcryptica.com` on Cloudflare Pages
+  - [x] staging on a separate Cloudflare Pages branch or subdomain
+  - [x] assets on `assets.codexcryptica.com`
+- [x] Confirm whether GitHub Pages will be retired or kept as a fallback.
+- [x] Decide whether `blog-content` stays as a published content branch or is removed after the move.
 
 ## Phase 2: Move the app host
 
-- [ ] Create a Cloudflare Pages project for the web app.
-- [ ] Configure the production domain on Cloudflare Pages.
-- [ ] Configure staging or preview deployment URLs.
-- [ ] Move the build/deploy workflow from GitHub Pages to Cloudflare Pages.
-- [ ] Remove GitHub Pages specific build steps when the Cloudflare deploy is verified.
-- [ ] Verify the app still builds with `adapter-static` or switch adapters only if needed.
+- [x] Create a Cloudflare Pages project for the web app.
+- [x] Configure the production domain on Cloudflare Pages.
+- [x] Configure staging or preview deployment URLs.
+- [x] Move the build/deploy workflow from GitHub Pages to Cloudflare Pages.
+- [x] Remove GitHub Pages specific build steps when the Cloudflare deploy is verified.
+- [x] Verify the app still builds with `adapter-static` or switch adapters only if needed.
 
 ## Phase 3: Keep blogs indexable
 
-- [ ] Keep `/blog` and `/blog/[slug]` prerendered as real HTML pages.
-- [ ] Verify the prerendered output is present in the Cloudflare build artifact.
-- [ ] Confirm Google can fetch `/blog` and a sample blog post as `200` HTML.
-- [ ] Make sure blog canonical URLs point to the final public domain.
-- [ ] Keep the blog metadata and Open Graph fields intact after the move.
+- [x] Keep `/blog` and `/blog/[slug]` prerendered as real HTML pages.
+- [x] Verify the prerendered output is present in the Cloudflare build artifact.
+- [x] Confirm Google can fetch `/blog` and a sample blog post as `200` HTML.
+- [x] Make sure blog canonical URLs point to the final public domain.
+- [x] Keep the blog metadata and Open Graph fields intact after the move.
 
 ## Phase 4: Separate blog publishing from full app deploys
 
-- [ ] Decide how blog content changes should publish:
+- [x] Decide how blog content changes should publish:
   - [ ] rebuild only the blog artifact
-  - [ ] rebuild the full app but keep the blog build fast
-  - [ ] keep a published `blog-content` branch as the content source
-- [ ] Ensure blog-only content updates do not require a full manual site rebuild.
-- [ ] Preserve a lightweight blog publishing workflow for frequent posts.
-- [ ] Verify blog images continue to resolve from Cloudflare R2.
+  - [x] rebuild the full app but keep the blog build fast
+  - [x] keep a published `blog-content` branch as the content source
+- [x] Ensure blog-only content updates do not require a full manual site rebuild.
+- [x] Preserve a lightweight blog publishing workflow for frequent posts.
+- [x] Verify blog images continue to resolve from Cloudflare R2.
 
 ## Phase 5: Asset and caching cleanup
 
-- [ ] Confirm all blog images point at `assets.codexcryptica.com`.
-- [ ] Keep image optimization URLs (`cdn-cgi/image/...`) where appropriate.
+- [x] Confirm all blog images point at `assets.codexcryptica.com`.
+- [x] Keep image optimization URLs (`cdn-cgi/image/...`) where appropriate.
 - [ ] Review caching headers for blog pages and blog assets.
-- [ ] Confirm redirects for old URLs, staging URLs, and any blog path changes.
+- [x] Confirm redirects for old URLs, staging URLs, and any blog path changes.
 
 ## Phase 6: Environment and secrets
 
-- [ ] Move build-time environment variables to Cloudflare Pages.
-- [ ] Set separate production and staging values where needed.
-- [ ] Confirm Gemini, Discord, and any other deployment secrets are available in the new host.
+- [x] Move build-time environment variables to the deploy workflow.
+- [x] Set separate production and staging values where needed.
+- [x] Confirm Gemini, Discord, and any other deployment secrets are available in the new host.
 
 ## Phase 7: Validation
 
-- [ ] Test the app home page on the new host.
-- [ ] Test `/blog` and at least one blog post on the new host.
-- [ ] Test a newly published blog post end to end.
-- [ ] Test image loading from R2.
-- [ ] Run a live Google Search Console inspection on `/blog`.
+- [x] Test the app home page on the new host.
+- [x] Test `/blog` and at least one blog post on the new host.
+- [x] Test a newly published blog post end to end.
+- [x] Test image loading from R2.
+- [x] Run a live Google Search Console inspection on `/blog`.
 
 ## Phase 8: Cutover
 
-- [ ] Disable GitHub Pages once Cloudflare is serving the site correctly.
-- [ ] Remove old GitHub Pages deploy workflows.
+- [x] Disable GitHub Pages once Cloudflare is serving the site correctly.
+- [x] Remove old GitHub Pages deploy workflows.
 - [ ] Keep a rollback path for the first few releases.
-- [ ] Document the final hosting model in `docs/`.
+- [x] Document the final hosting model in `docs/`.
 
 ## Success Criteria
 
