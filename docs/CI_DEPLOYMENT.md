@@ -39,7 +39,7 @@ The intended GitHub flow is:
 For release promotion PRs, the goal is to move already-validated staging work into `main`, not to re-review the feature implementation from scratch.
 
 ```mermaid
-flowchart LR
+flowchart TD
   A[Feature branch] --> B[PR into staging]
   B --> C[staging]
   C --> D[staging.codexcryptica.com]
