@@ -7,6 +7,8 @@ import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
+const INDEX_BATCH_SIZE = 50;
+
 export class SearchService {
   private worker: Worker | null = null;
   private api: Comlink.Remote<SearchEngine> | null = null;
@@ -127,7 +129,7 @@ export class SearchService {
     const start = performance.now();
     let indexedCount = 0;
     const batch: any[] = [];
-    const BATCH_SIZE = 50;
+    const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
       await entityDb.entityContent
@@ -367,11 +369,17 @@ export class SearchService {
     // Serialize indexing jobs to prevent overlapping worker updates
     this.indexQueue = this.indexQueue
       .then(async () => {
-        const entries = entities.map((e) => this.mapToSearchEntry(e));
-        // Indexing in chunks to avoid blocking the worker for too long
-        for (let i = 0; i < entries.length; i += 50) {
-          const chunk = entries.slice(i, i + 50);
-          await Promise.all(chunk.map((entry) => this.api!.add(entry)));
+        // ⚡ Bolt Optimization: Replace full array .map() with incremental imperative loop processing.
+        // Avoids allocating a massive intermediate array for all entities during cold boot,
+        // reducing peak memory and GC pressure.
+        for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
+          const chunkPromises: Promise<void>[] = [];
+          const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
+          for (let j = i; j < end; j++) {
+            const entry = this.mapToSearchEntry(entities[j]);
+            chunkPromises.push(this.api!.add(entry));
+          }
+          await Promise.all(chunkPromises);
         }
       })
       .catch((err) => debugStore.warn("Index batch error", err));
