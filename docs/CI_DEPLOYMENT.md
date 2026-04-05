@@ -8,6 +8,7 @@ Codex Cryptica now uses **Cloudflare Pages** for hosting. We still keep a staged
 
 - **Production:** Hosted at the root (`codexcryptica.com`).
 - **Staging:** Hosted as a Cloudflare Pages staging deployment or subdomain.
+  - If you want a dedicated staging URL, attach `staging.codexcryptica.com` to the `staging` branch and point the DNS record at `staging.codex-cryptica.pages.dev`.
 
 ## The Deployment Workflow (`deploy.yml`)
 
