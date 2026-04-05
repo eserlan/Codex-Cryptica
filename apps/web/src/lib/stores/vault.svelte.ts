@@ -156,8 +156,9 @@ export class VaultStore {
       },
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       getActiveSyncHandle: () => this.getActiveSyncHandle(),
-      ensureServicesInitialized: () =>
-        this.serviceRegistry.ensureInitialized() as any,
+      ensureServicesInitialized: async () => {
+        await this.serviceRegistry.ensureInitialized();
+      },
       loadMaps: (vId) => mapRegistry.loadFromVault(vId),
       loadCanvases: (vId) => canvasRegistry.loadFromVault(vId),
     });
