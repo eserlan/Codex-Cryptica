@@ -177,7 +177,9 @@ export class VaultStore {
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       loadFiles: (skipSync) => this.loadFiles(skipSync),
-      ensureServicesInitialized: () => this.serviceRegistry.ensureInitialized(),
+      ensureServicesInitialized: async () => {
+        await this.serviceRegistry.ensureInitialized();
+      },
       clearStorageCache: () => this.storageManager.clearCache(),
       getEntities: () => this.entities,
       setDemoVaultName: (n) => (this.demoVaultName = n),
