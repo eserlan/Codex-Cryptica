@@ -9,6 +9,7 @@
     name="description"
     content="Explore the official Codex Cryptica blog for guides on local-first RPG world-building, tactical mapping, and data sovereignty."
   />
+  <link rel="canonical" href={data.canonicalUrl} />
 </svelte:head>
 
 <div
@@ -28,7 +29,7 @@
     </header>
 
     <div class="grid gap-12 md:gap-20">
-      {#each data.articles as article}
+      {#each data.articles as article (article.slug)}
         <article class="group relative flex flex-col gap-4">
           <div
             class="flex items-center gap-4 text-xs font-mono text-theme-primary uppercase tracking-widest mb-2"

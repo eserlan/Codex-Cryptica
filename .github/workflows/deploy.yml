@@ -55,6 +55,7 @@ jobs:
 
       - name: Build Application
         env:
+          VITE_PUBLIC_APP_URL: https://codexcryptica.com
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog

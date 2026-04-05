@@ -1,6 +1,10 @@
 import { loadBlogArticle } from "$lib/content/blog-content";
+import { buildAbsoluteUrl } from "$lib/seo/site";
 import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
+
+export const prerender = true;
+export const ssr = true;
 
 export const load: PageLoad = async ({ params }) => {
   const article = await loadBlogArticle(params.slug);
@@ -11,5 +15,6 @@ export const load: PageLoad = async ({ params }) => {
 
   return {
     article,
+    canonicalUrl: buildAbsoluteUrl(`/blog/${params.slug}`),
   };
 };
