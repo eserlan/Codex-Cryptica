@@ -398,6 +398,22 @@ class UIStore {
     if (newWin) newWin.opener = null;
   }
 
+  openDiceWindow() {
+    if (typeof window === "undefined") return;
+
+    const width = 450;
+    const height = 800;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const url = `${window.location.origin}${base}/dice`;
+    const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
+
+    const newWin = window.open(url, "CodexCrypticaDice", features);
+    if (newWin) newWin.opener = null;
+    this.showDiceModal = false;
+  }
+
   toggleSettings(tab: SettingsTab = "vault") {
     if (this.showSettings && this.activeSettingsTab === tab) {
       this.showSettings = false;
