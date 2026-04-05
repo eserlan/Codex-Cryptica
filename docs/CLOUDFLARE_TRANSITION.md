@@ -71,3 +71,7 @@ For maximum safety, we can eventually move to **Artifact Promotion**:
 2. Upload the artifact to **Cloudflare R2** (Storage).
 3. "Promote" by updating a Cloudflare Worker or KV key to point the Production domain to the new artifact hash.
    - _Benefit_: Guaranteed that what you tested on staging is _exactly_ what hits production.
+
+## Migration Task List
+
+See [CLOUDFLARE_MIGRATION_TASKS.md](./CLOUDFLARE_MIGRATION_TASKS.md) for the working checklist for the full move.
