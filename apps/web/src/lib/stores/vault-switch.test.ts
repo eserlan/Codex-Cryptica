@@ -97,7 +97,7 @@ describe("VaultStore Multi-Vault", () => {
 
   beforeEach(async () => {
     vi.resetAllMocks();
-    vaultEventBus.reset(false);
+    vaultEventBus.reset();
     mockOpfs = createMockOpfs();
     _mockIDB = createMockIDB();
 
@@ -136,10 +136,19 @@ describe("VaultStore Multi-Vault", () => {
     (vaultRegistry as any).isInitialized = false;
     (vaultRegistry as any).availableVaults = [];
     (vaultRegistry as any).activeVaultId = null;
-    (vault as any).services = {
+    const mockServices = {
       search: mockSearchService,
-      ai: { clearStyleCache: vi.fn() },
+      ai: {
+        clearStyleCache: vi.fn(),
+        expandQuery: vi.fn().mockResolvedValue(""),
+      },
     };
+    vi.spyOn(vault.serviceRegistry, "ensureInitialized").mockResolvedValue(
+      mockServices as any,
+    );
+    vi.spyOn(vault.serviceRegistry, "services", "get").mockReturnValue(
+      mockServices as any,
+    );
 
     sharedInternalState.maps = {};
     sharedInternalState.canvases = {};
@@ -187,7 +196,7 @@ describe("VaultStore Multi-Vault", () => {
     // We can't easily subscribe and expect it to survive reset() inside loadFiles
     // unless we use a NAMED listener which survives reset(true)
     const eventSpy = vi.fn();
-    vaultEventBus.subscribe(eventSpy, "test-listener");
+    const unsubscribe = vaultEventBus.subscribe(eventSpy, "test-listener");
 
     await vault.switchVault("vault-b");
 
@@ -198,7 +207,7 @@ describe("VaultStore Multi-Vault", () => {
       }),
     );
 
-    vaultEventBus.reset(false); // cleanup
+    unsubscribe();
   });
 
   it("should dispatch vault-switched event when switching", async () => {
@@ -223,12 +232,12 @@ describe("VaultStore Multi-Vault", () => {
   });
 
   it("should reset content-loaded tracking when switching vaults", async () => {
-    (vault as any)._contentLoadedIds = new Set(["e1", "e2", "e3"]);
-    (vault as any)._contentVerifiedIds = new Set(["e1", "e2"]);
+    (vault as any).entityStore._contentLoadedIds = new Set(["e1", "e2", "e3"]);
+    (vault as any).entityStore._contentVerifiedIds = new Set(["e1", "e2"]);
 
     await vault.switchVault("vault-b");
 
-    expect((vault as any)._contentLoadedIds.size).toBe(0);
-    expect((vault as any)._contentVerifiedIds.size).toBe(0);
+    expect((vault as any).entityStore._contentLoadedIds.size).toBe(0);
+    expect((vault as any).entityStore._contentVerifiedIds.size).toBe(0);
   });
 });

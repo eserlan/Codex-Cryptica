@@ -1,97 +1,102 @@
 import { getDB } from "../../utils/idb";
 import type { LocalEntity } from "./types";
 import { cacheService } from "../../services/cache.svelte";
+import type { SyncStore } from "./sync-store.svelte";
+import type { AssetStore } from "./asset-store.svelte";
+
+export interface VaultLifecycleDependencies {
+  syncStore: SyncStore;
+  assetStore: AssetStore;
+  repository: any;
+  activeVaultId: () => string | null;
+  getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>;
+  ensureServicesInitialized: () => Promise<void>;
+  clearStorageCache: () => void;
+  getEntities: () => Record<string, LocalEntity>;
+  setDemoVaultName: (name: string | null) => void;
+  setInitialized: (val: boolean) => void;
+  getServices: () => any;
+  setSelectedEntityId: (id: string | null) => void;
+  vaultRegistry: any;
+  themeStore: any;
+  mapRegistry: any;
+  canvasRegistry: any;
+  ensureAssetPersisted: (
+    path: string,
+    handle: FileSystemDirectoryHandle,
+  ) => Promise<void>;
+}
 
 export class VaultLifecycleManager {
   private switchLock: Promise<void> = Promise.resolve();
 
-  constructor(
-    private setStatus: (
-      status: "idle" | "loading" | "saving" | "error",
-    ) => void,
-    private setErrorMessage: (msg: string | null) => void,
-    private getActiveVaultId: () => string | null,
-    private getActiveVaultHandle: () => Promise<
-      FileSystemDirectoryHandle | undefined
-    >,
-    private repository: any,
-    private assetManager: any,
-    private loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>,
-    private getEntities: () => Record<string, LocalEntity>,
-    private setDemoVaultName: (name: string | null) => void,
-    private setInitialized: (val: boolean) => void,
-    private getServices: () => any,
-    private setHasConflictFiles: (val: boolean) => void,
-    private setSelectedEntityId: (id: string | null) => void,
-    private vaultRegistry: typeof import("../vault-registry.svelte").vaultRegistry,
-    private themeStore: typeof import("../theme.svelte").themeStore,
-    private mapRegistry: typeof import("../map-registry.svelte").mapRegistry,
-    private canvasRegistry: typeof import("../canvas-registry.svelte").canvasRegistry,
-    private ensureAssetPersisted: (
-      path: string,
-      handle: FileSystemDirectoryHandle,
-    ) => Promise<void>,
-  ) {}
+  constructor(private deps: VaultLifecycleDependencies) {}
 
   async importFromFolder(handle: FileSystemDirectoryHandle) {
-    this.setStatus("loading");
+    this.deps.syncStore.setStatus("loading");
     try {
       const db = await getDB();
-      const vaultId = await this.vaultRegistry.createVault(handle.name);
+      const vaultId = await this.deps.vaultRegistry.createVault(handle.name);
       await db.put("settings", handle, `syncHandle_${vaultId}`);
-      await this.vaultRegistry.setActiveVault(vaultId);
+      await this.deps.vaultRegistry.setActiveVault(vaultId);
+      this.deps.clearStorageCache();
 
       // Force a reload of files which will now find the sync handle we just put
-      await this.loadFiles(false);
+      await this.deps.loadFiles(false);
 
-      this.setStatus("idle");
+      this.deps.syncStore.setStatus("idle");
       return vaultId;
     } catch (err: any) {
       console.error("[VaultStore] Import failed:", err);
-      this.setStatus("error");
-      this.setErrorMessage(err.message || "Failed to import vault.");
+      this.deps.syncStore.setStatus("error");
+      this.deps.syncStore.setErrorMessage(
+        err.message || "Failed to import vault.",
+      );
       throw err;
     }
   }
 
   async persistToIndexedDB(vaultId: string) {
-    this.setStatus("saving");
+    this.deps.syncStore.setStatus("saving");
     try {
-      const handle = await this.getActiveVaultHandle();
+      const handle = await this.deps.getActiveVaultHandle();
       if (!handle) throw new Error("No vault handle available");
 
-      const entities = this.getEntities();
+      const entities = this.deps.getEntities();
       for (const entity of Object.values(entities)) {
-        await this.repository.saveToDisk(handle, vaultId, entity, false);
-        await this.ensureAssetPersisted(entity.id, handle);
+        await this.deps.repository.saveToDisk(handle, vaultId, entity, false);
+        await this.deps.ensureAssetPersisted(entity.id, handle);
       }
 
       const db = await getDB();
       await db.put("settings", handle, `syncHandle_${vaultId}`);
-      this.setStatus("idle");
+      this.deps.syncStore.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);
-      this.setStatus("error");
-      this.setErrorMessage(err.message || "Failed to persist vault.");
+      this.deps.syncStore.setStatus("error");
+      this.deps.syncStore.setErrorMessage(
+        err.message || "Failed to persist vault.",
+      );
       throw err;
     }
   }
 
   async createVault(name: string) {
-    const newId = await this.vaultRegistry.createVault(name);
+    const newId = await this.deps.vaultRegistry.createVault(name);
     await this.switchVault(newId);
     return newId;
   }
 
   async deleteVault(id: string) {
-    await this.vaultRegistry.deleteVault(id);
+    await this.deps.vaultRegistry.deleteVault(id);
     await cacheService.clearVault(id);
-    if (this.getActiveVaultId() === id) {
-      this.repository.clear();
-      this.assetManager.clear();
-      this.mapRegistry.maps = {};
-      this.canvasRegistry.clear();
-      const nextVault = this.vaultRegistry.availableVaults[0];
+    if (this.deps.activeVaultId() === id) {
+      this.deps.repository.clear();
+      this.deps.assetStore.clear();
+      this.deps.mapRegistry.maps = {};
+      this.deps.canvasRegistry.clear();
+      const nextVault = this.deps.vaultRegistry.availableVaults[0];
       if (nextVault) {
         await this.switchVault(nextVault.id);
       }
@@ -99,7 +104,7 @@ export class VaultLifecycleManager {
   }
 
   async setupSync(handle: FileSystemDirectoryHandle) {
-    const activeId = this.getActiveVaultId();
+    const activeId = this.deps.activeVaultId();
     if (!activeId) return;
     try {
       const db = await getDB();
@@ -110,43 +115,74 @@ export class VaultLifecycleManager {
     return this.importFromFolder(handle);
   }
 
+  async runMigration() {
+    const activeId = this.deps.activeVaultId();
+    if (!activeId) return;
+
+    const { checkForMigration, runMigration } = await import("./migration");
+    const migration = await checkForMigration();
+
+    if (migration.required) {
+      await runMigration(
+        this.deps.vaultRegistry.rootHandle as FileSystemDirectoryHandle,
+        migration.handle as FileSystemDirectoryHandle,
+        true,
+        async () => {
+          if (this.deps.activeVaultId()) {
+            await this.deps.loadFiles(false);
+          }
+        },
+        (status, error) => {
+          this.deps.syncStore.setStatus(status);
+          if (error) this.deps.syncStore.setErrorMessage(error);
+        },
+      );
+      return true;
+    }
+    return false;
+  }
+
   async switchVault(id: string) {
     this.switchLock = this.switchLock.then(async () => {
-      if (this.getActiveVaultId() === id) return;
+      if (this.deps.activeVaultId() === id) return;
 
       // Ensure all pending changes are written to the current vault before switching
-      await this.repository.waitForAllSaves();
+      await this.deps.repository.waitForAllSaves();
 
-      this.repository.clear();
-      this.assetManager.clear();
-      this.mapRegistry.maps = {};
-      this.canvasRegistry.clear();
-      this.setSelectedEntityId(null);
-      this.setHasConflictFiles(false);
-      this.setStatus("loading");
+      this.deps.repository.clear();
+      this.deps.assetStore.clear();
+      this.deps.mapRegistry.maps = {};
+      this.deps.canvasRegistry.clear();
+      this.deps.setSelectedEntityId(null);
+      this.deps.syncStore.setHasConflictFiles(false);
+      this.deps.syncStore.setStatus("loading");
 
-      await this.vaultRegistry.setActiveVault(id);
-      await this.themeStore.loadForVault(id);
-      await this.loadFiles(true);
-      this.setInitialized(true);
-      this.setStatus("idle");
+      await this.deps.vaultRegistry.setActiveVault(id);
+      this.deps.clearStorageCache();
+      await this.deps.themeStore.loadForVault(id);
+      await this.deps.loadFiles(true);
+      this.deps.setInitialized(true);
+      this.deps.syncStore.setStatus("idle");
 
-      window.dispatchEvent(
-        new CustomEvent("vault-switched", { detail: { id } }),
-      );
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("vault-switched", { detail: { id } }),
+        );
+      }
     });
 
     return this.switchLock;
   }
 
   async loadDemoData(name: string, entities: Record<string, LocalEntity>) {
-    this.setStatus("loading");
+    this.deps.syncStore.setStatus("loading");
     try {
-      this.setDemoVaultName(name);
-      this.repository.entities = entities;
-      this.setInitialized(true);
+      await this.deps.ensureServicesInitialized();
+      this.deps.setDemoVaultName(name);
+      this.deps.repository.entities = entities;
+      this.deps.setInitialized(true);
 
-      const services = this.getServices();
+      const services = this.deps.getServices();
       if (services?.search) {
         for (const entity of Object.values(entities)) {
           await services.search.index({
@@ -165,11 +201,11 @@ export class VaultLifecycleManager {
         }
       }
 
-      this.setStatus("idle");
+      this.deps.syncStore.setStatus("idle");
     } catch (err: any) {
       console.error("[VaultStore] Persistence failed:", err);
-      this.setStatus("error");
-      this.setErrorMessage("Failed to persist demo data.");
+      this.deps.syncStore.setStatus("error");
+      this.deps.syncStore.setErrorMessage("Failed to persist demo data.");
       throw err;
     }
   }

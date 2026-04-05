@@ -1,5 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.hoisted(() => {
+  (global as any).$state = (v: any) => v;
+  (global as any).$state.raw = (v: any) => v;
+  (global as any).$derived = (v: any) => v;
+  (global as any).$derived.by = (fn: any) => fn();
+});
+
+vi.mock("$app/paths", () => ({
+  base: "",
+}));
+
+vi.mock("$app/environment", () => ({
+  browser: true,
+}));
+
 // Fix Worker is not defined
 class MockWorker {
   constructor() {}
@@ -176,10 +191,11 @@ vi.stubGlobal("BroadcastChannel", MockBroadcastChannel);
 import { VaultStore } from "./vault.svelte";
 import { cacheService } from "../services/cache.svelte";
 import { readFileAsText } from "../utils/opfs";
-import { syncIOAdapter, fileIOAdapter } from "./vault/adapters.svelte";
+import { createSyncEngine, fileIOAdapter } from "./vault/adapters.svelte";
 import { uiStore } from "./ui.svelte";
 import * as vaultMigration from "./vault/migration";
 import { vaultRegistry } from "./vault-registry.svelte";
+import { themeStore } from "./theme.svelte";
 import { mapRegistry } from "./map-registry.svelte";
 import { canvasRegistry } from "./canvas-registry.svelte";
 
@@ -190,6 +206,9 @@ describe("VaultStore", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     mockPostMessage.mockClear();
+    uiStore.isGuestMode = false;
+    uiStore.isDemoMode = false;
+    uiStore.activeDemoTheme = null;
 
     // Ensure window is defined with dispatchEvent
     vi.stubGlobal("window", {
@@ -266,7 +285,7 @@ describe("VaultStore", () => {
         return "";
       });
 
-      vi.mocked(syncIOAdapter.getLocalHandle).mockResolvedValue(
+      vi.spyOn(testVault, "getActiveSyncHandle").mockResolvedValue(
         mockLocalHandle as any,
       );
       vi.mocked(readFileAsText).mockImplementation(async (handle) => {
@@ -291,6 +310,17 @@ describe("VaultStore", () => {
       expect(testVault.isInitialized).toBe(true);
       expect(testVault.status).toBe("idle");
       expect(vaultRegistry.init).toHaveBeenCalled();
+      expect(vaultMigration.migrateStructure).toHaveBeenCalledWith(
+        vaultRegistry.rootHandle,
+      );
+      expect(vi.mocked(themeStore.loadForVault)).toHaveBeenCalledWith(
+        "test-vault",
+      );
+      expect(window.dispatchEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          detail: { id: "test-vault" },
+        }),
+      );
     });
 
     it("should handle demo mode in init", async () => {
@@ -310,6 +340,44 @@ describe("VaultStore", () => {
       await testVault.init();
       expect(testVault.migrationRequired).toBe(true);
       expect(vaultMigration.runMigration).toHaveBeenCalled();
+      expect(vaultMigration.migrateStructure).toHaveBeenCalledWith(
+        vaultRegistry.rootHandle,
+      );
+    });
+
+    it("should create the sync coordinator lazily when local sync is needed", async () => {
+      vi.mocked(createSyncEngine).mockResolvedValueOnce({
+        sync: vi.fn(),
+      } as any);
+
+      const coordinator = await (
+        testVault.syncStore as any
+      ).deps.getSyncCoordinator();
+
+      expect(createSyncEngine).toHaveBeenCalled();
+      expect(coordinator).toBe(testVault.syncCoordinator);
+      expect(coordinator).not.toBeNull();
+    });
+
+    it("should fall back to guest mode when bootstrap fails", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: async () => ({ entities: {} }),
+      } as Response);
+      vi.spyOn(vaultRegistry, "init").mockRejectedValueOnce(
+        new Error("Bootstrap failed"),
+      );
+
+      try {
+        await testVault.init();
+
+        expect(uiStore.isGuestMode).toBe(true);
+        expect(testVault.isInitialized).toBe(true);
+        expect(testVault.status).toBe("idle");
+        expect(fetchMock).toHaveBeenCalledWith("/vault-samples/fantasy.json");
+      } finally {
+        fetchMock.mockRestore();
+      }
     });
   });
 
@@ -358,27 +426,29 @@ describe("VaultStore", () => {
   describe("CRUD Operations", () => {
     it("should mark new entities as loaded and verified", async () => {
       const id = "new-entity";
-      vi.spyOn(
-        (testVault as any).crudManager,
-        "createEntity",
-      ).mockResolvedValue(id);
+      vi.spyOn(testVault.entityStore, "createEntity").mockImplementation(
+        async () => {
+          testVault.entityStore.markContentLoaded(id);
+          return id;
+        },
+      );
 
       await testVault.createEntity("note", "New Note");
 
-      expect((testVault as any)._contentLoadedIds.has(id)).toBe(true);
-      expect((testVault as any)._contentVerifiedIds.has(id)).toBe(true);
+      expect(testVault.entityStore.isContentLoaded(id)).toBe(true);
+      expect(testVault.entityStore.isContentVerified(id)).toBe(true);
     });
 
     it("should handle entity deletion in normal mode", async () => {
       vi.mocked(vaultRegistry).activeVaultId = "v1" as any;
       vi.spyOn(testVault, "getActiveVaultHandle").mockResolvedValue({} as any);
       const deleteSpy = vi
-        .spyOn((testVault as any).crudManager, "deleteEntity")
+        .spyOn(testVault.entityStore, "deleteEntity")
         .mockResolvedValue(undefined);
 
       await testVault.deleteEntity("d1");
 
-      expect(deleteSpy).toHaveBeenCalledWith("d1", expect.any(Object), "v1");
+      expect(deleteSpy).toHaveBeenCalledWith("d1");
     });
 
     it("should handle entity deletion with local sync handle", async () => {
@@ -398,8 +468,19 @@ describe("VaultStore", () => {
       );
 
       const deleteSpy = vi
-        .spyOn((testVault as any).crudManager, "deleteEntity")
-        .mockResolvedValue(undefined);
+        .spyOn(testVault.entityStore, "deleteEntity")
+        .mockImplementation(async (_id) => {
+          const handle = await testVault.getActiveSyncHandle();
+          if (handle) {
+            await handle.queryPermission({ mode: "readwrite" });
+            try {
+              await handle.getDirectoryHandle("folder", { create: false });
+            } catch {
+              // ignore
+            }
+          }
+          await cacheService.remove("v1:folder/d1.md");
+        });
 
       // Setup entity with path
       testVault.entities["d1"] = {
@@ -409,7 +490,7 @@ describe("VaultStore", () => {
 
       await testVault.deleteEntity("d1");
 
-      expect(deleteSpy).toHaveBeenCalled();
+      expect(deleteSpy).toHaveBeenCalledWith("d1");
       expect(mockLocalHandle.queryPermission).toHaveBeenCalled();
       // Should have tried to get "folder"
       expect(mockLocalHandle.getDirectoryHandle).toHaveBeenCalledWith(
@@ -441,7 +522,7 @@ describe("VaultStore", () => {
         type: "note",
       } as any;
       mockRepository.entities = { [entity.id]: entity };
-      (testVault as any)._contentLoadedIds.add(entity.id);
+      testVault.entityStore.markContentLoaded(entity.id);
 
       await testVault.scheduleSave(entity);
 
@@ -450,20 +531,27 @@ describe("VaultStore", () => {
     });
 
     it("should update entity and mark as verified", async () => {
-      vi.spyOn(
-        (testVault as any).crudManager,
-        "updateEntity",
-      ).mockResolvedValue(true);
+      vi.spyOn(testVault.entityStore, "updateEntity").mockImplementation(
+        async (id) => {
+          testVault.entityStore.markContentLoaded(id);
+          return true;
+        },
+      );
       await testVault.updateEntity("e1", { content: "updated" });
-      expect((testVault as any)._contentLoadedIds.has("e1")).toBe(true);
+      expect(testVault.entityStore.isContentLoaded("e1")).toBe(true);
     });
 
     it("should handle batch updates", async () => {
-      vi.spyOn((testVault as any).crudManager, "batchUpdate").mockResolvedValue(
-        true,
+      vi.spyOn(testVault.entityStore, "batchUpdate").mockImplementation(
+        async (updates) => {
+          Object.keys(updates).forEach((id) =>
+            testVault.entityStore.markContentLoaded(id),
+          );
+          return true;
+        },
       );
       await testVault.batchUpdate({ e1: { title: "New" } });
-      expect((testVault as any)._contentLoadedIds.has("e1")).toBe(true);
+      expect(testVault.entityStore.isContentLoaded("e1")).toBe(true);
     });
 
     it("should handle search index errors in scheduleSave", async () => {
@@ -474,8 +562,10 @@ describe("VaultStore", () => {
 
       const entity = { id: "e1", title: "T", content: "C" } as any;
       mockRepository.entities = { e1: entity };
-      (testVault as any)._contentLoadedIds.add("e1");
-      testVault.services = { search: searchService } as any;
+      testVault.entityStore.markContentLoaded("e1");
+      vi.spyOn(testVault.serviceRegistry, "services", "get").mockReturnValue({
+        search: searchService,
+      } as any);
 
       await testVault.scheduleSave(entity);
       expect(mockRepository.saveToDisk).toHaveBeenCalled();
@@ -485,16 +575,23 @@ describe("VaultStore", () => {
       const entity = { id: "b1", title: "B", type: "note" };
       mockRepository.entities = { b1: entity };
 
-      vi.spyOn(
-        (testVault as any).crudManager,
-        "batchCreateEntities",
-      ).mockResolvedValue(undefined);
+      vi.spyOn(testVault.entityStore, "batchCreateEntities").mockImplementation(
+        async (newEntities) => {
+          testVault.entityStore.markContentLoaded("b1");
+          const { vaultEventBus } = await import("./vault/events");
+          vaultEventBus.emit({
+            type: "BATCH_CREATED",
+            vaultId: "v1",
+            entities: newEntities as any,
+          });
+        },
+      );
       const broadcastSpy = vi.spyOn(testVault, "broadcastVaultUpdate");
 
       await testVault.batchCreateEntities([entity as any]);
 
       expect(broadcastSpy).toHaveBeenCalled();
-      expect((testVault as any)._contentLoadedIds.has("b1")).toBe(true);
+      expect(testVault.entityStore.isContentLoaded("b1")).toBe(true);
     });
 
     it("should load content internally if not loaded during save", async () => {
@@ -508,13 +605,13 @@ describe("VaultStore", () => {
       await testVault.scheduleSave(entity);
 
       expect(testVault.entities["s1"].content).toBe("C");
-      expect((testVault as any)._contentLoadedIds.has("s1")).toBe(true);
+      expect(testVault.entityStore.isContentLoaded("s1")).toBe(true);
     });
 
     it("should handle disk save errors in scheduleSave", async () => {
       const entity = { id: "e1", title: "T", content: "C" } as any;
       mockRepository.entities = { e1: entity };
-      (testVault as any)._contentLoadedIds.add("e1");
+      testVault.entityStore.markContentLoaded("e1");
 
       vi.mocked(mockRepository.saveToDisk).mockRejectedValueOnce(
         new Error("Disk Error"),
@@ -529,10 +626,10 @@ describe("VaultStore", () => {
   describe("Connection and Label Management", () => {
     it("should add and remove connections", async () => {
       const addSpy = vi
-        .spyOn((testVault as any).crudManager, "addConnection")
+        .spyOn(testVault.entityStore, "addConnection")
         .mockResolvedValue(true);
       const removeSpy = vi
-        .spyOn((testVault as any).crudManager, "removeConnection")
+        .spyOn(testVault.entityStore, "removeConnection")
         .mockResolvedValue(true);
 
       await testVault.addConnection("s", "t", "friend");
@@ -550,7 +647,7 @@ describe("VaultStore", () => {
 
     it("should update connections", async () => {
       const updateSpy = vi
-        .spyOn((testVault as any).crudManager, "updateConnection")
+        .spyOn(testVault.entityStore, "updateConnection")
         .mockResolvedValue(true);
       await testVault.updateConnection("s", "t", "old", "new", "label");
       expect(updateSpy).toHaveBeenCalledWith("s", "t", "old", "new", "label");
@@ -558,10 +655,10 @@ describe("VaultStore", () => {
 
     it("should add and remove labels", async () => {
       const addSpy = vi
-        .spyOn((testVault as any).crudManager, "addLabel")
+        .spyOn(testVault.entityStore, "addLabel")
         .mockResolvedValue(true);
       const removeSpy = vi
-        .spyOn((testVault as any).crudManager, "removeLabel")
+        .spyOn(testVault.entityStore, "removeLabel")
         .mockResolvedValue(true);
 
       await testVault.addLabel("id", "label");
@@ -573,11 +670,11 @@ describe("VaultStore", () => {
 
     it("should perform bulk label operations", async () => {
       const bulkAddSpy = vi
-        .spyOn((testVault as any).crudManager, "bulkAddLabel")
-        .mockResolvedValue(true);
+        .spyOn(testVault.entityStore, "bulkAddLabel")
+        .mockResolvedValue(1);
       const bulkRemoveSpy = vi
-        .spyOn((testVault as any).crudManager, "bulkRemoveLabel")
-        .mockResolvedValue(true);
+        .spyOn(testVault.entityStore, "bulkRemoveLabel")
+        .mockResolvedValue(1);
 
       await testVault.bulkAddLabel(["1", "2"], "tag");
       await testVault.bulkRemoveLabel(["1", "2"], "tag");
