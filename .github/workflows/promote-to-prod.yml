@@ -1,0 +1,105 @@
+name: Promote Staging to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      staging_run_id:
+        description: "Staging workflow run ID to promote (leave blank for latest successful staging run)"
+        required: false
+        type: string
+
+concurrency:
+  group: "promote-to-prod"
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  deployments: write
+  actions: read
+
+jobs:
+  find-staging-build:
+    runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ steps.find.outputs.run_id }}
+      commit_sha: ${{ steps.find.outputs.commit_sha }}
+      commit_msg: ${{ steps.find.outputs.commit_msg }}
+    steps:
+      - name: Find latest successful staging run
+        id: find
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPECIFIC_RUN: ${{ inputs.staging_run_id }}
+        run: |
+          if [ -n "$SPECIFIC_RUN" ]; then
+            # Use the specified run
+            RUN_ID="$SPECIFIC_RUN"
+          else
+            # Find the latest successful deploy run on staging branch
+            RUN_ID=$(gh run list --workflow "Deploy to Cloudflare Pages" --branch staging --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+
+          if [ -z "$RUN_ID" ]; then
+            echo "Error: No successful staging deployment found to promote."
+            exit 1
+          fi
+
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+          # Get the commit details
+          COMMIT_SHA=$(gh run view "$RUN_ID" --json headSha --jq '.headSha')
+          COMMIT_MSG=$(gh run view "$RUN_ID" --json displayTitle --jq '.displayTitle')
+
+          echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+          echo "Promoting staging run #$RUN_ID ($COMMIT_SHA)"
+
+  promote:
+    needs: find-staging-build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    steps:
+      - name: Download staging artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: staging-dist
+          run-id: ${{ needs.find-staging-build.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist/
+
+      - name: Deploy to Production
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica
+
+      - name: Notify Discord on Production Deploy
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PROD_DEPLOY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ needs.find-staging-build.outputs.run_id }}"
+          COMMIT="${{ needs.find-staging-build.outputs.commit_sha }}"
+          MSG="${{ needs.find-staging-build.outputs.commit_msg }}"
+          SHORT_SHA=$(echo "$COMMIT" | cut -c1-7)
+
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+
+          # Append promotion info to the Discord message via a second webhook call
+          PROMOTE_MSG="🔁 **Promoted to Production**
+
+**Source:** [Staging run #${{ needs.find-staging-build.outputs.run_id }}]($RUN_URL)
+**Commit:** \`$SHORT_SHA\` — $MSG
+**Promoted by:** ${{ github.actor }}
+
+This is the exact same build artifact that was tested on staging."
+
+          PAYLOAD=$(jq -nc --arg content "$PROMOTE_MSG" '{content: $content}')
+          curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

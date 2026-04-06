@@ -4,93 +4,119 @@ This document describes the automated build and deployment pipeline for Codex Cr
 
 ## Overview
 
-Codex Cryptica now uses **Cloudflare Pages** for hosting. We still keep a staged deployment path so changes can be tested before they are promoted live.
+Codex Cryptica uses **Cloudflare Pages** for hosting with an **artifact promotion** model. The application is built once on staging, and that exact same build artifact is promoted to production — no rebuilds, no drift.
 
-- **Production:** Hosted at the root (`codexcryptica.com`).
-- **Staging:** Hosted as a Cloudflare Pages staging deployment or subdomain.
-  - If you want a dedicated staging URL, attach `staging.codexcryptica.com` to the `staging` branch and point the DNS record at `staging.codex-cryptica.pages.dev`.
+- **Production:** `codexcryptica.com`
+- **Staging:** `staging.codexcryptica.com`
 
-## The Deployment Workflow (`deploy.yml`)
+## The Deployment Pipeline
 
-The main deployment script is located at `.github/workflows/deploy.yml`. It triggers on pushes to the main deployment branches and builds the current branch once before uploading it to Cloudflare Pages.
+### 1. Feature → Staging (Auto-Merge)
 
-### 1. Build Phase
+```mermaid
+flowchart LR
+  A[Feature branch] --> B[PR → staging]
+  B --> C{Auto-merge}
+  C --> D[staging branch]
+  D --> E[Build + Test]
+  E --> F[Deploy to staging]
+  F --> G[staging.codexcryptica.com]
+```
 
-The workflow installs dependencies, runs lint and tests, and then builds the web app with the current branch content.
+1. Open a PR targeting `staging`.
+2. The [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml) workflow enables auto-merge for non-draft PRs.
+3. Once merged, [`deploy.yml`](.github/workflows/deploy.yml) triggers:
+   - Installs dependencies, runs lint and tests
+   - Builds the application
+   - Deploys to Cloudflare Pages on the `staging` branch
+   - Uploads a **staging artifact** (`staging-dist`) with 30-day retention for later promotion
+   - Sends a notification to the Discord release channel
 
-### 2. Deploy Phase
+### 2. Staging → Production (Artifact Promotion)
 
-The deployment job uploads the static build to Cloudflare Pages:
+```mermaid
+flowchart LR
+  A[Promote to Prod] --> B[Download staging artifact]
+  B --> C[Deploy same build to prod]
+  C --> D[codexcryptica.com]
+  D --> E[Discord notification]
+```
 
-- `main` deploys to production
-- `staging` deploys to the staging Pages branch
+Production uses a **manual promotion workflow** — there is no automatic promotion from staging to production.
+
+**To promote:**
+
+1. Go to **Actions** → **Promote Staging to Production**
+2. Click **Run workflow**
+3. Optionally specify a staging run ID (leave blank to use the latest successful staging deployment)
+4. Click **Run workflow**
+
+The promotion workflow:
+
+- Finds the latest successful staging deployment (or the specific run you provided)
+- Downloads the exact `staging-dist` artifact from that run
+- Deploys it to Cloudflare Pages on the production branch
+- Sends a notification to the Discord prod-deployment channel with the source run link
+
+**Artifact retention:** Staging build artifacts are kept for 30 days. If you need to promote an older build, re-run the staging deployment for that commit first.
+
+## Workflow Files
+
+| File                                                                       | Purpose                                                            |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [`deploy.yml`](.github/workflows/deploy.yml)                               | Build + deploy on push to `main` or `staging`                      |
+| [`promote-to-prod.yml`](.github/workflows/promote-to-prod.yml)             | Manual promotion of staging artifact to production                 |
+| [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml)       | Auto-enables merge for staging-targeted PRs                        |
+| [`auto-bump-web-version.yml`](.github/workflows/auto-bump-web-version.yml) | Auto-increments `apps/web/package.json` version on merge to `main` |
+| [`release.yml`](.github/workflows/release.yml)                             | Creates GitHub releases for major/minor version bumps              |
 
 ## Branch Flow
 
-The intended GitHub flow is:
-
-1. Create a feature branch and open a PR into `staging`.
-2. Let the `auto-merge-staging` workflow enable merge-on-green for that PR.
-3. Test the deployed result on `staging.codexcryptica.com`.
-4. Push fixes to the same feature branch and let the PR update and redeploy to staging.
-5. When the staging result is good, open a promotion PR from `staging` into `main`.
-6. Merge that promotion PR to release the same validated changes to production.
-
-For release promotion PRs, the goal is to move already-validated staging work into `main`, not to re-review the feature implementation from scratch.
-
-```mermaid
-flowchart TD
-  A[Feature branch] --> B[PR into staging]
-  B --> C[staging]
-  C --> D[staging.codexcryptica.com]
-  C --> E[Promotion PR into main]
-  E --> F[main]
-  F --> G[codexcryptica.com]
-  D --> A
 ```
-
-## The Version Bump Workflow (`auto-bump-web-version.yml`)
-
-When a Pull Request is merged into `main`:
-
-1. **Auto-Bump Trigger:** A workflow runs to increment the version in `apps/web/package.json`.
-2. **Commit & Push:** The bot commits the new version back to `main`.
-3. **Redundant Triggers:** This push triggers `deploy.yml` automatically.
-4. **Manual Dispatch:** The bot can also execute `gh workflow run deploy.yml`.
-
-**Note:** Because of the `concurrency` setting in `deploy.yml`, you may see "Cancelled" runs in your Actions tab after a merge. This is normal behavior; the system is simply cancelling the earlier deployment in favor of the later one.
-
-## Staging Promotion Workflow
-
-Pull requests targeting `staging` can be promoted automatically once they are ready.
-
-- [`/.github/workflows/auto-merge-staging.yml`](/home/espen/proj/Codex-Arcana/.github/workflows/auto-merge-staging.yml) enables GitHub auto-merge for non-draft PRs that target `staging`.
-- GitHub repository settings must allow auto-merge for the workflow to take effect.
-- The workflow only applies to PRs from the same repository, so forked contributions are left alone.
-
-Once auto-merge is enabled, GitHub will merge the PR into `staging` after the required checks and review conditions pass.
-
-## Blog Content Deployment
-
-The blog now has its own content-only deployment path that publishes markdown into a dedicated `blog-content` branch.
-
-See [`docs/BLOG_DEPLOYMENT.md`](/home/espen/proj/Codex-Arcana/docs/BLOG_DEPLOYMENT.md) for the workflow, runtime fetch path, and branch layout.
+Feature branch → PR → staging (auto-merge) → staging.codexcryptica.com
+                                                    ↓
+                                    [Promote to Prod] button
+                                                    ↓
+                                              codexcryptica.com
+```
 
 ## Environment Variables
 
-The following secrets must be configured in GitHub for the build to succeed:
+The following secrets must be configured in GitHub repository settings:
 
-- `VITE_GOOGLE_CLIENT_ID`: OAuth client ID.
-- `VITE_GEMINI_API_KEY`: API key for the Lore Oracle.
-- `CLOUDFLARE_ACCOUNT_ID`: Cloudflare account ID for Pages deployments.
-- `CLOUDFLARE_API_TOKEN`: Cloudflare API token with Pages deploy permissions.
-- `VITE_DISCORD_WEBHOOK_URL_PROD`: For production notifications.
-- `VITE_DISCORD_WEBHOOK_URL_STAGING`: For staging notifications.
+| Secret                             | Purpose                                                                      |
+| ---------------------------------- | ---------------------------------------------------------------------------- |
+| `VITE_GOOGLE_CLIENT_ID`            | OAuth client ID                                                              |
+| `VITE_GEMINI_API_KEY`              | API key for the Lore Oracle                                                  |
+| `VITE_SHARED_GEMINI_KEY`           | Shared (lite mode) API key                                                   |
+| `CLOUDFLARE_ACCOUNT_ID`            | Cloudflare account ID                                                        |
+| `CLOUDFLARE_API_TOKEN`             | Cloudflare API token with Pages deploy permissions                           |
+| `DISCORD_WEBHOOK_URL_PROD_DEPLOY`  | Webhook URL for the prod-deployment Discord channel                          |
+| `VITE_DISCORD_WEBHOOK_URL_RELEASE` | Webhook URL for the release Discord channel (used for staging notifications) |
+
+## Concurrency
+
+The `deploy.yml` workflow uses `concurrency: cloudflare-pages` with `cancel-in-progress: true`. This means:
+
+- If multiple pushes happen in quick succession, only the latest build + deploy runs
+- You may see "Cancelled" runs in the Actions tab — this is normal
+
+The `promote-to-prod.yml` workflow does **not** cancel in-progress promotions to prevent accidental double-deploys.
 
 ## Troubleshooting
 
-If a merge to `main` doesn't result in a site update:
+**Staging deployed but promotion fails:**
 
-1. Check the **Actions** tab. Look for the _latest_ "Deploy to Cloudflare Pages" run.
-2. If it failed, check the "Build Application" step for linting or test errors.
-3. If it was cancelled, wait for the subsequent run (the one triggered by the bot) to finish.
+1. Check that the staging build artifact exists (Actions → staging run → Artifacts)
+2. Artifacts expire after 30 days; re-run the staging deploy if needed
+
+**Production deploy didn't update the site:**
+
+1. Check the **Actions** tab for the latest "Deploy to Cloudflare Pages" or "Promote Staging to Production" run
+2. If it failed, check the deploy step for Cloudflare API errors
+3. If it was cancelled, a newer push superseded it — wait for the latest run to finish
+
+**Staging notification went to the wrong Discord channel:**
+
+- Staging notifications use `VITE_DISCORD_WEBHOOK_URL_RELEASE`
+- Production notifications use `DISCORD_WEBHOOK_URL_PROD_DEPLOY`
