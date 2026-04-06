@@ -1,0 +1,22 @@
+{
+  "name": "@codex/sync-engine",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "idb": "^8.0.3",
+    "schema": "*"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.2",
+    "eslint": "^10.1.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

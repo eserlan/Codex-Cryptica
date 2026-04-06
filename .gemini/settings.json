@@ -1,0 +1,32 @@
+{
+  "hooksConfig": {
+    "enabled": false
+  },
+  "hooks": {
+    "AfterAgent": [
+      {
+        "matcher": "<!-- GEMINI_CMD: speckit.implement -->",
+        "hooks": [
+          {
+            "name": "speckit-completion-discord",
+            "type": "command",
+            "command": "/bin/bash -c './scripts/discord-notify.sh'",
+            "description": "Notify Discord after speckit implementation"
+          }
+        ]
+      },
+      {
+        "matcher": "<!-- CODEX_CMD: speckit.implement -->",
+        "hooks": [
+          {
+            "name": "speckit-completion-discord",
+            "type": "command",
+            "command": "/bin/bash -c './scripts/discord-notify.sh'",
+            "description": "Notify Discord after speckit implementation"
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {}
+}

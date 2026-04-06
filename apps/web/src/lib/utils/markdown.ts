@@ -1,0 +1,116 @@
+import yaml from "js-yaml";
+import type { Entity } from "schema";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
+import { browser } from "$app/environment";
+
+export interface ParseResult {
+  metadata: Partial<Entity>;
+  content: string;
+}
+
+export function renderMarkdown(
+  text: string,
+  options: { query?: string; inline?: boolean } = {},
+): string {
+  if (!text) return "";
+
+  try {
+    let content = text;
+    if (options.query) {
+      const safeQuery = options.query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(${safeQuery})`, "gi");
+      content = text.replace(
+        regex,
+        '<mark class="bg-yellow-200 dark:bg-yellow-900/50 text-inherit rounded-sm px-0.5">$1</mark>',
+      );
+    }
+
+    const rawHtml = options.inline
+      ? (marked.parseInline(content) as string)
+      : (marked.parse(content) as string);
+
+    if (!browser) return rawHtml;
+
+    return DOMPurify.sanitize(rawHtml, {
+      ADD_TAGS: ["mark"],
+      ADD_ATTR: ["class"],
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+    });
+  } catch (e) {
+    console.error("Markdown rendering failed", e);
+    // Fallback: sanitize the original content before injecting via {@html}
+    // Always sanitize in fallback mode for security, even in SSR
+    return DOMPurify.sanitize(text, {
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+    });
+  }
+}
+
+export function parseMarkdown(raw: string): ParseResult {
+  // More robust regex:
+  // 1. Handles \r?\n for Windows support
+  // 2. Allows optional whitespace before the dashes (e.g. for BOMs)
+  // 3. Ensures it matches at the absolute start of the file
+  const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\s*/;
+  const match = raw.match(frontmatterRegex);
+
+  let metadata: Partial<Entity> = {};
+  let content = raw;
+
+  if (match) {
+    try {
+      const yamlContent = match[1];
+      const parsed = yaml.load(yamlContent) as any;
+      if (typeof parsed === "object" && parsed !== null) {
+        metadata = parsed;
+      }
+    } catch (e) {
+      console.error("Failed to parse frontmatter", e);
+    }
+    // Remove the entire match including surrounding whitespace/newlines
+    content = raw.substring((match.index ?? 0) + match[0].length).trim();
+  }
+
+  return { metadata, content };
+}
+
+export function sanitizeId(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function stringifyEntity(entity: Entity): string {
+  const { content, updatedAt, ...metadata } = entity;
+
+  // Ensure updatedAt is the FIRST property for optimized sync scanning
+  const orderedMetadata: any = { updatedAt };
+
+  // Remove runtime-only fields if they crept in
+  const cleanRest = { ...metadata };
+  delete (cleanRest as any)._fsHandle;
+  delete (cleanRest as any)._lastModified;
+  delete (cleanRest as any).connections;
+
+  Object.assign(orderedMetadata, cleanRest);
+  orderedMetadata.connections = entity.connections;
+
+  // Use sortKeys: false to preserve our specific order
+  const yamlStr = yaml.dump(orderedMetadata, { sortKeys: false });
+  return `---\n${yamlStr}---\n${content || ""}`;
+}
+
+/**
+ * Derives a unique entity ID from a file path.
+ */
+export function deriveIdFromPath(path: string[]): string {
+  const filename = path[path.length - 1];
+  const basename = filename.replace(/\.(md|markdown)$/i, "");
+  return sanitizeId(basename);
+}

@@ -1,0 +1,412 @@
+import { vault as defaultVault } from "../../stores/vault.svelte";
+import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
+import { guestRoster as defaultGuestRoster } from "../../stores/guest";
+import type { Entity } from "schema";
+import {
+  buildSharedGraphPayload,
+  deriveGuestPresenceStatus,
+  normalizeGuestName,
+  removeGuestFromRoster,
+  upsertGuestRoster,
+} from "./p2p-helpers";
+import { createPeer, type PeerFactory } from "./peer-factory";
+
+type HostDeps = {
+  vault?: typeof defaultVault;
+  themeStore?: typeof defaultThemeStore;
+  guestRoster?: typeof defaultGuestRoster;
+  peerFactory?: PeerFactory;
+};
+
+export class P2PHostService {
+  private peer: any;
+  private peerId: string | null = null;
+  connections = $state<any[]>([]);
+  private _isHosting = false;
+  private unsubscribe: (() => void) | null = null;
+  private readonly vault: typeof defaultVault;
+  private readonly themeStore: typeof defaultThemeStore;
+  private readonly guestRoster: typeof defaultGuestRoster;
+  private readonly peerFactory: PeerFactory;
+
+  constructor(deps: HostDeps = {}) {
+    this.vault = deps.vault ?? defaultVault;
+    this.themeStore = deps.themeStore ?? defaultThemeStore;
+    this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
+    this.peerFactory = deps.peerFactory ?? createPeer;
+  }
+
+  async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
+    if (this._isHosting && this.peerId) {
+      onPeerId?.(this.peerId);
+      return this.peerId;
+    }
+
+    const peerId = crypto.randomUUID();
+    onPeerId?.(peerId);
+
+    return new Promise((resolve, reject) => {
+      // Generate a random ID with a prefix
+      this.peer = this.peerFactory(peerId, {
+        debug: 1,
+      });
+
+      this.peer.on("open", (id: string) => {
+        console.log("[P2P Host] Hosting started. ID:", id);
+        this.peerId = id;
+        this._isHosting = true;
+
+        // Subscribe to local vault updates
+        this.vault.onEntityUpdate = (entity) => {
+          this.broadcastEntityUpdate(entity);
+        };
+        this.vault.onEntityDelete = (delId) => {
+          this.broadcastEntityDelete(delId);
+        };
+        this.vault.onBatchUpdate = (updates) => {
+          this.broadcastBatchUpdate(updates);
+        };
+        this.themeStore.onThemeUpdate = (themeId) => {
+          this.broadcastThemeUpdate(themeId);
+        };
+        this.guestRoster.set({});
+
+        resolve(id);
+      });
+
+      this.peer.on("connection", (conn: any) => {
+        console.log("[P2P Host] Received connection attempt from:", conn.peer);
+        this.handleConnection(conn);
+      });
+
+      this.peer.on("error", (err: any) => {
+        console.error("[P2P Host] Peer error:", err);
+        if (!this._isHosting) reject(err);
+      });
+    });
+  }
+
+  private handleConnection(conn: any) {
+    if (this.connections.some((c) => c.peer === conn.peer && c.open)) {
+      console.log(
+        "[P2P Host] Guest already connected with an open link:",
+        conn.peer,
+      );
+      // Optional: we could close the new one, but often PeerJS is just recovering
+    }
+
+    console.log("[P2P Host] New guest connected:", conn.peer);
+    this.connections.push(conn);
+
+    conn.on("open", async () => {
+      try {
+        console.log("[P2P Host] Connection open for guest:", conn.peer);
+        // 1. Send Initial Graph
+        const graph = await this.prepareGraphPayload();
+        conn.send({ type: "GRAPH_SYNC", payload: graph });
+        console.log("[P2P Host] Initial graph sent to:", conn.peer);
+      } catch (err) {
+        console.error(
+          "[P2P Host] Failed to send initial graph to:",
+          conn.peer,
+          err,
+        );
+      }
+    });
+
+    conn.on("data", async (data: any) => {
+      console.log("[P2P Host] Received data:", data);
+
+      if (data.type === "GET_FILE") {
+        await this.handleFileRequest(conn, data.path, data.requestId);
+      } else if (data.type === "GUEST_JOIN") {
+        this.handleGuestJoin(conn.peer, data.payload);
+      } else if (data.type === "GUEST_STATUS") {
+        this.handleGuestStatus(conn.peer, data.payload);
+      }
+    });
+
+    conn.on("close", () => {
+      console.log("[P2P Host] Guest disconnected:", conn.peer);
+      this.connections = this.connections.filter((c) => c !== conn);
+      this.guestRoster.update((current) =>
+        removeGuestFromRoster(current, conn.peer),
+      );
+    });
+  }
+
+  private handleGuestJoin(peerId: string, payload: any) {
+    this.guestRoster.update((current) =>
+      upsertGuestRoster(current, peerId, {
+        displayName: normalizeGuestName(payload?.displayName, peerId),
+        status: "connected",
+        currentEntityId: null,
+        currentEntityTitle: null,
+      }),
+    );
+  }
+
+  private handleGuestStatus(peerId: string, payload: any) {
+    const currentEntityId =
+      typeof payload?.currentEntityId === "string" && payload.currentEntityId
+        ? payload.currentEntityId
+        : null;
+    const currentEntityTitle =
+      typeof payload?.currentEntityTitle === "string" &&
+      payload.currentEntityTitle
+        ? payload.currentEntityTitle
+        : currentEntityId
+          ? this.vault.entities[currentEntityId]?.title || currentEntityId
+          : null;
+    this.guestRoster.update((current) =>
+      upsertGuestRoster(current, peerId, {
+        displayName: normalizeGuestName(
+          payload?.displayName,
+          current[peerId]?.displayName || peerId,
+        ),
+        status: deriveGuestPresenceStatus(payload?.status, currentEntityId),
+        currentEntityId,
+        currentEntityTitle,
+      }),
+    );
+  }
+
+  private async prepareGraphPayload() {
+    const rawEntities = $state.snapshot(this.vault.entities);
+    return buildSharedGraphPayload(
+      rawEntities,
+      this.vault.defaultVisibility,
+      this.themeStore.currentThemeId,
+    );
+  }
+
+  private async handleFileRequest(conn: any, path: string, requestId: string) {
+    try {
+      console.log(`[P2P Host] Handling file request for: ${path}`);
+
+      // Use the active vault handle
+      const vaultHandle = await this.vault.getActiveVaultHandle();
+      console.log(`[P2P Host] Active Vault ID: ${this.vault.activeVaultId}`);
+
+      if (!vaultHandle) {
+        console.error("[P2P Host] No active vault handle!");
+        conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+        return;
+      }
+
+      // Normalize path by splitting and filtering empty/dot segments
+      const parts = path.split("/").filter((p) => p && p !== "." && p !== "..");
+      const cleanPath = parts.join("/");
+      console.log(`[P2P Host] Looking for parts:`, parts);
+
+      let fileHandle: FileSystemFileHandle | undefined;
+
+      try {
+        if (parts.length === 1) {
+          // Root file
+          fileHandle = await vaultHandle.getFileHandle(parts[0]);
+        } else if (parts[0] === "images" && parts.length === 2) {
+          // images/filename.ext
+          let imgDir: FileSystemDirectoryHandle | undefined;
+          try {
+            imgDir = await vaultHandle.getDirectoryHandle("images");
+            fileHandle = await imgDir.getFileHandle(parts[1]);
+          } catch (err: any) {
+            const isNotFound =
+              err &&
+              typeof err === "object" &&
+              (err.name === "NotFoundError" || err.code === "NotFoundError");
+
+            if (!isNotFound) {
+              console.error(
+                "[P2P Host] Unexpected error while accessing images directory or file",
+                err,
+              );
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
+
+            if (!imgDir) {
+              console.warn(`[P2P Host] Images directory not found`);
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
+            // 1. Quick extension swap check (avoid full scan if possible)
+            const requestedName = parts[1];
+            if (requestedName.match(/\.(jpg|jpeg|png)$/i)) {
+              const webpName = requestedName.replace(
+                /\.(jpg|jpeg|png)$/i,
+                ".webp",
+              );
+              fileHandle = await imgDir
+                .getFileHandle(webpName)
+                .catch(() => undefined);
+            }
+
+            if (!fileHandle) {
+              // 2. Fallback to full scan for robust fuzzy match
+              const requestedBase =
+                requestedName.substring(0, requestedName.lastIndexOf(".")) ||
+                requestedName;
+
+              // List contents and look for fuzzy match
+              const files = [];
+              for await (const [name] of imgDir.entries()) files.push(name);
+
+              console.log(
+                `[P2P Host] Image '${requestedName}' not found. scanning ${files.length} files for fuzzy match...`,
+              );
+
+              const fuzzyMatch = files.find(
+                (f) =>
+                  f.startsWith(requestedBase) &&
+                  (f.endsWith(".webp") ||
+                    f.endsWith(".png") ||
+                    f.endsWith(".jpg")),
+              );
+              if (fuzzyMatch) {
+                console.log(`[P2P Host] Found fuzzy match: ${fuzzyMatch}`);
+                fileHandle = await imgDir.getFileHandle(fuzzyMatch);
+              }
+            }
+
+            if (!fileHandle) {
+              console.warn(`[P2P Host] File definitely not found: ${parts[1]}`);
+              conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.error(
+          `[P2P Host] Error accessing path structure: ${parts.join("/")}`,
+          err,
+        );
+      }
+
+      if (fileHandle) {
+        console.log(`[P2P Host] File found, reading...`);
+        const file = await fileHandle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+
+        console.log(`[P2P Host] Sending file response (${file.size} bytes)`);
+        conn.send({
+          type: "FILE_RESPONSE",
+          requestId,
+          found: true,
+          mime: file.type,
+          data: arrayBuffer,
+        });
+      } else {
+        console.log(`[P2P Host] File not found: ${cleanPath}`);
+        conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+      }
+    } catch (err) {
+      console.error("[P2P Host] Failed to serve file:", path, err);
+      conn.send({ type: "FILE_RESPONSE", requestId, found: false });
+    }
+  }
+
+  private broadcastEntityUpdate(entity: any) {
+    if (this.connections.length === 0) return;
+
+    // Sanitize
+    const snap = $state.snapshot(entity);
+    const { _fsHandle, ...safeEntity } = snap;
+
+    console.log("[P2P Host] Broadcasting update for:", safeEntity.title);
+
+    const message = {
+      type: "ENTITY_UPDATE",
+      payload: safeEntity,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
+  private broadcastEntityDelete(id: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting delete for:", id);
+
+    const message = {
+      type: "ENTITY_DELETE",
+      payload: id,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
+  private broadcastBatchUpdate(updates: Record<string, Partial<Entity>>) {
+    if (this.connections.length === 0) return;
+
+    // Sanitize updates
+    const sanitizedUpdates: Record<string, any> = {};
+    for (const [id, patch] of Object.entries(updates)) {
+      const snap = $state.snapshot(patch);
+      // Remove runtime-only fields
+      const { _fsHandle, ...safePatch } = snap as any;
+      sanitizedUpdates[id] = safePatch;
+    }
+
+    console.log(
+      `[P2P Host] Broadcasting batch update for ${Object.keys(sanitizedUpdates).length} entities`,
+    );
+
+    const message = {
+      type: "ENTITY_BATCH_UPDATE",
+      payload: sanitizedUpdates,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
+  private broadcastThemeUpdate(themeId: string) {
+    if (this.connections.length === 0) return;
+
+    console.log("[P2P Host] Broadcasting theme update:", themeId);
+
+    const message = {
+      type: "THEME_UPDATE",
+      payload: themeId,
+    };
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
+  stopHosting() {
+    this.vault.onEntityUpdate = undefined;
+    this.vault.onEntityDelete = undefined;
+    this.vault.onBatchUpdate = undefined;
+    this.themeStore.onThemeUpdate = undefined;
+    this.guestRoster.set({});
+    if (this.peer) {
+      this.peer.destroy();
+      this.peer = null;
+    }
+    this._isHosting = false;
+    this.connections = [];
+  }
+}
+
+export const p2pHost = new P2PHostService();
+
+if (typeof window !== "undefined") {
+  (window as any).p2pHostService = p2pHost;
+}

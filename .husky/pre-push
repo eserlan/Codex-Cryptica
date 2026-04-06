@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+skip_pattern='^(apps/web/src/lib/content/blog/|scripts/publish-blog-content\.mjs$|\.github/workflows/deploy-blog-content\.yml$|docs/BLOG_DEPLOYMENT\.md$|docs/CI_DEPLOYMENT\.md$)'
+blog_only=true
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	if [ -z "$local_ref" ]; then
+		continue
+	fi
+
+	if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+		diff_base="$(git hash-object -t tree /dev/null)"
+	else
+		diff_base="$remote_sha"
+	fi
+
+	changed_files="$(git diff --name-only "$diff_base" "$local_sha" --)"
+	if [ -z "$changed_files" ]; then
+		continue
+	fi
+
+	non_blog_files="$(printf '%s\n' "$changed_files" | grep -Ev "$skip_pattern" || true)"
+	if [ -n "$non_blog_files" ]; then
+		blog_only=false
+		break
+	fi
+done
+
+if [ "$blog_only" = "true" ]; then
+	exit 0
+fi
+
+npm run lint && npm test

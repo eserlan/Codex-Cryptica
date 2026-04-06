@@ -1,0 +1,531 @@
+<script lang="ts">
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
+  import { importQueue } from "$lib/stores/import-queue.svelte";
+  import ImportDropzone from "$lib/features/importer/ImportDropzone.svelte";
+  import ReviewList from "$lib/features/importer/ReviewList.svelte";
+  import ImportProgress from "../import/ImportProgress.svelte";
+  import InlineKeySetup from "../oracle/InlineKeySetup.svelte";
+  import {
+    TextParser,
+    DocxParser,
+    JsonParser,
+    PdfParser,
+    OracleAnalyzer,
+    calculateFileHash,
+    getRegistry,
+    markChunkComplete,
+    clearRegistryEntry,
+    splitTextIntoChunks,
+    mergeEntities,
+  } from "@codex/importer";
+  import type { DiscoveredEntity } from "@codex/importer";
+  import { sanitizeId } from "$lib/utils/markdown";
+  import { slide, fade } from "svelte/transition";
+  import pdfWorker from "pdfjs-dist/build/pdf.worker.mjs?url";
+  import { aiClientManager } from "$lib/services/ai/client-manager";
+
+  let { isStandalone = false } = $props<{ isStandalone?: boolean }>();
+
+  let step = $state<"upload" | "processing" | "review" | "complete">("upload");
+  let statusMessage = $state("");
+  let discoveredEntities = $state<DiscoveredEntity[]>([]);
+  let extractedAssets = new Map<string, any>(); // filename -> asset
+  let totalChunks = $state(0);
+  let showResumeToast = $state(false);
+  let currentFileHash = $state("");
+
+  $effect(() => {
+    uiStore.isImporting = step === "processing" || step === "review";
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (step === "processing") {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      uiStore.isImporting = false;
+    };
+  });
+
+  const parsers = [
+    new TextParser(),
+    new DocxParser(),
+    new JsonParser(),
+    new PdfParser(pdfWorker),
+  ];
+
+  const handleFiles = async (files: File[]) => {
+    const apiKey = oracle.effectiveApiKey || "";
+
+    step = "processing";
+    const analyzer = new OracleAnalyzer((modelName: string) =>
+      aiClientManager.getModel(apiKey, modelName),
+    );
+
+    discoveredEntities = [];
+    extractedAssets.clear();
+
+    const signal = uiStore.abortSignal;
+
+    // Build known entities map for reconciliation
+    const knownEntities: Record<string, string> = {};
+    Object.values(vault.entities).forEach((e) => {
+      knownEntities[e.title] = e.id;
+    });
+
+    for (const file of files) {
+      if (signal.aborted) break;
+
+      statusMessage = `Hashing ${file.name}...`;
+      const hash = await calculateFileHash(file);
+      currentFileHash = hash;
+
+      const parser = parsers.find((p) => p.accepts(file));
+      if (!parser) {
+        console.error(`No parser for ${file.name}`);
+        continue;
+      }
+
+      try {
+        statusMessage = `Parsing ${file.name}...`;
+        const result = await parser.parse(file);
+
+        // Store assets for dimension lookups later
+        result.assets.forEach((asset) => {
+          extractedAssets.set(asset.placementRef, asset);
+        });
+
+        const chunks = splitTextIntoChunks(result.text);
+        totalChunks = chunks.length;
+
+        // Check Registry
+
+        const registry = await getRegistry(hash, file.name, totalChunks);
+
+        if (registry.completedIndices.length > 0) {
+          if (registry.completedIndices.length === totalChunks) {
+            statusMessage = `Already processed: ${file.name}.`;
+
+            continue; // Skip to next file
+          } else {
+            showResumeToast = true;
+
+            setTimeout(() => (showResumeToast = false), 5000);
+          }
+        }
+
+        // Initialize progress UI state
+
+        importQueue.activeItemChunks = {};
+
+        registry.completedIndices.forEach((idx) => {
+          importQueue.updateChunkStatus(idx, "skipped");
+        });
+
+        if (signal.aborted) break;
+
+        statusMessage = `Analyzing ${file.name} with Oracle...`;
+
+        await analyzer.analyze(result.text, {
+          signal,
+
+          knownEntities,
+
+          completedIndices: registry.completedIndices,
+
+          onChunkActive: (idx) => {
+            importQueue.updateChunkStatus(idx, "active");
+
+            statusMessage = `Analyzing chunk ${idx + 1}/${totalChunks}...`;
+          },
+
+          onChunkProcessed: async (idx, res) => {
+            await markChunkComplete(hash, idx);
+
+            importQueue.updateChunkStatus(idx, "completed");
+
+            discoveredEntities = mergeEntities([
+              ...discoveredEntities,
+
+              ...res.entities,
+            ]);
+          },
+        });
+
+        if (signal.aborted) break;
+      } catch (err: any) {
+        if (err.message === "Analysis Aborted") {
+          console.log("Analysis aborted gracefully.");
+
+          return;
+        }
+
+        console.error(`Failed to process ${file.name}:`, err);
+
+        // On unexpected errors, clear any partial registry state for this file
+
+        try {
+          await clearRegistryEntry(hash);
+        } catch (cleanupErr) {
+          console.error(
+            `Failed to clear analysis progress for ${file.name}:`,
+
+            cleanupErr,
+          );
+        }
+      }
+    }
+
+    if (signal.aborted) {
+      step = "upload";
+
+      discoveredEntities = [];
+
+      return;
+    }
+
+    step = "review";
+  };
+
+  const handleRestart = async () => {
+    if (currentFileHash) {
+      await clearRegistryEntry(currentFileHash);
+
+      step = "upload";
+
+      statusMessage = "Progress cleared. Please select the file again.";
+    }
+  };
+
+  const handleSave = async (toSave: DiscoveredEntity[]) => {
+    step = "processing";
+
+    statusMessage = `Finalizing ${toSave.length} entities...`;
+
+    const signal = uiStore.abortSignal;
+
+    const mapType = (type: string) => {
+      const t = type.toLowerCase();
+
+      if (t === "character") return "character";
+
+      if (["location", "item", "event", "faction", "note"].includes(t))
+        return t;
+
+      return "note";
+    };
+
+    const batchData: any[] = [];
+
+    for (const entity of toSave) {
+      if (signal.aborted) break;
+
+      const title = entity.suggestedTitle;
+
+      const entityId = sanitizeId(title) || "untitled";
+
+      const type = mapType(entity.suggestedType) as any;
+
+      const existingId =
+        entity.matchedEntityId || (vault.entities[entityId] ? entityId : null);
+
+      if (existingId && vault.entities[existingId]) {
+        const existing = vault.entities[existingId];
+
+        statusMessage = `Updating connections for existing entity: ${existing.title}...`;
+
+        const newConnections = (entity.detectedLinks || [])
+
+          .map((link) => {
+            const targetName = typeof link === "string" ? link : link.target;
+
+            const label =
+              typeof link === "string" ? link : link.label || link.target;
+
+            return {
+              target: sanitizeId(targetName) || "untitled",
+
+              label,
+
+              type: "related_to",
+
+              strength: 1,
+            };
+          })
+
+          .filter(
+            (newConn) =>
+              !existing.connections.some(
+                (c) => c.target === newConn.target && c.label === newConn.label,
+              ),
+          );
+
+        if (newConnections.length > 0) {
+          await vault.updateEntity(existing.id, {
+            connections: [...existing.connections, ...newConnections],
+          });
+        }
+
+        continue;
+      }
+
+      // Check for image metadata in extracted assets
+
+      const imgRef = entity.frontmatter.image;
+
+      let width = entity.frontmatter.width;
+
+      let height = entity.frontmatter.height;
+
+      let imagePath = entity.frontmatter.image;
+
+      let thumbnailPath = entity.frontmatter.thumbnail;
+
+      if (imgRef && extractedAssets.has(imgRef)) {
+        const asset = extractedAssets.get(imgRef);
+
+        width = width || asset.width;
+        height = height || asset.height;
+
+        try {
+          const savedAssets = await vault.saveImageToVault(
+            asset.blob,
+            entityId,
+            asset.originalName,
+          );
+          imagePath = savedAssets.image;
+          thumbnailPath = savedAssets.thumbnail;
+        } catch (err) {
+          console.error("Failed to save imported asset:", err);
+        }
+      }
+
+      batchData.push({
+        type,
+
+        title,
+
+        initialData: {
+          content: entity.chronicle || entity.content,
+
+          lore: entity.lore,
+
+          labels: entity.frontmatter.labels || [],
+
+          metadata: {
+            width: typeof width === "number" ? width : undefined,
+
+            height: typeof height === "number" ? height : undefined,
+          },
+
+          image: imagePath,
+
+          thumbnail: thumbnailPath,
+
+          connections: (entity.detectedLinks || []).map((link) => {
+            const targetName = typeof link === "string" ? link : link.target;
+
+            const label =
+              typeof link === "string" ? link : link.label || link.target;
+
+            return {
+              target: sanitizeId(targetName) || "untitled",
+
+              label: label,
+
+              type: "related_to",
+
+              strength: 1,
+            };
+          }),
+        },
+      });
+    }
+
+    if (signal.aborted) {
+      step = "review";
+
+      return;
+    }
+
+    try {
+      if (batchData.length > 0) {
+        await vault.batchCreateEntities(batchData);
+      }
+
+      step = "complete";
+    } catch (err) {
+      console.error("Batch import failed:", err);
+
+      alert("Failed to save imported entities. Check console for details.");
+
+      step = "review";
+
+      return;
+    }
+
+    setTimeout(() => {
+      step = "upload";
+
+      discoveredEntities = [];
+    }, 3000);
+  };
+</script>
+
+<div class="space-y-4 {isStandalone ? 'flex-1 flex flex-col min-h-0' : ''}">
+  {#if !isStandalone}
+    <h3
+      class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest"
+    >
+      Archive Importer
+    </h3>
+
+    <p class="text-sm text-theme-text/70 leading-relaxed">
+      Import existing documents, lore bibles, or JSON data. The Oracle will
+      automatically break down large files into distinct entities and extract
+      embedded art.
+    </p>
+  {/if}
+
+  {#if !oracle.isEnabled}
+    {#if isStandalone}
+      <InlineKeySetup />
+    {:else}
+      <div
+        class="p-4 bg-red-500/10 border border-red-500/20 rounded flex items-start gap-3"
+      >
+        <span
+          class="icon-[lucide--alert-triangle] w-5 h-5 text-red-400 shrink-0 mt-0.5"
+        ></span>
+
+        <div class="flex flex-col gap-1">
+          <span
+            class="text-sm font-bold text-red-400 uppercase font-header tracking-wider"
+            >Oracle Connection Required</span
+          >
+
+          <p class="text-xs text-red-400/80 leading-tight">
+            Intelligent importing requires an active Gemini API key. Please
+            configure your access in the
+
+            <button
+              class="underline hover:text-red-300"
+              onclick={() => (uiStore.activeSettingsTab = "intelligence")}
+              >AI</button
+            > tab.
+          </p>
+        </div>
+      </div>
+    {/if}
+  {:else}
+    {#if showResumeToast}
+      <div
+        transition:slide
+        class="p-3 bg-theme-secondary/10 border border-theme-secondary/20 rounded flex items-center justify-between gap-4"
+      >
+        <div
+          class="flex items-center gap-2 text-[11px] font-bold text-theme-secondary uppercase font-header tracking-wider"
+        >
+          <span class="icon-[lucide--history] w-3.5 h-3.5"></span>
+
+          Resuming previous import
+        </div>
+
+        <button
+          onclick={handleRestart}
+          class="text-[9px] font-bold underline hover:text-theme-text"
+        >
+          START OVER
+        </button>
+      </div>
+    {/if}
+
+    <div
+      class="flex-1 flex flex-col relative overflow-hidden {isStandalone
+        ? ''
+        : 'bg-theme-surface border border-theme-border p-4 rounded-lg justify-center'}"
+    >
+      {#if step === "upload"}
+        <div class="flex-1 flex flex-col min-h-0">
+          <ImportDropzone onFileSelect={handleFiles} {isStandalone} />
+        </div>
+      {:else if step === "processing"}
+        <div class="flex flex-col items-center gap-6 py-8">
+          <div class="relative">
+            <div
+              class="w-12 h-12 border-2 border-theme-primary/20 border-t-theme-primary rounded-full animate-spin"
+            ></div>
+
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span
+                class="icon-[lucide--zap] text-theme-primary animate-pulse w-4 h-4"
+              ></span>
+            </div>
+          </div>
+
+          <div
+            class="text-center space-y-1"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <p
+              class="text-xs font-mono text-theme-primary uppercase tracking-tight"
+            >
+              {statusMessage}
+            </p>
+
+            <p
+              class="text-[10px] text-theme-muted uppercase tracking-[0.2em] font-header"
+            >
+              Oracle is interpreting your notes
+            </p>
+          </div>
+
+          {#if totalChunks > 0}
+            <div transition:fade class="w-full max-w-md px-4">
+              <ImportProgress {totalChunks} />
+            </div>
+          {/if}
+
+          <button
+            onclick={() => uiStore.abortActiveOperations()}
+            class="text-[10px] font-bold text-theme-muted hover:text-red-400 transition-colors uppercase font-header tracking-widest"
+          >
+            Cancel Import
+          </button>
+        </div>
+      {:else if step === "review"}
+        <ReviewList
+          entities={discoveredEntities}
+          onSave={handleSave}
+          onCancel={() => (step = "upload")}
+          {isStandalone}
+        />
+      {:else if step === "complete"}
+        <div
+          class="flex flex-col items-center gap-2 py-8 text-theme-primary"
+          transition:fade
+        >
+          <div
+            class="w-16 h-16 rounded-full bg-theme-primary/10 flex items-center justify-center mb-2"
+          >
+            <span class="icon-[lucide--check-circle] w-8 h-8"></span>
+          </div>
+          <p class="text-base font-bold uppercase font-header tracking-widest">
+            Import Successful
+          </p>
+          <p class="text-[11px] text-theme-muted uppercase font-mono">
+            Archive updated with {discoveredEntities.length} records
+          </p>
+        </div>
+      {/if}
+    </div>
+  {/if}
+</div>

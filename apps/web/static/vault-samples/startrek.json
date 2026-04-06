@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "jean-luc-picard": {
+      "id": "jean-luc-picard",
+      "title": "Jean-Luc Picard",
+      "type": "character",
+      "tags": ["captain", "human", "diplomat"],
+      "connections": [
+        {
+          "target": "uss-enterprise-d",
+          "type": "commands",
+          "label": "Commanding Officer"
+        }
+      ],
+      "content": "Captain of the USS Enterprise-D. Known for his tactical brilliance and diplomatic skills.",
+      "lore": "Captain of the USS Enterprise-D. Known for his tactical brilliance and diplomatic skills.",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-npc.png",
+      "_path": ["personnel", "jean-luc-picard.md"],
+      "lastModified": 1700000000000
+    },
+    "uss-enterprise-d": {
+      "id": "uss-enterprise-d",
+      "title": "USS Enterprise-D",
+      "type": "location",
+      "tags": ["starship", "galaxy-class", "federation"],
+      "connections": [],
+      "content": "The flagship of the United Federation of Planets. A Galaxy-class starship designed for exploration and defense.",
+      "lore": "The flagship of the United Federation of Planets. A Galaxy-class starship designed for exploration and defense.",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-location.png",
+      "_path": ["ships", "uss-enterprise-d.md"],
+      "lastModified": 1700000000000
+    },
+    "united-federation-of-planets": {
+      "id": "united-federation-of-planets",
+      "title": "United Federation of Planets",
+      "type": "faction",
+      "tags": ["interstellar", "democratic", "alliance"],
+      "connections": [],
+      "content": "An interstellar union of planetary governments that agree to exist semi-autonomously under a single central government.",
+      "lore": "An interstellar union of planetary governments that agree to exist semi-autonomously under a single central government.",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-faction.png",
+      "_path": ["factions", "federation.md"],
+      "lastModified": 1700000000000
+    },
+    "borg-collective": {
+      "id": "borg-collective",
+      "title": "Borg Collective",
+      "type": "creature",
+      "tags": ["cybernetic", "hive-mind", "adversary"],
+      "connections": [],
+      "content": "A pseudo-species of cybernetic organisms that assimilate other species into their hive mind.",
+      "lore": "A pseudo-species of cybernetic organisms that assimilate other species into their hive mind.",
+      "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-creature.png",
+      "_path": ["adversaries", "borg.md"],
+      "lastModified": 1700000000000
+    }
+  }
+}

@@ -1,0 +1,27 @@
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - dependencies
+      - github_actions
+    authors:
+      - github-actions[bot]
+  categories:
+    - title: "✨ New Features"
+      labels:
+        - enhancement
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+    - title: "📚 Documentation"
+      labels:
+        - documentation
+    - title: "🧹 Other Improvements"
+      labels:
+        - improvement
+    - title: "📦 Dependencies"
+      labels:
+        - dependencies
+    - title: "⚙️ GitHub Actions"
+      labels:
+        - github_actions

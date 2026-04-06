@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">
+  <filter id="parchment">
+    <!-- Higher frequency for visible grain, similar to paper fibers -->
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="5" stitchTiles="stitch"/>
+    <!-- Boosted Alpha to 0.3 to ensure visibility through the overlay -->
+    <feColorMatrix type="matrix" values="0.33 0.33 0.33 0 0
+                                         0.29 0.29 0.29 0 0
+                                         0.25 0.25 0.25 0 0
+                                         0 0 0 0.4 0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#parchment)"/>
+</svg>

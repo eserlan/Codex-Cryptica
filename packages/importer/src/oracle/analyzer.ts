@@ -1,0 +1,220 @@
+import {
+  GoogleGenerativeAI,
+  type GenerativeModel,
+} from "@google/generative-ai";
+import type {
+  AnalysisResult,
+  DiscoveredEntity,
+  OracleAnalyzerEngine,
+  AnalysisOptions,
+} from "../types";
+import { EXTRACTION_PROMPT } from "./prompt-factory";
+import { splitTextIntoChunks, mergeEntities } from "../utils";
+
+const CHUNK_SIZE = 50000;
+const OVERLAP_SIZE = 2000;
+
+export class OracleAnalyzer implements OracleAnalyzerEngine {
+  private modelFactory: (modelName: string) => GenerativeModel;
+
+  /**
+   * @param apiKeyOrFactory Either a Google Gemini API key string, or a factory function that returns a GenerativeModel.
+   */
+  constructor(
+    apiKeyOrFactory: string | ((modelName: string) => GenerativeModel),
+  ) {
+    if (typeof apiKeyOrFactory === "string") {
+      const genAI = new GoogleGenerativeAI(apiKeyOrFactory);
+      this.modelFactory = (modelName: string) =>
+        genAI.getGenerativeModel({ model: modelName });
+    } else {
+      this.modelFactory = apiKeyOrFactory;
+    }
+  }
+
+  async analyze(
+    text: string,
+    options?: AnalysisOptions,
+  ): Promise<AnalysisResult> {
+    const chunks = splitTextIntoChunks(text, CHUNK_SIZE, OVERLAP_SIZE);
+
+    console.log(`[OracleAnalyzer] Split text into ${chunks.length} chunks.`);
+
+    // Process all chunks
+    const allEntities: DiscoveredEntity[] = [];
+    const completedSet = new Set(options?.completedIndices || []);
+
+    for (let i = 0; i < chunks.length; i++) {
+      if (options?.signal?.aborted) {
+        console.log("[OracleAnalyzer] Analysis aborted by user.");
+        throw new Error("Analysis Aborted");
+      }
+      const chunk = chunks[i];
+
+      if (completedSet.has(i)) {
+        console.log(
+          `[OracleAnalyzer] Skipping chunk ${i + 1}/${chunks.length} (Already completed)`,
+        );
+        if (options?.onProgress) {
+          options.onProgress(i + 1, chunks.length);
+        }
+        continue;
+      }
+
+      console.log(
+        `[OracleAnalyzer] Processing chunk ${i + 1}/${chunks.length}...`,
+      );
+
+      if (options?.onChunkActive) {
+        options.onChunkActive(i);
+      }
+
+      if (options?.onProgress) {
+        options.onProgress(i + 1, chunks.length);
+      }
+
+      const result = await this.processChunk(chunk, options);
+      allEntities.push(...result.entities);
+
+      if (options?.onChunkProcessed) {
+        options.onChunkProcessed(i, result);
+      }
+    }
+
+    return { entities: mergeEntities(allEntities) };
+  }
+
+  private async processChunk(
+    text: string,
+    options?: AnalysisOptions,
+  ): Promise<AnalysisResult> {
+    const knownEntityList = options?.knownEntities
+      ? Object.keys(options.knownEntities)
+      : [];
+    const contextStr =
+      knownEntityList.length > 0
+        ? `\n\nKnown Entities in Vault (try to match these if they appear): ${knownEntityList.join(", ")}`
+        : "";
+
+    const prompt = `${EXTRACTION_PROMPT}${contextStr}\n\nInput Text:\n${text}`;
+
+    // Attempt models in order of strength/preference, aligned with app configuration
+    const models = [
+      "gemini-3-flash-preview", // Advanced Tier
+      "gemini-flash-lite-latest", // Lite Tier
+    ];
+
+    for (const modelName of models) {
+      try {
+        const model = this.modelFactory(modelName);
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const rawText = response.text();
+
+        // Robust JSON extraction
+        const jsonMatch = rawText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (!jsonMatch) {
+          throw new Error("No valid JSON array found in Oracle response");
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        const entities: DiscoveredEntity[] = parsed.map((item: any) => {
+          const rawImage =
+            item.imageUrl ||
+            item.imageURL ||
+            item.image ||
+            item.frontmatter?.image;
+          const isValidUrl =
+            typeof rawImage === "string" &&
+            (rawImage.startsWith("http://") || rawImage.startsWith("https://"));
+
+          const title = item.title;
+          let matchedEntityId: string | undefined = undefined;
+
+          if (options?.knownEntities) {
+            // Case-insensitive matching
+            const normalizedTitle = title.toLowerCase().trim();
+            const escape = (s: string) =>
+              s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+            // Compile discovered title pattern once
+            const titlePattern =
+              normalizedTitle.length >= 3
+                ? new RegExp(`\\b${escape(normalizedTitle)}\\b`, "i")
+                : null;
+
+            const match = Object.entries(options.knownEntities).find(([t]) => {
+              const known = t.toLowerCase().trim();
+              if (!known) return false;
+
+              // 1. Exact match
+              if (known === normalizedTitle) return true;
+
+              // 2. Fuzzy match: bidirectional whole-word containment to avoid
+              // cases like "Beldrinian" matching "Eldrin".
+              if (known.length < 3) return false;
+
+              return (
+                new RegExp(`\\b${escape(known)}\\b`, "i").test(
+                  normalizedTitle,
+                ) ||
+                (titlePattern?.test(known) ?? false)
+              );
+            });
+            if (match) {
+              matchedEntityId = match[1];
+            }
+          }
+
+          return {
+            id: crypto.randomUUID(),
+            suggestedTitle: title,
+            suggestedType: item.type,
+            chronicle: item.chronicle || item.content || "",
+            lore: item.lore || "",
+            content:
+              item.content ||
+              `${item.chronicle || ""}\n\n${item.lore || ""}`.trim(),
+            frontmatter: {
+              ...item.frontmatter,
+              // Prioritize explicit image URL from AI or input, only if absolute
+              image: isValidUrl ? rawImage : undefined,
+            },
+            confidence: 1, // Placeholder
+            suggestedFilename: this.slugify(title),
+            matchedEntityId,
+            detectedLinks: (item.detectedLinks || []).map((link: any) => {
+              if (typeof link === "string") return { target: link };
+              return {
+                target: link.target || link.title || "",
+                label: link.label || link.type || "",
+              };
+            }),
+          };
+        });
+
+        return { entities };
+      } catch (error) {
+        console.warn(`Oracle Analysis failed with model ${modelName}:`, error);
+        // Continue to next model
+      }
+    }
+
+    console.error("Oracle Analysis failed with all available models.");
+    return { entities: [] };
+  }
+
+  private slugify(text: string): string {
+    return (
+      text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-") // Replace spaces with -
+        .replace(/[^\w-]+/g, "") // Remove all non-word chars
+        .replace(/--+/g, "-") + // Replace multiple - with single -
+      ".md"
+    );
+  }
+}

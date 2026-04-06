@@ -1,0 +1,249 @@
+<script lang="ts" module>
+  let nextId = 0;
+</script>
+
+<script lang="ts">
+  import { searchService } from "$lib/services/search";
+  import { vault } from "$lib/stores/vault.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import { getIconClass } from "$lib/utils/icon";
+  import type { SearchResult } from "schema";
+  import { isEntityVisible } from "schema";
+  import { ui } from "$lib/stores/ui.svelte";
+  import { onDestroy, onMount, tick } from "svelte";
+
+  let {
+    value = $bindable(""),
+    // eslint-disable-next-line no-useless-assignment
+    selectedId = $bindable<string | null>(null),
+    placeholder = "Search entities...",
+    minChars = 3,
+    id,
+    ariaLabel,
+    ariaLabelledBy,
+  } = $props<{
+    value?: string;
+    selectedId?: string | null;
+    placeholder?: string;
+    minChars?: number;
+    id?: string;
+    ariaLabel?: string;
+    ariaLabelledBy?: string;
+  }>();
+
+  let results = $state<SearchResult[]>([]);
+  let selectedIndex = $state(0);
+  let showResults = $state(false);
+  let isLoading = $state(false);
+  let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  let statusMessage = $state("");
+  let hasAnnouncedNavigationHelp = $state(false);
+
+  $effect(() => {
+    if (isLoading) {
+      statusMessage = "Loading results...";
+    } else if (showResults) {
+      const count = results.length;
+
+      if (count === 0) {
+        statusMessage = "No results found.";
+      } else {
+        const resultLabel =
+          count === 1 ? "1 result found." : `${count} results found.`;
+
+        if (!hasAnnouncedNavigationHelp) {
+          statusMessage = `${resultLabel} Use up and down arrows to navigate.`;
+          hasAnnouncedNavigationHelp = true;
+        } else {
+          statusMessage = resultLabel;
+        }
+      }
+    } else {
+      statusMessage = "";
+      hasAnnouncedNavigationHelp = false;
+    }
+  });
+
+  // Generate a stable ID if none is provided
+  let generatedId = $state("");
+  onMount(() => {
+    if (!id) {
+      generatedId = `autocomplete-${nextId++}`;
+    }
+  });
+  let finalId = $derived(id || generatedId);
+
+  let ariaAttributes = $derived.by(() => {
+    if (ariaLabelledBy) return { "aria-labelledby": ariaLabelledBy };
+    if (ariaLabel) return { "aria-label": ariaLabel };
+    return {};
+  });
+
+  onDestroy(() => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
+
+  const handleInput = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const query = target.value;
+    value = query;
+    selectedId = null;
+
+    clearTimeout(debounceTimer);
+    if (query.length < minChars) {
+      results = [];
+      showResults = false;
+      return;
+    }
+
+    debounceTimer = setTimeout(async () => {
+      isLoading = true;
+      try {
+        const rawResults = await searchService.search(query, { limit: 10 });
+
+        // Filter results based on visibility settings (same as searchStore)
+        const settings = {
+          sharedMode: ui.sharedMode,
+          defaultVisibility: vault.defaultVisibility,
+        };
+
+        results = rawResults.filter((result) => {
+          const entity = vault.entities[result.id];
+          if (!entity) return false;
+          return isEntityVisible(entity, settings);
+        });
+
+        showResults = results.length > 0;
+        selectedIndex = 0;
+      } catch (err) {
+        console.error("Autocomplete search failed:", err);
+        results = [];
+      } finally {
+        isLoading = false;
+      }
+    }, 200);
+  };
+
+  const selectResult = (result: SearchResult) => {
+    value = result.title;
+    selectedId = result.id;
+    showResults = false;
+    results = [];
+  };
+
+  const scrollToSelected = async () => {
+    // Ensure there are results and the selectedIndex is within bounds
+    if (
+      !results.length ||
+      selectedIndex < 0 ||
+      selectedIndex >= results.length
+    ) {
+      return;
+    }
+
+    await tick();
+    const el = document.getElementById(`${finalId}-option-${selectedIndex}`);
+    if (!el) {
+      return;
+    }
+
+    el.scrollIntoView({ block: "nearest" });
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!showResults) return;
+    if (!results.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      selectedIndex = (selectedIndex + 1) % results.length;
+      scrollToSelected();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      selectedIndex = (selectedIndex - 1 + results.length) % results.length;
+      scrollToSelected();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      selectResult(results[selectedIndex]);
+    } else if (e.key === "Escape") {
+      showResults = false;
+    }
+  };
+</script>
+
+<div class="relative w-full">
+  <div class="sr-only" role="status" aria-live="polite">
+    {statusMessage}
+  </div>
+  <input
+    type="text"
+    id={finalId}
+    {value}
+    {placeholder}
+    role="combobox"
+    aria-busy={isLoading}
+    aria-autocomplete="list"
+    aria-expanded={showResults}
+    aria-controls={showResults ? `${finalId}-listbox` : undefined}
+    aria-activedescendant={showResults && selectedIndex >= 0
+      ? `${finalId}-option-${selectedIndex}`
+      : undefined}
+    {...ariaAttributes}
+    oninput={handleInput}
+    onkeydown={handleKeyDown}
+    onblur={() => setTimeout(() => (showResults = false), 200)}
+    onfocus={() => {
+      if (results.length > 0) showResults = true;
+    }}
+    class="w-full bg-theme-bg/50 border border-theme-border rounded px-3 py-2 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary transition-all font-mono"
+  />
+
+  {#if showResults}
+    <div
+      id="{finalId}-listbox"
+      role="listbox"
+      aria-label="Search results"
+      class="absolute z-50 w-full mt-1 bg-theme-surface border border-theme-border rounded shadow-xl max-h-60 overflow-y-auto"
+    >
+      {#each results as result, i}
+        <button
+          id="{finalId}-option-{i}"
+          role="option"
+          tabindex="-1"
+          aria-selected={i === selectedIndex}
+          aria-label={result.title}
+          class="w-full text-left px-3 py-2 flex items-center gap-2 transition-colors
+            {i === selectedIndex
+            ? 'bg-theme-primary/20 text-theme-primary'
+            : 'hover:bg-theme-bg/50 text-theme-text'}"
+          onclick={() => selectResult(result)}
+        >
+          {#if result.type}
+            <span
+              class="{getIconClass(
+                categories.getCategory(result.type)?.icon,
+              )} w-3.5 h-3.5 shrink-0"
+              style="color: {categories.getColor(result.type)}"
+            ></span>
+          {/if}
+          <span class="truncate text-xs">{result.title}</span>
+          {#if result.type}
+            <span
+              class="ml-auto text-[9px] uppercase opacity-50 font-bold font-header tracking-widest"
+            >
+              {categories.getCategory(result.type)?.label || result.type}
+            </span>
+          {/if}
+        </button>
+      {/each}
+    </div>
+  {/if}
+
+  {#if isLoading}
+    <div class="absolute right-3 top-1/2 -translate-y-1/2">
+      <div
+        class="w-3 h-3 border-2 border-theme-primary/30 border-t-theme-primary rounded-full animate-spin"
+      ></div>
+    </div>
+  {/if}
+</div>

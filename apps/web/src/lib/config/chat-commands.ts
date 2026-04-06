@@ -1,0 +1,79 @@
+import { oracle } from "../stores/oracle.svelte";
+import { uiStore } from "../stores/ui.svelte";
+
+export interface ChatCommand {
+  name: string;
+  description: string;
+  parameters?: string[];
+  handler: (args: string) => Promise<void> | void;
+}
+
+export const chatCommands: ChatCommand[] = [
+  {
+    name: "/roll",
+    description: "Roll dice (e.g. /roll 2d20kh1 + 5)",
+    handler: (args) => oracle.ask("/roll " + args),
+  },
+  {
+    name: "/draw",
+    description: "Visualize something with AI",
+    parameters: ["[subject]"],
+    handler: (subject) => oracle.ask(`/draw ${subject}`),
+  },
+  {
+    name: "/create",
+    description: 'Create record (AI) or /create "Name" [as "Type"]',
+    parameters: ["[description]"],
+    handler: (desc) => oracle.ask(`/create ${desc}`),
+  },
+  {
+    name: "/connect",
+    description: "Link entities with AI guidance",
+    parameters: ["oracle"],
+    handler: (args) => {
+      if (args.trim().toLowerCase() === "oracle") {
+        oracle.startWizard("connection");
+      } else {
+        oracle.ask(`/connect ${args}`);
+      }
+    },
+  },
+  {
+    name: "/merge",
+    description: "Merge entities with AI guidance",
+    parameters: ["source", "into", "target"],
+    handler: (args) => {
+      if (args.trim().toLowerCase() === "oracle") {
+        oracle.startWizard("merge");
+      } else {
+        oracle.ask(`/merge ${args}`);
+      }
+    },
+  },
+  {
+    name: "/plot",
+    description: "Analyse story tensions around an entity",
+    parameters: ["[entity name]"],
+    handler: (subject) => oracle.ask(`/plot ${subject}`),
+  },
+  {
+    name: "/help",
+    description: "Show available commands",
+    handler: () => oracle.ask("/help"),
+  },
+  {
+    name: "/clear",
+    description: "Clear conversation history",
+    handler: async () => {
+      if (
+        await uiStore.confirm({
+          title: "Clear History",
+          message: "Are you sure you want to clear the conversation history?",
+          isDangerous: true,
+        })
+      ) {
+        oracle.clearMessages();
+      }
+    },
+  },
+];

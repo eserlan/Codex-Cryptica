@@ -1,0 +1,142 @@
+import type { Core } from "cytoscape";
+
+export interface ImageManagerOptions {
+  showImages: boolean;
+  resolveImageUrl: (path: string) => Promise<string | null>;
+  releaseImageUrl: (path: string) => void;
+  batchSize?: number;
+  onBatchApplied?: (count: number) => void;
+  onLog?: (message: string) => void;
+  onError?: (error: any) => void;
+}
+
+export class GraphImageManager {
+  private urlCache = new Map<string, string>();
+  private resolvingIds = new Set<string>();
+  private nodePathMap = new Map<string, string>();
+
+  constructor(private cy: Core) {}
+
+  sync(options: ImageManagerOptions) {
+    if (!this.cy || this.cy.destroyed()) return;
+
+    if (!options.showImages) {
+      this.clearImages(options);
+      return;
+    }
+
+    const nodesWithImages = this.cy
+      .nodes()
+      .filter(
+        (n) =>
+          (n.data("image") || n.data("thumbnail")) &&
+          !n.data("resolvedImage") &&
+          !this.resolvingIds.has(n.id()),
+      );
+
+    if (nodesWithImages.length === 0) return;
+
+    options.onLog?.(
+      `[GraphImageManager] Syncing images for ${nodesWithImages.length} nodes...`,
+    );
+
+    // Mark them all as resolving immediately
+    nodesWithImages.forEach((n) => {
+      this.resolvingIds.add(n.id());
+    });
+
+    // Bulk process all images concurrently
+    void (async () => {
+      try {
+        const start = performance.now();
+        const results = await Promise.all(
+          nodesWithImages.map(async (node) => {
+            const imagePath = node.data("image") || node.data("thumbnail");
+            let url = this.urlCache.get(imagePath);
+            if (!url) {
+              url = (await options.resolveImageUrl(imagePath)) || "";
+              if (url) this.urlCache.set(imagePath, url);
+            }
+            return {
+              node,
+              url,
+              oldUrl: node.data("resolvedImage") as string | undefined,
+            };
+          }),
+        );
+
+        if (this.cy.destroyed() || !options.showImages) {
+          nodesWithImages.forEach((n) => {
+            this.resolvingIds.delete(n.id());
+          });
+          return;
+        }
+
+        // Apply in smaller batches to prevent massive style churn
+        const batchSize = options.batchSize ?? 10;
+        for (let i = 0; i < results.length; i += batchSize) {
+          const chunk = results.slice(i, i + batchSize);
+          this.cy.batch(() => {
+            for (const { node, url, oldUrl } of chunk) {
+              const newUrl = url || "none"; // Mark as "none" to avoid infinite retries and prevent broken image states
+              if (newUrl !== oldUrl) {
+                const nodeId = node.id();
+                const oldPath = this.nodePathMap.get(nodeId);
+                if (oldPath) {
+                  options.releaseImageUrl(oldPath);
+                }
+
+                node.data("resolvedImage", newUrl);
+                const currentPath =
+                  node.data("image") || node.data("thumbnail");
+                if (currentPath) {
+                  this.nodePathMap.set(nodeId, currentPath);
+                }
+              }
+            }
+          });
+        }
+
+        this.cy.style().update();
+        options.onLog?.(
+          `[GraphImageManager] Resolved ${results.length} images in ${(performance.now() - start).toFixed(2)}ms`,
+        );
+        options.onBatchApplied?.(results.length);
+      } catch (err) {
+        options.onError?.(err);
+        nodesWithImages.forEach((n) => {
+          this.resolvingIds.delete(n.id());
+        });
+      }
+    })();
+  }
+
+  private clearImages(options?: ImageManagerOptions) {
+    this.resolvingIds.clear();
+    this.urlCache.clear(); // Ensure we don't hold onto stale/revoked blob URLs
+    this.cy
+      .nodes()
+      .filter((n) => n.data("resolvedImage"))
+      .forEach((node) => {
+        const nodeId = node.id();
+        const path = this.nodePathMap.get(nodeId);
+        if (path && options) {
+          options.releaseImageUrl(path);
+        }
+        this.nodePathMap.delete(nodeId);
+        node.removeData("resolvedImage");
+      });
+    this.cy.style().update();
+  }
+
+  destroy(options?: ImageManagerOptions) {
+    if (options) {
+      this.nodePathMap.forEach((path) => {
+        options.releaseImageUrl(path);
+      });
+    }
+    this.urlCache.clear();
+    this.nodePathMap.clear();
+    this.resolvingIds.clear();
+  }
+}

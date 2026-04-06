@@ -1,0 +1,151 @@
+# Codex-Cryptica Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-04-03
+
+## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte` (077-vault-front-page)
+- OPFS (Vault Files, Local Images), IndexedDB (Metadata, Activity History) (077-vault-front-page)
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai` (075-free-oracle-use)
+- IndexedDB (Settings) (075-free-oracle-use)
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind CSS 4 (074-staging-indicator)
+- N/A (Transient UI State) (074-staging-indicator)
+
+- TypeScript 5.9.3 (Svelte 5 Runes) + Svelte, Lucide-Svelte, Tailwind 4 (073-prominent-import)
+- OPFS (via Importer package) (073-prominent-import)
+
+- TypeScript 5.9.3 + Svelte 5 (Runes) + SvelteKit 2, FlexSearch, isomorphic-dompurify, Lucide Svelte (069-pop-out-help-window)
+- LocalStorage (for help state persistence) (069-pop-out-help-window)
+
+- TypeScript 5.9.3 + Svelte 5 (Runes), IndexedDB (`idb`) (067-oracle-store-refactor)
+- IndexedDB (for chat history persistence via `ChatHistoryService`) (067-oracle-store-refactor)
+
+- TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), `idb` (for history), Web Crypto API (for fair randomization) (066-die-rolling)
+- IndexedDB (via `idb`) for session-based roll history (066-die-rolling)
+
+- TypeScript 5.x, Node.js 20+, Svelte 5 (Runes) + SvelteKit, Lucide Svelte, Tailwind 4 (065-move-oracle-sidebar)
+- LocalStorage (via `UIStore`) (065-move-oracle-sidebar)
+
+- TypeScript 5.x / Markdown (GitHub Flavored) + `marked`, `marked-gfm-heading-id`, `isomorphic-dompurify` (already in `ArticleRenderer.svelte`) (064-help-blog-post)
+- Static Markdown file in `apps/web/src/lib/content/blog/` (064-help-blog-post)
+
+- TypeScript 5.x / Svelte 5 / SvelteKit 2 (routing, pre-rendering), `marked` (for Markdown-to-HTML if not already present or using Svelte components) (062-add-blog-path)
+- Static JSON or Markdown files for articles (062-add-blog-path)
+
+- TypeScript 5.x / Node.js 20+ / Svelte 5 (Runes) + `@xyflow/svelte` (for canvas management), `lucide-svelte` (icons), `idb` (metadata management) (061-spatial-canvas)
+- OPFS (Origin Private File System) for `.canvas` JSON files; IndexedDB for canvas registry and metadata. (061-spatial-canvas)
+
+- OPFS (Vault Data), IndexedDB via `idb` (Sync Registry metadata)
+
+- TypeScript 5.x + Svelte 5, `idb`, Web File System Access API (059-robust-local-sync)
+- IndexedDB (Metadata), OPFS (Internal Files), Local Filesystem (External Mirror) (059-robust-local-sync)
+
+- TypeScript 5.x / Node.js 20+ / Svelte 5 + SvelteKit, `@sveltejs/adapter-static` (055-prerender-marketing)
+- N/A (Static files) (055-prerender-marketing)
+
+- TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai` (054-lite-no-ai)
+- LocalStorage (for persistent setting `liteMode`) (054-lite-no-ai)
+
+- IndexedDB (Metadata), OPFS (Files), LocalStorage (UI State/Last Reminded) (052-sync-reminder)
+
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), Tailwind 4, `idb` (IndexedDB wrapper), Gemini SDK (051-demo-mode)
+- Transient (In-memory) for demo session; IndexedDB for conversion (051-demo-mode)
+
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `idb` (IndexedDB), Web Crypto API (066-die-rolling)
+- IndexedDB (`dice_history` store) (066-die-rolling)
+
+- TypeScript 5.x, Node.js 20+ + Svelte 5 (Runes), Zod (Schema validation) (049-theme-based-jargon)
+- N/A (Transient UI state derived from active theme) (049-theme-based-jargon)
+
+- TypeScript 5.x, Node.js 20+ + `idb` (IndexedDB wrapper), Web Crypto API (for hashing), Svelte 5 (Runes) (046-import-state-management)
+- IndexedDB (new `import_registry` store) (046-import-state-management)
+
+- IndexedDB (via `idb`) for campaign settings, OPFS for vault metadata (045-campaign-date-picker)
+
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `flexsearch` (Search Engine) (044-oracle-chat-commands)
+- OPFS (Vault Files), IndexedDB (Chat History, Search Index) (044-oracle-chat-commands)
+
+- OPFS (Primary content storage), IndexedDB (Metadata & Graph Cache) (041-node-merging)
+
+- TypeScript 5.x / Node.js 20+ + Svelte 5, `idb`, OPFS (Browser Native) (039-multi-campaign-switch)
+- OPFS (Files), IndexedDB (Metadata/Registry) (039-multi-campaign-switch)
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (Runes), `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB) (040-connections-proposer)
+- IndexedDB (New store `proposals`), OPFS (Reading entities) (040-connections-proposer)
+
+- TypeScript 5.x / Node.js 20+ + `@google/generative-ai` (for context), Browser Native `fetch` (for Imagen REST API), `idb` (for metadata) (011-oracle-image-gen)
+- OPFS (Origin Private File System) for binary images, Markdown (frontmatter) for entity linkage. (011-oracle-image-gen)
+- TypeScript 5.x / Node.js 20+ + Cytoscape.js (Graph Engine), Svelte 5 (UI Framework) (012-minimap)
+- N/A (Transient UI state) (012-minimap)
+- TypeScript 5.x / Node.js 20+ + Cytoscape.js, Svelte 5 (014-graph-focus-mode)
+- N/A (UI-only state) (014-graph-focus-mode)
+- OPFS (Vault), IndexedDB (Metadata Store)
+- TypeScript 5.x, Node.js 20+ + Svelte 5, Cytoscape.js, `@google/generative-ai` (018-perf-improvements)
+- OPFS (Origin Private File System), IndexedDB (via `idb`) (018-perf-improvements)
+- TypeScript 5.x / Node.js 20+ + `@google/generative-ai`, FlexSearch, Svelte 5 (019-oracle-rag-improvements)
+- IndexedDB (Chat History), Markdown (Vault) (019-oracle-rag-improvements)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, FlexSearch, marked (markdown parsing) (020-help-guide-system)
+- LocalStorage (progress tracking), Static JSON/Markdown (content) (020-help-guide-system)
+- TypeScript 5.x / Node.js 20+ + Svelte 5 (UI Framework), `packages/editor-core` (for content handling logic) (022-oracle-data-parsing)
+- OPFS (Markdown files with YAML frontmatter) (022-oracle-data-parsing)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `editor-core` (024-delete-nodes)
+- OPFS (Primary), FSA (Sync) (024-delete-nodes)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, Turborepo, Vitest, Playwright (026-world-timeline)
+- OPFS (Primary), FSA (Sync) (026-world-timeline)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, Tailwind CSS 4.x, `idb` (for settings) (028-styling-templates)
+- Vault Metadata (Markdown Frontmatter or `.codex/config.json`) (028-styling-templates)
+- OPFS (Origin Private File System) via `editor-core`. (031-import-file-content)
+- TypeScript 5.x + `cytoscape` (Core), `svelte` (UI) (032-central-node-orbit)
+- N/A (Transient view state) (032-central-node-orbit)
+- TypeScript 5.x + `cytoscape` (Graph Visualization), `svelte` (UI), `zod` (Validation) (033-connection-labels)
+- Markdown YAML Frontmatter (Local-First) via `vault` store (033-connection-labels)
+- TypeScript 5.x / Node.js 20+ + Svelte 5, Cytoscape.js, FlexSearch, `idb` (034-fog-of-war)
+- OPFS (Vault Files), IndexedDB (Metadata), LocalStorage (UI State) (034-fog-of-war)
+
+- OPFS (Origin Private File System) / IndexedDB (Metadata)
+- FlexSearch (004-fuzzy-search)
+- `@sveltejs/adapter-static` (005-gh-pages-deploy)
+- IndexedDB Caching (007-scalability-hardening)
+- Google Gemini API (008-lore-oracle)
+- Tailwind CSS 4.x / Svelte 5 (009-mobile-ux-sync-feedback)
+
+## Project Structure
+
+```text
+apps/
+  web/          # SvelteKit application
+packages/
+  editor-core/  # Markdown editing logic
+  graph-engine/ # Visualization logic
+  schema/       # Shared data models
+specs/          # Feature specifications
+```
+
+## Commands
+
+npm test; npm run lint
+
+## Code Style
+
+TypeScript: Follow standard conventions
+
+## Implementation Guardrails (AI Guidelines)
+
+- **Mandatory Testing**: NEVER consider a feature or bug fix complete without corresponding unit tests. For every new logic branch or service method, you MUST add a test case. If an existing test file exists for the module, append to it; otherwise, create a new one. Verification is only complete when `npm test` passes with your changes.
+- **Prefix Unused Vars**: Always prefix unused callback parameters or variables with an underscore (e.g., `_evt`) to satisfy strict `no-unused-vars` linting rules.
+- **Svelte 5 Reactivity**: Avoid initializing `$state` directly from props (e.g., `let x = $state(prop)`). Use `$derived` for data that should stay in sync, or ensure the intent of a local-only copy is clear to avoid `state_referenced_locally` warnings.
+- **Tailwind 4 Syntax**: Use Tailwind 4's `@reference`, `@theme`, and `@apply` rules correctly in Svelte `<style>` blocks. Ignore standard CSS linter warnings for these specific at-rules.
+- **Package Type Safety**: When modifying or creating packages, ensure `node` types are included in `tsconfig.json` if the code uses Node globals (e.g., `Buffer`, `process`, `fs`).
+- **Dependency Injection**: Always use constructor-based DI with sensible defaults for all services and stores. Export both the class and a default singleton. Avoid tight singleton coupling to facilitate unit testing.
+- **Branching Strategy**: Always create a new branch for code changes, fixes, improvements, or refactoring. Never commit directly to the main branch.
+
+## Recent Changes
+
+- 078-entity-traditional-view: Added persistent Entity Explorer sidebar and embedded focus mode with Dexie-backed metadata caching.
+
+- 077-vault-front-page: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte`
+
+- 075-free-oracle-use: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`
+
+<!-- MANUAL ADDITIONS START -->

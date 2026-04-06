@@ -1,0 +1,390 @@
+<script lang="ts">
+  import { vault } from "$lib/stores/vault.svelte";
+  import { ui } from "$lib/stores/ui.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
+  import ShareModal from "$lib/components/ShareModal.svelte";
+  import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { demoService } from "$lib/services/demo";
+
+  let { orientation = "horizontal" } = $props<{
+    orientation?: "horizontal" | "vertical";
+  }>();
+
+  let showForm = $state(false);
+  let showShare = $state(false);
+  let showVaultSwitcher = $state(false);
+  let newTitle = $state("");
+  let newType = $state<string>("character");
+  let isCreating = $state(false);
+  let createError = $state<string | null>(null);
+
+  // Logic
+  let isVertical = $derived(orientation === "vertical");
+
+  // Styling derived states
+  const btnBase =
+    "rounded font-bold tracking-widest transition whitespace-nowrap flex items-center";
+
+  const btnPrimary = $derived(
+    `${btnBase} bg-theme-primary hover:bg-theme-secondary text-theme-bg`,
+  );
+  const btnSecondary = $derived(
+    `${btnBase} border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary`,
+  );
+  const btnAccent = $derived(
+    `${btnBase} border border-theme-border text-theme-accent hover:text-theme-accent/80 hover:border-theme-accent`,
+  );
+  const btnGhost = $derived(
+    `${btnBase} border border-theme-border text-theme-muted hover:text-theme-primary hover:border-theme-primary`,
+  );
+
+  const iconOnlyClasses = $derived(
+    isVertical
+      ? "py-3 text-sm justify-start px-4 gap-3"
+      : "px-2 py-1.5 justify-center gap-3",
+  );
+
+  $effect(() => {
+    if (showForm && categories.list.length > 0) {
+      const currentIsValid = categories.list.some((c) => c.id === newType);
+      if (!currentIsValid) {
+        newType = categories.list[0].id;
+      }
+    }
+  });
+
+  const handleCreate = async () => {
+    if (!newTitle.trim() || isCreating) return;
+    isCreating = true;
+    createError = null;
+    try {
+      const id = await vault.createEntity(newType, newTitle);
+      vault.selectedEntityId = id;
+      newTitle = "";
+      showForm = false;
+    } catch (err: unknown) {
+      console.error(err);
+      createError = err instanceof Error ? err.message : String(err);
+    } finally {
+      isCreating = false;
+    }
+  };
+
+  let isOffline = $state(false);
+  $effect(() => {
+    if (typeof window === "undefined") return;
+    const updateStatus = () => (isOffline = !navigator.onLine);
+    window.addEventListener("online", updateStatus);
+    window.addEventListener("offline", updateStatus);
+    updateStatus();
+    return () => {
+      window.removeEventListener("online", updateStatus);
+      window.removeEventListener("offline", updateStatus);
+    };
+  });
+</script>
+
+<div class="flex flex-col gap-2 font-body">
+  <div
+    class="flex {isVertical
+      ? 'flex-col items-stretch gap-3'
+      : 'gap-1.5 md:gap-3 items-center'}"
+  >
+    {#if ui.isDemoMode}
+      <div
+        class="flex items-center gap-1.5 px-2 py-1 border border-theme-primary bg-theme-primary/10 text-theme-primary rounded text-[9px] font-bold tracking-tighter"
+      >
+        DEMO MODE
+      </div>
+      <button
+        class={isVertical
+          ? `${btnPrimary} py-3 text-sm justify-center gap-2`
+          : `${btnPrimary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+        onclick={async () => {
+          try {
+            await demoService.convertToWorld();
+          } catch (error) {
+            console.error(`Failed to save ${themeStore.jargon.vault}:`, error);
+            ui.notify(
+              `Failed to save ${themeStore.jargon.vault}. Please try again.`,
+              "error",
+            );
+          }
+        }}
+        data-testid="save-as-campaign-button"
+        aria-label={`Save as ${themeStore.jargon.vault}`}
+        aria-describedby="save-as-campaign-desc-text"
+        title={`Save this demo exploration as your own persistent ${themeStore.jargon.vault}`}
+      >
+        <span class="icon-[lucide--save] w-3 h-3"></span>
+        SAVE AS {themeStore.jargon.vault.toUpperCase()}
+      </button>
+      <div class="sr-only" id="save-as-campaign-desc-text">
+        Save this demo exploration as your own persistent {themeStore.jargon
+          .vault}
+      </div>
+      <button
+        class={isVertical
+          ? `${btnGhost} py-3 text-sm justify-center gap-2`
+          : `${btnGhost} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+        onclick={() => demoService.exitDemo()}
+        aria-label="Exit Demo"
+      >
+        <span class="icon-[lucide--log-out] w-3 h-3"></span>
+        EXIT DEMO
+      </button>
+    {/if}
+
+    {#if isOffline}
+      <div
+        class="flex items-center gap-1.5 px-2 py-1 border border-amber-900/50 bg-amber-950/20 text-amber-500 rounded text-[9px] font-bold tracking-tighter cursor-help justify-center"
+        title="Sovereign data remains accessible. Cloud sync and Lore Oracle are suspended while offline."
+      >
+        <span class="icon-[lucide--wifi-off] w-3.5 h-3.5"></span>
+        <span class={isVertical ? "inline" : "hidden md:inline"}>OFFLINE</span>
+      </div>
+    {/if}
+
+    <button
+      class="flex items-center gap-2 rounded transition-colors group {isVertical
+        ? 'justify-center w-full py-3 min-h-[44px]'
+        : 'px-3 py-2 hover:bg-theme-surface/50'}"
+      onclick={() => (showVaultSwitcher = true)}
+      title="Switch Vault"
+      data-testid="open-vault-button"
+      aria-haspopup="dialog"
+      aria-expanded={showVaultSwitcher}
+    >
+      <span
+        class="icon-[lucide--database] w-3.5 h-3.5 text-theme-muted group-hover:text-theme-primary"
+      ></span>
+      <span
+        class="font-bold text-xs tracking-wider text-theme-text group-hover:text-theme-primary max-w-[240px] truncate font-header"
+      >
+        {themeStore.jargon.vault}: {vault.vaultName}
+      </span>
+      <span
+        class="icon-[lucide--chevron-down] w-3 h-3 text-theme-muted/50 group-hover:text-theme-primary"
+      ></span>
+    </button>
+
+    <div
+      class="text-[10px] md:text-xs text-theme-muted tracking-wider uppercase {isVertical
+        ? 'text-center'
+        : 'hidden sm:block'}"
+      role="status"
+      aria-live="polite"
+    >
+      {#if vault.status === "loading"}
+        <div class="flex flex-col gap-1 items-center min-w-[100px] py-1">
+          <span class="animate-pulse text-theme-primary font-bold font-header"
+            >LOADING... {vault.syncStats.progress}%</span
+          >
+          <div class="w-full h-1 bg-theme-border rounded-full overflow-hidden">
+            <div
+              class="h-full bg-theme-primary transition-all duration-300 ease-out"
+              style="width: {vault.syncStats.progress}%"
+            ></div>
+          </div>
+        </div>
+      {:else if vault.status === "saving"}
+        <span class="text-theme-accent">SAVING...</span>
+      {:else if vault.status === "error"}
+        <span
+          class="text-red-400 font-bold text-xs bg-red-900/20 px-2 py-1 rounded border border-red-900/50"
+        >
+          {vault.errorMessage || "ERROR"}
+        </span>
+      {:else if vault.allEntities.length > 0}
+        <span
+          class="text-theme-secondary font-header"
+          data-testid="entity-count"
+          >{vault.allEntities.length}
+          {themeStore
+            .resolveJargon("entity", vault.allEntities.length)
+            .toUpperCase()}</span
+        >
+      {:else}
+        <span class="text-theme-muted"
+          >NO {themeStore.jargon.vault.toUpperCase()}</span
+        >
+      {/if}
+    </div>
+
+    {#if vault.isInitialized}
+      {#if vault.isGuest}
+        <button
+          class={isVertical
+            ? `${btnAccent} py-3 text-sm justify-center`
+            : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          onclick={() => {
+            window.location.href =
+              window.location.origin + window.location.pathname;
+          }}
+          data-testid="exit-guest-mode-button"
+          aria-label="Exit Guest Mode"
+        >
+          <span class="icon-[lucide--log-out] w-3 h-3"></span>
+          EXIT GUEST MODE
+        </button>
+      {:else}
+        <!-- Main Actions -->
+        <button
+          class={isVertical
+            ? `${btnGhost} py-3 text-sm justify-center`
+            : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
+          onclick={() => {
+            showForm = !showForm;
+            if (showForm) createError = null;
+          }}
+          data-testid="new-entity-button"
+          aria-expanded={showForm}
+        >
+          <span
+            class={showForm
+              ? "icon-[heroicons--x-mark] w-3 h-3"
+              : "icon-[heroicons--plus] w-3 h-3"}
+          ></span>
+          {showForm
+            ? "CANCEL"
+            : `NEW ${themeStore.jargon.entity.toUpperCase()}`}
+        </button>
+
+        <div class="relative flex items-center">
+          <button
+            class={isVertical
+              ? `${btnGhost} py-3 text-sm justify-center gap-2 w-full`
+              : `${btnSecondary} px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2`}
+            onclick={() => ui.openImportWindow()}
+            data-testid="import-vault-button"
+            title="Import markdown notes or JSON data into your archive."
+            aria-label="Import Data"
+          >
+            <span class="icon-[lucide--folder-input] w-3.5 h-3.5"></span>
+            IMPORT
+          </button>
+        </div>
+
+        <div
+          class="flex {isVertical
+            ? 'flex-col gap-3'
+            : 'gap-1.5 md:gap-3 items-center'}"
+        >
+          <button
+            class="{btnAccent} {isVertical
+              ? 'py-3 text-sm justify-center gap-2'
+              : 'px-3 md:px-4 py-1.5 text-[10px] md:text-xs gap-2'} {vault.syncType ===
+            'local'
+              ? 'opacity-75 cursor-wait'
+              : ''}"
+            onclick={() => vault.syncWithLocalFolder()}
+            title="Mirror internal archive with a local folder."
+            aria-label={isVertical
+              ? "SYNC - Mirror internal archive with a local folder."
+              : "SYNC - Mirror internal archive with a local folder."}
+            aria-busy={vault.syncType === "local"}
+            disabled={vault.syncType === "local"}
+          >
+            {#if vault.syncType === "local"}
+              <span
+                class="icon-[lucide--loader-2] w-3.5 h-3.5 animate-spin"
+                aria-hidden="true"
+              ></span>
+              {#if isVertical}SYNCING...{:else}SYNCING...{/if}
+            {:else}
+              <span class="icon-[lucide--download] w-3.5 h-3.5"></span>
+              {#if isVertical}SYNC TO FOLDER{:else}SYNC{/if}
+            {/if}
+          </button>
+
+          <button
+            class="{btnGhost} text-blue-500 hover:text-blue-400 hover:border-blue-700 {iconOnlyClasses}"
+            onclick={() => (showShare = true)}
+            title="Share Campaign"
+            aria-label={isVertical
+              ? "SHARE - Share Campaign"
+              : "Share Campaign"}
+          >
+            <span class="icon-[lucide--share-2] w-3.5 h-3.5"></span>
+            {#if isVertical}<span class="font-bold tracking-widest">SHARE</span
+              >{/if}
+          </button>
+        </div>
+      {/if}
+    {/if}
+  </div>
+
+  {#if showShare}
+    <ShareModal close={() => (showShare = false)} />
+  {/if}
+
+  {#if showVaultSwitcher}
+    <VaultSwitcherModal onClose={() => (showVaultSwitcher = false)} />
+  {/if}
+
+  {#if showForm}
+    <form
+      onsubmit={(e) => {
+        e.preventDefault();
+        handleCreate();
+      }}
+      class="flex {isVertical
+        ? 'flex-col'
+        : 'flex-wrap'} gap-2 p-3 bg-theme-surface rounded border border-theme-border animate-in slide-in-from-top-2 fade-in"
+    >
+      <input
+        bind:value={newTitle}
+        aria-label={`New ${themeStore.jargon.entity} Title`}
+        placeholder={`${themeStore.jargon.entity} Title...`}
+        data-testid="new-entity-title-input"
+        class="px-3 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded flex-1 focus:outline-none focus:border-theme-primary placeholder-theme-muted/50 font-body {isVertical
+          ? 'py-3 text-sm'
+          : ''}"
+        aria-invalid={!!createError}
+        aria-describedby={createError ? "create-error" : undefined}
+      />
+      <select
+        bind:value={newType}
+        aria-label="New Entity Type"
+        class="px-2 py-1.5 text-xs bg-theme-bg border border-theme-border text-theme-text rounded focus:outline-none focus:border-theme-primary font-body {isVertical
+          ? 'py-3 text-sm'
+          : ''}"
+      >
+        {#each categories.list as cat}
+          <option value={cat.id}>{cat.label}</option>
+        {/each}
+      </select>
+      <button
+        type="submit"
+        class="{btnPrimary} {isVertical
+          ? 'py-3 text-sm justify-center'
+          : 'px-4 py-1.5 text-xs'} {!newTitle.trim() || isCreating
+          ? 'opacity-50 cursor-not-allowed'
+          : ''}"
+        aria-disabled={!newTitle.trim() || isCreating}
+        title={!newTitle.trim() ? "Enter a title to create" : ""}
+        aria-busy={isCreating}
+      >
+        {#if isCreating}
+          <span
+            class="icon-[lucide--loader-2] w-3 h-3 animate-spin mr-2"
+            aria-hidden="true"
+          ></span>
+          ADDING...
+        {:else}
+          ADD
+        {/if}
+      </button>
+      {#if createError}
+        <div
+          id="create-error"
+          class="text-[10px] text-red-500 w-full text-center font-header"
+          role="alert"
+        >
+          {createError}
+        </div>
+      {/if}
+    </form>
+  {/if}
+</div>

@@ -1,0 +1,318 @@
+import { test, expect } from "@playwright/test";
+
+test.describe("Fuzzy Search", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => ((window as any).DISABLE_ONBOARDING = true));
+    // Mock File System Access API and IndexedDB
+    await page.addInitScript(() => {
+      // Intercept IndexedDB to handle DataCloneError with mock handles
+      const originalPut = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (
+        ...args: [unknown, IDBValidKey?]
+      ) {
+        try {
+          return originalPut.apply(this, args);
+        } catch (e: any) {
+          if (e.name === "DataCloneError") {
+            console.log(
+              "MOCK: Caught DataCloneError in IndexedDB, returning fake success",
+            );
+            const req: any = {
+              onsuccess: null,
+              onerror: null,
+              result: args[1],
+              readyState: "done",
+              addEventListener: function (type: string, listener: any) {
+                if (type === "success") this.onsuccess = listener;
+              },
+            };
+            setTimeout(() => {
+              if (req.onsuccess) req.onsuccess({ target: req });
+            }, 0);
+            return req;
+          }
+          throw e;
+        }
+      };
+
+      const content1 = "---\ntitle: My Note\n---\n# My Note Content";
+      const content2 = "---\ntitle: The Crone\n---\n# The Crone Content";
+
+      const createMockFile = (content: string, name: string) => {
+        const file = new File([content], name, { type: "text/markdown" });
+        return {
+          kind: "file",
+          name,
+          getFile: async () => file,
+          createWritable: async () => ({
+            write: async () => {},
+            close: async () => {},
+          }),
+        };
+      };
+
+      const fileHandle1 = createMockFile(content1, "My Note.md");
+      const fileHandle2 = createMockFile(content2, "the-crone.md");
+
+      const dirHandle = {
+        kind: "directory",
+        name: "test-vault",
+        requestPermission: async () => "granted",
+        queryPermission: async () => "granted",
+        values: function () {
+          return [fileHandle1, fileHandle2][Symbol.iterator]();
+        },
+        entries: function () {
+          const entries = [
+            ["My Note.md", fileHandle1],
+            ["the-crone.md", fileHandle2],
+          ];
+          return {
+            [Symbol.asyncIterator]() {
+              let i = 0;
+              return {
+                async next() {
+                  if (i < entries.length) {
+                    return { value: entries[i++], done: false };
+                  }
+                  return { done: true };
+                },
+              };
+            },
+          };
+        },
+        getFileHandle: async (name: string) =>
+          name === "My Note.md" ? fileHandle1 : fileHandle2,
+      };
+
+      // @ts-expect-error - Mock
+      window.showDirectoryPicker = async () => dirHandle;
+    });
+  });
+
+  test("Search works offline", async ({ page, context }) => {
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+    await page.goto("http://localhost:5173/");
+
+    // Create entities via UI to trigger indexing
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    // Wait for indexing to complete (2 entries)
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
+      timeout: 20000,
+    });
+
+    // 2. Go Offline
+    await context.setOffline(true);
+
+    // 3. Open Search Modal
+    await page.keyboard.press("Control+k");
+    await page.keyboard.press("Meta+k");
+
+    const input = page.getByPlaceholder("Search notes...");
+    await expect(input).toBeVisible();
+
+    // 4. Type query
+    await input.fill("Note");
+
+    // 5. Verify results
+    await expect(
+      page.getByTestId("search-result").filter({ hasText: "My Note" }),
+    ).toBeVisible();
+
+    // 6. Click the result directly
+    await page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" })
+      .click();
+
+    await expect(input).not.toBeVisible({ timeout: 2000 });
+
+    // 7. Verify Detail Panel opens
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+  });
+
+  test("handles search results with missing IDs via path fallback", async ({
+    page,
+  }) => {
+    page.on("console", (msg) => console.log("PAGE LOG:", msg.text()));
+    await page.goto("http://localhost:5173/");
+
+    // Create entities via UI
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
+      timeout: 20000,
+    });
+
+    // 2. Mock broken search results
+    await page.evaluate(() => {
+      const mockResults = [
+        {
+          id: undefined, // MISSING ID
+          title: "The Crone",
+          path: "the-crone.md",
+          matchType: "content",
+          score: 0.9,
+          excerpt: "The Crone is a mysterious figure...",
+        },
+      ];
+
+      const { searchStore } = window as any;
+      if (searchStore) {
+        searchStore.query = "Crone";
+        searchStore.results = mockResults;
+        searchStore.isOpen = true;
+      }
+    });
+
+    // 3. Verify the "broken" result is visible
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "The Crone" });
+    await expect(resultItem).toBeVisible();
+
+    // 4. Select the result
+    await resultItem.click();
+
+    // 5. Verify Fallback worked
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
+
+    // Check for the title in the detail panel
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: /Crone/i }),
+    ).toBeVisible();
+  });
+
+  test("selecting search result does not add redundant URL parameters", async ({
+    page,
+  }) => {
+    await page.goto("http://localhost:5173/");
+
+    // Create entities via UI to trigger indexing
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("The Crone");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await expect(page.getByTestId("entity-count")).toHaveText("2 CHRONICLES", {
+      timeout: 20000,
+    });
+
+    // 2. Open Search Modal
+    await page.keyboard.press("Control+k");
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
+
+    // 3. Type query and wait for results
+    await page.getByPlaceholder("Search notes...").fill("Note");
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" });
+    await expect(resultItem).toBeVisible();
+
+    // 4. Click the result
+    await resultItem.click();
+
+    // 5. Verify modal closed and entity selected
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+
+    // 6. CRITICAL: Verify URL does not contain ?file=
+    const url = page.url();
+    expect(url).not.toContain("file=");
+  });
+
+  test("selecting a searched entity zooms the graph to level 2", async ({
+    page,
+  }) => {
+    await page.goto("http://localhost:5173/");
+
+    await page.getByTestId("new-entity-button").click();
+    await page.getByPlaceholder("Chronicle Title...").fill("My Note");
+    await page.getByRole("button", { name: "ADD" }).click();
+
+    await expect(page.getByTestId("entity-count")).toHaveText("1 CHRONICLE", {
+      timeout: 20000,
+    });
+
+    await page.keyboard.press("Control+k");
+    await expect(page.getByPlaceholder("Search notes...")).toBeVisible();
+
+    await page.getByPlaceholder("Search notes...").fill("Note");
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "My Note" });
+    await expect(resultItem).toBeVisible();
+
+    await resultItem.click();
+
+    await expect(page.getByPlaceholder("Search notes...")).not.toBeVisible();
+    await expect(
+      page.getByRole("heading", { level: 2 }).filter({ hasText: "My Note" }),
+    ).toBeVisible();
+
+    await page.waitForFunction(
+      () => {
+        const cy = (window as any).cy;
+        return cy && Math.abs(cy.zoom() - 2) < 0.15;
+      },
+      null,
+      { timeout: 10000 },
+    );
+
+    const zoom = await page.evaluate(() => (window as any).cy?.zoom());
+    expect(zoom).toBeGreaterThan(1.8);
+    expect(zoom).toBeLessThan(2.2);
+  });
+
+  test("shows recent searches from localStorage when opening with empty query", async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      const recents = [
+        {
+          id: "recent-note",
+          title: "Recent Note",
+          path: "recent-note.md",
+          score: 0.5,
+          matchType: "title",
+        },
+      ];
+      window.localStorage.setItem(
+        "search_recents_default",
+        JSON.stringify(recents),
+      );
+    });
+
+    await page.goto("http://localhost:5173/");
+    await page.waitForFunction(() => (window as any).uiStore !== undefined);
+
+    // Use keyboard shortcut to open modal
+    await page.keyboard.press("Control+k");
+
+    const resultItem = page
+      .getByTestId("search-result")
+      .filter({ hasText: "Recent Note" });
+    await expect(resultItem).toBeVisible();
+    await expect(resultItem).toContainText("recent-note.md");
+  });
+});

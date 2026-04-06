@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@source "./**/*.{svelte,ts,html}";
+@source "../../packages/*/src/**/*.{svelte,ts}";
+@plugin "@iconify/tailwind4";
+
+@theme {
+  --breakpoint-xs: 475px;
+
+  --color-theme-bg: var(--color-bg-primary);
+  --color-theme-surface: var(--color-bg-surface);
+  --color-theme-primary: var(--color-accent-primary);
+  --color-theme-secondary: var(--color-accent-dim);
+  --color-theme-border: var(--color-border-primary);
+  --color-theme-text: var(--color-text-primary);
+  --color-theme-muted: var(--color-text-muted);
+
+  --bg-theme-surface: var(--bg-texture-overlay);
+
+  /* Override Tailwind colors to make existing UI theme-aware */
+  --color-green-50: color-mix(in srgb, var(--color-accent-primary), transparent 95%);
+  --color-green-100: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+  --color-green-200: color-mix(in srgb, var(--color-accent-primary), transparent 70%);
+  --color-green-300: color-mix(in srgb, var(--color-accent-primary), transparent 40%);
+  --color-green-400: var(--color-accent-primary);
+  --color-green-500: var(--color-accent-primary);
+  --color-green-600: var(--color-accent-dim);
+  --color-green-700: var(--color-accent-dark);
+  --color-green-800: var(--color-accent-dark);
+  --color-green-900: var(--color-accent-dim);
+  --color-green-950: var(--color-bg-primary);
+
+  /* Override Gray scales to ensure readability across light/dark themes */
+  --color-gray-100: var(--color-text-primary);
+  --color-gray-200: var(--color-text-primary);
+  --color-gray-300: var(--color-text-muted);
+  --color-gray-400: var(--color-text-muted);
+  --color-gray-500: var(--color-text-dim);
+  --color-gray-600: var(--color-text-dim);
+  --color-gray-700: var(--color-border-primary);
+  --color-gray-800: var(--color-bg-primary);
+  --color-gray-900: var(--color-bg-primary);
+
+  --color-zinc-100: var(--color-text-primary);
+  --color-zinc-200: var(--color-text-primary);
+  --color-zinc-300: var(--color-text-muted);
+  --color-zinc-400: var(--color-text-muted);
+  --color-zinc-500: var(--color-text-dim);
+  --color-zinc-800: var(--color-bg-primary);
+  --color-zinc-900: var(--color-bg-primary);
+
+  --color-slate-100: var(--color-text-primary);
+  --color-slate-200: var(--color-text-primary);
+  --color-slate-300: var(--color-text-muted);
+  --color-slate-400: var(--color-text-muted);
+  --color-slate-500: var(--color-text-dim);
+  --color-slate-800: var(--color-bg-primary);
+  --color-slate-900: var(--color-bg-primary);
+
+  /* Override Blue for Shared/Inbound elements */
+  --color-blue-400: color-mix(in srgb, var(--color-accent-primary), blue 20%);
+  --color-blue-500: color-mix(in srgb, var(--color-accent-primary), blue 30%);
+  --color-blue-600: color-mix(in srgb, var(--color-accent-dim), blue 30%);
+
+  /* Override Red for Delete/Danger elements */
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+
+  /* Amber/Gold for Lore and Accents */
+  --color-amber-400: var(--color-theme-accent);
+  --color-amber-500: var(--color-theme-accent);
+  --color-amber-600: color-mix(in srgb, var(--color-theme-accent), black 20%);
+
+  /* Custom oracle colors */
+  --color-oracle-primary: var(--color-oracle-primary);
+  --color-oracle-dim: var(--color-oracle-dim);
+  --color-oracle-dark: var(--color-oracle-dark);
+
+  /* Timeline colors */
+  --color-timeline-primary: var(--color-theme-accent);
+  --color-timeline-dim: color-mix(in srgb, var(--color-timeline-primary), black 25%);
+  --color-timeline-dark: color-mix(in srgb, var(--color-timeline-primary), black 45%);
+
+  --z-index-overlay-max: 150;
+  --z-index-overlay-tooltip: 152;
+
+  --font-header: var(--font-header-val);
+  --font-body: var(--font-body-val);
+}
+
+@layer base {
+  :root {
+    --header-height: 65px;
+    --color-bg-primary: #fdf6e3;
+    --color-bg-surface: #eee8d5;
+    --color-accent-primary: #78350f;
+    --color-accent-dim: #451a03;
+    --color-accent-dark: #451a03;
+    --color-accent-deep: #fdf6e3;
+    --color-border-primary: rgba(120, 53, 15, 0.3);
+
+    --color-text-primary: #2d241e;
+    --color-text-muted: #451a03;
+    /* Match secondary for better visibility when muted */
+    --color-text-dim: #451a03;
+    /* Slightly darker than muted but still readable */
+
+    --color-theme-accent: #991b1b;
+
+    --font-header-val: 'Zilla Slab', serif;
+    --font-body-val: 'Zilla Slab', serif;
+
+    --bg-texture: none;
+
+    --color-warning: #eab308;
+    --color-danger: #ef4444;
+
+    --color-oracle-primary: #991b1b;
+    --color-oracle-dim: color-mix(in srgb, #991b1b, #fdf6e3 30%);
+    --color-oracle-dark: color-mix(in srgb, #991b1b, #fdf6e3 60%);
+
+    /* Fix for EdgeLabel white box artifacts */
+    --xy-edge-label-background-color-default: transparent;
+    --xy-edge-label-background-color: transparent;
+  }
+
+  html.skip-landing .marketing-layer {
+    display: none !important;
+  }
+
+  body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-body-val);
+    background-image: var(--bg-texture);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-header-val);
+  }
+
+  /* Ensure icons inherit color and are transitionable */
+  [class^="icon-"],
+  [class*=" icon-"] {
+    transition: color 0.3s ease;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    border-radius: var(--theme-border-radius, 2px);
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  button:active {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(1px);
+  }
+
+  /* Global prose and code styling */
+  .prose {
+    --tw-prose-body: var(--color-text-primary);
+    --tw-prose-headings: var(--color-text-primary);
+    --tw-prose-lead: var(--color-text-muted);
+    --tw-prose-links: var(--color-accent-primary);
+    --tw-prose-bold: var(--color-text-primary);
+    --tw-prose-counters: var(--color-text-muted);
+    --tw-prose-bullets: var(--color-accent-dim);
+    --tw-prose-hr: var(--color-border-primary);
+    --tw-prose-quotes: var(--color-text-muted);
+    --tw-prose-quote-borders: var(--color-accent-dim);
+    --tw-prose-captions: var(--color-text-dim);
+    --tw-prose-code: var(--color-text-primary);
+    --tw-prose-pre-code: var(--color-text-primary);
+    --tw-prose-pre-bg: var(--color-bg-surface);
+    --tw-prose-th-borders: var(--color-border-primary);
+    --tw-prose-td-borders: var(--color-border-primary);
+  }
+
+  code {
+    background-color: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+    color: var(--color-accent-primary);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    border: 1px solid color-mix(in srgb, var(--color-accent-primary), transparent 80%);
+    font-size: 0.85em;
+    font-family: var(--font-body-val);
+    font-weight: bold;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--color-accent-primary);
+    border-radius: 2px;
+  }
+
+  .svelte-flow__edge-labels {
+    background: transparent !important;
+  }
+}
