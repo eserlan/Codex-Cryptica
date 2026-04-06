@@ -8,10 +8,17 @@ on:
       - "scripts/publish-blog-content.mjs"
       - ".github/workflows/deploy-blog-content.yml"
       - "docs/**"
+  pull_request:
+    branches: [main, staging]
+    paths-ignore:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
+      - "docs/**"
   workflow_dispatch:
 
 concurrency:
-  group: "cloudflare-pages"
+  group: "cloudflare-pages-${{ github.event_name }}-${{ github.ref }}"
   cancel-in-progress: true
 
 permissions:
@@ -80,6 +87,7 @@ jobs:
           retention-days: 30
 
   deploy:
+    if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
     environment:
