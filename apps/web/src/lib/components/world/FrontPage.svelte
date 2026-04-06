@@ -309,26 +309,35 @@ Art direction:
     const themeDescription = activeTheme.description.trim();
     const retrievedWorldContext = await buildRetrievedWorldContext();
     const generated = await worldStore.generateBriefing(
-      `Write a high-level briefing for "${worldName.trim() || "this world"}".
+      `System Instructions: Write a high-level briefing for "${worldName.trim() || "this world"}".
 
-Theme:
-- Name: ${activeTheme.name}
-- Description: ${themeDescription}
+Theme Context:
 
-Requirements:
-- Start with 1 short atmospheric intro paragraph.
-- Follow with 3 to 5 markdown bullet points using bold labels such as **The Setting:**, **Current Conflict:**, **Key Players:**, or **Immediate Hook:** when they fit the world.
-- Clearly explain the setting, mood, and immediate premise.
-- Use specific details from the world instead of generic language.
-- Keep it readable, welcoming, and easy to scan.
-- Keep each bullet to one compact sentence.
-- Avoid headings and meta commentary.
-- Do not mention that you are an AI.
+Name: ${activeTheme.name}
 
-Retrieved context:
-${retrievedWorldContext || "No additional context was retrieved."} 
+Description: ${themeDescription}
 
-Match the briefing to the theme atmosphere and visual identity, and focus on what a player or GM needs to know at a glance.`,
+Retrieved World Data:
+${retrievedWorldContext || "No additional context provided."}
+
+Briefing Requirements:
+Write exactly three concise, punchy paragraphs. Use specific details from the context provided and avoid generic "fantasy/sci-fi" filler.
+
+Paragraph 1: The Setting. Start with a short, atmospheric hook that establishes the physical world and its mood. Describe the environment and the "vibe" (e.g., decaying industrialism, high-magic renaissance).
+
+Paragraph 2: The Power. Summarize the political landscape and social hierarchy. Who holds the keys to power, and what is the "oversimplified" rule of law?
+
+Paragraph 3: The Spark. Identify the current major events or the immediate conflict driving the world right now. What is the one big problem everyone is talking about?
+
+Tone & Style:
+
+Keep it scannable by bolding the first 3–5 words of each paragraph to act as a "soft heading."
+
+Match the atmosphere and visual identity of the ${activeTheme.name} theme.
+
+Avoid meta-commentary, AI self-references, or introductory "Here is your briefing" text.
+
+Oversimplify: Focus on clarity and impact over granular history.`,
     );
     if (generated.trim() && !worldStore.error) {
       draftDescription = generated;
