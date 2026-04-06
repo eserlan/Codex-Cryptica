@@ -8,6 +8,7 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FrontPage from "./FrontPage.svelte";
 import { uiStore } from "$lib/stores/ui.svelte";
+import { hexToRgb } from "$lib/utils/color";
 
 vi.mock("svelte", async () => {
   // @ts-expect-error - force the client Svelte runtime so testing-library can mount
@@ -117,8 +118,12 @@ vi.mock("$lib/stores/theme.svelte", () => ({
         "Cyberpunk, neon-noir, corporate control, street-level rebellion, hackers, implants, and high-tech urban danger.",
       tokens: {
         primary: "#f472b6",
+        secondary: "#94a3b8",
         accent: "#facc15",
         background: "#020617",
+        surface: "#0f172a",
+        border: "#334155",
+        text: "#e2e8f0",
       },
     },
   },
@@ -237,6 +242,12 @@ describe("FrontPage", () => {
     render(FrontPage);
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+
+    const shell = screen.getByTestId("front-page-shell") as HTMLElement;
+    expect(shell.style.backgroundColor).toBe("rgb(2, 6, 23)");
+    expect(shell.style.backgroundImage).toContain(
+      `rgba(${hexToRgb("#f472b6")}, 0.16)`,
+    );
 
     expect(screen.getByText("Front Page")).toBeTruthy();
     expect(screen.getByText("Relevant Entities")).toBeTruthy();

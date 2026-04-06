@@ -1,8 +1,20 @@
 <script lang="ts">
   import MapView from "$lib/components/map/MapView.svelte";
+  import VTTControls from "$lib/components/map/VTTControls.svelte";
+  import VTTGridColorMenu from "$lib/components/map/VTTGridColorMenu.svelte";
+  import VTTModeToggle from "$lib/components/map/VTTModeToggle.svelte";
+  import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
+  import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
+  import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
+  import { shouldShowInitiativePanel } from "$lib/components/map/vtt-ui";
   import { mapStore } from "$lib/stores/map.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+
+  const showInitiativePanel = $derived(
+    shouldShowInitiativePanel(mapSession.vttEnabled, mapSession.mode),
+  );
 
   let showUpload = $state(false);
   let mapName = $state("");
@@ -62,6 +74,30 @@
 <div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
   {#if mapStore.activeMap}
     <MapView>
+      <div
+        class="absolute top-4 right-4 z-10 flex flex-col gap-3 items-end pointer-events-none"
+      >
+        <div class="pointer-events-auto">
+          <VTTControls />
+        </div>
+
+        {#if mapSession.vttEnabled}
+          <div
+            class="pointer-events-none flex flex-col gap-3 items-end lg:flex-row lg:items-start"
+          >
+            <div class="pointer-events-auto">
+              <TokenDetail />
+            </div>
+
+            {#if showInitiativePanel}
+              <div class="pointer-events-auto">
+                <InitiativePanel />
+              </div>
+            {/if}
+          </div>
+        {/if}
+      </div>
+
       <!-- HUD Overlay -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
@@ -84,7 +120,7 @@
           value={mapStore.activeMapId}
           onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
         >
-          {#each Object.values(vault.maps) as map}
+          {#each Object.values(vault.maps) as map (map.id)}
             <option value={map.id}>
               {map.isWorldMap ? "★ " : ""}{map.name}
             </option>
@@ -138,98 +174,114 @@
       </div>
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
-        role="presentation"
-        onmousedown={(e) => e.stopPropagation()}
-      >
-        <button
-          class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode
-            ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-            : 'text-theme-muted hover:text-theme-text'}"
-          onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
-          title={uiStore.sharedMode
-            ? "Exit Shared Mode (Admin View)"
-            : "Enter Shared Mode (Player Preview)"}
-          data-testid="shared-mode-toggle"
-          aria-pressed={uiStore.sharedMode}
-          aria-label="Toggle player view mode"
+      {#if !uiStore.isGuestMode}
+        <div
+          class="absolute inset-x-4 bottom-4 z-10 flex justify-center"
+          role="presentation"
+          onmousedown={(e) => e.stopPropagation()}
         >
-          {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
-        </button>
-
-        {#if mapStore.isGMMode}
           <div
-            class="flex items-center gap-1 border-x border-theme-border px-2 mx-1"
+            class="flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
           >
             <button
-              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showFog
-                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
+              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
                 : 'text-theme-muted hover:text-theme-text'}"
-              onclick={() => (mapStore.showFog = !mapStore.showFog)}
+              onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
+              title={uiStore.sharedMode
+                ? "Exit Shared Mode (Admin View)"
+                : "Enter Shared Mode (Player Preview)"}
+              data-testid="shared-mode-toggle"
+              aria-pressed={uiStore.sharedMode}
+              aria-label="Toggle player view mode"
             >
-              FOG: {mapStore.showFog ? "ON" : "OFF"}
+              {uiStore.sharedMode ? "EXIT PLAYER VIEW" : "PLAYER VIEW"}
             </button>
 
-            <button
-              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showGrid
-                ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
-                : 'text-theme-muted hover:text-theme-text'}"
-              onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-            >
-              GRID: {mapStore.showGrid ? "ON" : "OFF"}
-            </button>
-          </div>
-
-          <div
-            class="flex items-center gap-3 px-4 border-r border-theme-border"
-          >
-            <span
-              class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
-              >Brush Size</span
-            >
-            <input
-              type="range"
-              min="10"
-              max="500"
-              bind:value={mapStore.brushRadius}
-              class="w-24 accent-theme-primary h-1"
-            />
-            <span class="text-[9px] text-theme-primary font-mono w-6"
-              >{mapStore.brushRadius}px</span
-            >
-          </div>
-
-          {#if mapStore.showGrid}
-            <div
-              class="flex items-center gap-3 px-4 border-r border-theme-border"
-            >
-              <span
-                class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
-                >Grid Size</span
+            {#if mapStore.isGMMode}
+              <div
+                class="flex items-center gap-1 border-x border-theme-border px-2 mx-1"
               >
-              <input
-                type="range"
-                min="20"
-                max="200"
-                bind:value={mapStore.gridSize}
-                class="w-24 accent-theme-primary h-1"
-              />
-              <span class="text-[9px] text-theme-primary font-mono w-6"
-                >{mapStore.gridSize}px</span
-              >
-            </div>
-          {/if}
+                <button
+                  class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showFog
+                    ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
+                    : 'text-theme-muted hover:text-theme-text'}"
+                  onclick={() => (mapStore.showFog = !mapStore.showFog)}
+                >
+                  FOG: {mapStore.showFog ? "ON" : "OFF"}
+                </button>
 
-          <div
-            class="flex flex-col justify-center px-4 text-[9px] text-theme-muted italic leading-tight border-l border-theme-border/50"
-          >
-            <span>Alt+Drag to Reveal</span>
-            <span>Alt+Shift+Drag to Hide</span>
+                <button
+                  class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showGrid
+                    ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
+                    : 'text-theme-muted hover:text-theme-text'}"
+                  onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
+                  oncontextmenu={(e) => {
+                    e.preventDefault();
+                    mapSession.showGridSettings = true;
+                  }}
+                  title="Toggle Grid (Right-click for settings)"
+                >
+                  GRID: {mapStore.showGrid ? "ON" : "OFF"}
+                </button>
+              </div>
+
+              <VTTModeToggle />
+
+              <div
+                class="flex items-center gap-3 px-4 border-r border-theme-border"
+              >
+                <span
+                  class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
+                  >Brush Size</span
+                >
+                <input
+                  type="range"
+                  min="10"
+                  max="500"
+                  bind:value={mapStore.brushRadius}
+                  class="w-24 accent-theme-primary h-1"
+                />
+                <span class="text-[9px] text-theme-primary font-mono w-6"
+                  >{mapStore.brushRadius}px</span
+                >
+              </div>
+
+              {#if mapStore.showGrid}
+                <div
+                  class="flex items-center gap-3 px-4 border-r border-theme-border"
+                >
+                  <span
+                    class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
+                    >Grid Size</span
+                  >
+                  <input
+                    type="range"
+                    min="20"
+                    max="200"
+                    bind:value={mapStore.gridSize}
+                    class="w-24 accent-theme-primary h-1"
+                  />
+                  <span class="text-[9px] text-theme-primary font-mono w-6"
+                    >{mapStore.gridSize}px</span
+                  >
+                </div>
+              {/if}
+
+              <div
+                class="flex flex-col justify-center px-4 text-[9px] text-theme-muted italic leading-tight border-l border-theme-border/50"
+              >
+                <span>Alt+Drag to Reveal</span>
+                <span>Alt+Shift+Drag to Hide</span>
+              </div>
+            {/if}
           </div>
-        {/if}
-      </div>
+        </div>
+      {/if}
+
+      <TokenAddDialog />
     </MapView>
+    <VTTGridColorMenu />
   {:else}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div

@@ -5,7 +5,35 @@ import { imageToViewport, viewportToImage } from "map-engine";
 import { convertToWebP } from "../utils/image-processing";
 import { writeOpfsFile } from "../utils/opfs";
 
-class MapStore {
+const MAP_SETTINGS_STORAGE_PREFIX = "codex-map-settings";
+const MAP_PAGE_STATE_STORAGE_PREFIX = "codex-map-page-state";
+type PersistedMapSettings = {
+  showFog: boolean;
+  showGrid: boolean;
+  brushRadius: number;
+  gridSize: number;
+  gridColor: string | null;
+};
+
+type PersistedMapPageState = {
+  activeMapId: string | null;
+  viewports: Record<string, ViewportTransform>;
+};
+
+const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
+  showFog: true,
+  showGrid: false,
+  brushRadius: 50,
+  gridSize: 50,
+  gridColor: null,
+};
+
+const DEFAULT_VIEWPORT: ViewportTransform = {
+  pan: { x: 0, y: 0 },
+  zoom: 1,
+};
+
+export class MapStore {
   activeMapId = $state<string | null>(null);
   viewport = $state<ViewportTransform>({
     pan: { x: 0, y: 0 },
@@ -20,13 +48,17 @@ class MapStore {
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
   gridSize = $state(50);
+  gridColor = $state<string | null>(null); // null means use theme primary
+  private isRestoringSettings = false;
+  private pendingActiveMapId = $state<string | null>(null);
 
   activeMap = $derived.by(() => {
-    return this.activeMapId ? vault.maps[this.activeMapId] : null;
+    const maps = vault.maps ?? {};
+    return this.activeMapId ? maps[this.activeMapId] : null;
   });
 
   worldMap = $derived.by(() => {
-    return Object.values(vault.maps).find((m) => m.isWorldMap) || null;
+    return Object.values(vault.maps ?? {}).find((m) => m.isWorldMap) || null;
   });
 
   canGoBack = $derived(this.navigationStack.length > 0);
@@ -36,18 +68,52 @@ class MapStore {
   });
 
   constructor() {
+    if (typeof window !== "undefined") {
+      this.applySettings(null);
+      this.restorePageState();
+
+      $effect.root(() => {
+        $effect(() => {
+          const tracked = [
+            this.showFog,
+            this.showGrid,
+            this.brushRadius,
+            this.gridSize,
+            this.gridColor,
+          ];
+          void tracked;
+          this.persistSettings();
+        });
+      });
+    }
+
     // Clear stack on vault switch and handle auto-selection
     if (typeof window !== "undefined") {
       window.addEventListener("vault-switched", () => {
         this.navigationStack = [];
-        this.activeMapId = null;
+        this.pendingActiveMapId = null;
+        this.restorePageState();
       });
 
       // Reactive auto-selection when maps are loaded or activeMapId is lost/invalid
       $effect.root(() => {
         $effect(() => {
-          const isInvalid = this.activeMapId && !vault.maps[this.activeMapId];
-          if ((!this.activeMapId || isInvalid) && this.worldMap) {
+          const maps = vault.maps ?? {};
+          const pendingMapId = this.pendingActiveMapId;
+          if (pendingMapId && maps[pendingMapId]) {
+            this.pendingActiveMapId = null;
+            this.selectMap(pendingMapId);
+            return;
+          }
+
+          const hasLoadedMaps = Object.keys(maps).length > 0;
+          const isInvalid =
+            hasLoadedMaps && this.activeMapId ? !maps[this.activeMapId] : false;
+          if (
+            (!this.activeMapId || isInvalid) &&
+            !pendingMapId &&
+            this.worldMap
+          ) {
             this.selectMap(this.worldMap.id);
           }
         });
@@ -55,17 +121,194 @@ class MapStore {
     }
   }
 
+  private getSettingsStorageKey(mapId: string) {
+    return `${MAP_SETTINGS_STORAGE_PREFIX}:${mapId}`;
+  }
+
+  private readPersistedSettings(mapId: string): PersistedMapSettings | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const raw = window.localStorage.getItem(
+        this.getSettingsStorageKey(mapId),
+      );
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<PersistedMapSettings>;
+      return {
+        showFog:
+          typeof parsed.showFog === "boolean"
+            ? parsed.showFog
+            : DEFAULT_MAP_SETTINGS.showFog,
+        showGrid:
+          typeof parsed.showGrid === "boolean"
+            ? parsed.showGrid
+            : DEFAULT_MAP_SETTINGS.showGrid,
+        brushRadius:
+          typeof parsed.brushRadius === "number"
+            ? parsed.brushRadius
+            : DEFAULT_MAP_SETTINGS.brushRadius,
+        gridSize:
+          typeof parsed.gridSize === "number"
+            ? parsed.gridSize
+            : DEFAULT_MAP_SETTINGS.gridSize,
+        gridColor:
+          typeof parsed.gridColor === "string" || parsed.gridColor === null
+            ? parsed.gridColor
+            : DEFAULT_MAP_SETTINGS.gridColor,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private persistSettings() {
+    if (
+      typeof window === "undefined" ||
+      this.isRestoringSettings ||
+      !this.activeMapId
+    ) {
+      return;
+    }
+
+    const payload: PersistedMapSettings = {
+      showFog: this.showFog,
+      showGrid: this.showGrid,
+      brushRadius: this.brushRadius,
+      gridSize: this.gridSize,
+      gridColor: this.gridColor,
+    };
+
+    try {
+      window.localStorage.setItem(
+        this.getSettingsStorageKey(this.activeMapId),
+        JSON.stringify(payload),
+      );
+    } catch (err) {
+      console.warn("[MapStore] Failed to persist map settings", err);
+    }
+  }
+
+  private getPageStateStorageKey(vaultId = vault.activeVaultId ?? "default") {
+    return `${MAP_PAGE_STATE_STORAGE_PREFIX}:${vaultId}`;
+  }
+
+  private readPageState(): PersistedMapPageState | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+      const raw = window.localStorage.getItem(this.getPageStateStorageKey());
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as Partial<PersistedMapPageState>;
+      return {
+        activeMapId:
+          typeof parsed.activeMapId === "string" || parsed.activeMapId === null
+            ? parsed.activeMapId
+            : null,
+        viewports:
+          parsed.viewports && typeof parsed.viewports === "object"
+            ? Object.fromEntries(
+                Object.entries(parsed.viewports).filter(([, viewport]) =>
+                  this.isViewportTransform(viewport),
+                ),
+              )
+            : {},
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private isViewportTransform(value: unknown): value is ViewportTransform {
+    if (!value || typeof value !== "object") return false;
+    const viewport = value as ViewportTransform;
+    return (
+      !!viewport.pan &&
+      typeof viewport.pan.x === "number" &&
+      typeof viewport.pan.y === "number" &&
+      typeof viewport.zoom === "number"
+    );
+  }
+
+  private persistPageState() {
+    if (typeof window === "undefined" || this.isRestoringSettings) {
+      return;
+    }
+
+    const pageState = this.readPageState() ?? {
+      activeMapId: null,
+      viewports: {},
+    };
+
+    if (this.activeMapId) {
+      pageState.activeMapId = this.activeMapId;
+      pageState.viewports = {
+        ...pageState.viewports,
+        [this.activeMapId]: {
+          pan: { ...this.viewport.pan },
+          zoom: this.viewport.zoom,
+        },
+      };
+    } else {
+      pageState.activeMapId = null;
+    }
+
+    try {
+      window.localStorage.setItem(
+        this.getPageStateStorageKey(),
+        JSON.stringify(pageState),
+      );
+    } catch (err) {
+      console.warn("[MapStore] Failed to persist map page state", err);
+    }
+  }
+
+  private restorePageState() {
+    const pageState = this.readPageState();
+    const nextMapId = pageState?.activeMapId ?? null;
+    const nextViewport =
+      nextMapId && pageState?.viewports[nextMapId]
+        ? pageState.viewports[nextMapId]
+        : DEFAULT_VIEWPORT;
+
+    this.isRestoringSettings = true;
+    try {
+      this.pendingActiveMapId = nextMapId;
+      this.activeMapId = null;
+      this.viewport = nextViewport;
+      this.applySettings(nextMapId);
+    } finally {
+      this.isRestoringSettings = false;
+    }
+  }
+
+  private applySettings(mapId: string | null) {
+    const persisted = mapId ? this.readPersistedSettings(mapId) : null;
+    const next = persisted ?? DEFAULT_MAP_SETTINGS;
+
+    this.isRestoringSettings = true;
+    try {
+      this.showFog = next.showFog;
+      this.showGrid = next.showGrid;
+      this.brushRadius = next.brushRadius;
+      this.gridSize = next.gridSize;
+      this.gridColor = next.gridColor;
+    } finally {
+      this.isRestoringSettings = false;
+    }
+  }
+
   async setAsWorldMap(id: string) {
     // 1. Clear existing world map flag
-    for (const mapId of Object.keys(vault.maps)) {
-      if (vault.maps[mapId].isWorldMap) {
-        vault.maps[mapId] = { ...vault.maps[mapId], isWorldMap: false };
+    const maps = vault.maps ?? {};
+    for (const mapId of Object.keys(maps)) {
+      if (maps[mapId].isWorldMap) {
+        maps[mapId] = { ...maps[mapId], isWorldMap: false };
       }
     }
 
     // 2. Set new world map
-    if (vault.maps[id]) {
-      vault.maps[id] = { ...vault.maps[id], isWorldMap: true };
+    if (maps[id]) {
+      maps[id] = { ...maps[id], isWorldMap: true };
       await vault.saveMaps();
     }
   }
@@ -75,20 +318,37 @@ class MapStore {
     if (pushToStack && this.activeMapId && this.activeMapId !== id) {
       this.navigationStack.push(this.activeMapId);
     }
+    this.persistPageState();
+    this.pendingActiveMapId = null;
     this.activeMapId = id;
-    this.viewport = { pan: { x: 0, y: 0 }, zoom: 1 };
+    this.applySettings(id);
+    const pageState = this.readPageState();
+    this.viewport = pageState?.viewports[id] ?? {
+      pan: { x: 0, y: 0 },
+      zoom: 1,
+    };
+    this.persistPageState();
   }
 
   goBack() {
     const prevId = this.navigationStack.pop();
     if (prevId) {
+      this.persistPageState();
+      this.pendingActiveMapId = null;
       this.activeMapId = prevId;
-      this.viewport = { pan: { x: 0, y: 0 }, zoom: 1 };
+      this.applySettings(prevId);
+      const pageState = this.readPageState();
+      this.viewport = pageState?.viewports[prevId] ?? {
+        pan: { x: 0, y: 0 },
+        zoom: 1,
+      };
+      this.persistPageState();
     }
   }
 
   updateViewport(pan: Point, zoom: number) {
     this.viewport = { pan, zoom };
+    this.persistPageState();
   }
 
   setCanvasSize(width: number, height: number) {
@@ -185,6 +445,28 @@ class MapStore {
 
     if (!this.activeMap?.fogOfWar || !this.activeMapId) {
       return canvas;
+    }
+
+    const maskPath = this.activeMap.fogOfWar.maskPath;
+    const isRemoteMask =
+      /^([a-z]+:)?\/\//i.test(maskPath) ||
+      maskPath.startsWith("blob:") ||
+      maskPath.startsWith("data:");
+
+    if (isRemoteMask) {
+      try {
+        const response = await fetch(maskPath);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch remote fog mask: ${maskPath}`);
+        }
+        const blob = await response.blob();
+        const bitmap = await createImageBitmap(blob);
+        ctx.drawImage(bitmap, 0, 0, width, height);
+        return canvas;
+      } catch (e) {
+        console.error("[MapStore] Failed to load remote fog mask:", e);
+        return canvas;
+      }
     }
 
     const vaultDir = await vault.getActiveVaultHandle();

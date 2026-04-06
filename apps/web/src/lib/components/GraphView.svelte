@@ -26,6 +26,7 @@
   import EdgeEditorModal from "./graph/EdgeEditorModal.svelte";
   import GraphHUD from "./graph/GraphHUD.svelte";
   import GraphToolbar from "./graph/GraphToolbar.svelte";
+  import { handleGraphDeleteShortcut } from "./graph/graph-keyboard";
   import {
     DEFAULT_SEARCH_ENTITY_ZOOM,
     consumePendingSearchEntityFocus,
@@ -168,7 +169,20 @@
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = async (e: KeyboardEvent) => {
+    const handledDelete = await handleGraphDeleteShortcut(e, {
+      cy,
+      selectedId,
+      isGuest: vault.isGuest,
+      confirm: (params) => ui.confirm(params),
+      deleteEntity: (id) => vault.deleteEntity(id),
+      clearSelectedId: () => {
+        selectedId = null;
+      },
+    });
+
+    if (handledDelete) return;
+
     const target = document.activeElement;
     if (
       target?.tagName === "INPUT" ||

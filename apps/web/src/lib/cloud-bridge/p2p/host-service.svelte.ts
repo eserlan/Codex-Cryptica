@@ -1,7 +1,8 @@
 import { vault as defaultVault } from "../../stores/vault.svelte";
 import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
 import { guestRoster as defaultGuestRoster } from "../../stores/guest";
-import type { Entity } from "schema";
+import { mapStore as defaultMapStore } from "../../stores/map.svelte";
+import type { Entity, Map } from "schema";
 import {
   buildSharedGraphPayload,
   deriveGuestPresenceStatus,
@@ -10,11 +11,14 @@ import {
   upsertGuestRoster,
 } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
+import { mapSession } from "../../stores/map-session.svelte";
+import type { P2PMessage } from "./p2p-protocol";
 
 type HostDeps = {
   vault?: typeof defaultVault;
   themeStore?: typeof defaultThemeStore;
   guestRoster?: typeof defaultGuestRoster;
+  mapStore?: typeof defaultMapStore;
   peerFactory?: PeerFactory;
 };
 
@@ -27,12 +31,14 @@ export class P2PHostService {
   private readonly vault: typeof defaultVault;
   private readonly themeStore: typeof defaultThemeStore;
   private readonly guestRoster: typeof defaultGuestRoster;
+  private readonly mapStore: typeof defaultMapStore;
   private readonly peerFactory: PeerFactory;
 
   constructor(deps: HostDeps = {}) {
     this.vault = deps.vault ?? defaultVault;
     this.themeStore = deps.themeStore ?? defaultThemeStore;
     this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
+    this.mapStore = deps.mapStore ?? defaultMapStore;
     this.peerFactory = deps.peerFactory ?? createPeer;
   }
 
@@ -55,6 +61,10 @@ export class P2PHostService {
         console.log("[P2P Host] Hosting started. ID:", id);
         this.peerId = id;
         this._isHosting = true;
+        mapSession.setBroadcaster((message) =>
+          this.broadcastVttMessage(message),
+        );
+        mapSession.myPeerId = id;
 
         // Subscribe to local vault updates
         this.vault.onEntityUpdate = (entity) => {
@@ -105,6 +115,21 @@ export class P2PHostService {
         const graph = await this.prepareGraphPayload();
         conn.send({ type: "GRAPH_SYNC", payload: graph });
         console.log("[P2P Host] Initial graph sent to:", conn.peer);
+        if (this.mapStore.activeMap) {
+          const mapPayload = await this.prepareMapPayload(
+            this.mapStore.activeMap,
+          );
+          conn.send({
+            type: "MAP_SYNC",
+            payload: mapPayload,
+          });
+        }
+        if (mapSession.mapId && mapSession.vttEnabled) {
+          conn.send({
+            type: "SESSION_SNAPSHOT",
+            session: mapSession.createSnapshot(),
+          });
+        }
       } catch (err) {
         console.error(
           "[P2P Host] Failed to send initial graph to:",
@@ -123,6 +148,51 @@ export class P2PHostService {
         this.handleGuestJoin(conn.peer, data.payload);
       } else if (data.type === "GUEST_STATUS") {
         this.handleGuestStatus(conn.peer, data.payload);
+      } else if (data.type === "TOKEN_ADD_REQUEST") {
+        const entity = data.entityId
+          ? this.vault.entities[data.entityId]
+          : null;
+        mapSession.addToken({
+          name: data.name,
+          entityId: data.entityId,
+          x: data.x,
+          y: data.y,
+          color: data.color,
+          imageUrl: entity?.image ? entity.image : null,
+          ownerPeerId: conn.peer,
+        });
+      } else if (data.type === "TOKEN_MOVE") {
+        if (mapSession.canMoveToken(data.tokenId, conn.peer, true)) {
+          mapSession.moveToken(data.tokenId, data.x, data.y);
+        }
+      } else if (data.type === "TOKEN_REMOVE") {
+        mapSession.removeToken(data.tokenId);
+      } else if (data.type === "TOKEN_SELECT") {
+        mapSession.setSelection(data.tokenId);
+      } else if (data.type === "SET_MODE") {
+        mapSession.setMode(data.mode);
+      } else if (data.type === "TURN_ADVANCE") {
+        mapSession.advanceTurn();
+      } else if (data.type === "CHAT_MESSAGE") {
+        mapSession.handleRemoteChatMessage(data);
+        this.broadcastVttMessage(data);
+      } else if (data.type === "PING") {
+        mapSession.handleRemotePing(
+          data.x,
+          data.y,
+          data.peerId ?? conn.peer,
+          data.color,
+        );
+        this.broadcastVttMessage({
+          type: "MAP_PING",
+          mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
+          x: data.x,
+          y: data.y,
+          peerId: data.peerId ?? conn.peer,
+          color: data.color,
+        });
+      } else if (data.type === "MAP_SYNC") {
+        this.broadcastMapSync(data.payload);
       }
     });
 
@@ -178,6 +248,106 @@ export class P2PHostService {
       this.vault.defaultVisibility,
       this.themeStore.currentThemeId,
     );
+  }
+
+  private async prepareMapPayload(map: Map): Promise<{
+    map: Map;
+    image?: { mime: string; data: ArrayBuffer };
+    fog?: { mime: string; data: ArrayBuffer };
+  }> {
+    const payload: {
+      map: Map;
+      image?: { mime: string; data: ArrayBuffer };
+      fog?: { mime: string; data: ArrayBuffer };
+    } = {
+      map: $state.snapshot(map),
+    };
+
+    if (map.fogOfWar) {
+      try {
+        const maskCanvas = await this.mapStore.loadMask(
+          Math.max(map.dimensions.width, 1),
+          Math.max(map.dimensions.height, 1),
+        );
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          maskCanvas.toBlob(
+            (b) =>
+              b
+                ? resolve(b)
+                : reject(new Error("Failed to create fog blob from canvas")),
+            "image/png",
+          );
+        });
+        payload.fog = {
+          mime: blob.type || "image/png",
+          data: await blob.arrayBuffer(),
+        };
+      } catch (err) {
+        console.warn("[P2P Host] Failed to prepare fog payload", err);
+      }
+    }
+
+    if (!map.assetPath) {
+      return payload;
+    }
+
+    try {
+      const url = await this.vault.resolveImageUrl(map.assetPath);
+      if (!url) return payload;
+
+      const response = await fetch(url);
+      if (!response.ok) return payload;
+
+      const blob = await response.blob();
+      payload.image = {
+        mime: blob.type || "image/webp",
+        data: await blob.arrayBuffer(),
+      };
+    } catch (err) {
+      console.warn("[P2P Host] Failed to prepare map image payload", err);
+    }
+
+    return payload;
+  }
+
+  private async prepareFogPayload(map: Map): Promise<{
+    mapId: string;
+    fog?: { mime: string; data: ArrayBuffer };
+  }> {
+    const payload: {
+      mapId: string;
+      fog?: { mime: string; data: ArrayBuffer };
+    } = {
+      mapId: map.id,
+    };
+
+    if (!map.fogOfWar) {
+      return payload;
+    }
+
+    try {
+      const maskCanvas = await this.mapStore.loadMask(
+        Math.max(map.dimensions.width, 1),
+        Math.max(map.dimensions.height, 1),
+      );
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        maskCanvas.toBlob(
+          (b) =>
+            b
+              ? resolve(b)
+              : reject(new Error("Failed to create fog blob from canvas")),
+          "image/png",
+        );
+      });
+      payload.fog = {
+        mime: blob.type || "image/png",
+        data: await blob.arrayBuffer(),
+      };
+    } catch (err) {
+      console.warn("[P2P Host] Failed to prepare fog payload", err);
+    }
+
+    return payload;
   }
 
   private async handleFileRequest(conn: any, path: string, requestId: string) {
@@ -390,12 +560,79 @@ export class P2PHostService {
     });
   }
 
+  public async broadcastActiveMapSync() {
+    if (!this.mapStore.activeMap) return;
+    const payload = await this.prepareMapPayload(this.mapStore.activeMap);
+    this.broadcastMapSync(payload);
+  }
+
+  public async broadcastActiveMapFogSync() {
+    if (!this.mapStore.activeMap) return;
+    const payload = await this.prepareFogPayload(this.mapStore.activeMap);
+    this.broadcastMapFogSync(payload);
+  }
+
+  private broadcastMapSync(payload: {
+    map: Map;
+    image?: { mime: string; data: ArrayBuffer };
+    fog?: { mime: string; data: ArrayBuffer };
+  }) {
+    if (!payload?.map || this.connections.length === 0) return;
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send({ type: "MAP_SYNC", payload });
+      }
+    });
+  }
+
+  private broadcastMapFogSync(payload: {
+    mapId: string;
+    fog?: { mime: string; data: ArrayBuffer };
+  }) {
+    if (!payload?.mapId || this.connections.length === 0) return;
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send({ type: "MAP_FOG_SYNC", payload });
+      }
+    });
+  }
+
+  private broadcastVttMessage(message: P2PMessage) {
+    if (this.connections.length === 0) return;
+
+    if (message.type === "PING") {
+      const payload = {
+        type: "MAP_PING" as const,
+        mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
+        x: message.x,
+        y: message.y,
+        peerId: message.peerId,
+        color: message.color,
+      };
+      this.connections.forEach((conn) => {
+        if (conn.open) {
+          conn.send(payload);
+        }
+      });
+      return;
+    }
+
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(message);
+      }
+    });
+  }
+
   stopHosting() {
     this.vault.onEntityUpdate = undefined;
     this.vault.onEntityDelete = undefined;
     this.vault.onBatchUpdate = undefined;
     this.themeStore.onThemeUpdate = undefined;
     this.guestRoster.set({});
+    mapSession.setBroadcaster(null);
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;

@@ -1,10 +1,17 @@
+import { normalizeGuestView } from "./guest-session";
+
 export function buildP2PShareLink(
   origin: string,
   pathname: string,
   peerId: string,
+  view?: string | null,
 ) {
   const url = new URL(origin + pathname);
   url.searchParams.set("shareId", `p2p-${peerId}`);
+  const normalizedView = normalizeGuestView(view);
+  if (normalizedView) {
+    url.searchParams.set("view", normalizedView);
+  }
   return url.toString();
 }
 
@@ -26,6 +33,7 @@ export async function copyTextToClipboard(
 export async function startShareSession(options: {
   origin: string;
   pathname: string;
+  view?: string | null;
   clipboard?: Pick<Clipboard, "writeText">;
   startHosting: (onPeerId?: (peerId: string) => void) => Promise<string>;
   onLink?: (link: string) => void;
@@ -38,6 +46,7 @@ export async function startShareSession(options: {
       options.origin,
       options.pathname,
       peerId,
+      options.view,
     );
     options.onLink?.(shareLink);
     copiedDuringGesture = true;
@@ -54,6 +63,7 @@ export async function startShareSession(options: {
       options.origin,
       options.pathname,
       peerId,
+      options.view,
     );
     options.onLink?.(shareLink);
     const copied = await copyTextToClipboard(shareLink, options.clipboard);

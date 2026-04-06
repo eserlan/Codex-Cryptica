@@ -4,6 +4,7 @@
   import { worldStore } from "$lib/stores/world.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { hexToRgb } from "$lib/utils/color";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
   import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";
   import CoverImage from "./CoverImage.svelte";
@@ -49,7 +50,19 @@ Art direction:
   let isDraftDirty = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
+  const themeTokens = $derived(themeStore.activeTheme.tokens);
   const metadata = $derived(worldStore.metadata);
+  const frontPageBackgroundStyle = $derived.by(() => {
+    const backgroundRgb = hexToRgb(themeTokens.background);
+    const surfaceRgb = hexToRgb(themeTokens.surface);
+    const primaryRgb = hexToRgb(themeTokens.primary);
+    const secondaryRgb = hexToRgb(themeTokens.secondary);
+
+    return [
+      `background-color: ${themeTokens.background}`,
+      `background-image: radial-gradient(circle at top, rgba(${primaryRgb}, 0.16), transparent 46%), radial-gradient(circle at bottom right, rgba(${secondaryRgb}, 0.12), transparent 42%), linear-gradient(180deg, rgba(${surfaceRgb}, 0.16), rgba(${backgroundRgb}, 0.96))`,
+    ].join("; ");
+  });
   const briefingSource = $derived(
     metadata?.description?.trim() ||
       worldStore.frontPageEntity?.chronicle?.trim() ||
@@ -445,7 +458,8 @@ Match the briefing to the theme atmosphere and visual identity, and focus on wha
 
 <section
   data-testid="front-page-shell"
-  class="relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_48%),linear-gradient(180deg,rgba(10,10,10,0.92),rgba(5,5,8,0.98))] p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  style={frontPageBackgroundStyle}
+  class="relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
 >
   {#if !isWorldReady}
     <div
@@ -476,9 +490,19 @@ Match the briefing to the theme atmosphere and visual identity, and focus on wha
 
     <div
       class="absolute inset-0 pointer-events-none opacity-65 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.05),rgba(0,0,0,0.7)),linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.65))]"
+      style={`background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+        themeTokens.primary,
+      )}, 0.08), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
+        themeTokens.background,
+      )}, 0.1), rgba(${hexToRgb(themeTokens.background)}, 0.75))`}
     ></div>
     <div
       class="absolute inset-0 pointer-events-none opacity-40 bg-[linear-gradient(transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"
+      style={`background-image: linear-gradient(transparent 0, rgba(${hexToRgb(
+        themeTokens.surface,
+      )}, 0.03) 1px, transparent 1px), linear-gradient(90deg, transparent 0, rgba(${hexToRgb(
+        themeTokens.surface,
+      )}, 0.03) 1px, transparent 1px)`}
     ></div>
 
     <div

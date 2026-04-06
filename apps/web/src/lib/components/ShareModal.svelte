@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { base } from "$app/paths";
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
+  import { getGuestViewFromPathname } from "$lib/utils/guest-session";
   import {
     copyTextToClipboard,
     startShareSession,
@@ -20,6 +22,7 @@
       await startShareSession({
         origin: window.location.origin,
         pathname: window.location.pathname,
+        view: getGuestViewFromPathname(window.location.pathname, base),
         clipboard: navigator.clipboard,
         startHosting: p2pHost.startHosting.bind(p2pHost),
         onLink: (shareLink) => {
@@ -39,16 +42,28 @@
       p2pLoading = false;
     }
   };
+
+  function onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      close();
+    }
+  }
 </script>
 
+<svelte:window onkeydown={onKeyDown} />
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+  onclick={close}
 >
   <div
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
+    onclick={(e) => e.stopPropagation()}
   >
     <button
-      class="absolute top-2 right-2 text-gray-500 hover:text-white"
+      class="absolute top-2 right-2 text-gray-500 hover:text-white transition-colors"
       onclick={close}
       aria-label="Close"
     >
@@ -59,12 +74,12 @@
       class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
       <span class="icon-[lucide--share-2] w-5 h-5"></span>
-      Share Campaign
+      Share World
     </h2>
 
     <p class="text-xs mb-6 text-gray-400">
-      Generate a live link to share your campaign via P2P. Recipients can view
-      the knowledge graph and notes in real-time while you keep this tab open.
+      Generate a live link to share your world via P2P. Recipients can view the
+      knowledge graph and notes in real-time while you keep this tab open.
     </p>
 
     {#if error}

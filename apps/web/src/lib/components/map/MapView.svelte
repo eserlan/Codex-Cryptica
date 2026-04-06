@@ -6,6 +6,9 @@
   import { uiStore } from "../../stores/ui.svelte";
   import { themeStore } from "../../stores/theme.svelte";
   import { oracle } from "../../stores/oracle.svelte";
+  import { mapSession } from "../../stores/map-session.svelte";
+  import { p2pGuestService } from "../../cloud-bridge/p2p/guest-service";
+  import { p2pHost } from "../../cloud-bridge/p2p/host-service.svelte";
   import { hexToRgb } from "../../utils/color";
   import { renderMap } from "map-engine";
   import PinLinker from "./PinLinker.svelte";
@@ -18,6 +21,7 @@
   import { MapFogPainter } from "./map-fog-painter";
   import { MapViewAssetLoader } from "./map-view-loader";
   import MapPinPopover from "./MapPinPopover.svelte";
+  import { hitTestToken, measureDistance } from "$lib/utils/vtt-helpers";
 
   let { children }: { children?: Snippet } = $props();
 
@@ -86,17 +90,122 @@
       ? mapStore.getEntitySubMap(selectedPin.entityId)
       : null,
   );
+  const activeMapSignature = $derived.by(() => {
+    const activeMap = mapStore.activeMap;
+    if (!activeMap) return null;
+    return `${activeMap.id}:${activeMap.assetPath}:${activeMap.dimensions.width}x${activeMap.dimensions.height}`;
+  });
+  let lastMapSignature: string | null = null;
+  let loadedMaskPath = $state<string | null>(null);
 
   const fogColor = $derived(
     `rgba(${hexToRgb(themeStore.activeTheme.tokens.secondary)}, ${mapStore.isGMMode ? 0.6 : 1.0})`,
   );
-  const gridColor = $derived(
-    `rgba(${hexToRgb(themeStore.activeTheme.tokens.primary)}, 0.2)`,
+  const gridColor = $derived.by(() => {
+    const baseColor =
+      mapStore.gridColor || themeStore.activeTheme.tokens.primary;
+    const rgb = baseColor.startsWith("#") ? hexToRgb(baseColor) : baseColor;
+    return `rgba(${rgb}, 0.55)`;
+  });
+  const vttMeasurement = $derived.by(() => {
+    const measurement = mapSession.measurement;
+    if (!measurement.active || !measurement.start || !measurement.end) {
+      return null;
+    }
+
+    const pixelDist = measureDistance(measurement.start, measurement.end);
+    const gridSize = mapStore.gridSize || 50;
+    const units = (pixelDist / gridSize) * mapSession.gridDistance;
+    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+
+    return {
+      ...measurement,
+      label,
+    };
+  });
+  const vttPings = $derived.by(() => Object.values(mapSession.pings));
+  const vttTokens = $derived.by(() =>
+    Object.values(mapSession.tokens).map((token) => ({
+      ...token,
+      label: token.name,
+      image: tokenImageCache[token.id] ?? null,
+      selected: mapSession.selection === token.id,
+      active: mapSession.activeTokenId === token.id,
+      visible: true,
+    })),
   );
 
   $effect(() => {
+    const currentTokens = Object.values(mapSession.tokens);
+    for (const token of currentTokens) {
+      const source =
+        token.imageUrl ||
+        (token.entityId
+          ? (vault.entities[token.entityId]?.image ?? null)
+          : null);
+      if (!source) continue;
+
+      if (
+        tokenImageSourceCache[token.id] === source &&
+        tokenImageCache[token.id]
+      ) {
+        continue;
+      }
+
+      tokenImageSourceCache[token.id] = source;
+      void vault
+        .resolveImageUrl(source)
+        .then((resolved) => {
+          const img = new Image();
+          img.onload = () => {
+            tokenImageCache[token.id] = img;
+          };
+          img.onerror = () => {
+            tokenImageCache[token.id] = null;
+          };
+          img.src = resolved;
+        })
+        .catch(() => {
+          tokenImageCache[token.id] = null;
+        });
+    }
+  });
+
+  $effect(() => {
     handleResize();
+    if (activeMapSignature === lastMapSignature) {
+      return;
+    }
+
+    lastMapSignature = activeMapSignature;
     return mapAssets.sync(mapStore.activeMap);
+  });
+
+  $effect(() => {
+    const activeMap = mapStore.activeMap;
+    const fogMaskPath = activeMap?.fogOfWar?.maskPath ?? null;
+    const image = mapImage;
+
+    if (!activeMap || !fogMaskPath || !image) {
+      loadedMaskPath = null;
+      return;
+    }
+
+    if (fogMaskPath === loadedMaskPath) {
+      return;
+    }
+
+    let cancelled = false;
+    void mapStore.loadMask(image.width, image.height).then((mask) => {
+      if (cancelled) return;
+      maskCanvas = mask;
+      _drawMask = mask;
+      loadedMaskPath = fogMaskPath;
+    });
+
+    return () => {
+      cancelled = true;
+    };
   });
 
   function handleResize() {
@@ -141,9 +250,60 @@
           type: mapStore.showGrid ? "square" : "none",
           size: mapStore.gridSize,
           color: gridColor,
-          opacity: 0.5,
+          opacity: 0.65,
         },
+        tokens: vttTokens,
+        measurement: vttMeasurement,
       });
+
+      if (vttPings.length > 0) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const now = Date.now();
+          const PING_DURATION = 3000;
+          for (const ping of vttPings) {
+            const elapsed = now - ping.timestamp;
+            if (elapsed > PING_DURATION) continue;
+
+            const progress = elapsed / PING_DURATION; // 0 to 1
+            const pingPoint = mapStore.project({
+              x: ping.x,
+              y: ping.y,
+            });
+
+            ctx.save();
+
+            // Single expanding wave
+            // Start radius: if it was a token ping (centered on token), we want it to start at the edge.
+            // Since we don't store "isTokenPing", we'll use a heuristic or just a sensible base.
+            // Default base is 25px (half of standard 50px grid).
+            const baseRadius = 25 * mapStore.viewport.zoom;
+            const expandRange = 40 * mapStore.viewport.zoom;
+            const radius = baseRadius + progress * expandRange;
+            const opacity = 1 - progress;
+
+            ctx.beginPath();
+            ctx.arc(pingPoint.x, pingPoint.y, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = ping.color;
+            ctx.globalAlpha = opacity;
+            ctx.lineWidth = 4 * (1 - progress) + 1;
+
+            // Glow effect
+            ctx.shadowColor = ping.color;
+            ctx.shadowBlur = 10 * opacity;
+            ctx.stroke();
+
+            // Minimal center dot for orientation
+            ctx.globalAlpha = opacity * 0.5;
+            ctx.beginPath();
+            ctx.arc(pingPoint.x, pingPoint.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = ping.color;
+            ctx.fill();
+
+            ctx.restore();
+          }
+        }
+      }
 
       // Render Visual Brush Indicator directly on canvas for zero-lag tracking
       if (mapStore.isGMMode && isAltPressed && isPointerOver) {
@@ -205,6 +365,20 @@
   let isAltPressed = $state(false);
   let isPointerOver = $state(false);
   let cachedRect: DOMRect | null = null;
+  let dragState = $state<{
+    tokenId: string;
+    offset: { x: number; y: number };
+  } | null>(null);
+  let tokenImageCache = $state<Record<string, HTMLImageElement | null>>({});
+  let tokenImageSourceCache = $state<Record<string, string>>({});
+  let contextMenu = $state<{
+    x: number;
+    y: number;
+    imgX: number;
+    imgY: number;
+    tokenId?: string;
+  } | null>(null);
+  let showResizeSubmenu = $state(false);
 
   const visualBrushRadius = $derived(
     mapStore.brushRadius * mapStore.viewport.zoom,
@@ -241,6 +415,8 @@
   }
 
   function onMouseDown(e: MouseEvent) {
+    contextMenu = null;
+    showResizeSubmenu = false;
     updateCachedRect();
     if (cachedRect) {
       lastMousePos = {
@@ -250,6 +426,36 @@
     }
     mouseDownPos = { x: e.clientX, y: e.clientY };
     isAltPressed = e.altKey;
+
+    if (mapSession.vttEnabled && cachedRect) {
+      const hitToken = hitTestToken(
+        Object.values(mapSession.tokens),
+        (point) => mapStore.project(point),
+        lastMousePos.x,
+        lastMousePos.y,
+      );
+
+      if (
+        hitToken &&
+        mapSession.canMoveToken(
+          hitToken.id,
+          p2pGuestService.peerId,
+          mapStore.isGMMode,
+        )
+      ) {
+        const imgPoint = mapStore.unproject(lastMousePos);
+        dragState = {
+          tokenId: hitToken.id,
+          offset: {
+            x: imgPoint.x - hitToken.x,
+            y: imgPoint.y - hitToken.y,
+          },
+        };
+        mapSession.setSelection(hitToken.id);
+        isPanning = false;
+        return;
+      }
+    }
 
     if (mapStore.isGMMode && e.altKey) {
       painter.begin(
@@ -269,11 +475,32 @@
     const mouseY = e.clientY - cachedRect.top;
     isAltPressed = e.altKey;
 
+    if (dragState) {
+      const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
+      const nextX = imgPoint.x - dragState.offset.x;
+      const nextY = imgPoint.y - dragState.offset.y;
+      if (mapStore.isGMMode) {
+        mapSession.moveToken(dragState.tokenId, nextX, nextY);
+      } else {
+        mapSession.requestTokenMove(dragState.tokenId, nextX, nextY);
+        p2pGuestService.requestTokenMove(dragState.tokenId, nextX, nextY);
+      }
+      lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
     if (painter.isPainting) {
       painter.move(
         { x: mouseX, y: mouseY },
         e.shiftKey || e.ctrlKey || e.metaKey,
       );
+    } else if (
+      mapSession.measurement.active &&
+      mapSession.measurement.start &&
+      !mapSession.measurement.locked
+    ) {
+      const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
+      mapSession.setMeasurementEnd(imgPoint, true);
     } else if (isPanning && !isAltPressed) {
       const dx = mouseX - lastMousePos.x;
       const dy = mouseY - lastMousePos.y;
@@ -297,7 +524,21 @@
 
   async function onMouseUp(e: MouseEvent) {
     if (painter.isPainting) {
-      await painter.finish();
+      const finished = await painter.finish();
+      if (
+        finished &&
+        mapStore.isGMMode &&
+        !uiStore.isGuestMode &&
+        mapSession.vttEnabled
+      ) {
+        void p2pHost.broadcastActiveMapFogSync();
+      }
+    }
+
+    if (dragState) {
+      dragState = null;
+      isPanning = false;
+      return;
     }
 
     if (isPanning) {
@@ -319,6 +560,35 @@
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    if (mapSession.vttEnabled) {
+      const hitToken = hitTestToken(
+        Object.values(mapSession.tokens),
+        (point) => mapStore.project(point),
+        x,
+        y,
+      );
+
+      if (hitToken) {
+        mapSession.setSelection(hitToken.id);
+        selectedPinId = null;
+        return;
+      }
+
+      mapSession.setSelection(null);
+      if (mapSession.measurement.active) {
+        const imgCoords = mapStore.unproject({ x, y });
+        if (!mapSession.measurement.start) {
+          mapSession.setMeasurementStart(imgCoords);
+        } else if (!mapSession.measurement.locked) {
+          mapSession.setMeasurementEnd(imgCoords);
+          mapSession.setMeasurementLocked(true);
+        } else {
+          mapSession.setMeasurementStart(imgCoords);
+        }
+      }
+      return;
+    }
+
     const clickedPin = findClickedPin(
       mapStore.pins,
       (point) => mapStore.project(point),
@@ -337,16 +607,81 @@
   }
 
   function onDoubleClick(e: MouseEvent) {
+    contextMenu = null;
+    showResizeSubmenu = false;
     if (!container) return;
+
     const rect = container.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     const imgCoords = mapStore.unproject({ x, y });
-    mapStore.pendingPinCoords = imgCoords;
+    if (mapSession.vttEnabled && mapStore.isGMMode && !uiStore.isGuestMode) {
+      mapSession.pendingTokenCoords = imgCoords;
+    } else if (!mapSession.vttEnabled) {
+      mapStore.pendingPinCoords = imgCoords;
+    }
   }
 
+  function onContextMenu(e: MouseEvent) {
+    if (!mapSession.vttEnabled || !container) return;
+    e.preventDefault();
+
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const hitToken = hitTestToken(
+      Object.values(mapSession.tokens),
+      (point) => mapStore.project(point),
+      x,
+      y,
+    );
+
+    const imgCoords = mapStore.unproject({ x, y });
+    showResizeSubmenu = false;
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      imgX: imgCoords.x,
+      imgY: imgCoords.y,
+      tokenId: hitToken?.id,
+    };
+  }
   function onWheel(e: WheelEvent) {
+    const canResize =
+      mapSession.vttEnabled && mapStore.isGMMode && !uiStore.isGuestMode;
+    if (e.shiftKey && canResize) {
+      if (!container) return;
+      e.preventDefault();
+
+      const rect = container.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const hitToken = hitTestToken(
+        Object.values(mapSession.tokens),
+        (point) => mapStore.project(point),
+        mouseX,
+        mouseY,
+      );
+
+      if (hitToken) {
+        const gridSize = mapStore.gridSize || 50;
+        const currentScale = Math.round(hitToken.width / gridSize);
+        let nextScale = currentScale + (e.deltaY < 0 ? 1 : -1);
+        nextScale = Math.max(1, Math.min(4, nextScale));
+
+        if (nextScale !== currentScale) {
+          mapSession.updateToken(hitToken.id, {
+            width: nextScale * gridSize,
+            height: nextScale * gridSize,
+          });
+        }
+        return;
+      }
+    }
+
     e.preventDefault();
     if (!container) return;
 
@@ -381,6 +716,7 @@
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
   ondblclick={onDoubleClick}
+  oncontextmenu={onContextMenu}
   onwheel={onWheel}
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
@@ -441,6 +777,133 @@
       }}
       onClose={() => (selectedPinId = null)}
     />
+  {/if}
+
+  {#if contextMenu}
+    <div
+      class="fixed z-[1000] bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[140px]"
+      style="left: {contextMenu.x}px; top: {contextMenu.y}px;"
+      transition:fade={{ duration: 100 }}
+      role="presentation"
+      onmousedown={(e) => e.stopPropagation()}
+    >
+      {#if contextMenu.tokenId}
+        <button
+          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+          onclick={() => {
+            if (contextMenu?.tokenId) {
+              mapSession.pingToken(contextMenu.tokenId);
+              contextMenu = null;
+            }
+          }}
+        >
+          <span class="icon-[lucide--radar] w-3.5 h-3.5 text-theme-primary"
+          ></span>
+          <span>Ping Token</span>
+        </button>
+
+        <div class="h-px bg-theme-border my-1 mx-2"></div>
+
+        <!-- Removal -->
+        {#if mapStore.isGMMode && !uiStore.isGuestMode}
+          <button
+            class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+            onclick={() => {
+              if (contextMenu?.tokenId) {
+                mapSession.cloneToken(contextMenu.tokenId);
+                contextMenu = null;
+              }
+            }}
+          >
+            <span class="icon-[lucide--copy-plus] w-3.5 h-3.5"></span>
+            <span>Clone Token</span>
+          </button>
+        {/if}
+
+        {#if mapStore.isGMMode && !uiStore.isGuestMode}
+          <button
+            class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
+            onclick={() => {
+              if (contextMenu?.tokenId) {
+                mapSession.removeToken(contextMenu.tokenId);
+                contextMenu = null;
+              }
+            }}
+          >
+            <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+            <span>Remove Token</span>
+          </button>
+        {/if}
+
+        <!-- Resize Submenu Trigger (Host only) -->
+        {#if mapStore.isGMMode && !uiStore.isGuestMode}
+          <div class="relative group" role="presentation">
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+              onmouseenter={() => (showResizeSubmenu = true)}
+            >
+              <div class="flex items-center gap-2">
+                <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
+                <span>Resize</span>
+              </div>
+              <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+              ></span>
+            </button>
+
+            {#if showResizeSubmenu}
+              <div
+                class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[100px]"
+                role="presentation"
+                onmouseleave={() => (showResizeSubmenu = false)}
+              >
+                {#each [1, 2, 3, 4] as scale (scale)}
+                  <button
+                    class="w-full text-left px-4 py-2 text-xs hover:bg-theme-primary/20 hover:text-theme-primary transition-colors font-mono"
+                    onclick={() => {
+                      if (contextMenu?.tokenId) {
+                        const gridSize = mapStore.gridSize || 50;
+                        const token = mapSession.tokens[contextMenu.tokenId];
+                        if (token) {
+                          const snappedX =
+                            Math.round(token.x / gridSize) * gridSize;
+                          const snappedY =
+                            Math.round(token.y / gridSize) * gridSize;
+
+                          mapSession.updateToken(contextMenu.tokenId, {
+                            x: snappedX,
+                            y: snappedY,
+                            width: scale * gridSize,
+                            height: scale * gridSize,
+                          });
+                        }
+                        contextMenu = null;
+                        showResizeSubmenu = false;
+                      }
+                    }}
+                  >
+                    {scale}x{scale}
+                  </button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {/if}
+      {:else}
+        <button
+          class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+          onclick={() => {
+            if (contextMenu) {
+              mapSession.ping(contextMenu.imgX, contextMenu.imgY);
+              contextMenu = null;
+            }
+          }}
+        >
+          <span class="icon-[lucide--map-pin] w-3.5 h-3.5 text-theme-primary"
+          ></span>
+          <span>Ping Here</span>
+        </button>
+      {/if}
+    </div>
   {/if}
 
   {@render children?.()}

@@ -47,19 +47,29 @@ export class WorldStore {
 
   private loadSequence = 0;
 
+  private clearContent() {
+    this.metadata = null;
+    this.frontPageEntity = null;
+    this.recentActivity = [];
+  }
+
   async load(vaultId: string | null, limit = 6) {
     const loadId = ++this.loadSequence;
-    this.activeVaultId = vaultId;
     if (!vaultId) {
-      this.metadata = null;
-      this.frontPageEntity = null;
-      this.recentActivity = [];
+      this.activeVaultId = null;
+      this.clearContent();
       this.isLoading = false;
       return;
     }
 
+    const switchingVault = this.activeVaultId !== vaultId;
+    this.activeVaultId = vaultId;
     this.isLoading = true;
     this.error = null;
+    if (switchingVault) {
+      this.clearContent();
+    }
+
     try {
       const [metadata, frontPageEntity, recentActivity] = await Promise.all([
         this.worldServiceImpl.getMetadata(vaultId),

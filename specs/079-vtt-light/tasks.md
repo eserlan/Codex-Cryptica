@@ -40,6 +40,7 @@
 - [ ] T004 Add token rendering function `renderTokens()` in `packages/map-engine/src/renderer.ts` following existing `drawPins()` pattern
 - [ ] T005 [P] Write unit tests for MapSession store (CRUD, initiative, mode transitions) in `apps/web/tests/unit/stores/map-session.test.ts`
 - [ ] T006 [P] Write unit tests for renderTokens (coordinate transforms, frustum culling) in `apps/web/tests/unit/renderer/render-tokens.test.ts`
+- [ ] T006a [P] Make VTT mode reachable from the map page without starting a share session in `apps/web/src/routes/(app)/map/+page.svelte`
 - [ ] T007 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` to accept and broadcast VTT message types
 - [ ] T008 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` to receive and apply VTT state updates
 - [ ] T009 Add typed P2P message union in `apps/web/src/lib/cloud-bridge/p2p/p2p-protocol.ts` for compile-time safety
@@ -66,7 +67,7 @@
 
 - [ ] T015 [US1] Add token add/remove methods to MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts`
 - [ ] T016 [US1] Implement grid snapping helper in `apps/web/src/lib/utils/vtt-helpers.ts` (snap to `mapStore.gridSize`)
-- [ ] T017 [US1] Create VTTControls.svelte with VTT mode toggle in `apps/web/src/lib/components/map/VTTControls.svelte`
+- [ ] T017 [US1] Create VTTControls.svelte with an always-visible VTT mode toggle in `apps/web/src/lib/components/map/VTTControls.svelte`
 - [ ] T018 [US1] Wire VTT mode toggle to MapView.svelte draw() loop to enable token overlay rendering
 - [ ] T019 [US1] Add token placement UI (click to place + dialog for name/entity link) in `apps/web/src/lib/components/map/TokenAddDialog.svelte`
 - [ ] T020 [US1] Implement pointer-based token drag in MapView.svelte (pointer down/move/up with coordinate transform)

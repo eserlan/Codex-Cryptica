@@ -17,7 +17,9 @@
   });
 </script>
 
-<FrontPage />
+{#key vault.activeVaultId}
+  <FrontPage />
+{/key}
 
 {#if selectedEntity}
   <EntityDetailPanel

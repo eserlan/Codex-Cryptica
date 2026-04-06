@@ -624,7 +624,9 @@
       fitView
     >
       <Background gap={20} />
-      <Controls />
+      {#if !uiStore.isGuestMode}
+        <Controls />
+      {/if}
       <MiniMap position="top-right" nodeColor="var(--color-theme-primary)" />
     </SvelteFlow>
   </div>

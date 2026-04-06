@@ -1,17 +1,13 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
-  import { onMount } from "svelte";
-  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { base } from "$app/paths";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { base } from "$app/paths";
   import { demoService } from "$lib/services/demo";
   import { building, browser } from "$app/environment";
   import { SCHEMA_ORG } from "$lib/config";
-  import GuestLoginModal from "../../lib/components/modals/GuestLoginModal.svelte";
-  import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
 
   const isSpecialEnv =
     import.meta.env.DEV ||
@@ -138,121 +134,6 @@
       loadHeavyComponents();
     }
   });
-
-  // Guest Mode Connection Logic - Triggers once username is provided
-  $effect(() => {
-    if (
-      isGuestMode &&
-      shareId &&
-      shareId.startsWith("p2p-") &&
-      uiStore.guestUsername
-    ) {
-      const peerId = shareId.substring(4); // Remove "p2p-" prefix
-      uiStore.isGuestMode = true; // Activate guest mode
-      vault.status = "loading";
-      vault.selectedEntityId = null;
-
-      p2pGuestService
-        .connectToHost(
-          peerId,
-          (graph) => {
-            // Update vault entities with received data
-            vault.repository.entities = Object.fromEntries(
-              Object.entries(graph.entities).map(
-                ([id, entity]: [string, any]) => [
-                  id,
-                  {
-                    ...entity,
-                    _path:
-                      typeof entity._path === "string"
-                        ? [entity._path]
-                        : entity._path,
-                  },
-                ],
-              ),
-            );
-            if (graph.defaultVisibility) {
-              vault.defaultVisibility = graph.defaultVisibility;
-            }
-            if (graph.themeId) {
-              import("../../lib/stores/theme.svelte")
-                .then((m) => {
-                  if (m?.themeStore) m.themeStore.previewTheme(graph.themeId);
-                })
-                .catch((err) =>
-                  console.error("Failed to load theme store", err),
-                );
-            }
-            // Force shared mode for guests to ensure Fog of War is active
-            import("../../lib/stores/ui.svelte")
-              .then((m) => {
-                if (m?.ui) m.ui.sharedMode = true;
-              })
-              .catch((err) => console.error("Failed to load ui store", err));
-            vault.isInitialized = true; // Mark vault as initialized in guest mode
-            vault.status = "idle";
-          },
-          (updatedEntity) => {
-            // Real-time update from host
-            vault.repository.entities[updatedEntity.id] = {
-              ...updatedEntity,
-              _path:
-                typeof updatedEntity._path === "string"
-                  ? [updatedEntity._path]
-                  : updatedEntity._path,
-            };
-          },
-          (deletedId) => {
-            // Real-time delete from host
-            delete vault.repository.entities[deletedId];
-          },
-          (batchUpdates) => {
-            // Real-time batch update from host
-            vault.batchUpdate(batchUpdates);
-          },
-          (themeId) => {
-            // Real-time theme update from host
-            import("../../lib/stores/theme.svelte")
-              .then((m) => {
-                if (m?.themeStore) m.themeStore.previewTheme(themeId);
-              })
-              .catch((err) => console.error("Failed to load theme store", err));
-          },
-          uiStore.guestUsername ?? undefined,
-        )
-        .catch((err) => {
-          console.error("[Guest Mode] Failed to connect to host:", err);
-          vault.selectedEntityId = null;
-          uiStore.guestUsername = null;
-          uiStore.isGuestMode = false;
-          vault.status = "error";
-          vault.errorMessage = "Failed to connect to shared campaign.";
-        });
-    }
-  });
-
-  $effect(() => {
-    if (!isGuestMode || !uiStore.isGuestMode || !uiStore.guestUsername) {
-      return;
-    }
-
-    const { status, currentEntityId, currentEntityTitle } =
-      buildGuestPresencePayload({
-        selectedEntityId: vault.selectedEntityId,
-        zenModeEntityId: uiStore.showZenMode ? uiStore.zenModeEntityId : null,
-        entities: vault.entities,
-      });
-
-    p2pGuestService.updateGuestStatus({
-      status,
-      currentEntityId,
-      currentEntityTitle,
-    });
-  });
-
-  onMount(async () => {
-    // onMount logic removed - moved to reactive $effect above
-  });
 </script>
 
 <svelte:head>
@@ -272,7 +153,9 @@
     {#if uiStore.mainViewMode === "focus" && uiStore.focusedEntityId && EmbeddedEntityView}
       <EmbeddedEntityView entityId={uiStore.focusedEntityId} />
     {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
-      <GraphView bind:selectedId={vault.selectedEntityId} />
+      {#key vault.activeVaultId}
+        <GraphView bind:selectedId={vault.selectedEntityId} />
+      {/key}
     {:else if !uiStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
       <div
         class="absolute inset-0 bg-theme-bg flex items-center justify-center"
@@ -291,12 +174,6 @@
     <EntityDetailPanel
       entity={selectedEntity}
       onClose={() => (vault.selectedEntityId = null)}
-    />
-  {/if}
-
-  {#if isGuestMode && !uiStore.guestUsername && !building}
-    <GuestLoginModal
-      onJoin={(username) => uiStore.setGuestUsername(username)}
     />
   {/if}
 
@@ -323,7 +200,9 @@
       transition:fade
     >
       <div class="max-w-7xl mx-auto w-full">
-        <FrontPage onClose={dismissFrontPageOverlay} />
+        {#key vault.activeVaultId}
+          <FrontPage onClose={dismissFrontPageOverlay} />
+        {/key}
       </div>
     </div>
   {/if}

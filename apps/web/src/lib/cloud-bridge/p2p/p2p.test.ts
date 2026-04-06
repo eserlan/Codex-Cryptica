@@ -5,6 +5,7 @@ import { P2PClientAdapter } from "./client-adapter";
 import { vault } from "../../stores/vault.svelte";
 import { themeStore } from "../../stores/theme.svelte";
 import { guestRoster } from "../../stores/guest";
+import { mapStore } from "../../stores/map.svelte";
 
 const { MockConnection, MockPeer } = vi.hoisted(() => {
   class MockConnection {
@@ -75,11 +76,28 @@ vi.mock("peerjs", () => {
 });
 
 vi.stubGlobal("Peer", MockPeer);
+vi.stubGlobal(
+  "fetch",
+  vi.fn(async () => ({
+    ok: true,
+    blob: async () => new Blob(["map-image"], { type: "image/webp" }),
+  })) as any,
+);
 
 // Mock Vault
 vi.mock("../../stores/vault.svelte", () => {
   return {
     vault: {
+      maps: {
+        "map-1": {
+          id: "map-1",
+          name: "Host Map",
+          assetPath: "maps/test.webp",
+          dimensions: { width: 400, height: 300 },
+          pins: [],
+          fogOfWar: { maskPath: "maps/test_mask.png" },
+        },
+      },
       entities: {
         "entity-1": {
           id: "entity-1",
@@ -91,6 +109,9 @@ vi.mock("../../stores/vault.svelte", () => {
       onEntityUpdate: null,
       onEntityDelete: null,
       onBatchUpdate: null,
+      resolveImageUrl: vi.fn(async (path: string) =>
+        path.endsWith("_mask.png") ? "blob:mask-url" : "blob:map-url",
+      ),
       getActiveVaultHandle: vi.fn().mockResolvedValue({
         getFileHandle: vi.fn().mockResolvedValue({
           getFile: vi.fn().mockResolvedValue({
@@ -123,6 +144,30 @@ vi.mock("../../stores/vault.svelte", () => {
   };
 });
 
+vi.mock("../../stores/map.svelte", () => {
+  return {
+    mapStore: {
+      activeMapId: "map-1",
+      activeMap: {
+        id: "map-1",
+        name: "Host Map",
+        assetPath: "maps/test.webp",
+        dimensions: { width: 400, height: 300 },
+        pins: [],
+        fogOfWar: { maskPath: "maps/test_mask.png" },
+      },
+      selectMap: vi.fn(),
+      gridSize: 50,
+      showGrid: true,
+      showFog: true,
+      loadMask: vi.fn().mockResolvedValue({
+        toBlob: (cb: (blob: Blob | null) => void) =>
+          cb(new Blob(["fog"], { type: "image/png" })),
+      }),
+    },
+  };
+});
+
 describe("P2P Services", () => {
   describe("P2PHostService", () => {
     let hostService: P2PHostService;
@@ -134,6 +179,7 @@ describe("P2P Services", () => {
         vault,
         themeStore,
         guestRoster,
+        mapStore,
         peerFactory: (id?: string) => new MockPeer(id ?? "mock-peer-id"),
       });
     });
@@ -184,6 +230,60 @@ describe("P2P Services", () => {
           }),
         );
       });
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_SYNC",
+          payload: expect.objectContaining({
+            image: expect.any(Object),
+            fog: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it("should rebroadcast the active map with fresh fog data", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      (hostService as any).connections.push(mockConn);
+
+      await hostService.broadcastActiveMapSync();
+
+      expect(mapStore.loadMask).toHaveBeenCalled();
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_SYNC",
+          payload: expect.objectContaining({
+            fog: expect.any(Object),
+          }),
+        }),
+      );
+    });
+
+    it("should rebroadcast only fog updates without re-sending the map image", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      (hostService as any).connections.push(mockConn);
+
+      await hostService.broadcastActiveMapFogSync();
+
+      expect(mapStore.loadMask).toHaveBeenCalled();
+      expect(mockConn.send).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "MAP_FOG_SYNC",
+          payload: expect.objectContaining({
+            mapId: "map-1",
+            fog: expect.any(Object),
+          }),
+        }),
+      );
     });
 
     it("should track joined guests and their status", async () => {
@@ -253,6 +353,40 @@ describe("P2P Services", () => {
       expect(mockConn.send).toHaveBeenCalledWith({
         type: "ENTITY_UPDATE",
         payload: expect.objectContaining({ id: "entity-1" }),
+      });
+    });
+
+    it("should relay ping messages to all guests as shared map pings", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      (hostService as any).connections.push(mockConn);
+
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "PING",
+        x: 120,
+        y: 90,
+        peerId: "guest-1",
+        color: "hsl(220 75% 55%)",
+      });
+
+      await vi.waitFor(() => {
+        expect(mockConn.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "MAP_PING",
+            mapId: "map-1",
+            x: 120,
+            y: 90,
+            peerId: "guest-1",
+            color: "hsl(220 75% 55%)",
+          }),
+        );
       });
     });
 
@@ -525,6 +659,107 @@ describe("P2P Services", () => {
 
       mockConn.emit("data", { type: "THEME_UPDATE", payload: "cyberpunk" });
       expect(onThemeUpdate).toHaveBeenCalledWith("cyberpunk");
+    });
+
+    it("should install and select the host map on MAP_SYNC", async () => {
+      vi.mocked(mapStore.selectMap).mockClear();
+      mapStore.activeMapId = "guest-map";
+
+      const connectPromise = guestService.connectToHost(
+        "host-id",
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        "Guest Two",
+      );
+
+      const peerInstance = (guestService as any).peer;
+      peerInstance.emit("open", "guest-id");
+
+      const mockConn = (guestService as any).connection;
+      mockConn.emit("open");
+
+      await connectPromise;
+
+      mockConn.emit("data", {
+        type: "MAP_SYNC",
+        payload: {
+          map: {
+            id: "map-1",
+            name: "Host Map",
+            assetPath: "maps/test.webp",
+            dimensions: { width: 400, height: 300 },
+            pins: [],
+            fogOfWar: { maskPath: "maps/test_mask.png" },
+          },
+          image: {
+            mime: "image/webp",
+            data: new ArrayBuffer(8),
+          },
+          fog: {
+            mime: "image/png",
+            data: new ArrayBuffer(8),
+          },
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(mapStore.selectMap).toHaveBeenCalledWith("map-1");
+      });
+      expect(vault.maps["map-1"]).toBeDefined();
+      expect(vault.maps["map-1"].assetPath).toMatch(/^blob:/);
+      expect(vault.maps["map-1"].fogOfWar?.maskPath).toMatch(/^blob:/);
+      mapStore.activeMapId = "map-1";
+    });
+
+    it("should update only the fog mask on MAP_FOG_SYNC", async () => {
+      vault.maps["map-1"] = {
+        id: "map-1",
+        name: "Host Map",
+        assetPath: "maps/test.webp",
+        dimensions: { width: 400, height: 300 },
+        pins: [],
+        fogOfWar: { maskPath: "maps/test_mask.png" },
+      };
+      mapStore.activeMapId = "map-1";
+
+      const connectPromise = guestService.connectToHost(
+        "host-id",
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        vi.fn(),
+        "Guest Two",
+      );
+
+      const peerInstance = (guestService as any).peer;
+      peerInstance.emit("open", "guest-id");
+
+      const mockConn = (guestService as any).connection;
+      mockConn.emit("open");
+      await connectPromise;
+
+      const originalAssetPath = vault.maps["map-1"].assetPath;
+
+      mockConn.emit("data", {
+        type: "MAP_FOG_SYNC",
+        payload: {
+          mapId: "map-1",
+          fog: {
+            mime: "image/png",
+            data: new ArrayBuffer(8),
+          },
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(vault.maps["map-1"].fogOfWar?.maskPath).toMatch(/^blob:/);
+      });
+      expect(vault.maps["map-1"].assetPath).toBe(originalAssetPath);
+      mapStore.activeMapId = "map-1";
     });
 
     it("should announce guest name and status on connection", async () => {

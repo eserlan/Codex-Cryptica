@@ -12,6 +12,7 @@
 - Maps in the vault may or may not have grid metadata defined; both cases must be supported
 - A host/guest P2P connection model already exists for shared experiences
 - The VTT feature is additive and does not alter existing map data when toggled on or off
+- VTT prep is local-first: a GM can enable VTT mode, build encounters, and save snapshots without starting a live share session
 - Session state is ephemeral by default; persistence is opt-in through explicit save actions
 - Token images can use entity images when linked, or a default marker shape when freeform
 - Distance measurement uses the map's existing scale definition (if any); maps without a scale default to pixel-based measurement
@@ -21,11 +22,11 @@
 
 ### User Story 1 - Place and Move Tokens on a Map (Priority: P1)
 
-A Game Master (GM) opens an existing map from their vault and enters VTT mode. They can place token markers on the map, drag them to new positions, and snap them to the grid if one is defined. Tokens can be linked to existing vault entities (characters, locations) or created as freeform markers with custom names. The GM sees all tokens and can move any of them.
+A Game Master (GM) opens an existing map from their vault and enters VTT mode locally. They can place token markers on the map, drag them to new positions, and snap them to the grid if one is defined. Tokens can be linked to existing vault entities (characters, locations) or created as freeform markers with custom names. The GM sees all tokens and can move any of them.
 
 **Why this priority**: This is the foundational VTT capability — without tokens and movement, there is no VTT. It delivers immediate value for solo prep and single-user map navigation.
 
-**Independent Test**: Can be fully tested by opening a map, placing tokens, dragging them, and verifying positions persist within the session. Delivers a usable tactical map for solo GM use.
+**Independent Test**: Can be fully tested by opening a map, enabling VTT mode without starting a share session, placing tokens, dragging them, and verifying positions persist within the session. Delivers a usable tactical map for solo GM prep use.
 
 **Acceptance Scenarios**:
 
@@ -84,11 +85,11 @@ The GM activates a measurement tool and clicks two points on the map. The applic
 
 ### User Story 5 - Shared Session: Guests See Token Positions (Priority: P3)
 
-The GM hosts a shared map session. Connected guests (players) see the same token positions, turn order, and fog reveal state as the GM in near real-time. Guests cannot move tokens unless assigned ownership of a specific token by the GM.
+The GM optionally starts a shared map session from the current local VTT encounter. Connected guests (players) then see the same token positions, turn order, and fog reveal state as the GM in near real-time. Guests cannot move tokens unless assigned ownership of a specific token by the GM.
 
 **Why this priority**: Multiplayer VTT is the ultimate goal, but it depends on a working single-player foundation. This story adds the P2P synchronization layer on top of the established token and turn order system.
 
-**Independent Test**: Can be tested by hosting a session from one browser tab and joining from another, then verifying token moves by the host appear in the guest view. Delivers shared tactical play.
+**Independent Test**: Can be tested by preparing an encounter locally, then hosting a session from one browser tab and joining from another, then verifying token moves by the host appear in the guest view. Delivers shared tactical play without requiring shared mode for prep.
 
 **Acceptance Scenarios**:
 
@@ -133,11 +134,12 @@ The GM hosts a shared map session. Connected guests (players) see the same token
 - **FR-021**: Session-specific fog reveal MUST be controlled by the host and synchronized to guests
 - **FR-022**: System MUST distinguish between exploration mode (free movement) and combat mode (turn-locked movement) in its session state
 - **FR-023**: System MUST handle host disconnection by ending the shared session for all participants
+- **FR-024**: System MUST allow VTT mode to be enabled for local prep without starting a live shared session
 
 ### Key Entities
 
 - **Token**: A visual marker placed on a map during a VTT session. Has position (x, y), size, rotation, an optional link to a vault entity, a name, and an optional owner (peer ID for shared sessions). Exists only within a session unless saved as part of an encounter snapshot.
-- **Encounter Session**: An ephemeral or saved state associated with a map during a VTT session. Contains token positions, initiative order, current turn, round number, session mode (exploration/combat), and fog reveal state. Can be saved to or loaded from the vault as an encounter snapshot.
+- **Encounter Session**: An ephemeral or saved state associated with a map during a VTT session. Contains token positions, initiative order, current turn, round number, session mode (exploration/combat), and fog reveal state. Can be saved to or loaded from the vault as an encounter snapshot. A session may exist locally without any live guests connected.
 - **Initiative Entry**: A reference to a token within an ordered list. Has an initiative value (numeric), a reference to the token, and optional metadata (e.g., whether the token has acted this round).
 
 ## Success Criteria _(mandatory)_

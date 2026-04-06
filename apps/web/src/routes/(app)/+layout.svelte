@@ -30,6 +30,8 @@
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
+  import GuestInfoOverlay from "$lib/components/vtt/GuestInfoOverlay.svelte";
+  import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
 
   // Logic & Hooks
   import {
@@ -215,7 +217,10 @@
   {#if !isPopup}
     <AppFooter />
     <GlobalModalProvider bind:isMobileMenuOpen />
+    <GuestInfoOverlay />
   {/if}
+
+  <GuestSessionBootstrap />
 </div>
 
 <FatalErrorOverlay />
