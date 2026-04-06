@@ -70,6 +70,15 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+      - name: Upload staging artifact for promotion
+        if: github.ref_name == 'staging'
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-dist
+          path: apps/web/build/
+          include-hidden-files: true
+          retention-days: 30
+
   deploy:
     needs: build
     runs-on: ubuntu-latest
