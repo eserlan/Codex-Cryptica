@@ -62,7 +62,7 @@ jobs:
       name: production
     steps:
       - name: Download staging artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: staging-dist
           run-id: ${{ needs.find-staging-build.outputs.run_id }}
