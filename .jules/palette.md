@@ -12,3 +12,8 @@
 
 **Learning:** Icon-only buttons or buttons with sparse descriptions often miss `aria-label` attributes which makes them inaccessible for screen-readers. Examples include the delete button in the label settings and era editor, as well as apply/dismiss proposal buttons.
 **Action:** When working on Svelte components or reviewing existing ones, ensure that `aria-label` is populated using context variables (e.g., `{era.name}`) to provide clear actions for screen readers.
+
+## 2025-04-06 - Accessible Responsive Buttons & Loading States
+
+**Learning:** Responsive buttons that hide their text on small screens (e.g., using Tailwind's `hidden sm:inline`) effectively become icon-only buttons on mobile devices. Without an explicit `aria-label`, these buttons lose their accessible name for mobile screen reader users. Additionally, asynchronous action buttons (like 'Save') should always use `aria-busy` to programmatically communicate the loading state to screen readers.
+**Action:** Always provide an explicit `aria-label` for responsive buttons that hide their text labels on smaller breakpoints. Apply `aria-busy={isLoading}` to buttons that trigger asynchronous operations to ensure state changes are announced properly.

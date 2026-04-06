@@ -98,6 +98,7 @@
         onclick={onStartEdit}
         class="px-3 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
         data-testid="edit-entity-button"
+        aria-label="Edit"
       >
         <span class="icon-[lucide--edit-2] w-3 h-3"></span>
         <span class="hidden sm:inline">EDIT</span>
@@ -113,6 +114,8 @@
         onclick={onSave}
         disabled={isSaving}
         class="px-3 md:px-4 py-1.5 bg-theme-primary hover:bg-theme-secondary disabled:opacity-50 text-theme-bg text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
+        aria-label="Save changes"
+        aria-busy={isSaving}
       >
         {#if isSaving}
           <span class="icon-[lucide--loader-2] w-3 h-3 animate-spin"></span>
