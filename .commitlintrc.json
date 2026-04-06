@@ -1,9 +1,0 @@
-{
-  "extends": ["gitmoji"],
-  "rules": {
-    "type-empty": [0],
-    "subject-empty": [0],
-    "type-enum": [0],
-    "type-case": [0]
-  }
-}
