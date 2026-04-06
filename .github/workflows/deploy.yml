@@ -108,3 +108,19 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
+
+      - name: Notify Discord on Production Deploy
+        if: github.ref_name == 'main' && success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_RELEASE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+
+      - name: Notify Discord on Staging Deploy
+        if: github.ref_name == 'staging' && success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_RELEASE }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"
