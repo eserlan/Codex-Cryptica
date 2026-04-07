@@ -35,13 +35,13 @@ test.describe("Visual Styling Templates", () => {
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
 
-    // 5. Verify typography overhaul (Zilla Slab header font)
+    // 5. Verify typography overhaul (Alegreya header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-header-val")
         .trim(),
     );
-    expect(fontHeader).toContain("Zilla Slab");
+    expect(fontHeader).toContain("Alegreya");
 
     // 6. Verify texture integration
     const textureOverlay = await page.evaluate(() =>

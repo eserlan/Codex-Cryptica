@@ -134,8 +134,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       text: "#2d241e", // Inked Text
       border: "rgba(120, 53, 15, 0.3)",
       accent: "#991b1b", // Dried Blood / Crimson
-      fontHeader: "'Zilla Slab', serif",
-      fontBody: "'Zilla Slab', serif",
+      fontHeader: "'Alegreya', serif",
+      fontBody: "'Alegreya', serif",
       texture: "parchment.svg",
     },
     graph: {
