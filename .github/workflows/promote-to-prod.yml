@@ -29,6 +29,7 @@ jobs:
         id: find
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           SPECIFIC_RUN: ${{ inputs.staging_run_id }}
         run: |
           if [ -n "$SPECIFIC_RUN" ]; then
