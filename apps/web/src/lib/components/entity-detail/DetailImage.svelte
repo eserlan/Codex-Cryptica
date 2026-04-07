@@ -158,38 +158,38 @@
   {:else}
     <div class="px-4 md:px-6">
       <div
-        class="mb-4 w-full h-32 md:h-40 py-4 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
+        class="mb-4 w-full h-12 md:h-16 py-2 rounded border border-dashed border-theme-border flex items-center justify-center gap-4 text-theme-muted hover:border-theme-primary/50 transition relative overflow-hidden bg-theme-bg/30"
       >
-        <div class="flex flex-col items-center justify-center gap-2 mt-2">
-          <span class="icon-[lucide--image] w-6 h-6 md:w-8 md:h-8 opacity-20"
+        <div class="flex items-center justify-center gap-2">
+          <span class="icon-[lucide--image] w-4 h-4 md:w-5 md:h-5 opacity-20"
           ></span>
-          <span class="text-[9px] font-bold uppercase font-header opacity-40"
+          <span class="text-[8px] font-bold uppercase font-header opacity-40"
             >No Image</span
           >
         </div>
 
         {#if oracle.tier === "advanced" && !uiStore.liteMode}
-          <div class="mb-2">
+          <div>
             <button
               onclick={() => oracle.drawEntity(entity.id)}
               disabled={oracle.isLoading}
-              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
+              class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2.5 py-1 rounded shadow-sm group/btn relative overflow-hidden"
               aria-label="Draw visualization for {entity.title}"
               aria-busy={oracle.isLoading}
             >
               {#if oracle.isLoading}
                 <span
-                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin text-theme-primary"
+                  class="icon-[lucide--loader-2] w-3 h-3 animate-spin text-theme-primary"
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[8px] font-bold tracking-widest text-theme-primary text-center px-2"
+                  class="text-[7px] font-bold tracking-widest text-theme-primary text-center px-1"
                   aria-live="polite"
                 >
                   {#if oracle.activeStyleTitle}
-                    STYLE: {oracle.activeStyleTitle.toUpperCase()}
+                    {oracle.activeStyleTitle.toUpperCase()}
                   {:else}
-                    VISUALIZING...
+                    DRAWING...
                   {/if}
                 </span>
               {:else}
@@ -197,12 +197,12 @@
                   class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
                 ></div>
                 <span
-                  class="icon-[lucide--palette] w-3.5 h-3.5 text-theme-primary opacity-80"
+                  class="icon-[lucide--palette] w-3 h-3 text-theme-primary opacity-80"
                   aria-hidden="true"
                 ></span>
                 <span
-                  class="text-[9px] font-bold tracking-widest text-theme-primary relative z-10"
-                  >DRAW VISUAL</span
+                  class="text-[8px] font-bold tracking-widest text-theme-primary relative z-10"
+                  >DRAW</span
                 >
               {/if}
             </button>
