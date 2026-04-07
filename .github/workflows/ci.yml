@@ -1,20 +1,29 @@
-name: CI
+name: CI & Preview Deploy
 
 on:
   pull_request:
-    branches: [main, staging]
     paths-ignore:
       - "apps/web/src/lib/content/blog/**"
       - "scripts/publish-blog-content.mjs"
       - ".github/workflows/deploy-blog-content.yml"
       - "docs/**"
+  push:
+    branches-ignore: [main, staging]
+    paths-ignore:
+      - "apps/web/src/lib/content/blog/**"
+      - "scripts/publish-blog-content.mjs"
+      - ".github/workflows/deploy-blog-content.yml"
+      - "docs/**"
+  workflow_dispatch:
 
 concurrency:
-  group: "ci-${{ github.ref }}"
+  group: "ci-preview-${{ github.event.pull_request.number || github.ref }}"
   cancel-in-progress: true
 
 permissions:
   contents: read
+  deployments: write
+  pull-requests: write
 
 jobs:
   ci:
@@ -23,21 +32,21 @@ jobs:
       HUSKY: 0
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "npm"
 
-      - name: Install Dependencies
-        run: npm ci --legacy-peer-deps
-
       - name: Check no auto-merge workflow
         run: bash scripts/check-no-auto-merge.sh
+
+      - name: Install Dependencies
+        run: npm ci --legacy-peer-deps
 
       - name: Lint
         run: npm run lint
@@ -46,7 +55,7 @@ jobs:
         run: npm run test:coverage
 
       - name: Upload Coverage Reports
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage
@@ -55,8 +64,55 @@ jobs:
             packages/*/coverage/
           retention-days: 7
 
-      - name: Build
+      - name: Build Application
         env:
           VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
-          VITE_ROBOTS_DIRECTIVE: "index, follow"
+          VITE_ROBOTS_DIRECTIVE: "noindex, nofollow"
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.head_ref || github.ref_name }}/blog
         run: npm run build --workspace=web
+
+      - name: Upload intermediate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-dist
+          path: apps/web/build/
+          include-hidden-files: true
+          retention-days: 1
+
+  deploy-preview:
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref_name != 'main' && github.ref_name != 'staging'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Build
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-dist
+          path: dist/
+
+      - name: Deploy to Cloudflare Pages
+        id: cloudflare_deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref || github.ref_name }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && success()
+        uses: mshick/add-pr-comment@v2
+        with:
+          message: |
+            ### 🚀 Preview Deployment Ready!
+
+            **Status:** Success ✅
+            **Preview URL:** ${{ steps.cloudflare_deploy.outputs.deployment-url }}
+            **Branch:** `${{ github.head_ref || github.ref_name }}`
+
+            _This preview was automatically generated for this branch/pull request._
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

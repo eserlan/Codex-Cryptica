@@ -6,7 +6,7 @@ set -euo pipefail
 
 AUTO_MERGE_FILE=".github/workflows/auto-merge-staging.yml"
 
-if [ -f "$AUTO_MERGE_FILE" ]; then
+if [ -e "$AUTO_MERGE_FILE" ]; then
   echo "❌ FAIL: $AUTO_MERGE_FILE must not exist."
   echo ""
   echo "This workflow was removed to give maintainers manual control over merges."
