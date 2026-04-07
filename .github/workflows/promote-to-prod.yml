@@ -64,6 +64,9 @@ jobs:
     environment:
       name: production
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Download staging artifact
         uses: actions/download-artifact@v4
         with:
@@ -81,4 +84,21 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica
+
+      - name: Notify Discord on Production Deploy
+        if: success()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PROD_DEPLOY }}
+        run: |
+          # Use the existing script for the standard notification
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+
+          # Construct a simple one-line promotion summary
+          RUN_ID="${{ needs.find-staging-build.outputs.run_id }}"
+          ACTOR="${{ github.actor }}"
+          SUMMARY="🔁 **Promotion Successful**: Staging run #$RUN_ID was promoted to production by $ACTOR."
+          
+          # Send the summary
+          PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
+          curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
 
