@@ -133,6 +133,7 @@
         onclick={() => onSelect?.(entity)}
         data-testid="entity-list-item"
         data-entity-id={entity.id}
+        title={`Select ${entity.title}`}
         class="w-full text-left p-2.5 bg-theme-bg border border-theme-border rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5 transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none"
       >
         <div class="flex items-center gap-2">
