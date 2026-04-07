@@ -124,6 +124,12 @@ class UIStore {
 
       this.focusedEntityId = entityId;
       this.mainViewMode = "focus";
+
+      // On mobile, close the sidebar when focusing an entity to ensure the view is visible
+      if (this.isMobile) {
+        this.closeSidebar();
+      }
+
       // Close the right-side entity sidebar if it was open
       if (this.mainViewMode === "focus") {
         void import("./vault.svelte").then((m) => {
