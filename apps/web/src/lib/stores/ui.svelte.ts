@@ -119,29 +119,28 @@ class UIStore {
 
   focusEntity(entityId: string | null) {
     if (entityId) {
+      // On mobile, close the sidebar when focusing an entity to ensure the view is visible.
+      // We do this BEFORE the early return to ensure selecting an already-focused entity still closes the drawer.
+      if (this.isMobile) {
+        this.closeSidebar();
+      }
+
       if (this.focusedEntityId === entityId && this.mainViewMode === "focus")
         return;
 
       this.focusedEntityId = entityId;
       this.mainViewMode = "focus";
 
-      // On mobile, close the sidebar when focusing an entity to ensure the view is visible
-      if (this.isMobile) {
-        this.closeSidebar();
-      }
-
-      // Close the right-side entity sidebar if it was open
-      if (this.mainViewMode === "focus") {
-        void import("./vault.svelte").then((m) => {
-          if (
-            m?.vault &&
-            this.mainViewMode === "focus" &&
-            this.focusedEntityId === entityId
-          ) {
-            m.vault.selectedEntityId = null;
-          }
-        });
-      }
+      // Close the right-side entity sidebar if it was open (mutually exclusive with focus mode)
+      void import("./vault.svelte").then((m) => {
+        if (
+          m?.vault &&
+          this.mainViewMode === "focus" &&
+          this.focusedEntityId === entityId
+        ) {
+          m.vault.selectedEntityId = null;
+        }
+      });
     } else {
       if (this.mainViewMode !== "focus") return;
 
