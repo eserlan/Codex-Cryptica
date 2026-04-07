@@ -308,9 +308,15 @@
           <button
             onclick={() => applyLabel(applyInput)}
             disabled={!applyInput.trim() || isLoading}
-            class="w-full py-3 md:py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg"
+            class="w-full py-3 md:py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm shadow-lg flex items-center justify-center gap-2"
+            aria-busy={isLoading}
           >
-            {isLoading ? "Applying…" : "Apply to all"}
+            {#if isLoading}
+              <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+              Applying…
+            {:else}
+              Apply to all
+            {/if}
           </button>
         {:else if anyLabels.length === 0}
           <div class="text-center py-8">
