@@ -29,9 +29,9 @@
 <div class="relative">
   <button
     bind:this={toggleEl}
-    class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapSession.vttEnabled
-      ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
-      : 'text-theme-muted hover:text-theme-text'}"
+    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.vttEnabled
+      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
     onclick={toggleVtt}
     onmousedown={handleMouseDown}
     oncontextmenu={(event) => event.preventDefault()}

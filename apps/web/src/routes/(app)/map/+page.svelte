@@ -181,12 +181,12 @@
           onmousedown={(e) => e.stopPropagation()}
         >
           <div
-            class="flex gap-2 bg-theme-surface/80 backdrop-blur border border-theme-border p-2 rounded-xl shadow-2xl items-center"
+            class="flex gap-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border p-1.5 rounded-lg shadow-lg items-center"
           >
             <button
-              class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {uiStore.sharedMode
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]'
-                : 'text-theme-muted hover:text-theme-text'}"
+              class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {uiStore.sharedMode
+                ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+                : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
               onclick={() => (uiStore.sharedMode = !uiStore.sharedMode)}
               title={uiStore.sharedMode
                 ? "Exit Shared Mode (Admin View)"
@@ -199,40 +199,34 @@
             </button>
 
             {#if mapStore.isGMMode}
-              <div
-                class="flex items-center gap-1 border-x border-theme-border px-2 mx-1"
+              <button
+                class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapStore.showFog
+                  ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+                  : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+                onclick={() => (mapStore.showFog = !mapStore.showFog)}
               >
-                <button
-                  class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showFog
-                    ? 'bg-amber-500/20 text-amber-500 border border-amber-500/50'
-                    : 'text-theme-muted hover:text-theme-text'}"
-                  onclick={() => (mapStore.showFog = !mapStore.showFog)}
-                >
-                  FOG: {mapStore.showFog ? "ON" : "OFF"}
-                </button>
+                FOG: {mapStore.showFog ? "ON" : "OFF"}
+              </button>
 
-                <button
-                  class="px-4 py-2 rounded-lg text-[10px] font-bold tracking-widest transition-all {mapStore.showGrid
-                    ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/50'
-                    : 'text-theme-muted hover:text-theme-text'}"
-                  onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
-                  oncontextmenu={(e) => {
-                    e.preventDefault();
-                    mapSession.showGridSettings = true;
-                  }}
-                  title="Toggle Grid (Right-click for settings)"
-                >
-                  GRID: {mapStore.showGrid ? "ON" : "OFF"}
-                </button>
-              </div>
+              <button
+                class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapStore.showGrid
+                  ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+                  : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+                onclick={() => (mapStore.showGrid = !mapStore.showGrid)}
+                oncontextmenu={(e) => {
+                  e.preventDefault();
+                  mapSession.showGridSettings = true;
+                }}
+                title="Toggle Grid (Right-click for settings)"
+              >
+                GRID: {mapStore.showGrid ? "ON" : "OFF"}
+              </button>
 
               <VTTModeToggle />
 
-              <div
-                class="flex items-center gap-3 px-4 border-r border-theme-border"
-              >
+              <div class="flex items-center gap-2 px-2">
                 <span
-                  class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
+                  class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
                   >Brush Size</span
                 >
                 <input
@@ -248,11 +242,9 @@
               </div>
 
               {#if mapStore.showGrid}
-                <div
-                  class="flex items-center gap-3 px-4 border-r border-theme-border"
-                >
+                <div class="flex items-center gap-2 px-2">
                   <span
-                    class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase font-header"
+                    class="text-[9px] text-theme-muted font-bold tracking-tighter uppercase"
                     >Grid Size</span
                   >
                   <input
@@ -269,7 +261,7 @@
               {/if}
 
               <div
-                class="flex flex-col justify-center px-4 text-[9px] text-theme-muted italic leading-tight border-l border-theme-border/50"
+                class="flex flex-col justify-center px-2 text-[9px] text-theme-muted italic leading-tight"
               >
                 <span>Alt+Drag to Reveal</span>
                 <span>Alt+Shift+Drag to Hide</span>

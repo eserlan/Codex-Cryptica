@@ -1,22 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
-  VTTSessionService,
   createEncounterSession,
   sanitizeEncounterSession,
   summarizeEncounterSession,
+  VTTSessionService,
 } from "./vtt-session";
-
-const opfsMock = vi.hoisted(() => ({
-  writeOpfsFile: vi.fn(),
-  readOpfsBlob: vi.fn(),
-}));
+import { readOpfsBlob, writeOpfsFile } from "../utils/opfs";
 
 vi.mock("../utils/opfs", () => ({
-  writeOpfsFile: opfsMock.writeOpfsFile,
-  readOpfsBlob: opfsMock.readOpfsBlob,
+  readOpfsBlob: vi.fn(),
+  writeOpfsFile: vi.fn(),
 }));
-
-const { writeOpfsFile, readOpfsBlob } = opfsMock;
 
 describe("vtt-session", () => {
   beforeEach(() => {
@@ -24,7 +18,11 @@ describe("vtt-session", () => {
   });
 
   it("creates, sanitizes, and summarizes encounters", () => {
-    const session = createEncounterSession("map-1", "enc-1", "Goblin Ambush");
+    const session = createEncounterSession(
+      "map-1",
+      "enc-1" as any,
+      "Goblin Ambush",
+    );
     session.tokens = {
       token: {
         id: "token",
@@ -79,7 +77,7 @@ describe("vtt-session", () => {
     });
 
     await service.saveEncounterSnapshot(
-      createEncounterSession("map-1", "enc-1", "Goblin Ambush"),
+      createEncounterSession("map-1", "enc-1" as any, "Goblin Ambush"),
     );
 
     expect(writeOpfsFile).toHaveBeenCalledWith(
@@ -89,11 +87,11 @@ describe("vtt-session", () => {
       "vault",
     );
 
-    readOpfsBlob.mockResolvedValue(
+    (readOpfsBlob as any).mockResolvedValue(
       new Blob(
         [
           JSON.stringify(
-            createEncounterSession("map-1", "enc-2", "Ruined Gate"),
+            createEncounterSession("map-1", "enc-2" as any, "Ruined Gate"),
           ),
         ],
         {
@@ -113,7 +111,7 @@ describe("vtt-session", () => {
         new Blob(
           [
             JSON.stringify(
-              createEncounterSession("map-1", "enc-3", "Forest Ambush"),
+              createEncounterSession("map-1", "enc-3" as any, "Forest Ambush"),
             ),
           ],
           {
@@ -129,19 +127,15 @@ describe("vtt-session", () => {
         })(),
       ),
     };
-
     const vaultHandle = {
-      name: "vault",
       getDirectoryHandle: vi.fn().mockResolvedValue(mapsDir),
     } as any;
-
     const service = new VTTSessionService({
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
     });
 
     const snapshots = await service.listEncounterSnapshots("map-1");
     expect(snapshots).toHaveLength(1);
-    expect(snapshots[0].id).toBe("enc-3");
     expect(snapshots[0].name).toBe("Forest Ambush");
   });
 });

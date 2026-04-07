@@ -98,13 +98,6 @@
             />
           </div>
         </div>
-
-        <div
-          class="mt-2 flex items-center justify-between text-[10px] uppercase tracking-widest text-theme-muted"
-        >
-          <span>{entry.hasActed ? "Acted" : "Waiting"}</span>
-          <span>#{index + 1}</span>
-        </div>
       </div>
     {/each}
 

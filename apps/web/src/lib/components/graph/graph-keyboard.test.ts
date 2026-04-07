@@ -29,9 +29,9 @@ describe("handleGraphDeleteShortcut", () => {
       cy,
       selectedId: null,
       isGuest: false,
-      confirm,
-      deleteEntity,
-      clearSelectedId,
+      confirm: confirm as any,
+      deleteEntity: deleteEntity as any,
+      clearSelectedId: clearSelectedId as any,
     });
 
     expect(handled).toBe(true);
@@ -56,9 +56,9 @@ describe("handleGraphDeleteShortcut", () => {
       cy,
       selectedId: "node-3",
       isGuest: false,
-      confirm,
-      deleteEntity,
-      clearSelectedId,
+      confirm: confirm as any,
+      deleteEntity: deleteEntity as any,
+      clearSelectedId: clearSelectedId as any,
     });
 
     expect(handled).toBe(true);
@@ -71,9 +71,9 @@ describe("handleGraphDeleteShortcut", () => {
       cy,
       selectedId: "node-3",
       isGuest: true,
-      confirm,
-      deleteEntity,
-      clearSelectedId,
+      confirm: confirm as any,
+      deleteEntity: deleteEntity as any,
+      clearSelectedId: clearSelectedId as any,
     });
 
     expect(handled).toBe(false);

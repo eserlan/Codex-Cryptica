@@ -30,6 +30,7 @@ const config = {
     alias: {
       $stores: "src/lib/stores",
       $workers: "src/workers",
+      $types: "src/types",
     },
   },
 };

@@ -421,9 +421,14 @@ export class MapSessionStore {
     this.mapId = snapshot.mapId;
     this.mode = snapshot.mode;
     this.name = snapshot.name ?? this.name;
-    this.tokens = Object.fromEntries(
-      Object.entries(snapshot.tokens).map(([id, token]) => [id, { ...token }]),
-    );
+    if (snapshot.tokens) {
+      this.tokens = Object.fromEntries(
+        Object.entries(snapshot.tokens).map(([id, token]) => [
+          id,
+          { ...(token as Token) },
+        ]),
+      );
+    }
     this.initiativeOrder = [...snapshot.initiativeOrder];
     this.initiativeValues = { ...snapshot.initiativeValues };
     this.round = snapshot.round;

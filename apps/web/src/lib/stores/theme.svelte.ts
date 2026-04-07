@@ -243,6 +243,9 @@ export class ThemeStore {
     root.style.setProperty("--color-accent-deep", tokens.background);
     root.style.setProperty("--color-border-primary", tokens.border);
 
+    // Base accent alias (for --color-theme-accent and --color-theme-danger)
+    root.style.setProperty("--color-accent", tokens.accent);
+
     // RGB versions for rgba() usage in shadows/overlays
     root.style.setProperty(
       "--color-accent-primary-rgb",

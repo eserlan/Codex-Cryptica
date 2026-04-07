@@ -107,13 +107,13 @@
 
       <div class="pt-4 flex gap-3">
         <button
-          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-lg hover:bg-theme-bg transition-colors uppercase text-[10px] font-bold font-header tracking-widest"
+          class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider"
           onclick={close}
         >
           Cancel
         </button>
         <button
-          class="flex-1 px-4 py-2 bg-theme-primary text-theme-bg rounded-lg font-bold uppercase font-header text-[10px] tracking-widest hover:bg-theme-primary/90 transition-all"
+          class="flex-1 px-4 py-2 bg-theme-primary text-theme-bg rounded-md font-bold uppercase tracking-wider hover:bg-theme-primary/90 transition-all"
           onclick={save}
         >
           Apply to All

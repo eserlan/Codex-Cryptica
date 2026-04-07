@@ -21,34 +21,32 @@
 </script>
 
 <div
-  class="flex items-center gap-2 rounded-xl border border-theme-border bg-theme-surface/90 backdrop-blur px-3 py-2 shadow-2xl pointer-events-auto"
+  class="flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 backdrop-blur px-2 py-1.5 shadow-lg pointer-events-auto"
 >
-  <div class="flex items-center gap-1 border-r border-theme-border pr-2">
-    <button
-      class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors {mapSession.mode ===
-      'exploration'
-        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
-        : 'text-theme-muted hover:text-theme-text'}"
-      onclick={() => mapSession.setMode("exploration")}
-    >
-      Explore
-    </button>
-    <button
-      class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors {mapSession.mode ===
-      'combat'
-        ? 'bg-red-500/20 text-red-300 border border-red-500/40'
-        : 'text-theme-muted hover:text-theme-text'}"
-      onclick={() => mapSession.setMode("combat")}
-    >
-      Combat
-    </button>
-  </div>
+  <button
+    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.mode ===
+    'exploration'
+      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+    onclick={() => mapSession.setMode("exploration")}
+  >
+    Explore
+  </button>
+  <button
+    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.mode ===
+    'combat'
+      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+    onclick={() => mapSession.setMode("combat")}
+  >
+    Combat
+  </button>
 
   <button
-    class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-colors {mapSession
+    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession
       .measurement.active
-      ? 'bg-theme-primary/20 text-theme-primary border border-theme-primary/40'
-      : 'text-theme-muted hover:text-theme-text'}"
+      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
+      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
     onclick={() =>
       mapSession.setMeasurementActive(!mapSession.measurement.active)}
   >
@@ -57,19 +55,7 @@
 
   {#if canManageVtt}
     <button
-      class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
-      onclick={() => (mapSession.showGridSettings = true)}
-      oncontextmenu={(e) => {
-        e.preventDefault();
-        mapSession.showGridSettings = true;
-      }}
-      title="Grid Settings"
-    >
-      Grid
-    </button>
-
-    <button
-      class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+      class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text transition-all hover:bg-theme-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
       onclick={openTokenDialog}
       disabled={!mapStore.activeMap}
     >
@@ -77,14 +63,14 @@
     </button>
 
     <button
-      class="px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+      class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text transition-all hover:bg-theme-primary/10"
       onclick={() => (showEncounters = true)}
     >
       Encounters
     </button>
   {/if}
 
-  <div class="ml-2">
+  <div class="ml-0.5">
     <FeatureHint hintId="vtt-mode" />
   </div>
 </div>

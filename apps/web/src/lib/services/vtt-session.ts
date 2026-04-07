@@ -1,5 +1,9 @@
 import { readOpfsBlob, writeOpfsFile } from "../utils/opfs";
-import type { EncounterSession, EncounterSnapshotSummary } from "$types/vtt";
+import type {
+  EncounterSession,
+  EncounterSnapshotSummary,
+  Token,
+} from "$types/vtt";
 
 export interface VTTSessionServiceDeps {
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
@@ -47,7 +51,10 @@ export function sanitizeEncounterSession(
   return {
     ...session,
     tokens: Object.fromEntries(
-      Object.entries(session.tokens).map(([id, token]) => [id, { ...token }]),
+      Object.entries(session.tokens).map(([id, token]) => [
+        id,
+        { ...(token as Token) },
+      ]),
     ),
     initiativeOrder: [...session.initiativeOrder],
     initiativeValues: { ...session.initiativeValues },
@@ -57,6 +64,7 @@ export function sanitizeEncounterSession(
         ? { ...session.measurement.start }
         : null,
       end: session.measurement.end ? { ...session.measurement.end } : null,
+      locked: session.measurement.locked,
     },
     lastPing: session.lastPing ? { ...session.lastPing } : null,
   };
@@ -126,7 +134,7 @@ export class VTTSessionService {
         name.endsWith(".json")
       ) {
         try {
-          const blob = await handle.getFile();
+          const blob = await (handle as FileSystemFileHandle).getFile();
           const parsed = JSON.parse(await blob.text()) as EncounterSession;
           summaries.push(summarizeEncounterSession(parsed));
         } catch {

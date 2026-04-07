@@ -94,7 +94,7 @@ export interface TokenMoveInput {
 }
 
 export interface TokenStateUpdateInput {
-  tokenId: string;
+  tokenId?: string;
   x?: number;
   y?: number;
   width?: number;
@@ -150,6 +150,7 @@ export interface SetModePayload {
 
 export interface MapPingPayload {
   type: "MAP_PING";
+  mapId?: string;
   x: number;
   y: number;
   peerId: string;

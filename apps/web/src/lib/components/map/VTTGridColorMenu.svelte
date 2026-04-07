@@ -72,7 +72,7 @@
       {#each gridColors as color (color.value)}
         <button
           role="menuitem"
-          class="flex items-center gap-2 rounded-lg border border-theme-border bg-theme-bg/60 px-2 py-2 text-left text-xs text-theme-text transition-colors hover:border-theme-primary hover:bg-theme-primary/10"
+          class="flex items-center gap-2 rounded-md border border-theme-border bg-theme-bg/60 px-2.5 py-2 text-left text-xs text-theme-text transition-all hover:border-theme-primary hover:bg-theme-primary/10"
           onclick={() => setGridColor(color.value)}
           aria-label={`Set grid color to ${color.label}`}
         >
@@ -88,7 +88,7 @@
     <div class="mt-3 pt-3 border-t border-theme-border/50">
       <button
         role="menuitem"
-        class="w-full rounded-lg border border-theme-border bg-theme-bg/60 px-3 py-2 text-left text-xs font-bold uppercase tracking-widest text-theme-muted transition-colors hover:text-theme-primary hover:border-theme-primary hover:bg-theme-primary/10"
+        class="w-full rounded-md border border-theme-border bg-theme-bg/60 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-theme-muted transition-all hover:text-theme-primary hover:border-theme-primary hover:bg-theme-primary/10"
         onclick={() => setGridColor(null)}
       >
         Theme Default
