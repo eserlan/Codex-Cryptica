@@ -26,11 +26,15 @@ flowchart LR
 1. Open a PR targeting `staging`.
 2. The [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml) workflow enables auto-merge for non-draft PRs.
 3. Once merged, [`deploy.yml`](.github/workflows/deploy.yml) triggers:
-   - Installs dependencies, runs lint and tests
-   - Builds the application
-   - Deploys to Cloudflare Pages on the `staging` branch
-   - Uploads a **staging artifact** (`staging-dist`) with 30-day retention for later promotion
-   - Sends a notification to the Discord release channel
+   - Installs dependencies, runs lint and tests.
+   - **Builds the application using Production Environment Variables** (to ensure the artifact is ready for promotion without a rebuild).
+   - Deploys to Cloudflare Pages on the `staging` branch.
+   - Uploads a **staging artifact** (`staging-dist`) with 30-day retention for later promotion.
+   - Sends a notification to the Discord release channel.
+
+> [!IMPORTANT]
+> To support the "artifact promotion" model, staging builds must be production-ready. We bake production URLs (`codexcryptica.com`) and indexing directives into the staging build to ensure the promoted artifact is correct for the live site. To prevent staging from being indexed, use Cloudflare-level overrides (headers or workers) rather than build-time environment variables.
+
 
 ### 2. Staging → Production (Artifact Promotion)
 
