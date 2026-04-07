@@ -1,7 +1,7 @@
 name: CI
 
 on:
-  pull_request:
+  push:
     branches: [main, staging]
     paths-ignore:
       - "apps/web/src/lib/content/blog/**"
