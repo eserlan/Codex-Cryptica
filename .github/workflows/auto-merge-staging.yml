@@ -19,6 +19,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Enable auto-merge for staging PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
