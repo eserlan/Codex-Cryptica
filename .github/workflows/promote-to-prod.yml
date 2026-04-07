@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
   deployments: write
   actions: read
 
@@ -49,8 +49,6 @@ jobs:
 
           # Get the commit details
           COMMIT_SHA=$(gh run view "$RUN_ID" --json headSha --jq '.headSha')
-          COMMIT_MSG=$(gh run view "$RUN_ID" --json displayTitle --jq '.databaseId' | xargs -I {} gh run view {} --json displayTitle --jq '.displayTitle')
-          # Fix: Sometimes displayTitle is not directly available via run list or needs a fresh fetch
           COMMIT_MSG=$(gh run view "$RUN_ID" --json displayTitle --jq '.displayTitle')
 
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
@@ -66,6 +64,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Download staging artifact
         uses: actions/download-artifact@v4
@@ -84,6 +85,23 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica
+
+      - name: Sync Main Branch
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          echo "Merging promoted commit ${{ needs.find-staging-build.outputs.commit_sha }} into main..."
+          
+          git fetch origin main
+          git checkout main
+          
+          # Use --no-ff to create a merge commit, which allows us to add [skip ci] 
+          # to the message to prevent a redundant build on main.
+          git merge ${{ needs.find-staging-build.outputs.commit_sha }} --no-ff -m "🚀 promote: sync main with production build #${{ needs.find-staging-build.outputs.run_id }} [skip ci]"
+          
+          git push origin main
 
       - name: Notify Discord on Production Deploy
         if: success()
