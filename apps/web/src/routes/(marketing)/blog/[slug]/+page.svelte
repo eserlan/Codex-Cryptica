@@ -1,7 +1,8 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { themeStore } from "$lib/stores/theme.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
-
+...
   let { data } = $props();
   const article = $derived(data.article);
 </script>
@@ -48,7 +49,7 @@
           })}
         </time>
         <span class="w-8 h-px bg-theme-border"></span>
-        <span>Intel Report</span>
+        <span>{themeStore.resolveJargon("blog_entry")}</span>
       </div>
 
       <h1
