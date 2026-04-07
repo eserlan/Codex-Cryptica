@@ -81,30 +81,3 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica
 
-      - name: Notify Discord on Production Deploy
-        if: success()
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_PROD_DEPLOY }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ needs.find-staging-build.outputs.run_id }}"
-          COMMIT="${{ needs.find-staging-build.outputs.commit_sha }}"
-          MSG="${{ needs.find-staging-build.outputs.commit_msg }}"
-          SHORT_SHA=$(echo "$COMMIT" | cut -c1-7)
-
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
-
-          # Append promotion info to the Discord message via a second webhook call
-          PROMOTE_MSG=$(cat <<EOF
-🔁 **Promoted to Production**
-
-**Source:** [Staging run #$RUN_ID]($RUN_URL)
-**Commit:** \`$SHORT_SHA\` — $MSG
-**Promoted by:** ${{ github.actor }}
-
-This is the exact same build artifact that was tested on staging.
-EOF
-          )
-
-          PAYLOAD=$(jq -nc --arg content "$PROMOTE_MSG" '{content: $content}')
-          curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
