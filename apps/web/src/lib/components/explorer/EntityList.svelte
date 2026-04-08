@@ -87,7 +87,7 @@
   }
 </script>
 
-<div class="flex flex-col flex-1 min-h-0 {className}">
+<div class="flex flex-col h-full min-h-0 {className}">
   <div class="p-4 border-b border-theme-border shrink-0">
     <div class="relative mb-3">
       <Search
@@ -159,7 +159,7 @@
   </div>
 
   <div
-    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    class="flex-1 overflow-y-auto min-h-0 p-2 space-y-1 custom-scrollbar overscroll-contain"
   >
     {#each filteredEntities as entity}
       {@const cat = categories.getCategory(entity.type)}
