@@ -89,7 +89,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -134,34 +134,25 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
 
-      - name: Comment Preview URL on PR
+      - name: Comment on PR
         if: github.event_name == 'pull_request' && success()
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          DEPLOYMENT_URL: ${{ steps.deploy_preview.outputs.deployment-url }}
-          ALIAS_URL: ${{ steps.deploy_preview.outputs.deployment-alias-url }}
-        run: |
-          COMMENT="🚀 **Preview Deployment Ready!**
+        uses: mshick/add-pr-comment@v3
+        with:
+          message: |
+            ### 🚀 Preview Deployment Ready!
 
-          **URL:** $DEPLOYMENT_URL
-          **Alias:** $ALIAS_URL
+            **Status:** Success ✅
+            **Preview URL:** ${{ steps.deploy_preview.outputs.deployment-url }}
+            **Branch:** `${{ github.head_ref }}`
 
-          _Changes will be live shortly._"
-          
-          # Check if a comment already exists to avoid spamming
-          EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments | jq -r '.comments[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
-          
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
-            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
-          else
-            gh pr comment "$PR_NUMBER" --body "$COMMENT"
-          fi
+            _This preview was automatically generated for this branch/pull request._
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: false
 
       - name: Notify Discord on Production Deploy
-        if: github.ref_name == 'main' && success()
+        if: github.ref_name == 'main' && success() && github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -169,7 +160,7 @@ jobs:
           ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
 
       - name: Notify Discord on Staging Deploy
-        if: github.ref_name == 'staging' && success()
+        if: github.ref_name == 'staging' && success() && github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
