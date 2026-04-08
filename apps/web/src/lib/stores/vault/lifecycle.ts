@@ -36,6 +36,11 @@ export class VaultLifecycleManager {
   async importFromFolder(handle: FileSystemDirectoryHandle) {
     this.deps.syncStore.setStatus("loading");
     try {
+      // Ensure vaultRegistry is initialized before creating a vault
+      if (!this.deps.vaultRegistry.isInitialized) {
+        await this.deps.vaultRegistry.init();
+      }
+
       const db = await getDB();
       const vaultId = await this.deps.vaultRegistry.createVault(handle.name);
       await db.put("settings", handle, `syncHandle_${vaultId}`);

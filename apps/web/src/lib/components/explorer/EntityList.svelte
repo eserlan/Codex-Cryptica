@@ -3,7 +3,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
-  import { Search, Filter, LayoutGrid } from "lucide-svelte";
+  import { Search, LayoutGrid } from "lucide-svelte";
 
   let {
     onSelect,
@@ -16,7 +16,7 @@
   } = $props();
 
   let searchQuery = $state("");
-  let typeFilters = $state<string[]>(["all"]);
+  let typeFilters = $state<Set<string>>(new Set());
 
   const typesWithCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
@@ -34,12 +34,12 @@
     const allEntities = vault.allEntities;
     const filtered: Entity[] = [];
     const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.includes("all");
+    const filterAll = typeFilters.size === 0;
 
     if (!query) {
       for (let i = 0; i < allEntities.length; i++) {
         const e = allEntities[i];
-        if (filterAll || typeFilters.includes(e.type)) {
+        if (filterAll || typeFilters.has(e.type)) {
           filtered.push(e);
         }
       }
@@ -51,7 +51,7 @@
       const matchesSearch =
         e.title.toLowerCase().includes(query) ||
         e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.includes(e.type);
+      const matchesType = filterAll || typeFilters.has(e.type);
 
       if (matchesSearch && matchesType) {
         filtered.push(e);
@@ -65,23 +65,23 @@
     const isMulti = event.ctrlKey || event.metaKey;
 
     if (type === "all") {
-      typeFilters = ["all"];
+      typeFilters = new Set();
       return;
     }
 
     if (isMulti) {
-      let newFilters = typeFilters.filter((f) => f !== "all");
-      if (newFilters.includes(type)) {
-        newFilters = newFilters.filter((f) => f !== type);
+      const newFilters = new Set(typeFilters);
+      if (newFilters.has(type)) {
+        newFilters.delete(type);
       } else {
-        newFilters.push(type);
+        newFilters.add(type);
       }
-      typeFilters = newFilters.length === 0 ? ["all"] : newFilters;
+      typeFilters = newFilters;
     } else {
-      if (typeFilters.length === 1 && typeFilters[0] === type) {
-        typeFilters = ["all"];
+      if (typeFilters.has(type)) {
+        typeFilters = new Set();
       } else {
-        typeFilters = [type];
+        typeFilters = new Set([type]);
       }
     }
   }
@@ -102,59 +102,50 @@
       />
     </div>
 
-    <div class="space-y-2">
-      <div
-        class="flex items-center gap-1.5 text-[10px] font-mono text-theme-muted uppercase tracking-wider"
+    <div
+      class="flex items-center gap-1 px-2 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded shadow-sm"
+    >
+      <button
+        onclick={() => (typeFilters = new Set())}
+        title="Show all categories"
+        aria-label="Show all categories"
+        class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.size ===
+        0
+          ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
+          : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
       >
-        <Filter class="w-3 h-3" />
-        <span>Filter by category</span>
-        {#if !typeFilters.includes("all")}
-          <span
-            class="ml-auto text-[9px] bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded"
-          >
-            {typeFilters.length} selected
-          </span>
-        {/if}
-      </div>
-      <div class="flex flex-wrap gap-1.5">
-        <button
-          onclick={() => (typeFilters = ["all"])}
-          aria-label="Show all categories"
-          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all {typeFilters.includes(
-            'all',
-          )
-            ? 'bg-theme-primary text-theme-bg shadow-sm'
-            : 'bg-theme-bg border border-theme-border text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
-        >
-          <LayoutGrid class="w-3.5 h-3.5" />
-          <span>All</span>
-        </button>
-        {#each typesWithCounts as { type, count }}
-          {@const cat = categories.getCategory(type)}
+        <LayoutGrid class="w-3.5 h-3.5" />
+      </button>
+
+      {#each categories.list as cat (cat.id)}
+        {@const count =
+          typesWithCounts.find((t) => t.type === cat.id)?.count || 0}
+        {#if count > 0 || typeFilters.has(cat.id)}
           <button
-            onclick={(e) => toggleTypeFilter(type, e)}
-            aria-label={`Filter by ${cat?.label || type}`}
-            class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all {typeFilters.includes(
-              type,
+            onclick={(e) => toggleTypeFilter(cat.id, e)}
+            title={cat.label}
+            aria-label={`Filter by ${cat.label}`}
+            aria-pressed={typeFilters.has(cat.id)}
+            class="relative p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.has(
+              cat.id,
             )
-              ? 'shadow-sm'
-              : 'bg-theme-bg border border-theme-border text-theme-muted hover:border-theme-primary/50 hover:text-theme-text'}"
-            style={typeFilters.includes(type)
-              ? `background-color: ${cat?.color || "#15803d"}20; border: 1px solid ${cat?.color || "#15803d"}; color: ${cat?.color || "#15803d"}`
-              : ""}
+              ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
+              : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
           >
-            <span class="{getIconClass(cat?.icon)} w-3.5 h-3.5"></span>
-            <span>{cat?.label || type}</span>
             <span
-              class="text-[10px] px-1 rounded-full {typeFilters.includes(type)
-                ? 'bg-white/20'
-                : 'bg-theme-primary/10 text-theme-muted'}"
-            >
-              {count}
-            </span>
+              class="{getIconClass(cat.icon)} w-3.5 h-3.5"
+              style={!typeFilters.has(cat.id) ? `color: ${cat.color}` : ""}
+            ></span>
+            {#if count > 0 && !typeFilters.has(cat.id)}
+              <span
+                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary/20 text-theme-primary text-[7px] font-bold flex items-center justify-center leading-none"
+              >
+                {count > 9 ? "9+" : count}
+              </span>
+            {/if}
           </button>
-        {/each}
-      </div>
+        {/if}
+      {/each}
     </div>
   </div>
 

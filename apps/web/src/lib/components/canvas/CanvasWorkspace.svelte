@@ -23,6 +23,7 @@
   import CustomEdge from "$lib/components/canvas/CustomEdge.svelte";
   import EdgeLabelModal from "$lib/components/canvas/EdgeLabelModal.svelte";
   import CanvasHint from "$lib/components/hints/CanvasHint.svelte";
+  import CategoryFilter from "$lib/components/labels/CategoryFilter.svelte";
   import { page } from "$app/state";
   import { untrack, onDestroy, onMount, tick } from "svelte";
   import { browser } from "$app/environment";
@@ -43,6 +44,25 @@
     ),
   );
   const canvasId = $derived(canvas?.id);
+
+  // Category filtering
+  let activeCategories = $state(new Set<string>());
+  function toggleCategoryFilter(categoryId: string) {
+    if (activeCategories.has(categoryId)) {
+      activeCategories.delete(categoryId);
+    } else {
+      activeCategories.add(categoryId);
+    }
+    activeCategories = new Set(activeCategories);
+  }
+  function clearCategoryFilters() {
+    activeCategories = new Set();
+  }
+
+  const filteredNodes = $derived.by(() => {
+    if (activeCategories.size === 0) return nodes;
+    return nodes.filter((n) => activeCategories.has(n.data?.type));
+  });
 
   const nodeTypes = {
     entity: EntityNode,
@@ -582,6 +602,12 @@
         </span>
       </div>
 
+      <CategoryFilter
+        {activeCategories}
+        onToggle={toggleCategoryFilter}
+        onClear={clearCategoryFilters}
+      />
+
       {#if canvasRegistry.status === "saving"}
         <div
           class="flex items-center gap-2 px-3 py-1 bg-theme-primary/10 border border-theme-primary/20 backdrop-blur-sm animate-pulse"
@@ -597,7 +623,7 @@
     </div>
 
     <SvelteFlow
-      bind:nodes
+      nodes={filteredNodes}
       bind:edges
       {nodeTypes}
       {edgeTypes}
