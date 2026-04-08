@@ -146,10 +146,10 @@ jobs:
         run: |
           COMMENT="🚀 **Preview Deployment Ready!**
 
-**URL:** $DEPLOYMENT_URL
-**Alias:** $ALIAS_URL
+          **URL:** $DEPLOYMENT_URL
+          **Alias:** $ALIAS_URL
 
-_Changes will be live shortly._"
+          _Changes will be live shortly._"
           
           # Check if a comment already exists to avoid spamming
           EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
