@@ -159,7 +159,8 @@
   </div>
 
   <div
-    class="flex-1 overflow-y-auto min-h-0 p-2 space-y-1 custom-scrollbar overscroll-contain"
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    style="touch-action: pan-y;"
   >
     {#each filteredEntities as entity}
       {@const cat = categories.getCategory(entity.type)}
