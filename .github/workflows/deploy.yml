@@ -84,7 +84,7 @@ jobs:
           retention-days: 30
 
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -102,7 +102,7 @@ jobs:
           path: dist/
 
       - name: Deploy Production to Cloudflare Pages
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'main' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -125,6 +125,7 @@ jobs:
 
       - name: Deploy Preview to Cloudflare Pages
         if: github.event_name == 'pull_request'
+        id: deploy_preview
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -133,6 +134,30 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica
+
+      - name: Comment Preview URL on PR
+        if: github.event_name == 'pull_request' && success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DEPLOYMENT_URL: ${{ steps.deploy_preview.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.deploy_preview.outputs.deployment-alias-url }}
+        run: |
+          COMMENT="🚀 **Preview Deployment Ready!**
+
+          **URL:** $DEPLOYMENT_URL
+          **Alias:** $ALIAS_URL
+
+          _Changes will be live shortly._"
+          
+          # Check if a comment already exists to avoid spamming
+          EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
+          
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
+          else
+            gh pr comment "$PR_NUMBER" --body "$COMMENT"
+          fi
 
       - name: Notify Discord on Production Deploy
         if: github.ref_name == 'main' && success()
