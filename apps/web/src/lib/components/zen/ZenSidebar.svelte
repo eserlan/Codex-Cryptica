@@ -72,6 +72,16 @@
 
     return result;
   });
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!entity) return false;
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 </script>
 
 <div
@@ -90,7 +100,18 @@
 
   <!-- Image -->
   <div class="mb-6">
-    {#if editState.isEditing}
+    {#if !isVisible && vault.isGuest}
+      <div
+        class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
+      >
+        <span class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
+        ></span>
+        <span
+          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          >Hidden</span
+        >
+      </div>
+    {:else if editState.isEditing}
       <div class="mb-4">
         <label
           class="block text-[10px] text-theme-secondary font-bold mb-1"

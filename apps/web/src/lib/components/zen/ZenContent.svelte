@@ -3,7 +3,7 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
-  import type { Entity } from "schema";
+  import { isEntityVisible, type Entity } from "schema";
 
   let {
     entity,
@@ -14,6 +14,16 @@
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
   }>();
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!entity) return false;
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 
   const getTemporalLabel = (type: string, field: "start" | "end") => {
     const t = (type || "").toLowerCase();
@@ -124,30 +134,39 @@
     {/if}
 
     <!-- Chronicle -->
-    <div>
-      <h2
-        class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
-      >
-        <span class="icon-[lucide--book-open] w-5 h-5"></span>
-        {themeStore.jargon.chronicle_header}
-      </h2>
-      {#if editState.isEditing}
-        <MarkdownEditor
-          content={editState.content}
-          editable={true}
-          onUpdate={(md) => (editState.content = md)}
-        />
-      {:else}
-        <div class="prose-container">
+    {#if editState.isEditing || isVisible}
+      <div>
+        <h2
+          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+        >
+          <span class="icon-[lucide--book-open] w-5 h-5"></span>
+          {themeStore.jargon.chronicle_header}
+        </h2>
+        {#if editState.isEditing}
           <MarkdownEditor
-            content={entity?.content || "No records found."}
-            editable={false}
+            content={editState.content}
+            editable={true}
+            onUpdate={(md) => (editState.content = md)}
           />
-        </div>
-      {/if}
-    </div>
+        {:else if isVisible}
+          <div class="prose-container">
+            <MarkdownEditor
+              content={entity?.content || "No records found."}
+              editable={false}
+            />
+          </div>
+        {:else}
+          <div
+            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
+          >
+            <span class="icon-[lucide--lock] w-4 h-4"></span>
+            Chronicle is hidden in shared mode
+          </div>
+        {/if}
+      </div>
+    {/if}
 
-    {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
+    {#if editState.isEditing || (isVisible && entity?.lore)}
       <div>
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
