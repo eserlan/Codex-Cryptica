@@ -11,30 +11,31 @@ Codex Cryptica uses **Cloudflare Pages** for hosting with an **artifact promotio
 
 ## The Deployment Pipeline
 
-### 1. Feature → Staging (Auto-Merge)
+### 1. Feature → Preview (Verification)
 
 ```mermaid
 flowchart LR
-  A[Feature branch] --> B[PR → staging]
-  B --> C{Auto-merge}
-  C --> D[staging branch]
-  D --> E[Build + Test]
-  E --> F[Deploy to staging]
-  F --> G[staging.codexcryptica.com]
+  A[Feature branch] --> B[PR targeting staging]
+  B --> C[Build + Test]
+  C --> D[Deploy Preview]
+  D --> E[Unique Preview URL]
 ```
 
-1. Open a PR targeting `staging`.
-2. The [`auto-merge-staging.yml`](.github/workflows/auto-merge-staging.yml) workflow enables auto-merge for non-draft PRs.
-3. Once merged, [`deploy.yml`](.github/workflows/deploy.yml) triggers:
+1. Open a Pull Request targeting the `staging` branch.
+2. The [`deploy.yml`](.github/workflows/deploy.yml) workflow triggers on `pull_request`:
+   - Installs dependencies, runs lint and tests.
+   - Builds the application.
+   - Deploys a **Preview** to Cloudflare Pages.
+   - Cloudflare automatically adds a comment to the PR with a unique preview URL.
+3. Review the preview and ensure everything works as expected.
 
-> [!NOTE]
-> **Prerequisite:** For automatic merging to work, you must enable **"Allow auto-merge"** in your GitHub repository settings under **Settings > General > Pull Requests**.
+### 2. Merge → Staging (Shared Environment)
 
-- Installs dependencies, runs lint and tests.
-- **Builds the application using Production Environment Variables** (to ensure the artifact is ready for promotion without a rebuild).
-- Deploys to Cloudflare Pages on the `staging` branch.
-- Uploads a **staging artifact** (`staging-dist`) with 30-day retention for later promotion.
-- Sends a notification to the Discord release channel.
+Once the PR is approved and manually merged:
+
+1. `deploy.yml` triggers on `push` to the `staging` branch.
+2. It deploys the build to `staging.codexcryptica.com`.
+3. It uploads a **staging artifact** (`staging-dist`) with 30-day retention for production promotion.
 
 > [!IMPORTANT]
 > To support the "artifact promotion" model, staging builds must be production-ready. We bake production URLs (`codexcryptica.com`) and indexing directives into the staging build to ensure the promoted artifact is correct for the live site. To prevent staging from being indexed, use Cloudflare-level overrides (headers or workers) rather than build-time environment variables.
@@ -55,7 +56,7 @@ Production uses a **manual promotion workflow** — there is no automatic promot
 
 1. Go to **Actions** → **Promote Staging to Production**
 2. Click **Run workflow**
-3. Optionally specify a staging run ID (leave blank for latest successful staging deployment)
+3. Optionally specify a staging run ID (leave blank to use the latest successful staging deployment)
 4. Click **Run workflow**
 
 The promotion workflow:
@@ -63,7 +64,6 @@ The promotion workflow:
 - Finds the latest successful staging deployment (or the specific run you provided)
 - Downloads the exact `staging-dist` artifact from that run
 - Deploys it to Cloudflare Pages on the production branch
-- **Syncs the code:** Automatically merges the promoted `staging` commit into the `main` branch. This uses `[skip ci]` to ensure the `main` branch stays up to date without triggering a redundant production build.
 - Sends a notification to the Discord prod-deployment channel with the source run link
 
 **Artifact retention:** Staging build artifacts are kept for 30 days. If you need to promote an older build, re-run the staging deployment for that commit first.
@@ -99,7 +99,7 @@ The following secrets must be configured in GitHub repository settings:
 | `VITE_SHARED_GEMINI_KEY`           | Shared (lite mode) API key                                                   |
 | `CLOUDFLARE_ACCOUNT_ID`            | Cloudflare account ID                                                        |
 | `CLOUDFLARE_API_TOKEN`             | Cloudflare API token with Pages deploy permissions                           |
-| `VITE_DISCORD_WEBHOOK_URL_PROD`    | Webhook URL for the prod-deployment Discord channel                          |
+| `DISCORD_WEBHOOK_URL_PROD_DEPLOY`  | Webhook URL for the prod-deployment Discord channel                          |
 | `VITE_DISCORD_WEBHOOK_URL_RELEASE` | Webhook URL for the release Discord channel (used for staging notifications) |
 
 ## Concurrency
@@ -127,4 +127,4 @@ The `promote-to-prod.yml` workflow does **not** cancel in-progress promotions to
 **Staging notification went to the wrong Discord channel:**
 
 - Staging notifications use `VITE_DISCORD_WEBHOOK_URL_RELEASE`
-- Production notifications use `VITE_DISCORD_WEBHOOK_URL_PROD`
+- Production notifications use `DISCORD_WEBHOOK_URL_PROD_DEPLOY`
