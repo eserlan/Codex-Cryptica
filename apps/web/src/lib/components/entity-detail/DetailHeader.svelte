@@ -29,10 +29,11 @@
   });
 
   let isObscured = $derived.by(() => {
-    if (!entity || !ui.sharedMode) return false;
+    if (!entity || !vault.isGuest) return false;
     return !isEntityVisible(entity, {
-      sharedMode: ui.sharedMode,
-    } as any);
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
   });
 
   const handleFindInGraph = () => {

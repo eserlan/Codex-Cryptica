@@ -5,6 +5,7 @@
   import { debugStore } from "$lib/stores/debug.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { isEntityVisible } from "schema";
 
   let {
     entity,
@@ -19,6 +20,15 @@
   let resolvedImageUrl = $state("");
   let showLightbox = $state(false);
   let isDraggingOver = $state(false);
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 
   $effect(() => {
     const imagePath = entity?.image;
@@ -136,6 +146,19 @@
         class="bg-theme-bg border border-theme-border text-theme-text px-2 py-1 text-xs focus:outline-none focus:border-theme-primary w-full placeholder-theme-muted/50"
         placeholder="https://..."
       />
+    </div>
+  {:else if !isVisible && vault.isGuest}
+    <div class="px-4 md:px-6">
+      <div
+        class="mb-4 w-full py-2 md:py-4 md:h-40 rounded border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-bg/30"
+      >
+        <span class="icon-[lucide--lock] w-4 h-4 md:w-6 md:h-6 opacity-30"
+        ></span>
+        <span
+          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          >Image Hidden</span
+        >
+      </div>
     </div>
   {:else if entity.image}
     <div class="px-4 md:px-6">
