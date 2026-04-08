@@ -61,7 +61,7 @@
 
   const filteredNodes = $derived.by(() => {
     if (activeCategories.size === 0) return nodes;
-    return nodes.filter((n) => activeCategories.has(n.data?.type));
+    return nodes.filter((n) => activeCategories.has(n.data?.type as string));
   });
 
   const nodeTypes = {
