@@ -158,7 +158,9 @@
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+  <div
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+  >
     {#each filteredEntities as entity}
       {@const cat = categories.getCategory(entity.type)}
       <button
