@@ -166,7 +166,7 @@
       </div>
     {/if}
 
-    {#if editState.isEditing || (isVisible && entity?.lore)}
+    {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
       <div>
         <h2
           class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"

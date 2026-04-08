@@ -184,7 +184,6 @@
               bind:editContent
               bind:editStartDate
               bind:editEndDate
-              bind:editLore
             />
           {/if}
         </div>

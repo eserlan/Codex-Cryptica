@@ -15,7 +15,6 @@
     editContent = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
-    editLore = $bindable(),
   } = $props<{
     entity: Entity;
     isEditing: boolean;
@@ -23,7 +22,6 @@
     editContent: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
-    editLore: string;
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
@@ -173,29 +171,6 @@
             }}
           />
         {/if}
-      </div>
-    </div>
-  {/if}
-
-  <!-- Lore (Mobile Only) - NEVER visible for guests -->
-  {#if !vault.isGuest && (isEditing || entity.lore)}
-    <div class="md:hidden">
-      <h3
-        class="text-theme-secondary font-header italic text-lg mb-3 border-b border-theme-border pb-1 flex items-center gap-2"
-      >
-        <span class="icon-[lucide--scroll-text] w-4 h-4"></span>
-        {themeStore.jargon.lore_header}
-      </h3>
-      <div class="prose-content">
-        <MarkdownEditor
-          content={isEditing
-            ? editLore
-            : entity.lore || "No detailed lore available."}
-          editable={isEditing}
-          onUpdate={(val) => {
-            if (isEditing) editLore = val;
-          }}
-        />
       </div>
     </div>
   {/if}
