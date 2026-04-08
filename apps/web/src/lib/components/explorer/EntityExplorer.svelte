@@ -11,7 +11,7 @@
 </script>
 
 <div
-  class="flex flex-col h-full bg-theme-surface font-body"
+  class="flex flex-col flex-1 min-h-0 bg-theme-surface font-body"
   data-testid="entity-explorer-panel"
 >
   <!-- Header -->
@@ -47,7 +47,7 @@
   </div>
 
   <!-- List -->
-  <div class="flex-1 min-h-0">
+  <div class="flex-1 min-h-0 flex flex-col">
     <EntityList onSelect={handleSelect} />
   </div>
 </div>

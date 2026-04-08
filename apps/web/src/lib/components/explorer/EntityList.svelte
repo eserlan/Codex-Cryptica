@@ -87,8 +87,8 @@
   }
 </script>
 
-<div class="flex flex-col h-full {className}">
-  <div class="p-4 border-b border-theme-border">
+<div class="flex flex-col flex-1 min-h-0 {className}">
+  <div class="p-4 border-b border-theme-border shrink-0">
     <div class="relative mb-3">
       <Search
         class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted"
