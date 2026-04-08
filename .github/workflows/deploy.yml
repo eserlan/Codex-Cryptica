@@ -142,7 +142,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const branch = context.payload.pull_request.head.ref;
-            const previewUrl = `https://${branch}.codex-cryptica.pages.dev`;
+            // Cloudflare Pages transforms branch names: "/" → "-", truncated to 28 chars
+            const cfBranch = branch.replace(/\//g, "-").slice(0, 28);
+            const previewUrl = `https://${cfBranch}.codex-cryptica.pages.dev`;
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
