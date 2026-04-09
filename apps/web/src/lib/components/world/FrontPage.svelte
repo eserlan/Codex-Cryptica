@@ -75,8 +75,8 @@ Art direction:
       return false;
     };
 
-    const pinned = [];
-    const unpinned = [];
+    const pinned: (typeof recentActivity)[number][] = [];
+    const unpinned: (typeof recentActivity)[number][] = [];
 
     for (let i = 0; i < recentActivity.length; i++) {
       const activity = recentActivity[i];
