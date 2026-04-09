@@ -101,4 +101,3 @@ jobs:
           # Send the summary
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
-

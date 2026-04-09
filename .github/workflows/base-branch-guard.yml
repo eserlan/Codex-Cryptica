@@ -13,13 +13,13 @@ jobs:
         run: |
           HEAD_BRANCH="${{ github.head_ref }}"
           BASE_BRANCH="${{ github.base_ref }}"
-          
+
           echo "PR is from $HEAD_BRANCH into $BASE_BRANCH"
-          
+
           if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "staging" ]]; then
             echo "::error::Direct PRs into 'main' are blocked. Please target the 'staging' branch instead."
             echo "Once your changes are merged to 'staging' and verified, 'staging' itself will be promoted to 'main'."
             exit 1
           fi
-          
+
           echo "✅ Target branch check passed."
