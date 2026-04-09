@@ -335,33 +335,17 @@ export async function deleteVaultDir(
     const db = await getDB();
     const tx = db.transaction("opfs_file_state", "readwrite");
     const index = tx.store.index("by-vault");
-    let operationError: unknown;
-    let txDoneError: unknown;
 
-    try {
-      // ⚡ Bolt Optimization: Use getAllKeys and concurrent Promise.all deletions to eliminate N+1 bottleneck
-      const keys = await index.getAllKeys(normalized);
-      if (keys.length > 0) {
-        // Process in bounded batches to avoid overwhelming the IndexedDB queue or transaction
-        const batchSize = 1000;
-        for (let i = 0; i < keys.length; i += batchSize) {
-          const batch = keys.slice(i, i + batchSize);
-          await Promise.all(batch.map((key) => tx.store.delete(key)));
-        }
+    // ⚡ Bolt Optimization: Use getAllKeys and concurrent Promise.all deletions to eliminate N+1 bottleneck
+    const keys = await index.getAllKeys(normalized);
+    if (keys.length > 0) {
+      // Process in bounded batches to avoid overwhelming the IndexedDB queue or transaction
+      const batchSize = 1000;
+      for (let i = 0; i < keys.length; i += batchSize) {
+        const batch = keys.slice(i, i + batchSize);
+        await Promise.all(batch.map((key) => tx.store.delete(key)));
       }
-    } catch (err) {
-      operationError = err;
-      throw err;
-    } finally {
-      try {
-        await tx.done;
-      } catch (txErr) {
-        txDoneError = txErr;
-      }
-    }
-
-    if (txDoneError && !operationError) {
-      throw txDoneError;
+      await tx.done;
     }
   } catch (err) {
     console.warn(
@@ -370,3 +354,5 @@ export async function deleteVaultDir(
     );
   }
 }
+// trigger review
+// test review v5
