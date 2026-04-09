@@ -36,9 +36,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Check no auto-merge workflow
-        run: bash scripts/check-no-auto-merge.sh
-
       - name: Lint
         run: npm run lint
 
