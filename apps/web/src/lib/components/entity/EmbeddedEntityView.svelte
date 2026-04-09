@@ -103,7 +103,13 @@
           actions.handleDelete(entity!, () => uiStore.focusEntity(null))}
       />
 
-      <ZenContent {entity} {editState} bind:scrollContainer />
+      <div
+        data-testid="embedded-entity-scroll"
+        class="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden w-full h-full custom-scrollbar overscroll-contain"
+        style="touch-action: pan-y;"
+      >
+        <ZenContent {entity} {editState} bind:scrollContainer />
+      </div>
     </div>
 
     <ZenImageLightbox
