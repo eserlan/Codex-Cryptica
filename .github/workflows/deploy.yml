@@ -152,8 +152,8 @@ jobs:
 
           _Changes will be live shortly._"
           
-          # Check if a comment already exists to avoid spamming
-          EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
+          # Use the numeric REST comment id so the update endpoint works reliably.
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --paginate --jq '.[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
           
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
