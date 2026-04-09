@@ -22,7 +22,6 @@ permissions:
   contents: read
   deployments: write
   pull-requests: write
-  issues: write
 
 jobs:
   build:
@@ -153,12 +152,12 @@ jobs:
           _Changes will be live shortly._"
           
           # Check if a comment already exists to avoid spamming
-          EXISTING_COMMENT_ID=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
           
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
           else
-            gh pr comment "$PR_NUMBER" --body "$COMMENT"
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -f body="$COMMENT"
           fi
 
       - name: Notify Discord on Production Deploy
