@@ -373,14 +373,59 @@ describe("opfs - utility functions", () => {
       expect(mockStore.delete).not.toHaveBeenCalled();
     });
 
+    it("should warn if the cleanup transaction rejects after an empty key result", async () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const txError = new Error("transaction failed");
+      const mockIndex = {
+        getAllKeys: vi.fn().mockResolvedValue([]),
+      };
+      const mockStore = {
+        index: vi.fn().mockReturnValue(mockIndex),
+        delete: vi.fn(),
+      };
+      const mockTx = {
+        store: mockStore,
+        done: Promise.reject(txError),
+      };
+      const mockDB = {
+        transaction: vi.fn().mockReturnValue(mockTx),
+      };
+      const { getDB } = await import("./idb");
+      vi.mocked(getDB).mockResolvedValue(mockDB as any);
+
+      const mockVaultDir = {
+        removeEntry: vi.fn().mockResolvedValue(undefined),
+      };
+      const mockRoot = {
+        getDirectoryHandle: vi.fn().mockImplementation((name) => {
+          if (name === "vaults") return Promise.resolve(mockVaultDir);
+          return Promise.reject({ name: "NotFoundError" });
+        }),
+      };
+
+      await deleteVaultDir(mockRoot as any, "empty-vault");
+
+      expect(mockIndex.getAllKeys).toHaveBeenCalledWith("empty-vault");
+      expect(mockStore.delete).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "[OPFS] Failed to clear fingerprint cache for vault empty-vault",
+        txError,
+      );
+    });
+
     it("should delete many keys concurrently in batches", async () => {
       const deletedKeys: IDBValidKey[] = [];
-      const totalKeys = 120;
+      const totalKeys = 1201;
       const keys = Array.from({ length: totalKeys }, (_, i) => `key-${i}`);
+      let releaseFirstBatch: (() => void) | undefined;
+      const firstBatchGate = new Promise<void>((resolve) => {
+        releaseFirstBatch = resolve;
+      });
 
       const mockDelete = vi.fn().mockImplementation((key) => {
+        const callNumber = deletedKeys.length;
         deletedKeys.push(key);
-        return Promise.resolve(undefined);
+        return callNumber < 1000 ? firstBatchGate : Promise.resolve(undefined);
       });
 
       const mockIndexImpl = vi.fn().mockReturnValue({
@@ -418,9 +463,17 @@ describe("opfs - utility functions", () => {
         }),
       };
 
-      await deleteVaultDir(mockRoot as any, "large-vault");
+      const deletePromise = deleteVaultDir(mockRoot as any, "large-vault");
 
-      // Verify all 120 keys were deleted
+      await vi.waitFor(() => {
+        expect(mockDelete).toHaveBeenCalledTimes(1000);
+      });
+      expect(deletedKeys).toEqual(keys.slice(0, 1000));
+
+      releaseFirstBatch?.();
+      await deletePromise;
+
+      // Verify all keys were deleted and the second batch ran after the first settled
       expect(deletedKeys).toHaveLength(totalKeys);
       expect(deletedKeys).toEqual(keys);
       expect(mockDelete).toHaveBeenCalledTimes(totalKeys);
