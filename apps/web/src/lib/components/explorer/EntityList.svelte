@@ -3,7 +3,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
-  import { Search, Filter, LayoutGrid } from "lucide-svelte";
+  import { Search, LayoutGrid } from "lucide-svelte";
 
   let {
     onSelect,
@@ -16,27 +16,30 @@
   } = $props();
 
   let searchQuery = $state("");
-  let typeFilters = $state<string[]>(["all"]);
+  let typeFilters = $state<Set<string>>(new Set());
 
-  const types = $derived.by(() => {
+  const typesWithCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
-    const typesSet = new Set<string>(["all"]);
+    const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
-      typesSet.add(allEntities[i].type);
+      const type = allEntities[i].type;
+      counts.set(type, (counts.get(type) || 0) + 1);
     }
-    return Array.from(typesSet);
+    return Array.from(counts.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => a.type.localeCompare(b.type));
   });
 
   const filteredEntities = $derived.by(() => {
     const allEntities = vault.allEntities;
     const filtered: Entity[] = [];
     const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.includes("all");
+    const filterAll = typeFilters.size === 0;
 
     if (!query) {
       for (let i = 0; i < allEntities.length; i++) {
         const e = allEntities[i];
-        if (filterAll || typeFilters.includes(e.type)) {
+        if (filterAll || typeFilters.has(e.type)) {
           filtered.push(e);
         }
       }
@@ -48,7 +51,7 @@
       const matchesSearch =
         e.title.toLowerCase().includes(query) ||
         e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.includes(e.type);
+      const matchesType = filterAll || typeFilters.has(e.type);
 
       if (matchesSearch && matchesType) {
         filtered.push(e);
@@ -62,30 +65,30 @@
     const isMulti = event.ctrlKey || event.metaKey;
 
     if (type === "all") {
-      typeFilters = ["all"];
+      typeFilters = new Set();
       return;
     }
 
     if (isMulti) {
-      let newFilters = typeFilters.filter((f) => f !== "all");
-      if (newFilters.includes(type)) {
-        newFilters = newFilters.filter((f) => f !== type);
+      const newFilters = new Set(typeFilters);
+      if (newFilters.has(type)) {
+        newFilters.delete(type);
       } else {
-        newFilters.push(type);
+        newFilters.add(type);
       }
-      typeFilters = newFilters.length === 0 ? ["all"] : newFilters;
+      typeFilters = newFilters;
     } else {
-      if (typeFilters.length === 1 && typeFilters[0] === type) {
-        typeFilters = ["all"];
+      if (typeFilters.has(type)) {
+        typeFilters = new Set();
       } else {
-        typeFilters = [type];
+        typeFilters = new Set([type]);
       }
     }
   }
 </script>
 
-<div class="flex flex-col h-full {className}">
-  <div class="p-4 border-b border-theme-border">
+<div class="flex flex-col h-full min-h-0 {className}">
+  <div class="p-4 border-b border-theme-border shrink-0">
     <div class="relative mb-3">
       <Search
         class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted"
@@ -99,31 +102,57 @@
       />
     </div>
 
-    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1">
-      <Filter class="w-3 h-3 text-theme-muted shrink-0 mr-1" />
-      {#each types as type}
-        <button
-          onclick={(e) => toggleTypeFilter(type, e)}
-          aria-label={`Filter by ${type}`}
-          title={type.toUpperCase()}
-          class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.includes(
-            type,
-          )
-            ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
-            : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-        >
-          {#if type === "all"}
-            <LayoutGrid class="w-4 h-4" />
-          {:else}
-            {@const cat = categories.getCategory(type)}
-            <span class="{getIconClass(cat?.icon)} w-4 h-4"></span>
-          {/if}
-        </button>
+    <div
+      class="flex items-center gap-1 px-2 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded shadow-sm"
+    >
+      <button
+        onclick={() => (typeFilters = new Set())}
+        title="Show all categories"
+        aria-label="Show all categories"
+        class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.size ===
+        0
+          ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
+          : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+      >
+        <LayoutGrid class="w-3.5 h-3.5" />
+      </button>
+
+      {#each categories.list as cat (cat.id)}
+        {@const count =
+          typesWithCounts.find((t) => t.type === cat.id)?.count || 0}
+        {#if count > 0 || typeFilters.has(cat.id)}
+          <button
+            onclick={(e) => toggleTypeFilter(cat.id, e)}
+            title={cat.label}
+            aria-label={`Filter by ${cat.label}`}
+            aria-pressed={typeFilters.has(cat.id)}
+            class="relative p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.has(
+              cat.id,
+            )
+              ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
+              : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+          >
+            <span
+              class="{getIconClass(cat.icon)} w-3.5 h-3.5"
+              style={!typeFilters.has(cat.id) ? `color: ${cat.color}` : ""}
+            ></span>
+            {#if count > 0 && !typeFilters.has(cat.id)}
+              <span
+                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary/20 text-theme-primary text-[7px] font-bold flex items-center justify-center leading-none"
+              >
+                {count > 9 ? "9+" : count}
+              </span>
+            {/if}
+          </button>
+        {/if}
       {/each}
     </div>
   </div>
 
-  <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+  <div
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    style="touch-action: pan-y;"
+  >
     {#each filteredEntities as entity}
       {@const cat = categories.getCategory(entity.type)}
       <button

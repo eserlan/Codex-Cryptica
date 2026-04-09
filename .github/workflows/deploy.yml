@@ -89,7 +89,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -126,7 +126,6 @@ jobs:
 
       - name: Deploy Preview to Cloudflare Pages
         if: github.event_name == 'pull_request'
-        id: deploy_preview
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -134,9 +133,9 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
 
-      - name: Comment Preview URL on PR
+      - name: Comment on PR
         if: github.event_name == 'pull_request' && success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -150,10 +149,10 @@ jobs:
           **Alias:** $ALIAS_URL
 
           _Changes will be live shortly._"
-          
+
           # Check if a comment already exists to avoid spamming
           EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
-          
+
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
           else
@@ -161,7 +160,7 @@ jobs:
           fi
 
       - name: Notify Discord on Production Deploy
-        if: github.ref_name == 'main' && success()
+        if: github.ref_name == 'main' && success() && github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -169,7 +168,7 @@ jobs:
           ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
 
       - name: Notify Discord on Staging Deploy
-        if: github.ref_name == 'staging' && success()
+        if: github.ref_name == 'staging' && success() && github.event_name == 'push'
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
