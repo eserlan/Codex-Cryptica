@@ -58,20 +58,37 @@ Art direction:
   );
   const recentActivity = $derived(worldStore.recentActivity);
   const displayedRecentActivity = $derived.by(() => {
+    // ⚡ Bolt Optimization: Replace multiple .filter() calls with a single imperative loop
+    // to partition the array, preventing duplicate O(N) passes and extra array allocations.
     const isPinned = (
       tags: string[] | undefined,
       labels: string[] | undefined,
-    ) =>
-      [...(tags || []), ...(labels || [])].some(
-        (tag) => tag?.trim().toLowerCase() === "frontpage",
-      );
+    ) => {
+      const ts = tags || [];
+      for (let i = 0; i < ts.length; i++) {
+        if (ts[i]?.trim().toLowerCase() === "frontpage") return true;
+      }
+      const ls = labels || [];
+      for (let i = 0; i < ls.length; i++) {
+        if (ls[i]?.trim().toLowerCase() === "frontpage") return true;
+      }
+      return false;
+    };
 
-    const pinned = recentActivity
-      .filter((activity) => isPinned(activity.tags, activity.labels))
-      .sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-    const unpinned = recentActivity
-      .filter((activity) => !isPinned(activity.tags, activity.labels))
-      .sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+    const pinned = [];
+    const unpinned = [];
+
+    for (let i = 0; i < recentActivity.length; i++) {
+      const activity = recentActivity[i];
+      if (isPinned(activity.tags, activity.labels)) {
+        pinned.push(activity);
+      } else {
+        unpinned.push(activity);
+      }
+    }
+
+    pinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+    unpinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
 
     return [...pinned, ...unpinned].slice(0, recentLimit);
   });
