@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "comlink": "^4.4.1",
-    "cytoscape": "^3.28.0",
+    "cytoscape": "^3.33.2",
     "cytoscape-fcose": "^2.2.0",
     "schema": "*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "jsdom": "^29.0.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
