@@ -295,29 +295,12 @@ describe("opfs - utility functions", () => {
       );
     });
 
-    it("should clear IDB cache with cursor-based sequential deletion", async () => {
+    it("should clear IDB cache with batched concurrent Promise.all deletion", async () => {
       const deletedKeys: IDBValidKey[] = [];
-
-      // Mock cursor that simulates IDB cursor behavior
-      // continue() advances cursor, returns cursor or null when exhausted
-      let cursorCallCount = 0;
-      const mockCursor: any = {
-        primaryKey: "key1",
-        continue: vi.fn().mockImplementation(() => {
-          cursorCallCount++;
-          if (cursorCallCount === 1) {
-            mockCursor.primaryKey = "key2";
-          } else if (cursorCallCount === 2) {
-            mockCursor.primaryKey = "key3";
-          } else {
-            return Promise.resolve(null);
-          }
-          return Promise.resolve(mockCursor);
-        }),
-      };
+      const mockKeys = ["key1", "key2", "key3"];
 
       const mockIndex = {
-        openKeyCursor: vi.fn().mockResolvedValue(mockCursor),
+        getAllKeys: vi.fn().mockResolvedValue(mockKeys),
       };
       const mockStore = {
         index: vi.fn().mockReturnValue(mockIndex),
@@ -349,15 +332,15 @@ describe("opfs - utility functions", () => {
 
       await deleteVaultDir(mockRoot as any, "test-vault");
 
-      // Verify cursor was used
-      expect(mockIndex.openKeyCursor).toHaveBeenCalledWith("test-vault");
+      // Verify index was queried
+      expect(mockIndex.getAllKeys).toHaveBeenCalledWith("test-vault");
       // Verify all 3 keys were deleted
       expect(deletedKeys).toEqual(["key1", "key2", "key3"]);
     });
 
-    it("should handle empty cursor result", async () => {
+    it("should handle empty keys result", async () => {
       const mockIndex = {
-        openKeyCursor: vi.fn().mockResolvedValue(null),
+        getAllKeys: vi.fn().mockResolvedValue([]),
       };
       const mockStore = {
         index: vi.fn().mockReturnValue(mockIndex),
@@ -386,27 +369,14 @@ describe("opfs - utility functions", () => {
 
       await deleteVaultDir(mockRoot as any, "empty-vault");
 
-      expect(mockIndex.openKeyCursor).toHaveBeenCalledWith("empty-vault");
+      expect(mockIndex.getAllKeys).toHaveBeenCalledWith("empty-vault");
       expect(mockStore.delete).not.toHaveBeenCalled();
     });
 
-    it("should delete many keys sequentially", async () => {
+    it("should delete many keys concurrently in batches", async () => {
       const deletedKeys: IDBValidKey[] = [];
       const totalKeys = 120;
       const keys = Array.from({ length: totalKeys }, (_, i) => `key-${i}`);
-      let currentKeyIndex = 0;
-
-      const mockCursor: any = {
-        primaryKey: keys[0],
-        continue: vi.fn().mockImplementation(() => {
-          currentKeyIndex++;
-          if (currentKeyIndex >= totalKeys) {
-            return Promise.resolve(null);
-          }
-          mockCursor.primaryKey = keys[currentKeyIndex];
-          return Promise.resolve(mockCursor);
-        }),
-      };
 
       const mockDelete = vi.fn().mockImplementation((key) => {
         deletedKeys.push(key);
@@ -414,7 +384,7 @@ describe("opfs - utility functions", () => {
       });
 
       const mockIndexImpl = vi.fn().mockReturnValue({
-        openKeyCursor: vi.fn().mockResolvedValue(mockCursor),
+        getAllKeys: vi.fn().mockResolvedValue(keys),
       });
 
       const mockStoreImpl = {
@@ -450,10 +420,9 @@ describe("opfs - utility functions", () => {
 
       await deleteVaultDir(mockRoot as any, "large-vault");
 
-      // Verify all 120 keys were deleted sequentially
+      // Verify all 120 keys were deleted
       expect(deletedKeys).toHaveLength(totalKeys);
       expect(deletedKeys).toEqual(keys);
-      // Verify sequential deletion (each key deleted individually)
       expect(mockDelete).toHaveBeenCalledTimes(totalKeys);
     });
   });
