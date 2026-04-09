@@ -1,18 +1,21 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
-  import { isEntityVisible, type Entity } from "schema";
+  import { isEntityVisible, type Connection, type Entity } from "schema";
 
   let {
     entity,
     editState = $bindable(),
     scrollContainer = $bindable(),
+    showConnections = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
+    showConnections?: boolean;
   }>();
 
   // Check if this entity is visible in guest/shared mode
@@ -68,6 +71,26 @@
     if (date.day !== undefined) str += `/${date.day}`;
     return str;
   };
+
+  const connections = $derived.by(() => {
+    if (!showConnections || !entity) return [];
+
+    const outbound = (entity.connections || []).map((c: Connection) => ({
+      ...c,
+      isOutbound: true,
+      displayTitle: vault.entities[c.target]?.title || c.target,
+      targetId: c.target,
+    }));
+
+    const inbound = (vault.inboundConnections[entity.id] || []).map((item) => ({
+      ...item.connection,
+      isOutbound: false,
+      displayTitle: vault.entities[item.sourceId]?.title || item.sourceId,
+      targetId: item.sourceId,
+    }));
+
+    return [...outbound, ...inbound];
+  });
 </script>
 
 <div
@@ -188,6 +211,58 @@
             />
           </div>
         {/if}
+      </div>
+    {/if}
+
+    {#if showConnections}
+      <div>
+        <h2
+          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+        >
+          <span class="icon-[lucide--link-2] w-5 h-5"></span>
+          {themeStore.jargon.connections_header}
+        </h2>
+
+        <ul class="space-y-3">
+          {#each connections as conn (conn.targetId + ":" + conn.label + ":" + conn.type + ":" + conn.isOutbound)}
+            <li class="flex gap-3 text-sm text-theme-muted items-start group">
+              <span
+                class="mt-1 w-3 h-3 shrink-0 {conn.isOutbound
+                  ? 'text-theme-primary icon-[lucide--arrow-up-right]'
+                  : 'text-blue-500 icon-[lucide--arrow-down-left]'}"
+              ></span>
+              <button
+                type="button"
+                class="flex-1 min-w-0 text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
+                onclick={() => uiStore.focusEntity(conn.targetId)}
+              >
+                {#if conn.isOutbound}
+                  <span class="text-theme-secondary">{entity?.title}</span>
+                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
+                  <strong
+                    class="text-theme-text group-hover:text-theme-primary transition"
+                    >{conn.label || conn.type}</strong
+                  >
+                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
+                  <span class="text-theme-text">{conn.displayTitle}</span>
+                {:else}
+                  <span class="text-theme-text">{conn.displayTitle}</span>
+                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
+                  <strong
+                    class="text-theme-text group-hover:text-theme-primary transition"
+                    >{conn.label || conn.type}</strong
+                  >
+                  <span class="icon-[lucide--move-right] w-4 h-4"></span>
+                  <span class="text-theme-secondary">{entity?.title}</span>
+                {/if}
+              </button>
+            </li>
+          {:else}
+            <li class="text-theme-muted italic text-sm">
+              No known connections.
+            </li>
+          {/each}
+        </ul>
       </div>
     {/if}
   </div>
