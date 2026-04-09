@@ -142,8 +142,8 @@
     <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
 
     <div
-      class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
-      style:background-image="var(--bg-texture-overlay)"
+      class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"
+      style="background-image: var(--bg-texture-overlay); touch-action: pan-y;"
     >
       {#if uiStore.isDemoMode}
         <div
