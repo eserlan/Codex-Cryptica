@@ -108,9 +108,9 @@
         aria-controls={panelIds.lore}
         tabindex={activeTab === "lore" ? 0 : -1}
         data-testid="tab-lore"
-        class="{activeTab === 'lore'
-          ? 'text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5'
-          : 'hover:text-theme-text transition'} hidden md:block"
+        class={activeTab === "lore"
+          ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : "hover:text-theme-text transition"}
         onclick={() => {
           activeTab = "lore";
         }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
