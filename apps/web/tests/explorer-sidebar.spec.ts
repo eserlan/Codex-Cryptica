@@ -117,6 +117,7 @@ test.describe("Entity Explorer Sidebar", () => {
             _path: ["test-entry.md"],
           },
         };
+        v.entities = { ...v.repository.entities };
         v.isInitialized = true;
         v.status = "idle";
       }
