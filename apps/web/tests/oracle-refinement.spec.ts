@@ -64,7 +64,7 @@ test.describe("Oracle UI Refinement", () => {
     page,
   }) => {
     // Open Oracle Window
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");
@@ -87,7 +87,7 @@ test.describe("Oracle UI Refinement", () => {
 
   test("should clear chat history when vault is closed", async ({ page }) => {
     // Open Oracle Window
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");

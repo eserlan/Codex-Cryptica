@@ -282,3 +282,4 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 ## Qwen Added Memories
 
 - Always run playwright test with --last-failed --reporter=line when iterating on fixes (terse output). Note: test:e2e in package.json already has these flags baked in, so it only applies when invoking playwright directly (npx playwright test ...). See feedback_e2e_playwright_flags.md for details.
+- Run playwright tests with --last-failed --max-failures=5 --reporter=line. --last-failed only reruns previously failed tests (useful for iterating on fixes). --max-failures=5 stops after 5 failures (fail-fast). --reporter=line gives terse output. Only applies when invoking npx playwright test directly; npm run test:e2e already has flags baked in.

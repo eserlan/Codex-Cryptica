@@ -29,7 +29,7 @@ test.describe("Oracle Connection Wizard", () => {
     });
 
     // Open Oracle Window
-    const toggleBtn = page.getByTitle("Open Lore Oracle");
+    const toggleBtn = page.getByTestId("activity-bar-oracle");
     await toggleBtn.click();
   });
 
