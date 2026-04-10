@@ -113,11 +113,10 @@
 
     --color-theme-accent: #991b1b;
 
-    --font-header-val: 'Zilla Slab', serif;
-    --font-body-val: 'Zilla Slab', serif;
+    --font-header-val: 'Alegreya', serif;
+    --font-body-val: 'Alegreya', serif;
 
     --bg-texture: none;
-
     --color-warning: #eab308;
     --color-danger: #ef4444;
 

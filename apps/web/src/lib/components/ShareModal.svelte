@@ -174,9 +174,11 @@
           class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-black rounded text-sm font-bold tracking-widest uppercase font-header transition shadow-lg shadow-cyan-900/20 flex items-center justify-center gap-2"
           onclick={handleP2PStart}
           disabled={p2pLoading}
+          aria-busy={p2pLoading}
         >
           {#if p2pLoading}
-            <span class="animate-spin">⏳</span> STARTING...
+            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            STARTING...
           {:else}
             <span class="icon-[lucide--zap] w-4 h-4"></span>
             START LIVE SESSION

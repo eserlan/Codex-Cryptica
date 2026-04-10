@@ -249,4 +249,51 @@ describe("UIStore", () => {
     uiStore.dismissedLandingPage = true;
     expect(uiStore.isLandingPageVisible).toBe(false);
   });
+
+  it("should close the sidebar when focusing an entity on mobile", () => {
+    // 1. Setup mobile state
+    uiStore.isMobile = true;
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+
+    // 2. Focus an entity
+    uiStore.focusEntity("hero-123");
+
+    // 3. Verify sidebar is closed
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+  });
+
+  it("should close the sidebar even when re-focusing the same entity on mobile", () => {
+    // 1. Setup mobile state with an entity already focused
+    uiStore.isMobile = true;
+    uiStore.focusEntity("hero-123");
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+
+    // 2. Focus the SAME entity again
+    uiStore.focusEntity("hero-123");
+
+    // 3. Verify sidebar is closed even if the entity didn't change
+    expect(uiStore.leftSidebarOpen).toBe(false);
+    expect(uiStore.activeSidebarTool).toBe("none");
+    expect(uiStore.focusedEntityId).toBe("hero-123");
+  });
+
+  it("should NOT close the sidebar when focusing an entity on desktop", () => {
+    // 1. Setup desktop state
+    uiStore.isMobile = false;
+    uiStore.toggleSidebarTool("explorer");
+    expect(uiStore.leftSidebarOpen).toBe(true);
+
+    // 2. Focus an entity
+    uiStore.focusEntity("hero-456");
+
+    // 3. Verify sidebar is still open
+    expect(uiStore.leftSidebarOpen).toBe(true);
+    expect(uiStore.activeSidebarTool).toBe("explorer");
+    expect(uiStore.focusedEntityId).toBe("hero-456");
+  });
 });

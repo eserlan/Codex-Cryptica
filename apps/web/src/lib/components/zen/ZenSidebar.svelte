@@ -72,6 +72,16 @@
 
     return result;
   });
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!entity) return false;
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 </script>
 
 <div
@@ -90,7 +100,18 @@
 
   <!-- Image -->
   <div class="mb-6">
-    {#if editState.isEditing}
+    {#if !isVisible && vault.isGuest}
+      <div
+        class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
+      >
+        <span class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
+        ></span>
+        <span
+          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          >Hidden</span
+        >
+      </div>
+    {:else if editState.isEditing}
       <div class="mb-4">
         <label
           class="block text-[10px] text-theme-secondary font-bold mb-1"
@@ -124,11 +145,14 @@
       </button>
     {:else}
       <div
-        class="w-full aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
+        class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
       >
-        <div class="flex flex-col items-center justify-center gap-2">
-          <span class="icon-[lucide--image] w-12 h-12 opacity-50"></span>
-          <span class="text-[10px] font-bold uppercase font-header"
+        <div class="flex flex-col items-center justify-center gap-1 md:gap-2">
+          <span
+            class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
+          ></span>
+          <span
+            class="text-[8px] md:text-[10px] font-bold uppercase font-header opacity-40"
             >No Image</span
           >
         </div>
@@ -137,17 +161,17 @@
           <button
             onclick={() => oracle.drawEntity(entity.id)}
             disabled={oracle.isLoading}
-            class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-4 py-2 rounded shadow-sm group/btn relative overflow-hidden"
+            class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden mt-1 md:mt-2"
             aria-label="Draw visualization for {entity.title}"
             aria-busy={oracle.isLoading}
           >
             {#if oracle.isLoading}
               <span
-                class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+                class="icon-[lucide--loader-2] w-3 h-3 md:w-5 md:h-5 animate-spin text-theme-primary"
                 aria-hidden="true"
               ></span>
               <span
-                class="text-[10px] font-bold tracking-widest text-theme-primary text-center"
+                class="text-[7px] md:text-[10px] font-bold tracking-widest text-theme-primary text-center"
                 aria-live="polite"
               >
                 {#if oracle.activeStyleTitle}
@@ -161,11 +185,11 @@
                 class="absolute inset-0 bg-theme-primary/10 opacity-0 group-hover/btn:opacity-100 transition-opacity"
               ></div>
               <span
-                class="icon-[lucide--palette] w-4 h-4 text-theme-primary"
+                class="icon-[lucide--palette] w-3 h-3 md:w-4 md:h-4 text-theme-primary"
                 aria-hidden="true"
               ></span>
               <span
-                class="text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
+                class="text-[8px] md:text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
                 >DRAW VISUAL</span
               >
             {/if}

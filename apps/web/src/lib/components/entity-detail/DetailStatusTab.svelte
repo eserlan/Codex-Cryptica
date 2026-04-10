@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Entity, Connection } from "schema";
   import { vault } from "$lib/stores/vault.svelte";
+  import { isEntityVisible } from "schema";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "$lib/components/connections/ConnectionEditor.svelte";
@@ -24,6 +25,15 @@
   }>();
 
   let editingConnectionTarget = $state<string | null>(null);
+
+  // Check if this entity is visible in guest/shared mode
+  const isVisible = $derived.by(() => {
+    if (!vault.isGuest) return true;
+    return isEntityVisible(entity, {
+      sharedMode: vault.isGuest,
+      defaultVisibility: vault.defaultVisibility,
+    });
+  });
 
   const getTemporalLabel = (type: string, field: "date" | "start" | "end") => {
     const t = type.toLowerCase();
@@ -135,22 +145,35 @@
   {/if}
 
   <!-- Chronicle -->
-  <div>
-    <h3
-      class="text-theme-secondary font-header italic text-lg mb-3 border-b border-theme-border pb-1"
-    >
-      {themeStore.jargon.chronicle_header}
-    </h3>
-    <div class="prose-content">
-      <MarkdownEditor
-        content={isEditing ? editContent : entity.content || "No content yet."}
-        editable={isEditing}
-        onUpdate={(val) => {
-          if (isEditing) editContent = val;
-        }}
-      />
+  {#if isEditing || isVisible}
+    <div>
+      <h3
+        class="text-theme-secondary font-header italic text-lg mb-3 border-b border-theme-border pb-1"
+      >
+        {themeStore.jargon.chronicle_header}
+      </h3>
+      <div class="prose-content">
+        {#if !isVisible && vault.isGuest}
+          <div
+            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
+          >
+            <span class="icon-[lucide--lock] w-4 h-4"></span>
+            Chronicle is hidden in shared mode
+          </div>
+        {:else}
+          <MarkdownEditor
+            content={isEditing
+              ? editContent
+              : entity.content || "No content yet."}
+            editable={isEditing}
+            onUpdate={(val) => {
+              if (isEditing) editContent = val;
+            }}
+          />
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 
   <!-- Connections -->
   <div>

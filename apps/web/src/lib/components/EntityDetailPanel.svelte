@@ -137,15 +137,13 @@
     class="pointer-events-auto flex h-full w-full md:w-[400px] lg:w-[450px] flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
     style:background-image="var(--bg-theme-surface)"
     style:background-size="cover"
-    ontouchmove={(e) => e.stopPropagation()}
-    onwheel={(e) => e.stopPropagation()}
     data-testid="entity-detail-panel"
   >
     <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
 
     <div
-      class="flex-1 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col"
-      style:background-image="var(--bg-texture-overlay)"
+      class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"
+      style="background-image: var(--bg-texture-overlay); touch-action: pan-y;"
     >
       {#if uiStore.isDemoMode}
         <div
@@ -156,7 +154,7 @@
       {/if}
       <div
         style:background-image="var(--bg-texture-overlay)"
-        class="bg-theme-surface"
+        class="bg-theme-surface shrink-0"
       >
         <DetailImage {entity} {isEditing} bind:editImage />
 
@@ -169,7 +167,7 @@
         />
       </div>
 
-      <div class="p-4 md:p-6 flex-1">
+      <div class="p-4 md:p-6">
         <div
           role="tabpanel"
           id={panelIds.status}

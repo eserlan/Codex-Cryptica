@@ -79,4 +79,37 @@ This report identifies the top 10 potential "God Files" (files with excessive re
 
 ## Conclusion
 
-The highest priority for refactoring should now shift to **`SyncService.ts`**, followed by any remaining large UI shells such as `CanvasWorkspace.svelte` and `ChatMessage.svelte`. The successful refactors of `oracle.svelte.ts`, `vault.svelte.ts`, `GraphView.svelte`, `ZenModeModal.svelte`, `ai.ts`, and `MapView.svelte` have validated a modular extraction strategy that should now be applied to sync-core responsibilities and any remaining high-entropy UI containers.
+The biggest remaining risks are no longer the historically-fixed monoliths, but the live high-coupling shells at the top of the current list. The next refactor pass should focus on files that combine UI, state, and side effects in a way that is still hard to test or reason about, rather than simply chasing line count.
+
+## Next Actions
+
+The next pass should focus on the four or five files below. Each one either concentrates too many responsibilities in one module or is likely to hide a reusable boundary that can be extracted cleanly.
+
+### 1. `apps/web/src/lib/components/canvas/CanvasWorkspace.svelte`
+
+**Why now:** This is the largest remaining file and the strongest signal that the canvas workspace still mixes rendering, pointer interaction, selection, keyboard shortcuts, tool dispatch, and workspace coordination in one place.
+**Recommended split:** Extract tool-specific interaction handlers, selection/command state, and rendering helpers into separate modules or child components. Keep the shell focused on composition and event wiring.
+
+### 2. `apps/web/src/lib/stores/vault/entity-store.svelte.ts`
+
+**Why now:** This store is the biggest vault-adjacent state module and likely carries entity lifecycle, indexing, sync hooks, and persistence boundaries.
+**Recommended split:** Separate pure entity CRUD/state from persistence and indexing concerns. If this file still knows too much about vault-wide coordination, move that logic into a dedicated service or coordinator.
+
+### 3. `packages/oracle-engine/src/oracle-executor.ts`
+
+**Why now:** Engine code tends to accumulate orchestration, validation, and side effects behind a single entrypoint. It is a good candidate for clearer seams because the behavior is usually deterministic enough to test in layers.
+**Recommended split:** Isolate command routing, execution policy, and effectful integrations so the executor becomes a thin dispatcher instead of a multi-role coordinator.
+
+### 4. `apps/web/src/lib/components/settings/SettingsModal.svelte`
+
+**Why now:** Settings modals commonly become a dumping ground for vault, sync, theme, export/import, and preference flows.
+**Recommended split:** Extract the modal sections by concern, and move non-visual settings logic into store/service modules so the modal becomes a layout shell with tabs or sections.
+
+### 5. `apps/web/src/lib/components/settings/ImportSettings.svelte`
+
+**Why now:** Import flows often hide parsing, validation, preview, and merge logic in a component that should mostly just present state.
+**Recommended split:** Pull parsing and file/format validation out of the component. Keep the Svelte file responsible for UX and status display only.
+
+### Secondary Candidates
+
+`apps/web/src/lib/components/GraphView.svelte`, `apps/web/src/routes/(app)/+page.svelte`, `apps/web/src/lib/components/world/FrontPage.svelte`, and `apps/web/src/lib/stores/ui.svelte.ts` should stay on watch, but they are lower priority than the files above. They may still be large shells, but they are less obviously the source of architectural coupling than `CanvasWorkspace`, `entity-store`, and `oracle-executor`.

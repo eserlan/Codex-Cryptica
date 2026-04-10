@@ -1,5 +1,6 @@
 <script lang="ts">
   import { base } from "$app/paths";
+  import { themeStore } from "$lib/stores/theme.svelte";
   let { data } = $props();
 </script>
 
@@ -43,7 +44,7 @@
               })}
             </time>
             <span class="w-8 h-px bg-theme-border"></span>
-            <span>Intel Report</span>
+            <span>{themeStore.resolveJargon("blog_entry")}</span>
           </div>
 
           <h2
@@ -64,7 +65,7 @@
           <div
             class="mt-2 flex items-center gap-2 text-theme-primary font-bold uppercase text-xs tracking-[0.2em] group-hover:gap-4 transition-all"
           >
-            Decrypt Full Entry
+            {themeStore.resolveJargon("blog_action")}
             <span class="icon-[lucide--arrow-right] w-4 h-4"></span>
           </div>
         </article>

@@ -31,10 +31,12 @@ vi.mock("../canvas-registry.svelte", () => ({
 
 vi.mock("../vault-registry.svelte", () => ({
   vaultRegistry: {
+    init: vi.fn().mockResolvedValue(undefined),
     createVault: vi.fn(),
     deleteVault: vi.fn(),
     setActiveVault: vi.fn(),
     availableVaults: [],
+    isInitialized: false,
   },
 }));
 
@@ -88,10 +90,12 @@ describe("VaultLifecycleManager", () => {
       getServices: vi.fn().mockReturnValue({}),
       setSelectedEntityId: vi.fn(),
       vaultRegistry: {
-        createVault: vi.fn(),
+        init: vi.fn().mockResolvedValue(undefined),
+        createVault: vi.fn().mockResolvedValue("test-id"),
         deleteVault: vi.fn(),
         setActiveVault: vi.fn(),
         availableVaults: [],
+        isInitialized: false,
       },
       themeStore: mockThemeStore,
       mapRegistry: { maps: {} },

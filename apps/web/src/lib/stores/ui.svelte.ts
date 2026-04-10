@@ -120,23 +120,28 @@ class UIStore {
 
   focusEntity(entityId: string | null) {
     if (entityId) {
+      // On mobile, close the sidebar when focusing an entity to ensure the view is visible.
+      // We do this BEFORE the early return to ensure selecting an already-focused entity still closes the drawer.
+      if (this.isMobile) {
+        this.closeSidebar();
+      }
+
       if (this.focusedEntityId === entityId && this.mainViewMode === "focus")
         return;
 
       this.focusedEntityId = entityId;
       this.mainViewMode = "focus";
-      // Close the right-side entity sidebar if it was open
-      if (this.mainViewMode === "focus") {
-        void import("./vault.svelte").then((m) => {
-          if (
-            m?.vault &&
-            this.mainViewMode === "focus" &&
-            this.focusedEntityId === entityId
-          ) {
-            m.vault.selectedEntityId = null;
-          }
-        });
-      }
+
+      // Close the right-side entity sidebar if it was open (mutually exclusive with focus mode)
+      void import("./vault.svelte").then((m) => {
+        if (
+          m?.vault &&
+          this.mainViewMode === "focus" &&
+          this.focusedEntityId === entityId
+        ) {
+          m.vault.selectedEntityId = null;
+        }
+      });
     } else {
       if (this.mainViewMode !== "focus") return;
 
@@ -407,6 +412,22 @@ class UIStore {
 
     const newWin = window.open(url, "CodexCrypticaImport", features);
     if (newWin) newWin.opener = null;
+  }
+
+  openDiceWindow() {
+    if (typeof window === "undefined") return;
+
+    const width = 450;
+    const height = 800;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const url = `${window.location.origin}${base}/dice`;
+    const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
+
+    const newWin = window.open(url, "CodexCrypticaDice", features);
+    if (newWin) newWin.opener = null;
+    this.showDiceModal = false;
   }
 
   toggleSettings(tab: SettingsTab = "vault") {

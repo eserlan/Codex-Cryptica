@@ -18,13 +18,13 @@
   },
   "peerDependencies": {
     "@xyflow/svelte": "^1.5.2",
-    "svelte": "^5.55.1"
+    "svelte": "^5.55.2"
   },
   "devDependencies": {
-    "@sveltejs/kit": "^2.55.0",
-    "@types/node": "^25.5.0",
-    "@vitest/coverage-v8": "^4.1.2",
-    "eslint": "^10.1.0",
+    "@sveltejs/kit": "^2.57.0",
+    "@types/node": "^25.5.2",
+    "@vitest/coverage-v8": "^4.1.4",
+    "eslint": "^10.2.0",
     "schema": "*",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
