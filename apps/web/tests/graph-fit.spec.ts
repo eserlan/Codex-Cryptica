@@ -10,6 +10,11 @@ test.describe("Graph Fit to Screen", () => {
       } catch {
         /* ignore */
       }
+      try {
+        localStorage.setItem("codex_dismissed_world_page", "true");
+      } catch {
+        /* ignore */
+      }
     });
   });
 
@@ -21,12 +26,6 @@ test.describe("Graph Fit to Screen", () => {
     // Wait for graph canvas
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible({ timeout: 10000 });
-
-    // Dismiss front page overlay if visible
-    const enterBtn = page.getByRole("button", { name: /ENTER THE CODEX/i });
-    if (await enterBtn.isVisible()) {
-      await enterBtn.click();
-    }
 
     // Wait for vault to be fully initialized before creating entities
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
