@@ -22,6 +22,17 @@
   import { MapViewAssetLoader } from "./map-view-loader";
   import MapPinPopover from "./MapPinPopover.svelte";
   import { hitTestToken, measureDistance } from "$lib/utils/vtt-helpers";
+  import { TOKEN_STATUS_EFFECTS } from "$types/vtt";
+
+  function hashToColor(input: string) {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      hash = (hash << 5) - hash + input.charCodeAt(i);
+      hash |= 0;
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue} 75% 55%)`;
+  }
 
   let { children }: { children?: Snippet } = $props();
 
@@ -124,16 +135,40 @@
     };
   });
   const vttPings = $derived.by(() => Object.values(mapSession.pings));
-  const vttTokens = $derived.by(() =>
-    Object.values(mapSession.tokens).map((token) => ({
-      ...token,
-      label: token.name,
-      image: tokenImageCache[token.id] ?? null,
-      selected: mapSession.selection === token.id,
-      active: mapSession.activeTokenId === token.id,
-      visible: true,
-    })),
-  );
+  const remoteMeasurement = $derived.by(() => {
+    const rm = mapSession.activeMeasurement;
+    if (!rm || !rm.start || !rm.end) return null;
+
+    const pixelDist = measureDistance(rm.start, rm.end);
+    const gridSize = mapStore.gridSize || 50;
+    const units = (pixelDist / gridSize) * mapSession.gridDistance;
+    const label = `${Math.round(units)}${mapSession.gridUnit}`;
+    const color = hashToColor(rm.peerId);
+
+    return {
+      start: rm.start,
+      end: rm.end,
+      label,
+      color,
+      peerId: rm.peerId,
+    };
+  });
+  const vttTokens = $derived.by(() => {
+    const isHost = mapStore.isGMMode;
+    const peerId = mapSession.myPeerId;
+    const selected = mapSession.selectedTokens;
+
+    return Object.values(mapSession.tokens)
+      .filter((token) => mapSession.canViewToken(token.id, peerId, isHost))
+      .map((token) => ({
+        ...token,
+        label: token.name,
+        image: tokenImageCache[token.id] ?? null,
+        selected: mapSession.selection === token.id || selected.has(token.id),
+        active: mapSession.activeTokenId === token.id,
+        visible: true,
+      }));
+  });
 
   $effect(() => {
     const currentTokens = Object.values(mapSession.tokens);
@@ -246,11 +281,15 @@
         maskCanvas: _drawMask,
         showFog: mapStore.showFog,
         fogColor,
+        accentColor: themeStore.activeTheme.tokens.primary,
         grid: {
           type: mapStore.showGrid ? "square" : "none",
           size: mapStore.gridSize,
           color: gridColor,
           opacity: 0.65,
+          offsetX: mapStore.gridOffsetX,
+          offsetY: mapStore.gridOffsetY,
+          fixed: mapSession.gridMoveMode && mapStore.isGMMode,
         },
         tokens: vttTokens,
         measurement: vttMeasurement,
@@ -302,6 +341,48 @@
 
             ctx.restore();
           }
+        }
+      }
+
+      // Render remote measurement from other peers
+      if (remoteMeasurement) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const start = mapStore.project(remoteMeasurement.start);
+          const end = mapStore.project(remoteMeasurement.end);
+
+          ctx.save();
+          ctx.strokeStyle = remoteMeasurement.color;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 4]);
+          ctx.globalAlpha = 0.8;
+
+          ctx.beginPath();
+          ctx.moveTo(start.x, start.y);
+          ctx.lineTo(end.x, end.y);
+          ctx.stroke();
+
+          // Draw endpoint circles
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(start.x, start.y, 5, 0, Math.PI * 2);
+          ctx.fillStyle = remoteMeasurement.color;
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.arc(end.x, end.y, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Draw label
+          const midX = (start.x + end.x) / 2;
+          const midY = (start.y + end.y) / 2;
+          ctx.font = "12px sans-serif";
+          ctx.fillStyle = remoteMeasurement.color;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillText(remoteMeasurement.label, midX, midY - 8);
+
+          ctx.restore();
         }
       }
 
@@ -364,6 +445,10 @@
   let mouseDownPos = { x: 0, y: 0 };
   let isAltPressed = $state(false);
   let isPointerOver = $state(false);
+  let gridFitStart = $state<{ x: number; y: number } | null>(null);
+  let gridFitEnd = $state<{ x: number; y: number } | null>(null);
+  let boxSelectStart = $state<{ x: number; y: number } | null>(null);
+  let boxSelectEnd = $state<{ x: number; y: number } | null>(null);
   let cachedRect: DOMRect | null = null;
   let dragState = $state<{
     tokenId: string;
@@ -379,6 +464,7 @@
     tokenId?: string;
   } | null>(null);
   let showResizeSubmenu = $state(false);
+  let showStatusSubmenu = $state(false);
 
   const visualBrushRadius = $derived(
     mapStore.brushRadius * mapStore.viewport.zoom,
@@ -410,6 +496,46 @@
     }
   }
 
+  function onGlobalKeyDown(event: KeyboardEvent) {
+    // Grid move mode: Enter applies, Escape cancels
+    if (event.key === "Enter" && mapSession.gridMoveMode) {
+      event.preventDefault();
+      const viewport = mapStore.viewport;
+      const canvasSize = mapStore.canvasSize;
+      mapStore.gridOffsetX =
+        -((viewport.pan.x + canvasSize.width / 2) / viewport.zoom) %
+        mapStore.gridSize;
+      mapStore.gridOffsetY =
+        -((viewport.pan.y + canvasSize.height / 2) / viewport.zoom) %
+        mapStore.gridSize;
+      mapSession.gridMoveMode = false;
+      uiStore.clearNotification();
+      return;
+    }
+    if (event.key === "Escape") {
+      if (mapSession.gridMoveMode) {
+        mapSession.gridMoveMode = false;
+        uiStore.clearNotification();
+        return;
+      }
+      if (mapSession.gridFitMode) {
+        mapSession.gridFitMode = false;
+        gridFitStart = null;
+        gridFitEnd = null;
+        return;
+      }
+      if (boxSelectStart) {
+        boxSelectStart = null;
+        boxSelectEnd = null;
+        return;
+      }
+      if (mapSession.selectedTokens.size > 1) {
+        mapSession.clearSelection();
+        return;
+      }
+    }
+  }
+
   function onKeyUp(event: KeyboardEvent) {
     isAltPressed = event.altKey;
   }
@@ -417,6 +543,7 @@
   function onMouseDown(e: MouseEvent) {
     contextMenu = null;
     showResizeSubmenu = false;
+    showStatusSubmenu = false;
     updateCachedRect();
     if (cachedRect) {
       lastMousePos = {
@@ -426,6 +553,20 @@
     }
     mouseDownPos = { x: e.clientX, y: e.clientY };
     isAltPressed = e.altKey;
+
+    // Ctrl/Cmd+click: start box selection
+    if (
+      mapStore.isGMMode &&
+      (e.ctrlKey || e.metaKey) &&
+      mapSession.vttEnabled &&
+      cachedRect
+    ) {
+      e.preventDefault();
+      boxSelectStart = { x: lastMousePos.x, y: lastMousePos.y };
+      boxSelectEnd = boxSelectStart;
+      isPanning = false;
+      return;
+    }
 
     if (mapSession.vttEnabled && cachedRect) {
       const hitToken = hitTestToken(
@@ -451,10 +592,39 @@
             y: imgPoint.y - hitToken.y,
           },
         };
-        mapSession.setSelection(hitToken.id);
+        mapSession.draggingTokenId = hitToken.id;
+        // Ctrl/Cmd+click to add to selection, Shift+click to toggle
+        if (e.ctrlKey || e.metaKey) {
+          mapSession.addToSelection(hitToken.id);
+        } else if (e.shiftKey) {
+          if (mapSession.selectedTokens.has(hitToken.id)) {
+            mapSession.removeFromSelection(hitToken.id);
+          } else {
+            mapSession.addToSelection(hitToken.id);
+          }
+        } else {
+          mapSession.setSelection(hitToken.id);
+        }
         isPanning = false;
         return;
       }
+    }
+
+    if (mapSession.gridMoveMode && mapStore.isGMMode && cachedRect) {
+      // In grid move mode, mouse drag moves the viewport (pan) freely
+      // Grid stays fixed at screen origin
+      e.preventDefault();
+      e.stopPropagation();
+      isPanning = true;
+      return;
+    }
+
+    if (mapSession.gridFitMode && mapStore.isGMMode && cachedRect) {
+      e.preventDefault();
+      e.stopPropagation();
+      gridFitStart = { x: lastMousePos.x, y: lastMousePos.y };
+      gridFitEnd = gridFitStart;
+      return;
     }
 
     if (mapStore.isGMMode && e.altKey) {
@@ -475,6 +645,12 @@
     const mouseY = e.clientY - cachedRect.top;
     isAltPressed = e.altKey;
 
+    if (boxSelectStart) {
+      boxSelectEnd = { x: mouseX, y: mouseY };
+      lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
     if (dragState) {
       const imgPoint = mapStore.unproject({ x: mouseX, y: mouseY });
       const nextX = imgPoint.x - dragState.offset.x;
@@ -482,9 +658,15 @@
       if (mapStore.isGMMode) {
         mapSession.moveToken(dragState.tokenId, nextX, nextY);
       } else {
-        mapSession.requestTokenMove(dragState.tokenId, nextX, nextY);
+        mapSession.requestTokenMove(dragState.tokenId, nextX, nextY, true);
         p2pGuestService.requestTokenMove(dragState.tokenId, nextX, nextY);
       }
+      lastMousePos = { x: mouseX, y: mouseY };
+      return;
+    }
+
+    if (gridFitStart) {
+      gridFitEnd = { x: mouseX, y: mouseY };
       lastMousePos = { x: mouseX, y: mouseY };
       return;
     }
@@ -535,9 +717,76 @@
       }
     }
 
+    if (boxSelectStart && boxSelectEnd && cachedRect) {
+      // Find all tokens within the selection rectangle
+      const allTokens = Object.values(mapSession.tokens);
+      const x1 = Math.min(boxSelectStart.x, boxSelectEnd.x);
+      const y1 = Math.min(boxSelectStart.y, boxSelectEnd.y);
+      const x2 = Math.max(boxSelectStart.x, boxSelectEnd.x);
+      const y2 = Math.max(boxSelectStart.y, boxSelectEnd.y);
+      const minArea = 100; // Minimum drag area to count as box select
+
+      if ((x2 - x1) * (y2 - y1) > minArea) {
+        const selected: string[] = [];
+        for (const token of allTokens) {
+          const projected = mapStore.project({ x: token.x, y: token.y });
+          if (
+            projected.x >= x1 &&
+            projected.x <= x2 &&
+            projected.y >= y1 &&
+            projected.y <= y2
+          ) {
+            selected.push(token.id);
+          }
+        }
+        mapSession.setMultiSelection(selected);
+      }
+
+      boxSelectStart = null;
+      boxSelectEnd = null;
+      return;
+    }
+
     if (dragState) {
+      if (!mapStore.isGMMode) {
+        mapSession.confirmTokenMove(dragState.tokenId);
+      }
+      mapSession.draggingTokenId = null;
       dragState = null;
       isPanning = false;
+      return;
+    }
+
+    if (gridFitStart && gridFitEnd && cachedRect) {
+      const viewport = mapStore.viewport;
+      const _canvasSize = mapStore.canvasSize;
+      const _zoom = viewport.zoom;
+
+      // Convert drawn screen-space coords to image space
+      const startImg = mapStore.unproject(gridFitStart);
+      const endImg = mapStore.unproject(gridFitEnd);
+
+      const imgWidth = Math.abs(endImg.x - startImg.x);
+      const imgHeight = Math.abs(endImg.y - startImg.y);
+
+      // Ignore tiny drags
+      if (imgWidth >= 5 || imgHeight >= 5) {
+        // Cell size from larger dimension (image-space)
+        const cellSize = Math.round(Math.max(imgWidth, imgHeight));
+        mapStore.gridSize = cellSize;
+
+        // Set offset so grid lines pass through top-left of drawn square
+        const gridMinX = Math.min(startImg.x, endImg.x);
+        const gridMinY = Math.min(startImg.y, endImg.y);
+        mapStore.gridOffsetX = -(gridMinX % cellSize);
+        mapStore.gridOffsetY = -(gridMinY % cellSize);
+      }
+
+      gridFitStart = null;
+      gridFitEnd = null;
+      mapSession.gridFitMode = false;
+      // Open grid settings so user can fine-tune with move mode
+      mapSession.showGridSettings = true;
       return;
     }
 
@@ -609,6 +858,7 @@
   function onDoubleClick(e: MouseEvent) {
     contextMenu = null;
     showResizeSubmenu = false;
+    showStatusSubmenu = false;
     if (!container) return;
 
     const rect = container.getBoundingClientRect();
@@ -624,6 +874,13 @@
   }
 
   function onContextMenu(e: MouseEvent) {
+    if (gridFitStart) {
+      gridFitStart = null;
+      gridFitEnd = null;
+      mapSession.gridFitMode = false;
+      return;
+    }
+
     if (!mapSession.vttEnabled || !container) return;
     e.preventDefault();
 
@@ -640,6 +897,7 @@
 
     const imgCoords = mapStore.unproject({ x, y });
     showResizeSubmenu = false;
+    showStatusSubmenu = false;
     contextMenu = {
       x: e.clientX,
       y: e.clientY,
@@ -721,7 +979,12 @@
   onkeydown={onKeyDown}
   onkeyup={onKeyUp}
 >
-  <canvas bind:this={canvas} class="absolute inset-0"></canvas>
+  <canvas
+    bind:this={canvas}
+    class="absolute inset-0 {mapSession.gridFitMode && mapStore.isGMMode
+      ? 'cursor-crosshair'
+      : ''} {mapSession.gridMoveMode && mapStore.isGMMode ? 'cursor-move' : ''}"
+  ></canvas>
 
   {#if !mapImage}
     <div
@@ -802,6 +1065,60 @@
           <span>Ping Token</span>
         </button>
 
+        <!-- Multi-select actions (GM only) -->
+        {#if mapStore.isGMMode && !uiStore.isGuestMode}
+          {#if contextMenu?.tokenId && mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(contextMenu.tokenId)}
+            <div class="h-px bg-theme-border my-1 mx-2"></div>
+            <div
+              class="px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-muted"
+            >
+              {mapSession.selectedTokens.size} tokens selected
+            </div>
+            <!-- Hide Selected -->
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+              onclick={() => {
+                for (const id of mapSession.selectedTokens) {
+                  mapSession.toggleTokenVisibility(id);
+                }
+                contextMenu = null;
+              }}
+            >
+              <span class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+              ></span>
+              <span>Hide Selected</span>
+            </button>
+            <!-- Remove Selected -->
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-red-400"
+              onclick={() => {
+                for (const id of mapSession.selectedTokens) {
+                  mapSession.removeToken(id);
+                }
+                contextMenu = null;
+              }}
+            >
+              <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+              <span>Remove Selected</span>
+            </button>
+          {:else}
+            <!-- Select All Visible -->
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+              onclick={() => {
+                const allIds = Object.keys(mapSession.tokens);
+                mapSession.setMultiSelection(allIds);
+                contextMenu = null;
+              }}
+            >
+              <span
+                class="icon-[lucide--square-mouse-pointer] w-3.5 h-3.5 text-theme-muted"
+              ></span>
+              <span>Select All</span>
+            </button>
+          {/if}
+        {/if}
+
         <div class="h-px bg-theme-border my-1 mx-2"></div>
 
         <!-- Removal -->
@@ -818,6 +1135,31 @@
             <span class="icon-[lucide--copy-plus] w-3.5 h-3.5"></span>
             <span>Clone Token</span>
           </button>
+
+          <!-- Show/Hide Token -->
+          {#if contextMenu?.tokenId}
+            {@const token = mapSession.tokens[contextMenu.tokenId]}
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+              onclick={() => {
+                if (contextMenu?.tokenId) {
+                  mapSession.toggleTokenVisibility(contextMenu.tokenId);
+                  contextMenu = null;
+                }
+              }}
+            >
+              {#if token?.visibleTo === "all"}
+                <span
+                  class="icon-[lucide--eye-off] w-3.5 h-3.5 text-theme-muted"
+                ></span>
+                <span>Hide from Guests</span>
+              {:else}
+                <span class="icon-[lucide--eye] w-3.5 h-3.5 text-theme-primary"
+                ></span>
+                <span>Show to All</span>
+              {/if}
+            </button>
+          {/if}
         {/if}
 
         {#if mapStore.isGMMode && !uiStore.isGuestMode}
@@ -835,12 +1177,22 @@
           </button>
         {/if}
 
-        <!-- Resize Submenu Trigger (Host only) -->
+        <!-- Resize Submenu (Host only) -->
         {#if mapStore.isGMMode && !uiStore.isGuestMode}
-          <div class="relative group" role="presentation">
+          <div
+            class="relative group"
+            role="presentation"
+            onmouseenter={() => {
+              showResizeSubmenu = true;
+              showStatusSubmenu = false;
+            }}
+            onmouseleave={() => {
+              showResizeSubmenu = false;
+              showStatusSubmenu = false;
+            }}
+          >
             <button
               class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
-              onmouseenter={() => (showResizeSubmenu = true)}
             >
               <div class="flex items-center gap-2">
                 <span class="icon-[lucide--maximize] w-3.5 h-3.5"></span>
@@ -854,7 +1206,6 @@
               <div
                 class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[100px]"
                 role="presentation"
-                onmouseleave={() => (showResizeSubmenu = false)}
               >
                 {#each [1, 2, 3, 4] as scale (scale)}
                   <button
@@ -865,9 +1216,17 @@
                         const token = mapSession.tokens[contextMenu.tokenId];
                         if (token) {
                           const snappedX =
-                            Math.round(token.x / gridSize) * gridSize;
+                            Math.round(
+                              (token.x - mapStore.gridOffsetX) / gridSize,
+                            ) *
+                              gridSize +
+                            mapStore.gridOffsetX;
                           const snappedY =
-                            Math.round(token.y / gridSize) * gridSize;
+                            Math.round(
+                              (token.y - mapStore.gridOffsetY) / gridSize,
+                            ) *
+                              gridSize +
+                            mapStore.gridOffsetY;
 
                           mapSession.updateToken(contextMenu.tokenId, {
                             x: snappedX,
@@ -888,6 +1247,84 @@
             {/if}
           </div>
         {/if}
+
+        <!-- Status Submenu (Host only) -->
+        {#if mapStore.isGMMode && !uiStore.isGuestMode}
+          {#if contextMenu.tokenId}
+            {@const token = mapSession.tokens[contextMenu.tokenId]}
+            {@const activeEffects = token?.statusEffects ?? []}
+            <div
+              class="relative group"
+              role="presentation"
+              onmouseenter={() => {
+                showStatusSubmenu = true;
+                showResizeSubmenu = false;
+              }}
+              onmouseleave={() => {
+                showStatusSubmenu = false;
+                showResizeSubmenu = false;
+              }}
+            >
+              <button
+                class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center justify-between gap-2"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="icon-[lucide--badge] w-3.5 h-3.5"></span>
+                  <span>Status</span>
+                </div>
+                <span class="icon-[lucide--chevron-right] w-3 h-3 opacity-50"
+                ></span>
+              </button>
+
+              {#if showStatusSubmenu}
+                <div
+                  class="absolute left-full top-0 ml-px bg-theme-surface border border-theme-border rounded shadow-2xl py-1 min-w-[160px]"
+                  role="presentation"
+                >
+                  {#each TOKEN_STATUS_EFFECTS as effect (effect.id)}
+                    {@const isActive = activeEffects.includes(effect.id)}
+                    <button
+                      class="w-full text-left px-4 py-2 text-xs transition-colors flex items-center gap-2 {isActive
+                        ? 'text-theme-primary hover:bg-theme-primary/20'
+                        : 'text-theme-text hover:bg-theme-bg/50'}"
+                      onclick={() => {
+                        if (contextMenu?.tokenId) {
+                          const token = mapSession.tokens[contextMenu.tokenId];
+                          if (token) {
+                            const current = token.statusEffects ?? [];
+                            const updated = isActive
+                              ? current.filter((e) => e !== effect.id)
+                              : [...current, effect.id];
+                            mapSession.updateToken(contextMenu.tokenId, {
+                              statusEffects: updated,
+                            });
+                          }
+                          contextMenu = null;
+                          showStatusSubmenu = false;
+                          showResizeSubmenu = false;
+                        }
+                      }}
+                    >
+                      <span
+                        class="{effect.icon} w-3.5 h-3.5 flex-shrink-0"
+                        style:color={effect.color}
+                      ></span>
+                      <span class="flex-1">{effect.label}</span>
+                      {#if isActive}
+                        <span
+                          class="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-900/10 text-[11px] font-black leading-none text-amber-950 shadow-[0_0_0_1px_rgba(120,53,15,0.25)]"
+                          aria-hidden="true"
+                        >
+                          ✓
+                        </span>
+                      {/if}
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          {/if}
+        {/if}
       {:else}
         <button
           class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
@@ -906,5 +1343,39 @@
     </div>
   {/if}
 
+  {#if gridFitStart && gridFitEnd}
+    <div
+      class="absolute inset-0 z-[60] pointer-events-none"
+      style:cursor="crosshair"
+    >
+      <div
+        class="absolute border-2 border-dashed"
+        style:border-color="var(--color-theme-primary, #78350f)"
+        style:left={`${Math.min(gridFitStart.x, gridFitEnd.x)}px`}
+        style:top={`${Math.min(gridFitStart.y, gridFitEnd.y)}px`}
+        style:width={`${Math.abs(gridFitEnd.x - gridFitStart.x)}px`}
+        style:height={`${Math.abs(gridFitEnd.y - gridFitStart.y)}px`}
+      ></div>
+    </div>
+  {/if}
+
+  {#if boxSelectStart && boxSelectEnd}
+    <div
+      class="absolute inset-0 z-[60] pointer-events-none"
+      style:cursor="crosshair"
+    >
+      <div
+        class="absolute border-2 border-dashed bg-theme-primary/10"
+        style:border-color="var(--color-theme-primary, #78350f)"
+        style:left={`${Math.min(boxSelectStart.x, boxSelectEnd.x)}px`}
+        style:top={`${Math.min(boxSelectStart.y, boxSelectEnd.y)}px`}
+        style:width={`${Math.abs(boxSelectEnd.x - boxSelectStart.x)}px`}
+        style:height={`${Math.abs(boxSelectEnd.y - boxSelectStart.y)}px`}
+      ></div>
+    </div>
+  {/if}
+
   {@render children?.()}
 </div>
+
+<svelte:window onkeydown={onGlobalKeyDown} />

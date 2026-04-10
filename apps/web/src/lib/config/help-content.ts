@@ -304,7 +304,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Navigation Hub",
     content:
       "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
-    icon: "icon-[lucide--layout-sidebar]",
+    icon: "icon-[lucide--layout-panel-left]",
   },
 };
 

@@ -3,6 +3,7 @@ import { themeStore as defaultThemeStore } from "../../stores/theme.svelte";
 import { guestRoster as defaultGuestRoster } from "../../stores/guest";
 import { mapStore as defaultMapStore } from "../../stores/map.svelte";
 import type { Entity, Map } from "schema";
+import { get } from "svelte/store";
 import {
   buildSharedGraphPayload,
   deriveGuestPresenceStatus,
@@ -12,7 +13,7 @@ import {
 } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { mapSession } from "../../stores/map-session.svelte";
-import type { P2PMessage } from "./p2p-protocol";
+import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -40,6 +41,14 @@ export class P2PHostService {
     this.guestRoster = deps.guestRoster ?? defaultGuestRoster;
     this.mapStore = deps.mapStore ?? defaultMapStore;
     this.peerFactory = deps.peerFactory ?? createPeer;
+  }
+
+  get isHosting() {
+    return this._isHosting;
+  }
+
+  get activePeerId() {
+    return this.peerId;
   }
 
   async startHosting(onPeerId?: (peerId: string) => void): Promise<string> {
@@ -113,22 +122,19 @@ export class P2PHostService {
         console.log("[P2P Host] Connection open for guest:", conn.peer);
         // 1. Send Initial Graph
         const graph = await this.prepareGraphPayload();
-        conn.send({ type: "GRAPH_SYNC", payload: graph });
+        this.safeSend(conn, { type: "GRAPH_SYNC", payload: graph });
         console.log("[P2P Host] Initial graph sent to:", conn.peer);
         if (this.mapStore.activeMap) {
           const mapPayload = await this.prepareMapPayload(
             this.mapStore.activeMap,
           );
-          conn.send({
+          this.safeSend(conn, {
             type: "MAP_SYNC",
             payload: mapPayload,
           });
         }
         if (mapSession.mapId && mapSession.vttEnabled) {
-          conn.send({
-            type: "SESSION_SNAPSHOT",
-            session: mapSession.createSnapshot(),
-          });
+          void this.sendSessionSnapshot(conn, mapSession.createSnapshot());
         }
       } catch (err) {
         console.error(
@@ -145,7 +151,9 @@ export class P2PHostService {
       if (data.type === "GET_FILE") {
         await this.handleFileRequest(conn, data.path, data.requestId);
       } else if (data.type === "GUEST_JOIN") {
-        this.handleGuestJoin(conn.peer, data.payload);
+        this.handleGuestJoin(conn, data.payload);
+      } else if (data.type === "GUEST_LEAVE") {
+        this.handleGuestLeave(conn, data.payload);
       } else if (data.type === "GUEST_STATUS") {
         this.handleGuestStatus(conn.peer, data.payload);
       } else if (data.type === "TOKEN_ADD_REQUEST") {
@@ -165,12 +173,17 @@ export class P2PHostService {
         if (mapSession.canMoveToken(data.tokenId, conn.peer, true)) {
           mapSession.moveToken(data.tokenId, data.x, data.y);
         }
-      } else if (data.type === "TOKEN_REMOVE") {
+      } else if (
+        data.type === "TOKEN_REMOVE" ||
+        data.type === "TOKEN_REMOVED"
+      ) {
         mapSession.removeToken(data.tokenId);
       } else if (data.type === "TOKEN_SELECT") {
         mapSession.setSelection(data.tokenId);
       } else if (data.type === "SET_MODE") {
         mapSession.setMode(data.mode);
+      } else if (data.type === "SESSION_SNAPSHOT") {
+        mapSession.syncFromRemoteSession(data.session);
       } else if (data.type === "TURN_ADVANCE") {
         mapSession.advanceTurn();
       } else if (data.type === "CHAT_MESSAGE") {
@@ -182,14 +195,40 @@ export class P2PHostService {
           data.y,
           data.peerId ?? conn.peer,
           data.color,
+          data.timestamp,
         );
-        this.broadcastVttMessage({
+        const payload = {
           type: "MAP_PING",
           mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
           x: data.x,
           y: data.y,
           peerId: data.peerId ?? conn.peer,
           color: data.color,
+          timestamp: data.timestamp ?? Date.now(),
+        } as const;
+        this.connections.forEach((guestConn) => {
+          if (guestConn !== conn && guestConn.open) {
+            guestConn.send(payload);
+          }
+        });
+      } else if (data.type === "MEASUREMENT") {
+        mapSession.handleRemoteMeasurement(
+          data.startX,
+          data.startY,
+          data.endX,
+          data.endY,
+          data.peerId ?? conn.peer,
+          data.active,
+        );
+        this.broadcastVttMessage({
+          type: "MAP_MEASUREMENT",
+          mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
+          startX: data.startX,
+          startY: data.startY,
+          endX: data.endX,
+          endY: data.endY,
+          peerId: data.peerId ?? conn.peer,
+          active: data.active,
         });
       } else if (data.type === "MAP_SYNC") {
         this.broadcastMapSync(data.payload);
@@ -198,6 +237,10 @@ export class P2PHostService {
 
     conn.on("close", () => {
       console.log("[P2P Host] Guest disconnected:", conn.peer);
+      const departingGuest = get(this.guestRoster)[conn.peer];
+      if (departingGuest) {
+        mapSession.clearGuestOwnership(conn.peer);
+      }
       this.connections = this.connections.filter((c) => c !== conn);
       this.guestRoster.update((current) =>
         removeGuestFromRoster(current, conn.peer),
@@ -205,18 +248,116 @@ export class P2PHostService {
     });
   }
 
-  private handleGuestJoin(peerId: string, payload: any) {
+  private safeSend(conn: any, message: any) {
+    if (!conn?.open) return false;
+    try {
+      conn.send(message);
+      return true;
+    } catch (err) {
+      console.warn("[P2P Host] Failed to send to guest", conn?.peer, err);
+      return false;
+    }
+  }
+
+  private sendGuestRosterSnapshot(conn: any) {
+    const roster = Object.values(get(this.guestRoster));
+    for (const guest of roster) {
+      this.safeSend(conn, {
+        type: "GUEST_STATUS",
+        payload: {
+          peerId: guest.peerId,
+          displayName: guest.displayName,
+          status: guest.status,
+          currentEntityId: guest.currentEntityId,
+          currentEntityTitle: guest.currentEntityTitle,
+        },
+      });
+    }
+  }
+
+  private handleGuestLeave(conn: any, _payload: any) {
+    const peerId = conn.peer;
+    const departingGuest = get(this.guestRoster)[peerId];
+
+    if (departingGuest) {
+      console.log("[P2P Host] Guest leaving:", departingGuest.displayName);
+      mapSession.clearGuestOwnership(peerId);
+      this.guestRoster.update((current) =>
+        removeGuestFromRoster(current, peerId),
+      );
+
+      // Broadcast the guest leaving to all other guests
+      this.broadcastVttMessage({
+        type: "GUEST_STATUS",
+        payload: {
+          peerId,
+          displayName: departingGuest.displayName,
+          status: "disconnected" as const,
+          currentEntityId: null,
+          currentEntityTitle: null,
+        },
+      });
+    }
+
+    conn.close();
+  }
+
+  private handleGuestJoin(conn: any, payload: any) {
+    const peerId = conn.peer;
+    const displayName = normalizeGuestName(payload?.displayName, peerId);
+    const hasDuplicateName = Object.values(get(this.guestRoster)).some(
+      (guest) =>
+        guest.peerId !== peerId &&
+        guest.displayName.localeCompare(displayName, undefined, {
+          sensitivity: "base",
+        }) === 0,
+    );
+    if (hasDuplicateName) {
+      this.safeSend(conn, {
+        type: "GUEST_JOIN_REJECTED",
+        payload: {
+          reason: "duplicate-display-name",
+          displayName,
+        },
+      });
+      conn.close();
+      return;
+    }
     this.guestRoster.update((current) =>
       upsertGuestRoster(current, peerId, {
-        displayName: normalizeGuestName(payload?.displayName, peerId),
+        displayName,
         status: "connected",
         currentEntityId: null,
         currentEntityTitle: null,
       }),
     );
+    mapSession.rebindGuestOwnership(peerId, displayName);
+    this.sendGuestRosterSnapshot(conn);
+    // Broadcast the new guest's info to all other connected guests
+    const guest = get(this.guestRoster)[peerId];
+    if (guest) {
+      this.broadcastVttMessage({
+        type: "GUEST_STATUS",
+        payload: {
+          peerId: guest.peerId,
+          displayName: guest.displayName,
+          status: guest.status,
+          currentEntityId: guest.currentEntityId,
+          currentEntityTitle: guest.currentEntityTitle,
+        },
+      });
+    }
   }
 
   private handleGuestStatus(peerId: string, payload: any) {
+    const existingGuest = get(this.guestRoster)[peerId];
+    if (!existingGuest) {
+      console.warn(
+        "[P2P Host] Ignoring GUEST_STATUS for peer without accepted join:",
+        peerId,
+      );
+      return;
+    }
     const currentEntityId =
       typeof payload?.currentEntityId === "string" && payload.currentEntityId
         ? payload.currentEntityId
@@ -224,21 +365,37 @@ export class P2PHostService {
     const currentEntityTitle =
       typeof payload?.currentEntityTitle === "string" &&
       payload.currentEntityTitle
-        ? payload.currentEntityTitle
-        : currentEntityId
+        ? currentEntityId
           ? this.vault.entities[currentEntityId]?.title || currentEntityId
-          : null;
+          : null
+        : null;
+    const displayName = normalizeGuestName(
+      payload?.displayName,
+      existingGuest.displayName || peerId,
+    );
     this.guestRoster.update((current) =>
       upsertGuestRoster(current, peerId, {
-        displayName: normalizeGuestName(
-          payload?.displayName,
-          current[peerId]?.displayName || peerId,
-        ),
+        displayName,
         status: deriveGuestPresenceStatus(payload?.status, currentEntityId),
         currentEntityId,
         currentEntityTitle,
       }),
     );
+    mapSession.rebindGuestOwnership(peerId, displayName);
+    // Broadcast updated guest info to all other connected guests
+    const guest = get(this.guestRoster)[peerId];
+    if (guest) {
+      this.broadcastVttMessage({
+        type: "GUEST_STATUS",
+        payload: {
+          peerId: guest.peerId,
+          displayName: guest.displayName,
+          status: guest.status,
+          currentEntityId: guest.currentEntityId,
+          currentEntityTitle: guest.currentEntityTitle,
+        },
+      });
+    }
   }
 
   private async prepareGraphPayload() {
@@ -348,6 +505,16 @@ export class P2PHostService {
     }
 
     return payload;
+  }
+
+  private async sendSessionSnapshot(
+    conn: any,
+    session = mapSession.createSnapshot(),
+  ) {
+    const payload = await encodeSessionSnapshot(session);
+    if (conn.open) {
+      conn.send(payload);
+    }
   }
 
   private async handleFileRequest(conn: any, path: string, requestId: string) {
@@ -602,6 +769,21 @@ export class P2PHostService {
   private broadcastVttMessage(message: P2PMessage) {
     if (this.connections.length === 0) return;
 
+    if (message.type === "SHOW_TOKEN_IMAGE") {
+      console.log("[P2P Host] Broadcasting SHOW_TOKEN_IMAGE", {
+        title: message.title,
+        imagePath: message.imagePath,
+        recipients: this.connections
+          .filter((conn) => conn.open)
+          .map((conn) => conn.peer),
+      });
+    }
+
+    if (message.type === "SESSION_SNAPSHOT") {
+      void this.broadcastSessionSnapshot(message.session);
+      return;
+    }
+
     if (message.type === "PING") {
       const payload = {
         type: "MAP_PING" as const,
@@ -610,6 +792,26 @@ export class P2PHostService {
         y: message.y,
         peerId: message.peerId,
         color: message.color,
+        timestamp: message.timestamp,
+      };
+      this.connections.forEach((conn) => {
+        if (conn.open) {
+          conn.send(payload);
+        }
+      });
+      return;
+    }
+
+    if (message.type === "MEASUREMENT") {
+      const payload = {
+        type: "MAP_MEASUREMENT" as const,
+        mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
+        startX: message.startX,
+        startY: message.startY,
+        endX: message.endX,
+        endY: message.endY,
+        peerId: message.peerId,
+        active: message.active,
       };
       this.connections.forEach((conn) => {
         if (conn.open) {
@@ -622,6 +824,18 @@ export class P2PHostService {
     this.connections.forEach((conn) => {
       if (conn.open) {
         conn.send(message);
+      }
+    });
+  }
+
+  private async broadcastSessionSnapshot(
+    session = mapSession.createSnapshot(),
+  ) {
+    if (this.connections.length === 0) return;
+    const payload = await encodeSessionSnapshot(session);
+    this.connections.forEach((conn) => {
+      if (conn.open) {
+        conn.send(payload);
       }
     });
   }

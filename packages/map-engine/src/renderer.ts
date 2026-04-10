@@ -1,6 +1,34 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = hex.replace("#", "").match(/.{2}/g);
+  if (!m || m.length < 3) return null;
+  return {
+    r: parseInt(m[0], 16),
+    g: parseInt(m[1], 16),
+    b: parseInt(m[2], 16),
+  };
+}
+
+function _lightenColor(hex: string, amount: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * amount));
+  const g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * amount));
+  const b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * amount));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+function _darkenColor(hex: string, amount: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const r = Math.max(0, Math.round(rgb.r * (1 - amount)));
+  const g = Math.max(0, Math.round(rgb.g * (1 - amount)));
+  const b = Math.max(0, Math.round(rgb.b * (1 - amount)));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
 export interface RenderToken {
   id: string;
   x: number;
@@ -14,6 +42,7 @@ export interface RenderToken {
   selected?: boolean;
   active?: boolean;
   visible?: boolean;
+  statusEffects?: string[];
 }
 
 export interface RenderMeasurement {
@@ -35,11 +64,15 @@ export interface RenderOptions {
   fogColor?: string;
   tokens?: RenderToken[];
   measurement?: RenderMeasurement | null;
+  accentColor?: string;
   grid?: {
     type: "none" | "square" | "hex";
     size: number;
     color: string;
     opacity: number;
+    offsetX?: number;
+    offsetY?: number;
+    fixed?: boolean;
   };
 }
 
@@ -214,20 +247,196 @@ export function renderMap(options: RenderOptions) {
       ctx.fill();
     }
 
-    if (token.selected || token.active) {
-      ctx.lineWidth = token.active ? 4 : 3;
-      ctx.strokeStyle = token.active ? "#f59e0b" : "#ffffff";
-      ctx.shadowColor = token.active
-        ? "rgba(245, 158, 11, 0.8)"
-        : "rgba(255, 255, 255, 0.5)";
-      ctx.shadowBlur = token.active ? 14 : 8;
+    ctx.restore();
+
+    // Border and shadow OUTSIDE the token
+    if (token.active || token.selected) {
+      const accent = token.active
+        ? options.accentColor || "#d97706"
+        : "#3b82f6";
+      const borderWidth = token.active ? 8 : 5;
+
+      // Outer drop shadow (outside only)
+      ctx.save();
       ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.lineWidth = borderWidth + 4;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.shadowBlur = token.active ? 20 : 12;
       ctx.stroke();
-      ctx.shadowBlur = 0;
+      ctx.restore();
+
+      // Main thick border
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = borderWidth;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = token.active ? 16 : 10;
+      ctx.stroke();
+      ctx.restore();
+
+      // Thin bright highlight on top
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+      ctx.shadowBlur = 4;
+      ctx.stroke();
+      ctx.restore();
     }
 
-    ctx.restore();
+    // Draw dead status: red X ON the token + dark overlay
+    if (token.statusEffects && token.statusEffects.includes("dead")) {
+      ctx.save();
+      // Dark overlay on token
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fill();
+      // Red X
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = Math.max(3, radius * 0.15);
+      ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
+      ctx.shadowBlur = 8;
+      const xHalf = radius * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(-xHalf, -xHalf);
+      ctx.lineTo(xHalf, xHalf);
+      ctx.moveTo(xHalf, -xHalf);
+      ctx.lineTo(-xHalf, xHalf);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw other status icons above the token
+    if (token.statusEffects) {
+      const otherStatuses = token.statusEffects.filter((s) => s !== "dead");
+      if (otherStatuses.length > 0) {
+        const iconSize = Math.max(14, Math.min(20, radius * 0.5));
+        const gap = 4;
+        const padding = 9;
+        const totalWidth = otherStatuses.length * (iconSize + gap) - gap;
+        const barWidth = totalWidth + padding * 2;
+        const barHeight = iconSize + padding * 2;
+        const startX = center.x - totalWidth / 2;
+        const iconY = center.y - radius - iconSize - 8;
+        const barX = center.x - barWidth / 2;
+        const barY = iconY - padding;
+        const barRadius = barHeight / 2;
+
+        // Shared pill background
+        ctx.save();
+        drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barRadius);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        for (let i = 0; i < otherStatuses.length; i++) {
+          const statusId = otherStatuses[i];
+          const cx = startX + i * (iconSize + gap) + iconSize / 2;
+          const cy = iconY + iconSize / 2;
+          const s = iconSize / 2;
+
+          ctx.save();
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          switch (statusId) {
+            case "stunned": {
+              // Zap / lightning bolt
+              ctx.fillStyle = "#facc15";
+              ctx.shadowColor = "rgba(250, 204, 21, 0.6)";
+              ctx.shadowBlur = 4;
+              ctx.beginPath();
+              ctx.moveTo(cx + s * 0.1, -s + cy);
+              ctx.lineTo(cx - s * 0.5, cy);
+              ctx.lineTo(cx - s * 0.05, cy);
+              ctx.lineTo(cx - s * 0.2, s + cy);
+              ctx.lineTo(cx + s * 0.5, cy);
+              ctx.lineTo(cx + s * 0.05, cy);
+              ctx.closePath();
+              ctx.fill();
+              break;
+            }
+            case "prone": {
+              // Arrow-down
+              ctx.strokeStyle = "#a855f7";
+              ctx.lineWidth = 2;
+              ctx.shadowColor = "rgba(168, 85, 247, 0.5)";
+              ctx.shadowBlur = 3;
+              ctx.beginPath();
+              ctx.moveTo(cx, -s * 0.6 + cy);
+              ctx.lineTo(cx, s * 0.7 + cy);
+              ctx.moveTo(cx - s * 0.4, s * 0.2 + cy);
+              ctx.lineTo(cx, s * 0.7 + cy);
+              ctx.lineTo(cx + s * 0.4, s * 0.2 + cy);
+              ctx.stroke();
+              break;
+            }
+            case "poisoned": {
+              // Skull / flask-conical
+              ctx.strokeStyle = "#22c55e";
+              ctx.lineWidth = 1.5;
+              ctx.shadowColor = "rgba(34, 197, 94, 0.5)";
+              ctx.shadowBlur = 3;
+              ctx.beginPath();
+              ctx.arc(cx, cy - s * 0.2, s * 0.35, Math.PI, 0, false);
+              ctx.lineTo(cx + s * 0.35, cy + s * 0.2);
+              ctx.lineTo(cx + s * 0.5, cy + s * 0.9);
+              ctx.lineTo(cx - s * 0.5, cy + s * 0.9);
+              ctx.lineTo(cx - s * 0.35, cy + s * 0.2);
+              ctx.closePath();
+              ctx.stroke();
+              // Eyes
+              ctx.fillStyle = "#22c55e";
+              ctx.beginPath();
+              ctx.arc(cx - s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(cx + s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+            }
+            case "invisible": {
+              // Eye with slash (eye-off)
+              ctx.strokeStyle = "#94a3b8";
+              ctx.lineWidth = 1.5;
+              ctx.shadowColor = "rgba(148, 163, 184, 0.5)";
+              ctx.shadowBlur = 3;
+              // Eye shape
+              ctx.beginPath();
+              ctx.moveTo(cx - s * 0.7, cy);
+              ctx.quadraticCurveTo(cx, cy - s * 0.7, cx + s * 0.7, cy);
+              ctx.quadraticCurveTo(cx, cy + s * 0.7, cx - s * 0.7, cy);
+              ctx.stroke();
+              // Iris
+              ctx.beginPath();
+              ctx.arc(cx, cy, s * 0.25, 0, Math.PI * 2);
+              ctx.stroke();
+              // Slash
+              ctx.beginPath();
+              ctx.moveTo(cx - s * 0.6, cy - s * 0.7);
+              ctx.lineTo(cx + s * 0.6, cy + s * 0.7);
+              ctx.stroke();
+              break;
+            }
+          }
+          ctx.restore();
+        }
+      }
+    }
 
     if (token.label) {
       ctx.save();
@@ -433,17 +642,31 @@ function drawGrid(
     ctx.save();
     ctx.fillStyle = cache.cachedPattern.pattern;
 
-    const offsetX = (transform.pan.x + canvasSize.width / 2) % size;
-    const offsetY = (transform.pan.y + canvasSize.height / 2) % size;
+    if (grid.fixed) {
+      // Fixed grid mode: ignore pan offset, draw at screen origin
+      ctx.fillRect(
+        -size,
+        -size,
+        canvasSize.width + size * 2,
+        canvasSize.height + size * 2,
+      );
+    } else {
+      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
+      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
+      const offsetX =
+        (transform.pan.x + canvasSize.width / 2 + gridOffsetX) % size;
+      const offsetY =
+        (transform.pan.y + canvasSize.height / 2 + gridOffsetY) % size;
 
-    ctx.translate(offsetX, offsetY);
-    // Draw slightly larger to cover edges during pan
-    ctx.fillRect(
-      -size,
-      -size,
-      canvasSize.width + size * 2,
-      canvasSize.height + size * 2,
-    );
+      ctx.translate(offsetX, offsetY);
+      // Draw slightly larger to cover edges during pan
+      ctx.fillRect(
+        -size,
+        -size,
+        canvasSize.width + size * 2,
+        canvasSize.height + size * 2,
+      );
+    }
     ctx.restore();
   }
 }

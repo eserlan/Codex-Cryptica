@@ -1,6 +1,6 @@
 # VTT Session P2P Protocol Contract
 
-This document defines the message types exchanged between the VTT session host and guests over the existing PeerJS DataConnection layer. All messages are plain JavaScript objects sent via `DataConnection.send()`.
+This document defines the message types exchanged between the VTT session host and guests over the existing PeerJS DataConnection layer. Most messages are plain JavaScript objects sent via `DataConnection.send()`. Large session snapshots are gzip-compressed at the transport boundary when supported by the browser.
 
 ## Message Envelope
 
@@ -10,7 +10,7 @@ Every message follows the format:
 { type: "<MESSAGE_TYPE>", ...fields }
 ```
 
-No wrapper, no versioning, no serialization — direct object transmission over PeerJS.
+No wrapper, no versioning, no custom envelope beyond the transport-specific compressed snapshot variant — direct object transmission over PeerJS.
 
 ---
 
@@ -38,17 +38,53 @@ Sent when a guest connects. Provides the complete current session state.
       rotation: number,
       zIndex: number,
       ownerPeerId: string | null,
-      visibleTo: "all" | "gm-only" | "owner-only",
+      visibleTo: "all" | "gm-only",
       color: string,
-      imageUrl: string | null
+      imageUrl: string | null,
+      statusEffects: string[]
     }>,
     initiativeOrder: string[],
+    initiativeValues: Record<string, number>,
     round: number,
     turnIndex: number,
-    selection: string | null
+    selection: string | null,
+    sessionFogMask: string | null,
+    lastPing: {
+      x: number,
+      y: number,
+      peerId: string,
+      color: string,
+      timestamp: number
+    } | null,
+    measurement: {
+      active: boolean,
+      start: { x: number, y: number } | null,
+      end: { x: number, y: number } | null,
+      locked?: boolean
+    },
+    createdAt: number,
+    savedAt: number | null,
+    chatMessages: Array<any>,
+    gridSize?: number,
+    gridUnit?: string,
+    gridDistance?: number
   }
 }
 ```
+
+### SESSION_SNAPSHOT_GZIP
+
+Preferred transport form for `SESSION_SNAPSHOT` when the browser supports `CompressionStream`.
+
+```typescript
+{
+  type: "SESSION_SNAPSHOT_GZIP",
+  encoding: "gzip",
+  data: ArrayBuffer
+}
+```
+
+Guests must accept either the plain or gzip-compressed snapshot payload.
 
 ### TOKEN_STATE_UPDATE
 
@@ -61,8 +97,13 @@ Broadcast when the host confirms a token operation. Sent to all guests.
   delta: {
     x?: number,
     y?: number,
+    width?: number,
+    height?: number,
     rotation?: number,
-    visibleTo?: "all" | "gm-only" | "owner-only"
+    visibleTo?: "all" | "gm-only",
+    ownerPeerId?: string | null,
+    imageUrl?: string | null,
+    statusEffects?: string[]
   }
 }
 ```
@@ -85,7 +126,7 @@ Broadcast when a new token is placed on the map.
     rotation: number,
     zIndex: number,
     ownerPeerId: string | null,
-    visibleTo: "all" | "gm-only" | "owner-only",
+    visibleTo: "all" | "gm-only",
     color: string,
     imageUrl: string | null
   }
@@ -133,6 +174,23 @@ Broadcast when the host reveals or hides fog during the session.
 }
 ```
 
+### MAP_MEASUREMENT
+
+Broadcast when the host updates the measurement overlay.
+
+```typescript
+{
+  type: "MAP_MEASUREMENT",
+  mapId: string,
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+  peerId: string,
+  active: boolean
+}
+```
+
 ### SET_MODE
 
 Broadcast when the host changes the session mode.
@@ -141,6 +199,16 @@ Broadcast when the host changes the session mode.
 {
   type: "SET_MODE",
   mode: "exploration" | "combat"
+}
+```
+
+### SESSION_ENDED
+
+Broadcast when the host ends the shared VTT session.
+
+```typescript
+{
+  type: "SESSION_ENDED";
 }
 ```
 
@@ -210,5 +278,14 @@ Sent when a guest clicks to place a ping marker.
 ## Error Handling
 
 - If a guest sends a `TOKEN_MOVE` for a token they don't own, the host silently ignores it. The guest client should implement a 500ms revert timeout if no `TOKEN_STATE_UPDATE` arrives.
-- If a `SESSION_SNAPSHOT` is received but the `mapId` doesn't match the guest's current map, the guest logs a warning and ignores the snapshot.
+- If a guest requests token removal using `TOKEN_REMOVE` or a compatible `TOKEN_REMOVED` action, the host removes the token and broadcasts `TOKEN_REMOVED` to all guests.
+- If a `SESSION_SNAPSHOT` or `SESSION_SNAPSHOT_GZIP` is received but the `mapId` doesn't match the guest's current map, the guest logs a warning and ignores the snapshot.
 - Malformed messages (missing required fields) are silently discarded with a debug log.
+
+## P2P Rules
+
+- The host is authoritative for encounter state. Guests may request changes, but the host decides whether to apply them.
+- Token ownership is a movement permission only. It does not change whether other participants can see the token.
+- Token visibility is controlled separately by the host through the token's visibility state; in the lightweight VTT, hidden-from-guests state is represented by `visibleTo: "gm-only"`. `owner-only` is legacy compatibility data and should be normalized to `all`.
+- Large `SESSION_SNAPSHOT` payloads should be compressed when browser support exists, but the uncompressed schema remains the canonical data model.
+- The initiative pop-out mirrors the same session state as the sidebar, including current initiative order, selection, and token ownership assignments.

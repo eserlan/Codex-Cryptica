@@ -6,6 +6,9 @@
   import VaultSwitcherModal from "$lib/components/vaults/VaultSwitcherModal.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { demoService } from "$lib/services/demo";
+  import { p2pGuestService } from "$lib/cloud-bridge/p2p/guest-service";
+  import { base } from "$app/paths";
+  import { goto } from "$app/navigation";
 
   let { orientation = "horizontal" } = $props<{
     orientation?: "horizontal" | "vertical";
@@ -218,9 +221,11 @@
           class={isVertical
             ? `${btnAccent} py-3 text-sm justify-center`
             : `${btnAccent} px-3 md:px-4 py-1.5 text-[10px] md:text-xs`}
-          onclick={() => {
-            window.location.href =
-              window.location.origin + window.location.pathname;
+          onclick={async () => {
+            await p2pGuestService.leaveSession();
+            ui.guestUsername = null;
+            ui.isGuestMode = false;
+            await goto(base, { replaceState: true });
           }}
           data-testid="exit-guest-mode-button"
           aria-label="Exit Guest Mode"

@@ -45,24 +45,27 @@ export class P2PClientAdapter implements IStorageAdapter {
 
   private connectToHost(resolve: () => void, _reject: (e: any) => void) {
     console.log("[P2P Client] Connecting to host:", this.hostId);
-    this.conn = this.peer.connect(this.hostId, { reliable: true });
+    const conn = this.peer.connect(this.hostId, { reliable: true });
+    this.conn = conn;
 
-    this.conn.on("open", () => {
+    conn.on("open", () => {
+      if (this.conn !== conn) return;
       console.log("[P2P Client] Connection established!");
       resolve();
     });
 
-    this.conn.on("data", (data: any) => {
+    conn.on("data", (data: any) => {
       this.handleMessage(data);
     });
 
-    this.conn.on("close", () => {
+    conn.on("close", () => {
+      if (this.conn !== conn) return;
       console.warn("[P2P Client] Disconnected from host.");
     });
 
     // Timeout if connection doesn't happen
     setTimeout(() => {
-      if (!this.conn.open) {
+      if (this.conn !== conn || !conn.open) {
         console.warn("[P2P Client] Connection timeout.");
         // reject(new Error("Connection timed out"));
       }
@@ -120,12 +123,13 @@ export class P2PClientAdapter implements IStorageAdapter {
       this.pendingRequests.set(requestId, { resolve, reject });
 
       // Allow time for connection if not ready
-      if (!this.conn || !this.conn.open) {
+      const conn = this.conn;
+      if (!conn || !conn.open) {
         reject(new Error("Not connected to host"));
         return;
       }
 
-      this.conn.send({
+      conn.send({
         type: "GET_FILE",
         path: path,
         requestId,

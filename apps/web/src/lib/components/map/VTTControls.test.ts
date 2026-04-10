@@ -20,6 +20,16 @@ vi.mock("$lib/components/vtt/EncounterManager.svelte", () => ({
   },
 }));
 
+vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
+  p2pHost: {
+    startHosting: vi.fn().mockResolvedValue("peer-123"),
+  },
+}));
+
+vi.mock("$lib/utils/share-link", () => ({
+  startShareSession: vi.fn().mockResolvedValue("peer-123"),
+}));
+
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     maps: {},
@@ -72,12 +82,11 @@ describe("VTTControls", () => {
   it("shows the pure VTT controls for the active map session", async () => {
     render(VTTControls);
 
-    expect(screen.queryByRole("button", { name: /VTT (ON|OFF)/ })).toBeNull();
     expect(screen.getByRole("button", { name: "Explore" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Combat" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Measure" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Add Token" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Encounters" })).not.toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 
   it("hides token and encounter management for guests", async () => {
@@ -87,8 +96,8 @@ describe("VTTControls", () => {
 
     expect(screen.getByRole("button", { name: "Explore" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Combat" })).not.toBeNull();
-    expect(screen.getByRole("button", { name: "Measure" })).not.toBeNull();
     expect(screen.queryByRole("button", { name: "Add Token" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Encounters" })).toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 });

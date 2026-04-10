@@ -66,6 +66,8 @@ describe("MapStore settings persistence", () => {
         showGrid: true,
         brushRadius: 88,
         gridSize: 120,
+        gridOffsetX: 0,
+        gridOffsetY: 0,
         gridColor: "#fbbf24",
       });
     });

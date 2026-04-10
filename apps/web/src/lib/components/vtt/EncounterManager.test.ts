@@ -17,6 +17,7 @@ if (!HTMLElement.prototype.animate) {
 const mocks = vi.hoisted(() => ({
   refreshEncounterSnapshots: vi.fn().mockResolvedValue([]),
   saveEncounterSnapshot: vi.fn().mockResolvedValue(undefined),
+  deleteEncounterSnapshot: vi.fn().mockResolvedValue(undefined),
   loadEncounterSnapshot: vi.fn().mockResolvedValue(undefined),
   startNewEncounter: vi.fn(),
 }));
@@ -38,6 +39,7 @@ vi.mock("$lib/stores/map-session.svelte", () => ({
     ],
     refreshEncounterSnapshots: mocks.refreshEncounterSnapshots,
     saveEncounterSnapshot: mocks.saveEncounterSnapshot,
+    deleteEncounterSnapshot: mocks.deleteEncounterSnapshot,
     loadEncounterSnapshot: mocks.loadEncounterSnapshot,
     startNewEncounter: mocks.startNewEncounter,
   },
@@ -47,6 +49,7 @@ describe("EncounterManager", () => {
   const close = vi.fn();
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
@@ -78,6 +81,20 @@ describe("EncounterManager", () => {
       expect(mocks.loadEncounterSnapshot).toHaveBeenCalledWith("enc-1"),
     );
     expect(close).toHaveBeenCalled();
+  });
+
+  it("deletes encounters after confirmation", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(EncounterManager, { close });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Delete Ruined Gate" }),
+    );
+
+    await waitFor(() =>
+      expect(mocks.deleteEncounterSnapshot).toHaveBeenCalledWith("enc-1"),
+    );
+    expect(mocks.refreshEncounterSnapshots).toHaveBeenCalled();
   });
 
   it("closes on Escape and backdrop click", async () => {

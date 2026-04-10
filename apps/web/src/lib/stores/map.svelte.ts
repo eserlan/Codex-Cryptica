@@ -12,6 +12,8 @@ type PersistedMapSettings = {
   showGrid: boolean;
   brushRadius: number;
   gridSize: number;
+  gridOffsetX: number;
+  gridOffsetY: number;
   gridColor: string | null;
 };
 
@@ -25,6 +27,8 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   showGrid: false,
   brushRadius: 50,
   gridSize: 50,
+  gridOffsetX: 0,
+  gridOffsetY: 0,
   gridColor: null,
 };
 
@@ -48,6 +52,8 @@ export class MapStore {
   navigationStack = $state<string[]>([]);
   showGrid = $state(false);
   gridSize = $state(50);
+  gridOffsetX = $state(0);
+  gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
@@ -151,6 +157,14 @@ export class MapStore {
           typeof parsed.gridSize === "number"
             ? parsed.gridSize
             : DEFAULT_MAP_SETTINGS.gridSize,
+        gridOffsetX:
+          typeof parsed.gridOffsetX === "number"
+            ? parsed.gridOffsetX
+            : DEFAULT_MAP_SETTINGS.gridOffsetX,
+        gridOffsetY:
+          typeof parsed.gridOffsetY === "number"
+            ? parsed.gridOffsetY
+            : DEFAULT_MAP_SETTINGS.gridOffsetY,
         gridColor:
           typeof parsed.gridColor === "string" || parsed.gridColor === null
             ? parsed.gridColor
@@ -175,6 +189,8 @@ export class MapStore {
       showGrid: this.showGrid,
       brushRadius: this.brushRadius,
       gridSize: this.gridSize,
+      gridOffsetX: this.gridOffsetX,
+      gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
     };
 
@@ -291,6 +307,8 @@ export class MapStore {
       this.showGrid = next.showGrid;
       this.brushRadius = next.brushRadius;
       this.gridSize = next.gridSize;
+      this.gridOffsetX = next.gridOffsetX ?? 0;
+      this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
     } finally {
       this.isRestoringSettings = false;

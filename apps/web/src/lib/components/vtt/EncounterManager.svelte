@@ -31,6 +31,23 @@
     }
   }
 
+  async function deleteSnapshot(snapshotId: string, snapshotName: string) {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(`Delete encounter "${snapshotName}"?`)
+    ) {
+      return;
+    }
+
+    loading = true;
+    try {
+      await mapSession.deleteEncounterSnapshot(snapshotId);
+      await mapSession.refreshEncounterSnapshots();
+    } finally {
+      loading = false;
+    }
+  }
+
   const handleBackdropClick = (event: MouseEvent) => {
     if (event.currentTarget === event.target) {
       close();
@@ -157,6 +174,15 @@
               }}
             >
               Load
+            </button>
+            <button
+              class="px-3 py-2 rounded-lg border border-rose-500/30 text-[10px] font-bold uppercase tracking-widest text-rose-400 hover:text-rose-300"
+              onclick={() => deleteSnapshot(snapshot.id, snapshot.name)}
+              disabled={loading}
+              aria-label={`Delete ${snapshot.name}`}
+              title={`Delete ${snapshot.name}`}
+            >
+              Delete
             </button>
           </div>
         {:else}

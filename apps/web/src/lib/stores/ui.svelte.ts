@@ -43,6 +43,7 @@ class UIStore {
   notification = $state<{
     message: string;
     type: "success" | "info" | "error";
+    persistent?: boolean;
   } | null>(null);
 
   private abortController: AbortController | null = null;
@@ -357,11 +358,21 @@ class UIStore {
     this.globalError = null;
   }
 
-  notify(message: string, type: "success" | "info" | "error" = "success") {
-    this.notification = { message, type };
-    setTimeout(() => {
-      this.notification = null;
-    }, 5000);
+  notify(
+    message: string,
+    type: "success" | "info" | "error" = "success",
+    persistent = false,
+  ) {
+    this.notification = { message, type, persistent };
+    if (!persistent) {
+      setTimeout(() => {
+        this.notification = null;
+      }, 5000);
+    }
+  }
+
+  clearNotification() {
+    this.notification = null;
   }
 
   openCanvasSelection(pendingEntities: string[] = []) {

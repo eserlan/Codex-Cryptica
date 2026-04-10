@@ -14,9 +14,12 @@
 - The VTT feature is additive and does not alter existing map data when toggled on or off
 - VTT prep is local-first: a GM can enable VTT mode, build encounters, and save snapshots without starting a live share session
 - Session state is ephemeral by default; persistence is opt-in through explicit save actions
+- Host/guest sync is host-authoritative: the host owns the canonical encounter state, while guests receive synchronized session updates and may only request changes through the p2p layer
+- Token ownership controls movement permission only; it does not hide tokens from other participants. Token visibility is a separate host-controlled setting and is limited to `all` or `gm-only` in the lightweight VTT.
 - Token images can use entity images when linked, or a default marker shape when freeform
 - Distance measurement uses the map's existing scale definition (if any); maps without a scale default to pixel-based measurement
 - The GM role is equivalent to the session host; no separate GM assignment mechanism is needed in the lightweight version
+- Rapid VTT updates should be coalesced when possible so dragging tokens and editing initiative stays responsive instead of thrashing storage or sync paths
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -39,7 +42,7 @@ A Game Master (GM) opens an existing map from their vault and enters VTT mode lo
 
 ### User Story 2 - Select Tokens and View Details (Priority: P2)
 
-The GM clicks a token to select it. A side panel or tooltip shows the token's name, linked entity (if any), and basic details. The GM can deselect by clicking empty space. Only one token is selected at a time in this lightweight version.
+The GM clicks a token to select it. A side panel shows the token's name, linked entity (if any), ownership, and basic details. The GM can change ownership or remove the token from the detail panel when managing the encounter. The GM can deselect by clicking empty space. Only one token is selected at a time in this lightweight version.
 
 **Why this priority**: Selection enables future actions (editing, targeting, status effects) and provides necessary context for who is acting during combat. It is a supporting feature that becomes critical once multiple tokens exist.
 
@@ -49,12 +52,13 @@ The GM clicks a token to select it. A side panel or tooltip shows the token's na
 
 1. **Given** multiple tokens on the map, **When** the GM clicks a token, **Then** that token is visually highlighted and its details are shown in a side panel
 2. **Given** a token is selected, **When** the GM clicks empty map space, **Then** the selection is cleared
+3. **Given** the GM is viewing token details, **When** they change ownership or remove the token, **Then** the encounter state updates immediately and the change is reflected in the session
 
 ---
 
 ### User Story 3 - Manage Turn Order and Initiative (Priority: P2)
 
-The GM opens a turn order panel beside the map. They can add tokens to the initiative list, roll or manually assign initiative values, and advance through turns round by round. The currently active token is highlighted on the map. The GM can reorder the list by dragging entries.
+The GM opens a turn order panel beside the map or in a separate pop-out window. They can add tokens to the initiative list, roll or manually assign initiative values, and advance through turns round by round. The currently active token is highlighted on the map. The GM can reorder the list by dragging entries and can jump from a combatant in the initiative list to that token's detail view.
 
 **Why this priority**: Turn order is the core differentiator between a tactical VTT and a static map. It enables structured combat encounters and gives players a clear sense of whose turn it is.
 
@@ -65,6 +69,7 @@ The GM opens a turn order panel beside the map. They can add tokens to the initi
 1. **Given** tokens exist on the map, **When** the GM adds them to the initiative list, **Then** they appear in the turn order panel with editable initiative values
 2. **Given** an initiative list exists, **When** the GM advances to the next turn, **Then** the next token in order is highlighted on the map and the round counter increments when the list cycles
 3. **Given** a token is the active turn, **When** the GM reorders the initiative list, **Then** the turn order updates and the next advance follows the new order
+4. **Given** the GM opens the initiative pop-out, **When** the panel is opened in a separate window, **Then** it shows the same current encounter state as the in-app sidebar
 
 ---
 
@@ -85,7 +90,7 @@ The GM activates a measurement tool and clicks two points on the map. The applic
 
 ### User Story 5 - Shared Session: Guests See Token Positions (Priority: P3)
 
-The GM optionally starts a shared map session from the current local VTT encounter. Connected guests (players) then see the same token positions, turn order, and fog reveal state as the GM in near real-time. Guests cannot move tokens unless assigned ownership of a specific token by the GM.
+The GM optionally starts a shared map session from the current local VTT encounter. Connected guests (players) then see the same token positions, turn order, and fog reveal state as the GM in near real-time. Guests cannot move tokens unless assigned ownership of a specific token by the GM, but ownership does not hide or reveal tokens; visibility is controlled separately by the host's explicit visibility setting (`all` or `gm-only`).
 
 **Why this priority**: Multiplayer VTT is the ultimate goal, but it depends on a working single-player foundation. This story adds the P2P synchronization layer on top of the established token and turn order system.
 
@@ -95,7 +100,7 @@ The GM optionally starts a shared map session from the current local VTT encount
 
 1. **Given** the GM starts a shared session, **When** a guest joins, **Then** the guest sees all tokens in the same positions as the GM
 2. **Given** tokens are visible to a guest, **When** the GM moves a token, **Then** the token's new position appears for the guest within one second
-3. **Given** a guest views the map, **When** the guest attempts to move a token they do not own, **Then** the token does not move and the guest is notified they lack permission
+3. **Given** a guest views the map, **When** the guest attempts to move a token they do not own, **Then** the token does not move and the guest is notified they lack permission. The token remains visible unless the host has explicitly hidden it from guests
 
 ---
 
@@ -126,7 +131,7 @@ The GM optionally starts a shared map session from the current local VTT encount
 - **FR-013**: System MUST provide a distance measurement tool that displays the distance between two map points
 - **FR-014**: System MUST support a host/guest model where the host is the authoritative source of session state
 - **FR-015**: Guests MUST receive token position and turn order updates from the host in near real-time
-- **FR-016**: Guests MUST NOT be able to move tokens unless explicitly assigned ownership by the host
+- **FR-016**: Guests MUST NOT be able to move tokens unless explicitly assigned ownership by the host. Ownership MUST affect movement permissions only and MUST NOT change token visibility for other participants; visibility is controlled separately by the host's explicit visibility setting (`all` or `gm-only`)
 - **FR-017**: Session state MUST be ephemeral by default and NOT persist to the vault unless explicitly saved
 - **FR-018**: System MUST allow saving the current session state as an encounter snapshot to the vault
 - **FR-019**: System MUST allow loading a previously saved encounter snapshot to restore session state
@@ -135,6 +140,13 @@ The GM optionally starts a shared map session from the current local VTT encount
 - **FR-022**: System MUST distinguish between exploration mode (free movement) and combat mode (turn-locked movement) in its session state
 - **FR-023**: System MUST handle host disconnection by ending the shared session for all participants
 - **FR-024**: System MUST allow VTT mode to be enabled for local prep without starting a live shared session
+- **FR-025**: System MUST present initiative and token detail controls in a dedicated VTT sidebar during map play
+- **FR-026**: System MUST allow the initiative panel to pop out into a standalone window that mirrors the current encounter state
+- **FR-027**: System MUST allow selecting a combatant from the initiative list to update the selected token details
+- **FR-028**: System MUST allow the GM to assign token ownership and remove the selected token from the token detail view
+- **FR-029**: System MUST allow the GM to delete a saved encounter snapshot from the vault and refresh the saved-encounter list
+- **FR-030**: System MUST provide a host-only share control in the VTT sidebar for starting a live shared session without leaving VTT mode
+- **FR-031**: System SHOULD compress large VTT session snapshots during host-to-guest sync when the browser supports transport compression, while preserving the full session payload
 
 ### Key Entities
 
@@ -153,3 +165,7 @@ The GM optionally starts a shared map session from the current local VTT encount
 - **SC-005**: 95% of users can successfully place a token, move it, and advance one turn without assistance or referring to documentation
 - **SC-006**: A saved encounter snapshot can be loaded and restored to its previous state within 3 seconds
 - **SC-007**: The VTT session layer operates independently of the underlying map data — toggling VTT mode on or off does not alter the saved map state (pins, fog, grid)
+- **SC-008**: A GM can move between the sidebar and the initiative pop-out without losing encounter state or selection context
+- **SC-009**: A GM can drag a token continuously for 3 seconds in a 20-token encounter without visible stutter caused by persistence or session sync churn
+- **SC-010**: A GM can delete a saved encounter snapshot and see it removed from the encounter manager list immediately
+- **SC-011**: A guest can join a busy VTT session without visible lag from oversized session snapshot transport, with compressed snapshots used when supported

@@ -1,7 +1,8 @@
 import type { Point } from "schema";
 
 export type SessionMode = "exploration" | "combat";
-export type TokenVisibility = "all" | "gm-only" | "owner-only";
+export type TokenVisibility = "all" | "gm-only";
+export type LegacyTokenVisibility = TokenVisibility | "owner-only";
 
 export interface PingState {
   x: number;
@@ -22,9 +23,11 @@ export interface Token {
   rotation: number;
   zIndex: number;
   ownerPeerId: string | null;
+  ownerGuestName: string | null;
   visibleTo: TokenVisibility;
   color: string;
   imageUrl: string | null;
+  statusEffects: string[];
 }
 
 export interface MeasurementState {
@@ -32,6 +35,11 @@ export interface MeasurementState {
   start: Point | null;
   end: Point | null;
   locked?: boolean;
+}
+
+export interface SharedTokenImageState {
+  title: string;
+  imagePath: string;
 }
 
 export interface InitiativeEntry {
@@ -82,10 +90,39 @@ export interface TokenCreationInput {
   rotation?: number;
   zIndex?: number;
   ownerPeerId?: string | null;
-  visibleTo?: TokenVisibility;
+  ownerGuestName?: string | null;
+  visibleTo?: LegacyTokenVisibility;
   color?: string;
   imageUrl?: string | null;
 }
+
+export const TOKEN_STATUS_EFFECTS = [
+  { id: "dead", label: "Dead", icon: "icon-[lucide--skull]", color: "#6b7280" },
+  {
+    id: "stunned",
+    label: "Stunned",
+    icon: "icon-[lucide--zap]",
+    color: "#facc15",
+  },
+  {
+    id: "prone",
+    label: "Prone",
+    icon: "icon-[lucide--arrow-down]",
+    color: "#a855f7",
+  },
+  {
+    id: "poisoned",
+    label: "Poisoned",
+    icon: "icon-[lucide--flask-conical]",
+    color: "#22c55e",
+  },
+  {
+    id: "invisible",
+    label: "Invisible",
+    icon: "icon-[lucide--eye-off]",
+    color: "#94a3b8",
+  },
+] as const;
 
 export interface TokenMoveInput {
   tokenId: string;
@@ -100,9 +137,11 @@ export interface TokenStateUpdateInput {
   width?: number;
   height?: number;
   rotation?: number;
-  visibleTo?: TokenVisibility;
+  visibleTo?: LegacyTokenVisibility;
   ownerPeerId?: string | null;
+  ownerGuestName?: string | null;
   imageUrl?: string | null;
+  statusEffects?: string[];
 }
 
 export interface SessionSnapshotPayload {
@@ -155,6 +194,7 @@ export interface MapPingPayload {
   y: number;
   peerId: string;
   color: string;
+  timestamp: number;
 }
 
 export interface PingPayload {
@@ -163,6 +203,34 @@ export interface PingPayload {
   y: number;
   peerId: string;
   color: string;
+  timestamp: number;
+}
+
+export interface MeasurementPayload {
+  type: "MEASUREMENT";
+  active: boolean;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  peerId: string;
+}
+
+export interface MapMeasurementPayload {
+  type: "MAP_MEASUREMENT";
+  mapId: string;
+  active: boolean;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  peerId: string;
+}
+
+export interface ShowTokenImagePayload {
+  type: "SHOW_TOKEN_IMAGE";
+  title: string;
+  imagePath: string;
 }
 
 export interface TokenAddRequestPayload {
@@ -236,6 +304,8 @@ export type VTTMessage =
   | SetModePayload
   | MapPingPayload
   | PingPayload
+  | MeasurementPayload
+  | MapMeasurementPayload
   | TokenAddRequestPayload
   | TokenMovePayload
   | TokenRemoveRequestPayload
@@ -243,4 +313,5 @@ export type VTTMessage =
   | SessionSavePayload
   | SessionEndedPayload
   | SetGridSettingsPayload
-  | ChatMessagePayload;
+  | ChatMessagePayload
+  | ShowTokenImagePayload;

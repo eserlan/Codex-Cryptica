@@ -3,6 +3,7 @@
   import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import { getGuestViewFromPathname } from "$lib/utils/guest-session";
   import {
+    buildP2PShareLink,
     copyTextToClipboard,
     startShareSession,
   } from "$lib/utils/share-link";
@@ -16,7 +17,29 @@
   let p2pLink = $state<string | null>(null);
   let p2pCopied = $state(false);
 
+  function syncActiveP2PLink() {
+    const peerId = p2pHost.activePeerId;
+    if (!p2pHost.isHosting || !peerId || typeof window === "undefined") {
+      return false;
+    }
+
+    p2pLink = buildP2PShareLink(
+      window.location.origin,
+      window.location.pathname,
+      peerId,
+      getGuestViewFromPathname(window.location.pathname, base),
+    );
+    return true;
+  }
+
+  $effect(() => {
+    syncActiveP2PLink();
+  });
+
   const handleP2PStart = async () => {
+    if (syncActiveP2PLink()) {
+      return;
+    }
     p2pLoading = true;
     try {
       await startShareSession({

@@ -4,11 +4,13 @@ import type { Token } from "$types/vtt";
 export function snapToGrid(
   point: Point,
   gridSize: number | null | undefined,
+  offsetX = 0,
+  offsetY = 0,
 ): Point {
   if (!gridSize || gridSize <= 0) return point;
   return {
-    x: Math.round(point.x / gridSize) * gridSize,
-    y: Math.round(point.y / gridSize) * gridSize,
+    x: Math.round((point.x - offsetX) / gridSize) * gridSize + offsetX,
+    y: Math.round((point.y - offsetY) / gridSize) * gridSize + offsetY,
   };
 }
 

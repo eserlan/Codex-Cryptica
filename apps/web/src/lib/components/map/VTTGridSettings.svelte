@@ -1,6 +1,7 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
 
   let { close }: { close: () => void } = $props();
@@ -61,7 +62,7 @@
             id="grid-size"
             type="range"
             min="20"
-            max="200"
+            max="500"
             step="1"
             bind:value={gridSize}
             class="flex-1 accent-theme-primary h-1"
@@ -105,12 +106,71 @@
         </div>
       </div>
 
-      <div class="pt-4 flex gap-3">
+      <div class="border-t border-theme-border pt-4 space-y-4">
+        {#if mapSession.gridMoveMode}
+          <div class="space-y-3">
+            <p class="text-[10px] text-theme-muted text-center">
+              Drag the map to align it with the fixed grid
+            </p>
+          </div>
+        {:else if mapSession.gridFitMode}
+          <div class="space-y-3">
+            <p class="text-[10px] text-theme-muted text-center">
+              Draw a square around a map grid cell
+            </p>
+            <button
+              class="w-full px-4 py-2 rounded-md border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider"
+              onclick={() => {
+                mapSession.gridFitMode = false;
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        {:else}
+          <button
+            class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2"
+            onclick={() => {
+              mapSession.gridFitMode = true;
+              close();
+            }}
+          >
+            <span class="icon-[lucide--square] w-3.5 h-3.5"></span>
+            Fit Grid from Map
+          </button>
+          <p class="text-[9px] text-theme-muted mt-1 text-center italic">
+            Draw a square around a grid cell to auto-detect size
+          </p>
+
+          {#if mapStore.gridSize > 0}
+            <button
+              class="w-full px-4 py-2.5 rounded-md border border-dashed border-theme-border text-theme-muted text-[10px] font-bold uppercase tracking-wider transition-all hover:border-theme-primary hover:text-theme-primary hover:bg-theme-primary/5 flex items-center justify-center gap-2"
+              onclick={() => {
+                mapSession.gridMoveMode = true;
+                close();
+                uiStore.notify(
+                  "Drag the map to align. Enter to confirm, Esc to cancel.",
+                  "info",
+                  true,
+                );
+              }}
+            >
+              <span class="icon-[lucide--move] w-3.5 h-3.5"></span>
+              Move Map to Fine-tune
+            </button>
+            <p class="text-[9px] text-theme-muted mt-1 text-center italic">
+              Drag the map under the fixed grid
+            </p>
+          {/if}
+        {/if}
+      </div>
+
+      <div class="pt-2 flex gap-3">
         <button
           class="flex-1 px-4 py-2 border border-theme-border text-theme-muted rounded-md hover:bg-theme-bg transition-all uppercase text-[10px] font-bold tracking-wider"
           onclick={close}
         >
-          Cancel
+          Close
         </button>
         <button
           class="flex-1 px-4 py-2 bg-theme-primary text-theme-bg rounded-md font-bold uppercase tracking-wider hover:bg-theme-primary/90 transition-all"

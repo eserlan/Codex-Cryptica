@@ -3,6 +3,8 @@
 **Input**: Design documents from `/specs/079-vtt-light/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/p2p-protocol.md, quickstart.md
 
+**Implementation note**: The VTT feature set is implemented in the current codebase. This checklist is retained as the original delivery plan; all items below are completed, and several entries landed in the existing web app architecture rather than the exact file layout shown here.
+
 **Tests**: Unit tests for stores, services, and types. E2E test for shared session flow.
 
 **Organization**: Tasks grouped by user story to enable independent implementation and testing of each story.
@@ -25,8 +27,8 @@
 
 **Purpose**: Project initialization — minimal, most infrastructure already exists
 
-- [ ] T001 [P] Define VTT types (Token, EncounterSession, P2P messages) in `apps/web/src/types/vtt.ts`
-- [ ] T002 [P] Add VTT help content entries in `apps/web/src/lib/config/help-content.ts`
+- [x] T001 [P] Define VTT types (Token, EncounterSession, P2P messages) in `apps/web/src/types/vtt.ts`
+- [x] T002 [P] Add VTT help content entries in `apps/web/src/lib/config/help-content.ts`
 
 ---
 
@@ -36,16 +38,16 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Create MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts` with $state for tokens, initiative, turn, round, selection, mode
-- [ ] T004 Add token rendering function `renderTokens()` in `packages/map-engine/src/renderer.ts` following existing `drawPins()` pattern
-- [ ] T005 [P] Write unit tests for MapSession store (CRUD, initiative, mode transitions) in `apps/web/tests/unit/stores/map-session.test.ts`
-- [ ] T006 [P] Write unit tests for renderTokens (coordinate transforms, frustum culling) in `apps/web/tests/unit/renderer/render-tokens.test.ts`
-- [ ] T006a [P] Make VTT mode reachable from the map page without starting a share session in `apps/web/src/routes/(app)/map/+page.svelte`
-- [ ] T007 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` to accept and broadcast VTT message types
-- [ ] T008 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` to receive and apply VTT state updates
-- [ ] T009 Add typed P2P message union in `apps/web/src/lib/cloud-bridge/p2p/p2p-protocol.ts` for compile-time safety
-- [ ] T010 [P] Write unit tests for P2P VTT message round-trip in `apps/web/tests/unit/services/vtt-session.test.ts`
-- [ ] T011 [P] Ensure session state is ephemeral by default (no auto-persist to vault on session end)
+- [x] T003 Create MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts` with $state for tokens, initiative, turn, round, selection, mode
+- [x] T004 Add token rendering function `renderTokens()` in `packages/map-engine/src/renderer.ts` following existing `drawPins()` pattern
+- [x] T005 [P] Write unit tests for MapSession store (CRUD, initiative, mode transitions) in `apps/web/tests/unit/stores/map-session.test.ts`
+- [x] T006 [P] Write unit tests for renderTokens (coordinate transforms, frustum culling) in `apps/web/tests/unit/renderer/render-tokens.test.ts`
+- [x] T006a [P] Make VTT mode reachable from the map page without starting a share session in `apps/web/src/routes/(app)/map/+page.svelte`
+- [x] T007 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/host-service.svelte.ts` to accept and broadcast VTT message types
+- [x] T008 Extend P2P message handlers in `apps/web/src/lib/cloud-bridge/p2p/guest-service.ts` to receive and apply VTT state updates
+- [x] T009 Add typed P2P message union in `apps/web/src/lib/cloud-bridge/p2p/p2p-protocol.ts` for compile-time safety
+- [x] T010 [P] Write unit tests for P2P VTT message round-trip in `apps/web/tests/unit/services/vtt-session.test.ts`
+- [x] T011 [P] Ensure session state is ephemeral by default (no auto-persist to vault on session end)
 
 **Checkpoint**: Foundation ready — session store, rendering pipeline, and P2P sync infrastructure in place
 
@@ -59,24 +61,24 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Unit test for token placement logic in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
-- [ ] T013 [P] [US1] Unit test for grid snapping math in `apps/web/tests/unit/lib/vtt-helpers.test.ts`
-- [ ] T014 [US1] Integration test: token drag + render cycle in `apps/web/tests/e2e/vtt-token-drag.spec.ts`
+- [x] T012 [P] [US1] Unit test for token placement logic in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
+- [x] T013 [P] [US1] Unit test for grid snapping math in `apps/web/tests/unit/lib/vtt-helpers.test.ts`
+- [x] T014 [US1] Integration test: token drag + render cycle in `apps/web/tests/e2e/vtt-token-drag.spec.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T015 [US1] Add token add/remove methods to MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts`
-- [ ] T016 [US1] Implement grid snapping helper in `apps/web/src/lib/utils/vtt-helpers.ts` (snap to `mapStore.gridSize`)
-- [ ] T017 [US1] Create VTTControls.svelte with an always-visible VTT mode toggle in `apps/web/src/lib/components/map/VTTControls.svelte`
-- [ ] T018 [US1] Wire VTT mode toggle to MapView.svelte draw() loop to enable token overlay rendering
-- [ ] T019 [US1] Add token placement UI (click to place + dialog for name/entity link) in `apps/web/src/lib/components/map/TokenAddDialog.svelte`
-- [ ] T020 [US1] Implement pointer-based token drag in MapView.svelte (pointer down/move/up with coordinate transform)
-- [ ] T021 [US1] Add grid snapping to token drag using vtt-helpers.ts (snap only when `mapStore.showGrid` is true; free placement otherwise)
-- [ ] T022 [US1] Render token labels as canvas text in `renderTokens()` for freeform tokens
-- [ ] T023 [US1] Render token images from linked entities in `renderTokens()` using entity image blob URLs
-- [ ] T024 [US1] Clamp token positions to map bounds to prevent off-map placement
-- [ ] T025 [US1] Handle deleted vault entity gracefully (token displays cached name as freeform)
-- [ ] T026 [US1] Persist session tokens within the tab via sessionStorage (survives page refresh; distinct from vault persistence per FR-017)
+- [x] T015 [US1] Add token add/remove methods to MapSession store in `apps/web/src/lib/stores/map-session.svelte.ts`
+- [x] T016 [US1] Implement grid snapping helper in `apps/web/src/lib/utils/vtt-helpers.ts` (snap to `mapStore.gridSize`)
+- [x] T017 [US1] Create VTTControls.svelte with an always-visible VTT mode toggle in `apps/web/src/lib/components/map/VTTControls.svelte`
+- [x] T018 [US1] Wire VTT mode toggle to MapView.svelte draw() loop to enable token overlay rendering
+- [x] T019 [US1] Add token placement UI (click to place + dialog for name/entity link) in `apps/web/src/lib/components/map/TokenAddDialog.svelte`
+- [x] T020 [US1] Implement pointer-based token drag in MapView.svelte (pointer down/move/up with coordinate transform)
+- [x] T021 [US1] Add grid snapping to token drag using vtt-helpers.ts (snap only when `mapStore.showGrid` is true; free placement otherwise)
+- [x] T022 [US1] Render token labels as canvas text in `renderTokens()` for freeform tokens
+- [x] T023 [US1] Render token images from linked entities in `renderTokens()` using entity image blob URLs
+- [x] T024 [US1] Clamp token positions to map bounds to prevent off-map placement
+- [x] T025 [US1] Handle deleted vault entity gracefully (token displays cached name as freeform)
+- [x] T026 [US1] Persist session tokens within the tab via sessionStorage (survives page refresh; distinct from vault persistence per FR-017)
 
 **Checkpoint**: GM can place tokens, drag them with grid snapping, see labels and images. Fully functional single-player VTT.
 
@@ -90,16 +92,16 @@
 
 ### Tests for User Story 2
 
-- [ ] T027 [P] [US2] Unit test for selection state management in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
-- [ ] T028 [US2] Unit test for token hit-testing math in `apps/web/tests/unit/lib/vtt-helpers.test.ts` (extend existing)
+- [x] T027 [P] [US2] Unit test for selection state management in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
+- [x] T028 [US2] Unit test for token hit-testing math in `apps/web/tests/unit/lib/vtt-helpers.test.ts` (extend existing)
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] Add token hit-testing in MapView.svelte pointer handler (detect click on token bounds)
-- [ ] T030 [US2] Wire token click to MapSession store selection state
-- [ ] T031 [US2] Create TokenDetail.svelte side panel in `apps/web/src/lib/components/vtt/TokenDetail.svelte`
-- [ ] T032 [US2] Render token selection highlight (glow/border) in `renderTokens()` canvas function
-- [ ] T033 [US2] Implement deselect on empty-space click in MapView.svelte
+- [x] T029 [US2] Add token hit-testing in MapView.svelte pointer handler (detect click on token bounds)
+- [x] T030 [US2] Wire token click to MapSession store selection state
+- [x] T031 [US2] Create TokenDetail.svelte side panel in `apps/web/src/lib/components/vtt/TokenDetail.svelte` with ownership assignment and selected-token removal actions
+- [x] T032 [US2] Render token selection highlight (glow/border) in `renderTokens()` canvas function
+- [x] T033 [US2] Implement deselect on empty-space click in MapView.svelte
 
 **Checkpoint**: Token selection and detail view work independently. Can select, view details, and deselect.
 
@@ -113,18 +115,18 @@
 
 ### Tests for User Story 3
 
-- [ ] T034 [P] [US3] Unit test for initiative cycling logic in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
-- [ ] T035 [US3] Unit test for turn advancement and round counting in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing) — verify round starts at 1, increments on full cycle, never decrements
+- [x] T034 [P] [US3] Unit test for initiative cycling logic in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
+- [x] T035 [US3] Unit test for turn advancement and round counting in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing) — verify round starts at 1, increments on full cycle, never decrements
 
 ### Implementation for User Story 3
 
-- [ ] T036 [US3] Add initiative management methods to MapSession store (addToken, removeToken, reorder, advanceTurn)
-- [ ] T037 [US3] Create InitiativePanel.svelte in `apps/web/src/lib/components/vtt/InitiativePanel.svelte`
-- [ ] T038 [US3] Add drag-reorder capability to initiative list entries in InitiativePanel.svelte
-- [ ] T039 [US3] Render active token highlight in `renderTokens()` when session is in combat mode
-- [ ] T040 [US3] Add round counter display in InitiativePanel.svelte
-- [ ] T041 [US3] Implement mode toggle (exploration ↔ combat) in MapSession store and VTTControls.svelte — mode values are `"exploration"` (free movement) and `"combat"` (turn-locked movement)
-- [ ] T042 [US3] Lock token movement to active token when in combat mode (non-active tokens cannot be moved)
+- [x] T036 [US3] Add initiative management methods to MapSession store (addToken, removeToken, reorder, advanceTurn)
+- [x] T037 [US3] Create InitiativePanel.svelte in `apps/web/src/lib/components/vtt/InitiativePanel.svelte` as the docked initiative sidebar, with optional pop-out window support
+- [x] T038 [US3] Add drag-reorder capability to initiative list entries in InitiativePanel.svelte
+- [x] T039 [US3] Render active token highlight in `renderTokens()` when session is in combat mode
+- [x] T040 [US3] Add round counter display in InitiativePanel.svelte
+- [x] T041 [US3] Implement mode toggle (exploration ↔ combat) in MapSession store and VTTControls.svelte — mode values are `"exploration"` (free movement) and `"combat"` (turn-locked movement)
+- [x] T042 [US3] Lock token movement to active token when in combat mode (non-active tokens cannot be moved)
 
 **Checkpoint**: Full turn order system works. Can manage initiative, advance turns, see active token highlight, track rounds.
 
@@ -138,16 +140,16 @@
 
 ### Tests for User Story 4
 
-- [ ] T043 [P] [US4] Unit test for distance calculation math in `apps/web/tests/unit/lib/vtt-helpers.test.ts` (extend existing)
+- [x] T043 [P] [US4] Unit test for distance calculation math in `apps/web/tests/unit/lib/vtt-helpers.test.ts` (extend existing)
 
 ### Implementation for User Story 4
 
-- [ ] T044 [US4] Add measurement tool state to MapSession store (startPoint, endPoint, active)
-- [ ] T045 [US4] Create MeasurementTool.svelte overlay in `apps/web/src/lib/components/map/MeasurementTool.svelte`
-- [ ] T046 [US4] Implement measurement click handler in MapView.svelte (pointer events on measurement tool active)
-- [ ] T047 [US4] Draw measurement line and distance label on canvas in `renderTokens()` or dedicated `renderMeasurement()` function
-- [ ] T048 [US4] Display distance using map scale if defined, otherwise pixel distance
-- [ ] T049 [US4] Add measurement tool toggle to VTTControls.svelte
+- [x] T044 [US4] Add measurement tool state to MapSession store (startPoint, endPoint, active)
+- [x] T045 [US4] Create MeasurementTool.svelte overlay in `apps/web/src/lib/components/map/MeasurementTool.svelte`
+- [x] T046 [US4] Implement measurement click handler in MapView.svelte (pointer events on measurement tool active)
+- [x] T047 [US4] Draw measurement line and distance label on canvas in `renderTokens()` or dedicated `renderMeasurement()` function
+- [x] T048 [US4] Display distance using map scale if defined, otherwise pixel distance
+- [x] T049 [US4] Add measurement tool toggle to VTTControls.svelte
 
 **Checkpoint**: Distance measurement works independently. Can measure between any two points and see accurate results.
 
@@ -161,22 +163,22 @@
 
 ### Tests for User Story 5
 
-- [ ] T050 [P] [US5] Unit test for host token move broadcast in `apps/web/tests/unit/services/vtt-session.test.ts` (extend existing)
-- [ ] T051 [P] [US5] Unit test for guest permission rejection in `apps/web/tests/unit/services/vtt-session.test.ts` (extend existing)
-- [ ] T052 [US5] E2E test: host joins, guest joins, host moves token, guest sees update within 1 second in `apps/web/tests/e2e/vtt-session.spec.ts`
+- [x] T050 [P] [US5] Unit test for host token move broadcast in `apps/web/tests/unit/services/vtt-session.test.ts` (extend existing)
+- [x] T051 [P] [US5] Unit test for guest permission rejection in `apps/web/tests/unit/services/vtt-session.test.ts` (extend existing)
+- [x] T052 [US5] E2E test: host joins, guest joins, host moves token, guest sees update within 1 second in `apps/web/tests/e2e/vtt-session.spec.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T053 [US5] Implement SESSION_SNAPSHOT broadcast on guest join in host-service.svelte.ts
-- [ ] T054 [US5] Implement TOKEN_MOVE handler in host-service.svelte.ts (validate ownership, update, broadcast TOKEN_STATE_UPDATE)
-- [ ] T055 [US5] Implement TOKEN_MOVE sender in guest-service.ts (send to host, handle timeout revert)
-- [ ] T056 [US5] Implement TOKEN_ADD_REQUEST handler in host-service.svelte.ts (host assigns id, ownerPeerId, broadcasts TOKEN_ADDED)
-- [ ] T057 [US5] Implement TURN_ADVANCE broadcast from MapSession store through host-service when host advances turn
-- [ ] T058 [US5] Add token ownership assignment UI in TokenDetail.svelte (GM assigns tokens to connected guests)
-- [ ] T059 [US5] Implement guest permission enforcement in MapView.svelte drag handler (check ownerPeerId before allowing drag)
-- [ ] T060 [US5] Implement session fog reveal sync (host paints fog using existing MapFogPainter brush → broadcasts FOG_REVEAL stroke deltas → guests apply to in-memory session mask)
-- [ ] T061 [US5] Implement MAP_PING broadcast for guest/host cursor pings
-- [ ] T062 [US5] Handle host disconnection (detect peer disconnect, broadcast SESSION_ENDED to guests so they see a disconnected UI state, then clear session state immediately)
+- [x] T053 [US5] Implement SESSION_SNAPSHOT broadcast on guest join in host-service.svelte.ts
+- [x] T054 [US5] Implement TOKEN_MOVE handler in host-service.svelte.ts (validate ownership for movement only, update, broadcast TOKEN_STATE_UPDATE)
+- [x] T055 [US5] Implement TOKEN_MOVE sender in guest-service.ts (send to host, handle timeout revert)
+- [x] T056 [US5] Implement TOKEN_ADD_REQUEST handler in host-service.svelte.ts (host assigns id, ownerPeerId, broadcasts TOKEN_ADDED)
+- [x] T057 [US5] Implement TURN_ADVANCE broadcast from MapSession store through host-service when host advances turn
+- [x] T058 [US5] Add token ownership assignment and removal UI in TokenDetail.svelte (GM assigns move permission to connected guests and can delete selected tokens without affecting visibility)
+- [x] T059 [US5] Implement guest permission enforcement in MapView.svelte drag handler (check ownerPeerId before allowing drag; do not use ownership as a visibility filter)
+- [x] T060 [US5] Implement session fog reveal sync (host paints fog using existing MapFogPainter brush → broadcasts FOG_REVEAL stroke deltas → guests apply to in-memory session mask)
+- [x] T061 [US5] Implement MAP_PING broadcast for guest/host cursor pings
+- [x] T062 [US5] Handle host disconnection (detect peer disconnect, broadcast SESSION_ENDED to guests so they see a disconnected UI state, then clear session state immediately)
 
 **Checkpoint**: Multiplayer VTT works. Host and guests share token positions, turn order, and fog state in real-time.
 
@@ -188,12 +190,13 @@
 
 **Independent Test**: Place 5 tokens, set initiative, save encounter. Clear session. Load encounter. Verify all tokens, positions, and initiative restored.
 
-- [ ] T063 [P] Write unit tests for encounter save/load serialization in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
-- [ ] T064 Create encounter snapshot save/load methods in MapSession store (serialize to OPFS JSON)
-- [ ] T065 Create EncounterManager.svelte in `apps/web/src/lib/components/vtt/EncounterManager.svelte` (save/load UI)
-- [ ] T066 Implement OPFS storage for encounter snapshots at `maps/{mapId}_encounter_{encounterId}.json`
-- [ ] T067 Add encounter list display in EncounterManager.svelte (load previously saved encounters)
-- [ ] T068 Implement session fog mask serialization (compress PNG blob → store in encounter JSON)
+- [x] T063 [P] Write unit tests for encounter save/load serialization in `apps/web/tests/unit/stores/map-session.test.ts` (extend existing)
+- [x] T064 Create encounter snapshot save/load methods in MapSession store (serialize to OPFS JSON)
+- [x] T065 Create EncounterManager.svelte in `apps/web/src/lib/components/vtt/EncounterManager.svelte` (save/load UI)
+- [x] T066 Implement OPFS storage for encounter snapshots at `maps/{mapId}_encounter_{encounterId}.json`
+- [x] T067 Add encounter list display in EncounterManager.svelte (load previously saved encounters)
+- [x] T068 Add encounter snapshot deletion from EncounterManager.svelte and OPFS storage
+- [x] T069 Implement session fog mask serialization (compress PNG blob → store in encounter JSON)
 
 ---
 
@@ -201,15 +204,15 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T069 [P] Update user documentation with VTT feature help entries in `apps/web/src/lib/config/help-content.ts`
-- [ ] T070 [P] Add FeatureHint for first-time VTT mode entry
-- [ ] T071 Run full test suite and verify coverage meets 70% goal for new VTT code
-- [ ] T072 Performance: verify 60fps token rendering with 20 tokens, optimize if needed
-- [ ] T073 [P] E2E test: full combat round flow (place tokens → initiative → advance turns → end) in `apps/web/tests/e2e/vtt-combat-round.spec.ts`
-- [ ] T074 Performance: verify encounter snapshot loads within 3 seconds (SC-006)
-- [ ] T075 Verify VTT mode toggle does not alter saved map state — pins, fog, grid unchanged after toggle on/off (SC-007)
-- [ ] T076 Quickstart.md validation: follow the quickstart guide and verify all steps work
-- [ ] T077 Code cleanup: remove any TODO comments, unused imports, debug logs
+- [x] T070 [P] Update user documentation with VTT feature help entries in `apps/web/src/lib/config/help-content.ts`
+- [x] T071 [P] Add FeatureHint for first-time VTT mode entry
+- [x] T072 Run full test suite and verify coverage meets 70% goal for new VTT code
+- [x] T073 Performance: verify 60fps token rendering with 20 tokens, optimize if needed
+- [x] T074 [P] E2E test: full combat round flow (place tokens → initiative → advance turns → end) in `apps/web/tests/e2e/vtt-combat-round.spec.ts`
+- [x] T075 Performance: verify encounter snapshot loads within 3 seconds (SC-006)
+- [x] T076 Verify VTT mode toggle does not alter saved map state — pins, fog, grid unchanged after toggle on/off (SC-007)
+- [x] T077 Quickstart.md validation: follow the quickstart guide and verify all steps work
+- [x] T078 Code cleanup: remove any TODO comments, unused imports, debug logs
 
 ---
 

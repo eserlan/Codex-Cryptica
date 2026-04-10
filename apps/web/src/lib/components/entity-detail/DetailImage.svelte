@@ -4,6 +4,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
   import { fade } from "svelte/transition";
 
   let {
@@ -230,16 +231,8 @@
   {/if}
 </div>
 
-{#if showLightbox && entity.image}
-  <button
-    class="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4 cursor-zoom-out"
-    onclick={() => (showLightbox = false)}
-    transition:fade={{ duration: 200 }}
-  >
-    <img
-      src={resolvedImageUrl}
-      alt={entity.title}
-      class="max-w-full max-h-full object-contain shadow-2xl animate-in zoom-in-95 duration-300"
-    />
-  </button>
-{/if}
+<ZenImageLightbox
+  bind:show={showLightbox}
+  imageUrl={resolvedImageUrl}
+  title={entity.title}
+/>

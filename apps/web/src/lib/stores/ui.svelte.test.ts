@@ -149,6 +149,7 @@ describe("UIStore", () => {
     expect(uiStore.notification).toEqual({
       message: "Success!",
       type: "success",
+      persistent: false,
     });
 
     vi.advanceTimersByTime(5000);

@@ -1,4 +1,14 @@
-import type { VTTMessage } from "$types/vtt";
+import type {
+  EncounterSession,
+  SessionSnapshotPayload,
+  VTTMessage,
+} from "$types/vtt";
+
+export interface CompressedSessionSnapshotPayload {
+  type: "SESSION_SNAPSHOT_GZIP";
+  encoding: "gzip";
+  data: ArrayBuffer;
+}
 
 export type P2PMessage =
   | { type: "GRAPH_SYNC"; payload: any }
@@ -36,12 +46,68 @@ export type P2PMessage =
       data?: ArrayBuffer;
     }
   | { type: "GUEST_JOIN"; payload: { displayName: string } }
+  | {
+      type: "GUEST_JOIN_REJECTED";
+      payload: { reason: "duplicate-display-name"; displayName: string };
+    }
+  | { type: "GUEST_LEAVE"; payload: { displayName: string } }
   | { type: "GUEST_STATUS"; payload: any }
   | { type: "ENTITY_UPDATE"; payload: any }
   | { type: "ENTITY_BATCH_UPDATE"; payload: Record<string, any> }
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
-  | VTTMessage;
+  | VTTMessage
+  | CompressedSessionSnapshotPayload;
+
+async function compressJson(value: unknown): Promise<ArrayBuffer> {
+  const text = JSON.stringify(value);
+  const source = new Response(text).body;
+  if (!source) {
+    throw new Error("Failed to create snapshot compression stream");
+  }
+  const compressed = source.pipeThrough(new CompressionStream("gzip"));
+  return await new Response(compressed).arrayBuffer();
+}
+
+async function decompressJson(data: ArrayBuffer): Promise<string> {
+  const source = new Response(data).body;
+  if (!source) {
+    throw new Error("Failed to create snapshot decompression stream");
+  }
+  const decompressed = source.pipeThrough(new DecompressionStream("gzip"));
+  return await new Response(decompressed).text();
+}
+
+export async function encodeSessionSnapshot(
+  session: EncounterSession,
+): Promise<SessionSnapshotPayload | CompressedSessionSnapshotPayload> {
+  if (
+    typeof CompressionStream === "undefined" ||
+    typeof DecompressionStream === "undefined"
+  ) {
+    return {
+      type: "SESSION_SNAPSHOT",
+      session,
+    };
+  }
+
+  return {
+    type: "SESSION_SNAPSHOT_GZIP",
+    encoding: "gzip",
+    data: await compressJson(session),
+  };
+}
+
+export async function decodeSessionSnapshot(
+  message: SessionSnapshotPayload | CompressedSessionSnapshotPayload,
+): Promise<EncounterSession> {
+  if (message.type === "SESSION_SNAPSHOT") {
+    return message.session;
+  }
+
+  const text = await decompressJson(message.data);
+  return JSON.parse(text) as EncounterSession;
+}
 
 export function isVTTMessage(message: any): message is VTTMessage {
   return (
@@ -51,6 +117,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
     [
       "SESSION_SNAPSHOT",
       "TOKEN_STATE_UPDATE",
+      "SHOW_TOKEN_IMAGE",
       "TOKEN_ADDED",
       "TOKEN_REMOVED",
       "TURN_ADVANCE",
@@ -76,12 +143,14 @@ export function isHostOnlyVTTMessage(message: VTTMessage): boolean {
   return [
     "SESSION_SNAPSHOT",
     "TOKEN_STATE_UPDATE",
+    "SHOW_TOKEN_IMAGE",
     "TOKEN_ADDED",
     "TOKEN_REMOVED",
     "TURN_ADVANCE",
     "FOG_REVEAL",
     "SET_MODE",
     "MAP_PING",
+    "MAP_MEASUREMENT",
     "SESSION_SAVE",
     "SESSION_ENDED",
     "CHAT_MESSAGE",
@@ -98,5 +167,6 @@ export function isGuestOnlyVTTMessage(message: VTTMessage): boolean {
     "TOKEN_SELECT",
     "PING",
     "CHAT_MESSAGE",
+    "MEASUREMENT",
   ].includes(message.type);
 }

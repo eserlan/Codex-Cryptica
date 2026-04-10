@@ -7,6 +7,7 @@ import {
   snapToGrid,
   toViewportPoint,
 } from "./vtt-helpers";
+import type { Token } from "$types/vtt";
 
 describe("vtt-helpers", () => {
   it("snaps and clamps points", () => {
@@ -37,15 +38,17 @@ describe("vtt-helpers", () => {
         rotation: 0,
         zIndex: 0,
         ownerPeerId: null,
+        ownerGuestName: null,
         visibleTo: "all",
         color: "#fff",
         imageUrl: null,
+        statusEffects: [],
       }),
     ).toEqual({ x: 40, y: 55 });
   });
 
   it("hit-tests tokens by z-index", () => {
-    const token = {
+    const token: Token = {
       id: "top",
       entityId: null,
       name: "Top",
@@ -56,17 +59,19 @@ describe("vtt-helpers", () => {
       rotation: 0,
       zIndex: 2,
       ownerPeerId: null,
+      ownerGuestName: null,
       visibleTo: "all",
       color: "#fff",
       imageUrl: null,
-    } as const;
-    const other = {
+      statusEffects: [],
+    };
+    const other: Token = {
       ...token,
       id: "bottom",
       zIndex: 1,
       x: 90,
       y: 90,
-    } as const;
+    };
 
     const found = hitTestToken([other, token], (point) => point, 110, 110);
 

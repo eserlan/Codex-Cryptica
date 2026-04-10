@@ -21,6 +21,8 @@
     building ? null : normalizeGuestView(page.url.searchParams.get("view")),
   );
   const isGuestMode = $derived(!!shareId);
+  let joinRejectionMessage = $state<string | null>(null);
+  let isConnectedToHost = $state(false);
 
   const syncGuestGraphPayload = (graph: any) => {
     vault.repository.entities = Object.fromEntries(
@@ -64,6 +66,32 @@
     });
   };
 
+  // Handle browser window/tab close
+  $effect(() => {
+    if (!browser || !isConnectedToHost) return;
+
+    const handleBeforeUnload = (_e: BeforeUnloadEvent) => {
+      // Send leave message synchronously (best effort)
+      try {
+        const connection = (p2pGuestService as any).connection;
+        if (connection?.open) {
+          connection.send({
+            type: "GUEST_LEAVE",
+            payload: { displayName: uiStore.guestUsername },
+          });
+        }
+      } catch {
+        // Ignore errors during unload
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  });
+
   $effect(() => {
     if (
       !isGuestMode ||
@@ -104,8 +132,18 @@
           themeStore.previewTheme(themeId);
         },
         uiStore.guestUsername ?? undefined,
+        (reason, displayName) => {
+          if (reason === "duplicate-display-name") {
+            joinRejectionMessage = `Display name "${displayName}" is already in use. Choose a different name.`;
+          } else {
+            joinRejectionMessage = `Join request was rejected: ${reason}`;
+          }
+        },
       )
-      .then(() => navigateToGuestView())
+      .then(() => {
+        isConnectedToHost = true;
+        return navigateToGuestView();
+      })
       .catch((err) => {
         console.error("[Guest Mode] Failed to connect to host:", err);
         vault.selectedEntityId = null;
@@ -137,5 +175,8 @@
 </script>
 
 {#if isGuestMode && !uiStore.guestUsername && !building}
-  <GuestLoginModal onJoin={(username) => uiStore.setGuestUsername(username)} />
+  <GuestLoginModal
+    onJoin={(username) => uiStore.setGuestUsername(username)}
+    rejectionMessage={joinRejectionMessage}
+  />
 {/if}

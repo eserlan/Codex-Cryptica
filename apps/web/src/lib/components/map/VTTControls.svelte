@@ -5,6 +5,7 @@
   import FeatureHint from "$lib/components/help/FeatureHint.svelte";
   import EncounterManager from "$lib/components/vtt/EncounterManager.svelte";
   import VTTGridSettings from "./VTTGridSettings.svelte";
+  import { getPrimaryButtonStateClass } from "./vtt-ui";
 
   let showEncounters = $state(false);
   let canManageVtt = $derived(!uiStore.isGuestMode);
@@ -21,56 +22,46 @@
 </script>
 
 <div
-  class="flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 backdrop-blur px-2 py-1.5 shadow-lg pointer-events-auto"
+  class="flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 backdrop-blur p-1.5 shadow-lg pointer-events-auto"
 >
   <button
-    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.mode ===
-    'exploration'
-      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
-      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.mode === "exploration")}`}
     onclick={() => mapSession.setMode("exploration")}
+    type="button"
   >
     Explore
   </button>
+
   <button
-    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.mode ===
-    'combat'
-      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
-      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.mode === "combat")}`}
     onclick={() => mapSession.setMode("combat")}
+    type="button"
   >
     Combat
   </button>
 
-  <button
-    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession
-      .measurement.active
-      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
-      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-    onclick={() =>
-      mapSession.setMeasurementActive(!mapSession.measurement.active)}
-  >
-    Measure
-  </button>
-
   {#if canManageVtt}
+    <div class="h-6 w-px bg-theme-border/70 mx-0.5"></div>
+
     <button
-      class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text transition-all hover:bg-theme-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+      class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(false)} disabled:opacity-50 disabled:cursor-not-allowed`}
       onclick={openTokenDialog}
       disabled={!mapStore.activeMap}
+      type="button"
     >
       Add Token
     </button>
 
     <button
-      class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-theme-muted hover:text-theme-text transition-all hover:bg-theme-primary/10"
+      class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(false)}`}
       onclick={() => (showEncounters = true)}
+      type="button"
     >
       Encounters
     </button>
   {/if}
 
-  <div class="ml-0.5">
+  <div class="ml-1">
     <FeatureHint hintId="vtt-mode" />
   </div>
 </div>

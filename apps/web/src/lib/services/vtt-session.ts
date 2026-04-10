@@ -1,4 +1,4 @@
-import { readOpfsBlob, writeOpfsFile } from "../utils/opfs";
+import { deleteOpfsEntry, readOpfsBlob, writeOpfsFile } from "../utils/opfs";
 import type {
   EncounterSession,
   EncounterSnapshotSummary,
@@ -157,5 +157,18 @@ export class VTTSessionService {
       vaultHandle,
     );
     return JSON.parse(await blob.text()) as EncounterSession;
+  }
+
+  async deleteEncounterSnapshot(mapId: string, encounterId: string) {
+    const vaultHandle = await this.deps.getActiveVaultHandle();
+    if (!vaultHandle) {
+      throw new Error("Vault is not available");
+    }
+
+    await deleteOpfsEntry(
+      vaultHandle,
+      ["maps", `${mapId}_encounter_${encounterId}.json`],
+      vaultHandle.name,
+    );
   }
 }

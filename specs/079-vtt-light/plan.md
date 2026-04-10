@@ -2,12 +2,13 @@
 
 **Branch**: `079-vtt-light` | **Date**: 2026-04-05 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/079-vtt-light/spec.md`
+**Status**: Implemented
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Add a lightweight VTT session layer on top of the existing map system, introducing token placement/movement, turn order management, distance measurement, and P2P-synchronized shared sessions. Session state is kept separate from persistent map data, with optional save/load of encounter snapshots. Built as an overlay on the existing `MapView` component with a new `MapSession` store, leveraging the existing P2P host/guest infrastructure for multiplayer.
+Lightweight VTT is implemented as a session overlay on top of the existing map system. It covers token placement/movement, turn order management, distance measurement, P2P-synchronized shared sessions, encounter snapshot save/load/delete, a dedicated VTT sidebar, an initiative pop-out window, and a host-only share control. Session state stays separate from persistent map data and uses the existing host/guest bridge for multiplayer sync.
 
 ## Technical Context
 
@@ -17,26 +18,26 @@ Add a lightweight VTT session layer on top of the existing map system, introduci
 **Testing**: Vitest (unit), Playwright (E2E for shared session flows)
 **Target Platform**: Browser (web application)
 **Project Type**: Web application feature (SvelteKit frontend)
-**Performance Goals**: Smooth token drag at 60fps for ≤20 tokens; <1s sync latency for guest updates
-**Constraints**: Session state must not mutate persistent map data; host-authoritative model for P2P; offline-capable for single-player use
+**Performance Goals**: Smooth token drag at 60fps for ≤20 tokens; <1s sync latency for guest updates; coalesce rapid persistence and sync updates to avoid drag jank; compress large session snapshots at the transport boundary when supported
+**Constraints**: Session state must not mutate persistent map data; host-authoritative model for P2P; token ownership controls movement permission only and does not control visibility; offline-capable for single-player use
 **Scale/Scope**: ≤20 tokens per session, ≤8 connected peers, single map per session
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-| Gate                           | Status  | Notes                                                                                                        |
-| ------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------ |
-| **I. Library-First**           | ✅ PASS | New `map-session` store as standalone module in `apps/web/src/lib/stores/`; extractable to package if reused |
-| **II. TDD**                    | ✅ PASS | Unit tests for session store, token operations, initiative logic; E2E for shared session flows               |
-| **III. Simplicity & YAGNI**    | ✅ PASS | Overlay approach reuses existing MapView; DOM/SVG overlay for tokens — no custom canvas engine               |
-| **IV. AI-First Extraction**    | ⚠️ N/A  | Feature is UI/session management, not data extraction                                                        |
-| **V. Privacy & Client-Side**   | ✅ PASS | All session state in browser; P2P is peer-to-peer (no server relay)                                          |
-| **VI. Clean Implementation**   | ✅ PASS | Svelte 5 `$derived` for computed state; constructor DI; Tailwind 4 syntax                                    |
-| **VII. User Documentation**    | ✅ PASS | Help content entries + FeatureHint for first-time VTT mode entry                                             |
-| **VIII. Dependency Injection** | ✅ PASS | Session store accepts dependencies (map store, P2P service) via constructor                                  |
-| **IX. Natural Language**       | ✅ PASS | UI labels: "Tokens", "Turn Order", "Measure" — clear and accessible                                          |
-| **X. Quality & Coverage**      | ✅ PASS | Target 70%+ coverage for new session store and token logic                                                   |
+| Gate                           | Status  | Notes                                                                                                                  |
+| ------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **I. Library-First**           | ✅ PASS | Session store, service, and helper logic live in reusable modules under `apps/web/src/lib/` and `packages/map-engine/` |
+| **II. TDD**                    | ✅ PASS | Unit tests cover session store, token operations, initiative logic, sync, and persistence flows                        |
+| **III. Simplicity & YAGNI**    | ✅ PASS | The existing map canvas is reused; VTT is an overlay/session layer, not a new engine                                   |
+| **IV. AI-First Extraction**    | ⚠️ N/A  | Feature is UI/session management, not data extraction                                                                  |
+| **V. Privacy & Client-Side**   | ✅ PASS | Session state stays local-first; P2P is peer-to-peer and transport-compressed when available                           |
+| **VI. Clean Implementation**   | ✅ PASS | Svelte 5 runes, constructor DI, and minimal mutation patterns are used throughout                                      |
+| **VII. User Documentation**    | ✅ PASS | Help content, sidebar/pop-out guidance, quickstart notes, and task documentation are present                           |
+| **VIII. Dependency Injection** | ✅ PASS | Session store and P2P services accept dependencies via constructors                                                    |
+| **IX. Natural Language**       | ✅ PASS | UI labels remain plain and task-specific                                                                               |
+| **X. Quality & Coverage**      | ✅ PASS | Feature-specific tests cover the main VTT flows and persistence/sync edge cases                                        |
 
 ## Project Structure
 
@@ -58,41 +59,41 @@ specs/079-vtt-light/
 apps/web/src/
 ├── lib/
 │   ├── stores/
-│   │   ├── map-session.svelte.ts       # New: session state store
-│   │   ├── map.svelte.ts               # Existing: extended with VTT mode flag
-│   │   └── vault.svelte.ts             # Existing: encounter snapshot save/load
+│   │   ├── map-session.svelte.ts       # Session state, initiative, measurement, sync
+│   │   ├── map.svelte.ts               # Base map state and persistence
+│   │   └── vault.svelte.ts             # Vault and OPFS persistence helpers
 │   ├── components/
 │   │   ├── map/
-│   │   │   ├── MapView.svelte           # Existing: token overlay + drag handling added
-│   │   │   ├── TokenOverlay.svelte      # New: renders tokens on map
-│   │   │   ├── MeasurementTool.svelte   # New: distance ruler overlay
-│   │   │   ├── VTTControls.svelte       # New: VTT mode toggle, tool selection
-│   │   │   └── TokenAddDialog.svelte    # New: token placement dialog
+│   │   │   ├── MapView.svelte           # Map canvas, token overlay, drag handling
+│   │   │   ├── VTTControls.svelte       # Top-level VTT controls and host share entry
+│   │   │   ├── vtt-ui.ts                # Shared VTT UI state helpers
+│   │   │   └── vtt-mode-menu.svelte.ts  # Mode menu state helpers
 │   │   └── vtt/
-│   │       ├── InitiativePanel.svelte   # New: turn order sidebar
-│   │       ├── TokenDetail.svelte       # New: selected token info panel
-│   │       └── EncounterManager.svelte  # New: save/load encounter UI
+│   │       ├── InitiativePanel.svelte   # Docked initiative sidebar and pop-out
+│   │       ├── TokenDetail.svelte       # Selected token info, ownership, removal
+│   │       ├── EncounterManager.svelte  # Save/load/delete encounter UI
+│   │       ├── GuestSessionBootstrap.svelte # Guest popout bootstrap and hydration
+│   │       ├── GuestInfoOverlay.svelte   # Joined-players roster
+│   │       └── VTTChat.svelte           # Shared chat panel for VTT sessions
 │   ├── services/
-│   │   └── (VTT messages extend existing P2P host-service and guest-service)
+│   │   └── vtt-session.ts               # Encounter snapshot persistence service
 │   ├── utils/
-│   │   └── vtt-helpers.ts               # New: grid snapping, distance calc, hit-testing
+│   │   └── vtt-helpers.ts               # Grid snapping, distance calc, hit-testing
 │   └── config/
-│       └── help-content.ts              # Updated: VTT help entries
+│       └── help-content.ts              # VTT help entries and feature guidance
 ├── types/
-│   └── vtt.ts                          # New: Token, Session, Initiative types
-tests/
-├── unit/
-│   ├── stores/map-session.test.ts       # Session store operations
-│   ├── services/vtt-session.test.ts     # P2P sync protocol
-│   ├── lib/vtt-helpers.test.ts          # Grid snapping, distance, hit-testing
-│   └── renderer/render-tokens.test.ts   # Token rendering coordinate transforms
-└── e2e/
-    ├── vtt-token-drag.spec.ts           # Token drag interaction
-    ├── vtt-session.spec.ts              # Shared session flow
-    └── vtt-combat-round.spec.ts         # Full combat round flow
+│   └── vtt.ts                          # Token, session, initiative, protocol types
+packages/map-engine/src/
+└── renderer.ts                          # Token and measurement rendering
+packages/map-engine/tests/
+└── renderer.test.ts                     # Rendering and transform coverage
+apps/web/tests/
+├── map.spec.ts                          # Map/VTT UI integration coverage
+├── guest-mode.spec.ts                   # Guest/session integration coverage
+└── p2p-image-sync.spec.ts               # Shared sync and transport coverage
 ```
 
-**Structure Decision**: Single-project web application feature. New store (`map-session.svelte.ts`), components, and service layer added within `apps/web/src/lib/`. Types in a dedicated `vtt.ts` module. If the session layer grows beyond the web app scope, it can be extracted to a `packages/vtt-session/` later (per Library-First principle).
+**Structure Decision**: Single-project web application feature. The implementation lives in `apps/web/src/lib/` with shared token rendering logic in `packages/map-engine/`. VTT-specific types live in `apps/web/src/types/vtt.ts`. If the session layer grows beyond the web app scope, it can still be extracted later (per Library-First principle).
 
 ## Complexity Tracking
 

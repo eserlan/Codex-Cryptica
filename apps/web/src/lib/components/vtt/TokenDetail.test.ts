@@ -4,7 +4,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import TokenDetail from "./TokenDetail.svelte";
 import { mapSession } from "$lib/stores/map-session.svelte";
-import { guestRoster } from "$lib/stores/guest";
 import { mapStore } from "$lib/stores/map.svelte";
 
 vi.mock("svelte", async () => {
@@ -34,7 +33,6 @@ vi.mock("$lib/stores/ui.svelte", () => ({
 describe("TokenDetail", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    guestRoster.set({});
     mapSession.clearSession();
     mapSession.bindToMap("map-1");
     mapSession.setVttEnabled(true);
@@ -50,29 +48,33 @@ describe("TokenDetail", () => {
         rotation: 0,
         zIndex: 0,
         ownerPeerId: null,
+        ownerGuestName: null,
         visibleTo: "all",
         color: "#f59e0b",
         imageUrl: null,
+        statusEffects: [],
       } as any,
     };
     mapSession.setSelection("token-1");
   });
 
-  it("shows a read-only view for guests", async () => {
+  it("hides management and metadata blocks for guests", async () => {
     const { uiStore } = await import("$lib/stores/ui.svelte");
     uiStore.isGuestMode = true;
     mapStore.isGMMode = false;
+    mapSession.tokens["token-1"].entityId = "entity-1";
 
     render(TokenDetail);
 
-    await waitFor(() =>
-      expect(screen.getByText("Read-only view for guests")).toBeTruthy(),
-    );
+    await waitFor(() => expect(screen.getByText("Goblin")).toBeTruthy());
 
     expect(screen.queryByRole("button", { name: "Remove Token" })).toBeNull();
     expect(
       screen.queryByRole("button", { name: "Add to Initiative" }),
     ).toBeNull();
+    expect(screen.queryByText("Linked Entity")).toBeNull();
+    expect(screen.queryByText("Owner")).toBeNull();
+    expect(screen.queryByText("Read-only view for guests")).toBeNull();
   });
 
   it("removes the token directly in GM mode", async () => {
@@ -88,5 +90,40 @@ describe("TokenDetail", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Remove Token" }));
 
     await waitFor(() => expect(mapSession.tokens["token-1"]).toBeUndefined());
+  });
+
+  it("shows a host-only reveal button for tokens with an image", async () => {
+    mapStore.isGMMode = true;
+    const { uiStore } = await import("$lib/stores/ui.svelte");
+    uiStore.isGuestMode = false;
+    const revealSpy = vi.spyOn(mapSession, "showTokenImageToPlayers");
+    mapSession.tokens["token-1"].imageUrl = "images/goblin.webp";
+
+    render(TokenDetail);
+
+    const button = await screen.findByRole("button", {
+      name: "Show token image to players",
+    });
+    await fireEvent.click(button);
+
+    expect(revealSpy).toHaveBeenCalledWith("token-1");
+  });
+
+  it("hides add to initiative when the token is already in initiative", async () => {
+    mapStore.isGMMode = true;
+    const { uiStore } = await import("$lib/stores/ui.svelte");
+    uiStore.isGuestMode = false;
+    mapSession.initiativeOrder = ["token-1"];
+    mapSession.initiativeValues = { "token-1": 12 };
+
+    render(TokenDetail);
+
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Remove Token" })).toBeTruthy(),
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Add to Initiative" }),
+    ).toBeNull();
   });
 });

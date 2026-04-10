@@ -5,9 +5,10 @@ import {
   summarizeEncounterSession,
   VTTSessionService,
 } from "./vtt-session";
-import { readOpfsBlob, writeOpfsFile } from "../utils/opfs";
+import { deleteOpfsEntry, readOpfsBlob, writeOpfsFile } from "../utils/opfs";
 
 vi.mock("../utils/opfs", () => ({
+  deleteOpfsEntry: vi.fn(),
   readOpfsBlob: vi.fn(),
   writeOpfsFile: vi.fn(),
 }));
@@ -35,9 +36,11 @@ describe("vtt-session", () => {
         rotation: 0,
         zIndex: 1,
         ownerPeerId: null,
+        ownerGuestName: null,
         visibleTo: "all",
         color: "#fff",
         imageUrl: null,
+        statusEffects: [],
       },
     };
     session.savedAt = 456;
@@ -102,6 +105,23 @@ describe("vtt-session", () => {
 
     const loaded = await service.loadEncounterSnapshot("map-1", "enc-2");
     expect(loaded.id).toBe("enc-2");
+  });
+
+  it("deletes snapshots from OPFS", async () => {
+    const vaultHandle = { name: "vault" } as FileSystemDirectoryHandle;
+    const service = new VTTSessionService({
+      getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
+    });
+
+    await service.deleteEncounterSnapshot("map-1", "enc-1");
+
+    expect(vi.mocked(writeOpfsFile)).not.toHaveBeenCalled();
+    expect(vi.mocked(readOpfsBlob)).not.toHaveBeenCalled();
+    expect(vi.mocked(deleteOpfsEntry)).toHaveBeenCalledWith(
+      vaultHandle,
+      ["maps", "map-1_encounter_enc-1.json"],
+      "vault",
+    );
   });
 
   it("lists encounter snapshots from the maps directory", async () => {

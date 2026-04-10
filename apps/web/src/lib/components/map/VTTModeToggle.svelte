@@ -1,6 +1,7 @@
 <script lang="ts">
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vttModeMenu } from "./vtt-mode-menu.svelte";
+  import { getPrimaryButtonStateClass } from "./vtt-ui";
 
   let toggleEl = $state<HTMLButtonElement | null>(null);
 
@@ -29,9 +30,7 @@
 <div class="relative">
   <button
     bind:this={toggleEl}
-    class="px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all {mapSession.vttEnabled
-      ? 'bg-theme-primary/20 text-theme-primary ring-1 ring-theme-primary/50 hover:bg-theme-primary/30'
-      : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.vttEnabled)}`}
     onclick={toggleVtt}
     onmousedown={handleMouseDown}
     oncontextmenu={(event) => event.preventDefault()}
