@@ -145,6 +145,9 @@ Only return the JSON. If no connections are found, return empty array [].`;
 
       const proposals: Proposal[] = [];
       const validTargetIds = new Set(availableTargets.map((t) => t.id));
+      const idToIdMap = new Map(
+        availableTargets.map((t) => [t.id.toLowerCase(), t.id]),
+      );
       const nameToIdMap = new Map(
         availableTargets.map((t) => [t.name.toLowerCase(), t.id]),
       );
@@ -165,9 +168,13 @@ Only return the JSON. If no connections are found, return empty array [].`;
         // Robust ID Matching: AI sometimes hallucinates the 'name' as the ID or slugs it.
         let resolvedId = p.targetId;
         if (!validTargetIds.has(resolvedId)) {
-          const normalized = String(resolvedId).toLowerCase();
+          const normalized = String(resolvedId).trim().toLowerCase();
+          const slugified = normalized.replace(/[^a-z0-9]/g, "-");
           const matchId =
-            nameToIdMap.get(normalized) || slugToIdMap.get(normalized);
+            idToIdMap.get(normalized) ||
+            nameToIdMap.get(normalized) ||
+            slugToIdMap.get(normalized) ||
+            slugToIdMap.get(slugified);
 
           if (matchId) {
             resolvedId = matchId;
