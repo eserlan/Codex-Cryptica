@@ -165,7 +165,7 @@ test.describe("Mobile UX - 009 Feature Requirements", () => {
       await page.setViewportSize({ width: 375, height: 667 });
       await page.goto("/");
 
-      const searchButton = page.getByLabel("Search");
+      const searchButton = page.getByRole("button", { name: "Search" });
       await expect(searchButton).toBeVisible();
 
       const box = await searchButton.boundingBox();
