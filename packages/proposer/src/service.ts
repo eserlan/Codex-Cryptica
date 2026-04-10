@@ -6,6 +6,15 @@ const DB_NAME = "CodexCryptica";
 const DB_VERSION = 7;
 const PROPOSAL_STORE = "proposals";
 
+function normalizeTargetId(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export class ProposerService implements IProposerService {
   private dbPromise: Promise<IDBPDatabase<any>> | undefined;
   private config: ProposerConfig = {
@@ -152,10 +161,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
         availableTargets.map((t) => [t.name.toLowerCase(), t.id]),
       );
       const slugToIdMap = new Map(
-        availableTargets.map((t) => [
-          t.name.toLowerCase().replace(/[^a-z0-9]/g, "-"),
-          t.id,
-        ]),
+        availableTargets.map((t) => [normalizeTargetId(t.name), t.id]),
       );
 
       // Deduplicate proposals to only suggest one connection per target entity (highest confidence)
@@ -169,7 +175,7 @@ Only return the JSON. If no connections are found, return empty array [].`;
         let resolvedId = p.targetId;
         if (!validTargetIds.has(resolvedId)) {
           const normalized = String(resolvedId).trim().toLowerCase();
-          const slugified = normalized.replace(/[^a-z0-9]/g, "-");
+          const slugified = normalizeTargetId(normalized);
           const matchId =
             idToIdMap.get(normalized) ||
             nameToIdMap.get(normalized) ||

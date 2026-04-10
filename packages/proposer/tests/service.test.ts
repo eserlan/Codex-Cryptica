@@ -190,6 +190,48 @@ describe("ProposerService", () => {
               type: "related",
               reason: "test",
             },
+            {
+              targetId: " TARGET_ONE ",
+              confidence: 0.8,
+              type: "related",
+              reason: "test",
+            },
+            {
+              targetId: "Target One.",
+              confidence: 0.7,
+              type: "related",
+              reason: "test",
+            },
+          ]),
+      },
+    });
+    const mockModel = { generateContent };
+    vi.mocked(GoogleGenerativeAI).prototype.getGenerativeModel = vi
+      .fn()
+      .mockReturnValue(mockModel);
+    const proposals = await service.analyzeEntity(
+      "fake-key",
+      "gemini-1.5-flash",
+      "source1",
+      "content",
+      [{ id: "target1", name: "Target One" }],
+    );
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].targetId).toBe("target1");
+    expect(proposals[0].confidence).toBe(0.9);
+  });
+
+  it("should match canonical IDs case-insensitively after trimming", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify([
+            {
+              targetId: " TARGET1 ",
+              confidence: 0.9,
+              type: "related",
+              reason: "test",
+            },
           ]),
       },
     });
