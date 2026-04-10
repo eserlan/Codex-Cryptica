@@ -22,6 +22,12 @@ test.describe("Graph Fit to Screen", () => {
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible({ timeout: 10000 });
 
+    // Dismiss front page overlay if visible
+    const enterBtn = page.getByRole("button", { name: /ENTER THE CODEX/i });
+    if (await enterBtn.isVisible()) {
+      await enterBtn.click();
+    }
+
     // Wait for vault to be fully initialized before creating entities
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
       timeout: 15000,
