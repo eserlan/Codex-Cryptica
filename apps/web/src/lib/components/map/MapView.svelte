@@ -17,6 +17,7 @@
     getKeyboardViewportUpdate,
     getZoomViewportUpdate,
     isClickGesture,
+    shouldIgnoreMapKeyboardEvent,
   } from "./map-view-helpers";
   import { MapFogPainter } from "./map-fog-painter";
   import { MapViewAssetLoader } from "./map-view-loader";
@@ -477,6 +478,10 @@
   }
 
   function onKeyDown(event: KeyboardEvent) {
+    if (shouldIgnoreMapKeyboardEvent(event.target)) {
+      return;
+    }
+
     const { key, altKey } = event;
     isAltPressed = altKey;
     const viewport = mapStore.viewport;

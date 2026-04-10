@@ -23,7 +23,7 @@ import type {
 import type { Point } from "schema";
 import { snapToGrid } from "$lib/utils/vtt-helpers";
 import { uiStore } from "./ui.svelte";
-import { diceEngine } from "dice-engine";
+import { diceEngine, type RollResult } from "dice-engine";
 
 const STORAGE_PREFIX = "codex.vtt.session";
 const POPOUT_STORAGE_PREFIX = "codex.vtt.popout";
@@ -529,37 +529,33 @@ export class MapSessionStore {
     this.hasHydratedSession = false;
   }
 
-  sendChatMessage(content: string) {
-    if (!this.vttEnabled) return;
+  private createChatRoll(
+    formula: string,
+    result: Pick<RollResult, "total" | "parts">,
+  ) {
+    return {
+      formula,
+      total: result.total,
+      parts: result.parts.map((p) => ({
+        type: p.type,
+        value: p.value,
+        sides: p.type === "dice" ? p.sides : undefined,
+        rolls: p.type === "dice" ? p.rolls : undefined,
+        dropped: p.type === "dice" ? p.dropped : undefined,
+      })),
+    };
+  }
 
+  private buildChatPayload(
+    content: string,
+    roll?: ReturnType<MapSessionStore["createChatRoll"]>,
+  ): ChatMessagePayload {
     const sender = uiStore.isGuestMode
       ? uiStore.guestUsername || "Guest"
       : "GM";
     const senderId = this.myPeerId || "host";
 
-    let roll = undefined;
-    const trimmed = content.trim();
-    if (trimmed.startsWith("/roll ")) {
-      try {
-        const formula = trimmed.replace("/roll ", "").trim();
-        const result = diceEngine.evaluate(formula);
-        roll = {
-          formula,
-          total: result.total,
-          parts: result.parts.map((p) => ({
-            type: p.type,
-            value: p.value,
-            sides: p.type === "dice" ? p.sides : undefined,
-            rolls: p.type === "dice" ? p.rolls : undefined,
-            dropped: p.type === "dice" ? p.dropped : undefined,
-          })),
-        };
-      } catch (err) {
-        console.error("[MapSession] Dice roll failed", err);
-      }
-    }
-
-    const payload: ChatMessagePayload = {
+    return {
       type: "CHAT_MESSAGE",
       sender,
       senderId,
@@ -567,13 +563,61 @@ export class MapSessionStore {
       timestamp: Date.now(),
       roll,
     };
+  }
+
+  sendChatMessage(content: string) {
+    if (!this.vttEnabled) return;
+
+    let roll = undefined;
+    const trimmed = content.trim();
+    if (trimmed.startsWith("/roll ")) {
+      try {
+        const formula = trimmed.replace("/roll ", "").trim();
+        const result = diceEngine.evaluate(formula);
+        roll = this.createChatRoll(formula, result);
+      } catch (err) {
+        console.error("[MapSession] Dice roll failed", err);
+      }
+    }
+
+    const payload = this.buildChatPayload(content, roll);
 
     this.chatMessages = [...this.chatMessages, payload];
     this.emit(payload);
   }
 
+  sendResolvedRollMessage(
+    formula: string,
+    result: Pick<RollResult, "total" | "parts">,
+  ) {
+    if (!this.vttEnabled) return;
+
+    const payload = this.buildChatPayload(
+      `/roll ${formula}`,
+      this.createChatRoll(formula, result),
+    );
+
+    this.chatMessages = [...this.chatMessages, payload];
+    this.emit(payload);
+  }
+
+  clearChatMessages() {
+    if (!this.vttEnabled) return;
+
+    this.chatMessages = [];
+    this.emit({
+      type: "CHAT_CLEAR",
+      timestamp: Date.now(),
+    });
+  }
+
   handleRemoteChatMessage(payload: ChatMessagePayload) {
     this.chatMessages = [...this.chatMessages, payload];
+    this.persistDraft();
+  }
+
+  handleRemoteChatClear() {
+    this.chatMessages = [];
     this.persistDraft();
   }
 

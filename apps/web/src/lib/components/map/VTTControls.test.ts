@@ -80,13 +80,17 @@ describe("VTTControls", () => {
   });
 
   it("shows the pure VTT controls for the active map session", async () => {
-    render(VTTControls);
+    const { container } = render(VTTControls);
 
     expect(screen.getByRole("button", { name: "Explore" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Combat" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Add Token" })).not.toBeNull();
     expect(screen.getByRole("button", { name: "Encounters" })).not.toBeNull();
     expect(screen.queryByRole("tab")).toBeNull();
+    expect(container.firstElementChild?.className).toContain("flex-col");
+    expect(container.firstElementChild?.firstElementChild?.className).toContain(
+      "min-w-0",
+    );
   });
 
   it("hides token and encounter management for guests", async () => {

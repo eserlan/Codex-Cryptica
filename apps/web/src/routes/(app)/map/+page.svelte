@@ -7,6 +7,7 @@
   import TokenAddDialog from "$lib/components/vtt/TokenAddDialog.svelte";
   import TokenDetail from "$lib/components/vtt/TokenDetail.svelte";
   import InitiativePanel from "$lib/components/vtt/InitiativePanel.svelte";
+  import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
   import GuestInfoOverlay from "$lib/components/vtt/GuestInfoOverlay.svelte";
   import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
   import {
@@ -26,6 +27,7 @@
 
   let showUpload = $state(false);
   let showVttShare = $state(false);
+  let isVttChatSidebarCollapsed = $state(false);
   let isVttSidebarCollapsed = $state(false);
   let mapName = $state("");
   let files = $state<FileList | null>(null);
@@ -85,6 +87,8 @@
   {#if mapStore.activeMap}
     <MapView>
       {#if mapSession.vttEnabled}
+        <VTTChatSidebar bind:collapsed={isVttChatSidebarCollapsed} />
+
         <aside
           class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-border bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {isVttSidebarCollapsed
             ? 'w-12'

@@ -364,6 +364,10 @@ export class P2PGuestService {
             void this.getMapSession().then((mapSession) =>
               mapSession.handleRemoteChatMessage(data),
             );
+          } else if (data.type === "CHAT_CLEAR") {
+            void this.getMapSession().then((mapSession) =>
+              mapSession.handleRemoteChatClear(),
+            );
           } else if (data.type === "FOG_REVEAL") {
             void this.getMapSession().then((mapSession) =>
               mapSession.handleRemoteFogMask(

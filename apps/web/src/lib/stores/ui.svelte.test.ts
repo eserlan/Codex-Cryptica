@@ -143,6 +143,17 @@ describe("UIStore", () => {
     openSpy.mockRestore();
   });
 
+  it("should preserve the active theme when opening the dice window", () => {
+    window.localStorage.setItem("codex-cryptica-active-theme", "cyberpunk");
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    uiStore.openDiceWindow();
+
+    expect(openSpy).toHaveBeenCalled();
+    expect(openSpy.mock.calls[0][0]).toContain("/dice?theme=cyberpunk");
+    openSpy.mockRestore();
+  });
+
   it("should handle notifications with timeout", () => {
     vi.useFakeTimers();
     uiStore.notify("Success!", "success");

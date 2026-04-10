@@ -21,48 +21,58 @@
   }
 </script>
 
-<div
-  class="flex items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 backdrop-blur p-1.5 shadow-lg pointer-events-auto"
->
-  <button
-    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.mode === "exploration")}`}
-    onclick={() => mapSession.setMode("exploration")}
-    type="button"
-  >
-    Explore
-  </button>
-
-  <button
-    class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(mapSession.mode === "combat")}`}
-    onclick={() => mapSession.setMode("combat")}
-    type="button"
-  >
-    Combat
-  </button>
-
-  {#if canManageVtt}
-    <div class="h-6 w-px bg-theme-border/70 mx-0.5"></div>
-
-    <button
-      class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(false)} disabled:opacity-50 disabled:cursor-not-allowed`}
-      onclick={openTokenDialog}
-      disabled={!mapStore.activeMap}
-      type="button"
-    >
-      Add Token
-    </button>
-
-    <button
-      class={`px-2.5 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${getPrimaryButtonStateClass(false)}`}
-      onclick={() => (showEncounters = true)}
-      type="button"
-    >
-      Encounters
-    </button>
-  {/if}
-
-  <div class="ml-1">
+<div class="flex flex-col gap-2 pointer-events-auto">
+  <div class="min-w-0 w-full">
     <FeatureHint hintId="vtt-mode" />
+  </div>
+
+  <div
+    class="flex flex-wrap items-center gap-1.5 rounded-lg border border-theme-border bg-theme-surface/90 p-1.5 shadow-lg backdrop-blur min-w-0"
+  >
+    <button
+      class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(mapSession.mode === "exploration")}`}
+      onclick={() => mapSession.setMode("exploration")}
+      type="button"
+      aria-label="Explore"
+      title="Explore"
+    >
+      <span class="icon-[lucide--compass] h-4 w-4"></span>
+    </button>
+
+    <button
+      class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(mapSession.mode === "combat")}`}
+      onclick={() => mapSession.setMode("combat")}
+      type="button"
+      aria-label="Combat"
+      title="Combat"
+    >
+      <span class="icon-[lucide--swords] h-4 w-4"></span>
+    </button>
+
+    {#if canManageVtt}
+      <div class="h-6 w-px bg-theme-border/70 mx-0.5 shrink-0"></div>
+
+      <button
+        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)} disabled:opacity-50 disabled:cursor-not-allowed`}
+        onclick={openTokenDialog}
+        disabled={!mapStore.activeMap}
+        type="button"
+        aria-label="Add Token"
+        title="Add Token"
+      >
+        <span class="icon-[lucide--user-plus] h-4 w-4"></span>
+      </button>
+
+      <button
+        class={`h-9 w-9 flex items-center justify-center rounded-md transition-all ${getPrimaryButtonStateClass(false)}`}
+        onclick={() => (showEncounters = true)}
+        type="button"
+        aria-label="Encounters"
+        title="Encounters"
+      >
+        <span class="icon-[lucide--scroll-text] h-4 w-4"></span>
+      </button>
+    {/if}
   </div>
 </div>
 

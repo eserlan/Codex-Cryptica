@@ -294,6 +294,11 @@ export interface ChatMessagePayload {
   };
 }
 
+export interface ChatClearPayload {
+  type: "CHAT_CLEAR";
+  timestamp: number;
+}
+
 export type VTTMessage =
   | SessionSnapshotPayload
   | TokenStateUpdatePayload
@@ -313,5 +318,6 @@ export type VTTMessage =
   | SessionSavePayload
   | SessionEndedPayload
   | SetGridSettingsPayload
+  | ChatClearPayload
   | ChatMessagePayload
   | ShowTokenImagePayload;

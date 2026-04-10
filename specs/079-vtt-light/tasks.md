@@ -216,6 +216,22 @@
 
 ---
 
+## Phase 10: VTT Chat, Dice, and Sidebar UX
+
+**Purpose**: Delivered chat and command-flow improvements that keep VTT coordination in the sidebar layout.
+
+- [x] T079 [P] Add a dedicated left-side VTT chat sidebar in `apps/web/src/lib/components/vtt/VTTChatSidebar.svelte`
+- [x] T080 [P] Move VTT help text above the token controls and keep sidebar hints wrapped in `apps/web/src/lib/components/map/VTTControls.svelte` and `apps/web/src/lib/components/help/FeatureHint.svelte`
+- [x] T081 Wire VTT chat `/roll` autocomplete to the Oracle-style command menu flow in `apps/web/src/lib/components/vtt/VTTChat.svelte`
+- [x] T082 Extract shared dice-roll rendering into `apps/web/src/lib/components/dice/DiceRollResult.svelte` and reuse it in Oracle and VTT chat message rendering
+- [x] T083 Add the dice modal entry button to the VTT chat input row in `apps/web/src/lib/components/vtt/VTTChat.svelte`
+- [x] T084 Broadcast resolved dice rolls from the shared modal into VTT chat and the P2P transcript path in `apps/web/src/lib/components/dice/DiceModal.svelte` and `apps/web/src/lib/stores/map-session.svelte.ts`
+- [x] T085 Guard map zoom shortcuts while typing in VTT chat by ignoring editable targets in `apps/web/src/lib/components/map/MapView.svelte` and `apps/web/src/lib/components/map/map-view-helpers.ts`
+- [x] T086 Convert primary VTT controls to icon buttons in `apps/web/src/lib/components/map/VTTControls.svelte`
+- [x] T087 Keep the shared modal provider mounted in VTT fullscreen so the dice modal can open from the chat sidebar in `apps/web/src/routes/(app)/+layout.svelte`
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

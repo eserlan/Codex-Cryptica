@@ -10,11 +10,39 @@ Every message follows the format:
 { type: "<MESSAGE_TYPE>", ...fields }
 ```
 
-No wrapper, no versioning, no custom envelope beyond the transport-specific compressed snapshot variant — direct object transmission over PeerJS.
+No wrapper, no versioning, no custom envelope beyond the transport-specific compressed snapshot variant - direct object transmission over PeerJS.
 
 ---
 
-## Host → Guest Messages
+## Shared Payload Shapes
+
+### ChatMessage
+
+```typescript
+{
+  id: string,
+  senderId: string,
+  senderName: string,
+  content: string,
+  createdAt: number,
+  kind: "chat" | "roll",
+  roll: {
+    formula: string,
+    total: number,
+    terms: Array<{
+      value: number,
+      label?: string
+    }>,
+    detail?: string
+  } | null
+}
+```
+
+Roll entries are sent as resolved results, not re-rolled by guests.
+
+---
+
+## Host -> Guest Messages
 
 ### SESSION_SNAPSHOT
 
@@ -62,9 +90,25 @@ Sent when a guest connects. Provides the complete current session state.
       end: { x: number, y: number } | null,
       locked?: boolean
     },
+    chatMessages: Array<{
+      id: string,
+      senderId: string,
+      senderName: string,
+      content: string,
+      createdAt: number,
+      kind: "chat" | "roll",
+      roll: {
+        formula: string,
+        total: number,
+        terms: Array<{
+          value: number,
+          label?: string
+        }>,
+        detail?: string
+      } | null
+    }>,
     createdAt: number,
     savedAt: number | null,
-    chatMessages: Array<any>,
     gridSize?: number,
     gridUnit?: string,
     gridDistance?: number
@@ -164,7 +208,6 @@ Broadcast when the host reveals or hides fog during the session.
 ```typescript
 {
   type: "FOG_REVEAL",
-  // Delta: array of {x, y, radius, reveal: boolean} brush strokes
   strokes: Array<{
     x: number,
     y: number,
@@ -219,15 +262,26 @@ Broadcast when any participant places a ping on the map.
 ```typescript
 {
   type: "MAP_PING",
-  x: number,    // image-space
-  y: number,    // image-space
-  peerId: string  // originator
+  x: number,
+  y: number,
+  peerId: string
+}
+```
+
+### CHAT_MESSAGE
+
+Broadcast when a chat entry or resolved dice result should appear in the shared transcript.
+
+```typescript
+{
+  type: "CHAT_MESSAGE",
+  message: ChatMessage
 }
 ```
 
 ---
 
-## Guest → Host Messages
+## Guest -> Host Messages
 
 ### TOKEN_MOVE
 
@@ -242,7 +296,7 @@ Sent by a guest to request moving a token they own.
 }
 ```
 
-**Expected host response**: `TOKEN_STATE_UPDATE` broadcast to all guests (including the requester) with the confirmed position. If the host rejects the move (invalid token, wrong owner, out of bounds), no response is sent — the guest client should revert the token to its last known position after a timeout.
+**Expected host response**: `TOKEN_STATE_UPDATE` broadcast to all guests (including the requester) with the confirmed position. If the host rejects the move (invalid token, wrong owner, out of bounds), no response is sent - the guest client should revert the token to its last known position after a timeout.
 
 ### TOKEN_ADD_REQUEST
 
@@ -273,6 +327,17 @@ Sent when a guest clicks to place a ping marker.
 }
 ```
 
+### CHAT_MESSAGE
+
+Sent by a guest to submit chat text or a resolved dice roll for the shared transcript.
+
+```typescript
+{
+  type: "CHAT_MESSAGE",
+  message: ChatMessage
+}
+```
+
 ---
 
 ## Error Handling
@@ -289,3 +354,4 @@ Sent when a guest clicks to place a ping marker.
 - Token visibility is controlled separately by the host through the token's visibility state; in the lightweight VTT, hidden-from-guests state is represented by `visibleTo: "gm-only"`. `owner-only` is legacy compatibility data and should be normalized to `all`.
 - Large `SESSION_SNAPSHOT` payloads should be compressed when browser support exists, but the uncompressed schema remains the canonical data model.
 - The initiative pop-out mirrors the same session state as the sidebar, including current initiative order, selection, and token ownership assignments.
+- Chat messages and resolved dice rolls are synchronized through the same transcript payload so all participants see the same output.

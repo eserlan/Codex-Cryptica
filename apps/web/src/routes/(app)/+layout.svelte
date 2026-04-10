@@ -21,7 +21,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { isEntityVisible } from "schema";
+  import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
@@ -60,6 +60,13 @@
   const isVttFullscreen = $derived(
     page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
   );
+
+  if (browser) {
+    const requestedTheme = page.url.searchParams.get("theme");
+    if (requestedTheme && THEMES[requestedTheme]) {
+      themeStore.currentThemeId = requestedTheme;
+    }
+  }
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
@@ -226,6 +233,9 @@
 
   {#if !isPopup && !isVttFullscreen}
     <AppFooter />
+  {/if}
+
+  {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
 

@@ -1,5 +1,7 @@
 import { base } from "$app/paths";
 
+const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
+
 export type SettingsTab =
   | "vault"
   | "intelligence"
@@ -422,7 +424,14 @@ class UIStore {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    const url = `${window.location.origin}${base}/dice`;
+    const params = new URLSearchParams();
+    const activeTheme = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
+    if (activeTheme) {
+      params.set("theme", activeTheme);
+    }
+
+    const query = params.toString();
+    const url = `${window.location.origin}${base}/dice${query ? `?${query}` : ""}`;
     const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
     const newWin = window.open(url, "CodexCrypticaDice", features);

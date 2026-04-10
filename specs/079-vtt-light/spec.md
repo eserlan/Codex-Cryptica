@@ -104,6 +104,24 @@ The GM optionally starts a shared map session from the current local VTT encount
 
 ---
 
+### User Story 6 - VTT Chat and Roll Sharing (Priority: P3)
+
+The GM and guests use a dedicated left-side VTT chat panel during map play. They can send chat messages, use `/roll` with the same command flow as the Oracle chat, open the shared dice roller modal from the chat input row, and see dice results posted back into the chat transcript for everyone in the session. The chat panel keeps the interaction separate from the token controls, and the VTT controls remain compact icon buttons for fast map play.
+
+**Why this priority**: Tactical play benefits from keeping coordination, rolls, and encounter control in one place. This is a quality-of-life story that reduces context switching without changing core encounter mechanics.
+
+**Independent Test**: Can be tested by opening VTT mode, typing `/roll` in chat, using the dice modal to roll a formula, and verifying the result appears in the VTT chat transcript for all connected participants.
+
+**Acceptance Scenarios**:
+
+1. **Given** VTT mode is active, **When** the user opens the left chat sidebar, **Then** they can send chat messages without leaving the map view
+2. **Given** the user types `/` in the VTT chat input, **When** the command menu opens, **Then** selecting `/roll` inserts the roll command using the same flow as the Oracle chat
+3. **Given** the user opens the shared dice roller modal from VTT chat, **When** they roll a formula, **Then** the result appears in the VTT chat transcript and is synchronized to connected participants
+4. **Given** the map view has keyboard focus elsewhere, **When** the user types into the VTT chat input, **Then** `+`, `-`, and related text-entry keys are not interpreted as map zoom shortcuts
+5. **Given** the VTT control strip is visible, **When** the user interacts with its actions, **Then** the controls use compact icon buttons and remain readable in the sidebar layout
+
+---
+
 ### Edge Cases
 
 - What happens when a token is moved off the visible map area? (Clamp to map bounds)
@@ -111,6 +129,7 @@ The GM optionally starts a shared map session from the current local VTT encount
 - What happens when the host disconnects during a shared session? (Session ends for all guests; state is not preserved unless explicitly saved)
 - How does the system handle two guests trying to move the same token simultaneously? (Host is authoritative; only the host's state wins)
 - What happens when a map has no grid defined but grid snapping is requested? (Snapping is disabled; free placement only)
+- What happens when the user opens the shared dice modal from VTT chat? (The modal remains globally available in VTT fullscreen and posts the resolved roll back to chat when VTT mode is active)
 
 ## Requirements _(mandatory)_
 
@@ -147,12 +166,19 @@ The GM optionally starts a shared map session from the current local VTT encount
 - **FR-029**: System MUST allow the GM to delete a saved encounter snapshot from the vault and refresh the saved-encounter list
 - **FR-030**: System MUST provide a host-only share control in the VTT sidebar for starting a live shared session without leaving VTT mode
 - **FR-031**: System SHOULD compress large VTT session snapshots during host-to-guest sync when the browser supports transport compression, while preserving the full session payload
+- **FR-032**: System MUST provide a dedicated VTT chat sidebar for shared coordination during map play
+- **FR-033**: System MUST support `/roll` in VTT chat using the same command-selection flow as Oracle chat
+- **FR-034**: System MUST allow the shared dice roller modal to be opened from VTT chat
+- **FR-035**: Dice rolls made from the shared VTT dice roller MUST be posted into the VTT chat transcript and synchronized to connected participants
+- **FR-036**: System MUST prevent map keyboard shortcuts such as zoom from triggering while the user is typing in the VTT chat input
+- **FR-037**: The VTT control strip SHOULD remain compact and use icon buttons for primary actions in the sidebar layout
 
 ### Key Entities
 
 - **Token**: A visual marker placed on a map during a VTT session. Has position (x, y), size, rotation, an optional link to a vault entity, a name, and an optional owner (peer ID for shared sessions). Exists only within a session unless saved as part of an encounter snapshot.
 - **Encounter Session**: An ephemeral or saved state associated with a map during a VTT session. Contains token positions, initiative order, current turn, round number, session mode (exploration/combat), and fog reveal state. Can be saved to or loaded from the vault as an encounter snapshot. A session may exist locally without any live guests connected.
 - **Initiative Entry**: A reference to a token within an ordered list. Has an initiative value (numeric), a reference to the token, and optional metadata (e.g., whether the token has acted this round).
+- **Chat Message**: A shared VTT transcript entry containing sender metadata, message content, and optional dice-roll results. Appears in the VTT chat sidebar and is synchronized to connected participants.
 
 ## Success Criteria _(mandatory)_
 
@@ -169,3 +195,5 @@ The GM optionally starts a shared map session from the current local VTT encount
 - **SC-009**: A GM can drag a token continuously for 3 seconds in a 20-token encounter without visible stutter caused by persistence or session sync churn
 - **SC-010**: A GM can delete a saved encounter snapshot and see it removed from the encounter manager list immediately
 - **SC-011**: A guest can join a busy VTT session without visible lag from oversized session snapshot transport, with compressed snapshots used when supported
+- **SC-012**: A user can use the VTT chat sidebar to coordinate during play, roll dice from the shared modal, and see the same roll transcript across all connected participants
+- **SC-013**: A user typing in VTT chat can enter `+` and `-` characters without triggering map zoom shortcuts

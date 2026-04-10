@@ -8,17 +8,17 @@
 
 ## Summary
 
-Lightweight VTT is implemented as a session overlay on top of the existing map system. It covers token placement/movement, turn order management, distance measurement, P2P-synchronized shared sessions, encounter snapshot save/load/delete, a dedicated VTT sidebar, an initiative pop-out window, and a host-only share control. Session state stays separate from persistent map data and uses the existing host/guest bridge for multiplayer sync.
+Lightweight VTT is implemented as a session overlay on top of the existing map system. It covers token placement/movement, turn order management, distance measurement, P2P-synchronized shared sessions, encounter snapshot save/load/delete, a dedicated VTT sidebar, a left-side VTT chat panel, a shared dice modal entry point, an initiative pop-out window, and a host-only share control. Session state stays separate from persistent map data and uses the existing host/guest bridge for multiplayer sync.
 
 ## Technical Context
 
 **Language/Version**: TypeScript (as project standard)
-**Primary Dependencies**: Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync)
+**Primary Dependencies**: Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync), existing shared dice modal and Oracle command menu flow
 **Storage**: In-memory session state; optional vault persistence via OPFS for encounter snapshots
 **Testing**: Vitest (unit), Playwright (E2E for shared session flows)
 **Target Platform**: Browser (web application)
 **Project Type**: Web application feature (SvelteKit frontend)
-**Performance Goals**: Smooth token drag at 60fps for ≤20 tokens; <1s sync latency for guest updates; coalesce rapid persistence and sync updates to avoid drag jank; compress large session snapshots at the transport boundary when supported
+**Performance Goals**: Smooth token drag at 60fps for ≤20 tokens; <1s sync latency for guest updates; keep chat, dice, and sidebar interactions responsive without stealing map keyboard focus; coalesce rapid persistence and sync updates to avoid drag jank; compress large session snapshots at the transport boundary when supported
 **Constraints**: Session state must not mutate persistent map data; host-authoritative model for P2P; token ownership controls movement permission only and does not control visibility; offline-capable for single-player use
 **Scale/Scope**: ≤20 tokens per session, ≤8 connected peers, single map per session
 
@@ -34,7 +34,7 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 | **IV. AI-First Extraction**    | ⚠️ N/A  | Feature is UI/session management, not data extraction                                                                  |
 | **V. Privacy & Client-Side**   | ✅ PASS | Session state stays local-first; P2P is peer-to-peer and transport-compressed when available                           |
 | **VI. Clean Implementation**   | ✅ PASS | Svelte 5 runes, constructor DI, and minimal mutation patterns are used throughout                                      |
-| **VII. User Documentation**    | ✅ PASS | Help content, sidebar/pop-out guidance, quickstart notes, and task documentation are present                           |
+| **VII. User Documentation**    | ✅ PASS | Help content, sidebar/pop-out guidance, VTT chat notes, quickstart notes, and task documentation are present           |
 | **VIII. Dependency Injection** | ✅ PASS | Session store and P2P services accept dependencies via constructors                                                    |
 | **IX. Natural Language**       | ✅ PASS | UI labels remain plain and task-specific                                                                               |
 | **X. Quality & Coverage**      | ✅ PASS | Feature-specific tests cover the main VTT flows and persistence/sync edge cases                                        |
@@ -74,13 +74,14 @@ apps/web/src/
 │   │       ├── EncounterManager.svelte  # Save/load/delete encounter UI
 │   │       ├── GuestSessionBootstrap.svelte # Guest popout bootstrap and hydration
 │   │       ├── GuestInfoOverlay.svelte   # Joined-players roster
-│   │       └── VTTChat.svelte           # Shared chat panel for VTT sessions
+│   │       ├── VTTChatSidebar.svelte    # Left-side shared chat panel for VTT sessions
+│   │       └── VTTChat.svelte           # Shared chat panel and dice modal entry point
 │   ├── services/
 │   │   └── vtt-session.ts               # Encounter snapshot persistence service
 │   ├── utils/
 │   │   └── vtt-helpers.ts               # Grid snapping, distance calc, hit-testing
 │   └── config/
-│       └── help-content.ts              # VTT help entries and feature guidance
+│       └── help-content.ts              # VTT help entries and feature guidance, including chat and roll usage
 ├── types/
 │   └── vtt.ts                          # Token, session, initiative, protocol types
 packages/map-engine/src/

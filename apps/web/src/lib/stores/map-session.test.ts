@@ -844,4 +844,84 @@ describe("MapSessionStore", () => {
       }),
     );
   });
+
+  it("broadcasts resolved modal roll results to VTT chat", () => {
+    const emitSpy = vi.spyOn(store as any, "emit");
+    store.vttEnabled = true;
+
+    store.sendResolvedRollMessage("2d20kh1 + 5", {
+      total: 22,
+      parts: [
+        {
+          type: "dice",
+          value: 17,
+          sides: 20,
+          rolls: [17, 9],
+          dropped: [9],
+        },
+        {
+          type: "modifier",
+          value: 5,
+        },
+      ],
+    } as any);
+
+    expect(store.chatMessages.at(-1)).toMatchObject({
+      type: "CHAT_MESSAGE",
+      content: "/roll 2d20kh1 + 5",
+      roll: {
+        formula: "2d20kh1 + 5",
+        total: 22,
+      },
+    });
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CHAT_MESSAGE",
+        content: "/roll 2d20kh1 + 5",
+        roll: expect.objectContaining({
+          formula: "2d20kh1 + 5",
+          total: 22,
+        }),
+      }),
+    );
+  });
+
+  it("clears chat and emits a shared clear event", () => {
+    const emitSpy = vi.spyOn(store as any, "emit");
+    store.vttEnabled = true;
+    store.chatMessages = [
+      {
+        type: "CHAT_MESSAGE",
+        sender: "GM",
+        senderId: "host",
+        content: "hello",
+        timestamp: Date.now(),
+      },
+    ];
+
+    store.clearChatMessages();
+
+    expect(store.chatMessages).toEqual([]);
+    expect(emitSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CHAT_CLEAR",
+      }),
+    );
+  });
+
+  it("applies remote chat clear events locally", () => {
+    store.chatMessages = [
+      {
+        type: "CHAT_MESSAGE",
+        sender: "GM",
+        senderId: "host",
+        content: "hello",
+        timestamp: Date.now(),
+      },
+    ];
+
+    store.handleRemoteChatClear();
+
+    expect(store.chatMessages).toEqual([]);
+  });
 });
