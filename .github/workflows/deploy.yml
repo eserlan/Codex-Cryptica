@@ -126,6 +126,7 @@ jobs:
 
       - name: Deploy Preview to Cloudflare Pages
         if: github.event_name == 'pull_request'
+        id: deploy_preview
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -140,18 +141,26 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          DEPLOYMENT_URL: ${{ steps.deploy_preview.outputs.deployment-url }}
-          ALIAS_URL: ${{ steps.deploy_preview.outputs.deployment-alias-url }}
         run: |
+          # Construct the preview URL using Cloudflare Pages branch slugging rules:
+          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
+          BRANCH="${{ github.head_ref }}"
+          CF_BRANCH=$(printf '%s' "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//' \
+            | cut -c1-28 \
+            | sed -E 's/-+$//')
+          DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
+
           COMMENT="🚀 **Preview Deployment Ready!**
 
-          **URL:** $DEPLOYMENT_URL
-          **Alias:** $ALIAS_URL
+          **URL:** ${DEPLOYMENT_URL}
+          **Branch:** \`${BRANCH}\`
 
           _Changes will be live shortly._"
 
           # Check if a comment already exists to avoid spamming
-          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready")) | .id' | head -n 1)
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
 
           if [ -n "$EXISTING_COMMENT_ID" ]; then
             gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
