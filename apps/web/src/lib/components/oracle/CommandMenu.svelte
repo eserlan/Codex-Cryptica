@@ -79,7 +79,7 @@
     if (activeStep !== "COMMAND" || !input.startsWith("/")) return [];
     const term = input.slice(1).toLowerCase();
     return commands.filter(
-      (c) =>
+      (c: ChatCommand) =>
         c.name.toLowerCase().includes(term) ||
         c.description.toLowerCase().includes(term),
     );
