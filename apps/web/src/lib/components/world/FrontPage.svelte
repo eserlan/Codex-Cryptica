@@ -77,8 +77,8 @@ Art direction:
     };
 
     // ⚡ Bolt Optimization: Single-pass imperative partitioning instead of multiple .filter() calls
-    const pinned = [];
-    const unpinned = [];
+    const pinned: typeof recentActivity = [];
+    const unpinned: typeof recentActivity = [];
     for (const activity of recentActivity) {
       if (isPinned(activity.tags, activity.labels)) {
         pinned.push(activity);
