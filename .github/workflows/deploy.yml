@@ -142,10 +142,14 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Construct the preview URL directly
-          # Cloudflare Pages transforms branch names: "/" → "-", truncated to 28 chars
+          # Construct the preview URL using Cloudflare Pages branch slugging rules:
+          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
           BRANCH="${{ github.head_ref }}"
-          CF_BRANCH=$(echo "$BRANCH" | sed 's/\//-/g' | cut -c1-28)
+          CF_BRANCH=$(printf '%s' "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//' \
+            | cut -c1-28 \
+            | sed -E 's/-+$//')
           DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
 
           COMMENT="🚀 **Preview Deployment Ready!**
