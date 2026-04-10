@@ -278,3 +278,7 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 ## Recent Changes
 
 - 076-add-canvas-context-menu: Added TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine
+
+## Qwen Added Memories
+
+- Always run playwright test with --last-failed --reporter=line when iterating on fixes (terse output). Note: test:e2e in package.json already has these flags baked in, so it only applies when invoking playwright directly (npx playwright test ...). See feedback_e2e_playwright_flags.md for details.
