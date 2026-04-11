@@ -29,7 +29,7 @@ test.describe("Oracle Clear Chat", () => {
     page,
   }) => {
     // 1. Open Oracle Window
-    const toggleBtn = page.getByTitle("Open Lore Oracle");
+    const toggleBtn = page.getByTestId("activity-bar-oracle");
     await expect(toggleBtn).toBeVisible();
     await toggleBtn.click();
 

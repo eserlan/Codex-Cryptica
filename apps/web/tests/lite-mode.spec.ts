@@ -14,6 +14,13 @@ test.describe("Lite Mode (No AI)", () => {
     });
     await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Toggle Lite Mode ON removes AI entry points and silences network", async ({

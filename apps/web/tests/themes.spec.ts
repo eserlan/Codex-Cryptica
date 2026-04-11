@@ -14,6 +14,13 @@ test.describe("Visual Styling Templates", () => {
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Switch to Fantasy theme and verify visual changes", async ({

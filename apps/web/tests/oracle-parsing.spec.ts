@@ -86,7 +86,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     page,
   }) => {
     // 1. Open Oracle
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // 2. Inject a structured message into the store
     await page.evaluate(() => {
@@ -142,7 +142,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
     page,
   }) => {
     // 1. Open Oracle
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // 2. Mock the AI response for a /create command
     await page.evaluate(() => {

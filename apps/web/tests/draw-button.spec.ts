@@ -35,7 +35,7 @@ test.describe("Advanced Draw Button", () => {
     ).not.toBeVisible();
 
     // 2. Check Oracle Chat
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
     const input = page.getByTestId("oracle-input");
     await input.fill("Tell me about the dragon");
     await input.press("Enter");
@@ -85,7 +85,7 @@ test.describe("Advanced Draw Button", () => {
     await expect(page.getByText("VISUALIZING...")).toBeVisible();
 
     // 3. Check Oracle Chat
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // Inject a mock assistant message directly into the store to test the button logic
     await page.evaluate(async () => {

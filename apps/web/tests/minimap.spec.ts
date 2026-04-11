@@ -30,9 +30,9 @@ test.describe("Minimap Navigation", () => {
 
     await page.goto("http://localhost:5173/");
     // Wait for app load
-    await expect(
-      page.getByRole("heading", { name: "Codex Cryptica" }),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("graph-canvas")).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should toggle minimap using the dedicated button", async ({ page }) => {
