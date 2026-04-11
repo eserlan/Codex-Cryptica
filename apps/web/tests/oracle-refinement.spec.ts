@@ -44,7 +44,7 @@ test.describe("Oracle UI Refinement", () => {
       const ui = (window as any).uiStore;
       if (ui) {
         ui.dismissedWorldPage = true;
-        ui.isLandingPageVisible = false;
+        ui.dismissedLandingPage = true;
       }
     });
 

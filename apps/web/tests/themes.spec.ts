@@ -18,7 +18,7 @@ test.describe("Visual Styling Templates", () => {
       const ui = (window as any).uiStore;
       if (ui) {
         ui.dismissedWorldPage = true;
-        ui.isLandingPageVisible = false;
+        ui.dismissedLandingPage = true;
       }
     });
   });
