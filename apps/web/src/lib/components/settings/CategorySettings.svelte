@@ -157,7 +157,7 @@
               categories.removeCategory(cat.id);
             }
           }}
-          class="opacity-0 group-hover:opacity-100 text-gray-600 hover:text-red-500 transition-all p-1"
+          class="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-600 hover:text-red-500 transition-all p-1"
           aria-label="Delete category {cat.label}"
           title="Delete Category"
         >
