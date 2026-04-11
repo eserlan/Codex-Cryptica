@@ -40,6 +40,13 @@ test.describe("Oracle UI Refinement", () => {
 
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
 
     // Mock Gemini API for text generation
     await page.route(
@@ -64,7 +71,7 @@ test.describe("Oracle UI Refinement", () => {
     page,
   }) => {
     // Open Oracle Window
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");
@@ -87,7 +94,7 @@ test.describe("Oracle UI Refinement", () => {
 
   test("should clear chat history when vault is closed", async ({ page }) => {
     // Open Oracle Window
-    await page.getByTitle("Open Lore Oracle").click();
+    await page.getByTestId("activity-bar-oracle").click();
 
     // Send a message
     const textarea = page.getByTestId("oracle-input");

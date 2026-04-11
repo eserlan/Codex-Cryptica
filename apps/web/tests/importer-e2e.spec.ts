@@ -75,30 +75,35 @@ test.describe("Intelligent Importer E2E", () => {
       /.*\/v1beta\/models\/.*:generateContent.*/,
       async (route) => {
         await requestHold;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            candidates: [
-              {
-                content: {
-                  parts: [
-                    {
-                      text: JSON.stringify([
-                        {
-                          title: "Ghost Entity",
-                          type: "Character",
-                          chronicle: "Summary",
-                          lore: "Lore",
-                        },
-                      ]),
-                    },
-                  ],
+        // Request may already be aborted when the user cancels the import — ignore errors
+        try {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              candidates: [
+                {
+                  content: {
+                    parts: [
+                      {
+                        text: JSON.stringify([
+                          {
+                            title: "Ghost Entity",
+                            type: "Character",
+                            chronicle: "Summary",
+                            lore: "Lore",
+                          },
+                        ]),
+                      },
+                    ],
+                  },
                 },
-              },
-            ],
-          }),
-        });
+              ],
+            }),
+          });
+        } catch {
+          /* request was aborted by the cancel action */
+        }
       },
     );
 

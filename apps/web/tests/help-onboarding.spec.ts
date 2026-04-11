@@ -54,7 +54,10 @@ test.describe("Help Onboarding Walkthrough", () => {
       { timeout: 15000 },
     );
 
-    await page.waitForTimeout(2000);
+    // Wait for the welcome modal to actually render before tests run
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("should automatically start onboarding for new users", async ({
@@ -158,7 +161,7 @@ test.describe("Help Onboarding Walkthrough", () => {
 
   test("should allow skipping the tour", async ({ page }) => {
     await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible();
-    await page.getByRole("button", { name: "Dismiss" }).click();
+    await page.getByRole("button", { name: "Dismiss tour" }).click();
     await expect(page.getByText("Welcome to Codex Cryptica")).not.toBeVisible();
 
     // Verify it doesn't reappear
@@ -173,7 +176,7 @@ test.describe("Help Onboarding Walkthrough", () => {
     await expect(page.getByText("Welcome to Codex Cryptica")).toBeVisible({
       timeout: 10000,
     });
-    await page.getByRole("button", { name: "Dismiss" }).click();
+    await page.getByRole("button", { name: "Dismiss tour" }).click();
 
     // Ensure GraphView is fully loaded and ready before interacting
     const canvas = page.locator('[data-testid="graph-canvas"]');

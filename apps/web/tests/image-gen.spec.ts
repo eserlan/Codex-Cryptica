@@ -82,7 +82,7 @@ test.describe("Oracle Image Generation", () => {
     });
 
     // 1. Open Oracle
-    const trigger = page.locator("button[title='Open Lore Oracle']");
+    const trigger = page.getByTestId("activity-bar-oracle");
     await trigger.waitFor({ state: "visible", timeout: 15000 });
     await trigger.click();
 

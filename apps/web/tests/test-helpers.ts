@@ -23,6 +23,13 @@ export async function setupVaultPage(page: Page) {
       timeout: 15000,
     },
   );
+  await page.evaluate(() => {
+    const ui = (window as any).uiStore;
+    if (ui) {
+      ui.dismissedWorldPage = true;
+      ui.dismissedLandingPage = true;
+    }
+  });
   await expect(page.getByTestId("graph-canvas")).toBeVisible({
     timeout: 10000,
   });

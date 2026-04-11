@@ -17,7 +17,7 @@ test.describe("Mobile Header Responsiveness", () => {
     await expect(desktopLogo).not.toBeVisible();
 
     // Verify search button is visible (input is hidden)
-    const searchButton = page.getByLabel("Search");
+    const searchButton = page.getByRole("button", { name: "Search" });
     await expect(searchButton).toBeVisible();
     await expect(page.getByPlaceholder(/Search/)).not.toBeVisible();
 
