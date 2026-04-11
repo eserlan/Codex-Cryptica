@@ -101,7 +101,7 @@
               </div>
 
               <div
-                class="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                class="flex flex-col gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity"
               >
                 <button
                   onclick={() => handleApply(proposal)}
