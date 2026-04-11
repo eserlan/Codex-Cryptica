@@ -16,7 +16,7 @@ jobs:
 
           echo "PR is from $HEAD_BRANCH into $BASE_BRANCH"
 
-          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "staging" && ! "$HEAD_BRANCH" =~ ^jules- && ! "$HEAD_BRANCH" =~ ^bolt/ ]]; then
+          if [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" != "staging" && ! "$HEAD_BRANCH" =~ ^jules- && ! "$HEAD_BRANCH" =~ ^bolt/ && ! "$HEAD_BRANCH" =~ ^fix/e2e- ]]; then
             echo "::error::Direct PRs into 'main' are blocked. Please target the 'staging' branch instead."
             echo "Once your changes are merged to 'staging' and verified, 'staging' itself will be promoted to 'main'."
             exit 1
