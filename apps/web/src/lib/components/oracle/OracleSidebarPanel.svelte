@@ -129,10 +129,14 @@
 
   <!-- Feature Hint Modal -->
   {#if showHint}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
       onclick={() => (showHint = false)}
     >
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="bg-theme-surface border border-theme-border rounded-lg p-5 max-w-sm shadow-2xl"
         onclick={(e) => e.stopPropagation()}
