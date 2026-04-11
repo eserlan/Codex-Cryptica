@@ -180,15 +180,6 @@ This refactor should stay focused. It should not:
 - move front-page logic into a workspace package as part of the initial extraction
 - force granular loading states if the store layer does not support them naturally
 
-### 3.7 Welcome Screen Gate
-
-The FrontPage must **not** be shown until the user has dismissed the welcome/landing screen. Both routes that render `FrontPage` check `uiStore.skipWelcomeScreen`:
-
-- **`routes/(app)/+page.svelte`** — the overlay condition requires `uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage`
-- **`routes/(app)/vault/[id]/+page.svelte`** — the component is only rendered when `uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage`
-
-This ensures first-time users see the onboarding flow before the front page appears. The `openFrontPage()` action in `app-header-actions.ts` already calls `toggleWelcomeScreen(true)`, so manually opening the front page from the header automatically satisfies this gate.
-
 ---
 
 ## 4. Testing Strategy

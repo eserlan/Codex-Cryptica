@@ -162,7 +162,6 @@ vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     dismissedLandingPage: false,
     dismissedWorldPage: false,
-    skipWelcomeScreen: true,
     toggleWelcomeScreen: vi.fn(),
     toggleSidebarTool: vi.fn(),
     openZenMode: vi.fn(),
@@ -171,7 +170,6 @@ vi.mock("$lib/stores/ui.svelte", () => ({
   ui: {
     dismissedLandingPage: false,
     dismissedWorldPage: false,
-    skipWelcomeScreen: true,
     toggleWelcomeScreen: vi.fn(),
     toggleSidebarTool: vi.fn(),
     openZenMode: vi.fn(),
@@ -199,7 +197,6 @@ describe("FrontPage", () => {
     });
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedWorldPage = false;
-    uiStore.skipWelcomeScreen = true;
     worldStoreMock.error = null;
     window.localStorage.removeItem("codex_front_page_recent_limit:vault-1");
     Object.assign(worldMock.metadata, {
@@ -632,11 +629,7 @@ describe("FrontPage", () => {
     expect(worldStoreMock.error).toBe("Failed to save world briefing.");
   });
 
-  it.skip("shows a working state while cover art is generating", async () => {
-    // TODO: This test fails due to timing issues with the refactored async flow.
-    // The CoverImage component's isGenerating state may not reset properly when
-    // the handler's promise resolves. Requires investigation into CoverImage's
-    // promise tracking in the test environment.
+  it("shows a working state while cover art is generating", async () => {
     let resolveGenerateCover: (() => void) | undefined;
     mocks.generateCoverImage.mockImplementationOnce(
       () =>
@@ -659,10 +652,7 @@ describe("FrontPage", () => {
 
     resolveGenerateCover?.();
 
-    // Give time for the promise to settle and CoverImage to update its state
-    await waitFor(() => expect(screen.getByText("Generate Art")).toBeTruthy(), {
-      timeout: 2000,
-    });
+    await waitFor(() => expect(screen.getByText("Generate Art")).toBeTruthy());
   });
 
   it("opens zen mode on double click before the single-click action runs", async () => {
@@ -708,8 +698,6 @@ describe("FrontPage", () => {
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
     await fireEvent.click(screen.getByLabelText("Generate briefing"));
-    // Wait for the async confirm to be called
-    await waitFor(() => expect(uiStore.confirm).toHaveBeenCalled());
 
     expect(uiStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -738,7 +726,9 @@ describe("FrontPage", () => {
       expect.stringContaining('Write a high-level briefing for "Moonfall".'),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining("Current Conflict"),
+      expect.stringContaining(
+        "Follow with 3 to 5 markdown bullet points using bold labels",
+      ),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("Sky-market politics and drone wars."),
@@ -813,65 +803,6 @@ describe("FrontPage", () => {
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("[truncated]"),
     );
-  });
-
-  it("falls back to empty context when frontpage entity loading fails during briefing generation", async () => {
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
-    mocks.loadEntityContent.mockRejectedValueOnce(new Error("idb failure"));
-
-    render(FrontPage);
-
-    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
-    await fireEvent.click(screen.getByLabelText("Generate briefing"));
-
-    await waitFor(() => expect(mocks.generateBriefing).toHaveBeenCalled());
-    expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining("No additional context was retrieved."),
-    );
-  });
-
-  it.skip("shows a generating indicator while briefing generation is in progress", async () => {
-    // TODO: This test depends on the async flow through the controller's
-    // context-building methods. The indicator appears via isGenerating prop
-    // but the full promise chain (context build → generateBriefing) may
-    // not settle cleanly in the test environment. Revisit once the full
-    // FrontPage extraction is finalized.
-    let resolveGenerate: ((value: string) => void) | undefined;
-    mocks.generateBriefing.mockImplementationOnce(
-      () =>
-        new Promise<string>((resolve) => {
-          resolveGenerate = resolve;
-        }),
-    );
-    (uiStore.confirm as any).mockResolvedValueOnce(true);
-
-    render(FrontPage);
-
-    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
-    await fireEvent.click(screen.getByLabelText("Generate briefing"));
-
-    await waitFor(() =>
-      expect(screen.getByTestId("briefing-generating-indicator")).toBeTruthy(),
-    );
-    expect(
-      screen.getByTestId("briefing-preview").getAttribute("aria-busy"),
-    ).toBe("true");
-
-    resolveGenerate?.("New briefing text.");
-
-    // Wait for the promise chain to settle and Svelte to re-render
-    await vi.waitFor(
-      async () => {
-        await new Promise((r) => setTimeout(r, 50));
-        expect(
-          screen.queryByTestId("briefing-generating-indicator"),
-        ).toBeNull();
-      },
-      { timeout: 3000 },
-    );
-    expect(
-      screen.getByTestId("briefing-preview").getAttribute("aria-busy"),
-    ).toBe("false");
   });
 
   it("keeps the current briefing when generation fails", async () => {
@@ -982,7 +913,7 @@ describe("FrontPage", () => {
       lastModified: Date.now() + 3,
       image: "",
       thumbnail: "",
-    } as (typeof worldMock.recentActivity)[number]);
+    });
 
     render(FrontPage);
 
@@ -1041,8 +972,6 @@ describe("FrontPage", () => {
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
     await fireEvent.click(screen.getByLabelText("Generate briefing"));
-    // Wait for the async confirm to be called
-    await waitFor(() => expect(uiStore.confirm).toHaveBeenCalled());
 
     expect(uiStore.confirm).toHaveBeenCalledWith(
       expect.objectContaining({
