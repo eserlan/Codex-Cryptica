@@ -47,6 +47,14 @@ test.describe("Entity Explorer Sidebar", () => {
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
       timeout: 15000,
     });
+    // Reliably dismiss the front-page overlay (initScript polling may lose the race)
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
   });
 
   test("should toggle explorer sidebar and show entity list", async ({

@@ -38,6 +38,13 @@ test.describe("Dice Modal UI and Isolation", () => {
 
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
 
     // Wait for actual UI to be ready
     await expect(page.getByTestId("dice-roller-button")).toBeVisible({

@@ -33,6 +33,13 @@ test.describe("Graph Deletion and UI Safety", () => {
         });
       await waitForVault();
     });
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
   });
 
   test("should delete multiple nodes from graph context menu", async ({

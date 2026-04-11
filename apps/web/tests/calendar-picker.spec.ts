@@ -78,6 +78,13 @@ test.describe("Campaign Date Picker E2E", () => {
         (window as any).vault.status === "idle",
       { timeout: 15000 },
     );
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
 
     // Setup: Create a test entity
     await page.getByTestId("new-entity-button").click();

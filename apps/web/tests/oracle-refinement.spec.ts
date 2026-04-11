@@ -40,6 +40,13 @@ test.describe("Oracle UI Refinement", () => {
 
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
 
     // Mock Gemini API for text generation
     await page.route(

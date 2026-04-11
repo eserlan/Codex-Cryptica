@@ -54,7 +54,10 @@ test.describe("Help Onboarding Walkthrough", () => {
       { timeout: 15000 },
     );
 
-    await page.waitForTimeout(2000);
+    // Wait for the welcome modal to actually render before tests run
+    await expect(
+      page.locator("h3").getByText("Welcome to Codex Cryptica"),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("should automatically start onboarding for new users", async ({

@@ -301,10 +301,22 @@ test.describe("Fuzzy Search", () => {
         "search_recents_default",
         JSON.stringify(recents),
       );
+      try {
+        window.localStorage.setItem("codex_skip_landing", "true");
+      } catch {
+        /* ignore */
+      }
     });
 
     await page.goto("http://localhost:5173/");
     await page.waitForFunction(() => (window as any).uiStore !== undefined);
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
 
     // Use keyboard shortcut to open modal
     await page.keyboard.press("Control+k");

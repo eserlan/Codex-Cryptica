@@ -19,6 +19,13 @@ test.describe("Mobile Explorer Scrolling", () => {
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {
       timeout: 15000,
     });
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.isLandingPageVisible = false;
+      }
+    });
     await expect(page.getByTestId("graph-canvas")).toBeVisible({
       timeout: 10000,
     });
