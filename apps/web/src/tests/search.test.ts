@@ -97,10 +97,6 @@ describe("SearchService", () => {
 
     const pendingAdds: Array<(value?: any) => void> = [];
     mockApi.addBatch = vi.fn().mockImplementation(() => new Promise((resolve) => pendingAdds.push(resolve)));
-    mockApi.addBatch = vi.fn().mockImplementation(() => new Promise((resolve) => pendingAdds.push(resolve)));
-    try {
-
-
 
       (service as any).api = mockApi;
 
@@ -129,9 +125,7 @@ describe("SearchService", () => {
       pendingAdds.splice(0).forEach((resolve) => resolve());
 
       await expect(batchPromise).resolves.toBeUndefined();
-    } finally {
 
-    }
   });
 
   it("should perform a search", async () => {
