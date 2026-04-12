@@ -100,13 +100,16 @@
       data-testid="tab-status"
       class={activeTab === "status"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "status" && isFantasyTheme
         ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "status" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
         : undefined}
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
@@ -122,13 +125,16 @@
         data-testid="tab-lore"
         class={activeTab === "lore"
           ? isFantasyTheme
-            ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
+            ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
             : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
           : isFantasyTheme
             ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
             : "hover:text-theme-text transition"}
         style:border-color={activeTab === "lore" && isFantasyTheme
           ? "var(--theme-focus-border)"
+          : undefined}
+        style:background-color={activeTab === "lore" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
           : undefined}
         onclick={() => {
           activeTab = "lore";
@@ -145,13 +151,16 @@
       data-testid="tab-inventory"
       class={activeTab === "inventory"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "inventory" && isFantasyTheme
         ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "inventory" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
         : undefined}
       onclick={() => (activeTab = "inventory")}
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
@@ -166,13 +175,16 @@
       data-testid="tab-map"
       class={activeTab === "map"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "map" && isFantasyTheme
         ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "map" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
         : undefined}
       onclick={() => (activeTab = "map")}>MAP</button
     >
