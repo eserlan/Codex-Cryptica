@@ -54,8 +54,28 @@ sw.addEventListener("fetch", (event) => {
       return fetch(event.request);
     }
 
-    // 2. Bypassing service worker for development server internals or non-http
+    // 2. Bypass non-http protocols
     if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return fetch(event.request);
+    }
+
+    // 3. Bypass Vite dev server requests — never cache .svelte source files,
+    //    Vite modules, filesystem proxies, or hot-module-replacement endpoints.
+    //    These are transformed on-the-fly by the dev server and should never
+    //    pass through the service worker cache.
+    const viteDevPatterns = [
+      /\.svelte($|\?)/,
+      /\.ts($|\?)/,
+      /\/@vite\//,
+      /\/@fs\//,
+      /\/node_modules\//,
+      /\?v=/,
+      /__vite/,
+      /\/@id\//,
+    ];
+    if (
+      viteDevPatterns.some((pattern) => pattern.test(url.pathname + url.search))
+    ) {
       return fetch(event.request);
     }
 
