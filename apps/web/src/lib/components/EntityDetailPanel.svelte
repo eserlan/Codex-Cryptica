@@ -135,6 +135,7 @@
   <aside
     transition:fade={{ duration: 200 }}
     class="pointer-events-auto flex h-full w-full md:w-[400px] lg:w-[450px] flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
+    style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-theme-surface)"
     style:background-size="cover"
     data-testid="entity-detail-panel"
@@ -143,6 +144,7 @@
 
     <div
       class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"
+      style:background-color="var(--theme-panel-muted)"
       style="background-image: var(--bg-texture-overlay); touch-action: pan-y;"
     >
       {#if uiStore.isDemoMode}
@@ -155,6 +157,7 @@
       <div
         style:background-image="var(--bg-texture-overlay)"
         class="bg-theme-surface shrink-0"
+        style:background-color="var(--theme-panel-fill)"
       >
         <DetailImage {entity} {isEditing} bind:editImage />
 
@@ -236,10 +239,10 @@
     width: 4px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #000;
+    background: var(--theme-panel-muted);
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #15803d;
+    background: var(--theme-selected-border);
     border-radius: 2px;
   }
 </style>

@@ -131,13 +131,13 @@ export const THEMES: Record<string, StylingTemplate> = {
     description:
       "Classic fantasy, magic, kingdoms, quests, ancient relics, and the broad language of swords, sorcery, and legend.",
     tokens: {
-      primary: "#78350f", // Burnt Umber
-      secondary: "#451a03", // Deep Brown
+      primary: "#6f4a2a", // Warm Brown
+      secondary: "#4a3420", // Dark Ink Brown
       background: "#fdf6e3", // Parchment
-      surface: "#eee8d5", // Aged Paper
-      text: "#2d241e", // Inked Text
-      border: "rgba(120, 53, 15, 0.3)",
-      accent: "#991b1b", // Dried Blood / Crimson
+      surface: "#f2e3c5", // Warm Aged Paper
+      text: "#2a2018", // Inked Text
+      border: "rgba(111, 74, 42, 0.34)",
+      accent: "#b08b57", // Soft Gold
       fontHeader: "'Alegreya', serif",
       fontBody: "'Alegreya', serif",
       texture: "parchment.svg",

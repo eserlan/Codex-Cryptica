@@ -11,6 +11,44 @@ test.describe("Visual Styling Templates", () => {
         /* ignore */
       }
     });
+    await page.addInitScript(() => {
+      const seedVault = () => {
+        const v = (window as any).vault;
+        if (v && v.repository) {
+          const now = Date.now();
+          v.repository.entities = {
+            "test-character": {
+              id: "test-character",
+              title: "The Rat-Van",
+              type: "character",
+              content: "Test content",
+              lore: "Test lore",
+              labels: ["test"],
+              connections: [],
+              updatedAt: now,
+              _path: ["test-character.md"],
+            },
+            "test-location": {
+              id: "test-location",
+              title: "Tome Hall",
+              type: "location",
+              content: "Location content",
+              lore: "",
+              labels: [],
+              connections: [],
+              updatedAt: now,
+              _path: ["test-location.md"],
+            },
+          };
+          v.entities = { ...v.repository.entities };
+          v.isInitialized = true;
+          v.status = "idle";
+        } else {
+          setTimeout(seedVault, 20);
+        }
+      };
+      seedVault();
+    });
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
@@ -38,6 +76,7 @@ test.describe("Visual Styling Templates", () => {
     // 4. Verify background color change (Parchment color)
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(253, 246, 227)");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "fantasy");
 
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
@@ -64,9 +103,40 @@ test.describe("Visual Styling Templates", () => {
         .getPropertyValue("--theme-border-radius")
         .trim(),
     );
-    expect(borderRadius).toBe("6px");
+    expect(borderRadius).toBe("4px");
 
-    // 8. Verify jargon (Archive instead of Vault)
+    // 8. Verify fantasy-specific warm variables
+    const fantasyVars = await page.evaluate(() => {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        titleInk: styles.getPropertyValue("--theme-title-ink").trim(),
+        iconDefault: styles.getPropertyValue("--theme-icon-default").trim(),
+        panelFill: styles.getPropertyValue("--theme-panel-fill").trim(),
+        selectedBg: styles.getPropertyValue("--theme-selected-bg").trim(),
+      };
+    });
+    expect(fantasyVars.titleInk).toBe("#24180f");
+    expect(fantasyVars.iconDefault).toBe("#70533a");
+    expect(fantasyVars.panelFill).toContain("#f2e3c5");
+    expect(fantasyVars.selectedBg).toContain("#6f4a2a");
+
+    // 9. Verify unified warm explorer icon colors
+    await page.getByTestId("activity-bar-explorer").click();
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    const characterIcon = page
+      .locator('button[aria-label="Filter by Character"] span')
+      .first();
+    const locationIcon = page
+      .locator('button[aria-label="Filter by Location"] span')
+      .first();
+    const [characterColor, locationColor] = await Promise.all([
+      characterIcon.evaluate((el) => getComputedStyle(el).color),
+      locationIcon.evaluate((el) => getComputedStyle(el).color),
+    ]);
+    expect(characterColor).toBe(locationColor);
+    expect(characterColor).toBe("rgb(112, 83, 58)");
+
+    // 10. Verify jargon (Archive instead of Vault)
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Archive",
     );

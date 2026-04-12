@@ -48,6 +48,8 @@
       cy.center(node);
     }
   };
+
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 </script>
 
 {#if isObscured}
@@ -79,7 +81,10 @@
   </div>
 {/if}
 
-<div class="p-4 md:p-6 border-b border-theme-border bg-theme-surface">
+<div
+  class="p-4 md:p-6 border-b border-theme-border bg-theme-surface"
+  style:background-color="var(--theme-panel-fill)"
+>
   <div class="flex justify-between items-start mb-2">
     {#if isEditing}
       <div class="flex flex-col gap-2 w-full mr-4">
@@ -92,7 +97,10 @@
       </div>
     {:else}
       <h2
-        class="text-2xl md:text-3xl font-bold text-theme-text font-body tracking-wide"
+        class="text-2xl md:text-3xl font-bold tracking-wide {isFantasyTheme
+          ? 'font-header'
+          : 'font-body'}"
+        style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
       >
         {entity.title}
       </h2>
@@ -103,7 +111,7 @@
         {#if isGraphView}
           <button
             onclick={handleFindInGraph}
-            class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
+            class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
             aria-label="Find in Graph"
             title="Find in Graph"
             data-testid="find-in-graph-button"
@@ -113,7 +121,7 @@
         {/if}
         <button
           onclick={() => ui.openZenMode(entity.id)}
-          class="text-theme-secondary hover:text-theme-primary transition flex items-center justify-center p-1"
+          class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
           aria-label="Enter Zen Mode"
           title="Zen Mode (Full Screen)"
           data-testid="enter-zen-mode-button"
@@ -123,7 +131,7 @@
       {/if}
       <button
         onclick={onClose}
-        class="text-theme-muted hover:text-theme-primary transition flex items-center justify-center p-1"
+        class="transition flex items-center justify-center p-1 text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-icon-active)]"
         aria-label="Close panel"
         title="Close"
       >
