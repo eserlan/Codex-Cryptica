@@ -11,9 +11,11 @@
   import { DEFAULT_RECENT_LIMIT } from "./front-page/front-page-constants";
   import { FrontPageController } from "./front-page/front-page-controller";
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
-  import FrontPageHero from "./FrontPageHero.svelte";
+  import FrontPageBackground from "./FrontPageBackground.svelte";
+  import FrontPageActions from "./FrontPageActions.svelte";
   import FrontPageEntities from "./FrontPageEntities.svelte";
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
+  import CoverImage from "./CoverImage.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -132,7 +134,12 @@
 
     let stale = false;
     void vault.resolveImageUrl(coverImage).then((url) => {
-      if (!stale) coverImageUrl = url || "";
+      if (!stale) {
+        coverImageUrl = url || "";
+        if (import.meta.env.DEV) {
+          console.log("[FrontPage] Resolved cover image URL:", coverImageUrl);
+        }
+      }
     });
 
     return () => {
@@ -246,8 +253,23 @@
 
 <section
   data-testid="front-page-shell"
-  class="relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_48%),linear-gradient(180deg,rgba(10,10,10,0.92),rgba(5,5,8,0.98))] p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  class="front-page-shell relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
 >
+  <style>
+    .front-page-shell {
+      background:
+        radial-gradient(
+          circle at top,
+          color-mix(in srgb, var(--color-theme-primary), transparent 92%),
+          transparent 48%
+        ),
+        linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--color-theme-bg), transparent 8%),
+          color-mix(in srgb, var(--color-theme-bg), black 2%)
+        );
+    }
+  </style>
   {#if !isWorldReady}
     <div
       class="relative z-10 flex min-h-[inherit] items-center justify-center py-20"
@@ -268,11 +290,14 @@
     </div>
   {:else}
     <div
-      class="absolute inset-0 pointer-events-none opacity-65 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.05),rgba(0,0,0,0.7)),linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.65))]"
+      class="absolute inset-0 pointer-events-none opacity-50"
+      style="background: radial-gradient(circle at top, color-mix(in srgb, var(--color-theme-primary), transparent 95%), color-mix(in srgb, var(--color-theme-bg), black 30%)), linear-gradient(180deg, color-mix(in srgb, var(--color-theme-bg), transparent 85%), color-mix(in srgb, var(--color-theme-bg), black 35%))"
     ></div>
     <div
-      class="absolute inset-0 pointer-events-none opacity-40 bg-[linear-gradient(transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"
+      class="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px),linear-gradient(90deg,transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px)] bg-[size:24px_24px]"
     ></div>
+
+    <FrontPageBackground {coverImageUrl} {showCoverEditor} />
 
     <div
       class="relative z-10 flex min-h-[inherit] flex-col gap-6 md:gap-8 xl:gap-10"
@@ -290,16 +315,13 @@
           </div>
         </div>
 
-        <FrontPageHero
+        <FrontPageActions
           {coverImageUrl}
           {coverImage}
-          {showCoverEditor}
           isSaving={worldStore.isSaving}
           {onClose}
           onOpenCoverEditor={openCoverEditor}
           onOpenLightbox={openCoverLightbox}
-          onUploadCover={handleUploadCover}
-          onGenerateCover={handleGenerateCover}
         />
       </header>
 
@@ -310,6 +332,16 @@
       />
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
+        {#if showCoverEditor || !coverImage}
+          <CoverImage
+            hasImage={!!coverImage}
+            isSaving={worldStore.isSaving}
+            onDrop={handleUploadCover}
+            onGenerate={handleGenerateCover}
+            onCancel={coverImage ? () => (showCoverEditor = false) : undefined}
+          />
+        {/if}
+
         {#if worldStore.error}
           <p
             class="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
