@@ -12,6 +12,22 @@ export const ThemeTokensSchema = z.object({
   fontHeader: z.string(),
   fontBody: z.string(),
   texture: z.string().optional(),
+  titleInk: z.string().optional(),
+  sectionTitle: z.string().optional(),
+  metaText: z.string().optional(),
+  iconDefault: z.string().optional(),
+  iconActive: z.string().optional(),
+  focus: z.string().optional(),
+  panelFill: z.string().optional(),
+  panelMuted: z.string().optional(),
+  selectedBg: z.string().optional(),
+  selectedBorder: z.string().optional(),
+  focusBg: z.string().optional(),
+  focusBorder: z.string().optional(),
+  actionBg: z.string().optional(),
+  actionHover: z.string().optional(),
+  actionText: z.string().optional(),
+  borderRadius: z.string().optional(),
 });
 
 export type ThemeTokens = z.infer<typeof ThemeTokensSchema>;
@@ -131,16 +147,32 @@ export const THEMES: Record<string, StylingTemplate> = {
     description:
       "Classic fantasy, magic, kingdoms, quests, ancient relics, and the broad language of swords, sorcery, and legend.",
     tokens: {
-      primary: "#78350f", // Burnt Umber
-      secondary: "#451a03", // Deep Brown
+      primary: "#6f4a2a", // Warm Brown
+      secondary: "#4a3420", // Dark Ink Brown
       background: "#fdf6e3", // Parchment
-      surface: "#eee8d5", // Aged Paper
-      text: "#2d241e", // Inked Text
-      border: "rgba(120, 53, 15, 0.3)",
-      accent: "#991b1b", // Dried Blood / Crimson
+      surface: "#f2e3c5", // Warm Aged Paper
+      text: "#2a2018", // Inked Text
+      border: "rgba(111, 74, 42, 0.34)",
+      accent: "#b08b57", // Soft Gold
       fontHeader: "'Alegreya', serif",
       fontBody: "'Alegreya', serif",
       texture: "parchment.svg",
+      titleInk: "#24180f",
+      sectionTitle: "#3d2a1a",
+      metaText: "#6e5640",
+      iconDefault: "#70533a",
+      iconActive: "#5c3a20",
+      focus: "#b08b57",
+      panelFill: "color-mix(in srgb, #f2e3c5, #fdf6e3 24%)",
+      panelMuted: "color-mix(in srgb, #f2e3c5, #fdf6e3 48%)",
+      selectedBg: "color-mix(in srgb, #6f4a2a, #fdf6e3 88%)",
+      selectedBorder: "color-mix(in srgb, #6f4a2a, #fdf6e3 38%)",
+      focusBg: "color-mix(in srgb, #b08b57, #fdf6e3 68%)",
+      focusBorder: "color-mix(in srgb, #b08b57, #fdf6e3 18%)",
+      actionBg: "color-mix(in srgb, #6f4a2a, #fdf6e3 74%)",
+      actionHover: "color-mix(in srgb, #6f4a2a, #fdf6e3 64%)",
+      actionText: "#24180f",
+      borderRadius: "3px",
     },
     graph: {
       nodeShape: "round-rectangle",
