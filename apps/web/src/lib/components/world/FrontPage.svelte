@@ -51,7 +51,6 @@
       worldStore.frontPageEntity?.content?.trim()
     ),
   );
-  const briefingPreview = $derived(draftDescription.trim());
 
   // Sync draft description from briefing source when not actively editing
   $effect(() => {
@@ -234,8 +233,17 @@
     isEditingBriefing = true;
   };
 
+  const handleDraftDescriptionChange = (value: string) => {
+    draftDescription = value;
+    isDraftDirty = true;
+  };
+
   const openCoverEditor = () => {
     showCoverEditor = true;
+  };
+
+  const closeCoverEditor = () => {
+    showCoverEditor = false;
   };
 
   const openCoverLightbox = () => {
@@ -315,9 +323,11 @@
           {coverImageUrl}
           {coverImage}
           {showCoverEditor}
+          showPanel={false}
           isSaving={worldStore.isSaving}
           {onClose}
           onOpenCoverEditor={openCoverEditor}
+          onCloseCoverEditor={closeCoverEditor}
           onOpenLightbox={openCoverLightbox}
           onUploadCover={handleUploadCover}
           onGenerateCover={handleGenerateCover}
@@ -331,6 +341,22 @@
       />
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
+        {#if showCoverEditor || !coverImage}
+          <FrontPageHero
+            {coverImageUrl}
+            {coverImage}
+            {showCoverEditor}
+            showActions={false}
+            isSaving={worldStore.isSaving}
+            onOpenCoverEditor={openCoverEditor}
+            onCloseCoverEditor={closeCoverEditor}
+            onOpenLightbox={openCoverLightbox}
+            onUploadCover={handleUploadCover}
+            onGenerateCover={handleGenerateCover}
+            class="w-full"
+          />
+        {/if}
+
         {#if worldStore.error}
           <p
             class="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
@@ -347,7 +373,7 @@
         />
 
         <FrontPageBriefing
-          draftDescription={briefingPreview}
+          bind:draftDescription
           {isEditingBriefing}
           {isDraftDirty}
           {hasBriefing}
@@ -357,6 +383,7 @@
           onCancel={cancelEditingBriefing}
           onGenerate={handleGenerateBriefing}
           onEdit={startEditingBriefing}
+          onDraftChange={handleDraftDescriptionChange}
         />
       </div>
     </div>
