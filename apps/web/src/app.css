@@ -236,16 +236,14 @@
     transform: translateY(1px);
   }
 
-  [data-theme="fantasy"] .btnSecondary,
-  [data-theme="fantasy"] .btnPrimary {
+  [data-theme="fantasy"] .btnSecondary {
     border-color: var(--theme-selected-border);
     background-color: var(--theme-action-bg);
     color: var(--theme-action-text);
     box-shadow: inset 0 1px 0 rgba(255, 248, 236, 0.45);
   }
 
-  [data-theme="fantasy"] .btnSecondary:hover,
-  [data-theme="fantasy"] .btnPrimary:hover {
+  [data-theme="fantasy"] .btnSecondary:hover {
     background-color: var(--theme-action-hover);
     color: var(--theme-action-text);
   }
