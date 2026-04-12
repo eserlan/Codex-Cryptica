@@ -5,44 +5,25 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
-  import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";
   import CoverImage from "./CoverImage.svelte";
   import EntityCard from "./EntityCard.svelte";
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
+  import { partitionAndSortRecentActivity } from "./front-page/front-page-entities";
+  import {
+    readRecentLimit,
+    persistRecentLimit,
+  } from "./front-page/front-page-prefs";
+  import { DEFAULT_RECENT_LIMIT } from "./front-page/front-page-constants";
+  import { FrontPageController } from "./front-page/front-page-controller";
 
   let { onClose }: { onClose?: () => void } = $props();
 
-  const createWorldCoverPrompt = (
-    worldName: string,
-    themeName: string,
-    themeDescription: string,
-    briefing: string,
-    worldContext: string,
-  ) => {
-    const safeBriefing = briefing.trim() || "An unexplored setting.";
-    const safeName = worldName.trim() || "this world";
-    const safeWorldContext =
-      worldContext.trim() || "No additional context was retrieved.";
-
-    return `Create atmospheric portrait cover art for "${safeName}".
-
-Theme:
-- Name: ${themeName}
-- Thematic scope: ${themeDescription}
-
-World cues:
-- Briefing: ${safeBriefing}
-- Retrieved context:
-${safeWorldContext}
-
-Art direction:
-- Portrait composition, vertical framing, approximately 2:3 aspect ratio.
-- Focus on the tone, mood, and symbolic atmosphere of the setting.
-- Depict the world itself more than a single action scene.
-- Emphasize place, tension, and identity through lighting, silhouette, color, and environment.
-- Make it feel like the frontispiece to a living world.
-- No text, no title lettering, no UI, no borders.`;
-  };
+  const controller = new FrontPageController({
+    worldStore,
+    vault,
+    themeStore,
+    uiStore,
+  });
 
   let lastLoadedVaultId: string | null = null;
   let draftDescription = $state("");
@@ -51,51 +32,46 @@ Art direction:
   const activeVaultId = $derived(vault.activeVaultId);
   const metadata = $derived(worldStore.metadata);
   const briefingSource = $derived(
-    metadata?.description?.trim() ||
+    worldStore.metadata?.description?.trim() ||
       worldStore.frontPageEntity?.chronicle?.trim() ||
       worldStore.frontPageEntity?.content?.trim() ||
       "",
   );
   const recentActivity = $derived(worldStore.recentActivity);
-  const displayedRecentActivity = $derived.by(() => {
-    // ⚡ Bolt Optimization: Avoid intermediate array allocations for tags/labels
-    const isPinned = (
-      tags: string[] | undefined,
-      labels: string[] | undefined,
-    ) => {
-      if (tags) {
-        for (const tag of tags) {
-          if (tag?.trim().toLowerCase() === "frontpage") return true;
-        }
-      }
-      if (labels) {
-        for (const label of labels) {
-          if (label?.trim().toLowerCase() === "frontpage") return true;
-        }
-      }
-      return false;
-    };
-
-    // ⚡ Bolt Optimization: Single-pass imperative partitioning instead of multiple .filter() calls
-    const pinned: typeof recentActivity = [];
-    const unpinned: typeof recentActivity = [];
-    for (const activity of recentActivity) {
-      if (isPinned(activity.tags, activity.labels)) {
-        pinned.push(activity);
-      } else {
-        unpinned.push(activity);
-      }
-    }
-
-    pinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-    unpinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-
-    return [...pinned, ...unpinned].slice(0, recentLimit);
-  });
+  const displayedRecentActivity = $derived(
+    partitionAndSortRecentActivity(recentActivity, recentLimit),
+  );
   const coverImage = $derived(metadata?.coverImage || "");
   const worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
-  const hasBriefing = $derived(!!(draftDescription.trim() || briefingSource));
+  const hasBriefing = $derived(
+    !!(
+      draftDescription.trim() ||
+      worldStore.metadata?.description?.trim() ||
+      worldStore.frontPageEntity?.chronicle?.trim() ||
+      worldStore.frontPageEntity?.content?.trim()
+    ),
+  );
   const briefingPreview = $derived(draftDescription.trim());
+
+  // Sync draft description from briefing source when not actively editing
+  $effect(() => {
+    if (!isEditingBriefing && !isDraftDirty) {
+      draftDescription = briefingSource;
+    }
+  });
+
+  // Clear dirty flag when source changes and we're not editing
+  $effect(() => {
+    if (!isEditingBriefing && briefingSource) isDraftDirty = false;
+  });
+
+  let recentLimit = $state(DEFAULT_RECENT_LIMIT);
+  const recentActivity = $derived(worldStore.recentActivity);
+  const displayedRecentActivity = $derived(
+    partitionAndSortRecentActivity(recentActivity, recentLimit),
+  );
+  const coverImage = $derived(metadata?.coverImage || "");
+  const _worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
 
   let isEditingBriefing = $state(false);
   let showCoverEditor = $state(false);
@@ -103,33 +79,12 @@ Art direction:
   let lastCoverImage = "";
   let isWorldReady = $state(false);
   let briefingTextarea = $state<HTMLTextAreaElement | null>(null);
-  let recentLimit = $state(6);
   let isEditingRecentLimit = $state(false);
-  let recentLimitInput = $state("6");
-  let lastLoadedRecentLimit = 6;
+  let recentLimitInput = $state(String(DEFAULT_RECENT_LIMIT));
+  let lastLoadedRecentLimit = DEFAULT_RECENT_LIMIT;
   let isBriefingExpanded = $state(false);
   let briefingHoverTimer: ReturnType<typeof setTimeout> | null = null;
   let showCoverLightbox = $state(false);
-  const FRONTPAGE_CONTEXT_MAX_CHARS = 2400;
-  const FRONTPAGE_ENTITY_SNIPPET_MAX_CHARS = 900;
-
-  const getRecentLimitStorageKey = (vaultId: string) =>
-    `codex_front_page_recent_limit:${vaultId}`;
-
-  const readRecentLimit = (vaultId: string) => {
-    if (typeof window === "undefined") return 6;
-    const raw = window.localStorage.getItem(getRecentLimitStorageKey(vaultId));
-    const parsed = raw ? Number.parseInt(raw, 10) : 6;
-    return Number.isFinite(parsed) ? Math.min(24, Math.max(1, parsed)) : 6;
-  };
-
-  const persistRecentLimit = (vaultId: string, limit: number) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      getRecentLimitStorageKey(vaultId),
-      String(limit),
-    );
-  };
 
   $effect(() => {
     if (!activeVaultId || typeof window === "undefined") return;
@@ -167,11 +122,8 @@ Art direction:
     };
   });
 
+  // Cover-editor initial state: show editor only when there is no cover image
   $effect(() => {
-    if (!isEditingBriefing && !isDraftDirty) {
-      draftDescription = briefingSource;
-    }
-    if (!isEditingBriefing && briefingSource) isDraftDirty = false;
     if (coverImage !== lastCoverImage) {
       lastCoverImage = coverImage;
       showCoverEditor = !coverImage;
@@ -209,108 +161,8 @@ Art direction:
     }
   };
 
-  const isFrontpageEntity = (entity: { tags?: string[]; labels?: string[] }) =>
-    [...(entity.tags || []), ...(entity.labels || [])].some(
-      (tag) => tag?.trim().toLowerCase() === "frontpage",
-    );
-
-  const buildFrontpageEntityContext = async () => {
-    const frontpageEntities = vault.allEntities
-      .filter(isFrontpageEntity)
-      .sort(
-        (a, b) =>
-          ((b as any).lastModified || 0) - ((a as any).lastModified || 0),
-      );
-    if (frontpageEntities.length === 0) return "";
-
-    if (vault.loadEntityContent) {
-      await Promise.all(
-        frontpageEntities.map((entity) => vault.loadEntityContent(entity.id)),
-      );
-    }
-
-    const sections: string[] = [];
-    let currentLength = 0;
-    let omittedCount = 0;
-
-    for (const entity of frontpageEntities) {
-      const loadedEntity = vault.entities[entity.id] || entity;
-      if (!loadedEntity?.title) continue;
-      const content = (
-        (loadedEntity as any).chronicle?.trim() ||
-        loadedEntity.content?.trim() ||
-        ""
-      ).trim();
-      if (!content) continue;
-
-      const header = `--- FRONTPAGE ENTITY: ${loadedEntity.title} ---\n`;
-      const remainingBudget = FRONTPAGE_CONTEXT_MAX_CHARS - currentLength;
-      if (remainingBudget <= header.length + 40) {
-        omittedCount += 1;
-        continue;
-      }
-
-      const bodyBudget = Math.min(
-        FRONTPAGE_ENTITY_SNIPPET_MAX_CHARS,
-        remainingBudget - header.length,
-      );
-      let body = content;
-      if (body.length > bodyBudget) {
-        body =
-          body.slice(0, Math.max(0, bodyBudget - 16)).trimEnd() +
-          "... [truncated]";
-      }
-
-      const snippet = `${header}${body}`;
-      sections.push(snippet);
-      currentLength += snippet.length + 2;
-    }
-
-    const joined = sections.join("\n\n");
-    if (!omittedCount) return joined;
-
-    const suffix = `\n\n[${omittedCount} additional frontpage ${
-      omittedCount === 1 ? "entity" : "entities"
-    } omitted for brevity.]`;
-    return `${joined}${suffix}`;
-  };
-
-  const buildRetrievedWorldContext = async (isImage = false) => {
-    const worldRef = worldName.trim();
-    const themeRef = themeStore.activeTheme.name.trim();
-    const baseTerms = [worldRef, themeRef].filter(Boolean).join(" ").trim();
-    const queries = [
-      `${baseTerms} setting world overview premise tone central conflict`,
-      `${baseTerms} major players factions antagonists allies plot hooks current threats`,
-    ];
-
-    try {
-      const [retrievedParts, frontpageContext] = await Promise.all([
-        Promise.all(
-          queries.map(async (query) => {
-            const retrieved = await contextRetrievalService.retrieveContext(
-              query,
-              new Set<string>(),
-              vault,
-              worldStore.frontPageEntity?.id,
-              isImage,
-            );
-            return retrieved.content.trim();
-          }),
-        ),
-        buildFrontpageEntityContext(),
-      ]);
-
-      const uniqueParts = [
-        ...new Set([...retrievedParts, frontpageContext].filter(Boolean)),
-      ];
-      return uniqueParts.join("\n\n");
-    } catch {
-      return "";
-    }
-  };
-
   const handleGenerateBriefing = async () => {
+    // Check confirmation FIRST (before expensive context building)
     if (hasBriefing) {
       const confirmed = await uiStore.confirm({
         title: "Regenerate Briefing",
@@ -322,35 +174,57 @@ Art direction:
       if (!confirmed) return;
     }
 
-    const activeTheme = themeStore.activeTheme;
-    const themeDescription = activeTheme.description.trim();
-    const retrievedWorldContext = await buildRetrievedWorldContext();
-    const generated = await worldStore.generateBriefing(
-      `Write a high-level briefing for "${worldName.trim() || "this world"}".
+    // Build context and generate
+    const frontpageContext =
+      await controller.buildFrontpageEntityContextAsync();
+    const contextResult =
+      await controller.buildRetrievedWorldContext(frontpageContext);
+    if (contextResult.devWarning) {
+      console.warn(
+        "[FrontPage] Context retrieval warning:",
+        contextResult.devWarning,
+      );
+    }
 
-Theme:
-- Name: ${activeTheme.name}
-- Description: ${themeDescription}
-
-Requirements:
-- Start with 1 short atmospheric intro paragraph.
-- Follow with 3 to 5 markdown bullet points using bold labels such as **The Setting:**, **Current Conflict:**, **Key Players:**, or **Immediate Hook:** when they fit the world.
-- Clearly explain the setting, mood, and immediate premise.
-- Use specific details from the world instead of generic language.
-- Keep it readable, welcoming, and easy to scan.
-- Keep each bullet to one compact sentence.
-- Avoid headings and meta commentary.
-- Do not mention that you are an AI.
-
-Retrieved context:
-${retrievedWorldContext || "No additional context was retrieved."} 
-
-Match the briefing to the theme atmosphere and visual identity, and focus on what a player or GM needs to know at a glance.`,
-    );
-    if (generated.trim() && !worldStore.error) {
-      draftDescription = generated;
+    const result = await controller.generateBriefing(contextResult.content);
+    if (result.success) {
+      draftDescription = worldStore.metadata?.description ?? "";
       isDraftDirty = false;
       isEditingBriefing = false;
+    }
+  };
+
+  const handleGenerateCover = async () => {
+    // Build context and generate
+    let contextContent = "";
+    try {
+      const frontpageContext =
+        await controller.buildFrontpageEntityContextAsync();
+      const contextResult = await controller.buildRetrievedWorldContext(
+        frontpageContext,
+        true,
+      );
+      if (contextResult.devWarning) {
+        console.warn(
+          "[FrontPage] Context retrieval warning:",
+          contextResult.devWarning,
+        );
+      }
+      contextContent = contextResult.content;
+    } catch {
+      // Context retrieval is non-critical; proceed without it
+    }
+
+    const result = await controller.generateCover(contextContent);
+    if (result.warning) {
+      worldStore.error = result.warning;
+    }
+  };
+
+  const handleUploadCover = async (file: File) => {
+    const result = await controller.uploadCover(file);
+    if (!result.success) {
+      worldStore.error = "Failed to upload cover image.";
     }
   };
 
@@ -374,36 +248,6 @@ Match the briefing to the theme atmosphere and visual identity, and focus on wha
 
   const closeCoverEditor = () => {
     showCoverEditor = false;
-  };
-
-  const handleUploadCover = async (file: File) => {
-    if (!activeVaultId) return;
-    const saved = await vault.saveImageToVault(
-      file,
-      `world-${activeVaultId}`,
-      file.name,
-    );
-    await worldStore.setCoverImage(saved.image);
-  };
-
-  const handleGenerateCover = async () => {
-    const themeName = themeStore.activeTheme.name;
-    const themeDescription = themeStore.activeTheme.description.trim();
-    const briefingText = briefingPreview || "No world briefing provided yet.";
-    const retrievedWorldContext = await buildRetrievedWorldContext(true);
-    try {
-      await worldStore.generateCoverImage(
-        createWorldCoverPrompt(
-          worldName,
-          themeName,
-          themeDescription,
-          briefingText,
-          retrievedWorldContext,
-        ),
-      );
-    } catch {
-      // The store should absorb errors, but keep the click handler safe.
-    }
   };
 
   const beginEditingRecentLimit = () => {
