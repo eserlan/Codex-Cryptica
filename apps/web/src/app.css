@@ -171,6 +171,7 @@
     );
     --theme-action-bg: var(--color-accent-primary);
     --theme-action-hover: var(--color-accent-dim);
+    --theme-action-text: var(--color-accent-deep);
 
     --bg-texture: none;
     --color-warning: #eab308;
@@ -235,22 +236,18 @@
     transform: translateY(1px);
   }
 
-  [data-theme="fantasy"] body {
-    background-color: var(--color-bg-primary);
-  }
-
   [data-theme="fantasy"] .btnSecondary,
   [data-theme="fantasy"] .btnPrimary {
     border-color: var(--theme-selected-border);
     background-color: var(--theme-action-bg);
-    color: var(--theme-title-ink);
+    color: var(--theme-action-text);
     box-shadow: inset 0 1px 0 rgba(255, 248, 236, 0.45);
   }
 
   [data-theme="fantasy"] .btnSecondary:hover,
   [data-theme="fantasy"] .btnPrimary:hover {
     background-color: var(--theme-action-hover);
-    color: var(--theme-title-ink);
+    color: var(--theme-action-text);
   }
 
   /* Global prose and code styling */

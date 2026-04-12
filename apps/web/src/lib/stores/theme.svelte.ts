@@ -259,35 +259,65 @@ export class ThemeStore {
     root.style.setProperty("--color-text-dim", tokens.secondary);
 
     root.style.setProperty("--color-theme-accent", tokens.accent);
-    root.style.setProperty("--theme-title-ink", tokens.text);
-    root.style.setProperty("--theme-section-title", tokens.secondary);
-    root.style.setProperty("--theme-meta-text", tokens.secondary);
-    root.style.setProperty("--theme-icon-default", tokens.secondary);
-    root.style.setProperty("--theme-icon-active", tokens.primary);
-    root.style.setProperty("--theme-focus", tokens.accent);
-    root.style.setProperty("--theme-panel-fill", tokens.surface);
+    root.style.setProperty("--theme-title-ink", tokens.titleInk ?? tokens.text);
+    root.style.setProperty(
+      "--theme-section-title",
+      tokens.sectionTitle ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-meta-text",
+      tokens.metaText ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-icon-default",
+      tokens.iconDefault ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-icon-active",
+      tokens.iconActive ?? tokens.primary,
+    );
+    root.style.setProperty("--theme-focus", tokens.focus ?? tokens.accent);
+    root.style.setProperty(
+      "--theme-panel-fill",
+      tokens.panelFill ?? tokens.surface,
+    );
     root.style.setProperty(
       "--theme-panel-muted",
-      `color-mix(in srgb, ${tokens.surface}, ${tokens.background} 28%)`,
+      tokens.panelMuted ??
+        `color-mix(in srgb, ${tokens.surface}, ${tokens.background} 28%)`,
     );
     root.style.setProperty(
       "--theme-selected-bg",
-      `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 86%)`,
+      tokens.selectedBg ??
+        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 86%)`,
     );
     root.style.setProperty(
       "--theme-selected-border",
-      `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 42%)`,
+      tokens.selectedBorder ??
+        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 42%)`,
     );
     root.style.setProperty(
       "--theme-focus-bg",
-      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 84%)`,
+      tokens.focusBg ??
+        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 84%)`,
     );
     root.style.setProperty(
       "--theme-focus-border",
-      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 42%)`,
+      tokens.focusBorder ??
+        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 42%)`,
     );
-    root.style.setProperty("--theme-action-bg", tokens.primary);
-    root.style.setProperty("--theme-action-hover", tokens.secondary);
+    root.style.setProperty(
+      "--theme-action-bg",
+      tokens.actionBg ?? tokens.primary,
+    );
+    root.style.setProperty(
+      "--theme-action-hover",
+      tokens.actionHover ?? tokens.secondary,
+    );
+    root.style.setProperty(
+      "--theme-action-text",
+      tokens.actionText ?? tokens.background,
+    );
 
     root.style.setProperty("--color-oracle-primary", tokens.accent);
     root.style.setProperty(
@@ -317,48 +347,8 @@ export class ThemeStore {
     if (theme.id === "modern") radius = "12px";
     if (theme.id === "fantasy") radius = "3px"; // Firmer, less app-like fantasy
     if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
+    if (tokens.borderRadius) radius = tokens.borderRadius;
     root.style.setProperty("--theme-border-radius", radius);
-
-    if (theme.id === "fantasy") {
-      root.style.setProperty("--theme-title-ink", "#24180f");
-      root.style.setProperty("--theme-section-title", "#3d2a1a");
-      root.style.setProperty("--theme-meta-text", "#6e5640");
-      root.style.setProperty("--theme-icon-default", "#70533a");
-      root.style.setProperty("--theme-icon-active", "#5c3a20");
-      root.style.setProperty("--theme-focus", "#b08b57");
-      root.style.setProperty(
-        "--theme-panel-fill",
-        "color-mix(in srgb, #f2e3c5, #fdf6e3 24%)",
-      );
-      root.style.setProperty(
-        "--theme-panel-muted",
-        "color-mix(in srgb, #f2e3c5, #fdf6e3 48%)",
-      );
-      root.style.setProperty(
-        "--theme-selected-bg",
-        "color-mix(in srgb, #6f4a2a, #fdf6e3 88%)",
-      );
-      root.style.setProperty(
-        "--theme-selected-border",
-        "color-mix(in srgb, #6f4a2a, #fdf6e3 38%)",
-      );
-      root.style.setProperty(
-        "--theme-focus-bg",
-        "color-mix(in srgb, #b08b57, #fdf6e3 84%)",
-      );
-      root.style.setProperty(
-        "--theme-focus-border",
-        "color-mix(in srgb, #b08b57, #fdf6e3 40%)",
-      );
-      root.style.setProperty(
-        "--theme-action-bg",
-        "color-mix(in srgb, #6f4a2a, #fdf6e3 74%)",
-      );
-      root.style.setProperty(
-        "--theme-action-hover",
-        "color-mix(in srgb, #6f4a2a, #fdf6e3 64%)",
-      );
-    }
 
     if (tokens.texture) {
       root.style.setProperty(

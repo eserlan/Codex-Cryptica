@@ -12,44 +12,46 @@ test.describe("Visual Styling Templates", () => {
       }
     });
     await page.addInitScript(() => {
-      const seedVault = () => {
-        const v = (window as any).vault;
-        if (v && v.repository) {
-          const now = Date.now();
-          v.repository.entities = {
-            "test-character": {
-              id: "test-character",
-              title: "The Rat-Van",
-              type: "character",
-              content: "Test content",
-              lore: "Test lore",
-              labels: ["test"],
-              connections: [],
-              updatedAt: now,
-              _path: ["test-character.md"],
-            },
-            "test-location": {
-              id: "test-location",
-              title: "Tome Hall",
-              type: "location",
-              content: "Location content",
-              lore: "",
-              labels: [],
-              connections: [],
-              updatedAt: now,
-              _path: ["test-location.md"],
-            },
-          };
-          v.entities = { ...v.repository.entities };
-          v.isInitialized = true;
-          v.status = "idle";
-        } else {
-          setTimeout(seedVault, 20);
-        }
+      (window as any).__E2E_THEME_FIXTURE__ = {
+        "test-character": {
+          id: "test-character",
+          title: "The Rat-Van",
+          type: "character",
+          content: "Test content",
+          lore: "Test lore",
+          labels: ["test"],
+          connections: [],
+          _path: ["test-character.md"],
+        },
+        "test-location": {
+          id: "test-location",
+          title: "Tome Hall",
+          type: "location",
+          content: "Location content",
+          lore: "",
+          labels: [],
+          connections: [],
+          _path: ["test-location.md"],
+        },
       };
-      seedVault();
     });
     await page.goto("http://localhost:5173/");
+    await page.waitForFunction(() => (window as any).vault?.repository);
+    await page.evaluate(() => {
+      const v = (window as any).vault;
+      const fixture = (window as any).__E2E_THEME_FIXTURE__;
+      const now = Date.now();
+      const seededEntities = Object.fromEntries(
+        Object.entries(fixture).map(([id, entity]: [string, any]) => [
+          id,
+          { ...entity, updatedAt: now },
+        ]),
+      );
+      v.repository.entities = seededEntities;
+      v.entities = { ...seededEntities };
+      v.isInitialized = true;
+      v.status = "idle";
+    });
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
     await page.evaluate(() => {
