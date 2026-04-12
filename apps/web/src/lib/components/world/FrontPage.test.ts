@@ -735,10 +735,10 @@ describe("FrontPage", () => {
       ),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining('Write a world briefing for "Moonfall".'),
+      expect.stringContaining('Write a high-level briefing for "Moonfall".'),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining("Politics & Power"),
+      expect.stringContaining("Current Conflict"),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("Sky-market politics and drone wars."),
@@ -812,6 +812,21 @@ describe("FrontPage", () => {
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("[truncated]"),
+    );
+  });
+
+  it("falls back to empty context when frontpage entity loading fails during briefing generation", async () => {
+    (uiStore.confirm as any).mockResolvedValueOnce(true);
+    mocks.loadEntityContent.mockRejectedValueOnce(new Error("idb failure"));
+
+    render(FrontPage);
+
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledWith("vault-1", 6));
+    await fireEvent.click(screen.getByLabelText("Generate briefing"));
+
+    await waitFor(() => expect(mocks.generateBriefing).toHaveBeenCalled());
+    expect(mocks.generateBriefing).toHaveBeenCalledWith(
+      expect.stringContaining("No additional context was retrieved."),
     );
   });
 
@@ -967,7 +982,7 @@ describe("FrontPage", () => {
       lastModified: Date.now() + 3,
       image: "",
       thumbnail: "",
-    });
+    } as (typeof worldMock.recentActivity)[number]);
 
     render(FrontPage);
 
