@@ -18,7 +18,7 @@
   });
 </script>
 
-{#if uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage}
+{#if !uiStore.dismissedWorldPage}
   <FrontPage />
 {/if}
 

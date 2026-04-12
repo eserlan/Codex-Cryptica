@@ -11,11 +11,9 @@
   import { DEFAULT_RECENT_LIMIT } from "./front-page/front-page-constants";
   import { FrontPageController } from "./front-page/front-page-controller";
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
-  import FrontPageBackground from "./FrontPageBackground.svelte";
-  import FrontPageActions from "./FrontPageActions.svelte";
+  import FrontPageHero from "./FrontPageHero.svelte";
   import FrontPageEntities from "./FrontPageEntities.svelte";
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
-  import CoverImage from "./CoverImage.svelte";
 
   let { onClose }: { onClose?: () => void } = $props();
 
@@ -171,10 +169,17 @@
     // Build context and generate
     isGeneratingBriefing = true;
     try {
-      const frontpageContext =
-        await controller.buildFrontpageEntityContextAsync();
-      const contextResult =
-        await controller.buildRetrievedWorldContext(frontpageContext);
+      let contextResult: Awaited<
+        ReturnType<typeof controller.buildRetrievedWorldContext>
+      > = { content: "" };
+      try {
+        const frontpageContext =
+          await controller.buildFrontpageEntityContextAsync();
+        contextResult =
+          await controller.buildRetrievedWorldContext(frontpageContext);
+      } catch {
+        // Context retrieval is non-critical; proceed without it
+      }
       if (contextResult.devWarning) {
         console.warn(
           "[FrontPage] Context retrieval warning:",
@@ -297,8 +302,6 @@
       class="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px),linear-gradient(90deg,transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px)] bg-[size:24px_24px]"
     ></div>
 
-    <FrontPageBackground {coverImageUrl} {showCoverEditor} />
-
     <div
       class="relative z-10 flex min-h-[inherit] flex-col gap-6 md:gap-8 xl:gap-10"
     >
@@ -315,13 +318,16 @@
           </div>
         </div>
 
-        <FrontPageActions
+        <FrontPageHero
           {coverImageUrl}
           {coverImage}
+          {showCoverEditor}
           isSaving={worldStore.isSaving}
           {onClose}
           onOpenCoverEditor={openCoverEditor}
           onOpenLightbox={openCoverLightbox}
+          onUploadCover={handleUploadCover}
+          onGenerateCover={handleGenerateCover}
         />
       </header>
 
@@ -332,16 +338,6 @@
       />
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
-        {#if showCoverEditor || !coverImage}
-          <CoverImage
-            hasImage={!!coverImage}
-            isSaving={worldStore.isSaving}
-            onDrop={handleUploadCover}
-            onGenerate={handleGenerateCover}
-            onCancel={coverImage ? () => (showCoverEditor = false) : undefined}
-          />
-        {/if}
-
         {#if worldStore.error}
           <p
             class="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"

@@ -1,18 +1,6 @@
 <script lang="ts">
+  import type { RecentActivity } from "@codex/vault-engine";
   import EntityCard from "./EntityCard.svelte";
-
-  interface ActivityEntity {
-    id: string;
-    title?: string;
-    excerpt?: string;
-    type?: string;
-    tags?: string[];
-    labels?: string[];
-    lastModified?: number;
-    image?: string;
-    thumbnail?: string;
-    path?: string;
-  }
 
   let {
     displayedRecentActivity,
@@ -20,7 +8,7 @@
     isLoading,
     onRecentLimitChange,
   }: {
-    displayedRecentActivity: ActivityEntity[];
+    displayedRecentActivity: RecentActivity[];
     recentLimit: number;
     isLoading: boolean;
     onRecentLimitChange: (limit: number) => void;
