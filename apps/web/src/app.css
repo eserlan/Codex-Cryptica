@@ -142,6 +142,7 @@
     --theme-meta-text: var(--color-text-muted);
     --theme-icon-default: var(--color-text-muted);
     --theme-icon-active: var(--color-accent-primary);
+    --theme-focus: var(--color-theme-accent);
     --theme-panel-fill: var(--color-bg-surface);
     --theme-panel-muted: color-mix(
       in srgb,
@@ -157,6 +158,16 @@
       in srgb,
       var(--color-accent-primary),
       var(--color-bg-primary) 46%
+    );
+    --theme-focus-bg: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      var(--color-bg-primary) 84%
+    );
+    --theme-focus-border: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      var(--color-bg-primary) 42%
     );
     --theme-action-bg: var(--color-accent-primary);
     --theme-action-hover: var(--color-accent-dim);

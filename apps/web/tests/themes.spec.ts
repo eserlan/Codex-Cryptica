@@ -103,7 +103,7 @@ test.describe("Visual Styling Templates", () => {
         .getPropertyValue("--theme-border-radius")
         .trim(),
     );
-    expect(borderRadius).toBe("4px");
+    expect(borderRadius).toBe("3px");
 
     // 8. Verify fantasy-specific warm variables
     const fantasyVars = await page.evaluate(() => {
@@ -111,12 +111,14 @@ test.describe("Visual Styling Templates", () => {
       return {
         titleInk: styles.getPropertyValue("--theme-title-ink").trim(),
         iconDefault: styles.getPropertyValue("--theme-icon-default").trim(),
+        focus: styles.getPropertyValue("--theme-focus").trim(),
         panelFill: styles.getPropertyValue("--theme-panel-fill").trim(),
         selectedBg: styles.getPropertyValue("--theme-selected-bg").trim(),
       };
     });
     expect(fantasyVars.titleInk).toBe("#24180f");
     expect(fantasyVars.iconDefault).toBe("#70533a");
+    expect(fantasyVars.focus).toBe("#b08b57");
     expect(fantasyVars.panelFill).toContain("#f2e3c5");
     expect(fantasyVars.selectedBg).toContain("#6f4a2a");
 
@@ -136,7 +138,14 @@ test.describe("Visual Styling Templates", () => {
     expect(characterColor).toBe(locationColor);
     expect(characterColor).toBe("rgb(112, 83, 58)");
 
-    // 10. Verify jargon (Archive instead of Vault)
+    // 10. Verify selected fantasy states use gold
+    await page.getByLabel("Filter by Character").click();
+    await expect(page.getByLabel("Filter by Character")).toHaveCSS(
+      "color",
+      "rgb(176, 139, 87)",
+    );
+
+    // 11. Verify jargon (Archive instead of Vault)
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Archive",
     );

@@ -100,13 +100,13 @@
       data-testid="tab-status"
       class={activeTab === "status"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-icon-active)]"
+          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "status" && isFantasyTheme
-        ? "var(--theme-selected-border)"
+        ? "var(--theme-focus-border)"
         : undefined}
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
@@ -122,13 +122,13 @@
         data-testid="tab-lore"
         class={activeTab === "lore"
           ? isFantasyTheme
-            ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-icon-active)]"
+            ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
             : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
           : isFantasyTheme
             ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
             : "hover:text-theme-text transition"}
         style:border-color={activeTab === "lore" && isFantasyTheme
-          ? "var(--theme-selected-border)"
+          ? "var(--theme-focus-border)"
           : undefined}
         onclick={() => {
           activeTab = "lore";
@@ -145,13 +145,13 @@
       data-testid="tab-inventory"
       class={activeTab === "inventory"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-icon-active)]"
+          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "inventory" && isFantasyTheme
-        ? "var(--theme-selected-border)"
+        ? "var(--theme-focus-border)"
         : undefined}
       onclick={() => (activeTab = "inventory")}
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
@@ -166,13 +166,13 @@
       data-testid="tab-map"
       class={activeTab === "map"
         ? isFantasyTheme
-          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-icon-active)]"
+          ? "border-b-2 pb-2 -mb-2.5 text-[color:var(--theme-focus)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
       style:border-color={activeTab === "map" && isFantasyTheme
-        ? "var(--theme-selected-border)"
+        ? "var(--theme-focus-border)"
         : undefined}
       onclick={() => (activeTab = "map")}>MAP</button
     >

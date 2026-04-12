@@ -117,13 +117,13 @@
         class="p-1.5 rounded-md flex items-center justify-center transition-all border {typeFilters.size ===
         0
           ? isFantasyTheme
-            ? 'text-[color:var(--theme-icon-active)] shadow-none border-[color:var(--theme-selected-border)]'
+            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
             : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
           : isFantasyTheme
             ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
             : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
         style:background-color={typeFilters.size === 0 && isFantasyTheme
-          ? "var(--theme-selected-bg)"
+          ? "var(--theme-focus-bg)"
           : undefined}
       >
         <LayoutGrid class="w-3.5 h-3.5" />
@@ -142,13 +142,13 @@
               cat.id,
             )
               ? isFantasyTheme
-                ? 'text-[color:var(--theme-icon-active)] shadow-none border-[color:var(--theme-selected-border)]'
+                ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
                 : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
               : isFantasyTheme
                 ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
                 : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
             style:background-color={typeFilters.has(cat.id) && isFantasyTheme
-              ? "var(--theme-selected-bg)"
+              ? "var(--theme-focus-bg)"
               : undefined}
           >
             <span
@@ -158,12 +158,16 @@
                   ? "color: var(--theme-icon-default)"
                   : `color: ${cat.color}`
                 : isFantasyTheme
-                  ? "color: var(--theme-icon-active)"
+                  ? "color: var(--theme-focus)"
                   : ""}
             ></span>
             {#if count > 0 && !typeFilters.has(cat.id)}
               <span
-                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary/20 text-theme-primary text-[7px] font-bold flex items-center justify-center leading-none"
+                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[7px] font-bold flex items-center justify-center leading-none"
+                style:background-color={isFantasyTheme
+                  ? "var(--theme-focus-bg)"
+                  : undefined}
+                style:color={isFantasyTheme ? "var(--theme-focus)" : undefined}
               >
                 {count > 9 ? "9+" : count}
               </span>

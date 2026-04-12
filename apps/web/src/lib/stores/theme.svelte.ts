@@ -264,6 +264,7 @@ export class ThemeStore {
     root.style.setProperty("--theme-meta-text", tokens.secondary);
     root.style.setProperty("--theme-icon-default", tokens.secondary);
     root.style.setProperty("--theme-icon-active", tokens.primary);
+    root.style.setProperty("--theme-focus", tokens.accent);
     root.style.setProperty("--theme-panel-fill", tokens.surface);
     root.style.setProperty(
       "--theme-panel-muted",
@@ -276,6 +277,14 @@ export class ThemeStore {
     root.style.setProperty(
       "--theme-selected-border",
       `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 42%)`,
+    );
+    root.style.setProperty(
+      "--theme-focus-bg",
+      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 84%)`,
+    );
+    root.style.setProperty(
+      "--theme-focus-border",
+      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 42%)`,
     );
     root.style.setProperty("--theme-action-bg", tokens.primary);
     root.style.setProperty("--theme-action-hover", tokens.secondary);
@@ -306,7 +315,7 @@ export class ThemeStore {
 
     let radius = "2px"; // Gothic/Terminal default
     if (theme.id === "modern") radius = "12px";
-    if (theme.id === "fantasy") radius = "4px"; // More crafted look for fantasy
+    if (theme.id === "fantasy") radius = "3px"; // Firmer, less app-like fantasy
     if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
     root.style.setProperty("--theme-border-radius", radius);
 
@@ -316,6 +325,7 @@ export class ThemeStore {
       root.style.setProperty("--theme-meta-text", "#6e5640");
       root.style.setProperty("--theme-icon-default", "#70533a");
       root.style.setProperty("--theme-icon-active", "#5c3a20");
+      root.style.setProperty("--theme-focus", "#b08b57");
       root.style.setProperty(
         "--theme-panel-fill",
         "color-mix(in srgb, #f2e3c5, #fdf6e3 24%)",
@@ -331,6 +341,14 @@ export class ThemeStore {
       root.style.setProperty(
         "--theme-selected-border",
         "color-mix(in srgb, #6f4a2a, #fdf6e3 38%)",
+      );
+      root.style.setProperty(
+        "--theme-focus-bg",
+        "color-mix(in srgb, #b08b57, #fdf6e3 84%)",
+      );
+      root.style.setProperty(
+        "--theme-focus-border",
+        "color-mix(in srgb, #b08b57, #fdf6e3 40%)",
       );
       root.style.setProperty(
         "--theme-action-bg",

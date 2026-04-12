@@ -73,13 +73,13 @@
       href={view.href}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? isFantasyTheme
-          ? 'text-[color:var(--theme-icon-active)] border-[color:var(--theme-selected-border)] shadow-none'
+          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
           : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
         : isFantasyTheme
           ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
           : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
       style:background-color={active && isFantasyTheme
-        ? "var(--theme-selected-bg)"
+        ? "var(--theme-focus-bg)"
         : undefined}
       aria-label={view.label}
       title={view.label}
@@ -95,7 +95,7 @@
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
                  bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
           style:background-color={isFantasyTheme
-            ? "var(--theme-icon-active)"
+            ? "var(--theme-focus)"
             : undefined}
         ></div>
       {/if}
@@ -115,13 +115,13 @@
       onclick={tool.action}
       class="w-10 h-10 flex items-center justify-center rounded-md transition-all duration-200 group relative border {active
         ? isFantasyTheme
-          ? 'text-[color:var(--theme-icon-active)] border-[color:var(--theme-selected-border)] shadow-none'
+          ? 'text-[color:var(--theme-focus)] border-[color:var(--theme-focus-border)] shadow-none'
           : 'bg-theme-primary/10 text-theme-primary border-theme-primary/30 shadow-sm'
         : isFantasyTheme
           ? 'text-[color:var(--theme-icon-default)] border-transparent hover:text-[color:var(--theme-title-ink)]'
           : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/5'}"
       style:background-color={active && isFantasyTheme
-        ? "var(--theme-selected-bg)"
+        ? "var(--theme-focus-bg)"
         : undefined}
       aria-label={tool.label}
       title={tool.label}
@@ -137,7 +137,7 @@
                  bottom-0 left-1/2 -translate-x-1/2 w-6 h-1
                  bg-theme-primary rounded-t-full md:rounded-r-full md:rounded-t-none"
           style:background-color={isFantasyTheme
-            ? "var(--theme-icon-active)"
+            ? "var(--theme-focus)"
             : undefined}
         ></div>
       {/if}

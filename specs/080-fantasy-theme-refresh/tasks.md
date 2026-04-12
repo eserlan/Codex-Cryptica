@@ -28,8 +28,8 @@
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete
 
-- [ ] T003 Update the base fantasy-theme token values in `packages/schema/src/theme.ts` to remove cyan and pink-adjacent styling pressure and reinforce warm ink, brown, and restrained gold tones
-- [ ] T004 [P] Expose any revised fantasy-theme CSS variables through `apps/web/src/lib/stores/theme.svelte.ts` for icon states, panel warmth, border tone, and selected feedback
+- [ ] T003 Update the base fantasy-theme token values in `packages/schema/src/theme.ts` to enforce dark ink, brown interaction, gold focus, and warmer parchment-aligned surfaces
+- [ ] T004 [P] Expose revised fantasy-theme CSS variables through `apps/web/src/lib/stores/theme.svelte.ts` for brown interaction states, gold focus states, panel warmth, and firmer edges
 - [ ] T005 [P] Normalize shared fantasy surface, border, radius, and interaction styling hooks in `apps/web/src/app.css`
 
 **Checkpoint**: Shared fantasy tokens and CSS hooks are ready for story-specific work
@@ -38,21 +38,21 @@
 
 ## Phase 3: User Story 1 - Cohesive Fantasy Styling (Priority: P1) 🎯 MVP
 
-**Goal**: Remove cyan and pink accents and replace multicolor icon treatment with one warm fantasy language
+**Goal**: Remove cyan and pink accents and replace multicolor icon treatment with a single muted-brown fantasy system
 
-**Independent Test**: Activate the fantasy theme and confirm the explorer and entity header no longer show cyan text, pink borders or highlights, or multicolor standard UI icon states
+**Independent Test**: Activate the fantasy theme and confirm the explorer and entity header no longer show cyan text, pink borders or highlights, or multicolor standard UI icon states, and that standard interaction still reads as brown rather than gold
 
 ### Tests for User Story 1 ⚠️
 
 > **NOTE: Write these tests FIRST, ensure they fail before implementation**
 
-- [ ] T006 [P] [US1] Add Playwright assertions for removing cyan text, removing pink highlights, and unifying fantasy icon colors in `apps/web/tests/themes.spec.ts`
+- [ ] T006 [P] [US1] Add Playwright assertions for dark-ink text, brown standard interaction, and unified muted-brown fantasy icon colors in `apps/web/tests/themes.spec.ts`
 
 ### Implementation for User Story 1
 
 - [ ] T007 [US1] Remove multicolor default icon treatment from the fantasy explorer controls in `apps/web/src/lib/components/explorer/EntityList.svelte`
 - [ ] T008 [P] [US1] Replace cyan-like fantasy title treatment with dark ink title styling and unified tool-icon states in `apps/web/src/lib/components/entity-detail/DetailHeader.svelte`
-- [ ] T009 [P] [US1] Replace pink-adjacent active and hover emphasis with warm brown fantasy states in `apps/web/src/lib/components/entity-detail/DetailTabs.svelte`
+- [ ] T009 [P] [US1] Replace pink-adjacent fantasy emphasis with brown standard interaction states in `apps/web/src/lib/components/entity-detail/DetailTabs.svelte`
 
 **Checkpoint**: User Story 1 should now deliver a cohesive fantasy color language on its own
 
@@ -62,17 +62,17 @@
 
 **Goal**: Warm the main fantasy panels and sidebars so they match the parchment background and reduce app-like separation
 
-**Independent Test**: Activate the fantasy theme and compare the explorer, sidebar shells, detail surfaces, and dominant brown action surface against the page background; they should read as integrated parchment surfaces rather than neutral cards, and the brown action surface should no longer pull disproportionate focus
+**Independent Test**: Activate the fantasy theme and compare the explorer, sidebar shells, detail surfaces, and dominant brown action surface against the page background; they should read as integrated parchment surfaces rather than neutral cards, and the cards should feel slightly firmer and less soft
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T010 [P] [US2] Add Playwright assertions for fantasy panel warmth, border tone, and dominant brown action-surface treatment in `apps/web/tests/themes.spec.ts`
+- [ ] T010 [P] [US2] Add Playwright assertions for fantasy panel warmth, border tone, firmer card edges, and dominant brown action-surface treatment in `apps/web/tests/themes.spec.ts`
 
 ### Implementation for User Story 2
 
 - [ ] T011 [US2] Warm and integrate the entity detail shell in `apps/web/src/lib/components/EntityDetailPanel.svelte`
 - [ ] T012 [P] [US2] Warm and integrate the sidebar shell in `apps/web/src/lib/components/layout/SidebarPanelHost.svelte`
-- [ ] T013 [P] [US2] Warm and integrate the embedded entity shell and tone down the dominant brown action surface in `apps/web/src/lib/components/entity/EmbeddedEntityView.svelte` and `apps/web/src/app.css`
+- [ ] T013 [P] [US2] Warm and integrate the embedded entity shell, tone down the dominant brown action surface, and reduce overly soft card feel in `apps/web/src/lib/components/entity/EmbeddedEntityView.svelte` and `apps/web/src/app.css`
 
 **Checkpoint**: User Story 2 should now deliver parchment-aligned core surfaces independently
 
@@ -80,19 +80,19 @@
 
 ## Phase 5: User Story 3 - Clearer Reading Hierarchy (Priority: P3)
 
-**Goal**: Improve title weight, section separation, metadata de-emphasis, and crafted edge treatment in entity reading views
+**Goal**: Improve title weight, section separation, metadata de-emphasis, and gold focus treatment in entity reading views
 
-**Independent Test**: Open an entity in the fantasy theme and confirm the title, section headings such as the chronicle area, metadata, and reading blocks have clearer visual hierarchy without introducing harsh or modern-looking styling
+**Independent Test**: Open an entity in the fantasy theme and confirm the title, section headings such as the chronicle area, metadata, and reading blocks have clearer visual hierarchy, with gold reserved for active tabs, selected elements, and key highlights
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T014 [P] [US3] Add Playwright assertions for fantasy title hierarchy, section-heading distinction, and quieter metadata in `apps/web/tests/themes.spec.ts`
+- [ ] T014 [P] [US3] Add Playwright assertions for fantasy title hierarchy, section-heading distinction, quieter metadata, and gold-only focus states in `apps/web/tests/themes.spec.ts`
 
 ### Implementation for User Story 3
 
 - [ ] T015 [US3] Strengthen title and metadata hierarchy in `apps/web/src/lib/components/entity-detail/DetailHeader.svelte`
 - [ ] T016 [US3] Strengthen section spacing, section-heading distinction, and secondary text hierarchy in `apps/web/src/lib/components/entity-detail/DetailStatusTab.svelte`
-- [ ] T017 [US3] Tighten crafted edge treatment and reduce soft-mobile styling in `apps/web/src/lib/components/entity-detail/DetailTabs.svelte` and `apps/web/src/app.css`
+- [ ] T017 [US3] Apply gold-only focus treatment to active tabs, selected elements, and key highlights in `apps/web/src/lib/components/entity-detail/DetailTabs.svelte`, `apps/web/src/lib/components/layout/ActivityBar.svelte`, and `apps/web/src/app.css`
 
 **Checkpoint**: User Story 3 should now make the fantasy reading view feel structured and authored on its own
 
@@ -179,5 +179,5 @@ Task: "Soften fantasy active and hover tab emphasis in apps/web/src/lib/componen
 
 - `[P]` tasks are limited to work that can proceed without unresolved file conflicts
 - `apps/web/tests/themes.spec.ts` is the primary regression file for this feature
-- The highest-priority implementation slice is exactly the user-provided top three: remove cyan and pink accents, unify icon colors, and warm panels toward parchment
+- The highest-priority implementation slice is exactly the user-provided distilled rule set: dark ink text, brown interaction, gold focus, unified brown icons, warmer parchment panels, and firmer edges
 - Preserve the existing theme system; do not create a fantasy-only styling path outside shared theme plumbing

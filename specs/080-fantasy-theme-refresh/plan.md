@@ -7,7 +7,7 @@
 
 ## Summary
 
-Refresh the existing Classic/fantasy theme so the interface reads as a cohesive warm parchment experience. The first pass is driven by the user's explicit priorities: remove cyan and pink accents, replace multicolor icon rows with unified ink/brown icon states, and warm panel surfaces to match the parchment background. From there, the implementation will also tone down the dominant brown action surface and strengthen hierarchy in the entity view.
+Refresh the existing Classic/fantasy theme so the interface reads as a cohesive warm parchment experience. The first pass is driven by the user's explicit rule set: dark ink for text, brown for standard UI and interaction, gold only for focus and importance, warmer parchment-aligned panels, and firmer less app-like card edges. From there, the implementation will tone down the dominant brown action surface and strengthen hierarchy in the entity view.
 
 ## Technical Context
 
@@ -18,8 +18,8 @@ Refresh the existing Classic/fantasy theme so the interface reads as a cohesive 
 **Target Platform**: Modern desktop and mobile browsers  
 **Project Type**: Web application monorepo  
 **Performance Goals**: Preserve current theme-switch speed, avoid visible layout shifts, and keep the refresh CSS-driven where possible  
-**Constraints**: Preserve non-fantasy themes, follow the existing shared theme system, maintain accessible contrast on parchment surfaces, avoid hardcoded one-off color logic spread across many components, and keep the implementation focused on the screenshot-identified surfaces first  
-**Scale/Scope**: Shared theme tokens plus a focused set of fantasy-facing UI surfaces in `apps/web`, especially the title area, icon rows, panel shells, borders, primary brown action surface, and entity-view hierarchy
+**Constraints**: Preserve non-fantasy themes, follow the existing shared theme system, maintain accessible contrast on parchment surfaces, avoid hardcoded one-off color logic spread across many components, keep the implementation focused on the screenshot-identified surfaces first, and enforce the simplified fantasy color rule consistently  
+**Scale/Scope**: Shared theme tokens plus a focused set of fantasy-facing UI surfaces in `apps/web`, especially the title area, icon rows, panel shells, borders, active/selected states, primary brown action surface, and entity-view hierarchy
 
 ## Constitution Check
 
@@ -77,7 +77,7 @@ packages/
         └── theme.ts
 ```
 
-**Structure Decision**: Keep shared fantasy token decisions centralized in `packages/schema/src/theme.ts`, map them through the existing theme store and global CSS in `apps/web/src/lib/stores/theme.svelte.ts` and `apps/web/src/app.css`, and make targeted component updates only where the current fantasy presentation breaks cohesion. The first target set is the exact screenshot-driven problem areas: cold title/highlight colors, multicolor icons, panel warmth, border tone, the dominant brown action surface, and entity-view hierarchy.
+**Structure Decision**: Keep shared fantasy token decisions centralized in `packages/schema/src/theme.ts`, map them through the existing theme store and global CSS in `apps/web/src/lib/stores/theme.svelte.ts` and `apps/web/src/app.css`, and make targeted component updates only where the current fantasy presentation breaks cohesion. The first target set is the exact screenshot-driven problem areas: cold title/highlight colors, multicolor icons, panel warmth, brown-vs-gold state treatment, firmer edges, the dominant brown action surface, and entity-view hierarchy.
 
 ## Complexity Tracking
 
