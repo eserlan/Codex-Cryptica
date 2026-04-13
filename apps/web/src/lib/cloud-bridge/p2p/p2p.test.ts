@@ -402,6 +402,7 @@ describe("P2P Services", () => {
         name: "Disposable",
         x: 0,
         y: 0,
+        ownerPeerId: "guest-1",
       });
       const tokenId = Object.keys(mapSession.tokens)[0];
 

@@ -282,12 +282,12 @@ export class P2PGuestService {
                 const blob = new Blob([fog.data], {
                   type: fog.mime || "image/png",
                 });
-                const fogUrl = URL.createObjectURL(blob);
+                this.mapFogUrl = URL.createObjectURL(blob);
                 const nextMap = {
                   ...currentMap,
                   fogOfWar: {
-                    ...(currentMap.fogOfWar ?? { maskPath: fogUrl }),
-                    maskPath: fogUrl,
+                    ...(currentMap.fogOfWar ?? { maskPath: this.mapFogUrl }),
+                    maskPath: this.mapFogUrl,
                   },
                 };
 

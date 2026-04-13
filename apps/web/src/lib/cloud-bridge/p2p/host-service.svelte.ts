@@ -170,22 +170,27 @@ export class P2PHostService {
           ownerPeerId: conn.peer,
         });
       } else if (data.type === "TOKEN_MOVE") {
-        if (mapSession.canMoveToken(data.tokenId, conn.peer, true)) {
+        if (mapSession.canMoveToken(data.tokenId, conn.peer, false)) {
           mapSession.moveToken(data.tokenId, data.x, data.y);
         }
       } else if (
         data.type === "TOKEN_REMOVE" ||
         data.type === "TOKEN_REMOVED"
       ) {
-        mapSession.removeToken(data.tokenId);
+        if (mapSession.canMoveToken(data.tokenId, conn.peer, false)) {
+          mapSession.removeToken(data.tokenId);
+        }
       } else if (data.type === "TOKEN_SELECT") {
         mapSession.setSelection(data.tokenId);
       } else if (data.type === "SET_MODE") {
-        mapSession.setMode(data.mode);
+        // Host only action
+        return;
       } else if (data.type === "SESSION_SNAPSHOT") {
-        mapSession.syncFromRemoteSession(data.session);
+        // Guests cannot push snapshots to the host
+        return;
       } else if (data.type === "TURN_ADVANCE") {
-        mapSession.advanceTurn();
+        // Host only action
+        return;
       } else if (data.type === "CHAT_MESSAGE") {
         mapSession.handleRemoteChatMessage(data);
         this.broadcastVttMessage(data, conn.peer);
@@ -220,16 +225,22 @@ export class P2PHostService {
           data.peerId ?? conn.peer,
           data.active,
         );
-        this.broadcastVttMessage({
-          type: "MAP_MEASUREMENT",
-          mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
-          startX: data.startX,
-          startY: data.startY,
-          endX: data.endX,
-          endY: data.endY,
-          peerId: data.peerId ?? conn.peer,
-          active: data.active,
-        });
+        this.broadcastVttMessage(
+          {
+            type: "MAP_MEASUREMENT",
+            mapId: mapSession.mapId ?? this.mapStore.activeMapId ?? "",
+            startX: data.startX,
+            startY: data.startY,
+            endX: data.endX,
+            endY: data.endY,
+            peerId: data.peerId ?? conn.peer,
+            active: data.active,
+          },
+          conn.peer,
+        );
+      } else if (data.type === "SET_GRID_SETTINGS") {
+        // Host only action
+        return;
       } else if (data.type === "MAP_SYNC") {
         this.broadcastMapSync(data.payload);
       }
@@ -814,7 +825,7 @@ export class P2PHostService {
         active: message.active,
       };
       this.connections.forEach((conn) => {
-        if (conn.open) {
+        if (conn.open && conn.peer !== excludePeer) {
           conn.send(payload);
         }
       });
