@@ -1100,15 +1100,24 @@ export class MapSessionStore {
         return next;
       }
 
-      this.emit({
-        type: "TOKEN_STATE_UPDATE",
-        tokenId,
-        delta: {
-          ...updates,
-          x: posChanged || sizeChanged ? snapped.x : undefined,
-          y: posChanged || sizeChanged ? snapped.y : undefined,
-        },
-      });
+      if (uiStore.isGuestMode && (posChanged || sizeChanged)) {
+        this.emit({
+          type: "TOKEN_MOVE",
+          tokenId,
+          x: snapped.x,
+          y: snapped.y,
+        });
+      } else {
+        this.emit({
+          type: "TOKEN_STATE_UPDATE",
+          tokenId,
+          delta: {
+            ...updates,
+            x: posChanged || sizeChanged ? snapped.x : undefined,
+            y: posChanged || sizeChanged ? snapped.y : undefined,
+          },
+        });
+      }
 
       // Ownership/visibility and status changes are sensitive to client-side
       // drift. Follow the delta with a canonical snapshot so guests heal from

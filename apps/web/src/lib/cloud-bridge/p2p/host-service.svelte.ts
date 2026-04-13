@@ -795,7 +795,7 @@ export class P2PHostService {
         timestamp: message.timestamp,
       };
       this.connections.forEach((conn) => {
-        if (conn.open) {
+        if (conn.open && conn.peer !== excludePeer) {
           conn.send(payload);
         }
       });

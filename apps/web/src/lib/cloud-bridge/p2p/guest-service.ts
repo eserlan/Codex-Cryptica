@@ -499,15 +499,21 @@ export class P2PGuestService {
     const requestId = crypto.randomUUID();
 
     return new Promise((resolve, reject) => {
-      const timeoutHandle = setTimeout(() => {
+      const cleanup = () => {
         connection.off("data", handler);
+        connection.off("close", cleanup);
+        connection.off("error", cleanup);
+      };
+
+      const timeoutHandle = setTimeout(() => {
+        cleanup();
         reject(new Error("File request timed out"));
       }, 15000);
 
       const handler = (data: any) => {
         if (data.type === "FILE_RESPONSE" && data.requestId === requestId) {
           clearTimeout(timeoutHandle);
-          connection.off("data", handler);
+          cleanup();
           if (data.found) {
             resolve(new Blob([data.data], { type: data.mime }));
           } else {
@@ -517,6 +523,8 @@ export class P2PGuestService {
       };
 
       connection.on("data", handler);
+      connection.on("close", cleanup);
+      connection.on("error", cleanup);
 
       connection.send({
         type: "GET_FILE",
