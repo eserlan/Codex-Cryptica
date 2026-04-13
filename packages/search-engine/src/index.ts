@@ -114,6 +114,25 @@ export class SearchEngine {
     return this.taskQueue;
   }
 
+  async addBatch(docs: SearchEntry[]) {
+    this.taskQueue = this.taskQueue.then(async () => {
+      if (!this.index) {
+        this.log("warn", "Index was null during addBatch(), re-initializing.");
+        this.initIndex();
+      }
+      try {
+        for (const doc of docs) {
+          this.index.add(doc);
+          this.docIds.add(doc.id);
+        }
+        this.notifyChange();
+      } catch (err) {
+        this.log("error", `Failed to add batch of ${docs.length} documents`, err);
+      }
+    });
+    return this.taskQueue;
+  }
+
   async remove(id: string) {
     this.taskQueue = this.taskQueue.then(async () => {
       if (!this.index) return;
