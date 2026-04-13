@@ -13,8 +13,11 @@ The Oracle works in two modes: System Proxy (free, uses shared access) or Custom
 ### Visual Graph
 Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
 
+### World Front Page
+Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
+
 ### Local Folder Sync
-Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your campaign data seamlessly.
+Keep your internal archive in sync with a folder on your machine. This allows you to use external tools like Obsidian to edit your world data seamlessly.
 
 ### Total Privacy
 Your notes stay on your device. We use local storage for maximum security with no cloud accounts required.
@@ -35,7 +38,7 @@ Use the toolbar to quickly Apply Labels to multiple items or Merge duplicates in
 Keep secrets hidden. Hide items from your map so players don't see them during a session. Press `P` to toggle the preview.
 
 ### Switching Stories
-Change your campaign. Click the folder name at the top to switch to a different story.
+Change your world. Click the folder name at the top to switch to a different story.
 
 ### Pick Dates
 Pick years quickly without typing. Click the grid to zoom into specific decades and years.
@@ -50,7 +53,7 @@ Instantly transform the look and feel of your workspace. Choose from a variety o
 For Advanced Tier users: Instantly generate visuals for your lore. Look for the 'DRAW' button on Oracle responses or in the sidepanel for entities without images. The AI respects your 'Art Style' notes.
 
 ### Demo Mode
-Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as Campaign' in Settings or the Oracle to keep your work.
+Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
 
 ### Lite Mode (No AI)
 Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
@@ -59,7 +62,7 @@ Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI featu
 Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.
 
 ### Map Mode
-Plot your campaign data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.
 
 ### Spatial Canvas
 Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.
@@ -69,6 +72,12 @@ Visit our blog for deep dives into data sovereignty and tactical world-building 
 
 ### Die Roller
 Perform polyhedral dice rolls via the /roll command in Oracle chat or using the dedicated Die Roller modal. Click dice icons in quick succession to roll multiple dice at once, and use the reroll button to instantly repeat any previous roll.
+
+### Entity Explorer
+Quickly browse and filter all your world entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.
+
+### Navigation Hub
+Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.
 
 
 ## Help Documentation
@@ -557,6 +566,25 @@ Your story starts here...
 
 ---
 
+### WORLD FRONT PAGE
+
+The front page is the first thing you see when a vault opens. It gives you a world briefing, a quick way to jump to the graph or tools, and a space for recent activity cards.
+
+### What You Can Do
+
+- Edit the world briefing directly from the page.
+- Upload a cover image, paste an image URL, or ask the Oracle to generate one.
+- Tag any markdown entity with `frontpage` to pin it to the top of recent entities and use its chronicle/body text in the card preview.
+- Use the navigation buttons to move into the Graph view, open the map, or open the canvas.
+
+### Tips
+
+- Keep the briefing short and useful. You can always expand it later.
+- If you add more than one `frontpage` tag, the most recently edited entity wins.
+- Recent cards update automatically from the vault’s latest edits, and any `frontpage` entity stays pinned at the top.
+
+---
+
 ### TERMINAL LANDING PAGE
 
 The Terminal Landing Page serves as the initial entry point for Codex Cryptica, designed to introduce users to the core operational protocols while maintaining a high-performance, SEO-friendly surface for search engines.
@@ -593,6 +621,6 @@ Here you will find deep dives into:
 
 You can access the blog at any time by visiting [/blog](/blog).
 
-Read our first intel report: **The GM’s Guide to Data Sovereignty**.
+Read our latest dispatch: **The GM’s Guide to Data Sovereignty**.
 
 ---

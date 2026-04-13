@@ -35,6 +35,9 @@
   >
     <!-- Modal -->
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirmation-modal-title"
       class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl"
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
@@ -60,6 +63,7 @@
           {/if}
         </div>
         <h3
+          id="confirmation-modal-title"
           class="font-header text-xl font-bold uppercase tracking-widest text-theme-text"
         >
           {dialog.title}

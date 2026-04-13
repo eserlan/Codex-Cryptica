@@ -45,6 +45,9 @@
   class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
 >
   <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="share-modal-title"
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
   >
     <button
@@ -56,6 +59,7 @@
     </button>
 
     <h2
+      id="share-modal-title"
       class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
       <span class="icon-[lucide--share-2] w-5 h-5"></span>
