@@ -4,6 +4,7 @@
     copyTextToClipboard,
     startShareSession,
   } from "$lib/utils/share-link";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   let { close }: { close: () => void } = $props();
 
@@ -13,48 +14,6 @@
   let p2pLoading = $state(false);
   let p2pLink = $state<string | null>(null);
   let p2pCopied = $state(false);
-
-  let previousActiveElement: HTMLElement | null = null;
-  let modalElement: HTMLElement | undefined = $state();
-
-  $effect(() => {
-    previousActiveElement = document.activeElement as HTMLElement;
-    setTimeout(() => {
-      const firstFocusable = modalElement?.querySelector(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      ) as HTMLElement;
-      firstFocusable?.focus();
-    }, 10);
-
-    return () => {
-      if (previousActiveElement) {
-        previousActiveElement.focus();
-      }
-    };
-  });
-
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      close();
-      e.stopPropagation();
-    } else if (e.key === "Tab") {
-      if (!modalElement) return;
-      const focusables = modalElement.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0] as HTMLElement;
-      const last = focusables[focusables.length - 1] as HTMLElement;
-
-      if (e.shiftKey && document.activeElement === first) {
-        last.focus();
-        e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        first.focus();
-        e.preventDefault();
-      }
-    }
-  };
 
   const handleP2PStart = async () => {
     p2pLoading = true;
@@ -87,12 +46,11 @@
   class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
 >
   <div
-    bind:this={modalElement}
+    use:focusTrap={{ onEscape: close }}
     role="dialog"
     aria-modal="true"
     aria-labelledby="share-modal-title"
     tabindex="-1"
-    onkeydown={handleKeydown}
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300 focus:outline-none"
   >
     <button

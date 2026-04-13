@@ -4,6 +4,7 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { fade, fly } from "svelte/transition";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   let {
     isOpen = false,
@@ -181,25 +182,21 @@
       isLoading = false;
     }
   };
-
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
-  };
 </script>
 
 {#if isOpen}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
+    use:focusTrap={{ onEscape: onClose }}
     role="dialog"
     aria-modal="true"
     aria-label="Bulk label {entityIds.length} {themeStore.resolveJargon(
       'entity',
       entityIds.length,
     )}"
-    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-    onkeydown={handleKeydown}
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 focus:outline-none"
     transition:fade={{ duration: 200 }}
-    tabindex="0"
+    tabindex="-1"
   >
     <div
       class="w-full max-w-md bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col overflow-hidden
@@ -312,7 +309,10 @@
             aria-busy={isLoading}
           >
             {#if isLoading}
-              <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+              <span
+                class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                aria-hidden="true"
+              ></span>
               Applying…
             {:else}
               Apply to all

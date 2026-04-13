@@ -1,6 +1,7 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const dialog = $derived(uiStore.confirmationDialog);
 
@@ -12,48 +13,10 @@
     uiStore.resolveConfirmation(true);
   };
 
-  let previousActiveElement: HTMLElement | null = null;
-  let modalElement: HTMLElement | undefined = $state();
-
-  $effect(() => {
-    if (dialog.open) {
-      previousActiveElement = document.activeElement as HTMLElement;
-      setTimeout(() => {
-        const firstFocusable = modalElement?.querySelector(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        ) as HTMLElement;
-        firstFocusable?.focus();
-      }, 10);
-    } else if (previousActiveElement) {
-      previousActiveElement.focus();
-      previousActiveElement = null;
-    }
-  });
-
   const handleKeydown = (e: KeyboardEvent) => {
-    if (!dialog.open) return;
-    if (e.key === "Escape") {
-      handleCancel();
-      e.stopPropagation();
-    } else if (e.key === "Enter") {
+    if (e.key === "Enter") {
       if (document.activeElement?.tagName === "BUTTON") return;
       handleConfirm();
-    } else if (e.key === "Tab") {
-      if (!modalElement) return;
-      const focusables = modalElement.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0] as HTMLElement;
-      const last = focusables[focusables.length - 1] as HTMLElement;
-
-      if (e.shiftKey && document.activeElement === first) {
-        last.focus();
-        e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        first.focus();
-        e.preventDefault();
-      }
     }
   };
 </script>
@@ -69,7 +32,7 @@
   >
     <!-- Modal -->
     <div
-      bind:this={modalElement}
+      use:focusTrap={{ onEscape: handleCancel }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"

@@ -4,6 +4,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
   import type { VaultRecord } from "$lib/utils/idb";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   let { onClose } = $props<{ onClose: () => void }>();
 
@@ -158,27 +159,12 @@
   };
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && onClose()} />
-
 <div
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm focus:outline-none"
   transition:fade
-  role="button"
-  tabindex="0"
+  use:focusTrap={{ onEscape: onClose }}
   onclick={(e) => {
     if (e.target === e.currentTarget) onClose();
-  }}
-  onkeydown={(e) => {
-    if (
-      e.target === e.currentTarget &&
-      (e.key === "Enter" ||
-        e.key === " " ||
-        e.key === "Spacebar" ||
-        e.key === "Escape")
-    ) {
-      e.preventDefault();
-      onClose();
-    }
   }}
 >
   <div

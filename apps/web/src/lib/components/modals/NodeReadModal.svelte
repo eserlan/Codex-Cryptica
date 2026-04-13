@@ -6,6 +6,7 @@
   import DOMPurify from "dompurify";
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
+  import { focusTrap } from "$lib/actions/focusTrap";
 
   const close = () => ui.closeReadMode();
 
@@ -133,14 +134,14 @@
 {#if ui.readModeNodeId}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+    use:focusTrap={{ onEscape: close }}
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 focus:outline-none"
     onclick={(event) => {
       if (event.target === event.currentTarget) close();
     }}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
-    onkeydown={(e) => e.key === "Escape" && close()}
   >
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
