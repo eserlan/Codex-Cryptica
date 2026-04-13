@@ -319,19 +319,32 @@
           </div>
         </div>
 
-        <FrontPageHero
-          {coverImageUrl}
-          {coverImage}
-          {showCoverEditor}
-          showPanel={false}
-          isSaving={worldStore.isSaving}
-          {onClose}
-          onOpenCoverEditor={openCoverEditor}
-          onCloseCoverEditor={closeCoverEditor}
-          onOpenLightbox={openCoverLightbox}
-          onUploadCover={handleUploadCover}
-          onGenerateCover={handleGenerateCover}
-        />
+        {#if coverImage}
+          <FrontPageHero
+            {coverImageUrl}
+            {coverImage}
+            {showCoverEditor}
+            showPanel={false}
+            isSaving={worldStore.isSaving}
+            {onClose}
+            onOpenCoverEditor={openCoverEditor}
+            onCloseCoverEditor={closeCoverEditor}
+            onOpenLightbox={openCoverLightbox}
+            onUploadCover={handleUploadCover}
+            onGenerateCover={handleGenerateCover}
+          />
+        {:else if onClose}
+          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
+            <button
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              onclick={onClose}
+              aria-label="Close front page"
+              title="Close front page"
+            >
+              <span class="icon-[lucide--x] h-4 w-4"></span>
+            </button>
+          </div>
+        {/if}
       </header>
 
       <ZenImageLightbox
