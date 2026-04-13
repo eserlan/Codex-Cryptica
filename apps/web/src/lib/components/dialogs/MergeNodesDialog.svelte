@@ -97,12 +97,15 @@
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
   >
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="merge-nodes-title"
       class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh]"
     >
       <div
         class="p-6 border-b border-theme-border flex justify-between items-center"
       >
-        <h2 class="text-xl font-bold text-theme-text">
+        <h2 id="merge-nodes-title" class="text-xl font-bold text-theme-text">
           Merge {sourceNodeIds.length}
           {themeStore.resolveJargon("entity", sourceNodeIds.length)}
         </h2>
