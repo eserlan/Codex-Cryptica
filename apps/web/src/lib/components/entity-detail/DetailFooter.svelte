@@ -21,6 +21,7 @@
 
 <div
   class="p-3 md:p-4 border-t border-theme-border flex justify-between items-center bg-theme-surface"
+  style:background-image="var(--bg-texture-overlay)"
 >
   {#if isEditing}
     <div class="flex gap-2 w-full justify-end">

@@ -100,7 +100,7 @@
       data-testid="tab-status"
       class={activeTab === "status"
         ? isFantasyTheme
-          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
@@ -125,7 +125,7 @@
         data-testid="tab-lore"
         class={activeTab === "lore"
           ? isFantasyTheme
-            ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
+            ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
             : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
           : isFantasyTheme
             ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
@@ -151,7 +151,7 @@
       data-testid="tab-inventory"
       class={activeTab === "inventory"
         ? isFantasyTheme
-          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
@@ -175,7 +175,7 @@
       data-testid="tab-map"
       class={activeTab === "map"
         ? isFantasyTheme
-          ? "border px-3 py-1.5 rounded-sm text-[color:var(--theme-focus)]"
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"

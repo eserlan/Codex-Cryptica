@@ -236,6 +236,35 @@
     transform: translateY(1px);
   }
 
+  /* Node cards lift off the canvas with a warm shadow — adds depth without colour */
+  [data-theme="fantasy"] .svelte-flow__node > div {
+    box-shadow:
+      0 4px 12px rgba(94, 48, 24, 0.18),
+      0 1px 3px rgba(94, 48, 24, 0.12) !important;
+  }
+
+  /* Gold feedback on interaction — inputs, selects, focus-visible buttons all get a warm gold ring */
+  [data-theme="fantasy"] input:focus,
+  [data-theme="fantasy"] textarea:focus,
+  [data-theme="fantasy"] select:focus {
+    border-color: var(--color-theme-accent) !important;
+    box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.22) !important;
+    outline: none !important;
+  }
+
+  [data-theme="fantasy"] button:focus-visible {
+    outline: 2px solid var(--color-theme-accent) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Chrome (header, footer, activity bar) blends into parchment — same sheet, not separate panels */
+  [data-theme="fantasy"] header,
+  [data-theme="fantasy"] footer,
+  [data-theme="fantasy"] nav[aria-label="Activity Bar"] {
+    background-color: color-mix(in srgb, var(--color-bg-surface), var(--color-bg-primary) 72%) !important;
+    border-color: rgba(94, 48, 24, 0.18) !important;
+  }
+
   [data-theme="fantasy"] .btnSecondary {
     border-color: var(--theme-selected-border);
     background-color: var(--theme-action-bg);

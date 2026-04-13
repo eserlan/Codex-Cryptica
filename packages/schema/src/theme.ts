@@ -147,30 +147,30 @@ export const THEMES: Record<string, StylingTemplate> = {
     description:
       "Classic fantasy, magic, kingdoms, quests, ancient relics, and the broad language of swords, sorcery, and legend.",
     tokens: {
-      primary: "#6f4a2a", // Warm Brown
-      secondary: "#4a3420", // Dark Ink Brown
+      primary: "#5e3018", // Warm Mahogany — red-brown undertone, interactive/primary elements
+      secondary: "#423830", // Cool Umber — grey-brown undertone, structural/secondary elements
       background: "#fdf6e3", // Parchment
-      surface: "#f2e3c5", // Warm Aged Paper
-      text: "#2a2018", // Inked Text
-      border: "rgba(111, 74, 42, 0.34)",
-      accent: "#b08b57", // Soft Gold
+      surface: "#f0ddb8", // Aged Vellum — softer than #ead4a8, still distinct from parchment bg but not harsh
+      text: "#2a2018", // Inked Text — warm, stays warm (body copy reads as hand-inked)
+      border: "rgba(94, 48, 24, 0.52)", // Stronger border — up from 0.34, uses richer primary
+      accent: "#c8973a", // Jeweller's Gold — highlights and active states
       fontHeader: "'Alegreya', serif",
       fontBody: "'Alegreya', serif",
       texture: "parchment.svg",
-      titleInk: "#24180f",
-      sectionTitle: "#3d2a1a",
-      metaText: "#6e5640",
-      iconDefault: "#70533a",
-      iconActive: "#5c3a20",
-      focus: "#b08b57",
-      panelFill: "color-mix(in srgb, #f2e3c5, #fdf6e3 24%)",
-      panelMuted: "color-mix(in srgb, #f2e3c5, #fdf6e3 48%)",
-      selectedBg: "color-mix(in srgb, #6f4a2a, #fdf6e3 88%)",
-      selectedBorder: "color-mix(in srgb, #6f4a2a, #fdf6e3 38%)",
-      focusBg: "color-mix(in srgb, #b08b57, #fdf6e3 68%)",
-      focusBorder: "color-mix(in srgb, #b08b57, #fdf6e3 18%)",
-      actionBg: "color-mix(in srgb, #6f4a2a, #fdf6e3 74%)",
-      actionHover: "color-mix(in srgb, #6f4a2a, #fdf6e3 64%)",
+      titleInk: "#24180f", // Warmest — titles and headings anchor the hierarchy
+      sectionTitle: "#3a3225", // Cool Umber — section labels are structural, not primary; slightly olive-grey
+      metaText: "#6b5e50", // Cool Grey-Brown — metadata, timestamps; neutral to recede behind content
+      iconDefault: "#6b5e4e", // Cool Grey-Brown — inactive icons match metaText register
+      iconActive: "#5e3018", // Warm — active icon matches primary
+      focus: "#c8973a", // Updated to match new accent gold
+      panelFill: "color-mix(in srgb, #f0ddb8, #fdf6e3 62%)", // 38% vellum — panels recede further toward parchment bg
+      panelMuted: "color-mix(in srgb, #f0ddb8, #fdf6e3 74%)", // Even lighter — secondary panel surfaces near-invisible
+      selectedBg: "color-mix(in srgb, #c8973a, #fdf6e3 88%)", // Faint gold tint on hover — was brown-tinted, now gold-tinted
+      selectedBorder: "color-mix(in srgb, #c8973a, #fdf6e3 42%)", // Gold-based (was brown) — guides eye on section headings and tab separator
+      focusBg: "color-mix(in srgb, #c8973a, #fdf6e3 72%)", // 28% gold tint — light enough for dark text to read clearly on it
+      focusBorder: "#c8973a", // Raw gold — no dilution on active tab border
+      actionBg: "color-mix(in srgb, #5e3018, #fdf6e3 74%)",
+      actionHover: "color-mix(in srgb, #5e3018, #fdf6e3 64%)",
       actionText: "#24180f",
       borderRadius: "3px",
     },
@@ -178,8 +178,8 @@ export const THEMES: Record<string, StylingTemplate> = {
       nodeShape: "round-rectangle",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
-      edgeWidth: 2,
-      edgeColor: "#5F4B3B", // Sepia Ink
+      edgeWidth: 3, // Bolder — connections need to win against parchment bg
+      edgeColor: "#6b3820", // Deep Mahogany — updated to complement richer primary
     },
     jargon: {
       vault: "Archive",

@@ -2,6 +2,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
   import { Search, LayoutGrid } from "lucide-svelte";
@@ -19,6 +20,7 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+  const focusedEntityId = $derived(uiStore.focusedEntityId);
 
   const typesWithCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
@@ -109,6 +111,9 @@
       style:background-color={isFantasyTheme
         ? "var(--theme-panel-muted)"
         : undefined}
+      style:background-image={isFantasyTheme
+        ? "var(--bg-texture-overlay)"
+        : undefined}
     >
       <button
         onclick={() => (typeFilters = new Set())}
@@ -192,9 +197,14 @@
         data-testid="entity-list-item"
         data-entity-id={entity.id}
         title={`Select ${entity.title}`}
-        class="w-full text-left p-2.5 border border-theme-border transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none {isFantasyTheme
-          ? 'bg-[color:var(--theme-panel-muted)] rounded-md hover:border-[color:var(--theme-selected-border)] hover:bg-[color:var(--theme-selected-bg)]'
-          : 'bg-theme-bg rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+        class="w-full text-left p-2.5 border transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none {entity.id ===
+        focusedEntityId
+          ? isFantasyTheme
+            ? 'rounded-md border-[color:var(--theme-focus-border)] bg-[color:var(--theme-focus-bg)] ring-1 ring-[color:var(--theme-focus-border)]/40'
+            : 'rounded-lg border-theme-primary bg-theme-primary/10'
+          : isFantasyTheme
+            ? 'border-theme-border bg-[color:var(--theme-panel-muted)] rounded-md hover:border-[color:var(--theme-selected-border)] hover:bg-[color:var(--theme-selected-bg)]'
+            : 'border-theme-border bg-theme-bg rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
       >
         <div class="flex items-center gap-2">
           <span

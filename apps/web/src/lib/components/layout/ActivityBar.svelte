@@ -64,6 +64,7 @@
     w-full md:w-14 h-14 md:h-full border-t md:border-t-0 md:border-r"
   aria-label="Activity Bar"
   data-testid="activity-bar"
+  style:background-image="var(--bg-texture-overlay)"
 >
   <!-- Main Views -->
   {#each views as view}

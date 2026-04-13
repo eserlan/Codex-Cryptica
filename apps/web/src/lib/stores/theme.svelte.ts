@@ -336,11 +336,17 @@ export class ThemeStore {
       "--theme-border-width",
       `${theme.graph.nodeBorderWidth}px`,
     );
+    root.style.setProperty(
+      "--theme-edge-stroke-width",
+      `${theme.graph.edgeWidth}px`,
+    );
 
     // Theme specific visual behaviors
     let glow = "none";
     if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
     if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
+    // Warm candlelight/arcane glow using the gold accent — evokes magic without neon
+    if (theme.id === "fantasy") glow = `0 0 14px ${tokens.accent}44`;
     root.style.setProperty("--theme-glow", glow);
 
     let radius = "2px"; // Gothic/Terminal default

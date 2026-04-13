@@ -84,6 +84,7 @@
 <div
   class="p-4 md:p-6 border-b border-theme-border bg-theme-surface"
   style:background-color="var(--theme-panel-fill)"
+  style:background-image="var(--bg-texture-overlay)"
 >
   <div class="flex justify-between items-start mb-2">
     {#if isEditing}
@@ -97,9 +98,9 @@
       </div>
     {:else}
       <h2
-        class="text-2xl md:text-3xl font-bold tracking-wide {isFantasyTheme
-          ? 'font-header'
-          : 'font-body'}"
+        class="{isFantasyTheme
+          ? 'text-2xl md:text-3xl font-header tracking-wider'
+          : 'text-2xl md:text-3xl font-body tracking-wide'} font-bold"
         style:color={isFantasyTheme ? "var(--theme-title-ink)" : undefined}
       >
         {entity.title}
