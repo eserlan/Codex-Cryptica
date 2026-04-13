@@ -221,6 +221,39 @@ describe("MapSessionStore", () => {
     );
   });
 
+  it("broadcasts a canonical snapshot after status effect updates", () => {
+    const broadcaster = vi.fn();
+    store.setBroadcaster(broadcaster);
+    const token = store.addToken({ name: "Marked", x: 0, y: 0 });
+
+    broadcaster.mockClear();
+    store.updateToken(token!.id, { statusEffects: ["poisoned"] });
+
+    expect(broadcaster).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        type: "TOKEN_STATE_UPDATE",
+        tokenId: token!.id,
+        delta: expect.objectContaining({
+          statusEffects: ["poisoned"],
+        }),
+      }),
+    );
+    expect(broadcaster).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        type: "SESSION_SNAPSHOT",
+        session: expect.objectContaining({
+          tokens: expect.objectContaining({
+            [token!.id]: expect.objectContaining({
+              statusEffects: ["poisoned"],
+            }),
+          }),
+        }),
+      }),
+    );
+  });
+
   it("broadcasts a shared token image reveal without persisting it to the session", () => {
     const broadcaster = vi.fn();
     store.setBroadcaster(broadcaster);

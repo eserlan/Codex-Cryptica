@@ -1024,6 +1024,7 @@ export class MapSessionStore {
       updates.ownerPeerId !== undefined ||
       updates.ownerGuestName !== undefined ||
       updates.visibleTo !== undefined;
+    const statusChanged = updates.statusEffects !== undefined;
     const shouldDebounceBroadcast = posChanged || sizeChanged;
 
     const snapped =
@@ -1109,9 +1110,10 @@ export class MapSessionStore {
         },
       });
 
-      // Ownership/visibility changes are permission-sensitive. Follow the
-      // delta with a canonical snapshot so guests heal from any stale local state.
-      if (permissionChanged) {
+      // Ownership/visibility and status changes are sensitive to client-side
+      // drift. Follow the delta with a canonical snapshot so guests heal from
+      // any stale local state immediately.
+      if (permissionChanged || statusChanged) {
         this.broadcastSessionSnapshotNow();
       }
     } else {
