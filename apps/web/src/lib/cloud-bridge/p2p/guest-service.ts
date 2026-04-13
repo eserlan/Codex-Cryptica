@@ -3,7 +3,7 @@ import { guestRoster, type GuestPresenceStatus } from "../../stores/guest";
 import { upsertGuestRoster } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import type { VTTMessage } from "$types/vtt";
-import { isValidP2PMessage } from "./p2p-protocol";
+import { decodeSessionSnapshot, isValidP2PMessage } from "./p2p-protocol";
 
 type GuestStatusPayload = {
   status: GuestPresenceStatus;
@@ -292,10 +292,15 @@ export class P2PGuestService {
                 vault.maps[mapId] = nextMap;
               },
             );
-          } else if (data.type === "SESSION_SNAPSHOT") {
-            if (!data.session) return;
-            void this.getMapSession().then((mapSession) => {
-              mapSession.syncFromRemoteSession(data.session, false);
+          } else if (
+            data.type === "SESSION_SNAPSHOT" ||
+            data.type === "SESSION_SNAPSHOT_GZIP"
+          ) {
+            void Promise.all([
+              this.getMapSession(),
+              decodeSessionSnapshot(data as any),
+            ]).then(([mapSession, session]) => {
+              mapSession.syncFromRemoteSession(session, false);
             });
           } else if (data.type === "TOKEN_ADDED") {
             void this.getMapSession().then((mapSession) =>

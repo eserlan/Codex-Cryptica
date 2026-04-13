@@ -149,6 +149,11 @@ export interface SessionSnapshotPayload {
   session: EncounterSession;
 }
 
+export interface CompressedSessionSnapshotPayload {
+  type: "SESSION_SNAPSHOT_GZIP";
+  data: ArrayBuffer;
+}
+
 export interface TokenStateUpdatePayload {
   type: "TOKEN_STATE_UPDATE";
   tokenId: string;
@@ -301,6 +306,7 @@ export interface ChatClearPayload {
 
 export type VTTMessage =
   | SessionSnapshotPayload
+  | CompressedSessionSnapshotPayload
   | TokenStateUpdatePayload
   | TokenAddedPayload
   | TokenRemovedPayload

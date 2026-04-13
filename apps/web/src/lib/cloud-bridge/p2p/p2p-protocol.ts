@@ -1,8 +1,11 @@
 import type {
+  CompressedSessionSnapshotPayload,
   EncounterSession,
   SessionSnapshotPayload,
   VTTMessage,
 } from "$types/vtt";
+
+const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 
 export type P2PMessage =
   | { type: "GRAPH_SYNC"; payload: any }
@@ -50,8 +53,7 @@ export type P2PMessage =
   | { type: "ENTITY_BATCH_UPDATE"; payload: Record<string, any> }
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
-  | VTTMessage
-  | SessionSnapshotPayload;
+  | VTTMessage;
 
 export function isValidP2PMessage(
   message: unknown,
@@ -66,20 +68,41 @@ export function isValidP2PMessage(
 
 export async function encodeSessionSnapshot(
   session: EncounterSession,
-): Promise<SessionSnapshotPayload> {
-  return {
-    type: "SESSION_SNAPSHOT",
-    session,
-  };
+): Promise<SessionSnapshotPayload | CompressedSessionSnapshotPayload> {
+  const json = JSON.stringify(session);
+  if (
+    json.length < SNAPSHOT_COMPRESS_THRESHOLD ||
+    typeof CompressionStream === "undefined"
+  ) {
+    return { type: "SESSION_SNAPSHOT", session };
+  }
+  const cs = new CompressionStream("gzip");
+  const writer = cs.writable.getWriter();
+  writer.write(new TextEncoder().encode(json));
+  writer.close();
+  const data = await new Response(cs.readable).arrayBuffer();
+  const ratio = ((1 - data.byteLength / json.length) * 100).toFixed(1);
+  console.log(
+    `[P2P] SESSION_SNAPSHOT_GZIP: ${json.length} → ${data.byteLength} bytes (${ratio}% smaller)`,
+  );
+  return { type: "SESSION_SNAPSHOT_GZIP", data };
 }
 
 export async function decodeSessionSnapshot(
-  message: SessionSnapshotPayload,
+  message: SessionSnapshotPayload | CompressedSessionSnapshotPayload,
 ): Promise<EncounterSession> {
-  if (message.type !== "SESSION_SNAPSHOT") {
-    throw new Error(`Unknown snapshot message type: ${(message as any).type}`);
+  if (message.type === "SESSION_SNAPSHOT") {
+    return message.session;
   }
-  return message.session;
+  if (message.type === "SESSION_SNAPSHOT_GZIP") {
+    const ds = new DecompressionStream("gzip");
+    const writer = ds.writable.getWriter();
+    writer.write(new Uint8Array(message.data));
+    writer.close();
+    const json = await new Response(ds.readable).text();
+    return JSON.parse(json);
+  }
+  throw new Error(`Unknown snapshot message type: ${(message as any).type}`);
 }
 
 export function isVTTMessage(message: any): message is VTTMessage {
@@ -89,6 +112,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
     typeof message.type === "string" &&
     [
       "SESSION_SNAPSHOT",
+      "SESSION_SNAPSHOT_GZIP",
       "TOKEN_STATE_UPDATE",
       "SHOW_TOKEN_IMAGE",
       "TOKEN_ADDED",
@@ -118,6 +142,7 @@ export function isVTTMessage(message: any): message is VTTMessage {
 export function isHostOnlyVTTMessage(message: VTTMessage): boolean {
   return [
     "SESSION_SNAPSHOT",
+    "SESSION_SNAPSHOT_GZIP",
     "TOKEN_STATE_UPDATE",
     "SHOW_TOKEN_IMAGE",
     "TOKEN_ADDED",
