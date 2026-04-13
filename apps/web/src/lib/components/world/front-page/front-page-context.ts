@@ -5,9 +5,10 @@
  *
  * Deduplication strategy: content-level dedup via normalised string comparison.
  * The two retrieval queries can return overlapping text; after gathering all
- * parts we filter out exact duplicate strings (after trimming) before joining.
- * This is simpler and more reliable than the previous `new Set()` approach
- * which relied on reference equality for distinct string objects.
+ * parts we normalise each string (trim + lowercase), then filter out exact
+ * duplicates before joining. This is more reliable than a plain `new Set()`
+ * over the raw strings because it also deduplicates values that differ only
+ * by surrounding whitespace or casing.
  */
 
 import { contextRetrievalService } from "$lib/services/ai/context-retrieval.service";

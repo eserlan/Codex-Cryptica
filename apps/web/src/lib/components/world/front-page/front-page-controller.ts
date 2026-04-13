@@ -15,12 +15,19 @@ import {
 import { buildRetrievedWorldContext } from "./front-page-context";
 
 /** Minimal interface matching the vault store subset used by context retrieval. */
+interface FrontPageEntityLike {
+  id: string;
+  tags?: string[];
+  labels?: string[];
+  lastModified?: number;
+  title?: string;
+  content?: string;
+  chronicle?: string;
+}
+
 interface VaultLike {
-  allEntities: Array<{ id?: string; tags?: string[]; labels?: string[] }>;
-  entities: Record<
-    string,
-    { title?: string; content?: string; chronicle?: string }
-  >;
+  allEntities: FrontPageEntityLike[];
+  entities: Record<string, FrontPageEntityLike>;
   loadEntityContent?: (id: string) => Promise<void>;
 }
 import {
@@ -202,15 +209,15 @@ export class FrontPageController {
 
     if (vault.loadEntityContent) {
       await Promise.all(
-        frontpageEntities.map((entity) => vault.loadEntityContent!(entity.id!)),
+        frontpageEntities.map((entity) => vault.loadEntityContent!(entity.id)),
       );
     }
 
     const loadedEntities = frontpageEntities.map((entity) => {
-      const loaded = vault.entities[entity.id!] || entity;
+      const loaded = vault.entities[entity.id] || entity;
       return {
         title: loaded.title,
-        chronicle: (loaded as any).chronicle,
+        chronicle: loaded.chronicle,
         content: loaded.content,
       };
     });

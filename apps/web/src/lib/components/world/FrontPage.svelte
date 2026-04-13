@@ -51,7 +51,6 @@
       worldStore.frontPageEntity?.content?.trim()
     ),
   );
-  const briefingPreview = $derived(draftDescription.trim());
 
   // Sync draft description from briefing source when not actively editing
   $effect(() => {
@@ -234,8 +233,17 @@
     isEditingBriefing = true;
   };
 
+  const handleDraftDescriptionChange = (value: string) => {
+    draftDescription = value;
+    isDraftDirty = true;
+  };
+
   const openCoverEditor = () => {
     showCoverEditor = true;
+  };
+
+  const closeCoverEditor = () => {
+    showCoverEditor = false;
   };
 
   const openCoverLightbox = () => {
@@ -287,6 +295,13 @@
       </div>
     </div>
   {:else}
+    {#if coverImageUrl && !showCoverEditor}
+      <div
+        data-testid="front-page-hero-background"
+        class="absolute inset-0 pointer-events-none bg-cover bg-center opacity-55"
+        style={`background-image: url("${coverImageUrl}"); filter: saturate(0.92) contrast(1.04);`}
+      ></div>
+    {/if}
     <div
       class="absolute inset-0 pointer-events-none opacity-50"
       style="background: radial-gradient(circle at top, color-mix(in srgb, var(--color-theme-primary), transparent 95%), color-mix(in srgb, var(--color-theme-bg), black 30%)), linear-gradient(180deg, color-mix(in srgb, var(--color-theme-bg), transparent 85%), color-mix(in srgb, var(--color-theme-bg), black 35%))"
@@ -311,17 +326,32 @@
           </div>
         </div>
 
-        <FrontPageHero
-          {coverImageUrl}
-          {coverImage}
-          {showCoverEditor}
-          isSaving={worldStore.isSaving}
-          {onClose}
-          onOpenCoverEditor={openCoverEditor}
-          onOpenLightbox={openCoverLightbox}
-          onUploadCover={handleUploadCover}
-          onGenerateCover={handleGenerateCover}
-        />
+        {#if coverImage}
+          <FrontPageHero
+            {coverImageUrl}
+            {coverImage}
+            {showCoverEditor}
+            showPanel={false}
+            isSaving={worldStore.isSaving}
+            {onClose}
+            onOpenCoverEditor={openCoverEditor}
+            onCloseCoverEditor={closeCoverEditor}
+            onOpenLightbox={openCoverLightbox}
+            onUploadCover={handleUploadCover}
+            onGenerateCover={handleGenerateCover}
+          />
+        {:else if onClose}
+          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
+            <button
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              onclick={onClose}
+              aria-label="Close front page"
+              title="Close front page"
+            >
+              <span class="icon-[lucide--x] h-4 w-4"></span>
+            </button>
+          </div>
+        {/if}
       </header>
 
       <ZenImageLightbox
@@ -331,6 +361,21 @@
       />
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
+        {#if showCoverEditor || !coverImage}
+          <FrontPageHero
+            {coverImageUrl}
+            {coverImage}
+            {showCoverEditor}
+            showActions={false}
+            isSaving={worldStore.isSaving}
+            onOpenCoverEditor={openCoverEditor}
+            onCloseCoverEditor={closeCoverEditor}
+            onOpenLightbox={openCoverLightbox}
+            onUploadCover={handleUploadCover}
+            onGenerateCover={handleGenerateCover}
+            class="w-full"
+          />
+        {/if}
         {#if worldStore.error}
           <p
             class="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
@@ -347,7 +392,7 @@
         />
 
         <FrontPageBriefing
-          draftDescription={briefingPreview}
+          bind:draftDescription
           {isEditingBriefing}
           {isDraftDirty}
           {hasBriefing}
@@ -357,6 +402,7 @@
           onCancel={cancelEditingBriefing}
           onGenerate={handleGenerateBriefing}
           onEdit={startEditingBriefing}
+          onDraftChange={handleDraftDescriptionChange}
         />
       </div>
     </div>
