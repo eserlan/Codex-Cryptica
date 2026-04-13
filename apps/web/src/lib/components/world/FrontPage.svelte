@@ -58,20 +58,37 @@ Art direction:
   );
   const recentActivity = $derived(worldStore.recentActivity);
   const displayedRecentActivity = $derived.by(() => {
+    // ⚡ Bolt Optimization: Avoid intermediate array allocations for tags/labels
     const isPinned = (
       tags: string[] | undefined,
       labels: string[] | undefined,
-    ) =>
-      [...(tags || []), ...(labels || [])].some(
-        (tag) => tag?.trim().toLowerCase() === "frontpage",
-      );
+    ) => {
+      if (tags) {
+        for (const tag of tags) {
+          if (tag?.trim().toLowerCase() === "frontpage") return true;
+        }
+      }
+      if (labels) {
+        for (const label of labels) {
+          if (label?.trim().toLowerCase() === "frontpage") return true;
+        }
+      }
+      return false;
+    };
 
-    const pinned = recentActivity
-      .filter((activity) => isPinned(activity.tags, activity.labels))
-      .sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
-    const unpinned = recentActivity
-      .filter((activity) => !isPinned(activity.tags, activity.labels))
-      .sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+    // ⚡ Bolt Optimization: Single-pass imperative partitioning instead of multiple .filter() calls
+    const pinned: typeof recentActivity = [];
+    const unpinned: typeof recentActivity = [];
+    for (const activity of recentActivity) {
+      if (isPinned(activity.tags, activity.labels)) {
+        pinned.push(activity);
+      } else {
+        unpinned.push(activity);
+      }
+    }
+
+    pinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
+    unpinned.sort((a, b) => (b.lastModified || 0) - (a.lastModified || 0));
 
     return [...pinned, ...unpinned].slice(0, recentLimit);
   });

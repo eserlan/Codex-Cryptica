@@ -8,6 +8,10 @@ on:
       - "scripts/publish-blog-content.mjs"
       - ".github/workflows/deploy-blog-content.yml"
       - "docs/**"
+  pull_request:
+    branches: [main, staging]
+    paths-ignore:
+      - "docs/**"
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +21,7 @@ concurrency:
 permissions:
   contents: read
   deployments: write
+  pull-requests: write
 
 jobs:
   build:
@@ -55,8 +60,8 @@ jobs:
 
       - name: Build Application
         env:
-          VITE_PUBLIC_APP_URL: ${{ github.ref_name == 'staging' && 'https://staging.codexcryptica.com' || 'https://codexcryptica.com' }}
-          VITE_ROBOTS_DIRECTIVE: ${{ github.ref_name == 'staging' && 'noindex, nofollow' || 'index, follow' }}
+          VITE_PUBLIC_APP_URL: "https://codexcryptica.com"
+          VITE_ROBOTS_DIRECTIVE: "index, follow"
           VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_SHARED_GEMINI_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
           VITE_BLOG_CONTENT_BASE_URL: https://raw.githubusercontent.com/${{ github.repository }}/blog-content/blog
@@ -70,11 +75,21 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
+      - name: Upload staging artifact for promotion
+        if: github.ref_name == 'staging'
+        uses: actions/upload-artifact@v7
+        with:
+          name: staging-dist
+          path: apps/web/build/
+          include-hidden-files: true
+          retention-days: 30
+
   deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+      name: ${{ github.ref_name == 'main' && 'production' || (github.ref_name == 'staging' && 'staging' || 'preview') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -88,7 +103,7 @@ jobs:
           path: dist/
 
       - name: Deploy Production to Cloudflare Pages
-        if: github.ref_name == 'main'
+        if: github.ref_name == 'main' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -99,7 +114,7 @@ jobs:
           command: pages deploy dist --project-name=codex-cryptica
 
       - name: Deploy Staging to Cloudflare Pages
-        if: github.ref_name == 'staging'
+        if: github.ref_name == 'staging' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -108,3 +123,63 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dist --project-name=codex-cryptica --branch=staging
+
+      - name: Deploy Preview to Cloudflare Pages
+        if: github.event_name == 'pull_request'
+        id: deploy_preview
+        uses: cloudflare/wrangler-action@v3
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Construct the preview URL using Cloudflare Pages branch slugging rules:
+          # lowercase, replace non [a-z0-9-] with "-", trim edge "-", then truncate.
+          BRANCH="${{ github.head_ref }}"
+          CF_BRANCH=$(printf '%s' "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//; s/-+$//' \
+            | cut -c1-28 \
+            | sed -E 's/-+$//')
+          DEPLOYMENT_URL="https://${CF_BRANCH}.codex-cryptica.pages.dev"
+
+          COMMENT="🚀 **Preview Deployment Ready!**
+
+          **URL:** ${DEPLOYMENT_URL}
+          **Branch:** \`${BRANCH}\`
+
+          _Changes will be live shortly._"
+
+          # Check if a comment already exists to avoid spamming
+          EXISTING_COMMENT_ID=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[] | select(.body | contains("Preview Deployment Ready!")) | .id' | head -n 1)
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$EXISTING_COMMENT_ID" -f body="$COMMENT"
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR_NUMBER/comments" -f body="$COMMENT"
+          fi
+
+      - name: Notify Discord on Production Deploy
+        if: github.ref_name == 'main' && success() && github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
+
+      - name: Notify Discord on Staging Deploy
+        if: github.ref_name == 'staging' && success() && github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_STAGING }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"

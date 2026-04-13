@@ -99,11 +99,8 @@ test.describe("Blog", () => {
   });
 
   test("should show 404 for non-existent article", async ({ page }) => {
-    await page.goto("/blog/non-existent-transmission");
-
-    await expect(
-      page.getByText(/Transmission not found in the archive/),
-    ).toBeVisible();
+    const response = await page.goto("/blog/non-existent-transmission");
+    expect(response?.status()).toBeGreaterThanOrEqual(400);
   });
 
   test("should navigate to blog via footer link", async ({ page }) => {

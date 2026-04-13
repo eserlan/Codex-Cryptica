@@ -214,11 +214,17 @@
           Cancel
         </button>
         <button
-          class="px-6 py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          class="px-6 py-2 bg-theme-primary text-black font-bold rounded hover:bg-theme-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
           onclick={handleMerge}
           disabled={!targetId || isLoading}
+          aria-busy={isLoading}
         >
-          {isLoading ? "Processing..." : "Confirm Merge"}
+          {#if isLoading}
+            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            Processing...
+          {:else}
+            Confirm Merge
+          {/if}
         </button>
       </div>
     </div>

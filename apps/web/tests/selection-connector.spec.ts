@@ -215,8 +215,10 @@ test.describe("Selection Connector", () => {
     await expect(page.getByRole("button", { name: "Rival" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Ally" })).toBeVisible();
 
-    // Click Rival chip
-    await page.getByRole("button", { name: "Rival" }).click();
+    // Click Rival chip (scroll into view first — viewport may be small under parallel load)
+    const rivalBtn = page.getByRole("button", { name: "Rival" });
+    await rivalBtn.scrollIntoViewIfNeeded();
+    await rivalBtn.click();
 
     // Verify notification
     await expect(page.getByText("Connected Node C to Node D")).toBeVisible();

@@ -95,13 +95,12 @@ describe("SearchService", () => {
 
   it("should chunk indexBatch work sequentially without eager full-array allocation", async () => {
     const originalAddBatch = mockApi.addBatch.getMockImplementation();
-    const pendingAdds: Array<() => void> = [];
-
+    const pendingAddBatches: Array<() => void> = [];
     try {
       mockApi.addBatch.mockImplementation(
         () =>
           new Promise<void>((resolve) => {
-            pendingAdds.push(resolve);
+            pendingAddBatches.push(resolve);
           }),
       );
 
@@ -119,17 +118,17 @@ describe("SearchService", () => {
       await Promise.resolve();
 
       expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
-      expect(pendingAdds).toHaveLength(1);
+      expect(pendingAddBatches).toHaveLength(1);
 
-      pendingAdds.splice(0).forEach((resolve) => resolve());
+      pendingAddBatches.splice(0).forEach((resolve) => resolve());
 
       await Promise.resolve();
       await Promise.resolve();
 
       expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
-      expect(pendingAdds).toHaveLength(1);
+      expect(pendingAddBatches).toHaveLength(1);
 
-      pendingAdds.splice(0).forEach((resolve) => resolve());
+      pendingAddBatches.splice(0).forEach((resolve) => resolve());
 
       await expect(batchPromise).resolves.toBeUndefined();
     } finally {
@@ -271,11 +270,7 @@ describe("SearchService", () => {
         "1": { id: "1", title: "Note 1", content: "body", type: "note" },
       } as any;
       vaultEventBus.emit({ type: "CACHE_LOADED", vaultId: "v1", entities });
-
-      // Wait for the async loadIndex + indexBatch to complete
-      await vi.waitFor(() => {
-        expect(indexBatchSpy).toHaveBeenCalled();
-      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(indexBatchSpy).toHaveBeenCalledWith(Object.values(entities));
       expect((service as any).needsFullContentSweep).toBe(true);

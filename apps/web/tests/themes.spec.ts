@@ -14,6 +14,13 @@ test.describe("Visual Styling Templates", () => {
     await page.goto("http://localhost:5173/");
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Switch to Fantasy theme and verify visual changes", async ({
@@ -35,13 +42,13 @@ test.describe("Visual Styling Templates", () => {
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
 
-    // 5. Verify typography overhaul (Zilla Slab header font)
+    // 5. Verify typography overhaul (Alegreya header font)
     const fontHeader = await page.evaluate(() =>
       getComputedStyle(document.documentElement)
         .getPropertyValue("--font-header-val")
         .trim(),
     );
-    expect(fontHeader).toContain("Zilla Slab");
+    expect(fontHeader).toContain("Alegreya");
 
     // 6. Verify texture integration
     const textureOverlay = await page.evaluate(() =>

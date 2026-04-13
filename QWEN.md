@@ -278,3 +278,7 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 ## Recent Changes
 
 - 076-add-canvas-context-menu: Added TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine
+
+## Qwen Added Memories
+
+- Always run playwright test with --last-failed --max-failures=5 --reporter=line when iterating on fixes. --last-failed only reruns previously failed tests. --max-failures=5 stops after 5 failures (fail-fast). --reporter=line gives terse output. Only applies when invoking npx playwright test directly; npm run test:e2e already has default flags.

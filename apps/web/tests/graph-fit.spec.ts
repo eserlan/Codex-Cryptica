@@ -5,11 +5,6 @@ test.describe("Graph Fit to Screen", () => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      try {
-        localStorage.setItem("codex_skip_landing", "true");
-      } catch {
-        /* ignore */
-      }
     });
   });
 
@@ -21,6 +16,15 @@ test.describe("Graph Fit to Screen", () => {
     // Wait for graph canvas
     const canvas = page.getByTestId("graph-canvas");
     await expect(canvas).toBeVisible({ timeout: 10000 });
+
+    // Force-dismiss front page overlay (intercepts pointer events)
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
 
     // Wait for vault to be fully initialized before creating entities
     await page.waitForFunction(() => (window as any).vault?.status === "idle", {

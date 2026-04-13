@@ -142,6 +142,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 079-modal-dice-roller-refinement: Fixed CI/CD and artifact promotion workflows. Corrected hallucinated GitHub Action versions (v4), ensured staging builds use production environment variables for "no-drift" promotion, and fixed `promote-to-prod.yml` to correctly download staging artifacts using `run-id`.
+
 - 078-entity-traditional-view: Added persistent Entity Explorer sidebar and embedded focus mode with Dexie-backed metadata caching.
 
 - 077-vault-front-page: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte`
