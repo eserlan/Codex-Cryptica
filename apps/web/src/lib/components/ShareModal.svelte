@@ -4,7 +4,6 @@
     copyTextToClipboard,
     startShareSession,
   } from "$lib/utils/share-link";
-  import { focusTrap } from "$lib/actions/focusTrap";
 
   let { close }: { close: () => void } = $props();
 
@@ -46,12 +45,10 @@
   class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
 >
   <div
-    use:focusTrap={{ onEscape: close }}
     role="dialog"
     aria-modal="true"
     aria-labelledby="share-modal-title"
-    tabindex="-1"
-    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300 focus:outline-none"
+    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
   >
     <button
       class="absolute top-2 right-2 text-gray-500 hover:text-white"
@@ -146,10 +143,7 @@
           aria-busy={p2pLoading}
         >
           {#if p2pLoading}
-            <span
-              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-              aria-hidden="true"
-            ></span>
+            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
             STARTING...
           {:else}
             <span class="icon-[lucide--zap] w-4 h-4"></span>

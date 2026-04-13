@@ -1,7 +1,6 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { fade, scale } from "svelte/transition";
-  import { focusTrap } from "$lib/actions/focusTrap";
 
   const dialog = $derived(uiStore.confirmationDialog);
 
@@ -14,12 +13,16 @@
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
-    if (e.key === "Enter") {
-      if (document.activeElement?.tagName === "BUTTON") return;
+    if (!dialog.open) return;
+    if (e.key === "Escape") {
+      handleCancel();
+    } else if (e.key === "Enter") {
       handleConfirm();
     }
   };
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 {#if dialog.open}
   <!-- Backdrop -->
@@ -32,13 +35,10 @@
   >
     <!-- Modal -->
     <div
-      use:focusTrap={{ onEscape: handleCancel }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
-      tabindex="-1"
-      onkeydown={handleKeydown}
-      class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl focus:outline-none"
+      class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl"
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
     >

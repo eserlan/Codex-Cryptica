@@ -6,7 +6,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
-  import { focusTrap } from "$lib/actions/focusTrap";
 
   let {
     isOpen = false,
@@ -52,6 +51,7 @@
       if (!targetId || !sourceNodeIds.includes(targetId)) {
         targetId = sourceNodeIds[0];
       }
+      // loadProposal(); // Removed to avoid redundant calls, triggered by specific user actions instead
     }
   });
 
@@ -97,12 +97,10 @@
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
   >
     <div
-      use:focusTrap={{ onEscape: onClose }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="merge-nodes-title"
-      tabindex="-1"
-      class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh] focus:outline-none"
+      class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh]"
     >
       <div
         class="p-6 border-b border-theme-border flex justify-between items-center"
@@ -225,10 +223,7 @@
           aria-busy={isLoading}
         >
           {#if isLoading}
-            <span
-              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-              aria-hidden="true"
-            ></span>
+            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
             Processing...
           {:else}
             Confirm Merge

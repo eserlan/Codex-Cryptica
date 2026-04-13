@@ -11,7 +11,6 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { base } from "$app/paths";
   import { VERSION, CODENAME } from "$lib/config";
-  import { focusTrap } from "$lib/actions/focusTrap";
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
     { id: "vault", label: "Vault", icon: "icon-[lucide--database]" },
@@ -48,6 +47,45 @@
     }
     uiStore.closeSettings();
   };
+
+  let previousActiveElement: HTMLElement | null = null;
+  let modalElement: HTMLElement | undefined = $state();
+
+  $effect(() => {
+    if (uiStore.showSettings) {
+      previousActiveElement = document.activeElement as HTMLElement;
+      // Focus the first tab button after a short delay to allow for transition
+      setTimeout(() => {
+        const firstTab = modalElement?.querySelector(
+          '[role="tab"]',
+        ) as HTMLElement;
+        firstTab?.focus();
+      }, 100);
+    } else if (previousActiveElement) {
+      previousActiveElement.focus();
+      previousActiveElement = null;
+    }
+  });
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+    if (e.key === "Tab") {
+      if (!modalElement) return;
+      const focusables = modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      const first = focusables[0] as HTMLElement;
+      const last = focusables[focusables.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  };
 </script>
 
 {#if uiStore.showSettings}
@@ -62,12 +100,13 @@
   ></div>
 
   <div
-    use:focusTrap={{ onEscape: close, initialFocusSelector: '[role="tab"]' }}
-    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body focus:outline-none"
+    bind:this={modalElement}
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-6xl h-[90vh] bg-theme-bg border border-theme-border shadow-2xl rounded-lg overflow-hidden flex z-[101] font-body"
     role="dialog"
     aria-modal="true"
     aria-labelledby="settings-heading"
     tabindex="-1"
+    onkeydown={handleKeydown}
     transition:fly={{ y: 20, duration: 300 }}
     data-testid="settings-modal"
   >

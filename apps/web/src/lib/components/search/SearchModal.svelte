@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
@@ -11,7 +12,6 @@
     dispatchSearchEntityFocus,
     resolveSearchResultEntityId,
   } from "./search-focus";
-  import { focusTrap } from "$lib/actions/focusTrap";
 
   let inputElement = $state<HTMLInputElement>();
   let resultsContainer = $state<HTMLDivElement>();
@@ -19,9 +19,11 @@
 
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
 
-  // Clear pending debounce when closed
+  // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
-    if (!searchStore.isOpen) {
+    if (searchStore.isOpen) {
+      tick().then(() => inputElement?.focus());
+    } else {
       clearTimeout(debounceTimer);
     }
   });
@@ -107,9 +109,9 @@
 {#if searchStore.isOpen}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    use:focusTrap={{ onEscape: () => searchStore.close() }}
-    class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm focus:outline-none"
+    class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm"
     onclick={handleBackdropClick}
+    onkeydown={(e) => e.key === "Escape" && searchStore.close()}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
