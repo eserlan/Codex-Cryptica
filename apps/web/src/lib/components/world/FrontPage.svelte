@@ -36,12 +36,13 @@
       worldStore.frontPageEntity?.content?.trim() ||
       "",
   );
+  let recentLimit = $state(DEFAULT_RECENT_LIMIT);
   const recentActivity = $derived(worldStore.recentActivity);
   const displayedRecentActivity = $derived(
     partitionAndSortRecentActivity(recentActivity, recentLimit),
   );
   const coverImage = $derived(metadata?.coverImage || "");
-  const worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
+  const _worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
   const hasBriefing = $derived(
     !!(
       draftDescription.trim() ||
@@ -63,14 +64,6 @@
   $effect(() => {
     if (!isEditingBriefing && briefingSource) isDraftDirty = false;
   });
-
-  let recentLimit = $state(DEFAULT_RECENT_LIMIT);
-  const recentActivity = $derived(worldStore.recentActivity);
-  const displayedRecentActivity = $derived(
-    partitionAndSortRecentActivity(recentActivity, recentLimit),
-  );
-  const coverImage = $derived(metadata?.coverImage || "");
-  const _worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
 
   let isEditingBriefing = $state(false);
   let showCoverEditor = $state(false);
