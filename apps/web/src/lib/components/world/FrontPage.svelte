@@ -298,8 +298,8 @@
     {#if coverImageUrl && !showCoverEditor}
       <div
         data-testid="front-page-hero-background"
-        class="absolute inset-0 pointer-events-none bg-cover bg-center opacity-35 mix-blend-screen"
-        style={`background-image: url("${coverImageUrl}")`}
+        class="absolute inset-0 pointer-events-none bg-cover bg-center opacity-55"
+        style={`background-image: url("${coverImageUrl}"); filter: saturate(0.92) contrast(1.04);`}
       ></div>
     {/if}
     <div
