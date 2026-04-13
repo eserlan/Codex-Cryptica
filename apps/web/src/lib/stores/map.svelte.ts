@@ -15,6 +15,8 @@ type PersistedMapSettings = {
   gridOffsetX: number;
   gridOffsetY: number;
   gridColor: string | null;
+  gridUnit: string;
+  gridDistance: number;
 };
 
 type PersistedMapPageState = {
@@ -30,6 +32,8 @@ const DEFAULT_MAP_SETTINGS: PersistedMapSettings = {
   gridOffsetX: 0,
   gridOffsetY: 0,
   gridColor: null,
+  gridUnit: "ft",
+  gridDistance: 5,
 };
 
 const DEFAULT_VIEWPORT: ViewportTransform = {
@@ -55,6 +59,8 @@ export class MapStore {
   gridOffsetX = $state(0);
   gridOffsetY = $state(0);
   gridColor = $state<string | null>(null); // null means use theme primary
+  gridUnit = $state("ft");
+  gridDistance = $state(5);
   private isRestoringSettings = false;
   private pendingActiveMapId = $state<string | null>(null);
 
@@ -86,6 +92,8 @@ export class MapStore {
             this.brushRadius,
             this.gridSize,
             this.gridColor,
+            this.gridUnit,
+            this.gridDistance,
           ];
           void tracked;
           this.persistSettings();
@@ -169,6 +177,14 @@ export class MapStore {
           typeof parsed.gridColor === "string" || parsed.gridColor === null
             ? parsed.gridColor
             : DEFAULT_MAP_SETTINGS.gridColor,
+        gridUnit:
+          typeof parsed.gridUnit === "string"
+            ? parsed.gridUnit
+            : DEFAULT_MAP_SETTINGS.gridUnit,
+        gridDistance:
+          typeof parsed.gridDistance === "number"
+            ? parsed.gridDistance
+            : DEFAULT_MAP_SETTINGS.gridDistance,
       };
     } catch {
       return null;
@@ -192,6 +208,8 @@ export class MapStore {
       gridOffsetX: this.gridOffsetX,
       gridOffsetY: this.gridOffsetY,
       gridColor: this.gridColor,
+      gridUnit: this.gridUnit,
+      gridDistance: this.gridDistance,
     };
 
     try {
@@ -310,6 +328,9 @@ export class MapStore {
       this.gridOffsetX = next.gridOffsetX ?? 0;
       this.gridOffsetY = next.gridOffsetY ?? 0;
       this.gridColor = next.gridColor;
+      this.gridUnit = next.gridUnit ?? DEFAULT_MAP_SETTINGS.gridUnit;
+      this.gridDistance =
+        next.gridDistance ?? DEFAULT_MAP_SETTINGS.gridDistance;
     } finally {
       this.isRestoringSettings = false;
     }

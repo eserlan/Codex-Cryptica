@@ -111,9 +111,19 @@ export class MapSessionStore {
   myPeerId = $state<string | null>(null);
   draggingTokenId = $state<string | null>(null);
 
-  // Grid settings
-  gridUnit = $state("ft");
-  gridDistance = $state(5);
+  // Grid settings — derived from mapStore so they survive page reload
+  get gridUnit(): string {
+    return this.deps.mapStore.gridUnit;
+  }
+  set gridUnit(value: string) {
+    this.deps.mapStore.gridUnit = value;
+  }
+  get gridDistance(): number {
+    return this.deps.mapStore.gridDistance;
+  }
+  set gridDistance(value: number) {
+    this.deps.mapStore.gridDistance = value;
+  }
   showGridSettings = $state(false);
   gridFitMode = $state(false);
   gridMoveMode = $state(false);

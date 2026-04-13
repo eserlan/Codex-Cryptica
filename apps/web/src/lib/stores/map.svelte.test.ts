@@ -69,6 +69,8 @@ describe("MapStore settings persistence", () => {
         gridOffsetX: 0,
         gridOffsetY: 0,
         gridColor: "#fbbf24",
+        gridUnit: "ft",
+        gridDistance: 5,
       });
     });
   });
