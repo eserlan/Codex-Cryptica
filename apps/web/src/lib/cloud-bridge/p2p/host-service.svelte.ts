@@ -117,32 +117,8 @@ export class P2PHostService {
     console.log("[P2P Host] New guest connected:", conn.peer);
     this.connections.push(conn);
 
-    conn.on("open", async () => {
-      try {
-        console.log("[P2P Host] Connection open for guest:", conn.peer);
-        // 1. Send Initial Graph
-        const graph = await this.prepareGraphPayload();
-        this.safeSend(conn, { type: "GRAPH_SYNC", payload: graph });
-        console.log("[P2P Host] Initial graph sent to:", conn.peer);
-        if (this.mapStore.activeMap) {
-          const mapPayload = await this.prepareMapPayload(
-            this.mapStore.activeMap,
-          );
-          this.safeSend(conn, {
-            type: "MAP_SYNC",
-            payload: mapPayload,
-          });
-        }
-        if (mapSession.mapId && mapSession.vttEnabled) {
-          void this.sendSessionSnapshot(conn, mapSession.createSnapshot());
-        }
-      } catch (err) {
-        console.error(
-          "[P2P Host] Failed to send initial graph to:",
-          conn.peer,
-          err,
-        );
-      }
+    conn.on("open", () => {
+      console.log("[P2P Host] Connection open for guest:", conn.peer);
     });
 
     conn.on("data", async (data: any) => {
@@ -160,6 +136,7 @@ export class P2PHostService {
         const entity = data.entityId
           ? this.vault.entities[data.entityId]
           : null;
+        const guest = get(this.guestRoster)[conn.peer];
         mapSession.addToken({
           name: data.name,
           entityId: data.entityId,
@@ -168,6 +145,7 @@ export class P2PHostService {
           color: data.color,
           imageUrl: entity?.image ? entity.image : null,
           ownerPeerId: conn.peer,
+          ownerGuestName: guest?.displayName ?? null,
         });
       } else if (data.type === "TOKEN_MOVE") {
         if (mapSession.canMoveToken(data.tokenId, conn.peer, false)) {
@@ -189,8 +167,9 @@ export class P2PHostService {
         // Guests cannot push snapshots to the host
         return;
       } else if (data.type === "TURN_ADVANCE") {
-        // Host only action
-        return;
+        if (mapSession.canAdvanceTurn(conn.peer, false)) {
+          mapSession.advanceTurn();
+        }
       } else if (data.type === "CHAT_MESSAGE") {
         mapSession.handleRemoteChatMessage(data);
         this.broadcastVttMessage(data, conn.peer);
@@ -347,6 +326,7 @@ export class P2PHostService {
     // Broadcast the new guest's info to all other connected guests
     const guest = get(this.guestRoster)[peerId];
     if (guest) {
+      void this.sendInitialState(conn);
       this.broadcastVttMessage({
         type: "GUEST_STATUS",
         payload: {
@@ -357,6 +337,32 @@ export class P2PHostService {
           currentEntityTitle: guest.currentEntityTitle,
         },
       });
+    }
+  }
+
+  private async sendInitialState(conn: any) {
+    try {
+      const graph = await this.prepareGraphPayload();
+      this.safeSend(conn, { type: "GRAPH_SYNC", payload: graph });
+      console.log("[P2P Host] Initial graph sent to:", conn.peer);
+      if (this.mapStore.activeMap) {
+        const mapPayload = await this.prepareMapPayload(
+          this.mapStore.activeMap,
+        );
+        this.safeSend(conn, {
+          type: "MAP_SYNC",
+          payload: mapPayload,
+        });
+      }
+      if (mapSession.mapId && mapSession.vttEnabled) {
+        await this.sendSessionSnapshot(conn, mapSession.createSnapshot());
+      }
+    } catch (err) {
+      console.error(
+        "[P2P Host] Failed to send initial graph to:",
+        conn.peer,
+        err,
+      );
     }
   }
 

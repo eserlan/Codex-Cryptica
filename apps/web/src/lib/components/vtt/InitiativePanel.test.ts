@@ -31,6 +31,8 @@ const mapSessionMock = vi.hoisted(() => ({
   refreshPopoutSnapshot: vi.fn(),
   setSelection: vi.fn(),
   removeToken: vi.fn(),
+  canAdvanceTurn: vi.fn(() => true),
+  myPeerId: "host-peer",
 }));
 
 const mapStoreMock = vi.hoisted(() => ({
@@ -79,6 +81,9 @@ describe("InitiativePanel", () => {
     mapSessionMock.refreshPopoutSnapshot.mockReset();
     mapSessionMock.setSelection.mockReset();
     mapSessionMock.removeToken.mockReset();
+    mapSessionMock.canAdvanceTurn.mockReset();
+    mapSessionMock.canAdvanceTurn.mockReturnValue(true);
+    mapSessionMock.myPeerId = "host-peer";
     mapStoreMock.isGMMode = true;
     uiStoreMock.isGuestMode = false;
   });
@@ -150,5 +155,19 @@ describe("InitiativePanel", () => {
     );
 
     openSpy.mockRestore();
+  });
+
+  it("disables next turn for guests who do not own the active token", () => {
+    mapStoreMock.isGMMode = false;
+    uiStoreMock.isGuestMode = true;
+    mapSessionMock.myPeerId = "guest-2";
+    mapSessionMock.canAdvanceTurn.mockReturnValue(false);
+
+    render(InitiativePanel);
+
+    expect(screen.getByRole("button", { name: "Next Turn" })).toHaveProperty(
+      "disabled",
+      true,
+    );
   });
 });

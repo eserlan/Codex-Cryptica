@@ -56,6 +56,8 @@ describe("MapStore settings persistence", () => {
     store.showGrid = true;
     store.brushRadius = 88;
     store.gridSize = 120;
+    store.gridOffsetX = 12;
+    store.gridOffsetY = -8;
     store.gridColor = "#fbbf24";
 
     await waitFor(() => {
@@ -66,8 +68,8 @@ describe("MapStore settings persistence", () => {
         showGrid: true,
         brushRadius: 88,
         gridSize: 120,
-        gridOffsetX: 0,
-        gridOffsetY: 0,
+        gridOffsetX: 12,
+        gridOffsetY: -8,
         gridColor: "#fbbf24",
       });
     });

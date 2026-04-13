@@ -59,7 +59,7 @@ export type P2PMessage =
   | VTTMessage
   | CompressedSessionSnapshotPayload;
 
-async function compressJson(value: unknown): Promise<ArrayBuffer> {
+async function _compressJson(value: unknown): Promise<ArrayBuffer> {
   const text = JSON.stringify(value);
   const source = new Response(text).body;
   if (!source) {
@@ -81,20 +81,9 @@ async function decompressJson(data: ArrayBuffer): Promise<string> {
 export async function encodeSessionSnapshot(
   session: EncounterSession,
 ): Promise<SessionSnapshotPayload | CompressedSessionSnapshotPayload> {
-  if (
-    typeof CompressionStream === "undefined" ||
-    typeof DecompressionStream === "undefined"
-  ) {
-    return {
-      type: "SESSION_SNAPSHOT",
-      session,
-    };
-  }
-
   return {
-    type: "SESSION_SNAPSHOT_GZIP",
-    encoding: "gzip",
-    data: await compressJson(session),
+    type: "SESSION_SNAPSHOT",
+    session,
   };
 }
 

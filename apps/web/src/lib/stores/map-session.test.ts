@@ -170,6 +170,32 @@ describe("MapSessionStore", () => {
     expect(store.advanceTurn()).toBe(first!.id);
   });
 
+  it("allows guests to advance only when they own the active token", () => {
+    const guestOwned = store.addToken({
+      name: "Guest Scout",
+      x: 0,
+      y: 0,
+      ownerPeerId: "guest-1",
+    });
+    const hostOwned = store.addToken({
+      name: "Host Knight",
+      x: 0,
+      y: 0,
+    });
+
+    store.initiativeOrder = [guestOwned!.id, hostOwned!.id];
+    store.turnIndex = 0;
+
+    expect(store.canAdvanceTurn("guest-1", false)).toBe(true);
+    expect(store.canAdvanceTurn("guest-2", false)).toBe(false);
+    expect(store.canAdvanceTurn(null, false)).toBe(false);
+
+    store.turnIndex = 1;
+
+    expect(store.canAdvanceTurn("guest-1", false)).toBe(false);
+    expect(store.canAdvanceTurn("host-peer", true)).toBe(true);
+  });
+
   it("debounces session snapshot broadcasts when initiative values change", () => {
     vi.useFakeTimers();
     const broadcaster = vi.fn();

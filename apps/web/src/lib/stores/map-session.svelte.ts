@@ -1412,6 +1412,21 @@ export class MapSessionStore {
     return this.isTokenVisible(tokenId, peerId, isHost);
   }
 
+  canAdvanceTurn(peerId: string | null, isHost = false) {
+    if (this.initiativeOrder.length === 0) return false;
+    if (isHost) return true;
+
+    const activeTokenId = this.activeTokenId;
+    if (!activeTokenId) return false;
+
+    const activeToken = this.tokens[activeTokenId];
+    if (!activeToken) return false;
+
+    return (
+      activeToken.ownerPeerId !== null && activeToken.ownerPeerId === peerId
+    );
+  }
+
   async saveEncounterSnapshot(
     encounterId = this.sessionId ?? crypto.randomUUID(),
   ) {

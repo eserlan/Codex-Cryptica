@@ -19,6 +19,9 @@
   const activeTokenId = $derived(mapSession.activeTokenId);
   const roster = $derived($guestRoster);
   const canManageTokens = $derived(mapStore.isGMMode && !uiStore.isGuestMode);
+  const canAdvanceTurn = $derived(
+    mapSession.canAdvanceTurn(mapSession.myPeerId, mapStore.isGMMode),
+  );
   const panelMaxHeight = $derived.by(() => {
     const rowHeight = compact ? 74 : 82;
     const headerHeight = compact ? 86 : 104;
@@ -142,7 +145,7 @@
           compact ? "px-2.5 py-1.5" : "px-3 py-2"
         }`}
         onclick={() => mapSession.advanceTurn()}
-        disabled={entries.length === 0}
+        disabled={!canAdvanceTurn}
         type="button"
       >
         Next Turn

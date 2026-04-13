@@ -249,6 +249,10 @@ describe("P2P Services", () => {
       expect(hostService.connections).toContain(mockConn);
 
       mockConn.emit("open");
+      mockConn.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
 
       await vi.waitFor(() => {
         expect(mockConn.send).toHaveBeenCalledWith(
@@ -348,9 +352,12 @@ describe("P2P Services", () => {
       await vi.waitFor(() => {
         expect(mockConn.send).toHaveBeenCalledWith(
           expect.objectContaining({
-            type: "SESSION_SNAPSHOT_GZIP",
-            encoding: "gzip",
-            data: expect.any(ArrayBuffer),
+            type: "SESSION_SNAPSHOT",
+            session: expect.objectContaining({
+              initiativeValues: expect.objectContaining({
+                "token-1": 17,
+              }),
+            }),
           }),
         );
       });
@@ -382,9 +389,10 @@ describe("P2P Services", () => {
       await vi.waitFor(() => {
         expect(mockConn.send).toHaveBeenCalledWith(
           expect.objectContaining({
-            type: "SESSION_SNAPSHOT_GZIP",
-            encoding: "gzip",
-            data: expect.any(ArrayBuffer),
+            type: "SESSION_SNAPSHOT",
+            session: expect.objectContaining({
+              tokens: expect.any(Object),
+            }),
           }),
         );
       });
@@ -418,6 +426,36 @@ describe("P2P Services", () => {
 
       await vi.waitFor(() => {
         expect(mapSession.tokens[tokenId]).toBeUndefined();
+      });
+    });
+
+    it("should let a guest advance the turn when they own the active token", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const guestToken = mapSession.addToken({
+        name: "Guest Turn",
+        x: 0,
+        y: 0,
+        ownerPeerId: "guest-1",
+      });
+      mapSession.initiativeOrder = [guestToken!.id];
+      mapSession.turnIndex = 0;
+      mapSession.round = 1;
+
+      const mockConn = new MockConnection("guest-1");
+      (hostService as any).connections.push(mockConn);
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+
+      mockConn.emit("data", {
+        type: "TURN_ADVANCE",
+      });
+
+      await vi.waitFor(() => {
+        expect(mapSession.round).toBe(2);
       });
     });
 
@@ -493,6 +531,80 @@ describe("P2P Services", () => {
         });
         unsub();
         expect(nextRoster["guest-1"]).toBeUndefined();
+      });
+    });
+
+    it("does not send shared state before a guest join is accepted", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const existing = new MockConnection("guest-existing");
+      peerInstance.emit("connection", existing);
+      existing.emit("open");
+      existing.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      const duplicate = new MockConnection("guest-duplicate");
+      peerInstance.emit("connection", duplicate);
+      duplicate.emit("open");
+
+      expect(duplicate.send).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "GRAPH_SYNC" }),
+      );
+      expect(duplicate.send).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "MAP_SYNC" }),
+      );
+
+      duplicate.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      await vi.waitFor(() => {
+        expect(duplicate.send).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: "GUEST_JOIN_REJECTED",
+          }),
+        );
+      });
+      expect(duplicate.send).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: "GRAPH_SYNC" }),
+      );
+    });
+
+    it("stores guest display names on guest-created tokens", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      const mockConn = new MockConnection("guest-1");
+      peerInstance.emit("connection", mockConn);
+      mockConn.emit("open");
+      mockConn.emit("data", {
+        type: "GUEST_JOIN",
+        payload: { displayName: "Ava" },
+      });
+
+      mockConn.emit("data", {
+        type: "TOKEN_ADD_REQUEST",
+        name: "Guest Token",
+        entityId: null,
+        x: 10,
+        y: 20,
+        color: "#fff",
+      });
+
+      const created = Object.values(mapSession.tokens).find(
+        (token) => token.name === "Guest Token",
+      );
+      expect(created).toMatchObject({
+        ownerPeerId: "guest-1",
+        ownerGuestName: "Ava",
       });
     });
 

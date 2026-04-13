@@ -15,6 +15,8 @@
     getMeasurementToolButtonClass,
     shouldShowInitiativePanel,
   } from "$lib/components/map/vtt-ui";
+  import { handleActiveMapSelection } from "$lib/components/map/map-page-actions";
+  import { p2pHost } from "$lib/cloud-bridge/p2p/host-service.svelte";
   import { mapStore } from "$lib/stores/map.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
@@ -221,7 +223,14 @@
             <select
               class="bg-theme-surface border border-theme-border text-theme-text px-3 py-1.5 rounded-lg text-xs"
               value={mapStore.activeMapId}
-              onchange={(e) => mapStore.selectMap(e.currentTarget.value)}
+              onchange={(e) =>
+                handleActiveMapSelection({
+                  mapId: e.currentTarget.value,
+                  selectMap: (mapId) => mapStore.selectMap(mapId),
+                  isHosting: p2pHost.isHosting,
+                  broadcastActiveMapSync: () =>
+                    p2pHost.broadcastActiveMapSync(),
+                })}
             >
               {#each Object.values(vault.maps) as map (map.id)}
                 <option value={map.id}>

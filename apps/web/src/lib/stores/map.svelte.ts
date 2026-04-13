@@ -85,6 +85,8 @@ export class MapStore {
             this.showGrid,
             this.brushRadius,
             this.gridSize,
+            this.gridOffsetX,
+            this.gridOffsetY,
             this.gridColor,
           ];
           void tracked;

@@ -10,7 +10,7 @@
   --color-theme-surface: var(--color-bg-surface);
   --color-theme-primary: var(--color-accent-primary);
   --color-theme-secondary: var(--color-accent-dim);
-  --color-theme-accent: var(--color-theme-accent);
+  --color-theme-accent: var(--color-accent-secondary);
   --color-theme-danger: var(--color-danger);
   --color-theme-warning: var(--color-warning);
   --color-theme-border: var(--color-border-primary);
