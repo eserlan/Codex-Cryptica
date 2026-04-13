@@ -3,10 +3,7 @@ import { guestRoster, type GuestPresenceStatus } from "../../stores/guest";
 import { upsertGuestRoster } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import type { VTTMessage } from "$types/vtt";
-import {
-  decodeSessionSnapshot,
-  type CompressedSessionSnapshotPayload,
-} from "./p2p-protocol";
+import { isValidP2PMessage } from "./p2p-protocol";
 
 type GuestStatusPayload = {
   status: GuestPresenceStatus;
@@ -168,6 +165,7 @@ export class P2PGuestService {
         });
 
         connection.on("data", (data: any) => {
+          if (!isValidP2PMessage(data)) return;
           console.log("[P2P Guest] Received data:", data.type);
           if (data.type === "GRAPH_SYNC") {
             console.log(
@@ -295,21 +293,16 @@ export class P2PGuestService {
               },
             );
           } else if (data.type === "SESSION_SNAPSHOT") {
+            if (!data.session) return;
             void this.getMapSession().then((mapSession) => {
               mapSession.syncFromRemoteSession(data.session, false);
-            });
-          } else if (data.type === "SESSION_SNAPSHOT_GZIP") {
-            void this.getMapSession().then(async (mapSession) => {
-              const snapshot = await decodeSessionSnapshot(
-                data as CompressedSessionSnapshotPayload,
-              );
-              mapSession.syncFromRemoteSession(snapshot, false);
             });
           } else if (data.type === "TOKEN_ADDED") {
             void this.getMapSession().then((mapSession) =>
               mapSession.handleRemoteTokenAdded(data.token),
             );
           } else if (data.type === "TOKEN_STATE_UPDATE") {
+            if (typeof data.tokenId !== "string") return;
             console.log("[P2P Guest] TOKEN_STATE_UPDATE payload", {
               tokenId: data.tokenId,
               delta: data.delta,
@@ -318,6 +311,7 @@ export class P2PGuestService {
               mapSession.handleRemoteTokenUpdate(data.tokenId, data.delta),
             );
           } else if (data.type === "SHOW_TOKEN_IMAGE") {
+            if (typeof data.title !== "string") return;
             console.log("[P2P Guest] SHOW_TOKEN_IMAGE payload", {
               title: data.title,
               imagePath: data.imagePath,
@@ -339,7 +333,7 @@ export class P2PGuestService {
             );
           } else if (data.type === "SET_GRID_SETTINGS") {
             void this.getMapSession().then((mapSession) =>
-              mapSession.handleRemoteGridSettings(data),
+              mapSession.handleRemoteGridSettings(data as any),
             );
           } else if (data.type === "MAP_PING") {
             void this.getMapSession().then((mapSession) =>
@@ -364,7 +358,9 @@ export class P2PGuestService {
             );
           } else if (data.type === "CHAT_MESSAGE") {
             void this.getMapSession().then((mapSession) =>
-              mapSession.handleRemoteChatMessage(data),
+              mapSession.handleRemoteChatMessage(
+                data as import("$types/vtt").ChatMessagePayload,
+              ),
             );
           } else if (data.type === "CHAT_CLEAR") {
             void this.getMapSession().then((mapSession) =>

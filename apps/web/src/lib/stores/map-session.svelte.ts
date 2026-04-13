@@ -154,10 +154,6 @@ export class MapSessionStore {
       })
       .filter((entry): entry is InitiativeEntry => entry !== null);
   });
-  activeSession = $derived.by(() => {
-    if (!this.mapId) return null;
-    return this.createSnapshot();
-  });
 
   constructor(private deps: MapSessionDependencies) {
     this.service =
@@ -183,7 +179,8 @@ export class MapSessionStore {
               myPeerId?: string | null;
               snapshot?: EncounterSession;
             };
-            if (!parsed.snapshot) return;
+            if (!parsed.snapshot?.mapId) return;
+            if (this.mapId && parsed.snapshot.mapId !== this.mapId) return;
             this.syncFromRemoteSession(
               parsed.snapshot,
               !this.isInitiativePopoutWindow(),
@@ -736,7 +733,10 @@ export class MapSessionStore {
     this.savedAt = snapshot.savedAt;
     this.chatMessages = snapshot.chatMessages ? [...snapshot.chatMessages] : [];
 
-    if (snapshot.gridSize !== undefined) {
+    if (
+      snapshot.gridSize !== undefined &&
+      snapshot.mapId === this.deps.mapStore.activeMapId
+    ) {
       this.deps.mapStore.gridSize = snapshot.gridSize;
     }
     if (snapshot.gridUnit !== undefined) {

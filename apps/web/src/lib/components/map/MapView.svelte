@@ -246,12 +246,19 @@
 
   function handleResize() {
     if (container && canvas) {
+      const dpr = window.devicePixelRatio || 1;
       const w = container.clientWidth;
       const h = container.clientHeight;
 
-      canvas.width = w;
-      canvas.height = h;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       mapStore.setCanvasSize(w, h);
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
     }
   }
 

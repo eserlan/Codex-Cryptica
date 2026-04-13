@@ -4,12 +4,6 @@ import type {
   VTTMessage,
 } from "$types/vtt";
 
-export interface CompressedSessionSnapshotPayload {
-  type: "SESSION_SNAPSHOT_GZIP";
-  encoding: "gzip";
-  data: ArrayBuffer;
-}
-
 export type P2PMessage =
   | { type: "GRAPH_SYNC"; payload: any }
   | {
@@ -57,30 +51,22 @@ export type P2PMessage =
   | { type: "ENTITY_DELETE"; payload: string }
   | { type: "THEME_UPDATE"; payload: string }
   | VTTMessage
-  | CompressedSessionSnapshotPayload;
+  | SessionSnapshotPayload;
 
-async function _compressJson(value: unknown): Promise<ArrayBuffer> {
-  const text = JSON.stringify(value);
-  const source = new Response(text).body;
-  if (!source) {
-    throw new Error("Failed to create snapshot compression stream");
-  }
-  const compressed = source.pipeThrough(new CompressionStream("gzip"));
-  return await new Response(compressed).arrayBuffer();
-}
-
-async function decompressJson(data: ArrayBuffer): Promise<string> {
-  const source = new Response(data).body;
-  if (!source) {
-    throw new Error("Failed to create snapshot decompression stream");
-  }
-  const decompressed = source.pipeThrough(new DecompressionStream("gzip"));
-  return await new Response(decompressed).text();
+export function isValidP2PMessage(
+  message: unknown,
+): message is { type: string } & Record<string, any> {
+  return (
+    message !== null &&
+    typeof message === "object" &&
+    "type" in message &&
+    typeof (message as Record<string, unknown>).type === "string"
+  );
 }
 
 export async function encodeSessionSnapshot(
   session: EncounterSession,
-): Promise<SessionSnapshotPayload | CompressedSessionSnapshotPayload> {
+): Promise<SessionSnapshotPayload> {
   return {
     type: "SESSION_SNAPSHOT",
     session,
@@ -88,14 +74,12 @@ export async function encodeSessionSnapshot(
 }
 
 export async function decodeSessionSnapshot(
-  message: SessionSnapshotPayload | CompressedSessionSnapshotPayload,
+  message: SessionSnapshotPayload,
 ): Promise<EncounterSession> {
-  if (message.type === "SESSION_SNAPSHOT") {
-    return message.session;
+  if (message.type !== "SESSION_SNAPSHOT") {
+    throw new Error(`Unknown snapshot message type: ${(message as any).type}`);
   }
-
-  const text = await decompressJson(message.data);
-  return JSON.parse(text) as EncounterSession;
+  return message.session;
 }
 
 export function isVTTMessage(message: any): message is VTTMessage {

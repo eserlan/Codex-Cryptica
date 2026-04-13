@@ -13,7 +13,11 @@ import {
 } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
 import { mapSession } from "../../stores/map-session.svelte";
-import { encodeSessionSnapshot, type P2PMessage } from "./p2p-protocol";
+import {
+  encodeSessionSnapshot,
+  isValidP2PMessage,
+  type P2PMessage,
+} from "./p2p-protocol";
 
 type HostDeps = {
   vault?: typeof defaultVault;
@@ -122,6 +126,7 @@ export class P2PHostService {
     });
 
     conn.on("data", async (data: any) => {
+      if (!isValidP2PMessage(data)) return;
       console.log("[P2P Host] Received data:", data);
 
       if (data.type === "GET_FILE") {
@@ -133,9 +138,12 @@ export class P2PHostService {
       } else if (data.type === "GUEST_STATUS") {
         this.handleGuestStatus(conn.peer, data.payload);
       } else if (data.type === "TOKEN_ADD_REQUEST") {
-        const entity = data.entityId
-          ? this.vault.entities[data.entityId]
-          : null;
+        if (typeof data.name !== "string") return;
+        if (typeof data.x !== "number" || typeof data.y !== "number") return;
+        const entity =
+          data.entityId && typeof data.entityId === "string"
+            ? this.vault.entities[data.entityId]
+            : null;
         const guest = get(this.guestRoster)[conn.peer];
         mapSession.addToken({
           name: data.name,
@@ -148,17 +156,33 @@ export class P2PHostService {
           ownerGuestName: guest?.displayName ?? null,
         });
       } else if (data.type === "TOKEN_MOVE") {
+        if (
+          typeof data.tokenId !== "string" ||
+          typeof data.x !== "number" ||
+          typeof data.y !== "number"
+        )
+          return;
         if (mapSession.canMoveToken(data.tokenId, conn.peer, false)) {
-          mapSession.moveToken(data.tokenId, data.x, data.y);
+          mapSession.moveToken(data.tokenId, data.x, data.y, true);
+          this.broadcastVttMessage(
+            {
+              type: "TOKEN_STATE_UPDATE",
+              tokenId: data.tokenId,
+              delta: { x: data.x, y: data.y },
+            },
+            conn.peer,
+          );
         }
       } else if (
         data.type === "TOKEN_REMOVE" ||
         data.type === "TOKEN_REMOVED"
       ) {
+        if (typeof data.tokenId !== "string") return;
         if (mapSession.canMoveToken(data.tokenId, conn.peer, false)) {
           mapSession.removeToken(data.tokenId);
         }
       } else if (data.type === "TOKEN_SELECT") {
+        if (typeof data.tokenId !== "string") return;
         mapSession.setSelection(data.tokenId);
       } else if (data.type === "SET_MODE") {
         // Host only action
@@ -171,9 +195,19 @@ export class P2PHostService {
           mapSession.advanceTurn();
         }
       } else if (data.type === "CHAT_MESSAGE") {
-        mapSession.handleRemoteChatMessage(data);
-        this.broadcastVttMessage(data, conn.peer);
+        if (typeof data.sender !== "string" || typeof data.content !== "string")
+          return;
+        mapSession.handleRemoteChatMessage(
+          data as import("$types/vtt").ChatMessagePayload,
+        );
+        this.broadcastVttMessage(data as P2PMessage, conn.peer);
       } else if (data.type === "PING") {
+        if (
+          typeof data.x !== "number" ||
+          typeof data.y !== "number" ||
+          typeof data.color !== "string"
+        )
+          return;
         mapSession.handleRemotePing(
           data.x,
           data.y,
@@ -196,6 +230,13 @@ export class P2PHostService {
           }
         });
       } else if (data.type === "MEASUREMENT") {
+        if (
+          typeof data.startX !== "number" ||
+          typeof data.startY !== "number" ||
+          typeof data.endX !== "number" ||
+          typeof data.endY !== "number"
+        )
+          return;
         mapSession.handleRemoteMeasurement(
           data.startX,
           data.startY,
@@ -382,10 +423,10 @@ export class P2PHostService {
     const currentEntityTitle =
       typeof payload?.currentEntityTitle === "string" &&
       payload.currentEntityTitle
-        ? currentEntityId
+        ? payload.currentEntityTitle
+        : currentEntityId
           ? this.vault.entities[currentEntityId]?.title || currentEntityId
-          : null
-        : null;
+          : null;
     const displayName = normalizeGuestName(
       payload?.displayName,
       existingGuest.displayName || peerId,
@@ -529,9 +570,7 @@ export class P2PHostService {
     session = mapSession.createSnapshot(),
   ) {
     const payload = await encodeSessionSnapshot(session);
-    if (conn.open) {
-      conn.send(payload);
-    }
+    this.safeSend(conn, payload);
   }
 
   private async handleFileRequest(conn: any, path: string, requestId: string) {
@@ -864,6 +903,7 @@ export class P2PHostService {
     this.themeStore.onThemeUpdate = undefined;
     this.guestRoster.set({});
     mapSession.setBroadcaster(null);
+    mapSession.myPeerId = null;
     if (this.peer) {
       this.peer.destroy();
       this.peer = null;
