@@ -13,6 +13,15 @@ vi.mock("./vault.svelte", () => ({
   vault: { selectedEntityId: null },
 }));
 
+vi.mock("../utils/idb", () => ({
+  getDB: vi.fn().mockResolvedValue({
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    getAll: vi.fn(),
+  }),
+}));
+
 // Mock matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,

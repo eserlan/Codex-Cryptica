@@ -82,6 +82,9 @@
   onclick={close}
 >
   <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="share-modal-title"
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
     onclick={(e) => e.stopPropagation()}
   >
@@ -94,6 +97,7 @@
     </button>
 
     <h2
+      id="share-modal-title"
       class="text-xl font-bold text-green-500 mb-4 tracking-wider uppercase font-header flex items-center gap-2"
     >
       <span class="icon-[lucide--share-2] w-5 h-5"></span>
@@ -177,7 +181,10 @@
           aria-busy={p2pLoading}
         >
           {#if p2pLoading}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
             STARTING...
           {:else}
             <span class="icon-[lucide--zap] w-4 h-4"></span>
