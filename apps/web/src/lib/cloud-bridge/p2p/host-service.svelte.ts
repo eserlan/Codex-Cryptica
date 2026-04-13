@@ -188,7 +188,7 @@ export class P2PHostService {
         mapSession.advanceTurn();
       } else if (data.type === "CHAT_MESSAGE") {
         mapSession.handleRemoteChatMessage(data);
-        this.broadcastVttMessage(data);
+        this.broadcastVttMessage(data, conn.peer);
       } else if (data.type === "PING") {
         mapSession.handleRemotePing(
           data.x,
@@ -766,7 +766,7 @@ export class P2PHostService {
     });
   }
 
-  private broadcastVttMessage(message: P2PMessage) {
+  private broadcastVttMessage(message: P2PMessage, excludePeer?: string) {
     if (this.connections.length === 0) return;
 
     if (message.type === "SHOW_TOKEN_IMAGE") {
@@ -822,7 +822,7 @@ export class P2PHostService {
     }
 
     this.connections.forEach((conn) => {
-      if (conn.open) {
+      if (conn.open && conn.peer !== excludePeer) {
         conn.send(message);
       }
     });
