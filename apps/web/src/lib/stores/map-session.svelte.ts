@@ -27,6 +27,7 @@ import { diceEngine, type RollResult } from "dice-engine";
 
 const STORAGE_PREFIX = "codex.vtt.session";
 const POPOUT_STORAGE_PREFIX = "codex.vtt.popout";
+const GRID_MEASURE_PREFIX = "codex.vtt.grid-measure";
 const SESSION_SNAPSHOT_BROADCAST_DELAY_MS = 250;
 const TOKEN_COORD_PRECISION = 2;
 
@@ -111,19 +112,9 @@ export class MapSessionStore {
   myPeerId = $state<string | null>(null);
   draggingTokenId = $state<string | null>(null);
 
-  // Grid settings — derived from mapStore so they survive page reload
-  get gridUnit(): string {
-    return this.deps.mapStore.gridUnit;
-  }
-  set gridUnit(value: string) {
-    this.deps.mapStore.gridUnit = value;
-  }
-  get gridDistance(): number {
-    return this.deps.mapStore.gridDistance;
-  }
-  set gridDistance(value: number) {
-    this.deps.mapStore.gridDistance = value;
-  }
+  // Grid settings
+  gridUnit = $state("ft");
+  gridDistance = $state(5);
   showGridSettings = $state(false);
   gridFitMode = $state(false);
   gridMoveMode = $state(false);
@@ -467,6 +458,7 @@ export class MapSessionStore {
   bindToMap(mapId: string) {
     this.mapId = mapId;
     this.restoredMapId = mapId;
+    this.loadGridMeasure(mapId);
     const restored = this.restoreDraft(mapId);
     this.hasHydratedSession = restored;
     if (!restored) {
@@ -1591,6 +1583,37 @@ export class MapSessionStore {
     this.persistDraft();
   }
 
+  private loadGridMeasure(mapId: string) {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(
+        `${GRID_MEASURE_PREFIX}:${mapId}`,
+      );
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.gridUnit === "string") this.gridUnit = parsed.gridUnit;
+      if (typeof parsed.gridDistance === "number")
+        this.gridDistance = parsed.gridDistance;
+    } catch {
+      // ignore corrupt entries
+    }
+  }
+
+  private saveGridMeasure(mapId: string) {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        `${GRID_MEASURE_PREFIX}:${mapId}`,
+        JSON.stringify({
+          gridUnit: this.gridUnit,
+          gridDistance: this.gridDistance,
+        }),
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   setGridSettings(settings: {
     gridSize?: number;
     gridUnit?: string;
@@ -1604,6 +1627,9 @@ export class MapSessionStore {
     }
     if (settings.gridDistance !== undefined) {
       this.gridDistance = settings.gridDistance;
+    }
+    if (this.mapId) {
+      this.saveGridMeasure(this.mapId);
     }
     this.emit({
       type: "SET_GRID_SETTINGS",
