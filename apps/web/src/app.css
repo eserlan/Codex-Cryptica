@@ -17,10 +17,26 @@
   --bg-theme-surface: var(--bg-texture-overlay);
 
   /* Override Tailwind colors to make existing UI theme-aware */
-  --color-green-50: color-mix(in srgb, var(--color-accent-primary), transparent 95%);
-  --color-green-100: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
-  --color-green-200: color-mix(in srgb, var(--color-accent-primary), transparent 70%);
-  --color-green-300: color-mix(in srgb, var(--color-accent-primary), transparent 40%);
+  --color-green-50: color-mix(
+    in srgb,
+    var(--color-accent-primary),
+    transparent 95%
+  );
+  --color-green-100: color-mix(
+    in srgb,
+    var(--color-accent-primary),
+    transparent 90%
+  );
+  --color-green-200: color-mix(
+    in srgb,
+    var(--color-accent-primary),
+    transparent 70%
+  );
+  --color-green-300: color-mix(
+    in srgb,
+    var(--color-accent-primary),
+    transparent 40%
+  );
   --color-green-400: var(--color-accent-primary);
   --color-green-500: var(--color-accent-primary);
   --color-green-600: var(--color-accent-dim);
@@ -81,8 +97,16 @@
 
   /* Timeline colors */
   --color-timeline-primary: var(--color-theme-accent);
-  --color-timeline-dim: color-mix(in srgb, var(--color-timeline-primary), black 25%);
-  --color-timeline-dark: color-mix(in srgb, var(--color-timeline-primary), black 45%);
+  --color-timeline-dim: color-mix(
+    in srgb,
+    var(--color-timeline-primary),
+    black 25%
+  );
+  --color-timeline-dark: color-mix(
+    in srgb,
+    var(--color-timeline-primary),
+    black 45%
+  );
 
   --z-index-overlay-max: 150;
   --z-index-overlay-tooltip: 152;
@@ -110,8 +134,44 @@
 
     --color-theme-accent: #991b1b;
 
-    --font-header-val: 'Alegreya', serif;
-    --font-body-val: 'Alegreya', serif;
+    --font-header-val: "Alegreya", serif;
+    --font-body-val: "Alegreya", serif;
+
+    --theme-title-ink: var(--color-text-primary);
+    --theme-section-title: var(--color-accent-dim);
+    --theme-meta-text: var(--color-text-muted);
+    --theme-icon-default: var(--color-text-muted);
+    --theme-icon-active: var(--color-accent-primary);
+    --theme-focus: var(--color-theme-accent);
+    --theme-panel-fill: var(--color-bg-surface);
+    --theme-panel-muted: color-mix(
+      in srgb,
+      var(--color-bg-surface),
+      var(--color-bg-primary) 40%
+    );
+    --theme-selected-bg: color-mix(
+      in srgb,
+      var(--color-accent-primary),
+      var(--color-bg-primary) 86%
+    );
+    --theme-selected-border: color-mix(
+      in srgb,
+      var(--color-accent-primary),
+      var(--color-bg-primary) 46%
+    );
+    --theme-focus-bg: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      var(--color-bg-primary) 84%
+    );
+    --theme-focus-border: color-mix(
+      in srgb,
+      var(--color-theme-accent),
+      var(--color-bg-primary) 42%
+    );
+    --theme-action-bg: var(--color-accent-primary);
+    --theme-action-hover: var(--color-accent-dim);
+    --theme-action-text: var(--color-accent-deep);
 
     --bg-texture: none;
     --color-warning: #eab308;
@@ -138,7 +198,9 @@
     background-repeat: no-repeat;
     background-size: cover;
     background-attachment: fixed;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
   h1,
@@ -162,12 +224,57 @@
   select {
     font-family: inherit;
     border-radius: var(--theme-border-radius, 2px);
-    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
   }
 
   button:active {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transform: translateY(1px);
+  }
+
+  /* Node cards lift off the canvas with a warm shadow — adds depth without colour */
+  [data-theme="fantasy"] .svelte-flow__node > div {
+    box-shadow:
+      0 4px 12px rgba(94, 48, 24, 0.18),
+      0 1px 3px rgba(94, 48, 24, 0.12) !important;
+  }
+
+  /* Gold feedback on interaction — inputs, selects, focus-visible buttons all get a warm gold ring */
+  [data-theme="fantasy"] input:focus,
+  [data-theme="fantasy"] textarea:focus,
+  [data-theme="fantasy"] select:focus {
+    border-color: var(--color-theme-accent) !important;
+    box-shadow: 0 0 0 2px rgba(200, 151, 58, 0.22) !important;
+    outline: none !important;
+  }
+
+  [data-theme="fantasy"] button:focus-visible {
+    outline: 2px solid var(--color-theme-accent) !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Chrome (header, footer, activity bar) blends into parchment — same sheet, not separate panels */
+  [data-theme="fantasy"] header,
+  [data-theme="fantasy"] footer,
+  [data-theme="fantasy"] nav[aria-label="Activity Bar"] {
+    background-color: color-mix(in srgb, var(--color-bg-surface), var(--color-bg-primary) 72%) !important;
+    border-color: rgba(94, 48, 24, 0.18) !important;
+  }
+
+  [data-theme="fantasy"] .btnSecondary {
+    border-color: var(--theme-selected-border);
+    background-color: var(--theme-action-bg);
+    color: var(--theme-action-text);
+    box-shadow: inset 0 1px 0 rgba(255, 248, 236, 0.45);
+  }
+
+  [data-theme="fantasy"] .btnSecondary:hover {
+    background-color: var(--theme-action-hover);
+    color: var(--theme-action-text);
   }
 
   /* Global prose and code styling */
@@ -191,11 +298,16 @@
   }
 
   code {
-    background-color: color-mix(in srgb, var(--color-accent-primary), transparent 90%);
+    background-color: color-mix(
+      in srgb,
+      var(--color-accent-primary),
+      transparent 90%
+    );
     color: var(--color-accent-primary);
     padding: 0.1rem 0.3rem;
     border-radius: 0.25rem;
-    border: 1px solid color-mix(in srgb, var(--color-accent-primary), transparent 80%);
+    border: 1px solid
+      color-mix(in srgb, var(--color-accent-primary), transparent 80%);
     font-size: 0.85em;
     font-family: var(--font-body-val);
     font-weight: bold;

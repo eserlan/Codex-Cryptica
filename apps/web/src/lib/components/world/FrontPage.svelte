@@ -94,7 +94,7 @@ Art direction:
   });
   const coverImage = $derived(metadata?.coverImage || "");
   const worldName = $derived(metadata?.name?.trim() || vault.vaultName || "");
-  const hasBriefing = $derived(!!draftDescription.trim());
+  const hasBriefing = $derived(!!(draftDescription.trim() || briefingSource));
   const briefingPreview = $derived(draftDescription.trim());
 
   let isEditingBriefing = $state(false);

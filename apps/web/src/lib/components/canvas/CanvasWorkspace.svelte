@@ -709,7 +709,7 @@
   }
   :global(.svelte-flow__background-pattern) {
     fill: var(--color-border-primary) !important;
-    opacity: 0.15 !important;
+    opacity: 0.25 !important;
   }
   :global(.svelte-flow__edgelabel-renderer) {
     background: transparent !important;
@@ -720,7 +720,7 @@
   }
   :global(.svelte-flow__edge-path) {
     stroke: var(--color-theme-primary, #78350f) !important;
-    stroke-width: 2 !important;
+    stroke-width: var(--theme-edge-stroke-width, 2) !important;
     stroke-opacity: 1 !important;
     visibility: visible !important;
     transition:
@@ -728,12 +728,12 @@
       stroke 0.2s ease;
   }
   :global(.svelte-flow__edge:hover .svelte-flow__edge-path) {
-    stroke-width: 4 !important;
+    stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
     stroke: var(--color-theme-primary) !important;
     filter: drop-shadow(0 0 4px var(--color-theme-primary));
   }
   :global(.svelte-flow__edge.selected .svelte-flow__edge-path) {
-    stroke-width: 4 !important;
+    stroke-width: calc(var(--theme-edge-stroke-width, 2) + 2px) !important;
     stroke: var(--color-theme-primary) !important;
   }
   :global(.svelte-flow__edge.animated path) {

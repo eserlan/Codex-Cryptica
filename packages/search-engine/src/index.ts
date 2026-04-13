@@ -121,6 +121,7 @@ export class SearchEngine {
         this.initIndex();
       }
       let count = 0;
+      const errors: string[] = [];
       for (const doc of docs) {
         try {
           this.index.add(doc);
@@ -128,7 +129,14 @@ export class SearchEngine {
           count++;
         } catch (err) {
           this.log("error", `Failed to add document ${doc.id}`, err);
+          errors.push(doc.id);
         }
+      }
+      if (errors.length > 0) {
+        this.log(
+          "warn",
+          `Batch complete with ${errors.length} errors: ${errors.join(", ")}`,
+        );
       }
       if (count > 0) {
         this.notifyChange();
