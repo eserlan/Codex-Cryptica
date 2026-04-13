@@ -317,7 +317,7 @@
             </div>
 
             <div
-              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0"
             >
               {#if renamingId !== canvas.id}
                 <button
