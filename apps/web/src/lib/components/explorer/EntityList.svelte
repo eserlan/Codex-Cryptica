@@ -22,16 +22,16 @@
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const focusedEntityId = $derived(uiStore.focusedEntityId);
 
-  const typesWithCounts = $derived.by(() => {
+  // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
+  // mapping, and sorting. This also turns an O(N) .find into an O(1) Map .get lookup in the loop.
+  const typeCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
     const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
       const type = allEntities[i].type;
       counts.set(type, (counts.get(type) || 0) + 1);
     }
-    return Array.from(counts.entries())
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => a.type.localeCompare(b.type));
+    return counts;
   });
 
   const filteredEntities = $derived.by(() => {
@@ -135,8 +135,7 @@
       </button>
 
       {#each categories.list as cat (cat.id)}
-        {@const count =
-          typesWithCounts.find((t) => t.type === cat.id)?.count || 0}
+        {@const count = typeCounts.get(cat.id) || 0}
         {#if count > 0 || typeFilters.has(cat.id)}
           <button
             onclick={(e) => toggleTypeFilter(cat.id, e)}
