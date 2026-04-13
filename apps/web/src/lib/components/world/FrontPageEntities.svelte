@@ -55,11 +55,17 @@
         Relevant Entities
       </h2>
       <div class="group relative flex items-center">
-        <span
-          class="icon-[lucide--info] h-3.5 w-3.5 text-theme-muted/60 transition-colors hover:text-theme-primary cursor-help"
-        ></span>
+        <button
+          type="button"
+          class="icon-[lucide--info] h-3.5 w-3.5 cursor-help text-theme-muted/60 transition-colors hover:text-theme-primary focus-visible:text-theme-primary focus-visible:outline-none"
+          aria-label="About relevant entities"
+          aria-describedby="relevant-entities-tooltip"
+          title="Entities tagged or labeled with frontpage will be pinned to the top of this section."
+        ></button>
         <div
-          class="absolute bottom-full left-0 mb-2 w-56 p-3 bg-theme-surface/95 backdrop-blur-md border border-theme-primary/30 rounded-xl text-[10px] leading-relaxed text-theme-text shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 translate-y-1 group-hover:translate-y-0"
+          id="relevant-entities-tooltip"
+          role="tooltip"
+          class="absolute bottom-full left-0 z-50 mb-2 w-56 translate-y-1 rounded-xl border border-theme-primary/30 bg-theme-surface/95 p-3 text-[10px] leading-relaxed text-theme-text opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 pointer-events-none group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
         >
           <p>
             Entities tagged or labeled with <strong class="text-theme-primary"

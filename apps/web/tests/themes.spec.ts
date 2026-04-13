@@ -119,10 +119,10 @@ test.describe("Visual Styling Templates", () => {
       };
     });
     expect(fantasyVars.titleInk).toBe("#24180f");
-    expect(fantasyVars.iconDefault).toBe("#70533a");
-    expect(fantasyVars.focus).toBe("#b08b57");
-    expect(fantasyVars.panelFill).toContain("#f2e3c5");
-    expect(fantasyVars.selectedBg).toContain("#6f4a2a");
+    expect(fantasyVars.iconDefault).toBe("#6b5e4e");
+    expect(fantasyVars.focus).toBe("#c8973a");
+    expect(fantasyVars.panelFill).toContain("#f0ddb8");
+    expect(fantasyVars.selectedBg).toContain("#c8973a");
 
     // 9. Verify unified warm explorer icon colors
     await page.getByTestId("activity-bar-explorer").click();
@@ -138,13 +138,13 @@ test.describe("Visual Styling Templates", () => {
       locationIcon.evaluate((el) => getComputedStyle(el).color),
     ]);
     expect(characterColor).toBe(locationColor);
-    expect(characterColor).toBe("rgb(112, 83, 58)");
+    expect(characterColor).toBe("rgb(107, 94, 78)");
 
     // 10. Verify selected fantasy states use gold
     await page.getByLabel("Filter by Character").click();
     await expect(page.getByLabel("Filter by Character")).toHaveCSS(
       "color",
-      "rgb(176, 139, 87)",
+      "rgb(200, 151, 58)",
     );
 
     // 11. Verify jargon (Archive instead of Vault)

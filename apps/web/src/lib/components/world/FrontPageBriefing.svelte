@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import ArticleRenderer from "$lib/components/blog/ArticleRenderer.svelte";
 
   let {
-    draftDescription,
+    draftDescription = $bindable(),
     isEditingBriefing,
     isDraftDirty,
     hasBriefing,
@@ -12,6 +13,7 @@
     onCancel,
     onGenerate,
     onEdit,
+    onDraftChange,
   }: {
     draftDescription: string;
     isEditingBriefing: boolean;
@@ -23,6 +25,7 @@
     onCancel: () => void;
     onGenerate: () => Promise<void>;
     onEdit: () => void;
+    onDraftChange: (value: string) => void;
   } = $props();
 
   let briefingTextarea = $state<HTMLTextAreaElement | null>(null);
@@ -50,6 +53,8 @@
     isBriefingExpanded = false;
   };
 
+  onDestroy(clearBriefingHoverTimer);
+
   $effect(() => {
     if (!hasBriefing || isEditingBriefing) {
       isBriefingExpanded = false;
@@ -73,6 +78,7 @@
       <textarea
         bind:this={briefingTextarea}
         bind:value={draftDescription}
+        oninput={() => onDraftChange(draftDescription)}
         rows="1"
         class="min-h-[12rem] w-full resize-none border-0 bg-transparent px-5 py-5 pb-16 text-sm leading-relaxed text-theme-text placeholder:text-theme-muted/60 focus:outline-none sm:px-6 sm:py-6 sm:text-base overflow-hidden"
         placeholder="Write a short world briefing…"
