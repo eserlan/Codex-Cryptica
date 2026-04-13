@@ -73,6 +73,14 @@ test.describe("Guest Login Modal Accessibility", () => {
     await usernameInput.fill("Baddy");
     await submitButton.click();
 
+    // Wait for the connection object to be created by the submit handler
+    await page.waitForFunction(
+      () => (window as any).__guestConn !== undefined,
+      {
+        timeout: 5000,
+      },
+    );
+
     await page.evaluate(() => {
       const conn = (window as any).__guestConn;
       conn?.emit("error", new Error("Connection failed"));

@@ -31,6 +31,7 @@
       ? entityDetailTabs.filter((tab) => tab !== "lore")
       : entityDetailTabs,
   );
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
   const handleTabKeydown = (event: KeyboardEvent) => {
     if (
@@ -72,7 +73,8 @@
     </div>
   {:else}
     <div
-      class="text-xs font-bold tracking-widest text-theme-secondary uppercase font-header mb-4"
+      class="text-xs font-bold tracking-widest uppercase font-header mb-4"
+      style:color="var(--theme-meta-text)"
     >
       {entity.type}
     </div>
@@ -83,6 +85,9 @@
     aria-label="Entity detail sections"
     tabindex="0"
     class="flex flex-wrap md:flex-nowrap gap-x-4 md:gap-x-6 gap-y-2 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    style:border-color={isFantasyTheme
+      ? "var(--theme-selected-border)"
+      : undefined}
     onkeydown={handleTabKeydown}
   >
     <button
@@ -94,8 +99,18 @@
       tabindex={activeTab === "status" ? 0 : -1}
       data-testid="tab-status"
       class={activeTab === "status"
-        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : "hover:text-theme-text transition"}
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "status" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "status" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
       onclick={() => (activeTab = "status")}
       >{themeStore.jargon.tab_status.toUpperCase()}</button
     >
@@ -109,8 +124,18 @@
         tabindex={activeTab === "lore" ? 0 : -1}
         data-testid="tab-lore"
         class={activeTab === "lore"
-          ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-          : "hover:text-theme-text transition"}
+          ? isFantasyTheme
+            ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+            : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+          : isFantasyTheme
+            ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+            : "hover:text-theme-text transition"}
+        style:border-color={activeTab === "lore" && isFantasyTheme
+          ? "var(--theme-focus-border)"
+          : undefined}
+        style:background-color={activeTab === "lore" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
         onclick={() => {
           activeTab = "lore";
         }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
@@ -125,8 +150,18 @@
       tabindex={activeTab === "inventory" ? 0 : -1}
       data-testid="tab-inventory"
       class={activeTab === "inventory"
-        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : "hover:text-theme-text transition"}
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "inventory" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "inventory" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
       onclick={() => (activeTab = "inventory")}
       >{themeStore.jargon.tab_inventory.toUpperCase()}</button
     >
@@ -139,8 +174,18 @@
       tabindex={activeTab === "map" ? 0 : -1}
       data-testid="tab-map"
       class={activeTab === "map"
-        ? "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-        : "hover:text-theme-text transition"}
+        ? isFantasyTheme
+          ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
+          : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
+        : isFantasyTheme
+          ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
+          : "hover:text-theme-text transition"}
+      style:border-color={activeTab === "map" && isFantasyTheme
+        ? "var(--theme-focus-border)"
+        : undefined}
+      style:background-color={activeTab === "map" && isFantasyTheme
+        ? "var(--theme-focus-bg)"
+        : undefined}
       onclick={() => (activeTab = "map")}>MAP</button
     >
   </div>

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { themeStore } from "$lib/stores/theme.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
   import { Search, LayoutGrid } from "lucide-svelte";
@@ -17,17 +19,19 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
+  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
+  const focusedEntityId = $derived(uiStore.focusedEntityId);
 
-  const typesWithCounts = $derived.by(() => {
+  // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
+  // mapping, and sorting. This also turns an O(N) .find into an O(1) Map .get lookup in the loop.
+  const typeCounts = $derived.by(() => {
     const allEntities = vault.allEntities;
     const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
       const type = allEntities[i].type;
       counts.set(type, (counts.get(type) || 0) + 1);
     }
-    return Array.from(counts.entries())
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => a.type.localeCompare(b.type));
+    return counts;
   });
 
   const filteredEntities = $derived.by(() => {
@@ -103,42 +107,71 @@
     </div>
 
     <div
-      class="flex items-center gap-1 px-2 py-1.5 bg-theme-surface/80 backdrop-blur border border-theme-border rounded shadow-sm"
+      class="flex items-center gap-1 px-2 py-1.5 border border-theme-border rounded shadow-sm"
+      style:background-color={isFantasyTheme
+        ? "var(--theme-panel-muted)"
+        : undefined}
+      style:background-image={isFantasyTheme
+        ? "var(--bg-texture-overlay)"
+        : undefined}
     >
       <button
         onclick={() => (typeFilters = new Set())}
         title="Show all categories"
         aria-label="Show all categories"
-        class="p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.size ===
+        class="p-1.5 rounded-md flex items-center justify-center transition-all border {typeFilters.size ===
         0
-          ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
-          : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+          ? isFantasyTheme
+            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
+            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
+          : isFantasyTheme
+            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
+            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+        style:background-color={typeFilters.size === 0 && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
       >
         <LayoutGrid class="w-3.5 h-3.5" />
       </button>
 
       {#each categories.list as cat (cat.id)}
-        {@const count =
-          typesWithCounts.find((t) => t.type === cat.id)?.count || 0}
+        {@const count = typeCounts.get(cat.id) || 0}
         {#if count > 0 || typeFilters.has(cat.id)}
           <button
             onclick={(e) => toggleTypeFilter(cat.id, e)}
             title={cat.label}
             aria-label={`Filter by ${cat.label}`}
             aria-pressed={typeFilters.has(cat.id)}
-            class="relative p-1.5 rounded-md flex items-center justify-center transition-all {typeFilters.has(
+            class="relative p-1.5 rounded-md flex items-center justify-center transition-all border {typeFilters.has(
               cat.id,
             )
-              ? 'bg-theme-primary text-theme-bg shadow-sm scale-110'
-              : 'text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+              ? isFantasyTheme
+                ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
+                : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
+              : isFantasyTheme
+                ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
+                : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+            style:background-color={typeFilters.has(cat.id) && isFantasyTheme
+              ? "var(--theme-focus-bg)"
+              : undefined}
           >
             <span
               class="{getIconClass(cat.icon)} w-3.5 h-3.5"
-              style={!typeFilters.has(cat.id) ? `color: ${cat.color}` : ""}
+              style={!typeFilters.has(cat.id)
+                ? isFantasyTheme
+                  ? "color: var(--theme-icon-default)"
+                  : `color: ${cat.color}`
+                : isFantasyTheme
+                  ? "color: var(--theme-focus)"
+                  : ""}
             ></span>
             {#if count > 0 && !typeFilters.has(cat.id)}
               <span
-                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-theme-primary/20 text-theme-primary text-[7px] font-bold flex items-center justify-center leading-none"
+                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[7px] font-bold flex items-center justify-center leading-none"
+                style:background-color={isFantasyTheme
+                  ? "var(--theme-focus-bg)"
+                  : undefined}
+                style:color={isFantasyTheme ? "var(--theme-focus)" : undefined}
               >
                 {count > 9 ? "9+" : count}
               </span>
@@ -163,17 +196,28 @@
         data-testid="entity-list-item"
         data-entity-id={entity.id}
         title={`Select ${entity.title}`}
-        class="w-full text-left p-2.5 bg-theme-bg border border-theme-border rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5 transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none"
+        class="w-full text-left p-2.5 border transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none {entity.id ===
+        focusedEntityId
+          ? isFantasyTheme
+            ? 'rounded-md border-[color:var(--theme-focus-border)] bg-[color:var(--theme-focus-bg)] ring-1 ring-[color:var(--theme-focus-border)]/40'
+            : 'rounded-lg border-theme-primary bg-theme-primary/10'
+          : isFantasyTheme
+            ? 'border-theme-border bg-[color:var(--theme-panel-muted)] rounded-md hover:border-[color:var(--theme-selected-border)] hover:bg-[color:var(--theme-selected-bg)]'
+            : 'border-theme-border bg-theme-bg rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
       >
         <div class="flex items-center gap-2">
           <span
             class="{getIconClass(
               cat?.icon,
-            )} w-3.5 h-3.5 shrink-0 text-theme-primary/70 group-hover:text-theme-primary transition-colors"
+            )} w-3.5 h-3.5 shrink-0 transition-colors {isFantasyTheme
+              ? 'text-[color:var(--theme-icon-default)] group-hover:text-[color:var(--theme-icon-active)]'
+              : 'text-theme-primary/70 group-hover:text-theme-primary'}"
           ></span>
           <div class="flex-1 min-w-0">
             <div
-              class="text-xs font-bold text-theme-text group-hover:text-theme-primary transition-colors truncate uppercase font-header tracking-widest"
+              class="text-xs font-bold transition-colors truncate uppercase font-header tracking-widest {isFantasyTheme
+                ? 'text-[color:var(--theme-title-ink)] group-hover:text-[color:var(--theme-icon-active)]'
+                : 'text-theme-text group-hover:text-theme-primary'}"
             >
               {entity.title}
             </div>

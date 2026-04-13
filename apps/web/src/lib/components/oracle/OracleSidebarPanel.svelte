@@ -47,12 +47,14 @@
 
 <div
   class="flex-1 min-h-0 bg-theme-surface border-r border-theme-border flex flex-col z-[60] shrink-0 shadow-2xl relative"
+  style:background-image="var(--bg-texture-overlay)"
   transition:fly={{ x: -384, duration: 300 }}
   data-testid="oracle-sidebar-panel"
 >
   <!-- Header -->
   <div
     class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+    style:background-image="var(--bg-texture-overlay)"
   >
     <div class="flex items-center gap-2">
       <div
@@ -164,10 +166,14 @@
 
   <!-- Feature Hint Modal -->
   {#if showHint}
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
       class="absolute inset-0 bg-black/60 z-[70] flex items-center justify-center p-4"
       onclick={() => (showHint = false)}
     >
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="bg-theme-surface border border-theme-border rounded-lg p-5 max-w-sm shadow-2xl"
         onclick={(e) => e.stopPropagation()}

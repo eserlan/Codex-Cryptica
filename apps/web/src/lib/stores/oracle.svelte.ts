@@ -160,6 +160,26 @@ export class OracleStore {
       );
     } catch (err: any) {
       console.error("[OracleStore] Ask failed:", err);
+
+      // Stale chunk: browser has old HTML referencing a chunk hash that no
+      // longer exists on the server (happens after a deployment while the
+      // previous page is still open).  Force a full reload so the user gets
+      // fresh HTML + matching chunks.
+      if (
+        typeof err?.message === "string" &&
+        err.message.includes("Failed to fetch dynamically imported module")
+      ) {
+        await this.chatHistory.addMessage({
+          id: crypto.randomUUID(),
+          role: "system",
+          content:
+            "⟳ A new version of the app was deployed. Reloading to apply the update…",
+        });
+        this.settings.setLoading(false);
+        setTimeout(() => location.reload(), 1500);
+        return;
+      }
+
       await this.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",

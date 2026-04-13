@@ -6,6 +6,7 @@
 
 <footer
   class="px-6 py-4 bg-theme-surface border-t border-theme-border flex flex-col md:flex-row justify-between items-center gap-4 hidden md:flex"
+  style:background-image="var(--bg-texture-overlay)"
 >
   <div
     class="text-[10px] font-header text-theme-muted uppercase tracking-widest"

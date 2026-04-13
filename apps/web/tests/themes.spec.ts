@@ -11,9 +11,56 @@ test.describe("Visual Styling Templates", () => {
         /* ignore */
       }
     });
+    await page.addInitScript(() => {
+      (window as any).__E2E_THEME_FIXTURE__ = {
+        "test-character": {
+          id: "test-character",
+          title: "The Rat-Van",
+          type: "character",
+          content: "Test content",
+          lore: "Test lore",
+          labels: ["test"],
+          connections: [],
+          _path: ["test-character.md"],
+        },
+        "test-location": {
+          id: "test-location",
+          title: "Tome Hall",
+          type: "location",
+          content: "Location content",
+          lore: "",
+          labels: [],
+          connections: [],
+          _path: ["test-location.md"],
+        },
+      };
+    });
     await page.goto("http://localhost:5173/");
+    await page.waitForFunction(() => (window as any).vault?.repository);
+    await page.evaluate(() => {
+      const v = (window as any).vault;
+      const fixture = (window as any).__E2E_THEME_FIXTURE__;
+      const now = Date.now();
+      const seededEntities = Object.fromEntries(
+        Object.entries(fixture).map(([id, entity]: [string, any]) => [
+          id,
+          { ...entity, updatedAt: now },
+        ]),
+      );
+      v.repository.entities = seededEntities;
+      v.entities = { ...seededEntities };
+      v.isInitialized = true;
+      v.status = "idle";
+    });
     // Wait for auto-init
     await page.waitForFunction(() => (window as any).vault?.status === "idle");
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("Switch to Fantasy theme and verify visual changes", async ({
@@ -31,6 +78,7 @@ test.describe("Visual Styling Templates", () => {
     // 4. Verify background color change (Parchment color)
     const body = page.locator("body");
     await expect(body).toHaveCSS("background-color", "rgb(253, 246, 227)");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "fantasy");
 
     // Close settings via explicit button
     await page.getByLabel("Close Settings").click();
@@ -57,9 +105,41 @@ test.describe("Visual Styling Templates", () => {
         .getPropertyValue("--theme-border-radius")
         .trim(),
     );
-    expect(borderRadius).toBe("6px");
+    expect(borderRadius).toBe("3px");
 
-    // 8. Verify jargon (Archive instead of Vault)
+    // 8. Verify fantasy-specific warm variables
+    const fantasyVars = await page.evaluate(() => {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        titleInk: styles.getPropertyValue("--theme-title-ink").trim(),
+        iconDefault: styles.getPropertyValue("--theme-icon-default").trim(),
+        focus: styles.getPropertyValue("--theme-focus").trim(),
+        panelFill: styles.getPropertyValue("--theme-panel-fill").trim(),
+        selectedBg: styles.getPropertyValue("--theme-selected-bg").trim(),
+      };
+    });
+    expect(fantasyVars.titleInk).toBe("#24180f");
+    expect(fantasyVars.iconDefault).toBe("#6b5e4e");
+    expect(fantasyVars.focus).toBe("#c8973a");
+    expect(fantasyVars.panelFill).toContain("#f0ddb8");
+    expect(fantasyVars.selectedBg).toContain("#c8973a");
+
+    // 9. Verify unified warm activity-bar icon colors
+    const mapButton = page.getByTestId("activity-bar-map");
+    const explorerButton = page.getByTestId("activity-bar-explorer");
+    const [mapColor, explorerColor] = await Promise.all([
+      mapButton.evaluate((el) => getComputedStyle(el).color),
+      explorerButton.evaluate((el) => getComputedStyle(el).color),
+    ]);
+    expect(mapColor).toBe(explorerColor);
+    expect(explorerColor).toBe("rgb(107, 94, 78)");
+
+    // 10. Verify selected fantasy states use gold
+    await explorerButton.click();
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    await expect(explorerButton).toHaveCSS("color", "rgb(200, 151, 58)");
+
+    // 11. Verify jargon (Archive instead of Vault)
     await expect(page.getByTestId("open-vault-button")).toContainText(
       "Archive",
     );

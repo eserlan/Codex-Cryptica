@@ -33,6 +33,13 @@ test.describe("Graph Deletion and UI Safety", () => {
         });
       await waitForVault();
     });
+    await page.evaluate(() => {
+      const ui = (window as any).uiStore;
+      if (ui) {
+        ui.dismissedWorldPage = true;
+        ui.dismissedLandingPage = true;
+      }
+    });
   });
 
   test("should delete multiple nodes from graph context menu", async ({
@@ -66,15 +73,13 @@ test.describe("Graph Deletion and UI Safety", () => {
     });
     await expect(deleteMenuItem).toBeVisible();
 
-    // Handle confirmation dialog
-    page.once("dialog", (dialog) => {
-      expect(dialog.message()).toContain(
-        "Are you sure you want to delete 2 nodes",
-      );
-      dialog.accept();
-    });
-
     await deleteMenuItem.click();
+
+    // Accept the Svelte confirmation dialog
+    await page
+      .locator('[class*="z-\\[200\\]"]')
+      .getByRole("button", { name: "Delete" })
+      .click();
 
     // Verify notification
     await expect(page.getByText("Deleted 2 nodes.")).toBeVisible();

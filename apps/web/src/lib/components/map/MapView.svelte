@@ -976,6 +976,7 @@
 <div
   bind:this={container}
   class="flex-1 min-h-0 w-full h-full bg-theme-bg overflow-hidden relative select-none"
+  style:background-image="var(--bg-texture)"
   role="application"
   aria-roledescription="map"
   aria-label="Interactive map. Use arrow keys to pan and plus or minus keys to zoom."
