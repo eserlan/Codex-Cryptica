@@ -46,14 +46,53 @@
     }
   };
 
+  let previousActiveElement: HTMLElement | null = null;
+  let modalElement: HTMLElement | undefined = $state();
+
   $effect(() => {
-    if (isOpen && sourceNodeIds.length > 0) {
-      if (!targetId || !sourceNodeIds.includes(targetId)) {
+    if (isOpen) {
+      previousActiveElement = document.activeElement as HTMLElement;
+      if (
+        sourceNodeIds.length > 0 &&
+        (!targetId || !sourceNodeIds.includes(targetId))
+      ) {
         targetId = sourceNodeIds[0];
       }
-      // loadProposal(); // Removed to avoid redundant calls, triggered by specific user actions instead
+      setTimeout(() => {
+        const firstFocusable = modalElement?.querySelector(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) as HTMLElement;
+        firstFocusable?.focus();
+      }, 10);
+    } else if (previousActiveElement) {
+      previousActiveElement.focus();
+      previousActiveElement = null;
     }
   });
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (!isOpen) return;
+    if (e.key === "Escape") {
+      onClose();
+      e.stopPropagation();
+    } else if (e.key === "Tab") {
+      if (!modalElement) return;
+      const focusables = modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0] as HTMLElement;
+      const last = focusables[focusables.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  };
 
   const handleMerge = async () => {
     if (!proposal || !targetId) return;
@@ -97,10 +136,13 @@
     class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
   >
     <div
+      bind:this={modalElement}
       role="dialog"
       aria-modal="true"
       aria-labelledby="merge-nodes-title"
-      class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh]"
+      tabindex="-1"
+      onkeydown={handleKeydown}
+      class="w-full max-w-2xl bg-theme-surface border border-theme-border rounded-lg shadow-2xl flex flex-col max-h-[90vh] focus:outline-none"
     >
       <div
         class="p-6 border-b border-theme-border flex justify-between items-center"
@@ -223,7 +265,10 @@
           aria-busy={isLoading}
         >
           {#if isLoading}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
             Processing...
           {:else}
             Confirm Merge

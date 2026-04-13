@@ -14,6 +14,48 @@
   let p2pLink = $state<string | null>(null);
   let p2pCopied = $state(false);
 
+  let previousActiveElement: HTMLElement | null = null;
+  let modalElement: HTMLElement | undefined = $state();
+
+  $effect(() => {
+    previousActiveElement = document.activeElement as HTMLElement;
+    setTimeout(() => {
+      const firstFocusable = modalElement?.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      ) as HTMLElement;
+      firstFocusable?.focus();
+    }, 10);
+
+    return () => {
+      if (previousActiveElement) {
+        previousActiveElement.focus();
+      }
+    };
+  });
+
+  const handleKeydown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      close();
+      e.stopPropagation();
+    } else if (e.key === "Tab") {
+      if (!modalElement) return;
+      const focusables = modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0] as HTMLElement;
+      const last = focusables[focusables.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleP2PStart = async () => {
     p2pLoading = true;
     try {
@@ -45,10 +87,13 @@
   class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
 >
   <div
+    bind:this={modalElement}
     role="dialog"
     aria-modal="true"
     aria-labelledby="share-modal-title"
-    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
+    tabindex="-1"
+    onkeydown={handleKeydown}
+    class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300 focus:outline-none"
   >
     <button
       class="absolute top-2 right-2 text-gray-500 hover:text-white"
@@ -143,7 +188,10 @@
           aria-busy={p2pLoading}
         >
           {#if p2pLoading}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
             STARTING...
           {:else}
             <span class="icon-[lucide--zap] w-4 h-4"></span>

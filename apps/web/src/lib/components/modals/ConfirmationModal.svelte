@@ -12,17 +12,51 @@
     uiStore.resolveConfirmation(true);
   };
 
+  let previousActiveElement: HTMLElement | null = null;
+  let modalElement: HTMLElement | undefined = $state();
+
+  $effect(() => {
+    if (dialog.open) {
+      previousActiveElement = document.activeElement as HTMLElement;
+      setTimeout(() => {
+        const firstFocusable = modalElement?.querySelector(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ) as HTMLElement;
+        firstFocusable?.focus();
+      }, 10);
+    } else if (previousActiveElement) {
+      previousActiveElement.focus();
+      previousActiveElement = null;
+    }
+  });
+
   const handleKeydown = (e: KeyboardEvent) => {
     if (!dialog.open) return;
     if (e.key === "Escape") {
       handleCancel();
+      e.stopPropagation();
     } else if (e.key === "Enter") {
+      if (document.activeElement?.tagName === "BUTTON") return;
       handleConfirm();
+    } else if (e.key === "Tab") {
+      if (!modalElement) return;
+      const focusables = modalElement.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0] as HTMLElement;
+      const last = focusables[focusables.length - 1] as HTMLElement;
+
+      if (e.shiftKey && document.activeElement === first) {
+        last.focus();
+        e.preventDefault();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        first.focus();
+        e.preventDefault();
+      }
     }
   };
 </script>
-
-<svelte:window onkeydown={handleKeydown} />
 
 {#if dialog.open}
   <!-- Backdrop -->
@@ -35,10 +69,13 @@
   >
     <!-- Modal -->
     <div
+      bind:this={modalElement}
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirmation-modal-title"
-      class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl"
+      tabindex="-1"
+      onkeydown={handleKeydown}
+      class="relative w-full max-w-md overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface shadow-2xl focus:outline-none"
       transition:scale={{ duration: 250, start: 0.95 }}
       onclick={(e) => e.stopPropagation()}
     >
