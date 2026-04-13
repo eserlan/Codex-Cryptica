@@ -26,6 +26,7 @@
 <header
   bind:this={headerEl}
   class="px-4 md:px-6 py-3 md:py-4 bg-theme-surface border-b border-theme-border sticky top-0 z-[70] flex flex-col gap-3"
+  style:background-image="var(--bg-texture-overlay)"
 >
   {#if isStaging}
     <div

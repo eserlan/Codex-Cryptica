@@ -288,6 +288,7 @@
 
   <div
     class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
+    style:background-image="var(--bg-texture-overlay)"
   >
     {#if showCommandMenu}
       <CommandMenu

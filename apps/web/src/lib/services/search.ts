@@ -373,13 +373,13 @@ export class SearchService {
         // Avoids allocating a massive intermediate array for all entities during cold boot,
         // reducing peak memory and GC pressure.
         for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
-          const chunkPromises: Promise<void>[] = [];
+          const chunkEntries: any[] = [];
           const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
           for (let j = i; j < end; j++) {
             const entry = this.mapToSearchEntry(entities[j]);
-            chunkPromises.push(this.api!.add(entry));
+            chunkEntries.push(entry);
           }
-          await Promise.all(chunkPromises);
+          await this.api!.addBatch(chunkEntries);
         }
       })
       .catch((err) => debugStore.warn("Index batch error", err));

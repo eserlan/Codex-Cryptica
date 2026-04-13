@@ -12,15 +12,21 @@
 
 <div
   class="flex flex-col flex-1 min-h-0 bg-theme-surface font-body"
+  style:background-color="var(--theme-panel-fill)"
+  style:background-image="var(--bg-texture-overlay)"
   data-testid="entity-explorer-panel"
 >
   <!-- Header -->
   <div
     class="p-4 border-b border-theme-border flex items-center justify-between shrink-0"
+    style:background-color="var(--theme-panel-fill)"
   >
     <div class="flex items-center gap-2">
       <div
-        class="w-8 h-8 rounded-lg bg-theme-primary/10 flex items-center justify-center text-theme-primary"
+        class="w-8 h-8 rounded-md flex items-center justify-center border"
+        style:background-color="var(--theme-selected-bg)"
+        style:border-color="var(--theme-selected-border)"
+        style:color="var(--theme-icon-active)"
       >
         <Database class="w-4 h-4" />
       </div>
@@ -39,7 +45,8 @@
     </div>
     <button
       onclick={() => uiStore.toggleSidebarTool("explorer")}
-      class="p-1.5 rounded-md text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-all"
+      class="p-1.5 rounded-md transition-all"
+      style:color="var(--theme-icon-default)"
       aria-label="Close Explorer"
     >
       <X class="w-4 h-4" />

@@ -6,6 +6,7 @@ const { MockWorker, mockApi } = vi.hoisted(() => {
   const mockApi = {
     initIndex: vi.fn().mockResolvedValue(true),
     add: vi.fn().mockResolvedValue(true),
+    addBatch: vi.fn().mockResolvedValue(true),
     remove: vi.fn().mockResolvedValue(true),
     search: vi.fn().mockResolvedValue([{ id: "1", title: "Test", score: 1 }]),
     searchOptimized: vi
@@ -93,10 +94,11 @@ describe("SearchService", () => {
   });
 
   it("should chunk indexBatch work sequentially without eager full-array allocation", async () => {
-    const originalAdd = mockApi.add.getMockImplementation();
+    const originalAddBatch = mockApi.addBatch.getMockImplementation();
     const pendingAdds: Array<() => void> = [];
+
     try {
-      mockApi.add.mockImplementation(
+      mockApi.addBatch.mockImplementation(
         () =>
           new Promise<void>((resolve) => {
             pendingAdds.push(resolve);
@@ -116,22 +118,22 @@ describe("SearchService", () => {
 
       await Promise.resolve();
 
-      expect(mockApi.add).toHaveBeenCalledTimes(50);
-      expect(pendingAdds).toHaveLength(50);
+      expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
+      expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
 
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(mockApi.add).toHaveBeenCalledTimes(52);
-      expect(pendingAdds).toHaveLength(2);
+      expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
+      expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
 
       await expect(batchPromise).resolves.toBeUndefined();
     } finally {
-      mockApi.add.mockImplementation(originalAdd as any);
+      mockApi.addBatch.mockImplementation(originalAddBatch as any);
     }
   });
 
@@ -269,7 +271,11 @@ describe("SearchService", () => {
         "1": { id: "1", title: "Note 1", content: "body", type: "note" },
       } as any;
       vaultEventBus.emit({ type: "CACHE_LOADED", vaultId: "v1", entities });
-      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Wait for the async loadIndex + indexBatch to complete
+      await vi.waitFor(() => {
+        expect(indexBatchSpy).toHaveBeenCalled();
+      });
 
       expect(indexBatchSpy).toHaveBeenCalledWith(Object.values(entities));
       expect((service as any).needsFullContentSweep).toBe(true);
