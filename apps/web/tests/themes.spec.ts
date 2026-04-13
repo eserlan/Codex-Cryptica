@@ -124,28 +124,20 @@ test.describe("Visual Styling Templates", () => {
     expect(fantasyVars.panelFill).toContain("#f0ddb8");
     expect(fantasyVars.selectedBg).toContain("#c8973a");
 
-    // 9. Verify unified warm explorer icon colors
-    await page.getByTestId("activity-bar-explorer").click();
-    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
-    const characterIcon = page
-      .locator('button[aria-label="Filter by Character"] span')
-      .first();
-    const locationIcon = page
-      .locator('button[aria-label="Filter by Location"] span')
-      .first();
-    const [characterColor, locationColor] = await Promise.all([
-      characterIcon.evaluate((el) => getComputedStyle(el).color),
-      locationIcon.evaluate((el) => getComputedStyle(el).color),
+    // 9. Verify unified warm activity-bar icon colors
+    const mapButton = page.getByTestId("activity-bar-map");
+    const explorerButton = page.getByTestId("activity-bar-explorer");
+    const [mapColor, explorerColor] = await Promise.all([
+      mapButton.evaluate((el) => getComputedStyle(el).color),
+      explorerButton.evaluate((el) => getComputedStyle(el).color),
     ]);
-    expect(characterColor).toBe(locationColor);
-    expect(characterColor).toBe("rgb(107, 94, 78)");
+    expect(mapColor).toBe(explorerColor);
+    expect(explorerColor).toBe("rgb(107, 94, 78)");
 
     // 10. Verify selected fantasy states use gold
-    await page.getByLabel("Filter by Character").click();
-    await expect(page.getByLabel("Filter by Character")).toHaveCSS(
-      "color",
-      "rgb(200, 151, 58)",
-    );
+    await explorerButton.click();
+    await expect(page.getByTestId("entity-explorer-panel")).toBeVisible();
+    await expect(explorerButton).toHaveCSS("color", "rgb(200, 151, 58)");
 
     // 11. Verify jargon (Archive instead of Vault)
     await expect(page.getByTestId("open-vault-button")).toContainText(
