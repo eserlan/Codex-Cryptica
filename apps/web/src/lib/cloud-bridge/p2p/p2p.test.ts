@@ -783,6 +783,48 @@ describe("P2P Services", () => {
       expect(hostService.connections.length).toBe(0);
       expect((hostService as any).peer).toBeNull();
     });
+
+    it("should not echo a CHAT_MESSAGE back to the sending guest", async () => {
+      const idPromise = hostService.startHosting();
+      const peerInstance = (hostService as any).peer;
+      peerInstance.emit("open", "mock-peer-id");
+      await idPromise;
+
+      // Two guests connected
+      const sender = new MockConnection("guest-sender");
+      const other = new MockConnection("guest-other");
+      (hostService as any).connections.push(sender, other);
+      peerInstance.emit("connection", sender);
+      sender.emit("open");
+      peerInstance.emit("connection", other);
+      other.emit("open");
+
+      sender.send.mockClear();
+      other.send.mockClear();
+
+      // Guest "sender" sends a chat message
+      const chatPayload = {
+        type: "CHAT_MESSAGE",
+        sender: "Alice",
+        senderId: "guest-sender",
+        content: "hello",
+        timestamp: Date.now(),
+      };
+      sender.emit("data", chatPayload);
+
+      await vi.waitFor(() => {
+        // The message must appear in the host's chat log
+        expect(mapSession.chatMessages).toHaveLength(1);
+        // The other guest must receive the broadcast
+        expect(other.send).toHaveBeenCalledWith(
+          expect.objectContaining({ type: "CHAT_MESSAGE", content: "hello" }),
+        );
+        // The sending guest must NOT receive an echo
+        expect(sender.send).not.toHaveBeenCalledWith(
+          expect.objectContaining({ type: "CHAT_MESSAGE" }),
+        );
+      });
+    });
   });
 
   describe("P2PGuestService", () => {
