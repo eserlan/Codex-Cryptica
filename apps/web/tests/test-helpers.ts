@@ -28,6 +28,7 @@ export async function setupVaultPage(page: Page) {
     if (ui) {
       ui.dismissedWorldPage = true;
       ui.dismissedLandingPage = true;
+      ui.skipWelcomeScreen = true;
     }
   });
   await expect(page.getByTestId("graph-canvas")).toBeVisible({

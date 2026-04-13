@@ -301,7 +301,7 @@
   {/if}
 
   <!-- Vault Front Page Overlay -->
-  {#if FrontPage && vault.isInitialized && !uiStore.isLandingPageVisible && !uiStore.dismissedWorldPage && !selectedEntity}
+  {#if FrontPage && vault.isInitialized && uiStore.skipWelcomeScreen && !uiStore.dismissedWorldPage && !selectedEntity}
     <div
       data-testid="front-page-overlay"
       class={`absolute inset-0 z-40 overflow-y-auto p-4 md:p-6 bg-theme-bg/96 backdrop-blur-sm ${selectedEntity ? "pointer-events-none" : ""}`}
