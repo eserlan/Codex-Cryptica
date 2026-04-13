@@ -262,22 +262,12 @@
 <section
   data-testid="front-page-shell"
   class="front-page-shell relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  style={`background-color: ${themeTokens.background}; background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+    themeTokens.primary,
+  )}, 0.16), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
+    themeTokens.background,
+  )}, 0.92), rgba(${hexToRgb(themeTokens.background)}, 0.98));`}
 >
-  <style>
-    .front-page-shell {
-      background:
-        radial-gradient(
-          circle at top,
-          color-mix(in srgb, var(--color-theme-primary), transparent 92%),
-          transparent 48%
-        ),
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--color-theme-bg), transparent 8%),
-          color-mix(in srgb, var(--color-theme-bg), black 2%)
-        );
-    }
-  </style>
   {#if !isWorldReady}
     <div
       class="relative z-10 flex min-h-[inherit] items-center justify-center py-20"
