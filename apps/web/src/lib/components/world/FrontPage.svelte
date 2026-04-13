@@ -295,6 +295,13 @@
       </div>
     </div>
   {:else}
+    {#if coverImageUrl && !showCoverEditor}
+      <div
+        data-testid="front-page-hero-background"
+        class="absolute inset-0 pointer-events-none bg-cover bg-center opacity-35 mix-blend-screen"
+        style={`background-image: url("${coverImageUrl}")`}
+      ></div>
+    {/if}
     <div
       class="absolute inset-0 pointer-events-none opacity-50"
       style="background: radial-gradient(circle at top, color-mix(in srgb, var(--color-theme-primary), transparent 95%), color-mix(in srgb, var(--color-theme-bg), black 30%)), linear-gradient(180deg, color-mix(in srgb, var(--color-theme-bg), transparent 85%), color-mix(in srgb, var(--color-theme-bg), black 35%))"
