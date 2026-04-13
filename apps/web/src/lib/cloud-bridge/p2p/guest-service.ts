@@ -158,9 +158,11 @@ export class P2PGuestService {
             this.pendingStatus = null;
           }
           void this.getMapSession().then((mapSession) => {
-            mapSession.setBroadcaster((message) =>
-              this.sendVttMessage(message),
-            );
+            if (this.connection === connection && connection.open) {
+              mapSession.setBroadcaster((message) =>
+                this.sendVttMessage(message),
+              );
+            }
           });
           resolve();
         });

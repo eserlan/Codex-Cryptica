@@ -15,6 +15,8 @@ export class P2PClientAdapter implements IStorageAdapter {
     { resolve: (b: Blob) => void; reject: (e: any) => void }
   >();
 
+  private objectUrls = new Set<string>();
+
   constructor(hostId: string, deps: { peerFactory?: PeerFactory } = {}) {
     this.hostId = hostId;
     this.peerFactory = deps.peerFactory ?? createPeer;
@@ -110,7 +112,9 @@ export class P2PClientAdapter implements IStorageAdapter {
     // We return a Blob URL that the UI can display
     try {
       const blob = await this.fetchFile(path);
-      return URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+      this.objectUrls.add(url);
+      return url;
     } catch (e) {
       console.warn(`[P2P Client] Failed to resolve path ${path}`, e);
       return ""; // Broken image fallback
@@ -157,6 +161,11 @@ export class P2PClientAdapter implements IStorageAdapter {
         this.peer = null;
       }
       this.pendingRequests.clear();
+
+      for (const url of this.objectUrls) {
+        URL.revokeObjectURL(url);
+      }
+      this.objectUrls.clear();
     } catch (err) {
       console.error("[P2P Client] Error disposing adapter:", err);
     }

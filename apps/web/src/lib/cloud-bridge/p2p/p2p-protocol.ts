@@ -135,7 +135,9 @@ export function isVTTMessage(message: any): message is VTTMessage {
       "CHAT_MESSAGE",
       "MAP_SYNC",
       "MAP_FOG_SYNC",
-      "MAP_PING",
+      "MEASUREMENT",
+      "MAP_MEASUREMENT",
+      "SET_GRID_SETTINGS",
     ].includes(message.type)
   );
 }
