@@ -4,7 +4,7 @@ import type {
   MapPingPayload,
   SessionSnapshotPayload,
   VTTMessage,
-} from "$types/vtt";
+} from "../../../types/vtt";
 
 const SNAPSHOT_COMPRESS_THRESHOLD = 10_000; // bytes
 

@@ -3,7 +3,7 @@ import type {
   EncounterSession,
   EncounterSnapshotSummary,
   Token,
-} from "$types/vtt";
+} from "../../types/vtt";
 
 export interface VTTSessionServiceDeps {
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;

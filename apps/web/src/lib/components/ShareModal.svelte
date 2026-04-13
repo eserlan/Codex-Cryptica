@@ -85,6 +85,7 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="share-modal-title"
+    tabindex="-1"
     class="bg-gray-900 border border-green-800 p-6 rounded-lg max-w-md w-full shadow-2xl relative font-mono text-gray-300"
     onclick={(e) => e.stopPropagation()}
   >

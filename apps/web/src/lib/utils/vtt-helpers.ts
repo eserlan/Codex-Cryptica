@@ -1,5 +1,5 @@
 import type { Point, ViewportTransform } from "schema";
-import type { Token } from "$types/vtt";
+import type { Token } from "../../types/vtt";
 
 export function snapToGrid(
   point: Point,

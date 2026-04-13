@@ -1,7 +1,7 @@
 <script lang="ts">
   import DiceRollResult from "$lib/components/dice/DiceRollResult.svelte";
   import { mapSession } from "$lib/stores/map-session.svelte";
-  import type { ChatMessagePayload } from "$types/vtt";
+  import type { ChatMessagePayload } from "../../../types/vtt";
 
   let { message } = $props<{ message: ChatMessagePayload }>();
 

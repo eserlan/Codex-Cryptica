@@ -1,4 +1,4 @@
-import type { SessionMode } from "$types/vtt";
+import type { SessionMode } from "../../../types/vtt";
 
 export function shouldShowInitiativePanel(
   vttEnabled: boolean,

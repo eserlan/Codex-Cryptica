@@ -19,7 +19,7 @@ import type {
   TokenCreationInput,
   TokenStateUpdateInput,
   VTTMessage,
-} from "$types/vtt";
+} from "../../types/vtt";
 import type { Point } from "schema";
 import { snapToGrid } from "$lib/utils/vtt-helpers";
 import { uiStore } from "./ui.svelte";

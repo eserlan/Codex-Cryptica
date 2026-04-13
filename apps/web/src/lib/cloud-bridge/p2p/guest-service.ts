@@ -2,7 +2,7 @@ import type { SerializedGraph } from "../types";
 import { guestRoster, type GuestPresenceStatus } from "../../stores/guest";
 import { upsertGuestRoster } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
-import type { VTTMessage } from "$types/vtt";
+import type { VTTMessage } from "../../../types/vtt";
 import { decodeSessionSnapshot, isValidP2PMessage } from "./p2p-protocol";
 
 type GuestStatusPayload = {
@@ -364,7 +364,7 @@ export class P2PGuestService {
           } else if (data.type === "CHAT_MESSAGE") {
             void this.getMapSession().then((mapSession) =>
               mapSession.handleRemoteChatMessage(
-                data as import("$types/vtt").ChatMessagePayload,
+                data as import("../../../types/vtt").ChatMessagePayload,
               ),
             );
           } else if (data.type === "CHAT_CLEAR") {

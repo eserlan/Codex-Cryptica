@@ -1,4 +1,4 @@
-import type { EncounterSession } from "$types/vtt";
+import type { EncounterSession } from "../../../types/vtt";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   decodeSessionSnapshot,

@@ -23,7 +23,7 @@
   import { MapViewAssetLoader } from "./map-view-loader";
   import MapPinPopover from "./MapPinPopover.svelte";
   import { hitTestToken, measureDistance } from "$lib/utils/vtt-helpers";
-  import { TOKEN_STATUS_EFFECTS } from "$types/vtt";
+  import { TOKEN_STATUS_EFFECTS } from "../../../types/vtt";
 
   function hashToColor(input: string) {
     let hash = 0;
@@ -1306,7 +1306,7 @@
                           if (token) {
                             const current = token.statusEffects ?? [];
                             const updated = isActive
-                              ? current.filter((e) => e !== effect.id)
+                              ? current.filter((e: string) => e !== effect.id)
                               : [...current, effect.id];
                             mapSession.updateToken(contextMenu.tokenId, {
                               statusEffects: updated,

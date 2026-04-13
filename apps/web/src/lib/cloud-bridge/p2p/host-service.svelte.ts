@@ -198,7 +198,7 @@ export class P2PHostService {
         if (typeof data.sender !== "string" || typeof data.content !== "string")
           return;
         mapSession.handleRemoteChatMessage(
-          data as import("$types/vtt").ChatMessagePayload,
+          data as import("../../../types/vtt").ChatMessagePayload,
         );
         this.broadcastVttMessage(data as P2PMessage, conn.peer);
       } else if (data.type === "PING") {

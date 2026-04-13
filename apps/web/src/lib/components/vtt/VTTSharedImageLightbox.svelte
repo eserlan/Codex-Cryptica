@@ -1,7 +1,7 @@
 <script lang="ts">
   import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import type { SharedTokenImageState } from "$types/vtt";
+  import type { SharedTokenImageState } from "../../../types/vtt";
 
   let { imageState, onClose } = $props<{
     imageState: SharedTokenImageState | null;

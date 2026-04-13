@@ -15,7 +15,7 @@
   } = $props();
 
   let isEditingRecentLimit = $state(false);
-  let recentLimitInput = $state(String(recentLimit));
+  let recentLimitInput = $state("");
 
   $effect(() => {
     recentLimitInput = String(recentLimit);

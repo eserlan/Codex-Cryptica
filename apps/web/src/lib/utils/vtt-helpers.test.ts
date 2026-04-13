@@ -7,7 +7,7 @@ import {
   snapToGrid,
   toViewportPoint,
 } from "./vtt-helpers";
-import type { Token } from "$types/vtt";
+import type { Token } from "../../types/vtt";
 
 describe("vtt-helpers", () => {
   it("snaps and clamps points", () => {
