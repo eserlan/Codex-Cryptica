@@ -80,4 +80,26 @@ describe("handleGraphDeleteShortcut", () => {
     expect(confirm).not.toHaveBeenCalled();
     expect(deleteEntity).not.toHaveBeenCalled();
   });
+
+  it("ignores delete shortcuts when a select is focused", async () => {
+    const select = document.createElement("select");
+    document.body.appendChild(select);
+    select.focus();
+
+    const event = new KeyboardEvent("keydown", { key: "Delete" });
+    const handled = await handleGraphDeleteShortcut(event, {
+      cy,
+      selectedId: "node-3",
+      isGuest: false,
+      confirm: confirm as any,
+      deleteEntity: deleteEntity as any,
+      clearSelectedId: clearSelectedId as any,
+    });
+
+    expect(handled).toBe(false);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(deleteEntity).not.toHaveBeenCalled();
+
+    select.remove();
+  });
 });

@@ -53,9 +53,10 @@ export function hitTestToken(
   x: number,
   y: number,
 ): Token | null {
-  const sorted = [...tokens].sort((a, b) => b.zIndex - a.zIndex);
+  let bestHit: Token | null = null;
+  let bestZIndex = -Infinity;
 
-  for (const token of sorted) {
+  for (const token of tokens) {
     const topLeft = project({ x: token.x, y: token.y });
     const bottomRight = project({
       x: token.x + token.width,
@@ -67,12 +68,19 @@ export function hitTestToken(
     const minY = Math.min(topLeft.y, bottomRight.y);
     const maxY = Math.max(topLeft.y, bottomRight.y);
 
-    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
-      return token;
+    if (
+      x >= minX &&
+      x <= maxX &&
+      y >= minY &&
+      y <= maxY &&
+      token.zIndex >= bestZIndex
+    ) {
+      bestHit = token;
+      bestZIndex = token.zIndex;
     }
   }
 
-  return null;
+  return bestHit;
 }
 
 export function getTokenCenter(token: Token): Point {

@@ -168,6 +168,25 @@ describe("UIStore", () => {
     vi.useRealTimers();
   });
 
+  it("should not let an older timeout clear a newer persistent notification", () => {
+    vi.useFakeTimers();
+
+    uiStore.notify("Short lived", "success");
+    uiStore.notify("Persistent", "info", true);
+
+    vi.advanceTimersByTime(5000);
+
+    expect(uiStore.notification).toEqual({
+      message: "Persistent",
+      type: "info",
+      persistent: true,
+    });
+
+    uiStore.clearNotification();
+    expect(uiStore.notification).toBe(null);
+    vi.useRealTimers();
+  });
+
   it("should handle global errors", () => {
     uiStore.setGlobalError("Oops", "stack trace");
     expect(uiStore.globalError).toEqual({

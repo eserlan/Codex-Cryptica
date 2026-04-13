@@ -1,7 +1,5 @@
 /** @vitest-environment jsdom */
 
-/** @vitest-environment jsdom */
-
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import ShareModal from "./ShareModal.svelte";

@@ -1,6 +1,7 @@
 import type {
   CompressedSessionSnapshotPayload,
   EncounterSession,
+  MapPingPayload,
   SessionSnapshotPayload,
   VTTMessage,
 } from "$types/vtt";
@@ -24,16 +25,7 @@ export type P2PMessage =
         fog?: { mime: string; data: ArrayBuffer };
       };
     }
-  | {
-      type: "MAP_PING";
-      payload: {
-        mapId: string;
-        x: number;
-        y: number;
-        peerId: string;
-        color: string;
-      };
-    }
+  | MapPingPayload
   | { type: "GET_FILE"; path: string; requestId: string }
   | {
       type: "FILE_RESPONSE";
@@ -76,11 +68,13 @@ export async function encodeSessionSnapshot(
   ) {
     return { type: "SESSION_SNAPSHOT", session };
   }
-  const cs = new CompressionStream("gzip");
-  const writer = cs.writable.getWriter();
-  writer.write(new TextEncoder().encode(json));
-  writer.close();
-  const data = await new Response(cs.readable).arrayBuffer();
+  const source = new Response(json).body;
+  if (!source) {
+    return { type: "SESSION_SNAPSHOT", session };
+  }
+  const data = await new Response(
+    source.pipeThrough(new CompressionStream("gzip")),
+  ).arrayBuffer();
   const ratio = ((1 - data.byteLength / json.length) * 100).toFixed(1);
   console.log(
     `[P2P] SESSION_SNAPSHOT_GZIP: ${json.length} → ${data.byteLength} bytes (${ratio}% smaller)`,
@@ -95,11 +89,13 @@ export async function decodeSessionSnapshot(
     return message.session;
   }
   if (message.type === "SESSION_SNAPSHOT_GZIP") {
-    const ds = new DecompressionStream("gzip");
-    const writer = ds.writable.getWriter();
-    writer.write(new Uint8Array(message.data));
-    writer.close();
-    const json = await new Response(ds.readable).text();
+    const source = new Response(message.data).body;
+    if (!source) {
+      throw new Error("Compressed snapshot body is unavailable");
+    }
+    const json = await new Response(
+      source.pipeThrough(new DecompressionStream("gzip")),
+    ).text();
     return JSON.parse(json);
   }
   throw new Error(`Unknown snapshot message type: ${(message as any).type}`);
@@ -130,8 +126,6 @@ export function isVTTMessage(message: any): message is VTTMessage {
       "SESSION_ENDED",
       "CHAT_CLEAR",
       "CHAT_MESSAGE",
-      "MAP_SYNC",
-      "MAP_FOG_SYNC",
       "MEASUREMENT",
       "MAP_MEASUREMENT",
       "SET_GRID_SETTINGS",

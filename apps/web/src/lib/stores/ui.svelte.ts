@@ -49,6 +49,7 @@ class UIStore {
   } | null>(null);
 
   private abortController: AbortController | null = null;
+  private notificationTimeoutId: number | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
 
   constructor() {
@@ -370,15 +371,25 @@ class UIStore {
     type: "success" | "info" | "error" = "success",
     persistent = false,
   ) {
+    if (this.notificationTimeoutId !== null) {
+      clearTimeout(this.notificationTimeoutId);
+      this.notificationTimeoutId = null;
+    }
+
     this.notification = { message, type, persistent };
     if (!persistent) {
-      setTimeout(() => {
+      this.notificationTimeoutId = window.setTimeout(() => {
         this.notification = null;
+        this.notificationTimeoutId = null;
       }, 5000);
     }
   }
 
   clearNotification() {
+    if (this.notificationTimeoutId !== null) {
+      clearTimeout(this.notificationTimeoutId);
+      this.notificationTimeoutId = null;
+    }
     this.notification = null;
   }
 
