@@ -48,9 +48,9 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this VTT was built for you.
 
+- **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to your knowledge graph.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** Your maps and tokens stay in your browser. There are no upload bars, no monthly quotas, and no "your storage is full" warnings mid-session.
-- **Context-Aware Play:** This is the first VTT that actually understands your lore. It doesn't just show images; it connects your tactical play to your knowledge graph.
 
 ## The VTT is the Interface
 
