@@ -25,11 +25,12 @@ Codex-Cryptica was built to make your world connected. Now it extends into the s
 
 ## Your Lore is the Map
 
-The core of the VTT is its deep connection to your data. In most tools, a token is just a name and an image. 
+The core of the VTT is its deep connection to your data. In most tools, a token is just a name and an image.
 
 **Here, a token is an Entity.**
 
 This creates a seamless flow from prep to play:
+
 1. **Prepare** an NPC with history, secrets, and relationships in your vault.
 2. **Drag** that NPC directly onto the map during a session.
 3. **Access** their full lore instantly by clicking their token—no searching, no tab-switching.
@@ -46,16 +47,17 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 ## Why Switch? Data-Native Gameplay
 
-If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this VTT was built for you.
+If you’ve ever felt slowed down by setup, subscriptions, or juggling multiple tools during a session, this VTT was built for you.
 
 - **Context-Aware Play:** **This is the first VTT designed to understand your lore**—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world—in real time.
+- **AI, When You Use It:** AI is available by default, but only runs when you actively use it. Your data stays local otherwise.
 - **No Hosting, No Setup:** **There is nothing to install**, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** **Your maps render instantly**—even high-resolution battle maps—because the data never leaves your machine. No upload bars, no quotas, and no delays mid-session.
 - **Direct Player Connection:** **Your players connect directly to your session**—no central server required. Map state and Fog of War are shared in real time, while your data stays local.
 
 ## The VTT is the Interface
 
-The VTT doesn’t replace your notes—it makes them playable. 
+The VTT doesn’t replace your notes—it makes them playable.
 
 **No export. No import. No sync.** You simply write a location, drop it on a map, and play instantly. Whether you are tracking a party's movement across a continent or managing a room-to-room encounter, this integration ensures one thing:
 
@@ -63,9 +65,9 @@ The VTT doesn’t replace your notes—it makes them playable.
 
 ### Start Your Next Session
 
-The VTT is ready for you today. 
+The VTT is ready for you today.
 
-**Open any map from your sidebar and toggle the VTT mode to start dragging your first entity onto the board—it takes seconds.** 
+**Open any map from your sidebar and toggle the VTT mode to start dragging your first entity onto the board—it takes seconds.**
 
 The first minute of your next session just got a whole lot smoother.
 

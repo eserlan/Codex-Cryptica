@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   publish:
@@ -39,6 +40,7 @@ jobs:
         run: node scripts/publish-blog-content.mjs
 
       - name: Commit and Push Blog Branch
+        id: commit_step
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HUSKY: 0
@@ -49,7 +51,16 @@ jobs:
           git add blog
           if git diff --cached --quiet; then
             echo "No blog content changes to publish."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           git commit --no-verify -m "📝 Update blog content"
           git push --no-verify --force-with-lease origin blog-content
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger Main App Deployment
+        if: steps.commit_step.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run deploy.yml --ref ${{ github.ref_name }}
