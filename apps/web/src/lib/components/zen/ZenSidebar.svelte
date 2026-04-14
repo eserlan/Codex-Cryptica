@@ -203,7 +203,7 @@
 
   <!-- Sidebar Content (Desktop) -->
   <div class="hidden md:block space-y-6">
-    {#if !isPopout}
+    {#if !(isPopout && vault.isGuest)}
       <div
         class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
       >
