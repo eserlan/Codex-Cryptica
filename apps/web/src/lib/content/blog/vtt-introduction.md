@@ -54,7 +54,7 @@ If you are tired of the setup time in Foundry, the monthly fees of Roll20, or th
 
 ## The VTT is the Interface
 
-I didn't build a VTT to replace your notes; I built it to make them more useful. 
+The VTT doesn’t replace your notes—it makes them playable. 
 
 **No export. No import. No sync.** You simply write a location, drop it on a map, and play instantly. Whether you are tracking a party's movement across a continent or managing a room-to-room encounter, this integration ensures that the distance between writing the world and playing it is zero.
 
