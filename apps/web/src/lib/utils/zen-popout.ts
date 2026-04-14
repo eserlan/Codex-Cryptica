@@ -11,10 +11,10 @@ export interface ZenPopoutPayload {
  * Opens an entity in a standalone zen popout tab.
  *
  * For guests (P2P data, no local vault), the entity is written to
- * localStorage before the tab opens. We intentionally omit `noopener`
- * for guests: in private/incognito mode, `noopener` causes the browser
- * to give the new tab an isolated storage partition, making the
- * localStorage write invisible to it.
+ * sessionStorage before the tab opens. We intentionally omit `noopener`
+ * for guests: browsers copy the opener's sessionStorage to new tabs
+ * opened via window.open, so the payload is immediately visible. With
+ * `noopener` that inheritance is blocked and the new tab sees nothing.
  *
  * For hosts, `noopener,noreferrer` is safe since no cross-tab storage
  * handshake is needed.
@@ -32,7 +32,7 @@ export function openEntityPopout(
       entity: JSON.parse(JSON.stringify(entity)),
       isGuest: true,
     };
-    localStorage.setItem(
+    sessionStorage.setItem(
       `${STORAGE_KEY_PREFIX}${entity.id}`,
       JSON.stringify(payload),
     );
@@ -47,9 +47,9 @@ export function consumeZenPopoutPayload(
   entityId: string,
 ): ZenPopoutPayload | null {
   const key = `${STORAGE_KEY_PREFIX}${entityId}`;
-  const raw = localStorage.getItem(key);
+  const raw = sessionStorage.getItem(key);
   if (!raw) return null;
-  localStorage.removeItem(key);
+  sessionStorage.removeItem(key);
   try {
     return JSON.parse(raw) as ZenPopoutPayload;
   } catch {
