@@ -3,6 +3,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
+  import { page } from "$app/state";
 
   import { clipboardService } from "$lib/services/ClipboardService";
   import ZenImageLightbox from "../zen/ZenImageLightbox.svelte";
@@ -12,6 +13,10 @@
   import ZenSidebar from "../zen/ZenSidebar.svelte";
   import ZenContent from "../zen/ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
+
+  const isPopout = $derived(
+    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
+  );
 
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -92,6 +97,10 @@
   };
 
   const handleClose = () => {
+    if (isPopout) {
+      window.close();
+      return;
+    }
     actions.handleClose(() => {
       uiStore.closeZenMode();
     });
@@ -167,7 +176,7 @@
       return;
 
     if (e.key === "Escape") {
-      handleClose();
+      if (!isPopout) handleClose();
     } else if (!isEditing) {
       const scroller =
         window.innerWidth < 768 ? mobileScroller : scrollContainer;
@@ -190,7 +199,7 @@
   <div
     class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
     transition:fade={{ duration: 200 }}
-    onclick={handleClose}
+    onclick={isPopout ? undefined : handleClose}
     data-testid="zen-mode-modal"
   >
     <div
@@ -231,7 +240,7 @@
         onCancelEdit={cancelEditing}
         onSave={saveChanges}
         onClose={handleClose}
-        onPopOut={handlePopOut}
+        onPopOut={isPopout ? undefined : handlePopOut}
       />
 
       <!-- Navigation Tabs -->
