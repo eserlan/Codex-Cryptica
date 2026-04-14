@@ -63,7 +63,11 @@ The VTT doesn’t replace your notes—it makes them playable.
 
 ### Start Your Next Session
 
-The VTT is ready for you today. **Open your campaign and drag your first entity onto the map—it takes seconds.** 
+The VTT is ready for you today. 
+
+**Click the “Launch VTT” icon in your sidebar and drag your first entity onto the map—it takes seconds.** 
+
+The first minute of your next session just got a whole lot smoother.
 
 I can’t wait to see the worlds you build and the stories you tell—I built this for exactly that.
 
