@@ -34,7 +34,7 @@ This creates a seamless flow from prep to play:
 2. **Drag** that NPC directly onto the map during a session.
 3. **Access** their full lore instantly by clicking their token—no searching, no tab-switching.
 
-Drop "Captain Elira" onto the board, and you instantly have her alliances and past encounters at your fingertips. You never have to hunt through folders to remember a character's motivation during a tense encounter—the map is simply another view of your world's data.
+Drop "Captain Elira" onto the board and instantly access her alliances, secrets, and past encounters. You never have to hunt through folders to remember a character's motivation during a tense session—the map is simply another view of your world's data.
 
 ## Reveal the World: Fast Tactical Discovery
 
