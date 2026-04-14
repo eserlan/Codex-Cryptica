@@ -1,8 +1,8 @@
 ---
 id: vtt-introduction
 slug: vtt-introduction
-title: "Your Notes Are Now Playable: Introducing the Codex Cryptica VTT"
-description: "Connect your notes to the map. Experience a data-native VTT that turns your lore into a playable space with zero setup and total privacy."
+title: "Stop Alt-Tabbing: Your Notes Are Now Playable"
+description: "Experience a data-native VTT that turns your lore into a playable space with zero setup, instant rendering, and total privacy."
 keywords:
   [
     "Virtual Tabletop",
@@ -36,9 +36,9 @@ This creates a seamless flow from prep to play:
 
 Drop "Captain Elira" onto the board—and everything you wrote about her is right there.
 
-## Reveal the World: Fast Tactical Discovery
+## Reveal the World: Instant Tactical Discovery
 
-A good session thrives on mystery and exploration. The VTT includes a **fast Fog of War** system that allows you to reveal the map as your players discover it—without breaking flow or leaving your world.
+A good session thrives on mystery and exploration. The VTT includes an **instant Fog of War** system that allows you to reveal the map as your players discover it—without breaking flow or leaving your world.
 
 Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. It is intentionally lightweight—you get core tools like initiative and status tracking without the heavy automation that gets in the way of fast, immersive play. I’ve designed it to be responsive and zero-setup to ensure the technology stays out of your way, even during combat.
 
@@ -50,7 +50,7 @@ If you are tired of the setup time in Foundry, the monthly fees of Roll20, or th
 
 - **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
-- **No Uploads, No Waiting:** Your maps and tokens stay in your browser. There are no upload bars, no monthly quotas, and no "your storage is full" warnings mid-session.
+- **No Uploads, No Waiting:** Your maps render instantly—even high-resolution battle maps—because the data never leaves your machine. No upload bars, no quotas, and no delays mid-session.
 - **Direct Player Connection:** Your players connect directly to your session—no central server required. Map state and Fog of War are shared in real time, while your data stays local.
 
 ## The VTT is the Interface
