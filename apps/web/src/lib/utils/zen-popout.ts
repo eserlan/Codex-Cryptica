@@ -11,8 +11,13 @@ export interface ZenPopoutPayload {
  * Opens an entity in a standalone zen popout tab.
  *
  * For guests (P2P data, no local vault), the entity is written to
- * localStorage under a per-entity key before the tab opens. The new tab
- * reads and immediately removes the entry so it doesn't linger.
+ * localStorage before the tab opens. We intentionally omit `noopener`
+ * for guests: in private/incognito mode, `noopener` causes the browser
+ * to give the new tab an isolated storage partition, making the
+ * localStorage write invisible to it.
+ *
+ * For hosts, `noopener,noreferrer` is safe since no cross-tab storage
+ * handshake is needed.
  */
 export function openEntityPopout(
   vaultId: string,
@@ -20,9 +25,10 @@ export function openEntityPopout(
   base: string,
   isGuest: boolean,
 ) {
+  const url = `${base}/vault/${vaultId}/entity/${entity.id}`;
+
   if (isGuest) {
     const payload: ZenPopoutPayload = {
-      // Strip Svelte reactive proxy before serialising
       entity: JSON.parse(JSON.stringify(entity)),
       isGuest: true,
     };
@@ -30,13 +36,11 @@ export function openEntityPopout(
       `${STORAGE_KEY_PREFIX}${entity.id}`,
       JSON.stringify(payload),
     );
+    // No noopener — needed to share the same storage partition in private mode
+    window.open(url, "_blank");
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
   }
-
-  window.open(
-    `${base}/vault/${vaultId}/entity/${entity.id}`,
-    "_blank",
-    "noopener,noreferrer",
-  );
 }
 
 export function consumeZenPopoutPayload(
