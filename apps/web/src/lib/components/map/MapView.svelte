@@ -1098,24 +1098,26 @@
               ></span>
               <span>Look at {_ctxToken.name}</span>
             </button>
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                if (_ctxToken?.entityId && vault.activeVaultId) {
-                  window.open(
-                    `${base}/vault/${vault.activeVaultId}/entity/${_ctxToken.entityId}`,
-                    "_blank",
-                    "noopener,noreferrer",
-                  );
-                  contextMenu = null;
-                }
-              }}
-            >
-              <span
-                class="icon-[heroicons--arrow-top-right-on-square] w-3.5 h-3.5 text-theme-primary"
-              ></span>
-              <span>Open in new tab</span>
-            </button>
+            {#if !uiStore.isGuestMode}
+              <button
+                class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+                onclick={() => {
+                  if (_ctxToken?.entityId && vault.activeVaultId) {
+                    window.open(
+                      `${base}/vault/${vault.activeVaultId}/entity/${_ctxToken.entityId}`,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
+                    contextMenu = null;
+                  }
+                }}
+              >
+                <span
+                  class="icon-[heroicons--arrow-top-right-on-square] w-3.5 h-3.5 text-theme-primary"
+                ></span>
+                <span>Open in new tab</span>
+              </button>
+            {/if}
           {/if}
         {/if}
 

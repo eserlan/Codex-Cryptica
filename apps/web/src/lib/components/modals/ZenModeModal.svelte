@@ -245,7 +245,7 @@
         onCancelEdit={cancelEditing}
         onSave={saveChanges}
         onClose={handleClose}
-        onPopOut={isPopout ? undefined : handlePopOut}
+        onPopOut={isPopout || vault.isGuest ? undefined : handlePopOut}
       />
 
       <!-- Navigation Tabs -->
