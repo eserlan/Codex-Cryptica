@@ -40,7 +40,7 @@ Drop "Captain Elira" onto the board—and everything you wrote about her is righ
 
 A good session thrives on mystery and exploration. The VTT includes a **fast Fog of War** system that allows you to reveal the map as your players discover it—without breaking flow or leaving your world.
 
-Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. It’s designed to be responsive and zero-setup—because I built it to stay out of your way during a session.
+Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. It is intentionally lightweight—you get core tools like initiative and status tracking without the heavy automation that gets in the way of fast, immersive play. I’ve designed it to be responsive and zero-setup to ensure the technology stays out of your way, even during combat.
 
 ![Tactical Map with Fog of War](https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-tactical.png)
 
