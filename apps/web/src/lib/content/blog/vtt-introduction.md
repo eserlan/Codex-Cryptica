@@ -34,7 +34,7 @@ This creates a seamless flow from prep to play:
 2. **Drag** that NPC directly onto the map during a session.
 3. **Access** their full lore instantly by clicking their token—no searching, no tab-switching.
 
-Drop "Captain Elira" onto the board—and everything you wrote about her is right there.
+Drop "Captain Elira" onto the board—and **everything you wrote about her is right there.**
 
 ## Reveal the World: Instant Tactical Discovery
 
