@@ -113,8 +113,13 @@
   };
 
   const handlePopOut = () => {
-    if (!entity || !vault.activeVaultId) return;
-    openEntityPopout(vault.activeVaultId, entity, base, vault.isGuest);
+    if (!entity) return;
+    openEntityPopout(
+      vault.activeVaultId ?? "guest",
+      entity,
+      base,
+      vault.isGuest,
+    );
     uiStore.closeZenMode();
   };
 

@@ -1105,9 +1105,9 @@
                 const entity = _ctxToken?.entityId
                   ? vault.entities[_ctxToken.entityId]
                   : null;
-                if (entity && vault.activeVaultId) {
+                if (entity) {
                   openEntityPopout(
-                    vault.activeVaultId,
+                    vault.activeVaultId ?? "guest",
                     entity,
                     base,
                     uiStore.isGuestMode,

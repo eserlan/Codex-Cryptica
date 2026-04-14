@@ -8,26 +8,36 @@
   const vaultId = $derived(page.params.id);
   const entityId = $derived(page.params.entityId);
 
-  // Guest flow: entity was written to localStorage by the opener tab
-  $effect(() => {
-    if (!browser || !entityId) return;
-    const payload = consumeZenPopoutPayload(entityId);
-    if (!payload) return;
+  // Consume guest payload synchronously so uiStore.isGuestMode is set
+  // before any effects run — prevents the host switchVault from firing.
+  let guestEntityId: string | null = null;
+  if (browser) {
+    const payload = page.params.entityId
+      ? consumeZenPopoutPayload(page.params.entityId)
+      : null;
+    if (payload) {
+      vault.repository.entities[payload.entity.id] = {
+        ...payload.entity,
+        _path:
+          typeof payload.entity._path === "string"
+            ? [payload.entity._path]
+            : payload.entity._path,
+      };
+      vault.isInitialized = true;
+      vault.status = "idle";
+      if (payload.isGuest) uiStore.isGuestMode = true;
+      guestEntityId = payload.entity.id;
+    }
+  }
 
-    vault.repository.entities[payload.entity.id] = {
-      ...payload.entity,
-      _path:
-        typeof payload.entity._path === "string"
-          ? [payload.entity._path]
-          : payload.entity._path,
-    };
-    vault.isInitialized = true;
-    vault.status = "idle";
-    if (payload.isGuest) uiStore.isGuestMode = true;
-    uiStore.openZenMode(payload.entity.id);
+  // Guest flow: open zen mode once reactive state has settled
+  $effect(() => {
+    if (guestEntityId && vault.entities[guestEntityId]) {
+      uiStore.openZenMode(guestEntityId);
+    }
   });
 
-  // Host flow: load vault from OPFS then open zen mode
+  // Host flow: only when not a guest popout
   $effect(() => {
     if (vaultId && vault.activeVaultId !== vaultId && !uiStore.isGuestMode) {
       void vault.switchVault(vaultId);
