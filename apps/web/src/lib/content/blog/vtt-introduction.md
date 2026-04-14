@@ -50,6 +50,7 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 If you’ve ever felt slowed down by setup, subscriptions, or juggling multiple tools during a session, this VTT was built for you.
 
 - **Context-Aware Play:** **This is the first VTT designed to understand your lore**—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world—in real time.
+- **AI, When You Use It:** AI is available by default, but only runs when you actively use it. Your data stays local otherwise.
 - **No Hosting, No Setup:** **There is nothing to install**, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** **Your maps render instantly**—even high-resolution battle maps—because the data never leaves your machine. No upload bars, no quotas, and no delays mid-session.
 - **Direct Player Connection:** **Your players connect directly to your session**—no central server required. Map state and Fog of War are shared in real time, while your data stays local.
