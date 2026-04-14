@@ -57,6 +57,9 @@
       page.url.pathname === `${base}/help` ||
       page.url.pathname === `${base}/import`,
   );
+  const isZenPopout = $derived(
+    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
+  );
   const isVttFullscreen = $derived(
     page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
   );
@@ -214,14 +217,14 @@
 <div class="h-screen bg-theme-bg flex flex-col font-body app-layout">
   <NotificationToast />
 
-  {#if !isPopup && !isVttFullscreen}
+  {#if !isPopup && !isVttFullscreen && !isZenPopout}
     <AppHeader bind:isMobileMenuOpen bind:headerEl />
   {/if}
 
   <div
     class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
   >
-    {#if !isPopup && !isVttFullscreen}
+    {#if !isPopup && !isVttFullscreen && !isZenPopout}
       <ActivityBar />
       <SidebarPanelHost />
     {/if}
@@ -231,7 +234,7 @@
     </main>
   </div>
 
-  {#if !isPopup && !isVttFullscreen}
+  {#if !isPopup && !isVttFullscreen && !isZenPopout}
     <AppFooter />
   {/if}
 

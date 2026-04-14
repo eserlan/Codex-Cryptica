@@ -1103,7 +1103,7 @@
               onclick={() => {
                 if (_ctxToken?.entityId && vault.activeVaultId) {
                   window.open(
-                    `${base}/vault/${vault.activeVaultId}?zen=${_ctxToken.entityId}`,
+                    `${base}/vault/${vault.activeVaultId}/entity/${_ctxToken.entityId}`,
                     "_blank",
                     "noopener,noreferrer",
                   );

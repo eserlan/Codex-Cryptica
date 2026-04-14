@@ -100,7 +100,7 @@
   const handlePopOut = () => {
     if (!entity || !vault.activeVaultId) return;
     window.open(
-      `${base}/vault/${vault.activeVaultId}?zen=${entity.id}`,
+      `${base}/vault/${vault.activeVaultId}/entity/${entity.id}`,
       "_blank",
       "noopener,noreferrer",
     );
