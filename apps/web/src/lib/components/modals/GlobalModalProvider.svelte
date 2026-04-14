@@ -36,7 +36,6 @@
 </script>
 
 <SearchModal />
-<SettingsModal />
 
 {#if uiStore.showChangelog}
   {#await loadModal(() => import("./ChangelogModal.svelte"), "ChangelogModal") then ChangelogModal}
