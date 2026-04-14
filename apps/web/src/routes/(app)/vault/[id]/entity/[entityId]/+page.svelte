@@ -12,14 +12,26 @@
   const vaultId = $derived(page.params.id);
   const entityId = $derived(page.params.entityId);
 
+  const normalizeEntity = (e: {
+    _path?: string | string[] | null;
+    [k: string]: unknown;
+  }) => ({
+    ...e,
+    _path: typeof e._path === "string" ? [e._path] : (e._path ?? []),
+  });
+
   const applyGuestPayload = (payload: ZenPopoutPayload) => {
-    vault.repository.entities[payload.entity.id] = {
-      ...payload.entity,
-      _path:
-        typeof payload.entity._path === "string"
-          ? [payload.entity._path]
-          : payload.entity._path,
-    };
+    vault.repository.entities[payload.entity.id] = normalizeEntity(
+      payload.entity,
+    ) as any;
+
+    // Hydrate stubs for connected entities so connection rendering works
+    for (const extra of payload.extraEntities ?? []) {
+      if (!vault.repository.entities[extra.id]) {
+        vault.repository.entities[extra.id] = normalizeEntity(extra) as any;
+      }
+    }
+
     vault.isInitialized = true;
     vault.status = "idle";
     if (payload.isGuest) uiStore.isGuestMode = true;

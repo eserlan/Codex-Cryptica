@@ -132,11 +132,43 @@
         entityForPopout = vault.entities[entityId] ?? entityForPopout;
       }
 
+      // Convert blob URL → data URL so the image survives cross-tab (no P2P in popout)
+      if (resolvedImageUrl) {
+        try {
+          const resp = await fetch(resolvedImageUrl);
+          const blob = await resp.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          entityForPopout = { ...entityForPopout, image: dataUrl };
+        } catch {
+          // silently skip — image just won't appear in the popout
+        }
+      }
+
+      // Collect stubs for linked entities — needed for connection rendering in popout
+      const seen = new Set<string>();
+      const extraEntities: (typeof entity)[] = [];
+      const addStub = (id: string) => {
+        if (seen.has(id)) return;
+        seen.add(id);
+        const e = vault.entities[id];
+        if (e) extraEntities.push(e);
+      };
+      for (const conn of entityForPopout.connections ?? [])
+        addStub(conn.target);
+      for (const item of vault.inboundConnections[entityForPopout.id] ?? [])
+        addStub(item.sourceId);
+
       openEntityPopout(
         vault.activeVaultId ?? "guest",
         entityForPopout,
         base,
         vault.isGuest,
+        extraEntities.length > 0 ? extraEntities : undefined,
       );
       uiStore.closeZenMode();
     };
