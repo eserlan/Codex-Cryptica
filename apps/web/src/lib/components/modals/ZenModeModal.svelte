@@ -4,6 +4,7 @@
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
   import { page } from "$app/state";
+  import { openEntityPopout } from "$lib/utils/zen-popout";
 
   import { clipboardService } from "$lib/services/ClipboardService";
   import ZenImageLightbox from "../zen/ZenImageLightbox.svelte";
@@ -113,11 +114,7 @@
 
   const handlePopOut = () => {
     if (!entity || !vault.activeVaultId) return;
-    window.open(
-      `${base}/vault/${vault.activeVaultId}/entity/${entity.id}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    openEntityPopout(vault.activeVaultId, entity, base, vault.isGuest);
     uiStore.closeZenMode();
   };
 
@@ -245,7 +242,7 @@
         onCancelEdit={cancelEditing}
         onSave={saveChanges}
         onClose={handleClose}
-        onPopOut={isPopout || vault.isGuest ? undefined : handlePopOut}
+        onPopOut={isPopout ? undefined : handlePopOut}
       />
 
       <!-- Navigation Tabs -->
