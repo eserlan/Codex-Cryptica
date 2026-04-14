@@ -35,15 +35,12 @@ jobs:
           if [ -n "$SPECIFIC_RUN" ]; then
             RUN_ID="$SPECIFIC_RUN"
           else
-            # Resolve the exact commit SHA at the tip of staging, then find the
-            # workflow run for that commit. This is reliable regardless of how the
-            # run was triggered (push, workflow_dispatch, etc.).
-            STAGING_SHA=$(gh api repos/$GH_REPO/commits/staging --jq '.sha')
-            echo "Staging tip: $STAGING_SHA"
-
+            # Find the latest successful deploy on the staging branch.
+            # Using --branch is more reliable than --commit on the tip SHA,
+            # since CI-only commits (no app change) may not have a deploy run.
             RUN_ID=$(gh run list \
               --workflow "Deploy to Cloudflare Pages" \
-              --commit "$STAGING_SHA" \
+              --branch staging \
               --status success \
               --limit 1 \
               --json databaseId \
