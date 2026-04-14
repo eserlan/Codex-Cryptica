@@ -51,6 +51,6 @@ I didn't build a VTT to replace your notes; I built it to make them more useful.
 
 Whether you are tracking a party's movement across a continent or managing a room-to-room encounter, this integration ensures that the distance between "writing the world" and "playing the world" is zero. 
 
-The VTT is currently in **Early Access (Staging)** and will be rolling out to everyone soon. I can’t wait to see the maps you build and the stories you tell.
+I can’t wait to see the maps you build and the stories you tell.
 
 _Want to learn more about how data is handled? Check out the [GM's Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty)._
