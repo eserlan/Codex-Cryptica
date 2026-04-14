@@ -51,6 +51,7 @@ If you are tired of the setup time in Foundry, the monthly fees of Roll20, or th
 - **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** Your maps and tokens stay in your browser. There are no upload bars, no monthly quotas, and no "your storage is full" warnings mid-session.
+- **Direct Player Connection:** Your players connect directly to your session—no central server required. Map state and Fog of War are shared in real time, while your data stays local.
 
 ## The VTT is the Interface
 
