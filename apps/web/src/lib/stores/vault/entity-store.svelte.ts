@@ -588,11 +588,18 @@ export class EntityStore {
 
   async loadEntityContent(id: string): Promise<void> {
     const activeVaultId = this.deps.activeVaultId();
-    if (!id || !activeVaultId) return;
+    if (!id) return;
     if (this._contentVerifiedIds.has(id)) return;
 
     const currentEntity = this.entities[id];
     if (!currentEntity) return;
+
+    // Guest/popout mode: no local vault — content arrives via P2P or postMessage.
+    // If the entity already carries content, treat it as verified and done.
+    if (!activeVaultId) {
+      if (currentEntity.content) this._contentVerifiedIds.add(id);
+      return;
+    }
 
     // PRIORITY 1: Cache
     let cached: { content: string; lore: string } | null = null;
