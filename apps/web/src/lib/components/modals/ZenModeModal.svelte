@@ -2,6 +2,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { fly, fade } from "svelte/transition";
+  import { base } from "$app/paths";
 
   import { clipboardService } from "$lib/services/ClipboardService";
   import ZenImageLightbox from "../zen/ZenImageLightbox.svelte";
@@ -94,6 +95,16 @@
     actions.handleClose(() => {
       uiStore.closeZenMode();
     });
+  };
+
+  const handlePopOut = () => {
+    if (!entity || !vault.activeVaultId) return;
+    window.open(
+      `${base}/vault/${vault.activeVaultId}?zen=${entity.id}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+    uiStore.closeZenMode();
   };
 
   const navigateTo = async (id: string) => {
@@ -220,6 +231,7 @@
         onCancelEdit={cancelEditing}
         onSave={saveChanges}
         onClose={handleClose}
+        onPopOut={handlePopOut}
       />
 
       <!-- Navigation Tabs -->

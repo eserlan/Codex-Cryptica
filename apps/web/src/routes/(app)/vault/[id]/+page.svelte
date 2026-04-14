@@ -6,6 +6,7 @@
   import EntityDetailPanel from "$lib/components/EntityDetailPanel.svelte";
 
   const vaultId = $derived(page.params.id);
+  const zenParam = $derived(page.url.searchParams.get("zen"));
   const selectedEntity = $derived.by(() => {
     const id = vault.selectedEntityId;
     return id ? vault.entities[id] : null;
@@ -14,6 +15,17 @@
   $effect(() => {
     if (vaultId && vault.activeVaultId !== vaultId) {
       void vault.switchVault(vaultId);
+    }
+  });
+
+  // Auto-open zen mode when ?zen=entityId is in the URL, once the vault is loaded
+  $effect(() => {
+    if (
+      zenParam &&
+      vault.activeVaultId === vaultId &&
+      vault.entities[zenParam]
+    ) {
+      uiStore.openZenMode(zenParam);
     }
   });
 </script>
