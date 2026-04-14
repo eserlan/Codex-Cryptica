@@ -14,6 +14,12 @@
   let lightboxBackdrop = $state<HTMLDivElement>();
   let closeLightboxBtn = $state<HTMLButtonElement>();
 
+  function openInStandaloneWindow(event: MouseEvent) {
+    event.stopPropagation();
+    if (!imageUrl || typeof window === "undefined") return;
+    window.open(imageUrl, "_blank", "noopener,noreferrer");
+  }
+
   // Focus Management
   $effect(() => {
     if (show) {
@@ -71,18 +77,32 @@
     onkeydown={handleKeydown}
     transition:fade={{ duration: 200 }}
   >
-    <!-- Explicit Close Button -->
-    <button
-      bind:this={closeLightboxBtn}
-      class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
-      onclick={(e) => {
-        e.stopPropagation();
-        show = false;
-      }}
-      aria-label="Close image view"
-    >
-      <span class="icon-[lucide--x] w-8 h-8"></span>
-    </button>
+    <div class="absolute top-4 right-4 flex items-center gap-2">
+      <button
+        class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none disabled:opacity-40 disabled:cursor-not-allowed"
+        onclick={openInStandaloneWindow}
+        aria-label="Open image in standalone window"
+        title="Open image in standalone window"
+        disabled={!imageUrl}
+        type="button"
+      >
+        <span class="icon-[lucide--external-link] w-6 h-6"></span>
+      </button>
+
+      <!-- Explicit Close Button -->
+      <button
+        bind:this={closeLightboxBtn}
+        class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none"
+        onclick={(e) => {
+          e.stopPropagation();
+          show = false;
+        }}
+        aria-label="Close image view"
+        type="button"
+      >
+        <span class="icon-[lucide--x] w-8 h-8"></span>
+      </button>
+    </div>
 
     {#if imageUrl}
       <img

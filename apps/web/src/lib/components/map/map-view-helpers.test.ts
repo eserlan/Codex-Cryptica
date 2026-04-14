@@ -5,6 +5,7 @@ import {
   getKeyboardViewportUpdate,
   getZoomViewportUpdate,
   isClickGesture,
+  shouldIgnoreMapKeyboardEvent,
 } from "./map-view-helpers";
 
 describe("map-view helpers", () => {
@@ -73,6 +74,22 @@ describe("map-view helpers", () => {
       zoom: 1,
     });
     expect(zoom?.zoom).toBe(1.1);
+  });
+
+  it("shouldIgnoreMapKeyboardEvent should ignore editable elements", () => {
+    const input = document.createElement("input");
+    const textarea = document.createElement("textarea");
+    const select = document.createElement("select");
+    const div = document.createElement("div");
+    const editable = document.createElement("div");
+    editable.setAttribute("contenteditable", "true");
+
+    expect(shouldIgnoreMapKeyboardEvent(input)).toBe(true);
+    expect(shouldIgnoreMapKeyboardEvent(textarea)).toBe(true);
+    expect(shouldIgnoreMapKeyboardEvent(select)).toBe(true);
+    expect(shouldIgnoreMapKeyboardEvent(editable)).toBe(true);
+    expect(shouldIgnoreMapKeyboardEvent(div)).toBe(false);
+    expect(shouldIgnoreMapKeyboardEvent(null)).toBe(false);
   });
 
   it("getZoomViewportUpdate should keep the mouse focus unless alt is held", () => {

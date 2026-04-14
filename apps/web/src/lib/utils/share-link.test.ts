@@ -8,8 +8,8 @@ import {
 describe("share-link helpers", () => {
   it("should build a p2p share link", () => {
     expect(
-      buildP2PShareLink("https://example.com", "/campaign", "peer-123"),
-    ).toBe("https://example.com/campaign?shareId=p2p-peer-123");
+      buildP2PShareLink("https://example.com", "/campaign", "peer-123", "map"),
+    ).toBe("https://example.com/campaign?shareId=p2p-peer-123&view=map");
   });
 
   it("should return false when clipboard write fails", async () => {
@@ -41,6 +41,7 @@ describe("share-link helpers", () => {
     const sessionPromise = startShareSession({
       origin: "https://example.com",
       pathname: "/campaign",
+      view: "campaign",
       startHosting,
       clipboard: { writeText: copy },
       onLink,
@@ -49,10 +50,10 @@ describe("share-link helpers", () => {
 
     expect(startHosting).toHaveBeenCalledTimes(1);
     expect(copy).toHaveBeenCalledWith(
-      "https://example.com/campaign?shareId=p2p-peer-123",
+      "https://example.com/campaign?shareId=p2p-peer-123&view=campaign",
     );
     expect(onLink).toHaveBeenCalledWith(
-      "https://example.com/campaign?shareId=p2p-peer-123",
+      "https://example.com/campaign?shareId=p2p-peer-123&view=campaign",
     );
 
     resolveHost("peer-123");

@@ -1,6 +1,58 @@
 import type { MapPin, ViewportTransform } from "schema";
 import { imageToViewport } from "./math";
 
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = hex.replace("#", "").match(/.{2}/g);
+  if (!m || m.length < 3) return null;
+  return {
+    r: parseInt(m[0], 16),
+    g: parseInt(m[1], 16),
+    b: parseInt(m[2], 16),
+  };
+}
+
+function _lightenColor(hex: string, amount: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const r = Math.min(255, Math.round(rgb.r + (255 - rgb.r) * amount));
+  const g = Math.min(255, Math.round(rgb.g + (255 - rgb.g) * amount));
+  const b = Math.min(255, Math.round(rgb.b + (255 - rgb.b) * amount));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+function _darkenColor(hex: string, amount: number): string {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return hex;
+  const r = Math.max(0, Math.round(rgb.r * (1 - amount)));
+  const g = Math.max(0, Math.round(rgb.g * (1 - amount)));
+  const b = Math.max(0, Math.round(rgb.b * (1 - amount)));
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+export interface RenderToken {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  color: string;
+  label: string;
+  image?: HTMLImageElement | null;
+  selected?: boolean;
+  active?: boolean;
+  visible?: boolean;
+  statusEffects?: string[];
+}
+
+export interface RenderMeasurement {
+  active: boolean;
+  start: { x: number; y: number } | null;
+  end: { x: number; y: number } | null;
+  color?: string;
+  label?: string;
+}
+
 export interface RenderOptions {
   canvas: HTMLCanvasElement;
   image: HTMLImageElement | null;
@@ -10,11 +62,17 @@ export interface RenderOptions {
   maskCanvas: HTMLCanvasElement | null;
   showFog: boolean;
   fogColor?: string;
+  tokens?: RenderToken[];
+  measurement?: RenderMeasurement | null;
+  accentColor?: string;
   grid?: {
     type: "none" | "square" | "hex";
     size: number;
     color: string;
     opacity: number;
+    offsetX?: number;
+    offsetY?: number;
+    fixed?: boolean;
   };
 }
 
@@ -31,6 +89,23 @@ interface CanvasCache {
 }
 
 const canvasCaches = new WeakMap<HTMLCanvasElement, CanvasCache>();
+
+function drawRoundedRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  ctx.beginPath();
+  if (typeof ctx.roundRect === "function") {
+    ctx.roundRect(x, y, width, height, radius);
+    return;
+  }
+
+  ctx.rect(x, y, width, height);
+}
 
 function getCache(canvas: HTMLCanvasElement): CanvasCache {
   let cache = canvasCaches.get(canvas);
@@ -50,6 +125,8 @@ export function renderMap(options: RenderOptions) {
     pins,
     maskCanvas,
     showFog,
+    tokens = [],
+    measurement = null,
     grid,
   } = options;
   const ctx = canvas.getContext("2d");
@@ -77,12 +154,321 @@ export function renderMap(options: RenderOptions) {
   );
   ctx.restore();
 
-  // 2. Draw Grid
+  // 3. Draw Grid
   if (grid && grid.type !== "none") {
     drawGrid(ctx, transform, canvasSize, grid, cache);
   }
 
-  // 3. Draw Fog of War using an off-screen canvas to isolate the compositing.
+  // 4. Draw pins
+  for (const pin of pins) {
+    const pos = imageToViewport(pin.coordinates, transform, canvasSize);
+
+    // Frustum culling: skip pins outside the viewport (with padding)
+    if (
+      pos.x < -20 ||
+      pos.x > canvasSize.width + 20 ||
+      pos.y < -20 ||
+      pos.y > canvasSize.height + 20
+    ) {
+      continue;
+    }
+
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = pin.visuals.color || "#4ade80"; // Fallback to theme-primary
+    ctx.fill();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // 5. Draw tokens above the map and pins
+  for (const token of tokens) {
+    if (token.visible === false) continue;
+
+    const topLeft = imageToViewport(
+      { x: token.x, y: token.y },
+      transform,
+      canvasSize,
+    );
+    const bottomRight = imageToViewport(
+      { x: token.x + token.width, y: token.y + token.height },
+      transform,
+      canvasSize,
+    );
+
+    const minX = Math.min(topLeft.x, bottomRight.x);
+    const minY = Math.min(topLeft.y, bottomRight.y);
+    const width = Math.abs(bottomRight.x - topLeft.x);
+    const height = Math.abs(bottomRight.y - topLeft.y);
+
+    if (
+      minX > canvasSize.width + 40 ||
+      minY > canvasSize.height + 40 ||
+      minX + width < -40 ||
+      minY + height < -40
+    ) {
+      continue;
+    }
+
+    const center = {
+      x: minX + width / 2,
+      y: minY + height / 2,
+    };
+    const diameter = Math.max(1, Math.min(width, height));
+    const radius = diameter / 2;
+
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.rotate((token.rotation * Math.PI) / 180);
+
+    ctx.beginPath();
+    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+
+    if (token.image && token.image.width > 0 && token.image.height > 0) {
+      const imageAspect = token.image.width / token.image.height;
+      const drawWidth = imageAspect > 1 ? diameter * imageAspect : diameter;
+      const drawHeight = imageAspect > 1 ? diameter : diameter / imageAspect;
+
+      ctx.drawImage(
+        token.image,
+        -drawWidth / 2,
+        -drawHeight / 2,
+        drawWidth,
+        drawHeight,
+      );
+    } else if (token.image) {
+      ctx.fillStyle = token.color || "#f59e0b";
+      ctx.fill();
+    } else {
+      ctx.fillStyle = token.color || "#f59e0b";
+      ctx.fill();
+    }
+
+    ctx.restore();
+
+    // Border and shadow OUTSIDE the token
+    if (token.active || token.selected) {
+      const accent = token.active
+        ? options.accentColor || "#d97706"
+        : "#3b82f6";
+      const borderWidth = token.active ? 8 : 5;
+
+      // Outer drop shadow (outside only)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius + borderWidth / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.lineWidth = borderWidth + 4;
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.shadowBlur = token.active ? 20 : 12;
+      ctx.stroke();
+      ctx.restore();
+
+      // Main thick border
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = borderWidth;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = token.active ? 16 : 10;
+      ctx.stroke();
+      ctx.restore();
+
+      // Thin bright highlight on top
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, radius, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+      ctx.shadowBlur = 4;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw dead status: red X ON the token + dark overlay
+    if (token.statusEffects && token.statusEffects.includes("dead")) {
+      ctx.save();
+      // Dark overlay on token
+      ctx.translate(center.x, center.y);
+      ctx.rotate((token.rotation * Math.PI) / 180);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+      ctx.fill();
+      // Red X
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = Math.max(3, radius * 0.15);
+      ctx.lineCap = "round";
+      ctx.shadowColor = "rgba(239, 68, 68, 0.8)";
+      ctx.shadowBlur = 8;
+      const xHalf = radius * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(-xHalf, -xHalf);
+      ctx.lineTo(xHalf, xHalf);
+      ctx.moveTo(xHalf, -xHalf);
+      ctx.lineTo(-xHalf, xHalf);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw other status icons above the token
+    if (token.statusEffects) {
+      const otherStatuses = token.statusEffects.filter((s) => s !== "dead");
+      if (otherStatuses.length > 0) {
+        const iconSize = Math.max(14, Math.min(20, radius * 0.5));
+        const gap = 4;
+        const padding = 9;
+        const totalWidth = otherStatuses.length * (iconSize + gap) - gap;
+        const barWidth = totalWidth + padding * 2;
+        const barHeight = iconSize + padding * 2;
+        const startX = center.x - totalWidth / 2;
+        const iconY = center.y - radius - iconSize - 8;
+        const barX = center.x - barWidth / 2;
+        const barY = iconY - padding;
+        const barRadius = barHeight / 2;
+
+        // Shared pill background
+        ctx.save();
+        drawRoundedRectPath(ctx, barX, barY, barWidth, barHeight, barRadius);
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        for (let i = 0; i < otherStatuses.length; i++) {
+          const statusId = otherStatuses[i];
+          const cx = startX + i * (iconSize + gap) + iconSize / 2;
+          const cy = iconY + iconSize / 2;
+          const s = iconSize / 2;
+
+          ctx.save();
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+
+          switch (statusId) {
+            case "stunned": {
+              // Zap / lightning bolt
+              ctx.fillStyle = "#facc15";
+              ctx.shadowColor = "rgba(250, 204, 21, 0.6)";
+              ctx.shadowBlur = 4;
+              ctx.beginPath();
+              ctx.moveTo(cx + s * 0.1, -s + cy);
+              ctx.lineTo(cx - s * 0.5, cy);
+              ctx.lineTo(cx - s * 0.05, cy);
+              ctx.lineTo(cx - s * 0.2, s + cy);
+              ctx.lineTo(cx + s * 0.5, cy);
+              ctx.lineTo(cx + s * 0.05, cy);
+              ctx.closePath();
+              ctx.fill();
+              break;
+            }
+            case "prone": {
+              // Arrow-down
+              ctx.strokeStyle = "#a855f7";
+              ctx.lineWidth = 2;
+              ctx.shadowColor = "rgba(168, 85, 247, 0.5)";
+              ctx.shadowBlur = 3;
+              ctx.beginPath();
+              ctx.moveTo(cx, -s * 0.6 + cy);
+              ctx.lineTo(cx, s * 0.7 + cy);
+              ctx.moveTo(cx - s * 0.4, s * 0.2 + cy);
+              ctx.lineTo(cx, s * 0.7 + cy);
+              ctx.lineTo(cx + s * 0.4, s * 0.2 + cy);
+              ctx.stroke();
+              break;
+            }
+            case "poisoned": {
+              // Skull / flask-conical
+              ctx.strokeStyle = "#22c55e";
+              ctx.lineWidth = 1.5;
+              ctx.shadowColor = "rgba(34, 197, 94, 0.5)";
+              ctx.shadowBlur = 3;
+              ctx.beginPath();
+              ctx.arc(cx, cy - s * 0.2, s * 0.35, Math.PI, 0, false);
+              ctx.lineTo(cx + s * 0.35, cy + s * 0.2);
+              ctx.lineTo(cx + s * 0.5, cy + s * 0.9);
+              ctx.lineTo(cx - s * 0.5, cy + s * 0.9);
+              ctx.lineTo(cx - s * 0.35, cy + s * 0.2);
+              ctx.closePath();
+              ctx.stroke();
+              // Eyes
+              ctx.fillStyle = "#22c55e";
+              ctx.beginPath();
+              ctx.arc(cx - s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(cx + s * 0.12, cy - s * 0.2, 1.2, 0, Math.PI * 2);
+              ctx.fill();
+              break;
+            }
+            case "invisible": {
+              // Eye with slash (eye-off)
+              ctx.strokeStyle = "#94a3b8";
+              ctx.lineWidth = 1.5;
+              ctx.shadowColor = "rgba(148, 163, 184, 0.5)";
+              ctx.shadowBlur = 3;
+              // Eye shape
+              ctx.beginPath();
+              ctx.moveTo(cx - s * 0.7, cy);
+              ctx.quadraticCurveTo(cx, cy - s * 0.7, cx + s * 0.7, cy);
+              ctx.quadraticCurveTo(cx, cy + s * 0.7, cx - s * 0.7, cy);
+              ctx.stroke();
+              // Iris
+              ctx.beginPath();
+              ctx.arc(cx, cy, s * 0.25, 0, Math.PI * 2);
+              ctx.stroke();
+              // Slash
+              ctx.beginPath();
+              ctx.moveTo(cx - s * 0.6, cy - s * 0.7);
+              ctx.lineTo(cx + s * 0.6, cy + s * 0.7);
+              ctx.stroke();
+              break;
+            }
+          }
+          ctx.restore();
+        }
+      }
+    }
+
+    if (token.label) {
+      ctx.save();
+      ctx.font = "12px ui-sans-serif, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const labelX = center.x;
+      const labelY = center.y + height / 2 + 6;
+      const metrics = ctx.measureText(token.label);
+      const paddingX = 8;
+      const boxWidth = metrics.width + paddingX * 2;
+      const boxHeight = 18;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.strokeStyle = token.active ? "#f59e0b" : "rgba(255, 255, 255, 0.2)";
+      ctx.lineWidth = 1;
+      drawRoundedRectPath(
+        ctx,
+        labelX - boxWidth / 2,
+        labelY,
+        boxWidth,
+        boxHeight,
+        8,
+      );
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(token.label, labelX, labelY + 2);
+      ctx.restore();
+    }
+  }
+
+  // 6. Draw Fog of War above pins and tokens so the reveal state masks them.
   // Applying destination-out directly on the main canvas would erase the map
   // image itself, not just the fog layer on top of it.
   if (showFog && maskCanvas) {
@@ -127,27 +513,71 @@ export function renderMap(options: RenderOptions) {
     }
   }
 
-  // 4. Draw pins
-  for (const pin of pins) {
-    const pos = imageToViewport(pin.coordinates, transform, canvasSize);
+  // 7. Draw measurement overlay
+  if (measurement?.active && measurement.start && measurement.end) {
+    const start = imageToViewport(measurement.start, transform, canvasSize);
+    const end = imageToViewport(measurement.end, transform, canvasSize);
+    const color = measurement.color || "#22c55e";
 
-    // Frustum culling: skip pins outside the viewport (with padding)
-    if (
-      pos.x < -20 ||
-      pos.x > canvasSize.width + 20 ||
-      pos.y < -20 ||
-      pos.y > canvasSize.height + 20
-    ) {
-      continue;
-    }
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 6]);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw arrowhead at end
+    const headLength = 12;
+    const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    ctx.beginPath();
+    ctx.moveTo(end.x, end.y);
+    ctx.lineTo(
+      end.x - headLength * Math.cos(angle - Math.PI / 6),
+      end.y - headLength * Math.sin(angle - Math.PI / 6),
+    );
+    ctx.lineTo(
+      end.x - headLength * Math.cos(angle + Math.PI / 6),
+      end.y - headLength * Math.sin(angle + Math.PI / 6),
+    );
+    ctx.closePath();
+    ctx.fill();
 
     ctx.beginPath();
-    ctx.arc(pos.x, pos.y, 8, 0, Math.PI * 2);
-    ctx.fillStyle = pin.visuals.color || "#4ade80"; // Fallback to theme-primary
+    ctx.arc(start.x, start.y, 4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    const label = measurement.label || "";
+    if (label) {
+      ctx.font = "bold 12px ui-sans-serif, system-ui, sans-serif";
+      const metrics = ctx.measureText(label);
+      const paddingX = 12;
+      const paddingY = 6;
+      const boxWidth = metrics.width + paddingX * 2;
+      const boxHeight = 14 + paddingY * 2;
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+
+      const boxX = midX - boxWidth / 2;
+      const boxY = midY - boxHeight - 15; // Shift up from the line
+
+      drawRoundedRectPath(ctx, boxX, boxY, boxWidth, boxHeight, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, midX, boxY + boxHeight / 2 + 1);
+    }
+    ctx.restore();
   }
 }
 
@@ -195,6 +625,7 @@ function drawGrid(
       patternCanvas.height = size;
       pCtx.strokeStyle = grid.color;
       pCtx.globalAlpha = grid.opacity;
+      pCtx.lineWidth = 1.5;
       pCtx.strokeRect(0, 0, size, size);
 
       const pattern = ctx.createPattern(patternCanvas, "repeat");
@@ -211,17 +642,31 @@ function drawGrid(
     ctx.save();
     ctx.fillStyle = cache.cachedPattern.pattern;
 
-    const offsetX = (transform.pan.x + canvasSize.width / 2) % size;
-    const offsetY = (transform.pan.y + canvasSize.height / 2) % size;
+    if (grid.fixed) {
+      // Fixed grid mode: ignore pan offset, draw at screen origin
+      ctx.fillRect(
+        -size,
+        -size,
+        canvasSize.width + size * 2,
+        canvasSize.height + size * 2,
+      );
+    } else {
+      const gridOffsetX = (grid.offsetX ?? 0) * transform.zoom;
+      const gridOffsetY = (grid.offsetY ?? 0) * transform.zoom;
+      const offsetX =
+        (transform.pan.x + canvasSize.width / 2 + gridOffsetX) % size;
+      const offsetY =
+        (transform.pan.y + canvasSize.height / 2 + gridOffsetY) % size;
 
-    ctx.translate(offsetX, offsetY);
-    // Draw slightly larger to cover edges during pan
-    ctx.fillRect(
-      -size,
-      -size,
-      canvasSize.width + size * 2,
-      canvasSize.height + size * 2,
-    );
+      ctx.translate(offsetX, offsetY);
+      // Draw slightly larger to cover edges during pan
+      ctx.fillRect(
+        -size,
+        -size,
+        canvasSize.width + size * 2,
+        canvasSize.height + size * 2,
+      );
+    }
     ctx.restore();
   }
 }

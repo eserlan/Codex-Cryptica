@@ -30,6 +30,8 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^20.5.0",
+    "@emnapi/core": "^1.9.2",
+    "@emnapi/runtime": "^1.9.2",
     "@eslint/js": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
     "@typescript-eslint/parser": "^8.58.1",

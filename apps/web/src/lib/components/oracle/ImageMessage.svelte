@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
-  import { fade, scale } from "svelte/transition";
+  import { fade } from "svelte/transition";
+  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
 
   let { message }: { message: ChatMessage } = $props();
 
@@ -123,36 +124,11 @@
   {/if}
 </div>
 
-<!-- Lightbox -->
-{#if showLightbox && message.imageUrl}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div
-    class="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 cursor-zoom-out"
-    onclick={() => (showLightbox = false)}
-    transition:fade={{ duration: 200 }}
-  >
-    <div transition:scale={{ start: 0.95, duration: 200 }}>
-      <img
-        src={message.imageUrl}
-        alt={message.content}
-        class="max-w-[95vw] max-h-[95vh] rounded shadow-2xl border border-white/10"
-      />
-      <div class="mt-4 text-center">
-        <p class="text-gray-400 text-xs font-mono">{message.content}</p>
-      </div>
-    </div>
-
-    <button
-      class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
-      onclick={() => (showLightbox = false)}
-      aria-label="Close lightbox"
-      data-testid="close-lightbox"
-    >
-      <span class="icon-[lucide--x] w-8 h-8"></span>
-    </button>
-  </div>
-{/if}
+<ZenImageLightbox
+  bind:show={showLightbox}
+  imageUrl={message.imageUrl ?? ""}
+  title={message.content}
+/>
 
 <style>
   img {

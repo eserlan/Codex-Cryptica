@@ -4,7 +4,11 @@
     saveGuestDisplayName,
   } from "$lib/utils/guest-name-storage";
 
-  let { onJoin }: { onJoin: (username: string) => void } = $props();
+  let {
+    onJoin,
+    rejectionMessage = null,
+  }: { onJoin: (username: string) => void; rejectionMessage?: string | null } =
+    $props();
 
   const getGuestStorage = () => {
     if (typeof window === "undefined") return null;
@@ -17,6 +21,12 @@
 
   let username = $state(loadGuestDisplayName(getGuestStorage()));
   let error = $state<string | null>(null);
+
+  $effect(() => {
+    if (rejectionMessage) {
+      error = rejectionMessage;
+    }
+  });
 
   const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();

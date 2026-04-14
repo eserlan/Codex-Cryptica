@@ -3,6 +3,7 @@
   import { worldStore } from "$lib/stores/world.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { hexToRgb } from "$lib/utils/color";
   import { partitionAndSortRecentActivity } from "./front-page/front-page-entities";
   import {
     readRecentLimit,
@@ -29,6 +30,7 @@
   let isDraftDirty = $state(false);
 
   const activeVaultId = $derived(vault.activeVaultId);
+  const themeTokens = $derived(themeStore.activeTheme.tokens);
   const metadata = $derived(worldStore.metadata);
   const briefingSource = $derived(
     worldStore.metadata?.description?.trim() ||
@@ -260,22 +262,12 @@
 <section
   data-testid="front-page-shell"
   class="front-page-shell relative isolate min-h-[calc(100vh-var(--header-height,65px)-2rem)] overflow-hidden rounded-[2rem] border border-theme-border p-4 sm:p-5 md:p-8 xl:p-10 shadow-[0_30px_120px_rgba(0,0,0,0.35)]"
+  style={`background-color: ${themeTokens.background}; background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+    themeTokens.primary,
+  )}, 0.16), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
+    themeTokens.background,
+  )}, 0.92), rgba(${hexToRgb(themeTokens.background)}, 0.98));`}
 >
-  <style>
-    .front-page-shell {
-      background:
-        radial-gradient(
-          circle at top,
-          color-mix(in srgb, var(--color-theme-primary), transparent 92%),
-          transparent 48%
-        ),
-        linear-gradient(
-          180deg,
-          color-mix(in srgb, var(--color-theme-bg), transparent 8%),
-          color-mix(in srgb, var(--color-theme-bg), black 2%)
-        );
-    }
-  </style>
   {#if !isWorldReady}
     <div
       class="relative z-10 flex min-h-[inherit] items-center justify-center py-20"
@@ -303,11 +295,20 @@
       ></div>
     {/if}
     <div
-      class="absolute inset-0 pointer-events-none opacity-50"
-      style="background: radial-gradient(circle at top, color-mix(in srgb, var(--color-theme-primary), transparent 95%), color-mix(in srgb, var(--color-theme-bg), black 30%)), linear-gradient(180deg, color-mix(in srgb, var(--color-theme-bg), transparent 85%), color-mix(in srgb, var(--color-theme-bg), black 35%))"
+      class="absolute inset-0 pointer-events-none opacity-65 bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.05),rgba(0,0,0,0.7)),linear-gradient(180deg,rgba(0,0,0,0.15),rgba(0,0,0,0.65))]"
+      style={`background-image: radial-gradient(circle at top, rgba(${hexToRgb(
+        themeTokens.primary,
+      )}, 0.08), transparent 48%), linear-gradient(180deg, rgba(${hexToRgb(
+        themeTokens.background,
+      )}, 0.1), rgba(${hexToRgb(themeTokens.background)}, 0.75))`}
     ></div>
     <div
-      class="absolute inset-0 pointer-events-none opacity-30 bg-[linear-gradient(transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px),linear-gradient(90deg,transparent_0,color-mix(in_srgb,var(--color-theme-primary),transparent_97%)_1px,transparent_1px)] bg-[size:24px_24px]"
+      class="absolute inset-0 pointer-events-none opacity-40 bg-[linear-gradient(transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,transparent_0,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"
+      style={`background-image: linear-gradient(transparent 0, rgba(${hexToRgb(
+        themeTokens.surface,
+      )}, 0.03) 1px, transparent 1px), linear-gradient(90deg, transparent 0, rgba(${hexToRgb(
+        themeTokens.surface,
+      )}, 0.03) 1px, transparent 1px)`}
     ></div>
 
     <div

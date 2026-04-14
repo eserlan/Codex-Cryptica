@@ -11,7 +11,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@google/genai": "^1.49.0",
+    "@google/generative-ai": "^0.24.1",
     "idb": "^8.0.0"
   },
   "devDependencies": {

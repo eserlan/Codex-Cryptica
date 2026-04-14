@@ -11,8 +11,11 @@
   import { fly } from "svelte/transition";
   import { onMount } from "svelte";
   import { FEATURE_HINTS, HINT_KEYS } from "$lib/config/help-content";
+  import { mapSession } from "$lib/stores/map-session.svelte";
+  import VTTChat from "../vtt/VTTChat.svelte";
 
   let showHint = $state(false);
+  let activeTab = $state<"oracle" | "chat">("oracle");
 
   onMount(() => {
     // Show hint on first open
@@ -61,7 +64,7 @@
       ></div>
       <span
         class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
-        >Lore Oracle</span
+        >{activeTab === "oracle" ? "Lore Oracle" : "VTT Chat"}</span
       >
       {#if uiStore.liteMode}
         <span
@@ -74,7 +77,7 @@
 
     <div class="flex items-center gap-1">
       <!-- Clear Chat -->
-      {#if oracle.messages.length > 0}
+      {#if activeTab === "oracle" && oracle.messages.length > 0}
         <button
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
           onclick={async () => {
@@ -98,15 +101,17 @@
       {/if}
 
       <!-- Pop out -->
-      <button
-        class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
-        onclick={popOut}
-        title="Pop out to new window"
-        aria-label="Pop out to new window"
-      >
-        <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
-        ></span>
-      </button>
+      {#if activeTab === "oracle"}
+        <button
+          class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
+          onclick={popOut}
+          title="Pop out to new window"
+          aria-label="Pop out to new window"
+        >
+          <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+          ></span>
+        </button>
+      {/if}
 
       <!-- Close -->
       <button
@@ -119,14 +124,44 @@
     </div>
   </div>
 
+  <!-- Navigation Tabs (only if VTT is enabled) -->
+  {#if mapSession.vttEnabled}
+    <div
+      class="flex border-b border-theme-border bg-theme-bg/10 px-1 pt-1 shrink-0"
+    >
+      <button
+        onclick={() => (activeTab = "oracle")}
+        class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-all
+               {activeTab === 'oracle'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        Lore Oracle
+      </button>
+      <button
+        onclick={() => (activeTab = "chat")}
+        class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+               {activeTab === 'chat'
+          ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
+          : 'text-theme-muted hover:text-theme-text'}"
+      >
+        VTT Chat
+      </button>
+    </div>
+  {/if}
+
   <!-- Chat Content -->
   <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
-    <OracleChat
-      onOpenSettings={() => {
-        uiStore.openSettings();
-        uiStore.closeSidebar();
-      }}
-    />
+    {#if activeTab === "oracle"}
+      <OracleChat
+        onOpenSettings={() => {
+          uiStore.openSettings();
+          uiStore.closeSidebar();
+        }}
+      />
+    {:else}
+      <VTTChat />
+    {/if}
   </div>
 
   <!-- Feature Hint Modal -->

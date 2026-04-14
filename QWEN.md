@@ -272,6 +272,9 @@ The application builds as a **static site** deployed to GitHub Pages. The Oracle
 
 ## Active Technologies
 
+- TypeScript (as project standard) + Svelte 5 (UI), existing `map.svelte.ts` (base map), existing P2P host-service/client-adapter (sync) (079-vtt-light)
+- In-memory session state; optional vault persistence via OPFS for encounter snapshots (079-vtt-light)
+
 - TypeScript 6.0.2 + Svelte 5.54, SvelteKit 2.55, @codex/canvas-engine, @codex/graph-engine (076-add-canvas-context-menu)
 - OPFS (Origin Private File System) via canvas-engine (076-add-canvas-context-menu)
 

@@ -223,7 +223,10 @@
           aria-busy={isLoading}
         >
           {#if isLoading}
-            <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+            <span
+              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+              aria-hidden="true"
+            ></span>
             Processing...
           {:else}
             Confirm Merge

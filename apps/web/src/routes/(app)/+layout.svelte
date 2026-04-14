@@ -16,11 +16,12 @@
   import { timelineStore } from "$lib/stores/timeline.svelte";
   import { calendarStore } from "$lib/stores/calendar.svelte";
   import { graph } from "$lib/stores/graph.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { isEntityVisible } from "schema";
+  import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
   import AppHeader from "$lib/components/layout/AppHeader.svelte";
@@ -30,6 +31,7 @@
   import ActivityBar from "$lib/components/layout/ActivityBar.svelte";
   import SidebarPanelHost from "$lib/components/layout/SidebarPanelHost.svelte";
   import GlobalModalProvider from "$lib/components/modals/GlobalModalProvider.svelte";
+  import GuestSessionBootstrap from "$lib/components/vtt/GuestSessionBootstrap.svelte";
 
   // Logic & Hooks
   import {
@@ -55,6 +57,16 @@
       page.url.pathname === `${base}/help` ||
       page.url.pathname === `${base}/import`,
   );
+  const isVttFullscreen = $derived(
+    page.url.pathname.startsWith(`${base}/map`) && mapSession.vttEnabled,
+  );
+
+  if (browser) {
+    const requestedTheme = page.url.searchParams.get("theme");
+    if (requestedTheme && THEMES[requestedTheme]) {
+      themeStore.currentThemeId = requestedTheme;
+    }
+  }
 
   // Set up global listeners BEFORE bootSystem to avoid missing vault-switched events
   $effect(() => {
@@ -145,7 +157,14 @@
 
   // Header Height CSS Var
   $effect(() => {
-    if (headerEl && browser) {
+    if (!browser) return;
+
+    if (isVttFullscreen || !headerEl) {
+      document.documentElement.style.setProperty("--header-height", "0px");
+      return;
+    }
+
+    if (headerEl) {
       const updateHeight = () => {
         const height = headerEl!.getBoundingClientRect().height;
         document.documentElement.style.setProperty(
@@ -195,14 +214,14 @@
 <div class="h-screen bg-theme-bg flex flex-col font-body app-layout">
   <NotificationToast />
 
-  {#if !isPopup}
+  {#if !isPopup && !isVttFullscreen}
     <AppHeader bind:isMobileMenuOpen bind:headerEl />
   {/if}
 
   <div
     class="flex-1 flex flex-col-reverse md:flex-row min-h-0 relative overflow-hidden"
   >
-    {#if !isPopup}
+    {#if !isPopup && !isVttFullscreen}
       <ActivityBar />
       <SidebarPanelHost />
     {/if}
@@ -212,10 +231,15 @@
     </main>
   </div>
 
-  {#if !isPopup}
+  {#if !isPopup && !isVttFullscreen}
     <AppFooter />
+  {/if}
+
+  {#if !isPopup}
     <GlobalModalProvider bind:isMobileMenuOpen />
   {/if}
+
+  <GuestSessionBootstrap />
 </div>
 
 <FatalErrorOverlay />
