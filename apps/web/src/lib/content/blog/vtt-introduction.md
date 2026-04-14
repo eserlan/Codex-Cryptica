@@ -19,7 +19,7 @@ publishedAt: 2026-04-14T10:00:00Z
 
 ![VTT Interface](https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-hero.png)
 
-You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of separate tools.
+You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of disconnected tools.
 
 Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
 
@@ -46,7 +46,7 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 ## Why Switch? Data-Native Gameplay
 
-If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, the VTT was built for you.
+If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this VTT was built for you.
 
 - **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
