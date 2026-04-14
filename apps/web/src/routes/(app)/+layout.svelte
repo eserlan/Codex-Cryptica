@@ -21,6 +21,8 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
+  import { VERSION as _VERSION } from "$lib/config";
+  import releases from "$lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
@@ -198,6 +200,32 @@
         } else {
           helpStore.startTour("initial-onboarding");
         }
+      }
+    }
+  });
+
+  // Automatic Release Note Trigger
+  $effect(() => {
+    if (browser && !uiStore.showChangelog && !uiStore.isDemoMode) {
+      const hasUnseenReleases = releases.some((r) => {
+        if (!uiStore.lastSeenVersion) return true;
+
+        const v1 = r.version.split(".").map(Number);
+        const v2 = uiStore.lastSeenVersion.split(".").map(Number);
+        for (let i = 0; i < 3; i++) {
+          if (v1[i] > v2[i]) return true;
+          if (v1[i] < v2[i]) return false;
+        }
+        return false;
+      });
+
+      if (hasUnseenReleases) {
+        // Delay to not conflict with tour/demo triggers
+        setTimeout(() => {
+          if (!helpStore.activeTour && !uiStore.showZenMode) {
+            uiStore.showChangelog = true;
+          }
+        }, 2000);
       }
     }
   });

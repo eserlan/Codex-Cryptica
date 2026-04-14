@@ -1,0 +1,35 @@
+[
+  {
+    "version": "0.17.37",
+    "title": "Entity Traditional View & Traditional Explorer",
+    "date": "2026-04-12",
+    "type": "minor",
+    "highlights": [
+      "New persistent Entity Explorer sidebar",
+      "Traditional 'Focus Mode' for deep entity editing",
+      "Dexie-backed metadata caching for faster navigation"
+    ]
+  },
+  {
+    "version": "0.17.0",
+    "title": "Vault Front Page & Onboarding",
+    "date": "2026-04-03",
+    "type": "minor",
+    "highlights": [
+      "New Vault Front Page with quick access to recent entities",
+      "Improved onboarding for new archives",
+      "OPFS integration for high-performance local file handling"
+    ]
+  },
+  {
+    "version": "0.16.0",
+    "title": "Oracle & Die Roller Enhancements",
+    "date": "2026-03-25",
+    "type": "minor",
+    "highlights": [
+      "Refined Die Roller with multi-dice support",
+      "Improved Oracle reasoning with context-aware prompts",
+      "Lite Mode (No AI) for distraction-free writing"
+    ]
+  }
+]
