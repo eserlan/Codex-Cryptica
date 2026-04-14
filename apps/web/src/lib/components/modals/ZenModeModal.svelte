@@ -4,7 +4,10 @@
   import { fly, fade } from "svelte/transition";
   import { base } from "$app/paths";
   import { page } from "$app/state";
-  import { openEntityPopout } from "$lib/utils/zen-popout";
+  import {
+    openEntityPopout,
+    persistZenPopoutPayload,
+  } from "$lib/utils/zen-popout";
 
   import { clipboardService } from "$lib/services/ClipboardService";
   import ZenImageLightbox from "../zen/ZenImageLightbox.svelte";
@@ -41,6 +44,13 @@
     if (uiStore.showZenMode && entityId && !entity) {
       uiStore.closeZenMode();
     }
+  });
+
+  // Keep the guest popout payload fresh after Zen Mode renders and after
+  // lazy-loaded entity content updates the active entity snapshot.
+  $effect(() => {
+    if (!uiStore.showZenMode || !entity || !vault.isGuest) return;
+    persistZenPopoutPayload(entity, true);
   });
 
   let activeTab = $derived(uiStore.zenModeActiveTab);
@@ -114,13 +124,24 @@
 
   const handlePopOut = () => {
     if (!entity) return;
-    openEntityPopout(
-      vault.activeVaultId ?? "guest",
-      entity,
-      base,
-      vault.isGuest,
-    );
-    uiStore.closeZenMode();
+    const popOutEntity = async () => {
+      let entityForPopout = entity;
+
+      if (vault.isGuest && entityId && !entity.content) {
+        await vault.loadEntityContent(entityId);
+        entityForPopout = vault.entities[entityId] ?? entityForPopout;
+      }
+
+      openEntityPopout(
+        vault.activeVaultId ?? "guest",
+        entityForPopout,
+        base,
+        vault.isGuest,
+      );
+      uiStore.closeZenMode();
+    };
+
+    void popOutEntity();
   };
 
   const navigateTo = async (id: string) => {

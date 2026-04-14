@@ -13,6 +13,7 @@ export interface EntityStoreDependencies {
   repository: VaultRepository;
   activeVaultId: () => string | null;
   isGuest: () => boolean;
+  getGuestFile?: (path: string) => Promise<Blob>;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   getSpecificVaultHandle: (
     vaultId: string,
@@ -257,7 +258,12 @@ export class EntityStore {
       const merged = {
         ...current,
         ...patch,
-        content: patch.content !== undefined ? patch.content : current.content,
+        content:
+          patch.content !== undefined
+            ? this.deps.isGuest() && patch.content === "" && current.content
+              ? current.content
+              : patch.content
+            : current.content,
         lore: patch.lore !== undefined ? patch.lore : current.lore,
         updatedAt: Date.now(),
       } as LocalEntity;
@@ -587,19 +593,60 @@ export class EntityStore {
   // --- Content Loading ---
 
   async loadEntityContent(id: string): Promise<void> {
-    const activeVaultId = this.deps.activeVaultId();
     if (!id) return;
-    if (this._contentVerifiedIds.has(id)) return;
-
     const currentEntity = this.entities[id];
     if (!currentEntity) return;
 
-    // Guest/popout mode: no local vault — content arrives via P2P or postMessage.
-    // If the entity already carries content, treat it as verified and done.
-    if (!activeVaultId) {
-      if (currentEntity.content) this._contentVerifiedIds.add(id);
+    const isGuest = this.deps.isGuest();
+    if (
+      this._contentVerifiedIds.has(id) &&
+      (!isGuest || !!currentEntity.content)
+    )
+      return;
+
+    const activeVaultId = this.deps.activeVaultId();
+    const guestFileFetcher = this.deps.getGuestFile;
+    const parseMarkdown =
+      this._helpers.parseMarkdown ||
+      (await import("../../utils/markdown")).parseMarkdown;
+
+    if (isGuest) {
+      if (currentEntity.content) {
+        this._contentLoadedIds.add(id);
+        this._contentVerifiedIds.add(id);
+        return;
+      }
+
+      const path = currentEntity._path || [`${id}.md`];
+      const requestPath = path.join("/");
+      if (!guestFileFetcher || !requestPath) return;
+
+      try {
+        const file = await guestFileFetcher(requestPath);
+        const text = await file.text();
+        if (!text) {
+          this._contentVerifiedIds.add(id);
+          return;
+        }
+
+        const { content: freshContent } = parseMarkdown(text);
+        this.deps.repository.entities[id] = {
+          ...currentEntity,
+          content: freshContent || currentEntity.content || "",
+          lore: "",
+        };
+        this._contentLoadedIds.add(id);
+        this._contentVerifiedIds.add(id);
+      } catch (err) {
+        debugStore.warn(
+          `[EntityStore] Guest content fetch failed for ${id}`,
+          err,
+        );
+      }
       return;
     }
+
+    if (!activeVaultId) return;
 
     // PRIORITY 1: Cache
     let cached: { content: string; lore: string } | null = null;
@@ -636,9 +683,6 @@ export class EntityStore {
       const readFileAsText =
         this._helpers.readFileAsText ||
         (await import("../../utils/opfs")).readFileAsText;
-      const parseMarkdown =
-        this._helpers.parseMarkdown ||
-        (await import("../../utils/markdown")).parseMarkdown;
 
       let text = "";
       const vaultDir = await this.deps.getActiveVaultHandle();

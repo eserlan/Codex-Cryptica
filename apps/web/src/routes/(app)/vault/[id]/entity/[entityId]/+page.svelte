@@ -3,32 +3,57 @@
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
-  import { consumeZenPopoutPayload } from "$lib/utils/zen-popout";
+  import {
+    consumeZenPopoutPayload,
+    requestZenPopoutPayload,
+    type ZenPopoutPayload,
+  } from "$lib/utils/zen-popout";
 
   const vaultId = $derived(page.params.id);
   const entityId = $derived(page.params.entityId);
 
-  // Consume guest payload synchronously so uiStore.isGuestMode is set
-  // before any effects run — prevents the host switchVault from firing.
+  const applyGuestPayload = (payload: ZenPopoutPayload) => {
+    vault.repository.entities[payload.entity.id] = {
+      ...payload.entity,
+      _path:
+        typeof payload.entity._path === "string"
+          ? [payload.entity._path]
+          : payload.entity._path,
+    };
+    vault.isInitialized = true;
+    vault.status = "idle";
+    if (payload.isGuest) uiStore.isGuestMode = true;
+    guestEntityId = payload.entity.id;
+  };
+
   let guestEntityId: string | null = null;
+  let isResolvingGuestPayload = false;
   if (browser) {
     const payload = page.params.entityId
       ? consumeZenPopoutPayload(page.params.entityId)
       : null;
     if (payload) {
-      vault.repository.entities[payload.entity.id] = {
-        ...payload.entity,
-        _path:
-          typeof payload.entity._path === "string"
-            ? [payload.entity._path]
-            : payload.entity._path,
-      };
-      vault.isInitialized = true;
-      vault.status = "idle";
-      if (payload.isGuest) uiStore.isGuestMode = true;
-      guestEntityId = payload.entity.id;
+      applyGuestPayload(payload);
+    } else if (page.params.entityId && window.opener) {
+      isResolvingGuestPayload = true;
     }
   }
+
+  $effect(() => {
+    if (!browser || !isResolvingGuestPayload || !entityId) return;
+
+    let isCancelled = false;
+
+    void requestZenPopoutPayload(entityId).then((payload) => {
+      if (isCancelled) return;
+      if (payload) applyGuestPayload(payload);
+      isResolvingGuestPayload = false;
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  });
 
   // Guest flow: open zen mode once reactive state has settled
   $effect(() => {
@@ -39,7 +64,12 @@
 
   // Host flow: only when not a guest popout
   $effect(() => {
-    if (vaultId && vault.activeVaultId !== vaultId && !uiStore.isGuestMode) {
+    if (
+      vaultId &&
+      vault.activeVaultId !== vaultId &&
+      !uiStore.isGuestMode &&
+      !isResolvingGuestPayload
+    ) {
       void vault.switchVault(vaultId);
     }
   });
