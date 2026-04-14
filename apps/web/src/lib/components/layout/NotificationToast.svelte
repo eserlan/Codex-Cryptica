@@ -34,5 +34,21 @@
     <span class="font-header text-xs font-bold tracking-widest uppercase"
       >{notification.message}</span
     >
+    {#if notification.persistent}
+      <span class="relative flex h-2 w-2 ml-1">
+        <span
+          class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+          class:bg-theme-primary={notification.type === "success"}
+          class:bg-blue-400={notification.type === "info"}
+          class:bg-red-500={notification.type === "error"}
+        ></span>
+        <span
+          class="relative inline-flex rounded-full h-2 w-2"
+          class:bg-theme-primary={notification.type === "success"}
+          class:bg-blue-400={notification.type === "info"}
+          class:bg-red-500={notification.type === "error"}
+        ></span>
+      </span>
+    {/if}
   </div>
 {/if}

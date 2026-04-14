@@ -12,11 +12,13 @@
   let {
     input = $bindable(""),
     anchorEl,
+    commands = chatCommands,
     onSelect,
     onClose,
   } = $props<{
     input: string;
     anchorEl: HTMLElement | null;
+    commands?: ChatCommand[];
     onSelect: (command: ChatCommand) => void;
     onClose: () => void;
   }>();
@@ -76,8 +78,8 @@
   let filteredCommands = $derived.by(() => {
     if (activeStep !== "COMMAND" || !input.startsWith("/")) return [];
     const term = input.slice(1).toLowerCase();
-    return chatCommands.filter(
-      (c) =>
+    return commands.filter(
+      (c: ChatCommand) =>
         c.name.toLowerCase().includes(term) ||
         c.description.toLowerCase().includes(term),
     );

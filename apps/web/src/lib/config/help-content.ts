@@ -29,6 +29,7 @@ export interface FeatureHint {
 export const HINT_KEYS = {
   ORACLE_CONNECTION: "oracle-hint-seen",
   FRONT_PAGE: "front-page-hint-seen",
+  VTT_MODE: "vtt-mode-hint-seen",
 } as const;
 
 export const ONBOARDING_TOUR: GuideStep[] = [
@@ -263,6 +264,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.",
     icon: "icon-[lucide--map]",
   },
+  "vtt-mode": {
+    id: "vtt-mode",
+    title: "VTT Mode",
+    content:
+      "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.",
+    icon: "icon-[lucide--swords]",
+  },
   "spatial-canvas": {
     id: "spatial-canvas",
     title: "Spatial Canvas",
@@ -296,7 +304,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     title: "Navigation Hub",
     content:
       "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
-    icon: "icon-[lucide--layout-sidebar]",
+    icon: "icon-[lucide--layout-panel-left]",
   },
 };
 

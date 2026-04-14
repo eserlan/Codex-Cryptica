@@ -19,7 +19,9 @@
 </script>
 
 {#if !uiStore.dismissedWorldPage}
-  <FrontPage />
+  {#key vault.activeVaultId}
+    <FrontPage />
+  {/key}
 {/if}
 
 {#if selectedEntity}

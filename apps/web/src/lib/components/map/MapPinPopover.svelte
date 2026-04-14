@@ -32,11 +32,11 @@
   role="none"
 >
   <div
-    class="bg-theme-surface border border-theme-border rounded-lg shadow-2xl p-1 flex items-center gap-0.5"
+    class="bg-theme-surface border border-theme-border rounded-md shadow-lg p-1 flex items-center gap-0.5"
   >
     {#if entity}
       <button
-        class="px-3 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-colors uppercase font-header tracking-widest whitespace-nowrap border-r border-theme-border mr-1"
+        class="px-2.5 py-1.5 text-[10px] font-bold text-theme-text hover:text-theme-primary transition-all uppercase tracking-wider whitespace-nowrap border-r border-theme-border mr-1 hover:bg-theme-primary/10 rounded-md"
         onclick={() => onOpenEntity(entity.id)}
       >
         {entity.title}
@@ -45,7 +45,7 @@
 
     {#if subMap}
       <button
-        class="p-1.5 text-theme-primary hover:text-theme-text transition-colors rounded-md hover:bg-theme-primary/10 group/map mx-0.5"
+        class="p-1.5 text-theme-primary hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10 group/map mx-0.5"
         onclick={() => onEnterSubmap(subMap.id)}
         title="Enter Sub-map"
         aria-label="Enter Sub-map"
@@ -58,14 +58,14 @@
 
     <div class="flex items-center gap-0.5 ml-auto">
       <button
-        class="p-1.5 text-theme-muted hover:text-red-500 transition-colors rounded-md hover:bg-red-500/10"
+        class="p-1.5 text-theme-muted hover:text-red-500 transition-all rounded-md hover:bg-red-500/10"
         onclick={onDelete}
         aria-label="Delete pin"
       >
         <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
       </button>
       <button
-        class="p-1.5 text-theme-muted hover:text-theme-text transition-colors rounded-md hover:bg-theme-primary/10"
+        class="p-1.5 text-theme-muted hover:text-theme-text transition-all rounded-md hover:bg-theme-primary/10"
         onclick={onClose}
         aria-label="Close pin details"
       >

@@ -152,15 +152,46 @@ describe("UIStore", () => {
     openSpy.mockRestore();
   });
 
+  it("should preserve the active theme when opening the dice window", () => {
+    window.localStorage.setItem("codex-cryptica-active-theme", "cyberpunk");
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    uiStore.openDiceWindow();
+
+    expect(openSpy).toHaveBeenCalled();
+    expect(openSpy.mock.calls[0][0]).toContain("/dice?theme=cyberpunk");
+    openSpy.mockRestore();
+  });
+
   it("should handle notifications with timeout", () => {
     vi.useFakeTimers();
     uiStore.notify("Success!", "success");
     expect(uiStore.notification).toEqual({
       message: "Success!",
       type: "success",
+      persistent: false,
     });
 
     vi.advanceTimersByTime(5000);
+    expect(uiStore.notification).toBe(null);
+    vi.useRealTimers();
+  });
+
+  it("should not let an older timeout clear a newer persistent notification", () => {
+    vi.useFakeTimers();
+
+    uiStore.notify("Short lived", "success");
+    uiStore.notify("Persistent", "info", true);
+
+    vi.advanceTimersByTime(5000);
+
+    expect(uiStore.notification).toEqual({
+      message: "Persistent",
+      type: "info",
+      persistent: true,
+    });
+
+    uiStore.clearNotification();
     expect(uiStore.notification).toBe(null);
     vi.useRealTimers();
   });

@@ -1,5 +1,7 @@
 import { base } from "$app/paths";
 
+const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
+
 export type SettingsTab =
   | "vault"
   | "intelligence"
@@ -43,9 +45,11 @@ class UIStore {
   notification = $state<{
     message: string;
     type: "success" | "info" | "error";
+    persistent?: boolean;
   } | null>(null);
 
   private abortController: AbortController | null = null;
+  private notificationTimeoutId: number | null = null;
   globalError = $state<{ message: string; stack?: string } | null>(null);
 
   constructor() {
@@ -362,11 +366,31 @@ class UIStore {
     this.globalError = null;
   }
 
-  notify(message: string, type: "success" | "info" | "error" = "success") {
-    this.notification = { message, type };
-    setTimeout(() => {
-      this.notification = null;
-    }, 5000);
+  notify(
+    message: string,
+    type: "success" | "info" | "error" = "success",
+    persistent = false,
+  ) {
+    if (this.notificationTimeoutId !== null) {
+      clearTimeout(this.notificationTimeoutId);
+      this.notificationTimeoutId = null;
+    }
+
+    this.notification = { message, type, persistent };
+    if (!persistent) {
+      this.notificationTimeoutId = window.setTimeout(() => {
+        this.notification = null;
+        this.notificationTimeoutId = null;
+      }, 5000);
+    }
+  }
+
+  clearNotification() {
+    if (this.notificationTimeoutId !== null) {
+      clearTimeout(this.notificationTimeoutId);
+      this.notificationTimeoutId = null;
+    }
+    this.notification = null;
   }
 
   openCanvasSelection(pendingEntities: string[] = []) {
@@ -411,7 +435,14 @@ class UIStore {
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
-    const url = `${window.location.origin}${base}/dice`;
+    const params = new URLSearchParams();
+    const activeTheme = window.localStorage.getItem(ACTIVE_THEME_STORAGE_KEY);
+    if (activeTheme) {
+      params.set("theme", activeTheme);
+    }
+
+    const query = params.toString();
+    const url = `${window.location.origin}${base}/dice${query ? `?${query}` : ""}`;
     const features = `width=${width},height=${height},left=${left},top=${top},toolbar=0,location=0,menubar=0,noopener,noreferrer`;
 
     const newWin = window.open(url, "CodexCrypticaDice", features);

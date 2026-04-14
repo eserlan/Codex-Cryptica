@@ -1,5 +1,6 @@
 <script lang="ts">
   import { diceHistory } from "$lib/stores/dice-history.svelte";
+  import { mapSession } from "$lib/stores/map-session.svelte";
   import { diceEngine, diceParser } from "dice-engine";
   import { slide } from "svelte/transition";
   import RollLog from "./RollLog.svelte";
@@ -24,6 +25,9 @@
       const command = diceParser.parse(f);
       const result = diceEngine.execute(command);
       await diceHistory.addResult(result, "modal");
+      if (mapSession.vttEnabled) {
+        mapSession.sendResolvedRollMessage(f, result);
+      }
       // Reset history navigation
       historyIndex = -1;
       // Scroll to top to see new result
@@ -126,7 +130,8 @@
           onclick={() => quickAdd(die.sides)}
           title="Add {die.sides}-sided die to formula"
         >
-          <span class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
+          <span
+            class="text-[9px] font-bold opacity-50 group-hover:opacity-100 mb-1"
             >d{die.sides}</span
           >
           <span class="{getDiceIcon(die.sides)} w-5 h-5"></span>
@@ -201,7 +206,8 @@
     <div
       class="px-4 py-2 flex justify-between items-center border-b border-theme-border/30"
     >
-      <span class="text-[11px] font-bold text-theme-muted uppercase tracking-tighter"
+      <span
+        class="text-[11px] font-bold text-theme-muted uppercase tracking-tighter"
         >Session History</span
       >
       <button

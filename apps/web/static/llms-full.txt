@@ -63,6 +63,8 @@ Our marketing and legal pages are pre-baked as static HTML for instant loading a
 
 ### Map Mode
 Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+### VTT Mode
+Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.
 
 ### Spatial Canvas
 Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.

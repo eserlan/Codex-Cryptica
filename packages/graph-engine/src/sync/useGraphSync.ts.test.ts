@@ -42,6 +42,24 @@ describe("syncGraphElements", () => {
     expect(mockCy.add).toHaveBeenCalled();
   });
 
+  it("should remove existing graph items when the target element list is empty", () => {
+    const existingNode = {
+      id: vi.fn().mockReturnValue("node1"),
+    };
+    mockCy.elements.mockReturnValue([existingNode]);
+    mockCy.collection.mockImplementation((els) => els);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [],
+      vaultStatus: "loading",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) =>
+        JSON.stringify(a) === JSON.stringify(b),
+    });
+
+    expect(mockCy.remove).toHaveBeenCalledWith([existingNode]);
+  });
+
   it("should apply label filtering in OR mode", () => {
     const mockNode1 = {
       id: vi.fn().mockReturnValue("node1"),
