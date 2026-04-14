@@ -26,8 +26,8 @@
     guestEntityId = payload.entity.id;
   };
 
-  let guestEntityId: string | null = null;
-  let isResolvingGuestPayload = false;
+  let guestEntityId = $state<string | null>(null);
+  let isResolvingGuestPayload = $state(false);
   if (browser) {
     const payload = page.params.entityId
       ? consumeZenPopoutPayload(page.params.entityId)
