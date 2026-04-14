@@ -25,7 +25,7 @@ Codex-Cryptica was built to make your world connected. Now, that connection exte
 
 ## Your Lore is the Map
 
-The core of this VTT is its deep connection to your data. In most tools, a token is just a name and an image. 
+The core of this **Data-Native VTT** is its deep connection to your data. In most tools, a token is just a name and an image. 
 
 **Here, a token is an Entity.**
 
@@ -46,7 +46,7 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 ## Why Switch? Data-Native Gameplay
 
-If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this VTT was built for you.
+If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this **Data-Native VTT** was built for you.
 
 - **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to your knowledge graph.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
@@ -60,7 +60,7 @@ The VTT doesn’t replace your notes—it makes them playable.
 
 ### Start Your Next Session
 
-The VTT is ready for you today. **Open your campaign and try dragging your first entity onto the map.** 
+The VTT is ready for you today. **Open your campaign and drag your first entity onto the map—it takes seconds.** 
 
 I can’t wait to see the worlds you build and the stories you tell.
 
