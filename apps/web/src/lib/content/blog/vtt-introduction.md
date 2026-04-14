@@ -38,7 +38,7 @@ Drop "Captain Elira" onto the board and instantly access her alliances, secrets,
 
 ## Reveal the World: Fast Tactical Discovery
 
-A good session thrives on mystery and exploration. The VTT includes a **fast Fog of War** system that allows you to reveal the map as your players discover it—without breaking the flow of the story or leaving your notes.
+A good session thrives on mystery and exploration. The VTT includes a **fast Fog of War** system that allows you to reveal the map as your players discover it—without breaking flow or leaving your world.
 
 Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. I’ve designed it to be responsive and zero-setup, ensuring that the technology stays out of your way so you can focus entirely on the session.
 
