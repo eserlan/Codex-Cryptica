@@ -35,6 +35,8 @@
     if (payload) {
       applyGuestPayload(payload);
     } else if (page.params.entityId && window.opener) {
+      // Set isGuestMode early so vault.init() bails before loadFiles() runs
+      uiStore.isGuestMode = true;
       isResolvingGuestPayload = true;
     }
   }

@@ -209,6 +209,13 @@ export class VaultStore {
   // --- Core Lifecycle ---
 
   async init() {
+    // Guest popout tabs pre-populate the vault via applyGuestPayload before
+    // this runs — skip full init so loadFiles() doesn't overwrite that data.
+    if (uiStore.isGuestMode) {
+      this.isInitialized = true;
+      return;
+    }
+
     try {
       await vaultRegistry.init();
 
