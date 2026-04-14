@@ -149,26 +149,11 @@
         }
       }
 
-      // Collect stubs for linked entities — needed for connection rendering in popout
-      const seen = new Set<string>();
-      const extraEntities: (typeof entity)[] = [];
-      const addStub = (id: string) => {
-        if (seen.has(id)) return;
-        seen.add(id);
-        const e = vault.entities[id];
-        if (e) extraEntities.push(e);
-      };
-      for (const conn of entityForPopout.connections ?? [])
-        addStub(conn.target);
-      for (const item of vault.inboundConnections[entityForPopout.id] ?? [])
-        addStub(item.sourceId);
-
       openEntityPopout(
         vault.activeVaultId ?? "guest",
         entityForPopout,
         base,
         vault.isGuest,
-        extraEntities.length > 0 ? extraEntities : undefined,
       );
       uiStore.closeZenMode();
     };
@@ -376,6 +361,7 @@
               {entity}
               bind:editState
               {resolvedImageUrl}
+              {isPopout}
               onShowLightbox={() => (showLightbox = true)}
               onNavigate={navigateTo}
               onDelete={handleDelete}

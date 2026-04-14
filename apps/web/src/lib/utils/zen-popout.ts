@@ -9,8 +9,6 @@ const LISTENER_TTL_MS = 30_000;
 export interface ZenPopoutPayload {
   entity: Entity;
   isGuest: boolean;
-  /** Stubs for entities linked to/from this entity — needed for connection rendering */
-  extraEntities?: Entity[];
 }
 
 function buildGuestEntitySnapshot(entity: Entity): Entity {
@@ -55,19 +53,12 @@ function persistPayload(entityId: string, payload: ZenPopoutPayload) {
   );
 }
 
-export function persistZenPopoutPayload(
-  entity: Entity,
-  isGuest: boolean,
-  extraEntities?: Entity[],
-) {
+export function persistZenPopoutPayload(entity: Entity, isGuest: boolean) {
   const payload: ZenPopoutPayload = {
     entity: isGuest
       ? buildGuestEntitySnapshot(entity)
       : (JSON.parse(JSON.stringify(entity)) as Entity),
     isGuest,
-    extraEntities: extraEntities?.map(
-      (e) => JSON.parse(JSON.stringify(e)) as Entity,
-    ),
   };
   persistPayload(entity.id, payload);
   return payload;
@@ -89,12 +80,11 @@ export function openEntityPopout(
   entity: Entity,
   base: string,
   isGuest: boolean,
-  extraEntities?: Entity[],
 ) {
   const url = `${base}/vault/${vaultId}/entity/${entity.id}`;
 
   if (isGuest) {
-    const payload = persistZenPopoutPayload(entity, true, extraEntities);
+    const payload = persistZenPopoutPayload(entity, true);
     const childWindow = window.open(url, "_blank");
     if (!childWindow) return;
 
