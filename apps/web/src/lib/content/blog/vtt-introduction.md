@@ -21,7 +21,7 @@ publishedAt: 2026-04-14T10:00:00Z
 
 You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of disconnected tools.
 
-Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
+Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT** — a tactical layer integrated directly into the archive. This isn't a separate application—it’s a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
 
 ## Your Lore is the Map
 
@@ -40,7 +40,7 @@ Drop "Captain Elira" onto the board—and everything you wrote about her is righ
 
 A good session thrives on mystery and exploration. The VTT includes an **instant Fog of War** system that allows you to reveal the map as your players discover it—without breaking flow or leaving your world.
 
-Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. It is intentionally lightweight—you get core tools like initiative and status tracking without the heavy automation that gets in the way of fast, immersive play. I’ve designed it to be responsive and zero-setup to ensure the technology stays out of your way, even during combat.
+Whether you need a precise square grid for a dungeon crawl or a hex map for overland travel, the VTT gives you instant tactical clarity. It is intentionally lightweight—you get core tools like initiative and status tracking without the heavy automation that gets in the way of fast, immersive play. I built it to be responsive and zero-setup, so the technology stays out of your way—even during combat.
 
 ![Tactical Map with Fog of War](https://assets.codexcryptica.com/images/blog/vtt-introduction/vtt-tactical.png)
 
@@ -48,7 +48,7 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this VTT was built for you.
 
-- **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world.
+- **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world—in real time.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** Your maps render instantly—even high-resolution battle maps—because the data never leaves your machine. No upload bars, no quotas, and no delays mid-session.
 - **Direct Player Connection:** Your players connect directly to your session—no central server required. Map state and Fog of War are shared in real time, while your data stays local.
