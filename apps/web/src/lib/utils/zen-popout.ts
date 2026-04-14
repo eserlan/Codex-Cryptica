@@ -40,8 +40,14 @@ export function openEntityPopout(
       if (event.source !== newTab) return;
       const msg = event.data as ZenEntityRequest;
       if (msg?.type === ZEN_POPOUT_REQUEST && msg.entityId === entity.id) {
+        // $state.snapshot produces a plain object — required for structured clone
+        const plain = $state.snapshot(entity) as Entity;
         newTab.postMessage(
-          { type: ZEN_POPOUT_DATA, entity, isGuest } satisfies ZenEntityData,
+          {
+            type: ZEN_POPOUT_DATA,
+            entity: plain,
+            isGuest,
+          } satisfies ZenEntityData,
           origin,
         );
         window.removeEventListener("message", handleRequest);
