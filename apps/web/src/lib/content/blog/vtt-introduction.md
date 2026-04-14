@@ -21,7 +21,7 @@ publishedAt: 2026-04-14T10:00:00Z
 
 You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of separate tools.
 
-Codex-Cryptica was built to make your world connected. Now, that connection extends into the session itself. **Introducing the Virtual Tabletop (VTT)** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
+Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Virtual Tabletop (VTT)** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
 
 ## Your Lore is the Map
 
