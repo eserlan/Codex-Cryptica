@@ -25,7 +25,9 @@ Codex-Cryptica was built to make your world connected. Now, that connection exte
 
 ## Your Lore is the Map
 
-The core of this VTT is its deep connection to your data. In most tools, a token is just a name and an image. Here, **a token is an Entity**. 
+The core of this VTT is its deep connection to your data. In most tools, a token is just a name and an image. 
+
+**Here, a token is an Entity.**
 
 This creates a seamless flow from prep to play:
 1. **Prepare** an NPC with history, secrets, and relationships in your vault.
