@@ -64,6 +64,6 @@ The VTT doesn’t replace your notes—it makes them playable.
 
 The VTT is ready for you today. **Open your campaign and drag your first entity onto the map—it takes seconds.** 
 
-I can’t wait to see the worlds you build and the stories you tell.
+I can’t wait to see the worlds you build and the stories you tell—I built this for exactly that.
 
 _Want to learn more about how data is handled? Check out the [GM's Guide to Data Sovereignty](/blog/gm-guide-data-sovereignty)._
