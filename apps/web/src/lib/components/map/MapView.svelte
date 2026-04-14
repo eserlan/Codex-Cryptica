@@ -1,8 +1,6 @@
 <script lang="ts">
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
-  import { base } from "$app/paths";
-  import { openEntityPopout } from "$lib/utils/zen-popout";
   import { mapStore } from "../../stores/map.svelte";
   import { vault } from "../../stores/vault.svelte";
   import { uiStore } from "../../stores/ui.svelte";
@@ -1098,28 +1096,6 @@
                 class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
               ></span>
               <span>Look at {_ctxToken.name}</span>
-            </button>
-            <button
-              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
-              onclick={() => {
-                const entity = _ctxToken?.entityId
-                  ? vault.entities[_ctxToken.entityId]
-                  : null;
-                if (entity) {
-                  openEntityPopout(
-                    vault.activeVaultId ?? "guest",
-                    entity,
-                    base,
-                    uiStore.isGuestMode,
-                  );
-                  contextMenu = null;
-                }
-              }}
-            >
-              <span
-                class="icon-[heroicons--arrow-top-right-on-square] w-3.5 h-3.5 text-theme-primary"
-              ></span>
-              <span>Open in new tab</span>
             </button>
           {/if}
         {/if}
