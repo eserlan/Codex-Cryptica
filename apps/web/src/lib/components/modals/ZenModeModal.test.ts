@@ -75,7 +75,7 @@ vi.mock("$lib/stores/ui.svelte", () => ({
 }));
 
 vi.mock("$lib/stores/vault.svelte", () => {
-  const entities = {
+  const entities: Record<string, any> = {
     "entity-1": {
       id: "entity-1",
       title: "Faerun",

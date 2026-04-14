@@ -45,6 +45,8 @@ Object.defineProperty(window, "matchMedia", {
 import { uiStore } from "./ui.svelte";
 import { vault } from "./vault.svelte";
 
+const mockedVault = vault as any;
+
 describe("UIStore", () => {
   beforeEach(() => {
     // Reset state before each test
@@ -55,9 +57,9 @@ describe("UIStore", () => {
     uiStore.dismissedWorldPage = false;
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
-    vault.isGuest = false;
-    vault.entities = {};
-    vault.loadEntityContent.mockClear();
+    mockedVault.isGuest = false;
+    mockedVault.entities = {};
+    mockedVault.loadEntityContent.mockClear();
   });
 
   it("should make Entity Explorer and Canvas Palette mutually exclusive", () => {
