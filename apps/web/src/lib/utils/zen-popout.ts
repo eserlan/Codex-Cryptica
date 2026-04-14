@@ -1,15 +1,8 @@
 import type { Entity } from "schema";
 
-export const ZEN_POPOUT_REQUEST = "ZEN_ENTITY_REQUEST";
-export const ZEN_POPOUT_DATA = "ZEN_ENTITY_DATA";
+const STORAGE_KEY_PREFIX = "codex.zen-popout.";
 
-export interface ZenEntityRequest {
-  type: typeof ZEN_POPOUT_REQUEST;
-  entityId: string;
-}
-
-export interface ZenEntityData {
-  type: typeof ZEN_POPOUT_DATA;
+export interface ZenPopoutPayload {
   entity: Entity;
   isGuest: boolean;
 }
@@ -17,9 +10,9 @@ export interface ZenEntityData {
 /**
  * Opens an entity in a standalone zen popout tab.
  *
- * For guests, data lives in memory (P2P), not local storage. We open the tab
- * without `noopener` so the new tab can postMessage us a request, then we
- * respond with the entity payload.
+ * For guests (P2P data, no local vault), the entity is written to
+ * localStorage under a per-entity key before the tab opens. The new tab
+ * reads and immediately removes the entry so it doesn't linger.
  */
 export function openEntityPopout(
   vaultId: string,
@@ -27,32 +20,35 @@ export function openEntityPopout(
   base: string,
   isGuest: boolean,
 ) {
-  const url = `${base}/vault/${vaultId}/entity/${entity.id}`;
-
-  // noopener would null out window.opener in the child — skip it for guests
-  const features = isGuest ? "" : "noopener,noreferrer";
-  const newTab = window.open(url, "_blank", features);
-
-  if (isGuest && newTab) {
-    const origin = window.location.origin;
-    const handleRequest = (event: MessageEvent) => {
-      if (event.origin !== origin) return;
-      if (event.source !== newTab) return;
-      const msg = event.data as ZenEntityRequest;
-      if (msg?.type === ZEN_POPOUT_REQUEST && msg.entityId === entity.id) {
-        // Strip Svelte reactive proxy — postMessage needs a plain cloneable object
-        const plain = JSON.parse(JSON.stringify(entity)) as Entity;
-        newTab.postMessage(
-          {
-            type: ZEN_POPOUT_DATA,
-            entity: plain,
-            isGuest,
-          } satisfies ZenEntityData,
-          origin,
-        );
-        window.removeEventListener("message", handleRequest);
-      }
+  if (isGuest) {
+    const payload: ZenPopoutPayload = {
+      // Strip Svelte reactive proxy before serialising
+      entity: JSON.parse(JSON.stringify(entity)),
+      isGuest: true,
     };
-    window.addEventListener("message", handleRequest);
+    localStorage.setItem(
+      `${STORAGE_KEY_PREFIX}${entity.id}`,
+      JSON.stringify(payload),
+    );
+  }
+
+  window.open(
+    `${base}/vault/${vaultId}/entity/${entity.id}`,
+    "_blank",
+    "noopener,noreferrer",
+  );
+}
+
+export function consumeZenPopoutPayload(
+  entityId: string,
+): ZenPopoutPayload | null {
+  const key = `${STORAGE_KEY_PREFIX}${entityId}`;
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  localStorage.removeItem(key);
+  try {
+    return JSON.parse(raw) as ZenPopoutPayload;
+  } catch {
+    return null;
   }
 }
