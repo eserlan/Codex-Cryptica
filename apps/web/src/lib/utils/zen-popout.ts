@@ -40,8 +40,8 @@ export function openEntityPopout(
       if (event.source !== newTab) return;
       const msg = event.data as ZenEntityRequest;
       if (msg?.type === ZEN_POPOUT_REQUEST && msg.entityId === entity.id) {
-        // $state.snapshot produces a plain object — required for structured clone
-        const plain = $state.snapshot(entity) as Entity;
+        // Strip Svelte reactive proxy — postMessage needs a plain cloneable object
+        const plain = JSON.parse(JSON.stringify(entity)) as Entity;
         newTab.postMessage(
           {
             type: ZEN_POPOUT_DATA,
