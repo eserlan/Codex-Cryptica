@@ -193,7 +193,7 @@
                     uiStore.openZenMode(token.entityId!);
                   }}
                   onmousedown={(e) => e.stopPropagation()}
-                  title="View entity"
+                  title="Look at {token.name}"
                   type="button"
                 >
                   <span class="icon-[lucide--book-open] w-3.5 h-3.5"></span>

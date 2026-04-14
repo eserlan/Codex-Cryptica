@@ -1095,7 +1095,7 @@
               <span
                 class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
               ></span>
-              <span>View Entity</span>
+              <span>Look at {_ctxToken.name}</span>
             </button>
           {/if}
         {/if}
