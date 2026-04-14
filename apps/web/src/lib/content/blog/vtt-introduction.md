@@ -65,7 +65,7 @@ The VTT doesn’t replace your notes—it makes them playable.
 
 The VTT is ready for you today. 
 
-**Click the “Launch VTT” icon in your sidebar and drag your first entity onto the map—it takes seconds.** 
+**Open any map from your sidebar and toggle the VTT mode to start dragging your first entity onto the board—it takes seconds.** 
 
 The first minute of your next session just got a whole lot smoother.
 
