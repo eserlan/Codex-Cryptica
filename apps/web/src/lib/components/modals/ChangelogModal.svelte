@@ -29,15 +29,18 @@
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") close();
   };
+
+  const displayEntries = $derived(entries.length > 0 ? entries : [releases[0]]);
 </script>
 
-{#if uiStore.showChangelog && entries.length > 0}
+<svelte:window onkeydown={handleKeydown} />
+
+{#if uiStore.showChangelog}
   <!-- Backdrop -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
     class="fixed inset-0 bg-black/80 z-[200] backdrop-blur-sm"
     onclick={close}
-    onkeydown={handleKeydown}
     role="presentation"
     transition:fade
   ></div>
@@ -47,7 +50,6 @@
     role="dialog"
     aria-modal="true"
     aria-labelledby="changelog-heading"
-    onkeydown={handleKeydown}
     transition:fly={{ y: 20, duration: 300 }}
   >
     <!-- Header -->
@@ -60,10 +62,11 @@
           id="changelog-heading"
           class="text-xl font-bold text-theme-text uppercase font-header tracking-widest"
         >
-          What's New
+          {entries.length > 0 ? "What's New" : "Recent Updates"}
         </h2>
         <p class="text-[10px] text-theme-muted uppercase tracking-[0.2em] mt-1">
           Codex Cryptica {VERSION}
+          {entries.length === 0 ? "(Up to Date)" : ""}
         </p>
       </div>
       <button
@@ -77,7 +80,7 @@
 
     <!-- Body -->
     <div class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
-      {#each entries as release}
+      {#each displayEntries as release}
         <section>
           <div
             class="flex items-baseline justify-between mb-4 border-b border-theme-border/30 pb-2"
@@ -118,7 +121,7 @@
         onclick={close}
         class="px-12 py-3 bg-theme-primary text-black font-bold uppercase font-header tracking-widest text-xs hover:bg-theme-primary/80 transition-all active:scale-95 shadow-[0_0_15px_var(--color-accent-primary)]"
       >
-        Acknowledge Updates
+        {entries.length > 0 ? "Acknowledge Updates" : "Return to Codex"}
       </button>
       <div
         class="mt-4 text-[9px] font-header text-theme-muted uppercase tracking-[0.3em]"

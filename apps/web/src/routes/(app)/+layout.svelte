@@ -21,7 +21,6 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
-  import { VERSION as _VERSION } from "$lib/config";
   import releases from "$lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
 
@@ -221,11 +220,17 @@
 
       if (hasUnseenReleases) {
         // Delay to not conflict with tour/demo triggers
-        setTimeout(() => {
-          if (!helpStore.activeTour && !uiStore.showZenMode) {
+        const timeout = setTimeout(() => {
+          if (
+            !helpStore.activeTour &&
+            !uiStore.showZenMode &&
+            !uiStore.isDemoMode &&
+            !uiStore.showChangelog
+          ) {
             uiStore.showChangelog = true;
           }
         }, 2000);
+        return () => clearTimeout(timeout);
       }
     }
   });

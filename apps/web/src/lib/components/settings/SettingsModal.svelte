@@ -465,6 +465,7 @@
               <div class="mt-6">
                 <button
                   onclick={() => (uiStore.showChangelog = true)}
+                  data-testid="show-changelog-button"
                   class="w-full p-4 bg-theme-primary/10 border border-theme-primary/30 hover:border-theme-primary text-theme-primary transition-all rounded group flex items-center justify-between"
                 >
                   <div class="flex items-center gap-3">
