@@ -96,9 +96,14 @@
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (isPopout) {
-      window.close();
+      const confirmed = await uiStore.confirm({
+        title: "Close tab?",
+        message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
+        confirmLabel: "Close tab",
+      });
+      if (confirmed) window.close();
       return;
     }
     actions.handleClose(() => {
