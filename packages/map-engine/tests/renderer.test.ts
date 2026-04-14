@@ -17,6 +17,7 @@ function createContextMock() {
     clip: vi.fn(),
     moveTo: vi.fn(),
     lineTo: vi.fn(),
+    quadraticCurveTo: vi.fn(),
     fill: vi.fn(),
     stroke: vi.fn(),
     strokeRect: vi.fn(),
@@ -322,5 +323,198 @@ describe("Map Engine Renderer", () => {
       expect.any(Number),
       expect.any(Number),
     );
+  });
+
+  it("returns early when the canvas context is unavailable", () => {
+    const canvasWithoutContext = {
+      getContext: vi.fn().mockReturnValue(null),
+      width: 1000,
+      height: 800,
+    } as any;
+
+    renderMap({
+      canvas: canvasWithoutContext,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+    });
+
+    expect(canvasWithoutContext.getContext).toHaveBeenCalledWith("2d");
+  });
+
+  it("falls back to filling the token when the image has no intrinsic size", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [
+        {
+          id: "token-fallback",
+          x: 40,
+          y: 50,
+          width: 64,
+          height: 64,
+          rotation: 0,
+          color: "#10b981",
+          label: "",
+          image: { width: 0, height: 0 } as HTMLImageElement,
+          visible: true,
+        },
+      ],
+    });
+
+    expect(mockCtx.drawImage).toHaveBeenCalledTimes(1);
+    expect(mockCtx.fill).toHaveBeenCalled();
+    expect(mockCtx.fillStyle).toBe("#10b981");
+  });
+
+  it("draws active and dead token treatments with status icon bar", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      accentColor: "#c2410c",
+      tokens: [
+        {
+          id: "token-status",
+          x: 120,
+          y: 140,
+          width: 72,
+          height: 72,
+          rotation: 15,
+          color: "#f59e0b",
+          label: "Champion",
+          visible: true,
+          active: true,
+          statusEffects: ["dead", "stunned", "prone", "poisoned", "invisible"],
+        },
+      ],
+    });
+
+    expect(mockCtx.stroke).toHaveBeenCalled();
+    expect(mockCtx.fill).toHaveBeenCalled();
+    expect(mockCtx.moveTo).toHaveBeenCalled();
+    expect(mockCtx.lineTo).toHaveBeenCalled();
+    expect(mockCtx.arc).toHaveBeenCalled();
+    expect(mockCtx.quadraticCurveTo).toHaveBeenCalled();
+    expect(mockCtx.fillText).toHaveBeenCalledWith(
+      "Champion",
+      expect.any(Number),
+      expect.any(Number),
+    );
+  });
+
+  it("skips hidden and offscreen tokens", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 1 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      tokens: [
+        {
+          id: "hidden-token",
+          x: 10,
+          y: 10,
+          width: 32,
+          height: 32,
+          rotation: 0,
+          color: "#f59e0b",
+          label: "Hidden",
+          visible: false,
+        },
+        {
+          id: "far-away-token",
+          x: 9000,
+          y: 9000,
+          width: 32,
+          height: 32,
+          rotation: 0,
+          color: "#f59e0b",
+          label: "Far",
+          visible: true,
+        },
+      ],
+    });
+
+    expect(mockCtx.fillText).not.toHaveBeenCalled();
+  });
+
+  it("draws a fixed grid without translating the context", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 120, y: 80 }, zoom: 1.5 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "square",
+        size: 40,
+        color: "#94a3b8",
+        opacity: 0.25,
+        fixed: true,
+      },
+    });
+
+    expect(mockCtx.translate).toHaveBeenCalledTimes(1);
+    expect(mockCtx.fillRect).toHaveBeenCalledWith(-60, -60, 1120, 920);
+  });
+
+  it("applies grid offsets when drawing a scrolling grid", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 25, y: -15 }, zoom: 2 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "square",
+        size: 25,
+        color: "#ef4444",
+        opacity: 0.4,
+        offsetX: 5,
+        offsetY: 10,
+      },
+    });
+
+    expect(mockCtx.translate).toHaveBeenNthCalledWith(2, 35, 5);
+  });
+
+  it("skips drawing the grid when the zoomed cell size is too small", () => {
+    renderMap({
+      canvas: mockCanvas,
+      image: { width: 500, height: 400 } as HTMLImageElement,
+      transform: { pan: { x: 0, y: 0 }, zoom: 0.01 },
+      canvasSize: { width: 1000, height: 800 },
+      pins: [],
+      maskCanvas: null,
+      showFog: false,
+      grid: {
+        type: "square",
+        size: 50,
+        color: "#ef4444",
+        opacity: 0.4,
+      },
+    });
+
+    expect(mockCtx.createPattern).not.toHaveBeenCalled();
+    expect(mockCtx.fillRect).not.toHaveBeenCalled();
   });
 });
