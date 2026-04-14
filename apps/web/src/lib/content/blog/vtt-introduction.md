@@ -21,11 +21,11 @@ publishedAt: 2026-04-14T10:00:00Z
 
 You’ve spent hours building a rich, connected world—then the session starts, and everything fragments. You find yourself alt-tabbing between battlemaps, disconnected PDFs, and scattered notes, losing the momentum of the story to a sea of separate tools.
 
-Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Virtual Tabletop (VTT)** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
+Codex-Cryptica was built to make your world connected. Now it extends into the session itself. **Introducing the Data-Native VTT** — a tactical layer integrated directly into the archive. This isn't a separate application; it is a natural extension of your notes, built for GMs who want to run deep, lore-heavy sessions without the technical friction of traditional tools.
 
 ## Your Lore is the Map
 
-The core of this **Data-Native VTT** is its deep connection to your data. In most tools, a token is just a name and an image. 
+The core of the VTT is its deep connection to your data. In most tools, a token is just a name and an image. 
 
 **Here, a token is an Entity.**
 
@@ -34,7 +34,7 @@ This creates a seamless flow from prep to play:
 2. **Drag** that NPC directly onto the map during a session.
 3. **Access** their full lore instantly by clicking their token—no searching, no tab-switching.
 
-Drop "Captain Elira" onto the board and instantly access her alliances, secrets, and past encounters. You never have to hunt through folders to remember a character's motivation during a tense session—the map is simply another view of your world's data.
+Drop "Captain Elira" onto the board—and everything you wrote about her is right there.
 
 ## Reveal the World: Fast Tactical Discovery
 
@@ -46,9 +46,9 @@ Whether you need a precise square grid for a dungeon crawl or a hex map for over
 
 ## Why Switch? Data-Native Gameplay
 
-If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, this **Data-Native VTT** was built for you.
+If you are tired of the setup time in Foundry, the monthly fees of Roll20, or the disconnected feel of Owlbear Rodeo, the VTT was built for you.
 
-- **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to your knowledge graph.
+- **Context-Aware Play:** This is the first VTT designed to understand your lore—not just display it. It doesn't just show images; it connects your tactical play directly to the knowledge behind your world.
 - **No Hosting, No Setup:** There is nothing to install, no servers to maintain, and no version mismatches to troubleshoot. It just works.
 - **No Uploads, No Waiting:** Your maps and tokens stay in your browser. There are no upload bars, no monthly quotas, and no "your storage is full" warnings mid-session.
 
@@ -56,7 +56,9 @@ If you are tired of the setup time in Foundry, the monthly fees of Roll20, or th
 
 The VTT doesn’t replace your notes—it makes them playable. 
 
-**No export. No import. No sync.** You simply write a location, drop it on a map, and play instantly. Whether you are tracking a party's movement across a continent or managing a room-to-room encounter, this integration ensures that the distance between writing the world and playing it is zero.
+**No export. No import. No sync.** You simply write a location, drop it on a map, and play instantly. Whether you are tracking a party's movement across a continent or managing a room-to-room encounter, this integration ensures one thing:
+
+**The distance between writing the world and playing it is zero.**
 
 ### Start Your Next Session
 
