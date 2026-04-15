@@ -1,6 +1,6 @@
 # Component Pattern: Buttons
 
-Codex-Cryptica uses standard HTML `<button>` elements styled with Tailwind 4 utility classes. This ensures maximum flexibility while maintaining a consistent visual language.
+Codex-Cryptica uses standard HTML `<button>` elements styled with Tailwind 4 utility classes. Button patterns should remain theme agnostic: the base guidance covers structure, emphasis, spacing, and state treatment, while the active theme is applied through semantic tokens.
 
 ## Primary Button
 
@@ -51,4 +51,16 @@ Used for destructive actions (Delete, Remove).
 
 1.  **Svelte 5 Events**: Always use the `onclick` attribute instead of the deprecated `on:click`.
 2.  **Transitions**: Use `transition-all` to ensure smooth hover and active states.
-3.  **Typography**: Most buttons should use `text-xs font-bold uppercase tracking-widest` for a "game-like" UI feel.
+3.  **Typography**: Most buttons should use a compact, high-contrast label treatment such as `text-xs font-bold uppercase tracking-widest` when the action needs strong visual emphasis.
+4.  **Theme Agnostic Tokens**: Prefer semantic tokens such as `theme-primary`, `theme-secondary`, `theme-border`, `theme-bg`, `theme-text`, and `theme-muted` so button markup does not need to change across themes.
+
+## Applying the Current Theme
+
+The current default theme is Fantasy, but the button pattern itself should not depend on Fantasy-specific terminology or hardcoded decorative colors. The active theme should be expressed by the token values supplied in the theme layer.
+
+For the current Fantasy theme, that means:
+
+1.  **Primary Actions**: `bg-theme-primary`, `border-theme-primary`, and `text-theme-bg` resolve to the current Fantasy action palette.
+2.  **Secondary Actions**: `bg-theme-bg/50`, `border-theme-border`, and `text-theme-muted` inherit the current Fantasy surface and text treatment.
+3.  **Hover and Glow**: `hover:bg-theme-secondary` and token-derived shadow treatments pick up the current Fantasy accenting automatically.
+4.  **Danger Actions**: Hardcoded destructive colors remain an exception unless and until the design system defines semantic danger tokens for all button states.

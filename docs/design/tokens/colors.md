@@ -1,6 +1,6 @@
 # Design Tokens: Colors
 
-Codex-Cryptica uses a semantic color system powered by Tailwind 4 `@theme` variables. This ensures that components remain theme-aware and consistent across the application.
+Codex-Cryptica uses a semantic color system powered by Tailwind 4 `@theme` variables. The token layer should stay theme agnostic so components can remain structurally stable while each active theme supplies its own visual values.
 
 ## Core Theme Variables
 
@@ -32,4 +32,15 @@ Use these variables for all primary UI elements:
 
 ## Implementation Guideline
 
-Prefer semantic variables over hex codes or hardcoded Tailwind colors (e.g., `text-amber-500`) whenever possible. Use hardcoded Tailwind colors only for documented exceptions, such as label mappings and established destructive-action patterns (e.g., `bg-red-600`), so the UI remains consistent while still adapting correctly when the theme shifts from "Fantasy" to other potential modes.
+Prefer semantic variables over hex codes or hardcoded Tailwind colors (e.g., `text-amber-500`) whenever possible. Use hardcoded Tailwind colors only for documented exceptions, such as label mappings and established destructive-action patterns (e.g., `bg-red-600`).
+
+## Applying the Current Theme
+
+The current default theme is Fantasy. That theme should be implemented by assigning Fantasy-specific values to the semantic tokens above rather than by bypassing the token system in component markup.
+
+For the current Fantasy theme, that means:
+
+1.  **Background and Surfaces**: `--color-theme-bg` and `--color-theme-surface` map to the current Fantasy base materials.
+2.  **Primary and Accent**: `--color-theme-primary`, `--color-theme-secondary`, and `--color-theme-accent` map to the current Fantasy action and highlight palette.
+3.  **Borders and Text**: `--color-theme-border`, `--color-theme-text`, and `--color-theme-muted` map to the current Fantasy contrast system.
+4.  **Future Themes**: New themes should override the same semantic token set instead of introducing component-specific color exceptions.

@@ -2,6 +2,8 @@
 
 Codex-Cryptica uses a centralized modal system managed by the `uiStore`. Modals are rendered via a `GlobalModalProvider`.
 
+Dialog patterns should stay theme agnostic. The component guidance here defines structure, accessibility, layering, and motion, while the active theme is applied through semantic tokens on the rendered surfaces.
+
 ## Modal Structure
 
 A standard modal includes a backdrop, a container with transition effects, a header, a content area, and action buttons.
@@ -67,3 +69,15 @@ A standard modal includes a backdrop, a container with transition effects, a hea
 3.  **Keyboard Accessibility**: Ensure the modal can be closed with the `Escape` key and focus is managed correctly. `tabindex="-1"` should be set on the dialog container for programmatic focus.
 4.  **A11y Labeling**: Always use `aria-labelledby` pointing to the modal's primary heading.
 5.  **Backdrop**: Always include a `backdrop-blur` and a dark overlay to focus the user's attention.
+6.  **Theme Agnostic Tokens**: Use semantic tokens such as `theme-surface`, `theme-border`, `theme-text`, and `theme-muted` for modal surfaces and copy so the dialog pattern can survive theme changes unchanged.
+
+## Applying the Current Theme
+
+The current default theme is Fantasy, but the dialog pattern should not encode Fantasy-specific visuals directly into the structure. The active theme should be expressed through the tokens applied to the container, typography, and action controls.
+
+For the current Fantasy theme, that means:
+
+1.  **Container Surface**: `bg-theme-surface` and `border-theme-border` resolve to the current Fantasy panel treatment.
+2.  **Typography**: `font-header`, `text-theme-text`, and `text-theme-muted` inherit the current Fantasy heading and body styling.
+3.  **Action Buttons**: Confirmation and dismissal actions should reuse the shared button token mappings rather than defining dialog-only colors.
+4.  **Backdrop**: The dark overlay remains functional rather than thematic and should stay consistent across themes unless a broader overlay token system is introduced.

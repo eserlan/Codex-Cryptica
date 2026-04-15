@@ -53,6 +53,8 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 
 Codex-Cryptica supports multiple visual modes (e.g., the default "Fantasy" theme). Theming is achieved through CSS variable overrides within the `@theme` and `@layer base` blocks in `app.css`.
 
+Component guides should stay theme agnostic by default. When a guide needs to explain how the application looks today, document that separately as an example of how the current theme maps onto the shared semantic tokens.
+
 ### How it Works
 
 1.  **Semantic Tokens**: We define semantic tokens (e.g., `--color-theme-primary`) that components use.
@@ -63,9 +65,9 @@ Codex-Cryptica supports multiple visual modes (e.g., the default "Fantasy" theme
 
 For detailed specifications and usage examples of core components, refer to the following sub-documents:
 
-- **[Buttons](design/components/button.md)**: Primary, secondary, and danger styles.
-- **[Inputs](design/components/input.md)**: Text inputs, textareas, and checkboxes.
-- **[Modals and Dialogs](design/components/dialog.md)**: Centralized modal system patterns.
+- **[Buttons](design/components/button.md)**: Primary, secondary, and danger styles with theme-agnostic guidance plus notes on applying the active theme.
+- **[Inputs](design/components/input.md)**: Text inputs, textareas, and checkboxes with theme-agnostic guidance plus notes on applying the active theme.
+- **[Modals and Dialogs](design/components/dialog.md)**: Centralized modal system patterns with theme-agnostic guidance plus notes on applying the active theme.
 
 ## Living Examples
 

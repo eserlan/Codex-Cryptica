@@ -1,6 +1,6 @@
 # Component Pattern: Inputs
 
-Inputs in Codex-Cryptica are designed to be tactile and theme-aware, utilizing the "Fantasy" theme's parchment and ink aesthetics.
+Inputs in Codex-Cryptica should be documented and implemented as theme-agnostic components. The base pattern defines structure, spacing, states, and token usage without assuming a specific visual theme.
 
 ## Standard Text Input
 
@@ -66,3 +66,15 @@ For boolean settings.
 1.  **Binding**: Use Svelte's `bind:value` or `bind:checked` for reactive data synchronization.
 2.  **Focus States**: Always ensure a visible focus state using `focus:border-theme-accent` and a subtle ring.
 3.  **Scrollbars**: For textareas, use the `.custom-scrollbar` utility class defined in `app.css`.
+4.  **Theme Agnostic Tokens**: Use semantic tokens such as `theme-bg`, `theme-border`, `theme-text`, `theme-muted`, and `theme-accent` so the component can inherit any active theme without changing its markup.
+
+## Applying the Current Theme
+
+The current default theme is Fantasy, but the input pattern itself should not be rewritten around Fantasy-specific colors or materials. Instead, the active theme is applied by mapping semantic tokens to Fantasy values in the theme layer.
+
+For the current Fantasy theme, that means:
+
+1.  **Surface**: `bg-theme-bg/50` resolves to the Fantasy surface treatment.
+2.  **Borders and Text**: `border-theme-border`, `text-theme-text`, and `placeholder-theme-muted` inherit the Fantasy palette.
+3.  **Focus**: `focus:border-theme-accent` and `focus:ring-theme-accent/20` pick up the Fantasy accent treatment automatically.
+4.  **Future Themes**: New themes should override the same semantic tokens rather than requiring input-specific class changes.

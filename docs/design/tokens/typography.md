@@ -2,12 +2,12 @@
 
 ## Typography
 
-Codex-Cryptica uses a refined serif-first typography system to maintain its thematic "fantasy" and "mystical" aesthetic.
+Codex-Cryptica uses a semantic typography system that separates typographic roles from theme-specific font choices. Typography guidance should stay theme agnostic, while the active theme decides which font families and tone those roles resolve to.
 
 ### Fonts
 
-- **Header Font (`--font-header`)**: `Alegreya`, serif. Used for all headings (H1-H6).
-- **Body Font (`--font-body`)**: `Alegreya`, serif. Used for all primary text, inputs, and buttons.
+- **Header Font (`--font-header`)**: Semantic heading font token used for all headings (H1-H6).
+- **Body Font (`--font-body`)**: Semantic body font token used for all primary text, inputs, and buttons.
 
 ### Scale (Utility Classes)
 
@@ -22,7 +22,7 @@ We use standard Tailwind typography scales with semantic overrides for prose:
 
 ### Themed Typography
 
-Font families are not hardcoded but are mapped to theme-specific variables. This allows the aesthetic to shift (e.g., from "Fantasy" serifs to a more "Modern" sans-serif) based on the active theme.
+Font families are not hardcoded but are mapped to theme-specific variables. This allows the aesthetic to shift across themes without requiring component-level typography changes.
 
 - **Header Font Mapping**: `--font-header` maps to `--font-header-val` defined in the active theme.
 - **Body Font Mapping**: `--font-body` maps to `--font-body-val` defined in the active theme.
@@ -31,6 +31,16 @@ Font families are not hardcoded but are mapped to theme-specific variables. This
 
 - **Prose**: Content is styled using custom `.prose` theme variables and rules defined in `apps/web/src/app.css`.
 - **Code**: Inline code within prose uses the same custom theme-aware styling, including a slight background tint and border.
+
+### Applying the Current Theme
+
+The current default theme is Fantasy. That theme should be expressed by assigning Fantasy-appropriate font values to the semantic typography tokens rather than hardcoding Fantasy fonts into component rules.
+
+For the current Fantasy theme, that means:
+
+1.  **Header Font**: `--font-header` currently resolves to `Alegreya`, serif.
+2.  **Body Font**: `--font-body` currently resolves to `Alegreya`, serif.
+3.  **Tone**: The current Fantasy theme uses serif typography to support its present visual direction, but the typography roles remain reusable for future themes.
 
 ## Spacing
 
