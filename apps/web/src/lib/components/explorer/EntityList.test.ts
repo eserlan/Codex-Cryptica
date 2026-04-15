@@ -1,46 +1,110 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect } from "vitest";
 
-describe("EntityList Filtering Logic Performance", () => {
-  it("should calculate filtered list of 1,000 entities in under 50ms", async () => {
-    // 1. Generate 1,000 mock entities
-    const mockEntities = Array.from({ length: 1000 }, (_, i) => ({
-      id: `entity-${i}`,
-      title: `Entry ${i}`,
-      type: i % 2 === 0 ? "npc" : "location",
-      content: "Some content",
-      labels: ["test"],
-      connections: [],
-      updatedAt: Date.now(),
-    }));
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { uiStore } from "$lib/stores/ui.svelte";
+import EntityList from "./EntityList.svelte";
 
-    const typeFilters = ["all"];
-    const searchQuery = "entry";
+vi.mock("svelte", async () => {
+  // @ts-expect-error - force the client Svelte runtime so testing-library can mount
+  return await import("../../../../../../node_modules/svelte/src/index-client.js");
+});
 
-    const start = performance.now();
+vi.mock("$app/paths", () => ({
+  base: "",
+}));
 
-    // Simulating the logic in EntityList.svelte
-    const filtered = [];
-    const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.includes("all");
+vi.mock("$lib/stores/vault.svelte", () => ({
+  vault: {
+    activeVaultId: "vault-1",
+    allEntities: [
+      {
+        id: "quest-only",
+        title: "Broken Seal",
+        type: "npc",
+        tags: [],
+        labels: ["Quest"],
+        connections: [],
+        content: "",
+        updatedAt: 0,
+      },
+      {
+        id: "npc-only",
+        title: "Ava",
+        type: "npc",
+        tags: [],
+        labels: ["NPC"],
+        connections: [],
+        content: "",
+        updatedAt: 0,
+      },
+      {
+        id: "both",
+        title: "Mira",
+        type: "npc",
+        tags: [],
+        labels: ["NPC", "Quest"],
+        connections: [],
+        content: "",
+        updatedAt: 0,
+      },
+    ],
+  },
+}));
 
-    for (let i = 0; i < mockEntities.length; i++) {
-      const e = mockEntities[i];
-      const matchesSearch =
-        e.title.toLowerCase().includes(query) ||
-        e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.includes(e.type);
+vi.mock("$lib/stores/categories.svelte", () => ({
+  categories: {
+    list: [{ id: "npc", label: "NPC", icon: "user", color: "#fff" }],
+    getCategory: () => ({ icon: "user" }),
+  },
+}));
 
-      if (matchesSearch && matchesType) {
-        filtered.push(e);
-      }
-    }
-    filtered.sort((a, b) => a.title.localeCompare(b.title));
+vi.mock("$lib/utils/icon", () => ({
+  getIconClass: () => "",
+}));
 
-    const end = performance.now();
-    const duration = end - start;
+describe("EntityList", () => {
+  beforeEach(() => {
+    uiStore.explorerViewMode = "list";
+    uiStore.explorerCollapsedLabelGroups = {};
+    window.localStorage.removeItem("codex_explorer_collapsed_label_groups");
+  });
 
-    // In node/vitest, 10ms is a safe bet for pure logic
-    expect(duration).toBeLessThan(100);
+  it("shows and hides entities within a label group", async () => {
+    uiStore.setExplorerViewMode("label");
+
+    render(EntityList);
+
+    expect(screen.getByText("Broken Seal")).not.toBeNull();
+
+    const questToggle = screen
+      .getAllByRole("button")
+      .find(
+        (button) =>
+          button.getAttribute("aria-expanded") === "true" &&
+          button.textContent?.includes("Quest"),
+      );
+
+    expect(questToggle).not.toBeUndefined();
+
+    await fireEvent.click(questToggle!);
+
+    expect(screen.queryByText("Broken Seal")).toBeNull();
+    expect(uiStore.getCollapsedLabelGroups("vault-1").has("Quest")).toBe(true);
+
+    const collapsedQuestToggle = screen
+      .getAllByRole("button")
+      .find(
+        (button) =>
+          button.getAttribute("aria-expanded") === "false" &&
+          button.textContent?.includes("Quest"),
+      );
+
+    expect(collapsedQuestToggle).not.toBeUndefined();
+
+    await fireEvent.click(collapsedQuestToggle!);
+
+    expect(screen.getByText("Broken Seal")).not.toBeNull();
+    expect(uiStore.getCollapsedLabelGroups("vault-1").has("Quest")).toBe(false);
   });
 });
