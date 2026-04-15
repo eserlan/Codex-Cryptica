@@ -1,6 +1,10 @@
 import { base } from "$app/paths";
 
 const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
+const EXPLORER_COLLAPSED_LABELS_STORAGE_KEY =
+  "codex_explorer_collapsed_label_groups";
+
+type ExplorerCollapsedLabelGroups = Record<string, string[]>;
 
 export type SettingsTab =
   | "vault"
@@ -10,7 +14,7 @@ export type SettingsTab =
   | "about"
   | "help";
 
-class UIStore {
+export class UIStore {
   showSettings = $state(false);
   showCanvasSelector = $state(false);
   pendingCanvasEntities = $state<string[]>([]);
@@ -23,6 +27,8 @@ class UIStore {
   showDiceModal = $state(false);
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
+  explorerViewMode = $state<"list" | "label">("list");
+  explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
 
   // Sidebar State
   leftSidebarOpen = $state(false);
@@ -67,6 +73,38 @@ class UIStore {
       }
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
+
+      const explorerMode = localStorage.getItem("codex_explorer_view_mode");
+      if (explorerMode === "list" || explorerMode === "label") {
+        this.explorerViewMode = explorerMode;
+      }
+
+      const collapsedLabelGroups = localStorage.getItem(
+        EXPLORER_COLLAPSED_LABELS_STORAGE_KEY,
+      );
+      if (collapsedLabelGroups !== null) {
+        try {
+          const parsed = JSON.parse(collapsedLabelGroups);
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            !Array.isArray(parsed) &&
+            Object.values(parsed).every(
+              (value) =>
+                Array.isArray(value) &&
+                value.every((item) => typeof item === "string"),
+            )
+          ) {
+            this.explorerCollapsedLabelGroups =
+              parsed as ExplorerCollapsedLabelGroups;
+          } else {
+            throw new Error("Invalid format");
+          }
+        } catch {
+          this.explorerCollapsedLabelGroups = {};
+          localStorage.removeItem(EXPLORER_COLLAPSED_LABELS_STORAGE_KEY);
+        }
+      }
 
       const lastLabel = localStorage.getItem("codex_last_connection_label");
       if (lastLabel !== null) {
@@ -187,6 +225,57 @@ class UIStore {
     this.liteMode = enabled;
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_lite_mode", String(enabled));
+    }
+  }
+
+  setExplorerViewMode(mode: "list" | "label") {
+    this.explorerViewMode = mode;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_explorer_view_mode", mode);
+    }
+  }
+
+  getCollapsedLabelGroups(vaultId: string | null) {
+    return new Set(
+      this.explorerCollapsedLabelGroups[
+        this.getExplorerLabelGroupScope(vaultId)
+      ] ?? [],
+    );
+  }
+
+  toggleExplorerLabelGroup(vaultId: string | null, label: string) {
+    const scope = this.getExplorerLabelGroupScope(vaultId);
+    const nextLabels = new Set(this.explorerCollapsedLabelGroups[scope] ?? []);
+
+    if (nextLabels.has(label)) {
+      nextLabels.delete(label);
+    } else {
+      nextLabels.add(label);
+    }
+
+    const nextState = { ...this.explorerCollapsedLabelGroups };
+    if (nextLabels.size === 0) {
+      delete nextState[scope];
+    } else {
+      nextState[scope] = Array.from(nextLabels).sort((a, b) =>
+        a.localeCompare(b),
+      );
+    }
+
+    this.explorerCollapsedLabelGroups = nextState;
+    this.persistCollapsedLabelGroups();
+  }
+
+  private getExplorerLabelGroupScope(vaultId: string | null) {
+    return vaultId ?? "__default__";
+  }
+
+  private persistCollapsedLabelGroups() {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        EXPLORER_COLLAPSED_LABELS_STORAGE_KEY,
+        JSON.stringify(this.explorerCollapsedLabelGroups),
+      );
     }
   }
 
