@@ -2,14 +2,14 @@ import { test, expect } from "@playwright/test";
 import { setupVaultPage } from "./test-helpers";
 
 test.describe("Changelog System", () => {
-  test("should automatically open when a new version is detected", async ({
+  test("should automatically open when a new MINOR version is detected", async ({
     page,
   }) => {
-    // 1. Setup with an older version in localStorage
+    // 1. Setup with an older MINOR version in localStorage
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_last_seen_version", "0.17.0");
+      localStorage.setItem("codex_last_seen_version", "0.16.5");
       localStorage.setItem("codex_skip_landing", "true");
     });
 
@@ -28,16 +28,19 @@ test.describe("Changelog System", () => {
     const lastSeen = await page.evaluate(() =>
       localStorage.getItem("codex_last_seen_version"),
     );
+    // Should match the current package.json version
     expect(lastSeen).toBe("0.17.37");
   });
 
-  test("should NOT automatically open when version is up to date", async ({
+  test("should NOT automatically open when MINOR version is up to date (even if patch is older)", async ({
     page,
   }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
       (window as any).__E2E__ = true;
-      localStorage.setItem("codex_last_seen_version", "0.17.37");
+      // Stored version is 0.17.0, current app is 0.17.37.
+      // Because minor is the same, it should NOT pop up.
+      localStorage.setItem("codex_last_seen_version", "0.17.0");
       localStorage.setItem("codex_skip_landing", "true");
     });
 
@@ -75,7 +78,7 @@ test.describe("Changelog System", () => {
     await expect(modal).toBeVisible();
 
     // 5. Verify it shows the latest version from releases.json
-    await expect(page.locator("text=v0.17.37")).toBeVisible();
+    await expect(page.locator("text=v0.17.0")).toBeVisible();
 
     // 6. Close via Escape key
     await page.keyboard.press("Escape");

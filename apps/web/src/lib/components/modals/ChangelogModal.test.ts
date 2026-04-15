@@ -24,7 +24,7 @@ describe("ChangelogModal", () => {
       reverse: vi.fn(),
     } as unknown as Animation);
     uiStore.showChangelog = true;
-    uiStore.lastSeenVersion = "0.17.0";
+    uiStore.lastSeenVersion = "0.16.5";
   });
 
   it("moves focus into the dialog, traps tab navigation, and restores focus on close", async () => {

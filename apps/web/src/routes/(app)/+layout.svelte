@@ -209,19 +209,21 @@
   // Automatic Release Note Trigger
   $effect(() => {
     if (browser && !uiStore.showChangelog && !uiStore.isDemoMode) {
-      const hasUnseenReleases = releases.some((r) => {
-        if (!uiStore.lastSeenVersion) return true;
+      const lastSeenStr = uiStore.lastSeenVersion;
 
-        const v1 = r.version.split(".").map(Number);
-        const v2 = uiStore.lastSeenVersion.split(".").map(Number);
-        for (let i = 0; i < 3; i++) {
-          if (v1[i] > v2[i]) return true;
-          if (v1[i] < v2[i]) return false;
-        }
-        return false;
-      });
+      const hasUnseenMinorRelease = (() => {
+        if (!lastSeenStr) return true;
+        const currentStoredMinor = parseInt(
+          lastSeenStr.split(".")[1] || "0",
+          10,
+        );
+        return releases.some((r) => {
+          const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
+          return releaseMinor > currentStoredMinor;
+        });
+      })();
 
-      if (hasUnseenReleases) {
+      if (hasUnseenMinorRelease) {
         // Delay to not conflict with tour/demo triggers
         const timeout = setTimeout(() => {
           if (

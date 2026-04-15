@@ -8,22 +8,20 @@
   let dialogElement = $state<HTMLElement>();
   let closeButton = $state<HTMLButtonElement>();
 
-  const entries = $derived(
-    releases.filter((r) => {
-      if (!uiStore.lastSeenVersion) return true;
-      return compareVersions(r.version, uiStore.lastSeenVersion) > 0;
-    }),
-  );
+  // Only treat a new minor version as "new" for the auto-prompt and header copy.
+  const hasUnseenMinorReleases = $derived.by(() => {
+    if (!uiStore.lastSeenVersion) return true;
 
-  function compareVersions(v1: string, v2: string) {
-    const parts1 = v1.split(".").map(Number);
-    const parts2 = v2.split(".").map(Number);
-    for (let i = 0; i < 3; i++) {
-      if (parts1[i] > parts2[i]) return 1;
-      if (parts1[i] < parts2[i]) return -1;
-    }
-    return 0;
-  }
+    const currentStoredMinor = parseInt(
+      uiStore.lastSeenVersion.split(".")[1] || "0",
+      10,
+    );
+
+    return releases.some((r) => {
+      const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
+      return releaseMinor > currentStoredMinor;
+    });
+  });
 
   const close = () => {
     uiStore.markVersionAsSeen(VERSION);
@@ -74,8 +72,6 @@
       first.focus();
     }
   };
-
-  const displayEntries = $derived(entries.length > 0 ? entries : [releases[0]]);
 </script>
 
 {#if uiStore.showChangelog}
@@ -83,13 +79,13 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
     onclick={close}
     transition:fade={{ duration: 200 }}
   >
     <div
       bind:this={dialogElement}
-      class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface font-body shadow-2xl"
+      class="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] border border-theme-border bg-theme-surface font-body shadow-2xl"
       role="dialog"
       aria-modal="true"
       aria-labelledby="changelog-heading"
@@ -100,7 +96,7 @@
     >
       <!-- Header -->
       <div
-        class="flex items-center justify-between border-b border-theme-border bg-theme-surface px-8 py-6"
+        class="flex shrink-0 items-center justify-between border-b border-theme-border bg-theme-surface px-8 py-6"
         style="background-image: var(--bg-texture-overlay)"
       >
         <div>
@@ -108,52 +104,52 @@
             id="changelog-heading"
             class="text-xl font-bold text-theme-text uppercase font-header tracking-widest"
           >
-            {entries.length > 0 ? "What's New" : "Recent Updates"}
+            {hasUnseenMinorReleases ? "What's New" : "Recent Updates"}
           </h2>
           <p
             class="mt-1 text-[10px] text-theme-muted uppercase tracking-[0.2em]"
           >
             Codex Cryptica {VERSION}
-            {entries.length === 0 ? "(Up to Date)" : ""}
+            {!hasUnseenMinorReleases ? "(Up to Date)" : ""}
           </p>
         </div>
         <button
           bind:this={closeButton}
           onclick={close}
-          class="text-theme-muted hover:text-theme-primary transition-colors"
+          class="text-theme-muted transition-colors hover:text-theme-primary"
           aria-label="Close"
           type="button"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span class="icon-[lucide--x] h-6 w-6"></span>
         </button>
       </div>
 
       <!-- Body -->
-      <div class="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-10">
-        {#each displayEntries as release}
+      <div class="flex-1 space-y-12 overflow-y-auto p-8 custom-scrollbar">
+        {#each releases as release}
           <section>
             <div
-              class="mb-4 flex items-baseline justify-between border-b border-theme-border/30 pb-2"
+              class="mb-4 flex flex-col justify-between gap-1 border-b border-theme-border/30 pb-2 sm:flex-row sm:items-baseline sm:gap-0"
             >
               <h3
-                class="text-sm font-bold text-theme-primary uppercase font-header tracking-widest"
+                class="text-base font-bold text-theme-primary uppercase font-header tracking-widest"
               >
                 {release.title}
               </h3>
               <span
-                class="text-[10px] font-header text-theme-muted uppercase tracking-wider"
+                class="shrink-0 text-[10px] font-header uppercase tracking-wider text-theme-muted"
               >
                 v{release.version} // {release.date}
               </span>
             </div>
 
-            <ul class="space-y-3">
+            <ul class="space-y-4">
               {#each release.highlights as highlight}
                 <li
-                  class="group flex gap-3 text-sm leading-relaxed text-theme-text/80"
+                  class="group flex gap-4 text-sm leading-relaxed text-theme-text/90"
                 >
                   <span
-                    class="icon-[lucide--sparkles] w-4 h-4 shrink-0 text-theme-primary opacity-50 transition-opacity group-hover:opacity-100"
+                    class="icon-[lucide--sparkles] mt-0.5 h-4 w-4 shrink-0 text-theme-primary opacity-60 transition-opacity group-hover:opacity-100"
                   ></span>
                   <span>{highlight}</span>
                 </li>
@@ -165,17 +161,17 @@
 
       <!-- Footer -->
       <div
-        class="border-t border-theme-border bg-theme-surface/50 px-8 py-6 text-center"
+        class="shrink-0 border-t border-theme-border bg-theme-surface/50 px-8 py-6 text-center"
       >
         <button
           onclick={close}
-          class="rounded-xl border border-theme-primary bg-theme-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-theme-bg transition-all hover:border-theme-secondary hover:bg-theme-secondary shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)]"
+          class="rounded-xl border border-theme-primary bg-theme-primary px-6 py-3 text-xs font-bold uppercase tracking-widest text-theme-bg transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] hover:border-theme-secondary hover:bg-theme-secondary"
           type="button"
         >
-          {entries.length > 0 ? "Acknowledge Updates" : "Return to Codex"}
+          {hasUnseenMinorReleases ? "Acknowledge Updates" : "Done"}
         </button>
         <div
-          class="mt-4 text-[9px] font-header text-theme-muted uppercase tracking-[0.3em]"
+          class="mt-4 text-[9px] font-header uppercase tracking-[0.3em] text-theme-muted"
         >
           Archive synchronization protocols maintained
         </div>
