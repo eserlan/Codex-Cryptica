@@ -31,6 +31,11 @@
   let showVttShare = $state(false);
   let isVttChatSidebarCollapsed = $state(false);
   let isVttSidebarCollapsed = $state(false);
+
+  // Chat sidebar offset: 20rem when expanded, 3rem (w-12) when collapsed
+  const chatSidebarOffset = $derived(
+    isVttChatSidebarCollapsed ? "3rem" : "20rem",
+  );
   let mapName = $state("");
   let files = $state<FileList | null>(null);
 
@@ -194,7 +199,8 @@
       <!-- HUD Overlay -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
-        class="absolute top-4 left-4 z-10 flex flex-col items-start gap-2"
+        class="absolute z-10 flex flex-col items-start gap-2"
+        style="top: 1rem; left: calc({chatSidebarOffset} + 1rem);"
         role="presentation"
         onmousedown={(e) => e.stopPropagation()}
       >
@@ -292,7 +298,10 @@
 
       <!-- Measurement tool button (lower left) -->
       {#if !uiStore.isGuestMode && mapSession.vttEnabled}
-        <div class="absolute bottom-4 left-4 z-20 pointer-events-auto">
+        <div
+          class="absolute z-20 pointer-events-auto"
+          style="bottom: 1rem; left: calc({chatSidebarOffset} + 1rem);"
+        >
           <button
             class={getMeasurementToolButtonClass(mapSession.measurement.active)}
             onclick={(e) => {
