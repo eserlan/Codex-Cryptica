@@ -67,7 +67,7 @@
           class="text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary focus:ring-offset-2 focus:ring-offset-theme-bg rounded"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] w-6 h-6"></span>
+          <span class="icon-[lucide--x] w-5 h-5 md:w-6 md:h-6"></span>
         </button>
       </div>
 
@@ -112,9 +112,9 @@
       >
         <button
           onclick={close}
-          class="px-12 py-3 bg-theme-primary text-black font-bold uppercase font-header tracking-widest text-xs hover:bg-theme-primary/80 transition-all active:scale-95 shadow-[0_0_15px_var(--color-theme-primary)] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-theme-bg rounded-sm"
+          class="px-6 py-2 bg-theme-surface border border-theme-border text-theme-muted hover:text-theme-text hover:border-theme-primary transition-colors text-sm font-medium rounded focus:outline-none focus:ring-2 focus:ring-theme-primary"
         >
-          {hasUnseenMinorReleases ? "Acknowledge Updates" : "Return to Codex"}
+          {hasUnseenMinorReleases ? "Acknowledge Updates" : "Done"}
         </button>
         <div
           class="mt-4 text-[9px] font-header text-theme-muted uppercase tracking-[0.3em]"
