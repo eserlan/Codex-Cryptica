@@ -29,15 +29,17 @@
   let guestEntityId = $state<string | null>(null);
   let isResolvingGuestPayload = $state(false);
   if (browser) {
-    const payload = page.params.entityId
-      ? consumeZenPopoutPayload(page.params.entityId)
-      : null;
-    if (payload) {
-      applyGuestPayload(payload);
-    } else if (page.params.entityId && window.opener) {
-      // Set isGuestMode early so vault.init() bails before loadFiles() runs
-      uiStore.isGuestMode = true;
-      isResolvingGuestPayload = true;
+    const vid = page.params.id;
+    const eid = page.params.entityId;
+    if (vid && eid) {
+      const payload = consumeZenPopoutPayload(vid, eid);
+      if (payload) {
+        applyGuestPayload(payload);
+      } else if (window.opener) {
+        // Set isGuestMode early so vault.init() bails before loadFiles() runs
+        uiStore.isGuestMode = true;
+        isResolvingGuestPayload = true;
+      }
     }
   }
 

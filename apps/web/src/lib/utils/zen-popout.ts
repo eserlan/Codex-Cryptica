@@ -14,8 +14,10 @@ export interface ZenPopoutPayload {
 function buildGuestEntitySnapshot(entity: Entity): Entity {
   const snapshot = JSON.parse(JSON.stringify(entity)) as Entity & {
     lore?: string;
+    _fsHandle?: unknown;
   };
   delete snapshot.lore;
+  delete snapshot._fsHandle;
   return snapshot;
 }
 
@@ -46,21 +48,33 @@ function isResponseMessage(
   );
 }
 
-function persistPayload(entityId: string, payload: ZenPopoutPayload) {
+function getStorageKey(vaultId: string, entityId: string): string {
+  return `${STORAGE_KEY_PREFIX}${vaultId}.${entityId}`;
+}
+
+function persistPayload(
+  vaultId: string,
+  entityId: string,
+  payload: ZenPopoutPayload,
+) {
   sessionStorage.setItem(
-    `${STORAGE_KEY_PREFIX}${entityId}`,
+    getStorageKey(vaultId, entityId),
     JSON.stringify(payload),
   );
 }
 
-export function persistZenPopoutPayload(entity: Entity, isGuest: boolean) {
+export function persistZenPopoutPayload(
+  vaultId: string,
+  entity: Entity,
+  isGuest: boolean,
+) {
   const payload: ZenPopoutPayload = {
     entity: isGuest
       ? buildGuestEntitySnapshot(entity)
       : (JSON.parse(JSON.stringify(entity)) as Entity),
     isGuest,
   };
-  persistPayload(entity.id, payload);
+  persistPayload(vaultId, entity.id, payload);
   return payload;
 }
 
@@ -84,7 +98,7 @@ export function openEntityPopout(
   const url = `${base}/vault/${vaultId}/entity/${entity.id}`;
 
   if (isGuest) {
-    const payload = persistZenPopoutPayload(entity, true);
+    const payload = persistZenPopoutPayload(vaultId, entity, true);
     const childWindow = window.open(url, "_blank");
     if (!childWindow) return;
 
@@ -122,9 +136,10 @@ export function openEntityPopout(
 }
 
 export function consumeZenPopoutPayload(
+  vaultId: string,
   entityId: string,
 ): ZenPopoutPayload | null {
-  const key = `${STORAGE_KEY_PREFIX}${entityId}`;
+  const key = getStorageKey(vaultId, entityId);
   const raw = sessionStorage.getItem(key);
   if (!raw) return null;
   sessionStorage.removeItem(key);
@@ -153,11 +168,15 @@ export function requestZenPopoutPayload(
     const handleMessage = (event: MessageEvent) => {
       if (event.origin !== origin || event.source !== window.opener) return;
       if (!isResponseMessage(event.data, entityId)) return;
-      const sanitizedPayload = event.data.payload.isGuest
-        ? persistZenPopoutPayload(event.data.payload.entity, true)
-        : event.data.payload;
+      // Clear opener reference immediately after successful handshake to
+      // prevent reverse-tabnabbing.
+      try {
+        (window.opener as WindowProxy | null) = null;
+      } catch {
+        // Some browsers may not allow clearing opener; ignore.
+      }
       cleanup();
-      resolve(sanitizedPayload);
+      resolve(event.data.payload);
     };
     const timeoutId = window.setTimeout(() => {
       cleanup();

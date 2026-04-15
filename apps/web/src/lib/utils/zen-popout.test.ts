@@ -19,7 +19,7 @@ describe("zen-popout helpers", () => {
     vi.spyOn(window, "open").mockReturnValue(childWindow);
 
     openEntityPopout(
-      "guest",
+      "vault-1",
       {
         id: "entity-1",
         title: "Faerun",
@@ -97,8 +97,7 @@ describe("zen-popout helpers", () => {
       window.location.origin,
     );
     expect(payload?.entity.id).toBe("entity-1");
-    expect(payload?.entity).not.toHaveProperty("lore");
-    expect(consumeZenPopoutPayload("entity-1")?.entity.id).toBe("entity-1");
+    // Payload comes directly from the opener postMessage, not sessionStorage.
   });
 
   it("persists a cloned guest entity snapshot without lore", () => {
@@ -110,16 +109,48 @@ describe("zen-popout helpers", () => {
       _path: ["faerun.md"],
     } as any;
 
-    const payload = persistZenPopoutPayload(entity, true);
+    const payload = persistZenPopoutPayload("vault-1", entity, true);
     entity.content = "mutated after persist";
     entity.lore = "mutated lore";
 
     expect(payload.entity.content).toBe("Ancient forests and ruined empires.");
     expect(payload.entity).not.toHaveProperty("lore");
-    const storedPayload = consumeZenPopoutPayload("entity-1");
+    const storedPayload = consumeZenPopoutPayload("vault-1", "entity-1");
     expect(storedPayload?.entity.content).toBe(
       "Ancient forests and ruined empires.",
     );
     expect(storedPayload?.entity).not.toHaveProperty("lore");
+  });
+
+  it("strips _fsHandle from guest entity snapshot", () => {
+    const entity = {
+      id: "entity-2",
+      title: "Waterdeep",
+      content: "City of splendors.",
+      _path: ["waterdeep.md"],
+      _fsHandle: { handle: "some-fs-handle" },
+    } as any;
+
+    const payload = persistZenPopoutPayload("vault-2", entity, true);
+
+    expect(payload.entity).not.toHaveProperty("_fsHandle");
+    expect(payload.entity.content).toBe("City of splendors.");
+  });
+
+  it("namespaces sessionStorage keys by vaultId to prevent collisions", () => {
+    const entity = {
+      id: "shared-id",
+      title: "Entity A",
+      _path: ["a.md"],
+    } as any;
+
+    persistZenPopoutPayload("vault-a", entity, true);
+    persistZenPopoutPayload("vault-b", { ...entity, title: "Entity B" }, true);
+
+    const payloadA = consumeZenPopoutPayload("vault-a", "shared-id");
+    const payloadB = consumeZenPopoutPayload("vault-b", "shared-id");
+
+    expect(payloadA?.entity.title).toBe("Entity A");
+    expect(payloadB?.entity.title).toBe("Entity B");
   });
 });

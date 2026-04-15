@@ -121,7 +121,8 @@ describe("ZenModeModal", () => {
     await waitFor(() => {
       expect(
         JSON.parse(
-          window.sessionStorage.getItem("codex.zen-popout.entity-1") ?? "null",
+          window.sessionStorage.getItem("codex.zen-popout.guest.entity-1") ??
+            "null",
         ),
       ).toEqual(
         expect.objectContaining({

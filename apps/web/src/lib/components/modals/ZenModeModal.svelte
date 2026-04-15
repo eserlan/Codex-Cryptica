@@ -50,7 +50,7 @@
   // lazy-loaded entity content updates the active entity snapshot.
   $effect(() => {
     if (!uiStore.showZenMode || !entity || !vault.isGuest) return;
-    persistZenPopoutPayload(entity, true);
+    persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
 
   let activeTab = $derived(uiStore.zenModeActiveTab);
