@@ -7,6 +7,7 @@ import {
 } from "$lib/services/vtt-session";
 import type {
   ChatMessagePayload,
+  DragPreview,
   EncounterSession,
   EncounterSnapshotSummary,
   InitiativeEntry,
@@ -111,6 +112,7 @@ export class MapSessionStore {
   chatMessages = $state<ChatMessagePayload[]>([]);
   myPeerId = $state<string | null>(null);
   draggingTokenId = $state<string | null>(null);
+  dragPreview = $state<DragPreview | null>(null);
 
   // Grid settings
   gridUnit = $state("ft");
@@ -1013,6 +1015,26 @@ export class MapSessionStore {
     return positioned;
   }
 
+  requestTokenAdd(input: TokenCreationInput) {
+    if (!this.mapId || !this.broadcaster) return false;
+    const token = this.getTokenDefaults(input);
+    const snapped = this.clampAndSnapPosition(
+      { x: token.x, y: token.y },
+      { width: token.width, height: token.height },
+    );
+
+    this.broadcaster({
+      type: "TOKEN_ADD_REQUEST",
+      name: token.name,
+      entityId: token.entityId,
+      x: snapped.x,
+      y: snapped.y,
+      color: token.color,
+    });
+
+    return true;
+  }
+
   updateToken(tokenId: string, updates: TokenStateUpdateInput, silent = false) {
     const current = this.tokens[tokenId];
     if (!current) return null;
@@ -1726,6 +1748,14 @@ export class MapSessionStore {
     const token = this.tokens[tokenId];
     if (!token) return;
     this.ping(token.x + token.width / 2, token.y + token.height / 2);
+  }
+
+  setDragPreview(preview: DragPreview | null) {
+    this.dragPreview = preview;
+  }
+
+  clearDragPreview() {
+    this.dragPreview = null;
   }
 
   getSnapshotSummary() {

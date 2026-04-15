@@ -3,6 +3,8 @@ import { base } from "$app/paths";
 const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
 const EXPLORER_COLLAPSED_LABELS_STORAGE_KEY =
   "codex_explorer_collapsed_label_groups";
+const VTT_SIDEBAR_COLLAPSED_STORAGE_KEY = "codex_vtt_sidebar_collapsed";
+const VTT_ENTITY_LIST_COLLAPSED_STORAGE_KEY = "codex_vtt_entity_list_collapsed";
 
 type ExplorerCollapsedLabelGroups = Record<string, string[]>;
 
@@ -104,6 +106,20 @@ export class UIStore {
           this.explorerCollapsedLabelGroups = {};
           localStorage.removeItem(EXPLORER_COLLAPSED_LABELS_STORAGE_KEY);
         }
+      }
+
+      const vttSidebarCollapsed = localStorage.getItem(
+        VTT_SIDEBAR_COLLAPSED_STORAGE_KEY,
+      );
+      if (vttSidebarCollapsed !== null) {
+        this.vttSidebarCollapsed = vttSidebarCollapsed === "true";
+      }
+
+      const vttEntityListCollapsed = localStorage.getItem(
+        VTT_ENTITY_LIST_COLLAPSED_STORAGE_KEY,
+      );
+      if (vttEntityListCollapsed !== null) {
+        this.vttEntityListCollapsed = vttEntityListCollapsed === "true";
       }
 
       const lastLabel = localStorage.getItem("codex_last_connection_label");
@@ -338,6 +354,8 @@ export class UIStore {
   // Guest Mode State
   isGuestMode = $state(false);
   guestUsername = $state<string | null>(null);
+  vttSidebarCollapsed = $state(false);
+  vttEntityListCollapsed = $state(false);
 
   setGuestUsername(username: string) {
     this.guestUsername = username;
@@ -491,6 +509,26 @@ export class UIStore {
       this.notificationTimeoutId = null;
     }
     this.notification = null;
+  }
+
+  toggleVttSidebar(collapsed: boolean) {
+    this.vttSidebarCollapsed = collapsed;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        VTT_SIDEBAR_COLLAPSED_STORAGE_KEY,
+        String(collapsed),
+      );
+    }
+  }
+
+  toggleVttEntityList(collapsed: boolean) {
+    this.vttEntityListCollapsed = collapsed;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        VTT_ENTITY_LIST_COLLAPSED_STORAGE_KEY,
+        String(collapsed),
+      );
+    }
   }
 
   openCanvasSelection(pendingEntities: string[] = []) {

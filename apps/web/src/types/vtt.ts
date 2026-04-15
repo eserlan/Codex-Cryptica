@@ -42,6 +42,12 @@ export interface SharedTokenImageState {
   imagePath: string;
 }
 
+export interface DragPreview {
+  entityId: string;
+  x: number; // Map coordinates (image space)
+  y: number; // Map coordinates (image space)
+}
+
 export interface InitiativeEntry {
   tokenId: string;
   initiativeValue: number;
