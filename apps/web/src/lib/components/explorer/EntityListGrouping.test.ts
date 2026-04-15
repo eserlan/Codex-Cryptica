@@ -1,32 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Entity } from "schema";
-
-function groupEntities(entities: Entity[], viewMode: "list" | "label") {
-  if (viewMode === "list") return null;
-
-  if (viewMode === "label") {
-    const groups = new Map<string, Entity[]>();
-    const unlabeled: Entity[] = [];
-
-    for (const entity of entities) {
-      if (!entity.labels || entity.labels.length === 0) {
-        unlabeled.push(entity);
-      } else {
-        for (const label of entity.labels) {
-          if (!groups.has(label)) groups.set(label, []);
-          groups.get(label)!.push(entity);
-        }
-      }
-    }
-
-    const sortedLabels = Array.from(groups.keys()).sort((a, b) =>
-      a.localeCompare(b),
-    );
-    return { type: "label", groups, sortedKeys: sortedLabels, unlabeled };
-  }
-
-  return null;
-}
+import { groupEntitiesForExplorer } from "./entityListGrouping";
 
 describe("EntityList Grouping Logic", () => {
   const mockEntities: Entity[] = [
@@ -73,7 +47,7 @@ describe("EntityList Grouping Logic", () => {
   ];
 
   it("should group by label correctly", () => {
-    const result = groupEntities(mockEntities, "label");
+    const result = groupEntitiesForExplorer(mockEntities, "label");
     expect(result?.type).toBe("label");
     expect(result?.sortedKeys).toEqual(["L1", "L2"]);
     expect(result?.groups.get("L1")?.length).toBe(2);
@@ -87,6 +61,6 @@ describe("EntityList Grouping Logic", () => {
   });
 
   it("should not group anything in list mode", () => {
-    expect(groupEntities(mockEntities, "list")).toBeNull();
+    expect(groupEntitiesForExplorer(mockEntities, "list")).toBeNull();
   });
 });

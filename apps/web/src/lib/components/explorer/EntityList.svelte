@@ -3,6 +3,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
+  import { groupEntitiesForExplorer } from "./entityListGrouping";
   import type { Entity } from "schema";
   import { Search, LayoutGrid, List, Tag } from "lucide-svelte";
 
@@ -65,31 +66,7 @@
   });
 
   const groupedEntities = $derived.by(() => {
-    const entities = filteredEntities;
-    if (viewMode === "list") return null;
-
-    if (viewMode === "label") {
-      const groups = new Map<string, Entity[]>();
-      const unlabeled: Entity[] = [];
-
-      for (const entity of entities) {
-        if (!entity.labels || entity.labels.length === 0) {
-          unlabeled.push(entity);
-        } else {
-          for (const label of entity.labels) {
-            if (!groups.has(label)) groups.set(label, []);
-            groups.get(label)!.push(entity);
-          }
-        }
-      }
-
-      const sortedLabels = Array.from(groups.keys()).sort((a, b) =>
-        a.localeCompare(b),
-      );
-      return { type: "label", groups, sortedKeys: sortedLabels, unlabeled };
-    }
-
-    return null;
+    return groupEntitiesForExplorer(filteredEntities, viewMode);
   });
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
@@ -277,7 +254,7 @@
     {:else if viewMode === "label" && groupedEntities?.type === "label"}
       {#each groupedEntities.sortedKeys as label}
         {@render sectionHeader(label)}
-        {#each groupedEntities.groups.get(label)! as entity (entity.id + label)}
+        {#each groupedEntities.groups.get(label)! as entity (`${entity.id}:${label}`)}
           {@render entityItem(entity)}
         {/each}
       {/each}

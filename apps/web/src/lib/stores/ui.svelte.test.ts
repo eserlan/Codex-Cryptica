@@ -257,6 +257,8 @@ describe("UIStore", () => {
       "codex_explorer_view_mode",
       "label",
     );
+
+    setItemSpy.mockRestore();
   });
 
   it("should handle Zen Mode operations", () => {

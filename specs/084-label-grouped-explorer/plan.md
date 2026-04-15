@@ -1,7 +1,7 @@
 # Implementation Plan: Label-Grouped Entity Explorer
 
-**Branch**: `084-label-grouped-explorer` | **Date**: 2026-04-15 | **Spec**: [/specs/084-label-grouped-explorer/spec.md](/workspaces/Codex-Cryptica/specs/084-label-grouped-explorer/spec.md)
-**Input**: Feature specification from `/specs/084-label-grouped-explorer/spec.md`
+**Branch**: `084-label-grouped-explorer` | **Date**: 2026-04-15 | **Spec**: [./spec.md](./spec.md)
+**Input**: Feature specification from `./spec.md`
 
 ## Summary
 

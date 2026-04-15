@@ -66,7 +66,7 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 
 **Independent Test**: Select a grouped view, reload the app, and confirm the same layout remains active
 
-### Implementation for User Story 3
+### Implementation for User Story 2
 
 - [x] T010 [US2] Load the saved explorer view preference from `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
 - [x] T011 [US2] Persist explorer view changes back to `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
