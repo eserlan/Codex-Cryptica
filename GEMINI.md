@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-03
+Auto-generated from all feature plans. Last updated: 2026-04-15
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + Tailwind CSS 4, Lucide Svelte, Marked (for Markdown rendering if integrated into the web app) (083-style-guide-doc)
+- Static Markdown files in the repository (`docs/` and/or `apps/web/src/lib/content/`) (083-style-guide-doc)
 
 - TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte` (077-vault-front-page)
 - OPFS (Vault Files, Local Images), IndexedDB (Metadata, Activity History) (077-vault-front-page)
@@ -142,12 +145,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 083-style-guide-doc: Added TypeScript 5.9.3, Svelte 5 (Runes) + Tailwind CSS 4, Lucide Svelte, Marked (for Markdown rendering if integrated into the web app)
+
 - 079-modal-dice-roller-refinement: Fixed CI/CD and artifact promotion workflows. Corrected hallucinated GitHub Action versions (v4), ensured staging builds use production environment variables for "no-drift" promotion, and fixed `promote-to-prod.yml` to correctly download staging artifacts using `run-id`.
-
-- 078-entity-traditional-view: Added persistent Entity Explorer sidebar and embedded focus mode with Dexie-backed metadata caching.
-
-- 077-vault-front-page: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit + Tailwind CSS 4, `@google/generative-ai`, `idb`, `lucide-svelte`
-
-- 075-free-oracle-use: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, `@google/generative-ai`
 
 <!-- MANUAL ADDITIONS START -->

@@ -9,8 +9,12 @@
     type ZenPopoutPayload,
   } from "$lib/utils/zen-popout";
 
-  const vaultId = $derived(page.params.id);
-  const entityId = $derived(page.params.entityId);
+  const vaultId = $derived(
+    (page.params as { id: string; entityId: string }).id,
+  );
+  const entityId = $derived(
+    (page.params as { id: string; entityId: string }).entityId,
+  );
 
   const applyGuestPayload = (payload: ZenPopoutPayload) => {
     vault.repository.entities[payload.entity.id] = {
@@ -29,8 +33,8 @@
   let guestEntityId = $state<string | null>(null);
   let isResolvingGuestPayload = $state(false);
   if (browser) {
-    const vid = page.params.id;
-    const eid = page.params.entityId;
+    const vid = (page.params as { id: string; entityId: string }).id;
+    const eid = (page.params as { id: string; entityId: string }).entityId;
     if (vid && eid) {
       const payload = consumeZenPopoutPayload(vid, eid);
       if (payload) {
