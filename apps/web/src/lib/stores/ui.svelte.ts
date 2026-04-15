@@ -23,6 +23,7 @@ class UIStore {
   showDiceModal = $state(false);
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
+  explorerViewMode = $state<"list" | "label">("list");
 
   // Sidebar State
   leftSidebarOpen = $state(false);
@@ -67,6 +68,11 @@ class UIStore {
       }
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
+
+      const explorerMode = localStorage.getItem("codex_explorer_view_mode");
+      if (explorerMode === "list" || explorerMode === "label") {
+        this.explorerViewMode = explorerMode;
+      }
 
       const lastLabel = localStorage.getItem("codex_last_connection_label");
       if (lastLabel !== null) {
@@ -187,6 +193,13 @@ class UIStore {
     this.liteMode = enabled;
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_lite_mode", String(enabled));
+    }
+  }
+
+  setExplorerViewMode(mode: "list" | "label") {
+    this.explorerViewMode = mode;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_explorer_view_mode", mode);
     }
   }
 

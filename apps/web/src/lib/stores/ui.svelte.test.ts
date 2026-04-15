@@ -247,6 +247,18 @@ describe("UIStore", () => {
     );
   });
 
+  it("should persist explorer view mode changes", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.setExplorerViewMode("label");
+
+    expect(uiStore.explorerViewMode).toBe("label");
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_explorer_view_mode",
+      "label",
+    );
+  });
+
   it("should handle Zen Mode operations", () => {
     uiStore.openZenMode("entity-1", "inventory");
     expect(uiStore.showZenMode).toBe(true);

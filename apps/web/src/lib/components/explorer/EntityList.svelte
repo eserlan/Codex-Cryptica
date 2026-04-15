@@ -5,7 +5,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
-  import { Search, LayoutGrid } from "lucide-svelte";
+  import { Search, LayoutGrid, List, Tag } from "lucide-svelte";
 
   let {
     onSelect,
@@ -21,6 +21,7 @@
   let typeFilters = $state<Set<string>>(new Set());
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const focusedEntityId = $derived(uiStore.focusedEntityId);
+  const viewMode = $derived(uiStore.explorerViewMode);
 
   // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
   // mapping, and sorting. This also turns an O(N) .find into an O(1) Map .get lookup in the loop.
@@ -63,6 +64,34 @@
     }
 
     return filtered.sort((a, b) => a.title.localeCompare(b.title));
+  });
+
+  const groupedEntities = $derived.by(() => {
+    const entities = filteredEntities;
+    if (viewMode === "list") return null;
+
+    if (viewMode === "label") {
+      const groups = new Map<string, Entity[]>();
+      const unlabeled: Entity[] = [];
+
+      for (const entity of entities) {
+        if (!entity.labels || entity.labels.length === 0) {
+          unlabeled.push(entity);
+        } else {
+          for (const label of entity.labels) {
+            if (!groups.has(label)) groups.set(label, []);
+            groups.get(label)!.push(entity);
+          }
+        }
+      }
+
+      const sortedLabels = Array.from(groups.keys()).sort((a, b) =>
+        a.localeCompare(b),
+      );
+      return { type: "label", groups, sortedKeys: sortedLabels, unlabeled };
+    }
+
+    return null;
   });
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
@@ -179,6 +208,46 @@
           </button>
         {/if}
       {/each}
+
+      <div class="w-px h-3.5 bg-theme-border mx-0.5 opacity-50"></div>
+
+      <button
+        onclick={() => uiStore.setExplorerViewMode("list")}
+        title="List View"
+        aria-label="List View"
+        class="p-1.5 rounded-md flex items-center justify-center transition-all border {viewMode ===
+        'list'
+          ? isFantasyTheme
+            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
+            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
+          : isFantasyTheme
+            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
+            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+        style:background-color={viewMode === "list" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
+      >
+        <List class="w-3.5 h-3.5" />
+      </button>
+
+      <button
+        onclick={() => uiStore.setExplorerViewMode("label")}
+        title="Group by Label"
+        aria-label="Group by Label"
+        class="p-1.5 rounded-md flex items-center justify-center transition-all border {viewMode ===
+        'label'
+          ? isFantasyTheme
+            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
+            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
+          : isFantasyTheme
+            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
+            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
+        style:background-color={viewMode === "label" && isFantasyTheme
+          ? "var(--theme-focus-bg)"
+          : undefined}
+      >
+        <Tag class="w-3.5 h-3.5" />
+      </button>
     </div>
   </div>
 
@@ -186,7 +255,7 @@
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
     style="touch-action: pan-y;"
   >
-    {#each filteredEntities as entity}
+    {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
       <button
         type="button"
@@ -235,11 +304,43 @@
           {/if}
         </div>
       </button>
-    {:else}
-      <div class="text-center py-10 px-4" data-testid="no-entities-found">
-        <p class="text-xs text-theme-muted">No entities found</p>
+    {/snippet}
+
+    {#snippet sectionHeader(title: string)}
+      <div
+        class="py-1 px-2 mt-4 first:mt-0 text-[10px] font-bold text-theme-muted uppercase tracking-[0.2em] border-b border-theme-border/30 mb-1"
+      >
+        {title}
       </div>
-    {/each}
+    {/snippet}
+
+    {#if viewMode === "list"}
+      {#each filteredEntities as entity (entity.id)}
+        {@render entityItem(entity)}
+      {:else}
+        <div class="text-center py-10 px-4" data-testid="no-entities-found">
+          <p class="text-xs text-theme-muted">No entities found</p>
+        </div>
+      {/each}
+    {:else if viewMode === "label" && groupedEntities?.type === "label"}
+      {#each groupedEntities.sortedKeys as label}
+        {@render sectionHeader(label)}
+        {#each groupedEntities.groups.get(label)! as entity (entity.id + label)}
+          {@render entityItem(entity)}
+        {/each}
+      {/each}
+      {#if groupedEntities.unlabeled && groupedEntities.unlabeled.length > 0}
+        {@render sectionHeader("Unlabeled")}
+        {#each groupedEntities.unlabeled as entity (entity.id)}
+          {@render entityItem(entity)}
+        {/each}
+      {/if}
+      {#if filteredEntities.length === 0}
+        <div class="text-center py-10 px-4" data-testid="no-entities-found">
+          <p class="text-xs text-theme-muted">No entities found</p>
+        </div>
+      {/if}
+    {/if}
   </div>
 </div>
 
