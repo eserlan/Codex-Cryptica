@@ -49,6 +49,16 @@ We follow the **Red-Green-Refactor** cycle for all core logic.
 - Use `@apply` in Svelte component `<style>` blocks only when necessary to clean up repeated complex utility sets.
 - Reference theme variables directly in classes whenever possible (e.g., `text-theme-primary`).
 
+## Theming
+
+Codex-Cryptica supports multiple visual modes (e.g., the default "Fantasy" theme). Theming is achieved through CSS variable overrides within the `@theme` and `@layer base` blocks in `app.css`.
+
+### How it Works
+
+1.  **Semantic Tokens**: We define semantic tokens (e.g., `--color-theme-primary`) that components use.
+2.  **Theme Overrides**: Specific themes (e.g., `[data-theme="fantasy"]`) override these tokens to change colors, fonts, and textures.
+3.  **Typography Theming**: Font families (`--font-header`, `--font-body`) are included in this system, ensuring the typeface matches the thematic era.
+
 ## Common Design Patterns
 
 For detailed specifications and usage examples of core components, refer to the following sub-documents:

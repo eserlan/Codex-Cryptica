@@ -20,6 +20,13 @@ We use standard Tailwind typography scales with semantic overrides for prose:
 - `text-xl`: 1.25rem (20px)
 - `text-2xl`: 1.5rem (24px)
 
+### Themed Typography
+
+Font families are not hardcoded but are mapped to theme-specific variables. This allows the aesthetic to shift (e.g., from "Fantasy" serifs to a more "Modern" sans-serif) based on the active theme.
+
+- **Header Font Mapping**: `--font-header` maps to `--font-header-val` defined in the active theme.
+- **Body Font Mapping**: `--font-body` maps to `--font-body-val` defined in the active theme.
+
 ### Formatting
 
 - **Prose**: Content is styled using the `@tailwindcss/typography` plugin with custom theme mapping in `app.css`.
