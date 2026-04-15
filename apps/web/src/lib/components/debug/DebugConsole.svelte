@@ -32,7 +32,7 @@
 
 {#if logs.length > 0}
   <div
-    class="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2 font-mono"
+    class="fixed bottom-4 right-[calc(1rem+100px)] z-[9999] flex flex-col items-end gap-2 font-mono"
   >
     <button
       class="bg-black/80 text-white px-3 py-1 rounded text-xs border border-white/20 hover:bg-white/10 transition-colors shadow-lg"

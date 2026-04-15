@@ -1078,6 +1078,28 @@
           <span>Ping Token</span>
         </button>
 
+        <!-- View Entity (host always; guest only if token is not gm-only) -->
+        {#if contextMenu.tokenId}
+          {@const _ctxToken = mapSession.tokens[contextMenu.tokenId]}
+          {#if _ctxToken?.entityId && mapSession.canViewToken(contextMenu.tokenId, mapSession.myPeerId, mapStore.isGMMode)}
+            <div class="h-px bg-theme-border my-1 mx-2"></div>
+            <button
+              class="w-full text-left px-3 py-2 text-xs hover:bg-theme-bg/50 transition-colors flex items-center gap-2 text-theme-text"
+              onclick={() => {
+                if (_ctxToken?.entityId) {
+                  uiStore.openZenMode(_ctxToken.entityId);
+                  contextMenu = null;
+                }
+              }}
+            >
+              <span
+                class="icon-[lucide--book-open] w-3.5 h-3.5 text-theme-primary"
+              ></span>
+              <span>Look at {_ctxToken.name}</span>
+            </button>
+          {/if}
+        {/if}
+
         <!-- Multi-select actions (GM only) -->
         {#if mapStore.isGMMode && !uiStore.isGuestMode}
           {#if contextMenu?.tokenId && mapSession.selectedTokens.size > 1 && mapSession.selectedTokens.has(contextMenu.tokenId)}

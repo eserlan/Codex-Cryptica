@@ -2,6 +2,12 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { fly, fade } from "svelte/transition";
+  import { base } from "$app/paths";
+  import { page } from "$app/state";
+  import {
+    openEntityPopout,
+    persistZenPopoutPayload,
+  } from "$lib/utils/zen-popout";
 
   import { clipboardService } from "$lib/services/ClipboardService";
   import ZenImageLightbox from "../zen/ZenImageLightbox.svelte";
@@ -11,6 +17,10 @@
   import ZenSidebar from "../zen/ZenSidebar.svelte";
   import ZenContent from "../zen/ZenContent.svelte";
   import DetailMapTab from "$lib/components/entity-detail/DetailMapTab.svelte";
+
+  const isPopout = $derived(
+    /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
+  );
 
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
@@ -34,6 +44,13 @@
     if (uiStore.showZenMode && entityId && !entity) {
       uiStore.closeZenMode();
     }
+  });
+
+  // Keep the guest popout payload fresh after Zen Mode renders and after
+  // lazy-loaded entity content updates the active entity snapshot.
+  $effect(() => {
+    if (!uiStore.showZenMode || !entity || !vault.isGuest) return;
+    persistZenPopoutPayload(vault.activeVaultId ?? "guest", entity, true);
   });
 
   let activeTab = $derived(uiStore.zenModeActiveTab);
@@ -90,10 +107,58 @@
     }
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
+    if (isPopout) {
+      const confirmed = await uiStore.confirm({
+        title: "Close tab?",
+        message: `Close the tab for "${entity?.title ?? "this entity"}"?`,
+        confirmLabel: "Close tab",
+      });
+      if (confirmed) window.close();
+      return;
+    }
     actions.handleClose(() => {
       uiStore.closeZenMode();
     });
+  };
+
+  const handlePopOut = () => {
+    if (!entity) return;
+    const popOutEntity = async () => {
+      let entityForPopout = entity;
+
+      if (vault.isGuest && entityId && !entity.content) {
+        await vault.loadEntityContent(entityId);
+        entityForPopout = vault.entities[entityId] ?? entityForPopout;
+      }
+
+      // Convert blob URL → data URL so the image survives cross-tab (no P2P in popout)
+      if (resolvedImageUrl) {
+        try {
+          const resp = await fetch(resolvedImageUrl);
+          const blob = await resp.blob();
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+          entityForPopout = { ...entityForPopout, image: dataUrl };
+        } catch {
+          // silently skip — image just won't appear in the popout
+        }
+      }
+
+      openEntityPopout(
+        vault.activeVaultId ?? "guest",
+        entityForPopout,
+        base,
+        vault.isGuest,
+      );
+      uiStore.closeZenMode();
+    };
+
+    void popOutEntity();
   };
 
   const navigateTo = async (id: string) => {
@@ -156,7 +221,7 @@
       return;
 
     if (e.key === "Escape") {
-      handleClose();
+      if (!isPopout) handleClose();
     } else if (!isEditing) {
       const scroller =
         window.innerWidth < 768 ? mobileScroller : scrollContainer;
@@ -179,7 +244,7 @@
   <div
     class="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md"
     transition:fade={{ duration: 200 }}
-    onclick={handleClose}
+    onclick={isPopout ? undefined : handleClose}
     data-testid="zen-mode-modal"
   >
     <div
@@ -220,6 +285,7 @@
         onCancelEdit={cancelEditing}
         onSave={saveChanges}
         onClose={handleClose}
+        onPopOut={isPopout ? undefined : handlePopOut}
       />
 
       <!-- Navigation Tabs -->
@@ -295,6 +361,7 @@
               {entity}
               bind:editState
               {resolvedImageUrl}
+              {isPopout}
               onShowLightbox={() => (showLightbox = true)}
               onNavigate={navigateTo}
               onDelete={handleDelete}

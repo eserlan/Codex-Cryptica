@@ -12,6 +12,7 @@
     onShowLightbox,
     onNavigate,
     onDelete,
+    isPopout = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
@@ -19,6 +20,7 @@
     onShowLightbox: () => void;
     onNavigate: (id: string) => void;
     onDelete: () => Promise<void>;
+    isPopout?: boolean;
   }>();
 
   interface ConnectionListItem {
@@ -201,46 +203,50 @@
 
   <!-- Sidebar Content (Desktop) -->
   <div class="hidden md:block space-y-6">
-    <div
-      class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
-    >
-      <h3
-        class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
+    {#if !(isPopout && vault.isGuest)}
+      <div
+        class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
       >
-        Connections
-      </h3>
-      {#if allConnections.length > 0}
-        <div class="space-y-2">
-          {#each allConnections as conn}
-            <button
-              onclick={() => onNavigate(conn.id)}
-              class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
-            >
-              <span
-                class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                  ? 'bg-theme-primary'
-                  : 'bg-blue-500'}"
-              ></span>
-              <div class="flex-1 min-w-0">
-                <div class="text-[11px] text-theme-muted uppercase font-header">
-                  {conn.label}
+        <h3
+          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
+        >
+          Connections
+        </h3>
+        {#if allConnections.length > 0}
+          <div class="space-y-2">
+            {#each allConnections as conn}
+              <button
+                onclick={() => onNavigate(conn.id)}
+                class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full {conn.isOutbound
+                    ? 'bg-theme-primary'
+                    : 'bg-blue-500'}"
+                ></span>
+                <div class="flex-1 min-w-0">
+                  <div
+                    class="text-[11px] text-theme-muted uppercase font-header"
+                  >
+                    {conn.label}
+                  </div>
+                  <div
+                    class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
+                  >
+                    {conn.title}
+                  </div>
                 </div>
-                <div
-                  class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
-                >
-                  {conn.title}
-                </div>
-              </div>
-              <span
-                class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-              ></span>
-            </button>
-          {/each}
-        </div>
-      {:else}
-        <p class="text-xs text-theme-muted italic">No known connections.</p>
-      {/if}
-    </div>
+                <span
+                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
+                ></span>
+              </button>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-xs text-theme-muted italic">No known connections.</p>
+        {/if}
+      </div>
+    {/if}
 
     {#if editState.isEditing && !vault.isGuest}
       <div class="mt-8 pt-8 border-t border-theme-border">

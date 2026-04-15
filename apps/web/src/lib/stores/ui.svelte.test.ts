@@ -10,7 +10,12 @@ vi.mock("$app/paths", () => ({
 }));
 
 vi.mock("./vault.svelte", () => ({
-  vault: { selectedEntityId: null },
+  vault: {
+    selectedEntityId: null,
+    isGuest: false,
+    entities: {},
+    loadEntityContent: vi.fn(),
+  },
 }));
 
 vi.mock("../utils/idb", () => ({
@@ -38,6 +43,9 @@ Object.defineProperty(window, "matchMedia", {
 });
 
 import { uiStore } from "./ui.svelte";
+import { vault } from "./vault.svelte";
+
+const mockedVault = vault as any;
 
 describe("UIStore", () => {
   beforeEach(() => {
@@ -49,6 +57,9 @@ describe("UIStore", () => {
     uiStore.dismissedWorldPage = false;
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
+    mockedVault.isGuest = false;
+    mockedVault.entities = {};
+    mockedVault.loadEntityContent.mockClear();
   });
 
   it("should make Entity Explorer and Canvas Palette mutually exclusive", () => {

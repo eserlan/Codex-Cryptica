@@ -258,6 +258,13 @@ describe("P2P Services", () => {
         expect(mockConn.send).toHaveBeenCalledWith(
           expect.objectContaining({
             type: "GRAPH_SYNC",
+            payload: expect.objectContaining({
+              entities: expect.objectContaining({
+                "entity-1": expect.not.objectContaining({
+                  lore: expect.anything(),
+                }),
+              }),
+            }),
           }),
         );
       });
@@ -750,12 +757,16 @@ describe("P2P Services", () => {
       const mockConn = new MockConnection("guest-1");
       (hostService as any).connections.push(mockConn);
 
-      const entity = { id: "entity-1", title: "Updated Entity" };
+      const entity = {
+        id: "entity-1",
+        title: "Updated Entity",
+        lore: "Host-only notes",
+      };
       (hostService as any).broadcastEntityUpdate(entity);
 
       expect(mockConn.send).toHaveBeenCalledWith({
         type: "ENTITY_UPDATE",
-        payload: expect.objectContaining({ id: "entity-1" }),
+        payload: expect.not.objectContaining({ lore: expect.anything() }),
       });
     });
 
