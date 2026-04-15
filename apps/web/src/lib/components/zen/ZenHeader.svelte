@@ -14,6 +14,7 @@
     onCancelEdit,
     onSave,
     onClose,
+    onPopOut,
   } = $props<{
     entity: Entity;
     editState: any;
@@ -24,6 +25,7 @@
     onCancelEdit: () => void;
     onSave: () => Promise<void>;
     onClose: () => void;
+    onPopOut?: () => void;
   }>();
 </script>
 
@@ -121,6 +123,18 @@
           <span class="icon-[lucide--save] w-3 h-3"></span>
           <span class="hidden sm:inline">SAVE</span>
         {/if}
+      </button>
+    {/if}
+
+    {#if onPopOut && !editState.isEditing}
+      <button
+        onclick={onPopOut}
+        class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
+        title="Open in new tab"
+        aria-label="Open in new tab"
+      >
+        <span class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
+        ></span>
       </button>
     {/if}
 

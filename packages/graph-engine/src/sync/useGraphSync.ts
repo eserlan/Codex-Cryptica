@@ -17,6 +17,53 @@ export interface SyncOptions {
   ) => void;
 }
 
+const isNodeRendered = (node: any) =>
+  !node.hasClass("filtered-out") &&
+  !node.hasClass("category-filtered-out") &&
+  !node.hasClass("timeline-hidden");
+
+const syncRenderedWeights = (
+  elementMap: Map<string, any>,
+  elements: (GraphNode | GraphEdge)[],
+) => {
+  const graphNodes: any[] = [];
+
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
+    if (el.group !== "nodes") continue;
+
+    const node = elementMap.get(el.data.id);
+    if (node) graphNodes.push(node);
+  }
+
+  const visibleNodeIds = new Set<string>();
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    if (isNodeRendered(node)) visibleNodeIds.add(node.id());
+  }
+
+  for (let i = 0; i < graphNodes.length; i++) {
+    const node = graphNodes[i];
+    let nextWeight = 0;
+
+    if (visibleNodeIds.has(node.id())) {
+      const connectedEdges = node.connectedEdges();
+      for (let j = 0; j < connectedEdges.length; j++) {
+        const edge = connectedEdges[j];
+        const sourceId = edge.source().id();
+        const targetId = edge.target().id();
+        if (visibleNodeIds.has(sourceId) && visibleNodeIds.has(targetId)) {
+          nextWeight++;
+        }
+      }
+    }
+
+    if (node.data("weight") !== nextWeight) {
+      node.data("weight", nextWeight);
+    }
+  }
+};
+
 export function syncGraphElements(cy: Core, options: SyncOptions) {
   const {
     elements,
@@ -198,6 +245,8 @@ export function syncGraphElements(cy: Core, options: SyncOptions) {
           }
         }
       });
+
+      syncRenderedWeights(elementMap, elements);
     });
 
     const isFirstElements = !initialLoaded && elements.length > 0;
