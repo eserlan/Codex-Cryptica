@@ -83,11 +83,7 @@
 
     event.dataTransfer.setData("application/codex-entity", entityId);
     event.dataTransfer.effectAllowed = "copy";
-    mapSession.setDragPreview({
-      entityId,
-      x: 0,
-      y: 0,
-    });
+    mapSession.clearDragPreview();
   }
 
   function handleEntityDragEnd() {
@@ -115,6 +111,7 @@
 
       if (
         entity &&
+        VTT_ENTITY_TYPES.includes(entity.type) &&
         activeMap &&
         mapCoords.x >= 0 &&
         mapCoords.y >= 0 &&
