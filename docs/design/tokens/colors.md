@@ -32,4 +32,4 @@ Use these variables for all primary UI elements:
 
 ## Implementation Guideline
 
-**ALWAYS** prefer semantic variables over hex codes or hardcoded Tailwind colors (e.g., `text-amber-500`). This ensures the UI adapts correctly when the theme shifts from "Fantasy" to other potential modes.
+Prefer semantic variables over hex codes or hardcoded Tailwind colors (e.g., `text-amber-500`) whenever possible. Use hardcoded Tailwind colors only for documented exceptions, such as label mappings and established destructive-action patterns (e.g., `bg-red-600`), so the UI remains consistent while still adapting correctly when the theme shifts from "Fantasy" to other potential modes.

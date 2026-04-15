@@ -31,4 +31,4 @@
 
 ## Notes
 
-- [NEEDS CLARIFICATION] found in FR-006 regarding "living examples" versus "static snippets".
+- All requirements have been documented and validated against current project standards.

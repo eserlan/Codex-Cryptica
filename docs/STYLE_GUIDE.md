@@ -103,6 +103,7 @@ These snippets represent the most common UI building blocks used across the appl
   ></span>
   <input
     type="text"
+    aria-label="Search the codex"
     class="w-full pl-12 pr-4 py-3 bg-theme-bg/50 border border-theme-border rounded-full text-sm text-theme-text"
     placeholder="Search the codex..."
   />

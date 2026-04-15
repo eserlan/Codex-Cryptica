@@ -29,8 +29,8 @@ Font families are not hardcoded but are mapped to theme-specific variables. This
 
 ### Formatting
 
-- **Prose**: Content is styled using the `@tailwindcss/typography` plugin with custom theme mapping in `app.css`.
-- **Code**: Inline code uses a high-contrast theme-aware style with a slight background tint and border.
+- **Prose**: Content is styled using custom `.prose` theme variables and rules defined in `apps/web/src/app.css`.
+- **Code**: Inline code within prose uses the same custom theme-aware styling, including a slight background tint and border.
 
 ## Spacing
 

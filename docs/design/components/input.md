@@ -9,12 +9,18 @@ Used for single-line text entry.
 ### Usage
 
 ```svelte
-<input
-  type="text"
-  placeholder="Search entities..."
-  bind:value={_searchQuery}
-  class="w-full rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-2 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
-/>
+<div class="space-y-2">
+  <label for="search-input" class="text-sm font-medium text-theme-text">
+    Search Codex
+  </label>
+  <input
+    id="search-input"
+    type="text"
+    placeholder="Search entities..."
+    bind:value={_searchQuery}
+    class="w-full rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-2 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+  />
+</div>
 ```
 
 ## Textarea
@@ -24,12 +30,18 @@ Used for multi-line content such as entity descriptions or lore.
 ### Usage
 
 ```svelte
-<textarea
-  bind:value={_content}
-  placeholder="Describe the entity..."
-  rows="4"
-  class="w-full rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-3 text-sm leading-relaxed text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 custom-scrollbar"
-></textarea>
+<div class="space-y-2">
+  <label for="entity-description" class="text-sm font-medium text-theme-text">
+    Description
+  </label>
+  <textarea
+    id="entity-description"
+    bind:value={_content}
+    placeholder="Describe the entity..."
+    rows="4"
+    class="w-full rounded-lg border border-theme-border bg-theme-bg/50 px-4 py-3 text-sm leading-relaxed text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 custom-scrollbar"
+  ></textarea>
+</div>
 ```
 
 ## Checkboxes and Toggles

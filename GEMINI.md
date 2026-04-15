@@ -146,7 +146,6 @@ TypeScript: Follow standard conventions
 ## Recent Changes
 
 - 083-style-guide-doc: Added TypeScript 5.9.3, Svelte 5 (Runes) + Tailwind CSS 4, Lucide Svelte, Marked (for Markdown rendering if integrated into the web app)
-- 082-progressive-node-size: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
 - 079-modal-dice-roller-refinement: Fixed CI/CD and artifact promotion workflows. Corrected hallucinated GitHub Action versions (v4), ensured staging builds use production environment variables for "no-drift" promotion, and fixed `promote-to-prod.yml` to correctly download staging artifacts using `run-id`.
 
