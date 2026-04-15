@@ -320,4 +320,125 @@ describe("syncGraphElements", () => {
       "Elements Update",
     );
   });
+
+  it("should recalculate weights from the filtered rendered graph", () => {
+    const makeNode = (
+      id: string,
+      labels: string[],
+      connectedEdges: any[],
+      initiallyFiltered = false,
+    ) => {
+      const state = {
+        filteredOut: initiallyFiltered,
+        categoryFilteredOut: false,
+        timelineHidden: false,
+        weight: 2,
+      };
+
+      return {
+        id: vi.fn().mockReturnValue(id),
+        addClass: vi.fn((cls: string) => {
+          if (cls === "filtered-out") state.filteredOut = true;
+          if (cls === "category-filtered-out") state.categoryFilteredOut = true;
+          if (cls === "timeline-hidden") state.timelineHidden = true;
+        }),
+        removeClass: vi.fn((cls: string) => {
+          if (cls === "filtered-out") state.filteredOut = false;
+          if (cls === "category-filtered-out")
+            state.categoryFilteredOut = false;
+          if (cls === "timeline-hidden") state.timelineHidden = false;
+        }),
+        hasClass: vi.fn((cls: string) => {
+          if (cls === "filtered-out") return state.filteredOut;
+          if (cls === "category-filtered-out") return state.categoryFilteredOut;
+          if (cls === "timeline-hidden") return state.timelineHidden;
+          return false;
+        }),
+        connectedEdges: vi.fn(() => connectedEdges),
+        data: vi.fn((key?: string, value?: unknown) => {
+          if (key === undefined) return { id, labels, weight: state.weight };
+          if (value === undefined) {
+            if (key === "weight") return state.weight;
+            if (key === "labels") return labels;
+            if (key === "id") return id;
+            return undefined;
+          }
+          if (key === "weight") state.weight = value as number;
+          return undefined;
+        }),
+      };
+    };
+
+    const edge1: any = {
+      id: vi.fn().mockReturnValue("edge1"),
+      source: vi.fn(),
+      target: vi.fn(),
+      data: vi.fn(() => ({
+        id: "edge1",
+        source: "node1",
+        target: "node2",
+        connectionType: "ally",
+      })),
+    };
+    const edge2: any = {
+      id: vi.fn().mockReturnValue("edge2"),
+      source: vi.fn(),
+      target: vi.fn(),
+      data: vi.fn(() => ({
+        id: "edge2",
+        source: "node1",
+        target: "node3",
+        connectionType: "ally",
+      })),
+    };
+
+    const node1 = makeNode("node1", ["hidden"], [edge1, edge2]);
+    const node2 = makeNode("node2", ["keep"], [edge1]);
+    const node3 = makeNode("node3", ["keep"], [edge2]);
+
+    edge1.source.mockReturnValue(node1);
+    edge1.target.mockReturnValue(node2);
+    edge2.source.mockReturnValue(node1);
+    edge2.target.mockReturnValue(node3);
+
+    mockCy.elements.mockReturnValue([node1, node2, node3, edge1, edge2]);
+
+    const elements = [
+      { group: "nodes", data: { id: "node1", labels: ["hidden"], weight: 2 } },
+      { group: "nodes", data: { id: "node2", labels: ["keep"], weight: 2 } },
+      { group: "nodes", data: { id: "node3", labels: ["keep"], weight: 2 } },
+      {
+        group: "edges",
+        data: {
+          id: "edge1",
+          source: "node1",
+          target: "node2",
+          connectionType: "ally",
+        },
+      },
+      {
+        group: "edges",
+        data: {
+          id: "edge2",
+          source: "node1",
+          target: "node3",
+          connectionType: "ally",
+        },
+      },
+    ] as any[];
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements,
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) =>
+        JSON.stringify(a) === JSON.stringify(b),
+      activeLabels: new Set(["keep"]),
+      labelFilterMode: "OR",
+    });
+
+    expect(node1.data).toHaveBeenCalledWith("weight", 0);
+    expect(node2.data).toHaveBeenCalledWith("weight", 0);
+    expect(node3.data).toHaveBeenCalledWith("weight", 0);
+  });
 });
