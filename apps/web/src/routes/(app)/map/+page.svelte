@@ -334,6 +334,7 @@
                         onSelect={handleEntitySelect}
                         onDragStart={handleEntityDragStart}
                         onDragEnd={handleEntityDragEnd}
+                        onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
                       />
                     </div>
                   {/if}
