@@ -97,7 +97,7 @@
         <VTTChatSidebar bind:collapsed={isVttChatSidebarCollapsed} />
 
         <aside
-          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-border bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {isVttSidebarCollapsed
+          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {isVttSidebarCollapsed
             ? 'w-12'
             : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
           aria-label="VTT Sidebar"
@@ -105,6 +105,7 @@
           {#if isVttSidebarCollapsed}
             <div
               class="flex h-full w-full flex-col items-center justify-between p-2"
+              style="background-image: var(--bg-texture-overlay)"
             >
               <button
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
@@ -125,13 +126,30 @@
               </div>
             </div>
           {:else}
-            <div class="flex h-full min-h-0 w-full flex-col">
+            <div
+              class="flex h-full min-h-0 w-full flex-col relative"
+              style="background-image: var(--bg-texture-overlay)"
+            >
+              <!-- Decorative Corners -->
               <div
-                class="flex items-center justify-between gap-3 border-b border-theme-border/70 px-3 py-3"
+                class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-theme-primary/30 rounded-tl pointer-events-none hidden md:block"
+              ></div>
+              <div
+                class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-theme-primary/30 rounded-tr pointer-events-none hidden md:block"
+              ></div>
+              <div
+                class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-theme-primary/30 rounded-bl pointer-events-none hidden md:block"
+              ></div>
+              <div
+                class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-theme-primary/30 rounded-br pointer-events-none hidden md:block"
+              ></div>
+
+              <div
+                class="flex items-center justify-between gap-3 border-b border-theme-primary/20 px-3 py-3"
               >
                 <div>
                   <div
-                    class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-muted"
+                    class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
                   >
                     VTT Sidebar
                   </div>
@@ -148,7 +166,7 @@
                 </button>
               </div>
 
-              <div class="border-b border-theme-border/70 px-3 py-3">
+              <div class="border-b border-theme-primary/20 px-3 py-3">
                 <VTTControls />
               </div>
 
@@ -163,7 +181,7 @@
 
                 {#if !showInitiativePanel && !hasSelectedToken}
                   <div
-                    class="rounded-xl border border-dashed border-theme-border bg-theme-bg/50 p-4 text-sm text-theme-muted"
+                    class="rounded-xl border border-dashed border-theme-primary/20 bg-theme-bg/50 p-4 text-sm text-theme-muted"
                   >
                     Select a token to view its details.
                   </div>
@@ -172,7 +190,7 @@
 
               {#if !uiStore.isGuestMode}
                 <div
-                  class="relative z-20 border-t border-theme-border/70 p-3 flex justify-end pointer-events-auto"
+                  class="relative z-20 border-t border-theme-primary/20 p-3 flex justify-end pointer-events-auto"
                   role="presentation"
                   onmousedown={(e) => e.stopPropagation()}
                 >
