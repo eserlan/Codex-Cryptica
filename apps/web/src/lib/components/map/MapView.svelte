@@ -159,16 +159,23 @@
     const peerId = mapSession.myPeerId;
     const selected = mapSession.selectedTokens;
 
-    return Object.values(mapSession.tokens)
-      .filter((token) => mapSession.canViewToken(token.id, peerId, isHost))
-      .map((token) => ({
-        ...token,
-        label: token.name,
-        image: tokenImageCache[token.id] ?? null,
-        selected: mapSession.selection === token.id || selected.has(token.id),
-        active: mapSession.activeTokenId === token.id,
-        visible: true,
-      }));
+    // ⚡ Bolt Optimization: Use an imperative loop instead of chaining .filter().map()
+    // to avoid intermediate array allocations and reduce GC pressure.
+    const result = [];
+    const tokens = Object.values(mapSession.tokens);
+    for (const token of tokens) {
+      if (mapSession.canViewToken(token.id, peerId, isHost)) {
+        result.push({
+          ...token,
+          label: token.name,
+          image: tokenImageCache[token.id] ?? null,
+          selected: mapSession.selection === token.id || selected.has(token.id),
+          active: mapSession.activeTokenId === token.id,
+          visible: true,
+        });
+      }
+    }
+    return result;
   });
 
   $effect(() => {
