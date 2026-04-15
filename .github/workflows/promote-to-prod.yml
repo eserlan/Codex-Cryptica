@@ -13,8 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
-  deployments: write
+  contents: write
   actions: read
 
 jobs:
@@ -70,41 +69,33 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ needs.find-staging-build.outputs.commit_sha }}
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download staging artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: staging-dist
-          run-id: ${{ needs.find-staging-build.outputs.run_id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: dist/
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Deploy to Production
-        uses: cloudflare/wrangler-action@v3
+      - name: Merge selected staging commit into main
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica --branch=main
+          COMMIT_SHA: ${{ needs.find-staging-build.outputs.commit_sha }}
+        run: |
+          git fetch origin main staging
+          git checkout main
+          git merge --no-ff "$COMMIT_SHA" -m "🚀 promote: merge staging commit ${COMMIT_SHA:0:7} to main"
+          git push origin main
 
-      - name: Notify Discord on Production Deploy
+      - name: Notify Discord on Promotion
         if: success()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
         run: |
-          # Use the existing script for the standard notification
-          ./scripts/discord-deploy.sh "production" "$DISCORD_WEBHOOK_URL" "https://codexcryptica.com/"
-
-          # Construct a simple one-line promotion summary
           RUN_ID="${{ needs.find-staging-build.outputs.run_id }}"
+          COMMIT_SHA="${{ needs.find-staging-build.outputs.commit_sha }}"
           ACTOR="${{ github.actor }}"
-          SUMMARY="🔁 **Promotion Successful**: Staging run #$RUN_ID was promoted to production by $ACTOR."
-          
-          # Send the summary
+          SUMMARY="🔁 **Promotion Successful**: Staging run #$RUN_ID ($COMMIT_SHA) was merged to main by $ACTOR. Production deployment will proceed from main."
+
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
