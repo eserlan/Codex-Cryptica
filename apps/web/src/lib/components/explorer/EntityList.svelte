@@ -1,7 +1,6 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
-  import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { Entity } from "schema";
@@ -19,7 +18,6 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
-  const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
 
@@ -118,6 +116,12 @@
       }
     }
   }
+
+  function getIconToggleClasses(active: boolean) {
+    return active
+      ? "rounded-lg border border-theme-primary bg-theme-primary text-theme-bg shadow-sm transition-all hover:border-theme-secondary hover:bg-theme-secondary"
+      : "rounded-lg border border-theme-border bg-theme-bg/50 text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text";
+  }
 </script>
 
 <div class="flex flex-col h-full min-h-0 {className}">
@@ -131,34 +135,21 @@
         bind:value={searchQuery}
         placeholder="Search entities..."
         aria-label="Search entities"
-        class="w-full bg-theme-bg border border-theme-border rounded-md pl-9 pr-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary transition-colors"
+        class="w-full rounded-lg border border-theme-border bg-theme-bg/50 py-2 pl-9 pr-3 text-sm text-theme-text placeholder-theme-muted transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
       />
     </div>
 
     <div
-      class="flex items-center gap-1 px-2 py-1.5 border border-theme-border rounded shadow-sm"
-      style:background-color={isFantasyTheme
-        ? "var(--theme-panel-muted)"
-        : undefined}
-      style:background-image={isFantasyTheme
-        ? "var(--bg-texture-overlay)"
-        : undefined}
+      class="flex items-center gap-1 rounded-xl border border-theme-border bg-theme-surface/50 px-2 py-1.5 shadow-sm"
     >
       <button
         onclick={() => (typeFilters = new Set())}
         title="Show all categories"
         aria-label="Show all categories"
-        class="p-1.5 rounded-md flex items-center justify-center transition-all border {typeFilters.size ===
-        0
-          ? isFantasyTheme
-            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
-            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
-          : isFantasyTheme
-            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
-            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-        style:background-color={typeFilters.size === 0 && isFantasyTheme
-          ? "var(--theme-focus-bg)"
-          : undefined}
+        aria-pressed={typeFilters.size === 0}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          typeFilters.size === 0,
+        )}"
       >
         <LayoutGrid class="w-3.5 h-3.5" />
       </button>
@@ -171,36 +162,19 @@
             title={cat.label}
             aria-label={`Filter by ${cat.label}`}
             aria-pressed={typeFilters.has(cat.id)}
-            class="relative p-1.5 rounded-md flex items-center justify-center transition-all border {typeFilters.has(
-              cat.id,
-            )
-              ? isFantasyTheme
-                ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
-                : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
-              : isFantasyTheme
-                ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
-                : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-            style:background-color={typeFilters.has(cat.id) && isFantasyTheme
-              ? "var(--theme-focus-bg)"
-              : undefined}
+            class="relative flex items-center justify-center p-1.5 {getIconToggleClasses(
+              typeFilters.has(cat.id),
+            )}"
           >
             <span
               class="{getIconClass(cat.icon)} w-3.5 h-3.5"
-              style={!typeFilters.has(cat.id)
-                ? isFantasyTheme
-                  ? "color: var(--theme-icon-default)"
-                  : `color: ${cat.color}`
-                : isFantasyTheme
-                  ? "color: var(--theme-focus)"
-                  : ""}
+              style={typeFilters.has(cat.id)
+                ? undefined
+                : `color: ${cat.color}`}
             ></span>
             {#if count > 0 && !typeFilters.has(cat.id)}
               <span
-                class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full text-[7px] font-bold flex items-center justify-center leading-none"
-                style:background-color={isFantasyTheme
-                  ? "var(--theme-focus-bg)"
-                  : undefined}
-                style:color={isFantasyTheme ? "var(--theme-focus)" : undefined}
+                class="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-theme-primary/10 text-[7px] font-bold leading-none text-theme-primary"
               >
                 {count > 9 ? "9+" : count}
               </span>
@@ -215,17 +189,10 @@
         onclick={() => uiStore.setExplorerViewMode("list")}
         title="List View"
         aria-label="List View"
-        class="p-1.5 rounded-md flex items-center justify-center transition-all border {viewMode ===
-        'list'
-          ? isFantasyTheme
-            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
-            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
-          : isFantasyTheme
-            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
-            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-        style:background-color={viewMode === "list" && isFantasyTheme
-          ? "var(--theme-focus-bg)"
-          : undefined}
+        aria-pressed={viewMode === "list"}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          viewMode === 'list',
+        )}"
       >
         <List class="w-3.5 h-3.5" />
       </button>
@@ -234,17 +201,10 @@
         onclick={() => uiStore.setExplorerViewMode("label")}
         title="Group by Label"
         aria-label="Group by Label"
-        class="p-1.5 rounded-md flex items-center justify-center transition-all border {viewMode ===
-        'label'
-          ? isFantasyTheme
-            ? 'text-[color:var(--theme-focus)] shadow-none border-[color:var(--theme-focus-border)]'
-            : 'bg-theme-primary text-theme-bg shadow-sm scale-110 border-theme-primary'
-          : isFantasyTheme
-            ? 'border-transparent text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-title-ink)]'
-            : 'border-transparent text-theme-muted hover:text-theme-text hover:bg-theme-primary/10'}"
-        style:background-color={viewMode === "label" && isFantasyTheme
-          ? "var(--theme-focus-bg)"
-          : undefined}
+        aria-pressed={viewMode === "label"}
+        class="flex items-center justify-center p-1.5 {getIconToggleClasses(
+          viewMode === 'label',
+        )}"
       >
         <Tag class="w-3.5 h-3.5" />
       </button>
@@ -265,28 +225,20 @@
         data-testid="entity-list-item"
         data-entity-id={entity.id}
         title={`Select ${entity.title}`}
-        class="w-full text-left p-2.5 border transition-all group focus:ring-1 focus:ring-theme-primary focus:outline-none {entity.id ===
+        class="group w-full rounded-xl border p-2.5 text-left transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 {entity.id ===
         focusedEntityId
-          ? isFantasyTheme
-            ? 'rounded-md border-[color:var(--theme-focus-border)] bg-[color:var(--theme-focus-bg)] ring-1 ring-[color:var(--theme-focus-border)]/40'
-            : 'rounded-lg border-theme-primary bg-theme-primary/10'
-          : isFantasyTheme
-            ? 'border-theme-border bg-[color:var(--theme-panel-muted)] rounded-md hover:border-[color:var(--theme-selected-border)] hover:bg-[color:var(--theme-selected-bg)]'
-            : 'border-theme-border bg-theme-bg rounded-lg hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+          ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
+          : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
       >
         <div class="flex items-center gap-2">
           <span
             class="{getIconClass(
               cat?.icon,
-            )} w-3.5 h-3.5 shrink-0 transition-colors {isFantasyTheme
-              ? 'text-[color:var(--theme-icon-default)] group-hover:text-[color:var(--theme-icon-active)]'
-              : 'text-theme-primary/70 group-hover:text-theme-primary'}"
+            )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
           ></span>
           <div class="flex-1 min-w-0">
             <div
-              class="text-xs font-bold transition-colors truncate uppercase font-header tracking-widest {isFantasyTheme
-                ? 'text-[color:var(--theme-title-ink)] group-hover:text-[color:var(--theme-icon-active)]'
-                : 'text-theme-text group-hover:text-theme-primary'}"
+              class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
             >
               {entity.title}
             </div>
