@@ -21,6 +21,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
+  import releases from "$lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
@@ -201,6 +202,40 @@
         } else {
           helpStore.startTour("initial-onboarding");
         }
+      }
+    }
+  });
+
+  // Automatic Release Note Trigger
+  $effect(() => {
+    if (browser && !uiStore.showChangelog && !uiStore.isDemoMode) {
+      const lastSeenStr = uiStore.lastSeenVersion;
+
+      const hasUnseenMinorRelease = (() => {
+        if (!lastSeenStr) return true;
+        const currentStoredMinor = parseInt(
+          lastSeenStr.split(".")[1] || "0",
+          10,
+        );
+        return releases.some((r) => {
+          const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
+          return releaseMinor > currentStoredMinor;
+        });
+      })();
+
+      if (hasUnseenMinorRelease) {
+        // Delay to not conflict with tour/demo triggers
+        const timeout = setTimeout(() => {
+          if (
+            !helpStore.activeTour &&
+            !uiStore.showZenMode &&
+            !uiStore.isDemoMode &&
+            !uiStore.showChangelog
+          ) {
+            uiStore.showChangelog = true;
+          }
+        }, 2000);
+        return () => clearTimeout(timeout);
       }
     }
   });

@@ -461,6 +461,25 @@
                   </div>
                 </div>
               </div>
+
+              <div class="mt-6">
+                <button
+                  onclick={() => (uiStore.showChangelog = true)}
+                  data-testid="show-changelog-button"
+                  class="w-full p-4 bg-theme-primary/10 border border-theme-primary/30 hover:border-theme-primary text-theme-primary transition-all rounded group flex items-center justify-between"
+                >
+                  <div class="flex items-center gap-3">
+                    <span class="icon-[lucide--sparkles] w-5 h-5"></span>
+                    <span
+                      class="text-sm font-bold uppercase font-header tracking-widest"
+                      >What's New in Codex</span
+                    >
+                  </div>
+                  <span
+                    class="icon-[lucide--chevron-right] w-4 h-4 group-hover:translate-x-1 transition-transform"
+                  ></span>
+                </button>
+              </div>
             </section>
 
             <section>

@@ -21,6 +21,8 @@ class UIStore {
   dismissedWorldPage = $state(false);
   liteMode = $state(false);
   showDiceModal = $state(false);
+  showChangelog = $state(false);
+  lastSeenVersion = $state<string | null>(null);
 
   // Sidebar State
   leftSidebarOpen = $state(false);
@@ -63,6 +65,8 @@ class UIStore {
       if (lite !== null) {
         this.liteMode = lite === "true";
       }
+
+      this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
 
       const lastLabel = localStorage.getItem("codex_last_connection_label");
       if (lastLabel !== null) {
@@ -165,6 +169,13 @@ class UIStore {
   closeSidebar() {
     this.leftSidebarOpen = false;
     this.activeSidebarTool = "none";
+  }
+
+  markVersionAsSeen(version: string) {
+    this.lastSeenVersion = version;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_last_seen_version", version);
+    }
   }
 
   toggleWelcomeScreen(skip: boolean) {

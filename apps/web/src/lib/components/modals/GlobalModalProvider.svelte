@@ -37,6 +37,14 @@
 
 <SearchModal />
 
+{#if uiStore.showChangelog}
+  {#await loadModal(() => import("./ChangelogModal.svelte"), "ChangelogModal") then ChangelogModal}
+    {#if ChangelogModal}
+      <ChangelogModal />
+    {/if}
+  {/await}
+{/if}
+
 {#if !isLoginRoute}
   {#await loadModal(() => import("$lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
     {#if OracleWindow}
