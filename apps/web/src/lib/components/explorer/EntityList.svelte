@@ -17,10 +17,14 @@
   let {
     onSelect,
     onDragStart,
+    onDragEnd,
+    allowedTypes = null,
     class: className = "",
   }: {
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
+    onDragEnd?: () => void;
+    allowedTypes?: string[] | null;
     class?: string;
   } = $props();
 
@@ -29,6 +33,14 @@
   const activeVaultId = $derived(vault.activeVaultId);
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
+  const allowedTypeSet = $derived.by(() =>
+    allowedTypes ? new Set(allowedTypes) : null,
+  );
+  const visibleCategories = $derived.by(() =>
+    categories.list.filter(
+      (cat) => !allowedTypeSet || allowedTypeSet.has(cat.id),
+    ),
+  );
   const collapsedLabelGroups = $derived.by(() =>
     uiStore.getCollapsedLabelGroups(activeVaultId),
   );
@@ -40,6 +52,9 @@
     const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
       const type = allEntities[i].type;
+      if (allowedTypeSet && !allowedTypeSet.has(type)) {
+        continue;
+      }
       counts.set(type, (counts.get(type) || 0) + 1);
     }
     return counts;
@@ -51,19 +66,15 @@
     const query = searchQuery.trim().toLowerCase();
     const filterAll = typeFilters.size === 0;
 
-    if (!query) {
-      for (let i = 0; i < allEntities.length; i++) {
-        const e = allEntities[i];
-        if (filterAll || typeFilters.has(e.type)) {
-          filtered.push(e);
-        }
-      }
-      return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
+
+      if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
+        continue;
+      }
+
       const matchesSearch =
+        !query ||
         e.title.toLowerCase().includes(query) ||
         e.content.toLowerCase().includes(query);
       const matchesType = filterAll || typeFilters.has(e.type);
@@ -81,6 +92,10 @@
   });
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
+    if (allowedTypeSet && !allowedTypeSet.has(type)) {
+      return;
+    }
+
     const isMulti = event.ctrlKey || event.metaKey;
 
     if (type === "all") {
@@ -110,6 +125,19 @@
       ? "rounded-lg border border-theme-primary bg-theme-primary text-theme-bg shadow-sm transition-all hover:border-theme-secondary hover:bg-theme-secondary"
       : "rounded-lg border border-theme-border bg-theme-bg/50 text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text";
   }
+
+  $effect(() => {
+    if (!allowedTypeSet || typeFilters.size === 0) {
+      return;
+    }
+
+    const nextFilters = new Set(
+      Array.from(typeFilters).filter((type) => allowedTypeSet.has(type)),
+    );
+    if (nextFilters.size !== typeFilters.size) {
+      typeFilters = nextFilters;
+    }
+  });
 </script>
 
 <div class="flex flex-col h-full min-h-0 {className}">
@@ -142,7 +170,7 @@
         <LayoutGrid class="w-3.5 h-3.5" />
       </button>
 
-      {#each categories.list as cat (cat.id)}
+      {#each visibleCategories as cat (cat.id)}
         {@const count = typeCounts.get(cat.id) || 0}
         {#if count > 0 || typeFilters.has(cat.id)}
           <button
@@ -209,6 +237,7 @@
         type="button"
         draggable={!!onDragStart}
         ondragstart={(e) => onDragStart?.(e, entity.id)}
+        ondragend={() => onDragEnd?.()}
         onclick={() => onSelect?.(entity)}
         data-testid="entity-list-item"
         data-entity-id={entity.id}

@@ -35,7 +35,17 @@
     return `hsl(${hue} 75% 55%)`;
   }
 
-  let { children }: { children?: Snippet } = $props();
+  let {
+    children,
+    onMapDragOver,
+    onMapDragLeave,
+    onMapDrop,
+  }: {
+    children?: Snippet;
+    onMapDragOver?: (event: DragEvent) => void;
+    onMapDragLeave?: (event: DragEvent) => void;
+    onMapDrop?: (event: DragEvent) => void;
+  } = $props();
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let container = $state<HTMLDivElement | null>(null);
@@ -170,6 +180,26 @@
         visible: true,
       }));
   });
+  const vttDragPreview = $derived.by(() => {
+    const preview = mapSession.dragPreview;
+    const activeMap = mapStore.activeMap;
+    if (!preview || !activeMap) {
+      return null;
+    }
+
+    const dimensions = activeMap.dimensions;
+    const valid =
+      preview.x >= 0 &&
+      preview.y >= 0 &&
+      preview.x <= dimensions.width &&
+      preview.y <= dimensions.height;
+
+    return {
+      ...preview,
+      label: vault.entities[preview.entityId]?.title ?? "Entity",
+      valid,
+    };
+  });
 
   $effect(() => {
     const currentTokens = Object.values(mapSession.tokens);
@@ -302,6 +332,52 @@
         tokens: vttTokens,
         measurement: vttMeasurement,
       });
+
+      if (vttDragPreview) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const point = mapStore.project({
+            x: vttDragPreview.x,
+            y: vttDragPreview.y,
+          });
+          const size = Math.max(
+            28,
+            (mapStore.gridSize || 50) * mapStore.viewport.zoom,
+          );
+          const radius = size / 2;
+          const stroke = vttDragPreview.valid
+            ? themeStore.activeTheme.tokens.primary
+            : "#ef4444";
+          const fill = vttDragPreview.valid
+            ? "rgba(16, 185, 129, 0.25)"
+            : "rgba(239, 68, 68, 0.25)";
+
+          ctx.save();
+          ctx.translate(point.x, point.y);
+          ctx.globalAlpha = 0.8;
+          ctx.fillStyle = fill;
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.arc(0, 0, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(0, 0, 4, 0, Math.PI * 2);
+          ctx.fillStyle = stroke;
+          ctx.fill();
+
+          ctx.font = "600 12px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillStyle = stroke;
+          ctx.fillText(vttDragPreview.label, 0, -radius - 8);
+          ctx.restore();
+        }
+      }
 
       if (vttPings.length > 0) {
         const ctx = canvas.getContext("2d");
@@ -997,6 +1073,9 @@
     class="absolute inset-0 {mapSession.gridFitMode && mapStore.isGMMode
       ? 'cursor-crosshair'
       : ''} {mapSession.gridMoveMode && mapStore.isGMMode ? 'cursor-move' : ''}"
+    ondragover={onMapDragOver}
+    ondragleave={onMapDragLeave}
+    ondrop={onMapDrop}
   ></canvas>
 
   {#if !mapImage}

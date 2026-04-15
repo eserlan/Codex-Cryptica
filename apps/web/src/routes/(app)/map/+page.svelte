@@ -10,6 +10,7 @@
   import VTTChatSidebar from "$lib/components/vtt/VTTChatSidebar.svelte";
   import GuestInfoOverlay from "$lib/components/vtt/GuestInfoOverlay.svelte";
   import VTTSharedImageLightbox from "$lib/components/vtt/VTTSharedImageLightbox.svelte";
+  import EntityList from "$lib/components/explorer/EntityList.svelte";
   import {
     getPrimaryButtonStateClass,
     getMeasurementToolButtonClass,
@@ -21,16 +22,23 @@
   import { mapSession } from "$lib/stores/map-session.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
+  import type { Entity } from "schema";
 
   const showInitiativePanel = $derived(
     shouldShowInitiativePanel(mapSession.vttEnabled, mapSession.mode),
   );
   const hasSelectedToken = $derived(Boolean(mapSession.selectedToken));
+  const VTT_ENTITY_TYPES = ["character", "creature", "item"];
+  const vttEntityCount = $derived.by(
+    () =>
+      vault.allEntities.filter((entity) =>
+        VTT_ENTITY_TYPES.includes(entity.type),
+      ).length,
+  );
 
   let showUpload = $state(false);
   let showVttShare = $state(false);
   let isVttChatSidebarCollapsed = $state(false);
-  let isVttSidebarCollapsed = $state(false);
 
   // Chat sidebar offset: 20rem when expanded, 3rem (w-12) when collapsed
   const chatSidebarOffset = $derived(
@@ -65,12 +73,72 @@
 
   let isDragging = $state(false);
 
+  function isEntityDrag(dataTransfer: DataTransfer | null) {
+    if (!dataTransfer) return false;
+    return Array.from(dataTransfer.types).includes("application/codex-entity");
+  }
+
+  function handleEntityDragStart(event: DragEvent, entityId: string) {
+    if (!event.dataTransfer) return;
+
+    event.dataTransfer.setData("application/codex-entity", entityId);
+    event.dataTransfer.effectAllowed = "copy";
+    mapSession.setDragPreview({
+      entityId,
+      x: 0,
+      y: 0,
+    });
+  }
+
+  function handleEntityDragEnd() {
+    isDragging = false;
+    mapSession.clearDragPreview();
+  }
+
   function handleDrop(e: DragEvent) {
     e.preventDefault();
     isDragging = false;
 
     const dt = e.dataTransfer;
-    if (dt && dt.files && dt.files.length > 0) {
+    mapSession.clearDragPreview();
+    if (!dt) return;
+
+    if (isEntityDrag(dt)) {
+      const entityId = dt.getData("application/codex-entity");
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const mapCoords = mapStore.unproject({ x, y });
+      const entity = vault.entities[entityId];
+      const activeMap = mapStore.activeMap;
+
+      if (
+        entity &&
+        activeMap &&
+        mapCoords.x >= 0 &&
+        mapCoords.y >= 0 &&
+        mapCoords.x <= activeMap.dimensions.width &&
+        mapCoords.y <= activeMap.dimensions.height
+      ) {
+        const tokenInput = {
+          name: entity.title,
+          entityId: entity.id,
+          imageUrl: entity.image,
+          x: mapCoords.x,
+          y: mapCoords.y,
+        };
+
+        if (uiStore.isGuestMode) {
+          mapSession.requestTokenAdd(tokenInput);
+        } else {
+          mapSession.addToken(tokenInput);
+        }
+      }
+      return;
+    }
+
+    if (dt.files && dt.files.length > 0) {
       files = dt.files;
       // If dropping while modal is closed, open it to confirm name/upload
       if (!showUpload) {
@@ -82,34 +150,75 @@
   function handleDragOver(e: DragEvent) {
     e.preventDefault();
     isDragging = true;
+
+    const dt = e.dataTransfer;
+    if (isEntityDrag(dt)) {
+      dt!.dropEffect = "copy";
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const mapCoords = mapStore.unproject({ x, y });
+      const entityId =
+        dt?.getData("application/codex-entity") ||
+        mapSession.dragPreview?.entityId;
+
+      if (!entityId) return;
+
+      mapSession.setDragPreview({
+        entityId,
+        x: mapCoords.x,
+        y: mapCoords.y,
+      });
+    }
   }
 
   function handleDragLeave(e: DragEvent) {
     e.preventDefault();
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const hasLeftTarget =
+      e.clientX < rect.left ||
+      e.clientX > rect.right ||
+      e.clientY < rect.top ||
+      e.clientY > rect.bottom;
+
+    if (!hasLeftTarget) {
+      return;
+    }
+
     isDragging = false;
+    mapSession.clearDragPreview();
+  }
+
+  function handleEntitySelect(entity: Entity) {
+    uiStore.focusEntity(entity.id);
   }
 </script>
 
 <div class="flex-1 flex flex-col bg-theme-bg overflow-hidden relative">
   {#if mapStore.activeMap}
-    <MapView>
+    <MapView
+      onMapDragOver={handleDragOver}
+      onMapDragLeave={handleDragLeave}
+      onMapDrop={handleDrop}
+    >
       {#if mapSession.vttEnabled}
         <VTTChatSidebar bind:collapsed={isVttChatSidebarCollapsed} />
 
         <aside
-          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {isVttSidebarCollapsed
+          class="absolute top-0 right-0 bottom-0 z-[30] flex overflow-hidden border-l border-theme-primary/20 bg-theme-surface/95 shadow-[0_0_30px_rgba(0,0,0,0.25)] backdrop-blur transition-all duration-200 pointer-events-auto {uiStore.vttSidebarCollapsed
             ? 'w-12'
             : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
           aria-label="VTT Sidebar"
         >
-          {#if isVttSidebarCollapsed}
+          {#if uiStore.vttSidebarCollapsed}
             <div
               class="flex h-full w-full flex-col items-center justify-between p-2"
               style="background-image: var(--bg-texture-overlay)"
             >
               <button
                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                onclick={() => (isVttSidebarCollapsed = false)}
+                onclick={() => uiStore.toggleVttSidebar(false)}
                 aria-label="Expand VTT Sidebar"
                 aria-expanded="false"
                 type="button"
@@ -157,7 +266,7 @@
 
                 <button
                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-theme-border bg-theme-bg/70 text-theme-muted transition-colors hover:border-theme-primary hover:text-theme-text hover:bg-theme-primary/10"
-                  onclick={() => (isVttSidebarCollapsed = true)}
+                  onclick={() => uiStore.toggleVttSidebar(true)}
                   aria-label="Collapse VTT Sidebar"
                   aria-expanded="true"
                   type="button"
@@ -176,6 +285,62 @@
                 {#if showInitiativePanel}
                   <InitiativePanel />
                 {/if}
+
+                <section
+                  class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
+                  data-testid="vtt-entity-list-section"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+                    onclick={() =>
+                      uiStore.toggleVttEntityList(
+                        !uiStore.vttEntityListCollapsed,
+                      )}
+                    aria-expanded={!uiStore.vttEntityListCollapsed}
+                    aria-controls="vtt-entity-list"
+                  >
+                    <div>
+                      <div
+                        class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+                      >
+                        Vault Entities
+                      </div>
+                      <div class="text-xs text-theme-muted">
+                        Drag characters, creatures, and items onto the map.
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="rounded-full border border-theme-border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+                      >
+                        {vttEntityCount}
+                      </span>
+                      <span
+                        class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {uiStore.vttEntityListCollapsed
+                          ? '-rotate-90'
+                          : ''}"
+                      ></span>
+                    </div>
+                  </button>
+
+                  {#if !uiStore.vttEntityListCollapsed}
+                    <div
+                      id="vtt-entity-list"
+                      class="border-t border-theme-primary/20"
+                      role="presentation"
+                      onmousedown={(event) => event.stopPropagation()}
+                    >
+                      <EntityList
+                        class="h-[22rem]"
+                        allowedTypes={VTT_ENTITY_TYPES}
+                        onSelect={handleEntitySelect}
+                        onDragStart={handleEntityDragStart}
+                        onDragEnd={handleEntityDragEnd}
+                      />
+                    </div>
+                  {/if}
+                </section>
 
                 <TokenDetail />
 
