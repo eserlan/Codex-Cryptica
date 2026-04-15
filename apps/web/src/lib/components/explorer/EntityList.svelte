@@ -231,7 +231,7 @@
 
   <div
     role="list"
-    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
     {#snippet entityItem(entity: Entity)}
@@ -242,14 +242,14 @@
         focusedEntityId
           ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
           : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
-        draggable={!!onDragStart}
-        ondragstart={(e) => onDragStart?.(e, entity.id)}
-        ondragend={() => onDragEnd?.()}
         data-testid="entity-list-item"
         data-entity-id={entity.id}
       >
         <button
           type="button"
+          draggable={!!onDragStart}
+          ondragstart={(e) => onDragStart?.(e, entity.id)}
+          ondragend={() => onDragEnd?.()}
           onclick={() => onSelect?.(entity)}
           title={`Select ${entity.title}`}
           class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-xl"

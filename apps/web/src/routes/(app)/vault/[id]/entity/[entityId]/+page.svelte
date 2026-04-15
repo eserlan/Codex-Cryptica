@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { onMount } from "svelte";
   import { page } from "$app/state";
   import { vault } from "$lib/stores/vault.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
@@ -27,69 +27,57 @@
     vault.isInitialized = true;
     vault.status = "idle";
     if (payload.isGuest) uiStore.isGuestMode = true;
-    guestEntityId = payload.entity.id;
+    return payload.entity.id;
   };
 
-  let guestEntityId = $state<string | null>(null);
-  let isResolvingGuestPayload = $state(false);
-  if (browser) {
-    const vid = (page.params as { id: string; entityId: string }).id;
-    const eid = (page.params as { id: string; entityId: string }).entityId;
-    if (vid && eid) {
-      const payload = consumeZenPopoutPayload(vid, eid);
-      if (payload) {
-        applyGuestPayload(payload);
-      } else if (window.opener) {
-        // Set isGuestMode early so vault.init() bails before loadFiles() runs
-        uiStore.isGuestMode = true;
-        isResolvingGuestPayload = true;
+  onMount(() => {
+    const initEntityView = async () => {
+      const vid = vaultId;
+      const eid = entityId;
+
+      if (!vid || !eid) return;
+
+      // 1. Try to get guest payload synchronously (from sessionStorage)
+      let payload = consumeZenPopoutPayload(vid, eid);
+
+      // 2. If not found but we have an opener, request it via postMessage
+      if (!payload && window.opener) {
+        uiStore.isGuestMode = true; // Set early to prevent default vault load
+        payload = await requestZenPopoutPayload(eid);
       }
-    }
-  }
 
-  $effect(() => {
-    if (!browser || !isResolvingGuestPayload || !entityId) return;
+      if (payload) {
+        // Guest Flow
+        const loadedEntityId = applyGuestPayload(payload);
+        if (vault.entities[loadedEntityId]) {
+          uiStore.openZenMode(loadedEntityId);
+        }
+      } else {
+        // Host Flow
+        uiStore.isGuestMode = false;
+        if (vault.activeVaultId !== vid) {
+          await vault.switchVault(vid);
+        } else {
+          // If this vault was already active from LocalStorage restoration,
+          // we must wait for its background initialization (OPFS read) to finish.
+          let retries = 0;
+          while (!vault.isInitialized && retries < 100) {
+            await new Promise((r) => setTimeout(r, 50));
+            retries++;
+          }
+        }
 
-    let isCancelled = false;
-
-    void requestZenPopoutPayload(entityId).then((payload) => {
-      if (isCancelled) return;
-      if (payload) applyGuestPayload(payload);
-      isResolvingGuestPayload = false;
-    });
-
-    return () => {
-      isCancelled = true;
+        if (vault.entities[eid]) {
+          uiStore.openZenMode(eid);
+        } else {
+          console.warn(
+            `[Entity Popout] Entity ${eid} not found in vault ${vid}`,
+          );
+        }
+      }
     };
-  });
 
-  // Guest flow: open zen mode once reactive state has settled
-  $effect(() => {
-    if (guestEntityId && vault.entities[guestEntityId]) {
-      uiStore.openZenMode(guestEntityId);
-    }
-  });
-
-  // Host flow: only when not a guest popout
-  $effect(() => {
-    if (
-      vaultId &&
-      vault.activeVaultId !== vaultId &&
-      !uiStore.isGuestMode &&
-      !isResolvingGuestPayload
-    ) {
-      void vault.switchVault(vaultId);
-    }
-  });
-
-  $effect(() => {
-    if (
-      entityId &&
-      vault.activeVaultId === vaultId &&
-      vault.entities[entityId]
-    ) {
-      uiStore.openZenMode(entityId);
-    }
+    initEntityView();
   });
 </script>
 
