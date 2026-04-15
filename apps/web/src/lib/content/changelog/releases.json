@@ -1,35 +1,58 @@
 [
   {
-    "version": "0.17.37",
-    "title": "Entity Traditional View & Traditional Explorer",
-    "date": "2026-04-12",
-    "type": "minor",
-    "highlights": [
-      "New persistent Entity Explorer sidebar",
-      "Traditional 'Focus Mode' for deep entity editing",
-      "Dexie-backed metadata caching for faster navigation"
-    ]
-  },
-  {
     "version": "0.17.0",
-    "title": "Vault Front Page & Onboarding",
-    "date": "2026-04-03",
+    "title": "The Playable Tabletop Update",
+    "date": "2026-04-14",
     "type": "minor",
     "highlights": [
-      "New Vault Front Page with quick access to recent entities",
-      "Improved onboarding for new archives",
-      "OPFS integration for high-performance local file handling"
+      "Data-Native VTT: Turn your maps into playable, tactical encounters directly linked to your lore.",
+      "Peer-to-Peer Multiplayer: Host zero-setup sessions and invite players directly to your maps with real-time sync.",
+      "Fantasy Theme Refresh: A massive visual overhaul with deep fantasy aesthetics, cohesive typography (Alegreya), and rich styling.",
+      "In-App Changelog: Automatic notifications to keep you up to date on new features."
     ]
   },
   {
     "version": "0.16.0",
-    "title": "Oracle & Die Roller Enhancements",
+    "title": "The Living Hub Update",
+    "date": "2026-04-03",
+    "type": "minor",
+    "highlights": [
+      "Vault Front Page: A completely redesigned dashboard offering a living briefing room, pinned notes, and recent activity.",
+      "Traditional Entity Explorer: A powerful new sidebar and focus mode for deep, distraction-free entity editing.",
+      "Free Oracle Tier: Everyone now gets access to the Lore Oracle's core features out of the box."
+    ]
+  },
+  {
+    "version": "0.15.0",
+    "title": "The Spatial Canvas Update",
     "date": "2026-03-25",
     "type": "minor",
     "highlights": [
-      "Refined Die Roller with multi-dice support",
-      "Improved Oracle reasoning with context-aware prompts",
-      "Lite Mode (No AI) for distraction-free writing"
+      "Infinite Spatial Canvas: A massive new way to visually organize, group, and connect your entities outside the strict graph constraints.",
+      "Integrated Die Roller: Fully featured, fair 3D die rolling directly in your workspace.",
+      "Pop-out Help & Guides: A comprehensive, dockable help system to guide you through mastering Codex Cryptica."
+    ]
+  },
+  {
+    "version": "0.14.0",
+    "title": "The Robust Storage Update",
+    "date": "2026-03-15",
+    "type": "minor",
+    "highlights": [
+      "OPFS & Dexie Integration: A total rewrite of the local storage engine for lightning-fast performance and metadata caching.",
+      "Multi-Campaign Switching: Seamlessly jump between different isolated vaults and campaigns.",
+      "Robust Local & Cloud Sync: Bulletproof Google Drive synchronization paired with local-first file system mirroring."
+    ]
+  },
+  {
+    "version": "0.13.0",
+    "title": "The Oracle Ascension Update",
+    "date": "2026-03-01",
+    "type": "minor",
+    "highlights": [
+      "Chat Commands & Proposer: Ask the AI to propose new connections, generate images, or analyze plot holes directly from the chat.",
+      "Image Generation: Distill your entity descriptions into stunning, AI-generated character and location art.",
+      "Smart PDF Import: Drop lore bibles or PDFs onto the screen to have them automatically parsed and mapped into your graph."
     ]
   }
 ]
