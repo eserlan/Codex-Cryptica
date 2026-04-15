@@ -54,5 +54,93 @@
       "Image Generation: Distill your entity descriptions into stunning, AI-generated character and location art.",
       "Smart PDF Import: Drop lore bibles or PDFs onto the screen to have them automatically parsed and mapped into your graph."
     ]
+  },
+  {
+    "version": "0.12.0",
+    "title": "The World Timeline Update",
+    "date": "2026-02-15",
+    "type": "minor",
+    "highlights": [
+      "World Timeline: A chronological view of your world's events, eras, and history.",
+      "Node Merging: Combine duplicate or related entities into a single, cohesive node.",
+      "Rich Text Formatting: Enhanced markdown support for more expressive and readable notes."
+    ]
+  },
+  {
+    "version": "0.11.0",
+    "title": "The Advanced Graph Update",
+    "date": "2026-02-01",
+    "type": "minor",
+    "highlights": [
+      "Fog of War for Graph: Hide unrevealed nodes from players during shared sessions or exports.",
+      "Central Node Orbit: Focus on a single entity and see its immediate connections orbit around it.",
+      "Connection Labels: Add descriptive text to the lines connecting your entities."
+    ]
+  },
+  {
+    "version": "0.10.0",
+    "title": "The Customization Update",
+    "date": "2026-01-15",
+    "type": "minor",
+    "highlights": [
+      "Styling Templates: Apply custom visual themes to specific nodes or categories.",
+      "Entity Labeling: Tag and organize entities with custom, color-coded labels.",
+      "Node Read Mode: A clean, distraction-free view for reading long-form entity content."
+    ]
+  },
+  {
+    "version": "0.9.0",
+    "title": "The Oracle Intelligence Update",
+    "date": "2026-01-01",
+    "type": "minor",
+    "highlights": [
+      "Lore Oracle Intelligence: The AI assistant can now answer complex questions about your specific world lore.",
+      "Oracle RAG Improvements: Vastly improved retrieval accuracy ensures the AI pulls exactly the right context.",
+      "Oracle Data Parsing: The AI can extract structured data directly from your text notes."
+    ]
+  },
+  {
+    "version": "0.8.0",
+    "title": "The Campaign Management Update",
+    "date": "2025-12-15",
+    "type": "minor",
+    "highlights": [
+      "Share Campaigns: Generate read-only links to share your world with players.",
+      "Campaign Date Picker: Set and track the current in-world date for your sessions.",
+      "Flexible Categories: Create custom entity types beyond the default schema."
+    ]
+  },
+  {
+    "version": "0.7.0",
+    "title": "The Graph Engine Update",
+    "date": "2025-12-01",
+    "type": "minor",
+    "highlights": [
+      "Minimap Navigation: Quickly pan around massive knowledge graphs using the new minimap.",
+      "Graph Focus Mode: Isolate sub-graphs and filter out noise for deep-dive worldbuilding.",
+      "Delete Nodes: Safely remove entities and automatically clean up orphaned connections."
+    ]
+  },
+  {
+    "version": "0.6.0",
+    "title": "The Search & Discovery Update",
+    "date": "2025-11-15",
+    "type": "minor",
+    "highlights": [
+      "Fuzzy Search: Instantly find any entity, connection, or text snippet across your entire vault.",
+      "Mobile UX Refinements: Improved touch targets, sidebar navigation, and sync feedback for mobile devices.",
+      "Performance Improvements: Large graph rendering and search indexing optimizations."
+    ]
+  },
+  {
+    "version": "0.5.0",
+    "title": "The Foundations Update",
+    "date": "2025-11-01",
+    "type": "minor",
+    "highlights": [
+      "Core Entity Schema: Established the foundational Markdown and YAML structure for all data.",
+      "Svelte Sync Engine: The first iteration of local-first reactivity across the graph and editor.",
+      "Google Drive Mirroring: Automatic, silent backups of your local vault to the cloud."
+    ]
   }
 ]
