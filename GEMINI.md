@@ -145,7 +145,7 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
-- 085-vtt-entity-list: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+- 085-vtt-entity-list: Added VTT sidebar "Vault Entities" section with collapsible entity list, drag-to-map token placement (host add / guest request), canvas ghost-token drag preview, and persisted sidebar collapse state. Also added label-grouped explorer view mode with collapsible label groups and persisted view state.
 
 - 083-style-guide-doc: Added TypeScript 5.9.3, Svelte 5 (Runes) + Tailwind CSS 4, Lucide Svelte, Marked (for Markdown rendering if integrated into the web app)
 
