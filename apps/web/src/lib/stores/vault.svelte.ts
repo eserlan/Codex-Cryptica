@@ -31,6 +31,7 @@ import { migrateStructure } from "./vault/migration";
 
 import { VaultMessenger } from "./vault/messenger";
 import { VaultStorageManager } from "./vault/storage";
+import { p2pGuestService } from "../cloud-bridge/p2p/guest-service";
 
 export class VaultStore {
   // Reactive State
@@ -127,6 +128,7 @@ export class VaultStore {
       repository: this.repository,
       activeVaultId: () => this.activeVaultId,
       isGuest: () => this.isGuest,
+      getGuestFile: (path) => p2pGuestService.getFile(path),
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       getSpecificVaultHandle: (vId) => this.getSpecificVaultHandle(vId),
       getActiveSyncHandle: () => this.getActiveSyncHandle(),
@@ -207,6 +209,13 @@ export class VaultStore {
   // --- Core Lifecycle ---
 
   async init() {
+    // Guest popout tabs pre-populate the vault via applyGuestPayload before
+    // this runs — skip full init so loadFiles() doesn't overwrite that data.
+    if (uiStore.isGuestMode) {
+      this.isInitialized = true;
+      return;
+    }
+
     try {
       await vaultRegistry.init();
 

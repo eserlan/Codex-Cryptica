@@ -108,6 +108,7 @@ describe("EntityStore", () => {
       repository: repository as any,
       activeVaultId: () => "vault-1",
       isGuest: () => false,
+      getGuestFile: vi.fn(),
       setStatus: vi.fn(),
       setErrorMessage: vi.fn(),
       getActiveVaultHandle: vi.fn().mockResolvedValue({ name: "vault-1" }),
@@ -797,6 +798,7 @@ describe("EntityStore", () => {
         repository: repository as any,
         activeVaultId: () => null,
         isGuest: () => false,
+        getGuestFile: vi.fn(),
         setStatus: vi.fn(),
         setErrorMessage: vi.fn(),
         getActiveVaultHandle: vi.fn().mockResolvedValue({}),
@@ -806,6 +808,110 @@ describe("EntityStore", () => {
       });
 
       await storeNoVault.loadEntityContent("hero");
+    });
+
+    it("fetches guest chronicle content from the host when no local vault is available", async () => {
+      const getGuestFile = vi.fn().mockResolvedValue(
+        new Blob(["---\nlore: Hidden host notes\n---\nShared chronicle body"], {
+          type: "text/markdown",
+        }),
+      );
+      vi.mocked(
+        (await import("../../utils/markdown")).parseMarkdown,
+      ).mockReturnValue({
+        metadata: { lore: "Hidden host notes" },
+        content: "Shared chronicle body",
+      } as any);
+
+      const guestStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => null,
+        isGuest: () => true,
+        getGuestFile,
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      await guestStore.loadEntityContent("hero");
+
+      expect(getGuestFile).toHaveBeenCalledWith("hero.md");
+      expect(repository.entities.hero.content).toBe("Shared chronicle body");
+      expect(repository.entities.hero.lore).toBe("");
+      expect(guestStore.isContentLoaded("hero")).toBe(true);
+    });
+
+    it("retries guest host fetch when the entity was verified earlier but still has no content", async () => {
+      const getGuestFile = vi.fn().mockResolvedValue(
+        new Blob(["---\n---\nRetried chronicle"], {
+          type: "text/markdown",
+        }),
+      );
+      vi.mocked(
+        (await import("../../utils/markdown")).parseMarkdown,
+      ).mockReturnValue({
+        metadata: {},
+        content: "Retried chronicle",
+      } as any);
+
+      const guestStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => null,
+        isGuest: () => true,
+        getGuestFile,
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      guestStore.markContentLoaded("hero");
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        content: "",
+      };
+
+      await guestStore.loadEntityContent("hero");
+
+      expect(getGuestFile).toHaveBeenCalledWith("hero.md");
+      expect(repository.entities.hero.content).toContain("Retried chronicle");
+    });
+
+    it("uses the guest host-fetch path even when a local activeVaultId is still present", async () => {
+      const getGuestFile = vi.fn().mockResolvedValue(
+        new Blob(["---\n---\nGuest chronicle"], {
+          type: "text/markdown",
+        }),
+      );
+      vi.mocked(
+        (await import("../../utils/markdown")).parseMarkdown,
+      ).mockReturnValue({
+        metadata: {},
+        content: "Guest chronicle",
+      } as any);
+
+      const guestStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => "default-vault",
+        isGuest: () => true,
+        getGuestFile,
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      await guestStore.loadEntityContent("hero");
+
+      expect(getGuestFile).toHaveBeenCalledWith("hero.md");
+      expect(repository.entities.hero.content).toContain("Guest chronicle");
     });
 
     it("should return early when entity is already verified", async () => {
@@ -820,6 +926,36 @@ describe("EntityStore", () => {
 
     it("should return early when entity does not exist", async () => {
       await store.loadEntityContent("nonexistent");
+    });
+
+    it("preserves hydrated guest content when a guest batch patch sends empty content", async () => {
+      const guestStore = new EntityStore({
+        repository: repository as any,
+        activeVaultId: () => null,
+        isGuest: () => true,
+        getGuestFile: vi.fn(),
+        setStatus: vi.fn(),
+        setErrorMessage: vi.fn(),
+        getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getSpecificVaultHandle: vi.fn().mockResolvedValue(undefined),
+        getActiveSyncHandle: vi.fn().mockResolvedValue(undefined),
+        getServices: () => ({}),
+      });
+
+      repository.entities.hero = {
+        ...repository.entities.hero,
+        content: "Hydrated chronicle",
+      };
+
+      await guestStore.batchUpdate({
+        hero: {
+          title: "Updated Hero",
+          content: "",
+        },
+      });
+
+      expect(repository.entities.hero.title).toBe("Updated Hero");
+      expect(repository.entities.hero.content).toBe("Hydrated chronicle");
     });
   });
 

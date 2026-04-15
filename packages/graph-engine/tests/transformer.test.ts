@@ -121,7 +121,8 @@ describe("GraphTransformer", () => {
       themeId: "dark",
     };
 
-    const imageSelector = "node[image], node[thumbnail]";
+    const imageSelector =
+      "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']";
 
     // Test with images enabled (default)
     const styleWithImages = getGraphStyle(mockTemplate, [], true);
@@ -134,5 +135,134 @@ describe("GraphTransformer", () => {
     expect(
       styleWithoutImages.some((s: any) => s.selector === imageSelector),
     ).toBe(false);
+  });
+
+  it("should calculate node weight based on rendered inbound and outbound edges", () => {
+    const mockEntities: Entity[] = [
+      {
+        id: "hub",
+        title: "Hub",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+      {
+        id: "e1",
+        title: "Leaf 1",
+        type: "npc",
+        connections: [{ target: "hub", type: "friendly" }],
+        content: "...",
+      },
+      {
+        id: "e2",
+        title: "Leaf 2",
+        type: "npc",
+        connections: [{ target: "hub", type: "enemy" }],
+        content: "...",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(mockEntities);
+    const nodes = elements.filter((el) => el.group === "nodes");
+
+    const hubNode = nodes.find((n) => n.data.id === "hub");
+    const leafNode = nodes.find((n) => n.data.id === "e2");
+
+    expect(hubNode?.data.weight).toBe(2);
+    expect(leafNode?.data.weight).toBe(1);
+  });
+
+  it("should ignore hidden or invalid targets when calculating node weight", () => {
+    const mockEntities: Entity[] = [
+      {
+        id: "e1",
+        title: "Visible Hub",
+        type: "npc",
+        connections: [
+          { target: "e2", type: "friendly" },
+          { target: "hidden", type: "ally" },
+          { target: "missing", type: "enemy" },
+        ],
+        content: "...",
+      },
+      {
+        id: "e2",
+        title: "Visible Leaf",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+      {
+        id: "hidden",
+        title: "Hidden Leaf",
+        type: "npc",
+        connections: [],
+        content: "...",
+      },
+    ];
+
+    const elements = GraphTransformer.entitiesToElements(
+      mockEntities,
+      new Set(["e1", "e2"]),
+    );
+    const nodes = elements.filter((el) => el.group === "nodes");
+    const edges = elements.filter((el) => el.group === "edges");
+
+    const visibleHub = nodes.find((n) => n.data.id === "e1");
+    const visibleLeaf = nodes.find((n) => n.data.id === "e2");
+    const hiddenLeaf = nodes.find((n) => n.data.id === "hidden");
+
+    expect(visibleHub?.data.weight).toBe(1);
+    expect(visibleLeaf?.data.weight).toBe(1);
+    expect(hiddenLeaf?.data.weight).toBe(0);
+    expect(edges).toHaveLength(1);
+  });
+
+  it("should generate tier-based node sizes", () => {
+    const mockTemplate: StylingTemplate = {
+      description: "...",
+      tokens: {
+        background: "#000",
+        primary: "#f00",
+        surface: "#111",
+        text: "#fff",
+        fontBody: "Arial",
+        fontHeading: "Arial",
+      },
+      graph: {
+        nodeBorderWidth: 1,
+        nodeShape: "ellipse",
+        edgeColor: "#555",
+        edgeStyle: "solid",
+      },
+      themeId: "dark",
+    };
+
+    const styles = getGraphStyle(mockTemplate, [], false);
+
+    // Tier 0: 0-1 connections -> 48px
+    const tier0 = styles.find((s: any) => s.selector === "node[weight <= 1]");
+    expect(tier0?.style.width).toBe(48);
+
+    // Tier 1: 2-5 connections -> 64px
+    const tier1 = styles.find(
+      (s: any) => s.selector === "node[weight >= 2][weight <= 5]",
+    );
+    expect(tier1?.style.width).toBe(64);
+
+    // Tier 2: 6-10 connections -> 96px
+    const tier2 = styles.find(
+      (s: any) => s.selector === "node[weight >= 6][weight <= 10]",
+    );
+    expect(tier2?.style.width).toBe(96);
+
+    // Tier 3: 11+ connections -> 128px (Capped)
+    const tier3 = styles.find((s: any) => s.selector === "node[weight >= 11]");
+    expect(tier3?.style.width).toBe(128);
+
+    // Verify transitions
+    const baseNodeStyle = styles.find((s: any) => s.selector === "node");
+    expect(baseNodeStyle?.style["transition-property"]).toContain("width");
+    expect(baseNodeStyle?.style["transition-property"]).toContain("height");
   });
 });

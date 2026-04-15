@@ -142,7 +142,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "visual-graph",
     title: "Visual Graph",
     content:
-      "Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.",
+      "Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.",
     icon: "icon-[lucide--share-2]",
   },
   "front-page": {

@@ -33,11 +33,18 @@ jobs:
           SPECIFIC_RUN: ${{ inputs.staging_run_id }}
         run: |
           if [ -n "$SPECIFIC_RUN" ]; then
-            # Use the specified run
             RUN_ID="$SPECIFIC_RUN"
           else
-            # Find the latest successful deploy run on staging branch
-            RUN_ID=$(gh run list --workflow "Deploy to Cloudflare Pages" --branch staging --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+            # Find the latest successful deploy on the staging branch.
+            # Using --branch is more reliable than --commit on the tip SHA,
+            # since CI-only commits (no app change) may not have a deploy run.
+            RUN_ID=$(gh run list \
+              --workflow "Deploy to Cloudflare Pages" \
+              --branch staging \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')
           fi
 
           if [ -z "$RUN_ID" ]; then
@@ -45,18 +52,14 @@ jobs:
             exit 1
           fi
 
-          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
-
-          # Get the commit details
           COMMIT_SHA=$(gh run view "$RUN_ID" --json headSha --jq '.headSha')
-          COMMIT_MSG=$(gh run view "$RUN_ID" --json displayTitle --jq '.databaseId' | xargs -I {} gh run view {} --json displayTitle --jq '.displayTitle')
-          # Fix: Sometimes displayTitle is not directly available via run list or needs a fresh fetch
           COMMIT_MSG=$(gh run view "$RUN_ID" --json displayTitle --jq '.displayTitle')
 
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
           echo "commit_sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
           echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
-          echo "Promoting staging run #$RUN_ID ($COMMIT_SHA)"
+          echo "Promoting staging run #$RUN_ID ($COMMIT_SHA): $COMMIT_MSG"
 
   promote:
     needs: find-staging-build
@@ -67,6 +70,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v6
         with:
+          ref: ${{ needs.find-staging-build.outputs.commit_sha }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -86,7 +90,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica
+          command: pages deploy dist --project-name=codex-cryptica --branch=main
 
       - name: Notify Discord on Production Deploy
         if: success()

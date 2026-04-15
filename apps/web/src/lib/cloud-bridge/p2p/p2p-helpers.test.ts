@@ -53,6 +53,7 @@ describe("p2p helpers", () => {
           id: "entity-1",
           title: "Entity 1",
           image: "images/a.png",
+          lore: "Host-only notes",
           _fsHandle: "runtime",
         } as any,
       },

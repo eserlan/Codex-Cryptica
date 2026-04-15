@@ -9,6 +9,7 @@
     buildGuestRoutePath,
     normalizeGuestView,
   } from "$lib/utils/guest-session";
+  import { mergeGuestEntityUpdate } from "$lib/utils/guest-entity-merge";
   import { buildGuestPresencePayload } from "$lib/cloud-bridge/p2p/p2p-helpers";
   import { themeStore } from "$lib/stores/theme.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
@@ -114,13 +115,10 @@
           syncGuestGraphPayload(graph);
         },
         (updatedEntity) => {
-          vault.repository.entities[updatedEntity.id] = {
-            ...updatedEntity,
-            _path:
-              typeof updatedEntity._path === "string"
-                ? [updatedEntity._path]
-                : updatedEntity._path,
-          };
+          vault.repository.entities[updatedEntity.id] = mergeGuestEntityUpdate(
+            vault.repository.entities[updatedEntity.id],
+            updatedEntity,
+          );
         },
         (deletedId) => {
           delete vault.repository.entities[deletedId];

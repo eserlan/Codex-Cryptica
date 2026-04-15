@@ -9,6 +9,7 @@ import {
   deriveGuestPresenceStatus,
   normalizeGuestName,
   removeGuestFromRoster,
+  sanitizeEntityForGuestTransport,
   upsertGuestRoster,
 } from "./p2p-helpers";
 import { createPeer, type PeerFactory } from "./peer-factory";
@@ -703,9 +704,7 @@ export class P2PHostService {
   private broadcastEntityUpdate(entity: any) {
     if (this.connections.length === 0) return;
 
-    // Sanitize
-    const snap = $state.snapshot(entity);
-    const { _fsHandle, ...safeEntity } = snap;
+    const safeEntity = sanitizeEntityForGuestTransport($state.snapshot(entity));
 
     console.log("[P2P Host] Broadcasting update for:", safeEntity.title);
 
@@ -745,9 +744,7 @@ export class P2PHostService {
     const sanitizedUpdates: Record<string, any> = {};
     for (const [id, patch] of Object.entries(updates)) {
       const snap = $state.snapshot(patch);
-      // Remove runtime-only fields
-      const { _fsHandle, ...safePatch } = snap as any;
-      sanitizedUpdates[id] = safePatch;
+      sanitizedUpdates[id] = sanitizeEntityForGuestTransport(snap as Entity);
     }
 
     console.log(

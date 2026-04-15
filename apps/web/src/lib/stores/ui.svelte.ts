@@ -474,6 +474,14 @@ class UIStore {
     entityId: string,
     tab: "overview" | "inventory" | "map" = "overview",
   ) {
+    if (typeof window !== "undefined") {
+      void import("./vault.svelte").then(({ vault }) => {
+        const entity = vault.entities?.[entityId];
+        if (vault.isGuest && !entity?.content) {
+          void vault.loadEntityContent(entityId);
+        }
+      });
+    }
     this.zenModeEntityId = entityId;
     this.zenModeActiveTab = tab;
     this.showZenMode = true;

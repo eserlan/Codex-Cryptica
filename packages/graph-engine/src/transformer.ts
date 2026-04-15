@@ -38,6 +38,10 @@ export interface GraphEdge {
 
 export type GraphElement = GraphNode | GraphEdge;
 
+const incrementWeight = (weights: Map<string, number>, id: string) => {
+  weights.set(id, (weights.get(id) ?? 0) + 1);
+};
+
 const formatDate = (date?: TemporalMetadata) => {
   if (!date || date.year === undefined) return "";
   if (date.label) return date.label;
@@ -75,11 +79,30 @@ export class GraphTransformer {
 
     const elements: GraphElement[] = [];
     const count = entities.length;
+    const weights = new Map<string, number>();
 
     // Dynamically calculate spread based on entity count.
     // Larger vaults need more initial room.
     const spread = Math.max(2000, Math.sqrt(count) * 250);
     const halfSpread = spread / 2;
+
+    // Precompute rendered degree so node sizing matches the graph after
+    // connections to hidden or missing targets have been filtered out.
+    for (let i = 0; i < count; i++) {
+      const entity = entities[i];
+      if (!entity.id) continue;
+
+      const connections = entity.connections;
+      if (!connections) continue;
+
+      for (let j = 0; j < connections.length; j++) {
+        const conn = connections[j];
+        if (!validIds.has(conn.target)) continue;
+
+        incrementWeight(weights, entity.id);
+        incrementWeight(weights, conn.target);
+      }
+    }
 
     // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
     // Performance: Imperative loop to avoid iterator allocation on hot path.
@@ -126,7 +149,7 @@ export class GraphTransformer {
         id: entity.id,
         label: entity.title,
         type: entity.type,
-        weight: entity.connections?.length || 0,
+        weight: weights.get(entity.id) ?? 0,
         date: entity.date,
         start_date: entity.start_date,
         end_date: entity.end_date,
@@ -238,24 +261,41 @@ export const getGraphStyle = (
         "text-wrap": "wrap",
         opacity: 1,
         "text-opacity": 1,
-        "transition-property": "opacity, text-opacity",
+        "transition-property": "opacity, text-opacity, width, height",
         "transition-duration": 200,
+      },
+    },
+    {
+      selector: "node[weight <= 1]",
+      style: {
+        width: 48,
+        height: 48,
+      },
+    },
+    {
+      selector: "node[weight >= 2][weight <= 5]",
+      style: {
+        width: 64,
+        height: 64,
+      },
+    },
+    {
+      selector: "node[weight >= 6][weight <= 10]",
+      style: {
+        width: 96,
+        height: 96,
+      },
+    },
+    {
+      selector: "node[weight >= 11]",
+      style: {
+        width: 128,
+        height: 128,
       },
     },
   ];
 
   if (showImages) {
-    // PREDICTIVE SIZING: If a node HAS an image but it isn't resolved yet,
-    // give it a 64x64 placeholder size. This ensures the initial FCOSE layout
-    // leaves enough room for the image before it actually loads!
-    baseStyle.push({
-      selector: "node[image], node[thumbnail]",
-      style: {
-        width: 64,
-        height: 64,
-      },
-    });
-
     baseStyle.push({
       selector:
         "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
@@ -269,13 +309,7 @@ export const getGraphStyle = (
       },
     });
 
-    baseStyle.push({
-      selector: "node[resolvedImage][width][height]",
-      style: {
-        width: "data(width)",
-        height: "data(height)",
-      },
-    });
+    // Removed node[resolvedImage][width][height] override to ensure connectivity sizing is global
   }
 
   baseStyle.push(

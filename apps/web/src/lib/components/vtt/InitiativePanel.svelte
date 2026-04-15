@@ -185,6 +185,20 @@
               >
                 <span class="icon-[lucide--radar] w-3.5 h-3.5"></span>
               </button>
+              {#if token?.entityId && mapSession.canViewToken(entry.tokenId, mapSession.myPeerId, mapStore.isGMMode)}
+                <button
+                  class="shrink-0 text-theme-muted hover:text-theme-primary transition-colors active:scale-90"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    uiStore.openZenMode(token.entityId!);
+                  }}
+                  onmousedown={(e) => e.stopPropagation()}
+                  title="Look at {token.name}"
+                  type="button"
+                >
+                  <span class="icon-[lucide--book-open] w-3.5 h-3.5"></span>
+                </button>
+              {/if}
               <button
                 type="button"
                 class="min-w-0 text-left cursor-pointer"
