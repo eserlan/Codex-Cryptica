@@ -55,6 +55,7 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 - [x] T007 [US1] Add list and label view toggle controls to the explorer header in `apps/web/src/lib/components/explorer/EntityList.svelte`
 - [x] T008 [US1] Refactor repeated entity row rendering into reusable snippets in `apps/web/src/lib/components/explorer/EntityList.svelte`
 - [x] T009 [US1] Render label section headers and an explicit unlabeled fallback section in `apps/web/src/lib/components/explorer/EntityList.svelte`
+- [x] T010 [US1] Let users collapse and expand label sections in `apps/web/src/lib/components/explorer/EntityList.svelte`
 
 **Checkpoint**: Label view is functional and independently testable
 
@@ -68,21 +69,40 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 
 ### Implementation for User Story 2
 
-- [x] T010 [US2] Load the saved explorer view preference from `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
-- [x] T011 [US2] Persist explorer view changes back to `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
+- [x] T011 [US2] Load the saved explorer view preference from `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
+- [x] T012 [US2] Persist explorer view changes back to `localStorage` in `apps/web/src/lib/stores/ui.svelte.ts`
 
 **Checkpoint**: View preference survives page reloads
 
 ---
 
-## Phase 5: Polish & Cross-Cutting Concerns
+## Phase 5: User Story 3 - Remember Collapsed Label Sections (Priority: P2)
+
+**Goal**: Restore collapsed label groups for the active vault after reload so users can keep the explorer focused on the labels they care about.
+
+**Independent Test**: Collapse a label section, reload the app, and confirm the same section remains collapsed in the same vault.
+
+### Tests for User Story 3
+
+- [x] T013 [P] [US3] Add coverage for label-group collapse persistence in `apps/web/src/lib/components/explorer/EntityList.test.ts` and `apps/web/src/lib/stores/ui.svelte.test.ts`
+
+### Implementation for User Story 3
+
+- [x] T014 [US3] Add persisted per-vault collapsed label state in `apps/web/src/lib/stores/ui.svelte.ts`
+- [x] T015 [US3] Render collapsible label section headers in `apps/web/src/lib/components/explorer/EntityList.svelte`
+
+**Checkpoint**: Collapsed label sections survive reloads and remain scoped to the active vault
+
+---
+
+## Phase 6: Polish & Cross-Cutting Concerns
 
 **Purpose**: Validate grouped layouts against the existing explorer experience
 
-- [x] T012 [P] Verify grouped views continue to honor search and category filtering in `apps/web/src/lib/components/explorer/EntityList.svelte`
-- [x] T013 [P] Verify grouped views preserve entity selection and drag-start behavior in `apps/web/src/lib/components/explorer/EntityList.svelte`
-- [x] T014 Validate grouped explorer controls across default and fantasy themes in `apps/web/src/lib/components/explorer/EntityList.svelte`
-- [x] T015 Run feature-level validation using `specs/084-label-grouped-explorer/quickstart.md`
+- [x] T016 [P] Verify grouped views continue to honor search and category filtering in `apps/web/src/lib/components/explorer/EntityList.svelte`
+- [x] T017 [P] Verify grouped views preserve entity selection and drag-start behavior in `apps/web/src/lib/components/explorer/EntityList.svelte`
+- [x] T018 Validate grouped explorer controls across default and fantasy themes in `apps/web/src/lib/components/explorer/EntityList.svelte`
+- [x] T019 Run feature-level validation using `specs/084-label-grouped-explorer/quickstart.md`
 
 ---
 
@@ -94,7 +114,8 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 - **Foundational (Phase 2)**: Depends on Setup completion and blocks grouped explorer work
 - **User Story 1 (Phase 3)**: Depends on persisted explorer mode state from Phase 2
 - **User Story 2 (Phase 4)**: Depends on the foundational explorer state from Phase 2
-- **Polish (Phase 5)**: Depends on all desired grouped views being complete
+- **User Story 3 (Phase 5)**: Depends on the grouped explorer rendering from Phase 3
+- **Polish (Phase 6)**: Depends on all desired grouped views being complete
 
 ### Parallel Opportunities
 
@@ -113,5 +134,5 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 ### Incremental Delivery
 
 1. Persist the explorer view mode.
-2. Ship label grouping as the primary requested capability.
+2. Ship label grouping and collapsible sections as the primary requested capability.
 3. Validate persistence, filtering, theme, and interaction behavior.

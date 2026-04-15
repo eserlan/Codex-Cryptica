@@ -5,19 +5,19 @@
 
 ## Summary
 
-Add label grouping as an alternate explorer layout on top of the existing flat list. Preserve the current explorer selection flow and persist the chosen view mode in local storage.
+Add label grouping as an alternate explorer layout on top of the existing flat list. Preserve the current explorer selection flow, let users collapse label sections, and persist both the chosen view mode and collapsed-group state in local storage.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 6.0.2, Svelte 5.55.2  
 **Primary Dependencies**: SvelteKit web app, Lucide Svelte, workspace `schema` types  
-**Storage**: Existing vault entity state in memory plus browser `localStorage` for the explorer view preference  
+**Storage**: Existing vault entity state in memory plus browser `localStorage` for the explorer view preference and per-vault collapsed label sections  
 **Testing**: Vitest unit tests plus manual explorer verification  
 **Target Platform**: Web application on desktop and mobile browsers  
 **Project Type**: Monorepo web application  
 **Performance Goals**: Explorer mode switches should feel immediate for normal vault browsing with no noticeable delay compared with the existing flat list  
 **Constraints**: Preserve search/category filtering, keep behavior client-side, and avoid introducing a new explorer subsystem for a UI-only enhancement  
-**Scale/Scope**: Sidebar explorer rendering, explorer UI state, and validation for label grouping behavior
+**Scale/Scope**: Sidebar explorer rendering, explorer UI state, and validation for label grouping and per-vault collapse behavior
 
 ## Constitution Check
 
@@ -53,6 +53,7 @@ specs/084-label-grouped-explorer/
 ```text
 apps/web/src/lib/components/explorer/
 ├── EntityList.svelte
+├── EntityList.test.ts
 └── EntityListGrouping.test.ts
 
 apps/web/src/lib/stores/
@@ -67,6 +68,6 @@ apps/web/src/lib/config/
 ## Generated Artifacts
 
 - **research.md**: Documents the grouping strategy, store choice, and fallback behavior decisions.
-- **data-model.md**: Defines the user-facing preference and grouping concepts introduced by this enhancement.
-- **quickstart.md**: Provides manual validation steps for list and label explorer modes.
+- **data-model.md**: Defines the user-facing preference, grouping, and collapsed-section concepts introduced by this enhancement.
+- **quickstart.md**: Provides manual validation steps for list mode, label mode, and collapsed label persistence.
 - **checklists/requirements.md**: Captures the retroactive quality check for the finalized specification.

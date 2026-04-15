@@ -42,7 +42,7 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-import { uiStore } from "./ui.svelte";
+import { UIStore, uiStore } from "./ui.svelte";
 import { vault } from "./vault.svelte";
 
 const mockedVault = vault as any;
@@ -50,11 +50,15 @@ const mockedVault = vault as any;
 describe("UIStore", () => {
   beforeEach(() => {
     // Reset state before each test
+    localStorage.removeItem("codex_explorer_view_mode");
+    localStorage.removeItem("codex_explorer_collapsed_label_groups");
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
     uiStore.skipWelcomeScreen = false;
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedWorldPage = false;
+    uiStore.explorerViewMode = "list";
+    uiStore.explorerCollapsedLabelGroups = {};
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
     mockedVault.isGuest = false;
@@ -259,6 +263,38 @@ describe("UIStore", () => {
     );
 
     setItemSpy.mockRestore();
+  });
+
+  it("should persist collapsed explorer label groups per vault", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.toggleExplorerLabelGroup("vault-1", "Quest");
+
+    expect(uiStore.getCollapsedLabelGroups("vault-1")).toEqual(
+      new Set(["Quest"]),
+    );
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_explorer_collapsed_label_groups",
+      JSON.stringify({ "vault-1": ["Quest"] }),
+    );
+
+    uiStore.toggleExplorerLabelGroup("vault-1", "Quest");
+    expect(uiStore.getCollapsedLabelGroups("vault-1")).toEqual(new Set());
+
+    setItemSpy.mockRestore();
+  });
+
+  it("should restore collapsed explorer label groups from localStorage", () => {
+    localStorage.setItem(
+      "codex_explorer_collapsed_label_groups",
+      JSON.stringify({ "vault-1": ["Quest", "NPC"] }),
+    );
+
+    const store = new UIStore();
+
+    expect(store.getCollapsedLabelGroups("vault-1")).toEqual(
+      new Set(["NPC", "Quest"]),
+    );
   });
 
   it("should handle Zen Mode operations", () => {

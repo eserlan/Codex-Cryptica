@@ -5,7 +5,14 @@
   import { getIconClass } from "$lib/utils/icon";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
   import type { Entity } from "schema";
-  import { Search, LayoutGrid, List, Tag } from "lucide-svelte";
+  import {
+    ChevronDown,
+    ChevronRight,
+    Search,
+    LayoutGrid,
+    List,
+    Tag,
+  } from "lucide-svelte";
 
   let {
     onSelect,
@@ -19,8 +26,12 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
+  const activeVaultId = $derived(vault.activeVaultId);
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
+  const collapsedLabelGroups = $derived.by(() =>
+    uiStore.getCollapsedLabelGroups(activeVaultId),
+  );
 
   // ⚡ Bolt Optimization: Return the Map directly to avoid intermediate array allocations,
   // mapping, and sorting. This also turns an O(N) .find into an O(1) Map .get lookup in the loop.
@@ -253,10 +264,31 @@
       {/each}
     {:else if viewMode === "label" && groupedEntities?.type === "label"}
       {#each groupedEntities.sortedKeys as label}
-        {@render sectionHeader(label)}
-        {#each groupedEntities.groups.get(label)! as entity (`${entity.id}:${label}`)}
-          {@render entityItem(entity)}
-        {/each}
+        {@const labelEntities = groupedEntities.groups.get(label) ?? []}
+        {@const isCollapsed = collapsedLabelGroups.has(label)}
+        <button
+          type="button"
+          onclick={() => uiStore.toggleExplorerLabelGroup(activeVaultId, label)}
+          aria-expanded={!isCollapsed}
+          class="mt-4 first:mt-0 flex w-full items-center justify-between rounded-lg border border-theme-border/30 px-2 py-1.5 text-left text-[10px] font-bold uppercase tracking-[0.2em] text-theme-muted transition-all hover:border-theme-primary/40 hover:bg-theme-primary/5 hover:text-theme-text focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20"
+        >
+          <span class="flex items-center gap-1.5">
+            {#if isCollapsed}
+              <ChevronRight class="h-3 w-3" />
+            {:else}
+              <ChevronDown class="h-3 w-3" />
+            {/if}
+            <span>{label}</span>
+          </span>
+          <span class="text-[9px] text-theme-muted/80"
+            >{labelEntities.length}</span
+          >
+        </button>
+        {#if !isCollapsed}
+          {#each labelEntities as entity (`${entity.id}:${label}`)}
+            {@render entityItem(entity)}
+          {/each}
+        {/if}
       {/each}
       {#if groupedEntities.unlabeled && groupedEntities.unlabeled.length > 0}
         {@render sectionHeader("Unlabeled")}
