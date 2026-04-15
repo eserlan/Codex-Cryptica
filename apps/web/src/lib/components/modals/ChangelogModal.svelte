@@ -64,10 +64,10 @@
         </div>
         <button
           onclick={close}
-          class="text-theme-muted hover:text-theme-primary transition-colors focus:outline-none focus:ring-2 focus:ring-theme-primary focus:ring-offset-2 focus:ring-offset-theme-bg rounded"
+          class="text-theme-muted hover:text-theme-primary transition-colors"
           aria-label="Close"
         >
-          <span class="icon-[lucide--x] w-5 h-5 md:w-6 md:h-6"></span>
+          <span class="icon-[lucide--x] w-6 h-6"></span>
         </button>
       </div>
 
