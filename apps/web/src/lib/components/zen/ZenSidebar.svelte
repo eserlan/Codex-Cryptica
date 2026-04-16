@@ -176,7 +176,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.liteMode && entity}
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity}
           <button
             onclick={() => oracle.drawEntity(entity.id)}
             disabled={oracle.isLoading}

@@ -49,7 +49,7 @@ Auto-generated from all feature plans. Last updated: 2026-04-15
 - N/A (Static files) (055-prerender-marketing)
 
 - TypeScript 5.x, Node.js 20+ + Svelte 5, `@google/generative-ai` (054-lite-no-ai)
-- LocalStorage (for persistent setting `liteMode`) (054-lite-no-ai)
+- LocalStorage (for persistent setting `aiDisabled`) (054-lite-no-ai)
 
 - IndexedDB (Metadata), OPFS (Files), LocalStorage (UI State/Last Reminded) (052-sync-reminder)
 

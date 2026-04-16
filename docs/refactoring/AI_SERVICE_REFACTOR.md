@@ -30,8 +30,8 @@ The `apps/web/src/lib/services/ai.ts` file is currently a "God File" (~820 lines
 5. **Prompt Engineering**:
    - Massive hardcoded template literal strings defining system instructions and task constraints embedded directly inside method bodies.
 
-6. **Lite Mode Gating**:
-   - Every public method individually checks `if (uiStore.liteMode)`. This pattern is duplicated ~6 times across the class.
+6. **AI Disabled Gating**:
+   - Every public method individually checks `if (uiStore.aiDisabled)`. This pattern is duplicated ~6 times across the class.
 
 ---
 
@@ -119,13 +119,12 @@ Split into four distinct services (note: one more than the original plan):
 
 #### 4. `AICapabilityGuard` (`ai/capability-guard.ts`)
 
-- **Responsibility**: Centralize `liteMode` enforcement so it isn't duplicated across all services.
+- **Responsibility**: Centralize `aiDisabled` enforcement so it isn't duplicated across all services.
 - **Pattern**: Wrap service methods or provide a guard utility that each service calls once at the top of public methods.
 
 ```typescript
-export function assertAIEnabled(uiStore: { liteMode: boolean }) {
-  if (uiStore.liteMode)
-    throw new Error("AI features are disabled in Lite Mode.");
+export function assertAIEnabled(uiStore: { aiDisabled: boolean }) {
+  if (uiStore.aiDisabled) throw new Error("AI features are disabled.");
 }
 ```
 

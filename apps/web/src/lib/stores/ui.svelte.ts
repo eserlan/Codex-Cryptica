@@ -25,7 +25,7 @@ export class UIStore {
   skipWelcomeScreen = $state(false);
   dismissedLandingPage = $state(false);
   dismissedWorldPage = $state(false);
-  liteMode = $state(false);
+  aiDisabled = $state(false);
   showDiceModal = $state(false);
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
@@ -69,9 +69,17 @@ export class UIStore {
         this.skipWelcomeScreen = saved === "true";
       }
 
-      const lite = localStorage.getItem("codex_lite_mode");
-      if (lite !== null) {
-        this.liteMode = lite === "true";
+      const aiDisabled = localStorage.getItem("codex_ai_disabled");
+      if (aiDisabled !== null) {
+        this.aiDisabled = aiDisabled === "true";
+      } else {
+        // Migration from old lite_mode key
+        const lite = localStorage.getItem("codex_lite_mode");
+        if (lite !== null) {
+          this.aiDisabled = lite === "true";
+          localStorage.setItem("codex_ai_disabled", lite);
+          localStorage.removeItem("codex_lite_mode");
+        }
       }
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
@@ -237,10 +245,10 @@ export class UIStore {
     localStorage.setItem("codex_skip_landing", String(skip));
   }
 
-  toggleLiteMode(enabled: boolean) {
-    this.liteMode = enabled;
+  toggleAiDisabled(enabled: boolean) {
+    this.aiDisabled = enabled;
     if (typeof window !== "undefined") {
-      localStorage.setItem("codex_lite_mode", String(enabled));
+      localStorage.setItem("codex_ai_disabled", String(enabled));
     }
   }
 

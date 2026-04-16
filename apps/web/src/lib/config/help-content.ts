@@ -243,11 +243,11 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
-  "lite-mode": {
-    id: "lite-mode",
-    title: "Lite Mode (No AI)",
+  "ai-disabled": {
+    id: "ai-disabled",
+    title: "AI Disabled",
     content:
-      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
+      "Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI-powered features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
     icon: "icon-[lucide--zap-off]",
   },
   "seo-prerendering": {

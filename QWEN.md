@@ -217,7 +217,7 @@ When working with AI coding assistants:
 The application builds as a **static site** deployed to GitHub Pages. The Oracle AI uses:
 
 - **User API Key**: Stored in IndexedDB (secure, local)
-- **Lite Mode**: Shared key (public, rate-limited) - must be restricted via Google Cloud Console referrer policy
+- **Shared Key**: public, rate-limited access to Lite tier (restricted via Referrer Policy)
 
 ## Important Directories
 

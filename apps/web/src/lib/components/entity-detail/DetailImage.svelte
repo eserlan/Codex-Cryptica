@@ -193,7 +193,7 @@
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.liteMode}
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled}
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
