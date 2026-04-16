@@ -138,8 +138,8 @@ describe("front-page-prompts", () => {
         "Desc",
         "Context",
       );
-      expect(result).toContain("atmospheric intro paragraph");
-      expect(result).toContain("3 to 5 markdown bullet points");
+      expect(result).toContain("exactly three paragraphs of evocative prose");
+      expect(result).toContain("Do not use bullet points");
       expect(result).toContain("Do not mention that you are an AI");
     });
   });
