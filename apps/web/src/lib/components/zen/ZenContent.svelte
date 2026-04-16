@@ -132,7 +132,7 @@
         {#if entity?.start_date}
           <div class="flex flex-col">
             <span
-              class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
             >
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
@@ -144,7 +144,7 @@
         {#if entity?.end_date}
           <div class="flex flex-col">
             <span
-              class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
             >
               {getTemporalLabel(entity?.type || "", "end")}
             </span>

@@ -238,7 +238,7 @@
                 ></span>
                 <div class="flex-1 min-w-0">
                   <div
-                    class="text-[11px] text-theme-muted uppercase font-header"
+                    class="text-xs text-theme-muted uppercase tracking-widest font-header"
                   >
                     {conn.label}
                   </div>
