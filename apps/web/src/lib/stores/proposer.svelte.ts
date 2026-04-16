@@ -94,7 +94,7 @@ class ProposerStore {
   }
 
   async analyzeCurrentEntity() {
-    if (uiStore.liteMode) return;
+    if (uiStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
 
@@ -139,7 +139,7 @@ class ProposerStore {
         }
       }
 
-      // Use the lite model for background tasks to save cost/latency
+      // Use the basic model for background tasks to save cost/latency
       const modelName = TIER_MODES["lite"];
 
       const newProposals = await proposerBridge.analyzeEntity(

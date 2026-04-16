@@ -328,11 +328,11 @@ describe("UIStore", () => {
     expect(uiStore.bulkLabelDialog.open).toBe(false);
   });
 
-  it("should toggle lite mode and save to localStorage", () => {
+  it("should toggle AI disabled and save to localStorage", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
-    uiStore.toggleLiteMode(true);
-    expect(uiStore.liteMode).toBe(true);
-    expect(setItemSpy).toHaveBeenCalledWith("codex_lite_mode", "true");
+    uiStore.toggleAiDisabled(true);
+    expect(uiStore.aiDisabled).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_ai_disabled", "true");
   });
 
   it("should toggle welcome screen preference", () => {
@@ -428,5 +428,16 @@ describe("UIStore", () => {
       "codex_vtt_entity_list_collapsed",
       "true",
     );
+  });
+
+  it("should migrate codex_lite_mode to codex_ai_disabled on initialization", () => {
+    localStorage.setItem("codex_lite_mode", "true");
+    localStorage.removeItem("codex_ai_disabled");
+
+    const store = new UIStore();
+
+    expect(store.aiDisabled).toBe(true);
+    expect(localStorage.getItem("codex_ai_disabled")).toBe("true");
+    expect(localStorage.getItem("codex_lite_mode")).toBe(null);
   });
 });

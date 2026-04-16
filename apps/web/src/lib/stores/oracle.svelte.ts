@@ -133,10 +133,16 @@ export class OracleStore {
   async ask(query: string) {
     if (!query.trim()) return;
 
-    // Allow proceeding if we have an API key OR if we are NOT in lite mode (proxy mode)
-    // Roll commands are always allowed.
-    const isRoll = query.toLowerCase().trim().startsWith("/roll");
-    if (!this.effectiveApiKey && this.uiStore.liteMode && !isRoll) {
+    // Allow utility commands to function even if AI is disabled.
+    // The executor will handle informing the user if they try to use an AI intent while disabled.
+    const q = query.toLowerCase().trim();
+    const isUtility =
+      q.startsWith("/") &&
+      ["/help", "/clear", "/roll", "/create", "/connect", "/merge"].some(
+        (cmd) => q.startsWith(cmd),
+      );
+
+    if (!this.effectiveApiKey && this.uiStore.aiDisabled && !isUtility) {
       return;
     }
 
@@ -145,7 +151,7 @@ export class OracleStore {
       const { searchService } = await import("../services/search");
       const { nodeMergeService } =
         await import("../services/node-merge.service");
-      const intent = OracleCommandParser.parse(query, this.uiStore.liteMode);
+      const intent = OracleCommandParser.parse(query, this.uiStore.aiDisabled);
 
       await this.executor.execute(
         intent,
@@ -191,7 +197,7 @@ export class OracleStore {
   }
 
   async drawEntity(entityId: string) {
-    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+    if ((!this.effectiveApiKey && this.uiStore.aiDisabled) || this.isLoading)
       return;
     this.settings.setLoading(true);
     try {
@@ -202,7 +208,7 @@ export class OracleStore {
   }
 
   async drawMessage(messageId: string) {
-    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+    if ((!this.effectiveApiKey && this.uiStore.aiDisabled) || this.isLoading)
       return;
     this.settings.setLoading(true);
     try {

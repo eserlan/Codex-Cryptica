@@ -55,8 +55,8 @@ For Advanced Tier users: Instantly generate visuals for your lore. Look for the 
 ### Demo Mode
 Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
 
-### Lite Mode (No AI)
-Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
+### AI Disabled
+Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
 
 ### SEO Prerendering
 Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.

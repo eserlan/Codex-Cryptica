@@ -278,7 +278,7 @@
                 <div>
                   <label
                     class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
-                    for="lite-mode-toggle">Lite Mode (No AI)</label
+                    for="ai-disabled-toggle">AI Disabled</label
                   >
                   <p class="text-[11px] text-theme-muted">
                     Disable all AI-powered features (Oracle chat, image
@@ -286,17 +286,17 @@
                   </p>
                 </div>
                 <input
-                  id="lite-mode-toggle"
+                  id="ai-disabled-toggle"
                   type="checkbox"
-                  checked={uiStore.liteMode}
+                  checked={uiStore.aiDisabled}
                   onchange={(e) =>
-                    uiStore.toggleLiteMode(e.currentTarget.checked)}
+                    uiStore.toggleAiDisabled(e.currentTarget.checked)}
                   class="w-4 h-4 accent-theme-primary cursor-pointer"
                 />
               </div>
 
               <div
-                class="transition-all duration-300 {uiStore.liteMode
+                class="transition-all duration-300 {uiStore.aiDisabled
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >

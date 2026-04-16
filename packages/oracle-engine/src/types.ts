@@ -94,7 +94,7 @@ export interface UndoableAction {
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
-  liteMode?: boolean;
+  aiDisabled?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
   modelName: string;
