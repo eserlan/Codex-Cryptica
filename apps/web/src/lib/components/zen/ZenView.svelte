@@ -149,8 +149,8 @@
     }
   };
 
-  // Handle keyboard shortcuts locally within the view
-  const handleKeydown = (e: KeyboardEvent) => {
+  // Handle keyboard shortcuts
+  const handleKeydown = async (e: KeyboardEvent) => {
     if (showLightbox) {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -167,6 +167,13 @@
     )
       return;
 
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      await actions.handleClose(onClose);
+      return;
+    }
+
     if (!isEditing) {
       const scroller =
         window.innerWidth < 768 ? mobileScroller : scrollContainer;
@@ -181,11 +188,17 @@
       }
     }
   };
+
+  const ariaRole = $derived(uiStore.showZenMode ? "dialog" : "region");
+  const ariaModal = $derived(uiStore.showZenMode ? "true" : undefined);
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-  role="dialog"
-  aria-modal="true"
+  role={ariaRole}
+  aria-modal={ariaModal}
   aria-labelledby="entity-modal-title"
   tabindex="-1"
   class="zen-view w-full h-full bg-theme-bg flex flex-col overflow-hidden relative border-theme-border border-solid {className}"
@@ -194,7 +207,6 @@
   style:--local-radius="var(--theme-border-radius)"
   style:--local-width="var(--theme-border-width)"
   style="background-image: var(--bg-texture-overlay)"
-  onkeydown={handleKeydown}
 >
   {#if entity}
     <!-- Decorative Corners (Visible in desktop/modal mode via CSS) -->
