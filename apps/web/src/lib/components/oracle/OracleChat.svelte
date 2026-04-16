@@ -238,7 +238,7 @@
             <div class="flex flex-col items-center gap-1">
               <span
                 class="text-[9px] text-theme-muted uppercase tracking-widest font-bold font-header"
-                >Current Tier</span
+                >Model Tier</span
               >
               <span
                 class="text-xs px-2 py-0.5 rounded border font-bold uppercase font-header tracking-wider shadow-sm
@@ -260,7 +260,7 @@
                 <span
                   class="text-xs px-2 py-0.5 rounded border border-theme-primary/30 bg-theme-primary/10 text-theme-primary uppercase tracking-wider font-bold font-header"
                 >
-                  LITE
+                  SHARED
                 </span>
               </div>
             {/if}
