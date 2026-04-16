@@ -880,6 +880,29 @@ describe("MapSessionStore", () => {
     vi.useRealTimers();
   });
 
+  it("emits token add requests for guests without creating local tokens", () => {
+    const broadcaster = vi.fn();
+    store.setBroadcaster(broadcaster);
+
+    const created = store.requestTokenAdd({
+      name: "Guest Token",
+      entityId: "entity-1",
+      x: 73,
+      y: 126,
+    });
+
+    expect(created).toBe(true);
+    expect(Object.keys(store.tokens)).toHaveLength(0);
+    expect(broadcaster).toHaveBeenCalledWith({
+      type: "TOKEN_ADD_REQUEST",
+      name: "Guest Token",
+      entityId: "entity-1",
+      x: 50,
+      y: 150,
+      color: expect.any(String),
+    });
+  });
+
   it("triggers local pings and emits messages", () => {
     const emitSpy = vi.spyOn(store as any, "emit");
     store.ping(150, 250);

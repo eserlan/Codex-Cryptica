@@ -7,6 +7,7 @@ import {
 } from "$lib/services/vtt-session";
 import type {
   ChatMessagePayload,
+  DragPreview,
   EncounterSession,
   EncounterSnapshotSummary,
   InitiativeEntry,
@@ -21,7 +22,7 @@ import type {
   VTTMessage,
 } from "../../types/vtt";
 import type { Point } from "schema";
-import { snapToGrid } from "$lib/utils/vtt-helpers";
+import { snapToGrid, clampPointToBounds } from "$lib/utils/vtt-helpers";
 import { uiStore } from "./ui.svelte";
 import { diceEngine, type RollResult } from "dice-engine";
 
@@ -111,6 +112,7 @@ export class MapSessionStore {
   chatMessages = $state<ChatMessagePayload[]>([]);
   myPeerId = $state<string | null>(null);
   draggingTokenId = $state<string | null>(null);
+  dragPreview = $state<DragPreview | null>(null);
 
   // Grid settings
   gridUnit = $state("ft");
@@ -948,6 +950,11 @@ export class MapSessionStore {
         height: tokenSize.height,
       };
 
+    let targetX = point.x;
+    let targetY = point.y;
+    let targetWidth = tokenSize.width;
+    let targetHeight = tokenSize.height;
+
     if (this.deps.mapStore.showGrid) {
       const gridSize = this.deps.mapStore.gridSize;
       const offsetX = this.deps.mapStore.gridOffsetX;
@@ -955,28 +962,30 @@ export class MapSessionStore {
 
       // Snap position to grid lines
       const snapped = snapToGrid(point, gridSize, offsetX, offsetY);
+      targetX = snapped.x;
+      targetY = snapped.y;
 
       // Snap size to nearest grid cell multiple
-      const snappedWidth = gridSize
+      targetWidth = gridSize
         ? Math.max(gridSize, Math.round(tokenSize.width / gridSize) * gridSize)
         : tokenSize.width;
-      const snappedHeight = gridSize
+      targetHeight = gridSize
         ? Math.max(gridSize, Math.round(tokenSize.height / gridSize) * gridSize)
         : tokenSize.height;
-
-      return {
-        x: snapped.x,
-        y: snapped.y,
-        width: snappedWidth,
-        height: snappedHeight,
-      };
     }
 
+    // Always clamp to map bounds to prevent invisible placements
+    const clamped = clampPointToBounds(
+      { x: targetX, y: targetY },
+      activeMap.dimensions,
+      { width: targetWidth, height: targetHeight },
+    );
+
     return {
-      x: point.x,
-      y: point.y,
-      width: tokenSize.width,
-      height: tokenSize.height,
+      x: clamped.x,
+      y: clamped.y,
+      width: targetWidth,
+      height: targetHeight,
     };
   }
 
@@ -1011,6 +1020,26 @@ export class MapSessionStore {
       this.persistDraft();
     }
     return positioned;
+  }
+
+  requestTokenAdd(input: TokenCreationInput) {
+    if (!this.mapId || !this.broadcaster) return false;
+    const token = this.getTokenDefaults(input);
+    const snapped = this.clampAndSnapPosition(
+      { x: token.x, y: token.y },
+      { width: token.width, height: token.height },
+    );
+
+    this.broadcaster({
+      type: "TOKEN_ADD_REQUEST",
+      name: token.name,
+      entityId: token.entityId,
+      x: snapped.x,
+      y: snapped.y,
+      color: token.color,
+    });
+
+    return true;
   }
 
   updateToken(tokenId: string, updates: TokenStateUpdateInput, silent = false) {
@@ -1726,6 +1755,14 @@ export class MapSessionStore {
     const token = this.tokens[tokenId];
     if (!token) return;
     this.ping(token.x + token.width / 2, token.y + token.height / 2);
+  }
+
+  setDragPreview(preview: DragPreview | null) {
+    this.dragPreview = preview;
+  }
+
+  clearDragPreview() {
+    this.dragPreview = null;
   }
 
   getSnapshotSummary() {

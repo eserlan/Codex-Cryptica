@@ -271,6 +271,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.",
     icon: "icon-[lucide--swords]",
   },
+  "vtt-entity-list": {
+    id: "vtt-entity-list",
+    title: "VTT Entity List",
+    content:
+      "Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.",
+    icon: "icon-[lucide--panel-right]",
+  },
   "spatial-canvas": {
     id: "spatial-canvas",
     title: "Spatial Canvas",

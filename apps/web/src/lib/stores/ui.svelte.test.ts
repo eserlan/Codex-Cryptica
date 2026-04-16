@@ -52,6 +52,9 @@ describe("UIStore", () => {
     // Reset state before each test
     localStorage.removeItem("codex_explorer_view_mode");
     localStorage.removeItem("codex_explorer_collapsed_label_groups");
+    localStorage.removeItem("codex_vtt_sidebar_collapsed");
+    localStorage.removeItem("codex_vtt_entity_list_collapsed");
+
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
     uiStore.skipWelcomeScreen = false;
@@ -61,6 +64,8 @@ describe("UIStore", () => {
     uiStore.explorerCollapsedLabelGroups = {};
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
+    uiStore.vttSidebarCollapsed = false;
+    uiStore.vttEntityListCollapsed = false;
     mockedVault.isGuest = false;
     mockedVault.entities = {};
     mockedVault.loadEntityContent.mockClear();
@@ -395,5 +400,33 @@ describe("UIStore", () => {
     expect(uiStore.leftSidebarOpen).toBe(true);
     expect(uiStore.activeSidebarTool).toBe("explorer");
     expect(uiStore.focusedEntityId).toBe("hero-456");
+  });
+
+  it("should load persisted VTT sidebar state from localStorage", () => {
+    localStorage.setItem("codex_vtt_sidebar_collapsed", "true");
+    localStorage.setItem("codex_vtt_entity_list_collapsed", "true");
+
+    const store = new UIStore();
+
+    expect(store.vttSidebarCollapsed).toBe(true);
+    expect(store.vttEntityListCollapsed).toBe(true);
+  });
+
+  it("should persist VTT sidebar toggles", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+    uiStore.toggleVttSidebar(true);
+    uiStore.toggleVttEntityList(true);
+
+    expect(uiStore.vttSidebarCollapsed).toBe(true);
+    expect(uiStore.vttEntityListCollapsed).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_vtt_sidebar_collapsed",
+      "true",
+    );
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_vtt_entity_list_collapsed",
+      "true",
+    );
   });
 });

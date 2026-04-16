@@ -17,10 +17,16 @@
   let {
     onSelect,
     onDragStart,
+    onDragEnd,
+    onOpenZen,
+    allowedTypes = null,
     class: className = "",
   }: {
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
+    onDragEnd?: () => void;
+    onOpenZen?: (entity: Entity) => void;
+    allowedTypes?: string[] | null;
     class?: string;
   } = $props();
 
@@ -29,6 +35,14 @@
   const activeVaultId = $derived(vault.activeVaultId);
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
+  const allowedTypeSet = $derived.by(() =>
+    allowedTypes ? new Set(allowedTypes) : null,
+  );
+  const visibleCategories = $derived.by(() =>
+    categories.list.filter(
+      (cat) => !allowedTypeSet || allowedTypeSet.has(cat.id),
+    ),
+  );
   const collapsedLabelGroups = $derived.by(() =>
     uiStore.getCollapsedLabelGroups(activeVaultId),
   );
@@ -40,6 +54,9 @@
     const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
       const type = allEntities[i].type;
+      if (allowedTypeSet && !allowedTypeSet.has(type)) {
+        continue;
+      }
       counts.set(type, (counts.get(type) || 0) + 1);
     }
     return counts;
@@ -51,19 +68,15 @@
     const query = searchQuery.trim().toLowerCase();
     const filterAll = typeFilters.size === 0;
 
-    if (!query) {
-      for (let i = 0; i < allEntities.length; i++) {
-        const e = allEntities[i];
-        if (filterAll || typeFilters.has(e.type)) {
-          filtered.push(e);
-        }
-      }
-      return filtered.sort((a, b) => a.title.localeCompare(b.title));
-    }
-
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
+
+      if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
+        continue;
+      }
+
       const matchesSearch =
+        !query ||
         e.title.toLowerCase().includes(query) ||
         e.content.toLowerCase().includes(query);
       const matchesType = filterAll || typeFilters.has(e.type);
@@ -81,6 +94,10 @@
   });
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
+    if (allowedTypeSet && !allowedTypeSet.has(type)) {
+      return;
+    }
+
     const isMulti = event.ctrlKey || event.metaKey;
 
     if (type === "all") {
@@ -110,6 +127,19 @@
       ? "rounded-lg border border-theme-primary bg-theme-primary text-theme-bg shadow-sm transition-all hover:border-theme-secondary hover:bg-theme-secondary"
       : "rounded-lg border border-theme-border bg-theme-bg/50 text-theme-muted transition-all hover:bg-theme-bg hover:text-theme-text";
   }
+
+  $effect(() => {
+    if (!allowedTypeSet || typeFilters.size === 0) {
+      return;
+    }
+
+    const nextFilters = new Set(
+      Array.from(typeFilters).filter((type) => allowedTypeSet.has(type)),
+    );
+    if (nextFilters.size !== typeFilters.size) {
+      typeFilters = nextFilters;
+    }
+  });
 </script>
 
 <div class="flex flex-col h-full min-h-0 {className}">
@@ -142,7 +172,7 @@
         <LayoutGrid class="w-3.5 h-3.5" />
       </button>
 
-      {#each categories.list as cat (cat.id)}
+      {#each visibleCategories as cat (cat.id)}
         {@const count = typeCounts.get(cat.id) || 0}
         {#if count > 0 || typeFilters.has(cat.id)}
           <button
@@ -200,25 +230,28 @@
   </div>
 
   <div
-    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
     {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
-      <button
-        type="button"
-        draggable={!!onDragStart}
-        ondragstart={(e) => onDragStart?.(e, entity.id)}
-        onclick={() => onSelect?.(entity)}
-        data-testid="entity-list-item"
-        data-entity-id={entity.id}
-        title={`Select ${entity.title}`}
-        class="group w-full rounded-xl border p-2.5 text-left transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 {entity.id ===
+      <div
+        class="group relative flex items-stretch rounded-xl border transition-all {entity.id ===
         focusedEntityId
           ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
           : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+        data-testid="entity-list-item"
+        data-entity-id={entity.id}
       >
-        <div class="flex items-center gap-2">
+        <button
+          type="button"
+          draggable={!!onDragStart}
+          ondragstart={(e) => onDragStart?.(e, entity.id)}
+          ondragend={() => onDragEnd?.()}
+          onclick={() => onSelect?.(entity)}
+          title={`Select ${entity.title}`}
+          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-xl"
+        >
           <span
             class="{getIconClass(
               cat?.icon,
@@ -242,8 +275,19 @@
               {/each}
             </div>
           {/if}
-        </div>
-      </button>
+        </button>
+        {#if onOpenZen}
+          <button
+            type="button"
+            onclick={() => onOpenZen(entity)}
+            title="Open in Zen Mode"
+            aria-label="Open {entity.title} in Zen Mode"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100"
+          >
+            <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
+      </div>
     {/snippet}
 
     {#snippet sectionHeader(title: string)}
