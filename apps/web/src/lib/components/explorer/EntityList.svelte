@@ -18,12 +18,14 @@
     onSelect,
     onDragStart,
     onDragEnd,
+    onOpenZen,
     allowedTypes = null,
     class: className = "",
   }: {
     onSelect?: (entity: Entity) => void;
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
+    onOpenZen?: (entity: Entity) => void;
     allowedTypes?: string[] | null;
     class?: string;
   } = $props();
@@ -228,26 +230,28 @@
   </div>
 
   <div
-    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar overscroll-contain"
+    class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
     {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
-      <button
-        type="button"
-        draggable={!!onDragStart}
-        ondragstart={(e) => onDragStart?.(e, entity.id)}
-        ondragend={() => onDragEnd?.()}
-        onclick={() => onSelect?.(entity)}
-        data-testid="entity-list-item"
-        data-entity-id={entity.id}
-        title={`Select ${entity.title}`}
-        class="group w-full rounded-xl border p-2.5 text-left transition-all focus:border-theme-accent focus:outline-none focus:ring-2 focus:ring-theme-accent/20 {entity.id ===
+      <div
+        class="group relative flex items-stretch rounded-xl border transition-all {entity.id ===
         focusedEntityId
           ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
           : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
+        data-testid="entity-list-item"
+        data-entity-id={entity.id}
       >
-        <div class="flex items-center gap-2">
+        <button
+          type="button"
+          draggable={!!onDragStart}
+          ondragstart={(e) => onDragStart?.(e, entity.id)}
+          ondragend={() => onDragEnd?.()}
+          onclick={() => onSelect?.(entity)}
+          title={`Select ${entity.title}`}
+          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-xl"
+        >
           <span
             class="{getIconClass(
               cat?.icon,
@@ -271,8 +275,19 @@
               {/each}
             </div>
           {/if}
-        </div>
-      </button>
+        </button>
+        {#if onOpenZen}
+          <button
+            type="button"
+            onclick={() => onOpenZen(entity)}
+            title="Open in Zen Mode"
+            aria-label="Open {entity.title} in Zen Mode"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100"
+          >
+            <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
+      </div>
     {/snippet}
 
     {#snippet sectionHeader(title: string)}

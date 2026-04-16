@@ -109,15 +109,7 @@
       const entity = vault.entities[entityId];
       const activeMap = mapStore.activeMap;
 
-      if (
-        entity &&
-        VTT_ENTITY_TYPES.includes(entity.type) &&
-        activeMap &&
-        mapCoords.x >= 0 &&
-        mapCoords.y >= 0 &&
-        mapCoords.x <= activeMap.dimensions.width &&
-        mapCoords.y <= activeMap.dimensions.height
-      ) {
+      if (entity && VTT_ENTITY_TYPES.includes(entity.type) && activeMap) {
         const tokenInput = {
           name: entity.title,
           entityId: entity.id,
@@ -207,6 +199,7 @@
             ? 'w-12'
             : 'w-[22rem] max-w-[calc(100vw-3rem)]'}"
           aria-label="VTT Sidebar"
+          onwheel={(e) => e.stopPropagation()}
         >
           {#if uiStore.vttSidebarCollapsed}
             <div
@@ -283,61 +276,63 @@
                   <InitiativePanel />
                 {/if}
 
-                <section
-                  class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
-                  data-testid="vtt-entity-list-section"
-                >
-                  <button
-                    type="button"
-                    class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
-                    onclick={() =>
-                      uiStore.toggleVttEntityList(
-                        !uiStore.vttEntityListCollapsed,
-                      )}
-                    aria-expanded={!uiStore.vttEntityListCollapsed}
-                    aria-controls="vtt-entity-list"
+                {#if !uiStore.isGuestMode}
+                  <section
+                    class="rounded-xl border border-theme-primary/20 bg-theme-bg/50"
+                    data-testid="vtt-entity-list-section"
                   >
-                    <div>
-                      <div
-                        class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
-                      >
-                        Vault Entities
-                      </div>
-                      <div class="text-xs text-theme-muted">
-                        Drag characters, creatures, and items onto the map.
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <span
-                        class="rounded-full border border-theme-border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
-                      >
-                        {vttEntityCount}
-                      </span>
-                      <span
-                        class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {uiStore.vttEntityListCollapsed
-                          ? '-rotate-90'
-                          : ''}"
-                      ></span>
-                    </div>
-                  </button>
-
-                  {#if !uiStore.vttEntityListCollapsed}
-                    <div
-                      id="vtt-entity-list"
-                      class="border-t border-theme-primary/20"
-                      role="presentation"
-                      onmousedown={(event) => event.stopPropagation()}
+                    <button
+                      type="button"
+                      class="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+                      onclick={() =>
+                        uiStore.toggleVttEntityList(
+                          !uiStore.vttEntityListCollapsed,
+                        )}
+                      aria-expanded={!uiStore.vttEntityListCollapsed}
+                      aria-controls="vtt-entity-list"
                     >
-                      <EntityList
-                        class="h-[22rem]"
-                        allowedTypes={VTT_ENTITY_TYPES}
-                        onSelect={handleEntitySelect}
-                        onDragStart={handleEntityDragStart}
-                        onDragEnd={handleEntityDragEnd}
-                      />
-                    </div>
-                  {/if}
-                </section>
+                      <div>
+                        <div
+                          class="text-[9px] font-black uppercase tracking-[0.35em] text-theme-primary/70 font-header"
+                        >
+                          Vault Entities
+                        </div>
+                        <div class="text-xs text-theme-muted">
+                          Drag characters, creatures, and items onto the map.
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span
+                          class="rounded-full border border-theme-border px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-muted"
+                        >
+                          {vttEntityCount}
+                        </span>
+                        <span
+                          class="icon-[lucide--chevron-down] h-4 w-4 text-theme-muted transition-transform {uiStore.vttEntityListCollapsed
+                            ? '-rotate-90'
+                            : ''}"
+                        ></span>
+                      </div>
+                    </button>
+
+                    {#if !uiStore.vttEntityListCollapsed}
+                      <div
+                        id="vtt-entity-list"
+                        class="border-t border-theme-primary/20 flex flex-col max-h-[50vh]"
+                        role="presentation"
+                        onmousedown={(event) => event.stopPropagation()}
+                      >
+                        <EntityList
+                          allowedTypes={VTT_ENTITY_TYPES}
+                          onSelect={handleEntitySelect}
+                          onDragStart={handleEntityDragStart}
+                          onDragEnd={handleEntityDragEnd}
+                          onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+                        />
+                      </div>
+                    {/if}
+                  </section>
+                {/if}
 
                 <TokenDetail />
 

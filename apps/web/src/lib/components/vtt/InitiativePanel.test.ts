@@ -100,7 +100,7 @@ describe("InitiativePanel", () => {
   it("pings a combatant on double click", async () => {
     render(InitiativePanel);
 
-    await fireEvent.dblClick(screen.getByRole("listitem"));
+    await fireEvent.dblClick(screen.getByTestId("initiative-row"));
 
     expect(mapSessionMock.pingToken).toHaveBeenCalledWith("token-abc123");
   });
