@@ -128,8 +128,16 @@
             disabled={isSaving || isGenerating}
             title="Generate briefing"
             aria-label="Generate briefing"
+            aria-busy={isGenerating}
           >
-            <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+            {#if isGenerating}
+              <span
+                class="icon-[lucide--loader-2] h-4 w-4 animate-spin"
+                aria-hidden="true"
+              ></span>
+            {:else}
+              <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+            {/if}
           </button>
         </div>
       </div>

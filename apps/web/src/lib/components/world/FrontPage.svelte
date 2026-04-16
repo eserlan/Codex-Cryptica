@@ -325,6 +325,11 @@
             ></span>
             Front Page
           </div>
+          <h1
+            class="font-header text-4xl font-black tracking-tight text-theme-text sm:text-5xl xl:text-6xl uppercase"
+          >
+            {_worldName}
+          </h1>
         </div>
 
         {#if coverImage}
