@@ -1,5 +1,17 @@
 [
   {
+    "version": "0.18.0",
+    "title": "The Tactical Explorer Update",
+    "date": "2026-04-16",
+    "type": "minor",
+    "highlights": [
+      "Label-Grouped Explorer: Organize your vault by labels with collapsible sections and persisted view preferences.",
+      "VTT Entity List: Access your entire vault directly from the VTT sidebar to streamline encounter management.",
+      "Token Drag-and-Drop: Seamlessly place tokens on tactical maps by dragging entities from the sidebar.",
+      "Zen Popout Refinements: Enhanced reliability and error handling for detached entity view windows."
+    ]
+  },
+  {
     "version": "0.17.0",
     "title": "The Playable Tabletop Update",
     "date": "2026-04-14",

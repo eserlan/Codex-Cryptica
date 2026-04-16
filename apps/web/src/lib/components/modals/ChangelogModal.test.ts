@@ -10,6 +10,7 @@ vi.mock("svelte", async () => {
 
 import ChangelogModal from "./ChangelogModal.svelte";
 import { uiStore } from "$lib/stores/ui.svelte";
+import { VERSION } from "$lib/config";
 
 describe("ChangelogModal", () => {
   beforeEach(() => {
@@ -54,7 +55,7 @@ describe("ChangelogModal", () => {
     await fireEvent.click(closeButton);
     expect(uiStore.showChangelog).toBe(false);
     expect(window.localStorage.getItem("codex_last_seen_version")).toBe(
-      "0.17.37",
+      VERSION,
     );
 
     unmount();
