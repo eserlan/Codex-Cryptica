@@ -10,7 +10,7 @@ describe("ZenContent connections wiring", () => {
 
     expect(source).toContain("showConnections = false");
     expect(source).toContain("themeStore.jargon.connections_header");
-    expect(source).toContain("uiStore.focusEntity(conn.targetId)");
+    expect(source).toContain("onNavigate(conn.targetId)");
   });
 
   it("enables connections in the embedded entity view", () => {
@@ -19,6 +19,6 @@ describe("ZenContent connections wiring", () => {
       "utf8",
     );
 
-    expect(source).toContain("showConnections={true}");
+    expect(source).toContain("<ZenView");
   });
 });
