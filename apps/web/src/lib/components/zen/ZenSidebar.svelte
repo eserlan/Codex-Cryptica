@@ -3,6 +3,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
+  import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
   let {
@@ -92,13 +93,24 @@
   data-testid="zen-sidebar"
 >
   <!-- Labels -->
-  {#if entity?.labels && entity?.labels?.length > 0}
-    <div class="flex flex-wrap gap-1.5 mb-6">
-      {#each entity?.labels ?? [] as label}
-        <LabelBadge {label} />
-      {/each}
-    </div>
-  {/if}
+  <div class="mb-6 space-y-2">
+    {#if entity?.labels && entity?.labels?.length > 0}
+      <div class="flex flex-wrap gap-1.5">
+        {#each entity?.labels ?? [] as label}
+          <LabelBadge
+            {label}
+            removable={!vault.isGuest}
+            onRemove={async () =>
+              entity && (await vault.removeLabel(entity.id, label))}
+          />
+        {/each}
+      </div>
+    {/if}
+
+    {#if entity && !vault.isGuest}
+      <LabelInput entityId={entity.id} />
+    {/if}
+  </div>
 
   <!-- Image -->
   <div class="mb-6">
