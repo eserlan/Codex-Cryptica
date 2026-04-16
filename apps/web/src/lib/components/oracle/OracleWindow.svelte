@@ -48,7 +48,7 @@
 {#if oracle.isOpen}
   <!-- Backdrop (always on mobile, only on modal mode for desktop) -->
   <div
-    class="fixed inset-0 bg-black/40 z-40 {oracle.isModal
+    class="fixed inset-0 bg-black/40 z-[89] {oracle.isModal
       ? 'block'
       : 'md:hidden'}"
     onclick={() => oracle.toggle()}
@@ -57,10 +57,10 @@
   ></div>
 
   <div
-    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-50 flex flex-col bg-theme-surface border border-theme-border shadow-2xl
+    class="oracle-window-container fixed transition-all duration-500 ease-in-out z-[90] flex flex-col bg-theme-surface border border-theme-border shadow-2xl
     {oracle.isModal
       ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-full max-h-[85vh] md:w-[800px] md:max-h-[70vh] rounded-xl'
-      : 'bottom-0 left-0 w-full h-full rounded-t-xl'}"
+      : 'bottom-0 left-0 w-full h-[100dvh] rounded-t-xl'}"
     transition:fly={{ y: 50, duration: 300 }}
     role={oracle.isModal ? "dialog" : "region"}
     aria-modal={oracle.isModal ? "true" : undefined}
