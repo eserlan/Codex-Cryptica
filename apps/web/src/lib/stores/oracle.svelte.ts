@@ -133,10 +133,16 @@ export class OracleStore {
   async ask(query: string) {
     if (!query.trim()) return;
 
-    // Allow proceeding if we have an API key OR if AI is NOT disabled (proxy mode)
-    // Roll commands are always allowed.
-    const isRoll = query.toLowerCase().trim().startsWith("/roll");
-    if (!this.effectiveApiKey && this.uiStore.aiDisabled && !isRoll) {
+    // Allow utility commands to function even if AI is disabled.
+    // The executor will handle informing the user if they try to use an AI intent while disabled.
+    const q = query.toLowerCase().trim();
+    const isUtility =
+      q.startsWith("/") &&
+      ["/help", "/clear", "/roll", "/create", "/connect", "/merge"].some(
+        (cmd) => q.startsWith(cmd),
+      );
+
+    if (!this.effectiveApiKey && this.uiStore.aiDisabled && !isUtility) {
       return;
     }
 

@@ -429,4 +429,15 @@ describe("UIStore", () => {
       "true",
     );
   });
+
+  it("should migrate codex_lite_mode to codex_ai_disabled on initialization", () => {
+    localStorage.setItem("codex_lite_mode", "true");
+    localStorage.removeItem("codex_ai_disabled");
+
+    const store = new UIStore();
+
+    expect(store.aiDisabled).toBe(true);
+    expect(localStorage.getItem("codex_ai_disabled")).toBe("true");
+    expect(localStorage.getItem("codex_lite_mode")).toBe(null);
+  });
 });

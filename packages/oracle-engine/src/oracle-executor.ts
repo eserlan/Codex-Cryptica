@@ -79,11 +79,12 @@ export class OracleActionExecutor {
   }
 
   private async executeHelp(context: OracleExecutionContext) {
-    const isLite = context.uiStore.aiDisabled;
+    const isAIDisabled = context.uiStore.aiDisabled;
+
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "system",
-      content: isLite
+      content: isAIDisabled
         ? `### Restricted Mode Active
 AI features are disabled. The Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
