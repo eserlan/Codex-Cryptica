@@ -230,14 +230,12 @@
   </div>
 
   <div
-    role="list"
     class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar"
     style="touch-action: pan-y;"
   >
     {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
       <div
-        role="listitem"
         class="group relative flex items-stretch rounded-xl border transition-all {entity.id ===
         focusedEntityId
           ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'

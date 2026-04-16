@@ -155,13 +155,12 @@
 
   <div
     class="mt-3 flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-1"
-    role="list"
   >
     {#each entries as entry, index (entry.tokenId)}
       {@const token = mapSession.tokens[entry.tokenId]}
-      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_static_element_interactions -->
       <div
-        role="listitem"
+        data-testid="initiative-row"
         draggable="true"
         onmousedown={(e) => e.stopPropagation()}
         ondragstart={() => (draggedIndex = index)}

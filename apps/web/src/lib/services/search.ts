@@ -8,6 +8,8 @@ import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
 const INDEX_BATCH_SIZE = 50;
+const SEARCH_INIT_TIMEOUT_MS = 2000;
+const SEARCH_INIT_POLL_MS = 100;
 
 export class SearchService {
   private worker: Worker | null = null;
@@ -285,9 +287,17 @@ export class SearchService {
 
     // Wait for worker to be ready
     let retries = 0;
-    while (!this.isInitialized && retries < 20) {
-      await new Promise((r) => setTimeout(r, 100));
+    const maxRetries = SEARCH_INIT_TIMEOUT_MS / SEARCH_INIT_POLL_MS;
+    while (!this.isInitialized && retries < maxRetries) {
+      await new Promise((r) => setTimeout(r, SEARCH_INIT_POLL_MS));
       retries++;
+    }
+
+    if (!this.isInitialized) {
+      debugStore.warn(
+        `[SearchService] Search worker initialization timed out after ${SEARCH_INIT_TIMEOUT_MS}ms.`,
+      );
+      return false;
     }
 
     this.activeVaultId = vaultId;

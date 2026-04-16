@@ -22,7 +22,7 @@ import type {
   VTTMessage,
 } from "../../types/vtt";
 import type { Point } from "schema";
-import { snapToGrid } from "$lib/utils/vtt-helpers";
+import { snapToGrid, clampPointToBounds } from "$lib/utils/vtt-helpers";
 import { uiStore } from "./ui.svelte";
 import { diceEngine, type RollResult } from "dice-engine";
 
@@ -950,6 +950,11 @@ export class MapSessionStore {
         height: tokenSize.height,
       };
 
+    let targetX = point.x;
+    let targetY = point.y;
+    let targetWidth = tokenSize.width;
+    let targetHeight = tokenSize.height;
+
     if (this.deps.mapStore.showGrid) {
       const gridSize = this.deps.mapStore.gridSize;
       const offsetX = this.deps.mapStore.gridOffsetX;
@@ -957,28 +962,30 @@ export class MapSessionStore {
 
       // Snap position to grid lines
       const snapped = snapToGrid(point, gridSize, offsetX, offsetY);
+      targetX = snapped.x;
+      targetY = snapped.y;
 
       // Snap size to nearest grid cell multiple
-      const snappedWidth = gridSize
+      targetWidth = gridSize
         ? Math.max(gridSize, Math.round(tokenSize.width / gridSize) * gridSize)
         : tokenSize.width;
-      const snappedHeight = gridSize
+      targetHeight = gridSize
         ? Math.max(gridSize, Math.round(tokenSize.height / gridSize) * gridSize)
         : tokenSize.height;
-
-      return {
-        x: snapped.x,
-        y: snapped.y,
-        width: snappedWidth,
-        height: snappedHeight,
-      };
     }
 
+    // Always clamp to map bounds to prevent invisible placements
+    const clamped = clampPointToBounds(
+      { x: targetX, y: targetY },
+      activeMap.dimensions,
+      { width: targetWidth, height: targetHeight },
+    );
+
     return {
-      x: point.x,
-      y: point.y,
-      width: tokenSize.width,
-      height: tokenSize.height,
+      x: clamped.x,
+      y: clamped.y,
+      width: targetWidth,
+      height: targetHeight,
     };
   }
 
