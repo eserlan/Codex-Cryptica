@@ -133,10 +133,10 @@ export class OracleStore {
   async ask(query: string) {
     if (!query.trim()) return;
 
-    // Allow proceeding if we have an API key OR if we are NOT in lite mode (proxy mode)
+    // Allow proceeding if we have an API key OR if AI is NOT disabled (proxy mode)
     // Roll commands are always allowed.
     const isRoll = query.toLowerCase().trim().startsWith("/roll");
-    if (!this.effectiveApiKey && this.uiStore.liteMode && !isRoll) {
+    if (!this.effectiveApiKey && this.uiStore.aiDisabled && !isRoll) {
       return;
     }
 
@@ -145,7 +145,7 @@ export class OracleStore {
       const { searchService } = await import("../services/search");
       const { nodeMergeService } =
         await import("../services/node-merge.service");
-      const intent = OracleCommandParser.parse(query, this.uiStore.liteMode);
+      const intent = OracleCommandParser.parse(query, this.uiStore.aiDisabled);
 
       await this.executor.execute(
         intent,
@@ -191,7 +191,7 @@ export class OracleStore {
   }
 
   async drawEntity(entityId: string) {
-    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+    if ((!this.effectiveApiKey && this.uiStore.aiDisabled) || this.isLoading)
       return;
     this.settings.setLoading(true);
     try {
@@ -202,7 +202,7 @@ export class OracleStore {
   }
 
   async drawMessage(messageId: string) {
-    if ((!this.effectiveApiKey && this.uiStore.liteMode) || this.isLoading)
+    if ((!this.effectiveApiKey && this.uiStore.aiDisabled) || this.isLoading)
       return;
     this.settings.setLoading(true);
     try {

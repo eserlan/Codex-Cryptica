@@ -328,11 +328,11 @@ describe("UIStore", () => {
     expect(uiStore.bulkLabelDialog.open).toBe(false);
   });
 
-  it("should toggle lite mode and save to localStorage", () => {
+  it("should toggle AI disabled and save to localStorage", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
-    uiStore.toggleLiteMode(true);
-    expect(uiStore.liteMode).toBe(true);
-    expect(setItemSpy).toHaveBeenCalledWith("codex_lite_mode", "true");
+    uiStore.toggleAiDisabled(true);
+    expect(uiStore.aiDisabled).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_ai_disabled", "true");
   });
 
   it("should toggle welcome screen preference", () => {

@@ -79,13 +79,13 @@ export class OracleActionExecutor {
   }
 
   private async executeHelp(context: OracleExecutionContext) {
-    const isLite = context.uiStore.liteMode;
+    const isLite = context.uiStore.aiDisabled;
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "system",
       content: isLite
         ? `### Restricted Mode Active
-In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
+AI features are disabled. The Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
 **Available Commands:**
 - \`/roll [formula]\`: Roll dice (e.g. \`/roll 2d20kh1 + 5\`).
@@ -414,12 +414,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   private async executePlot(subject: string, context: OracleExecutionContext) {
-    if (context.uiStore.liteMode) {
+    if (context.uiStore.aiDisabled) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
         content:
-          "❌ The /plot command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.",
+          "❌ The /plot command is powered by AI and is disabled. Enable AI in settings to use story tension analysis.",
       });
       return;
     }
@@ -532,7 +532,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         id: crypto.randomUUID(),
         role: "system",
         content:
-          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type /help for a list of available commands.",
+          "AI features are disabled. Only utility slash commands are supported. Type /help for a list of available commands.",
       });
       return;
     }

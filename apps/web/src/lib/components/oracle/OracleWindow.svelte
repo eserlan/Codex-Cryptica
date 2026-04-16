@@ -80,7 +80,7 @@
           class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
-        {#if uiStore.liteMode}
+        {#if uiStore.aiDisabled}
           <span
             class="text-[8px] font-header bg-theme-primary/20 text-theme-primary px-1.5 py-0.5 rounded border border-theme-primary/30"
             >LITE</span

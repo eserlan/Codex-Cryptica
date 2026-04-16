@@ -29,7 +29,7 @@ describe("OracleActionExecutor - Detailed", () => {
         setMessages: vi.fn(),
         messages: [],
       },
-      uiStore: { liteMode: false },
+      uiStore: { aiDisabled: false },
       vault: {
         isGuest: false,
         createEntity: vi.fn().mockResolvedValue("new-id"),
@@ -176,8 +176,8 @@ describe("OracleActionExecutor - Detailed", () => {
       );
     });
 
-    it("should show restricted help in lite mode", async () => {
-      mockContext.uiStore.liteMode = true;
+    it("should show restricted help when AI is disabled", async () => {
+      mockContext.uiStore.aiDisabled = true;
       await executor.execute({ type: "help" }, mockContext);
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -330,12 +330,12 @@ describe("OracleActionExecutor - Detailed", () => {
       ).toHaveBeenCalled();
     });
 
-    it("should disable plot in lite mode", async () => {
-      mockContext.uiStore.liteMode = true;
+    it("should disable plot when AI is disabled", async () => {
+      mockContext.uiStore.aiDisabled = true;
       await executor.execute({ type: "plot", query: "Hero" }, mockContext);
       expect(mockContext.chatHistory.addMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          content: expect.stringContaining("disabled in Lite Mode"),
+          content: expect.stringContaining("is powered by AI and is disabled"),
         }),
       );
     });
