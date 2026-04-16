@@ -168,17 +168,25 @@
     const isHost = mapStore.isGMMode;
     const peerId = mapSession.myPeerId;
     const selected = mapSession.selectedTokens;
+    const tokens = Object.values(mapSession.tokens);
+    const result = [];
 
-    return Object.values(mapSession.tokens)
-      .filter((token) => mapSession.canViewToken(token.id, peerId, isHost))
-      .map((token) => ({
-        ...token,
-        label: token.name,
-        image: tokenImageCache[token.id] ?? null,
-        selected: mapSession.selection === token.id || selected.has(token.id),
-        active: mapSession.activeTokenId === token.id,
-        visible: true,
-      }));
+    // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
+    // to avoid intermediate array allocations and reduce GC pressure.
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      if (mapSession.canViewToken(token.id, peerId, isHost)) {
+        result.push({
+          ...token,
+          label: token.name,
+          image: tokenImageCache[token.id] ?? null,
+          selected: mapSession.selection === token.id || selected.has(token.id),
+          active: mapSession.activeTokenId === token.id,
+          visible: true,
+        });
+      }
+    }
+    return result;
   });
   const vttDragPreview = $derived.by(() => {
     const preview = mapSession.dragPreview;
