@@ -111,7 +111,7 @@
           {/if}
         </div>
         <div
-          class="absolute right-3 top-3 z-20 flex flex-wrap justify-end gap-1"
+          class="absolute right-3 top-3 z-20 flex flex-wrap items-center justify-end gap-1.5"
         >
           <button
             class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/80 bg-theme-bg/75 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
@@ -123,13 +123,23 @@
             <span class="icon-[lucide--pencil] h-4 w-4"></span>
           </button>
           <button
-            class="group inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors hover:bg-theme-primary/15 disabled:opacity-50"
+            class={`group inline-flex h-8 items-center justify-center rounded-full border border-theme-primary/30 bg-theme-bg/75 text-theme-primary backdrop-blur-sm transition-colors disabled:opacity-60 ${isGenerating ? "gap-1.5 px-3 hover:bg-theme-bg/75" : "w-8 hover:bg-theme-primary/15"}`}
             onclick={onGenerate}
             disabled={isSaving || isGenerating}
-            title="Generate briefing"
-            aria-label="Generate briefing"
+            title={isGenerating ? "Generating briefing" : "Generate briefing"}
+            aria-label={isGenerating
+              ? "Generating briefing"
+              : "Generate briefing"}
           >
-            <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+            {#if isGenerating}
+              <span class="icon-[lucide--loader-2] h-3.5 w-3.5 animate-spin"
+              ></span>
+              <span class="text-[9px] font-bold uppercase tracking-[0.18em]"
+                >Generating</span
+              >
+            {:else}
+              <span class="icon-[lucide--sparkles] h-4 w-4"></span>
+            {/if}
           </button>
         </div>
       </div>

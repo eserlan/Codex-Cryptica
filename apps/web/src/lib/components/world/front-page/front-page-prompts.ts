@@ -46,24 +46,30 @@ export function createWorldBriefingPrompt(
   const safeContext =
     retrievedWorldContext.trim() || "No additional context was retrieved.";
 
-  return `Write a high-level briefing for "${safeName}".
+  return `Write a high-level world briefing for "${safeName}".
 
 Theme:
 - Name: ${themeName}
 - Description: ${themeDescription}
 
-Requirements:
-- Start with 1 short atmospheric intro paragraph.
-- Follow with 3 to 5 markdown bullet points using bold labels such as **The Setting:**, **Current Conflict:**, **Key Players:**, or **Immediate Hook:** when they fit the world.
-- Clearly explain the setting, mood, and immediate premise.
-- Use specific details from the world instead of generic language.
-- Keep it readable, welcoming, and easy to scan.
-- Keep each bullet to one compact sentence.
-- Avoid headings and meta commentary.
-- Do not mention that you are an AI.
-
-Retrieved context:
+Retrieved world context:
 ${safeContext}
 
-Match the briefing to the theme atmosphere and visual identity, and focus on what a player or GM needs to know at a glance.`;
+Requirements:
+- Write exactly 3 prose paragraphs.
+- Do not use bullet points.
+- Do not use headings or markdown labels.
+- Each paragraph should be 3 to 5 sentences.
+- Paragraph 1 should establish the setting, atmosphere, physical world, and daily texture of life.
+- Paragraph 2 should explain the power structure, political order, factions, and social hierarchy.
+- Paragraph 3 should explain the current disruption, major conflict, or immediate pressure shaping the world right now.
+- Use specific details from the context, not generic genre language.
+- Make it vivid, compressed, and readable at a glance.
+- Match the tone and visual identity of the theme.
+- Avoid meta commentary, AI self-reference, and "here is the summary"-style framing.
+
+Style target:
+- Write like the opening page of a campaign guide or prestige sourcebook.
+- Favor strong nouns, concrete imagery, and confident world-specific phrasing.
+- Keep the prose cohesive and cinematic rather than list-like.`;
 }

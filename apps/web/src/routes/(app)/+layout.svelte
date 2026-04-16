@@ -22,6 +22,7 @@
   import { demoService } from "$lib/services/demo";
   import { HELP_ARTICLES } from "$lib/config/help-content";
   import releases from "$lib/content/changelog/releases.json";
+  import { VERSION } from "$lib/config";
   import { THEMES, isEntityVisible } from "schema";
 
   // Components & Providers
@@ -196,7 +197,8 @@
         if (
           vault.allEntities.length === 0 &&
           !uiStore.isDemoMode &&
-          !isTesting
+          !isTesting &&
+          !uiStore.dismissedLandingPage
         ) {
           demoService.startDemo("fantasy");
         } else {
@@ -208,20 +210,25 @@
 
   // Automatic Release Note Trigger
   $effect(() => {
-    if (browser && !uiStore.showChangelog && !uiStore.isDemoMode) {
+    if (
+      browser &&
+      !uiStore.showChangelog &&
+      !uiStore.isDemoMode &&
+      !uiStore.isLandingPageVisible
+    ) {
       const lastSeenStr = uiStore.lastSeenVersion;
 
-      const hasUnseenMinorRelease = (() => {
-        if (!lastSeenStr) return true;
-        const currentStoredMinor = parseInt(
-          lastSeenStr.split(".")[1] || "0",
-          10,
-        );
-        return releases.some((r) => {
-          const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
-          return releaseMinor > currentStoredMinor;
-        });
-      })();
+      // First-time user: no changelog popup, silently mark latest known release as seen
+      if (!lastSeenStr) {
+        uiStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
+        return;
+      }
+
+      const currentStoredMinor = parseInt(lastSeenStr.split(".")[1] || "0", 10);
+      const hasUnseenMinorRelease = releases.some((r) => {
+        const releaseMinor = parseInt(r.version.split(".")[1] || "0", 10);
+        return releaseMinor > currentStoredMinor;
+      });
 
       if (hasUnseenMinorRelease) {
         // Delay to not conflict with tour/demo triggers

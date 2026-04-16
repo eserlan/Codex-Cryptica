@@ -138,9 +138,11 @@ describe("front-page-prompts", () => {
         "Desc",
         "Context",
       );
-      expect(result).toContain("atmospheric intro paragraph");
-      expect(result).toContain("3 to 5 markdown bullet points");
-      expect(result).toContain("Do not mention that you are an AI");
+      expect(result).toContain("Write exactly 3 prose paragraphs");
+      expect(result).toContain("Do not use bullet points");
+      expect(result).toContain(
+        "opening page of a campaign guide or prestige sourcebook",
+      );
     });
   });
 });

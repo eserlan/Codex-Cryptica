@@ -354,9 +354,7 @@
                   <button
                     class="w-8 h-8 flex flex-shrink-0 items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-muted transition hover:text-theme-primary"
                     onclick={() => {
-                      console.log("[MapPage] VTT share requested");
                       showVttShare = true;
-                      console.log("[MapPage] showVttShare set", showVttShare);
                     }}
                     type="button"
                     title="Share Campaign"

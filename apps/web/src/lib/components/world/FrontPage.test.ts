@@ -746,10 +746,12 @@ describe("FrontPage", () => {
       ),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining('Write a high-level briefing for "Moonfall".'),
+      expect.stringContaining(
+        'Write a high-level world briefing for "Moonfall".',
+      ),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining("Current Conflict"),
+      expect.stringContaining("Write exactly 3 prose paragraphs"),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("Sky-market politics and drone wars."),

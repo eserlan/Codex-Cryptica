@@ -314,46 +314,49 @@
     <div
       class="relative z-10 flex min-h-[inherit] flex-col gap-6 md:gap-8 xl:gap-10"
     >
-      <header
-        class="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"
+      <div
+        class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 sm:flex-nowrap sm:items-center"
       >
-        <div class="w-full space-y-4 xl:pr-56">
-          <div
-            class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] backdrop-blur-sm"
-          >
-            <span class="w-2 h-2 rounded-full bg-theme-primary animate-pulse"
-            ></span>
-            Front Page
-          </div>
+        <div
+          class="inline-flex w-fit items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_10%,transparent)] backdrop-blur-sm"
+        >
+          <span class="h-2 w-2 rounded-full bg-theme-primary animate-pulse"
+          ></span>
+          Front Page
         </div>
 
-        {#if coverImage}
-          <FrontPageHero
-            {coverImageUrl}
-            {coverImage}
-            {showCoverEditor}
-            showPanel={false}
-            isSaving={worldStore.isSaving}
-            {onClose}
-            onOpenCoverEditor={openCoverEditor}
-            onCloseCoverEditor={closeCoverEditor}
-            onOpenLightbox={openCoverLightbox}
-            onUploadCover={handleUploadCover}
-            onGenerateCover={handleGenerateCover}
-          />
-        {:else if onClose}
-          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
+        <div class="flex items-center gap-2 self-start sm:self-center">
+          {#if coverImage}
             <button
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              class="inline-flex h-8 items-center rounded-full border border-theme-primary/30 bg-theme-surface/45 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-theme-primary transition-colors hover:bg-theme-primary/10 hover:border-theme-primary/50 disabled:opacity-50"
+              onclick={openCoverEditor}
+              disabled={worldStore.isSaving}
+            >
+              Change Image
+            </button>
+          {/if}
+          {#if coverImageUrl}
+            <button
+              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/70 bg-theme-bg/45 text-theme-muted/85 backdrop-blur-sm transition-colors hover:border-theme-primary/35 hover:text-theme-primary"
+              onclick={openCoverLightbox}
+              aria-label="Open cover image lightbox"
+              title="Open cover image"
+            >
+              <span class="icon-[lucide--maximize-2] h-3.5 w-3.5"></span>
+            </button>
+          {/if}
+          {#if onClose}
+            <button
+              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-theme-border/70 bg-theme-bg/45 text-theme-muted/85 backdrop-blur-sm transition-colors hover:border-theme-primary/35 hover:text-theme-primary"
               onclick={onClose}
               aria-label="Close front page"
               title="Close front page"
             >
-              <span class="icon-[lucide--x] h-4 w-4"></span>
+              <span class="icon-[lucide--x] h-3.5 w-3.5"></span>
             </button>
-          </div>
-        {/if}
-      </header>
+          {/if}
+        </div>
+      </div>
 
       <ZenImageLightbox
         bind:show={showCoverLightbox}
