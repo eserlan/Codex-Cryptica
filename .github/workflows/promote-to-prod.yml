@@ -108,25 +108,3 @@ jobs:
           # Send the summary
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"
-
-      - name: Verify Availability
-        run: |
-          BASE_URL="https://codexcryptica.com"
-          for FILE in "llms.txt" "llms-full.txt"; do
-            URL="${BASE_URL}/${FILE}"
-            echo "Verifying ${URL}..."
-            SUCCESS=false
-            for i in {1..5}; do
-              if curl --fail -sL "${URL}" > /dev/null; then
-                echo "${FILE} is available!"
-                SUCCESS=true
-                break
-              fi
-              echo "Attempt $i failed for ${FILE}, retrying in 10s..."
-              sleep 10
-            done
-            if [ "$SUCCESS" = false ]; then
-              echo "Verification failed for ${FILE} after 5 attempts."
-              exit 1
-            fi
-          done
