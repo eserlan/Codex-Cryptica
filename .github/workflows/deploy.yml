@@ -183,3 +183,33 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./scripts/discord-deploy.sh "staging" "$DISCORD_WEBHOOK_URL" "https://staging.codexcryptica.com/"
+
+      - name: Verify Availability
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            BASE_URL="https://codexcryptica.com"
+          elif [ "${{ github.ref_name }}" == "staging" ]; then
+            BASE_URL="https://staging.codexcryptica.com"
+          else
+            exit 0
+          fi
+          
+          for FILE in "llms.txt" "llms-full.txt"; do
+            URL="${BASE_URL}/${FILE}"
+            echo "Verifying ${URL}..."
+            SUCCESS=false
+            for i in {1..5}; do
+              if curl --fail -sL "${URL}" > /dev/null; then
+                echo "${FILE} is available!"
+                SUCCESS=true
+                break
+              fi
+              echo "Attempt $i failed for ${FILE}, retrying in 10s..."
+              sleep 10
+            done
+            if [ "$SUCCESS" = false ]; then
+              echo "Verification failed for ${FILE} after 5 attempts."
+              exit 1
+            fi
+          done
