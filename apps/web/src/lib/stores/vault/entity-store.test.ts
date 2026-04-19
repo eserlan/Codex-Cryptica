@@ -84,6 +84,7 @@ describe("EntityStore", () => {
           content: "",
           lore: "",
           type: "character",
+          status: "active",
           labels: [],
           tags: [],
           connections: [],
@@ -94,6 +95,7 @@ describe("EntityStore", () => {
           content: "",
           lore: "",
           type: "location",
+          status: "active",
           labels: ["important"],
           tags: [],
           connections: [],
@@ -681,8 +683,8 @@ describe("EntityStore", () => {
   describe("batchCreateEntities", () => {
     it("should create multiple entities and save them", async () => {
       const created = [
-        { id: "e1", title: "Entity 1" } as LocalEntity,
-        { id: "e2", title: "Entity 2" } as LocalEntity,
+        { id: "e1", title: "Entity 1", status: "active" } as LocalEntity,
+        { id: "e2", title: "Entity 2", status: "active" } as LocalEntity,
       ];
       vi.mocked(vaultEntities.batchCreateEntities).mockReturnValue({
         entities: { ...repository.entities, e1: created[0], e2: created[1] },
@@ -774,7 +776,9 @@ describe("EntityStore", () => {
     });
 
     it("should set entities on repository", () => {
-      const newEntities = { newOne: { id: "newOne" } as LocalEntity };
+      const newEntities = {
+        newOne: { id: "newOne", status: "active" } as LocalEntity,
+      };
       store.entities = newEntities;
       expect(repository.entities).toBe(newEntities);
     });

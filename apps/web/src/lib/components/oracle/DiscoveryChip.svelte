@@ -31,7 +31,7 @@
     onCommit?.();
   }
 
-  const typeIcon =
+  const typeIcon = $derived(
     {
       npc: "icon-[lucide--user]",
       character: "icon-[lucide--user]",
@@ -40,7 +40,8 @@
       faction: "icon-[lucide--users]",
       event: "icon-[lucide--calendar]",
       concept: "icon-[lucide--lightbulb]",
-    }[proposal.type] || "icon-[lucide--file-text]";
+    }[proposal.type] || "icon-[lucide--file-text]",
+  );
 </script>
 
 <div

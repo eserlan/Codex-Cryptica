@@ -57,7 +57,7 @@ export const EntitySchema = z.object({
       height: z.number().optional(),
     })
     .optional(),
-  status: z.enum(["active", "draft"]).default("active"),
+  status: z.enum(["active", "draft"]).optional().default("active"),
   discoverySource: z.string().optional(),
   lastUpdated: z.number().optional(),
   updatedAt: z.number().optional(),

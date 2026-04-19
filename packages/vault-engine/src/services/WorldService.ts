@@ -11,6 +11,7 @@ interface GraphEntityRecord {
   filePath?: string;
   image?: string;
   thumbnail?: string;
+  status?: string;
 }
 
 export interface VaultMetadataRecord {

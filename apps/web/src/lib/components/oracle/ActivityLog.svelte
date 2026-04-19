@@ -9,13 +9,13 @@
     });
   }
 
-  const icons = {
+  const icons: Record<string, string> = {
     discovery: "icon-[lucide--search]",
     archive: "icon-[lucide--archive]",
     update: "icon-[lucide--refresh-cw]",
   };
 
-  const colors = {
+  const colors: Record<string, string> = {
     discovery: "text-theme-primary",
     archive: "text-theme-accent",
     update: "text-theme-text/70",
