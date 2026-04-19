@@ -17,7 +17,7 @@
   />
 </svelte:head>
 
-<div class="fixed inset-0 bg-theme-bg flex flex-col overflow-hidden">
+<div class="fixed inset-0 h-[100dvh] bg-theme-bg flex flex-col overflow-hidden">
   <!-- Standalone Header -->
   <div
     class="px-4 py-3 border-b border-oracle-dim/30 bg-oracle-dark/20 flex justify-between items-center shrink-0"

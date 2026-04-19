@@ -23,7 +23,8 @@
   const adjustHeight = () => {
     if (!textArea) return;
     textArea.style.height = "auto";
-    textArea.style.height = `${Math.min(textArea.scrollHeight, 200)}px`;
+    const maxHeight = window.innerHeight < 600 ? 120 : 200;
+    textArea.style.height = `${Math.min(textArea.scrollHeight, maxHeight)}px`;
   };
 
   $effect(() => {
@@ -287,7 +288,7 @@
   <!-- Input -->
 
   <div
-    class="p-4 border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
+    class="p-3 sm:p-4 pb-safe sm:pb-4 border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
     style:background-image="var(--bg-texture-overlay)"
   >
     {#if showCommandMenu}
@@ -320,7 +321,7 @@
         aria-label="Chat Input"
         onkeydown={handleKeyDown}
         placeholder="Ask the archives or type &quot;/&quot; for commands..."
-        class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-4 py-2.5 text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-body resize-none overflow-hidden no-scrollbar shadow-inner"
+        class="flex-1 bg-theme-bg/50 border border-theme-border rounded px-3 sm:px-4 py-2.5 text-base sm:text-sm text-theme-text placeholder-theme-text/40 focus:outline-none focus:border-theme-primary focus:ring-1 focus:ring-theme-primary/20 transition-all font-body resize-none overflow-hidden no-scrollbar shadow-inner"
         disabled={oracle.isLoading}
         rows="1"
       ></textarea>
