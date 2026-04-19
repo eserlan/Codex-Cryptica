@@ -317,7 +317,7 @@
       <header
         class="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"
       >
-        <div class="w-full space-y-4 xl:pr-56">
+        <div class="w-full space-y-4 xl:pr-56 sr-only">
           <div
             class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] backdrop-blur-sm"
           >
