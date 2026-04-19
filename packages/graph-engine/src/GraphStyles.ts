@@ -25,6 +25,13 @@ export const getGraphStyles = (
       },
     },
     {
+      selector: "node[status = 'draft']",
+      style: {
+        opacity: 0.4,
+        "text-opacity": 0.4,
+      },
+    },
+    {
       selector: ".category-filtered-out",
       style: {
         display: "none",

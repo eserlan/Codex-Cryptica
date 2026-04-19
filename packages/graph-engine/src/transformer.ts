@@ -13,6 +13,7 @@ export interface GraphNode {
     label: string;
     type: string;
     weight: number;
+    status?: "active" | "draft";
     image?: string;
     thumbnail?: string;
     labels?: string[];
@@ -149,6 +150,7 @@ export class GraphTransformer {
         id: entity.id,
         label: entity.title,
         type: entity.type,
+        status: entity.status,
         weight: weights.get(entity.id) ?? 0,
         date: entity.date,
         start_date: entity.start_date,

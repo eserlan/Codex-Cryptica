@@ -52,7 +52,12 @@ describe("Vault Entities Operations", () => {
 
   describe("updateEntity", () => {
     it("should update an existing entity", () => {
-      const e1 = { id: "e1", title: "Old", connections: [] } as any;
+      const e1 = {
+        id: "e1",
+        title: "Old",
+        status: "active",
+        connections: [],
+      } as any;
       const entities = { e1 };
       const { updated } = updateEntity(entities, "e1", { title: "New" });
       expect(updated!.title).toBe("New");
@@ -70,6 +75,7 @@ describe("Vault Entities Operations", () => {
       const e1 = {
         id: "e1",
         title: "E1",
+        status: "active",
         connections: [],
         image: "img.png",
       } as any;
@@ -90,10 +96,16 @@ describe("Vault Entities Operations", () => {
     });
 
     it("should cleanup connections from other nodes", async () => {
-      const e1 = { id: "e1", title: "E1", connections: [] } as any;
+      const e1 = {
+        id: "e1",
+        title: "E1",
+        status: "active",
+        connections: [],
+      } as any;
       const e2 = {
         id: "e2",
         title: "E2",
+        status: "active",
         connections: [{ target: "e1", type: "enemy" }],
       } as any;
       const entities = { e1, e2 };
@@ -111,6 +123,7 @@ describe("Vault Entities Operations", () => {
     it("should handle asset deletion errors and missing handles", async () => {
       const e1 = {
         id: "e1",
+        status: "active",
         image: "images/img.png",
         thumbnail: "thumbs/thumb.png",
         _path: ["notes", "e1.md"],
@@ -130,6 +143,7 @@ describe("Vault Entities Operations", () => {
     it("should handle thumbnail deletion failure", async () => {
       const e1 = {
         id: "e1",
+        status: "active",
         thumbnail: "thumbs/thumb.png",
       } as any;
 
@@ -145,26 +159,26 @@ describe("Vault Entities Operations", () => {
 
   describe("label operations", () => {
     it("should add and normalized labels", () => {
-      const e1 = { id: "e1", labels: [] } as any;
+      const e1 = { id: "e1", status: "active", labels: [] } as any;
       const { updated } = addLabel({ e1 }, "e1", "  NPC  ");
       expect(updated!.labels).toContain("npc");
     });
 
     it("should prevent duplicate labels", () => {
-      const e1 = { id: "e1", labels: ["npc"] } as any;
+      const e1 = { id: "e1", status: "active", labels: ["npc"] } as any;
       const { updated } = addLabel({ e1 }, "e1", "NPC");
       expect(updated).toBeNull();
     });
 
     it("should remove labels", () => {
-      const e1 = { id: "e1", labels: ["npc", "hero"] } as any;
+      const e1 = { id: "e1", status: "active", labels: ["npc", "hero"] } as any;
       const { updated } = removeLabel({ e1 }, "e1", "NPC");
       expect(updated!.labels).toEqual(["hero"]);
     });
 
     it("should return null if entity or label not found in removeLabel", () => {
       expect(removeLabel({}, "missing", "label").updated).toBeNull();
-      const e1 = { id: "e1", labels: ["other"] } as any;
+      const e1 = { id: "e1", status: "active", labels: ["other"] } as any;
       expect(removeLabel({ e1 }, "e1", "missing").updated).toBeNull();
     });
   });
@@ -186,7 +200,7 @@ describe("Vault Entities Operations", () => {
     });
 
     it("should add a connection", () => {
-      const e1 = { id: "e1", connections: [] } as any;
+      const e1 = { id: "e1", status: "active", connections: [] } as any;
       const { updatedSource } = addConnection(
         { e1 },
         "e1",
@@ -201,6 +215,7 @@ describe("Vault Entities Operations", () => {
     it("should update a connection", () => {
       const e1 = {
         id: "e1",
+        status: "active",
         connections: [
           { target: "e2", type: "enemy" },
           { target: "e3", type: "friend" },
@@ -221,6 +236,7 @@ describe("Vault Entities Operations", () => {
     it("should remove a connection", () => {
       const e1 = {
         id: "e1",
+        status: "active",
         connections: [{ target: "e2", type: "enemy" }],
       } as any;
       const { updatedSource } = removeConnection({ e1 }, "e1", "e2", "enemy");
@@ -230,8 +246,8 @@ describe("Vault Entities Operations", () => {
 
   describe("bulk operations", () => {
     it("should bulk add labels", () => {
-      const e1 = { id: "e1", labels: [] } as any;
-      const e2 = { id: "e2", labels: ["story"] } as any;
+      const e1 = { id: "e1", status: "active", labels: [] } as any;
+      const e2 = { id: "e2", status: "active", labels: ["story"] } as any;
       const { entities, modifiedIds } = bulkAddLabel(
         { e1, e2 },
         ["e1", "e2", "missing"],
@@ -243,8 +259,8 @@ describe("Vault Entities Operations", () => {
     });
 
     it("should bulk remove labels", () => {
-      const e1 = { id: "e1", labels: ["story"] } as any;
-      const e2 = { id: "e2", labels: ["other"] } as any;
+      const e1 = { id: "e1", status: "active", labels: ["story"] } as any;
+      const e2 = { id: "e2", status: "active", labels: ["other"] } as any;
       const { entities, modifiedIds } = bulkRemoveLabel(
         { e1, e2 },
         ["e1", "e2"],
@@ -264,6 +280,7 @@ describe("Vault Entities Operations", () => {
           id: "hero-1",
           title: "Hero 1",
           type: "character",
+          status: "active",
           tags: [],
           labels: [],
           connections: [],

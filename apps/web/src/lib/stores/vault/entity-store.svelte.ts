@@ -50,11 +50,15 @@ export class EntityStore {
   }
 
   allEntities: LocalEntity[];
+  allActiveEntities: LocalEntity[];
   inboundConnections: InboundMap;
   labelIndex: string[];
 
   constructor(private deps: EntityStoreDependencies) {
     this.allEntities = $derived.by(() => Object.values(this.entities));
+    this.allActiveEntities = $derived.by(() =>
+      this.allEntities.filter((e) => e.status !== "draft"),
+    );
     this.inboundConnections = $derived.by(() =>
       vaultRelationships.rebuildInboundMap(this.entities),
     );
