@@ -168,7 +168,7 @@
     const isHost = mapStore.isGMMode;
     const peerId = mapSession.myPeerId;
     const selected = mapSession.selectedTokens;
-    const tokens = Object.values(mapSession.tokens);
+    const tokens = mapSession.allTokens;
     const result = [];
 
     // ⚡ Bolt Optimization: Replace chained .filter().map() with an imperative loop
@@ -210,7 +210,7 @@
   });
 
   $effect(() => {
-    const currentTokens = Object.values(mapSession.tokens);
+    const currentTokens = mapSession.allTokens;
     for (const token of currentTokens) {
       const source =
         token.imageUrl ||
@@ -666,7 +666,7 @@
 
     if (mapSession.vttEnabled && cachedRect) {
       const hitToken = hitTestToken(
-        Object.values(mapSession.tokens),
+        mapSession.allTokens,
         (point) => mapStore.project(point),
         lastMousePos.x,
         lastMousePos.y,
@@ -815,7 +815,7 @@
 
     if (boxSelectStart && boxSelectEnd && cachedRect) {
       // Find all tokens within the selection rectangle
-      const allTokens = Object.values(mapSession.tokens);
+      const allTokens = mapSession.allTokens;
       const x1 = Math.min(boxSelectStart.x, boxSelectEnd.x);
       const y1 = Math.min(boxSelectStart.y, boxSelectEnd.y);
       const x2 = Math.max(boxSelectStart.x, boxSelectEnd.x);
@@ -907,7 +907,7 @@
 
     if (mapSession.vttEnabled) {
       const hitToken = hitTestToken(
-        Object.values(mapSession.tokens),
+        mapSession.allTokens,
         (point) => mapStore.project(point),
         x,
         y,
@@ -985,7 +985,7 @@
     const y = e.clientY - rect.top;
 
     const hitToken = hitTestToken(
-      Object.values(mapSession.tokens),
+      mapSession.allTokens,
       (point) => mapStore.project(point),
       x,
       y,
@@ -1014,7 +1014,7 @@
       const mouseY = e.clientY - rect.top;
 
       const hitToken = hitTestToken(
-        Object.values(mapSession.tokens),
+        mapSession.allTokens,
         (point) => mapStore.project(point),
         mouseX,
         mouseY,

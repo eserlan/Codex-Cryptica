@@ -134,6 +134,7 @@ export class MapSessionStore {
     { previous: Token; timeoutId: number }
   >();
 
+    allTokens = $derived.by(() => Object.values(this.tokens));
   activeTokenId = $derived(this.initiativeOrder[this.turnIndex] ?? null);
   selectedToken = $derived.by(() => {
     if (!this.selection) return null;
@@ -1217,7 +1218,7 @@ export class MapSessionStore {
     );
     let highest = 1;
 
-    for (const token of Object.values(this.tokens)) {
+    for (const token of this.allTokens) {
       const match = token.name.trim().match(pattern);
       if (!match) continue;
       const suffix = match[1] ? Number(match[1]) : 1;
@@ -1242,7 +1243,7 @@ export class MapSessionStore {
       y: source.y + offset,
       zIndex:
         Math.max(
-          ...Object.values(this.tokens).map((token) => token.zIndex),
+          ...this.allTokens.map((token) => token.zIndex),
           source.zIndex,
         ) + 1,
     };
