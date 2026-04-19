@@ -1,14 +1,7 @@
 import { uiStore } from "$lib/stores/ui.svelte";
+import type { ActivityEvent } from "$lib/types/activity";
 
-export interface ActivityEvent {
-  id: string;
-  timestamp: number;
-  type: "discovery" | "archive" | "update";
-  title: string;
-  entityType: string;
-  entityId?: string;
-  details?: string;
-}
+export type { ActivityEvent };
 
 export class SessionActivityService {
   addEvent(event: Omit<ActivityEvent, "id" | "timestamp">) {

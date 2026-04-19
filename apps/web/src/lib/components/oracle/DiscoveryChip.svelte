@@ -11,8 +11,10 @@
   let { proposal, onCommit }: Props = $props();
   let isCommitting = $state(false);
 
+  const isGuest = $derived(vault.isGuest || uiStore.isDemoMode);
+
   async function handleCommit() {
-    if (isCommitting) return;
+    if (isCommitting || isGuest) return;
     isCommitting = true;
     try {
       if (proposal.entityId) {
@@ -65,12 +67,18 @@
   <button
     class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
     onclick={handleCommit}
-    disabled={isCommitting}
+    disabled={isCommitting || isGuest}
     aria-busy={isCommitting}
-    title={proposal.entityId ? "Update existing record" : "Add to Vault"}
-    aria-label={proposal.entityId
-      ? `Update ${proposal.title}`
-      : `Create ${proposal.title}`}
+    title={isGuest
+      ? "Not available in guest or demo mode"
+      : proposal.entityId
+        ? "Update existing record"
+        : "Add to Vault"}
+    aria-label={isGuest
+      ? "Commit unavailable in guest mode"
+      : proposal.entityId
+        ? `Update ${proposal.title}`
+        : `Create ${proposal.title}`}
   >
     {#if proposal.entityId}
       <span class="icon-[lucide--refresh-cw] w-3 h-3"></span>

@@ -1,4 +1,5 @@
 import { base } from "$app/paths";
+import type { ActivityEvent } from "$lib/types/activity";
 
 const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
 const EXPLORER_COLLAPSED_LABELS_STORAGE_KEY =
@@ -30,7 +31,7 @@ export class UIStore {
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
   autoArchive = $state(false);
-  archiveActivityLog = $state<any[]>([]);
+  archiveActivityLog = $state<ActivityEvent[]>([]);
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
 

@@ -628,9 +628,13 @@ The Lore Oracle supports several slash commands to help you manage your vault:
               });
             }
 
-            // Handle Auto-Archive if enabled
+            // Handle Auto-Archive if enabled (skip for guests and demo mode)
             const autoArchiveEnabled = context.uiStore.autoArchive;
-            if (autoArchiveEnabled) {
+            if (
+              autoArchiveEnabled &&
+              !context.vault.isGuest &&
+              !context.isDemoMode
+            ) {
               for (const p of proposals) {
                 if (!p.entityId) {
                   const id = await context.vault.createEntity(
