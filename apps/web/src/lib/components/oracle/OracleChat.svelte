@@ -288,7 +288,7 @@
   <!-- Input -->
 
   <div
-    class="p-3 sm:p-4 pb-safe sm:pb-4 border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
+    class="px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
     style:background-image="var(--bg-texture-overlay)"
   >
     {#if showCommandMenu}
