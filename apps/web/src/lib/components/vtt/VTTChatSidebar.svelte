@@ -36,6 +36,7 @@
     ? 'w-12'
     : 'w-[20rem] max-w-[calc(100vw-3rem)]'}"
   aria-label="VTT Chat Sidebar"
+  onwheel={(e) => e.stopPropagation()}
 >
   {#if collapsed}
     <div
