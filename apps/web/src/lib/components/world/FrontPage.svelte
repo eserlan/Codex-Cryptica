@@ -314,51 +314,39 @@
     <div
       class="relative z-10 flex min-h-[inherit] flex-col gap-6 md:gap-8 xl:gap-10"
     >
-      <header
-        class="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"
+      <div
+        class="absolute right-4 top-4 sm:right-5 sm:top-5 md:right-8 md:top-8 xl:right-10 xl:top-10 z-20 flex items-center gap-2"
       >
-        <div class="w-full space-y-4 xl:pr-56">
-          <div
-            class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] backdrop-blur-sm"
-          >
-            <span class="w-2 h-2 rounded-full bg-theme-primary animate-pulse"
-            ></span>
-            Front Page
-          </div>
-          <h1
-            class="font-header text-4xl font-black tracking-tight text-theme-text sm:text-5xl xl:text-6xl uppercase"
-          >
-            {_worldName}
-          </h1>
-        </div>
-
         {#if coverImage}
-          <FrontPageHero
-            {coverImageUrl}
-            {coverImage}
-            {showCoverEditor}
-            showPanel={false}
-            isSaving={worldStore.isSaving}
-            {onClose}
-            onOpenCoverEditor={openCoverEditor}
-            onCloseCoverEditor={closeCoverEditor}
-            onOpenLightbox={openCoverLightbox}
-            onUploadCover={handleUploadCover}
-            onGenerateCover={handleGenerateCover}
-          />
-        {:else if onClose}
-          <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
-            <button
-              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
-              onclick={onClose}
-              aria-label="Close front page"
-              title="Close front page"
-            >
-              <span class="icon-[lucide--x] h-4 w-4"></span>
-            </button>
-          </div>
+          <button
+            class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
+            onclick={openCoverEditor}
+            disabled={worldStore.isSaving}
+          >
+            Change Image
+          </button>
         {/if}
-      </header>
+        {#if coverImageUrl}
+          <button
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+            onclick={openCoverLightbox}
+            aria-label="Open cover image lightbox"
+            title="Open cover image"
+          >
+            <span class="icon-[lucide--maximize-2] h-4 w-4"></span>
+          </button>
+        {/if}
+        {#if onClose}
+          <button
+            class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+            onclick={onClose}
+            aria-label="Close front page"
+            title="Close front page"
+          >
+            <span class="icon-[lucide--x] h-4 w-4"></span>
+          </button>
+        {/if}
+      </div>
 
       <ZenImageLightbox
         bind:show={showCoverLightbox}
@@ -366,7 +354,7 @@
         title="World cover"
       />
 
-      <div class="flex flex-1 flex-col gap-5 lg:gap-6">
+      <div class="flex flex-1 flex-col gap-5 lg:gap-6 pt-12">
         {#if showCoverEditor || !coverImage}
           <FrontPageHero
             {coverImageUrl}
