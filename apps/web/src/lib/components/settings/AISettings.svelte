@@ -100,9 +100,10 @@
   <div class="mb-6 pt-6 border-t border-theme-border/30">
     <div class="flex items-start justify-between gap-4">
       <div class="flex-1">
-        <span
-          class="text-sm text-theme-text font-bold uppercase font-header block"
-          >Auto-Archive Discovered Lore</span
+        <label
+          for="auto-archive-toggle"
+          class="text-sm text-theme-text font-bold uppercase font-header block cursor-pointer"
+          >Auto-Archive Discovered Lore</label
         >
         <p class="text-xs text-theme-muted mt-1 leading-relaxed">
           When enabled, the Oracle will automatically save new characters,
@@ -111,6 +112,7 @@
       </div>
       <label class="relative inline-flex items-center cursor-pointer">
         <input
+          id="auto-archive-toggle"
           type="checkbox"
           class="sr-only peer"
           checked={uiStore.autoArchive}

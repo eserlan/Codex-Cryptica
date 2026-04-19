@@ -88,13 +88,15 @@ export interface UndoableAction {
   redo: () => Promise<void>;
 }
 
+import type { EntityType } from "schema";
+
 /**
  * Transient draft state used during chat
  */
 export interface PendingDraft {
   id: string;
   title: string;
-  type: string;
+  type: EntityType;
   description: string;
   sourceMessageIds: string[];
   state: "new" | "update";
@@ -106,7 +108,7 @@ export interface PendingDraft {
 export interface DiscoveryProposal {
   entityId?: string; // Present if 'update'
   title: string;
-  type: string;
+  type: EntityType;
   draft: {
     lore: string;
     chronicle: string;

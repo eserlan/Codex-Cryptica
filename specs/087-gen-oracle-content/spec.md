@@ -2,7 +2,7 @@
 
 **Feature Branch**: `087-gen-oracle-content`  
 **Created**: 2026-04-19  
-**Status**: Draft  
+**Status**: Completed  
 **Input**: User description: "auto gen content based on oracle chat https://github.com/eserlan/Codex-Cryptica/issues/642. Shift focus: Automagical background generation during chat instead of explicit /create command."
 
 ## Clarifications

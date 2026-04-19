@@ -12,7 +12,7 @@ interface GraphEntityRecord {
   filePath?: string;
   image?: string;
   thumbnail?: string;
-  status?: string;
+  status?: "active" | "draft";
 }
 
 export interface ActivityServiceDependencies {

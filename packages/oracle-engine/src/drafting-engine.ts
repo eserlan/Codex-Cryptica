@@ -1,3 +1,4 @@
+import type { EntityType } from "schema";
 import type { ChatMessage, DiscoveryProposal } from "./types";
 
 export interface DiscoveryContext {
@@ -14,10 +15,9 @@ export class DraftingEngine {
     text: string,
     context: DiscoveryContext,
   ): Promise<DiscoveryProposal[]> {
-    const proposals: DiscoveryProposal[] = [];
+    const proposalsMap = new Map<string, DiscoveryProposal>();
 
     // Regex to find **Name** as **Type** or just **Name** followed by descriptive text
-    // This is a simplified version of the proactive extraction logic.
     const markerRegex = /\*\*([^*]+)\*\*(?:\s+as\s+\*\*([^*]+)\*\*)?/g;
     let match;
 
@@ -26,28 +26,37 @@ export class DraftingEngine {
       const rawType = (match[2] || "concept").toLowerCase().trim();
 
       // Normalize type
-      const type = this.normalizeType(rawType);
+      const type = this.normalizeType(rawType) as EntityType;
 
       // Look for existing entity
       const existing = this.findExistingEntity(name, context.existingEntities);
+      const identityKey = existing?.id || `new:${name.toLowerCase()}`;
 
-      // Extract excerpt/lore around the mention (simple heuristic)
+      // Extract excerpt/lore around the mention
       const lore = this.extractLore(text, match.index, name);
       const chronicle = this.extractChronicle(lore);
 
-      proposals.push({
-        entityId: existing?.id,
-        title: name,
-        type: type,
-        draft: {
-          lore,
-          chronicle,
-        },
-        confidence: existing ? 0.95 : 0.8,
-      });
+      const existingProposal = proposalsMap.get(identityKey);
+      if (existingProposal) {
+        // Merge lore if multiple mentions
+        if (!existingProposal.draft.lore.includes(lore)) {
+          existingProposal.draft.lore += "\n\n" + lore;
+        }
+      } else {
+        proposalsMap.set(identityKey, {
+          entityId: existing?.id,
+          title: name,
+          type: type,
+          draft: {
+            lore,
+            chronicle,
+          },
+          confidence: existing ? 0.95 : 0.8,
+        });
+      }
     }
 
-    return proposals;
+    return Array.from(proposalsMap.values());
   }
 
   private normalizeType(rawType: string): string {

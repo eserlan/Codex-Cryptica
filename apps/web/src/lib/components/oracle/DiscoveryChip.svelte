@@ -9,26 +9,33 @@
   }
 
   let { proposal, onCommit }: Props = $props();
+  let isCommitting = $state(false);
 
   async function handleCommit() {
-    if (proposal.entityId) {
-      // Smart Update
-      const existing = vault.entities[proposal.entityId];
-      if (existing) {
-        await vault.updateEntity(proposal.entityId, {
-          lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
+    if (isCommitting) return;
+    isCommitting = true;
+    try {
+      if (proposal.entityId) {
+        // Smart Update
+        const existing = vault.entities[proposal.entityId];
+        if (existing) {
+          await vault.updateEntity(proposal.entityId, {
+            lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
+          });
+          uiStore.notify(`Updated ${proposal.title}`, "success");
+        }
+      } else {
+        // New Entity
+        await vault.createEntity(proposal.type as any, proposal.title, {
+          lore: proposal.draft.lore,
+          content: proposal.draft.chronicle,
         });
-        uiStore.notify(`Updated ${proposal.title}`, "success");
+        uiStore.notify(`Created ${proposal.title}`, "success");
       }
-    } else {
-      // New Entity
-      await vault.createEntity(proposal.type as any, proposal.title, {
-        lore: proposal.draft.lore,
-        content: proposal.draft.chronicle,
-      });
-      uiStore.notify(`Created ${proposal.title}`, "success");
+      onCommit?.();
+    } finally {
+      isCommitting = false;
     }
-    onCommit?.();
   }
 
   const typeIcon = $derived(
@@ -56,8 +63,10 @@
   >
 
   <button
-    class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center"
+    class="ml-2 p-1 hover:bg-theme-primary/20 rounded-full text-theme-primary transition-colors cursor-pointer flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
     onclick={handleCommit}
+    disabled={isCommitting}
+    aria-busy={isCommitting}
     title={proposal.entityId ? "Update existing record" : "Add to Vault"}
     aria-label={proposal.entityId
       ? `Update ${proposal.title}`

@@ -12,7 +12,7 @@
 
   let explorerTab = $state<"all" | "review">("all");
   let draftCount = $derived(
-    Object.values(vault.entities).filter((e) => e.status === "draft").length,
+    vault.allEntities.filter((e) => e.status === "draft").length,
   );
 </script>
 

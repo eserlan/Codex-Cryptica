@@ -5,13 +5,15 @@ import type {
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
-import { draftingEngine } from "./drafting-engine";
+import { DraftingEngine, draftingEngine } from "./drafting-engine";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
+  private draftingEngine: DraftingEngine;
 
-  constructor(generator?: OracleGenerator) {
-    this.generator = generator || new OracleGenerator();
+  constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
+    this.generator = generator ?? new OracleGenerator();
+    this.draftingEngine = engine ?? draftingEngine;
   }
   async execute(
     intent: OracleIntent,
@@ -608,7 +610,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         // Proactive Extraction
         try {
           const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
-          const proposals = await draftingEngine.propose(combinedText, {
+          const engineToUse = context.draftingEngine ?? this.draftingEngine;
+          const proposals = await engineToUse.propose(combinedText, {
             existingEntities: Object.values(context.vault.entities || {}),
             history: context.chatHistory.messages,
           });
