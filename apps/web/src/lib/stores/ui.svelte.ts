@@ -29,6 +29,8 @@ export class UIStore {
   showDiceModal = $state(false);
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
+  autoArchive = $state(false);
+  archiveActivityLog = $state<any[]>([]);
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
 
@@ -80,6 +82,11 @@ export class UIStore {
           localStorage.setItem("codex_ai_disabled", lite);
           localStorage.removeItem("codex_lite_mode");
         }
+      }
+
+      const autoArchive = localStorage.getItem("codex_auto_archive");
+      if (autoArchive !== null) {
+        this.autoArchive = autoArchive === "true";
       }
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
@@ -249,6 +256,13 @@ export class UIStore {
     this.aiDisabled = enabled;
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_ai_disabled", String(enabled));
+    }
+  }
+
+  toggleAutoArchive(enabled: boolean) {
+    this.autoArchive = enabled;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_auto_archive", String(enabled));
     }
   }
 

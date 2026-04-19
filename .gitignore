@@ -69,3 +69,8 @@ blogPics/
 
 # Cloudflare Wrangler
 .wrangler/
+# Workspace extras
+.svelte-kit/
+.vercel/
+.netlify/
+.cache/

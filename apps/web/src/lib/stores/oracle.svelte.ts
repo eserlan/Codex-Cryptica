@@ -5,6 +5,7 @@ import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
 import { uiStore as defaultUiStore } from "./ui.svelte";
+import { sessionActivity } from "../services/SessionActivityService";
 import {
   diceEngine as defaultDiceEngine,
   diceParser as defaultDiceParser,
@@ -240,6 +241,7 @@ export class OracleStore {
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.settings.modelName,
       isDemoMode: this.uiStore.isDemoMode,
+      logActivity: (event) => sessionActivity.addEvent(event),
     };
   }
 

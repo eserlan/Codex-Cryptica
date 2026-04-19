@@ -1,0 +1,72 @@
+import { describe, it, expect } from "vitest";
+import { DraftingEngine } from "./drafting-engine";
+
+describe("Oracle Proactive Discovery Benchmarks", () => {
+  const engine = new DraftingEngine();
+
+  it("SC-001: Entity identification accuracy should be >= 85%", async () => {
+    const testCases = [
+      {
+        text: "A brave knight named **Sir Alistair** as **NPC**.",
+        expected: "Sir Alistair",
+      },
+      {
+        text: "They traveled to **The Iron Citadel** as **Location**.",
+        expected: "The Iron Citadel",
+      },
+      {
+        text: "He carried a **Sword of Truth** as **Item**.",
+        expected: "Sword of Truth",
+      },
+      {
+        text: "The **Order of Shadows** as **Faction** is rising.",
+        expected: "Order of Shadows",
+      },
+      {
+        text: "The **Great Fire** as **Event** destroyed the city.",
+        expected: "Great Fire",
+      },
+      {
+        text: "A strange **Aura** as **Concept** filled the room.",
+        expected: "Aura",
+      },
+    ];
+
+    let matches = 0;
+    for (const tc of testCases) {
+      const proposals = await engine.propose(tc.text, {
+        existingEntities: [],
+        history: [],
+      });
+      if (proposals.some((p) => p.title === tc.expected)) matches++;
+    }
+
+    const accuracy = matches / testCases.length;
+    expect(accuracy).toBeGreaterThanOrEqual(0.85);
+  });
+
+  it("SC-004: Smart Update precision should be >= 95%", async () => {
+    const existingEntities = [
+      { id: "e1", title: "Valerius", type: "npc" },
+      { id: "e2", title: "Iron Tower", type: "location" },
+    ];
+
+    const testCases = [
+      { text: "**Valerius** adjusted his glasses.", expectedId: "e1" },
+      { text: "Inside the **Iron Tower**, it was cold.", expectedId: "e2" },
+      { text: "They called for **Valerius** again.", expectedId: "e1" },
+    ];
+
+    let correctMatches = 0;
+    for (const tc of testCases) {
+      const proposals = await engine.propose(tc.text, {
+        existingEntities,
+        history: [],
+      });
+      if (proposals.some((p) => p.entityId === tc.expectedId)) correctMatches++;
+    }
+
+    const precision = correctMatches / testCases.length;
+    expect(precision).toBeGreaterThanOrEqual(0.95);
+  });
+});

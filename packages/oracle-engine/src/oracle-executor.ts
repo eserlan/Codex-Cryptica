@@ -5,6 +5,7 @@ import type {
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
+import { draftingEngine } from "./drafting-engine";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
@@ -603,6 +604,68 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         finalMsgs[assistantMsgIndex].sources = sourceIds;
         finalMsgs[assistantMsgIndex].hasDrawAction =
           context.tier === "advanced";
+
+        // Proactive Extraction
+        try {
+          const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
+          const proposals = await draftingEngine.propose(combinedText, {
+            existingEntities: Object.values(context.vault.entities || {}),
+            history: context.chatHistory.messages,
+          });
+
+          if (proposals.length > 0) {
+            finalMsgs[assistantMsgIndex].proposals = proposals;
+
+            for (const p of proposals) {
+              context.logActivity?.({
+                type: "discovery",
+                title: p.title,
+                entityType: p.type,
+                entityId: p.entityId,
+              });
+            }
+
+            // Handle Auto-Archive if enabled
+            const autoArchiveEnabled = context.uiStore.autoArchive;
+            if (autoArchiveEnabled) {
+              for (const p of proposals) {
+                if (!p.entityId) {
+                  const id = await context.vault.createEntity(
+                    p.type as any,
+                    p.title,
+                    {
+                      lore: p.draft.lore,
+                      content: p.draft.chronicle,
+                      status: "draft",
+                    },
+                  );
+                  context.logActivity?.({
+                    type: "archive",
+                    title: p.title,
+                    entityType: p.type,
+                    entityId: id,
+                  });
+                } else {
+                  // Smart Update (Non-destructive append)
+                  const existing = context.vault.entities[p.entityId];
+                  if (existing) {
+                    await context.vault.updateEntity(p.entityId, {
+                      lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                    });
+                    context.logActivity?.({
+                      type: "update",
+                      title: p.title,
+                      entityType: p.type,
+                      entityId: p.entityId,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch (extractErr) {
+          console.warn("[OracleExecutor] Extraction failed", extractErr);
+        }
 
         context.chatHistory.setMessages(finalMsgs);
       }

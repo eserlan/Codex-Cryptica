@@ -7,3 +7,6 @@ yarn.lock
 pnpm-lock.yaml
 .svelte-kit/
 .turbo/
+# Workspace extras
+.svelte-kit/
+package-lock.json

@@ -313,6 +313,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
     icon: "icon-[lucide--layout-panel-left]",
   },
+  "proactive-discovery": {
+    id: "proactive-discovery",
+    title: "Proactive Discovery",
+    content:
+      "While you chat, the Oracle automatically identifies new characters, locations, and items. Look for 'Found Lore' chips at the bottom of messages to quickly add them to your vault.",
+    icon: "icon-[lucide--search-check]",
+  },
+  "draft-review": {
+    id: "draft-review",
+    title: "Reviewing Drafts",
+    content:
+      "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
+    icon: "icon-[lucide--clipboard-check]",
+  },
 };
 
 let initialArticles: HelpArticle[] = [];

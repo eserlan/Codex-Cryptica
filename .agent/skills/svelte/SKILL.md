@@ -111,7 +111,10 @@ When a handler function only calls `.mutate()`, inline it directly:
 
 # Styling
 
-For general CSS and Tailwind guidelines, see the `styling` skill.
+For general CSS and Tailwind guidelines, see the `styling` skill and ALWAYS adhere to `@docs/STYLE_GUIDE.md`.
+
+- **Tailwind 4 Semantic Tokens**: Use theme variables (e.g., `text-theme-primary`, `bg-theme-surface`) instead of generic Tailwind colors.
+- **Svelte 5 Runes**: Strictly use `$state`, `$derived`, and `$props`. Avoid legacy Svelte 4 syntax.
 
 # shadcn-svelte Best Practices
 
