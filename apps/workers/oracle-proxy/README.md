@@ -55,7 +55,9 @@ If `ALLOWED_ORIGINS` is not set, the worker allows:
 - `https://codex-cryptica.com`
 - `https://codexcryptica.com`
 - `https://staging.codex-cryptica.com`
+- `https://staging.codexcryptica.com`
 - `https://codex-cryptica.pages.dev`
+- `https://*.codex-cryptica.pages.dev`
 - `http://localhost` and `http://127.0.0.1` on any development port
 
 If `ALLOWED_ORIGINS` is set, it is treated as the exact allowlist for the worker. Include any localhost or loopback origins you want to permit in that variable.

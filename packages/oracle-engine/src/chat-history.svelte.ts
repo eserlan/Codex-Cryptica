@@ -84,6 +84,26 @@ export class ChatHistoryService {
     await this.saveToDB();
   }
 
+  async clear() {
+    return this.clearMessages();
+  }
+
+  async updateMessage(
+    id: string,
+    updates: Partial<ChatMessage>,
+    persist = true,
+  ) {
+    const msgIndex = this.messages.findIndex((m) => m.id === id);
+    if (msgIndex !== -1) {
+      this.messages[msgIndex] = { ...this.messages[msgIndex], ...updates };
+      this.messages = [...this.messages];
+      this.lastUpdated = Date.now();
+      if (persist) {
+        await this.saveToDB();
+      }
+    }
+  }
+
   /**
    * Save current messages to IndexedDB.
    * Strips blob URLs before persistence (they are regenerated on init).

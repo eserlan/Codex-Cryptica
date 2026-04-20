@@ -25,6 +25,17 @@ describe("OracleActionExecutor - Detailed", () => {
         addMessage: vi.fn().mockImplementation(async (msg) => {
           mockContext.chatHistory.messages.push(msg);
         }),
+        updateMessage: vi.fn().mockImplementation(async (id, updates) => {
+          const index = mockContext.chatHistory.messages.findIndex(
+            (msg: { id: string }) => msg.id === id,
+          );
+          if (index !== -1) {
+            mockContext.chatHistory.messages[index] = {
+              ...mockContext.chatHistory.messages[index],
+              ...updates,
+            };
+          }
+        }),
         clearMessages: vi.fn().mockResolvedValue(undefined),
         setMessages: vi.fn(),
         messages: [],
@@ -411,11 +422,30 @@ describe("OracleActionExecutor - Detailed", () => {
     });
 
     it("should handle text response", async () => {
+      mockGenerator.generateChatResponse.mockImplementation(
+        async (
+          _query: string,
+          _context: any,
+          onPartial: (partial: string) => void,
+        ) => {
+          onPartial("partial response");
+          return { primaryEntityId: "e1", sourceIds: ["e1"] };
+        },
+      );
+
       await executor.execute(
         { type: "chat", query: "tell me a story", isAIIntent: true },
         mockContext,
       );
 
+      expect(mockContext.chatHistory.updateMessage).toHaveBeenCalledWith(
+        expect.any(String),
+        { content: "partial response" },
+        false,
+      );
+      expect(mockContext.chatHistory.messages.at(-1)?.content).toBe(
+        "partial response",
+      );
       expect(mockContext.chatHistory.setMessages).toHaveBeenCalled();
     });
   });

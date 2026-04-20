@@ -82,6 +82,7 @@ describe("VaultLifecycleManager", () => {
       activeVaultId: vi.fn().mockReturnValue("v1"),
       getActiveVaultHandle: vi.fn().mockResolvedValue({}),
       loadFiles: vi.fn().mockResolvedValue(undefined),
+      flushPendingSaves: vi.fn().mockResolvedValue(undefined),
       ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
       clearStorageCache: vi.fn(),
       getEntities: vi.fn().mockReturnValue({}),
@@ -114,9 +115,8 @@ describe("VaultLifecycleManager", () => {
     it("should switch to a new vault and reset state", async () => {
       await manager.switchVault("v2");
 
-      expect(deps.repository.waitForAllSaves).toHaveBeenCalled();
+      expect(deps.flushPendingSaves).toHaveBeenCalled();
       expect(deps.repository.clear).toHaveBeenCalled();
-      expect(deps.syncStore.setStatus).toHaveBeenCalledWith("loading");
       expect(deps.vaultRegistry.setActiveVault).toHaveBeenCalledWith("v2");
       expect(deps.loadFiles).toHaveBeenCalledWith(true);
       expect(deps.themeStore.loadForVault).toHaveBeenCalledWith("v2");

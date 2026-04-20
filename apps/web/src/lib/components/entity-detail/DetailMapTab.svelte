@@ -132,7 +132,7 @@
         <button
           type="button"
           aria-label="Enter Location: {linkedMap.name}"
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity bg-black/40 cursor-pointer focus:outline-none"
+          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity bg-black/40 cursor-pointer focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black/40 focus:outline-none"
           onclick={() => {
             mapStore.selectMap(linkedMap!.id, true);
             uiStore.closeZenMode();

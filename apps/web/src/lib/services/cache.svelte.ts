@@ -179,6 +179,7 @@ export class CacheService {
         metadata: raw.metadata ? JSON.parse(JSON.stringify(raw.metadata)) : {},
         updatedAt:
           typeof raw.updatedAt === "number" ? raw.updatedAt : Date.now(),
+        status: raw.status || "active",
         _path: Array.isArray(raw._path) ? [...raw._path] : raw._path,
         vaultId: String(vaultId),
         lastModified: Number(lastModified),
