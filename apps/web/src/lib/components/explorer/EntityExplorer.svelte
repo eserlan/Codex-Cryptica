@@ -7,7 +7,7 @@
   import type { Entity } from "schema";
 
   function handleSelect(entity: Entity) {
-    uiStore.focusEntity(entity.id);
+    uiStore.openZenMode(entity.id);
   }
 
   let explorerTab = $state<"all" | "review">("all");
@@ -91,6 +91,7 @@
   <div class="flex-1 min-h-0 flex flex-col">
     <EntityList
       onSelect={handleSelect}
+      onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
       showDraftsOnly={explorerTab === "review"}
     />
   </div>

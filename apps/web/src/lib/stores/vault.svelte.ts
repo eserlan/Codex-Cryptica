@@ -179,6 +179,7 @@ export class VaultStore {
       activeVaultId: () => this.activeVaultId,
       getActiveVaultHandle: () => this.getActiveVaultHandle(),
       loadFiles: (skipSync) => this.loadFiles(skipSync),
+      flushPendingSaves: () => this.entityStore.flushPendingSaves(),
       ensureServicesInitialized: async () => {
         await this.serviceRegistry.ensureInitialized();
       },

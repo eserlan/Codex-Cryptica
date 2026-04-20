@@ -29,9 +29,13 @@ export interface EntityStoreDependencies {
   onBatchUpdate?: (updates: Record<string, Partial<LocalEntity>>) => void;
 }
 
+const SAVE_DEBOUNCE_MS = 400;
+
 export class EntityStore {
   private _contentLoadedIds = $state(new Set<string>());
   private _contentVerifiedIds = $state(new Set<string>());
+  private _saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private _saveResolvers = new Map<string, Array<() => void>>();
 
   /**
    * Pre-loaded helper modules to avoid dynamic import overhead.
@@ -110,48 +114,97 @@ export class EntityStore {
 
     if (uiStore.isDemoMode) return Promise.resolve();
 
-    const lockKey = entity.id;
+    const id = entity.id;
 
-    return this.deps.repository.saveQueue.enqueue(lockKey, async () => {
-      let latestEntity = this.entities[entity.id];
-      if (!latestEntity) return;
+    // Debounce: cancel any pending timer for this entity and restart it.
+    // All callers that scheduled a save within the window share the same
+    // queue enqueue, so only one disk write fires per burst.
+    const existing = this._saveTimers.get(id);
+    if (existing) clearTimeout(existing);
 
-      if (!this.isContentLoaded(entity.id)) {
-        await this.internalLoadContent(entity.id);
-        latestEntity = this.entities[entity.id] || latestEntity;
-      }
+    return new Promise<void>((resolve) => {
+      // Collect resolvers so flushPendingSaves() can drain them immediately.
+      const resolvers = this._saveResolvers.get(id) ?? [];
+      resolvers.push(resolve);
+      this._saveResolvers.set(id, resolvers);
 
-      this.deps.setStatus("saving");
-      try {
-        const vaultHandle =
-          await this.deps.getSpecificVaultHandle(vaultIdAtStart);
-        if (!vaultHandle) {
-          this.deps.setStatus("idle");
-          return;
-        }
-
-        await this.deps.repository.saveToDisk(
-          vaultHandle,
-          vaultIdAtStart,
-          latestEntity,
-          this.deps.isGuest(),
-        );
-
-        const path = latestEntity._path || [`${latestEntity.id}.md`];
-        await cacheService.set(
-          `${vaultIdAtStart}:${path.join("/")}`,
-          Date.now(),
-          latestEntity,
-        );
-
-        this.markContentLoaded(latestEntity.id);
-        this.deps.setStatus("idle");
-      } catch (error) {
-        debugStore.error("[EntityStore] Failed to save entity to disk", error);
-        this.deps.setStatus("error");
-        this.deps.setErrorMessage("Failed to access storage for saving.");
-      }
+      this._saveTimers.set(
+        id,
+        setTimeout(() => {
+          this._saveTimers.delete(id);
+          this._saveResolvers.delete(id);
+          this.deps.repository.saveQueue
+            .enqueue(id, () => this._persistEntity(id, vaultIdAtStart))
+            .then(() => resolvers.forEach((r) => r()))
+            .catch(() => resolvers.forEach((r) => r()));
+        }, SAVE_DEBOUNCE_MS),
+      );
     });
+  }
+
+  /**
+   * Flush all pending debounce timers immediately, then wait for the
+   * save queue to drain. Called by lifecycle before vault switching.
+   */
+  async flushPendingSaves(): Promise<void> {
+    for (const [id, timer] of this._saveTimers) {
+      clearTimeout(timer);
+      this._saveTimers.delete(id);
+      const resolvers = this._saveResolvers.get(id) ?? [];
+      this._saveResolvers.delete(id);
+      const vaultId = this.deps.activeVaultId();
+      if (vaultId) {
+        await this.deps.repository.saveQueue.enqueue(id, () =>
+          this._persistEntity(id, vaultId),
+        );
+      }
+      resolvers.forEach((r) => r());
+    }
+    await this.deps.repository.waitForAllSaves();
+  }
+
+  private async _persistEntity(
+    id: string,
+    vaultIdAtStart: string,
+  ): Promise<void> {
+    let latestEntity = this.entities[id];
+    if (!latestEntity) return;
+
+    if (!this.isContentLoaded(id)) {
+      await this.internalLoadContent(id);
+      latestEntity = this.entities[id] || latestEntity;
+    }
+
+    this.deps.setStatus("saving");
+    try {
+      const vaultHandle =
+        await this.deps.getSpecificVaultHandle(vaultIdAtStart);
+      if (!vaultHandle) {
+        this.deps.setStatus("idle");
+        return;
+      }
+
+      await this.deps.repository.saveToDisk(
+        vaultHandle,
+        vaultIdAtStart,
+        latestEntity,
+        this.deps.isGuest(),
+      );
+
+      const path = latestEntity._path || [`${latestEntity.id}.md`];
+      await cacheService.set(
+        `${vaultIdAtStart}:${path.join("/")}`,
+        Date.now(),
+        latestEntity,
+      );
+
+      this.markContentLoaded(latestEntity.id);
+      this.deps.setStatus("idle");
+    } catch (error) {
+      debugStore.error("[EntityStore] Failed to save entity to disk", error);
+      this.deps.setStatus("error");
+      this.deps.setErrorMessage("Failed to access storage for saving.");
+    }
   }
 
   // --- CRUD Operations ---
@@ -291,19 +344,19 @@ export class EntityStore {
       }
 
       savePromises.push(this.scheduleSave(merged));
-
-      vaultEventBus.emit({
-        type: "ENTITY_UPDATED",
-        vaultId: this.deps.activeVaultId() || "unknown",
-        entity: merged,
-        patch,
-      });
     }
 
     if (hasChanges) {
       this.entities = newEntities;
       if (this.deps.onBatchUpdate) this.deps.onBatchUpdate(appliedUpdates);
       await Promise.all(savePromises);
+
+      vaultEventBus.emit({
+        type: "BATCH_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        entities: Object.keys(appliedUpdates).map((id) => newEntities[id]),
+      });
+
       return true;
     }
     return false;
@@ -533,18 +586,19 @@ export class EntityStore {
     );
     if (modifiedIds.length > 0) {
       this.entities = entities;
+      const changed: LocalEntity[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
           await this.scheduleSave(entity);
-          vaultEventBus.emit({
-            type: "ENTITY_UPDATED",
-            vaultId: this.deps.activeVaultId() || "unknown",
-            entity,
-            patch: { labels: entity.labels },
-          });
+          changed.push(entity);
         }
       }
+      vaultEventBus.emit({
+        type: "BATCH_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        entities: changed,
+      });
     }
     return modifiedIds.length;
   }
@@ -557,18 +611,19 @@ export class EntityStore {
     );
     if (modifiedIds.length > 0) {
       this.entities = entities;
+      const changed: LocalEntity[] = [];
       for (const id of modifiedIds) {
         const entity = entities[id];
         if (entity) {
           await this.scheduleSave(entity);
-          vaultEventBus.emit({
-            type: "ENTITY_UPDATED",
-            vaultId: this.deps.activeVaultId() || "unknown",
-            entity,
-            patch: { labels: entity.labels },
-          });
+          changed.push(entity);
         }
       }
+      vaultEventBus.emit({
+        type: "BATCH_UPDATED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        entities: changed,
+      });
     }
     return modifiedIds.length;
   }
@@ -682,23 +737,12 @@ export class EntityStore {
     if (this._contentVerifiedIds.has(id)) return;
 
     try {
-      const path = currentEntity._path || [`${id}.md`];
+      // PRIORITY 2: OPFS (canonical source of truth)
+      let result = await this._readFromOpfs(id);
 
-      const readFileAsText =
-        this._helpers.readFileAsText ||
-        (await import("../../utils/opfs")).readFileAsText;
-
-      let text = "";
-      const vaultDir = await this.deps.getActiveVaultHandle();
-      if (vaultDir) {
-        try {
-          text = await readFileAsText(vaultDir, path);
-        } catch {
-          // Fall through
-        }
-      }
-
-      if (!text) {
+      // PRIORITY 3: Local FS fallback if OPFS had nothing
+      if (!result) {
+        const path = currentEntity._path || [`${id}.md`];
         const localHandle = await this.deps.getActiveSyncHandle();
         if (localHandle) {
           try {
@@ -706,7 +750,14 @@ export class EntityStore {
               (await localHandle.queryPermission({ mode: "read" })) ===
               "granted"
             ) {
-              text = await readFileAsText(localHandle, path);
+              const readFileAsText =
+                this._helpers.readFileAsText ||
+                (await import("../../utils/opfs")).readFileAsText;
+              const text = await readFileAsText(localHandle, path);
+              if (text) {
+                const { metadata, content } = parseMarkdown(text);
+                result = { content, lore: (metadata as any).lore || "" };
+              }
             }
           } catch (err) {
             debugStore.warn(
@@ -717,14 +768,12 @@ export class EntityStore {
         }
       }
 
-      if (text) {
-        const { metadata, content: freshContent } = parseMarkdown(text);
-        const freshLore = (metadata as any).lore || "";
-
+      if (result) {
         const entityToUpdate = this.entities[id];
         if (entityToUpdate) {
-          const finalContent = freshContent || entityToUpdate.content || "";
-          const finalLore = freshLore || entityToUpdate.lore || "";
+          const finalContent = result.content || entityToUpdate.content || "";
+          const finalLore = result.lore || entityToUpdate.lore || "";
+          const path = entityToUpdate._path || [`${id}.md`];
 
           const updatedEntity = {
             ...entityToUpdate,
@@ -733,7 +782,6 @@ export class EntityStore {
           };
 
           this.deps.repository.entities[id] = updatedEntity;
-
           this._contentLoadedIds.add(id);
           this._contentVerifiedIds.add(id);
 
@@ -766,29 +814,43 @@ export class EntityStore {
   }
 
   /**
-   * Internal helper to load content WITHOUT using the task queue.
+   * Read an entity's content directly from OPFS. Returns null if the file
+   * cannot be found or read. Shared by loadEntityContent and internalLoadContent.
+   */
+  private async _readFromOpfs(
+    id: string,
+  ): Promise<{ content: string; lore: string } | null> {
+    const entity = this.entities[id];
+    if (!entity) return null;
+    const path = entity._path || [`${id}.md`];
+    const vaultDir = await this.deps.getActiveVaultHandle();
+    if (!vaultDir) return null;
+    const readFileAsText =
+      this._helpers.readFileAsText ||
+      (await import("../../utils/opfs")).readFileAsText;
+    const text = await readFileAsText(vaultDir, path).catch(() => null);
+    if (!text) return null;
+    const parseMarkdown =
+      this._helpers.parseMarkdown ||
+      (await import("../../utils/markdown")).parseMarkdown;
+    const { metadata, content } = parseMarkdown(text);
+    return { content, lore: (metadata as any).lore || "" };
+  }
+
+  /**
+   * Load content from OPFS without going through the task queue.
+   * Used as a pre-save hydration step inside scheduleSave.
    */
   async internalLoadContent(id: string): Promise<void> {
     const currentEntity = this.entities[id];
     if (!currentEntity) return;
-
     try {
-      const path = currentEntity._path || [`${id}.md`];
-      const opfsModule = await import("../../utils/opfs");
-      const markdownModule = await import("../../utils/markdown");
-
-      const vaultDir = await this.deps.getActiveVaultHandle();
-      if (!vaultDir) return;
-
-      const text = await opfsModule.readFileAsText(vaultDir, path);
-      if (text) {
-        const { metadata, content } = markdownModule.parseMarkdown(text);
-        const lore = (metadata as any).lore || "";
-
+      const result = await this._readFromOpfs(id);
+      if (result) {
         this.deps.repository.entities[id] = {
           ...currentEntity,
-          content,
-          lore,
+          content: result.content,
+          lore: result.lore,
         };
         this._contentLoadedIds.add(id);
         this._contentVerifiedIds.add(id);
