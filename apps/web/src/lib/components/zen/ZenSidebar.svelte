@@ -3,6 +3,7 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
+  import LabelInput from "$lib/components/labels/LabelInput.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
   let {
@@ -92,13 +93,29 @@
   data-testid="zen-sidebar"
 >
   <!-- Labels -->
-  {#if entity?.labels && entity?.labels?.length > 0}
-    <div class="flex flex-wrap gap-1.5 mb-6">
-      {#each entity?.labels ?? [] as label}
-        <LabelBadge {label} />
-      {/each}
-    </div>
-  {/if}
+  <div class="mb-6 space-y-2">
+    {#if entity?.labels?.length}
+      <div class="flex flex-wrap gap-1.5">
+        {#each entity.labels as label}
+          <LabelBadge
+            {label}
+            removable={!vault.isGuest}
+            onRemove={() => {
+              if (entity) {
+                vault.removeLabel(entity.id, label).catch((err) => {
+                  console.error(`[ZenSidebar] Failed to remove label: ${err}`);
+                });
+              }
+            }}
+          />
+        {/each}
+      </div>
+    {/if}
+
+    {#if entity && !vault.isGuest}
+      <LabelInput entityId={entity.id} />
+    {/if}
+  </div>
 
   <!-- Image -->
   <div class="mb-6">
@@ -109,14 +126,14 @@
         <span class="icon-[lucide--lock] w-6 h-6 md:w-8 md:h-8 opacity-30"
         ></span>
         <span
-          class="text-[8px] md:text-[9px] font-bold uppercase font-header opacity-40"
+          class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
           >Hidden</span
         >
       </div>
     {:else if editState.isEditing}
       <div class="mb-4">
         <label
-          class="block text-[10px] text-theme-secondary font-bold mb-1"
+          class="block text-xs tracking-widest uppercase font-header text-theme-secondary font-bold mb-1"
           for="zen-entity-image-url">IMAGE URL</label
         >
         <input
@@ -140,7 +157,7 @@
           class="w-full h-auto max-h-[500px] object-contain opacity-90 group-hover:opacity-100 transition mx-auto"
         />
         <div
-          class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
+          class="absolute bottom-2 right-2 bg-theme-bg/70 text-theme-primary text-xs font-header tracking-widest uppercase px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 group-focus:opacity-100 transition"
         >
           Zoom
         </div>
@@ -154,12 +171,12 @@
             class="icon-[lucide--image] w-6 h-6 md:w-12 md:h-12 opacity-30 md:opacity-50"
           ></span>
           <span
-            class="text-[8px] md:text-[10px] font-bold uppercase font-header opacity-40"
+            class="text-xs font-bold uppercase font-header tracking-widest opacity-40"
             >No Image</span
           >
         </div>
 
-        {#if oracle.tier === "advanced" && !uiStore.liteMode && entity}
+        {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity}
           <button
             onclick={() => oracle.drawEntity(entity.id)}
             disabled={oracle.isLoading}
@@ -173,7 +190,7 @@
                 aria-hidden="true"
               ></span>
               <span
-                class="text-[7px] md:text-[10px] font-bold tracking-widest text-theme-primary text-center"
+                class="text-xs font-bold tracking-widest text-theme-primary text-center font-header uppercase"
                 aria-live="polite"
               >
                 {#if oracle.activeStyleTitle}
@@ -191,7 +208,7 @@
                 aria-hidden="true"
               ></span>
               <span
-                class="text-[8px] md:text-[10px] font-bold tracking-widest text-theme-primary relative z-10"
+                class="text-xs font-bold tracking-widest font-header text-theme-primary relative z-10 uppercase"
                 >DRAW VISUAL</span
               >
             {/if}
@@ -226,7 +243,7 @@
                 ></span>
                 <div class="flex-1 min-w-0">
                   <div
-                    class="text-[11px] text-theme-muted uppercase font-header"
+                    class="text-xs text-theme-muted uppercase tracking-widest font-header"
                   >
                     {conn.label}
                   </div>

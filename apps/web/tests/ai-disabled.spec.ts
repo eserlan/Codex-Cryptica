@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Lite Mode (No AI)", () => {
+test.describe("AI Disabled", () => {
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).DISABLE_ONBOARDING = true;
@@ -23,7 +23,7 @@ test.describe("Lite Mode (No AI)", () => {
     });
   });
 
-  test("Toggle Lite Mode ON removes AI entry points and silences network", async ({
+  test("Toggle AI Disabled ON removes AI entry points and silences network", async ({
     page,
   }) => {
     // 1. Setup network interception
@@ -36,27 +36,27 @@ test.describe("Lite Mode (No AI)", () => {
       },
     );
 
-    // 2. Open Settings and Toggle Lite Mode
+    // 2. Open Settings and Toggle AI Disabled
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: /^AI$/i }).click();
 
-    const liteModeToggle = page.getByLabel(/Lite Mode \(No AI\)/i);
-    await expect(liteModeToggle).toBeVisible();
-    await liteModeToggle.check();
+    const aiDisabledToggle = page.getByLabel(/AI Disabled/i);
+    await expect(aiDisabledToggle).toBeVisible();
+    await aiDisabledToggle.check();
 
     // 3. Close Settings
     await page.getByLabel("Close Settings").click();
 
     // 4. Create an entity and verify "Draw" button is hidden
     await page.evaluate(async () => {
-      await (window as any).vault.createEntity("character", "LiteHero", {
+      await (window as any).vault.createEntity("character", "AIDisabledHero", {
         content: "Just a hero.",
       });
     });
 
     // Select the entity to open detail panel
     await page.evaluate(() => {
-      (window as any).vault.selectedEntityId = "litehero";
+      (window as any).vault.selectedEntityId = "aidisabledhero";
     });
 
     // Verify "Draw" button is NOT visible
@@ -78,19 +78,19 @@ test.describe("Lite Mode (No AI)", () => {
 
     expect(aiCallDetected).toBe(false);
 
-    // Verify "Lite" indicator in Oracle header
-    const liteIndicator = page
+    // Verify "AI DISABLED" indicator in Oracle header
+    const aiDisabledIndicator = page
       .locator('[data-testid="oracle-sidebar-panel"]')
-      .getByText("LITE", { exact: true })
+      .getByText("AI DISABLED", { exact: true })
       .first();
-    await expect(liteIndicator).toBeVisible();
+    await expect(aiDisabledIndicator).toBeVisible();
   });
 
   test("Restricted Oracle supports /help command", async ({ page }) => {
-    // 1. Enable Lite Mode
+    // 1. Enable AI Disabled
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: /^AI$/i }).click();
-    await page.getByLabel(/Lite Mode \(No AI\)/i).check();
+    await page.getByLabel(/AI Disabled/i).check();
     await page.getByLabel("Close Settings").click();
 
     // 2. Open Oracle
@@ -100,7 +100,7 @@ test.describe("Lite Mode (No AI)", () => {
     ).toBeVisible();
 
     // 3. Trigger help via store (UI Enter key is flaky in tests)
-    await page.evaluate(() => (window as any).oracle.showHelp());
+    await page.evaluate(() => (window as any).oracle.ask("/help"));
 
     // 4. Verify help content
     await expect(page.getByText(/Restricted Mode Active/i)).toBeVisible();
@@ -116,7 +116,7 @@ test.describe("Lite Mode (No AI)", () => {
     ).toBeVisible();
 
     // 2. Trigger help via store
-    await page.evaluate(() => (window as any).oracle.showHelp());
+    await page.evaluate(() => (window as any).oracle.ask("/help"));
 
     // 3. Verify help content (AI Guide)
     await expect(page.getByText(/Oracle Command Guide/i)).toBeVisible();
@@ -124,11 +124,11 @@ test.describe("Lite Mode (No AI)", () => {
     await expect(page.locator('code:has-text("/create")')).toHaveCount(2);
   });
 
-  test("Lite Mode persists across reloads", async ({ page }) => {
-    // 1. Enable Lite Mode
+  test("AI Disabled persists across reloads", async ({ page }) => {
+    // 1. Enable AI Disabled
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: /^AI$/i }).click();
-    await page.getByLabel(/Lite Mode \(No AI\)/i).check();
+    await page.getByLabel(/AI Disabled/i).check();
     await page.getByLabel("Close Settings").click();
 
     // 2. Reload page
@@ -138,6 +138,6 @@ test.describe("Lite Mode (No AI)", () => {
     // 3. Verify it's still ON
     await page.getByTestId("settings-button").click();
     await page.getByRole("tab", { name: /^AI$/i }).click();
-    await expect(page.getByLabel(/Lite Mode \(No AI\)/i)).toBeChecked();
+    await expect(page.getByLabel(/AI Disabled/i)).toBeChecked();
   });
 });

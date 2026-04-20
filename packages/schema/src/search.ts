@@ -6,6 +6,7 @@ export interface SearchEntry {
   keywords?: string;
   path: string;
   updatedAt: number;
+  status?: "active" | "draft";
 }
 
 export interface SearchResult {
@@ -23,4 +24,5 @@ export interface SearchResult {
 export interface SearchOptions {
   limit?: number;
   threshold?: number;
+  includeDrafts?: boolean;
 }

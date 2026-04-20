@@ -1,6 +1,5 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
@@ -10,11 +9,13 @@
     entity,
     editState = $bindable(),
     scrollContainer = $bindable(),
+    onNavigate,
     showConnections = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
+    onNavigate: (id: string) => void;
     showConnections?: boolean;
   }>();
 
@@ -132,7 +133,7 @@
         {#if entity?.start_date}
           <div class="flex flex-col">
             <span
-              class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
             >
               {getTemporalLabel(entity?.type || "", "start")}
             </span>
@@ -144,7 +145,7 @@
         {#if entity?.end_date}
           <div class="flex flex-col">
             <span
-              class="text-[10px] text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
+              class="text-xs text-theme-secondary font-bold tracking-widest mb-1 uppercase font-header"
             >
               {getTemporalLabel(entity?.type || "", "end")}
             </span>
@@ -234,7 +235,7 @@
               <button
                 type="button"
                 class="flex-1 min-w-0 text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
-                onclick={() => uiStore.focusEntity(conn.targetId)}
+                onclick={() => onNavigate(conn.targetId)}
               >
                 {#if conn.isOutbound}
                   <span class="text-theme-secondary">{entity?.title}</span>

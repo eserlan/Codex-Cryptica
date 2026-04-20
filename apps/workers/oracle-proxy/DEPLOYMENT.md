@@ -131,7 +131,7 @@ Edit `wrangler.toml` to customize allowed origins:
 
 ```toml
 [vars]
-ALLOWED_ORIGINS = "https://codex-cryptica.com,https://staging.codex-cryptica.com"
+ALLOWED_ORIGINS = "https://codex-cryptica.com,https://staging.codexcryptica.com"
 ```
 
 Or set via Wrangler:

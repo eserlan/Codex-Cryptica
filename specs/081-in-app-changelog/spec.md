@@ -1,9 +1,10 @@
-# Feature Specification: In-App Changelog
+# Feature Specification: In-App & Dedicated Changelog
 
-**Feature Branch**: `feat/in-app-changelog`  
+**Feature Branch**: `feat/changelog-page`  
 **Created**: 2026-04-14  
-**Status**: Implemented  
-**Input**: User description: "in app change log so users will see the most recent features" (GitHub Issue #607)
+**Updated**: 2026-04-16 (Extended for Dedicated Page)  
+**Status**: In Progress  
+**Input**: User description: "in app change log so users will see the most recent features" (GitHub Issue #607) & "Changelog page" (GitHub Issue #637)
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -51,11 +52,41 @@ As a user, I want to see a concise list of high-impact changes rather than a tec
 
 ---
 
+### User Story 4 - Public Development History (Priority: P2)
+
+As a potential user or guest, I want to review the project's development velocity and history on a dedicated page without needing to enter the workspace, so I can assess the project's health.
+
+**Why this priority**: Improves transparency and project discoverability.
+
+**Independent Test**: Navigate to `/changelog` and verify the page loads with full release history.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am on the marketing landing page, **When** I click the "View Full Changelog" link, **Then** I should be taken to the `/changelog` page.
+2. **Given** I am on the `/changelog` page, **When** I scroll through the content, **Then** I should see all previous releases listed in reverse chronological order.
+
+---
+
+### User Story 5 - Deep Linking & Sharing (Priority: P3)
+
+As a community member, I want to share a link to a specific version's release notes, so I can highlight specific updates to others.
+
+**Why this priority**: Facilitates community discussion and focused communication.
+
+**Independent Test**: Append `#v0.18.0` to the `/changelog` URL and verify it scrolls to the correct section.
+
+**Acceptance Scenarios**:
+
+1. **Given** a direct link to a specific version, **When** I load the page, **Then** the browser should anchor to the specific release entry.
+
+---
+
 ### Edge Cases
 
 - **First-time Users**: Users with no `lastSeenVersion` in storage should see all relevant major/minor updates on their first visit (or have their version initialized to current to avoid overwhelm).
 - **Overlapping Modals**: The system should delay the changelog modal to avoid conflicting with onboarding tours or the welcome screen.
 - **Demo Mode**: The automatic trigger should be disabled in Demo Mode to avoid interrupting the scripted experience.
+- **Missing Release Content**: If `releases.json` is empty or malformed, the system should gracefully fail (e.g., showing a "No transmissions found" message).
 
 ## Requirements _(mandatory)_
 
@@ -66,6 +97,10 @@ As a user, I want to see a concise list of high-impact changes rather than a tec
 - **FR-003**: System MUST compare the current release versions against `lastSeenVersion` to determine if a notification is needed.
 - **FR-004**: System MUST allow users to dismiss the modal and update the `lastSeenVersion` accordingly.
 - **FR-005**: System MUST provide a manual entry point in the "About" section of the settings.
+- **FR-006**: System MUST provide a dedicated `/changelog` route within the `(marketing)` group.
+- **FR-007**: The `/changelog` page MUST be SEO-optimized and prerendered (SSR) for search engine indexing.
+- **FR-008**: The page SHOULD support anchor links for individual version sections.
+- **FR-009**: The Landing Page (Marketing Layer) MUST include a prominent link to the full Changelog.
 
 ### Key Entities
 
@@ -82,3 +117,5 @@ As a user, I want to see a concise list of high-impact changes rather than a tec
 - **SC-001**: 100% of returning users are prompted with a "What's New" modal upon their first visit after a minor/major version bump.
 - **SC-002**: Users can access the changelog manually in under 3 clicks from the main interface.
 - **SC-003**: The modal rendering is responsive and follows the theme's visual guidelines.
+- **SC-004**: The `/changelog` page achieves a "Good" rating for SEO (meta titles, descriptions, and crawlable content).
+- **SC-005**: Users can navigate from the public landing page to the full changelog in a single click.

@@ -92,7 +92,7 @@ Coverage reports are generated in the `coverage/` directory of each package and 
 The Lore Oracle (AI Assistant) uses Google Gemini. It can be used in two modes:
 
 1.  **User Provided Key**: Users enter their own API key in the settings. This is stored securely in their local browser (IndexedDB).
-2.  **Lite Mode (Shared Key)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" tier.
+2.  **Shared Key (Basic Tier)**: If `VITE_SHARED_GEMINI_KEY` is provided during build, all users can access the "Lite" model tier.
 
 **Important for Developers:** Because this is a static frontend application, any shared key provided at build time is **publicly visible** in the compiled JavaScript. To prevent abuse, you **must** restrict your API key in the [Google Cloud Console](https://console.cloud.google.com/):
 

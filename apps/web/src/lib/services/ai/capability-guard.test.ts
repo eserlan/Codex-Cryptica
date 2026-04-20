@@ -4,35 +4,33 @@ import { uiStore } from "../../stores/ui.svelte";
 
 vi.mock("../../stores/ui.svelte", () => ({
   uiStore: {
-    liteMode: false,
+    aiDisabled: false,
   },
 }));
 
 describe("capability-guard", () => {
   beforeEach(() => {
-    uiStore.liteMode = false;
+    uiStore.aiDisabled = false;
   });
 
   describe("assertAIEnabled", () => {
-    it("should not throw if liteMode is false", () => {
+    it("should not throw if aiDisabled is false", () => {
       expect(() => assertAIEnabled()).not.toThrow();
     });
 
-    it("should throw if liteMode is true", () => {
-      uiStore.liteMode = true;
-      expect(() => assertAIEnabled()).toThrow(
-        "AI features are disabled in Lite Mode.",
-      );
+    it("should throw if aiDisabled is true", () => {
+      uiStore.aiDisabled = true;
+      expect(() => assertAIEnabled()).toThrow("AI features are disabled.");
     });
   });
 
   describe("isAIEnabled", () => {
-    it("should return true if liteMode is false", () => {
+    it("should return true if aiDisabled is false", () => {
       expect(isAIEnabled()).toBe(true);
     });
 
-    it("should return false if liteMode is true", () => {
-      uiStore.liteMode = true;
+    it("should return false if aiDisabled is true", () => {
+      uiStore.aiDisabled = true;
       expect(isAIEnabled()).toBe(false);
     });
   });

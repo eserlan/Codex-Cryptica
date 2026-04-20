@@ -266,6 +266,14 @@
               View Features Overview
             </a>
 
+            <a
+              href="{base}/changelog"
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--history] w-3 h-3"></span>
+              View Full Changelog
+            </a>
+
             <div
               class="flex items-center gap-3 bg-theme-surface/50 px-4 py-2 rounded-lg border border-theme-border/30"
             >

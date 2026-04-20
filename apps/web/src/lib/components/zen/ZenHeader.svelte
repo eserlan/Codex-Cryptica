@@ -47,7 +47,7 @@
         <select
           bind:value={editState.type}
           aria-label="Entity Type"
-          class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-2"
+          class="bg-theme-bg border border-theme-primary text-theme-primary px-2 py-0.5 text-xs font-bold tracking-widest uppercase font-header focus:outline-none rounded ml-2"
         >
           {#each categories.list as cat}
             <option value={cat.id}>{cat.label || cat.id.toUpperCase()}</option>
@@ -55,7 +55,7 @@
         </select>
       {:else}
         <span
-          class="text-[10px] font-bold tracking-widest text-theme-primary uppercase font-header"
+          class="text-xs font-bold tracking-widest text-theme-primary uppercase font-header"
           >{entity?.type || ""}</span
         >
       {/if}

@@ -24,7 +24,7 @@
   });
 
   const close = () => {
-    uiStore.markVersionAsSeen(VERSION);
+    uiStore.markVersionAsSeen(releases[0]?.version ?? VERSION);
     uiStore.showChangelog = false;
   };
 

@@ -47,7 +47,7 @@
   data-testid="entities-section"
   class="flex flex-1 flex-col rounded-3xl border border-theme-border bg-theme-surface/80 p-4 sm:p-5 md:p-6"
 >
-  <div class="mb-4 flex items-center justify-between">
+  <header class="mb-4 flex items-center justify-between">
     <div class="flex items-center gap-2">
       <h2
         class="font-header text-xs uppercase tracking-[0.22em] text-theme-muted"
@@ -114,7 +114,7 @@
         </button>
       {/if}
     </div>
-  </div>
+  </header>
 
   {#if isLoading}
     <div class="py-10 text-center text-sm text-theme-muted">
