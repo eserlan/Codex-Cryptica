@@ -134,7 +134,7 @@ export class MapSessionStore {
     { previous: Token; timeoutId: number }
   >();
 
-    allTokens = $derived.by(() => Object.values(this.tokens));
+  allTokens = $derived.by(() => Object.values(this.tokens));
   activeTokenId = $derived(this.initiativeOrder[this.turnIndex] ?? null);
   selectedToken = $derived.by(() => {
     if (!this.selection) return null;
