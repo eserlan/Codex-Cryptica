@@ -441,6 +441,7 @@ describe("OracleActionExecutor - Detailed", () => {
       expect(mockContext.chatHistory.updateMessage).toHaveBeenCalledWith(
         expect.any(String),
         { content: "partial response" },
+        false,
       );
       expect(mockContext.chatHistory.messages.at(-1)?.content).toBe(
         "partial response",
