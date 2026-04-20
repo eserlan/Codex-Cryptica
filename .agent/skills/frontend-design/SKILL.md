@@ -14,8 +14,9 @@ Before coding, understand the context and commit to a BOLD aesthetic direction:
 
 - **Purpose**: What problem does this interface solve? Who uses it?
 - **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+- **Constraints**: Technical requirements (Svelte 5 Runes, Tailwind 4, Library-First architecture).
+- **STYLE GUARD**: Adhere strictly to `@docs/STYLE_GUIDE.md`. ALWAYS use semantic theme tokens (e.g., `text-theme-primary`) instead of hardcoded colors.
+- **Differentiation**: Use unique borders, textures, and typography that match the world-building context.
 
 **CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
 

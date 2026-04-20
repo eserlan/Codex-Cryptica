@@ -32,3 +32,8 @@
 
 **Learning:** Returning an array from a `$derived.by` block just to be used in a template's nested `.find()` loop results in `O(N)` lookups inside an `O(M)` loop (e.g. iterating over `categories` and calling `.find()` on `typeCounts`). Additionally, converting a `Map` to an `Array` using `.map()` and `.sort()` on every reactivity update generates GC pressure for arrays whose sort order isn't actually used.
 **Action:** In Svelte 5 `$derived.by` blocks computing keyed data for `#each` loops, return the `Map` directly. Then use `.get(id)` inside the `#each` loop to turn the `O(N)` array lookup into an `O(1)` Map lookup and eliminate intermediate array allocations.
+
+## 2026-04-16 - Avoid `.indexOf()` in Array Transformations in Svelte Reactive Blocks
+
+**Learning:** In highly reactive Svelte blocks (e.g., `$derived.by`), using `.indexOf()` inside array transformation callbacks like `.map()` degrades performance to O(N²).
+**Action:** Replace `.map().filter()` with an imperative `for` loop and use the loop index directly instead of calling `.indexOf()` on the parent array to achieve O(N) performance.

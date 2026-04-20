@@ -68,7 +68,7 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
+      class="px-4 py-2 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
     >
       <div class="flex items-center gap-2">
         <div
@@ -141,7 +141,7 @@
           onclick={() => oracle.toggle()}
           aria-label="Close oracle window"
         >
-          ✕
+          <span class="icon-[lucide--x] w-4 h-4"></span>
         </button>
       </div>
     </div>

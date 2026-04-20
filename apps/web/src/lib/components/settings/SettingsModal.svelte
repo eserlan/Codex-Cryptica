@@ -479,6 +479,26 @@
                     class="icon-[lucide--chevron-right] w-4 h-4 group-hover:translate-x-1 transition-transform"
                   ></span>
                 </button>
+
+                <a
+                  href="{base}/changelog"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-3 flex items-center justify-between p-4 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                >
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="icon-[lucide--history] w-5 h-5 text-theme-muted group-hover:text-theme-primary transition-colors"
+                    ></span>
+                    <span
+                      class="text-sm font-bold uppercase font-header tracking-widest text-theme-muted group-hover:text-theme-text transition-colors"
+                      >Full Chronology</span
+                    >
+                  </div>
+                  <span
+                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-hover:translate-x-1 transition-all"
+                  ></span>
+                </a>
               </div>
             </section>
 

@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createZenModeActions } from "./useZenModeActions.svelte";
 
+vi.mock("$lib/utils/zen-popout", () => ({
+  openEntityPopout: vi.fn(),
+}));
+
+import { openEntityPopout } from "$lib/utils/zen-popout";
+
 describe("useZenModeActions", () => {
   let mockUiStore: any;
   let mockVault: any;
@@ -197,6 +203,45 @@ describe("useZenModeActions", () => {
       await actions.handleClose(onClose);
       expect(onClose).toHaveBeenCalled();
       expect(mockEditState.isEditing).toBe(false);
+    });
+  });
+
+  describe("handlePopOut", () => {
+    const mockEntity = { id: "e1", title: "Pop" } as any;
+
+    beforeEach(() => {
+      mockVault.entities = { e1: mockEntity };
+      mockUiStore.showZenMode = false;
+      mockUiStore.mainViewMode = "visualization";
+      mockUiStore.closeZenMode = vi.fn();
+      mockUiStore.focusEntity = vi.fn();
+    });
+
+    it("should call openEntityPopout and close views", async () => {
+      mockUiStore.showZenMode = true;
+      const actions = createZenModeActions(mockEditState, {
+        uiStore: mockUiStore,
+        vault: mockVault,
+      });
+
+      await actions.handlePopOut("e1");
+
+      expect(openEntityPopout).toHaveBeenCalled();
+      expect(mockUiStore.closeZenMode).toHaveBeenCalled();
+    });
+
+    it("should close focus mode if active", async () => {
+      mockUiStore.showZenMode = false;
+      mockUiStore.mainViewMode = "focus";
+      const actions = createZenModeActions(mockEditState, {
+        uiStore: mockUiStore,
+        vault: mockVault,
+      });
+
+      await actions.handlePopOut("e1");
+
+      expect(openEntityPopout).toHaveBeenCalled();
+      expect(mockUiStore.focusEntity).toHaveBeenCalledWith(null);
     });
   });
 });

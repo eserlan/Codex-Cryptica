@@ -161,6 +161,7 @@
       <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_no_static_element_interactions -->
       <div
         data-testid="initiative-row"
+        role="application"
         draggable="true"
         onmousedown={(e) => e.stopPropagation()}
         ondragstart={() => (draggedIndex = index)}

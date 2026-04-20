@@ -497,6 +497,48 @@ describe("MapSessionStore", () => {
     expect(store.tokens[token!.id].ownerGuestName).toBe("Ava");
   });
 
+  it("computes initiativeEntries properly with hasActed logic", () => {
+    store.mode = "combat";
+    const t1 = store.addToken({ name: "A", x: 0, y: 0 })!;
+    const t2 = store.addToken({ name: "B", x: 0, y: 0 })!;
+    const t3 = store.addToken({ name: "C", x: 0, y: 0 })!;
+
+    store.setInitiativeValue(t1.id, 20);
+    store.setInitiativeValue(t2.id, 15);
+    store.setInitiativeValue(t3.id, 10);
+
+    // Order should be t1, t2, t3
+    expect(store.initiativeOrder).toEqual([t1.id, t2.id, t3.id]);
+
+    // Initial state: turnIndex 0 (t1's turn)
+    let entries = store.initiativeEntries;
+    expect(entries).toHaveLength(3);
+    expect(entries[0].hasActed).toBe(false); // active token hasn't "acted" in the sense of being passed
+    expect(entries[1].hasActed).toBe(false);
+    expect(entries[2].hasActed).toBe(false);
+
+    // Advance turn to t2 (turnIndex 1)
+    store.advanceTurn();
+    entries = store.initiativeEntries;
+    expect(entries[0].hasActed).toBe(true); // t1 is before turnIndex 1
+    expect(entries[1].hasActed).toBe(false); // active
+    expect(entries[2].hasActed).toBe(false); // yet to act
+
+    // Advance turn to t3 (turnIndex 2)
+    store.advanceTurn();
+    entries = store.initiativeEntries;
+    expect(entries[0].hasActed).toBe(true); // t1 is before turnIndex 2
+    expect(entries[1].hasActed).toBe(true); // t2 is before turnIndex 2
+    expect(entries[2].hasActed).toBe(false); // active
+
+    // Switch to exploration mode, hasActed should reset
+    store.mode = "exploration";
+    entries = store.initiativeEntries;
+    expect(entries[0].hasActed).toBe(false);
+    expect(entries[1].hasActed).toBe(false);
+    expect(entries[2].hasActed).toBe(false);
+  });
+
   it("rounds token coordinates before storing and broadcasting", () => {
     vi.useFakeTimers();
     const broadcaster = vi.fn();
