@@ -17,6 +17,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/llms.txt</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/llms-full.txt</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/terms</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
@@ -25,6 +35,12 @@
     <loc>https://codexcryptica.com/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/blog/vtt-introduction</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+    <lastmod>2026-04-14T10:00:00.000Z</lastmod>
   </url>
   <url>
     <loc>https://codexcryptica.com/blog/why-codex-cryptica-over-obsidian</loc>
