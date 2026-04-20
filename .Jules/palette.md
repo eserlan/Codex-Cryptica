@@ -12,3 +12,8 @@
 
 **Learning:** Found several full-screen or prominent overlay components (like ShareModal, MergeNodesDialog, and ConfirmationModal) that lacked proper ARIA dialog roles, making them opaque to screen readers.
 **Action:** Always wrap custom modal components with `role="dialog"`, `aria-modal="true"`, and explicitly link them to a title using `aria-labelledby` (with an `id` on the title element) to ensure screen readers correctly interpret them as focused dialogs.
+
+## 2026-04-14 - Semantic Buttons for Image Overlays
+
+**Learning:** Found instances where `<div>` elements with `onclick` handlers were used as interactive overlays on top of images (requiring `svelte-ignore` comments to bypass accessibility warnings). This practice breaks keyboard navigation and screen reader support.
+**Action:** Always replace interactive `<div>` elements with semantic `<button type="button">` elements. When using these as full-cover overlays (e.g., `absolute inset-0`), include `w-full h-full`, keyboard focus ring classes (e.g., `focus:ring-2`, `focus:outline-none`, `focus:opacity-100`), and descriptive `aria-label`s to ensure full accessibility and usability.

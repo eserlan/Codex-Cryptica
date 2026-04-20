@@ -129,10 +129,10 @@
             class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
           />
         {/await}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
-        <div
-          class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 cursor-pointer"
+        <button
+          type="button"
+          class="absolute inset-0 w-full h-full flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-theme-primary focus:outline-none transition-opacity bg-black/40 cursor-pointer"
+          aria-label={`Enter location: ${linkedMap.name}`}
           onclick={() => {
             mapStore.selectMap(linkedMap!.id, true);
             uiStore.closeZenMode();
@@ -144,7 +144,7 @@
           >
             Enter Location
           </span>
-        </div>
+        </button>
       </div>
     </div>
   {:else}
