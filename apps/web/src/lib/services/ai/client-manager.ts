@@ -220,7 +220,9 @@ export class DefaultAIClientManager {
           }
 
           const data = await response.json();
-          console.log("[OracleProxy] Received raw data:", data);
+          if (import.meta.env.DEV) {
+            console.log("[OracleProxy] Received raw data:", data);
+          }
 
           // Support for both text and image modalities by providing a safe text() helper
           // but always passing the full rawResponse for modality-specific services.
@@ -234,10 +236,12 @@ export class DefaultAIClientManager {
             .filter(Boolean)
             .join("");
 
-          console.log(
-            `[OracleProxy] Extracted text (${extractedText.length} chars):`,
-            extractedText.substring(0, 50) + "...",
-          );
+          if (import.meta.env.DEV) {
+            console.log(
+              `[OracleProxy] Extracted text (${extractedText.length} chars):`,
+              extractedText.substring(0, 50) + "...",
+            );
+          }
 
           return {
             response: {

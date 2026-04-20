@@ -553,9 +553,11 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
     const handlePartialResponse = (partial: string) => {
       assistantMsg.content = partial;
-      void context.chatHistory.updateMessage?.(assistantMsg.id, {
-        content: partial,
-      });
+      void context.chatHistory.updateMessage?.(
+        assistantMsg.id,
+        { content: partial },
+        false, // skip persistence during streaming
+      );
       onPartialResponse?.(partial);
     };
 
