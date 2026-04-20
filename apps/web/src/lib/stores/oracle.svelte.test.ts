@@ -259,17 +259,40 @@ describe("OracleStore", () => {
 
   describe("Domain Operations", () => {
     it("should handle drawEntity", async () => {
+      mockExecutor.drawEntity = vi.fn().mockResolvedValue(undefined);
       await oracle.drawEntity("entity-1");
-      expect(mockExecutor.execute).toHaveBeenCalledWith(
-        { type: "plot", entityId: "entity-1" },
+      expect(mockExecutor.drawEntity).toHaveBeenCalledWith(
+        "entity-1",
         expect.any(Object),
       );
     });
 
+    it("should track visualizing state for an entity draw", async () => {
+      let resolveDraw!: () => void;
+      mockExecutor.drawEntity = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveDraw = resolve;
+          }),
+      );
+
+      const drawPromise = oracle.drawEntity("entity-1");
+
+      expect(oracle.visualizingEntityId).toBe("entity-1");
+      expect(oracle.isVisualizingEntity("entity-1")).toBe(true);
+
+      resolveDraw();
+      await drawPromise;
+
+      expect(oracle.visualizingEntityId).toBe(null);
+      expect(oracle.isVisualizingEntity("entity-1")).toBe(false);
+    });
+
     it("should handle drawMessage", async () => {
+      mockExecutor.drawMessage = vi.fn().mockResolvedValue(undefined);
       await oracle.drawMessage("msg-1");
-      expect(mockExecutor.execute).toHaveBeenCalledWith(
-        { type: "plot", entityId: "msg-1" },
+      expect(mockExecutor.drawMessage).toHaveBeenCalledWith(
+        "msg-1",
         expect.any(Object),
       );
     });
@@ -282,6 +305,104 @@ describe("OracleStore", () => {
 
       await oracle.clearMessages();
       expect(mockChatHistory.clear).toHaveBeenCalled();
+    });
+
+    it("should pass related entity context into reconciliation updates", async () => {
+      (mockVault as any).entities = {
+        entity: {
+          id: "entity",
+          title: "Red Wizards of Thay",
+          type: "faction",
+          content: "Old chronicle",
+          lore: "Old lore",
+          connections: [{ target: "ally", type: "rules" }],
+        },
+        ally: {
+          id: "ally",
+          title: "Szass Tam",
+          type: "npc",
+          content: "Lich-regent",
+          lore: "Commands the faction",
+        },
+      };
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi
+        .fn()
+        .mockResolvedValue({
+          content: "Updated chronicle",
+          lore: "Updated lore",
+        });
+
+      await oracle.reconcileDiscoveryProposal({
+        entityId: "entity",
+        title: "Red Wizards of Thay",
+        type: "faction",
+        draft: {
+          chronicle: "New chronicle",
+          lore: "New lore mentioning Szass Tam",
+        },
+        confidence: 0.9,
+      });
+
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "test-key",
+        "test-model",
+        mockVault.entities.entity,
+        {
+          chronicle: "New chronicle",
+          lore: "New lore mentioning Szass Tam",
+        },
+        [
+          expect.objectContaining({
+            title: "Szass Tam",
+            type: "npc",
+          }),
+        ],
+      );
+    });
+
+    it("should fall back to a local append update when AI is disabled", async () => {
+      (mockUiStore as any).aiDisabled = true;
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+      (mockVault as any).entities = {
+        entity: {
+          id: "entity",
+          title: "Valindra Shadowmantle",
+          type: "npc",
+          content: "Existing chronicle",
+          lore: "Existing lore",
+          connections: [],
+        },
+      };
+
+      const result = await oracle.reconcileDiscoveryProposal({
+        entityId: "entity",
+        title: "Valindra Shadowmantle",
+        type: "npc",
+        draft: {
+          chronicle: "New chronicle",
+          lore: "Fresh discovery lore",
+        },
+        confidence: 0.9,
+      });
+
+      expect(result).toEqual({
+        content: "Existing chronicle",
+        lore: "Existing lore\n\nFresh discovery lore",
+      });
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).not.toHaveBeenCalled();
+
+      (mockUiStore as any).aiDisabled = false;
+    });
+
+    it("should expose searchService through the oracle execution context", () => {
+      const context = oracle.getExecutionContext();
+
+      expect(context.searchService).toBeDefined();
+      expect(typeof context.searchService.search).toBe("function");
     });
 
     it("should toggle open and modal states", async () => {

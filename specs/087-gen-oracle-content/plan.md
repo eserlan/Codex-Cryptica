@@ -5,7 +5,7 @@
 
 ## Summary
 
-Implement a proactive entity discovery and drafting system that works "under-the-hood" during Oracle chat. The system will silently identify new and existing entities mentioned in conversation, prepare background drafts (Lore, Chronicle, Type), and present them as unobtrusive UI actions. It includes an optional "Auto-Archive" mode for zero-friction persistence of discovered lore.
+Implement a proactive entity discovery and drafting system that works "under-the-hood" during Oracle chat. The system will silently identify new and existing entities mentioned in conversation, prepare background drafts (Lore, Chronicle, Type), and present them as unobtrusive UI actions. It includes an optional "Auto-Archive" mode for zero-friction persistence of discovered lore, and seeds the existing connection proposer flow after Oracle-driven create/update so related connection suggestions appear without a separate scan.
 
 ## Technical Context
 

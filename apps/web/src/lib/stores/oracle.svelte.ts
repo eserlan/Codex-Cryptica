@@ -1,6 +1,7 @@
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
+import { searchService as defaultSearchService } from "../services/search";
 import { entityDb } from "../utils/entity-db";
 import { graph as defaultGraph } from "./graph.svelte";
 import { vault as defaultVault } from "./vault.svelte";
@@ -9,6 +10,7 @@ import { sessionActivity } from "../services/SessionActivityService";
 import {
   DraftingEngine,
   draftingEngine as defaultDraftingEngine,
+  buildRelatedEntityContext,
   ChatHistoryService,
   OracleCommandParser,
   OracleActionExecutor,
@@ -17,6 +19,7 @@ import {
   type ChatMessage,
   type UndoableAction,
   type OracleExecutionContext,
+  type DiscoveryProposal,
 } from "@codex/oracle-engine";
 import {
   diceEngine as defaultDiceEngine,
@@ -31,6 +34,8 @@ export class OracleStore {
   isOpen = $state(false);
   isModal = $state(false);
   isInitialized = $state(false);
+  visualizingEntityId = $state<string | null>(null);
+  visualizingMessageId = $state<string | null>(null);
 
   // Dependencies
   private vault: typeof defaultVault;
@@ -40,6 +45,7 @@ export class OracleStore {
   private contextRetrieval: typeof defaultContextRetrieval;
   private textGeneration: typeof defaultTextGeneration;
   private imageGeneration: typeof defaultImageGeneration;
+  private searchService: typeof defaultSearchService;
   private diceEngine: typeof defaultDiceEngine;
   private diceParser: typeof defaultDiceParser;
   private sessionActivity: typeof sessionActivity;
@@ -60,6 +66,7 @@ export class OracleStore {
       contextRetrieval?: typeof defaultContextRetrieval;
       textGeneration?: typeof defaultTextGeneration;
       imageGeneration?: typeof defaultImageGeneration;
+      searchService?: typeof defaultSearchService;
       diceEngine?: typeof defaultDiceEngine;
       diceParser?: typeof defaultDiceParser;
       sessionActivity?: typeof sessionActivity;
@@ -77,6 +84,7 @@ export class OracleStore {
     this.contextRetrieval = deps.contextRetrieval ?? defaultContextRetrieval;
     this.textGeneration = deps.textGeneration ?? defaultTextGeneration;
     this.imageGeneration = deps.imageGeneration ?? defaultImageGeneration;
+    this.searchService = deps.searchService ?? defaultSearchService;
     this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
     this.diceParser = deps.diceParser ?? defaultDiceParser;
     this.sessionActivity = deps.sessionActivity ?? sessionActivity;
@@ -157,6 +165,7 @@ export class OracleStore {
       contextRetrieval: this.contextRetrieval,
       textGeneration: this.textGeneration,
       imageGeneration: this.imageGeneration,
+      searchService: this.searchService,
       diceParser: this.diceParser,
       diceEngine: this.diceEngine,
       diceHistory: this.diceHistory,
@@ -166,6 +175,23 @@ export class OracleStore {
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.modelName,
       isDemoMode: this.uiStore.isDemoMode,
+      proposeConnectionsForEntity: async (
+        entityId: string,
+        options?: { apply?: boolean; analysisText?: string },
+      ) => {
+        const { proposerStore } = await import("./proposer.svelte");
+        if (options?.apply) {
+          return proposerStore.analyzeAndApplyEntityById(
+            entityId,
+            options.analysisText,
+          );
+        }
+        return proposerStore.analyzeEntityById(
+          entityId,
+          false,
+          options?.analysisText,
+        );
+      },
       logActivity: (event) =>
         this.sessionActivity.addEvent({
           type: event.type,
@@ -208,17 +234,37 @@ export class OracleStore {
   }
 
   async drawEntity(entityId: string) {
-    await this.executor.execute(
-      { type: "plot", entityId },
-      this.getExecutionContext(),
-    );
+    if (this.visualizingEntityId === entityId) return;
+
+    this.visualizingEntityId = entityId;
+    try {
+      await this.executor.drawEntity(entityId, this.getExecutionContext());
+    } finally {
+      if (this.visualizingEntityId === entityId) {
+        this.visualizingEntityId = null;
+      }
+    }
   }
 
   async drawMessage(messageId: string) {
-    await this.executor.execute(
-      { type: "plot", entityId: messageId },
-      this.getExecutionContext(),
-    );
+    if (this.visualizingMessageId === messageId) return;
+
+    this.visualizingMessageId = messageId;
+    try {
+      await this.executor.drawMessage(messageId, this.getExecutionContext());
+    } finally {
+      if (this.visualizingMessageId === messageId) {
+        this.visualizingMessageId = null;
+      }
+    }
+  }
+
+  isVisualizingEntity(entityId: string | null | undefined) {
+    return Boolean(entityId && this.visualizingEntityId === entityId);
+  }
+
+  isVisualizingMessage(messageId: string | null | undefined) {
+    return Boolean(messageId && this.visualizingMessageId === messageId);
   }
 
   async clearHistory() {
@@ -243,6 +289,62 @@ export class OracleStore {
 
   async removeMessage(id: string) {
     await this.chatHistoryService.removeMessage(id);
+  }
+
+  async reconcileDiscoveryProposal(proposal: DiscoveryProposal) {
+    if (!proposal.entityId) {
+      throw new Error("Discovery proposal does not target an existing record.");
+    }
+
+    const existing = this.vault.entities[proposal.entityId];
+    if (!existing) {
+      throw new Error(`Entity ${proposal.entityId} was not found.`);
+    }
+
+    if (this.uiStore.aiDisabled || !this.textGeneration.reconcileEntityUpdate) {
+      return {
+        content: existing.content || proposal.draft.chronicle,
+        lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
+      };
+    }
+
+    return this.textGeneration.reconcileEntityUpdate(
+      this.effectiveApiKey || "",
+      this.modelName,
+      existing,
+      {
+        chronicle: proposal.draft.chronicle,
+        lore: proposal.draft.lore,
+      },
+      buildRelatedEntityContext({
+        entity: existing,
+        incoming: {
+          chronicle: proposal.draft.chronicle,
+          lore: proposal.draft.lore,
+        },
+        vault: this.vault,
+        getConsolidatedContext: (related) =>
+          this.contextRetrieval.getConsolidatedContext(related),
+      }),
+    );
+  }
+
+  async proposeConnectionsForEntity(
+    entityId: string,
+    options?: { apply?: boolean; analysisText?: string },
+  ) {
+    const { proposerStore } = await import("./proposer.svelte");
+    if (options?.apply) {
+      return proposerStore.analyzeAndApplyEntityById(
+        entityId,
+        options.analysisText,
+      );
+    }
+    return proposerStore.analyzeEntityById(
+      entityId,
+      false,
+      options?.analysisText,
+    );
   }
 
   async startWizard(type: "connection" | "merge") {

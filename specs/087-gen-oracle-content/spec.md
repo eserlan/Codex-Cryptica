@@ -62,6 +62,22 @@ As a lore keeper, I want the option to let the Oracle automatically commit detec
 
 ---
 
+### User Story 4 - Background Connection Seeding for Oracle Discoveries (Priority: P2)
+
+As a lore keeper, I want entities created or updated from Oracle chat to immediately feed the connection proposer, so that relationship suggestions appear without making me run a separate scan.
+
+**Why this priority**: Oracle-driven discovery captures the richest fresh context. Reusing that moment to seed connection analysis keeps the graph coherent without adding manual steps.
+
+**Independent Test**: Create or update an entity through normal Oracle chat discovery, then inspect that entity's proposal panel and see new pending connection suggestions generated through the existing proposer flow.
+
+**Acceptance Scenarios**:
+
+1. **Given** the Oracle creates a new entity from chat, **When** the record is committed manually or via Auto-Archive, **Then** the system triggers the existing connection proposer for that entity in the background.
+2. **Given** the Oracle updates an existing entity from chat, **When** the update is applied manually or via Auto-Archive, **Then** the system triggers the existing connection proposer for that entity in the background.
+3. **Given** connection analysis finds likely relationships, **When** proposals are ready, **Then** they are surfaced through the existing proposal UI from Feature 040 rather than silently creating graph edges.
+
+---
+
 ### Edge Cases
 
 - **False Positives**: What if the AI thinks a common noun or a passing mention is an entity? (Mitigation: Only propose drafts for entities with a "significant description"—defined as at least 100 characters of lore/chronicle content; allow easy dismissal of the "Add to Vault" suggestion).
@@ -69,6 +85,7 @@ As a lore keeper, I want the option to let the Oracle automatically commit detec
 - **Chat History vs. Instant Fact**: Should the AI use the whole session context to build the draft? (Yes, if Valerius was named in message 1 and described in message 4, the draft should synthesize both).
 - **Ambiguous Updates**: If fuzzy matching detects an existing entity but it's not a certain match (e.g., "The Alchemist" vs. "Valerius"), the system MUST propose "Update Valerius?" with an explicit confirmation rather than auto-updating.
 - **Update Conflicts**: If an entity is updated both manually and via a proposed Oracle update in the same session, the system MUST append the Oracle's new content to the end of the existing field (Lore or Chronicle) to prevent data loss.
+- **Proposal Flooding**: If the Oracle mentions many entities in one turn, background connection analysis should reuse the proposer safeguards from Feature 040 to avoid duplicate or already-existing links.
 
 ## Assumptions
 
@@ -89,6 +106,9 @@ As a lore keeper, I want the option to let the Oracle automatically commit detec
   - **FR-006.1**: Auto-archived actions MUST be notified via transient UI feedback (toasts/badges) AND recorded in a persistent session activity log.
   - **FR-006.2**: Users MUST be able to find and verify drafts via a dedicated "Review" tab AND see them on the graph canvas as "Ghost" nodes.
 - **FR-007**: System MUST handle multiple entity discoveries within a single chat message.
+- **FR-008**: System MUST trigger background connection proposal analysis for entities created or updated through Oracle discovery once they are committed to the vault.
+  - **FR-008.1**: This analysis MUST reuse the existing proposal persistence and review flow from Feature 040.
+  - **FR-008.2**: The system MUST surface suggested connections as proposals for user review rather than silently creating graph edges.
 
 ### Key Entities _(include if feature involves data)_
 

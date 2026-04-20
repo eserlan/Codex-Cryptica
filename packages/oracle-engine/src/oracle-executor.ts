@@ -6,6 +6,7 @@ import type {
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
+import { buildRelatedEntityContext } from "./reconciliation-context";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
@@ -173,11 +174,21 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         content: "",
         lore: "",
       });
+      const analysisText = this.buildCreateConnectionContext(name, context);
+      const appliedConnections =
+        (await context.proposeConnectionsForEntity?.(id, {
+          apply: true,
+          analysisText,
+        })) || 0;
+      const connectionSuffix =
+        appliedConnections > 0
+          ? ` and added ${appliedConnections} connection${appliedConnections === 1 ? "" : "s"}`
+          : "";
 
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
-        content: `✅ Created node: **${name}** (${type.toUpperCase()})`,
+        content: `✅ Created node: **${name}** (${type.toUpperCase()})${connectionSuffix}`,
       });
 
       context.vault.selectedEntityId = id;
@@ -189,6 +200,32 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         content: `❌ ${err.message}`,
       });
     }
+  }
+
+  private buildCreateConnectionContext(
+    name: string,
+    context: OracleExecutionContext,
+  ): string | undefined {
+    const recentMessages = (context.chatHistory?.messages || [])
+      .slice(-8)
+      .map((message: ChatMessage) => message.content?.trim())
+      .filter((content: string | undefined): content is string =>
+        Boolean(content),
+      );
+
+    if (recentMessages.length === 0) {
+      return undefined;
+    }
+
+    const joined = recentMessages.join("\n\n");
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const nameRegex = new RegExp(`\\b${escapedName}\\b`, "i");
+
+    if (nameRegex.test(joined)) {
+      return joined;
+    }
+
+    return `${name}\n\n${joined}`;
   }
 
   private async executeConnect(
@@ -662,19 +699,64 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                     entityType: p.type,
                     entityId: id,
                   });
+                  try {
+                    await context.proposeConnectionsForEntity?.(id);
+                  } catch (error: unknown) {
+                    console.warn(
+                      "[OracleExecutor] Failed to seed connection proposals",
+                      error,
+                    );
+                  }
                 } else {
-                  // Smart Update (Non-destructive append)
                   const existing = context.vault.entities[p.entityId];
                   if (existing) {
-                    await context.vault.updateEntity(p.entityId, {
-                      lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                    });
+                    if (context.textGeneration?.reconcileEntityUpdate) {
+                      const reconciled =
+                        await context.textGeneration.reconcileEntityUpdate(
+                          context.effectiveApiKey || "",
+                          context.modelName,
+                          existing,
+                          {
+                            chronicle: p.draft.chronicle,
+                            lore: p.draft.lore,
+                          },
+                          buildRelatedEntityContext({
+                            entity: existing,
+                            incoming: {
+                              chronicle: p.draft.chronicle,
+                              lore: p.draft.lore,
+                            },
+                            vault: context.vault,
+                            getConsolidatedContext: (related) =>
+                              context.contextRetrieval.getConsolidatedContext(
+                                related,
+                              ),
+                          }),
+                        );
+
+                      await context.vault.updateEntity(p.entityId, {
+                        content: reconciled.content,
+                        lore: reconciled.lore,
+                      });
+                    } else {
+                      await context.vault.updateEntity(p.entityId, {
+                        lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                      });
+                    }
                     context.logActivity?.({
                       type: "update",
                       title: p.title,
                       entityType: p.type,
                       entityId: p.entityId,
                     });
+                    try {
+                      await context.proposeConnectionsForEntity?.(p.entityId);
+                    } catch (error: unknown) {
+                      console.warn(
+                        "[OracleExecutor] Failed to seed connection proposals",
+                        error,
+                      );
+                    }
                   }
                 }
               }

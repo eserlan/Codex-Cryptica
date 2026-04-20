@@ -142,6 +142,10 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  proposeConnectionsForEntity?: (
+    entityId: string,
+    options?: { apply?: boolean; analysisText?: string },
+  ) => Promise<number | void>;
   logActivity?: (event: {
     type: "discovery" | "archive" | "update";
     title: string;

@@ -85,6 +85,8 @@
       defaultVisibility: vault.defaultVisibility,
     });
   });
+
+  const isVisualizing = $derived(oracle.isVisualizingEntity(entity?.id));
 </script>
 
 <div
@@ -179,12 +181,12 @@
         {#if oracle.tier === "advanced" && !uiStore.aiDisabled && entity}
           <button
             onclick={() => oracle.drawEntity(entity.id)}
-            disabled={oracle.isLoading}
+            disabled={isVisualizing}
             class="bg-theme-surface/50 hover:bg-theme-surface border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-4 md:py-2 rounded shadow-sm group/btn relative overflow-hidden mt-1 md:mt-2"
             aria-label="Draw visualization for {entity.title}"
-            aria-busy={oracle.isLoading}
+            aria-busy={isVisualizing}
           >
-            {#if oracle.isLoading}
+            {#if isVisualizing}
               <span
                 class="icon-[lucide--loader-2] w-3 h-3 md:w-5 md:h-5 animate-spin text-theme-primary"
                 aria-hidden="true"
@@ -213,6 +215,27 @@
               >
             {/if}
           </button>
+        {/if}
+
+        {#if isVisualizing}
+          <div
+            class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 border border-theme-primary/20"
+          >
+            <span
+              class="icon-[lucide--loader-2] w-6 h-6 animate-spin text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <div
+              class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-6"
+              aria-live="polite"
+            >
+              {#if oracle.activeStyleTitle}
+                Visualizing in {oracle.activeStyleTitle}
+              {:else}
+                Building Visual
+              {/if}
+            </div>
+          </div>
         {/if}
       </div>
     {/if}

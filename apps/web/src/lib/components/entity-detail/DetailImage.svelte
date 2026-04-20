@@ -21,6 +21,7 @@
   let resolvedImageUrl = $state("");
   let showLightbox = $state(false);
   let isDraggingOver = $state(false);
+  const isVisualizing = $derived(oracle.isVisualizingEntity(entity?.id));
 
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
@@ -197,12 +198,12 @@
           <div class="mt-1 md:mt-2">
             <button
               onclick={() => oracle.drawEntity(entity.id)}
-              disabled={oracle.isLoading}
+              disabled={isVisualizing}
               class="bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded shadow-sm group/btn relative overflow-hidden"
               aria-label="Draw visualization for {entity.title}"
-              aria-busy={oracle.isLoading}
+              aria-busy={isVisualizing}
             >
-              {#if oracle.isLoading}
+              {#if isVisualizing}
                 <span
                   class="icon-[lucide--loader-2] w-3 h-3 md:w-4 md:h-4 animate-spin text-theme-primary"
                   aria-hidden="true"
@@ -231,6 +232,27 @@
                 >
               {/if}
             </button>
+          </div>
+        {/if}
+
+        {#if isVisualizing}
+          <div
+            class="absolute inset-0 bg-theme-bg/75 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 border border-theme-primary/20"
+          >
+            <span
+              class="icon-[lucide--loader-2] w-5 h-5 animate-spin text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            <div
+              class="text-[8px] md:text-[9px] font-bold uppercase tracking-[0.2em] font-header text-theme-primary text-center px-4"
+              aria-live="polite"
+            >
+              {#if oracle.activeStyleTitle}
+                Visualizing in {oracle.activeStyleTitle}
+              {:else}
+                Building Visual
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
