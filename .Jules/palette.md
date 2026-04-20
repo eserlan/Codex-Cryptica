@@ -13,7 +13,7 @@
 **Learning:** Found several full-screen or prominent overlay components (like ShareModal, MergeNodesDialog, and ConfirmationModal) that lacked proper ARIA dialog roles, making them opaque to screen readers.
 **Action:** Always wrap custom modal components with `role="dialog"`, `aria-modal="true"`, and explicitly link them to a title using `aria-labelledby` (with an `id` on the title element) to ensure screen readers correctly interpret them as focused dialogs.
 
-## 2024-04-17 - Tablist Accessibility
+## 2026-04-17 - Tablist Accessibility
 
 **Learning:** Found custom tabbed interfaces (like in `BulkLabelDialog.svelte`) that were built with standard buttons but lacked proper ARIA tab roles, making them confusing for screen reader users who couldn't identify the grouped relationship or the selected state.
 **Action:** Always wrap tab groups with `role="tablist"` and `aria-label`, assign `role="tab"` and `aria-selected` to the tab buttons, and link them to their content using `role="tabpanel"`, `id`, and `aria-labelledby` to ensure the structure is correctly announced as an interactive tab list.
