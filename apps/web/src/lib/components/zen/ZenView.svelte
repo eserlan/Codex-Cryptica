@@ -233,8 +233,15 @@
       onStartEdit={startEditing}
       onCancelEdit={cancelEditing}
       onSave={saveChanges}
-      {onClose}
-      onPopOut={onPopOut ? handlePopOutClick : undefined}
+      onClose={() => actions.handleClose(onClose)}
+      onPopOut={typeof onPopOut === "function"
+        ? () => {
+            onPopOut();
+            handlePopOutClick();
+          }
+        : onPopOut
+          ? handlePopOutClick
+          : undefined}
     />
 
     <!-- Navigation Tabs -->

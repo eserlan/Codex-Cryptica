@@ -60,11 +60,19 @@
               datetime={release.date}
               class="text-xs font-header uppercase tracking-widest text-theme-muted"
             >
-              {new Date(release.date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {(() => {
+                // Parse "YYYY-MM-DD" safely without timezone shift
+                const [year, month, day] = release.date.split("-");
+                const d = new Date(
+                  Date.UTC(Number(year), Number(month) - 1, Number(day)),
+                );
+                return d.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  timeZone: "UTC",
+                });
+              })()}
             </time>
             <span class="hidden md:block flex-1 h-px bg-theme-border/30"></span>
             {#if release.type === "major" || release.type === "minor"}

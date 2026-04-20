@@ -20,5 +20,6 @@ describe("ZenContent connections wiring", () => {
     );
 
     expect(source).toContain("<ZenView");
+    expect(source).toContain("showConnections={true}");
   });
 });

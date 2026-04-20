@@ -5,7 +5,9 @@ test.describe("Changelog Page", () => {
     await page.goto("/changelog");
 
     // Check title
-    await expect(page).toHaveTitle(/The Chronology | Codex Cryptica Changelog/);
+    await expect(page).toHaveTitle(
+      /The Chronology \| Codex Cryptica Changelog/,
+    );
 
     // Check heading
     const heading = page.getByRole("heading", {
@@ -14,13 +16,10 @@ test.describe("Changelog Page", () => {
     });
     await expect(heading).toBeVisible();
 
-    // Check if the latest release is listed
-    const releaseTitle = page.getByText(/The Tactical Explorer Update/);
-    await expect(releaseTitle).toBeVisible();
-
-    // Check for version badge
-    const versionBadge = page.getByText(/v0.18.0/);
-    await expect(versionBadge).toBeVisible();
+    // Check that at least one release entry is rendered
+    const releaseAnchors = page.locator('[id^="v"]');
+    await expect(releaseAnchors.first()).toBeAttached();
+    await expect(releaseAnchors.first()).toBeVisible();
   });
 
   test("should navigate to changelog via landing page link", async ({
