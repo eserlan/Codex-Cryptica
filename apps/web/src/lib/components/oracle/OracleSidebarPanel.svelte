@@ -119,7 +119,7 @@
         onclick={() => uiStore.closeSidebar()}
         aria-label="Close panel"
       >
-        ✕
+        <span class="icon-[lucide--x] w-4 h-4"></span>
       </button>
     </div>
   </div>

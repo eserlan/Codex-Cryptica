@@ -62,6 +62,7 @@ export class SearchStore {
       type: entity.type,
       path,
       keywords,
+      status: entity.status,
       updatedAt: Date.now(),
     });
   }

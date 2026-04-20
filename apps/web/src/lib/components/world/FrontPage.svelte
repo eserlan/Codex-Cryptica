@@ -317,7 +317,7 @@
       <header
         class="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"
       >
-        <div class="w-full space-y-4 xl:pr-56">
+        <div class="w-full space-y-4 xl:pr-56 sr-only">
           <div
             class="inline-flex items-center gap-2 rounded-full border border-theme-primary/45 bg-theme-surface/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-theme-primary shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--color-theme-primary)_12%,transparent)] backdrop-blur-sm"
           >
@@ -333,19 +333,35 @@
         </div>
 
         {#if coverImage}
-          <FrontPageHero
-            {coverImageUrl}
-            {coverImage}
-            {showCoverEditor}
-            showPanel={false}
-            isSaving={worldStore.isSaving}
-            {onClose}
-            onOpenCoverEditor={openCoverEditor}
-            onCloseCoverEditor={closeCoverEditor}
-            onOpenLightbox={openCoverLightbox}
-            onUploadCover={handleUploadCover}
-            onGenerateCover={handleGenerateCover}
-          />
+          <div
+            class="flex items-center gap-2 max-xl:absolute max-xl:right-0 max-xl:top-0"
+          >
+            <button
+              class="inline-flex h-9 items-center rounded-full border border-theme-primary/45 px-4 text-[9px] font-bold uppercase tracking-[0.2em] text-theme-primary transition-colors hover:bg-theme-primary/12 hover:border-theme-primary/60 disabled:opacity-50"
+              onclick={openCoverEditor}
+              disabled={worldStore.isSaving}
+            >
+              Change Image
+            </button>
+            <button
+              class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+              onclick={openCoverLightbox}
+              aria-label="Open cover image lightbox"
+              title="Open cover image"
+            >
+              <span class="icon-[lucide--maximize-2] h-4 w-4"></span>
+            </button>
+            {#if onClose}
+              <button
+                class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-theme-border bg-theme-bg/70 text-theme-muted backdrop-blur-sm transition-colors hover:border-theme-primary/50 hover:text-theme-primary"
+                onclick={onClose}
+                aria-label="Close front page"
+                title="Close front page"
+              >
+                <span class="icon-[lucide--x] h-4 w-4"></span>
+              </button>
+            {/if}
+          </div>
         {:else if onClose}
           <div class="flex justify-end xl:absolute xl:right-0 xl:top-0">
             <button

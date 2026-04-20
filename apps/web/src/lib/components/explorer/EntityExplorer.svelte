@@ -1,5 +1,6 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
+  import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
   import { Database, X } from "lucide-svelte";
 
@@ -8,6 +9,11 @@
   function handleSelect(entity: Entity) {
     uiStore.openZenMode(entity.id);
   }
+
+  let explorerTab = $state<"all" | "review">("all");
+  let draftCount = $derived(
+    vault.allEntities.filter((e) => e.status === "draft").length,
+  );
 </script>
 
 <div
@@ -53,11 +59,40 @@
     </button>
   </div>
 
+  <!-- Tabs -->
+  <div class="flex border-b border-theme-border shrink-0 bg-theme-surface/30">
+    <button
+      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all {explorerTab ===
+      'all'
+        ? 'text-theme-primary border-b-2 border-theme-primary bg-theme-primary/5'
+        : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
+      onclick={() => (explorerTab = "all")}
+    >
+      All Entities
+    </button>
+    <button
+      class="flex-1 py-2 text-[10px] font-bold uppercase tracking-wider transition-all relative {explorerTab ===
+      'review'
+        ? 'text-theme-primary border-b-2 border-theme-primary bg-theme-primary/5'
+        : 'text-theme-muted hover:text-theme-text hover:bg-theme-surface/50'}"
+      onclick={() => (explorerTab = "review")}
+    >
+      Review
+      {#if draftCount > 0}
+        <span
+          class="ml-1 px-1.5 py-0.5 rounded-full bg-theme-primary text-theme-bg text-[8px]"
+          >{draftCount}</span
+        >
+      {/if}
+    </button>
+  </div>
+
   <!-- List -->
   <div class="flex-1 min-h-0 flex flex-col">
     <EntityList
       onSelect={handleSelect}
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+      showDraftsOnly={explorerTab === "review"}
     />
   </div>
 </div>

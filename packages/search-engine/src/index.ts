@@ -91,7 +91,7 @@ export class SearchEngine {
           minlength: 2,
         },
       ],
-      store: ["id", "title", "path", "content", "type"],
+      store: ["id", "title", "path", "content", "type", "status"],
     };
 
     this.index = new FlexSearch.Document(config);
@@ -197,6 +197,11 @@ export class SearchEngine {
 
         if (!id) {
           this.log("warn", `Could not extract ID from item:`, item);
+          continue;
+        }
+
+        // Filter out drafts unless explicitly included
+        if (entry?.status === "draft" && !options.includeDrafts) {
           continue;
         }
 

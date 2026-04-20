@@ -14,6 +14,7 @@
   import RollMessage from "./RollMessage.svelte";
   import ConnectionWizard from "./ConnectionWizard.svelte";
   import MergeWizard from "./MergeWizard.svelte";
+  import DiscoveryChip from "./DiscoveryChip.svelte";
   import {
     canOverrideTarget,
     getTargetEntityId,
@@ -212,6 +213,20 @@
                 <div class="bg-theme-border/20 h-3 w-[95%] rounded"></div>
               </div>
             {/if}
+          </div>
+        {/if}
+
+        {#if message.proposals && message.proposals.length > 0}
+          <div
+            class="mt-3 pt-2 border-t border-theme-border/30 flex flex-wrap gap-2 items-center"
+          >
+            <span
+              class="text-[9px] font-bold text-theme-primary/60 uppercase tracking-widest mr-1"
+              >Found Lore:</span
+            >
+            {#each message.proposals as proposal}
+              <DiscoveryChip {proposal} />
+            {/each}
           </div>
         {/if}
 
