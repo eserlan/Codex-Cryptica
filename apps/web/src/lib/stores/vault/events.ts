@@ -21,7 +21,9 @@ export type VaultEvent =
       patch: Partial<LocalEntity>;
     }
   | { type: "ENTITY_DELETED"; vaultId: string; entityId: string }
-  | { type: "BATCH_CREATED"; vaultId: string; entities: LocalEntity[] };
+  | { type: "BATCH_CREATED"; vaultId: string; entities: LocalEntity[] }
+  | { type: "BATCH_UPDATED"; vaultId: string; entities: LocalEntity[] }
+  | { type: "VAULT_SWITCHED"; vaultId: string };
 
 type VaultEventListener = (event: VaultEvent) => void | Promise<void>;
 

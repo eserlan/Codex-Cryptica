@@ -33,6 +33,10 @@ export class SyncStore {
 
   constructor(private deps: SyncStoreDependencies) {}
 
+  private isStale(vaultIdAtStart: string, signal: AbortSignal): boolean {
+    return this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted;
+  }
+
   async loadFiles(skipSyncIfWarm = true) {
     const activeVaultId = this.deps.activeVaultId();
     if (!activeVaultId) return;
@@ -72,8 +76,7 @@ export class SyncStore {
       const cachedMap = await cacheService.preloadVault(vaultIdAtStart);
 
       // Race check after async preload
-      if (this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted)
-        return;
+      if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (cachedMap.size > 0) {
         const entityMap: Record<string, LocalEntity> = {};
@@ -116,8 +119,7 @@ export class SyncStore {
 
       // 2. FS-Sync: Resolve OPFS handle
       const vaultDir = await this.deps.getActiveVaultHandle();
-      if (this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted)
-        return;
+      if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (!vaultDir) {
         if (this.status !== "idle") {
@@ -173,8 +175,7 @@ export class SyncStore {
         }
       }
 
-      if (this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted)
-        return;
+      if (this.isStale(vaultIdAtStart, signal)) return;
 
       if (cachedMap.size > 0) {
         this.status = "idle";
@@ -184,8 +185,7 @@ export class SyncStore {
         vaultIdAtStart,
         vaultDir,
         async (_chunk, current, total, newOrChanged) => {
-          if (this.deps.activeVaultId() !== vaultIdAtStart || signal.aborted)
-            return;
+          if (this.isStale(vaultIdAtStart, signal)) return;
 
           this.syncStats.total = total;
           this.syncStats.progress = Math.round((current / total) * 100);
