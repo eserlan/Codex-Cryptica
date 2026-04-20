@@ -224,8 +224,12 @@
       </div>
 
       <!-- Tabs -->
-      <div class="flex border-b border-theme-border">
+      <div class="flex border-b border-theme-border" role="tablist" aria-label="Bulk label actions">
         <button
+          role="tab"
+          aria-selected={activeTab === "apply"}
+          aria-controls="apply-label-panel"
+          id="apply-label-tab"
           class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'apply'
             ? 'text-theme-primary border-b-2 border-theme-primary'
@@ -235,6 +239,10 @@
           Apply Label
         </button>
         <button
+          role="tab"
+          aria-selected={activeTab === "remove"}
+          aria-controls="remove-label-panel"
+          id="remove-label-tab"
           class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'remove'
             ? 'text-theme-primary border-b-2 border-theme-primary'
@@ -248,6 +256,7 @@
       <!-- Body -->
       <div class="p-4 md:p-6 space-y-4 overflow-y-auto">
         {#if activeTab === "apply"}
+          <div role="tabpanel" id="apply-label-panel" aria-labelledby="apply-label-tab">
           <p class="text-xs md:text-sm text-theme-muted">
             Type a label name and press <kbd
               class="px-1 py-0.5 bg-theme-bg border border-theme-border rounded text-[10px] font-mono"
@@ -318,7 +327,10 @@
               Apply to all
             {/if}
           </button>
-        {:else if anyLabels.length === 0}
+          </div>
+        {:else}
+          <div role="tabpanel" id="remove-label-panel" aria-labelledby="remove-label-tab">
+          {#if anyLabels.length === 0}
           <div class="text-center py-8">
             <p class="text-sm text-theme-muted italic">
               No labels found on the selected {themeStore.resolveJargon(
@@ -327,7 +339,7 @@
               )}.
             </p>
           </div>
-        {:else}
+          {:else}
           <div class="space-y-4">
             <p class="text-xs md:text-sm text-theme-muted">
               Click a label to remove it from all selected {themeStore.resolveJargon(
@@ -363,6 +375,8 @@
                 )}. Others are present on at least one.
               </p>
             {/if}
+          </div>
+          {/if}
           </div>
         {/if}
       </div>
