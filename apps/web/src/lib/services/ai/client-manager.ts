@@ -220,16 +220,29 @@ export class DefaultAIClientManager {
           }
 
           const data = await response.json();
-          console.log("[OracleProxy] Received data:", data);
+          console.log("[OracleProxy] Received raw data:", data);
 
           // Support for both text and image modalities by providing a safe text() helper
           // but always passing the full rawResponse for modality-specific services.
-          const firstPart = data.candidates?.[0]?.content?.parts?.[0];
+          const candidates = data.candidates || [];
+          const firstCandidate = candidates[0];
+          const parts = firstCandidate?.content?.parts || [];
+
+          // Join all text parts (some models might return thoughts or multiple text parts)
+          const extractedText = parts
+            .map((p: any) => p.text || "")
+            .filter(Boolean)
+            .join("");
+
+          console.log(
+            `[OracleProxy] Extracted text (${extractedText.length} chars):`,
+            extractedText.substring(0, 50) + "...",
+          );
 
           return {
             response: {
-              text: () => firstPart?.text || "",
-              candidates: data.candidates || [],
+              text: () => extractedText,
+              candidates,
             },
             rawResponse: data,
           };

@@ -551,6 +551,14 @@ The Lore Oracle supports several slash commands to help you manage your vault:
     };
     await context.chatHistory.addMessage(assistantMsg);
 
+    const handlePartialResponse = (partial: string) => {
+      assistantMsg.content = partial;
+      void context.chatHistory.updateMessage?.(assistantMsg.id, {
+        content: partial,
+      });
+      onPartialResponse?.(partial);
+    };
+
     try {
       if (isImageRequest) {
         // Identify the primary entity to attach the image to, without triggering
@@ -593,7 +601,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           await this.generator.generateChatResponse(
             query,
             context,
-            onPartialResponse || (() => {}),
+            handlePartialResponse,
           );
 
         // Final update with entity context
