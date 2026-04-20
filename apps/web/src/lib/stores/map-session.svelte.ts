@@ -140,21 +140,26 @@ export class MapSessionStore {
     return this.tokens[this.selection] ?? null;
   });
   initiativeEntries = $derived.by(() => {
-    return this.initiativeOrder
-      .map((tokenId): InitiativeEntry | null => {
-        const token = this.tokens[tokenId];
-        if (!token) return null;
-        return {
+    const entries: InitiativeEntry[] = [];
+    const orderLength = this.initiativeOrder.length;
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
+    // to prevent intermediate array allocations and reduce GC pressure during highly reactive VTT updates.
+    for (let i = 0; i < orderLength; i++) {
+      const tokenId = this.initiativeOrder[i];
+      const token = this.tokens[tokenId];
+      if (token) {
+        entries.push({
           tokenId,
           initiativeValue: this.initiativeValues[tokenId] ?? 0,
           hasActed:
             this.mode === "combat" &&
             this.activeTokenId !== null &&
             this.activeTokenId !== tokenId &&
-            this.turnIndex > this.initiativeOrder.indexOf(tokenId),
-        };
-      })
-      .filter((entry): entry is InitiativeEntry => entry !== null);
+            this.turnIndex > i,
+        });
+      }
+    }
+    return entries;
   });
 
   constructor(private deps: MapSessionDependencies) {

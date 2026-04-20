@@ -32,3 +32,7 @@
 
 **Learning:** Returning an array from a `$derived.by` block just to be used in a template's nested `.find()` loop results in `O(N)` lookups inside an `O(M)` loop (e.g. iterating over `categories` and calling `.find()` on `typeCounts`). Additionally, converting a `Map` to an `Array` using `.map()` and `.sort()` on every reactivity update generates GC pressure for arrays whose sort order isn't actually used.
 **Action:** In Svelte 5 `$derived.by` blocks computing keyed data for `#each` loops, return the `Map` directly. Then use `.get(id)` inside the `#each` loop to turn the `O(N)` array lookup into an `O(1)` Map lookup and eliminate intermediate array allocations.
+## 2026-04-20 - [Performance Insight: O(N²) scaling in chained array methods]
+
+**Learning:** When using `.map()` to transform an array and simultaneously referencing the current element's index via an external `indexOf` lookup (e.g., `this.initiativeOrder.indexOf(tokenId)`), the overall operation silently scales to O(N²). This happens because `indexOf` is O(N) and executes once per element in the O(N) map.
+**Action:** Replace the chained `.map().filter()` containing the `indexOf` lookup with a single imperative `for` loop, utilizing the loop index directly (e.g., `for (let i = 0; i < len; i++)`) to achieve an O(N) transformation and eliminate unnecessary intermediate array allocation.
