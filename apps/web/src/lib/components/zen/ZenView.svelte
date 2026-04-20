@@ -191,6 +191,10 @@
 
   const ariaRole = $derived(uiStore.showZenMode ? "dialog" : "region");
   const ariaModal = $derived(uiStore.showZenMode ? "true" : undefined);
+
+  export function requestClose() {
+    actions.handleClose(onClose);
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

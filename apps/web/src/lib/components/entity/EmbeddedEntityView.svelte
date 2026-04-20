@@ -17,5 +17,5 @@
   transition:fade={{ duration: 200 }}
   data-testid="embedded-entity-view"
 >
-  <ZenView {entityId} showConnections={true} onClose={handleClose} />
+  <ZenView {entityId} onClose={handleClose} />
 </div>

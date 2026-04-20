@@ -6,7 +6,6 @@
   import { page } from "$app/state";
   import { openEntityPopout } from "$lib/utils/zen-popout";
   import ZenView from "../zen/ZenView.svelte";
-  import { useZenModeActions } from "$lib/hooks/useZenModeActions.svelte";
 
   const isPopout = $derived(
     /\/vault\/[^/]+\/entity\/[^/]+$/.test(page.url.pathname),
@@ -15,7 +14,7 @@
   let entityId = $derived(uiStore.zenModeEntityId);
   let entity = $derived(entityId ? vault.entities[entityId] : null);
 
-  const actions = useZenModeActions();
+  let zenViewComponent: ReturnType<typeof ZenView> | undefined = $state();
 
   // Close Zen Mode if the entity being viewed is deleted
   $effect(() => {
@@ -38,8 +37,10 @@
   };
 
   const handleBackdropClick = () => {
-    if (!isPopout) {
-      actions.handleClose(handleClose);
+    if (!isPopout && zenViewComponent) {
+      zenViewComponent.requestClose();
+    } else if (!isPopout) {
+      handleClose();
     }
   };
 
@@ -102,6 +103,7 @@
       onclick={(e) => e.stopPropagation()}
     >
       <ZenView
+        bind:this={zenViewComponent}
         {entityId}
         {isPopout}
         onClose={handleClose}
