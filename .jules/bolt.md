@@ -42,3 +42,8 @@
 
 **Learning:** Caching `Object.values(state)` on a class as a `$derived` property (e.g., `allTokens = $derived.by(() => Object.values(this.tokens));`) and then accessing it inside another `$derived` block (e.g., `MapView`'s `$derived.by` using `mapSession.allTokens`) avoids recursive array allocation issues and minimizes garbage collection overhead, compared to calling `Object.values(mapSession.tokens)` repeatedly within each dependent block.
 **Action:** Expose an `allX = $derived.by(() => Object.values(this.X))` property on store classes whenever `Object.values` is needed by multiple external reactive derivations, and use this cached property instead of calling `Object.values` inline.
+
+## 2026-04-21 - Avoid chaining array allocation operations for recent updates
+
+**Learning:** Svelte 5 stores often manage small bounded arrays like "recent searches" or "recent labels". Using `[newItem, ...arr.filter(...)]` or `.slice()` allocates multiple intermediate arrays on every update, increasing overhead for simple insertions.
+**Action:** Replace `...arr.filter()` or `.slice()` patterns for managing small, bounded recent lists with a single imperative loop that caps the array size.
