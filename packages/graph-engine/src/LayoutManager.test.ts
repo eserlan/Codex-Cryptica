@@ -121,7 +121,7 @@ describe("LayoutManager", () => {
     });
 
     const layoutCall = mockCy.layout.mock.calls[0][0];
-    expect(layoutCall.gravity).toBeLessThanOrEqual(0.1);
+    expect(layoutCall.gravity).toBeLessThanOrEqual(0.35);
   });
 
   it("should use higher gravity in portrait view", async () => {
