@@ -11,6 +11,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint lint:types",
+    "lint:fix": "turbo run lint -- --fix",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
     "test:e2e": "npm run test:e2e --workspace=web",

@@ -54,6 +54,7 @@ export default defineConfig({
     globals: true,
     pool: "threads",
     setupFiles: ["tests/setup.ts"],
+    // @ts-expect-error environmentMatchGlobs is valid at runtime in vitest 4.x but missing from the bundled types
     environmentMatchGlobs: [
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
@@ -101,7 +102,6 @@ export default defineConfig({
       ["src/lib/hooks/**", "node"],
       ["src/lib/workers/**", "node"],
       ["src/smoke*", "node"],
-      ["src/tests/**", "node"],
     ],
     coverage: {
       provider: "v8",
