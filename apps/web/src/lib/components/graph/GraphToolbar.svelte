@@ -15,6 +15,7 @@
       isInitial?: boolean,
       isForced?: boolean,
       caller?: string,
+      randomizeForced?: boolean,
     ) => Promise<void>;
     selectedCount: number;
   }>();

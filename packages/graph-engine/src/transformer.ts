@@ -407,6 +407,15 @@ export const getGraphStyle = (
 
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
+    // Reset opacity for image nodes — categoryStyles sets 0.4 which would bleed through portraits
+    ...(showImages
+      ? [
+          {
+            selector: "node[resolvedImage][resolvedImage != 'none']",
+            style: { "background-opacity": 1 },
+          },
+        ]
+      : []),
     {
       selector: "node[isRevealed]",
       style: {
@@ -437,6 +446,7 @@ export const getGraphStyle = (
       selector: "node:selected",
       style: {
         "background-color": tokens.surface,
+        "background-opacity": 1,
         "border-color": tokens.primary,
         "border-width": graph.nodeBorderWidth + 1,
         color: "#fff",
