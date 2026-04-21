@@ -17,3 +17,8 @@
 
 **Learning:** Found custom tabbed interfaces (like in `BulkLabelDialog.svelte`) that were built with standard buttons but lacked proper ARIA tab roles, making them confusing for screen reader users who couldn't identify the grouped relationship or the selected state.
 **Action:** Always wrap tab groups with `role="tablist"` and `aria-label`, assign `role="tab"` and `aria-selected` to the tab buttons, and link them to their content using `role="tabpanel"`, `id`, and `aria-labelledby` to ensure the structure is correctly announced as an interactive tab list.
+
+## 2026-04-19 - Clickable Div Accessibility
+
+**Learning:** Svelte `a11y_click_events_have_key_events` and `a11y_no_static_element_interactions` warnings on clickable `<div>` elements are best resolved by converting them to semantic `<button type="button">` elements.
+**Action:** When creating clickable overlays (like map entries) with `group-hover:opacity-100`, use a `<button>`, add an `aria-label`, and include `focus:opacity-100` plus a strong visible focus style such as `focus-visible:ring-2 focus-visible:ring-offset-2` so keyboard users can navigate to and trigger them natively without `svelte-ignore` comments.

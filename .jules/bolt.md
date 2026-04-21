@@ -37,3 +37,8 @@
 
 **Learning:** In highly reactive Svelte blocks (e.g., `$derived.by`), using `.indexOf()` inside array transformation callbacks like `.map()` degrades performance to O(N²).
 **Action:** Replace `.map().filter()` with an imperative `for` loop and use the loop index directly instead of calling `.indexOf()` on the parent array to achieve O(N) performance.
+
+## 2026-04-19 - [Performance Insight: Array allocation in Svelte 5 nested deriveds]
+
+**Learning:** Caching `Object.values(state)` on a class as a `$derived` property (e.g., `allTokens = $derived.by(() => Object.values(this.tokens));`) and then accessing it inside another `$derived` block (e.g., `MapView`'s `$derived.by` using `mapSession.allTokens`) avoids recursive array allocation issues and minimizes garbage collection overhead, compared to calling `Object.values(mapSession.tokens)` repeatedly within each dependent block.
+**Action:** Expose an `allX = $derived.by(() => Object.values(this.X))` property on store classes whenever `Object.values` is needed by multiple external reactive derivations, and use this cached property instead of calling `Object.values` inline.

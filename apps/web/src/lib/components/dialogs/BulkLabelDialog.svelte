@@ -182,23 +182,6 @@
     }
   };
 
-  const handleTabKeydown = (e: KeyboardEvent) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      activeTab = activeTab === "apply" ? "remove" : "apply";
-      const id = activeTab === "apply" ? "apply-label-tab" : "remove-label-tab";
-      document.getElementById(id)?.focus();
-    } else if (e.key === "Home") {
-      e.preventDefault();
-      activeTab = "apply";
-      document.getElementById("apply-label-tab")?.focus();
-    } else if (e.key === "End") {
-      e.preventDefault();
-      activeTab = "remove";
-      document.getElementById("remove-label-tab")?.focus();
-    }
-  };
-
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key === "Escape") onClose();
   };
@@ -245,8 +228,6 @@
         class="flex border-b border-theme-border"
         role="tablist"
         aria-label="Bulk label actions"
-        tabindex="0"
-        onkeydown={handleTabKeydown}
       >
         <button
           role="tab"
@@ -285,7 +266,6 @@
             role="tabpanel"
             id="apply-label-panel"
             aria-labelledby="apply-label-tab"
-            class="space-y-4"
           >
             <p class="text-xs md:text-sm text-theme-muted">
               Type a label name and press <kbd
@@ -366,7 +346,6 @@
             role="tabpanel"
             id="remove-label-panel"
             aria-labelledby="remove-label-tab"
-            class="space-y-4"
           >
             {#if anyLabels.length === 0}
               <div class="text-center py-8">
