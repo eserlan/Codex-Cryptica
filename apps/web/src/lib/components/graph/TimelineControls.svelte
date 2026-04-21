@@ -57,7 +57,7 @@
 <div class="flex items-center gap-2 flex-wrap pointer-events-auto">
   <button
     onclick={toggle}
-    class="px-3 py-1.5 rounded text-[10px] font-bold tracking-widest transition-all whitespace-nowrap
+    class="px-3 py-1.5 rounded text-xs font-bold tracking-widest transition-all whitespace-nowrap
     {graph.timelineMode
       ? 'bg-timeline-primary/20 text-timeline-primary border border-timeline-primary/50 shadow-[0_0_15px_rgba(var(--color-theme-accent-rgb),0.3)]'
       : 'bg-theme-surface/90 text-theme-muted border border-theme-border hover:border-theme-primary hover:text-theme-primary'}"
@@ -77,7 +77,7 @@
     >
       <button
         onclick={() => setAxis("x")}
-        class="px-3 py-1 rounded text-[9px] font-bold transition-all {graph.timelineAxis ===
+        class="px-3 py-1 rounded text-xs font-bold transition-all {graph.timelineAxis ===
         'x'
           ? 'bg-timeline-primary text-theme-bg'
           : 'text-theme-muted hover:text-timeline-primary'}"
@@ -88,7 +88,7 @@
       </button>
       <button
         onclick={() => setAxis("y")}
-        class="px-3 py-1 rounded text-[9px] font-bold transition-all {graph.timelineAxis ===
+        class="px-3 py-1 rounded text-xs font-bold transition-all {graph.timelineAxis ===
         'y'
           ? 'bg-timeline-primary text-theme-bg'
           : 'text-theme-muted hover:text-timeline-primary'}"
@@ -104,7 +104,7 @@
       transition:fade
     >
       <span
-        class="text-[9px] text-theme-muted font-bold uppercase font-header tracking-tighter"
+        class="text-xs text-theme-muted font-bold uppercase font-header tracking-tighter"
         >Scale</span
       >
       <input
@@ -126,7 +126,7 @@
     >
       <div class="flex items-center gap-2">
         <span
-          class="text-[9px] text-theme-muted font-bold uppercase font-header tracking-tighter"
+          class="text-xs text-theme-muted font-bold uppercase font-header tracking-tighter"
           >Range</span
         >
         <input
@@ -134,15 +134,15 @@
           bind:value={filterStart}
           onchange={applyRange}
           aria-label="Filter Start Year"
-          class="w-10 sm:w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
+          class="w-10 sm:w-12 bg-theme-surface border border-theme-border rounded px-1 text-xs text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
-        <span class="text-theme-muted text-[10px]">to</span>
+        <span class="text-theme-muted text-xs">to</span>
         <input
           type="number"
           bind:value={filterEnd}
           onchange={applyRange}
           aria-label="Filter End Year"
-          class="w-10 sm:w-12 bg-theme-surface border border-theme-border rounded px-1 text-[10px] text-timeline-primary text-center focus:border-theme-primary outline-none"
+          class="w-10 sm:w-12 bg-theme-surface border border-theme-border rounded px-1 text-xs text-timeline-primary text-center focus:border-theme-primary outline-none"
         />
       </div>
     </div>
