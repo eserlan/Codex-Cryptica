@@ -100,12 +100,12 @@
   style="background-image: var(--bg-texture-overlay)"
   data-testid="zen-content"
 >
-  <div class="max-w-3xl mx-auto space-y-8">
+  <div class="max-w-3xl mx-auto space-y-6">
     <!-- Temporal Data -->
     {#if editState.isEditing}
       <div class="bg-theme-surface p-4 rounded border border-theme-border">
         <h3
-          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest mb-4"
+          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest mb-3"
         >
           Timeline Configuration
         </h3>
@@ -161,7 +161,7 @@
     {#if editState.isEditing || isVisible}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--book-open] w-5 h-5"></span>
           {themeStore.jargon.chronicle_header}
@@ -193,7 +193,7 @@
     {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--scroll-text] w-5 h-5"></span>
           {themeStore.jargon.lore_header}
@@ -218,7 +218,7 @@
     {#if showConnections}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-3 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--link-2] w-5 h-5"></span>
           {themeStore.jargon.connections_header}
