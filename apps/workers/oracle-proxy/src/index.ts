@@ -254,24 +254,27 @@ function getCorsHeaders(
 export function isOriginAllowed(origin: string, env: Env): boolean {
   if (!origin) return false;
 
-  // When configured, ALLOWED_ORIGINS is an exact allowlist.
+  // 1. Check explicit allowlist if configured
   if (env.ALLOWED_ORIGINS) {
-    return env.ALLOWED_ORIGINS.split(",")
+    const isExplicitlyAllowed = env.ALLOWED_ORIGINS.split(",")
       .map((o) => o.trim())
       .filter(Boolean)
       .includes(origin);
+
+    if (isExplicitlyAllowed) return true;
   }
 
-  // Check default origins
+  // 2. Check default internal origins
   if (DEFAULT_ALLOWED_ORIGINS.includes(origin)) {
     return true;
   }
 
+  // 3. Allow Cloudflare Pages preview subdomains
   if (isCloudflarePagesPreviewOrigin(origin)) {
     return true;
   }
 
-  // Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
+  // 4. Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
   return isLoopbackOrigin(origin);
 }
 
@@ -282,9 +285,10 @@ function isCloudflarePagesPreviewOrigin(origin: string): boolean {
       return false;
     }
 
+    const hostname = url.hostname.toLowerCase();
     return (
-      url.hostname === "codex-cryptica.pages.dev" ||
-      url.hostname.endsWith(".codex-cryptica.pages.dev")
+      hostname === "codex-cryptica.pages.dev" ||
+      hostname.endsWith(".codex-cryptica.pages.dev")
     );
   } catch {
     return false;
