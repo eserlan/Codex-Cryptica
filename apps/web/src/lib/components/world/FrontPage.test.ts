@@ -163,26 +163,22 @@ vi.mock("$lib/stores/vault.svelte", () => ({
   },
 }));
 
-vi.mock("$lib/stores/ui.svelte", () => ({
-  uiStore: {
+vi.mock("$lib/stores/ui.svelte", () => {
+  const store = {
     dismissedLandingPage: false,
     dismissedWorldPage: false,
     skipWelcomeScreen: true,
     toggleWelcomeScreen: vi.fn(),
+    dismissWorldPage: vi.fn(),
     toggleSidebarTool: vi.fn(),
     openZenMode: vi.fn(),
     confirm: vi.fn().mockResolvedValue(true),
-  },
-  ui: {
-    dismissedLandingPage: false,
-    dismissedWorldPage: false,
-    skipWelcomeScreen: true,
-    toggleWelcomeScreen: vi.fn(),
-    toggleSidebarTool: vi.fn(),
-    openZenMode: vi.fn(),
-    confirm: vi.fn().mockResolvedValue(true),
-  },
-}));
+  };
+  store.dismissWorldPage.mockImplementation(() => {
+    store.dismissedWorldPage = true;
+  });
+  return { uiStore: store, ui: store };
+});
 
 vi.mock("$lib/stores/world.svelte", () => ({
   worldStore: Object.assign(worldStoreMock, {

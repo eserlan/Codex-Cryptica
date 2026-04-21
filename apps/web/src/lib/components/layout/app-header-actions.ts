@@ -7,5 +7,5 @@ export const openFrontPage = () => {
   vault.selectedEntityId = null;
   uiStore.toggleWelcomeScreen(true);
   uiStore.dismissedLandingPage = true;
-  uiStore.dismissedWorldPage = false;
+  uiStore.restoreWorldPage();
 };
