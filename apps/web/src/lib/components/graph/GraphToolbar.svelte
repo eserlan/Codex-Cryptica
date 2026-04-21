@@ -15,6 +15,7 @@
       isInitial?: boolean,
       isForced?: boolean,
       caller?: string,
+      randomizeForced?: boolean,
     ) => Promise<void>;
     selectedCount: number;
   }>();
@@ -197,7 +198,7 @@
         {/if}
         <button
           class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => onApplyLayout(false, true, "UI Redraw Button")}
+          onclick={() => onApplyLayout(false, true, "UI Redraw Button", true)}
           title="Redraw Layout"
           aria-label="Redraw Layout"
           ><span

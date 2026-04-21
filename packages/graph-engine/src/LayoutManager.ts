@@ -202,14 +202,16 @@ export class LayoutManager {
 
     const baseOptions = getDynamicLayoutOptions(cyNodes.length);
 
-    // Cap gravity based on aspect ratio to avoid excessive clumping
-    // Landscape: use a lower max gravity to allow horizontal spread
-    // Portrait: allow a slightly higher max to reduce extreme vertical drift
+    // Cap gravity based on aspect ratio
+    // Landscape: allow stronger gravity for the circular pull but cap extreme values
+    // Portrait: allow a bit more to counteract vertical drift
     const gravity = isLandscape
-      ? Math.min(baseOptions.gravity, 0.1)
-      : Math.min(baseOptions.gravity, 0.4);
+      ? Math.min(baseOptions.gravity, 0.35)
+      : Math.min(baseOptions.gravity, 0.5);
 
-    const shouldRandomize = randomize || (isForced && randomizeForced);
+    // Don't randomize if the user has explicitly locked positions via stableLayout
+    const shouldRandomize =
+      randomize || (isForced && randomizeForced && !options.stableLayout);
 
     this.currentLayout = this.cy.layout({
       ...baseOptions,
