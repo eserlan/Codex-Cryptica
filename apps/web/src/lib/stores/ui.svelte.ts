@@ -72,6 +72,23 @@ export class UIStore {
         this.skipWelcomeScreen = saved === "true";
       }
 
+      if (localStorage.getItem("codex_dismissed_landing") === "true") {
+        this.dismissedLandingPage = true;
+      }
+
+      const worldPageDismissedAt = localStorage.getItem(
+        "codex_world_page_dismissed_at",
+      );
+      if (worldPageDismissedAt !== null) {
+        const dismissedAt = parseInt(worldPageDismissedAt, 10);
+        const now = Date.now();
+        if (Number.isNaN(dismissedAt) || dismissedAt > now) {
+          localStorage.removeItem("codex_world_page_dismissed_at");
+        } else if (now - dismissedAt < 24 * 60 * 60 * 1000) {
+          this.dismissedWorldPage = true;
+        }
+      }
+
       const aiDisabled = localStorage.getItem("codex_ai_disabled");
       if (aiDisabled !== null) {
         this.aiDisabled = aiDisabled === "true";
@@ -251,6 +268,21 @@ export class UIStore {
   toggleWelcomeScreen(skip: boolean) {
     this.skipWelcomeScreen = skip;
     localStorage.setItem("codex_skip_landing", String(skip));
+  }
+
+  dismissLandingPage() {
+    this.dismissedLandingPage = true;
+    localStorage.setItem("codex_dismissed_landing", "true");
+  }
+
+  dismissWorldPage() {
+    this.dismissedWorldPage = true;
+    localStorage.setItem("codex_world_page_dismissed_at", String(Date.now()));
+  }
+
+  restoreWorldPage() {
+    this.dismissedWorldPage = false;
+    localStorage.removeItem("codex_world_page_dismissed_at");
   }
 
   toggleAiDisabled(enabled: boolean) {

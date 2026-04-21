@@ -36,12 +36,12 @@
   );
 
   const openInGraph = () => {
-    uiStore.dismissedWorldPage = true;
+    uiStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
   };
 
   const openInZenMode = () => {
-    uiStore.dismissedWorldPage = true;
+    uiStore.dismissWorldPage();
     vault.selectedEntityId = activity.id;
     uiStore.openZenMode(activity.id);
   };

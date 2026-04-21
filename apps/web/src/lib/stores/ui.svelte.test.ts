@@ -54,6 +54,8 @@ describe("UIStore", () => {
     localStorage.removeItem("codex_explorer_collapsed_label_groups");
     localStorage.removeItem("codex_vtt_sidebar_collapsed");
     localStorage.removeItem("codex_vtt_entity_list_collapsed");
+    localStorage.removeItem("codex_world_page_dismissed_at");
+    localStorage.removeItem("codex_dismissed_landing");
 
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
@@ -340,6 +342,86 @@ describe("UIStore", () => {
     uiStore.toggleWelcomeScreen(true);
     expect(uiStore.skipWelcomeScreen).toBe(true);
     expect(setItemSpy).toHaveBeenCalledWith("codex_skip_landing", "true");
+  });
+
+  it("should persist landing page dismissal to localStorage", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.dismissedLandingPage = false;
+    uiStore.dismissLandingPage();
+    expect(uiStore.dismissedLandingPage).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith("codex_dismissed_landing", "true");
+  });
+
+  it("should restore dismissedLandingPage from localStorage on init", () => {
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_dismissed_landing") return "true";
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedLandingPage).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("should dismiss world page and persist timestamp", () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+    uiStore.dismissedWorldPage = false;
+    uiStore.dismissWorldPage();
+    expect(uiStore.dismissedWorldPage).toBe(true);
+    expect(setItemSpy).toHaveBeenCalledWith(
+      "codex_world_page_dismissed_at",
+      expect.any(String),
+    );
+  });
+
+  it("should restore world page and clear timestamp", () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+    uiStore.dismissedWorldPage = true;
+    uiStore.restoreWorldPage();
+    expect(uiStore.dismissedWorldPage).toBe(false);
+    expect(removeItemSpy).toHaveBeenCalledWith("codex_world_page_dismissed_at");
+  });
+
+  it("should auto-dismiss world page on init when dismissed within 24h", () => {
+    const recentTimestamp = String(Date.now() - 30 * 60 * 1000); // 30 min ago
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return recentTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(true);
+    spy.mockRestore();
+  });
+
+  it("should not auto-dismiss world page on init when dismissed over 24h ago", () => {
+    const oldTimestamp = String(Date.now() - 25 * 60 * 60 * 1000); // 25h ago
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return oldTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(false);
+    spy.mockRestore();
+  });
+
+  it("should clear invalid/future world page timestamp on init", () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+    const futureTimestamp = String(Date.now() + 60 * 60 * 1000); // 1h in the future
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return futureTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(false);
+    expect(removeItemSpy).toHaveBeenCalledWith("codex_world_page_dismissed_at");
+    spy.mockRestore();
   });
 
   it("should calculate landing page visibility", () => {
