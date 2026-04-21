@@ -19,9 +19,9 @@ describe("Graph Theme Generation", () => {
       (s) => s.selector === "node",
     )?.style;
 
-    expect(scifiNode.shape).toBe("round-rectangle");
-    expect(fantasyNode.shape).toBe("round-rectangle");
-    expect(cyberpunkNode.shape).toBe("round-rectangle");
+    expect(scifiNode.shape).toBe("ellipse");
+    expect(fantasyNode.shape).toBe("ellipse");
+    expect(cyberpunkNode.shape).toBe("ellipse");
   });
 
   it("should generate different edge styles", () => {

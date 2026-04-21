@@ -8,6 +8,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   tile: true,
   tilingPaddingVertical: 60,
   tilingPaddingHorizontal: 60,
+  // gravity/repulsion/separation/edgeLength are always overridden by getDynamicLayoutOptions
   gravity: 0.25,
   nodeRepulsion: 18000,
   idealEdgeLength: 55,

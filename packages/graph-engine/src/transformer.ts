@@ -306,6 +306,7 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
+        "background-opacity": 1,
         "border-width": graph.nodeBorderWidth + 1,
         "border-color": tokens.primary,
       },

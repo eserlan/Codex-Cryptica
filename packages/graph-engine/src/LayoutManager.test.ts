@@ -161,6 +161,46 @@ describe("LayoutManager", () => {
     expect(layoutCall.gravity).toBeGreaterThan(0.1);
   });
 
+  it("should not randomize when stableLayout is on, even with randomizeForced", async () => {
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      false,
+      true,
+      "UI Redraw Button",
+      true,
+    );
+    const layoutCall = mockCy.layout.mock.calls[0][0];
+    expect(layoutCall.randomize).toBe(false);
+  });
+
+  it("should randomize when stableLayout is off and randomizeForced is true", async () => {
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+      },
+      false,
+      true,
+      "UI Redraw Button",
+      true,
+    );
+    const layoutCall = mockCy.layout.mock.calls[0][0];
+    expect(layoutCall.randomize).toBe(true);
+  });
+
   it("should call resize on apply", async () => {
     await layoutManager.apply({
       timelineMode: false,

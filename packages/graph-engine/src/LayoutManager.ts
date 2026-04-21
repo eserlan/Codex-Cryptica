@@ -209,7 +209,9 @@ export class LayoutManager {
       ? Math.min(baseOptions.gravity, 0.35)
       : Math.min(baseOptions.gravity, 0.5);
 
-    const shouldRandomize = randomize || (isForced && randomizeForced);
+    // Don't randomize if the user has explicitly locked positions via stableLayout
+    const shouldRandomize =
+      randomize || (isForced && randomizeForced && !options.stableLayout);
 
     this.currentLayout = this.cy.layout({
       ...baseOptions,
