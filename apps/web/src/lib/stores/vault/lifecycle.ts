@@ -3,6 +3,7 @@ import type { LocalEntity } from "./types";
 import { cacheService } from "../../services/cache.svelte";
 import type { SyncStore } from "./sync-store.svelte";
 import type { AssetStore } from "./asset-store.svelte";
+import { vaultEventBus } from "./events";
 
 export interface VaultLifecycleDependencies {
   syncStore: SyncStore;
@@ -11,6 +12,7 @@ export interface VaultLifecycleDependencies {
   activeVaultId: () => string | null;
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
   loadFiles: (skipSyncIfWarm?: boolean) => Promise<void>;
+  flushPendingSaves: () => Promise<void>;
   ensureServicesInitialized: () => Promise<void>;
   clearStorageCache: () => void;
   getEntities: () => Record<string, LocalEntity>;
@@ -160,8 +162,8 @@ export class VaultLifecycleManager {
     this.switchLock = this.switchLock.then(async () => {
       if (this.deps.activeVaultId() === id) return;
 
-      // Ensure all pending changes are written to the current vault before switching
-      await this.deps.repository.waitForAllSaves();
+      // Flush debounced saves and drain the queue before clearing state
+      await this.deps.flushPendingSaves();
 
       this.deps.repository.clear();
       this.deps.assetStore.clear();
@@ -169,7 +171,6 @@ export class VaultLifecycleManager {
       this.deps.canvasRegistry.clear();
       this.deps.setSelectedEntityId(null);
       this.deps.syncStore.setHasConflictFiles(false);
-      this.deps.syncStore.setStatus("loading");
 
       await this.deps.vaultRegistry.setActiveVault(id);
       this.deps.clearStorageCache();
@@ -178,6 +179,8 @@ export class VaultLifecycleManager {
       this.deps.setInitialized(true);
       this.deps.syncStore.setStatus("idle");
 
+      vaultEventBus.emit({ type: "VAULT_SWITCHED", vaultId: id });
+      // TODO: migrate remaining window listeners to vaultEventBus and remove this
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("vault-switched", { detail: { id } }),

@@ -96,7 +96,7 @@ The following secrets must be configured in GitHub repository settings:
 | ---------------------------------- | ---------------------------------------------------------------------------- |
 | `VITE_GOOGLE_CLIENT_ID`            | OAuth client ID                                                              |
 | `VITE_GEMINI_API_KEY`              | API key for the Lore Oracle                                                  |
-| `VITE_SHARED_GEMINI_KEY`           | Shared (lite mode) API key                                                   |
+| `VITE_SHARED_GEMINI_KEY`           | Shared API key for the basic/lite model tier                                 |
 | `CLOUDFLARE_ACCOUNT_ID`            | Cloudflare account ID                                                        |
 | `CLOUDFLARE_API_TOKEN`             | Cloudflare API token with Pages deploy permissions                           |
 | `DISCORD_WEBHOOK_URL_PROD_DEPLOY`  | Webhook URL for the prod-deployment Discord channel                          |

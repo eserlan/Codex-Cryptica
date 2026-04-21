@@ -20,6 +20,7 @@
     onDragEnd,
     onOpenZen,
     allowedTypes = null,
+    showDraftsOnly = false,
     class: className = "",
   }: {
     onSelect?: (entity: Entity) => void;
@@ -27,6 +28,7 @@
     onDragEnd?: () => void;
     onOpenZen?: (entity: Entity) => void;
     allowedTypes?: string[] | null;
+    showDraftsOnly?: boolean;
     class?: string;
   } = $props();
 
@@ -53,11 +55,17 @@
     const allEntities = vault.allEntities;
     const counts = new Map<string, number>();
     for (let i = 0; i < allEntities.length; i++) {
-      const type = allEntities[i].type;
-      if (allowedTypeSet && !allowedTypeSet.has(type)) {
+      const e = allEntities[i];
+      if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
         continue;
       }
-      counts.set(type, (counts.get(type) || 0) + 1);
+      if (showDraftsOnly && e.status !== "draft") {
+        continue;
+      }
+      if (!showDraftsOnly && e.status === "draft") {
+        continue;
+      }
+      counts.set(e.type, (counts.get(e.type) || 0) + 1);
     }
     return counts;
   });
@@ -72,6 +80,14 @@
       const e = allEntities[i];
 
       if (allowedTypeSet && !allowedTypeSet.has(e.type)) {
+        continue;
+      }
+
+      // Filter by draft status
+      if (showDraftsOnly && e.status !== "draft") {
+        continue;
+      }
+      if (!showDraftsOnly && e.status === "draft") {
         continue;
       }
 

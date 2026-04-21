@@ -79,7 +79,7 @@ describe("OracleCommandParser", () => {
       });
     });
 
-    it("should handle lite mode correctly", () => {
+    it("should handle ai disabled correctly", () => {
       const query = "Hello oracle";
       expect(OracleCommandParser.parse(query, true)).toEqual({
         type: "chat",

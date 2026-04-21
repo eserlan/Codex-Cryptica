@@ -749,7 +749,7 @@ describe("FrontPage", () => {
       expect.stringContaining('Write a high-level briefing for "Moonfall".'),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
-      expect.stringContaining("Current Conflict"),
+      expect.stringContaining("exactly three paragraphs of evocative prose"),
     );
     expect(mocks.generateBriefing).toHaveBeenCalledWith(
       expect.stringContaining("Sky-market politics and drone wars."),

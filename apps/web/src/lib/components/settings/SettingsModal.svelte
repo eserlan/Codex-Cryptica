@@ -278,7 +278,7 @@
                 <div>
                   <label
                     class="block text-sm font-bold text-theme-text uppercase font-header cursor-pointer"
-                    for="lite-mode-toggle">Lite Mode (No AI)</label
+                    for="ai-disabled-toggle">AI Disabled</label
                   >
                   <p class="text-[11px] text-theme-muted">
                     Disable all AI-powered features (Oracle chat, image
@@ -286,17 +286,17 @@
                   </p>
                 </div>
                 <input
-                  id="lite-mode-toggle"
+                  id="ai-disabled-toggle"
                   type="checkbox"
-                  checked={uiStore.liteMode}
+                  checked={uiStore.aiDisabled}
                   onchange={(e) =>
-                    uiStore.toggleLiteMode(e.currentTarget.checked)}
+                    uiStore.toggleAiDisabled(e.currentTarget.checked)}
                   class="w-4 h-4 accent-theme-primary cursor-pointer"
                 />
               </div>
 
               <div
-                class="transition-all duration-300 {uiStore.liteMode
+                class="transition-all duration-300 {uiStore.aiDisabled
                   ? 'opacity-40 grayscale pointer-events-none select-none'
                   : ''}"
               >
@@ -479,6 +479,26 @@
                     class="icon-[lucide--chevron-right] w-4 h-4 group-hover:translate-x-1 transition-transform"
                   ></span>
                 </button>
+
+                <a
+                  href="{base}/changelog"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-3 flex items-center justify-between p-4 bg-theme-surface border border-theme-border hover:border-theme-primary transition-all rounded group"
+                >
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="icon-[lucide--history] w-5 h-5 text-theme-muted group-hover:text-theme-primary transition-colors"
+                    ></span>
+                    <span
+                      class="text-sm font-bold uppercase font-header tracking-widest text-theme-muted group-hover:text-theme-text transition-colors"
+                      >Full Chronology</span
+                    >
+                  </div>
+                  <span
+                    class="icon-[lucide--external-link] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-hover:translate-x-1 transition-all"
+                  ></span>
+                </a>
               </div>
             </section>
 

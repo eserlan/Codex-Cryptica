@@ -96,6 +96,35 @@
     {/if}
   </div>
 
+  <!-- Auto-Archive Setting -->
+  <div class="mb-6 pt-6 border-t border-theme-border/30">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex-1">
+        <label
+          for="auto-archive-toggle"
+          class="text-sm text-theme-text font-bold uppercase font-header block cursor-pointer"
+          >Auto-Archive Discovered Lore</label
+        >
+        <p class="text-xs text-theme-muted mt-1 leading-relaxed">
+          When enabled, the Oracle will automatically save new characters,
+          locations, and items to your vault as drafts.
+        </p>
+      </div>
+      <label class="relative inline-flex items-center cursor-pointer">
+        <input
+          id="auto-archive-toggle"
+          type="checkbox"
+          class="sr-only peer"
+          checked={uiStore.autoArchive}
+          onchange={(e) => uiStore.toggleAutoArchive(e.currentTarget.checked)}
+        />
+        <div
+          class="w-11 h-6 bg-theme-border/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-theme-bg after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-theme-text after:border-theme-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-theme-primary"
+        ></div>
+      </label>
+    </div>
+  </div>
+
   <!-- API Key Management -->
   {#if !oracle.apiKey}
     <div class="pt-2 border-t border-theme-border">

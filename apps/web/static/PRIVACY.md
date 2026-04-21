@@ -22,7 +22,7 @@ If you use the AI features (Lore Oracle, Image Generation), your data is process
 
 - **Google Gemini:** Snippets of your current campaign context (entities and chronicles) are sent to Google's Gemini API to provide reasoning and generation.
 - **Data Usage:** According to Google's standard API terms, data sent via their paid/tier-based APIs is typically not used to train their global models.
-- **Opt-out:** You can disable all AI features by enabling "Lite Mode" in the settings.
+- **Opt-out:** You can disable all AI features by enabling "AI Disabled" in the settings.
 
 ## 4. Analytics and Telemetry
 

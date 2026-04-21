@@ -138,6 +138,10 @@
       </div>
     </div>
 
-    <EntityList onSelect={handleSelect} {onDragStart} />
+    <EntityList
+      onSelect={handleSelect}
+      {onDragStart}
+      onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+    />
   {/if}
 </div>

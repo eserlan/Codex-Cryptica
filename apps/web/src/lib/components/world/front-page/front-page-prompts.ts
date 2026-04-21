@@ -53,13 +53,12 @@ Theme:
 - Description: ${themeDescription}
 
 Requirements:
-- Start with 1 short atmospheric intro paragraph.
-- Follow with 3 to 5 markdown bullet points using bold labels such as **The Setting:**, **Current Conflict:**, **Key Players:**, or **Immediate Hook:** when they fit the world.
-- Clearly explain the setting, mood, and immediate premise.
-- Use specific details from the world instead of generic language.
-- Keep it readable, welcoming, and easy to scan.
-- Keep each bullet to one compact sentence.
-- Avoid headings and meta commentary.
+- Write exactly three paragraphs of evocative prose.
+- Paragraph 1: Set the scene, tone, and physical reality of the world.
+- Paragraph 2: Describe the central conflict, current tension, or immediate premise.
+- Paragraph 3: Provide a hook or call to action that defines what it's like to inhabit this setting.
+- Use specific details from the world context instead of generic language.
+- Do not use bullet points, headings, or meta-commentary.
 - Do not mention that you are an AI.
 
 Retrieved context:

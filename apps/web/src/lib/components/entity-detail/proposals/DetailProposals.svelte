@@ -9,7 +9,7 @@
   let showHistory = $state(false);
 
   $effect(() => {
-    if (uiStore.liteMode) return;
+    if (uiStore.aiDisabled) return;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     // Trigger analysis when viewing an entity
     if (vault.selectedEntityId && vault.status === "idle" && !isEditing) {
@@ -39,7 +39,7 @@
   };
 </script>
 
-{#if !uiStore.liteMode && (proposerStore.activeProposals.length > 0 || proposerStore.activeHistory.length > 0)}
+{#if !uiStore.aiDisabled && (proposerStore.activeProposals.length > 0 || proposerStore.activeHistory.length > 0)}
   <div
     class="mt-8 border-t border-theme-border pt-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
   >

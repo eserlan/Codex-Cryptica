@@ -21,7 +21,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<string> {
     if (!isAIEnabled()) return query;
     try {
-      const liteModel = this.aiClientManager.getModel(apiKey, TIER_MODES.lite);
+      const basicModel = this.aiClientManager.getModel(apiKey, TIER_MODES.lite);
 
       const conversationContext = history
         .slice(-4)
@@ -30,7 +30,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
 
       const prompt = buildQueryExpansionPrompt(conversationContext, query);
 
-      const result = await liteModel.generateContent(prompt);
+      const result = await basicModel.generateContent(prompt);
       const expanded = result.response.text().trim();
       console.log(
         `[TextGenerationService] Expanded query: "${query}" -> "${expanded}"`,

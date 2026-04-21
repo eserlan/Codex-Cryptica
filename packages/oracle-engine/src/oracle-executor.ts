@@ -5,12 +5,15 @@ import type {
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
+import { DraftingEngine, draftingEngine } from "./drafting-engine";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
+  private draftingEngine: DraftingEngine;
 
-  constructor(generator?: OracleGenerator) {
-    this.generator = generator || new OracleGenerator();
+  constructor(generator?: OracleGenerator, engine?: DraftingEngine) {
+    this.generator = generator ?? new OracleGenerator();
+    this.draftingEngine = engine ?? draftingEngine;
   }
   async execute(
     intent: OracleIntent,
@@ -79,13 +82,14 @@ export class OracleActionExecutor {
   }
 
   private async executeHelp(context: OracleExecutionContext) {
-    const isLite = context.uiStore.liteMode;
+    const isAIDisabled = context.uiStore.aiDisabled;
+
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       role: "system",
-      content: isLite
+      content: isAIDisabled
         ? `### Restricted Mode Active
-In Lite Mode, the Oracle is restricted to functional utility commands only. Natural language processing is disabled.
+AI features are disabled. The Oracle is restricted to functional utility commands only. Natural language processing is disabled.
 
 **Available Commands:**
 - \`/roll [formula]\`: Roll dice (e.g. \`/roll 2d20kh1 + 5\`).
@@ -414,12 +418,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
   }
 
   private async executePlot(subject: string, context: OracleExecutionContext) {
-    if (context.uiStore.liteMode) {
+    if (context.uiStore.aiDisabled) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
         content:
-          "❌ The /plot command is powered by AI and is disabled in Lite Mode. Disable Lite Mode in settings to use story tension analysis.",
+          "❌ The /plot command is powered by AI and is disabled. Enable AI in settings to use story tension analysis.",
       });
       return;
     }
@@ -532,7 +536,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         id: crypto.randomUUID(),
         role: "system",
         content:
-          "AI features are disabled in Lite Mode. Only utility slash commands are supported. Type /help for a list of available commands.",
+          "AI features are disabled. Only utility slash commands are supported. Type /help for a list of available commands.",
       });
       return;
     }
@@ -546,6 +550,16 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       type: isImageRequest ? "image" : "text",
     };
     await context.chatHistory.addMessage(assistantMsg);
+
+    const handlePartialResponse = (partial: string) => {
+      assistantMsg.content = partial;
+      void context.chatHistory.updateMessage?.(
+        assistantMsg.id,
+        { content: partial },
+        false, // skip persistence during streaming
+      );
+      onPartialResponse?.(partial);
+    };
 
     try {
       if (isImageRequest) {
@@ -589,7 +603,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           await this.generator.generateChatResponse(
             query,
             context,
-            onPartialResponse || (() => {}),
+            handlePartialResponse,
           );
 
         // Final update with entity context
@@ -602,6 +616,73 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         finalMsgs[assistantMsgIndex].sources = sourceIds;
         finalMsgs[assistantMsgIndex].hasDrawAction =
           context.tier === "advanced";
+
+        // Proactive Extraction
+        try {
+          const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
+          const engineToUse = context.draftingEngine ?? this.draftingEngine;
+          const proposals = await engineToUse.propose(combinedText, {
+            existingEntities: Object.values(context.vault.entities || {}),
+            history: context.chatHistory.messages,
+          });
+
+          if (proposals.length > 0) {
+            finalMsgs[assistantMsgIndex].proposals = proposals;
+
+            for (const p of proposals) {
+              context.logActivity?.({
+                type: "discovery",
+                title: p.title,
+                entityType: p.type,
+                entityId: p.entityId,
+              });
+            }
+
+            // Handle Auto-Archive if enabled (skip for guests and demo mode)
+            const autoArchiveEnabled = context.uiStore.autoArchive;
+            if (
+              autoArchiveEnabled &&
+              !context.vault.isGuest &&
+              !context.isDemoMode
+            ) {
+              for (const p of proposals) {
+                if (!p.entityId) {
+                  const id = await context.vault.createEntity(
+                    p.type as any,
+                    p.title,
+                    {
+                      lore: p.draft.lore,
+                      content: p.draft.chronicle,
+                      status: "draft",
+                    },
+                  );
+                  context.logActivity?.({
+                    type: "archive",
+                    title: p.title,
+                    entityType: p.type,
+                    entityId: id,
+                  });
+                } else {
+                  // Smart Update (Non-destructive append)
+                  const existing = context.vault.entities[p.entityId];
+                  if (existing) {
+                    await context.vault.updateEntity(p.entityId, {
+                      lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                    });
+                    context.logActivity?.({
+                      type: "update",
+                      title: p.title,
+                      entityType: p.type,
+                      entityId: p.entityId,
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch (extractErr) {
+          console.warn("[OracleExecutor] Extraction failed", extractErr);
+        }
 
         context.chatHistory.setMessages(finalMsgs);
       }

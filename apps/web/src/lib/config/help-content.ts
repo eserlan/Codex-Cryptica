@@ -243,11 +243,11 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.",
     icon: "icon-[lucide--play-circle]",
   },
-  "lite-mode": {
-    id: "lite-mode",
-    title: "Lite Mode (No AI)",
+  "ai-disabled": {
+    id: "ai-disabled",
+    title: "AI Disabled",
     content:
-      "Prefer a non-AI experience? Enable Lite Mode in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
+      "Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI-powered features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.",
     icon: "icon-[lucide--zap-off]",
   },
   "seo-prerendering": {
@@ -312,6 +312,20 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.",
     icon: "icon-[lucide--layout-panel-left]",
+  },
+  "proactive-discovery": {
+    id: "proactive-discovery",
+    title: "Proactive Discovery",
+    content:
+      "While you chat, the Oracle automatically identifies new characters, locations, and items. Look for 'Found Lore' chips at the bottom of messages to quickly add them to your vault.",
+    icon: "icon-[lucide--search-check]",
+  },
+  "draft-review": {
+    id: "draft-review",
+    title: "Reviewing Drafts",
+    content:
+      "Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.",
+    icon: "icon-[lucide--clipboard-check]",
   },
 };
 

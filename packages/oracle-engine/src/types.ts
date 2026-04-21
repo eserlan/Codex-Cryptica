@@ -31,6 +31,7 @@ export interface ChatMessage {
   rollResult?: any;
   hasDrawAction?: boolean;
   isDrawing?: boolean;
+  proposals?: DiscoveryProposal[];
 }
 
 /**
@@ -87,6 +88,34 @@ export interface UndoableAction {
   redo: () => Promise<void>;
 }
 
+import type { EntityType } from "schema";
+
+/**
+ * Transient draft state used during chat
+ */
+export interface PendingDraft {
+  id: string;
+  title: string;
+  type: EntityType;
+  description: string;
+  sourceMessageIds: string[];
+  state: "new" | "update";
+}
+
+/**
+ * Proposal for UI rendering (Discovery Chips)
+ */
+export interface DiscoveryProposal {
+  entityId?: string; // Present if 'update'
+  title: string;
+  type: EntityType;
+  draft: {
+    lore: string;
+    chronicle: string;
+  };
+  confidence: number;
+}
+
 /**
  * Oracle execution context
  * Provides all services needed for Oracle operations
@@ -94,7 +123,7 @@ export interface UndoableAction {
 export interface OracleExecutionContext {
   userId?: string;
   vaultId?: string;
-  liteMode?: boolean;
+  aiDisabled?: boolean;
   tier?: "lite" | "advanced";
   effectiveApiKey?: string | null;
   modelName: string;
@@ -112,4 +141,11 @@ export interface OracleExecutionContext {
   diceHistory?: any;
   graph?: any;
   undoRedo?: any;
+  draftingEngine?: any;
+  logActivity?: (event: {
+    type: "discovery" | "archive" | "update";
+    title: string;
+    entityType: string;
+    entityId?: string;
+  }) => void;
 }

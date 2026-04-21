@@ -29,15 +29,15 @@ describe("ImageGenerationService", () => {
     };
 
     service = new DefaultImageGenerationService(mockClientManager);
-    (uiStore as any).liteMode = false;
+    (uiStore as any).aiDisabled = false;
   });
 
-  describe("Lite Mode Gating", () => {
-    it("should throw error in generateImage when Lite Mode is ON", async () => {
-      (uiStore as any).liteMode = true;
+  describe("AI Disabled Gating", () => {
+    it("should throw error in generateImage when AI Disabled is ON", async () => {
+      (uiStore as any).aiDisabled = true;
       await expect(
         service.generateImage("key", "prompt", "model"),
-      ).rejects.toThrow("AI features are disabled in Lite Mode.");
+      ).rejects.toThrow("AI features are disabled.");
     });
   });
 

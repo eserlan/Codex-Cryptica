@@ -19,6 +19,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "https://codex-cryptica.com",
   "https://codexcryptica.com",
   "https://staging.codex-cryptica.com",
+  "https://staging.codexcryptica.com",
   "https://codex-cryptica.pages.dev",
   "http://localhost",
   "http://127.0.0.1",
@@ -266,8 +267,28 @@ export function isOriginAllowed(origin: string, env: Env): boolean {
     return true;
   }
 
+  if (isCloudflarePagesPreviewOrigin(origin)) {
+    return true;
+  }
+
   // Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
   return isLoopbackOrigin(origin);
+}
+
+function isCloudflarePagesPreviewOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== "https:") {
+      return false;
+    }
+
+    return (
+      url.hostname === "codex-cryptica.pages.dev" ||
+      url.hostname.endsWith(".codex-cryptica.pages.dev")
+    );
+  } catch {
+    return false;
+  }
 }
 
 function isLoopbackOrigin(origin: string): boolean {
