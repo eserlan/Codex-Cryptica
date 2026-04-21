@@ -2,6 +2,7 @@ import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
 import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
+import { debugStore } from "./debug.svelte";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
@@ -74,7 +75,7 @@ class ProposerStore {
     return this.service;
   }
 
-  async loadProposals(entityId: string) {
+  async loadProposals(entityId: string, requireSelection = true) {
     if (this.isLoadingProposals) return;
 
     this.isLoadingProposals = true;
@@ -84,7 +85,7 @@ class ProposerStore {
       const h = await service.getHistory(entityId);
 
       // Guard against stale updates if navigation happened
-      if (vault.selectedEntityId !== entityId) return;
+      if (requireSelection && vault.selectedEntityId !== entityId) return;
 
       this.proposals[entityId] = p;
       this.history[entityId] = h;
@@ -97,21 +98,34 @@ class ProposerStore {
     if (uiStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
     if (!entityId || this.isAnalyzing) return;
+    await this.analyzeEntityById(entityId, true);
+  }
+
+  async analyzeEntityById(
+    entityId: string,
+    requireSelection = false,
+    analysisText?: string,
+  ) {
+    if (uiStore.aiDisabled || this.isAnalyzing) return;
 
     this.analysisError = null;
 
     // Load existing proposals/history if not loaded
     if (!this.proposals[entityId]) {
-      await this.loadProposals(entityId);
+      await this.loadProposals(entityId, requireSelection);
       // If the user changed the selected entity while loading, abort this analysis
-      if (vault.selectedEntityId !== entityId) return;
+      if (requireSelection && vault.selectedEntityId !== entityId) return;
     }
 
-    const apiKey = oracle.effectiveApiKey;
-    if (!apiKey) return;
+    const apiKey = oracle.effectiveApiKey || "";
 
     const entity = vault.entities[entityId];
-    if (!entity) return;
+    if (!entity) {
+      debugStore.warn(
+        `[ProposerStore] Skipping connection analysis for ${entityId}: entity missing from vault`,
+      );
+      return;
+    }
 
     this.isAnalyzing = true;
     try {
@@ -142,16 +156,29 @@ class ProposerStore {
       // Use the basic model for background tasks to save cost/latency
       const modelName = TIER_MODES["lite"];
 
+      const sourceText = analysisText?.trim()
+        ? analysisText.trim()
+        : `${entity.content || ""} \n\n ${entity.lore || ""}`.trim();
+
+      debugStore.log("[ProposerStore] Starting connection analysis", {
+        entityId,
+        title: entity.title,
+        targetCount: targets.length,
+        sourceTextLength: sourceText.length,
+        usedOverrideText: Boolean(analysisText?.trim()),
+        mode: apiKey ? "custom-key" : "system-proxy",
+      });
+
       const newProposals = await proposerBridge.analyzeEntity(
         apiKey,
         modelName,
         entityId,
-        `${entity.content || ""} \n\n ${entity.lore || ""}`.trim(),
+        sourceText,
         targets,
       );
 
       // Guard against stale updates
-      if (vault.selectedEntityId !== entityId) return;
+      if (requireSelection && vault.selectedEntityId !== entityId) return;
 
       const service = this.getService();
       await service.saveProposals(newProposals);
@@ -167,14 +194,52 @@ class ProposerStore {
       );
 
       this.proposals[entityId] = [...existing, ...toAdd];
+
+      debugStore.log("[ProposerStore] Connection analysis completed", {
+        entityId,
+        title: entity.title,
+        rawProposalCount: newProposals.length,
+        addedProposalCount: toAdd.length,
+      });
     } catch (err: any) {
-      console.error("Analysis failed", err);
+      debugStore.error("[ProposerStore] Connection analysis failed", {
+        entityId,
+        error: err,
+      });
       this.analysisError = err.message || "Analysis failed";
     } finally {
-      if (vault.selectedEntityId === entityId) {
-        this.isAnalyzing = false;
+      this.isAnalyzing = false;
+    }
+  }
+
+  async analyzeAndApplyEntityById(entityId: string, analysisText?: string) {
+    await this.analyzeEntityById(entityId, false, analysisText);
+
+    const proposals = [...(this.proposals[entityId] || [])];
+    let appliedCount = 0;
+    let failedCount = 0;
+
+    debugStore.log("[ProposerStore] Applying connection proposals", {
+      entityId,
+      proposalCount: proposals.length,
+    });
+
+    for (const proposal of proposals) {
+      const applied = await this.apply(proposal);
+      if (applied) {
+        appliedCount += 1;
+      } else {
+        failedCount += 1;
       }
     }
+
+    debugStore.log("[ProposerStore] Finished applying connection proposals", {
+      entityId,
+      appliedCount,
+      failedCount,
+    });
+
+    return appliedCount;
   }
 
   async apply(proposal: Proposal) {
@@ -185,11 +250,10 @@ class ProposerStore {
       proposal.type,
     );
     if (!connectionCreated) {
-      console.error(
-        "Failed to create connection in vault for proposal",
+      debugStore.warn("[ProposerStore] Failed to create vault connection", {
         proposal,
-      );
-      return;
+      });
+      return false;
     }
 
     const service = this.getService();
@@ -202,6 +266,13 @@ class ProposerStore {
         proposal.sourceId
       ].filter((p) => p.id !== proposal.id);
     }
+    debugStore.log("[ProposerStore] Applied connection proposal", {
+      proposalId: proposal.id,
+      sourceId: proposal.sourceId,
+      targetId: proposal.targetId,
+      type: proposal.type,
+    });
+    return true;
   }
 
   async dismiss(proposal: Proposal) {

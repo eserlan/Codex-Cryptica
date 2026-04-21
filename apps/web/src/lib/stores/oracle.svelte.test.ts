@@ -3,6 +3,13 @@ import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
 import { uiStore as mockUiStore } from "./ui.svelte";
 
+const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
+  () => ({
+    mockAnalyzeEntityById: vi.fn().mockResolvedValue(0),
+    mockAnalyzeAndApplyEntityById: vi.fn().mockResolvedValue(0),
+  }),
+);
+
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
@@ -31,6 +38,12 @@ vi.mock("./ui.svelte", () => ({
     confirm: vi.fn().mockResolvedValue(true),
     aiDisabled: false,
     isDemoMode: false,
+    entityDiscoveryMode: "suggest",
+    connectionDiscoveryMode: "suggest",
+    oracleAutomationPolicy: {
+      entityDiscovery: "suggest",
+      connectionDiscovery: "suggest",
+    },
   },
 }));
 
@@ -45,6 +58,13 @@ vi.mock("./vault.svelte", () => ({
     addConnection: vi.fn().mockResolvedValue(true),
     removeConnection: vi.fn().mockResolvedValue(true),
     deleteEntity: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("./proposer.svelte", () => ({
+  proposerStore: {
+    analyzeEntityById: mockAnalyzeEntityById,
+    analyzeAndApplyEntityById: mockAnalyzeAndApplyEntityById,
   },
 }));
 
@@ -100,6 +120,16 @@ describe("OracleStore", () => {
   let mockExecutor: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    (mockUiStore as any).aiDisabled = false;
+    (mockUiStore as any).isDemoMode = false;
+    (mockUiStore as any).entityDiscoveryMode = "suggest";
+    (mockUiStore as any).connectionDiscoveryMode = "suggest";
+    (mockUiStore as any).oracleAutomationPolicy = {
+      entityDiscovery: "suggest",
+      connectionDiscovery: "suggest",
+    };
+
     mockChatHistory = {
       messages: [],
       addMessage: vi.fn().mockImplementation((m) => {
@@ -259,17 +289,40 @@ describe("OracleStore", () => {
 
   describe("Domain Operations", () => {
     it("should handle drawEntity", async () => {
+      mockExecutor.drawEntity = vi.fn().mockResolvedValue(undefined);
       await oracle.drawEntity("entity-1");
-      expect(mockExecutor.execute).toHaveBeenCalledWith(
-        { type: "plot", entityId: "entity-1" },
+      expect(mockExecutor.drawEntity).toHaveBeenCalledWith(
+        "entity-1",
         expect.any(Object),
       );
     });
 
+    it("should track visualizing state for an entity draw", async () => {
+      let resolveDraw!: () => void;
+      mockExecutor.drawEntity = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveDraw = resolve;
+          }),
+      );
+
+      const drawPromise = oracle.drawEntity("entity-1");
+
+      expect(oracle.visualizingEntityId).toBe("entity-1");
+      expect(oracle.isVisualizingEntity("entity-1")).toBe(true);
+
+      resolveDraw();
+      await drawPromise;
+
+      expect(oracle.visualizingEntityId).toBe(null);
+      expect(oracle.isVisualizingEntity("entity-1")).toBe(false);
+    });
+
     it("should handle drawMessage", async () => {
+      mockExecutor.drawMessage = vi.fn().mockResolvedValue(undefined);
       await oracle.drawMessage("msg-1");
-      expect(mockExecutor.execute).toHaveBeenCalledWith(
-        { type: "plot", entityId: "msg-1" },
+      expect(mockExecutor.drawMessage).toHaveBeenCalledWith(
+        "msg-1",
         expect.any(Object),
       );
     });
@@ -282,6 +335,155 @@ describe("OracleStore", () => {
 
       await oracle.clearMessages();
       expect(mockChatHistory.clear).toHaveBeenCalled();
+    });
+
+    it("should pass related entity context into reconciliation updates", async () => {
+      (mockVault as any).entities = {
+        entity: {
+          id: "entity",
+          title: "Red Wizards of Thay",
+          type: "faction",
+          content: "Old chronicle",
+          lore: "Old lore",
+          connections: [{ target: "ally", type: "rules" }],
+        },
+        ally: {
+          id: "ally",
+          title: "Szass Tam",
+          type: "npc",
+          content: "Lich-regent",
+          lore: "Commands the faction",
+        },
+      };
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi
+        .fn()
+        .mockResolvedValue({
+          content: "Updated chronicle",
+          lore: "Updated lore",
+        });
+
+      await oracle.reconcileDiscoveryProposal({
+        entityId: "entity",
+        title: "Red Wizards of Thay",
+        type: "faction",
+        draft: {
+          chronicle: "New chronicle",
+          lore: "New lore mentioning Szass Tam",
+        },
+        confidence: 0.9,
+      });
+
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).toHaveBeenCalledWith(
+        "test-key",
+        "test-model",
+        mockVault.entities.entity,
+        {
+          chronicle: "New chronicle",
+          lore: "New lore mentioning Szass Tam",
+        },
+        [
+          expect.objectContaining({
+            title: "Szass Tam",
+            type: "npc",
+          }),
+        ],
+      );
+    });
+
+    it("should fall back to a local append update when AI is disabled", async () => {
+      (mockUiStore as any).aiDisabled = true;
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn();
+      (mockVault as any).entities = {
+        entity: {
+          id: "entity",
+          title: "Valindra Shadowmantle",
+          type: "npc",
+          content: "Existing chronicle",
+          lore: "Existing lore",
+          connections: [],
+        },
+      };
+
+      const result = await oracle.reconcileDiscoveryProposal({
+        entityId: "entity",
+        title: "Valindra Shadowmantle",
+        type: "npc",
+        draft: {
+          chronicle: "New chronicle",
+          lore: "Fresh discovery lore",
+        },
+        confidence: 0.9,
+      });
+
+      expect(result).toEqual({
+        content: "Existing chronicle",
+        lore: "Existing lore\n\nFresh discovery lore",
+      });
+      expect(
+        (oracle as any).textGeneration.reconcileEntityUpdate,
+      ).not.toHaveBeenCalled();
+
+      (mockUiStore as any).aiDisabled = false;
+    });
+
+    it("should expose searchService through the oracle execution context", () => {
+      const context = oracle.getExecutionContext();
+
+      expect(context.searchService).toBeDefined();
+      expect(typeof context.searchService.search).toBe("function");
+    });
+
+    it("should expose oracle automation policy through the execution context", () => {
+      (mockUiStore as any).oracleAutomationPolicy = {
+        entityDiscovery: "auto-create",
+        connectionDiscovery: "auto-apply",
+      };
+
+      const context = oracle.getExecutionContext();
+
+      expect(context.automationPolicy).toEqual({
+        entityDiscovery: "auto-create",
+        connectionDiscovery: "auto-apply",
+      });
+    });
+
+    it("should seed discovery connections when connection discovery is suggest", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "suggest";
+
+      await oracle.handleDiscoveryConnectionsForEntity("entity", "context");
+
+      expect(mockAnalyzeEntityById).toHaveBeenCalledWith(
+        "entity",
+        false,
+        "context",
+      );
+      expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
+    });
+
+    it("should apply discovery connections only when connection discovery is auto-apply", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "auto-apply";
+      mockAnalyzeAndApplyEntityById.mockResolvedValue(2);
+
+      const count = await oracle.handleDiscoveryConnectionsForEntity("entity");
+
+      expect(count).toBe(2);
+      expect(mockAnalyzeAndApplyEntityById).toHaveBeenCalledWith(
+        "entity",
+        undefined,
+      );
+      expect(mockAnalyzeEntityById).not.toHaveBeenCalled();
+    });
+
+    it("should skip discovery connection analysis when connection discovery is off", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "off";
+
+      const count = await oracle.handleDiscoveryConnectionsForEntity("entity");
+
+      expect(count).toBe(0);
+      expect(mockAnalyzeEntityById).not.toHaveBeenCalled();
+      expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
     });
 
     it("should toggle open and modal states", async () => {

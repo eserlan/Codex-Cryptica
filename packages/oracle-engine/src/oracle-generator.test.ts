@@ -29,7 +29,7 @@ describe("OracleGenerator", () => {
         generateImage: vi.fn().mockResolvedValue(new Blob([])),
       },
       vault: {
-        entities: { e1: { id: "e1", title: "Entity 1" } },
+        entities: { e1: { id: "e1", title: "Entity 1", labels: [] } },
       },
       modelName: "model",
       isDemoMode: false,
@@ -95,6 +95,31 @@ describe("OracleGenerator", () => {
       expect(mockContext.imageGeneration.generateImage).toHaveBeenCalled();
     });
 
+    it("should prioritize entity labels in entity visualization prompts", async () => {
+      mockContext.vault.entities.e1.labels = ["necromancy", "regal", "undead"];
+
+      await generator.generateEntityVisualization("e1", mockContext);
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("HIGH-PRIORITY VISUAL LABELS"),
+        "ctx",
+        "model",
+        false,
+      );
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("- necromancy"),
+        "ctx",
+        "model",
+        false,
+      );
+    });
+
     it("should generate message visualization", async () => {
       const msg = { content: "hello", entityId: "e1" };
       const result = await generator.generateMessageVisualization(
@@ -102,6 +127,25 @@ describe("OracleGenerator", () => {
         mockContext,
       );
       expect(result).toBeInstanceOf(Blob);
+    });
+
+    it("should prioritize linked entity labels in message visualization prompts", async () => {
+      mockContext.vault.entities.e1.labels = ["desert", "sorcery"];
+
+      await generator.generateMessageVisualization(
+        { content: "draw it", entityId: "e1" } as any,
+        mockContext,
+      );
+
+      expect(
+        mockContext.imageGeneration.distillVisualPrompt,
+      ).toHaveBeenCalledWith(
+        "key",
+        expect.stringContaining("- desert"),
+        "ctx",
+        "model",
+        false,
+      );
     });
   });
 });

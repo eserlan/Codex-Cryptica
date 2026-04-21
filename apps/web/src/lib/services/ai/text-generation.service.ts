@@ -1,10 +1,15 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
-import { TIER_MODES, type TextGenerationService } from "schema";
+import {
+  TIER_MODES,
+  type RelatedEntityContext,
+  type TextGenerationService,
+} from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
+import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 
@@ -103,6 +108,56 @@ export class DefaultTextGenerationService implements TextGenerationService {
     } catch (err: any) {
       console.error("[TextGenerationService] Merge generation failed:", err);
       throw new Error(`Merge failed: ${err.message}`, { cause: err });
+    }
+  }
+
+  async reconcileEntityUpdate(
+    apiKey: string,
+    modelName: string,
+    entity: any,
+    incoming: {
+      chronicle: string;
+      lore: string;
+    },
+    relatedEntities: RelatedEntityContext[] = [],
+  ): Promise<{
+    content: string;
+    lore: string;
+  }> {
+    assertAIEnabled();
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const prompt = buildEntityReconciliationPrompt(
+      entity,
+      incoming,
+      relatedEntities,
+    );
+
+    try {
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Missing JSON payload");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]) as Partial<{
+        content: string;
+        lore: string;
+      }>;
+
+      return {
+        content:
+          parsed.content?.trim() || incoming.chronicle || entity.content || "",
+        lore: parsed.lore?.trim() || incoming.lore || entity.lore || "",
+      };
+    } catch (err: any) {
+      console.error(
+        "[TextGenerationService] Entity reconciliation failed:",
+        err,
+      );
+      throw new Error(`Entity reconciliation failed: ${err.message}`, {
+        cause: err,
+      });
     }
   }
 

@@ -6,6 +6,7 @@
   import { chatCommands } from "../../config/chat-commands";
   import { fade } from "svelte/transition";
   import { tick } from "svelte";
+  import { isChatNearBottom, scrollChatToBottom } from "./oracle-chat-scroll";
 
   let { onOpenSettings } = $props<{ onOpenSettings?: () => void }>();
 
@@ -14,6 +15,9 @@
   let textArea = $state<HTMLTextAreaElement>();
   let commandMenu = $state<ReturnType<typeof CommandMenu>>();
   let showCommandMenu = $state(false);
+  let hasScrolledToInitialHistory = false;
+  let previousMessageCount = 0;
+  let wasNearBottom = true;
 
   // Command history for ArrowUp/Down navigation
   let commandHistory = $state<string[]>([]);
@@ -28,17 +32,16 @@
   };
 
   $effect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    input; // Reactive dependency
+    const currentInput = input;
     adjustHeight();
 
-    if (input.startsWith("/")) {
+    if (currentInput.startsWith("/")) {
       const isCmd = (cmd: string) =>
-        input === cmd || input.startsWith(cmd + " ");
+        currentInput === cmd || currentInput.startsWith(cmd + " ");
       // Keep menu open if we haven't typed a space yet (command selection)
       // OR if it's a command that can have arguments
       if (
-        !input.includes(" ") ||
+        !currentInput.includes(" ") ||
         isCmd("/connect") ||
         isCmd("/merge") ||
         isCmd("/draw") ||
@@ -142,16 +145,58 @@
     }
   };
 
+  const scheduleScrollToBottom = (
+    behavior: "auto" | "instant" | "smooth" = "auto",
+  ) => {
+    tick().then(() => {
+      const scroll = () => {
+        const didScroll = scrollChatToBottom(scrollContainer, { behavior });
+        if (didScroll) {
+          wasNearBottom = true;
+        }
+      };
+
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(scroll);
+      } else {
+        setTimeout(scroll);
+      }
+    });
+  };
+
   $effect(() => {
-    if (oracle.messages.length && scrollContainer) {
-      tick().then(() => {
-        scrollContainer?.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "smooth",
-        });
-      });
+    const messageCount = oracle.messages.length;
+    const container = scrollContainer;
+
+    if (!container) return;
+
+    if (messageCount === 0) {
+      hasScrolledToInitialHistory = false;
+      previousMessageCount = 0;
+      return;
+    }
+
+    if (!hasScrolledToInitialHistory) {
+      hasScrolledToInitialHistory = true;
+      previousMessageCount = messageCount;
+      scheduleScrollToBottom("auto");
+      return;
+    }
+
+    const newMessageArrived = messageCount > previousMessageCount;
+    const shouldFollowNewMessages = newMessageArrived && wasNearBottom;
+
+    previousMessageCount = messageCount;
+
+    if (shouldFollowNewMessages) {
+      scheduleScrollToBottom("smooth");
     }
   });
+
+  const handleScroll = () => {
+    if (!scrollContainer) return;
+    wasNearBottom = isChatNearBottom(scrollContainer);
+  };
 </script>
 
 {#if !oracle.isEnabled}
@@ -201,6 +246,8 @@
   <div
     class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
     bind:this={scrollContainer}
+    data-testid="oracle-chat-scroll-container"
+    onscroll={handleScroll}
   >
     {#if oracle.messages.length === 0}
       <div
@@ -270,7 +317,7 @@
       </div>
     {/if}
 
-    {#each oracle.messages as _msg, i}
+    {#each oracle.messages as _msg, i (oracle.messages[i].id)}
       <ChatMessage bind:message={oracle.messages[i]} />
     {/each}
 

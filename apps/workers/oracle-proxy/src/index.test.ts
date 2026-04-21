@@ -58,6 +58,29 @@ describe("Oracle Proxy Worker CORS", () => {
         ALLOWED_ORIGINS: "https://example.com",
       }),
     ).toBeFalsy();
+    expect(
+      isOriginAllowed("https://feature-branch.codex-cryptica.pages.dev", {
+        GEMINI_API_KEY: "test-key",
+        ALLOWED_ORIGINS: "https://example.com",
+      }),
+    ).toBeFalsy();
+  });
+
+  it("can explicitly allow Cloudflare Pages previews with a strict allowlist", () => {
+    expect(
+      isOriginAllowed("https://feature-branch.codex-cryptica.pages.dev", {
+        GEMINI_API_KEY: "test-key",
+        ALLOWED_ORIGINS: "https://example.com",
+        ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: "true",
+      }),
+    ).toBeTruthy();
+    expect(
+      isOriginAllowed("https://feature-branch.evil.pages.dev", {
+        GEMINI_API_KEY: "test-key",
+        ALLOWED_ORIGINS: "https://example.com",
+        ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: "true",
+      }),
+    ).toBeFalsy();
   });
 
   it("rejects non-loopback origins that are not allowlisted", () => {

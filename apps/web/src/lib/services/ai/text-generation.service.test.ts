@@ -26,6 +26,12 @@ vi.mock("./prompts/plot-analysis", () => ({
 vi.mock("./prompts/context-distillation", () => ({
   buildContextDistillationPrompt: vi.fn((context) => `distill:${context}`),
 }));
+vi.mock("./prompts/entity-reconciliation", () => ({
+  buildEntityReconciliationPrompt: vi.fn(
+    (entity, incoming) =>
+      `reconcile:${entity.title}:${incoming.chronicle}:${incoming.lore}`,
+  ),
+}));
 
 describe("DefaultTextGenerationService", () => {
   let service: DefaultTextGenerationService;
@@ -190,6 +196,65 @@ describe("DefaultTextGenerationService", () => {
       const subject = { title: "Subject", type: "npc" };
       await service.generatePlotAnalysis("key", "model", subject, [], "Q");
       expect(mockModel.generateContent).toHaveBeenCalled();
+    });
+  });
+
+  describe("reconcileEntityUpdate", () => {
+    it("should reconcile an existing entity into updated content and lore", async () => {
+      mockModel.generateContent.mockResolvedValue({
+        response: {
+          text: vi
+            .fn()
+            .mockReturnValue(
+              '{"content":"Updated chronicle","lore":"Updated lore"}',
+            ),
+        },
+      });
+
+      const result = await service.reconcileEntityUpdate!(
+        "key",
+        "model",
+        {
+          title: "Thay",
+          type: "location",
+          content: "Old chronicle",
+          lore: "Old lore",
+        },
+        {
+          chronicle: "New chronicle",
+          lore: "New lore",
+        },
+        [
+          {
+            title: "Szass Tam",
+            type: "npc",
+            relation: "rules",
+            summary: "The lich-regent of Thay.",
+          },
+        ],
+      );
+
+      expect(result).toEqual({
+        content: "Updated chronicle",
+        lore: "Updated lore",
+      });
+      expect(mockModel.generateContent).toHaveBeenCalledWith(
+        "reconcile:Thay:New chronicle:New lore",
+      );
+    });
+
+    it("should throw when reconciliation fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Network fail"));
+
+      await expect(
+        service.reconcileEntityUpdate!(
+          "key",
+          "model",
+          { title: "Thay", type: "location", content: "", lore: "" },
+          { chronicle: "New chronicle", lore: "New lore" },
+          [],
+        ),
+      ).rejects.toThrow("Entity reconciliation failed: Network fail");
     });
   });
 

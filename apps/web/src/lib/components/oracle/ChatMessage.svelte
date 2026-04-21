@@ -25,6 +25,7 @@
   } from "./chat-message.helpers";
   import { ChatMessageActions } from "./chat-message.actions";
   import { sanitizeId } from "$lib/utils/markdown";
+  import { isVisibleDiscoveryProposal } from "./discovery-proposal-filter";
 
   let { message = $bindable() }: { message: ChatMessage } = $props();
   const chatMessageActions = new ChatMessageActions({
@@ -47,6 +48,7 @@
 
   let isSaved = $state(false);
   let isCopied = $state(false);
+  let showDiscoveryChips = $state(false);
   let htmlCache = $state("");
   let lastParsedContent = "";
 
@@ -76,6 +78,9 @@
   let isLore = $derived(isLoreMessage(message, oracle.messages));
   let showActions = $derived(
     shouldShowActions(message, parsed, oracle.isLoading),
+  );
+  let visibleProposals = $derived(
+    (message.proposals ?? []).filter(isVisibleDiscoveryProposal),
   );
 
   $effect(() => {
@@ -216,17 +221,43 @@
           </div>
         {/if}
 
-        {#if message.proposals && message.proposals.length > 0}
+        {#if visibleProposals.length > 0}
           <div
-            class="mt-3 pt-2 border-t border-theme-border/30 flex flex-wrap gap-2 items-center"
+            class="mt-3 pt-2 border-t border-theme-border/30"
+            data-testid="found-lore-panel"
           >
-            <span
-              class="text-[9px] font-bold text-theme-primary/60 uppercase tracking-widest mr-1"
-              >Found Lore:</span
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/20 bg-theme-primary/5 px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-theme-primary/80 font-header transition-colors hover:bg-theme-primary/10 hover:text-theme-primary"
+              onclick={() => (showDiscoveryChips = !showDiscoveryChips)}
+              aria-expanded={showDiscoveryChips}
+              aria-controls={`found-lore-${message.id}`}
             >
-            {#each message.proposals as proposal}
-              <DiscoveryChip {proposal} />
-            {/each}
+              <span class="icon-[lucide--sparkles] w-3 h-3"></span>
+              <span>Found lore</span>
+              <span
+                class="rounded-full bg-theme-primary/15 px-1.5 py-0.5 text-[8px] text-theme-primary"
+                >{visibleProposals.length}</span
+              >
+              <span
+                class={[
+                  "icon-[lucide--chevron-down] w-3 h-3 transition-transform",
+                  showDiscoveryChips ? "rotate-180" : "",
+                ]}
+              ></span>
+            </button>
+
+            {#if showDiscoveryChips}
+              <div
+                id={`found-lore-${message.id}`}
+                class="mt-2 flex flex-wrap gap-2 items-center"
+                transition:fade
+              >
+                {#each visibleProposals as proposal (`${proposal.entityId ?? "new"}:${proposal.title}`)}
+                  <DiscoveryChip {proposal} />
+                {/each}
+              </div>
+            {/if}
           </div>
         {/if}
 
