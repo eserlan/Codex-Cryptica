@@ -78,6 +78,7 @@
     transition:fade={{ duration: 200 }}
   >
     <div class="absolute top-4 right-4 flex items-center gap-2">
+      <!-- Pop out button -->
       <button
         class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition focus-visible:ring-2 focus-visible:ring-white outline-none disabled:opacity-40 disabled:cursor-not-allowed"
         onclick={openInStandaloneWindow}
