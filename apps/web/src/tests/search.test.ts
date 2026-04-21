@@ -77,7 +77,13 @@ describe("SearchService", () => {
   });
 
   it("should initialize", async () => {
-    await expect(service.init()).resolves.toBe(true);
+    // Calling init directly should now trigger worker creation via ensureWorker
+    // or we can just call search/index to trigger it.
+    await expect(service.init()).resolves.toBeUndefined();
+    // init() in search.ts returns void and doesn't call api.initIndex if api is null
+    // So we need to trigger ensureWorker
+    (service as any).isInitialized = true;
+    await (service as any).ensureWorker();
     expect(mockApi.initIndex).toHaveBeenCalled();
   });
 
@@ -89,7 +95,7 @@ describe("SearchService", () => {
       path: "/test.md",
       updatedAt: Date.now(),
     };
-    await expect(service.index(entry)).resolves.toBe(true);
+    await service.index(entry);
     expect(mockApi.add).toHaveBeenCalledWith(entry);
   });
 
@@ -105,7 +111,9 @@ describe("SearchService", () => {
           }),
       );
 
-      (service as any).api = mockApi;
+      // Trigger worker initialization
+      (service as any).isInitialized = true;
+      await (service as any).ensureWorker();
 
       const entities = Array.from({ length: 52 }, (_, index) => ({
         id: `${index}`,
@@ -116,17 +124,16 @@ describe("SearchService", () => {
 
       const batchPromise = (service as any).indexBatch(entities);
 
-      await Promise.resolve();
-
-      expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => {
+        expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
+      });
       expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
 
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
+      await vi.waitFor(() => {
+        expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
+      });
       expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
@@ -205,7 +212,11 @@ describe("SearchService", () => {
     });
   });
 
-  it("should bridge logs from worker to debugStore", () => {
+  it("should bridge logs from worker to debugStore", async () => {
+    // Trigger worker creation
+    (service as any).isInitialized = true;
+    await (service as any).ensureWorker();
+
     // Get the callback passed to setLogger
     const logCallback = (mockApi.setLogger as any).mock.calls[0][0];
     expect(logCallback).toBeDefined();
@@ -237,7 +248,8 @@ describe("SearchService", () => {
       // Reset the bus and recreate the service to ensure clean slate
       vaultEventBus.reset(false);
       service = new SearchService();
-      await service.init();
+      (service as any).isInitialized = true;
+      await (service as any).ensureWorker();
 
       // Initialize the vault ID
       vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });
@@ -381,7 +393,8 @@ describe("SearchService", () => {
       .spyOn(service as any, "indexBatch")
       .mockResolvedValue(undefined);
 
-    (service as any).api = mockApi;
+    (service as any).isInitialized = true;
+    await (service as any).ensureWorker();
     (service as any).activeVaultId = "v1";
 
     // Mock Dexie iteration
@@ -421,9 +434,14 @@ describe("SearchService", () => {
     expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(10);
   });
 
-  it("should terminate correctly", () => {
+  it("should terminate correctly", async () => {
+    // Trigger worker creation
+    (service as any).isInitialized = true;
+    await (service as any).ensureWorker();
+
     const releaseSpy = vi.fn();
     (service as any).api = {
+      ...mockApi,
       [Symbol.for("comlink.releaseProxy")]: releaseSpy,
     };
     const terminateSpy = vi.spyOn((service as any).worker, "terminate");
@@ -437,8 +455,11 @@ describe("SearchService", () => {
   });
 
   describe("AutoSave and VisibilityChange", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.useFakeTimers();
+      // Ensure worker is ready so callbacks are registered
+      (service as any).isInitialized = true;
+      await (service as any).ensureWorker();
     });
 
     afterEach(() => {
