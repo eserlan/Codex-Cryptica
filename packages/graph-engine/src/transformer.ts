@@ -399,6 +399,8 @@ export const getGraphStyle = (
     style: {
       "border-color": cat.color,
       "border-width": graph.nodeBorderWidth + 2,
+      "background-color": cat.color,
+      "background-opacity": 0.4,
     },
   }));
 
