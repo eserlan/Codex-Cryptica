@@ -2,7 +2,7 @@
 
 **Feature Branch**: `087-gen-oracle-content`  
 **Created**: 2026-04-19  
-**Status**: Completed  
+**Status**: In Progress
 **Input**: User description: "auto gen content based on oracle chat https://github.com/eserlan/Codex-Cryptica/issues/642. Shift focus: Automagical background generation during chat instead of explicit /create command."
 
 ## Clarifications
@@ -14,6 +14,11 @@
 - Q: How should the system handle proposed updates if the user has manually edited the same entity in the same session? → A: Non-destructive Append.
 - Q: Which messages should trigger the entity discovery and drafting process? → A: Both (Contextual Synthesis).
 - Q: How should users find and verify auto-archived drafts later? → A: Provide a dedicated "Review" tab for unreviewed entries and show draft nodes with a distinct "Ghost" style on the graph canvas.
+
+### Session 2026-04-21
+
+- Q: Should Oracle-created nodes and connections appear automatically? → A: Make automation user-configurable. Entity discovery and connection discovery should be separate settings so users can choose between no automation, suggestions, automatic entity creation, and automatic connection application.
+- Q: How should discovery suggestions be shown when suggestion mode finds many entities? → A: Collapse suggestions under a compact "Found lore" pill/menu by default, and suppress structured output labels such as Name, Type, Chronicle, and Lore from discovery proposals.
 
 ## User Scenarios & Testing _(mandatory)_
 
@@ -28,7 +33,7 @@ As a lore keeper, I want the Oracle to silently identify new entities I describe
 **Acceptance Scenarios**:
 
 1. **Given** a normal chat conversation, **When** the Oracle identifies a name and description that doesn't exist in the vault, **Then** it prepares a background draft (Lore/Chronicle/Type).
-2. **Given** a background draft is ready, **When** the Oracle displays its response, **Then** it includes an unobtrusive "Add to Vault" action for the detected entity.
+2. **Given** a background draft is ready, **When** the Oracle displays its response, **Then** it includes an unobtrusive "Found lore" control that can expand to show "Add to Vault" actions for detected entities.
 
 ---
 
@@ -78,6 +83,25 @@ As a lore keeper, I want entities created or updated from Oracle chat to immedia
 
 ---
 
+### User Story 5 - User-Controlled Oracle Automation (Priority: P1)
+
+As a lore keeper, I want to choose how much the Oracle changes my vault and graph automatically, so that the assistant can be helpful without feeling intrusive.
+
+**Why this priority**: The same automation that helps power users can surprise users who expect review before persisted changes. The feature must preserve trust by making persistence and graph mutation explicit preferences.
+
+**Independent Test**: Open Oracle settings and set Entity Discovery to "Suggest" and Connection Discovery to "Suggest". Chat about a new faction and commit its discovery chip. The entity is created only after the user clicks, and connection suggestions appear for review without graph edges being created automatically. Change Connection Discovery to "Auto-apply", repeat the flow, and verify accepted connections are created automatically.
+
+**Acceptance Scenarios**:
+
+1. **Given** Entity Discovery is "Off", **When** the Oracle chat mentions new or existing entities, **Then** no discovery chips or auto-archive records are produced.
+2. **Given** Entity Discovery is "Suggest", **When** the Oracle detects an entity, **Then** it shows a discovery chip but does not create or update a vault record until the user commits it.
+3. **Given** Entity Discovery is "Auto-create", **When** the Oracle detects a new entity or update, **Then** it saves the draft/update according to the Auto-Archive rules.
+4. **Given** Connection Discovery is "Off", **When** an Oracle-created or Oracle-updated entity is committed, **Then** no connection analysis runs.
+5. **Given** Connection Discovery is "Suggest", **When** an Oracle-created or Oracle-updated entity is committed, **Then** connection proposals are generated for review but no graph edges are created.
+6. **Given** Connection Discovery is "Auto-apply", **When** an Oracle-created or Oracle-updated entity is committed, **Then** high-confidence connection proposals may be applied automatically and the user is notified of the created edge count.
+
+---
+
 ### Edge Cases
 
 - **False Positives**: What if the AI thinks a common noun or a passing mention is an entity? (Mitigation: Only propose drafts for entities with a "significant description"—defined as at least 100 characters of lore/chronicle content; allow easy dismissal of the "Add to Vault" suggestion).
@@ -86,6 +110,10 @@ As a lore keeper, I want entities created or updated from Oracle chat to immedia
 - **Ambiguous Updates**: If fuzzy matching detects an existing entity but it's not a certain match (e.g., "The Alchemist" vs. "Valerius"), the system MUST propose "Update Valerius?" with an explicit confirmation rather than auto-updating.
 - **Update Conflicts**: If an entity is updated both manually and via a proposed Oracle update in the same session, the system MUST append the Oracle's new content to the end of the existing field (Lore or Chronicle) to prevent data loss.
 - **Proposal Flooding**: If the Oracle mentions many entities in one turn, background connection analysis should reuse the proposer safeguards from Feature 040 to avoid duplicate or already-existing links.
+- **Automation Surprise**: If a user has not explicitly enabled automatic graph mutation, the system MUST NOT create connection edges from Oracle discovery without user review.
+- **Mode Changes Mid-Session**: If the user changes automation settings during a chat, new Oracle actions MUST use the latest settings while already-created records and proposals remain unchanged.
+- **Structured Output Artifacts**: If an Oracle response includes labels such as `Name`, `Type`, `Chronicle`, `Lore`, `Content`, or `Summary`, the Drafting Engine MUST NOT treat those labels as entities or show them as discovery chips.
+- **Suggestion Clutter**: If multiple discoveries are found in Suggest mode, the chat message MUST keep them collapsed by default behind a compact control with a count.
 
 ## Assumptions
 
@@ -100,20 +128,30 @@ As a lore keeper, I want entities created or updated from Oracle chat to immedia
 - **FR-002**: System MUST identify both new entities (Creation) and existing entities (Update) from chat context.
   - **FR-002.1**: Identification MUST use near-exact matching first, falling back to fuzzy search for likely candidates.
 - **FR-003**: System MUST provide a "Drafting Engine" that silently prepares Lore, Chronicle, and Type based on conversation history.
-- **FR-004**: System MUST display "Found: [Entity Name]" actions in the chat UI without requiring a slash command trigger.
+- **FR-004**: System MUST display discovery actions in the chat UI without requiring a slash command trigger.
+  - **FR-004.1**: In Suggest mode, discovery actions MUST be collapsed by default under a compact "Found lore" control with a count.
+  - **FR-004.2**: Expanding the "Found lore" control MUST reveal individual entity create/update actions.
 - **FR-005**: System MUST support "One-Click Commit" to turn a background draft into a permanent vault record.
 - **FR-006**: System MUST allow users to toggle "Auto-Archive" to bypass manual confirmation for new drafts.
   - **FR-006.1**: Auto-archived actions MUST be notified via transient UI feedback (toasts/badges) AND recorded in a persistent session activity log.
   - **FR-006.2**: Users MUST be able to find and verify drafts via a dedicated "Review" tab AND see them on the graph canvas as "Ghost" nodes.
 - **FR-007**: System MUST handle multiple entity discoveries within a single chat message.
+  - **FR-007.1**: System MUST suppress structured field-name artifacts such as `Name`, `Type`, `Chronicle`, and `Lore` from discovery proposals.
 - **FR-008**: System MUST trigger background connection proposal analysis for entities created or updated through Oracle discovery once they are committed to the vault.
   - **FR-008.1**: This analysis MUST reuse the existing proposal persistence and review flow from Feature 040.
-  - **FR-008.2**: The system MUST surface suggested connections as proposals for user review rather than silently creating graph edges.
+  - **FR-008.2**: By default, the system MUST surface suggested connections as proposals for user review rather than silently creating graph edges.
+- **FR-009**: System MUST provide separate automation preferences for entity discovery and connection discovery.
+  - **FR-009.1**: Entity Discovery MUST support `Off`, `Suggest`, and `Auto-create` modes.
+  - **FR-009.2**: Connection Discovery MUST support `Off`, `Suggest`, and `Auto-apply` modes.
+  - **FR-009.3**: The default mode MUST avoid automatic graph mutation; connection edges MUST NOT be created automatically unless the user has selected `Auto-apply`.
+  - **FR-009.4**: Manual entity commits MUST still respect the Connection Discovery mode for follow-up analysis.
+  - **FR-009.5**: Deterministic slash-command creation MUST respect the Connection Discovery mode unless the command explicitly requests connection creation.
 
 ### Key Entities _(include if feature involves data)_
 
 - **PendingDraft**: A non-persistent draft stored in the current session memory until committed or discarded.
 - **DraftStatus**: A metadata field for entities (`unreviewed`, `verified`) to track auto-generated content.
+- **OracleAutomationPolicy**: User preference controlling whether entity discoveries are disabled, suggested, or auto-created, and whether connection discoveries are disabled, suggested, or auto-applied.
 
 ## Success Criteria _(mandatory)_
 
@@ -123,3 +161,4 @@ As a lore keeper, I want entities created or updated from Oracle chat to immedia
 - **SC-002**: Proactive draft generation adds less than 500ms of latency to the total response time (via parallel processing).
 - **SC-003**: Users successfully capture 3x more entities during a session compared to manual creation methods.
 - **SC-004**: "Smart Updates" correctly identify the target entity with 95% precision based on conversation context.
+- **SC-005**: 95% of users can correctly predict whether an Oracle action will create records, create connections, or only show suggestions based on the visible automation setting labels.

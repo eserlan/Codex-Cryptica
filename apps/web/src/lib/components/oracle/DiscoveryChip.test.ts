@@ -27,9 +27,11 @@ const { mockVault, mockOracle, mockUiStore, mockFocusEntity } = vi.hoisted(
     mockOracle: {
       reconcileDiscoveryProposal: vi.fn(),
       proposeConnectionsForEntity: vi.fn().mockResolvedValue(0),
+      handleDiscoveryConnectionsForEntity: vi.fn().mockResolvedValue(0),
     },
     mockUiStore: {
       isDemoMode: false,
+      connectionDiscoveryMode: "suggest",
       notify: vi.fn(),
     },
     mockFocusEntity: vi.fn(),
@@ -60,6 +62,7 @@ describe("DiscoveryChip", () => {
     vi.clearAllMocks();
     mockVault.isGuest = false;
     mockUiStore.isDemoMode = false;
+    mockUiStore.connectionDiscoveryMode = "suggest";
     mockVault.selectedEntityId = null;
   });
 
@@ -112,11 +115,11 @@ describe("DiscoveryChip", () => {
 
     await waitFor(() => {
       expect(mockVault.createEntity).toHaveBeenCalled();
-      expect(mockOracle.proposeConnectionsForEntity).toHaveBeenCalledWith(
-        "new-id",
-      );
+      expect(
+        mockOracle.handleDiscoveryConnectionsForEntity,
+      ).toHaveBeenCalledWith("new-id");
       expect(mockUiStore.notify).toHaveBeenCalledWith(
-        "Created Target",
+        "Created Target; connection suggestions queued",
         "success",
       );
     });
@@ -148,11 +151,37 @@ describe("DiscoveryChip", () => {
         content: "updated chronicle",
         lore: "updated lore",
       });
-      expect(mockOracle.proposeConnectionsForEntity).toHaveBeenCalledWith(
-        "target",
-      );
+      expect(
+        mockOracle.handleDiscoveryConnectionsForEntity,
+      ).toHaveBeenCalledWith("target");
       expect(mockUiStore.notify).toHaveBeenCalledWith(
-        "Updated Target",
+        "Updated Target; connection suggestions queued",
+        "success",
+      );
+    });
+  });
+
+  it("reports auto-applied connection counts when enabled", async () => {
+    mockUiStore.connectionDiscoveryMode = "auto-apply";
+    mockOracle.handleDiscoveryConnectionsForEntity.mockResolvedValue(2);
+
+    render(DiscoveryChip, {
+      proposal: {
+        title: "Target",
+        type: "npc",
+        draft: {
+          chronicle: "new chronicle",
+          lore: "new lore",
+        },
+        confidence: 0.95,
+      },
+    });
+
+    await fireEvent.click(screen.getByLabelText("Create Target"));
+
+    await waitFor(() => {
+      expect(mockUiStore.notify).toHaveBeenCalledWith(
+        "Created Target and added 2 connections",
         "success",
       );
     });

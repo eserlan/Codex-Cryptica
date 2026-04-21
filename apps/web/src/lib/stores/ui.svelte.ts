@@ -1,13 +1,31 @@
 import { base } from "$app/paths";
 import type { ActivityEvent } from "$lib/types/activity";
+import type {
+  ConnectionDiscoveryMode,
+  EntityDiscoveryMode,
+} from "@codex/oracle-engine";
 
 const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
 const EXPLORER_COLLAPSED_LABELS_STORAGE_KEY =
   "codex_explorer_collapsed_label_groups";
 const VTT_SIDEBAR_COLLAPSED_STORAGE_KEY = "codex_vtt_sidebar_collapsed";
 const VTT_ENTITY_LIST_COLLAPSED_STORAGE_KEY = "codex_vtt_entity_list_collapsed";
+const ENTITY_DISCOVERY_MODE_STORAGE_KEY = "codex_entity_discovery_mode";
+const CONNECTION_DISCOVERY_MODE_STORAGE_KEY = "codex_connection_discovery_mode";
 
 type ExplorerCollapsedLabelGroups = Record<string, string[]>;
+
+function isEntityDiscoveryMode(
+  value: string | null,
+): value is EntityDiscoveryMode {
+  return value === "off" || value === "suggest" || value === "auto-create";
+}
+
+function isConnectionDiscoveryMode(
+  value: string | null,
+): value is ConnectionDiscoveryMode {
+  return value === "off" || value === "suggest" || value === "auto-apply";
+}
 
 export type SettingsTab =
   | "vault"
@@ -31,6 +49,8 @@ export class UIStore {
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
   autoArchive = $state(false);
+  entityDiscoveryMode = $state<EntityDiscoveryMode>("suggest");
+  connectionDiscoveryMode = $state<ConnectionDiscoveryMode>("suggest");
   archiveActivityLog = $state<ActivityEvent[]>([]);
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
@@ -85,10 +105,7 @@ export class UIStore {
         }
       }
 
-      const autoArchive = localStorage.getItem("codex_auto_archive");
-      if (autoArchive !== null) {
-        this.autoArchive = autoArchive === "true";
-      }
+      this.loadOracleAutomationSettings();
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
 
@@ -261,9 +278,56 @@ export class UIStore {
   }
 
   toggleAutoArchive(enabled: boolean) {
-    this.autoArchive = enabled;
+    this.setEntityDiscoveryMode(enabled ? "auto-create" : "suggest");
+  }
+
+  setEntityDiscoveryMode(mode: EntityDiscoveryMode) {
+    this.entityDiscoveryMode = mode;
+    this.autoArchive = mode === "auto-create";
     if (typeof window !== "undefined") {
-      localStorage.setItem("codex_auto_archive", String(enabled));
+      localStorage.setItem(ENTITY_DISCOVERY_MODE_STORAGE_KEY, mode);
+      localStorage.setItem("codex_auto_archive", String(this.autoArchive));
+    }
+  }
+
+  setConnectionDiscoveryMode(mode: ConnectionDiscoveryMode) {
+    this.connectionDiscoveryMode = mode;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CONNECTION_DISCOVERY_MODE_STORAGE_KEY, mode);
+    }
+  }
+
+  get oracleAutomationPolicy() {
+    return {
+      entityDiscovery: this.entityDiscoveryMode,
+      connectionDiscovery: this.connectionDiscoveryMode,
+    };
+  }
+
+  private loadOracleAutomationSettings() {
+    const savedEntityMode = localStorage.getItem(
+      ENTITY_DISCOVERY_MODE_STORAGE_KEY,
+    );
+    if (isEntityDiscoveryMode(savedEntityMode)) {
+      this.entityDiscoveryMode = savedEntityMode;
+      this.autoArchive = savedEntityMode === "auto-create";
+    } else {
+      const autoArchive = localStorage.getItem("codex_auto_archive");
+      if (autoArchive !== null) {
+        this.autoArchive = autoArchive === "true";
+        this.entityDiscoveryMode = this.autoArchive ? "auto-create" : "suggest";
+        localStorage.setItem(
+          ENTITY_DISCOVERY_MODE_STORAGE_KEY,
+          this.entityDiscoveryMode,
+        );
+      }
+    }
+
+    const savedConnectionMode = localStorage.getItem(
+      CONNECTION_DISCOVERY_MODE_STORAGE_KEY,
+    );
+    if (isConnectionDiscoveryMode(savedConnectionMode)) {
+      this.connectionDiscoveryMode = savedConnectionMode;
     }
   }
 

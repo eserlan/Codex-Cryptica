@@ -30,8 +30,12 @@
             content: reconciled.content,
             lore: reconciled.lore,
           });
-          await oracle.proposeConnectionsForEntity(proposal.entityId);
-          uiStore.notify(`Updated ${proposal.title}`, "success");
+          const connectionCount =
+            await oracle.handleDiscoveryConnectionsForEntity(proposal.entityId);
+          uiStore.notify(
+            buildCommitNotice("Updated", proposal.title, connectionCount),
+            "success",
+          );
         }
       } else {
         // New Entity
@@ -43,8 +47,12 @@
             content: proposal.draft.chronicle,
           },
         );
-        await oracle.proposeConnectionsForEntity(entityId);
-        uiStore.notify(`Created ${proposal.title}`, "success");
+        const connectionCount =
+          await oracle.handleDiscoveryConnectionsForEntity(entityId);
+        uiStore.notify(
+          buildCommitNotice("Created", proposal.title, connectionCount),
+          "success",
+        );
       }
       onCommit?.();
     } finally {
@@ -57,6 +65,26 @@
 
     dispatchSearchEntityFocus(proposal.entityId, DEFAULT_SEARCH_ENTITY_ZOOM);
     vault.selectedEntityId = proposal.entityId;
+  }
+
+  function buildCommitNotice(
+    action: "Created" | "Updated",
+    title: string,
+    connectionCount: number | void,
+  ) {
+    if (uiStore.connectionDiscoveryMode === "off") {
+      return `${action} ${title}`;
+    }
+
+    if (uiStore.connectionDiscoveryMode === "auto-apply") {
+      const count = connectionCount || 0;
+      if (count > 0) {
+        return `${action} ${title} and added ${count} connection${count === 1 ? "" : "s"}`;
+      }
+      return `${action} ${title}; no new connections found`;
+    }
+
+    return `${action} ${title}; connection suggestions queued`;
   }
 
   let typeIcon = $derived(

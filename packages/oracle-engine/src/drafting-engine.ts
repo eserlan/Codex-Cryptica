@@ -25,8 +25,16 @@ export class DraftingEngine {
       const name = match[1].trim();
       const rawType = match[2]?.toLowerCase().trim();
 
+      if (this.shouldSuppressCandidate(name)) {
+        continue;
+      }
+
       // Extract excerpt/lore around the mention
       const lore = this.extractLore(text, match.index, name);
+      if (this.shouldSuppressCandidate(name, lore)) {
+        continue;
+      }
+
       const chronicle = this.extractChronicle(lore);
       const existing = this.findExistingEntity(name, context.existingEntities);
       const type = this.resolveType(rawType, existing, name, lore);
@@ -69,6 +77,29 @@ export class DraftingEngine {
     if (rawType === "person") return "character";
     if (rawType === "place") return "location";
     return "concept";
+  }
+
+  private shouldSuppressCandidate(name: string, lore = ""): boolean {
+    const normalizedName = this.normalizeLookupValue(name);
+    const suppressedNames = new Set([
+      "name",
+      "type",
+      "chronicle",
+      "lore",
+      "content",
+      "summary",
+      "description",
+    ]);
+
+    if (suppressedNames.has(normalizedName)) {
+      return true;
+    }
+
+    const normalizedLore = this.normalizeLookupValue(lore);
+    const structuredFieldPattern =
+      /\bname\b.*\btype\b.*\bchronicle\b.*\blore\b/;
+
+    return structuredFieldPattern.test(normalizedLore);
   }
 
   private resolveType(

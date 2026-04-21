@@ -317,8 +317,15 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "proactive-discovery",
     title: "Proactive Discovery",
     content:
-      "While you chat, the Oracle automatically identifies new characters, locations, and items. Look for 'Found Lore' chips at the bottom of messages to quickly add them to your vault.",
+      "While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.",
     icon: "icon-[lucide--search-check]",
+  },
+  "oracle-automation": {
+    id: "oracle-automation",
+    title: "Oracle Automation",
+    content:
+      "Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.",
+    icon: "icon-[lucide--sliders-horizontal]",
   },
   "draft-review": {
     id: "draft-review",

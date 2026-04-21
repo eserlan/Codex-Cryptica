@@ -3,6 +3,13 @@ import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
 import { uiStore as mockUiStore } from "./ui.svelte";
 
+const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
+  () => ({
+    mockAnalyzeEntityById: vi.fn().mockResolvedValue(0),
+    mockAnalyzeAndApplyEntityById: vi.fn().mockResolvedValue(0),
+  }),
+);
+
 // Mock dependencies
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
@@ -31,6 +38,12 @@ vi.mock("./ui.svelte", () => ({
     confirm: vi.fn().mockResolvedValue(true),
     aiDisabled: false,
     isDemoMode: false,
+    entityDiscoveryMode: "suggest",
+    connectionDiscoveryMode: "suggest",
+    oracleAutomationPolicy: {
+      entityDiscovery: "suggest",
+      connectionDiscovery: "suggest",
+    },
   },
 }));
 
@@ -45,6 +58,13 @@ vi.mock("./vault.svelte", () => ({
     addConnection: vi.fn().mockResolvedValue(true),
     removeConnection: vi.fn().mockResolvedValue(true),
     deleteEntity: vi.fn().mockResolvedValue(undefined),
+  },
+}));
+
+vi.mock("./proposer.svelte", () => ({
+  proposerStore: {
+    analyzeEntityById: mockAnalyzeEntityById,
+    analyzeAndApplyEntityById: mockAnalyzeAndApplyEntityById,
   },
 }));
 
@@ -100,6 +120,16 @@ describe("OracleStore", () => {
   let mockExecutor: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    (mockUiStore as any).aiDisabled = false;
+    (mockUiStore as any).isDemoMode = false;
+    (mockUiStore as any).entityDiscoveryMode = "suggest";
+    (mockUiStore as any).connectionDiscoveryMode = "suggest";
+    (mockUiStore as any).oracleAutomationPolicy = {
+      entityDiscovery: "suggest",
+      connectionDiscovery: "suggest",
+    };
+
     mockChatHistory = {
       messages: [],
       addMessage: vi.fn().mockImplementation((m) => {
@@ -403,6 +433,57 @@ describe("OracleStore", () => {
 
       expect(context.searchService).toBeDefined();
       expect(typeof context.searchService.search).toBe("function");
+    });
+
+    it("should expose oracle automation policy through the execution context", () => {
+      (mockUiStore as any).oracleAutomationPolicy = {
+        entityDiscovery: "auto-create",
+        connectionDiscovery: "auto-apply",
+      };
+
+      const context = oracle.getExecutionContext();
+
+      expect(context.automationPolicy).toEqual({
+        entityDiscovery: "auto-create",
+        connectionDiscovery: "auto-apply",
+      });
+    });
+
+    it("should seed discovery connections when connection discovery is suggest", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "suggest";
+
+      await oracle.handleDiscoveryConnectionsForEntity("entity", "context");
+
+      expect(mockAnalyzeEntityById).toHaveBeenCalledWith(
+        "entity",
+        false,
+        "context",
+      );
+      expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
+    });
+
+    it("should apply discovery connections only when connection discovery is auto-apply", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "auto-apply";
+      mockAnalyzeAndApplyEntityById.mockResolvedValue(2);
+
+      const count = await oracle.handleDiscoveryConnectionsForEntity("entity");
+
+      expect(count).toBe(2);
+      expect(mockAnalyzeAndApplyEntityById).toHaveBeenCalledWith(
+        "entity",
+        undefined,
+      );
+      expect(mockAnalyzeEntityById).not.toHaveBeenCalled();
+    });
+
+    it("should skip discovery connection analysis when connection discovery is off", async () => {
+      (mockUiStore as any).connectionDiscoveryMode = "off";
+
+      const count = await oracle.handleDiscoveryConnectionsForEntity("entity");
+
+      expect(count).toBe(0);
+      expect(mockAnalyzeEntityById).not.toHaveBeenCalled();
+      expect(mockAnalyzeAndApplyEntityById).not.toHaveBeenCalled();
     });
 
     it("should toggle open and modal states", async () => {

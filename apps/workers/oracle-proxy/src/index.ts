@@ -7,11 +7,13 @@
  * Environment variables required:
  * - GEMINI_API_KEY: The system Gemini API key
  * - ALLOWED_ORIGINS: Comma-separated list of allowed origins for CORS
+ * - ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS: Optional opt-in for Pages previews
  */
 
 interface Env {
   GEMINI_API_KEY: string;
   ALLOWED_ORIGINS?: string;
+  ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
 }
 
 // Allowed origins for CORS
@@ -255,13 +257,21 @@ export function isOriginAllowed(origin: string, env: Env): boolean {
   if (!origin) return false;
 
   // 1. Check explicit allowlist if configured
-  if (env.ALLOWED_ORIGINS) {
-    const isExplicitlyAllowed = env.ALLOWED_ORIGINS.split(",")
+  if (env.ALLOWED_ORIGINS?.trim()) {
+    const explicitlyAllowedOrigins = env.ALLOWED_ORIGINS.split(",")
       .map((o) => o.trim())
-      .filter(Boolean)
-      .includes(origin);
+      .filter(Boolean);
+    if (explicitlyAllowedOrigins.includes(origin)) return true;
 
-    if (isExplicitlyAllowed) return true;
+    if (
+      isEnabled(env.ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS) &&
+      isCloudflarePagesPreviewOrigin(origin)
+    ) {
+      return true;
+    }
+
+    // When ALLOWED_ORIGINS is configured, treat it as authoritative.
+    return false;
   }
 
   // 2. Check default internal origins
@@ -276,6 +286,10 @@ export function isOriginAllowed(origin: string, env: Env): boolean {
 
   // 4. Allow any local dev port so Vite / wrangler dev port changes do not break CORS.
   return isLoopbackOrigin(origin);
+}
+
+function isEnabled(value: string | undefined): boolean {
+  return value?.toLowerCase() === "true" || value === "1";
 }
 
 function isCloudflarePagesPreviewOrigin(origin: string): boolean {

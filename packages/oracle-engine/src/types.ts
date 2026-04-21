@@ -9,6 +9,14 @@
  */
 export type ConnectionMode = "system-proxy" | "custom-key";
 
+export type EntityDiscoveryMode = "off" | "suggest" | "auto-create";
+export type ConnectionDiscoveryMode = "off" | "suggest" | "auto-apply";
+
+export interface OracleAutomationPolicy {
+  entityDiscovery: EntityDiscoveryMode;
+  connectionDiscovery: ConnectionDiscoveryMode;
+}
+
 /**
  * Oracle message role types
  */
@@ -142,6 +150,7 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  automationPolicy?: OracleAutomationPolicy;
   proposeConnectionsForEntity?: (
     entityId: string,
     options?: { apply?: boolean; analysisText?: string },

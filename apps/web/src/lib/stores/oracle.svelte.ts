@@ -175,6 +175,7 @@ export class OracleStore {
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.modelName,
       isDemoMode: this.uiStore.isDemoMode,
+      automationPolicy: this.uiStore.oracleAutomationPolicy,
       proposeConnectionsForEntity: async (
         entityId: string,
         options?: { apply?: boolean; analysisText?: string },
@@ -308,25 +309,32 @@ export class OracleStore {
       };
     }
 
-    return this.textGeneration.reconcileEntityUpdate(
-      this.effectiveApiKey || "",
-      this.modelName,
-      existing,
-      {
-        chronicle: proposal.draft.chronicle,
-        lore: proposal.draft.lore,
-      },
-      buildRelatedEntityContext({
-        entity: existing,
-        incoming: {
+    try {
+      return await this.textGeneration.reconcileEntityUpdate(
+        this.effectiveApiKey || "",
+        this.modelName,
+        existing,
+        {
           chronicle: proposal.draft.chronicle,
           lore: proposal.draft.lore,
         },
-        vault: this.vault,
-        getConsolidatedContext: (related) =>
-          this.contextRetrieval.getConsolidatedContext(related),
-      }),
-    );
+        buildRelatedEntityContext({
+          entity: existing,
+          incoming: {
+            chronicle: proposal.draft.chronicle,
+            lore: proposal.draft.lore,
+          },
+          vault: this.vault,
+          getConsolidatedContext: (related) =>
+            this.contextRetrieval.getConsolidatedContext(related),
+        }),
+      );
+    } catch {
+      return {
+        content: existing.content || proposal.draft.chronicle,
+        lore: (existing.lore || "") + "\n\n" + proposal.draft.lore,
+      };
+    }
   }
 
   async proposeConnectionsForEntity(
@@ -345,6 +353,21 @@ export class OracleStore {
       false,
       options?.analysisText,
     );
+  }
+
+  async handleDiscoveryConnectionsForEntity(
+    entityId: string,
+    analysisText?: string,
+  ) {
+    const mode = this.uiStore.connectionDiscoveryMode;
+    if (mode === "off") {
+      return 0;
+    }
+
+    return this.proposeConnectionsForEntity(entityId, {
+      apply: mode === "auto-apply",
+      analysisText,
+    });
   }
 
   async startWizard(type: "connection" | "merge") {

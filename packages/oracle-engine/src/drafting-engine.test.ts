@@ -140,4 +140,25 @@ describe("DraftingEngine", () => {
     expect(proposals).toHaveLength(1);
     expect(proposals[0].type).toBe("event");
   });
+
+  it("should suppress structured output field names from discovery proposals", async () => {
+    const text = [
+      "**Name:** Strongheart Halflings",
+      "**Type:** faction",
+      "**Chronicle:** A resilient halfling culture.",
+      "**Lore:** The Stronghearts guard their homes fiercely.",
+      "",
+      "**Luiren** is their ancestral homeland.",
+    ].join("\n");
+    const context = {
+      existingEntities: [
+        { id: "luiren-id", title: "Luiren", type: "location" },
+      ],
+      history: [],
+    };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals.map((proposal) => proposal.title)).toEqual(["Luiren"]);
+  });
 });

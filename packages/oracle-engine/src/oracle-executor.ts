@@ -2,6 +2,8 @@ import type {
   OracleIntent,
   OracleExecutionContext,
   ChatMessage,
+  ConnectionDiscoveryMode,
+  EntityDiscoveryMode,
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
@@ -175,15 +177,18 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         lore: "",
       });
       const analysisText = this.buildCreateConnectionContext(name, context);
-      const appliedConnections =
-        (await context.proposeConnectionsForEntity?.(id, {
-          apply: true,
-          analysisText,
-        })) || 0;
+      const connectionMode = this.getConnectionDiscoveryMode(context);
+      const appliedConnections = await this.handleConnectionDiscovery(
+        id,
+        context,
+        analysisText,
+      );
       const connectionSuffix =
-        appliedConnections > 0
+        connectionMode === "auto-apply" && appliedConnections > 0
           ? ` and added ${appliedConnections} connection${appliedConnections === 1 ? "" : "s"}`
-          : "";
+          : connectionMode === "suggest"
+            ? " and queued connection suggestions"
+            : "";
 
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
@@ -656,6 +661,12 @@ The Lore Oracle supports several slash commands to help you manage your vault:
 
         // Proactive Extraction
         try {
+          const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
+          if (entityDiscoveryMode === "off") {
+            context.chatHistory.setMessages(finalMsgs);
+            return;
+          }
+
           const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
           const engineToUse = context.draftingEngine ?? this.draftingEngine;
           const proposals = await engineToUse.propose(combinedText, {
@@ -676,7 +687,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             }
 
             // Handle Auto-Archive if enabled (skip for guests and demo mode)
-            const autoArchiveEnabled = context.uiStore.autoArchive;
+            const autoArchiveEnabled = entityDiscoveryMode === "auto-create";
             if (
               autoArchiveEnabled &&
               !context.vault.isGuest &&
@@ -699,45 +710,44 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                     entityType: p.type,
                     entityId: id,
                   });
-                  try {
-                    await context.proposeConnectionsForEntity?.(id);
-                  } catch (error: unknown) {
-                    console.warn(
-                      "[OracleExecutor] Failed to seed connection proposals",
-                      error,
-                    );
-                  }
+                  await this.handleConnectionDiscovery(id, context);
                 } else {
                   const existing = context.vault.entities[p.entityId];
                   if (existing) {
                     if (context.textGeneration?.reconcileEntityUpdate) {
-                      const reconciled =
-                        await context.textGeneration.reconcileEntityUpdate(
-                          context.effectiveApiKey || "",
-                          context.modelName,
-                          existing,
-                          {
-                            chronicle: p.draft.chronicle,
-                            lore: p.draft.lore,
-                          },
-                          buildRelatedEntityContext({
-                            entity: existing,
-                            incoming: {
+                      try {
+                        const reconciled =
+                          await context.textGeneration.reconcileEntityUpdate(
+                            context.effectiveApiKey || "",
+                            context.modelName,
+                            existing,
+                            {
                               chronicle: p.draft.chronicle,
                               lore: p.draft.lore,
                             },
-                            vault: context.vault,
-                            getConsolidatedContext: (related) =>
-                              context.contextRetrieval.getConsolidatedContext(
-                                related,
-                              ),
-                          }),
-                        );
+                            buildRelatedEntityContext({
+                              entity: existing,
+                              incoming: {
+                                chronicle: p.draft.chronicle,
+                                lore: p.draft.lore,
+                              },
+                              vault: context.vault,
+                              getConsolidatedContext: (related) =>
+                                context.contextRetrieval.getConsolidatedContext(
+                                  related,
+                                ),
+                            }),
+                          );
 
-                      await context.vault.updateEntity(p.entityId, {
-                        content: reconciled.content,
-                        lore: reconciled.lore,
-                      });
+                        await context.vault.updateEntity(p.entityId, {
+                          content: reconciled.content,
+                          lore: reconciled.lore,
+                        });
+                      } catch {
+                        await context.vault.updateEntity(p.entityId, {
+                          lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                        });
+                      }
                     } else {
                       await context.vault.updateEntity(p.entityId, {
                         lore: (existing.lore || "") + "\n\n" + p.draft.lore,
@@ -749,14 +759,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                       entityType: p.type,
                       entityId: p.entityId,
                     });
-                    try {
-                      await context.proposeConnectionsForEntity?.(p.entityId);
-                    } catch (error: unknown) {
-                      console.warn(
-                        "[OracleExecutor] Failed to seed connection proposals",
-                        error,
-                      );
-                    }
+                    await this.handleConnectionDiscovery(p.entityId, context);
                   }
                 }
               }
@@ -774,6 +777,54 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         role: "system",
         content: err.message || "Error generating response.",
       });
+    }
+  }
+
+  private getEntityDiscoveryMode(
+    context: OracleExecutionContext,
+  ): EntityDiscoveryMode {
+    if (context.automationPolicy?.entityDiscovery) {
+      return context.automationPolicy.entityDiscovery;
+    }
+    if (context.uiStore?.entityDiscoveryMode) {
+      return context.uiStore.entityDiscoveryMode;
+    }
+    return context.uiStore?.autoArchive ? "auto-create" : "suggest";
+  }
+
+  private getConnectionDiscoveryMode(
+    context: OracleExecutionContext,
+  ): ConnectionDiscoveryMode {
+    return (
+      context.automationPolicy?.connectionDiscovery ||
+      context.uiStore?.connectionDiscoveryMode ||
+      "suggest"
+    );
+  }
+
+  private async handleConnectionDiscovery(
+    entityId: string,
+    context: OracleExecutionContext,
+    analysisText?: string,
+  ) {
+    const mode = this.getConnectionDiscoveryMode(context);
+    if (mode === "off" || !context.proposeConnectionsForEntity) {
+      return 0;
+    }
+
+    try {
+      return (
+        (await context.proposeConnectionsForEntity(entityId, {
+          apply: mode === "auto-apply",
+          analysisText,
+        })) || 0
+      );
+    } catch (error: unknown) {
+      console.warn(
+        "[OracleExecutor] Failed to handle connection discovery",
+        error,
+      );
+      return 0;
     }
   }
 
