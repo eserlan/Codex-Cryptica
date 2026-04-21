@@ -80,8 +80,11 @@ export class UIStore {
         "codex_world_page_dismissed_at",
       );
       if (worldPageDismissedAt !== null) {
-        const elapsed = Date.now() - parseInt(worldPageDismissedAt, 10);
-        if (elapsed < 24 * 60 * 60 * 1000) {
+        const dismissedAt = parseInt(worldPageDismissedAt, 10);
+        const now = Date.now();
+        if (Number.isNaN(dismissedAt) || dismissedAt > now) {
+          localStorage.removeItem("codex_world_page_dismissed_at");
+        } else if (now - dismissedAt < 24 * 60 * 60 * 1000) {
           this.dismissedWorldPage = true;
         }
       }

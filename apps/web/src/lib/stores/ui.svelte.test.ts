@@ -55,6 +55,7 @@ describe("UIStore", () => {
     localStorage.removeItem("codex_vtt_sidebar_collapsed");
     localStorage.removeItem("codex_vtt_entity_list_collapsed");
     localStorage.removeItem("codex_world_page_dismissed_at");
+    localStorage.removeItem("codex_dismissed_landing");
 
     uiStore.closeSettings();
     uiStore.activeSettingsTab = "vault";
@@ -405,6 +406,21 @@ describe("UIStore", () => {
       });
     const freshStore = new UIStore();
     expect(freshStore.dismissedWorldPage).toBe(false);
+    spy.mockRestore();
+  });
+
+  it("should clear invalid/future world page timestamp on init", () => {
+    const removeItemSpy = vi.spyOn(Storage.prototype, "removeItem");
+    const futureTimestamp = String(Date.now() + 60 * 60 * 1000); // 1h in the future
+    const spy = vi
+      .spyOn(Storage.prototype, "getItem")
+      .mockImplementation((key) => {
+        if (key === "codex_world_page_dismissed_at") return futureTimestamp;
+        return null;
+      });
+    const freshStore = new UIStore();
+    expect(freshStore.dismissedWorldPage).toBe(false);
+    expect(removeItemSpy).toHaveBeenCalledWith("codex_world_page_dismissed_at");
     spy.mockRestore();
   });
 
