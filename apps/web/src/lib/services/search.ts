@@ -8,8 +8,6 @@ import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
 const INDEX_BATCH_SIZE = 50;
-const SEARCH_INIT_TIMEOUT_MS = 2000;
-const SEARCH_INIT_POLL_MS = 100;
 
 export class SearchService {
   private worker: Worker | null = null;
@@ -18,15 +16,16 @@ export class SearchService {
   private activeVaultId: string | null = null;
   private saveTimeout: any = null;
   private indexQueue: Promise<void> = Promise.resolve();
+  private initPromise: Promise<void> | null = null;
   private isInitialized = false;
   private needsFullContentSweep = false;
 
   constructor() {
     if (typeof window !== "undefined") {
-      this.initWorker();
+      // Defer worker initialization until first use or vault event
+      // Bridge logs from worker to main thread log service
 
       // Final emergency save on page reload/exit
-      // Note: visibilitychange is more reliable than beforeunload for IDB writes
       window.addEventListener("visibilitychange", () => {
         if (
           document.visibilityState === "hidden" &&
@@ -175,6 +174,8 @@ export class SearchService {
   }
 
   private initWorker() {
+    if (this.worker) return;
+
     this.worker = new SearchWorker();
     this.api = Comlink.wrap<SearchEngine>(this.worker);
 
@@ -203,9 +204,37 @@ export class SearchService {
     );
 
     // Initialize immediately
-    this.init().then(() => {
-      this.isInitialized = true;
-    });
+    this.initPromise = this.api
+      .initIndex()
+      .then(() => {
+        this.isInitialized = true;
+      })
+      .catch((err) => {
+        debugStore.error("[SearchService] Worker initialization failed", err);
+        throw err;
+      });
+  }
+
+  private async ensureWorker(): Promise<Comlink.Remote<SearchEngine>> {
+    if (typeof window === "undefined") {
+      throw new Error(
+        "[SearchService] Search worker cannot be initialized in SSR environment",
+      );
+    }
+
+    if (!this.api) {
+      this.initWorker();
+    }
+
+    if (this.initPromise) {
+      await this.initPromise;
+    }
+
+    if (!this.api || !this.isInitialized) {
+      throw new Error("[SearchService] Search worker failed to initialize");
+    }
+
+    return this.api;
   }
 
   private scheduleAutoSave() {
@@ -226,26 +255,26 @@ export class SearchService {
     }
     this.worker?.terminate();
     this.worker = null;
+    this.initPromise = null;
   }
 
   async init(_options: { phonetic?: boolean } = {}): Promise<void> {
-    if (!this.api) return;
-    return this.api.initIndex();
+    await this.ensureWorker();
   }
 
   async index(entry: SearchEntry): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     // Serialize all indexing operations
     this.indexQueue = this.indexQueue
-      .then(() => this.api!.add(entry))
+      .then(() => api.add(entry))
       .catch((err) => debugStore.warn("Index error", err));
     return this.indexQueue;
   }
 
   async remove(id: string): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     this.indexQueue = this.indexQueue
-      .then(() => this.api!.remove(id))
+      .then(() => api.remove(id))
       .catch((err) => debugStore.warn("Index remove error", err));
     return this.indexQueue;
   }
@@ -254,9 +283,8 @@ export class SearchService {
     query: string,
     options: SearchOptions = {},
   ): Promise<SearchResult[]> {
-    if (!this.api) return [];
-
-    const rawResult = await this.api.searchOptimized(query, options);
+    const api = await this.ensureWorker();
+    const rawResult = await api.searchOptimized(query, options);
 
     // Handle Transferable (Encoded) result
     if (
@@ -273,9 +301,9 @@ export class SearchService {
   }
 
   async clear(): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     this.isDirty = false;
-    return this.api.clear();
+    return api.clear();
   }
 
   /**
@@ -283,28 +311,12 @@ export class SearchService {
    * Returns true if successful.
    */
   async loadIndex(vaultId: string): Promise<boolean> {
-    if (!this.api) return false;
-
-    // Wait for worker to be ready
-    let retries = 0;
-    const maxRetries = SEARCH_INIT_TIMEOUT_MS / SEARCH_INIT_POLL_MS;
-    while (!this.isInitialized && retries < maxRetries) {
-      await new Promise((r) => setTimeout(r, SEARCH_INIT_POLL_MS));
-      retries++;
-    }
-
-    if (!this.isInitialized) {
-      debugStore.warn(
-        `[SearchService] Search worker initialization timed out after ${SEARCH_INIT_TIMEOUT_MS}ms.`,
-      );
-      return false;
-    }
-
+    const api = await this.ensureWorker();
     this.activeVaultId = vaultId;
     try {
       const record = await entityDb.searchIndex.get(vaultId);
       if (record && record.data) {
-        await this.api.importIndex(record.data);
+        await api.importIndex(record.data);
         this.isDirty = false; // Reset dirty state after load
         return true;
       }
@@ -321,13 +333,13 @@ export class SearchService {
    * Persists the current state of the search index to IndexedDB.
    */
   async saveIndex(vaultId: string): Promise<void> {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
     try {
       debugStore.log(
         `[SearchService] Save started: Exporting index for ${vaultId}...`,
       );
       const start = performance.now();
-      const data = await this.api.exportIndex();
+      const data = await api.exportIndex();
 
       // Ensure we have actual index data (more than just docCount)
       const keyCount = Object.keys(data).length;
@@ -374,7 +386,7 @@ export class SearchService {
   }
 
   private async indexBatch(entities: any[]) {
-    if (!this.api) return;
+    const api = await this.ensureWorker();
 
     // Serialize indexing jobs to prevent overlapping worker updates
     this.indexQueue = this.indexQueue
@@ -389,7 +401,7 @@ export class SearchService {
             const entry = this.mapToSearchEntry(entities[j]);
             chunkEntries.push(entry);
           }
-          await this.api!.addBatch(chunkEntries);
+          await api.addBatch(chunkEntries);
         }
       })
       .catch((err) => debugStore.warn("Index batch error", err));
