@@ -78,6 +78,9 @@ vi.mock("$lib/stores/ui.svelte", () => ({
     openZenMode: vi.fn(),
     closeZenMode: vi.fn(),
     confirm: vi.fn(),
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

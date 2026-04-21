@@ -468,6 +468,29 @@ export class UIStore {
     this.bulkLabelDialog = { open: false, entityIds: [] };
   }
 
+  // Lightbox State
+  lightbox = $state<{
+    show: boolean;
+    imageUrl: string;
+    title: string;
+  }>({
+    show: false,
+    imageUrl: "",
+    title: "",
+  });
+
+  openLightbox(imageUrl: string, title: string) {
+    this.lightbox = {
+      show: true,
+      imageUrl,
+      title,
+    };
+  }
+
+  closeLightbox() {
+    this.lightbox.show = false;
+  }
+
   // Compatibility aliases (can be deprecated later)
   /** @deprecated Use zenModeEntityId */
   get readModeNodeId() {

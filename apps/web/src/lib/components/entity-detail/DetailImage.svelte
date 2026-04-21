@@ -4,7 +4,6 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
-  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
   import { fade } from "svelte/transition";
   import { isEntityVisible } from "schema";
 
@@ -19,7 +18,6 @@
   }>();
 
   let resolvedImageUrl = $state("");
-  let showLightbox = $state(false);
   let isDraggingOver = $state(false);
 
   // Check if this entity is visible in guest/shared mode
@@ -116,14 +114,6 @@
   }
 </script>
 
-<svelte:window
-  onkeydown={(e) => {
-    if (e.key === "Escape") {
-      if (showLightbox) showLightbox = false;
-    }
-  }}
-/>
-
 <div
   class="relative {isDraggingOver
     ? 'ring-2 ring-oracle-primary ring-offset-4 ring-offset-black bg-oracle-primary/10'
@@ -164,7 +154,7 @@
   {:else if entity.image}
     <div class="px-4 md:px-6">
       <button
-        onclick={() => (showLightbox = true)}
+        onclick={() => uiStore.openLightbox(resolvedImageUrl, entity.title)}
         class="mb-4 w-full rounded border border-theme-border overflow-hidden relative group cursor-pointer hover:border-theme-primary transition block shadow-inner bg-theme-bg/30"
       >
         <img
@@ -254,9 +244,3 @@
     </div>
   {/if}
 </div>
-
-<ZenImageLightbox
-  bind:show={showLightbox}
-  imageUrl={resolvedImageUrl}
-  title={entity.title}
-/>

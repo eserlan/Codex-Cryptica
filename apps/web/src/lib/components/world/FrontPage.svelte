@@ -11,7 +11,6 @@
   } from "./front-page/front-page-prefs";
   import { DEFAULT_RECENT_LIMIT } from "./front-page/front-page-constants";
   import { FrontPageController } from "./front-page/front-page-controller";
-  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
   import FrontPageHero from "./FrontPageHero.svelte";
   import FrontPageEntities from "./FrontPageEntities.svelte";
   import FrontPageBriefing from "./FrontPageBriefing.svelte";
@@ -72,7 +71,6 @@
   let lastCoverImage = "";
   let isWorldReady = $state(false);
   let lastLoadedRecentLimit = DEFAULT_RECENT_LIMIT;
-  let showCoverLightbox = $state(false);
   let isGeneratingBriefing = $state(false);
 
   $effect(() => {
@@ -249,7 +247,9 @@
   };
 
   const openCoverLightbox = () => {
-    showCoverLightbox = true;
+    if (coverImageUrl) {
+      uiStore.openLightbox(coverImageUrl, "World cover");
+    }
   };
 
   const cancelEditingBriefing = () => {
@@ -375,12 +375,6 @@
           </div>
         {/if}
       </header>
-
-      <ZenImageLightbox
-        bind:show={showCoverLightbox}
-        imageUrl={coverImageUrl}
-        title="World cover"
-      />
 
       <div class="flex flex-1 flex-col gap-5 lg:gap-6">
         {#if showCoverEditor || !coverImage}
