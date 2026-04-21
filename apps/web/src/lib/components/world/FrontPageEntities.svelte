@@ -65,7 +65,7 @@
         <div
           id="relevant-entities-tooltip"
           role="tooltip"
-          class="absolute bottom-full left-0 z-50 mb-2 w-56 translate-y-1 rounded-xl border border-theme-primary/30 bg-theme-surface/95 p-3 text-[10px] leading-relaxed text-theme-text opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 pointer-events-none group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+          class="absolute bottom-full left-0 z-50 mb-2 w-56 translate-y-1 rounded-xl border border-theme-primary/30 bg-theme-surface/95 p-3 text-xs leading-relaxed text-theme-text opacity-0 shadow-2xl backdrop-blur-md transition-all duration-200 pointer-events-none group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
         >
           <p>
             Entities tagged or labeled with <strong class="text-theme-primary"

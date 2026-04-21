@@ -30,18 +30,18 @@
   >
     <div class="flex flex-col gap-2">
       <h3
-        class="text-theme-primary font-header font-bold text-xs uppercase tracking-widest border-b border-theme-primary/20 pb-1"
+        class="text-theme-primary font-header font-bold text-sm uppercase tracking-widest border-b border-theme-primary/20 pb-1"
       >
         {hoveredEntity?.title || hoveredEntity?.id}
       </h3>
-      <div class="prose prose-invert prose-xs text-[10px] line-clamp-4">
+      <div class="prose prose-invert prose-sm text-xs line-clamp-4">
         {@html tooltipContent}
       </div>
       {#if hoveredEntity?.tags?.length}
         <div class="flex flex-wrap gap-1 mt-1">
           {#each hoveredEntity.tags as tag}
             <span
-              class="px-1.5 py-0.5 bg-theme-primary/10 border border-theme-primary/20 text-theme-primary text-[8px] font-mono rounded"
+              class="px-1.5 py-0.5 bg-theme-primary/10 border border-theme-primary/20 text-theme-primary text-[10px] font-mono rounded"
               >{tag}</span
             >
           {/each}
