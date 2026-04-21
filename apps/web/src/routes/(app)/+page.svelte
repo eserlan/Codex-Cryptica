@@ -83,7 +83,7 @@
   });
 
   const dismissFrontPageOverlay = () => {
-    uiStore.dismissedWorldPage = true;
+    uiStore.dismissWorldPage();
   };
 
   const handleFrontPageOverlayKeydown = (event: KeyboardEvent) => {
@@ -243,7 +243,7 @@
           >
             <button
               onclick={() => {
-                uiStore.dismissedLandingPage = true;
+                uiStore.dismissLandingPage();
               }}
               class="px-12 py-5 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-[0.2em] text-sm rounded-lg hover:bg-theme-primary/90 hover:shadow-[0_0_30px_var(--color-accent-primary)] transition-all active:scale-95"
             >
@@ -264,6 +264,14 @@
             >
               <span class="icon-[lucide--zap] w-3 h-3"></span>
               View Features Overview
+            </a>
+
+            <a
+              href="{base}/changelog"
+              class="inline-flex items-center gap-2 text-theme-primary/60 hover:text-theme-primary font-mono text-[10px] uppercase tracking-[0.2em] transition-colors"
+            >
+              <span class="icon-[lucide--history] w-3 h-3"></span>
+              View Full Changelog
             </a>
 
             <div

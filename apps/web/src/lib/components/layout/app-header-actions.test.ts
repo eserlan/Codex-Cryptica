@@ -7,15 +7,21 @@ const mocks = vi.hoisted(() => ({
   closeSidebar: vi.fn(),
   closeZenMode: vi.fn(),
   toggleWelcomeScreen: vi.fn(),
+  restoreWorldPage: vi.fn(),
+  openLightbox: vi.fn(),
+  closeLightbox: vi.fn(),
 }));
 
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     dismissedLandingPage: false,
-    dismissedWorldPage: true,
     closeSidebar: mocks.closeSidebar,
     closeZenMode: mocks.closeZenMode,
     toggleWelcomeScreen: mocks.toggleWelcomeScreen,
+    restoreWorldPage: mocks.restoreWorldPage,
+    openLightbox: mocks.openLightbox,
+    closeLightbox: mocks.closeLightbox,
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 
@@ -28,10 +34,10 @@ vi.mock("$lib/stores/vault.svelte", () => ({
 describe("openFrontPage", () => {
   beforeEach(() => {
     uiStore.dismissedLandingPage = false;
-    uiStore.dismissedWorldPage = true;
     mocks.closeSidebar.mockClear();
     mocks.closeZenMode.mockClear();
     mocks.toggleWelcomeScreen.mockClear();
+    mocks.restoreWorldPage.mockClear();
     vault.selectedEntityId = "entity-1";
   });
 
@@ -42,7 +48,7 @@ describe("openFrontPage", () => {
     expect(uiStore.closeZenMode).toHaveBeenCalled();
     expect(uiStore.toggleWelcomeScreen).toHaveBeenCalledWith(true);
     expect(uiStore.dismissedLandingPage).toBe(true);
-    expect(uiStore.dismissedWorldPage).toBe(false);
+    expect(uiStore.restoreWorldPage).toHaveBeenCalled();
     expect(vault.selectedEntityId).toBe(null);
   });
 });

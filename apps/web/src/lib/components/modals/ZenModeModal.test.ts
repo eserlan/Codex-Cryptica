@@ -35,6 +35,13 @@ vi.mock("$lib/hooks/useEditState.svelte", () => ({
 }));
 
 vi.mock("$lib/hooks/useZenModeActions.svelte", () => ({
+  useZenModeActions: vi.fn().mockReturnValue({
+    handleClose: vi.fn((cb) => cb()),
+    handlePopOut: vi.fn(),
+    discardEdits: vi.fn(),
+    isDirty: false,
+    isSaving: false,
+  }),
   createZenModeActions: vi.fn(() => ({
     isSaving: false,
     saveChanges: vi.fn(),
@@ -71,6 +78,9 @@ vi.mock("$lib/stores/ui.svelte", () => ({
     openZenMode: vi.fn(),
     closeZenMode: vi.fn(),
     confirm: vi.fn(),
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

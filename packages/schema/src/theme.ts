@@ -114,7 +114,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -175,7 +175,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       borderRadius: "3px",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
       edgeWidth: 3, // Bolder — connections need to win against parchment bg
@@ -219,7 +219,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -248,7 +248,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Fira Code', monospace",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "dashed",
       nodeBorderWidth: 2,
       edgeWidth: 1,
@@ -293,7 +293,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "rust.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "dotted",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -338,7 +338,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "blood.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 2,
       edgeWidth: 1,
@@ -384,7 +384,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       texture: "crt.svg",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -428,7 +428,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,
@@ -472,7 +472,7 @@ export const THEMES: Record<string, StylingTemplate> = {
       fontBody: "'Inter', sans-serif",
     },
     graph: {
-      nodeShape: "round-rectangle",
+      nodeShape: "ellipse",
       edgeStyle: "solid",
       nodeBorderWidth: 1,
       edgeWidth: 1,

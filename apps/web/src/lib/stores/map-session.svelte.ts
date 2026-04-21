@@ -134,27 +134,32 @@ export class MapSessionStore {
     { previous: Token; timeoutId: number }
   >();
 
+  allTokens = $derived.by(() => Object.values(this.tokens));
   activeTokenId = $derived(this.initiativeOrder[this.turnIndex] ?? null);
   selectedToken = $derived.by(() => {
     if (!this.selection) return null;
     return this.tokens[this.selection] ?? null;
   });
   initiativeEntries = $derived.by(() => {
-    return this.initiativeOrder
-      .map((tokenId): InitiativeEntry | null => {
-        const token = this.tokens[tokenId];
-        if (!token) return null;
-        return {
-          tokenId,
-          initiativeValue: this.initiativeValues[tokenId] ?? 0,
-          hasActed:
-            this.mode === "combat" &&
-            this.activeTokenId !== null &&
-            this.activeTokenId !== tokenId &&
-            this.turnIndex > this.initiativeOrder.indexOf(tokenId),
-        };
-      })
-      .filter((entry): entry is InitiativeEntry => entry !== null);
+    // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop.
+    // Also, eliminate the O(N^2) this.initiativeOrder.indexOf(tokenId) by using the loop index `i` directly.
+    const entries: InitiativeEntry[] = [];
+    const len = this.initiativeOrder.length;
+    for (let i = 0; i < len; i++) {
+      const tokenId = this.initiativeOrder[i];
+      const token = this.tokens[tokenId];
+      if (!token) continue;
+      entries.push({
+        tokenId,
+        initiativeValue: this.initiativeValues[tokenId] ?? 0,
+        hasActed:
+          this.mode === "combat" &&
+          this.activeTokenId !== null &&
+          this.activeTokenId !== tokenId &&
+          this.turnIndex > i,
+      });
+    }
+    return entries;
   });
 
   constructor(private deps: MapSessionDependencies) {
@@ -1217,7 +1222,7 @@ export class MapSessionStore {
     );
     let highest = 1;
 
-    for (const token of Object.values(this.tokens)) {
+    for (const token of this.allTokens) {
       const match = token.name.trim().match(pattern);
       if (!match) continue;
       const suffix = match[1] ? Number(match[1]) : 1;
@@ -1242,7 +1247,7 @@ export class MapSessionStore {
       y: source.y + offset,
       zIndex:
         Math.max(
-          ...Object.values(this.tokens).map((token) => token.zIndex),
+          ...this.allTokens.map((token) => token.zIndex),
           source.zIndex,
         ) + 1,
     };

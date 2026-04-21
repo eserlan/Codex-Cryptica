@@ -34,16 +34,16 @@ describe("DefaultAIClientManager", () => {
   });
 
   describe("getModel", () => {
-    it("should return proxy model when no API key provided", () => {
-      const model = manager.getModel("", "gemini-1.5-pro");
+    it("should return proxy model when no API key provided", async () => {
+      const model = await manager.getModel("", "gemini-1.5-pro");
 
       expect(model).toBeDefined();
       expect(model.model).toBe("gemini-1.5-pro");
       expect(typeof model.generateContent).toBe("function");
     });
 
-    it("should return direct client model when API key is provided", () => {
-      const model = manager.getModel("test-api-key", "gemini-1.5-pro");
+    it("should return direct client model when API key is provided", async () => {
+      const model = await manager.getModel("test-api-key", "gemini-1.5-pro");
 
       expect(model).toBeDefined();
       expect(model.model).toBe("gemini-1.5-pro");
@@ -67,7 +67,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
       const result = await model.generateContent("Test message");
 
       expect(fetch).toHaveBeenCalledWith(
@@ -93,7 +93,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
       const result = await model.generateContent("Test");
 
       expect(result.response.text()).toBe("");
@@ -110,7 +110,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
 
       await expect(model.generateContent("Test")).rejects.toThrow(
         "[OracleProxy] Request failed: Service unavailable",
@@ -125,7 +125,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
 
       await expect(model.generateContent("Test")).rejects.toThrow(
         "[OracleProxy] Request failed: Proxy request failed",
@@ -148,7 +148,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel(
+      const model = await manager.getModel(
         "",
         "gemini-1.5-pro",
         "You are a helpful assistant",
@@ -179,7 +179,7 @@ describe("DefaultAIClientManager", () => {
 
       vi.mocked(fetch).mockResolvedValue(mockResponse as any);
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
       await model.generateContent([
         { text: "Text part" },
         { inlineData: { mimeType: "image/png", data: "base64data" } },
@@ -223,7 +223,7 @@ describe("DefaultAIClientManager", () => {
         },
       };
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
       await model.generateContent(request);
 
       const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;
@@ -270,7 +270,7 @@ describe("DefaultAIClientManager", () => {
         {},
       );
 
-      const model = manager.getModel("", "gemini-1.5-pro");
+      const model = await manager.getModel("", "gemini-1.5-pro");
       await model.generateContent(request);
 
       const callArgs = vi.mocked(fetch).mock.calls[0][1] as RequestInit;

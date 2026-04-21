@@ -6,34 +6,36 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   randomize: true,
   packComponents: true,
   tile: true,
-  tilingPaddingVertical: 100,
-  tilingPaddingHorizontal: 100,
-  gravity: 0.1,
-  nodeRepulsion: 35000, // Increased baseline repulsion to reduce overlap in dense areas
-  idealEdgeLength: 80, // Tighter from 120
-  nodeSeparation: 80, // Tighter from 120
-  numIter: 3500, // Balanced iterations for speed/quality
-  nodeDimensionsIncludeLabels: true, // Essential for large entity cards to prevent overlap
-  nestingReprGrpFactor: 1.2, // Default value is more stable
+  tilingPaddingVertical: 60,
+  tilingPaddingHorizontal: 60,
+  // gravity/repulsion/separation/edgeLength are always overridden by getDynamicLayoutOptions
+  gravity: 0.25,
+  nodeRepulsion: 18000,
+  idealEdgeLength: 55,
+  nodeSeparation: 55,
+  numIter: 3500,
+  nodeDimensionsIncludeLabels: true,
+  nestingReprGrpFactor: 1.2,
   initialEnergyOnIncremental: 0.3,
 };
 
 /**
  * Generates layout options tuned for the specific size of the graph.
+ * Targets an Obsidian-like layout: stronger gravity pulls the graph into a
+ * cohesive circular shape while moderate repulsion still lets clusters form.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
-  // Always use 'default' quality unless it's a massive graph (> 500 nodes)
   const quality = nodeCount > 500 ? "draft" : "default";
 
-  // Scale repulsion significantly to prevent clumping in dense areas
-  const repulsion = Math.min(200000, 35000 + nodeCount * 400);
+  // Moderate repulsion — enough to prevent overlap without blowing clusters apart
+  const repulsion = Math.min(130000, 18000 + nodeCount * 250);
 
-  // Increase separation and edge length to give large cards room
-  const separation = Math.min(300, 80 + Math.sqrt(nodeCount) * 10);
-  const edgeLength = Math.min(250, 80 + Math.sqrt(nodeCount) * 8);
+  // Tighter separation and edge length so connected nodes cluster visibly
+  const separation = Math.min(220, 55 + Math.sqrt(nodeCount) * 8);
+  const edgeLength = Math.min(180, 55 + Math.sqrt(nodeCount) * 6);
 
-  // Very light gravity to prevent the "hairball" effect
-  const gravity = Math.max(0.01, 0.15 - nodeCount * 0.0003);
+  // Stronger gravity creates the characteristic circular pull toward the center
+  const gravity = Math.max(0.08, 0.4 - nodeCount * 0.001);
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,

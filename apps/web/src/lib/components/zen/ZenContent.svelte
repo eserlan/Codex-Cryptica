@@ -1,6 +1,5 @@
 <script lang="ts">
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
   import MarkdownEditor from "$lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "$lib/components/timeline/TemporalEditor.svelte";
@@ -10,11 +9,13 @@
     entity,
     editState = $bindable(),
     scrollContainer = $bindable(),
+    onNavigate,
     showConnections = false,
   } = $props<{
     entity: Entity | null;
     editState: any;
     scrollContainer: HTMLDivElement | undefined;
+    onNavigate: (id: string) => void;
     showConnections?: boolean;
   }>();
 
@@ -95,16 +96,16 @@
 
 <div
   bind:this={scrollContainer}
-  class="flex-1 p-6 md:p-8 md:overflow-y-auto custom-scrollbar bg-theme-bg"
+  class="flex-1 p-4 md:p-6 md:overflow-y-auto custom-scrollbar bg-theme-bg"
   style="background-image: var(--bg-texture-overlay)"
   data-testid="zen-content"
 >
-  <div class="max-w-3xl mx-auto space-y-12">
+  <div class="max-w-3xl mx-auto space-y-6">
     <!-- Temporal Data -->
     {#if editState.isEditing}
       <div class="bg-theme-surface p-4 rounded border border-theme-border">
         <h3
-          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest mb-4"
+          class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest mb-3"
         >
           Timeline Configuration
         </h3>
@@ -160,7 +161,7 @@
     {#if editState.isEditing || isVisible}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--book-open] w-5 h-5"></span>
           {themeStore.jargon.chronicle_header}
@@ -192,7 +193,7 @@
     {#if !vault.isGuest && (editState.isEditing || entity?.lore)}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--scroll-text] w-5 h-5"></span>
           {themeStore.jargon.lore_header}
@@ -217,7 +218,7 @@
     {#if showConnections}
       <div>
         <h2
-          class="text-xl font-header font-bold text-theme-primary mb-4 flex items-center gap-2 border-b border-theme-border pb-2"
+          class="text-xl font-header font-bold text-theme-primary mb-3 flex items-center gap-2 border-b border-theme-border pb-2"
         >
           <span class="icon-[lucide--link-2] w-5 h-5"></span>
           {themeStore.jargon.connections_header}
@@ -234,7 +235,7 @@
               <button
                 type="button"
                 class="flex-1 min-w-0 text-left hover:text-theme-primary transition flex items-center flex-wrap gap-y-1"
-                onclick={() => uiStore.focusEntity(conn.targetId)}
+                onclick={() => onNavigate(conn.targetId)}
               >
                 {#if conn.isOutbound}
                   <span class="text-theme-secondary">{entity?.title}</span>

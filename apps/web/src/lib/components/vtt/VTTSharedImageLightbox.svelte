@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { SharedTokenImageState } from "../../../types/vtt";
 
@@ -15,10 +15,12 @@
     if (!imageState) {
       resolvedImageUrl = "";
       lastResolvedPath = null;
+      uiStore.closeLightbox();
       return;
     }
 
     if (imageState.imagePath === lastResolvedPath && resolvedImageUrl) {
+      uiStore.openLightbox(resolvedImageUrl, imageState.title);
       return;
     }
 
@@ -35,6 +37,7 @@
             resolvedUrl: url,
           });
           resolvedImageUrl = url;
+          uiStore.openLightbox(url, imageState.title);
         }
       })
       .catch((err) => {
@@ -46,20 +49,10 @@
     };
   });
 
-  let show = $state(false);
-
+  // Synchronize store back to onClose if it's closed manually
   $effect(() => {
-    show = Boolean(imageState);
-  });
-
-  $effect(() => {
-    if (!imageState || show) return;
-    onClose();
+    if (!uiStore.lightbox.show && imageState) {
+      onClose();
+    }
   });
 </script>
-
-<ZenImageLightbox
-  bind:show
-  imageUrl={resolvedImageUrl}
-  title={imageState?.title ?? "Shared Token Image"}
-/>

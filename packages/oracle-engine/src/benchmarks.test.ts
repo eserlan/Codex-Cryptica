@@ -47,7 +47,9 @@ describe("Oracle Proactive Discovery Benchmarks", () => {
     }
 
     const accuracy = matches / testCases.length;
-    console.info(`[SC-001] Entity identification accuracy: ${(accuracy * 100).toFixed(1)}% (target >= 85%)`);
+    console.info(
+      `[SC-001] Entity identification accuracy: ${(accuracy * 100).toFixed(1)}% (target >= 85%)`,
+    );
     // Advisory only — not a hard CI gate
     expect(accuracy).toBeGreaterThan(0);
   });
@@ -74,7 +76,9 @@ describe("Oracle Proactive Discovery Benchmarks", () => {
     }
 
     const precision = correctMatches / testCases.length;
-    console.info(`[SC-004] Smart update precision: ${(precision * 100).toFixed(1)}% (target >= 95%)`);
+    console.info(
+      `[SC-004] Smart update precision: ${(precision * 100).toFixed(1)}% (target >= 95%)`,
+    );
     // Advisory only — not a hard CI gate
     expect(precision).toBeGreaterThan(0);
   });

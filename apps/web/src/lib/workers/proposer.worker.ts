@@ -22,7 +22,7 @@ async function analyzeEntityWithModel(
     return [];
   }
 
-  const model = aiClientManager.getModel(apiKey, modelName);
+  const model = await aiClientManager.getModel(apiKey, modelName);
 
   let truncatedContent = content.slice(0, 15000);
   if (content.length > 15000) {

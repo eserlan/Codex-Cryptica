@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/stores/oracle.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
-  import ZenImageLightbox from "$lib/components/zen/ZenImageLightbox.svelte";
 
   let { message }: { message: ChatMessage } = $props();
 
-  let showLightbox = $state(false);
   let isArchiving = $state(false);
   let archiveError = $state<string | null>(null);
 
@@ -49,12 +48,6 @@
   };
 </script>
 
-<svelte:window
-  onkeydown={(e) => {
-    if (e.key === "Escape" && showLightbox) showLightbox = false;
-  }}
-/>
-
 <div class="flex flex-col gap-3 w-full max-w-sm">
   {#if message.imageUrl}
     <div class="relative group">
@@ -67,7 +60,7 @@
         class="w-full rounded-lg border border-theme-border shadow-lg cursor-zoom-in group-hover:border-theme-primary/50 transition-all"
         draggable="true"
         ondragstart={handleDragStart}
-        onclick={() => (showLightbox = true)}
+        onclick={() => uiStore.openLightbox(message.imageUrl!, message.content)}
       />
 
       <!-- Overlay Info -->
@@ -123,12 +116,6 @@
     </div>
   {/if}
 </div>
-
-<ZenImageLightbox
-  bind:show={showLightbox}
-  imageUrl={message.imageUrl ?? ""}
-  title={message.content}
-/>
 
 <style>
   img {

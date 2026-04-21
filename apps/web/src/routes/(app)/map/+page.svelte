@@ -180,7 +180,7 @@
   }
 
   function handleEntitySelect(entity: Entity) {
-    uiStore.focusEntity(entity.id);
+    uiStore.openZenMode(entity.id);
   }
 </script>
 

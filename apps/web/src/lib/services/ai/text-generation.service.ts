@@ -26,7 +26,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<string> {
     if (!isAIEnabled()) return query;
     try {
-      const basicModel = this.aiClientManager.getModel(apiKey, TIER_MODES.lite);
+      const basicModel = await this.aiClientManager.getModel(
+        apiKey,
+        TIER_MODES.lite,
+      );
 
       const conversationContext = history
         .slice(-4)
@@ -58,7 +61,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     if (!isAIEnabled()) return context;
     if (!context.trim()) return context;
 
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
     const prompt = buildContextDistillationPrompt(context);
 
     try {
@@ -81,7 +84,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     sources: any[],
   ): Promise<{ body: string; lore?: string }> {
     assertAIEnabled();
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target)}`;
     const sourceContext = sources
@@ -122,7 +125,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     lore: string;
   }> {
     assertAIEnabled();
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
     const prompt = buildEntityReconciliationPrompt(
       entity,
       incoming,
@@ -166,7 +169,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     userQuery: string,
   ): Promise<string> {
     assertAIEnabled();
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const MAX_SUBJECT_CONTEXT_CHARS = 2000;
     const MAX_CONNECTED_ENTITIES = 20;
@@ -227,7 +230,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<void> {
     assertAIEnabled();
     const systemInstruction = buildSystemInstruction(demoMode);
-    const model = this.aiClientManager.getModel(
+    const model = await this.aiClientManager.getModel(
       apiKey,
       modelName,
       systemInstruction,
