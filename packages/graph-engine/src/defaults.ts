@@ -13,7 +13,7 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   nodeRepulsion: 18000,
   idealEdgeLength: 55,
   nodeSeparation: 55,
-  numIter: 3500,
+  numIter: 5000,
   nodeDimensionsIncludeLabels: true,
   nestingReprGrpFactor: 1.2,
   initialEnergyOnIncremental: 0.3,
@@ -21,21 +21,27 @@ export const DEFAULT_LAYOUT_OPTIONS = {
 
 /**
  * Generates layout options tuned for the specific size of the graph.
- * Targets an Obsidian-like layout: stronger gravity pulls the graph into a
- * cohesive circular shape while moderate repulsion still lets clusters form.
+ * Short edges keep connected nodes in tight clusters around their hubs;
+ * repulsion/separation spread unrelated nodes apart. Gravity is reduced as
+ * graphs grow so clusters can drift into distinct regions instead of
+ * collapsing into one mixed ball, with gravityRange keeping the overall
+ * layout loosely cohesive.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
   const quality = nodeCount > 500 ? "draft" : "default";
 
-  // Moderate repulsion — enough to prevent overlap without blowing clusters apart
-  const repulsion = Math.min(130000, 18000 + nodeCount * 250);
+  // Shorter edges pull connected nodes into tight huddles around their hub
+  const edgeLength = Math.min(70, 15 + Math.sqrt(nodeCount) * 1.5);
 
-  // Tighter separation and edge length so connected nodes cluster visibly
-  const separation = Math.min(220, 55 + Math.sqrt(nodeCount) * 8);
-  const edgeLength = Math.min(180, 55 + Math.sqrt(nodeCount) * 6);
+  const separation = Math.min(100, 20 + Math.sqrt(nodeCount) * 2.5);
 
-  // Stronger gravity creates the characteristic circular pull toward the center
-  const gravity = Math.max(0.08, 0.4 - nodeCount * 0.001);
+  // Higher repulsion pushes non-connected nodes further apart while
+  // short edges still keep directly-connected nodes in tight clusters
+  const repulsion = Math.min(200000, 30000 + nodeCount * 500);
+
+  // Lower gravity lets clusters drift into their own regions of space
+  // rather than being forced into one mixed ball
+  const gravity = Math.max(0.08, 0.25 - nodeCount * 0.0005);
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,
@@ -44,6 +50,7 @@ export const getDynamicLayoutOptions = (nodeCount: number) => {
     nodeSeparation: separation,
     idealEdgeLength: edgeLength,
     gravity,
+    gravityRange: 5.5,
   };
 };
 

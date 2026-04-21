@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { LayoutManager } from "./LayoutManager";
+import { LayoutManager, removeOverlaps } from "./LayoutManager";
 import type { Core } from "cytoscape";
 
 describe("LayoutManager", () => {
@@ -121,7 +121,7 @@ describe("LayoutManager", () => {
     });
 
     const layoutCall = mockCy.layout.mock.calls[0][0];
-    expect(layoutCall.gravity).toBeLessThanOrEqual(0.35);
+    expect(layoutCall.gravity).toBeLessThanOrEqual(0.25);
   });
 
   it("should use higher gravity in portrait view", async () => {
@@ -228,5 +228,77 @@ describe("LayoutManager", () => {
       true,
     );
     expect(mockCy.fit).toHaveBeenCalled();
+  });
+});
+
+describe("removeOverlaps", () => {
+  function makeNode(x: number, y: number, size: number) {
+    let pos = { x, y };
+    return {
+      position: vi.fn((newPos?: { x: number; y: number }) => {
+        if (newPos) pos = newPos;
+        return pos;
+      }),
+      width: vi.fn().mockReturnValue(size),
+    };
+  }
+
+  function makeCy(nodes: any[]) {
+    return {
+      nodes: vi
+        .fn()
+        .mockReturnValue(Object.assign(nodes, { length: nodes.length })),
+      batch: vi.fn((cb: () => void) => cb()),
+    } as any;
+  }
+
+  it("should not move non-overlapping nodes", () => {
+    const n1 = makeNode(0, 0, 40);
+    const n2 = makeNode(100, 0, 40);
+    const cy = makeCy([n1, n2]);
+    removeOverlaps(cy);
+    expect(n1.position()).toEqual({ x: 0, y: 0 });
+    expect(n2.position()).toEqual({ x: 100, y: 0 });
+  });
+
+  it("should push apart two overlapping nodes", () => {
+    // Two 40px-diameter nodes 10px apart (need 40+10=50 apart)
+    const n1 = makeNode(0, 0, 40);
+    const n2 = makeNode(10, 0, 40);
+    const cy = makeCy([n1, n2]);
+    removeOverlaps(cy, 10);
+    const p1 = n1.position();
+    const p2 = n2.position();
+    const dist = Math.abs(p2.x - p1.x);
+    expect(dist).toBeGreaterThanOrEqual(50);
+  });
+
+  it("should handle nodes at identical positions without NaN", () => {
+    const n1 = makeNode(0, 0, 40);
+    const n2 = makeNode(0, 0, 40);
+    const cy = makeCy([n1, n2]);
+    removeOverlaps(cy, 10);
+    const p1 = n1.position();
+    const p2 = n2.position();
+    expect(isNaN(p1.x)).toBe(false);
+    expect(isNaN(p2.x)).toBe(false);
+  });
+
+  it("should converge (no overlaps remain) after running", () => {
+    // Three nodes all at the same spot
+    const padding = 8;
+    const epsilon = 0.01;
+    const nodes = [makeNode(5, 5, 30), makeNode(5, 5, 30), makeNode(5, 5, 30)];
+    const cy = makeCy(nodes);
+    removeOverlaps(cy, padding, 100);
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const p1 = nodes[i].position();
+        const p2 = nodes[j].position();
+        const minDist = nodes[i].width() / 2 + nodes[j].width() / 2 + padding;
+        const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+        expect(dist).toBeGreaterThanOrEqual(minDist - epsilon);
+      }
+    }
   });
 });
