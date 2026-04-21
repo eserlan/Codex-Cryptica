@@ -7,6 +7,7 @@
       "outputs": [".svelte-kit/**", "dist/**"]
     },
     "lint": {},
+    "lint:types": {},
     "test": {
       "dependsOn": ["^build"]
     },
