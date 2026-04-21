@@ -86,16 +86,18 @@ As a GM, I want the Oracle to help me write the front page summary and tagline, 
 
 ### User Story 6 - Front Page Dismissal and Restore (Priority: P2)
 
-As a user, I want to dismiss the front page when I am ready to work, and restore it later from the header, so I can move between overview and graph without friction.
+As a user, I want to dismiss the front page when I am ready to work, and restore it later from the header, so I can move between overview and graph without friction. I also want it to reappear automatically on a daily basis so it stays useful without feeling nagging.
 
-**Why this priority**: The front page should be a landing layer, not a dead-end. Users need a predictable way to get back to it.
+**Why this priority**: The front page should be a landing layer, not a dead-end. Users need a predictable way to get back to it, and it should surface naturally at the start of each new working day without re-appearing on every reload.
 
-**Independent Test**: Open the front page, dismiss it with the close control or backdrop, then use the header brand button to bring it back.
+**Independent Test**: Open the front page, dismiss it with the close control or backdrop, then use the header brand button to bring it back. Reload within 24 hours and verify the front page stays dismissed. Reload after 24 hours and verify it reappears.
 
 **Acceptance Scenarios**:
 
 1. **Given** the front page is open, **When** I click outside the content or use the close control, **Then** the graph view is revealed again.
 2. **Given** the graph or an entity sidebar is open, **When** I click the header brand, **Then** the front page returns and the selection/sidebar state is cleared.
+3. **Given** the front page was dismissed less than 24 hours ago, **When** the app reloads, **Then** the front page remains dismissed.
+4. **Given** the front page was dismissed more than 24 hours ago (or never), **When** the app loads, **Then** the front page is shown again.
 
 ---
 
@@ -127,6 +129,8 @@ As a user, I want to dismiss the front page when I am ready to work, and restore
 - **FR-013**: If no `frontpage` entity exists, the system MUST fall back to the saved front page summary; if no title exists, it MUST fall back to the readable vault name.
 - **FR-014**: System MUST provide an AI generate/refine option for the campaign summary using the Oracle.
 - **FR-015**: System MUST provide a close control and backdrop dismissal for the front page, and the header brand MUST restore the front page from elsewhere in the app.
+- **FR-016**: System MUST persist the front page dismissal timestamp and suppress the front page for 24 hours after each dismissal; after 24 hours the front page MUST reappear on the next load.
+- **FR-017**: When the user explicitly restores the front page via the header brand, the dismissal timestamp MUST be cleared so the front page shows again on the next load.
 
 ### Key Entities _(include if feature involves data)_
 
@@ -147,3 +151,4 @@ As a user, I want to dismiss the front page when I am ready to work, and restore
 - **SC-006**: Tagging any entity with `frontpage` updates the front page summary source on the next load or manual refresh.
 - **SC-007**: The entity card grid remains responsive between mobile and desktop viewports.
 - **SC-008**: AI summary generation produces a concise, theme-aware summary or tagline within 15 seconds.
+- **SC-009**: The front page does not reappear between reloads within the same working session (24-hour window), but does reappear automatically the next day.

@@ -234,6 +234,7 @@
           aria-selected={activeTab === "apply"}
           aria-controls="apply-label-panel"
           id="apply-label-tab"
+          tabindex={activeTab === "apply" ? 0 : -1}
           class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'apply'
             ? 'text-theme-primary border-b-2 border-theme-primary'
@@ -247,6 +248,7 @@
           aria-selected={activeTab === "remove"}
           aria-controls="remove-label-panel"
           id="remove-label-tab"
+          tabindex={activeTab === "remove" ? 0 : -1}
           class="flex-1 py-3 md:py-2 text-xs md:text-sm font-medium transition-colors {activeTab ===
           'remove'
             ? 'text-theme-primary border-b-2 border-theme-primary'
@@ -258,7 +260,7 @@
       </div>
 
       <!-- Body -->
-      <div class="p-4 md:p-6 space-y-4 overflow-y-auto">
+      <div class="p-4 md:p-6 overflow-y-auto">
         {#if activeTab === "apply"}
           <div
             role="tabpanel"
