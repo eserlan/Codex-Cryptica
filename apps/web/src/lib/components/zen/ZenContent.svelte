@@ -96,11 +96,11 @@
 
 <div
   bind:this={scrollContainer}
-  class="flex-1 p-6 md:p-8 md:overflow-y-auto custom-scrollbar bg-theme-bg"
+  class="flex-1 p-4 md:p-6 md:overflow-y-auto custom-scrollbar bg-theme-bg"
   style="background-image: var(--bg-texture-overlay)"
   data-testid="zen-content"
 >
-  <div class="max-w-3xl mx-auto space-y-12">
+  <div class="max-w-3xl mx-auto space-y-8">
     <!-- Temporal Data -->
     {#if editState.isEditing}
       <div class="bg-theme-surface p-4 rounded border border-theme-border">

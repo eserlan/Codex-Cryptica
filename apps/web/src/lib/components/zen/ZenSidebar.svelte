@@ -89,11 +89,11 @@
 
 <div
   style="background-image: var(--bg-texture-overlay)"
-  class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-6 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
+  class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >
   <!-- Labels -->
-  <div class="mb-6 space-y-2">
+  <div class="mb-4 space-y-2">
     {#if entity?.labels?.length}
       <div class="flex flex-wrap gap-1.5">
         {#each entity.labels as label}
@@ -118,7 +118,7 @@
   </div>
 
   <!-- Image -->
-  <div class="mb-6">
+  <div class="mb-4">
     {#if !isVisible && vault.isGuest}
       <div
         class="w-full py-2 md:py-4 md:aspect-square rounded-lg border border-dashed border-theme-border flex flex-col items-center justify-center gap-2 md:gap-4 text-theme-muted bg-theme-primary/5 relative overflow-hidden"
@@ -219,10 +219,10 @@
   </div>
 
   <!-- Sidebar Content (Desktop) -->
-  <div class="hidden md:block space-y-6">
+  <div class="hidden md:block space-y-4">
     {#if !(isPopout && vault.isGuest)}
       <div
-        class="space-y-4 pt-8 border-t border-theme-border md:border-t-0 md:pt-0"
+        class="space-y-4 pt-6 border-t border-theme-border md:border-t-0 md:pt-0"
       >
         <h3
           class="text-xs font-bold text-theme-secondary uppercase font-header tracking-widest border-b border-theme-border pb-2"
@@ -266,7 +266,7 @@
     {/if}
 
     {#if editState.isEditing && !vault.isGuest}
-      <div class="mt-8 pt-8 border-t border-theme-border">
+      <div class="mt-6 pt-6 border-t border-theme-border">
         <button
           onclick={onDelete}
           class="w-full border border-red-900/30 text-red-800 hover:text-red-500 hover:border-red-600 hover:bg-red-950/30 text-xs font-bold px-4 py-2 rounded tracking-widest transition flex items-center justify-center gap-2"
