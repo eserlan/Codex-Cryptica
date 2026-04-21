@@ -60,7 +60,7 @@
   {/if}
 
   {#if browser}
-    {#if uiStore.settingsModal.open}
+    {#if uiStore.showSettings}
       {#await loadModal(() => import("$lib/components/settings/SettingsModal.svelte"), "SettingsModal") then SettingsModal}
         {#if SettingsModal}
           <SettingsModal />
