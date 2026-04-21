@@ -23,6 +23,42 @@ export interface LayoutOptions {
 
 const ORIENTATION_THRESHOLD = 1.2;
 
+export function removeOverlaps(cy: Core, padding = 10, maxIter = 50) {
+  const nodes = cy.nodes();
+  for (let iter = 0; iter < maxIter; iter++) {
+    let anyOverlap = false;
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const n1 = nodes[i];
+        const n2 = nodes[j];
+        const p1 = n1.position();
+        const p2 = n2.position();
+        const r1 = n1.width() / 2;
+        const r2 = n2.width() / 2;
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = r1 + r2 + padding;
+        if (dist < minDist) {
+          anyOverlap = true;
+          const push = (minDist - dist) / 2;
+          if (dist < 0.001) {
+            // Nodes at same position — push apart at a fixed angle
+            n1.position({ x: p1.x - push, y: p1.y });
+            n2.position({ x: p2.x + push, y: p2.y });
+          } else {
+            const nx = dx / dist;
+            const ny = dy / dist;
+            n1.position({ x: p1.x - nx * push, y: p1.y - ny * push });
+            n2.position({ x: p2.x + nx * push, y: p2.y + ny * push });
+          }
+        }
+      }
+    }
+    if (!anyOverlap) break;
+  }
+}
+
 export class LayoutManager {
   private currentLayout: any;
 
@@ -206,8 +242,8 @@ export class LayoutManager {
     // Landscape: allow stronger gravity for the circular pull but cap extreme values
     // Portrait: allow a bit more to counteract vertical drift
     const gravity = isLandscape
-      ? Math.min(baseOptions.gravity, 0.35)
-      : Math.min(baseOptions.gravity, 0.5);
+      ? Math.min(baseOptions.gravity, 0.25)
+      : Math.min(baseOptions.gravity, 0.35);
 
     // Don't randomize if the user has explicitly locked positions via stableLayout
     const shouldRandomize =
@@ -215,7 +251,7 @@ export class LayoutManager {
 
     this.currentLayout = this.cy.layout({
       ...baseOptions,
-      boundingBox: { x1: -2000, y1: -2000, x2: 2000, y2: 2000 },
+      boundingBox: { x1: -1200, y1: -1200, x2: 1200, y2: 1200 },
       gravity,
       randomize: shouldRandomize,
       animate: false,
@@ -225,6 +261,8 @@ export class LayoutManager {
     const layout = this.currentLayout;
     layout.one("layoutstop", () => {
       if (this.currentLayout !== layout || this.cy.destroyed()) return;
+
+      removeOverlaps(this.cy);
 
       this.cy.animate({
         fit: { eles: this.cy.elements(), padding: 20 },

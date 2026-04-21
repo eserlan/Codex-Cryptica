@@ -13,7 +13,7 @@ describe("getDynamicLayoutOptions", () => {
   });
 
   it("gravity never exceeds base cap", () => {
-    expect(getDynamicLayoutOptions(1).gravity).toBeLessThanOrEqual(0.4);
+    expect(getDynamicLayoutOptions(1).gravity).toBeLessThanOrEqual(0.25);
   });
 
   it("repulsion scales with node count", () => {
@@ -22,8 +22,8 @@ describe("getDynamicLayoutOptions", () => {
     expect(large.nodeRepulsion).toBeGreaterThan(small.nodeRepulsion);
   });
 
-  it("repulsion is capped at 130000", () => {
-    expect(getDynamicLayoutOptions(10000).nodeRepulsion).toBe(130000);
+  it("repulsion is capped at 200000", () => {
+    expect(getDynamicLayoutOptions(10000).nodeRepulsion).toBe(200000);
   });
 
   it("uses draft quality for graphs over 500 nodes", () => {
