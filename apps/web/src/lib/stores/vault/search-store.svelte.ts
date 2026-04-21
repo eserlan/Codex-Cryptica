@@ -5,7 +5,7 @@ import { debugStore } from "../debug.svelte";
 
 export class SearchStore {
   constructor(private serviceRegistry: ServiceRegistry) {
-    vaultEventBus.subscribe(async (event) => {
+    const handler = async (event: any) => {
       try {
         if (event.type === "ENTITY_UPDATED") {
           const services = await this.serviceRegistry.ensureInitialized();
@@ -13,18 +13,20 @@ export class SearchStore {
         } else if (event.type === "BATCH_CREATED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await Promise.all(
-            event.entities.map((e) => this.indexEntity(e, services)),
+            event.entities.map((e: any) => this.indexEntity(e, services)),
           );
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
           const entities = event.newOrChangedIds
-            .map((id) => event.entities[id])
+            .map((id: string) => event.entities[id])
             .filter(Boolean);
-          await Promise.all(entities.map((e) => this.indexEntity(e, services)));
+          await Promise.all(
+            entities.map((e: any) => this.indexEntity(e, services)),
+          );
         } else if (event.type === "BATCH_UPDATED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await Promise.all(
-            event.entities.map((e) => this.indexEntity(e, services)),
+            event.entities.map((e: any) => this.indexEntity(e, services)),
           );
         } else if (event.type === "ENTITY_DELETED") {
           await this.removeEntity(event.entityId);
@@ -32,7 +34,7 @@ export class SearchStore {
           const services = await this.serviceRegistry.ensureInitialized();
           await services.search.clear();
           await Promise.all(
-            Object.values(event.entities).map((e) =>
+            Object.values(event.entities).map((e: any) =>
               this.indexEntity(e, services),
             ),
           );
@@ -43,7 +45,17 @@ export class SearchStore {
       } catch (err) {
         debugStore.warn("[SearchStore] Event handler failed", err);
       }
-    }, "vault-search-store");
+    };
+
+    if (vaultEventBus) {
+      vaultEventBus.subscribe(handler, "vault-search-store");
+    } else {
+      void import("./events").then(({ vaultEventBus: bus }) => {
+        if (bus) {
+          bus.subscribe(handler, "vault-search-store");
+        }
+      });
+    }
   }
 
   private async indexEntity(entity: LocalEntity, services: any) {
