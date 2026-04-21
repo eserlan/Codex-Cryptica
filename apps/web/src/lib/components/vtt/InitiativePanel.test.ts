@@ -41,6 +41,9 @@ const mapStoreMock = vi.hoisted(() => ({
 
 const uiStoreMock = vi.hoisted(() => ({
   isGuestMode: false,
+  openLightbox: vi.fn(),
+  closeLightbox: vi.fn(),
+  lightbox: { show: false, imageUrl: "", title: "" },
 }));
 
 vi.mock("$lib/stores/map-session.svelte", () => ({

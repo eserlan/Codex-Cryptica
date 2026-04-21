@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   closeZenMode: vi.fn(),
   toggleWelcomeScreen: vi.fn(),
   restoreWorldPage: vi.fn(),
+  openLightbox: vi.fn(),
+  closeLightbox: vi.fn(),
 }));
 
 vi.mock("$lib/stores/ui.svelte", () => ({
@@ -17,6 +19,9 @@ vi.mock("$lib/stores/ui.svelte", () => ({
     closeZenMode: mocks.closeZenMode,
     toggleWelcomeScreen: mocks.toggleWelcomeScreen,
     restoreWorldPage: mocks.restoreWorldPage,
+    openLightbox: mocks.openLightbox,
+    closeLightbox: mocks.closeLightbox,
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

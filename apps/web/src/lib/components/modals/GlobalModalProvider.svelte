@@ -143,5 +143,18 @@
         {/if}
       {/await}
     {/if}
+
+    <!-- Global Image Lightbox -->
+    {#if uiStore.lightbox.show}
+      {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
+        {#if ZenImageLightbox}
+          <ZenImageLightbox
+            bind:show={uiStore.lightbox.show}
+            imageUrl={uiStore.lightbox.imageUrl}
+            title={uiStore.lightbox.title}
+          />
+        {/if}
+      {/await}
+    {/if}
   {/if}
 {/if}

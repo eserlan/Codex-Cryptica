@@ -2,7 +2,6 @@
   import { uiStore } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { clipboardService } from "$lib/services/ClipboardService";
-  import ZenImageLightbox from "./ZenImageLightbox.svelte";
   import { createEditState } from "$lib/hooks/useEditState.svelte";
   import { createZenModeActions } from "$lib/hooks/useZenModeActions.svelte";
   import ZenHeader from "./ZenHeader.svelte";
@@ -48,7 +47,6 @@
   });
 
   let activeTab = $derived(uiStore.zenModeActiveTab);
-  let showLightbox = $state(false);
   let scrollContainer = $state<HTMLDivElement>();
   let mobileScroller = $state<HTMLDivElement>();
   let tabOverview = $state<HTMLButtonElement>();
@@ -151,11 +149,11 @@
 
   // Handle keyboard shortcuts
   const handleKeydown = async (e: KeyboardEvent) => {
-    if (showLightbox) {
+    if (uiStore.lightbox.show) {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        showLightbox = false;
+        uiStore.closeLightbox();
       }
       return;
     }
@@ -322,7 +320,8 @@
             bind:editState
             {resolvedImageUrl}
             {isPopout}
-            onShowLightbox={() => (showLightbox = true)}
+            onShowLightbox={() =>
+              uiStore.openLightbox(resolvedImageUrl, entity.title)}
             onNavigate={navigateTo}
             onDelete={handleDelete}
           />
@@ -360,12 +359,6 @@
         </div>
       {/if}
     </div>
-
-    <ZenImageLightbox
-      bind:show={showLightbox}
-      imageUrl={resolvedImageUrl}
-      title={entity.title}
-    />
   {:else}
     <div class="flex-1 flex items-center justify-center p-12 text-center">
       <div class="max-w-md space-y-4">
