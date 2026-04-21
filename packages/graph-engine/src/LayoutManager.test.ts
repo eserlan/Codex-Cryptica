@@ -248,6 +248,7 @@ describe("removeOverlaps", () => {
       nodes: vi
         .fn()
         .mockReturnValue(Object.assign(nodes, { length: nodes.length })),
+      batch: vi.fn((cb: () => void) => cb()),
     } as any;
   }
 
@@ -285,15 +286,18 @@ describe("removeOverlaps", () => {
 
   it("should converge (no overlaps remain) after running", () => {
     // Three nodes all at the same spot
+    const padding = 8;
+    const epsilon = 0.01;
     const nodes = [makeNode(5, 5, 30), makeNode(5, 5, 30), makeNode(5, 5, 30)];
     const cy = makeCy(nodes);
-    removeOverlaps(cy, 8, 100);
+    removeOverlaps(cy, padding, 100);
     for (let i = 0; i < nodes.length; i++) {
       for (let j = i + 1; j < nodes.length; j++) {
         const p1 = nodes[i].position();
         const p2 = nodes[j].position();
+        const minDist = nodes[i].width() / 2 + nodes[j].width() / 2 + padding;
         const dist = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-        expect(dist).toBeGreaterThanOrEqual(30 - 0.01); // r1+r2 = 15+15
+        expect(dist).toBeGreaterThanOrEqual(minDist - epsilon);
       }
     }
   });

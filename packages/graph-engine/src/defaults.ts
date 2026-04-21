@@ -21,8 +21,11 @@ export const DEFAULT_LAYOUT_OPTIONS = {
 
 /**
  * Generates layout options tuned for the specific size of the graph.
- * Targets an Obsidian-like layout: short edges keep connected nodes in tight
- * clouds, strong gravity pulls all clouds into one circular ball.
+ * Short edges keep connected nodes in tight clusters around their hubs;
+ * repulsion/separation spread unrelated nodes apart. Gravity is reduced as
+ * graphs grow so clusters can drift into distinct regions instead of
+ * collapsing into one mixed ball, with gravityRange keeping the overall
+ * layout loosely cohesive.
  */
 export const getDynamicLayoutOptions = (nodeCount: number) => {
   const quality = nodeCount > 500 ? "draft" : "default";
