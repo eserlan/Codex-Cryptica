@@ -95,7 +95,6 @@ export class DefaultAIClientManager {
       async generateContent(
         request: string | Array<GenerativeContentBlob | string> | any,
       ) {
-        // ... rest of implementation (using cloneRequestPayload)
         console.log(`[OracleProxy] Request for model: ${modelName}`);
 
         // 1. Deep clone request data so any reactive proxies are removed

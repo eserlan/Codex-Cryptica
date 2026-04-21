@@ -8,8 +8,6 @@ import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
 const INDEX_BATCH_SIZE = 50;
-const SEARCH_INIT_TIMEOUT_MS = 2000;
-const SEARCH_INIT_POLL_MS = 100;
 
 export class SearchService {
   private worker: Worker | null = null;
@@ -18,6 +16,7 @@ export class SearchService {
   private activeVaultId: string | null = null;
   private saveTimeout: any = null;
   private indexQueue: Promise<void> = Promise.resolve();
+  private initPromise: Promise<void> | null = null;
   private isInitialized = false;
   private needsFullContentSweep = false;
 
@@ -39,7 +38,6 @@ export class SearchService {
 
       // Subscribe to vault lifecycle events
       vaultEventBus.subscribe(async (event) => {
-        // ... (rest of logic remains same, but we will ensure worker before indexing)
         // VALIDATION: All sync/load events MUST match the current active vault ID
         // to prevent cross-vault index contamination during rapid switches.
         if (
@@ -206,23 +204,37 @@ export class SearchService {
     );
 
     // Initialize immediately
-    this.init().then(() => {
-      this.isInitialized = true;
-    });
+    this.initPromise = this.api
+      .initIndex()
+      .then(() => {
+        this.isInitialized = true;
+      })
+      .catch((err) => {
+        debugStore.error("[SearchService] Worker initialization failed", err);
+        throw err;
+      });
   }
 
   private async ensureWorker(): Promise<Comlink.Remote<SearchEngine>> {
+    if (typeof window === "undefined") {
+      throw new Error(
+        "[SearchService] Search worker cannot be initialized in SSR environment",
+      );
+    }
+
     if (!this.api) {
       this.initWorker();
     }
-    // Wait for worker to be ready
-    let retries = 0;
-    const maxRetries = SEARCH_INIT_TIMEOUT_MS / SEARCH_INIT_POLL_MS;
-    while (!this.isInitialized && retries < maxRetries) {
-      await new Promise((r) => setTimeout(r, SEARCH_INIT_POLL_MS));
-      retries++;
+
+    if (this.initPromise) {
+      await this.initPromise;
     }
-    return this.api!;
+
+    if (!this.api || !this.isInitialized) {
+      throw new Error("[SearchService] Search worker failed to initialize");
+    }
+
+    return this.api;
   }
 
   private scheduleAutoSave() {
@@ -243,11 +255,11 @@ export class SearchService {
     }
     this.worker?.terminate();
     this.worker = null;
+    this.initPromise = null;
   }
 
   async init(_options: { phonetic?: boolean } = {}): Promise<void> {
-    if (!this.api) return;
-    return this.api.initIndex();
+    await this.ensureWorker();
   }
 
   async index(entry: SearchEntry): Promise<void> {

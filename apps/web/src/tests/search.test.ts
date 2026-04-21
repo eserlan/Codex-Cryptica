@@ -82,7 +82,6 @@ describe("SearchService", () => {
     await expect(service.init()).resolves.toBeUndefined();
     // init() in search.ts returns void and doesn't call api.initIndex if api is null
     // So we need to trigger ensureWorker
-    (service as any).isInitialized = true;
     await (service as any).ensureWorker();
     expect(mockApi.initIndex).toHaveBeenCalled();
   });
@@ -112,7 +111,6 @@ describe("SearchService", () => {
       );
 
       // Trigger worker initialization
-      (service as any).isInitialized = true;
       await (service as any).ensureWorker();
 
       const entities = Array.from({ length: 52 }, (_, index) => ({
@@ -164,9 +162,6 @@ describe("SearchService", () => {
       updatedAt: 123,
     });
 
-    // We need to bypass the initialization wait loop for testing
-    (service as any).isInitialized = true;
-
     const result = await service.loadIndex("test-vault");
     expect(result).toBe(true);
     expect(mockApi.importIndex).toHaveBeenCalledWith({
@@ -214,7 +209,6 @@ describe("SearchService", () => {
 
   it("should bridge logs from worker to debugStore", async () => {
     // Trigger worker creation
-    (service as any).isInitialized = true;
     await (service as any).ensureWorker();
 
     // Get the callback passed to setLogger
@@ -248,7 +242,6 @@ describe("SearchService", () => {
       // Reset the bus and recreate the service to ensure clean slate
       vaultEventBus.reset(false);
       service = new SearchService();
-      (service as any).isInitialized = true;
       await (service as any).ensureWorker();
 
       // Initialize the vault ID
@@ -393,7 +386,6 @@ describe("SearchService", () => {
       .spyOn(service as any, "indexBatch")
       .mockResolvedValue(undefined);
 
-    (service as any).isInitialized = true;
     await (service as any).ensureWorker();
     (service as any).activeVaultId = "v1";
 
@@ -436,7 +428,6 @@ describe("SearchService", () => {
 
   it("should terminate correctly", async () => {
     // Trigger worker creation
-    (service as any).isInitialized = true;
     await (service as any).ensureWorker();
 
     const releaseSpy = vi.fn();
@@ -458,7 +449,6 @@ describe("SearchService", () => {
     beforeEach(async () => {
       vi.useFakeTimers();
       // Ensure worker is ready so callbacks are registered
-      (service as any).isInitialized = true;
       await (service as any).ensureWorker();
     });
 
@@ -552,7 +542,6 @@ describe("SearchService", () => {
       vi.spyOn(entityDb.searchIndex, "get").mockRejectedValue(
         new Error("DB Error"),
       );
-      (service as any).isInitialized = true;
 
       const result = await service.loadIndex("v1");
       expect(result).toBe(false);
