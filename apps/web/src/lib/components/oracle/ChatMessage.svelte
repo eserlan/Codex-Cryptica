@@ -174,7 +174,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 mb-3 sm:mb-4 {message.role === 'user'
+  class="flex flex-col gap-1 {message.role === 'user'
     ? 'items-end'
     : 'items-start'}"
   data-testid="chat-message"
