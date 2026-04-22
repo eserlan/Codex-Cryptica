@@ -261,7 +261,7 @@
               {#if !vault.isGuest}
                 <button
                   type="button"
-                  class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100"
+                  class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                   onclick={() => {
                     if (conn.isOutbound) {
                       vault.removeConnection(

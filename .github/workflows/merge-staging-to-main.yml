@@ -50,9 +50,13 @@ jobs:
           PR_NUMBER=$(gh pr list \
             --base staging \
             --state merged \
-            --limit 1 \
-            --json number \
-            --jq '.[0].number')
+            --limit 1000 \
+            --json number,mergedAt \
+            --jq 'sort_by(.mergedAt) | if length == 0 then empty else last.number end')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No merged PRs found targeting staging" >&2
+            exit 1
+          fi
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "Found latest merged staging PR: #$PR_NUMBER"
 

@@ -14,6 +14,7 @@ vi.mock("svelte", async () => {
 vi.mock("$lib/stores/vault.svelte", () => ({
   vault: {
     isGuest: false,
+    defaultVisibility: "public",
     entities: {
       "target-1": { id: "target-1", title: "Target 1" },
       "source-1": { id: "source-1", title: "Source 1" },

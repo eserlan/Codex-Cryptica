@@ -295,7 +295,7 @@
                         vault.removeConnection(conn.id, entityId, conn.type);
                       }
                     }}
-                    class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 shrink-0"
+                    class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
                     aria-label="Delete connection"
                     title="Delete connection"
                   >
@@ -305,7 +305,7 @@
 
                 <button
                   onclick={() => onNavigate(conn.id)}
-                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition shrink-0"
+                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
                   aria-label="Navigate to {conn.title}"
                 ></button>
               </div>
