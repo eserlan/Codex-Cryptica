@@ -252,14 +252,41 @@
                 {/if}
               </button>
 
-              {#if conn.isOutbound && !vault.isGuest}
-                <button
-                  class="text-theme-muted hover:text-theme-primary transition p-1"
-                  onclick={() => (editingConnectionTarget = conn.targetId)}
-                  aria-label="Edit connection"
-                >
-                  <span class="icon-[lucide--pencil] w-3 h-3"></span>
-                </button>
+              {#if !vault.isGuest}
+                <div class="flex items-center gap-1">
+                  {#if conn.isOutbound}
+                    <button
+                      class="text-theme-muted hover:text-theme-primary transition p-1"
+                      onclick={() => (editingConnectionTarget = conn.targetId)}
+                      aria-label="Edit connection"
+                      title="Edit connection"
+                    >
+                      <span class="icon-[lucide--pencil] w-3 h-3"></span>
+                    </button>
+                  {/if}
+                  <button
+                    class="text-theme-muted hover:text-theme-danger transition p-1"
+                    onclick={() => {
+                      if (conn.isOutbound) {
+                        vault.removeConnection(
+                          entity.id,
+                          conn.targetId,
+                          conn.type,
+                        );
+                      } else {
+                        vault.removeConnection(
+                          conn.targetId,
+                          entity.id,
+                          conn.type,
+                        );
+                      }
+                    }}
+                    aria-label="Delete connection"
+                    title="Delete connection"
+                  >
+                    <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+                  </button>
+                </div>
               {/if}
             </div>
           </li>

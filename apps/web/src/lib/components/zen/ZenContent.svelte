@@ -257,6 +257,32 @@
                   <span class="text-theme-secondary">{entity?.title}</span>
                 {/if}
               </button>
+
+              {#if !vault.isGuest}
+                <button
+                  type="button"
+                  class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100"
+                  onclick={() => {
+                    if (conn.isOutbound) {
+                      vault.removeConnection(
+                        entity.id,
+                        conn.targetId,
+                        conn.type,
+                      );
+                    } else {
+                      vault.removeConnection(
+                        conn.targetId,
+                        entity.id,
+                        conn.type,
+                      );
+                    }
+                  }}
+                  aria-label="Delete connection"
+                  title="Delete connection"
+                >
+                  <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                </button>
+              {/if}
             </li>
           {:else}
             <li class="text-theme-muted italic text-sm">
