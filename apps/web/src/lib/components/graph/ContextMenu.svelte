@@ -23,6 +23,16 @@
   let pickerAnchor = $state<HTMLButtonElement>();
   let categoryPickerAnchor = $state<HTMLButtonElement>();
 
+  const hasImage = $derived.by(() => {
+    return selectedNodes.some((id) => vault.entities[id]?.image);
+  });
+
+  const imageActionLabel = $derived.by(() => {
+    const base = hasImage ? "Regen" : "Gen";
+    const suffix = selectedNodes.length > 1 ? "Images" : "Image";
+    return `${base} ${suffix}`;
+  });
+
   $effect(() => {
     if (cy) {
       const openHandler = (evt: EventObject) => {
@@ -397,9 +407,9 @@
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
         onclick={handleGenerateImage}
-        aria-label="(Re)generate Image"
+        aria-label={imageActionLabel}
       >
-        {selectedNodes.length > 1 ? "Regenerate Images" : "Regenerate Image"}
+        {imageActionLabel}
         <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-50"></span>
       </button>
     {/if}

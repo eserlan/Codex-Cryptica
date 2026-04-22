@@ -24,7 +24,9 @@ test.describe("Graph Image Generation Context Menu", () => {
       position: { x: box.width / 2, y: box.height / 2 },
     });
 
-    const genButton = page.getByRole("menuitem", { name: "Regenerate Image" });
+    // The label could be "Gen Image" or "Regen Image" depending on the node state.
+    // We use a regex to match either.
+    const genButton = page.getByRole("menuitem", { name: /(Gen|Regen) Image/ });
     await expect(genButton).toBeVisible();
 
     // We mock the oracle.drawEntity or just click it and expect a generic error or success
