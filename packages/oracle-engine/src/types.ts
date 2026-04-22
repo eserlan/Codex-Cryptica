@@ -150,6 +150,7 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  categories?: any;
   automationPolicy?: OracleAutomationPolicy;
   proposeConnectionsForEntity?: (
     entityId: string,

@@ -4,6 +4,7 @@ import type { ChatMessage, DiscoveryProposal } from "./types";
 export interface DiscoveryContext {
   existingEntities: any[]; // Simplified for engine logic
   history: ChatMessage[];
+  categories?: any[];
 }
 
 export class DraftingEngine {
@@ -37,7 +38,13 @@ export class DraftingEngine {
 
       const chronicle = this.extractChronicle(lore);
       const existing = this.findExistingEntity(name, context.existingEntities);
-      const type = this.resolveType(rawType, existing, name, lore);
+      const type = this.resolveType(
+        rawType,
+        existing,
+        name,
+        lore,
+        context.categories,
+      );
       const identityKey = existing?.id || `new:${name.toLowerCase()}`;
 
       const existingProposal = proposalsMap.get(identityKey);
@@ -63,7 +70,20 @@ export class DraftingEngine {
     return Array.from(proposalsMap.values());
   }
 
-  private normalizeType(rawType: string): string {
+  private normalizeType(rawType: string, categories?: any[]): string {
+    if (categories && categories.length > 0) {
+      const lowerRaw = rawType.toLowerCase().trim();
+      // Match by ID
+      const byId = categories.find((c) => c.id.toLowerCase() === lowerRaw);
+      if (byId) return byId.id;
+
+      // Match by Label
+      const byLabel = categories.find(
+        (c) => c.label.toLowerCase() === lowerRaw,
+      );
+      if (byLabel) return byLabel.id;
+    }
+
     const validTypes = [
       "character",
       "npc",
@@ -107,14 +127,16 @@ export class DraftingEngine {
     existing: any,
     name: string,
     lore: string,
+    categories?: any[],
   ): EntityType {
     if (rawType) {
-      return this.normalizeType(rawType) as EntityType;
+      return this.normalizeType(rawType, categories) as EntityType;
     }
 
     if (existing?.type) {
       return this.normalizeType(
         String(existing.type).toLowerCase(),
+        categories,
       ) as EntityType;
     }
 

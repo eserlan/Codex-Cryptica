@@ -26,6 +26,7 @@ import {
   diceParser as defaultDiceParser,
 } from "dice-engine";
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
+import { categories as defaultCategories } from "./categories.svelte";
 
 export type { ChatMessage, UndoableAction };
 
@@ -49,6 +50,7 @@ export class OracleStore {
   private diceEngine: typeof defaultDiceEngine;
   private diceParser: typeof defaultDiceParser;
   private sessionActivity: typeof sessionActivity;
+  private categories: typeof defaultCategories;
   private draftingEngine: DraftingEngine;
 
   // Internal Engine Services
@@ -70,6 +72,7 @@ export class OracleStore {
       diceEngine?: typeof defaultDiceEngine;
       diceParser?: typeof defaultDiceParser;
       sessionActivity?: typeof sessionActivity;
+      categories?: typeof defaultCategories;
       draftingEngine?: DraftingEngine;
       chatHistoryService?: ChatHistoryService;
       settingsService?: OracleSettingsService;
@@ -88,6 +91,7 @@ export class OracleStore {
     this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
     this.diceParser = deps.diceParser ?? defaultDiceParser;
     this.sessionActivity = deps.sessionActivity ?? sessionActivity;
+    this.categories = deps.categories ?? defaultCategories;
     this.draftingEngine = deps.draftingEngine ?? defaultDraftingEngine;
 
     // Use provided services or defaults
@@ -201,6 +205,7 @@ export class OracleStore {
           entityId: event.entityId,
         }),
       draftingEngine: this.draftingEngine,
+      categories: this.categories,
     } as OracleExecutionContext;
   }
 

@@ -65,6 +65,7 @@ export interface TextGenerationService {
     modelName: string,
     onUpdate: (partial: string) => void,
     demoMode?: boolean,
+    categories?: string[],
   ): Promise<void>;
   generateMergeProposal(
     apiKey: string,

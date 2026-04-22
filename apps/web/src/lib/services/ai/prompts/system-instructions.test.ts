@@ -28,4 +28,13 @@ describe("buildSystemInstruction", () => {
     expect(result).toContain("transient");
     expect(result).toContain("Save as Campaign");
   });
+
+  it("should include custom categories when provided", () => {
+    const categories = ["Wizard", "Spell", "Tower"];
+    const result = buildSystemInstruction(false, categories);
+    expect(result).toContain("Wizard | Spell | Tower");
+    expect(result).toContain(
+      "strictly use one of the types listed above: Wizard | Spell | Tower",
+    );
+  });
 });

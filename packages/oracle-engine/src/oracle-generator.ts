@@ -98,6 +98,8 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       );
 
     // 3. Trigger Generation
+    const categoryList = context.categories?.list?.map((c: any) => c.id);
+
     await context.textGeneration.generateResponse(
       apiKey,
       query,
@@ -106,6 +108,7 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       context.modelName,
       onPartial,
       context.isDemoMode,
+      categoryList,
     );
 
     return { primaryEntityId, sourceIds };

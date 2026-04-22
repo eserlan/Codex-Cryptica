@@ -227,9 +227,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
     modelName: string,
     onUpdate: (partial: string) => void,
     demoMode = false,
+    categories?: string[],
   ): Promise<void> {
     assertAIEnabled();
-    const systemInstruction = buildSystemInstruction(demoMode);
+    const systemInstruction = buildSystemInstruction(demoMode, categories);
     const model = await this.aiClientManager.getModel(
       apiKey,
       modelName,
