@@ -6,7 +6,7 @@ export interface Proposal {
   context: string;
   reason: string;
   confidence: number;
-  status: "pending" | "accepted" | "rejected";
+  status: "pending" | "accepted" | "rejected" | "verified";
   timestamp: number;
 }
 
@@ -71,9 +71,13 @@ export interface IProposerService {
 
   getProposals(entityId: string): Promise<Proposal[]>;
   getHistory(entityId: string): Promise<Proposal[]>;
+  getAllAcceptedProposals(): Promise<Proposal[]>;
+  getAllPendingProposals(): Promise<Proposal[]>;
+  getAllVerifiedProposals(): Promise<Proposal[]>;
 
   applyProposal(proposalId: string): Promise<void>;
   dismissProposal(proposalId: string): Promise<void>;
+  verifyProposal(proposalId: string): Promise<void>;
   reEvaluateProposal(proposalId: string): Promise<void>;
 
   saveProposals(proposals: Proposal[]): Promise<void>;

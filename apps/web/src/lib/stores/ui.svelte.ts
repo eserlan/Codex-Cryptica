@@ -57,7 +57,9 @@ export class UIStore {
 
   // Sidebar State
   leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+  activeSidebarTool = $state<"oracle" | "explorer" | "ai-assessment" | "none">(
+    "none",
+  );
 
   // Main View State
   mainViewMode = $state<"visualization" | "focus">("visualization");
@@ -214,7 +216,7 @@ export class UIStore {
     }
   }
 
-  toggleSidebarTool(tool: "oracle" | "explorer" | "none") {
+  toggleSidebarTool(tool: "oracle" | "explorer" | "ai-assessment" | "none") {
     if (tool === "none" || this.activeSidebarTool === tool) {
       this.leftSidebarOpen = false;
       this.activeSidebarTool = "none";

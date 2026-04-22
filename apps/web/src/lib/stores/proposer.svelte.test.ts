@@ -36,6 +36,7 @@ const {
       },
     ],
     addConnection: vi.fn().mockResolvedValue(true),
+    removeConnection: vi.fn().mockResolvedValue(true),
     selectedEntityId: null,
   },
   mockOracle: {
@@ -83,9 +84,13 @@ vi.mock("../utils/idb", () => ({
 const mockService = {
   getProposals: vi.fn().mockResolvedValue([]),
   getHistory: vi.fn().mockResolvedValue([]),
+  getAllAcceptedProposals: vi.fn().mockResolvedValue([]),
+  getAllPendingProposals: vi.fn().mockResolvedValue([]),
+  getAllVerifiedProposals: vi.fn().mockResolvedValue([]),
   saveProposals: vi.fn().mockResolvedValue(undefined),
   applyProposal: vi.fn().mockResolvedValue(undefined),
   dismissProposal: vi.fn().mockResolvedValue(undefined),
+  verifyProposal: vi.fn().mockResolvedValue(undefined),
   reEvaluateProposal: vi.fn().mockResolvedValue(undefined),
 };
 
@@ -96,6 +101,18 @@ vi.mock("@codex/proposer", () => ({
     }
   },
 }));
+
+const mockProposal = {
+  id: "source:target",
+  sourceId: "source",
+  targetId: "target",
+  type: "related_to",
+  context: "context",
+  reason: "reason",
+  confidence: 0.9,
+  status: "pending" as const,
+  timestamp: 1,
+};
 
 describe("proposerStore", () => {
   beforeEach(() => {
@@ -159,5 +176,55 @@ describe("proposerStore", () => {
         failedCount: 0,
       }),
     );
+  });
+
+  it("loads global proposals for assessment", async () => {
+    const pending = [{ ...mockProposal, id: "p1" }];
+    const accepted = [
+      { ...mockProposal, id: "a1", status: "accepted" as const },
+    ];
+    const verified = [
+      { ...mockProposal, id: "v1", status: "verified" as const },
+    ];
+
+    mockService.getAllPendingProposals.mockResolvedValue(pending);
+    mockService.getAllAcceptedProposals.mockResolvedValue(accepted);
+    mockService.getAllVerifiedProposals.mockResolvedValue(verified);
+
+    const { proposerStore } = await import("./proposer.svelte");
+    await proposerStore.loadGlobalProposals();
+
+    expect(proposerStore.allPendingProposals).toEqual(pending);
+    expect(proposerStore.allAcceptedProposals).toEqual(accepted);
+    expect(proposerStore.allVerifiedProposals).toEqual(verified);
+  });
+
+  it("verifies an accepted proposal", async () => {
+    const proposal = { ...mockProposal, id: "a1", status: "accepted" as const };
+    const { proposerStore } = await import("./proposer.svelte");
+    proposerStore.allAcceptedProposals = [proposal];
+
+    await proposerStore.verify(proposal);
+
+    expect(mockService.verifyProposal).toHaveBeenCalledWith(proposal.id);
+    expect(proposerStore.allAcceptedProposals).toHaveLength(0);
+    expect(proposerStore.allVerifiedProposals).toContainEqual(proposal);
+  });
+
+  it("undos an accepted proposal", async () => {
+    const proposal = { ...mockProposal, id: "a1", status: "accepted" as const };
+    const { proposerStore } = await import("./proposer.svelte");
+    proposerStore.allAcceptedProposals = [proposal];
+
+    await proposerStore.undo(proposal);
+
+    expect(mockVault.removeConnection).toHaveBeenCalledWith(
+      proposal.sourceId,
+      proposal.targetId,
+      proposal.type,
+    );
+    expect(mockService.dismissProposal).toHaveBeenCalledWith(proposal.id);
+    expect(proposerStore.allAcceptedProposals).toHaveLength(0);
+    expect(proposerStore.history[proposal.sourceId]).toContainEqual(proposal);
   });
 });

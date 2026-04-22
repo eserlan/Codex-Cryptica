@@ -1,7 +1,14 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { Sparkles, Database, Network, Compass, Layout } from "lucide-svelte";
+  import {
+    Sparkles,
+    Database,
+    Network,
+    Compass,
+    Layout,
+    ShieldCheck,
+  } from "lucide-svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
 
@@ -34,7 +41,7 @@
     },
   ];
 
-  const tools: NavItem[] = [
+  const tools = $derived<NavItem[]>([
     {
       id: "oracle",
       icon: Sparkles,
@@ -47,7 +54,17 @@
       label: "Entity Explorer",
       action: () => uiStore.toggleSidebarTool("explorer"),
     },
-  ];
+    ...(!uiStore.aiDisabled
+      ? [
+          {
+            id: "ai-assessment",
+            icon: ShieldCheck,
+            label: "AI Assessment",
+            action: () => uiStore.toggleSidebarTool("ai-assessment"),
+          },
+        ]
+      : []),
+  ]);
 
   const isViewActive = (item: NavItem) => {
     if (!item.href) return false;

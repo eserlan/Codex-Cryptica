@@ -16,6 +16,10 @@ class ProposerStore {
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
 
+  allPendingProposals = $state<Proposal[]>([]);
+  allAcceptedProposals = $state<Proposal[]>([]);
+  allVerifiedProposals = $state<Proposal[]>([]);
+
   activeProposals = $derived.by(() => {
     if (!vault.selectedEntityId) return [];
 
@@ -92,6 +96,82 @@ class ProposerStore {
     } finally {
       this.isLoadingProposals = false;
     }
+  }
+
+  async loadGlobalProposals() {
+    this.isLoadingProposals = true;
+    try {
+      const service = this.getService();
+      this.allPendingProposals = await service.getAllPendingProposals();
+      this.allAcceptedProposals = await service.getAllAcceptedProposals();
+      this.allVerifiedProposals = await service.getAllVerifiedProposals();
+    } finally {
+      this.isLoadingProposals = false;
+    }
+  }
+
+  async verify(proposal: Proposal) {
+    const service = this.getService();
+    await service.verifyProposal(proposal.id);
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    this.allVerifiedProposals = [proposal, ...this.allVerifiedProposals];
+
+    // Update per-entity cache if it exists
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    debugStore.log("[ProposerStore] Verified AI connection", {
+      proposalId: proposal.id,
+    });
+  }
+
+  async undo(proposal: Proposal) {
+    // Remove connection from vault
+    const removed = await vault.removeConnection(
+      proposal.sourceId,
+      proposal.targetId,
+      proposal.type,
+    );
+
+    if (!removed) {
+      debugStore.warn(
+        "[ProposerStore] Failed to remove vault connection for undo",
+        { proposal },
+      );
+    }
+
+    const service = this.getService();
+    await service.dismissProposal(proposal.id);
+
+    // Update state
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    this.allVerifiedProposals = this.allVerifiedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    // Add to history
+    if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
+    this.history[proposal.sourceId] = [
+      proposal,
+      ...this.history[proposal.sourceId],
+    ];
+
+    debugStore.log("[ProposerStore] Undid AI connection", {
+      proposalId: proposal.id,
+    });
   }
 
   async analyzeCurrentEntity() {

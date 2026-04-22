@@ -241,6 +241,21 @@ Only return the JSON. If no connections are found, return empty array [].`;
       .slice(0, this.config.maxHistory);
   }
 
+  async getAllAcceptedProposals(): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-status", "accepted");
+  }
+
+  async getAllPendingProposals(): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-status", "pending");
+  }
+
+  async getAllVerifiedProposals(): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-status", "verified");
+  }
+
   async applyProposal(proposalId: string): Promise<void> {
     const db = await this.getDB();
     const proposal = await db.get(PROPOSAL_STORE, proposalId);
@@ -257,6 +272,16 @@ Only return the JSON. If no connections are found, return empty array [].`;
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
     proposal.status = "rejected";
+    proposal.timestamp = Date.now();
+    await db.put(PROPOSAL_STORE, proposal);
+  }
+
+  async verifyProposal(proposalId: string): Promise<void> {
+    const db = await this.getDB();
+    const proposal = await db.get(PROPOSAL_STORE, proposalId);
+    if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
+
+    proposal.status = "verified";
     proposal.timestamp = Date.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
