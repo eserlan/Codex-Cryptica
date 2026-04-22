@@ -242,13 +242,16 @@ export const getGraphStyle = (
 ): any[] => {
   const { tokens, graph } = template;
 
+  const isFantasy = template.id === "fantasy";
+
   // Base styles (excluding revealed overrides which need to come last)
   const baseStyle: any[] = [
     {
       selector: "node",
       style: {
-        "background-color": tokens.background,
-        "border-width": graph.nodeBorderWidth,
+        // Force parchment-like background color for all nodes, matching theme surface/bg
+        "background-color": tokens.surface || tokens.background,
+        "border-width": graph.nodeBorderWidth + 2,
         "border-color": tokens.primary,
         width: 32,
         height: 32,
@@ -266,6 +269,13 @@ export const getGraphStyle = (
         "text-opacity": 1,
         "transition-property": "opacity, text-opacity, width, height",
         "transition-duration": 200,
+
+        // Depth effects for a more tactile feel
+        "shadow-blur": 4,
+        "shadow-color": "#000",
+        "shadow-opacity": 0.15,
+        "shadow-offset-x": 0,
+        "shadow-offset-y": 2,
       },
     },
     {
@@ -308,7 +318,7 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-opacity": 1,
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 6,
         "border-color": tokens.primary,
       },
     });
@@ -320,7 +330,7 @@ export const getGraphStyle = (
     {
       selector: ".selected-source",
       style: {
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         "border-color": "#facc15", // Keep yellow for functional clarity
         "background-color": tokens.surface,
       },
@@ -401,11 +411,26 @@ export const getGraphStyle = (
     selector: `node[type="${cat.id}"]`,
     style: {
       "border-color": cat.color,
-      "border-width": graph.nodeBorderWidth + 2,
+      "border-width": graph.nodeBorderWidth + 4,
+      // For fantasy, we want the category color to overlay the parchment background
       "background-color": cat.color,
-      "background-opacity": 0.55,
+      "background-opacity": isFantasy ? 0.35 : 0.55,
     },
   }));
+
+  // Image width override ensures that nodes with images have thick borders
+  // even if category styles (which come before) set a thinner width.
+  const imageWidthOverride = showImages
+    ? [
+        {
+          selector:
+            "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
+          style: {
+            "border-width": graph.nodeBorderWidth + 8,
+          },
+        },
+      ]
+    : [];
 
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
@@ -421,7 +446,7 @@ export const getGraphStyle = (
     {
       selector: "node[isRevealed]",
       style: {
-        "border-width": graph.nodeBorderWidth + 4,
+        "border-width": graph.nodeBorderWidth + 10,
         "background-clip": "none",
         "overlay-opacity": 0,
       },
@@ -436,7 +461,7 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-fit": "cover",
         "background-position-y": "50%",
-        "border-width": graph.nodeBorderWidth + 4,
+        "border-width": graph.nodeBorderWidth + 10,
       },
     });
   }
@@ -450,7 +475,7 @@ export const getGraphStyle = (
         "background-color": tokens.surface,
         "background-opacity": 1,
         "border-color": tokens.primary,
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         color: "#fff",
         opacity: 1,
         "text-opacity": 1,
@@ -478,6 +503,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
+    ...imageWidthOverride,
     ...revealedStyles,
     ...selectionStyles,
   ];
