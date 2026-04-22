@@ -415,4 +415,41 @@ describe("GraphTransformer", () => {
     const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
     expect(revealedStyle.style["border-width"]).toBe(11);
   });
+
+  it("should keep fantasy shield borders controlled for image and revealed nodes", () => {
+    const mockTemplate = {
+      id: "fantasy",
+      tokens: {
+        primary: "#5e3018",
+        background: "#fdf6e3",
+        text: "#2a2018",
+        surface: "#f0ddb8",
+        fontHeader: "Alegreya",
+        fontBody: "Alegreya",
+        texture: "parchment.svg",
+      },
+      graph: {
+        nodeShape: "ellipse",
+        nodeBorderWidth: 2,
+        edgeWidth: 3,
+        edgeColor: "#6b3820",
+        edgeStyle: "solid",
+      },
+    } as any;
+
+    const style = getGraphStyle(mockTemplate, [], true);
+
+    const baseStyle = style.find((s) => s.selector === "node");
+    expect(baseStyle.style["border-width"]).toBe(2);
+
+    const imageOverride = style.find(
+      (s) =>
+        s.selector.includes("resolvedImage") && s.style["border-width"] === 7,
+    );
+    expect(imageOverride).toBeDefined();
+
+    const revealedStyle = style.find((s) => s.selector === "node[isRevealed]");
+    expect(revealedStyle.style["border-width"]).toBe(4);
+    expect(revealedStyle.style["background-clip"]).toBe("node");
+  });
 });
