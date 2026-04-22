@@ -62,7 +62,7 @@
 >
   <!-- Header -->
   <div
-    class="px-4 py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+    class="px-3 py-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
     style:background-image="var(--bg-texture-overlay)"
   >
     <div class="flex items-center gap-2">
@@ -72,7 +72,7 @@
           : ''}"
       ></div>
       <span
-        class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+        class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
         >{headerTitle}</span
       >
       {#if uiStore.aiDisabled}
@@ -135,11 +135,11 @@
 
   <!-- Navigation Tabs -->
   <div
-    class="flex border-b border-theme-border bg-theme-bg/10 px-1 pt-1 shrink-0"
+    class="flex border-b border-theme-border bg-theme-bg/10 px-0.5 pt-0.5 sm:px-1 sm:pt-1 shrink-0"
   >
     <button
       onclick={() => (activeTab = "oracle")}
-      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-all
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all
              {activeTab === 'oracle'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -148,7 +148,7 @@
     </button>
     <button
       onclick={() => (activeTab = "activity")}
-      class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+      class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
              {activeTab === 'activity'
         ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
         : 'text-theme-muted hover:text-theme-text'}"
@@ -164,7 +164,7 @@
     {#if mapSession.vttEnabled}
       <button
         onclick={() => (activeTab = "chat")}
-        class="flex-1 py-2 text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
+        class="flex-1 py-2 text-[11px] sm:text-[10px] font-bold uppercase font-header tracking-widest transition-all relative
                {activeTab === 'chat'
           ? 'bg-theme-surface border-theme-border border-x border-t rounded-t -mb-px text-theme-primary shadow-sm'
           : 'text-theme-muted hover:text-theme-text'}"
