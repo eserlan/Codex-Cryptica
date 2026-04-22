@@ -2,6 +2,7 @@
   import { graph } from "$lib/stores/graph.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
@@ -227,6 +228,35 @@
     }
   };
 
+  const handleGenerateImage = async () => {
+    const nodesToUpdate = $state.snapshot(selectedNodes);
+    contextMenuOpen = false;
+    canvasPickerOpen = false;
+    categoryPickerOpen = false;
+
+    try {
+      if (nodesToUpdate.length === 1) {
+        await oracle.drawEntity(nodesToUpdate[0]);
+      } else if (nodesToUpdate.length > 1) {
+        // For now, sequential generation for bulk
+        ui.notify(
+          `Generating images for ${nodesToUpdate.length} nodes...`,
+          "info",
+        );
+        for (const id of nodesToUpdate) {
+          await oracle.drawEntity(id);
+        }
+        ui.notify(
+          `Completed image generation for ${nodesToUpdate.length} nodes.`,
+          "success",
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to generate image", err);
+      ui.notify(`Failed to generate image: ${err.message}`, "error");
+    }
+  };
+
   const handleAddToCanvas = async (canvasId: string) => {
     clearPickerTimeout();
     canvasPickerOpen = false;
@@ -362,6 +392,18 @@
         : "Label…"}
     </button>
 
+    {#if !ui.aiDisabled}
+      <button
+        role="menuitem"
+        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+        onclick={handleGenerateImage}
+        aria-label="(Re)generate Image"
+      >
+        {selectedNodes.length > 1 ? "Regenerate Images" : "Regenerate Image"}
+        <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-50"></span>
+      </button>
+    {/if}
+
     <button
       bind:this={categoryPickerAnchor}
       role="menuitem"
@@ -413,6 +455,7 @@
     <div
       role="menu"
       aria-label="Select category"
+      tabindex="-1"
       class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col p-1"
       style:top="{categoryPickerPosition.y}px"
       style:left="{categoryPickerPosition.x}px"
