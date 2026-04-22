@@ -24,7 +24,7 @@
 
 {#if hoveredEntity && hoverPosition}
   <div
-    class="fixed z-50 pointer-events-none bg-theme-surface/90 backdrop-blur-md border border-theme-primary/30 p-4 shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-xs overflow-hidden"
+    class="fixed z-50 pointer-events-none bg-theme-surface/90 backdrop-blur-md border border-theme-primary/30 p-4 shadow-2xl max-w-[calc(100vw-2rem)] sm:max-w-xs overflow-hidden rounded-xl"
     style="left: {hoverPosition.x + 20}px; top: {hoverPosition.y - 20}px;"
     transition:fly={{ y: 10, duration: 200 }}
   >
@@ -34,7 +34,9 @@
       >
         {hoveredEntity?.title || hoveredEntity?.id}
       </h3>
-      <div class="prose prose-invert prose-sm text-sm line-clamp-4">
+      <div
+        class="prose prose-invert prose-sm text-sm leading-relaxed line-clamp-4"
+      >
         {@html tooltipContent}
       </div>
       {#if hoveredEntity?.tags?.length}
