@@ -186,6 +186,16 @@
     }, 100);
   };
 
+  const toggleCategoryPicker = (e: MouseEvent | KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (categoryPickerOpen) {
+      categoryPickerOpen = false;
+    } else {
+      showCategoryPicker();
+    }
+  };
+
   const hideCategoryPicker = () => {
     if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
     categoryPickerTimeout = setTimeout(() => {
@@ -358,7 +368,7 @@
       class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
       onmouseenter={showCategoryPicker}
       onmouseleave={hideCategoryPicker}
-      onclick={() => (categoryPickerOpen = !categoryPickerOpen)}
+      onclick={toggleCategoryPicker}
       aria-label="Change Category"
       aria-expanded={categoryPickerOpen}
       aria-haspopup="true"
@@ -401,14 +411,16 @@
 
   {#if categoryPickerOpen}
     <div
-      role="none"
+      role="menu"
+      aria-label="Select category"
       class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col p-1"
       style:top="{categoryPickerPosition.y}px"
       style:left="{categoryPickerPosition.x}px"
       onmouseenter={showCategoryPicker}
       onmouseleave={hideCategoryPicker}
+      onkeydown={handleMenuKeydown}
     >
-      {#each categories.list as cat}
+      {#each categories.list as cat (cat.id)}
         <button
           role="menuitem"
           class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
