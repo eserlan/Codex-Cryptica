@@ -151,7 +151,7 @@
   };
 
   const showCanvasPicker = () => {
-    if (pickerTimeout) clearTimeout(pickerTimeout);
+    clearPickerTimeout();
     pickerTimeout = setTimeout(() => {
       if (pickerAnchor) {
         const rect = pickerAnchor.getBoundingClientRect();
@@ -173,7 +173,7 @@
   };
 
   const showCategoryPicker = () => {
-    if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
+    clearPickerTimeout();
     categoryPickerTimeout = setTimeout(() => {
       if (categoryPickerAnchor) {
         const rect = categoryPickerAnchor.getBoundingClientRect();
@@ -195,21 +195,22 @@
   };
 
   const handleSetCategory = async (type: string) => {
+    const nodesToUpdate = [...selectedNodes];
     clearPickerTimeout();
     categoryPickerOpen = false;
     contextMenuOpen = false;
 
     try {
-      if (selectedNodes.length === 1) {
-        await vault.updateEntity(selectedNodes[0], { type });
+      if (nodesToUpdate.length === 1) {
+        await vault.updateEntity(nodesToUpdate[0], { type });
         ui.notify("Category updated.", "success");
-      } else {
+      } else if (nodesToUpdate.length > 1) {
         const updates: Record<string, { type: string }> = {};
-        for (const id of selectedNodes) {
+        for (const id of nodesToUpdate) {
           updates[id] = { type };
         }
         await vault.batchUpdate(updates);
-        ui.notify(`Updated ${selectedNodes.length} nodes.`, "success");
+        ui.notify(`Updated ${nodesToUpdate.length} nodes.`, "success");
       }
     } catch (err: any) {
       console.error("Failed to update category", err);
