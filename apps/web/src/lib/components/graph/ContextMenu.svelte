@@ -6,7 +6,6 @@
   import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
-  import { ChevronRight } from "lucide-svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
@@ -195,7 +194,7 @@
   };
 
   const handleSetCategory = async (type: string) => {
-    const nodesToUpdate = [...selectedNodes];
+    const nodesToUpdate = $state.snapshot(selectedNodes);
     clearPickerTimeout();
     categoryPickerOpen = false;
     contextMenuOpen = false;
@@ -365,7 +364,7 @@
       aria-haspopup="true"
     >
       Change Category
-      <ChevronRight class="h-3.5 w-3.5 opacity-50" />
+      <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"></span>
     </button>
 
     <button
@@ -381,7 +380,7 @@
       aria-haspopup="true"
     >
       Add to Canvas
-      <ChevronRight class="h-3.5 w-3.5 opacity-50" />
+      <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"></span>
     </button>
 
     {#if !vault.isGuest}
