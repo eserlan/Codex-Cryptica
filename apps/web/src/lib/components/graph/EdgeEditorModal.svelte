@@ -45,7 +45,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 bg-theme-bg/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
     onclick={close}
   >
@@ -105,7 +105,7 @@
                 editingEdge = null;
               }
             }}
-            class="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+            class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
           >
             Sever Connection
           </button>
