@@ -322,6 +322,14 @@
     }
   };
 
+  const handleImageMainClick = (e: MouseEvent | KeyboardEvent) => {
+    if (hasImage) {
+      handleViewImage();
+    } else {
+      toggleImagePicker(e);
+    }
+  };
+
   const handleAddToCanvas = async (canvasId: string) => {
     clearPickerTimeout();
     canvasPickerOpen = false;
@@ -462,17 +470,26 @@
       <button
         bind:this={imagePickerAnchor}
         role="menuitem"
-        class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+        class="group w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
         onmouseenter={showImagePicker}
         onmouseleave={hideImagePicker}
-        onclick={toggleImagePicker}
+        onclick={handleImageMainClick}
         aria-label="Image actions"
         aria-expanded={imagePickerOpen}
         aria-haspopup="true"
       >
-        Image
-        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
-        ></span>
+        <span>Image</span>
+        <div class="flex items-center gap-2">
+          {#if hasImage}
+            <span
+              class="text-[10px] text-theme-muted opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none italic"
+            >
+              click to view
+            </span>
+          {/if}
+          <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+          ></span>
+        </div>
       </button>
     {/if}
 
@@ -563,17 +580,6 @@
       onmouseleave={hideImagePicker}
       onkeydown={handleMenuKeydown}
     >
-      {#if hasImage}
-        <button
-          role="menuitem"
-          class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
-          onclick={handleViewImage}
-        >
-          <span class="icon-[lucide--eye] h-3.5 w-3.5 opacity-70"></span>
-          View Image
-        </button>
-      {/if}
-
       {#if !ui.aiDisabled}
         <button
           role="menuitem"
