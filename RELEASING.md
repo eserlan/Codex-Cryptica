@@ -4,12 +4,17 @@ Codex Cryptica uses an automated versioning and release pipeline. Follow these g
 
 ## 🚀 The Release Flow
 
-1.  **Work on a Feature Branch**: Never work directly on `main`.
-2.  **Label your Pull Request**: Before merging to `main`, apply one of the following labels to your PR:
+1.  **Work on a Feature Branch**: Never work directly on `main` or `staging`.
+2.  **Label your Pull Request**: Before merging to `staging`, apply one of the following labels to your PR:
     - `minor`: (Recommended) Bumps the version to `X.Y.0` and triggers a formal GitHub Release. Use this for new features (e.g., Blog, Maps, Canvas).
     - `major`: Bumps the version to `X.0.0` and triggers a formal GitHub Release. Use this for breaking changes or massive milestones.
     - **No Label (Default)**: Automatically bumps the **Patch** version (`X.Y.Z+1`). This **does not** trigger a GitHub Release. Use this for bug fixes and internal chores.
-3.  **Merge the PR**: Once merged, the `Auto Bump` workflow will calculate the next version, push a commit to `main`, and then trigger the `Deploy` and `Release` workflows.
+3.  **Merge the PR to `staging`**: CI runs and a staging deployment is created.
+4.  **Promote to Production**: Trigger the `Promote Staging to Production` workflow. This deploys to prod, then automatically:
+    - Merges `staging` into `main`
+    - Reads the label from the latest merged staging PR to determine bump type
+    - Commits the version bump to `main`
+    - Triggers the `Deploy` and `Release` workflows
 
 ## 📦 What happens during a Release?
 
@@ -29,7 +34,7 @@ When a `minor` or `major` label is detected:
 
 ### 1. Labeling is Key
 
-The release process is entirely dependent on the **PR Label**. If you forget to add the `minor` label before merging, you will only get a patch bump and no formal release.
+The release process is entirely dependent on the **PR Label**. Labels must be applied **before merging to `staging`** — the bump reads the label of the most recently merged staging PR at promotion time. If you forget to add the `minor` label before merging, you will only get a patch bump and no formal release.
 
 ### 2. High-Signal PR Titles
 
@@ -49,4 +54,4 @@ After a release, always verify:
 
 ---
 
-_Last Updated: March 2026_
+_Last Updated: April 2026_
