@@ -37,9 +37,14 @@
   const close = () => {
     editingEdge = null;
   };
+
+  const handleWindowKeydown = (e: KeyboardEvent) => {
+    if (!editingEdge) return;
+    if (e.key === "Escape") close();
+  };
 </script>
 
-<svelte:window onkeydown={(e) => e.key === "Escape" && close()} />
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#if editingEdge}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
