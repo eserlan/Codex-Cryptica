@@ -68,7 +68,7 @@
   >
     <!-- Header -->
     <div
-      class="px-4 py-2 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
+      class="px-3 py-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0 rounded-t-xl md:rounded-t-lg overflow-hidden"
     >
       <div class="flex items-center gap-2">
         <div
@@ -77,7 +77,7 @@
             : ''}"
         ></div>
         <span
-          class="text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
+          class="text-[11px] sm:text-[10px] font-bold text-theme-text tracking-[0.2em] uppercase font-header"
           >Lore Oracle</span
         >
         {#if uiStore.aiDisabled}

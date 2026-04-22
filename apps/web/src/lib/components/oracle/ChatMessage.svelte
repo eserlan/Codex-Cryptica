@@ -174,14 +174,14 @@
 </script>
 
 <div
-  class="flex flex-col gap-1 mb-4 {message.role === 'user'
+  class="flex flex-col gap-1 {message.role === 'user'
     ? 'items-end'
     : 'items-start'}"
   data-testid="chat-message"
   data-role={message.role}
 >
   <div
-    class="px-4 py-2 rounded-lg max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden font-body
+    class="px-3 sm:px-4 py-2 rounded-lg max-w-[92%] sm:max-w-[85%] text-sm leading-relaxed relative group/msg overflow-hidden font-body
     {message.role === 'user'
       ? 'bg-theme-primary/15 text-theme-text border border-theme-primary/40 shadow-lg shadow-theme-primary/5'
       : 'bg-theme-surface border border-theme-border text-theme-text'}"

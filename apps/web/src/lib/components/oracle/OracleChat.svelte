@@ -244,7 +244,7 @@
 {:else}
   <!-- Messages -->
   <div
-    class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
+    class="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4 scroll-smooth"
     bind:this={scrollContainer}
     data-testid="oracle-chat-scroll-container"
     onscroll={handleScroll}
@@ -268,10 +268,17 @@
           >
             The Archives are Open
           </h4>
-          <p class="text-xs text-theme-muted leading-relaxed font-body">
+          <p
+            class="text-xs text-theme-muted leading-relaxed font-body hidden sm:block"
+          >
             Greetings, Seeker. I am the Oracle, the keeper of your recorded
             lore. Ask of the robber, the mayor, or the shadows beyond the
             village... I shall consult the echoes of your vault.
+          </p>
+          <p
+            class="text-[10px] text-theme-muted leading-relaxed font-body sm:hidden"
+          >
+            Consult the echoes of your vault.
           </p>
         </div>
 
@@ -335,7 +342,7 @@
   <!-- Input -->
 
   <div
-    class="px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
+    class="px-2.5 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-4 sm:pb-[calc(1rem+env(safe-area-inset-bottom))] border-t border-theme-border bg-theme-bg/30 shrink-0 relative z-20 overflow-visible"
     style:background-image="var(--bg-texture-overlay)"
   >
     {#if showCommandMenu}
