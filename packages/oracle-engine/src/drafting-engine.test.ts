@@ -50,6 +50,36 @@ describe("DraftingEngine", () => {
     expect(proposals.map((p) => p.type)).toEqual(["concept", "npc", "faction"]);
   });
 
+  it("should respect custom categories when provided", async () => {
+    const text = "A powerful **Fireball** as **Spell** was cast.";
+    const context = {
+      existingEntities: [],
+      history: [],
+      categories: [{ id: "spell", label: "Spell" }],
+    };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].title).toBe("Fireball");
+    expect(proposals[0].type).toBe("spell");
+  });
+
+  it("should resolve custom categories by label", async () => {
+    const text = "A powerful **Fireball** as **Ancient Spell** was cast.";
+    const context = {
+      existingEntities: [],
+      history: [],
+      categories: [{ id: "spell", label: "Ancient Spell" }],
+    };
+
+    const proposals = await engine.propose(text, context);
+
+    expect(proposals).toHaveLength(1);
+    expect(proposals[0].title).toBe("Fireball");
+    expect(proposals[0].type).toBe("spell");
+  });
+
   it("should infer type from matching vault entities for bolded mentions", async () => {
     const text =
       "**Thay** is ruled by **Szass Tam** and feared by **The Red Wizards**.";

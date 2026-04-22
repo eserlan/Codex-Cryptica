@@ -31,6 +31,7 @@ describe("OracleGenerator", () => {
       vault: {
         entities: { e1: { id: "e1", title: "Entity 1", labels: [] } },
       },
+      categories: [],
       modelName: "model",
       isDemoMode: false,
     };

@@ -4,6 +4,7 @@ import type { ChatMessage, DiscoveryProposal } from "./types";
 export interface DiscoveryContext {
   existingEntities: any[]; // Simplified for engine logic
   history: ChatMessage[];
+  categories?: any[];
 }
 
 export class DraftingEngine {
@@ -37,7 +38,13 @@ export class DraftingEngine {
 
       const chronicle = this.extractChronicle(lore);
       const existing = this.findExistingEntity(name, context.existingEntities);
-      const type = this.resolveType(rawType, existing, name, lore);
+      const type = this.resolveType(
+        rawType,
+        existing,
+        name,
+        lore,
+        context.categories,
+      );
       const identityKey = existing?.id || `new:${name.toLowerCase()}`;
 
       const existingProposal = proposalsMap.get(identityKey);
@@ -63,7 +70,32 @@ export class DraftingEngine {
     return Array.from(proposalsMap.values());
   }
 
-  private normalizeType(rawType: string): string {
+  private normalizeType(rawType: string, categories?: any[]): string {
+    const lowerRaw = rawType.toLowerCase().trim();
+
+    if (categories && categories.length > 0) {
+      // Match by ID
+      const byId = categories.find(
+        (c) => String(c?.id ?? "").toLowerCase() === lowerRaw,
+      );
+      if (byId) return byId.id;
+
+      // Match by Label
+      const byLabel = categories.find(
+        (c) => String(c?.label ?? "").toLowerCase() === lowerRaw,
+      );
+      if (byLabel) return byLabel.id;
+
+      // If categories are provided but no match found, fallback to the first category
+      // or a safe default if available in the list.
+      // Better yet, if "concept" or "note" exists in the list, use that.
+      const fallback =
+        categories.find(
+          (c) => c.id === "concept" || c.id === "note" || c.id === "npc",
+        ) || categories[0];
+      return fallback.id;
+    }
+
     const validTypes = [
       "character",
       "npc",
@@ -73,9 +105,9 @@ export class DraftingEngine {
       "event",
       "concept",
     ];
-    if (validTypes.includes(rawType)) return rawType;
-    if (rawType === "person") return "character";
-    if (rawType === "place") return "location";
+    if (validTypes.includes(lowerRaw)) return lowerRaw;
+    if (lowerRaw === "person") return "character";
+    if (lowerRaw === "place") return "location";
     return "concept";
   }
 
@@ -107,14 +139,16 @@ export class DraftingEngine {
     existing: any,
     name: string,
     lore: string,
+    categories?: any[],
   ): EntityType {
     if (rawType) {
-      return this.normalizeType(rawType) as EntityType;
+      return this.normalizeType(rawType, categories) as EntityType;
     }
 
     if (existing?.type) {
       return this.normalizeType(
         String(existing.type).toLowerCase(),
+        categories,
       ) as EntityType;
     }
 

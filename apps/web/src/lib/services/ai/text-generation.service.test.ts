@@ -15,7 +15,9 @@ vi.mock("./prompts/query-expansion", () => ({
   ),
 }));
 vi.mock("./prompts/system-instructions", () => ({
-  buildSystemInstruction: vi.fn((demo) => `system:${demo}`),
+  buildSystemInstruction: vi.fn(
+    (demo, categories) => `system:${demo}:${categories?.join(",") || ""}`,
+  ),
 }));
 vi.mock("./prompts/merge-proposal", () => ({
   buildMergeProposalPrompt: vi.fn((t, s) => `merge:${t}:${s}`),
@@ -330,6 +332,29 @@ describe("DefaultTextGenerationService", () => {
       await expect(
         service.generateResponse("key", "Q", [], "C", "m", onUpdate),
       ).rejects.toThrow("Lore Oracle Error: Generic AI error");
+    });
+
+    it("should pass categories to buildSystemInstruction", async () => {
+      const onUpdate = vi.fn();
+      const categories = ["cat1", "cat2"];
+      await service.generateResponse(
+        "key",
+        "Q",
+        [],
+        "C",
+        "m",
+        onUpdate,
+        false,
+        categories,
+      );
+
+      // Verify that the model was initialized with the instruction containing categories
+      // aiClientManager.getModel is called with systemInstruction
+      expect(mockAiClientManager.getModel).toHaveBeenCalledWith(
+        "key",
+        "m",
+        "system:false:cat1,cat2",
+      );
     });
   });
 
