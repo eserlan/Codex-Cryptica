@@ -205,7 +205,7 @@ export class OracleStore {
           entityId: event.entityId,
         }),
       draftingEngine: this.draftingEngine,
-      categories: this.categories,
+      categories: $state.snapshot(this.categories.list),
     } as OracleExecutionContext;
   }
 

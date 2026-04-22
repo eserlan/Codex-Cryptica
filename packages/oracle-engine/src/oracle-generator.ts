@@ -98,7 +98,13 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       );
 
     // 3. Trigger Generation
-    const categoryList = context.categories?.list?.map((c: any) => c.id);
+    const categoryList = Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
+    );
 
     await context.textGeneration.generateResponse(
       apiKey,

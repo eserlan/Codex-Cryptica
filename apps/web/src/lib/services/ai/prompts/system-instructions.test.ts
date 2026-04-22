@@ -37,4 +37,12 @@ describe("buildSystemInstruction", () => {
       "strictly use one of the types listed above: Wizard | Spell | Tower",
     );
   });
+
+  it("should sanitize custom categories to prevent prompt breaking", () => {
+    const categories = ["Wizard | Mage", "Spell`", "Tower\nEvil"];
+    const result = buildSystemInstruction(false, categories);
+    expect(result).toContain("Wizard  Mage | Spell | TowerEvil");
+    expect(result).not.toContain("| Mage");
+    expect(result).toContain("TowerEvil");
+  });
 });

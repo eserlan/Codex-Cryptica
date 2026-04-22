@@ -672,7 +672,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           const proposals = await engineToUse.propose(combinedText, {
             existingEntities: Object.values(context.vault.entities || {}),
             history: context.chatHistory.messages,
-            categories: context.categories?.list,
+            categories: context.categories,
           });
 
           if (proposals.length > 0) {

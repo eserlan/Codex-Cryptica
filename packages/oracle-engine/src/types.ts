@@ -2,6 +2,8 @@
  * Oracle Engine Type Definitions
  */
 
+import type { EntityType, Category } from "schema";
+
 /**
  * Connection mode for the Oracle service.
  * - `system-proxy`: Uses the Cloudflare Worker proxy (no user API key required)
@@ -96,8 +98,6 @@ export interface UndoableAction {
   redo: () => Promise<void>;
 }
 
-import type { EntityType } from "schema";
-
 /**
  * Transient draft state used during chat
  */
@@ -150,7 +150,7 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
-  categories?: any;
+  categories?: Category[];
   automationPolicy?: OracleAutomationPolicy;
   proposeConnectionsForEntity?: (
     entityId: string,

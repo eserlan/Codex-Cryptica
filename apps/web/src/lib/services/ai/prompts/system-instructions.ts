@@ -1,11 +1,21 @@
+function sanitizeCategoryForPrompt(id: string): string {
+  // Remove formatting characters that could break the prompt or cause injection
+  return id.replace(/[|`\n\r]/g, "").trim();
+}
+
 export function buildSystemInstruction(
   demoMode: boolean,
   categories?: string[],
 ): string {
   const isDemoMarker = "DEMO_MODE_ACTIVE";
+
+  const sanitizedCategories = (categories || [])
+    .map(sanitizeCategoryForPrompt)
+    .filter(Boolean);
+
   const validTypes =
-    categories && categories.length > 0
-      ? categories.join(" | ")
+    sanitizedCategories.length > 0
+      ? sanitizedCategories.join(" | ")
       : "npc | faction | location | item | event | concept";
 
   let systemInstruction = `You are the Lore Oracle, a wise and creative keeper of the user's personal world records. 

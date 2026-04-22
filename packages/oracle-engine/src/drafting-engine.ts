@@ -71,17 +71,29 @@ export class DraftingEngine {
   }
 
   private normalizeType(rawType: string, categories?: any[]): string {
+    const lowerRaw = rawType.toLowerCase().trim();
+
     if (categories && categories.length > 0) {
-      const lowerRaw = rawType.toLowerCase().trim();
       // Match by ID
-      const byId = categories.find((c) => c.id.toLowerCase() === lowerRaw);
+      const byId = categories.find(
+        (c) => String(c?.id ?? "").toLowerCase() === lowerRaw,
+      );
       if (byId) return byId.id;
 
       // Match by Label
       const byLabel = categories.find(
-        (c) => c.label.toLowerCase() === lowerRaw,
+        (c) => String(c?.label ?? "").toLowerCase() === lowerRaw,
       );
       if (byLabel) return byLabel.id;
+
+      // If categories are provided but no match found, fallback to the first category
+      // or a safe default if available in the list.
+      // Better yet, if "concept" or "note" exists in the list, use that.
+      const fallback =
+        categories.find(
+          (c) => c.id === "concept" || c.id === "note" || c.id === "npc",
+        ) || categories[0];
+      return fallback.id;
     }
 
     const validTypes = [
@@ -93,9 +105,9 @@ export class DraftingEngine {
       "event",
       "concept",
     ];
-    if (validTypes.includes(rawType)) return rawType;
-    if (rawType === "person") return "character";
-    if (rawType === "place") return "location";
+    if (validTypes.includes(lowerRaw)) return lowerRaw;
+    if (lowerRaw === "person") return "character";
+    if (lowerRaw === "place") return "location";
     return "concept";
   }
 
