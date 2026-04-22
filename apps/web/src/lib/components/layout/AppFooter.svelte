@@ -42,11 +42,6 @@
       class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
       >Blog</a
     >
-    <a
-      href="{base}/llms.txt"
-      class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest"
-      >LLMS.TXT</a
-    >
     <button
       onclick={() => uiStore.openSettings("help")}
       class="text-[10px] font-header text-theme-secondary hover:text-theme-primary transition-colors uppercase tracking-widest cursor-pointer"

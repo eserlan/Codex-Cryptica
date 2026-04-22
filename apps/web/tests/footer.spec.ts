@@ -98,11 +98,10 @@ test.describe("Footer", () => {
     await context.setOffline(false);
   });
 
-  test("should display LLMS.TXT link in the footer", async ({ page }) => {
+  test("should NOT display LLMS.TXT link in the footer", async ({ page }) => {
     const footer = page.locator("footer");
     const llmsLink = footer.locator('a:has-text("LLMS.TXT")');
 
-    await expect(llmsLink).toBeVisible();
-    await expect(llmsLink).toHaveAttribute("href", /\/llms\.txt$/);
+    await expect(llmsLink).not.toBeVisible();
   });
 });
