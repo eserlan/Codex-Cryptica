@@ -3,19 +3,25 @@
   import { ui } from "$lib/stores/ui.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { canvasRegistry } from "$lib/stores/canvas-registry.svelte";
+  import { categories } from "$lib/stores/categories.svelte";
   import CanvasPicker from "$lib/components/canvas/CanvasPicker.svelte";
   import type { Core, EventObject, NodeSingular } from "cytoscape";
+  import { ChevronRight } from "lucide-svelte";
 
   let { cy } = $props<{ cy: Core }>();
 
   let contextMenuOpen = $state(false);
   let canvasPickerOpen = $state(false);
+  let categoryPickerOpen = $state(false);
   let position = $state({ x: 0, y: 0 });
   let pickerPosition = $state({ x: 0, y: 0 });
+  let categoryPickerPosition = $state({ x: 0, y: 0 });
   let targetId = $state<string | null>(null);
   let selectedNodes = $state<string[]>([]);
   let pickerTimeout: ReturnType<typeof setTimeout> | null = null;
+  let categoryPickerTimeout: ReturnType<typeof setTimeout> | null = null;
   let pickerAnchor = $state<HTMLButtonElement>();
+  let categoryPickerAnchor = $state<HTMLButtonElement>();
 
   $effect(() => {
     if (cy) {
@@ -37,9 +43,12 @@
 
       const closeHandler = () => {
         if (pickerTimeout) clearTimeout(pickerTimeout);
+        if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
         pickerTimeout = null;
+        categoryPickerTimeout = null;
         contextMenuOpen = false;
         canvasPickerOpen = false;
+        categoryPickerOpen = false;
       };
 
       cy.on("cxttap", "node", openHandler);
@@ -47,7 +56,9 @@
 
       return () => {
         if (pickerTimeout) clearTimeout(pickerTimeout);
+        if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
         pickerTimeout = null;
+        categoryPickerTimeout = null;
         cy.off("cxttap", "node", openHandler);
         cy.off("tap", closeHandler);
       };
@@ -60,6 +71,10 @@
     if (pickerTimeout) {
       clearTimeout(pickerTimeout);
       pickerTimeout = null;
+    }
+    if (categoryPickerTimeout) {
+      clearTimeout(categoryPickerTimeout);
+      categoryPickerTimeout = null;
     }
   };
 
@@ -88,6 +103,7 @@
       clearPickerTimeout();
       contextMenuOpen = false;
       canvasPickerOpen = false;
+      categoryPickerOpen = false;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const nextIdx = (idx + 1) % items.length;
@@ -145,6 +161,7 @@
         };
       }
       canvasPickerOpen = true;
+      categoryPickerOpen = false;
     }, 100);
   };
 
@@ -153,6 +170,51 @@
     pickerTimeout = setTimeout(() => {
       canvasPickerOpen = false;
     }, 150);
+  };
+
+  const showCategoryPicker = () => {
+    if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
+    categoryPickerTimeout = setTimeout(() => {
+      if (categoryPickerAnchor) {
+        const rect = categoryPickerAnchor.getBoundingClientRect();
+        categoryPickerPosition = {
+          x: rect.right + 4,
+          y: rect.top,
+        };
+      }
+      categoryPickerOpen = true;
+      canvasPickerOpen = false;
+    }, 100);
+  };
+
+  const hideCategoryPicker = () => {
+    if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
+    categoryPickerTimeout = setTimeout(() => {
+      categoryPickerOpen = false;
+    }, 150);
+  };
+
+  const handleSetCategory = async (type: string) => {
+    clearPickerTimeout();
+    categoryPickerOpen = false;
+    contextMenuOpen = false;
+
+    try {
+      if (selectedNodes.length === 1) {
+        await vault.updateEntity(selectedNodes[0], { type });
+        ui.notify("Category updated.", "success");
+      } else {
+        const updates: Record<string, { type: string }> = {};
+        for (const id of selectedNodes) {
+          updates[id] = { type };
+        }
+        await vault.batchUpdate(updates);
+        ui.notify(`Updated ${selectedNodes.length} nodes.`, "success");
+      }
+    } catch (err: any) {
+      console.error("Failed to update category", err);
+      ui.notify(`Failed to update category: ${err.message}`, "error");
+    }
   };
 
   const handleAddToCanvas = async (canvasId: string) => {
@@ -222,6 +284,7 @@
     ) {
       contextMenuOpen = false;
       canvasPickerOpen = false;
+      categoryPickerOpen = false;
       try {
         for (const id of selectedNodes) {
           await vault.deleteEntity(id);
@@ -288,11 +351,27 @@
         ? `Label ${selectedNodes.length} Nodes…`
         : "Label…"}
     </button>
+
+    <button
+      bind:this={categoryPickerAnchor}
+      role="menuitem"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
+      onmouseenter={showCategoryPicker}
+      onmouseleave={hideCategoryPicker}
+      onclick={() => (categoryPickerOpen = !categoryPickerOpen)}
+      aria-label="Change Category"
+      aria-expanded={categoryPickerOpen}
+      aria-haspopup="true"
+    >
+      Change Category
+      <ChevronRight class="h-3.5 w-3.5 opacity-50" />
+    </button>
+
     <button
       bind:this={pickerAnchor}
       role="menuitem"
       data-testid="add-to-canvas-button"
-      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border relative whitespace-nowrap"
+      class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
       onmouseenter={showCanvasPicker}
       onmouseleave={hideCanvasPicker}
       onclick={() => (canvasPickerOpen = !canvasPickerOpen)}
@@ -301,6 +380,7 @@
       aria-haspopup="true"
     >
       Add to Canvas
+      <ChevronRight class="h-3.5 w-3.5 opacity-50" />
     </button>
 
     {#if !vault.isGuest}
@@ -318,6 +398,31 @@
       </button>
     {/if}
   </div>
+
+  {#if categoryPickerOpen}
+    <div
+      role="none"
+      class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col p-1"
+      style:top="{categoryPickerPosition.y}px"
+      style:left="{categoryPickerPosition.x}px"
+      onmouseenter={showCategoryPicker}
+      onmouseleave={hideCategoryPicker}
+    >
+      {#each categories.list as cat}
+        <button
+          role="menuitem"
+          class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
+          onclick={() => handleSetCategory(cat.id)}
+        >
+          <div
+            class="w-2 h-2 rounded-full"
+            style:background-color={cat.color}
+          ></div>
+          {cat.label}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   {#if canvasPickerOpen}
     <div
