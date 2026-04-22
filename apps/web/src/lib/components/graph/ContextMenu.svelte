@@ -13,18 +13,23 @@
   let contextMenuOpen = $state(false);
   let canvasPickerOpen = $state(false);
   let categoryPickerOpen = $state(false);
+  let imagePickerOpen = $state(false);
   let position = $state({ x: 0, y: 0 });
   let pickerPosition = $state({ x: 0, y: 0 });
   let categoryPickerPosition = $state({ x: 0, y: 0 });
+  let imagePickerPosition = $state({ x: 0, y: 0 });
   let targetId = $state<string | null>(null);
   let selectedNodes = $state<string[]>([]);
   let pickerTimeout: ReturnType<typeof setTimeout> | null = null;
   let categoryPickerTimeout: ReturnType<typeof setTimeout> | null = null;
+  let imagePickerTimeout: ReturnType<typeof setTimeout> | null = null;
   let pickerAnchor = $state<HTMLButtonElement>();
   let categoryPickerAnchor = $state<HTMLButtonElement>();
+  let imagePickerAnchor = $state<HTMLButtonElement>();
 
   const hasImage = $derived.by(() => {
-    return selectedNodes.some((id) => vault.entities[id]?.image);
+    if (selectedNodes.length !== 1) return false;
+    return !!vault.entities[selectedNodes[0]]?.image;
   });
 
   const imageActionLabel = $derived.by(() => {
@@ -52,11 +57,14 @@
       const closeHandler = () => {
         if (pickerTimeout) clearTimeout(pickerTimeout);
         if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
+        if (imagePickerTimeout) clearTimeout(imagePickerTimeout);
         pickerTimeout = null;
         categoryPickerTimeout = null;
+        imagePickerTimeout = null;
         contextMenuOpen = false;
         canvasPickerOpen = false;
         categoryPickerOpen = false;
+        imagePickerOpen = false;
       };
 
       cy.on("cxttap", "node", openHandler);
@@ -65,8 +73,10 @@
       return () => {
         if (pickerTimeout) clearTimeout(pickerTimeout);
         if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
+        if (imagePickerTimeout) clearTimeout(imagePickerTimeout);
         pickerTimeout = null;
         categoryPickerTimeout = null;
+        imagePickerTimeout = null;
         cy.off("cxttap", "node", openHandler);
         cy.off("tap", closeHandler);
       };
@@ -83,6 +93,10 @@
     if (categoryPickerTimeout) {
       clearTimeout(categoryPickerTimeout);
       categoryPickerTimeout = null;
+    }
+    if (imagePickerTimeout) {
+      clearTimeout(imagePickerTimeout);
+      imagePickerTimeout = null;
     }
   };
 
@@ -112,6 +126,7 @@
       contextMenuOpen = false;
       canvasPickerOpen = false;
       categoryPickerOpen = false;
+      imagePickerOpen = false;
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
       const nextIdx = (idx + 1) % items.length;
@@ -170,6 +185,7 @@
       }
       canvasPickerOpen = true;
       categoryPickerOpen = false;
+      imagePickerOpen = false;
     }, 100);
   };
 
@@ -192,6 +208,7 @@
       }
       categoryPickerOpen = true;
       canvasPickerOpen = false;
+      imagePickerOpen = false;
     }, 100);
   };
 
@@ -209,6 +226,39 @@
     if (categoryPickerTimeout) clearTimeout(categoryPickerTimeout);
     categoryPickerTimeout = setTimeout(() => {
       categoryPickerOpen = false;
+    }, 150);
+  };
+
+  const showImagePicker = () => {
+    clearPickerTimeout();
+    imagePickerTimeout = setTimeout(() => {
+      if (imagePickerAnchor) {
+        const rect = imagePickerAnchor.getBoundingClientRect();
+        imagePickerPosition = {
+          x: rect.right + 4,
+          y: rect.top,
+        };
+      }
+      imagePickerOpen = true;
+      canvasPickerOpen = false;
+      categoryPickerOpen = false;
+    }, 100);
+  };
+
+  const toggleImagePicker = (e: MouseEvent | KeyboardEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imagePickerOpen) {
+      imagePickerOpen = false;
+    } else {
+      showImagePicker();
+    }
+  };
+
+  const hideImagePicker = () => {
+    if (imagePickerTimeout) clearTimeout(imagePickerTimeout);
+    imagePickerTimeout = setTimeout(() => {
+      imagePickerOpen = false;
     }, 150);
   };
 
@@ -243,12 +293,32 @@
     contextMenuOpen = false;
     canvasPickerOpen = false;
     categoryPickerOpen = false;
+    imagePickerOpen = false;
 
     try {
       await oracle.drawEntity(nodesToUpdate[0]);
     } catch (err: any) {
       console.error("Failed to generate image", err);
       ui.notify(`Failed to generate image: ${err.message}`, "error");
+    }
+  };
+
+  const handleViewImage = async () => {
+    const nodesToUpdate = $state.snapshot(selectedNodes);
+    if (nodesToUpdate.length !== 1) return;
+
+    const entity = vault.entities[nodesToUpdate[0]];
+    if (!entity || !entity.image) return;
+
+    contextMenuOpen = false;
+    imagePickerOpen = false;
+
+    try {
+      const url = await vault.resolveImageUrl(entity.image);
+      ui.openLightbox(url, entity.title);
+    } catch (err: any) {
+      console.error("Failed to view image", err);
+      ui.notify(`Failed to open image: ${err.message}`, "error");
     }
   };
 
@@ -320,6 +390,7 @@
       contextMenuOpen = false;
       canvasPickerOpen = false;
       categoryPickerOpen = false;
+      imagePickerOpen = false;
       try {
         for (const id of selectedNodes) {
           await vault.deleteEntity(id);
@@ -387,15 +458,21 @@
         : "Label…"}
     </button>
 
-    {#if !ui.aiDisabled && selectedNodes.length === 1}
+    {#if selectedNodes.length === 1}
       <button
+        bind:this={imagePickerAnchor}
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
-        onclick={handleGenerateImage}
-        aria-label={imageActionLabel}
+        onmouseenter={showImagePicker}
+        onmouseleave={hideImagePicker}
+        onclick={toggleImagePicker}
+        aria-label="Image actions"
+        aria-expanded={imagePickerOpen}
+        aria-haspopup="true"
       >
-        {imageActionLabel}
-        <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-50"></span>
+        Image
+        <span class="icon-[lucide--chevron-right] h-3.5 w-3.5 opacity-50"
+        ></span>
       </button>
     {/if}
 
@@ -471,6 +548,42 @@
           {cat.label}
         </button>
       {/each}
+    </div>
+  {/if}
+
+  {#if imagePickerOpen}
+    <div
+      role="menu"
+      aria-label="Image actions"
+      tabindex="-1"
+      class="fixed z-[100] bg-theme-surface border border-theme-border shadow-2xl rounded overflow-hidden w-max flex flex-col p-1"
+      style:top="{imagePickerPosition.y}px"
+      style:left="{imagePickerPosition.x}px"
+      onmouseenter={showImagePicker}
+      onmouseleave={hideImagePicker}
+      onkeydown={handleMenuKeydown}
+    >
+      {#if hasImage}
+        <button
+          role="menuitem"
+          class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
+          onclick={handleViewImage}
+        >
+          <span class="icon-[lucide--eye] h-3.5 w-3.5 opacity-70"></span>
+          View Image
+        </button>
+      {/if}
+
+      {#if !ui.aiDisabled}
+        <button
+          role="menuitem"
+          class="w-full text-left px-3 py-1.5 text-xs text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition flex items-center gap-2 rounded-sm"
+          onclick={handleGenerateImage}
+        >
+          <span class="icon-[lucide--image-plus] h-3.5 w-3.5 opacity-70"></span>
+          {imageActionLabel}
+        </button>
+      {/if}
     </div>
   {/if}
 
