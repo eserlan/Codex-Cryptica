@@ -28,6 +28,7 @@
     id: string;
     label: string;
     title: string;
+    type: string;
     isOutbound: boolean;
   }
 
@@ -54,6 +55,7 @@
           id: c.target,
           label: c.label || c.type,
           title: vault.entities[c.target]?.title || c.target,
+          type: c.type,
           isOutbound: true,
         });
       }
@@ -68,6 +70,7 @@
           id: item.sourceId,
           label: item.connection.label || item.connection.type,
           title: vault.entities[item.sourceId]?.title || item.sourceId,
+          type: item.connection.type,
           isOutbound: false,
         });
       }
@@ -255,31 +258,57 @@
         {#if allConnections.length > 0}
           <div class="space-y-2">
             {#each allConnections as conn}
-              <button
-                onclick={() => onNavigate(conn.id)}
+              <div
                 class="w-full flex items-center gap-3 p-2 rounded border border-transparent hover:border-theme-border hover:bg-theme-primary/10 transition text-left group"
               >
-                <span
-                  class="w-1.5 h-1.5 rounded-full {conn.isOutbound
-                    ? 'bg-theme-primary'
-                    : 'bg-blue-500'}"
-                ></span>
-                <div class="flex-1 min-w-0">
-                  <div
-                    class="text-xs text-theme-muted uppercase tracking-widest font-header"
-                  >
-                    {conn.label}
+                <button
+                  onclick={() => onNavigate(conn.id)}
+                  class="flex-1 min-w-0 flex items-center gap-3 text-left"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full shrink-0 {conn.isOutbound
+                      ? 'bg-theme-primary'
+                      : 'bg-blue-500'}"
+                  ></span>
+                  <div class="flex-1 min-w-0">
+                    <div
+                      class="text-xs text-theme-muted uppercase tracking-widest font-header"
+                    >
+                      {conn.label}
+                    </div>
+                    <div
+                      class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
+                    >
+                      {conn.title}
+                    </div>
                   </div>
-                  <div
-                    class="text-sm font-bold text-theme-text group-hover:text-theme-primary truncate transition font-body"
+                </button>
+
+                {#if !vault.isGuest}
+                  <button
+                    onclick={() => {
+                      const entityId = entity?.id;
+                      if (!entityId) return;
+                      if (conn.isOutbound) {
+                        vault.removeConnection(entityId, conn.id, conn.type);
+                      } else {
+                        vault.removeConnection(conn.id, entityId, conn.type);
+                      }
+                    }}
+                    class="text-theme-muted hover:text-theme-danger transition p-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 shrink-0"
+                    aria-label="Delete connection"
+                    title="Delete connection"
                   >
-                    {conn.title}
-                  </div>
-                </div>
-                <span
-                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary opacity-0 group-hover:opacity-100 transition"
-                ></span>
-              </button>
+                    <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>
+                  </button>
+                {/if}
+
+                <button
+                  onclick={() => onNavigate(conn.id)}
+                  class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary group-focus-within:text-theme-primary focus-visible:text-theme-primary opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shrink-0"
+                  aria-label="Navigate to {conn.title}"
+                ></button>
+              </div>
             {/each}
           </div>
         {:else}
