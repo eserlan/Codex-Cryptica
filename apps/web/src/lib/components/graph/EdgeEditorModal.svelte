@@ -33,16 +33,31 @@
       editingEdge = null;
     }
   };
+
+  const close = () => {
+    editingEdge = null;
+  };
+
+  const handleWindowKeydown = (e: KeyboardEvent) => {
+    if (!editingEdge) return;
+    if (e.key === "Escape") close();
+  };
 </script>
 
+<svelte:window onkeydown={handleWindowKeydown} />
+
 {#if editingEdge}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+    class="fixed inset-0 bg-theme-bg/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
     transition:fade={{ duration: 200 }}
+    onclick={close}
   >
     <div
       class="bg-theme-surface border border-theme-primary p-6 shadow-2xl w-full max-w-md"
       transition:fly={{ y: 20, duration: 300 }}
+      onclick={(e) => e.stopPropagation()}
     >
       <h2
         class="text-theme-primary font-header font-bold text-sm uppercase tracking-[0.2em] mb-4"
@@ -95,7 +110,7 @@
                 editingEdge = null;
               }
             }}
-            class="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+            class="text-[10px] font-bold text-red-600 hover:text-red-500 uppercase tracking-widest transition-colors"
           >
             Sever Connection
           </button>
