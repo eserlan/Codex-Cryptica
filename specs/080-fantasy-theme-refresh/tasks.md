@@ -10,7 +10,7 @@
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: Can run in parallel (different files, no blocking dependency)
-- **[Story]**: Which user story this task belongs to (`US1`, `US2`, `US3`)
+- **[Story]**: Which user story this task belongs to (`US1`, `US2`, `US2a`, `US3`)
 - Every task includes exact file paths
 
 ## Phase 1: Setup (Shared Infrastructure)
@@ -19,6 +19,7 @@
 
 - [ ] T001 Add baseline fantasy-theme regression coverage scaffolding in `apps/web/tests/themes.spec.ts`
 - [ ] T002 [P] Inventory the screenshot-identified fantasy-theme touchpoints in `packages/schema/src/theme.ts`, `apps/web/src/lib/stores/theme.svelte.ts`, `apps/web/src/app.css`, `apps/web/src/lib/components/explorer/EntityList.svelte`, and `apps/web/src/lib/components/entity-detail/DetailHeader.svelte`
+- [ ] T002a [P] Inventory fantasy graph marker behavior in `packages/graph-engine/src/transformer.ts`, `packages/graph-engine/tests/themes.test.ts`, and `packages/graph-engine/tests/transformer.test.ts`
 
 ---
 
@@ -78,6 +79,27 @@
 
 ---
 
+## Phase 4a: User Story 2a - Themed Graph Nodes (Priority: P2)
+
+**Goal**: Make graph node markers reflect theme material and shape language without square artifacts or unsupported Cytoscape styles
+
+**Independent Test**: Activate fantasy and horror/vampire themes and confirm fantasy nodes render as shield-like parchment markers, fantasy image nodes retain thick category borders, non-fantasy themes remain circular unless otherwise specified, and horror/vampire blood textures vary orientation across nodes
+
+### Tests for User Story 2a ⚠️
+
+- [ ] T013a [P] [US2a] Add graph-engine assertions for fantasy shield node style, clipped texture, selected-node artifact prevention, and fantasy image-node border hierarchy in `packages/graph-engine/tests/themes.test.ts` and `packages/graph-engine/src/transformer.test.ts`
+- [ ] T013b [P] [US2a] Add graph-engine assertions for theme texture application, missing-texture fallback, and horror/vampire blood texture variants in `packages/graph-engine/tests/transformer.test.ts` and `packages/graph-engine/tests/themes.test.ts`
+
+### Implementation for User Story 2a
+
+- [ ] T013c [US2a] Apply supported theme texture styles, fantasy shield polygon points, and artifact-free selection treatment in `packages/graph-engine/src/transformer.ts`
+- [ ] T013d [US2a] Preserve circular node shapes for non-fantasy themes while adding random texture variant data for graph nodes in `packages/graph-engine/src/transformer.ts`
+- [ ] T013e [P] [US2a] Add rotated blood texture variant assets in `apps/web/static/themes/`
+
+**Checkpoint**: User Story 2a should now deliver themed graph node markers independently
+
+---
+
 ## Phase 5: User Story 3 - Clearer Reading Hierarchy (Priority: P3)
 
 **Goal**: Improve title weight, section separation, metadata de-emphasis, and gold focus treatment in entity reading views
@@ -115,6 +137,7 @@
 - **Foundational (Phase 2)**: Depends on Setup completion and blocks all user story work
 - **User Story 1 (Phase 3)**: Depends on Foundational completion
 - **User Story 2 (Phase 4)**: Depends on Foundational completion
+- **Graph Nodes (Phase 4a)**: Depends on Foundational completion and can proceed independently of User Story 3
 - **User Story 3 (Phase 5)**: Depends on Foundational completion and benefits from User Story 1 styling decisions
 - **Polish (Phase 6)**: Depends on all desired user stories being complete
 
@@ -122,6 +145,7 @@
 
 - **User Story 1 (P1)**: Can start immediately after Foundational completion
 - **User Story 2 (P2)**: Can start immediately after Foundational completion
+- **User Story 2a (P2)**: Can start immediately after Foundational completion
 - **User Story 3 (P3)**: Should follow the shared styling direction established in User Story 1, but remains independently testable
 
 ### Within Each User Story
@@ -136,6 +160,7 @@
 - `T004` and `T005` can run in parallel after `T003`
 - `T008` and `T009` can run in parallel after `T006`
 - `T012` and `T013` can run in parallel after `T010`
+- `T013a`, `T013b`, and `T013e` can run in parallel with graph-engine implementation planning
 - `T018` can run in parallel with `T019`
 
 ---
@@ -181,3 +206,4 @@ Task: "Soften fantasy active and hover tab emphasis in apps/web/src/lib/componen
 - `apps/web/tests/themes.spec.ts` is the primary regression file for this feature
 - The highest-priority implementation slice is exactly the user-provided distilled rule set: dark ink text, brown interaction, gold focus, unified brown icons, warmer parchment panels, and firmer edges
 - Preserve the existing theme system; do not create a fantasy-only styling path outside shared theme plumbing
+- Graph marker styling should stay in `packages/graph-engine` and avoid unsupported Cytoscape style properties that create warnings or square artifacts

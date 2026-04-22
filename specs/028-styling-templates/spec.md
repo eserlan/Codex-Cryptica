@@ -65,7 +65,7 @@ As a Game Master managing multiple campaigns, I want the theme selection to be s
 - **FR-001**: System MUST provide a selection interface for the following templates: Sci-Fi, Fantasy, Modern, Cyberpunk, Post-Apocalyptic.
 - **FR-002**: System MUST persist the selected template ID in the vault's local configuration.
 - **FR-003**: System MUST update the CSS variables and Cytoscape styles dynamically when a template is changed.
-- **FR-004**: Each template MUST define a specific set of visual attributes: primary color, background color, border radius, font family (serif/sans/mono), and graph edge style.
+- **FR-004**: Each template MUST define a specific set of visual attributes: primary color, background color, border radius, font family (serif/sans/mono), graph edge style, graph node shape, and supported graph node texture treatment.
 - **FR-005**: The system MUST apply template-specific borders and background textures to the Zen Mode and Entity Detail panels.
 
 ### Key Entities _(include if feature involves data)_

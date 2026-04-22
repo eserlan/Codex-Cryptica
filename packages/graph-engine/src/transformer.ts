@@ -21,6 +21,7 @@ export interface GraphNode {
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
     dateLabel?: string;
+    textureVariant?: number;
   };
   position?: { x: number; y: number };
 }
@@ -62,6 +63,18 @@ const formatDate = (date?: TemporalMetadata) => {
 };
 
 const EMPTY_LABELS: string[] = [];
+
+const hashId = (id: string): number => {
+  let hash = 0;
+  const len = id.length;
+  for (let i = 0; i < len; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
+
+const getTextureVariant = () => Math.floor(Math.random() * 4);
 
 export class GraphTransformer {
   static entitiesToElements(
@@ -111,6 +124,7 @@ export class GraphTransformer {
     for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
+      const hash = hashId(entity.id);
 
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
@@ -157,6 +171,7 @@ export class GraphTransformer {
         end_date: entity.end_date,
         dateLabel,
         labels: entity.labels ?? EMPTY_LABELS,
+        textureVariant: getTextureVariant(),
       };
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
@@ -172,16 +187,6 @@ export class GraphTransformer {
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
-      let hash = 0;
-      if (!hasValidCoords) {
-        const id = entity.id;
-        const len = id.length;
-        for (let j = 0; j < len; j++) {
-          hash = (hash << 5) - hash + id.charCodeAt(j);
-          hash |= 0; // Convert to 32bit integer
-        }
-      }
-
       elements.push({
         group: "nodes",
         data: nodeData,
@@ -235,6 +240,84 @@ const sanitizeFontForCytoscape = (fontFamily?: string): string => {
   return firstFont || "sans-serif";
 };
 
+const getThemeTextureStyle = (texture?: string) => {
+  if (!texture) return {};
+
+  return {
+    "background-image": `url('/themes/${texture}')`,
+    "background-fit": "cover",
+    "background-clip": "node",
+    "background-image-crossorigin": "null",
+    "background-repeat": "no-repeat",
+  };
+};
+
+const getThemeTextureVariantStyles = (texture?: string) => {
+  if (texture !== "blood.svg") return [];
+
+  return [
+    {
+      selector: "node[textureVariant = 1]",
+      style: {
+        "background-image": "url('/themes/blood-90.svg')",
+      },
+    },
+    {
+      selector: "node[textureVariant = 2]",
+      style: {
+        "background-image": "url('/themes/blood-180.svg')",
+      },
+    },
+    {
+      selector: "node[textureVariant = 3]",
+      style: {
+        "background-image": "url('/themes/blood-270.svg')",
+      },
+    },
+  ];
+};
+
+const getFantasyNodeStyle = (
+  template: StylingTemplate,
+): Record<string, string | number | number[]> => {
+  if (template.id !== "fantasy") return {};
+
+  const borderWidth = template.graph.nodeBorderWidth ?? 1;
+
+  return {
+    shape: "polygon",
+    "shape-polygon-points": [
+      -0.82, -0.68, 0, -0.96, 0.82, -0.68, 0.72, 0.26, 0, 0.98, -0.72, 0.26,
+    ],
+    "background-fit": "cover",
+    "background-clip": "node",
+    "background-opacity": 0.5,
+    "border-width": borderWidth,
+    "border-color": template.tokens.primary,
+    "border-opacity": 0.68,
+  };
+};
+
+const getFantasyEdgeStyle = (
+  template: StylingTemplate,
+): Record<string, string | number | number[]> => {
+  if (template.id !== "fantasy") return {};
+
+  return {
+    width: (template.graph.edgeWidth ?? 1) + 1,
+    "line-style": "dashed",
+    "line-dash-pattern": [13, 4, 2, 5],
+    "line-dash-offset": 2,
+    "line-cap": "round",
+    "arrow-scale": 0.45,
+    opacity: 0.44,
+    "underlay-color": template.tokens.background,
+    "underlay-opacity": 0.18,
+    "underlay-padding": 2,
+    "text-background-opacity": 0.68,
+  };
+};
+
 export const getGraphStyle = (
   template: StylingTemplate,
   categories: Category[],
@@ -242,13 +325,17 @@ export const getGraphStyle = (
 ): any[] => {
   const { tokens, graph } = template;
 
+  const isFantasy = template.id === "fantasy";
+
   // Base styles (excluding revealed overrides which need to come last)
   const baseStyle: any[] = [
     {
       selector: "node",
       style: {
-        "background-color": tokens.background,
-        "border-width": graph.nodeBorderWidth,
+        // Force parchment-like background color for all nodes, matching theme surface/bg
+        "background-color": tokens.surface || tokens.background,
+        ...getThemeTextureStyle(tokens.texture),
+        "border-width": graph.nodeBorderWidth + 2,
         "border-color": tokens.primary,
         width: 32,
         height: 32,
@@ -266,8 +353,10 @@ export const getGraphStyle = (
         "text-opacity": 1,
         "transition-property": "opacity, text-opacity, width, height",
         "transition-duration": 200,
+        ...getFantasyNodeStyle(template),
       },
     },
+    ...getThemeTextureVariantStyles(tokens.texture),
     {
       selector: "node[weight <= 1]",
       style: {
@@ -308,7 +397,9 @@ export const getGraphStyle = (
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
         "background-opacity": 1,
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 5
+          : graph.nodeBorderWidth + 6,
         "border-color": tokens.primary,
       },
     });
@@ -320,7 +411,7 @@ export const getGraphStyle = (
     {
       selector: ".selected-source",
       style: {
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         "border-color": "#facc15", // Keep yellow for functional clarity
         "background-color": tokens.surface,
       },
@@ -348,6 +439,7 @@ export const getGraphStyle = (
         "text-margin-y": -8,
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
+        ...getFantasyEdgeStyle(template),
       },
     },
     {
@@ -401,11 +493,30 @@ export const getGraphStyle = (
     selector: `node[type="${cat.id}"]`,
     style: {
       "border-color": cat.color,
-      "border-width": graph.nodeBorderWidth + 2,
+      "border-width": isFantasy
+        ? graph.nodeBorderWidth + 1
+        : graph.nodeBorderWidth + 4,
+      // For fantasy, we want the category color to overlay the parchment background
       "background-color": cat.color,
-      "background-opacity": 0.55,
+      "background-opacity": isFantasy ? 0.58 : 0.55,
     },
   }));
+
+  // Image width override ensures that nodes with images have thick borders
+  // even if category styles (which come before) set a thinner width.
+  const imageWidthOverride = showImages
+    ? [
+        {
+          selector:
+            "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
+          style: {
+            "border-width": isFantasy
+              ? graph.nodeBorderWidth + 5
+              : graph.nodeBorderWidth + 8,
+          },
+        },
+      ]
+    : [];
 
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
@@ -421,8 +532,10 @@ export const getGraphStyle = (
     {
       selector: "node[isRevealed]",
       style: {
-        "border-width": graph.nodeBorderWidth + 4,
-        "background-clip": "none",
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 2
+          : graph.nodeBorderWidth + 10,
+        "background-clip": isFantasy ? "node" : "none",
         "overlay-opacity": 0,
       },
     },
@@ -436,7 +549,9 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-fit": "cover",
         "background-position-y": "50%",
-        "border-width": graph.nodeBorderWidth + 4,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 2
+          : graph.nodeBorderWidth + 10,
       },
     });
   }
@@ -450,7 +565,7 @@ export const getGraphStyle = (
         "background-color": tokens.surface,
         "background-opacity": 1,
         "border-color": tokens.primary,
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         color: "#fff",
         opacity: 1,
         "text-opacity": 1,
@@ -458,8 +573,8 @@ export const getGraphStyle = (
         "text-outline-width": 2,
         "underlay-color": tokens.primary,
         "underlay-padding": 8,
-        "underlay-opacity": 0.3,
-        "underlay-shape": graph.nodeShape,
+        "underlay-opacity": isFantasy ? 0 : 0.3,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
         "z-index": 1000,
       },
     },
@@ -478,6 +593,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
+    ...imageWidthOverride,
     ...revealedStyles,
     ...selectionStyles,
   ];
