@@ -28,9 +28,7 @@
   });
 
   const imageActionLabel = $derived.by(() => {
-    const base = hasImage ? "Regen" : "Gen";
-    const suffix = selectedNodes.length > 1 ? "Images" : "Image";
-    return `${base} ${suffix}`;
+    return hasImage ? "Regen Image" : "Gen Image";
   });
 
   $effect(() => {
@@ -240,27 +238,14 @@
 
   const handleGenerateImage = async () => {
     const nodesToUpdate = $state.snapshot(selectedNodes);
+    if (nodesToUpdate.length !== 1) return;
+
     contextMenuOpen = false;
     canvasPickerOpen = false;
     categoryPickerOpen = false;
 
     try {
-      if (nodesToUpdate.length === 1) {
-        await oracle.drawEntity(nodesToUpdate[0]);
-      } else if (nodesToUpdate.length > 1) {
-        // For now, sequential generation for bulk
-        ui.notify(
-          `Generating images for ${nodesToUpdate.length} nodes...`,
-          "info",
-        );
-        for (const id of nodesToUpdate) {
-          await oracle.drawEntity(id);
-        }
-        ui.notify(
-          `Completed image generation for ${nodesToUpdate.length} nodes.`,
-          "success",
-        );
-      }
+      await oracle.drawEntity(nodesToUpdate[0]);
     } catch (err: any) {
       console.error("Failed to generate image", err);
       ui.notify(`Failed to generate image: ${err.message}`, "error");
@@ -402,7 +387,7 @@
         : "Label…"}
     </button>
 
-    {#if !ui.aiDisabled}
+    {#if !ui.aiDisabled && selectedNodes.length === 1}
       <button
         role="menuitem"
         class="w-full text-left px-4 py-2 text-sm text-theme-text hover:bg-theme-primary/10 hover:text-theme-primary transition border-t border-theme-border flex items-center justify-between gap-4 whitespace-nowrap"
