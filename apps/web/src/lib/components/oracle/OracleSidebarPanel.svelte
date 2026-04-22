@@ -62,7 +62,7 @@
 >
   <!-- Header -->
   <div
-    class="px-3 py-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
+    class="px-3 pt-[calc(0.5rem+env(safe-area-inset-top,0px))] pb-2 sm:px-4 sm:py-3 border-b border-theme-border bg-theme-primary/10 flex justify-between items-center shrink-0"
     style:background-image="var(--bg-texture-overlay)"
   >
     <div class="flex items-center gap-2">

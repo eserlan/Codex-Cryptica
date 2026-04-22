@@ -36,7 +36,7 @@
 {#if uiStore.leftSidebarOpen}
   <aside
     class="w-full md:w-96 md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0 overflow-hidden
-           max-md:fixed max-md:inset-0 max-md:top-[var(--header-height,65px)] max-md:bottom-14 md:border-r md:bottom-0"
+           max-md:fixed max-md:inset-0 md:border-r md:bottom-0"
     style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-texture-overlay)"
     data-testid="sidebar-panel-host"

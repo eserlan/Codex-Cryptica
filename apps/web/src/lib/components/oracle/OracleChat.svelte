@@ -268,10 +268,17 @@
           >
             The Archives are Open
           </h4>
-          <p class="text-xs text-theme-muted leading-relaxed font-body">
+          <p
+            class="text-xs text-theme-muted leading-relaxed font-body hidden sm:block"
+          >
             Greetings, Seeker. I am the Oracle, the keeper of your recorded
             lore. Ask of the robber, the mayor, or the shadows beyond the
             village... I shall consult the echoes of your vault.
+          </p>
+          <p
+            class="text-[10px] text-theme-muted leading-relaxed font-body sm:hidden"
+          >
+            Consult the echoes of your vault.
           </p>
         </div>
 
