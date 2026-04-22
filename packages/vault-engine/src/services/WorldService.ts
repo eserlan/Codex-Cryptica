@@ -246,10 +246,17 @@ export class WorldServiceImplementation {
       .limit(candidateLimit)
       .toArray()) as GraphEntityRecord[];
 
-    const recent = [
-      ...pinnedRecords,
-      ...recentCandidates.filter((record) => !pinnedIds.has(record.id)),
-    ]
+    // ⚡ Bolt Optimization: Replace intermediate .filter() and spread with a single imperative loop
+    const recent = [...pinnedRecords];
+    const len = recentCandidates.length;
+    for (let i = 0; i < len; i++) {
+      const record = recentCandidates[i];
+      if (!pinnedIds.has(record.id)) {
+        recent.push(record);
+      }
+    }
+
+    const limitedRecent = recent
       .sort((a, b) => {
         const aPinned = pinnedIds.has(a.id);
         const bPinned = pinnedIds.has(b.id);
@@ -259,12 +266,12 @@ export class WorldServiceImplementation {
       .slice(0, limit);
 
     const contentRecords = await Promise.all(
-      recent.map((record) =>
+      limitedRecent.map((record) =>
         this.db.entityContent.get([vaultId, record.id]).catch(() => null),
       ),
     );
 
-    return recent.map((record, index) => {
+    return limitedRecent.map((record, index) => {
       const content = contentRecords[index]?.content ?? "";
       const path = getEntityPath(record);
       return {
