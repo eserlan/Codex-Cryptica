@@ -54,7 +54,7 @@
       label: "Entity Explorer",
       action: () => uiStore.toggleSidebarTool("explorer"),
     },
-    ...(!uiStore.aiDisabled
+    ...(!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off"
       ? [
           {
             id: "ai-assessment",
