@@ -77,6 +77,7 @@
     const filtered: Entity[] = [];
     const query = searchQuery.trim().toLowerCase();
     const filterAllTypes = typeFilters.size === 0;
+    const activeLabels = Array.from(labelFilters);
 
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
@@ -103,9 +104,8 @@
 
       // AND logic for labels
       const matchesLabels =
-        labelFilters.size === 0 ||
-        (e.labels &&
-          Array.from(labelFilters).every((f) => e.labels?.includes(f)));
+        activeLabels.length === 0 ||
+        (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
 
       if (matchesSearch && matchesType && matchesLabels) {
         filtered.push(e);
@@ -137,6 +137,12 @@
         labelFilters = new Set([label]);
       }
     }
+  }
+
+  function removeLabelFilter(label: string) {
+    const newFilters = new Set(labelFilters);
+    newFilters.delete(label);
+    labelFilters = newFilters;
   }
 
   function toggleTypeFilter(type: string, event: MouseEvent) {
@@ -208,7 +214,7 @@
       class="flex items-center gap-1 rounded-xl border border-theme-border bg-theme-surface/50 px-2 py-1.5 shadow-sm"
     >
       <button
-        onclick={() => (typeFilters = new Set())}
+        onclick={(e) => toggleTypeFilter("all", e)}
         title="Show all categories"
         aria-label="Show all categories"
         aria-pressed={typeFilters.size === 0}
@@ -285,7 +291,7 @@
           >
             <span>{label}</span>
             <button
-              onclick={() => toggleLabelFilter(label)}
+              onclick={() => removeLabelFilter(label)}
               class="hover:text-theme-text transition-colors"
               aria-label={`Remove ${label} filter`}
             >
@@ -367,7 +373,7 @@
             onclick={() => onOpenZen(entity)}
             title="Open in Zen Mode"
             aria-label="Open {entity.title} in Zen Mode"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 rounded-r-xl"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
           >
             <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
           </button>
