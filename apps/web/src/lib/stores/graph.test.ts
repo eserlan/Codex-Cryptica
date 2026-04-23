@@ -37,11 +37,29 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 // Mock ui store
-vi.mock("./ui.svelte", () => ({
-  ui: {
-    sharedMode: false,
-  },
-}));
+vi.mock("./ui.svelte", () => {
+  const labelFilters = new Set<string>();
+  return {
+    ui: {
+      sharedMode: false,
+      isModifierPressed: false,
+      labelFilters: labelFilters,
+      toggleLabelFilter: vi.fn((label: string, isMulti: boolean) => {
+        if (!isMulti) {
+          labelFilters.clear();
+          labelFilters.add(label);
+        } else {
+          if (labelFilters.has(label)) {
+            labelFilters.delete(label);
+          } else {
+            labelFilters.add(label);
+          }
+        }
+      }),
+      clearLabelFilters: vi.fn(() => labelFilters.clear()),
+    },
+  };
+});
 
 // Mock graph-engine
 vi.mock("graph-engine", () => ({
