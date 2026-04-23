@@ -24,6 +24,7 @@ export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
   private db: AppSettingsStore | null = null;
+  private debounceTimeout: any = null;
 
   /**
    * Initialize the chat history service by loading saved messages from IndexedDB.
@@ -115,7 +116,15 @@ export class ChatHistoryService {
       this.messages[msgIndex] = { ...msg, proposals };
       this.messages = [...this.messages];
       this.lastUpdated = Date.now();
-      await this.saveToDB();
+
+      // Debounce persistence for high-frequency incremental discovery (PR Comment #8)
+      if (this.debounceTimeout) {
+        clearTimeout(this.debounceTimeout);
+      }
+      this.debounceTimeout = setTimeout(() => {
+        void this.saveToDB();
+        this.debounceTimeout = null;
+      }, 500);
     }
   }
 

@@ -1,5 +1,6 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
+import { browser } from "$app/environment";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
@@ -61,7 +62,7 @@ export class OracleStore {
   private settingsService: OracleSettingsService;
   private undoRedo: UndoRedoService;
   private executor: OracleActionExecutor;
-  private eventBus: BroadcastChannel;
+  private eventBus: BroadcastChannel | null = null;
 
   constructor(
     deps: {
@@ -111,8 +112,18 @@ export class OracleStore {
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
 
     // Initialize Event Bus for Hybrid Communication
-    this.eventBus = new BroadcastChannel("codex-oracle-events");
-    this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
+    if (browser) {
+      this.eventBus = new BroadcastChannel("codex-oracle-events");
+      this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
+    }
+  }
+
+  /**
+   * Cleans up resources, including the event bus.
+   */
+  public terminate() {
+    this.eventBus?.close();
+    this.eventBus = null;
   }
 
   private handleWorkerEvent(event: any) {
@@ -198,7 +209,9 @@ export class OracleStore {
       chatHistory: this.chatHistoryService,
       contextRetrieval: this.contextRetrieval,
       textGeneration: {
-        ...this.textGeneration,
+        // Explicitly forward calls to handle proxy enumerable issues (PR Comment #5)
+        expandQuery: (apiKey: string, query: string, history: any[]) =>
+          this.textGeneration.expandQuery(apiKey, query, history),
         generateResponse: (
           apiKey: string,
           query: string,
@@ -217,7 +230,7 @@ export class OracleStore {
           // Wrap callback with Comlink.proxy only if we are using the worker bridge
           const callback = oracleBridge.isReady
             ? Comlink.proxy(onUpdate)
-            : onUpdate;
+            : (onUpdate as any);
 
           return this.textGeneration.generateResponse(
             apiKey,

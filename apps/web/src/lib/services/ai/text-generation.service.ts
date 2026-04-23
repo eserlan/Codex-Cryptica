@@ -225,7 +225,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     history: any[],
     context: string,
     modelName: string,
-    onUpdate: (partial: string) => void,
+    onUpdate: (partial: string) => void | Promise<void>,
     demoMode = false,
     categories?: string[],
     _options?: {
@@ -306,7 +306,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         fullText += chunkText;
-        onUpdate(fullText);
+        await onUpdate(fullText);
       }
     } catch (err: any) {
       console.error("Gemini API Error:", err);

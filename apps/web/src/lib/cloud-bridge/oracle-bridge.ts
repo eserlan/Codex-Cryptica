@@ -18,8 +18,14 @@ export class OracleBridge {
   }
 
   private initWorker() {
-    this.worker = new OracleWorker();
-    this.api = Comlink.wrap<any>(this.worker);
+    try {
+      this.worker = new OracleWorker();
+      this.api = Comlink.wrap<any>(this.worker);
+    } catch (err) {
+      console.error("[OracleBridge] Failed to initialize OracleWorker:", err);
+      this.worker = null;
+      this.api = null;
+    }
   }
 
   public get isReady(): boolean {
@@ -47,6 +53,9 @@ export class OracleBridge {
   }
 
   public terminate() {
+    if (this.api) {
+      this.api[Comlink.releaseProxy]();
+    }
     this.worker?.terminate();
     this.worker = null;
     this.api = null;

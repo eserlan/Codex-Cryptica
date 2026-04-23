@@ -78,7 +78,7 @@ class OracleWorker {
         context,
         modelName,
         async (partial) => {
-          onUpdate(partial);
+          await onUpdate(partial);
 
           // Proactive Incremental Discovery
           // We only run this if the text is long enough to potentially contain entities

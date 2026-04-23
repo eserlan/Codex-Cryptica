@@ -69,7 +69,7 @@ export interface TextGenerationService {
     options?: {
       requestId?: string;
       vaultId?: string;
-      existingEntities?: any[];
+      existingEntities?: Entity[];
     },
   ): Promise<void>;
   generateMergeProposal(
