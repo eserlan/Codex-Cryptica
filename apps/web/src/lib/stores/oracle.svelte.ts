@@ -91,7 +91,9 @@ export class OracleStore {
     this.contextRetrieval = deps.contextRetrieval ?? defaultContextRetrieval;
     this.textGeneration =
       deps.textGeneration ??
-      (oracleBridge.isReady ? oracleBridge.textGeneration : defaultTextGeneration);
+      (oracleBridge.isReady
+        ? oracleBridge.textGeneration
+        : defaultTextGeneration);
     this.imageGeneration = deps.imageGeneration ?? defaultImageGeneration;
     this.searchService = deps.searchService ?? defaultSearchService;
     this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
@@ -100,7 +102,9 @@ export class OracleStore {
     this.categories = deps.categories ?? defaultCategories;
     this.draftingEngine =
       deps.draftingEngine ??
-      (oracleBridge.isReady ? oracleBridge.draftingEngine : defaultDraftingEngine);
+      (oracleBridge.isReady
+        ? oracleBridge.draftingEngine
+        : defaultDraftingEngine);
 
     // Use provided services or defaults
     this.chatHistoryService =
@@ -111,7 +115,10 @@ export class OracleStore {
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
 
     // Initialize Event Bus for Hybrid Communication
-    if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
+    if (
+      typeof window !== "undefined" &&
+      typeof BroadcastChannel !== "undefined"
+    ) {
       this.eventBus = new BroadcastChannel("codex-oracle-events");
       this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
     }
@@ -247,10 +254,21 @@ export class OracleStore {
         ),
       },
       contextRetrieval: {
+        retrieveContext: wrap(
+          this.contextRetrieval.retrieveContext?.bind(this.contextRetrieval),
+        ),
         getConsolidatedContext: wrap(
           this.contextRetrieval.getConsolidatedContext?.bind(
             this.contextRetrieval,
           ),
+        ),
+      },
+      imageGeneration: {
+        distillVisualPrompt: wrap(
+          this.imageGeneration.distillVisualPrompt?.bind(this.imageGeneration),
+        ),
+        generateImage: wrap(
+          this.imageGeneration.generateImage?.bind(this.imageGeneration),
         ),
       },
       textGeneration: {
@@ -276,7 +294,9 @@ export class OracleStore {
             existingEntities?: any[];
           },
         ) => {
-          const callback = isWorker ? Comlink.proxy(onUpdate) : (onUpdate as any);
+          const callback = isWorker
+            ? Comlink.proxy(onUpdate)
+            : (onUpdate as any);
 
           return this.textGeneration.generateResponse(
             apiKey,
@@ -290,7 +310,8 @@ export class OracleStore {
             {
               ...options,
               requestId: options?.requestId || undefined,
-              vaultId: options?.vaultId || this.vault.activeVaultId || undefined,
+              vaultId:
+                options?.vaultId || this.vault.activeVaultId || undefined,
               existingEntities: options?.existingEntities
                 ? $state.snapshot(options.existingEntities)
                 : $state.snapshot(Object.values(this.vault.entities || {})),
@@ -317,9 +338,7 @@ export class OracleStore {
         requestFit: wrap(this.graph.requestFit?.bind(this.graph)),
       },
       undoRedo: {
-        pushUndoAction: wrap(
-          this.undoRedo.pushUndoAction?.bind(this.undoRedo),
-        ),
+        pushUndoAction: wrap(this.undoRedo.pushUndoAction?.bind(this.undoRedo)),
       },
       tier: this.tier,
       effectiveApiKey: this.effectiveApiKey,
@@ -470,16 +489,18 @@ export class OracleStore {
         chronicle: proposal.draft.chronicle,
         lore: proposal.draft.lore,
       });
-      const snapContext = $state.snapshot(buildRelatedEntityContext({
-        entity: existing,
-        incoming: {
-          chronicle: proposal.draft.chronicle,
-          lore: proposal.draft.lore,
-        },
-        vault: this.vault,
-        getConsolidatedContext: (related) =>
-          this.contextRetrieval.getConsolidatedContext(related),
-      }));
+      const snapContext = $state.snapshot(
+        buildRelatedEntityContext({
+          entity: existing,
+          incoming: {
+            chronicle: proposal.draft.chronicle,
+            lore: proposal.draft.lore,
+          },
+          vault: this.vault,
+          getConsolidatedContext: (related) =>
+            this.contextRetrieval.getConsolidatedContext(related),
+        }),
+      );
 
       return await this.textGeneration.reconcileEntityUpdate(
         this.effectiveApiKey || "",
