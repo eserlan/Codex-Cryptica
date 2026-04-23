@@ -82,11 +82,14 @@ class ProposerStore {
   async loadProposals(entityId: string, requireSelection = true) {
     if (this.isLoadingProposals) return;
 
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
+
     this.isLoadingProposals = true;
     try {
       const service = this.getService();
-      const p = await service.getProposals(entityId);
-      const h = await service.getHistory(entityId);
+      const p = await service.getProposals(vaultId, entityId);
+      const h = await service.getHistory(vaultId, entityId);
 
       // Guard against stale updates if navigation happened
       if (requireSelection && vault.selectedEntityId !== entityId) return;
@@ -99,12 +102,22 @@ class ProposerStore {
   }
 
   async loadGlobalProposals() {
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) {
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+      return;
+    }
+
     this.isLoadingProposals = true;
     try {
       const service = this.getService();
-      this.allPendingProposals = await service.getAllPendingProposals();
-      this.allAcceptedProposals = await service.getAllAcceptedProposals();
-      this.allVerifiedProposals = await service.getAllVerifiedProposals();
+      this.allPendingProposals = await service.getAllPendingProposals(vaultId);
+      this.allAcceptedProposals =
+        await service.getAllAcceptedProposals(vaultId);
+      this.allVerifiedProposals =
+        await service.getAllVerifiedProposals(vaultId);
     } finally {
       this.isLoadingProposals = false;
     }
@@ -201,6 +214,9 @@ class ProposerStore {
   ) {
     if (uiStore.aiDisabled || this.isAnalyzing) return;
 
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
+
     this.analysisError = null;
 
     // Load existing proposals/history if not loaded
@@ -265,6 +281,7 @@ class ProposerStore {
       const newProposals = await proposerBridge.analyzeEntity(
         apiKey,
         modelName,
+        vaultId,
         entityId,
         sourceText,
         targets,
@@ -407,6 +424,19 @@ class ProposerStore {
       ...this.proposals[proposal.sourceId],
       proposal,
     ];
+  }
+
+  async clearVault(vaultId: string) {
+    const service = this.getService();
+    await service.clearVault(vaultId);
+    // Clear in-memory caches if this was the active vault
+    if (vault.activeVaultId === vaultId) {
+      this.proposals = {};
+      this.history = {};
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+    }
   }
 }
 

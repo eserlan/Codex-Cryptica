@@ -8,6 +8,7 @@ const {
   mockAnalyzeEntity,
 } = vi.hoisted(() => ({
   mockVault: {
+    activeVaultId: "test-vault",
     entities: {
       source: {
         id: "source",
@@ -103,7 +104,8 @@ vi.mock("@codex/proposer", () => ({
 }));
 
 const mockProposal = {
-  id: "source:target",
+  id: "test-vault:source:target",
+  vaultId: "test-vault",
   sourceId: "source",
   targetId: "target",
   type: "related_to",
@@ -123,7 +125,8 @@ describe("proposerStore", () => {
   it("logs analysis and application details when applying discovered connections", async () => {
     mockAnalyzeEntity.mockResolvedValue([
       {
-        id: "source:target",
+        id: "test-vault:source:target",
+        vaultId: "test-vault",
         sourceId: "source",
         targetId: "target",
         type: "related_to",
@@ -140,6 +143,14 @@ describe("proposerStore", () => {
       await proposerStore.analyzeAndApplyEntityById("source");
 
     expect(appliedCount).toBe(1);
+    expect(mockAnalyzeEntity).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      "test-vault",
+      "source",
+      expect.any(String),
+      expect.any(Array),
+    );
     expect(mockVault.addConnection).toHaveBeenCalledWith(
       "source",
       "target",
@@ -163,7 +174,7 @@ describe("proposerStore", () => {
     expect(mockDebugStore.log).toHaveBeenCalledWith(
       "[ProposerStore] Applied connection proposal",
       expect.objectContaining({
-        proposalId: "source:target",
+        proposalId: "test-vault:source:target",
         sourceId: "source",
         targetId: "target",
       }),
@@ -193,6 +204,16 @@ describe("proposerStore", () => {
 
     const { proposerStore } = await import("./proposer.svelte");
     await proposerStore.loadGlobalProposals();
+
+    expect(mockService.getAllPendingProposals).toHaveBeenCalledWith(
+      "test-vault",
+    );
+    expect(mockService.getAllAcceptedProposals).toHaveBeenCalledWith(
+      "test-vault",
+    );
+    expect(mockService.getAllVerifiedProposals).toHaveBeenCalledWith(
+      "test-vault",
+    );
 
     expect(proposerStore.allPendingProposals).toEqual(pending);
     expect(proposerStore.allAcceptedProposals).toEqual(accepted);

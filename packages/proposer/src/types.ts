@@ -1,5 +1,6 @@
 export interface Proposal {
-  id: string; // ${sourceId}:${targetId}
+  id: string; // ${vaultId}:${sourceId}:${targetId}
+  vaultId: string;
   sourceId: string;
   targetId: string;
   type: string;
@@ -25,6 +26,7 @@ export interface IProposerService {
   analyzeEntity(
     apiKey: string,
     modelName: string,
+    vaultId: string,
     entityId: string,
     content: string,
     availableTargets: { id: string; name: string }[],
@@ -69,11 +71,11 @@ export interface IProposerService {
     targetName: string;
   }>;
 
-  getProposals(entityId: string): Promise<Proposal[]>;
-  getHistory(entityId: string): Promise<Proposal[]>;
-  getAllAcceptedProposals(): Promise<Proposal[]>;
-  getAllPendingProposals(): Promise<Proposal[]>;
-  getAllVerifiedProposals(): Promise<Proposal[]>;
+  getProposals(vaultId: string, entityId: string): Promise<Proposal[]>;
+  getHistory(vaultId: string, entityId: string): Promise<Proposal[]>;
+  getAllAcceptedProposals(vaultId: string): Promise<Proposal[]>;
+  getAllPendingProposals(vaultId: string): Promise<Proposal[]>;
+  getAllVerifiedProposals(vaultId: string): Promise<Proposal[]>;
 
   applyProposal(proposalId: string): Promise<void>;
   dismissProposal(proposalId: string): Promise<void>;
@@ -81,4 +83,5 @@ export interface IProposerService {
   reEvaluateProposal(proposalId: string): Promise<void>;
 
   saveProposals(proposals: Proposal[]): Promise<void>;
+  clearVault(vaultId: string): Promise<void>;
 }

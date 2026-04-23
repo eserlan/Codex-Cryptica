@@ -39,19 +39,59 @@ export class OracleStore {
   visualizingMessageId = $state<string | null>(null);
 
   // Dependencies
-  private vault: typeof defaultVault;
-  private uiStore: typeof defaultUiStore;
-  private graph: typeof defaultGraph;
-  private diceHistory: typeof defaultDiceHistory;
-  private contextRetrieval: typeof defaultContextRetrieval;
-  private textGeneration: typeof defaultTextGeneration;
-  private imageGeneration: typeof defaultImageGeneration;
-  private searchService: typeof defaultSearchService;
-  private diceEngine: typeof defaultDiceEngine;
-  private diceParser: typeof defaultDiceParser;
-  private sessionActivity: typeof sessionActivity;
-  private categories: typeof defaultCategories;
-  private draftingEngine: DraftingEngine;
+  private _vault?: typeof defaultVault;
+  private _uiStore?: typeof defaultUiStore;
+  private _graph?: typeof defaultGraph;
+  private _diceHistory?: typeof defaultDiceHistory;
+  private _contextRetrieval?: typeof defaultContextRetrieval;
+  private _textGeneration?: typeof defaultTextGeneration;
+  private _imageGeneration?: typeof defaultImageGeneration;
+  private _searchService?: typeof defaultSearchService;
+  private _diceEngine?: typeof defaultDiceEngine;
+  private _diceParser?: typeof defaultDiceParser;
+  private _sessionActivity?: typeof sessionActivity;
+  private _categories?: typeof defaultCategories;
+  private _draftingEngine?: DraftingEngine;
+
+  private get vault() {
+    return this._vault ?? defaultVault;
+  }
+  private get uiStore() {
+    return this._uiStore ?? defaultUiStore;
+  }
+  private get graph() {
+    return this._graph ?? defaultGraph;
+  }
+  private get diceHistory() {
+    return this._diceHistory ?? defaultDiceHistory;
+  }
+  private get contextRetrieval() {
+    return this._contextRetrieval ?? defaultContextRetrieval;
+  }
+  private get textGeneration() {
+    return this._textGeneration ?? defaultTextGeneration;
+  }
+  private get imageGeneration() {
+    return this._imageGeneration ?? defaultImageGeneration;
+  }
+  private get searchService() {
+    return this._searchService ?? defaultSearchService;
+  }
+  private get diceEngine() {
+    return this._diceEngine ?? defaultDiceEngine;
+  }
+  private get diceParser() {
+    return this._diceParser ?? defaultDiceParser;
+  }
+  private get sessionActivity() {
+    return this._sessionActivity ?? sessionActivity;
+  }
+  private get categories() {
+    return this._categories ?? defaultCategories;
+  }
+  private get draftingEngine() {
+    return this._draftingEngine ?? defaultDraftingEngine;
+  }
 
   // Internal Engine Services
   private chatHistoryService: ChatHistoryService;
@@ -80,19 +120,19 @@ export class OracleStore {
       executor?: OracleActionExecutor;
     } = {},
   ) {
-    this.vault = deps.vault ?? defaultVault;
-    this.uiStore = deps.uiStore ?? defaultUiStore;
-    this.graph = deps.graph ?? defaultGraph;
-    this.diceHistory = deps.diceHistory ?? defaultDiceHistory;
-    this.contextRetrieval = deps.contextRetrieval ?? defaultContextRetrieval;
-    this.textGeneration = deps.textGeneration ?? defaultTextGeneration;
-    this.imageGeneration = deps.imageGeneration ?? defaultImageGeneration;
-    this.searchService = deps.searchService ?? defaultSearchService;
-    this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
-    this.diceParser = deps.diceParser ?? defaultDiceParser;
-    this.sessionActivity = deps.sessionActivity ?? sessionActivity;
-    this.categories = deps.categories ?? defaultCategories;
-    this.draftingEngine = deps.draftingEngine ?? defaultDraftingEngine;
+    this._vault = deps.vault;
+    this._uiStore = deps.uiStore;
+    this._graph = deps.graph;
+    this._diceHistory = deps.diceHistory;
+    this._contextRetrieval = deps.contextRetrieval;
+    this._textGeneration = deps.textGeneration;
+    this._imageGeneration = deps.imageGeneration;
+    this._searchService = deps.searchService;
+    this._diceEngine = deps.diceEngine;
+    this._diceParser = deps.diceParser;
+    this._sessionActivity = deps.sessionActivity;
+    this._categories = deps.categories;
+    this._draftingEngine = deps.draftingEngine;
 
     // Use provided services or defaults
     this.chatHistoryService =

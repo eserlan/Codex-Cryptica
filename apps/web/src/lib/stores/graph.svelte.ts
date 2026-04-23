@@ -6,15 +6,20 @@ import { getDB } from "../utils/idb";
 
 export class GraphStore {
   // Dependencies
-  private vault: typeof defaultVault;
-  private ui: typeof defaultUi;
+  private _vault?: typeof defaultVault;
+  private _ui?: typeof defaultUi;
 
-  constructor(
-    vault: typeof defaultVault = defaultVault,
-    ui: typeof defaultUi = defaultUi,
-  ) {
-    this.vault = vault;
-    this.ui = ui;
+  private get vault() {
+    return this._vault ?? defaultVault;
+  }
+
+  private get ui() {
+    return this._ui ?? defaultUi;
+  }
+
+  constructor(vault?: typeof defaultVault, ui?: typeof defaultUi) {
+    this._vault = vault;
+    this._ui = ui;
   }
 
   // Svelte 5 derived state

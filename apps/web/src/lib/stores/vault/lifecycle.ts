@@ -117,6 +117,8 @@ export class VaultLifecycleManager {
 
     await this.deps.vaultRegistry.deleteVault(id);
     await cacheService.clearVault(id);
+    const { proposerStore } = await import("../proposer.svelte");
+    await proposerStore.clearVault(id);
   }
 
   async setupSync(handle: FileSystemDirectoryHandle) {
