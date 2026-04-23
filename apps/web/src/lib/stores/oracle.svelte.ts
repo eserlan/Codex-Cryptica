@@ -293,9 +293,16 @@ export class OracleStore {
             },
           );
         },
-        reconcileEntityUpdate: isWorker
-          ? Comlink.proxy(this.textGeneration.reconcileEntityUpdate.bind(this.textGeneration))
-          : this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
+        reconcileEntityUpdate:
+          isWorker && this.textGeneration.reconcileEntityUpdate
+            ? Comlink.proxy(
+                this.textGeneration.reconcileEntityUpdate.bind(
+                  this.textGeneration,
+                ),
+              )
+            : this.textGeneration.reconcileEntityUpdate?.bind(
+                this.textGeneration,
+              ),
       },
       searchService: {
         search: isWorker
