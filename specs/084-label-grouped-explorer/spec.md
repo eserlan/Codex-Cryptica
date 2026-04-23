@@ -64,9 +64,9 @@ As a vault maintainer, I want to click on a label pill in the explorer to filter
 
 **Acceptance Scenarios**:
 
-1. **Given** I am in the entity explorer, **When** I click a label pill on an entity, **Then** the explorer should apply an exclusive filter for that label.
-2. **Given** an active label filter, **When** I Ctrl/Cmd+Click another label pill, **Then** the explorer should show only entities that match BOTH labels (AND logic).
-3. **Given** active label filters, **When** I click the "Clear" button or the main "All Categories" button, **Then** all label filters should be removed.
+1. **Given** I am in the entity explorer, **When** I click a label pill on an entity, **Then** the explorer should apply an exclusive filter for that label, AND the graph view should update to show only nodes matching that label.
+2. **Given** an active label filter, **When** I Ctrl/Cmd+Click another label pill, **Then** both the explorer and graph should show only entities that match BOTH labels (AND logic).
+3. **Given** active label filters, **When** I click the "Clear" button in the explorer or the graph filter HUD, **Then** all label filters should be removed from both views.
 4. **Given** a search query is active, **When** I apply a label filter, **Then** the results should match both the search text AND the selected labels.
 
 ---
@@ -96,6 +96,7 @@ As a vault maintainer, I want to click on a label pill in the explorer to filter
 - **FR-010**: The system MUST apply "AND" logic when multiple label filters are active.
 - **FR-011**: The system MUST display active label filters in the UI with a clear way to remove them.
 - **FR-012**: The search query MUST be extended to match against entity labels in addition to title and content.
+- **FR-013**: Label filters MUST be synchronized between the entity explorer and the graph view.
 
 ### Key Entities
 
@@ -116,3 +117,4 @@ As a vault maintainer, I want to click on a label pill in the explorer to filter
 - **SC-006**: Clicking a label pill reduces the explorer list to entities matching that label within 100ms.
 - **SC-007**: Active label filters are clearly visible and can be dismissed individually.
 - **SC-008**: The search bar correctly surfaces entities when searching for one of their labels.
+- **SC-009**: Label filter changes in the explorer are reflected in the graph view HUD and vice versa.

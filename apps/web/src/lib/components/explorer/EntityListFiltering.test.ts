@@ -60,6 +60,7 @@ vi.mock("$lib/utils/icon", () => ({
 describe("EntityList Filtering", () => {
   beforeEach(() => {
     uiStore.explorerViewMode = "list";
+    uiStore.clearLabelFilters();
   });
 
   it("filters entities when a label pill is clicked", async () => {

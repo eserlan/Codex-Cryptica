@@ -126,6 +126,7 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 - [x] T026 [US4] Update label pill rendering on entity items to be interactive (hover states, click handlers)
 - [x] T027 [US4] Implement `toggleLabelFilter` handler with exclusive click and additive Ctrl+Click behavior
 - [x] T028 [US4] Update help content in `apps/web/src/lib/config/help-content.ts` to describe label filtering
+- [x] T029 [US4] Synchronize label filtering with graph view via `uiStore`
 
 **Checkpoint**: Label-based filtering is functional, integrated with search/categories, and documented.
 

@@ -35,8 +35,8 @@
 
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
-  let labelFilters = $state<Set<string>>(new Set());
   const activeVaultId = $derived(vault.activeVaultId);
+  const labelFilters = $derived(uiStore.labelFilters);
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
   const allowedTypeSet = $derived.by(() =>
@@ -119,32 +119,6 @@
     return groupEntitiesForExplorer(filteredEntities, viewMode);
   });
 
-  function toggleLabelFilter(label: string, event?: MouseEvent) {
-    const isMulti = event?.ctrlKey || event?.metaKey;
-
-    if (isMulti) {
-      const newFilters = new Set(labelFilters);
-      if (newFilters.has(label)) {
-        newFilters.delete(label);
-      } else {
-        newFilters.add(label);
-      }
-      labelFilters = newFilters;
-    } else {
-      if (labelFilters.has(label) && labelFilters.size === 1) {
-        labelFilters = new Set();
-      } else {
-        labelFilters = new Set([label]);
-      }
-    }
-  }
-
-  function removeLabelFilter(label: string) {
-    const newFilters = new Set(labelFilters);
-    newFilters.delete(label);
-    labelFilters = newFilters;
-  }
-
   function toggleTypeFilter(type: string, event: MouseEvent) {
     if (allowedTypeSet && !allowedTypeSet.has(type)) {
       return;
@@ -154,7 +128,7 @@
 
     if (type === "all") {
       typeFilters = new Set();
-      labelFilters = new Set();
+      uiStore.clearLabelFilters();
       return;
     }
 
@@ -291,7 +265,7 @@
           >
             <span>{label}</span>
             <button
-              onclick={() => removeLabelFilter(label)}
+              onclick={() => uiStore.removeLabelFilter(label)}
               class="hover:text-theme-text transition-colors"
               aria-label={`Remove ${label} filter`}
             >
@@ -300,7 +274,7 @@
           </div>
         {/each}
         <button
-          onclick={() => (labelFilters = new Set())}
+          onclick={() => uiStore.clearLabelFilters()}
           class="px-2 py-0.5 text-[9px] font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
         >
           Clear All
@@ -353,7 +327,7 @@
                 type="button"
                 onclick={(e) => {
                   e.stopPropagation();
-                  toggleLabelFilter(label, e);
+                  uiStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
                 }}
                 class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
                   label,
