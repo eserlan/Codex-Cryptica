@@ -17,9 +17,8 @@ export function isAIEnabled(): boolean {
     if (lite === "true") return false;
   }
   
-  // In workers or if no localStorage, we default to true.
-  // The actual text generation call will still be gated by the UI 
-  // which passes aiDisabled down, and the worker can't easily 
-  // reactively follow UIStore.
+  // In workers or if no localStorage, we return true to avoid blocking
+  // background processing. The actual text generation call is gated
+  // by the main-thread OracleStore which passes aiDisabled down.
   return true;
 }

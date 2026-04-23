@@ -121,7 +121,7 @@ export class OracleStore {
   /**
    * Cleans up resources, including the event bus.
    */
-  public terminate() {
+  public destroy() {
     this.eventBus?.close();
     this.eventBus = null;
   }

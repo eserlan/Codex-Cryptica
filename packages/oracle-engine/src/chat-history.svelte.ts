@@ -24,7 +24,7 @@ export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
   private db: AppSettingsStore | null = null;
-  private debounceTimeout: any = null;
+  private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Initialize the chat history service by loading saved messages from IndexedDB.
@@ -51,6 +51,10 @@ export class ChatHistoryService {
    * Should be called when the service is destroyed or messages are cleared.
    */
   destroy() {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = null;
+    }
     this.messages.forEach((m) => {
       if (m.imageUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(m.imageUrl);
