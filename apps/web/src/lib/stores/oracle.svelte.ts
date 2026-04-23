@@ -210,7 +210,7 @@ export class OracleStore {
       textGeneration: {
         // Explicitly forward calls to handle proxy enumerable issues (PR Comment #5)
         expandQuery: (apiKey: string, query: string, history: any[]) =>
-          this.textGeneration.expandQuery(apiKey, query, history),
+          this.textGeneration.expandQuery(apiKey, query, $state.snapshot(history)),
         generateResponse: (
           apiKey: string,
           query: string,
@@ -231,22 +231,27 @@ export class OracleStore {
             ? Comlink.proxy(onUpdate)
             : (onUpdate as any);
 
+          // We MUST snapshot reactive state before sending to a worker (PR Fix)
+          const snapHistory = $state.snapshot(history);
+          const snapCategories = categories ? $state.snapshot(categories) : undefined;
+          const snapEntities = options?.existingEntities 
+            ? $state.snapshot(options.existingEntities) 
+            : $state.snapshot(Object.values(this.vault.entities || {}));
+
           return this.textGeneration.generateResponse(
             apiKey,
             query,
-            history,
+            snapHistory,
             context,
             modelName,
             callback,
             demoMode,
-            categories,
+            snapCategories,
             {
               ...options,
               requestId: options?.requestId || undefined,
               vaultId: options?.vaultId || this.vault.activeVaultId || undefined,
-              existingEntities:
-                options?.existingEntities ||
-                Object.values(this.vault.entities || {}),
+              existingEntities: snapEntities,
             },
           );
         },
@@ -398,24 +403,29 @@ export class OracleStore {
     }
 
     try {
-      return await this.textGeneration.reconcileEntityUpdate(
-        this.effectiveApiKey || "",
-        this.modelName,
-        existing,
-        {
+      // We MUST snapshot reactive state before sending to a worker (PR Fix)
+      const snapExisting = $state.snapshot(existing);
+      const snapIncoming = $state.snapshot({
+        chronicle: proposal.draft.chronicle,
+        lore: proposal.draft.lore,
+      });
+      const snapContext = $state.snapshot(buildRelatedEntityContext({
+        entity: existing,
+        incoming: {
           chronicle: proposal.draft.chronicle,
           lore: proposal.draft.lore,
         },
-        buildRelatedEntityContext({
-          entity: existing,
-          incoming: {
-            chronicle: proposal.draft.chronicle,
-            lore: proposal.draft.lore,
-          },
-          vault: this.vault,
-          getConsolidatedContext: (related) =>
-            this.contextRetrieval.getConsolidatedContext(related),
-        }),
+        vault: this.vault,
+        getConsolidatedContext: (related) =>
+          this.contextRetrieval.getConsolidatedContext(related),
+      }));
+
+      return await this.textGeneration.reconcileEntityUpdate(
+        this.effectiveApiKey || "",
+        this.modelName,
+        snapExisting,
+        snapIncoming,
+        snapContext,
       );
     } catch {
       return {
