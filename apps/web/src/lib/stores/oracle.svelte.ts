@@ -296,10 +296,21 @@ export class OracleStore {
         ),
       },
       contextRetrieval: {
+        retrieveContext: wrap(
+          this.contextRetrieval.retrieveContext?.bind(this.contextRetrieval),
+        ),
         getConsolidatedContext: wrap(
           this.contextRetrieval.getConsolidatedContext?.bind(
             this.contextRetrieval,
           ),
+        ),
+      },
+      imageGeneration: {
+        distillVisualPrompt: wrap(
+          this.imageGeneration.distillVisualPrompt?.bind(this.imageGeneration),
+        ),
+        generateImage: wrap(
+          this.imageGeneration.generateImage?.bind(this.imageGeneration),
         ),
       },
       textGeneration: {
