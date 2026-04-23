@@ -444,6 +444,18 @@ class ProposerStore {
       this.allVerifiedProposals = [];
     }
   }
+
+  /** @internal - For testing only */
+  reset() {
+    this.proposals = {};
+    this.history = {};
+    this.allPendingProposals = [];
+    this.allAcceptedProposals = [];
+    this.allVerifiedProposals = [];
+    this.isAnalyzing = false;
+    this.isLoadingProposals = false;
+    this.analysisError = null;
+  }
 }
 
 export const proposerStore = new ProposerStore();

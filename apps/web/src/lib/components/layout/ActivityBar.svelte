@@ -41,30 +41,33 @@
     },
   ];
 
-  const tools = $derived<NavItem[]>([
-    {
-      id: "oracle",
-      icon: Sparkles,
-      label: "Lore Oracle",
-      action: () => uiStore.toggleSidebarTool("oracle"),
-    },
-    {
-      id: "explorer",
-      icon: Database,
-      label: "Entity Explorer",
-      action: () => uiStore.toggleSidebarTool("explorer"),
-    },
-    ...(!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off"
-      ? [
-          {
-            id: "ai-assessment",
-            icon: ShieldCheck,
-            label: "AI Assessment",
-            action: () => uiStore.toggleSidebarTool("ai-assessment"),
-          },
-        ]
-      : []),
-  ]);
+  const tools = $derived.by<NavItem[]>(() => {
+    const list: NavItem[] = [
+      {
+        id: "oracle",
+        icon: Sparkles,
+        label: "Lore Oracle",
+        action: () => uiStore.toggleSidebarTool("oracle"),
+      },
+      {
+        id: "explorer",
+        icon: Database,
+        label: "Entity Explorer",
+        action: () => uiStore.toggleSidebarTool("explorer"),
+      },
+    ];
+
+    if (!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off") {
+      list.push({
+        id: "ai-assessment",
+        icon: ShieldCheck,
+        label: "AI Assessment",
+        action: () => uiStore.toggleSidebarTool("ai-assessment"),
+      });
+    }
+
+    return list;
+  });
 
   const isViewActive = (item: NavItem) => {
     if (!item.href) return false;
