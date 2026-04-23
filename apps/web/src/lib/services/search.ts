@@ -91,7 +91,10 @@ export class SearchService {
           case "SYNC_COMPLETE":
             // Trigger full content indexing sweep in background ONLY if cold boot
             if (this.needsFullContentSweep) {
-              this.indexContentInBackground(event.vaultId);
+              // Delay the background sync to let the UI finish rendering first
+              setTimeout(() => {
+                this.indexContentInBackground(event.vaultId);
+              }, 3000);
               this.needsFullContentSweep = false;
             }
             break;
