@@ -19,3 +19,8 @@
 - [x] **Task 4.1**: Verify unit tests for AI services.
 - [x] **Task 4.2**: Verify worker syntax and dependency resolution.
 - [x] **Task 4.3**: Update documentation (Spec, ADR, GEMINI.md).
+
+## Phase 5: Search Visibility (Issue #692)
+- [x] **Task 5.1**: Update `ContextRetrievalService` to include drafts in context searches.
+- [x] **Task 5.2**: Update `SearchStore` to include drafts in global search.
+- [x] **Task 5.3**: Add "Draft" status indicator to `SearchModal` items.

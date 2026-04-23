@@ -52,6 +52,8 @@ As a user, I want to see "Discovery Chips" appear in real-time as the Oracle ide
 - **FR-004**: System MUST provide a communication bridge (Comlink) between the main thread and the worker.
 - **FR-005**: System MUST fallback to main-thread execution if the worker is not ready or during SSR.
 - **FR-006**: System MUST ensure entity discovery is idempotent to avoid duplicate proposals from real-time events and final batch results.
+- **FR-007**: System MUST include entities with `status: 'draft'` in Oracle context retrieval to maintain conversational continuity.
+- **FR-008**: System MUST allow users to find `draft` entities in the global search UI.
 
 ### Key Entities
 

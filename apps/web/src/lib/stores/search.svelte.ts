@@ -106,7 +106,10 @@ export class SearchStore {
       }
 
       debugStore.log(`[SearchStore] Searching for: "${query}"`);
-      const results = await this.searchService.search(query, { limit: 20 });
+      const results = await this.searchService.search(query, {
+        limit: 20,
+        includeDrafts: true,
+      });
       debugStore.log(`[SearchStore] Found ${results.length} raw results.`);
 
       // Filter results based on visibility settings
