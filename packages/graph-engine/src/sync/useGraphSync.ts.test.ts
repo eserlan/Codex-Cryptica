@@ -45,6 +45,7 @@ describe("syncGraphElements", () => {
   it("should remove existing graph items when the target element list is empty", () => {
     const existingNode = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
     };
     mockCy.elements.mockReturnValue([existingNode]);
     mockCy.collection.mockImplementation((els) => els);
@@ -63,18 +64,21 @@ describe("syncGraphElements", () => {
   it("should apply label filtering in OR mode", () => {
     const mockNode1 = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-a"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode2 = {
       id: vi.fn().mockReturnValue("node2"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-b"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode3 = {
       id: vi.fn().mockReturnValue("node3"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-a", "faction-b"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -111,18 +115,21 @@ describe("syncGraphElements", () => {
   it("should apply label filtering in AND mode", () => {
     const mockNode1 = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-a"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode2 = {
       id: vi.fn().mockReturnValue("node2"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-b"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode3 = {
       id: vi.fn().mockReturnValue("node3"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-a", "faction-b"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -158,12 +165,14 @@ describe("syncGraphElements", () => {
   it("should show all nodes when no active labels", () => {
     const mockNode1 = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["faction-a"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode2 = {
       id: vi.fn().mockReturnValue("node2"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: [] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -193,12 +202,14 @@ describe("syncGraphElements", () => {
   it("should hide nodes without labels when filter is active", () => {
     const mockNodeWithLabel = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["important"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNodeWithoutLabel = {
       id: vi.fn().mockReturnValue("node2"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: [] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -227,6 +238,7 @@ describe("syncGraphElements", () => {
   it("should handle nodes with undefined labels", () => {
     const mockNode = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: undefined }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -254,12 +266,14 @@ describe("syncGraphElements", () => {
   it("should handle case-insensitive label matching", () => {
     const mockNode1 = {
       id: vi.fn().mockReturnValue("node1"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["FACTION-A"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
     };
     const mockNode2 = {
       id: vi.fn().mockReturnValue("node2"),
+      hasClass: vi.fn().mockReturnValue(false),
       data: vi.fn().mockReturnValue({ labels: ["Faction-B"] }),
       addClass: vi.fn(),
       removeClass: vi.fn(),
@@ -288,7 +302,10 @@ describe("syncGraphElements", () => {
 
   it("should force layout on deletion", () => {
     const onLayoutUpdate = vi.fn();
-    const existingNode = { id: vi.fn().mockReturnValue("old-node") };
+    const existingNode = {
+      id: vi.fn().mockReturnValue("old-node"),
+      hasClass: vi.fn().mockReturnValue(false),
+    };
     mockCy.elements.mockReturnValue([existingNode]);
 
     syncGraphElements(mockCy as unknown as Core, {
@@ -337,6 +354,7 @@ describe("syncGraphElements", () => {
 
       return {
         id: vi.fn().mockReturnValue(id),
+        hasClass: vi.fn().mockReturnValue(false),
         addClass: vi.fn((cls: string) => {
           if (cls === "filtered-out") state.filteredOut = true;
           if (cls === "category-filtered-out") state.categoryFilteredOut = true;
@@ -371,6 +389,7 @@ describe("syncGraphElements", () => {
 
     const edge1: any = {
       id: vi.fn().mockReturnValue("edge1"),
+      hasClass: vi.fn().mockReturnValue(false),
       source: vi.fn(),
       target: vi.fn(),
       data: vi.fn(() => ({
@@ -382,6 +401,7 @@ describe("syncGraphElements", () => {
     };
     const edge2: any = {
       id: vi.fn().mockReturnValue("edge2"),
+      hasClass: vi.fn().mockReturnValue(false),
       source: vi.fn(),
       target: vi.fn(),
       data: vi.fn(() => ({

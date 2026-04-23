@@ -33,18 +33,21 @@ vi.mock("@google/generative-ai", () => {
 describe("ProposerService", () => {
   let service: ProposerService;
   let dbName: string;
+  const vaultId = "test-vault";
 
   beforeEach(async () => {
     dbName = `test-db-${crypto.randomUUID()}`;
 
     // Setup DB schema for testing
-    // We open and close immediately to ensure schema is created
     const db = await openDB(dbName, 1, {
       upgrade(db) {
         if (!db.objectStoreNames.contains("proposals")) {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");
+          store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-vault-status", ["vaultId", "status"]);
+          store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
         }
       },
     });
@@ -61,6 +64,7 @@ describe("ProposerService", () => {
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
+      vaultId,
       "source1",
       "Some content about target1",
       [{ id: "target1", name: "Target One" }],
@@ -69,11 +73,14 @@ describe("ProposerService", () => {
     expect(proposals).toHaveLength(1);
     expect(proposals[0].targetId).toBe("target1");
     expect(proposals[0].confidence).toBe(0.9);
+    expect(proposals[0].vaultId).toBe(vaultId);
+    expect(proposals[0].id).toBe(`${vaultId}:source1:target1`);
   });
 
   it("should save and retrieve proposals", async () => {
     const proposal = {
-      id: "source1:target2",
+      id: `${vaultId}:source1:target2`,
+      vaultId,
       sourceId: "source1",
       targetId: "target2",
       type: "related",
@@ -86,14 +93,15 @@ describe("ProposerService", () => {
 
     await service.saveProposals([proposal]);
 
-    const fetched = await service.getProposals("source1");
+    const fetched = await service.getProposals(vaultId, "source1");
     expect(fetched).toHaveLength(1);
     expect(fetched[0].targetId).toBe("target2");
   });
 
   it("should apply proposal", async () => {
     const proposal = {
-      id: "source1:target3",
+      id: `${vaultId}:source1:target3`,
+      vaultId,
       sourceId: "source1",
       targetId: "target3",
       type: "related",
@@ -107,18 +115,19 @@ describe("ProposerService", () => {
     await service.saveProposals([proposal]);
 
     // Verify it's pending first
-    const pendingBefore = await service.getProposals("source1");
+    const pendingBefore = await service.getProposals(vaultId, "source1");
     expect(pendingBefore).toHaveLength(1);
 
     await service.applyProposal(proposal.id);
 
-    const pendingAfter = await service.getProposals("source1");
+    const pendingAfter = await service.getProposals(vaultId, "source1");
     expect(pendingAfter).toHaveLength(0);
   });
 
   it("should dismiss proposal and add to history", async () => {
     const proposal = {
-      id: "source1:target4",
+      id: `${vaultId}:source1:target4`,
+      vaultId,
       sourceId: "source1",
       targetId: "target4",
       type: "related",
@@ -132,17 +141,18 @@ describe("ProposerService", () => {
     await service.saveProposals([proposal]);
     await service.dismissProposal(proposal.id);
 
-    const pending = await service.getProposals("source1");
+    const pending = await service.getProposals(vaultId, "source1");
     expect(pending).toHaveLength(0);
 
-    const history = await service.getHistory("source1");
+    const history = await service.getHistory(vaultId, "source1");
     expect(history).toHaveLength(1);
     expect(history[0].status).toBe("rejected");
   });
 
   it("should re-evaluate proposal from history", async () => {
     const proposal = {
-      id: "source1:target5",
+      id: `${vaultId}:source1:target5`,
+      vaultId,
       sourceId: "source1",
       targetId: "target5",
       type: "related",
@@ -162,7 +172,7 @@ describe("ProposerService", () => {
 
     await service.reEvaluateProposal(proposal.id);
 
-    const pending = await service.getProposals("source1");
+    const pending = await service.getProposals(vaultId, "source1");
     expect(pending).toHaveLength(1);
     expect(pending[0].status).toBe("pending");
   });
@@ -172,6 +182,7 @@ describe("ProposerService", () => {
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
+      vaultId,
       "source1",
       longContent,
       [{ id: "target1", name: "Target One" }],
@@ -212,6 +223,7 @@ describe("ProposerService", () => {
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
+      vaultId,
       "source1",
       "content",
       [{ id: "target1", name: "Target One" }],
@@ -242,6 +254,7 @@ describe("ProposerService", () => {
     const proposals = await service.analyzeEntity(
       "fake-key",
       "gemini-1.5-flash",
+      vaultId,
       "source1",
       "content",
       [{ id: "target1", name: "Target One" }],
