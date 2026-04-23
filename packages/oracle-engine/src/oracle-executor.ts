@@ -628,7 +628,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         last.imageBlob = blob;
         last.content = `Generated visualization for: "${query}"`;
         last.entityId = primaryEntityId;
-        context.chatHistory.setMessages(finalMsgs);
+        await context.chatHistory.setMessages(finalMsgs);
 
         // Auto-attach to entity if possible
         if (primaryEntityId && !context.isDemoMode) {
@@ -668,7 +668,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         try {
           const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
           if (entityDiscoveryMode === "off") {
-            context.chatHistory.setMessages(finalMsgs);
+            await context.chatHistory.setMessages(finalMsgs);
             return;
           }
 
@@ -696,7 +696,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             ];
 
             for (const p of newProposals) {
-              context.logActivity?.({
+              await context.logActivity?.({
                 type: "discovery",
                 title: p.title,
                 entityType: p.type,
@@ -722,7 +722,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                       status: "draft",
                     },
                   );
-                  context.logActivity?.({
+                  await context.logActivity?.({
                     type: "archive",
                     title: p.title,
                     entityType: p.type,
@@ -771,7 +771,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                         lore: (existing.lore || "") + "\n\n" + p.draft.lore,
                       });
                     }
-                    context.logActivity?.({
+                    await context.logActivity?.({
                       type: "update",
                       title: p.title,
                       entityType: p.type,
@@ -787,7 +787,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           console.warn("[OracleExecutor] Extraction failed", extractErr);
         }
 
-        context.chatHistory.setMessages(finalMsgs);
+        await context.chatHistory.setMessages(finalMsgs);
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({

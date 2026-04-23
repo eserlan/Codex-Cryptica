@@ -201,14 +201,58 @@ export class OracleStore {
   }
 
   getExecutionContext(): OracleExecutionContext {
+    const isWorker = oracleBridge.isReady;
+
     return {
       vaultId: this.vault.activeVaultId,
-      vault: this.vault,
-      uiStore: this.uiStore,
-      chatHistory: this.chatHistoryService,
-      contextRetrieval: this.contextRetrieval,
+      vault: {
+        activeVaultId: this.vault.activeVaultId,
+        selectedEntityId: this.vault.selectedEntityId,
+        entities: $state.snapshot(this.vault.entities),
+        inboundConnections: $state.snapshot(this.vault.inboundConnections),
+        isGuest: this.vault.isGuest,
+        createEntity: isWorker
+          ? Comlink.proxy(this.vault.createEntity.bind(this.vault))
+          : this.vault.createEntity?.bind(this.vault),
+        updateEntity: isWorker
+          ? Comlink.proxy(this.vault.updateEntity.bind(this.vault))
+          : this.vault.updateEntity?.bind(this.vault),
+        addConnection: isWorker
+          ? Comlink.proxy(this.vault.addConnection.bind(this.vault))
+          : this.vault.addConnection?.bind(this.vault),
+        removeConnection: isWorker
+          ? Comlink.proxy(this.vault.removeConnection.bind(this.vault))
+          : this.vault.removeConnection?.bind(this.vault),
+        saveImageToVault: isWorker
+          ? Comlink.proxy(this.vault.saveImageToVault.bind(this.vault))
+          : this.vault.saveImageToVault?.bind(this.vault),
+        loadEntityContent: isWorker
+          ? Comlink.proxy(this.vault.loadEntityContent.bind(this.vault))
+          : this.vault.loadEntityContent?.bind(this.vault),
+      },
+      uiStore: $state.snapshot(this.uiStore),
+      chatHistory: {
+        messages: $state.snapshot(this.chatHistoryService.messages),
+        addMessage: isWorker
+          ? Comlink.proxy(this.chatHistoryService.addMessage.bind(this.chatHistoryService))
+          : this.chatHistoryService.addMessage.bind(this.chatHistoryService),
+        updateMessage: isWorker
+          ? Comlink.proxy(this.chatHistoryService.updateMessage.bind(this.chatHistoryService))
+          : this.chatHistoryService.updateMessage.bind(this.chatHistoryService),
+        setMessages: isWorker
+          ? Comlink.proxy(this.chatHistoryService.setMessages.bind(this.chatHistoryService))
+          : this.chatHistoryService.setMessages.bind(this.chatHistoryService),
+        clearMessages: isWorker
+          ? Comlink.proxy(this.chatHistoryService.clearMessages.bind(this.chatHistoryService))
+          : this.chatHistoryService.clearMessages.bind(this.chatHistoryService),
+      },
+      contextRetrieval: {
+        getConsolidatedContext: isWorker
+          ? Comlink.proxy(this.contextRetrieval.getConsolidatedContext.bind(this.contextRetrieval))
+          : this.contextRetrieval.getConsolidatedContext.bind(this.contextRetrieval),
+      },
       textGeneration: {
-        // Explicitly forward calls to handle proxy enumerable issues (PR Comment #5)
+        // Explicitly forward calls to handle proxy enumerable issues
         expandQuery: (apiKey: string, query: string, history: any[]) =>
           this.textGeneration.expandQuery(apiKey, query, $state.snapshot(history)),
         generateResponse: (
@@ -226,72 +270,118 @@ export class OracleStore {
             existingEntities?: any[];
           },
         ) => {
-          // Wrap callback with Comlink.proxy only if we are using the worker bridge
-          const callback = oracleBridge.isReady
+          const callback = isWorker
             ? Comlink.proxy(onUpdate)
             : (onUpdate as any);
-
-          // We MUST snapshot reactive state before sending to a worker (PR Fix)
-          const snapHistory = $state.snapshot(history);
-          const snapCategories = categories ? $state.snapshot(categories) : undefined;
-          const snapEntities = options?.existingEntities 
-            ? $state.snapshot(options.existingEntities) 
-            : $state.snapshot(Object.values(this.vault.entities || {}));
 
           return this.textGeneration.generateResponse(
             apiKey,
             query,
-            snapHistory,
+            $state.snapshot(history),
             context,
             modelName,
             callback,
             demoMode,
-            snapCategories,
+            categories ? $state.snapshot(categories) : undefined,
             {
               ...options,
               requestId: options?.requestId || undefined,
               vaultId: options?.vaultId || this.vault.activeVaultId || undefined,
-              existingEntities: snapEntities,
+              existingEntities: options?.existingEntities 
+                ? $state.snapshot(options.existingEntities) 
+                : $state.snapshot(Object.values(this.vault.entities || {})),
             },
           );
         },
+        reconcileEntityUpdate: isWorker
+          ? Comlink.proxy(this.textGeneration.reconcileEntityUpdate.bind(this.textGeneration))
+          : this.textGeneration.reconcileEntityUpdate?.bind(this.textGeneration),
       },
-      imageGeneration: this.imageGeneration,
-      searchService: this.searchService,
-      diceParser: this.diceParser,
-      diceEngine: this.diceEngine,
-      diceHistory: this.diceHistory,
-      graph: this.graph,
-      undoRedo: this.undoRedo,
+      searchService: {
+        search: isWorker
+          ? Comlink.proxy(this.searchService.search.bind(this.searchService))
+          : this.searchService.search.bind(this.searchService),
+      },
+      diceParser: {
+        parse: isWorker
+          ? Comlink.proxy(this.diceParser.parse.bind(this.diceParser))
+          : this.diceParser.parse.bind(this.diceParser),
+      },
+      diceEngine: {
+        execute: isWorker
+          ? Comlink.proxy(this.diceEngine.execute.bind(this.diceEngine))
+          : this.diceEngine.execute.bind(this.diceEngine),
+      },
+      diceHistory: {
+        addResult: isWorker
+          ? Comlink.proxy(this.diceHistory.addResult.bind(this.diceHistory))
+          : this.diceHistory.addResult.bind(this.diceHistory),
+      },
+      graph: {
+        requestFit: isWorker
+          ? Comlink.proxy(this.graph.requestFit.bind(this.graph))
+          : this.graph.requestFit.bind(this.graph),
+      },
+      undoRedo: {
+        pushUndoAction: isWorker
+          ? Comlink.proxy(this.undoRedo.pushUndoAction.bind(this.undoRedo))
+          : this.undoRedo.pushUndoAction.bind(this.undoRedo),
+      },
       tier: this.tier,
       effectiveApiKey: this.effectiveApiKey,
       modelName: this.modelName,
       isDemoMode: this.uiStore.isDemoMode,
-      automationPolicy: this.uiStore.oracleAutomationPolicy,
-      proposeConnectionsForEntity: async (
-        entityId: string,
-        options?: { apply?: boolean; analysisText?: string },
-      ) => {
-        const { proposerStore } = await import("./proposer.svelte");
-        if (options?.apply) {
-          return proposerStore.analyzeAndApplyEntityById(
-            entityId,
-            options.analysisText,
-          );
-        }
-        return proposerStore.analyzeEntityById(
-          entityId,
-          false,
-          options?.analysisText,
-        );
-      },
-      logActivity: (event) =>
-        this.sessionActivity.addEvent({
-          type: event.type,
-          title: event.title,
-          entityType: event.entityType,
-          entityId: event.entityId,
-        }),
+      automationPolicy: $state.snapshot(this.uiStore.oracleAutomationPolicy),
+      proposeConnectionsForEntity: isWorker
+        ? Comlink.proxy(async (
+            entityId: string,
+            options?: { apply?: boolean; analysisText?: string },
+          ) => {
+            const { proposerStore } = await import("./proposer.svelte");
+            if (options?.apply) {
+              return proposerStore.analyzeAndApplyEntityById(
+                entityId,
+                options.analysisText,
+              );
+            }
+            return proposerStore.analyzeEntityById(
+              entityId,
+              false,
+              options?.analysisText,
+            );
+          })
+        : async (
+            entityId: string,
+            options?: { apply?: boolean; analysisText?: string },
+          ) => {
+            const { proposerStore } = await import("./proposer.svelte");
+            if (options?.apply) {
+              return proposerStore.analyzeAndApplyEntityById(
+                entityId,
+                options.analysisText,
+              );
+            }
+            return proposerStore.analyzeEntityById(
+              entityId,
+              false,
+              options?.analysisText,
+            );
+          },
+      logActivity: isWorker
+        ? Comlink.proxy((event: any) =>
+            this.sessionActivity.addEvent({
+              type: event.type,
+              title: event.title,
+              entityType: event.entityType,
+              entityId: event.entityId,
+            }))
+        : (event: any) =>
+            this.sessionActivity.addEvent({
+              type: event.type,
+              title: event.title,
+              entityType: event.entityType,
+              entityId: event.entityId,
+            }),
       draftingEngine: this.draftingEngine,
       categories: $state.snapshot(this.categories.list),
     } as OracleExecutionContext;

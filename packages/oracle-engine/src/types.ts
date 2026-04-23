@@ -161,7 +161,7 @@ export interface OracleExecutionContext {
     title: string;
     entityType: string;
     entityId?: string;
-  }) => void;
+  }) => void | Promise<void>;
 }
 
 /**
