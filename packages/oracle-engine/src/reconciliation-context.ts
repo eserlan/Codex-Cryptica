@@ -49,7 +49,7 @@ function scoreTitleMentions(title: string, text: string): number {
 }
 
 function summarizeContext(value: string, maxChars: number): string {
-  const trimmed = value.replace(/\s+/g, " ").trim();
+  const trimmed = value.replace(/[ \t]+/g, " ").trim();
   if (trimmed.length <= maxChars) return trimmed;
   return trimmed.slice(0, maxChars).trimEnd() + "...";
 }

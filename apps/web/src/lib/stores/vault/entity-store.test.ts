@@ -467,6 +467,30 @@ describe("EntityStore", () => {
       });
     });
 
+    it("should preserve existing metadata when batch updates patch coordinates", async () => {
+      repository.entities.hero.metadata = {
+        region: ["north"],
+        coordinates: { x: 1, y: 2 },
+      } as any;
+
+      await store.batchUpdate({
+        hero: { metadata: { coordinates: { x: 10, y: 20 } } },
+      });
+
+      expect(store.entities.hero.metadata).toEqual({
+        region: ["north"],
+        coordinates: { x: 10, y: 20 },
+      });
+      expect(vaultEventBus.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "BATCH_UPDATED",
+          patches: {
+            hero: { metadata: { coordinates: { x: 10, y: 20 } } },
+          },
+        }),
+      );
+    });
+
     it("should call invalidateUrlCache for updated images", async () => {
       const invalidateUrlCache = vi.fn();
       const storeWithUrl = new EntityStore({
