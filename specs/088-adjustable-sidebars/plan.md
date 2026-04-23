@@ -7,6 +7,8 @@
 
 Implement draggable resize handles for both the left sidebar (Entity Explorer / Tools) and the right sidebar (Entity Details / Oracle). The sidebars will enforce minimum widths and maximum viewport percentages to maintain layout integrity. The user-defined widths will be persisted in `localStorage` via the `uiStore` and seamlessly restored across sessions or panel toggles. The dragging mechanism will use standard Pointer Events for high-performance 60fps resizing without layout jank.
 
+_Update (Implementation Polish): Added a centralized, highly-visible grip indicator on the resize handles and bumped z-indexes to `z-[100]` to ensure handles float above highly stacked panels like the Oracle._
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.9.3, Svelte 5 (Runes)  

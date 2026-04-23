@@ -2,7 +2,7 @@
 
 **Feature Branch**: `088-adjustable-sidebars`  
 **Created**: 2026-04-22
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: User description: "adjustable sidebar width (both sides) https://github.com/eserlan/Codex-Cryptica/issues/697"
 
 ## User Scenarios & Testing _(mandatory)_
