@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { OracleStore } from "./oracle.svelte";
 import { vault as mockVault } from "./vault.svelte";
 import { uiStore as mockUiStore } from "./ui.svelte";
+import {
+  textGenerationService,
+  contextRetrievalService,
+} from "../services/ai";
 
 const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
   () => ({
@@ -225,6 +229,8 @@ describe("OracleStore", () => {
       vault: mockVault as any,
       uiStore: mockUiStore as any,
       diceHistory: mockDiceHistory as any,
+      textGeneration: textGenerationService as any,
+      contextRetrieval: contextRetrievalService as any,
     });
 
     // Inject mocks into private fields to align with internal services refactor
@@ -448,6 +454,25 @@ describe("OracleStore", () => {
         entityDiscovery: "auto-create",
         connectionDiscovery: "auto-apply",
       });
+    });
+
+    it("should snapshot history before passing to textGeneration (structured clone safety)", async () => {
+      const context = oracle.getExecutionContext();
+      const history = [{ id: "1", role: "user", content: "test" }];
+      const onUpdate = vi.fn();
+      
+      // We want to verify that the 'history' passed to generateResponse is NOT the same instance
+      // if it was snapshotted (Svelte 5 behavior).
+      // Since our test environment might not have real Svelte proxies, we check the call.
+      
+      await context.textGeneration.generateResponse(
+        "key", "query", history, "ctx", "model", onUpdate
+      );
+      
+      const genCall = vi.mocked((oracle as any).textGeneration.generateResponse).mock.calls[0];
+      // Arg 2 is history
+      expect(genCall[2]).not.toBe(history); // It should be a snapshot/clone
+      expect(genCall[2]).toEqual(history);
     });
 
     it("should seed discovery connections when connection discovery is suggest", async () => {
