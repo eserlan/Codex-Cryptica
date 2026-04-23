@@ -180,7 +180,7 @@ export class LayoutManager {
 
   private getWorker(): Worker {
     if (!this.worker) {
-      this.worker = new Worker(new URL("./layout.worker", import.meta.url), {
+      this.worker = new Worker(new URL("./layout.worker.ts", import.meta.url), {
         type: "module",
       });
     }
@@ -473,7 +473,12 @@ export class LayoutManager {
       degrees.set(edge.data.source, (degrees.get(edge.data.source) ?? 0) + 1);
       degrees.set(edge.data.target, (degrees.get(edge.data.target) ?? 0) + 1);
     }
-    const maxDegree = Math.max(0, ...degrees.values());
+    let maxDegree = 0;
+    for (const degree of degrees.values()) {
+      if (degree > maxDegree) {
+        maxDegree = degree;
+      }
+    }
     const hubGravity = gravity * (1 - Math.min(0.45, maxDegree * 0.012));
     const nodes = Array.from(cyNodes).map((n, index) => {
       const p = n.position();

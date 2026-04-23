@@ -64,22 +64,24 @@ Always `{ x1: -2400, y1: -2400, x2: 2400, y2: 2400 }` for non-trivial graphs.
 Scaled by node count via `getDynamicLayoutOptions(nodeCount)`:
 
 ```ts
-repulsion  = min(200_000, 30_000 + nodeCount × 500)
-gravity    = max(0.08, 0.25 − nodeCount × 0.0005)
-edgeLength = min(70, 15 + √nodeCount × 1.5)
-separation = min(100, 20 + √nodeCount × 2.5)
-gravityRange = 5.5
-numIter    = 5000
+quality    = nodeCount > 500 ? "draft" : "default"
+repulsion  = min(1_600_000, 250_000 + nodeCount × 2_400)
+gravity    = max(0.005, 0.05 − nodeCount × 0.00015)
+edgeLength = min(450, 90 + √nodeCount × 9)
+separation = min(600, 120 + √nodeCount × 15)
+gravityRange = 1.5
+numIter    = nodeCount > 200 ? 1200 : 2200
 ```
 
 The degree-aware functions in the worker multiply on top of these base values.
 
 ## Gravity caps (LayoutManager.ts)
 
-After `getDynamicLayoutOptions`, gravity is capped per aspect ratio:
+After `getDynamicLayoutOptions`, gravity is capped per aspect ratio, then reduced again via `hubGravity`:
 
 ```ts
-gravity = isLandscape ? min(base, 0.25) : min(base, 0.35);
+gravity = isLandscape ? min(base, 0.12) : min(base, 0.15);
+gravity *= 1 - min(0.45, maxDegree * 0.012);
 ```
 
 ## removeOverlaps (layout.worker.ts)
@@ -107,8 +109,10 @@ For 150+ nodes, ±1200 leaves no room. All nodes crush into the center and remov
 
 ### Gravity floor too low
 
-Setting gravity floor to 0.01–0.02 without a matching `gravityRange` lets the outer nodes escape the canvas entirely. Keep floor ≥ 0.08 unless `gravityRange` is high enough to reach them.
+Setting a very low gravity floor without a matching `gravityRange` lets the outer nodes escape the canvas entirely. In the current defaults, a floor of `0.005` is paired with `gravityRange: 1.5`; treat those values as a tuned set and adjust them together rather than applying the older "floor >= 0.08" rule.
 
-### Draft quality for degree-aware layouts
+### Draft quality for large degree-aware layouts
 
-fcose `quality: "draft"` silently **ignores** function-valued `nodeRepulsion` and `idealEdgeLength`. Switching to draft drops all degree-aware tuning and produces a uniform, badly-overlapped layout. Keep `quality: "default"` for any graph that uses per-node/edge force functions. Only use draft for 500+ nodes where degree-aware functions are not needed.
+Earlier tuning notes suggested that fcose `quality: "draft"` could behave as if function-valued `nodeRepulsion` and `idealEdgeLength` were reduced or ignored. That is **not** a safe blanket rule for the current implementation: the worker still supplies the degree-aware functions, and the dynamic large-graph path uses `quality: "draft"` for 500+ nodes to keep runtime acceptable.
+
+Treat `draft` as a performance trade-off, not as "degree-aware tuning is disabled." If a large graph looks too uniform or overlap-heavy, verify the behaviour against the fcose version in use and compare `draft` vs `default` empirically before concluding that the callback functions are being ignored.

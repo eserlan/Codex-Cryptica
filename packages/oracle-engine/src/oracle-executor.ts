@@ -710,7 +710,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                     entityType: p.type,
                     entityId: id,
                   });
-                  this.handleConnectionDiscovery(id, context);
+                  await this.handleConnectionDiscovery(id, context);
                 } else {
                   const existing = context.vault.entities[p.entityId];
                   if (existing) {
@@ -759,7 +759,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                       entityType: p.type,
                       entityId: p.entityId,
                     });
-                    this.handleConnectionDiscovery(p.entityId, context);
+                    await this.handleConnectionDiscovery(p.entityId, context);
                   }
                 }
               }
