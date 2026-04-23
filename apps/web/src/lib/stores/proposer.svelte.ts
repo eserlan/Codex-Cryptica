@@ -3,6 +3,7 @@ import { oracle } from "./oracle.svelte";
 import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
+import { vaultEventBus } from "./vault/events";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
@@ -10,11 +11,24 @@ import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
+
+  constructor() {
+    vaultEventBus.subscribe((event) => {
+      if (event.type === "VAULT_DELETED") {
+        void this.clearVault(event.vaultId);
+      }
+    });
+  }
+
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
+
+  allPendingProposals = $state<Proposal[]>([]);
+  allAcceptedProposals = $state<Proposal[]>([]);
+  allVerifiedProposals = $state<Proposal[]>([]);
 
   activeProposals = $derived.by(() => {
     if (!vault.selectedEntityId) return [];
@@ -64,10 +78,6 @@ class ProposerStore {
     );
   });
 
-  constructor() {
-    //
-  }
-
   private getService(): ProposerService {
     if (!this.service) {
       this.service = new ProposerService(DB_NAME, DB_VERSION, getDB());
@@ -78,11 +88,14 @@ class ProposerStore {
   async loadProposals(entityId: string, requireSelection = true) {
     if (this.isLoadingProposals) return;
 
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
+
     this.isLoadingProposals = true;
     try {
       const service = this.getService();
-      const p = await service.getProposals(entityId);
-      const h = await service.getHistory(entityId);
+      const p = await service.getProposals(vaultId, entityId);
+      const h = await service.getHistory(vaultId, entityId);
 
       // Guard against stale updates if navigation happened
       if (requireSelection && vault.selectedEntityId !== entityId) return;
@@ -92,6 +105,105 @@ class ProposerStore {
     } finally {
       this.isLoadingProposals = false;
     }
+  }
+
+  async loadGlobalProposals() {
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) {
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+      return;
+    }
+
+    this.isLoadingProposals = true;
+    try {
+      const service = this.getService();
+      this.allPendingProposals = await service.getAllPendingProposals(vaultId);
+      this.allAcceptedProposals =
+        await service.getAllAcceptedProposals(vaultId);
+      this.allVerifiedProposals =
+        await service.getAllVerifiedProposals(vaultId);
+    } finally {
+      this.isLoadingProposals = false;
+    }
+  }
+
+  async verify(proposal: Proposal) {
+    const service = this.getService();
+    await service.verifyProposal(proposal.id);
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    const verifiedProposal = {
+      ...proposal,
+      status: "verified" as const,
+      timestamp: Date.now(),
+    };
+    this.allVerifiedProposals = [
+      verifiedProposal,
+      ...this.allVerifiedProposals,
+    ];
+
+    // Update per-entity cache if it exists
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    debugStore.log("[ProposerStore] Verified AI connection", {
+      proposalId: proposal.id,
+    });
+  }
+
+  async undo(proposal: Proposal) {
+    // Remove connection from vault
+    const removed = await vault.removeConnection(
+      proposal.sourceId,
+      proposal.targetId,
+      proposal.type,
+    );
+
+    if (!removed) {
+      debugStore.warn(
+        "[ProposerStore] Failed to remove vault connection for undo",
+        { proposal },
+      );
+    }
+
+    const service = this.getService();
+    await service.dismissProposal(proposal.id);
+
+    // Update state
+    this.allAcceptedProposals = this.allAcceptedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+    this.allVerifiedProposals = this.allVerifiedProposals.filter(
+      (p) => p.id !== proposal.id,
+    );
+
+    if (this.proposals[proposal.sourceId]) {
+      this.proposals[proposal.sourceId] = this.proposals[
+        proposal.sourceId
+      ].filter((p) => p.id !== proposal.id);
+    }
+
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
+    if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
+    this.history[proposal.sourceId] = [
+      dismissedProposal,
+      ...this.history[proposal.sourceId],
+    ];
+
+    debugStore.log("[ProposerStore] Undid AI connection", {
+      proposalId: proposal.id,
+    });
   }
 
   async analyzeCurrentEntity() {
@@ -107,6 +219,9 @@ class ProposerStore {
     analysisText?: string,
   ) {
     if (uiStore.aiDisabled || this.isAnalyzing) return;
+
+    const vaultId = vault.activeVaultId;
+    if (!vaultId) return;
 
     this.analysisError = null;
 
@@ -172,6 +287,7 @@ class ProposerStore {
       const newProposals = await proposerBridge.analyzeEntity(
         apiKey,
         modelName,
+        vaultId,
         entityId,
         sourceText,
         targets,
@@ -283,10 +399,15 @@ class ProposerStore {
         proposal.sourceId
       ].filter((p) => p.id !== proposal.id);
     }
-    // Add to history
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
-      proposal,
+      dismissedProposal,
       ...this.history[proposal.sourceId],
     ];
     if (this.history[proposal.sourceId].length > 20) {
@@ -309,6 +430,31 @@ class ProposerStore {
       ...this.proposals[proposal.sourceId],
       proposal,
     ];
+  }
+
+  async clearVault(vaultId: string) {
+    const service = this.getService();
+    await service.clearVault(vaultId);
+    // Clear in-memory caches if this was the active vault
+    if (vault.activeVaultId === vaultId) {
+      this.proposals = {};
+      this.history = {};
+      this.allPendingProposals = [];
+      this.allAcceptedProposals = [];
+      this.allVerifiedProposals = [];
+    }
+  }
+
+  /** @internal - For testing only */
+  reset() {
+    this.proposals = {};
+    this.history = {};
+    this.allPendingProposals = [];
+    this.allAcceptedProposals = [];
+    this.allVerifiedProposals = [];
+    this.isAnalyzing = false;
+    this.isLoadingProposals = false;
+    this.analysisError = null;
   }
 }
 

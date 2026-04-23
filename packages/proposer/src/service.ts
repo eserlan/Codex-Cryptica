@@ -43,13 +43,27 @@ export class ProposerService implements IProposerService {
         // This upgrade handler is for standalone usage of ProposerService (e.g., unit tests).
         // When used within the web app, the main `idb.ts`'s upgrade handler is responsible
         // for creating the 'proposals' store.
-        upgrade(db, _oldVersion) {
+        upgrade(db, oldVersion) {
           if (!db.objectStoreNames.contains(PROPOSAL_STORE)) {
             const store = db.createObjectStore(PROPOSAL_STORE, {
               keyPath: "id",
             });
             store.createIndex("by-source", "sourceId");
             store.createIndex("by-status", "status");
+            store.createIndex("by-vault", "vaultId");
+            store.createIndex("by-vault-status", ["vaultId", "status"]);
+            store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+          } else if (oldVersion < 8) {
+            const store = (db as any).transaction.objectStore(PROPOSAL_STORE);
+            if (!store.indexNames.contains("by-vault")) {
+              store.createIndex("by-vault", "vaultId");
+            }
+            if (!store.indexNames.contains("by-vault-status")) {
+              store.createIndex("by-vault-status", ["vaultId", "status"]);
+            }
+            if (!store.indexNames.contains("by-vault-source")) {
+              store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+            }
           }
         },
         blocking: () => {
@@ -73,6 +87,7 @@ export class ProposerService implements IProposerService {
   async analyzeEntity(
     apiKey: string,
     modelName: string,
+    vaultId: string,
     entityId: string,
     content: string,
     availableTargets: { id: string; name: string }[],
@@ -198,7 +213,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
 
       for (const p of bestProposalsByTarget.values()) {
         const proposal: Proposal = {
-          id: `${entityId}:${p.targetId}`,
+          id: `${vaultId}:${entityId}:${p.targetId}`,
+          vaultId,
           sourceId: entityId,
           targetId: p.targetId,
           type: p.type || "related",
@@ -218,27 +234,51 @@ Only return the JSON. If no connections are found, return empty array [].`;
     }
   }
 
-  async getProposals(entityId: string): Promise<Proposal[]> {
+  async getProposals(vaultId: string, entityId: string): Promise<Proposal[]> {
     const db = await this.getDB();
     const allProposals = await db.getAllFromIndex(
       PROPOSAL_STORE,
-      "by-source",
-      entityId,
+      "by-vault-source",
+      [vaultId, entityId],
     );
     return allProposals.filter((p: Proposal) => p.status === "pending");
   }
 
-  async getHistory(entityId: string): Promise<Proposal[]> {
+  async getHistory(vaultId: string, entityId: string): Promise<Proposal[]> {
     const db = await this.getDB();
     const allProposals = await db.getAllFromIndex(
       PROPOSAL_STORE,
-      "by-source",
-      entityId,
+      "by-vault-source",
+      [vaultId, entityId],
     );
     return allProposals
       .filter((p: Proposal) => p.status === "rejected")
       .sort((a: Proposal, b: Proposal) => b.timestamp - a.timestamp)
       .slice(0, this.config.maxHistory);
+  }
+
+  async getAllAcceptedProposals(vaultId: string): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-vault-status", [
+      vaultId,
+      "accepted",
+    ]);
+  }
+
+  async getAllPendingProposals(vaultId: string): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-vault-status", [
+      vaultId,
+      "pending",
+    ]);
+  }
+
+  async getAllVerifiedProposals(vaultId: string): Promise<Proposal[]> {
+    const db = await this.getDB();
+    return db.getAllFromIndex(PROPOSAL_STORE, "by-vault-status", [
+      vaultId,
+      "verified",
+    ]);
   }
 
   async applyProposal(proposalId: string): Promise<void> {
@@ -257,6 +297,26 @@ Only return the JSON. If no connections are found, return empty array [].`;
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
     proposal.status = "rejected";
+    proposal.timestamp = Date.now();
+    await db.put(PROPOSAL_STORE, proposal);
+  }
+
+  async verifyProposal(proposalId: string): Promise<void> {
+    const db = await this.getDB();
+    const proposal = await db.get(PROPOSAL_STORE, proposalId);
+    if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
+
+    if (proposal.status === "verified") {
+      return;
+    }
+
+    if (proposal.status !== "accepted") {
+      throw new Error(
+        `Proposal ${proposalId} cannot be verified from status "${proposal.status}"; expected "accepted" or "verified"`,
+      );
+    }
+
+    proposal.status = "verified";
     proposal.timestamp = Date.now();
     await db.put(PROPOSAL_STORE, proposal);
   }
@@ -420,6 +480,18 @@ Output JSON:
       }),
     );
 
+    await tx.done;
+  }
+
+  async clearVault(vaultId: string): Promise<void> {
+    const db = await this.getDB();
+    const tx = db.transaction(PROPOSAL_STORE, "readwrite");
+    const index = tx.store.index("by-vault");
+    let cursor = await index.openKeyCursor(IDBKeyRange.only(vaultId));
+    while (cursor) {
+      await tx.store.delete(cursor.primaryKey);
+      cursor = await cursor.continue();
+    }
     await tx.done;
   }
 }

@@ -42,19 +42,69 @@ export class OracleStore {
   visualizingMessageId = $state<string | null>(null);
 
   // Dependencies
-  private vault: typeof defaultVault;
-  private uiStore: typeof defaultUiStore;
-  private graph: typeof defaultGraph;
-  private diceHistory: typeof defaultDiceHistory;
-  private contextRetrieval: typeof defaultContextRetrieval;
-  private textGeneration: TextGenerationService;
-  private imageGeneration: typeof defaultImageGeneration;
-  private searchService: typeof defaultSearchService;
-  private diceEngine: typeof defaultDiceEngine;
-  private diceParser: typeof defaultDiceParser;
-  private sessionActivity: typeof sessionActivity;
-  private categories: typeof defaultCategories;
-  private draftingEngine: DraftingEngine;
+  private _vault?: typeof defaultVault;
+  private _uiStore?: typeof defaultUiStore;
+  private _graph?: typeof defaultGraph;
+  private _diceHistory?: typeof defaultDiceHistory;
+  private _contextRetrieval?: typeof defaultContextRetrieval;
+  private _textGeneration?: TextGenerationService;
+  private _imageGeneration?: typeof defaultImageGeneration;
+  private _searchService?: typeof defaultSearchService;
+  private _diceEngine?: typeof defaultDiceEngine;
+  private _diceParser?: typeof defaultDiceParser;
+  private _sessionActivity?: typeof sessionActivity;
+  private _categories?: typeof defaultCategories;
+  private _draftingEngine?: DraftingEngine;
+
+  private get vault() {
+    return this._vault ?? defaultVault;
+  }
+  private get uiStore() {
+    return this._uiStore ?? defaultUiStore;
+  }
+  private get graph() {
+    return this._graph ?? defaultGraph;
+  }
+  private get diceHistory() {
+    return this._diceHistory ?? defaultDiceHistory;
+  }
+  private get contextRetrieval() {
+    return this._contextRetrieval ?? defaultContextRetrieval;
+  }
+  private get textGeneration(): TextGenerationService {
+    return (
+      this._textGeneration ??
+      (oracleBridge.isReady
+        ? (oracleBridge.textGeneration as any)
+        : defaultTextGeneration)
+    );
+  }
+  private get imageGeneration() {
+    return this._imageGeneration ?? defaultImageGeneration;
+  }
+  private get searchService() {
+    return this._searchService ?? defaultSearchService;
+  }
+  private get diceEngine() {
+    return this._diceEngine ?? defaultDiceEngine;
+  }
+  private get diceParser() {
+    return this._diceParser ?? defaultDiceParser;
+  }
+  private get sessionActivity() {
+    return this._sessionActivity ?? sessionActivity;
+  }
+  private get categories() {
+    return this._categories ?? defaultCategories;
+  }
+  private get draftingEngine(): DraftingEngine {
+    return (
+      this._draftingEngine ??
+      (oracleBridge.isReady
+        ? (oracleBridge.draftingEngine as any)
+        : defaultDraftingEngine)
+    );
+  }
 
   // Internal Engine Services
   private chatHistoryService: ChatHistoryService;
@@ -84,23 +134,19 @@ export class OracleStore {
       executor?: OracleActionExecutor;
     } = {},
   ) {
-    this.vault = deps.vault ?? defaultVault;
-    this.uiStore = deps.uiStore ?? defaultUiStore;
-    this.graph = deps.graph ?? defaultGraph;
-    this.diceHistory = deps.diceHistory ?? defaultDiceHistory;
-    this.contextRetrieval = deps.contextRetrieval ?? defaultContextRetrieval;
-    this.textGeneration =
-      deps.textGeneration ??
-      (oracleBridge.isReady ? oracleBridge.textGeneration : defaultTextGeneration);
-    this.imageGeneration = deps.imageGeneration ?? defaultImageGeneration;
-    this.searchService = deps.searchService ?? defaultSearchService;
-    this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
-    this.diceParser = deps.diceParser ?? defaultDiceParser;
-    this.sessionActivity = deps.sessionActivity ?? sessionActivity;
-    this.categories = deps.categories ?? defaultCategories;
-    this.draftingEngine =
-      deps.draftingEngine ??
-      (oracleBridge.isReady ? oracleBridge.draftingEngine : defaultDraftingEngine);
+    this._vault = deps.vault;
+    this._uiStore = deps.uiStore;
+    this._graph = deps.graph;
+    this._diceHistory = deps.diceHistory;
+    this._contextRetrieval = deps.contextRetrieval;
+    this._textGeneration = deps.textGeneration;
+    this._imageGeneration = deps.imageGeneration;
+    this._searchService = deps.searchService;
+    this._diceEngine = deps.diceEngine;
+    this._diceParser = deps.diceParser;
+    this._sessionActivity = deps.sessionActivity;
+    this._categories = deps.categories;
+    this._draftingEngine = deps.draftingEngine;
 
     // Use provided services or defaults
     this.chatHistoryService =
@@ -111,7 +157,10 @@ export class OracleStore {
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
 
     // Initialize Event Bus for Hybrid Communication
-    if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
+    if (
+      typeof window !== "undefined" &&
+      typeof BroadcastChannel !== "undefined"
+    ) {
       this.eventBus = new BroadcastChannel("codex-oracle-events");
       this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
     }
@@ -276,7 +325,9 @@ export class OracleStore {
             existingEntities?: any[];
           },
         ) => {
-          const callback = isWorker ? Comlink.proxy(onUpdate) : (onUpdate as any);
+          const callback = isWorker
+            ? Comlink.proxy(onUpdate)
+            : (onUpdate as any);
 
           return this.textGeneration.generateResponse(
             apiKey,
@@ -290,7 +341,8 @@ export class OracleStore {
             {
               ...options,
               requestId: options?.requestId || undefined,
-              vaultId: options?.vaultId || this.vault.activeVaultId || undefined,
+              vaultId:
+                options?.vaultId || this.vault.activeVaultId || undefined,
               existingEntities: options?.existingEntities
                 ? $state.snapshot(options.existingEntities)
                 : $state.snapshot(Object.values(this.vault.entities || {})),
@@ -317,9 +369,7 @@ export class OracleStore {
         requestFit: wrap(this.graph.requestFit?.bind(this.graph)),
       },
       undoRedo: {
-        pushUndoAction: wrap(
-          this.undoRedo.pushUndoAction?.bind(this.undoRedo),
-        ),
+        pushUndoAction: wrap(this.undoRedo.pushUndoAction?.bind(this.undoRedo)),
       },
       tier: this.tier,
       effectiveApiKey: this.effectiveApiKey,
@@ -470,16 +520,18 @@ export class OracleStore {
         chronicle: proposal.draft.chronicle,
         lore: proposal.draft.lore,
       });
-      const snapContext = $state.snapshot(buildRelatedEntityContext({
-        entity: existing,
-        incoming: {
-          chronicle: proposal.draft.chronicle,
-          lore: proposal.draft.lore,
-        },
-        vault: this.vault,
-        getConsolidatedContext: (related) =>
-          this.contextRetrieval.getConsolidatedContext(related),
-      }));
+      const snapContext = $state.snapshot(
+        buildRelatedEntityContext({
+          entity: existing,
+          incoming: {
+            chronicle: proposal.draft.chronicle,
+            lore: proposal.draft.lore,
+          },
+          vault: this.vault,
+          getConsolidatedContext: (related) =>
+            this.contextRetrieval.getConsolidatedContext(related),
+        }),
+      );
 
       return await this.textGeneration.reconcileEntityUpdate(
         this.effectiveApiKey || "",

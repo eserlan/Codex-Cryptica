@@ -4,6 +4,7 @@
 
   let OracleSidebarPanel = $state<any>(null);
   let EntityExplorer = $state<any>(null);
+  let AIAssessment = $state<any>(null);
 
   const isSpecialEnv =
     import.meta.env.DEV ||
@@ -30,6 +31,11 @@
         .then((m) => (EntityExplorer = m?.default))
         .catch((err) => logError("EntityExplorer", err));
     }
+    if (uiStore.activeSidebarTool === "ai-assessment" && !AIAssessment) {
+      import("../oracle/AIAssessment.svelte")
+        .then((m) => (AIAssessment = m?.default))
+        .catch((err) => logError("AIAssessment", err));
+    }
   });
 </script>
 
@@ -45,6 +51,8 @@
       <OracleSidebarPanel />
     {:else if uiStore.activeSidebarTool === "explorer" && EntityExplorer}
       <EntityExplorer />
+    {:else if uiStore.activeSidebarTool === "ai-assessment" && AIAssessment}
+      <AIAssessment />
     {:else}
       <div class="flex-1 flex items-center justify-center p-8 text-center">
         <div
