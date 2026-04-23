@@ -313,15 +313,54 @@ export class SearchEngine {
   /**
    * Imports a previously exported index.
    */
-  async importIndex(data: Record<string, any>): Promise<void> {
+  async importIndex(data: any): Promise<void> {
     this.taskQueue = this.taskQueue.then(async () => {
+      let parsedData = data;
+
+      if (
+        data &&
+        typeof data === "object" &&
+        data.isSegmented &&
+        data.segments
+      ) {
+        try {
+          parsedData = {};
+          for (const ObjectEntry of Object.entries(data.segments)) {
+            const k = ObjectEntry[0];
+            const buffer = ObjectEntry[1] as ArrayBuffer;
+            const str = new TextDecoder().decode(buffer);
+            parsedData[k] = k === "_docIds" ? JSON.parse(str) : str;
+
+            // Yield back to event loop during heavy imports
+            await new Promise((r) => setTimeout(r, 0));
+          }
+        } catch (e) {
+          this.log("error", "Failed to decode segmented index data", e);
+          return;
+        }
+      } else if (
+        data &&
+        typeof data === "object" &&
+        data.isEncoded &&
+        data.data
+      ) {
+        // Fallback for previous monolithic encoded format
+        try {
+          const decoded = new TextDecoder().decode(data.data);
+          parsedData = JSON.parse(decoded);
+        } catch (e) {
+          this.log("error", "Failed to decode imported index data", e);
+          return;
+        }
+      }
+
       if (!this.index) this.initIndex();
-      if (data._docIds !== undefined) {
-        this.docIds = new Set(data._docIds);
+      if (parsedData._docIds !== undefined) {
+        this.docIds = new Set(parsedData._docIds);
       }
 
       let count = 0;
-      for (const [key, value] of Object.entries(data)) {
+      for (const [key, value] of Object.entries(parsedData)) {
         if (key === "_docIds") continue;
         // FlexSearch import is synchronous
         this.index.import(key, value);

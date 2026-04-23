@@ -345,14 +345,19 @@ export class SearchService {
         `[SearchService] Save started: Exporting index for ${vaultId}...`,
       );
       const start = performance.now();
-      const data = await api.exportIndex();
+      const rawData = await api.exportIndex();
+
+      const keyCount = rawData?.isSegmented
+        ? rawData.keyCount
+        : rawData?.isEncoded
+          ? rawData.keyCount
+          : Object.keys(rawData || {}).length;
 
       // Ensure we have actual index data (more than just docCount)
-      const keyCount = Object.keys(data).length;
-      if (data && keyCount > 1) {
+      if (rawData && keyCount > 1) {
         await entityDb.searchIndex.put({
           vaultId,
-          data,
+          data: rawData,
           updatedAt: Date.now(),
         });
         this.isDirty = false; // Reset dirty state after successful save
