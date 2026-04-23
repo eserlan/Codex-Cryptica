@@ -133,32 +133,34 @@ export class SearchService {
     const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
-      await entityDb.entityContent
+      const records = await entityDb.entityContent
         .where("vaultId")
         .equals(vaultId)
-        .each(async (record) => {
-          // We need the full metadata to prevent FlexSearch from overwriting the document
-          // with empty fields, as 'add/update' replaces the entire document.
-          const metadata = await entityDb.graphEntities.get([
-            vaultId,
-            record.entityId,
-          ]);
+        .toArray();
 
-          if (metadata) {
-            batch.push({
-              ...metadata,
-              content: record.content,
-              lore: record.lore,
-            });
+      for (const record of records) {
+        // We need the full metadata to prevent FlexSearch from overwriting the document
+        // with empty fields, as 'add/update' replaces the entire document.
+        const metadata = await entityDb.graphEntities.get([
+          vaultId,
+          record.entityId,
+        ]);
 
-            if (batch.length >= BATCH_SIZE) {
-              const currentBatch = [...batch];
-              batch.length = 0;
-              await this.indexBatch(currentBatch);
-              indexedCount += currentBatch.length;
-            }
+        if (metadata) {
+          batch.push({
+            ...metadata,
+            content: record.content,
+            lore: record.lore,
+          });
+
+          if (batch.length >= BATCH_SIZE) {
+            const currentBatch = [...batch];
+            batch.length = 0;
+            await this.indexBatch(currentBatch);
+            indexedCount += currentBatch.length;
           }
-        });
+        }
+      }
 
       if (batch.length > 0) {
         await this.indexBatch(batch);
