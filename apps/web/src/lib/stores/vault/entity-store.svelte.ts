@@ -315,6 +315,10 @@ export class EntityStore {
       const merged = {
         ...current,
         ...patch,
+        metadata:
+          patch.metadata !== undefined
+            ? { ...(current.metadata ?? {}), ...patch.metadata }
+            : current.metadata,
         content:
           patch.content !== undefined
             ? this.deps.isGuest() && patch.content === "" && current.content
@@ -355,6 +359,7 @@ export class EntityStore {
         type: "BATCH_UPDATED",
         vaultId: this.deps.activeVaultId() || "unknown",
         entities: Object.keys(appliedUpdates).map((id) => newEntities[id]),
+        patches: appliedUpdates,
       });
 
       return true;

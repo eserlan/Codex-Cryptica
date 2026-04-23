@@ -22,7 +22,12 @@ export type VaultEvent =
     }
   | { type: "ENTITY_DELETED"; vaultId: string; entityId: string }
   | { type: "BATCH_CREATED"; vaultId: string; entities: LocalEntity[] }
-  | { type: "BATCH_UPDATED"; vaultId: string; entities: LocalEntity[] }
+  | {
+      type: "BATCH_UPDATED";
+      vaultId: string;
+      entities: LocalEntity[];
+      patches?: Record<string, Partial<LocalEntity>>;
+    }
   | { type: "VAULT_SWITCHED"; vaultId: string }
   | { type: "VAULT_DELETED"; vaultId: string };
 

@@ -136,6 +136,12 @@
         onLayoutStart: () => {
           isLayoutRunning = true;
         },
+        onLayoutComputed: (ms) => {
+          debugStore.log(`Layout: ${ms}ms`, {
+            nodes: graph.stats.nodeCount,
+            caller,
+          });
+        },
         onLayoutStop: () => {
           isLayoutRunning = false;
           graphVisible = true;
