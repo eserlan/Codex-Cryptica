@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+vi.mock("$app/environment", () => ({
+  browser: true,
+}));
+
 // Mock Svelte 5 Runes
 vi.hoisted(() => {
   (global as any).$state = (v: any) => v;
@@ -30,11 +34,12 @@ describe("ImageGenerationService", () => {
 
     service = new DefaultImageGenerationService(mockClientManager);
     (uiStore as any).aiDisabled = false;
+    localStorage.clear();
   });
 
   describe("AI Disabled Gating", () => {
     it("should throw error in generateImage when AI Disabled is ON", async () => {
-      (uiStore as any).aiDisabled = true;
+      localStorage.setItem("codex_ai_disabled", "true");
       await expect(
         service.generateImage("key", "prompt", "model"),
       ).rejects.toThrow("AI features are disabled.");

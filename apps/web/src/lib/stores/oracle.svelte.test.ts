@@ -151,6 +151,7 @@ describe("OracleStore", () => {
       updateMessage: vi.fn(),
       updateMessageEntity: vi.fn(),
       addTestImageMessage: vi.fn(),
+      addProposal: vi.fn(),
     };
 
     mockSettings = {
@@ -524,10 +525,74 @@ describe("OracleStore", () => {
       );
     });
 
+    it("should throw error if proposal lacks entityId", async () => {
+      await expect(
+        oracle.reconcileDiscoveryProposal({ title: "No ID" } as any)
+      ).rejects.toThrow("Discovery proposal does not target an existing record.");
+    });
+
+    it("should throw error if entity not found in vault", async () => {
+      (mockVault as any).entities = {};
+      await expect(
+        oracle.reconcileDiscoveryProposal({ entityId: "missing", title: "Missing" } as any)
+      ).rejects.toThrow("Entity missing was not found.");
+    });
+
+    it("should fall back to local update if reconciliation fails", async () => {
+      (mockVault as any).entities = {
+        "e1": { id: "e1", title: "E1", content: "C", lore: "L" }
+      };
+      (oracle as any).textGeneration.reconcileEntityUpdate = vi.fn().mockRejectedValue(new Error("Fail"));
+      
+      const result = await oracle.reconcileDiscoveryProposal({
+        entityId: "e1",
+        title: "E1",
+        draft: { chronicle: "new", lore: "more" }
+      } as any);
+      
+      expect(result.content).toBe("C");
+      expect(result.lore).toBe("L\n\nmore");
+    });
+
     it("should reset the store", () => {
       oracle.reset();
       expect(mockChatHistory.setMessages).toHaveBeenCalledWith([]);
       // Note: reset behavior changed to only clear messages in the new refactor
+    });
+
+    it("should handle ORACLE_ENTITY_DISCOVERED worker event", () => {
+      const mockEvent = {
+        type: "ORACLE_ENTITY_DISCOVERED",
+        requestId: "r1",
+        payload: { title: "New Entity" }
+      };
+      
+      (oracle as any).handleWorkerEvent(mockEvent);
+      
+      expect(mockChatHistory.addProposal).toHaveBeenCalledWith("r1", mockEvent.payload);
+    });
+
+    it("should ignore events from other vaults", () => {
+      const mockEvent = {
+        type: "ORACLE_ENTITY_DISCOVERED",
+        vaultId: "other-vault",
+        requestId: "r1",
+        payload: { title: "New Entity" }
+      };
+      
+      (oracle as any).handleWorkerEvent(mockEvent);
+      
+      expect(mockChatHistory.addProposal).not.toHaveBeenCalled();
+    });
+
+    it("should close event bus on destroy", () => {
+      const mockBus = { close: vi.fn() };
+      (oracle as any).eventBus = mockBus;
+      
+      oracle.destroy();
+      
+      expect(mockBus.close).toHaveBeenCalled();
+      expect((oracle as any).eventBus).toBeNull();
     });
   });
 });
