@@ -37,27 +37,16 @@ vi.mock("./vault.svelte", () => ({
 }));
 
 // Mock ui store
-vi.mock("./ui.svelte", () => {
-  const labelFilters = new Set<string>();
+vi.mock("./ui.svelte", async (importOriginal) => {
+  const actual = (await importOriginal()) as any;
+  const mockUi = new actual.UIStore();
+  // Ensure we can track calls if needed, though real logic is better for state tests
+  mockUi.toggleLabelFilter = vi.fn(mockUi.toggleLabelFilter.bind(mockUi));
+  mockUi.clearLabelFilters = vi.fn(mockUi.clearLabelFilters.bind(mockUi));
+
   return {
-    ui: {
-      sharedMode: false,
-      isModifierPressed: false,
-      labelFilters: labelFilters,
-      toggleLabelFilter: vi.fn((label: string, isMulti: boolean) => {
-        if (!isMulti) {
-          labelFilters.clear();
-          labelFilters.add(label);
-        } else {
-          if (labelFilters.has(label)) {
-            labelFilters.delete(label);
-          } else {
-            labelFilters.add(label);
-          }
-        }
-      }),
-      clearLabelFilters: vi.fn(() => labelFilters.clear()),
-    },
+    ...actual,
+    ui: mockUi,
   };
 });
 
