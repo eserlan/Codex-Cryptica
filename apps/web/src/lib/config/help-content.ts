@@ -303,7 +303,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your world entities via the persistent sidebar. Clicking an entity opens it in Focus Mode, replacing the main view with a spacious detail panel.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl+Click to combine multiple labels for a focused drill-down.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {

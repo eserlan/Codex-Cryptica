@@ -54,6 +54,23 @@ As a returning user, I want collapsed label sections to stay collapsed so I can 
 
 ---
 
+### User Story 4 - Filter Explorer by Clicking Labels (Priority: P2)
+
+As a vault maintainer, I want to click on a label pill in the explorer to filter the list by that label, so I can quickly drill down into specific sub-collections without typing into the search bar.
+
+**Why this priority**: It complements the label-grouped view by making labels interactive and functional for discovery across both view modes.
+
+**Independent Test**: Click a label pill on an entity item, verify the list filters to show only entities with that label. Ctrl+Click another label and verify the list shows entities containing BOTH labels.
+
+**Acceptance Scenarios**:
+
+1. **Given** I am in the entity explorer, **When** I click a label pill on an entity, **Then** the explorer should apply an exclusive filter for that label.
+2. **Given** an active label filter, **When** I Ctrl/Cmd+Click another label pill, **Then** the explorer should show only entities that match BOTH labels (AND logic).
+3. **Given** active label filters, **When** I click the "Clear" button or the main "All Categories" button, **Then** all label filters should be removed.
+4. **Given** a search query is active, **When** I apply a label filter, **Then** the results should match both the search text AND the selected labels.
+
+---
+
 ### Edge Cases
 
 - Search and category filters must apply before grouping so alternate explorer views only show matching entities.
@@ -61,6 +78,7 @@ As a returning user, I want collapsed label sections to stay collapsed so I can 
 - Entities with multiple labels intentionally appear in multiple sections and must remain selectable in each location.
 - Entities without labels must remain discoverable through an explicit fallback group.
 - Collapsed label state must survive browser reloads without hiding the unlabeled fallback by mistake.
+- If a label filter is applied that excludes all entities in a collapsed group, that group should not be rendered at all.
 
 ## Requirements _(mandatory)_
 
@@ -74,12 +92,17 @@ As a returning user, I want collapsed label sections to stay collapsed so I can 
 - **FR-006**: The system MUST remember collapsed label sections across browser reloads and sessions for the same user.
 - **FR-007**: The system MUST scope collapsed label state to the active vault so one vault does not change another vault's explorer layout.
 - **FR-008**: The system MUST preserve existing search, category filtering, selection, and drag-start behavior in every explorer view.
+- **FR-009**: The system MUST make label pills in the explorer interactive.
+- **FR-010**: The system MUST apply "AND" logic when multiple label filters are active.
+- **FR-011**: The system MUST display active label filters in the UI with a clear way to remove them.
+- **FR-012**: The search query MUST be extended to match against entity labels in addition to title and content.
 
 ### Key Entities
 
 - **Explorer View Preference**: The user's saved explorer layout choice (`list` or `label`) that persists between sessions.
 - **Explorer Group**: A rendered section of entities produced from the current filtered explorer result set using a label key.
 - **Explorer Group Visibility Preference**: The per-vault saved set of label sections that are currently collapsed in label view.
+- **Label Filter Set**: A collection of labels currently used to narrow down the entity list.
 
 ## Success Criteria _(mandatory)_
 
@@ -90,3 +113,6 @@ As a returning user, I want collapsed label sections to stay collapsed so I can 
 - **SC-003**: Multi-labeled entities remain discoverable from every relevant label section.
 - **SC-004**: Grouped views hide empty sections when search or category filters remove all matching entities from that group.
 - **SC-005**: Users can collapse a label section with a single click and see it stay collapsed after a reload.
+- **SC-006**: Clicking a label pill reduces the explorer list to entities matching that label within 100ms.
+- **SC-007**: Active label filters are clearly visible and can be dismissed individually.
+- **SC-008**: The search bar correctly surfaces entities when searching for one of their labels.

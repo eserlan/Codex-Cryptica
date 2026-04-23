@@ -151,6 +151,8 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 089-label-filtering: Added interactive label pills in entity explorer with "AND" filtering logic, active filter UI, and label-based search integration. (Refinement of 084)
+
 - 087-gen-oracle-content: Added TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine`
 
 - 0.18.0 - The Tactical Explorer Update: Added Label-Grouped Entity Explorer with persistence, VTT sidebar Entity List, and token drag-and-drop. Improved Zen Popout error handling and map coordinate bounds safety.
