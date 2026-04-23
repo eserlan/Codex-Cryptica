@@ -277,17 +277,27 @@ export class UIStore {
     this.activeSidebarTool = "none";
   }
 
+  private leftSidebarSaveTimeout: number | null = null;
   setLeftSidebarWidth(width: number) {
     this.leftSidebarWidth = width;
     if (typeof window !== "undefined") {
-      localStorage.setItem("codex_left_sidebar_width", width.toString());
+      if (this.leftSidebarSaveTimeout)
+        clearTimeout(this.leftSidebarSaveTimeout);
+      this.leftSidebarSaveTimeout = window.setTimeout(() => {
+        localStorage.setItem("codex_left_sidebar_width", width.toString());
+      }, 500);
     }
   }
 
+  private rightSidebarSaveTimeout: number | null = null;
   setRightSidebarWidth(width: number) {
     this.rightSidebarWidth = width;
     if (typeof window !== "undefined") {
-      localStorage.setItem("codex_right_sidebar_width", width.toString());
+      if (this.rightSidebarSaveTimeout)
+        clearTimeout(this.rightSidebarSaveTimeout);
+      this.rightSidebarSaveTimeout = window.setTimeout(() => {
+        localStorage.setItem("codex_right_sidebar_width", width.toString());
+      }, 500);
     }
   }
 
