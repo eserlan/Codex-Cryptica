@@ -1,7 +1,6 @@
 <script lang="ts">
   import OracleChat from "$lib/components/oracle/OracleChat.svelte";
   import { oracle } from "$lib/stores/oracle.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
   import { onMount } from "svelte";
 
   onMount(() => {
@@ -39,18 +38,7 @@
       {#if oracle.messages.length > 0}
         <button
           class="px-3 py-1 flex items-center gap-2 text-[10px] font-bold text-oracle-primary hover:text-red-400 border border-oracle-dim/30 hover:border-red-500/50 transition-all uppercase font-header tracking-widest bg-oracle-dark/20"
-          onclick={async () => {
-            if (
-              await uiStore.confirm({
-                title: "Clear Chat",
-                message:
-                  "Are you sure you want to clear the conversation history?",
-                isDangerous: true,
-              })
-            ) {
-              oracle.clearMessages();
-            }
-          }}
+          onclick={() => oracle.clearMessages()}
           aria-label="Clear conversation history"
         >
           <span class="icon-[lucide--trash-2] w-3.5 h-3.5"></span>

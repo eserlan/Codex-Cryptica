@@ -334,6 +334,12 @@ describe("OracleStore", () => {
       });
 
       await oracle.clearMessages();
+      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Clear History",
+          isDangerous: true,
+        }),
+      );
       expect(mockChatHistory.clear).toHaveBeenCalled();
     });
 
