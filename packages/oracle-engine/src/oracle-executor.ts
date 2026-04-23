@@ -4,6 +4,7 @@ import type {
   ChatMessage,
   ConnectionDiscoveryMode,
   EntityDiscoveryMode,
+  DiscoveryProposal,
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
@@ -683,7 +684,10 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             const existingProposals =
               finalMsgs[assistantMsgIndex].proposals || [];
             const newProposals = proposals.filter(
-              (p) => !existingProposals.some((e) => e.title === p.title),
+              (p: DiscoveryProposal) =>
+                !existingProposals.some(
+                  (e: DiscoveryProposal) => e.title === p.title,
+                ),
             );
 
             finalMsgs[assistantMsgIndex].proposals = [

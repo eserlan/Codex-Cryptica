@@ -18,6 +18,7 @@ export interface SearchResult {
   excerpt?: string;
   score: number;
   matchType: "title" | "content";
+  status?: string;
   highlights?: Array<{ start: number; length: number }>;
 }
 

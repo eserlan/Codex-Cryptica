@@ -230,8 +230,8 @@ export class OracleStore {
             categories,
             {
               ...options,
-              requestId: options?.requestId,
-              vaultId: options?.vaultId || this.vault.activeVaultId,
+              requestId: options?.requestId || undefined,
+              vaultId: options?.vaultId || this.vault.activeVaultId || undefined,
               existingEntities:
                 options?.existingEntities ||
                 Object.values(this.vault.entities || {}),
