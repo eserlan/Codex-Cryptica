@@ -496,7 +496,7 @@ describe("OracleStore", () => {
 
     it("should use Comlink.proxy for methods when oracleBridge is ready", () => {
       (oracleBridge as any).isReady = true;
-      const context = oracle.getExecutionContext();
+      const _context = oracle.getExecutionContext();
       
       expect(Comlink.proxy).toHaveBeenCalled();
       // Reset for other tests
