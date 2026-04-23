@@ -64,7 +64,7 @@
 
 <div
   bind:this={handleRef}
-  class="resizer-handle group absolute top-0 bottom-0 z-50 w-6 cursor-col-resize transition-all"
+  class="resizer-handle group absolute top-0 bottom-0 z-[100] w-6 cursor-col-resize transition-all"
   class:right-0={side === "left"}
   class:-mr-3={side === "left"}
   class:left-0={side === "right"}

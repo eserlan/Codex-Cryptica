@@ -135,7 +135,7 @@
 {#if entity}
   <aside
     transition:fade={{ duration: 200 }}
-    class="pointer-events-auto flex h-full w-full flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50 shrink-0"
+    class="pointer-events-auto flex h-full w-full flex-col border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50 shrink-0"
     style:width={uiStore.isMobile ? "100%" : `${uiStore.rightSidebarWidth}px`}
     style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-theme-surface)"

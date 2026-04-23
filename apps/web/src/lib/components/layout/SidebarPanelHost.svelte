@@ -36,7 +36,7 @@
 
 {#if uiStore.leftSidebarOpen}
   <aside
-    class="w-full md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0 overflow-hidden
+    class="w-full md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0
            max-md:fixed max-md:inset-0 md:border-r md:bottom-0"
     style:width={uiStore.isMobile ? "100%" : `${uiStore.leftSidebarWidth}px`}
     style:background-color="var(--theme-panel-fill)"
