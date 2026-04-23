@@ -118,6 +118,7 @@ describe("OracleStore", () => {
   let mockSettings: any;
   let mockUndoRedo: any;
   let mockExecutor: any;
+  let mockSessionActivity: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -220,10 +221,16 @@ describe("OracleStore", () => {
       init: vi.fn(),
     };
 
+    mockSessionActivity = {
+      addEvent: vi.fn(),
+      clear: vi.fn(),
+    };
+
     oracle = new OracleStore({
       vault: mockVault as any,
       uiStore: mockUiStore as any,
       diceHistory: mockDiceHistory as any,
+      sessionActivity: mockSessionActivity as any,
     });
 
     // Inject mocks into private fields to align with internal services refactor
@@ -334,7 +341,29 @@ describe("OracleStore", () => {
       });
 
       await oracle.clearMessages();
+      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Clear History",
+          isDangerous: true,
+        }),
+      );
       expect(mockChatHistory.clear).toHaveBeenCalled();
+      expect(mockSessionActivity.clear).toHaveBeenCalled();
+    });
+
+    it("should not clear messages when confirmation is cancelled", async () => {
+      vi.mocked(mockUiStore.confirm).mockResolvedValue(false);
+
+      await oracle.clearMessages();
+
+      expect(mockUiStore.confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Clear History",
+          isDangerous: true,
+        }),
+      );
+      expect(mockChatHistory.clear).not.toHaveBeenCalled();
+      expect(mockSessionActivity.clear).not.toHaveBeenCalled();
     });
 
     it("should pass related entity context into reconciliation updates", async () => {
