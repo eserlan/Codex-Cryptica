@@ -10,9 +10,12 @@ import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
+  private activeAnalysisCounts = new Map<string, number>();
+  private activeAnalysisTotal = 0;
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
+  analysisErrors = $state<Record<string, string | null>>({});
   proposals = $state<Record<string, Proposal[]>>({}); // keyed by entityId
   history = $state<Record<string, Proposal[]>>({}); // keyed by entityId
 
@@ -75,6 +78,39 @@ class ProposerStore {
     return this.service;
   }
 
+  isEntityAnalyzing(entityId: string) {
+    return (this.activeAnalysisCounts.get(entityId) ?? 0) > 0;
+  }
+
+  private setAnalysisError(entityId: string, error: string | null) {
+    this.analysisErrors = { ...this.analysisErrors, [entityId]: error };
+    if (!vault.selectedEntityId || vault.selectedEntityId === entityId) {
+      this.analysisError = error;
+    }
+  }
+
+  private beginAnalysis(entityId: string) {
+    this.activeAnalysisCounts.set(
+      entityId,
+      (this.activeAnalysisCounts.get(entityId) ?? 0) + 1,
+    );
+    this.activeAnalysisTotal += 1;
+    this.isAnalyzing = true;
+    this.setAnalysisError(entityId, null);
+  }
+
+  private finishAnalysis(entityId: string) {
+    const nextCount = (this.activeAnalysisCounts.get(entityId) ?? 1) - 1;
+    if (nextCount > 0) {
+      this.activeAnalysisCounts.set(entityId, nextCount);
+    } else {
+      this.activeAnalysisCounts.delete(entityId);
+    }
+
+    this.activeAnalysisTotal = Math.max(0, this.activeAnalysisTotal - 1);
+    this.isAnalyzing = this.activeAnalysisTotal > 0;
+  }
+
   async loadProposals(entityId: string, requireSelection = true) {
     if (this.isLoadingProposals) return;
 
@@ -97,7 +133,7 @@ class ProposerStore {
   async analyzeCurrentEntity() {
     if (uiStore.aiDisabled) return;
     const entityId = vault.selectedEntityId;
-    if (!entityId || this.isAnalyzing) return;
+    if (!entityId || this.isEntityAnalyzing(entityId)) return;
     await this.analyzeEntityById(entityId, true);
   }
 
@@ -106,29 +142,35 @@ class ProposerStore {
     requireSelection = false,
     analysisText?: string,
   ) {
-    if (uiStore.aiDisabled || this.isAnalyzing) return;
+    if (uiStore.aiDisabled) return;
 
-    this.analysisError = null;
-
-    // Load existing proposals/history if not loaded
-    if (!this.proposals[entityId]) {
-      await this.loadProposals(entityId, requireSelection);
-      // If the user changed the selected entity while loading, abort this analysis
-      if (requireSelection && vault.selectedEntityId !== entityId) return;
-    }
-
-    const apiKey = oracle.effectiveApiKey || "";
-
-    const entity = vault.entities[entityId];
-    if (!entity) {
+    if (this.isEntityAnalyzing(entityId)) {
       debugStore.warn(
-        `[ProposerStore] Skipping connection analysis for ${entityId}: entity missing from vault`,
+        `[ProposerStore] Skipping duplicate connection analysis for ${entityId}: already running`,
       );
       return;
     }
 
-    this.isAnalyzing = true;
+    this.beginAnalysis(entityId);
+
     try {
+      // Load existing proposals/history if not loaded
+      if (!this.proposals[entityId]) {
+        await this.loadProposals(entityId, requireSelection);
+        // If the user changed the selected entity while loading, abort this analysis
+        if (requireSelection && vault.selectedEntityId !== entityId) return;
+      }
+
+      const apiKey = oracle.effectiveApiKey || "";
+
+      const entity = vault.entities[entityId];
+      if (!entity) {
+        debugStore.warn(
+          `[ProposerStore] Skipping connection analysis for ${entityId}: entity missing from vault`,
+        );
+        return;
+      }
+
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
       // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
@@ -206,9 +248,9 @@ class ProposerStore {
         entityId,
         error: err,
       });
-      this.analysisError = err.message || "Analysis failed";
+      this.setAnalysisError(entityId, err.message || "Analysis failed");
     } finally {
-      this.isAnalyzing = false;
+      this.finishAnalysis(entityId);
     }
   }
 
