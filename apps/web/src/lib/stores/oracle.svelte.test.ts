@@ -6,6 +6,21 @@ import {
   textGenerationService,
   contextRetrievalService,
 } from "../services/ai";
+import { oracleBridge } from "../cloud-bridge/oracle-bridge";
+import * as Comlink from "comlink";
+
+vi.mock("comlink", () => ({
+  proxy: vi.fn((x) => x),
+  releaseProxy: Symbol("releaseProxy"),
+}));
+
+vi.mock("../cloud-bridge/oracle-bridge", () => ({
+  oracleBridge: {
+    isReady: false,
+    textGeneration: {},
+    draftingEngine: {},
+  },
+}));
 
 const { mockAnalyzeEntityById, mockAnalyzeAndApplyEntityById } = vi.hoisted(
   () => ({
@@ -252,11 +267,15 @@ describe("OracleStore", () => {
     expect(mockSettings.init).toHaveBeenCalled();
   });
 
-  it("should save API key to database", async () => {
-    await oracle.setKey("new-key");
-    expect(mockSettings.updateSettings).toHaveBeenCalledWith({
-      apiKey: "new-key",
-    });
+  it("should ignore API key saving if same key", async () => {
+    mockSettings.settings.apiKey = "same";
+    await oracle.setKey("same");
+    expect(mockSettings.updateSettings).not.toHaveBeenCalled();
+  });
+
+  it("should not send empty messages", async () => {
+    await oracle.sendMessage("   ");
+    expect(mockChatHistory.addMessage).not.toHaveBeenCalled();
   });
 
   it("should toggle open state", () => {
@@ -475,6 +494,37 @@ describe("OracleStore", () => {
       expect(genCall[2]).toEqual(history);
     });
 
+    it("should use Comlink.proxy for methods when oracleBridge is ready", () => {
+      (oracleBridge as any).isReady = true;
+      const context = oracle.getExecutionContext();
+      
+      expect(Comlink.proxy).toHaveBeenCalled();
+      // Reset for other tests
+      (oracleBridge as any).isReady = false;
+    });
+
+    it("should handle missing methods in getExecutionContext (defensive wrapping)", () => {
+      const bareOracle = new OracleStore({
+        vault: { activeVaultId: "v1", entities: {} } as any,
+        uiStore: mockUiStore as any,
+        diceHistory: {} as any,
+        searchService: {} as any,
+        diceParser: {} as any,
+        diceEngine: {} as any,
+        chatHistoryService: mockChatHistory as any,
+      });
+      
+      const context = bareOracle.getExecutionContext();
+      expect(context.vault.createEntity).toBeUndefined();
+      expect(context.searchService.search).toBeUndefined();
+      expect(context.diceParser.parse).toBeUndefined();
+    });
+
+    it("should start a wizard", async () => {
+      await oracle.startWizard("connection");
+      expect(mockChatHistory.startWizard).toHaveBeenCalledWith("connection");
+    });
+
     it("should seed discovery connections when connection discovery is suggest", async () => {
       (mockUiStore as any).connectionDiscoveryMode = "suggest";
 
@@ -618,6 +668,12 @@ describe("OracleStore", () => {
       
       expect(mockBus.close).toHaveBeenCalled();
       expect((oracle as any).eventBus).toBeNull();
+    });
+
+    it("should ignore unhandled worker event types", () => {
+      const mockEvent = { type: "UNKNOWN_EVENT" };
+      // Should not throw or do anything
+      expect(() => (oracle as any).handleWorkerEvent(mockEvent)).not.toThrow();
     });
   });
 });

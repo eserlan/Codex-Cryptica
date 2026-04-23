@@ -68,5 +68,11 @@ describe("ImageGenerationService", () => {
       );
       expect(result).toBe("query");
     });
+
+    it("should return query immediately if isAIEnabled is false", async () => {
+      localStorage.setItem("codex_ai_disabled", "true");
+      const result = await service.distillVisualPrompt("key", "q", "c", "m");
+      expect(result).toBe("q");
+    });
   });
 });
