@@ -279,6 +279,7 @@ export class OracleStore {
       uiStore: $state.snapshot(this.uiStore),
       chatHistory: {
         messages: $state.snapshot(this.chatHistoryService.messages),
+        getMessages: wrap(() => [...this.chatHistoryService.messages]),
         addMessage: wrap(
           this.chatHistoryService.addMessage?.bind(this.chatHistoryService),
         ),

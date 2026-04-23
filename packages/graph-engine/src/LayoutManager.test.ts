@@ -147,6 +147,36 @@ describe("LayoutManager", () => {
     );
   });
 
+  it("should trigger layout when hasNewNodes is true even if stableLayout is true", async () => {
+    // Current positions are NOT at origin (so manual detection would fail)
+    const currentPositions = [
+      { x: 100, y: 100 },
+      { x: 200, y: 200 },
+    ];
+    mockCy.nodes.mockReturnValue(makeNodes(currentPositions));
+
+    await layoutManager.apply(
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: true,
+        isGuest: false,
+      },
+      false,
+      false,
+      "Elements Update",
+      false,
+      true, // hasNewNodes = true
+    );
+
+    // Should have triggered a worker postMessage (not just a fitOnly stop)
+    expect(capturedPostMessage).not.toBeNull();
+    expect(capturedPostMessage.jobId).toBeGreaterThan(0);
+  });
+
   it("should use lower gravity in landscape view", async () => {
     mockCy.width.mockReturnValue(1200);
     mockCy.height.mockReturnValue(800); // AR = 1.5 (Landscape)
@@ -469,6 +499,76 @@ describe("LayoutManager", () => {
       true,
     );
     expect(mockCy.fit).toHaveBeenCalled();
+  });
+
+  it("should emit positions in the schema-compliant nested format", async () => {
+    const onPositionsUpdated = vi.fn();
+    const mockWorkerResult = {
+      "1": { metadata: { coordinates: { x: 50, y: 50 } } },
+    };
+
+    const node1 = {
+      position: vi.fn().mockReturnValue({ x: 10, y: 10 }),
+      id: vi.fn().mockReturnValue("1"),
+      width: vi.fn().mockReturnValue(60),
+      height: vi.fn().mockReturnValue(60),
+      data: vi.fn().mockReturnValue({ id: "1" }),
+      length: 1,
+      removeData: vi.fn(),
+      removeClass: vi.fn(),
+    };
+    const node2 = {
+      position: vi.fn().mockReturnValue({ x: 30, y: 30 }),
+      id: vi.fn().mockReturnValue("2"),
+      width: vi.fn().mockReturnValue(60),
+      height: vi.fn().mockReturnValue(60),
+      data: vi.fn().mockReturnValue({ id: "2" }),
+      length: 1,
+      removeData: vi.fn(),
+      removeClass: vi.fn(),
+    };
+    mockCy.nodes.mockReturnValue([node1, node2]);
+    mockCy.$id.mockImplementation((id: string) => {
+      if (id === "1") return node1;
+      if (id === "2") return node2;
+      return { length: 0 };
+    });
+
+    // Override FakeWorker to return our specific format
+    class FormatWorker extends FakeWorker {
+      postMessage(data: any) {
+        Promise.resolve().then(() => {
+          const event = {
+            data: { jobId: data.jobId, positions: mockWorkerResult },
+          };
+          (this as any).messageListeners.forEach((cb: any) => cb(event));
+        });
+      }
+    }
+    vi.stubGlobal("Worker", FormatWorker);
+    layoutManager = new LayoutManager(mockCy as unknown as Core);
+
+    await layoutManager.apply({
+      timelineMode: false,
+      timelineAxis: "x",
+      timelineScale: 1,
+      orbitMode: false,
+      centralNodeId: null,
+      stableLayout: false,
+      isGuest: false,
+      onPositionsUpdated,
+    });
+
+    expect(onPositionsUpdated).toHaveBeenCalledWith(
+      expect.objectContaining({
+        "1": expect.objectContaining({
+          metadata: expect.objectContaining({
+            coordinates: expect.any(Object),
+          }),
+        }),
+      }),
+    );
+    expect(node1.position).toHaveBeenCalledWith({ x: 50, y: 50 });
   });
 });
 

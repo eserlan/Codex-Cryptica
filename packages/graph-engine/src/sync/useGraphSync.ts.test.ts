@@ -9,13 +9,32 @@ describe("syncGraphElements", () => {
     mockCy = {
       elements: vi.fn().mockReturnValue([]),
       remove: vi.fn(),
-      add: vi.fn().mockReturnValue([]),
+      add: vi.fn().mockImplementation((nodes) => {
+        const mapped = (Array.isArray(nodes) ? nodes : [nodes]).map((n) => ({
+          id: vi.fn().mockReturnValue(n.data.id),
+          data: vi.fn().mockReturnValue(n.data),
+          removeClass: vi.fn(),
+          position: vi.fn(),
+          hasClass: vi.fn().mockReturnValue(false),
+          connectedEdges: vi.fn().mockReturnValue([]),
+        }));
+        return {
+          addClass: vi.fn(),
+          forEach: vi.fn((cb) => mapped.forEach(cb)),
+        };
+      }),
       batch: vi.fn((cb) => cb()),
-      collection: vi.fn(),
+      collection: vi.fn((els) => els),
       width: vi.fn().mockReturnValue(1000),
       height: vi.fn().mockReturnValue(800),
       viewport: vi.fn(),
-      $id: vi.fn().mockReturnValue({ nonempty: vi.fn().mockReturnValue(true) }),
+      $id: vi.fn().mockReturnValue({
+        nonempty: vi.fn().mockReturnValue(true),
+        removeClass: vi.fn(),
+      }),
+      nodes: vi.fn().mockReturnValue({
+        removeClass: vi.fn(),
+      }),
     };
   });
 
@@ -316,10 +335,15 @@ describe("syncGraphElements", () => {
       onLayoutUpdate,
     });
 
-    expect(onLayoutUpdate).toHaveBeenCalledWith(false, true, "Elements Update");
+    expect(onLayoutUpdate).toHaveBeenCalledWith(
+      false,
+      true,
+      "Elements Update",
+      false,
+    );
   });
 
-  it("should NOT force layout on addition (incremental)", () => {
+  it("should force layout on addition and pass hasNewNodes=true", () => {
     const onLayoutUpdate = vi.fn();
     mockCy.elements.mockReturnValue([]);
 
@@ -335,7 +359,28 @@ describe("syncGraphElements", () => {
       false,
       false,
       "Elements Update",
+      true,
     );
+  });
+
+  it("should not trigger a relayout for edge-only additions", () => {
+    const onLayoutUpdate = vi.fn();
+    mockCy.elements.mockReturnValue([]);
+
+    syncGraphElements(mockCy as unknown as Core, {
+      elements: [
+        {
+          group: "edges",
+          data: { id: "edge-1", source: "node-a", target: "node-b" },
+        },
+      ] as any[],
+      vaultStatus: "idle",
+      initialLoaded: true,
+      isTemporalMetadataEqual: (a, b) => a === b,
+      onLayoutUpdate,
+    });
+
+    expect(onLayoutUpdate).not.toHaveBeenCalled();
   });
 
   it("should recalculate weights from the filtered rendered graph", () => {

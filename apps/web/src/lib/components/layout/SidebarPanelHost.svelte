@@ -1,6 +1,7 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import { onMount } from "svelte";
 
   let OracleSidebarPanel = $state<any>(null);
   let EntityExplorer = $state<any>(null);
@@ -19,23 +20,17 @@
     }
   };
 
-  // Pre-load components reactively
-  $effect(() => {
-    if (uiStore.activeSidebarTool === "oracle" && !OracleSidebarPanel) {
-      import("../oracle/OracleSidebarPanel.svelte")
-        .then((m) => (OracleSidebarPanel = m?.default))
-        .catch((err) => logError("OracleSidebarPanel", err));
-    }
-    if (uiStore.activeSidebarTool === "explorer" && !EntityExplorer) {
-      import("../explorer/EntityExplorer.svelte")
-        .then((m) => (EntityExplorer = m?.default))
-        .catch((err) => logError("EntityExplorer", err));
-    }
-    if (uiStore.activeSidebarTool === "ai-assessment" && !AIAssessment) {
-      import("../oracle/AIAssessment.svelte")
-        .then((m) => (AIAssessment = m?.default))
-        .catch((err) => logError("AIAssessment", err));
-    }
+  // Eagerly preload all panel components on mount so they're ready before first use
+  onMount(() => {
+    import("../oracle/OracleSidebarPanel.svelte")
+      .then((m) => (OracleSidebarPanel = m?.default))
+      .catch((err) => logError("OracleSidebarPanel", err));
+    import("../explorer/EntityExplorer.svelte")
+      .then((m) => (EntityExplorer = m?.default))
+      .catch((err) => logError("EntityExplorer", err));
+    import("../oracle/AIAssessment.svelte")
+      .then((m) => (AIAssessment = m?.default))
+      .catch((err) => logError("AIAssessment", err));
   });
 </script>
 
