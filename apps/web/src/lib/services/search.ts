@@ -138,13 +138,17 @@ export class SearchService {
         .equals(vaultId)
         .toArray();
 
+      const metadatas = await entityDb.graphEntities
+        .where("vaultId")
+        .equals(vaultId)
+        .toArray();
+
+      const metaMap = new Map(metadatas.map((m) => [m.id, m]));
+
       for (const record of records) {
         // We need the full metadata to prevent FlexSearch from overwriting the document
         // with empty fields, as 'add/update' replaces the entire document.
-        const metadata = await entityDb.graphEntities.get([
-          vaultId,
-          record.entityId,
-        ]);
+        const metadata = metaMap.get(record.entityId);
 
         if (metadata) {
           batch.push({
