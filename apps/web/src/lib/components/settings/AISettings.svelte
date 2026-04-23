@@ -210,6 +210,44 @@
     </div>
   </div>
 
+  <!-- Oracle Tools -->
+  <div class="mt-6 pt-6 border-t border-theme-border/30">
+    <span
+      class="text-sm text-theme-text font-bold uppercase font-header block mb-1"
+      >Oracle Tools</span
+    >
+    <p class="text-xs text-theme-muted mb-4 leading-relaxed">
+      Run manual analysis scripts to refine your campaign.
+    </p>
+
+    <button
+      onclick={() => {
+        uiStore.showSettings = false;
+        uiStore.showAIConnectionsAssessment = true;
+      }}
+      class="w-full flex items-center justify-between p-3 rounded-lg border border-theme-border bg-theme-bg/30 text-theme-text hover:bg-theme-primary/10 hover:border-theme-primary/40 transition-all group"
+    >
+      <div class="flex items-center gap-3 text-left">
+        <div
+          class="w-8 h-8 rounded-full bg-theme-primary/10 flex items-center justify-center text-theme-primary group-hover:scale-110 transition-transform"
+        >
+          <span class="icon-[lucide--brain-circuit] w-4 h-4"></span>
+        </div>
+        <div>
+          <span class="block text-xs font-bold uppercase font-header"
+            >Connections Assessment</span
+          >
+          <span class="text-[10px] text-theme-muted block"
+            >Scan entire archive for missing links.</span
+          >
+        </div>
+      </div>
+      <span
+        class="icon-[lucide--chevron-right] w-4 h-4 text-theme-muted group-hover:text-theme-primary transition-colors"
+      ></span>
+    </button>
+  </div>
+
   <!-- API Key Management -->
   {#if !oracle.apiKey}
     <div class="pt-2 border-t border-theme-border">

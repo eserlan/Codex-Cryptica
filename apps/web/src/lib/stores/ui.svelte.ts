@@ -47,6 +47,7 @@ export class UIStore {
   aiDisabled = $state(false);
   showDiceModal = $state(false);
   showChangelog = $state(false);
+  showAIConnectionsAssessment = $state(false);
   lastSeenVersion = $state<string | null>(null);
   autoArchive = $state(false);
   entityDiscoveryMode = $state<EntityDiscoveryMode>("suggest");

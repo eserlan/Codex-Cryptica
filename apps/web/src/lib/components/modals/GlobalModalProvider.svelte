@@ -144,6 +144,16 @@
       {/await}
     {/if}
 
+    {#if uiStore.showAIConnectionsAssessment}
+      {#await loadModal(() => import("$lib/components/debug/AIConnectionsAssessmentModal.svelte"), "AIConnectionsAssessmentModal") then AIConnectionsAssessmentModal}
+        {#if AIConnectionsAssessmentModal}
+          <AIConnectionsAssessmentModal
+            bind:isOpen={uiStore.showAIConnectionsAssessment}
+          />
+        {/if}
+      {/await}
+    {/if}
+
     <!-- Global Image Lightbox -->
     {#if uiStore.lightbox.show}
       {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
