@@ -1,6 +1,5 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
-import { browser } from "$app/environment";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
@@ -112,7 +111,7 @@ export class OracleStore {
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
 
     // Initialize Event Bus for Hybrid Communication
-    if (browser) {
+    if (typeof window !== "undefined" && typeof BroadcastChannel !== "undefined") {
       this.eventBus = new BroadcastChannel("codex-oracle-events");
       this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
     }

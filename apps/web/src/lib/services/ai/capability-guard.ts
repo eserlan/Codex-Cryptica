@@ -1,5 +1,3 @@
-import { browser } from "$app/environment";
-
 export function assertAIEnabled() {
   if (!isAIEnabled()) {
     throw new Error("AI features are disabled.");
@@ -7,7 +5,10 @@ export function assertAIEnabled() {
 }
 
 export function isAIEnabled(): boolean {
-  if (browser && typeof localStorage !== "undefined") {
+  // Manual check for browser environment to avoid $app/environment in workers
+  const isBrowser = typeof window !== "undefined" && typeof localStorage !== "undefined";
+
+  if (isBrowser) {
     // Sync check from localStorage as used in UIStore
     const disabled = localStorage.getItem("codex_ai_disabled");
     if (disabled === "true") return false;

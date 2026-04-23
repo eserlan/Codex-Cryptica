@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { assertAIEnabled, isAIEnabled } from "./capability-guard";
 
-vi.mock("$app/environment", () => ({
-  browser: true,
-}));
-
 describe("capability-guard", () => {
   beforeEach(() => {
     localStorage.clear();
