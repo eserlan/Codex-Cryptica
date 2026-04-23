@@ -3,6 +3,7 @@ import { oracle } from "./oracle.svelte";
 import { uiStore } from "./ui.svelte";
 import { proposerBridge } from "../cloud-bridge/proposer-bridge";
 import { debugStore } from "./debug.svelte";
+import { vaultEventBus } from "./vault/events";
 import { TIER_MODES } from "schema";
 import type { Proposal } from "@codex/proposer";
 import { ProposerService } from "@codex/proposer";
@@ -10,6 +11,15 @@ import { getDB, DB_NAME, DB_VERSION } from "../utils/idb";
 
 class ProposerStore {
   private service: ProposerService | null = null;
+
+  constructor() {
+    vaultEventBus.subscribe((event) => {
+      if (event.type === "VAULT_DELETED") {
+        void this.clearVault(event.vaultId);
+      }
+    });
+  }
+
   isAnalyzing = $state(false);
   isLoadingProposals = $state(false);
   analysisError = $state<string | null>(null);
@@ -67,10 +77,6 @@ class ProposerStore {
       (a, b) => b.timestamp - a.timestamp,
     );
   });
-
-  constructor() {
-    //
-  }
 
   private getService(): ProposerService {
     if (!this.service) {
