@@ -228,6 +228,11 @@ export class DefaultTextGenerationService implements TextGenerationService {
     onUpdate: (partial: string) => void,
     demoMode = false,
     categories?: string[],
+    _options?: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: any[];
+    },
   ): Promise<void> {
     assertAIEnabled();
     const systemInstruction = buildSystemInstruction(demoMode, categories);

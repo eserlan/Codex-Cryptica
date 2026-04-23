@@ -163,3 +163,19 @@ export interface OracleExecutionContext {
     entityId?: string;
   }) => void;
 }
+
+/**
+ * Oracle Background Worker Event Types
+ */
+export type OracleWorkerEventType =
+  | "ORACLE_THINKING_START"
+  | "ORACLE_THINKING_END"
+  | "ORACLE_ENTITY_DISCOVERED"
+  | "ORACLE_ERROR";
+
+export interface OracleWorkerEvent {
+  type: OracleWorkerEventType;
+  payload?: any;
+  vaultId?: string;
+  requestId?: string;
+}

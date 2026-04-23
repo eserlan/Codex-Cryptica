@@ -1,3 +1,5 @@
+import { oracleBridge } from "../cloud-bridge/oracle-bridge";
+import * as Comlink from "comlink";
 import { contextRetrievalService as defaultContextRetrieval } from "../services/ai/context-retrieval.service";
 import { textGenerationService as defaultTextGeneration } from "../services/ai/text-generation.service";
 import { imageGenerationService as defaultImageGeneration } from "../services/ai/image-generation.service";
@@ -27,6 +29,7 @@ import {
 } from "dice-engine";
 import { diceHistory as defaultDiceHistory } from "./dice-history.svelte";
 import { categories as defaultCategories } from "./categories.svelte";
+import type { TextGenerationService } from "schema";
 
 export type { ChatMessage, UndoableAction };
 
@@ -44,7 +47,7 @@ export class OracleStore {
   private graph: typeof defaultGraph;
   private diceHistory: typeof defaultDiceHistory;
   private contextRetrieval: typeof defaultContextRetrieval;
-  private textGeneration: typeof defaultTextGeneration;
+  private textGeneration: TextGenerationService;
   private imageGeneration: typeof defaultImageGeneration;
   private searchService: typeof defaultSearchService;
   private diceEngine: typeof defaultDiceEngine;
@@ -58,6 +61,7 @@ export class OracleStore {
   private settingsService: OracleSettingsService;
   private undoRedo: UndoRedoService;
   private executor: OracleActionExecutor;
+  private eventBus: BroadcastChannel;
 
   constructor(
     deps: {
@@ -66,7 +70,7 @@ export class OracleStore {
       graph?: typeof defaultGraph;
       diceHistory?: typeof defaultDiceHistory;
       contextRetrieval?: typeof defaultContextRetrieval;
-      textGeneration?: typeof defaultTextGeneration;
+      textGeneration?: TextGenerationService;
       imageGeneration?: typeof defaultImageGeneration;
       searchService?: typeof defaultSearchService;
       diceEngine?: typeof defaultDiceEngine;
@@ -85,14 +89,18 @@ export class OracleStore {
     this.graph = deps.graph ?? defaultGraph;
     this.diceHistory = deps.diceHistory ?? defaultDiceHistory;
     this.contextRetrieval = deps.contextRetrieval ?? defaultContextRetrieval;
-    this.textGeneration = deps.textGeneration ?? defaultTextGeneration;
+    this.textGeneration =
+      deps.textGeneration ??
+      (oracleBridge.isReady ? oracleBridge.textGeneration : defaultTextGeneration);
     this.imageGeneration = deps.imageGeneration ?? defaultImageGeneration;
     this.searchService = deps.searchService ?? defaultSearchService;
     this.diceEngine = deps.diceEngine ?? defaultDiceEngine;
     this.diceParser = deps.diceParser ?? defaultDiceParser;
     this.sessionActivity = deps.sessionActivity ?? sessionActivity;
     this.categories = deps.categories ?? defaultCategories;
-    this.draftingEngine = deps.draftingEngine ?? defaultDraftingEngine;
+    this.draftingEngine =
+      deps.draftingEngine ??
+      (oracleBridge.isReady ? oracleBridge.draftingEngine : defaultDraftingEngine);
 
     // Use provided services or defaults
     this.chatHistoryService =
@@ -101,6 +109,28 @@ export class OracleStore {
     this.undoRedo = deps.undoRedo ?? new UndoRedoService();
     this.executor =
       deps.executor ?? new OracleActionExecutor(undefined, this.draftingEngine);
+
+    // Initialize Event Bus for Hybrid Communication
+    this.eventBus = new BroadcastChannel("codex-oracle-events");
+    this.eventBus.onmessage = (event) => this.handleWorkerEvent(event.data);
+  }
+
+  private handleWorkerEvent(event: any) {
+    if (event.vaultId && event.vaultId !== this.vault.activeVaultId) return;
+
+    switch (event.type) {
+      case "ORACLE_ENTITY_DISCOVERED":
+        if (event.requestId) {
+          void this.chatHistoryService.addProposal(
+            event.requestId,
+            event.payload,
+          );
+        }
+        break;
+      case "ORACLE_ERROR":
+        console.error("[OracleWorker] Background Error:", event.payload);
+        break;
+    }
   }
 
   async init() {
@@ -167,7 +197,48 @@ export class OracleStore {
       uiStore: this.uiStore,
       chatHistory: this.chatHistoryService,
       contextRetrieval: this.contextRetrieval,
-      textGeneration: this.textGeneration,
+      textGeneration: {
+        ...this.textGeneration,
+        generateResponse: (
+          apiKey: string,
+          query: string,
+          history: any[],
+          context: string,
+          modelName: string,
+          onUpdate: (partial: string) => void,
+          demoMode?: boolean,
+          categories?: string[],
+          options?: {
+            requestId?: string;
+            vaultId?: string;
+            existingEntities?: any[];
+          },
+        ) => {
+          // Wrap callback with Comlink.proxy only if we are using the worker bridge
+          const callback = oracleBridge.isReady
+            ? Comlink.proxy(onUpdate)
+            : onUpdate;
+
+          return this.textGeneration.generateResponse(
+            apiKey,
+            query,
+            history,
+            context,
+            modelName,
+            callback,
+            demoMode,
+            categories,
+            {
+              ...options,
+              requestId: options?.requestId,
+              vaultId: options?.vaultId || this.vault.activeVaultId,
+              existingEntities:
+                options?.existingEntities ||
+                Object.values(this.vault.entities || {}),
+            },
+          );
+        },
+      },
       imageGeneration: this.imageGeneration,
       searchService: this.searchService,
       diceParser: this.diceParser,

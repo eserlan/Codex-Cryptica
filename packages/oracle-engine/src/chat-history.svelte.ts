@@ -104,6 +104,21 @@ export class ChatHistoryService {
     }
   }
 
+  async addProposal(messageId: string, proposal: any) {
+    const msgIndex = this.messages.findIndex((m) => m.id === messageId);
+    if (msgIndex !== -1) {
+      const msg = this.messages[msgIndex];
+      const existing = msg.proposals || [];
+      if (existing.some((p: any) => p.title === proposal.title)) return;
+
+      const proposals = [...existing, proposal];
+      this.messages[msgIndex] = { ...msg, proposals };
+      this.messages = [...this.messages];
+      this.lastUpdated = Date.now();
+      await this.saveToDB();
+    }
+  }
+
   /**
    * Save current messages to IndexedDB.
    * Strips blob URLs before persistence (they are regenerated on init).

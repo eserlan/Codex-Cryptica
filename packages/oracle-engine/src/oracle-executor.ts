@@ -646,6 +646,10 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             query,
             context,
             handlePartialResponse,
+            {
+              requestId: assistantMsg.id,
+              vaultId: context.vaultId,
+            },
           );
 
         // Final update with entity context
@@ -676,9 +680,18 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           });
 
           if (proposals.length > 0) {
-            finalMsgs[assistantMsgIndex].proposals = proposals;
+            const existingProposals =
+              finalMsgs[assistantMsgIndex].proposals || [];
+            const newProposals = proposals.filter(
+              (p) => !existingProposals.some((e) => e.title === p.title),
+            );
 
-            for (const p of proposals) {
+            finalMsgs[assistantMsgIndex].proposals = [
+              ...existingProposals,
+              ...newProposals,
+            ];
+
+            for (const p of newProposals) {
               context.logActivity?.({
                 type: "discovery",
                 title: p.title,
