@@ -181,6 +181,7 @@
               onclick={copyToClipboard}
               class="p-2 text-green-700 hover:text-green-500 transition rounded hover:bg-green-900/20"
               title="Copy Content"
+              aria-label="Copy Content"
             >
               {#if copyStatus === "success"}
                 <span class="icon-[lucide--check] w-6 h-6"></span>
