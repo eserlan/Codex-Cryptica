@@ -106,7 +106,12 @@ class ProposerStore {
     requireSelection = false,
     analysisText?: string,
   ) {
-    if (uiStore.aiDisabled || this.isAnalyzing) return;
+    if (uiStore.aiDisabled) return;
+
+    // We log a warning if trying to analyze the same entity concurrently,
+    // but we shouldn't block analyses for *different* entities entirely.
+    // For now, allow concurrent analyses by dropping the global `this.isAnalyzing` block here.
+    // NOTE: UI loaders bound to `isAnalyzing` might flicker.
 
     this.analysisError = null;
 
