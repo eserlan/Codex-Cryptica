@@ -22,3 +22,7 @@
 
 **Learning:** Svelte `a11y_click_events_have_key_events` and `a11y_no_static_element_interactions` warnings on clickable `<div>` elements are best resolved by converting them to semantic `<button type="button">` elements.
 **Action:** When creating clickable overlays (like map entries) with `group-hover:opacity-100`, use a `<button>`, add an `aria-label`, and include `focus:opacity-100` plus a strong visible focus style such as `focus-visible:ring-2 focus-visible:ring-offset-2` so keyboard users can navigate to and trigger them natively without `svelte-ignore` comments.
+
+## 2024-05-18 - Icon-Only Buttons Require Explicit aria-label
+**Learning:** While the `title` attribute provides a tooltip for sighted users on hover, it is not consistently read by all screen readers or in all contexts as an accessible name for an element. For icon-only buttons, especially in modals or highly interactive components, relying solely on `title` can result in empty or unhelpful announcements for assistive technologies.
+**Action:** Always provide an explicit `aria-label` attribute on icon-only `<button>` elements, even if a `title` attribute is already present. This ensures robust accessibility across different screen readers.
