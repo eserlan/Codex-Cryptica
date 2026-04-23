@@ -114,7 +114,8 @@
       oracle.init();
 
       // Preload heavy route chunks so first navigation is instant
-      preloadCode(`${base}/canvas`, `${base}/map`).catch(() => {});
+      preloadCode(`${base}/canvas`).catch(() => {});
+      preloadCode(`${base}/map`).catch(() => {});
 
       registerServiceWorker();
 

@@ -147,9 +147,7 @@
           isLayoutRunning = false;
           graphVisible = true;
           if (isInitial) {
-            setTimeout(() => {
-              _layoutReady = true;
-            }, 1000);
+            _layoutReady = true;
           }
         },
         onPositionsUpdated: (updates) => {

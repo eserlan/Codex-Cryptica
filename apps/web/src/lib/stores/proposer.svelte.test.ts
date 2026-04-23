@@ -205,6 +205,21 @@ describe("proposerStore", () => {
 
     const { proposerStore } = await import("./proposer.svelte");
 
+    mockVault.entities["source"] = {
+      id: "source",
+      title: "Source",
+      connections: [],
+    };
+    mockVault.entities["target"] = {
+      id: "target",
+      title: "Target",
+      connections: [],
+    };
+    mockVault.allEntities.push(
+      mockVault.entities["source"],
+      mockVault.entities["target"],
+    );
+
     const sourceRun = proposerStore.analyzeEntityById("source");
     await vi.waitFor(() => {
       expect(proposerStore.isEntityAnalyzing("source")).toBe(true);

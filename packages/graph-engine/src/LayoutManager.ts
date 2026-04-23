@@ -173,7 +173,12 @@ export class LayoutManager {
   private jobId = 0;
   private pendingJobId: number | null = null;
   private pendingWorkerResolve:
-    | ((result: Record<string, { x: number; y: number }> | null) => void)
+    | ((
+        result: Record<
+          string,
+          { metadata: { coordinates: { x: number; y: number } } }
+        > | null,
+      ) => void)
     | null = null;
 
   constructor(private cy: Core) {}

@@ -161,12 +161,12 @@ export class GraphTransformer {
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;
-      const hasValidCoords =
-        coords &&
-        typeof coords.x === "number" &&
-        typeof coords.y === "number" &&
+      const hasValidCoords = !!(
+        coords?.x != null &&
+        coords?.y != null &&
         Number.isFinite(coords.x) &&
-        Number.isFinite(coords.y);
+        Number.isFinite(coords.y)
+      );
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.

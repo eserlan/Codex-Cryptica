@@ -627,7 +627,9 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
           ...context.chatHistory.messages,
         ];
-        const lastIdx = finalMsgs.findIndex((m) => m.id === assistantMsg.id);
+        const lastIdx = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
         if (lastIdx !== -1) {
           finalMsgs[lastIdx].imageUrl = imageUrl;
           finalMsgs[lastIdx].imageBlob = blob;
@@ -664,9 +666,11 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
           ...context.chatHistory.messages,
         ];
-        const userMsgIndex = finalMsgs.findIndex((m) => m.id === userMsgId);
+        const userMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === userMsgId,
+        );
         const assistantMsgIndex = finalMsgs.findIndex(
-          (m) => m.id === assistantMsg.id,
+          (m: any) => m.id === assistantMsg.id,
         );
 
         if (userMsgIndex !== -1) {
