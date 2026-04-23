@@ -36,6 +36,21 @@ As a user, I want to see "Discovery Chips" appear in real-time as the Oracle ide
 
 ---
 
+### User Story 3 - Searchable AI Drafts (Priority: P2)
+
+As a user, I want to be able to find entities the Oracle has recently auto-created in global search, even if they are still in "Draft" status, so that I can quickly review or finalize them.
+
+**Why this priority**: Essential for the discovery workflow. If the AI creates a draft, the user needs to be able to find it easily without browsing the entire vault.
+
+**Independent Test**: Can be tested by letting the Oracle auto-create a draft and then searching for its name in the global search modal.
+
+**Acceptance Scenarios**:
+
+1. **Given** an AI-generated entity in "Draft" status, **When** I search for its title in the global search modal, **Then** it appears in the results with a "Draft" badge.
+2. **Given** a draft entity exists, **When** I ask the Oracle a follow-up question about it, **Then** the Oracle successfully retrieves it as RAG context and provides an accurate answer.
+
+---
+
 ### Edge Cases
 
 - **Worker Initialization Failure**: If the Web Worker fails to load (e.g., in a restricted environment), the system must fallback to main-thread execution to ensure the Oracle remains functional.
