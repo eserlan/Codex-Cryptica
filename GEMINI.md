@@ -1,8 +1,11 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-19
+Auto-generated from all feature plans. Last updated: 2026-04-23
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4 (088-adjustable-sidebars)
+- `localStorage` (via existing `uiStore` integration) (088-adjustable-sidebars)
 
 - TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine` (087-gen-oracle-content)
 - OPFS (Primary Vault), IndexedDB (Registry & Draft Metadata), LocalStorage (Auto-Archive setting) (087-gen-oracle-content)
@@ -151,10 +154,10 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 088-adjustable-sidebars: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4
+
 - 087-gen-oracle-content: Added TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine`
 
 - 0.18.0 - The Tactical Explorer Update: Added Label-Grouped Entity Explorer with persistence, VTT sidebar Entity List, and token drag-and-drop. Improved Zen Popout error handling and map coordinate bounds safety.
-
-- 085-vtt-entity-list: Added VTT sidebar "Vault Entities" section with collapsible entity list, drag-to-map token placement (host add / guest request), canvas ghost-token drag preview, and persisted sidebar collapse state. Also added label-grouped explorer view mode with collapsible label groups and persisted view state.
 
 <!-- MANUAL ADDITIONS START -->

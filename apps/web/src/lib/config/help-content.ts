@@ -327,6 +327,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
       "Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.",
     icon: "icon-[lucide--sliders-horizontal]",
   },
+  "adjustable-sidebars": {
+    id: "adjustable-sidebars",
+    title: "Adjustable Sidebars",
+    content:
+      "Dynamically resize the left and right sidebars to suit your workspace needs. Hover over the inner edge of a sidebar and drag left or right. Your custom widths are automatically saved across sessions.",
+    icon: "icon-[lucide--separator-vertical]",
+  },
   "draft-review": {
     id: "draft-review",
     title: "Reviewing Drafts",

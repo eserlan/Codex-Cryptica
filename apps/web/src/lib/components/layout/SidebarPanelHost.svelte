@@ -1,6 +1,7 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
+  import ResizerHandle from "./ResizerHandle.svelte";
 
   let OracleSidebarPanel = $state<any>(null);
   let EntityExplorer = $state<any>(null);
@@ -35,12 +36,23 @@
 
 {#if uiStore.leftSidebarOpen}
   <aside
-    class="w-full md:w-96 md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0 overflow-hidden
+    class="w-full md:h-full bg-theme-surface border-theme-border flex flex-col z-[85] shadow-xl relative shrink-0 overflow-hidden
            max-md:fixed max-md:inset-0 md:border-r md:bottom-0"
+    style:width={uiStore.isMobile ? "100%" : `${uiStore.leftSidebarWidth}px`}
     style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-texture-overlay)"
     data-testid="sidebar-panel-host"
   >
+    {#if !uiStore.isMobile}
+      <ResizerHandle
+        side="left"
+        minWidth={240}
+        maxWidthVW={40}
+        currentWidth={uiStore.leftSidebarWidth}
+        onResize={(w) => uiStore.setLeftSidebarWidth(w)}
+      />
+    {/if}
+
     {#if uiStore.activeSidebarTool === "oracle" && OracleSidebarPanel}
       <OracleSidebarPanel />
     {:else if uiStore.activeSidebarTool === "explorer" && EntityExplorer}

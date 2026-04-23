@@ -58,6 +58,8 @@ export class UIStore {
   // Sidebar State
   leftSidebarOpen = $state(false);
   activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+  leftSidebarWidth = $state(280);
+  rightSidebarWidth = $state(380);
 
   // Main View State
   mainViewMode = $state<"visualization" | "focus">("visualization");
@@ -273,6 +275,20 @@ export class UIStore {
   closeSidebar() {
     this.leftSidebarOpen = false;
     this.activeSidebarTool = "none";
+  }
+
+  setLeftSidebarWidth(width: number) {
+    this.leftSidebarWidth = width;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_left_sidebar_width", width.toString());
+    }
+  }
+
+  setRightSidebarWidth(width: number) {
+    this.rightSidebarWidth = width;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("codex_right_sidebar_width", width.toString());
+    }
   }
 
   markVersionAsSeen(version: string) {
