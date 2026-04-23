@@ -514,10 +514,10 @@ describe("OracleStore", () => {
         chatHistoryService: mockChatHistory as any,
       });
       
-      const context = bareOracle.getExecutionContext();
-      expect(context.vault.createEntity).toBeUndefined();
-      expect(context.searchService.search).toBeUndefined();
-      expect(context.diceParser.parse).toBeUndefined();
+      const _context = bareOracle.getExecutionContext();
+      expect(_context.vault.createEntity).toBeUndefined();
+      expect(_context.searchService.search).toBeUndefined();
+      expect(_context.diceParser.parse).toBeUndefined();
     });
 
     it("should start a wizard", async () => {
