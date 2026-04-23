@@ -120,6 +120,16 @@
   );
   const isGuestMode = $derived(!!shareId);
 
+  import { onMount } from "svelte";
+
+  onMount(() => {
+    // Eagerly prefetch the heavy components in the background a second after boot
+    // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
+    setTimeout(() => {
+      loadHeavyComponents();
+    }, 1000);
+  });
+
   // Consolidate reactive pre-loading and fallback loading into a single effect
   // to prevent race conditions during dynamic imports.
   $effect(() => {

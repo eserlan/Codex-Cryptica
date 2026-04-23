@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { uiStore } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
@@ -18,6 +19,14 @@
       debugStore.error(`Failed to lazy-load component: ${name}`, error);
     }
   };
+
+  // Eagerly prefetch the sidebars in the background to avoid dev-mode lag
+  onMount(() => {
+    setTimeout(() => {
+      import("../oracle/OracleSidebarPanel.svelte").catch(() => {});
+      import("../explorer/EntityExplorer.svelte").catch(() => {});
+    }, 1000);
+  });
 
   // Pre-load components reactively
   $effect(() => {
