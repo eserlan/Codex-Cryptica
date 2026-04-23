@@ -208,7 +208,13 @@ describe("proposerStore", () => {
 
     expect(mockService.verifyProposal).toHaveBeenCalledWith(proposal.id);
     expect(proposerStore.allAcceptedProposals).toHaveLength(0);
-    expect(proposerStore.allVerifiedProposals).toContainEqual(proposal);
+    expect(proposerStore.allVerifiedProposals).toContainEqual(
+      expect.objectContaining({
+        ...proposal,
+        status: "verified",
+        timestamp: expect.any(Number),
+      }),
+    );
   });
 
   it("undos an accepted proposal", async () => {
@@ -225,6 +231,12 @@ describe("proposerStore", () => {
     );
     expect(mockService.dismissProposal).toHaveBeenCalledWith(proposal.id);
     expect(proposerStore.allAcceptedProposals).toHaveLength(0);
-    expect(proposerStore.history[proposal.sourceId]).toContainEqual(proposal);
+    expect(proposerStore.history[proposal.sourceId]).toContainEqual(
+      expect.objectContaining({
+        ...proposal,
+        status: "rejected",
+        timestamp: expect.any(Number),
+      }),
+    );
   });
 });

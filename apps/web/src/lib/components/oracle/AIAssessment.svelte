@@ -6,22 +6,32 @@
 
   let assessmentTab = $state<"pending" | "finalized">("pending");
   let isLoading = $state(true);
+  let loadError = $state<string | null>(null);
 
   $effect(() => {
-    proposerStore.loadGlobalProposals().then(() => {
-      isLoading = false;
-    });
+    isLoading = true;
+    loadError = null;
+    proposerStore
+      .loadGlobalProposals()
+      .catch((error) => {
+        loadError =
+          error instanceof Error ? error.message : "Failed to load proposals";
+      })
+      .finally(() => {
+        isLoading = false;
+      });
   });
 
   const handleApply = async (proposal: Proposal) => {
     await proposerStore.apply(proposal);
+    // Refresh global list after apply
+    await proposerStore.loadGlobalProposals();
   };
 
   const handleDismiss = async (proposal: Proposal) => {
     await proposerStore.dismiss(proposal);
     // Refresh global list after dismissal
-    proposerStore.allPendingProposals =
-      proposerStore.allPendingProposals.filter((p) => p.id !== proposal.id);
+    await proposerStore.loadGlobalProposals();
   };
 
   const handleVerify = async (proposal: Proposal) => {
@@ -120,6 +130,19 @@
           >Loading Proposals...</span
         >
       </div>
+    {:else if loadError}
+      <div
+        class="flex flex-col items-center justify-center h-40 gap-3 text-red-400 text-center p-4"
+      >
+        <span class="icon-[lucide--alert-circle] w-8 h-8 opacity-50"></span>
+        <span class="text-xs">{loadError}</span>
+        <button
+          onclick={() => proposerStore.loadGlobalProposals()}
+          class="text-[10px] uppercase tracking-widest underline hover:text-red-300"
+        >
+          Retry
+        </button>
+      </div>
     {:else if assessmentTab === "pending"}
       {#if proposerStore.allPendingProposals.length === 0}
         <div
@@ -177,6 +200,7 @@
                   onclick={() => handleApply(proposal)}
                   class="p-2 hover:bg-green-500/20 text-green-400 rounded-md transition-colors"
                   title="Accept Connection"
+                  aria-label={`Accept connection suggestion from ${vault.entities[proposal.sourceId]?.title || "Unknown"} to ${vault.entities[proposal.targetId]?.title || "Unknown"}`}
                 >
                   <span class="icon-[lucide--check] w-4 h-4"></span>
                 </button>
@@ -184,6 +208,7 @@
                   onclick={() => handleDismiss(proposal)}
                   class="p-2 hover:bg-red-500/20 text-red-400 rounded-md transition-colors"
                   title="Dismiss"
+                  aria-label={`Dismiss connection suggestion from ${vault.entities[proposal.sourceId]?.title || "Unknown"} to ${vault.entities[proposal.targetId]?.title || "Unknown"}`}
                 >
                   <span class="icon-[lucide--trash-2] w-4 h-4"></span>
                 </button>
@@ -260,6 +285,7 @@
                         onclick={() => handleVerify(proposal)}
                         class="p-2 bg-theme-primary/10 hover:bg-theme-primary/20 text-theme-primary rounded-md transition-colors"
                         title="Verify Quality"
+                        aria-label={`Verify quality for ${vault.entities[proposal.sourceId]?.title || "Unknown"} to ${vault.entities[proposal.targetId]?.title || "Unknown"}`}
                       >
                         <span class="icon-[lucide--check] w-4 h-4"></span>
                       </button>
@@ -267,6 +293,7 @@
                         onclick={() => handleUndo(proposal)}
                         class="p-2 hover:bg-red-500/20 text-red-400 rounded-md transition-colors"
                         title="Remove Connection"
+                        aria-label={`Remove connection between ${vault.entities[proposal.sourceId]?.title || "Unknown"} and ${vault.entities[proposal.targetId]?.title || "Unknown"}`}
                       >
                         <span class="icon-[lucide--rotate-ccw] w-4 h-4"></span>
                       </button>
@@ -325,6 +352,7 @@
                       onclick={() => handleUndo(proposal)}
                       class="p-1.5 hover:bg-red-500/10 text-red-400/50 hover:text-red-400 rounded transition-colors"
                       title="Undo Verification & Remove"
+                      aria-label={`Undo verification and remove connection between ${vault.entities[proposal.sourceId]?.title || "Unknown"} and ${vault.entities[proposal.targetId]?.title || "Unknown"}`}
                     >
                       <span class="icon-[lucide--rotate-ccw] w-3 h-3"></span>
                     </button>

@@ -281,6 +281,16 @@ Only return the JSON. If no connections are found, return empty array [].`;
     const proposal = await db.get(PROPOSAL_STORE, proposalId);
     if (!proposal) throw new Error(`Proposal ${proposalId} not found`);
 
+    if (proposal.status === "verified") {
+      return;
+    }
+
+    if (proposal.status !== "accepted") {
+      throw new Error(
+        `Proposal ${proposalId} cannot be verified from status "${proposal.status}"; expected "accepted" or "verified"`,
+      );
+    }
+
     proposal.status = "verified";
     proposal.timestamp = Date.now();
     await db.put(PROPOSAL_STORE, proposal);

@@ -116,7 +116,15 @@ class ProposerStore {
     this.allAcceptedProposals = this.allAcceptedProposals.filter(
       (p) => p.id !== proposal.id,
     );
-    this.allVerifiedProposals = [proposal, ...this.allVerifiedProposals];
+    const verifiedProposal = {
+      ...proposal,
+      status: "verified" as const,
+      timestamp: Date.now(),
+    };
+    this.allVerifiedProposals = [
+      verifiedProposal,
+      ...this.allVerifiedProposals,
+    ];
 
     // Update per-entity cache if it exists
     if (this.proposals[proposal.sourceId]) {
@@ -162,10 +170,15 @@ class ProposerStore {
       ].filter((p) => p.id !== proposal.id);
     }
 
-    // Add to history
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
-      proposal,
+      dismissedProposal,
       ...this.history[proposal.sourceId],
     ];
 
@@ -363,10 +376,15 @@ class ProposerStore {
         proposal.sourceId
       ].filter((p) => p.id !== proposal.id);
     }
-    // Add to history
+    // Add to history with updated status
+    const dismissedProposal = {
+      ...proposal,
+      status: "rejected" as const,
+      timestamp: Date.now(),
+    };
     if (!this.history[proposal.sourceId]) this.history[proposal.sourceId] = [];
     this.history[proposal.sourceId] = [
-      proposal,
+      dismissedProposal,
       ...this.history[proposal.sourceId],
     ];
     if (this.history[proposal.sourceId].length > 20) {
