@@ -165,6 +165,19 @@ export class SearchService {
             batch.length = 0;
             await this.indexBatch(currentBatch);
             indexedCount += currentBatch.length;
+
+            // Stagger batches to let the main thread and IndexedDB breathe.
+            // 500ms delay between chunks of 100 entities provides a smooth background sync
+            // without choking UI interactivity.
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Abort if the user switched vaults during the delay!
+            if (this.activeVaultId !== vaultId) {
+              debugStore.log(
+                `[SearchService] Background sync aborted (vault switched).`,
+              );
+              return;
+            }
           }
         }
       }
