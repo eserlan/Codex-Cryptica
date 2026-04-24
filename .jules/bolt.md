@@ -47,3 +47,13 @@
 
 **Learning:** Svelte 5 stores often manage small bounded arrays like "recent searches" or "recent labels". Using `[newItem, ...arr.filter(...)]` or `.slice()` allocates multiple intermediate arrays on every update, increasing overhead for simple insertions.
 **Action:** Replace `...arr.filter()` or `.slice()` patterns for managing small, bounded recent lists with a single imperative loop that caps the array size.
+
+## 2026-04-26 - [Performance Insight: Avoid chained .map().filter()]
+
+**Learning:** Replace chained array methods like `.map().filter(Boolean)` (often used to map IDs to entities and remove nulls) with a single imperative loop. This eliminates the allocation and traversal of intermediate arrays, improving performance during chunk processing or event handling.
+**Action:** When mapping IDs to objects and filtering out missing ones, use a `for` loop instead of chained array methods to reduce allocations.
+
+## 2026-04-26 - [Performance Insight: Caution with manual limit loops]
+
+**Learning:** When manually optimizing `.slice(0, limit)` with an imperative loop condition like `result.length < limit`, explicitly handle cases where `limit` might be `undefined`. Native `.slice(0, undefined)` safely copies the array, but a manual loop condition `0 < undefined` evaluates to `false`, causing the loop to terminate immediately and introducing bugs.
+**Action:** Be careful when replacing standard library functions. Ensure that all edge cases (like `undefined` parameters) are correctly handled.

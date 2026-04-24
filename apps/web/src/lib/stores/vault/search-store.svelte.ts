@@ -52,12 +52,14 @@ export class SearchStore {
           );
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
-          const entities = event.newOrChangedIds
-            .map((id: string) => event.entities[id])
-            .filter(Boolean);
-          await Promise.all(
-            entities.map((e: any) => this.indexEntity(e, services)),
-          );
+          const promises = [];
+          for (let i = 0; i < event.newOrChangedIds.length; i++) {
+            const entity = event.entities[event.newOrChangedIds[i]];
+            if (entity) {
+              promises.push(this.indexEntity(entity, services));
+            }
+          }
+          await Promise.all(promises);
         } else if (event.type === "BATCH_UPDATED") {
           const toIndex = event.entities.filter((e: any) => {
             const patch = event.patches?.[e.id];
