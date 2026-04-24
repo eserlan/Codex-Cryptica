@@ -17,15 +17,14 @@ export class SearchStore {
           );
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
-          // ⚡ Bolt Optimization: Replace chained .map().filter() with an imperative loop
-          const entities: LocalEntity[] = [];
+          const promises = [];
           for (let i = 0; i < event.newOrChangedIds.length; i++) {
             const entity = event.entities[event.newOrChangedIds[i]];
             if (entity) {
-              entities.push(entity);
+              promises.push(this.indexEntity(entity, services));
             }
           }
-          await Promise.all(entities.map((e) => this.indexEntity(e, services)));
+          await Promise.all(promises);
         } else if (event.type === "BATCH_UPDATED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await Promise.all(
