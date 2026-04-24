@@ -347,13 +347,11 @@ describe("proposerStore", () => {
 
   it("updates in-memory history before awaiting manual-removal persistence", async () => {
     vi.resetModules();
-    let resolveSave: (() => void) | null = null;
-    mockService.saveProposals.mockImplementationOnce(
-      () =>
-        new Promise<void>((resolve) => {
-          resolveSave = resolve;
-        }),
-    );
+    let releaseSave: () => void = () => {};
+    const saveBarrier = new Promise<void>((resolve) => {
+      releaseSave = () => resolve();
+    });
+    mockService.saveProposals.mockImplementationOnce(() => saveBarrier);
 
     const { proposerStore } = await import("./proposer.svelte");
 
@@ -374,7 +372,7 @@ describe("proposerStore", () => {
     expect(proposerStore.history["source"]).toHaveLength(1);
     expect(proposerStore.history["target"]).toHaveLength(1);
 
-    if (resolveSave) resolveSave();
+    releaseSave();
     await pendingRemoval;
   });
 
