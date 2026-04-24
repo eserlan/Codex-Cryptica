@@ -407,7 +407,7 @@ export class LayoutManager {
     isForced: boolean,
     caller: string,
     randomizeForced = false,
-    hasNewNodesParam = false,
+    _hasNewNodesParam = false,
   ) {
     const cyNodes = this.cy.nodes();
 
@@ -419,38 +419,22 @@ export class LayoutManager {
       !options.orbitMode;
     let randomize = isExitingTimeline || isExitingMode;
 
-    // Single pass: detect new nodes (at origin) and full-clump in one loop
-    let hasNewNodes = hasNewNodesParam;
+    // Detect full-clump (all nodes at origin) — force randomize so fcose can spread them
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
-      if (!p || (p.x === 0 && p.y === 0)) {
-        hasNewNodes = true;
-        nodesAtOrigin++;
-      }
+      if (!p || (p.x === 0 && p.y === 0)) nodesAtOrigin++;
     });
     if (!randomize && cyNodes.length > 1 && nodesAtOrigin === cyNodes.length) {
       randomize = true;
     }
 
-    const isFitOnly =
-      options.stableLayout &&
-      !randomize &&
-      !hasNewNodes &&
-      !isForced &&
-      (caller === "Load Finalized" || caller === "Window Resize");
+    const isManualRedraw = caller === "UI Redraw Button" && isForced;
+    const isFitOnly = options.stableLayout && !randomize && !isManualRedraw;
 
     if (isFitOnly) {
-      if (
-        isInitial ||
-        caller === "Load Finalized" ||
-        caller === "Window Resize"
-      ) {
-        this.cy.resize();
-        this.animateFitAndStop(options, "ease-out-cubic");
-      } else {
-        options.onLayoutStop?.();
-      }
+      this.cy.resize();
+      this.animateFitAndStop(options, "ease-out-cubic");
       // Safety: ensure any newly added nodes are visible even in fit-only paths
       this.cy.nodes().removeData("isPendingLayout");
       this.cy.nodes(".pending-layout").removeClass("pending-layout");

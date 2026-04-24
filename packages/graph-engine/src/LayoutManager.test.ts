@@ -91,6 +91,9 @@ describe("LayoutManager", () => {
       { x: 10, y: 10 },
       { x: 30, y: 30 },
     ]);
+    // Cytoscape collections returned by cy.nodes() need these in the fit-only path
+    (twoNodes as any).removeData = vi.fn();
+    (twoNodes as any).removeClass = vi.fn();
 
     mockCy = {
       destroyed: vi.fn().mockReturnValue(false),
@@ -147,13 +150,15 @@ describe("LayoutManager", () => {
     );
   });
 
-  it("should trigger layout when hasNewNodes is true even if stableLayout is true", async () => {
-    // Current positions are NOT at origin (so manual detection would fail)
+  it("should use fit-only when stableLayout is true, even with new nodes", async () => {
     const currentPositions = [
       { x: 100, y: 100 },
       { x: 200, y: 200 },
     ];
-    mockCy.nodes.mockReturnValue(makeNodes(currentPositions));
+    const nodes = makeNodes(currentPositions);
+    (nodes as any).removeData = vi.fn();
+    (nodes as any).removeClass = vi.fn();
+    mockCy.nodes.mockReturnValue(nodes);
 
     await layoutManager.apply(
       {
@@ -172,9 +177,9 @@ describe("LayoutManager", () => {
       true, // hasNewNodes = true
     );
 
-    // Should have triggered a worker postMessage (not just a fitOnly stop)
-    expect(capturedPostMessage).not.toBeNull();
-    expect(capturedPostMessage.jobId).toBeGreaterThan(0);
+    // stableLayout=true → fit-only; worker must NOT be called
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).toHaveBeenCalled();
   });
 
   it("should use lower gravity in landscape view", async () => {
@@ -230,7 +235,7 @@ describe("LayoutManager", () => {
     });
   });
 
-  it("should not randomize stable layouts for non-redraw forced updates", async () => {
+  it("should use fit-only for forced updates when stableLayout is true", async () => {
     await layoutManager.apply(
       {
         timelineMode: false,
@@ -246,7 +251,9 @@ describe("LayoutManager", () => {
       "External Update",
       true,
     );
-    expect(capturedPostMessage?.options.randomize).toBe(false);
+    // stableLayout=true + non-redraw forced update → fit-only; worker must NOT be called
+    expect(capturedPostMessage).toBeNull();
+    expect(mockCy.animate).toHaveBeenCalled();
   });
 
   it("should randomize when the UI redraw button requests a fresh solve", async () => {
