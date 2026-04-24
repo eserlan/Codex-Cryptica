@@ -89,19 +89,7 @@
       {#if activeTab === "oracle" && oracle.messages.length > 0}
         <button
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-red-400 transition-colors"
-          onclick={async () => {
-            if (
-              await uiStore.confirm({
-                title: "Clear History",
-                message:
-                  "Are you sure you want to clear the conversation history?",
-                confirmLabel: "Clear",
-                isDangerous: true,
-              })
-            ) {
-              oracle.clearMessages();
-            }
-          }}
+          onclick={() => oracle.clearMessages()}
           title="Clear conversation history"
           aria-label="Clear conversation history"
         >

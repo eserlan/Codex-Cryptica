@@ -23,7 +23,12 @@ export class GraphStore {
   }
 
   // Svelte 5 derived state
-  activeLabels = $state(new Set<string>());
+  get activeLabels() {
+    return this.ui.labelFilters;
+  }
+  set activeLabels(value: Set<string>) {
+    this.ui.labelFilters = value;
+  }
   activeCategories = $state(new Set<string>());
 
   elements = $derived.by(() => {
@@ -178,17 +183,11 @@ export class GraphStore {
   }
 
   toggleLabelFilter(label: string) {
-    if (this.activeLabels.has(label)) {
-      this.activeLabels.delete(label);
-    } else {
-      this.activeLabels.add(label);
-    }
-    // Svelte Set reactivity trigger
-    this.activeLabels = new Set(this.activeLabels);
+    this.ui.toggleLabelFilter(label, this.ui.isModifierPressed);
   }
 
   clearLabelFilters() {
-    this.activeLabels = new Set();
+    this.ui.clearLabelFilters();
   }
 
   toggleCategoryFilter(categoryId: string) {

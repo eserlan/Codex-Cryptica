@@ -484,7 +484,7 @@ export class OracleStore {
     return Boolean(messageId && this.visualizingMessageId === messageId);
   }
 
-  async clearHistory() {
+  async clearMessages() {
     if (
       await this.uiStore.confirm({
         title: "Clear History",
@@ -497,11 +497,6 @@ export class OracleStore {
       await this.chatHistoryService.clear();
       this.sessionActivity.clear();
     }
-  }
-
-  /** Alias for clearHistory */
-  async clearMessages() {
-    return this.clearHistory();
   }
 
   async removeMessage(id: string) {
