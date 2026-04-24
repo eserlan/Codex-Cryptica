@@ -534,6 +534,14 @@ export class EntityStore {
         patch: { connections: updatedSource.connections },
       });
 
+      vaultEventBus.emit({
+        type: "CONNECTION_REMOVED",
+        vaultId: this.deps.activeVaultId() || "unknown",
+        sourceId,
+        targetId,
+        connectionType: type,
+      });
+
       return true;
     }
     return false;

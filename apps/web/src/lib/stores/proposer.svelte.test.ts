@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Proposal } from "@codex/proposer";
 
 const {
   mockVault,
@@ -258,5 +259,148 @@ describe("proposerStore", () => {
 
     expect(proposerStore.isEntityAnalyzing("target")).toBe(false);
     expect(proposerStore.isAnalyzing).toBe(false);
+  });
+
+  it("respects manual connection removals by blacklisting the target from future scans", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+
+    mockVault.entities["source"] = {
+      id: "source",
+      title: "Source",
+      connections: [],
+    };
+    mockVault.entities["target"] = {
+      id: "target",
+      title: "Target",
+      connections: [],
+    };
+    mockVault.allEntities = [
+      mockVault.entities["source"],
+      mockVault.entities["target"],
+    ];
+
+    // Simulate manual removal
+    const removalEvent = {
+      type: "CONNECTION_REMOVED",
+      vaultId: "test-vault",
+      sourceId: "source",
+      targetId: "target",
+      connectionType: "related",
+    };
+
+    const proposal: Proposal = {
+      id: "test-vault:source:target",
+      vaultId: "test-vault",
+      sourceId: "source",
+      targetId: "target",
+      type: "related",
+      context: "",
+      reason: "Manually removed by user",
+      confidence: 1.0,
+      status: "rejected",
+      timestamp: Date.now(),
+    };
+
+    mockService.getHistory.mockResolvedValue([proposal]);
+
+    // The store should have subscribed to the bus
+    const busListener = mockVaultEventBus.subscribe.mock.calls.find(
+      (call) => typeof call[0] === "function",
+    )?.[0];
+
+    if (!busListener) throw new Error("Bus listener not found");
+    await busListener(removalEvent);
+
+    // Verify it's in history in both directions
+    expect(proposerStore.history["source"]).toHaveLength(1);
+    expect(proposerStore.history["target"]).toHaveLength(1);
+
+    // Ensure proposals are marked as "loaded" so loadProposals doesn't wipe history
+    proposerStore.proposals["source"] = [];
+    proposerStore.proposals["target"] = [];
+
+    // Run analysis
+    await proposerStore.analyzeEntityById("source");
+
+    // Verify target was EXCLUDED from the AI call
+    expect(mockAnalyzeEntity).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      "source",
+      expect.any(String),
+      [], // Empty targets because 'target' was blacklisted
+    );
+
+    await proposerStore.analyzeEntityById("target");
+
+    expect(mockAnalyzeEntity).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      "target",
+      expect.any(String),
+      [], // Empty targets because 'source' was blacklisted too
+    );
+  });
+
+  it("updates in-memory history before awaiting manual-removal persistence", async () => {
+    vi.resetModules();
+    let releaseSave: () => void = () => {};
+    const saveBarrier = new Promise<void>((resolve) => {
+      releaseSave = () => resolve();
+    });
+    mockService.saveProposals.mockImplementationOnce(() => saveBarrier);
+
+    const { proposerStore } = await import("./proposer.svelte");
+
+    const busListener = mockVaultEventBus.subscribe.mock.calls.find(
+      (call) => typeof call[0] === "function",
+    )?.[0];
+
+    if (!busListener) throw new Error("Bus listener not found");
+
+    const pendingRemoval = busListener({
+      type: "CONNECTION_REMOVED",
+      vaultId: "test-vault",
+      sourceId: "source",
+      targetId: "target",
+      connectionType: "related",
+    });
+
+    expect(proposerStore.history["source"]).toHaveLength(1);
+    expect(proposerStore.history["target"]).toHaveLength(1);
+
+    releaseSave();
+    await pendingRemoval;
+  });
+
+  it("sorts proposals by confidence before auto-applying the top three", async () => {
+    const { proposerStore } = await import("./proposer.svelte");
+
+    const proposals: Proposal[] = [
+      { ...mockProposal, id: "p-low", targetId: "low", confidence: 0.2 },
+      { ...mockProposal, id: "p-high", targetId: "high", confidence: 0.95 },
+      { ...mockProposal, id: "p-mid", targetId: "mid", confidence: 0.6 },
+      { ...mockProposal, id: "p-top", targetId: "top", confidence: 0.99 },
+    ];
+
+    proposerStore.proposals["s"] = proposals;
+    const applySpy = vi
+      .spyOn(proposerStore, "apply")
+      .mockResolvedValue(true as any);
+    const analyzeSpy = vi
+      .spyOn(proposerStore, "analyzeEntityById")
+      .mockResolvedValue(undefined);
+
+    await proposerStore.analyzeAndApplyEntityById("s");
+
+    expect(analyzeSpy).toHaveBeenCalledWith("s", false, undefined);
+    expect(applySpy.mock.calls.map(([proposal]) => proposal.id)).toEqual([
+      "p-top",
+      "p-high",
+      "p-mid",
+    ]);
   });
 });

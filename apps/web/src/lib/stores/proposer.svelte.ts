@@ -18,8 +18,47 @@ class ProposerStore {
     vaultEventBus.subscribe((event) => {
       if (event.type === "VAULT_DELETED") {
         void this.clearVault(event.vaultId);
+      } else if (event.type === "CONNECTION_REMOVED") {
+        void this.handleManualRemoval(
+          event.vaultId,
+          event.sourceId,
+          event.targetId,
+          event.connectionType,
+        );
       }
     });
+  }
+
+  private async handleManualRemoval(
+    vaultId: string,
+    sourceId: string,
+    targetId: string,
+    type: string,
+  ) {
+    const forwardProposal: Proposal = {
+      id: `${vaultId}:${sourceId}:${targetId}`,
+      vaultId,
+      sourceId,
+      targetId,
+      type,
+      context: "",
+      reason: "Manually removed by user",
+      confidence: 1.0,
+      status: "rejected",
+      timestamp: Date.now(),
+    };
+    const reverseProposal: Proposal = {
+      ...forwardProposal,
+      id: `${vaultId}:${targetId}:${sourceId}`,
+      sourceId: targetId,
+      targetId: sourceId,
+    };
+
+    this.prependHistoryProposal(sourceId, forwardProposal);
+    this.prependHistoryProposal(targetId, reverseProposal);
+
+    const service = this.getService();
+    await service.saveProposals([forwardProposal, reverseProposal]);
   }
 
   isAnalyzing = $state(false);
@@ -119,6 +158,12 @@ class ProposerStore {
 
     this.activeAnalysisTotal = Math.max(0, this.activeAnalysisTotal - 1);
     this.isAnalyzing = this.activeAnalysisTotal > 0;
+  }
+
+  private prependHistoryProposal(entityId: string, proposal: Proposal) {
+    const existing = this.history[entityId] || [];
+    if (existing.some((p) => p.id === proposal.id)) return;
+    this.history[entityId] = [proposal, ...existing];
   }
 
   async loadProposals(entityId: string, requireSelection = true) {
@@ -289,23 +334,23 @@ class ProposerStore {
       // Prepare available targets (all other entities)
       // Exclude already connected entities (FR-007)
       // Also exclude entities that have an inbound connection to this entity (bidirectional prevention)
-      const existingConnectedIds = new Set(
-        entity.connections.map((c) => c.target),
-      );
+      // Also exclude entities in rejected history to respect manual pruning (US4)
+      const excludeIds = new Set(entity.connections.map((c) => c.target));
       for (const inbound of vault.inboundConnections[entityId] || []) {
-        existingConnectedIds.add(inbound.sourceId);
+        excludeIds.add(inbound.sourceId);
+      }
+      for (const h of this.history[entityId] || []) {
+        excludeIds.add(h.targetId);
       }
 
       // ⚡ Bolt Optimization: Use a single imperative loop over vault.allEntities instead of chaining .filter().map().
-      // vault.allEntities is already Object.values(...), so we still pay for that pass, but we avoid extra arrays and
-      // two additional traversals over the entities, which reduces allocations and GC pressure.
       const allEntities = vault.allEntities;
       const count = allEntities.length;
       const targets: { id: string; name: string }[] = [];
 
       for (let i = 0; i < count; i++) {
         const e = allEntities[i];
-        if (e.id !== entityId && !existingConnectedIds.has(e.id)) {
+        if (e.id !== entityId && !excludeIds.has(e.id)) {
           targets.push({ id: e.id, name: e.title });
         }
       }
@@ -315,7 +360,9 @@ class ProposerStore {
 
       const sourceText = analysisText?.trim()
         ? analysisText.trim()
-        : `${entity.content || ""} \n\n ${entity.lore || ""}`.trim();
+        : `${entity.content || ""} 
+
+ ${entity.lore || ""}`.trim();
 
       debugStore.log("[ProposerStore] Starting connection analysis", {
         entityId,
@@ -373,11 +420,26 @@ class ProposerStore {
   async analyzeAndApplyEntityById(entityId: string, analysisText?: string) {
     await this.analyzeEntityById(entityId, false, analysisText);
 
-    const proposals = [...(this.proposals[entityId] || [])];
+    // Strict Limit: Only auto-apply the top 3 most relevant connections
+    // to prevent graph clutter.
+    const proposals = [...(this.proposals[entityId] || [])]
+      .sort((a, b) => {
+        if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+        return b.timestamp - a.timestamp;
+      })
+      .slice(0, 3);
+
     let appliedCount = 0;
     let failedCount = 0;
 
-    debugStore.log("[ProposerStore] Applying connection proposals", {
+    if (proposals.length === 0) {
+      debugStore.log("[ProposerStore] No connections found to auto-apply.", {
+        entityId,
+      });
+      return 0;
+    }
+
+    debugStore.log("[ProposerStore] Applying top-3 connection proposals", {
       entityId,
       proposalCount: proposals.length,
     });
