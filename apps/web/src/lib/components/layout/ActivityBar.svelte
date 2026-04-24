@@ -1,7 +1,14 @@
 <script lang="ts">
   import { uiStore } from "$lib/stores/ui.svelte";
   import { themeStore } from "$lib/stores/theme.svelte";
-  import { Sparkles, Database, Network, Compass, Layout } from "lucide-svelte";
+  import {
+    Sparkles,
+    Database,
+    Network,
+    Compass,
+    Layout,
+    ShieldCheck,
+  } from "lucide-svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
 
@@ -34,20 +41,33 @@
     },
   ];
 
-  const tools: NavItem[] = [
-    {
-      id: "oracle",
-      icon: Sparkles,
-      label: "Lore Oracle",
-      action: () => uiStore.toggleSidebarTool("oracle"),
-    },
-    {
-      id: "explorer",
-      icon: Database,
-      label: "Entity Explorer",
-      action: () => uiStore.toggleSidebarTool("explorer"),
-    },
-  ];
+  const tools = $derived.by<NavItem[]>(() => {
+    const list: NavItem[] = [
+      {
+        id: "oracle",
+        icon: Sparkles,
+        label: "Lore Oracle",
+        action: () => uiStore.toggleSidebarTool("oracle"),
+      },
+      {
+        id: "explorer",
+        icon: Database,
+        label: "Entity Explorer",
+        action: () => uiStore.toggleSidebarTool("explorer"),
+      },
+    ];
+
+    if (!uiStore.aiDisabled && uiStore.connectionDiscoveryMode !== "off") {
+      list.push({
+        id: "ai-assessment",
+        icon: ShieldCheck,
+        label: "AI Assessment",
+        action: () => uiStore.toggleSidebarTool("ai-assessment"),
+      });
+    }
+
+    return list;
+  });
 
   const isViewActive = (item: NavItem) => {
     if (!item.href) return false;

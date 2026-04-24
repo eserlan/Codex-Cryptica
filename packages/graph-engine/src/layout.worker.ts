@@ -184,10 +184,15 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       try {
         removeOverlaps(cy!, actualRadii);
 
-        const positions: Record<string, { x: number; y: number }> = {};
+        const positions: Record<
+          string,
+          { metadata: { coordinates: { x: number; y: number } } }
+        > = {};
         cy!.nodes().forEach((node) => {
           const pos = node.position();
-          positions[node.id()] = { x: pos.x, y: pos.y };
+          positions[node.id()] = {
+            metadata: { coordinates: { x: pos.x, y: pos.y } },
+          };
         });
 
         cy!.destroy();

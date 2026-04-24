@@ -88,7 +88,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       } else {
         const styleResults = await this.searchService.search(
           "art style visual aesthetic",
-          { limit: 1 },
+          { limit: 1, includeDrafts: true },
         );
         if (styleResults.length > 0 && styleResults[0].score > 0.5) {
           const styleId = styleResults[0].id;
@@ -108,7 +108,10 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       }
     }
 
-    let results = await this.searchService.search(query, { limit: 5 });
+    let results = await this.searchService.search(query, {
+      limit: 5,
+      includeDrafts: true,
+    });
 
     if (results.length === 0) {
       const keywords = query
@@ -137,6 +140,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
       if (keywords.length > 0) {
         results = await this.searchService.search(keywords.join(" "), {
           limit: 5,
+          includeDrafts: true,
         });
       }
     }

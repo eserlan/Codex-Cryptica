@@ -4,6 +4,7 @@ import type {
   ChatMessage,
   ConnectionDiscoveryMode,
   EntityDiscoveryMode,
+  DiscoveryProposal,
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
@@ -197,7 +198,8 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       });
 
       context.vault.selectedEntityId = id;
-      context.graph.requestFit();
+      // Graph sync will trigger a real layout+fit after the node is added.
+      // Forcing an immediate fit here can zoom to temporary seed positions.
     } catch (err: any) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
@@ -567,8 +569,9 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
+    const userMsgId = crypto.randomUUID();
     await context.chatHistory.addMessage({
-      id: crypto.randomUUID(),
+      id: userMsgId,
       role: "user",
       content: query,
     });
@@ -621,13 +624,20 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         );
         const imageUrl = URL.createObjectURL(blob);
 
-        const finalMsgs = [...context.chatHistory.messages];
-        const last = finalMsgs[finalMsgs.length - 1];
-        last.imageUrl = imageUrl;
-        last.imageBlob = blob;
-        last.content = `Generated visualization for: "${query}"`;
-        last.entityId = primaryEntityId;
-        context.chatHistory.setMessages(finalMsgs);
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const lastIdx = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
+        if (lastIdx !== -1) {
+          finalMsgs[lastIdx].imageUrl = imageUrl;
+          finalMsgs[lastIdx].imageBlob = blob;
+          finalMsgs[lastIdx].content =
+            `Generated visualization for: "${query}"`;
+          finalMsgs[lastIdx].entityId = primaryEntityId;
+        }
+        await context.chatHistory.setMessages(finalMsgs);
 
         // Auto-attach to entity if possible
         if (primaryEntityId && !context.isDemoMode) {
@@ -646,24 +656,38 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             query,
             context,
             handlePartialResponse,
+            {
+              requestId: assistantMsg.id,
+              vaultId: context.vaultId,
+            },
           );
 
-        // Final update with entity context
-        const finalMsgs = [...context.chatHistory.messages];
-        const userMsgIndex = finalMsgs.length - 2;
-        const assistantMsgIndex = finalMsgs.length - 1;
+        // Final update with entity context — read live messages, not the stale snapshot
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const userMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === userMsgId,
+        );
+        const assistantMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
 
-        finalMsgs[userMsgIndex].entityId = primaryEntityId;
-        finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
-        finalMsgs[assistantMsgIndex].sources = sourceIds;
-        finalMsgs[assistantMsgIndex].hasDrawAction =
-          context.tier === "advanced";
+        if (userMsgIndex !== -1) {
+          finalMsgs[userMsgIndex].entityId = primaryEntityId;
+        }
+        if (assistantMsgIndex !== -1) {
+          finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
+          finalMsgs[assistantMsgIndex].sources = sourceIds;
+          finalMsgs[assistantMsgIndex].hasDrawAction =
+            context.tier === "advanced";
+        }
 
         // Proactive Extraction
         try {
           const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
           if (entityDiscoveryMode === "off") {
-            context.chatHistory.setMessages(finalMsgs);
+            await context.chatHistory.setMessages(finalMsgs);
             return;
           }
 
@@ -676,10 +700,22 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           });
 
           if (proposals.length > 0) {
-            finalMsgs[assistantMsgIndex].proposals = proposals;
+            const existingProposals =
+              finalMsgs[assistantMsgIndex].proposals || [];
+            const newProposals = proposals.filter(
+              (p: DiscoveryProposal) =>
+                !existingProposals.some(
+                  (e: DiscoveryProposal) => e.title === p.title,
+                ),
+            );
 
-            for (const p of proposals) {
-              context.logActivity?.({
+            finalMsgs[assistantMsgIndex].proposals = [
+              ...existingProposals,
+              ...newProposals,
+            ];
+
+            for (const p of newProposals) {
+              await context.logActivity?.({
                 type: "discovery",
                 title: p.title,
                 entityType: p.type,
@@ -705,7 +741,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                       status: "draft",
                     },
                   );
-                  context.logActivity?.({
+                  await context.logActivity?.({
                     type: "archive",
                     title: p.title,
                     entityType: p.type,
@@ -754,7 +790,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                         lore: (existing.lore || "") + "\n\n" + p.draft.lore,
                       });
                     }
-                    context.logActivity?.({
+                    await context.logActivity?.({
                       type: "update",
                       title: p.title,
                       entityType: p.type,
@@ -770,7 +806,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           console.warn("[OracleExecutor] Extraction failed", extractErr);
         }
 
-        context.chatHistory.setMessages(finalMsgs);
+        await context.chatHistory.setMessages(finalMsgs);
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({

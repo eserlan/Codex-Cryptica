@@ -173,7 +173,12 @@ export class LayoutManager {
   private jobId = 0;
   private pendingJobId: number | null = null;
   private pendingWorkerResolve:
-    | ((result: Record<string, { x: number; y: number }> | null) => void)
+    | ((
+        result: Record<
+          string,
+          { metadata: { coordinates: { x: number; y: number } } }
+        > | null,
+      ) => void)
     | null = null;
 
   constructor(private cy: Core) {}
@@ -192,7 +197,10 @@ export class LayoutManager {
     edges: SerializedLayoutEdge[],
     options: Record<string, any>,
     timeoutMs = BASE_LAYOUT_WORKER_TIMEOUT_MS,
-  ): Promise<Record<string, { x: number; y: number }> | null> {
+  ): Promise<Record<
+    string,
+    { metadata: { coordinates: { x: number; y: number } } }
+  > | null> {
     // If a job is already in flight, terminate the worker rather than queuing
     // behind it — stale layouts piling up is what makes vault switches slow.
     if (this.pendingJobId !== null) {
@@ -212,7 +220,10 @@ export class LayoutManager {
       let settled = false;
       let timeout: ReturnType<typeof setTimeout> | null = null;
       const done = (
-        result: Record<string, { x: number; y: number }> | null,
+        result: Record<
+          string,
+          { metadata: { coordinates: { x: number; y: number } } }
+        > | null,
       ) => {
         if (settled) return;
         settled = true;
@@ -282,6 +293,7 @@ export class LayoutManager {
     isForced = false,
     caller = "unknown",
     randomizeForced = false,
+    hasNewNodes = false,
   ) {
     if (!this.cy || this.cy.destroyed()) return;
 
@@ -337,6 +349,7 @@ export class LayoutManager {
           isForced,
           caller,
           randomizeForced,
+          hasNewNodes,
         );
       }
     } catch (error) {
@@ -394,6 +407,7 @@ export class LayoutManager {
     isForced: boolean,
     caller: string,
     randomizeForced = false,
+    hasNewNodesParam = false,
   ) {
     const cyNodes = this.cy.nodes();
 
@@ -406,7 +420,7 @@ export class LayoutManager {
     let randomize = isExitingTimeline || isExitingMode;
 
     // Single pass: detect new nodes (at origin) and full-clump in one loop
-    let hasNewNodes = false;
+    let hasNewNodes = hasNewNodesParam;
     let nodesAtOrigin = 0;
     cyNodes.forEach((n) => {
       const p = n.position();
@@ -423,7 +437,8 @@ export class LayoutManager {
       options.stableLayout &&
       !randomize &&
       !hasNewNodes &&
-      (!isForced || caller === "Load Finalized" || caller === "Window Resize");
+      !isForced &&
+      (caller === "Load Finalized" || caller === "Window Resize");
 
     if (isFitOnly) {
       if (
@@ -436,6 +451,9 @@ export class LayoutManager {
       } else {
         options.onLayoutStop?.();
       }
+      // Safety: ensure any newly added nodes are visible even in fit-only paths
+      this.cy.nodes().removeData("isPendingLayout");
+      this.cy.nodes(".pending-layout").removeClass("pending-layout");
       return;
     }
 
@@ -529,9 +547,14 @@ export class LayoutManager {
 
     // Apply positions back onto the real cy instance
     this.cy.batch(() => {
-      for (const [id, pos] of Object.entries(positions)) {
+      for (const [id, update] of Object.entries(positions)) {
         const node = this.cy.$id(id);
-        if (node.length) node.position(pos);
+        if (node.length) {
+          const pos = update.metadata.coordinates;
+          node.position(pos);
+          node.removeData("isPendingLayout");
+          node.removeClass("pending-layout");
+        }
       }
     });
 
