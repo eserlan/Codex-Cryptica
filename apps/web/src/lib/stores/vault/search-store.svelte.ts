@@ -17,14 +17,10 @@ export class SearchStore {
           );
         } else if (event.type === "SYNC_CHUNK_READY") {
           const services = await this.serviceRegistry.ensureInitialized();
-          const promises = [];
-          for (let i = 0; i < event.newOrChangedIds.length; i++) {
-            const entity = event.entities[event.newOrChangedIds[i]];
-            if (entity) {
-              promises.push(this.indexEntity(entity, services));
-            }
-          }
-          await Promise.all(promises);
+          const entities = event.newOrChangedIds
+            .map((id) => event.entities[id])
+            .filter(Boolean);
+          await Promise.all(entities.map((e) => this.indexEntity(e, services)));
         } else if (event.type === "BATCH_UPDATED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await Promise.all(
