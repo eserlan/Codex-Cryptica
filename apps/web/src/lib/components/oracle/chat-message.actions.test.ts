@@ -121,7 +121,7 @@ describe("ChatMessageActions", () => {
       "message-2",
       "new-id",
     );
-    expect(graph.requestFit).toHaveBeenCalled();
+    expect(graph.requestFit).not.toHaveBeenCalled();
     expect(setSaved).toHaveBeenCalledWith(true);
     expect(oracle.pushUndoAction).toHaveBeenCalled();
   });

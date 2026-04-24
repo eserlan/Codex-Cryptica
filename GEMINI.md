@@ -4,8 +4,8 @@ Auto-generated from all feature plans. Last updated: 2026-04-24
 
 ## Active Technologies
 
-- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit web app, `zod` for schema validation, `flexsearch` via `@codex/search-engine`, `js-yaml` for frontmatter. (089-entity-aliases)
-- OPFS (via `VaultRepository`) using YAML frontmatter in Markdown files. (089-entity-aliases)
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit web app, `zod` for schema validation, `flexsearch` via `@codex/search-engine`, `js-yaml` for frontmatter. (090-entity-aliases)
+- OPFS (via `VaultRepository`) using YAML frontmatter in Markdown files. (090-entity-aliases)
 
 - TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine` (087-gen-oracle-content)
 - OPFS (Primary Vault), IndexedDB (Registry & Draft Metadata), LocalStorage (Auto-Archive setting) (087-gen-oracle-content)
@@ -157,6 +157,8 @@ TypeScript: Follow standard conventions
 - 090-entity-aliases: Added support for alternative names (aliases) to world entities with weighted search indexing and management UI in Zen Mode header.
 
 - 089-label-filtering: Added interactive label pills in entity explorer with "AND" filtering logic, active filter UI, and label-based search integration. (Refinement of 084)
+
+- 088-offload-ai-creation: Offloaded Lore Oracle's chat generation, entity discovery, and reconciliation to a background Web Worker using Comlink for improved UI responsiveness.
 
 - 087-gen-oracle-content: Added TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine`
 

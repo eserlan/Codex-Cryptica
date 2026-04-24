@@ -44,6 +44,7 @@ export const EntitySchema = z.object({
   labels: z.array(z.string()).default([]),
   aliases: z.array(z.string().trim().min(1)).default([]),
   connections: z.array(ConnectionSchema).default([]),
+
   content: z.string().default(""), // Markdown content, default empty
   lore: z.string().optional(), // Extended lore & rich notes
   image: z.string().optional(),

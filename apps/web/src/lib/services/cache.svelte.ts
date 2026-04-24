@@ -171,6 +171,7 @@ export class CacheService {
         title: String(raw.title),
         tags: Array.isArray(raw.tags) ? [...raw.tags] : [],
         labels: Array.isArray(raw.labels) ? [...raw.labels] : [],
+        aliases: Array.isArray(raw.aliases) ? [...raw.aliases] : [],
         connections: Array.isArray(raw.connections)
           ? JSON.parse(JSON.stringify(raw.connections))
           : [],

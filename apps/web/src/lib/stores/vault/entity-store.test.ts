@@ -87,6 +87,7 @@ describe("EntityStore", () => {
           status: "active",
           labels: [],
           tags: [],
+          aliases: [],
           connections: [],
         } as LocalEntity,
         place: {
@@ -98,6 +99,7 @@ describe("EntityStore", () => {
           status: "active",
           labels: ["important"],
           tags: [],
+          aliases: [],
           connections: [],
         } as LocalEntity,
       },

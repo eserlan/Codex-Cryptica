@@ -117,6 +117,7 @@ export class VaultLifecycleManager {
 
     await this.deps.vaultRegistry.deleteVault(id);
     await cacheService.clearVault(id);
+    vaultEventBus.emit({ type: "VAULT_DELETED", vaultId: id });
   }
 
   async setupSync(handle: FileSystemDirectoryHandle) {

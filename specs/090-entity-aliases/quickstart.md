@@ -4,7 +4,7 @@ This guide outlines the steps to validate alias support.
 
 ## 1. Automated Validation
 
-Run the new unit tests (to be created):
+Run the unit tests included with this feature:
 
 ```bash
 # Test schema validation

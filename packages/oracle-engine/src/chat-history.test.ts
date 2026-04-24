@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ChatHistoryService } from "./chat-history.svelte";
 
 describe("ChatHistoryService", () => {
@@ -130,5 +130,60 @@ describe("ChatHistoryService", () => {
 
     // Should not throw
     expect(() => service.destroy()).not.toThrow();
+  });
+
+  describe("addProposal", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should add proposal to message and debounce persistence", async () => {
+      await service.init(mockDB);
+      const msg = { id: "m1", role: "assistant", content: "c" } as any;
+      await service.addMessage(msg);
+      mockDB.appSettings.put.mockClear();
+
+      const proposal = { title: "New NPC", type: "character" };
+      await service.addProposal("m1", proposal);
+
+      expect(service.messages[0].proposals).toContainEqual(proposal);
+      // Should NOT have saved yet due to debounce
+      expect(mockDB.appSettings.put).not.toHaveBeenCalled();
+
+      // Fast-forward time
+      vi.advanceTimersByTime(500);
+      expect(mockDB.appSettings.put).toHaveBeenCalled();
+    });
+
+    it("should ignore duplicate proposals by title", async () => {
+      await service.init(mockDB);
+      const msg = {
+        id: "m1",
+        role: "assistant",
+        content: "c",
+        proposals: [{ title: "Existing NPC" }],
+      } as any;
+      service.messages = [msg];
+
+      await service.addProposal("m1", { title: "Existing NPC" });
+      expect(service.messages[0].proposals!.length).toBe(1);
+    });
+
+    it("should clear debounce timeout on destroy", async () => {
+      await service.init(mockDB);
+      const msg = { id: "m1", role: "assistant", content: "c" } as any;
+      await service.addMessage(msg);
+
+      await service.addProposal("m1", { title: "P1" });
+      service.destroy();
+
+      vi.advanceTimersByTime(500);
+      // Should NOT have saved because destroy clears timeout
+      expect(mockDB.appSettings.put).toHaveBeenCalledTimes(1); // Only the initial addMessage call
+    });
   });
 });

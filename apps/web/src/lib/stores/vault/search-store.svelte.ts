@@ -74,11 +74,19 @@ export class SearchStore {
         } else if (event.type === "CACHE_LOADED") {
           const services = await this.serviceRegistry.ensureInitialized();
           await services.search.clear();
-          await Promise.all(
-            Object.values(event.entities).map((e: any) =>
-              this.indexEntity(e, services),
-            ),
-          );
+          const entities = Object.values(event.entities) as any[];
+          const CHUNK_SIZE = 25;
+          for (let i = 0; i < entities.length; i += CHUNK_SIZE) {
+            await Promise.all(
+              entities
+                .slice(i, i + CHUNK_SIZE)
+                .map((e: any) => this.indexEntity(e, services)),
+            );
+            // Yield between chunks so the browser can process renders/navigation
+            if (i + CHUNK_SIZE < entities.length) {
+              await new Promise<void>((r) => setTimeout(r, 0));
+            }
+          }
         } else if (event.type === "VAULT_OPENING") {
           const services = await this.serviceRegistry.ensureInitialized();
           await services.search.clear();

@@ -72,6 +72,11 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
     query: string,
     context: OracleExecutionContext,
     onPartial: (partial: string) => void,
+    options: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: any[];
+    } = {},
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
 
@@ -115,6 +120,12 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       onPartial,
       context.isDemoMode,
       categoryList,
+      {
+        ...options,
+        existingEntities:
+          options.existingEntities ||
+          Object.values(context.vault.entities || {}),
+      },
     );
 
     return { primaryEntityId, sourceIds };

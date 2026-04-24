@@ -217,6 +217,14 @@
                     inline: true,
                   })}
 
+                  {#if result.status === "draft"}
+                    <span
+                      class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700"
+                    >
+                      Draft
+                    </span>
+                  {/if}
+
                   {#if isCanvasPage}
                     <button
                       class="ml-auto p-1.5 rounded-md bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white transition-all text-[10px] font-bold uppercase font-header tracking-wider flex items-center gap-1 group/btn"

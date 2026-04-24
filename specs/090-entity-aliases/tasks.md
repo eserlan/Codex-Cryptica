@@ -13,8 +13,8 @@ description: "Actionable, dependency-ordered tasks for the Entity Alias Support 
 
 **Goal**: Prepare the codebase and environment for alias support.
 
-- [x] T001 Initialize the feature branch `089-entity-aliases` and verify local development environment
-- [x] T002 Update `packages/schema/src/entity.ts` to add `aliases: z.array(z.string()).default([])` to `EntitySchema`
+- [x] T001 Initialize the feature branch `090-entity-aliases` and verify local development environment
+- [x] T002 Update `packages/schema/src/entity.ts` to add `aliases: z.array(z.string().trim().min(1)).default([])` to `EntitySchema`
 - [x] T003 [P] Add unit tests for `EntitySchema` alias validation in `packages/schema/src/schema.test.ts`
 
 ---

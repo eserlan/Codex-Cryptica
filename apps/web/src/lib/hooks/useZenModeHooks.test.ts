@@ -13,6 +13,7 @@ describe("ZenMode Hooks", () => {
     connections: [],
     tags: [],
     labels: [],
+    aliases: [],
   };
 
   describe("useEditState", () => {
