@@ -132,15 +132,9 @@ export class SearchService {
     debugStore.log(`[SearchService] Starting background content sync...`);
     const start = performance.now();
     let indexedCount = 0;
-    const batch: any[] = [];
     const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
-      const records = await entityDb.entityContent
-        .where("vaultId")
-        .equals(vaultId)
-        .toArray();
-
       const metadatas = await entityDb.graphEntities
         .where("vaultId")
         .equals(vaultId)
@@ -148,43 +142,52 @@ export class SearchService {
 
       const metaMap = new Map(metadatas.map((m) => [m.id, m]));
 
-      for (const record of records) {
-        // We need the full metadata to prevent FlexSearch from overwriting the document
-        // with empty fields, as 'add/update' replaces the entire document.
-        const metadata = metaMap.get(record.entityId);
+      let offset = 0;
+      while (true) {
+        if (this.activeVaultId !== vaultId) {
+          debugStore.log(
+            `[SearchService] Background sync aborted (vault switched).`,
+          );
+          return;
+        }
 
-        if (metadata) {
-          batch.push({
-            ...metadata,
-            content: record.content,
-            lore: record.lore,
-          });
+        const records = await entityDb.entityContent
+          .where("vaultId")
+          .equals(vaultId)
+          .offset(offset)
+          .limit(BATCH_SIZE)
+          .toArray();
 
-          if (batch.length >= BATCH_SIZE) {
-            const currentBatch = [...batch];
-            batch.length = 0;
-            await this.indexBatch(currentBatch);
-            indexedCount += currentBatch.length;
+        if (records.length === 0) break;
 
-            // Stagger batches to let the main thread and IndexedDB breathe.
-            // 500ms delay between chunks of 100 entities provides a smooth background sync
-            // without choking UI interactivity.
-            await new Promise((resolve) => setTimeout(resolve, 500));
+        const currentBatch = [];
+        for (const record of records) {
+          // We need the full metadata to prevent FlexSearch from overwriting the document
+          // with empty fields, as 'add/update' replaces the entire document.
+          const metadata = metaMap.get(record.entityId);
 
-            // Abort if the user switched vaults during the delay!
-            if (this.activeVaultId !== vaultId) {
-              debugStore.log(
-                `[SearchService] Background sync aborted (vault switched).`,
-              );
-              return;
-            }
+          if (metadata) {
+            currentBatch.push({
+              ...metadata,
+              content: record.content,
+              lore: record.lore,
+            });
           }
         }
-      }
 
-      if (batch.length > 0) {
-        await this.indexBatch(batch);
-        indexedCount += batch.length;
+        if (currentBatch.length > 0) {
+          await this.indexBatch(currentBatch);
+          indexedCount += currentBatch.length;
+        }
+
+        if (records.length < BATCH_SIZE) break;
+
+        offset += records.length;
+
+        // Stagger batches to let the main thread and IndexedDB breathe.
+        // 500ms delay between chunks provides a smooth background sync
+        // without choking UI interactivity.
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       debugStore.log(
@@ -363,11 +366,35 @@ export class SearchService {
       const start = performance.now();
       const rawData = await api.exportIndex();
 
-      const keyCount = rawData?.isSegmented
-        ? rawData.keyCount
-        : rawData?.isEncoded
-          ? rawData.keyCount
-          : Object.keys(rawData || {}).length;
+      const explicitKeyCount =
+        typeof rawData?.keyCount === "number" ? rawData.keyCount : undefined;
+      const segmentedKeyCount =
+        rawData?.isSegmented &&
+        rawData?.segments &&
+        typeof rawData.segments === "object"
+          ? Object.keys(rawData.segments).length
+          : undefined;
+      const encodedPayload =
+        rawData?.isEncoded && rawData && typeof rawData === "object"
+          ? "payload" in rawData
+            ? (rawData as any).payload
+            : "data" in rawData
+              ? (rawData as any).data
+              : undefined
+          : undefined;
+      const encodedKeyCount =
+        rawData?.isEncoded &&
+        encodedPayload &&
+        typeof encodedPayload === "object"
+          ? Array.isArray(encodedPayload)
+            ? encodedPayload.length
+            : Object.keys(encodedPayload).length
+          : undefined;
+      const keyCount =
+        explicitKeyCount ??
+        segmentedKeyCount ??
+        encodedKeyCount ??
+        Object.keys(rawData || {}).length;
 
       // Ensure we have actual index data (more than just docCount)
       if (rawData && keyCount > 1) {

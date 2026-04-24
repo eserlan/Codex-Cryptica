@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -119,8 +120,6 @@
     building ? null : page.url.searchParams.get("shareId"),
   );
   const isGuestMode = $derived(!!shareId);
-
-  import { onMount } from "svelte";
 
   onMount(() => {
     // Eagerly prefetch the heavy components in the background a second after boot

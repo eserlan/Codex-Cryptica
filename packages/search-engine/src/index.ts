@@ -306,8 +306,35 @@ export class SearchEngine {
       }
     });
 
-    this.log("info", `Export complete. ${count} segments collected.`);
-    return data;
+    this.log(
+      "info",
+      `Export complete. ${count} segments collected. Encoding...`,
+    );
+
+    const segments: Record<string, ArrayBuffer> = {};
+    const transferables: ArrayBuffer[] = [];
+    const encoder = new TextEncoder();
+    let processed = 0;
+
+    // Process segments individually to prevent massive V8 string allocation
+    for (const [k, v] of Object.entries(data)) {
+      const jsonStr = typeof v === "string" ? v : JSON.stringify(v);
+      const buffer = encoder.encode(jsonStr).buffer;
+      segments[k] = buffer;
+      transferables.push(buffer);
+      processed++;
+
+      // Yield back to event loop every 50 segments so the worker can process search queries!
+      if (processed % 50 === 0) {
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    }
+
+    this.log("info", `Encoding complete. Transferring binary payload...`);
+    return Comlink.transfer(
+      { isSegmented: true, segments, keyCount: count },
+      transferables,
+    );
   }
 
   /**
@@ -325,14 +352,19 @@ export class SearchEngine {
       ) {
         try {
           parsedData = {};
-          for (const ObjectEntry of Object.entries(data.segments)) {
-            const k = ObjectEntry[0];
-            const buffer = ObjectEntry[1] as ArrayBuffer;
-            const str = new TextDecoder().decode(buffer);
-            parsedData[k] = k === "_docIds" ? JSON.parse(str) : str;
+          const decoder = new TextDecoder();
+          let processed = 0;
 
-            // Yield back to event loop during heavy imports
-            await new Promise((r) => setTimeout(r, 0));
+          for (const [k, value] of Object.entries(data.segments)) {
+            const buffer = value as ArrayBuffer;
+            const str = decoder.decode(buffer);
+            parsedData[k] = k === "_docIds" ? JSON.parse(str) : str;
+            processed++;
+
+            // Yield back to event loop every 50 segments during heavy imports
+            if (processed % 50 === 0) {
+              await new Promise((r) => setTimeout(r, 0));
+            }
           }
         } catch (e) {
           this.log("error", "Failed to decode segmented index data", e);

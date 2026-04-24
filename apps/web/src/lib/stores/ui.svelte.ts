@@ -35,6 +35,10 @@ export type SettingsTab =
   | "about"
   | "help";
 
+export const MIN_LEFT_SIDEBAR_WIDTH = 240;
+export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
+export const MAX_SIDEBAR_VW = 40;
+
 export class UIStore {
   showSettings = $state(false);
   showCanvasSelector = $state(false);
@@ -130,6 +134,30 @@ export class UIStore {
       this.loadOracleAutomationSettings();
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
+
+      const savedLeftWidth = localStorage.getItem("codex_left_sidebar_width");
+      if (savedLeftWidth !== null) {
+        const width = parseInt(savedLeftWidth, 10);
+        if (!isNaN(width)) {
+          const maxWidth = (window.innerWidth * MAX_SIDEBAR_VW) / 100;
+          this.leftSidebarWidth = Math.max(
+            MIN_LEFT_SIDEBAR_WIDTH,
+            Math.min(width, maxWidth),
+          );
+        }
+      }
+
+      const savedRightWidth = localStorage.getItem("codex_right_sidebar_width");
+      if (savedRightWidth !== null) {
+        const width = parseInt(savedRightWidth, 10);
+        if (!isNaN(width)) {
+          const maxWidth = (window.innerWidth * MAX_SIDEBAR_VW) / 100;
+          this.rightSidebarWidth = Math.max(
+            MIN_RIGHT_SIDEBAR_WIDTH,
+            Math.min(width, maxWidth),
+          );
+        }
+      }
 
       const explorerMode = localStorage.getItem("codex_explorer_view_mode");
       if (explorerMode === "list" || explorerMode === "label") {

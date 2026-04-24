@@ -407,9 +407,21 @@ describe("SearchService", () => {
       title: `Title ${r.entityId}`,
     }));
 
+    let contentCallCount = 0;
     vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
       equals: vi.fn().mockReturnValue({
-        toArray: vi.fn().mockResolvedValue(mockRecords),
+        offset: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockImplementation(() => {
+          if (contentCallCount === 0) {
+            contentCallCount++;
+            return Promise.resolve(mockRecords.slice(0, 100));
+          } else if (contentCallCount === 1) {
+            contentCallCount++;
+            return Promise.resolve(mockRecords.slice(100));
+          }
+          return Promise.resolve([]);
+        }),
       }),
     } as any);
 

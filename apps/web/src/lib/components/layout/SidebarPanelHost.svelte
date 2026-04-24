@@ -1,6 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import {
+    uiStore,
+    MIN_LEFT_SIDEBAR_WIDTH,
+    MAX_SIDEBAR_VW,
+  } from "$lib/stores/ui.svelte";
   import { debugStore } from "$lib/stores/debug.svelte";
   import ResizerHandle from "./ResizerHandle.svelte";
 
@@ -47,8 +51,8 @@
     {#if !uiStore.isMobile}
       <ResizerHandle
         side="left"
-        minWidth={240}
-        maxWidthVW={40}
+        minWidth={MIN_LEFT_SIDEBAR_WIDTH}
+        maxWidthVW={MAX_SIDEBAR_VW}
         currentWidth={uiStore.leftSidebarWidth}
         onResize={(w) => uiStore.setLeftSidebarWidth(w)}
       />

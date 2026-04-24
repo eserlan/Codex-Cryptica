@@ -50,8 +50,33 @@
   function handlePointerUp(e: PointerEvent) {
     if (!isDragging) return;
     isDragging = false;
-    handleRef.releasePointerCapture(e.pointerId);
+    if (handleRef.hasPointerCapture(e.pointerId)) {
+      handleRef.releasePointerCapture(e.pointerId);
+    }
     document.body.classList.remove("is-resizing-sidebar");
+  }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    let step = 10;
+    if (e.shiftKey) step = 50;
+
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault();
+      let delta = e.key === "ArrowRight" ? step : -step;
+
+      // For the right sidebar, moving left (negative delta) increases width
+      if (side === "right") {
+        delta = -delta;
+      }
+
+      let newWidth = currentWidth + delta;
+
+      // Calculate boundaries
+      const maxWidthPx = (window.innerWidth * maxWidthVW) / 100;
+      newWidth = Math.max(minWidth, Math.min(newWidth, maxWidthPx));
+
+      onResize(newWidth);
+    }
   }
 
   // Cleanup in case component unmounts while dragging
@@ -64,7 +89,8 @@
 
 <div
   bind:this={handleRef}
-  class="resizer-handle group absolute top-0 bottom-0 z-[100] w-6 cursor-col-resize transition-all"
+  class="resizer-handle group absolute top-0 bottom-0 z-[100] w-6 cursor-col-resize transition-all focus:outline-none"
+  data-testid="resizer-handle-{side}"
   class:right-0={side === "left"}
   class:-mr-3={side === "left"}
   class:left-0={side === "right"}
@@ -73,11 +99,15 @@
   onpointermove={handlePointerMove}
   onpointerup={handlePointerUp}
   onpointercancel={handlePointerUp}
+  onkeydown={handleKeyDown}
   role="separator"
   aria-orientation="vertical"
   aria-valuenow={currentWidth}
   aria-valuemin={minWidth}
-  tabindex="-1"
+  aria-valuemax={typeof window !== "undefined"
+    ? (window.innerWidth * maxWidthVW) / 100
+    : 1000}
+  tabindex="0"
 >
   <!-- Vertical line centered in the hit area -->
   <div
@@ -85,8 +115,10 @@
     class:bg-theme-accent={isDragging}
     class:bg-theme-border={!isDragging}
     class:group-hover:bg-theme-accent={true}
+    class:group-focus:bg-theme-accent={true}
     class:opacity-0={!isDragging}
     class:group-hover:opacity-100={true}
+    class:group-focus:opacity-100={true}
   ></div>
 
   <!-- Visual grip indicator centered on the line -->
@@ -95,8 +127,10 @@
     class:bg-theme-accent={isDragging}
     class:bg-theme-border={!isDragging}
     class:group-hover:bg-theme-accent={true}
+    class:group-focus:bg-theme-accent={true}
     class:opacity-60={!isDragging}
     class:group-hover:opacity-100={true}
+    class:group-focus:opacity-100={true}
     class:scale-110={isDragging}
   >
     <div class="w-[2px] h-[2px] rounded-full bg-theme-surface opacity-90"></div>

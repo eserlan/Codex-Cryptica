@@ -2,7 +2,11 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import {
+    uiStore,
+    MIN_RIGHT_SIDEBAR_WIDTH,
+    MAX_SIDEBAR_VW,
+  } from "$lib/stores/ui.svelte";
   import ResizerHandle from "./layout/ResizerHandle.svelte";
 
   // Sub-components
@@ -145,8 +149,8 @@
     {#if !uiStore.isMobile}
       <ResizerHandle
         side="right"
-        minWidth={320}
-        maxWidthVW={40}
+        minWidth={MIN_RIGHT_SIDEBAR_WIDTH}
+        maxWidthVW={MAX_SIDEBAR_VW}
         currentWidth={uiStore.rightSidebarWidth}
         onResize={(w) => uiStore.setRightSidebarWidth(w)}
       />
