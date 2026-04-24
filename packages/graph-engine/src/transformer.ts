@@ -351,31 +351,24 @@ export const getGraphStyle = (
     },
     ...getThemeTextureVariantStyles(tokens.texture),
     {
-      selector: "node[weight <= 1]",
+      selector: "node[weight <= 2]",
       style: {
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
       },
     },
     {
-      selector: "node[weight >= 2][weight <= 5]",
+      selector: "node[weight >= 3][weight <= 11]",
       style: {
-        width: 64,
-        height: 64,
+        width: 60,
+        height: 60,
       },
     },
     {
-      selector: "node[weight >= 6][weight <= 10]",
+      selector: "node[weight >= 12]",
       style: {
         width: 96,
         height: 96,
-      },
-    },
-    {
-      selector: "node[weight >= 11]",
-      style: {
-        width: 128,
-        height: 128,
       },
     },
   ];
