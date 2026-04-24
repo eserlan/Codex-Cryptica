@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { Proposal } from "@codex/proposer";
 
 const {
   mockVault,
@@ -258,5 +259,76 @@ describe("proposerStore", () => {
 
     expect(proposerStore.isEntityAnalyzing("target")).toBe(false);
     expect(proposerStore.isAnalyzing).toBe(false);
+  });
+
+  it("respects manual connection removals by blacklisting the target from future scans", async () => {
+    vi.resetModules();
+    const { proposerStore } = await import("./proposer.svelte");
+
+    mockVault.entities["source"] = {
+      id: "source",
+      title: "Source",
+      connections: [],
+    };
+    mockVault.entities["target"] = {
+      id: "target",
+      title: "Target",
+      connections: [],
+    };
+    mockVault.allEntities = [
+      mockVault.entities["source"],
+      mockVault.entities["target"],
+    ];
+
+    // Simulate manual removal
+    const removalEvent = {
+      type: "CONNECTION_REMOVED",
+      vaultId: "test-vault",
+      sourceId: "source",
+      targetId: "target",
+      connectionType: "related",
+    };
+
+    const proposal: Proposal = {
+      id: "test-vault:source:target",
+      vaultId: "test-vault",
+      sourceId: "source",
+      targetId: "target",
+      type: "related",
+      context: "",
+      reason: "Manually removed by user",
+      confidence: 1.0,
+      status: "rejected",
+      timestamp: Date.now(),
+    };
+
+    mockService.getHistory.mockResolvedValue([proposal]);
+
+    // The store should have subscribed to the bus
+    const busListener = mockVaultEventBus.subscribe.mock.calls.find(
+      (call) => typeof call[0] === "function",
+    )?.[0];
+
+    if (!busListener) throw new Error("Bus listener not found");
+    await busListener(removalEvent);
+
+    // Verify it's in history
+    expect(proposerStore.history["source"]).toHaveLength(1);
+
+    // Ensure proposals are marked as "loaded" so loadProposals doesn't wipe history
+    proposerStore.proposals["source"] = [];
+
+    // Run analysis
+    await proposerStore.analyzeEntityById("source");
+
+    // Verify target was EXCLUDED from the AI call
+    expect(mockAnalyzeEntity).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      "source",
+      expect.any(String),
+      [], // Empty targets because 'target' was blacklisted
+    );
   });
 });

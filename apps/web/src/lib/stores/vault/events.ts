@@ -28,6 +28,13 @@ export type VaultEvent =
       entities: LocalEntity[];
       patches?: Record<string, Partial<LocalEntity>>;
     }
+  | {
+      type: "CONNECTION_REMOVED";
+      vaultId: string;
+      sourceId: string;
+      targetId: string;
+      connectionType: string;
+    }
   | { type: "VAULT_SWITCHED"; vaultId: string }
   | { type: "VAULT_DELETED"; vaultId: string };
 
