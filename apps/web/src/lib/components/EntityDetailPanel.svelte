@@ -137,6 +137,33 @@
       }
     }
   };
+
+  let isDraftActioning = $state(false);
+
+  const handleApproveDraft = async () => {
+    if (!entity || isDraftActioning) return;
+    isDraftActioning = true;
+    try {
+      await vault.updateEntity(entity.id, { status: "active" });
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!entity || isDraftActioning) return;
+    isDraftActioning = true;
+    try {
+      await vault.deleteEntity(entity.id);
+      onClose();
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
+    }
+  };
 </script>
 
 {#if entity}
@@ -177,6 +204,39 @@
           class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-[9px] font-bold text-theme-primary tracking-widest text-center animate-pulse"
         >
           TRANSIENT MODE: CHANGES WILL NOT BE SAVED
+        </div>
+      {/if}
+      {#if entity.status === "draft" && !vault.isGuest}
+        <div
+          class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
+        >
+          <span
+            class="text-[9px] font-bold tracking-widest text-amber-500 uppercase"
+          >
+            AI Draft — Pending Review
+          </span>
+          <div class="flex items-center gap-1">
+            <button
+              onclick={handleApproveDraft}
+              disabled={isDraftActioning}
+              title="Approve draft"
+              aria-label="Approve draft"
+              class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-emerald-500 transition hover:bg-emerald-500/10 disabled:opacity-50"
+            >
+              <span class="icon-[lucide--check] h-3 w-3"></span>
+              Approve
+            </button>
+            <button
+              onclick={handleRejectDraft}
+              disabled={isDraftActioning}
+              title="Reject draft"
+              aria-label="Reject draft"
+              class="flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-red-500 transition hover:bg-red-500/10 disabled:opacity-50"
+            >
+              <span class="icon-[lucide--trash-2] h-3 w-3"></span>
+              Reject
+            </button>
+          </div>
         </div>
       {/if}
       <div

@@ -24,6 +24,9 @@
     onSave,
     onClose,
     onPopOut,
+    onApproveDraft,
+    onRejectDraft,
+    isDraftActioning = false,
   } = $props<{
     entity: Entity;
     editState: any;
@@ -35,6 +38,9 @@
     onSave: () => Promise<void>;
     onClose: () => void;
     onPopOut?: () => void;
+    onApproveDraft?: () => void;
+    onRejectDraft?: () => void;
+    isDraftActioning?: boolean;
   }>();
 
   const isGraphView = $derived.by(() => {
@@ -159,6 +165,30 @@
       </button>
     {/if}
 
+    {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
+      <button
+        onclick={onApproveDraft}
+        disabled={isDraftActioning}
+        title="Approve draft"
+        aria-label="Approve draft"
+        class="px-3 md:px-4 py-1.5 border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+        data-testid="approve-draft-button"
+      >
+        <span class="icon-[lucide--check] w-3 h-3"></span>
+        <span class="hidden sm:inline">APPROVE</span>
+      </button>
+      <button
+        onclick={onRejectDraft}
+        disabled={isDraftActioning}
+        title="Reject draft"
+        aria-label="Reject draft"
+        class="px-3 md:px-4 py-1.5 border border-red-500/40 text-red-500 hover:bg-red-500/10 text-xs font-bold rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50"
+        data-testid="reject-draft-button"
+      >
+        <span class="icon-[lucide--trash-2] w-3 h-3"></span>
+        <span class="hidden sm:inline">REJECT</span>
+      </button>
+    {/if}
     {#if !editState.isEditing && !vault.isGuest && entity}
       <button
         onclick={onStartEdit}

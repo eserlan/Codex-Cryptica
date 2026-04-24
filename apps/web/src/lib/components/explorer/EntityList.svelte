@@ -12,6 +12,8 @@
     onDragEnd,
     onOpenZen,
     onFindInGraph,
+    onApproveDraft,
+    onRejectDraft,
     allowedTypes = null,
     showDraftsOnly = false,
     class: className = "",
@@ -21,6 +23,8 @@
     onDragEnd?: () => void;
     onOpenZen?: (entity: Entity) => void;
     onFindInGraph?: (entity: Entity) => void;
+    onApproveDraft?: (entity: Entity) => void;
+    onRejectDraft?: (entity: Entity) => void;
     allowedTypes?: string[] | null;
     showDraftsOnly?: boolean;
     class?: string;
@@ -370,9 +374,41 @@
             }}
             title="Open in Zen Mode"
             aria-label="Open {entity.title} in Zen Mode"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 {!(
+              onApproveDraft &&
+              onRejectDraft &&
+              entity.status === 'draft'
+            )
+              ? 'rounded-r-xl'
+              : ''}"
           >
             <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
+        {#if onApproveDraft && onRejectDraft && entity.status === "draft"}
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onApproveDraft(entity);
+            }}
+            title="Approve draft"
+            aria-label="Approve {entity.title}"
+            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-emerald-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100"
+          >
+            <span class="icon-[lucide--check] h-3.5 w-3.5"></span>
+          </button>
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onRejectDraft(entity);
+            }}
+            title="Reject draft"
+            aria-label="Reject {entity.title}"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-red-500 focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
+          >
+            <span class="icon-[lucide--trash-2] h-3.5 w-3.5"></span>
           </button>
         {/if}
       </div>
