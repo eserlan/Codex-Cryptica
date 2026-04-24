@@ -2,7 +2,7 @@
 
 **Feature Branch**: `090-entity-aliases`  
 **Created**: 2026-04-23  
-**Status**: Draft  
+**Status**: Implemented  
 **Input**: User description: "alias support https://github.com/eserlan/Codex-Cryptica/issues/676"
 
 ## Clarifications
