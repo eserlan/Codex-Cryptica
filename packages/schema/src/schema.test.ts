@@ -32,6 +32,22 @@ describe("Entity Schema Validation", () => {
     }
   });
 
+  it("should validate an entity with aliases", () => {
+    const aliasedEntity = {
+      id: "npc-5",
+      type: "npc",
+      title: "King Arthur",
+      aliases: ["Wart", "The High King"],
+    };
+
+    const result = EntitySchema.safeParse(aliasedEntity);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.aliases).toContain("Wart");
+      expect(result.data.aliases).toHaveLength(2);
+    }
+  });
+
   it("should accept custom entity types (flexible categories)", () => {
     const customTypeEntity = {
       id: "artifact-1",

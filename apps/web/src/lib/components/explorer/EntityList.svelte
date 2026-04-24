@@ -5,15 +5,6 @@
   import { getIconClass } from "$lib/utils/icon";
   import { groupEntitiesForExplorer } from "./entityListGrouping";
   import type { Entity } from "schema";
-  import {
-    ChevronDown,
-    ChevronRight,
-    Search,
-    LayoutGrid,
-    List,
-    Tag,
-    X,
-  } from "lucide-svelte";
 
   let {
     onSelect,
@@ -98,7 +89,8 @@
         !query ||
         e.title.toLowerCase().includes(query) ||
         e.content.toLowerCase().includes(query) ||
-        e.labels?.some((l) => l.toLowerCase().includes(query));
+        e.labels?.some((l) => l.toLowerCase().includes(query)) ||
+        e.aliases?.some((a) => a.toLowerCase().includes(query));
 
       const matchesType = filterAllTypes || typeFilters.has(e.type);
 
@@ -172,9 +164,9 @@
 <div class="flex flex-col h-full min-h-0 {className}">
   <div class="p-4 border-b border-theme-border shrink-0">
     <div class="relative mb-3">
-      <Search
-        class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-theme-muted"
-      />
+      <span
+        class="absolute left-3 top-1/2 -translate-y-1/2 icon-[lucide--search] w-3.5 h-3.5 text-theme-muted"
+      ></span>
       <input
         type="text"
         bind:value={searchQuery}
@@ -196,7 +188,7 @@
           typeFilters.size === 0,
         )}"
       >
-        <LayoutGrid class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--layout-grid] w-3.5 h-3.5"></span>
       </button>
 
       {#each visibleCategories as cat (cat.id)}
@@ -239,7 +231,7 @@
           viewMode === 'list',
         )}"
       >
-        <List class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--list] w-3.5 h-3.5"></span>
       </button>
 
       <button
@@ -251,7 +243,7 @@
           viewMode === 'label',
         )}"
       >
-        <Tag class="w-3.5 h-3.5" />
+        <span class="icon-[lucide--tag] w-3.5 h-3.5"></span>
       </button>
     </div>
 
@@ -266,10 +258,10 @@
             <span>{label}</span>
             <button
               onclick={() => uiStore.removeLabelFilter(label)}
-              class="hover:text-theme-text transition-colors"
+              class="hover:text-theme-text transition-colors flex items-center justify-center"
               aria-label={`Remove ${label} filter`}
             >
-              <X class="w-2.5 h-2.5" />
+              <span class="icon-[lucide--x] w-2.5 h-2.5"></span>
             </button>
           </div>
         {/each}
@@ -311,12 +303,24 @@
               cat?.icon,
             )} h-3.5 w-3.5 shrink-0 text-theme-muted transition-colors group-hover:text-theme-primary"
           ></span>
-          <div class="flex-1 min-w-0">
+          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
             <div
               class="truncate font-header text-xs font-bold uppercase tracking-widest text-theme-text transition-colors group-hover:text-theme-primary"
             >
               {entity.title}
             </div>
+            {#if entity.aliases && entity.aliases.length > 0}
+              <div
+                class="truncate text-[9px] text-theme-muted/70 font-mono italic"
+              >
+                aka: {entity.aliases.slice(0, 2).join(", ")}
+                {#if entity.aliases.length > 2}
+                  <span class="text-[8px] opacity-60">
+                    +{entity.aliases.length - 2} more
+                  </span>
+                {/if}
+              </div>
+            {/if}
           </div>
         </button>
 
@@ -383,9 +387,9 @@
         >
           <span class="flex items-center gap-1.5">
             {#if isCollapsed}
-              <ChevronRight class="h-3 w-3" />
+              <span class="icon-[lucide--chevron-right] h-3 w-3"></span>
             {:else}
-              <ChevronDown class="h-3 w-3" />
+              <span class="icon-[lucide--chevron-down] h-3 w-3"></span>
             {/if}
             <span>{label}</span>
           </span>

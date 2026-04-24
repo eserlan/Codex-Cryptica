@@ -42,6 +42,7 @@ export const EntitySchema = z.object({
   title: z.string().min(1),
   tags: z.array(z.string()).default([]),
   labels: z.array(z.string()).default([]),
+  aliases: z.array(z.string()).optional().default([]),
   connections: z.array(ConnectionSchema).default([]),
   content: z.string().default(""), // Markdown content, default empty
   lore: z.string().optional(), // Extended lore & rich notes
@@ -64,7 +65,7 @@ export const EntitySchema = z.object({
   _path: z.union([z.string(), z.array(z.string())]).optional(),
 });
 
-export type Entity = z.infer<typeof EntitySchema>;
+export type Entity = z.infer<typeof EntitySchema> & { aliases: string[] };
 export type EntityType = z.infer<typeof EntityTypeSchema>;
 
 export const DEFAULT_ENTITY_TYPE = "note";
