@@ -184,8 +184,12 @@ describe("SearchEngine Functionality", () => {
     const exportedData = await engine.exportIndex();
 
     // Ensure we got actual flexsearch segments plus our metadata
-    expect(Object.keys(exportedData).length).toBeGreaterThan(1);
-    expect(exportedData._docIds).toContain("export-test-1");
+    expect(exportedData.isSegmented).toBe(true);
+    expect(exportedData.keyCount).toBeGreaterThan(1);
+
+    const docIdsBuffer = exportedData.segments._docIds;
+    const docIds = JSON.parse(new TextDecoder().decode(docIdsBuffer));
+    expect(docIds).toContain("export-test-1");
 
     // 3. Create a new, clean engine
     const engine2 = new SearchEngine();
