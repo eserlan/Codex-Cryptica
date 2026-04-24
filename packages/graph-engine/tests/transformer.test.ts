@@ -240,25 +240,19 @@ describe("GraphTransformer", () => {
 
     const styles = getGraphStyle(mockTemplate, [], false);
 
-    // Tier 0: 0-1 connections -> 48px
-    const tier0 = styles.find((s: any) => s.selector === "node[weight <= 1]");
-    expect(tier0?.style.width).toBe(48);
+    // Tier 0: 0-2 connections -> 40px
+    const tier0 = styles.find((s: any) => s.selector === "node[weight <= 2]");
+    expect(tier0?.style.width).toBe(40);
 
-    // Tier 1: 2-5 connections -> 64px
+    // Tier 1: 3-11 connections -> 60px
     const tier1 = styles.find(
-      (s: any) => s.selector === "node[weight >= 2][weight <= 5]",
+      (s: any) => s.selector === "node[weight >= 3][weight <= 11]",
     );
-    expect(tier1?.style.width).toBe(64);
+    expect(tier1?.style.width).toBe(60);
 
-    // Tier 2: 6-10 connections -> 96px
-    const tier2 = styles.find(
-      (s: any) => s.selector === "node[weight >= 6][weight <= 10]",
-    );
+    // Tier 2: 12+ connections -> 96px (Capped)
+    const tier2 = styles.find((s: any) => s.selector === "node[weight >= 12]");
     expect(tier2?.style.width).toBe(96);
-
-    // Tier 3: 11+ connections -> 128px (Capped)
-    const tier3 = styles.find((s: any) => s.selector === "node[weight >= 11]");
-    expect(tier3?.style.width).toBe(128);
 
     // Verify transitions
     const baseNodeStyle = styles.find((s: any) => s.selector === "node");
