@@ -352,10 +352,16 @@
             <div class="flex gap-2">
               <button
                 type="submit"
-                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-6 py-2 bg-theme-primary hover:bg-theme-primary-hover text-black font-bold text-sm rounded shadow-[0_0_15px_rgba(var(--theme-primary-rgb),0.3)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 disabled={isLoading || !newVaultName.trim()}
+                aria-busy={isLoading}
               >
-                {isLoading ? "CREATING..." : "CREATE"}
+                {#if isLoading}
+                  <span class="icon-[lucide--loader-2] w-4 h-4 animate-spin" aria-hidden="true"></span>
+                  CREATING...
+                {:else}
+                  CREATE
+                {/if}
               </button>
               <button
                 type="button"
