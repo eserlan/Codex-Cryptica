@@ -11,6 +11,7 @@
     onDragStart,
     onDragEnd,
     onOpenZen,
+    onFindInGraph,
     allowedTypes = null,
     showDraftsOnly = false,
     class: className = "",
@@ -19,6 +20,7 @@
     onDragStart?: (event: DragEvent, entityId: string) => void;
     onDragEnd?: () => void;
     onOpenZen?: (entity: Entity) => void;
+    onFindInGraph?: (entity: Entity) => void;
     allowedTypes?: string[] | null;
     showDraftsOnly?: boolean;
     class?: string;
@@ -345,10 +347,27 @@
           </div>
         {/if}
 
+        {#if onFindInGraph}
+          <button
+            type="button"
+            onclick={(e) => {
+              e.stopPropagation();
+              onFindInGraph(entity);
+            }}
+            title="Find in Graph"
+            aria-label="Find {entity.title} in Graph"
+            class="shrink-0 flex items-center justify-center px-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
+          >
+            <span class="icon-[lucide--target] h-3.5 w-3.5"></span>
+          </button>
+        {/if}
         {#if onOpenZen}
           <button
             type="button"
-            onclick={() => onOpenZen(entity)}
+            onclick={(e) => {
+              e.stopPropagation();
+              onOpenZen(entity);
+            }}
             title="Open in Zen Mode"
             aria-label="Open {entity.title} in Zen Mode"
             class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"

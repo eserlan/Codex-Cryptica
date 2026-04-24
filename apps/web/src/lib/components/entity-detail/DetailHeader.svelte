@@ -10,6 +10,10 @@
   import { themeStore } from "$lib/stores/theme.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   let {
     entity,
@@ -40,16 +44,13 @@
   });
 
   const handleFindInGraph = () => {
+    const nodeId = vault.selectedEntityId;
+    if (!nodeId) return;
+
     ui.findInGraph();
 
-    const cy = (window as any).cy;
-    const nodeId = vault.selectedEntityId;
-    if (!cy || !nodeId) return;
-
-    const node = cy.$id(nodeId);
-    if (node.length > 0) {
-      cy.center(node);
-    }
+    // Trigger centering and zooming
+    dispatchSearchEntityFocus(nodeId, DEFAULT_SEARCH_ENTITY_ZOOM);
   };
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
