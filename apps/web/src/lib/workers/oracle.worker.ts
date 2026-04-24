@@ -104,6 +104,8 @@ class OracleWorker {
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
     const discoveredTitles = new Set<string>();
+    let proposalsEmitted = 0;
+    const MAX_PROPOSALS = 5; // Hard cap to prevent UI spam and reduce AI usage costs
 
     this.emit({ type: "ORACLE_THINKING_START", vaultId, requestId });
 
@@ -118,8 +120,8 @@ class OracleWorker {
           await onUpdate(partial);
 
           // Proactive Incremental Discovery
-          // We only run this if the text is long enough to potentially contain entities
-          if (partial.length > 50) {
+          // We only run this if we haven't hit the cap and text is long enough
+          if (proposalsEmitted < MAX_PROPOSALS && partial.length > 50) {
             const combinedText = `${query}\n\n${partial}`;
             const proposals = await draftingEngine.propose(combinedText, {
               existingEntities,
@@ -127,11 +129,23 @@ class OracleWorker {
               categories,
             });
 
-            const newProposals = proposals.filter(
-              (p) => !discoveredTitles.has(p.title),
-            );
+            const newProposals = proposals.filter((p) => {
+              // Deduplicate against already emitted in this session
+              if (discoveredTitles.has(p.title)) return false;
+
+              // Deduplicate against already existing vault entities
+              // (DraftingEngine does a check, but we verify here for safety)
+              if (p.entityId) return false;
+
+              return true;
+            });
+
             for (const p of newProposals) {
+              if (proposalsEmitted >= MAX_PROPOSALS) break;
+
               discoveredTitles.add(p.title);
+              proposalsEmitted++;
+
               this.emit({
                 type: "ORACLE_ENTITY_DISCOVERED",
                 vaultId,

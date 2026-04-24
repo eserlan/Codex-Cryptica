@@ -35,7 +35,7 @@ class ProposerStore {
     targetId: string,
     type: string,
   ) {
-    const proposal: Proposal = {
+    const forwardProposal: Proposal = {
       id: `${vaultId}:${sourceId}:${targetId}`,
       vaultId,
       sourceId,
@@ -47,15 +47,18 @@ class ProposerStore {
       status: "rejected",
       timestamp: Date.now(),
     };
+    const reverseProposal: Proposal = {
+      ...forwardProposal,
+      id: `${vaultId}:${targetId}:${sourceId}`,
+      sourceId: targetId,
+      targetId: sourceId,
+    };
+
+    this.prependHistoryProposal(sourceId, forwardProposal);
+    this.prependHistoryProposal(targetId, reverseProposal);
 
     const service = this.getService();
-    await service.saveProposals([proposal]);
-
-    if (!this.history[sourceId]) this.history[sourceId] = [];
-    // Prevent duplicate entries in local history
-    if (!this.history[sourceId].some((p) => p.id === proposal.id)) {
-      this.history[sourceId] = [proposal, ...this.history[sourceId]];
-    }
+    await service.saveProposals([forwardProposal, reverseProposal]);
   }
 
   isAnalyzing = $state(false);
@@ -155,6 +158,12 @@ class ProposerStore {
 
     this.activeAnalysisTotal = Math.max(0, this.activeAnalysisTotal - 1);
     this.isAnalyzing = this.activeAnalysisTotal > 0;
+  }
+
+  private prependHistoryProposal(entityId: string, proposal: Proposal) {
+    const existing = this.history[entityId] || [];
+    if (existing.some((p) => p.id === proposal.id)) return;
+    this.history[entityId] = [proposal, ...existing];
   }
 
   async loadProposals(entityId: string, requireSelection = true) {
@@ -412,8 +421,13 @@ class ProposerStore {
     await this.analyzeEntityById(entityId, false, analysisText);
 
     // Strict Limit: Only auto-apply the top 3 most relevant connections
-    // to prevent graph clutter. Connections are already sorted by confidence.
-    const proposals = (this.proposals[entityId] || []).slice(0, 3);
+    // to prevent graph clutter.
+    const proposals = [...(this.proposals[entityId] || [])]
+      .sort((a, b) => {
+        if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+        return b.timestamp - a.timestamp;
+      })
+      .slice(0, 3);
 
     let appliedCount = 0;
     let failedCount = 0;
