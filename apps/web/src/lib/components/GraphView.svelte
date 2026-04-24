@@ -121,6 +121,7 @@
     isForced = false,
     caller = "unknown",
     randomizeForced = false,
+    hasNewNodes = false,
   ) => {
     if (!layoutManager) return;
 
@@ -136,13 +137,17 @@
         onLayoutStart: () => {
           isLayoutRunning = true;
         },
+        onLayoutComputed: (ms) => {
+          debugStore.log(`Layout: ${ms}ms`, {
+            nodes: graph.stats.nodeCount,
+            caller,
+          });
+        },
         onLayoutStop: () => {
           isLayoutRunning = false;
           graphVisible = true;
           if (isInitial) {
-            setTimeout(() => {
-              _layoutReady = true;
-            }, 1000);
+            _layoutReady = true;
           }
         },
         onPositionsUpdated: (updates) => {
@@ -153,6 +158,7 @@
       isForced,
       caller,
       randomizeForced,
+      hasNewNodes,
     );
   };
 
@@ -488,7 +494,9 @@
           initialLoaded = true;
           graphVisible = true;
         },
-        onLayoutUpdate: applyCurrentLayout,
+        onLayoutUpdate: (isInitial, isForced, caller, hasNewNodes) => {
+          applyCurrentLayout(isInitial, isForced, caller, false, hasNewNodes);
+        },
       });
     }
     // Optimization: Keep graph visible if we have data and it was already loaded
@@ -650,5 +658,22 @@
   :global(.selected-source) {
     box-shadow: 0 0 20px #facc15;
     z-index: 1000 !important;
+  }
+
+  /* Discovery Pulse Animation */
+  @keyframes discovery-pulse {
+    0% {
+      opacity: 0.15;
+    }
+    50% {
+      opacity: 0.35;
+    }
+    100% {
+      opacity: 0.15;
+    }
+  }
+
+  :global(node[status="draft"]) {
+    animation: discovery-pulse 2s infinite ease-in-out;
   }
 </style>

@@ -64,16 +64,6 @@ const formatDate = (date?: TemporalMetadata) => {
 
 const EMPTY_LABELS: string[] = [];
 
-const hashId = (id: string): number => {
-  let hash = 0;
-  const len = id.length;
-  for (let i = 0; i < len; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
-  }
-  return hash;
-};
-
 const getTextureVariant = () => Math.floor(Math.random() * 4);
 
 export class GraphTransformer {
@@ -95,11 +85,6 @@ export class GraphTransformer {
     const count = entities.length;
     const weights = new Map<string, number>();
 
-    // Dynamically calculate spread based on entity count.
-    // Larger vaults need more initial room.
-    const spread = Math.max(2000, Math.sqrt(count) * 250);
-    const halfSpread = spread / 2;
-
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
     for (let i = 0; i < count; i++) {
@@ -118,21 +103,20 @@ export class GraphTransformer {
       }
     }
 
-    // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
-    // Performance: Imperative loop to avoid iterator allocation on hot path.
-    // Length is accessed directly as modern engines optimize this and it avoids inconsistent local caching.
-    for (let i = 0; i < entities.length; i++) {
+    // phyllotaxis spiral distribution for unplaced nodes
+    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+    // Initial radius provides a decent base spread even for small graphs
+    const spiralRadius = Math.max(1200, Math.sqrt(count) * 100);
+
+    for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
-      const hash = hashId(entity.id);
 
       const dateLabel = formatDate(
         entity.date || entity.start_date || entity.end_date,
       );
 
       // Visibility markers for Admin visual cues
-      // OPTIMIZATION: Simple string comparisons are ~10x faster than Regex
-      // We check for existence first to avoid '|| []' allocation.
       let isRevealed = false;
       const tags = entity.tags;
       if (tags) {
@@ -157,7 +141,6 @@ export class GraphTransformer {
           }
         }
       }
-      // _isHidden was unused and removed
 
       // Create Node
       const nodeData: GraphNode["data"] = {
@@ -178,25 +161,35 @@ export class GraphTransformer {
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;
-      const hasValidCoords =
-        coords &&
-        typeof coords.x === "number" &&
-        typeof coords.y === "number" &&
+      const hasValidCoords = !!(
+        coords?.x != null &&
+        coords?.y != null &&
         Number.isFinite(coords.x) &&
-        Number.isFinite(coords.y);
+        Number.isFinite(coords.y)
+      );
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
-      elements.push({
-        group: "nodes",
-        data: nodeData,
-        position: hasValidCoords
-          ? coords
-          : {
-              x: (Math.abs(hash) % spread) - halfSpread,
-              y: (Math.abs(hash * 13) % spread) - halfSpread,
-            },
-      });
+      if (hasValidCoords) {
+        elements.push({
+          group: "nodes",
+          data: nodeData,
+          position: coords,
+        });
+      } else {
+        const angle = i * GOLDEN_ANGLE;
+        const distance = spiralRadius * Math.sqrt((i + 0.5) / count);
+        // Mark as pending layout so it stays invisible until placed
+        (nodeData as any).isPendingLayout = true;
+        elements.push({
+          group: "nodes",
+          data: nodeData,
+          position: {
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+          },
+        });
+      }
 
       // Create Edges
       const connections = entity.connections;
@@ -559,6 +552,31 @@ export const getGraphStyle = (
   // Selection styles MUST come last to ensure they override EVERYTHING
   // (category colors, revealed borders, and focus-mode opacities)
   const selectionStyles: any[] = [
+    {
+      selector: "node[isPendingLayout]",
+      style: {
+        opacity: 0,
+        events: "no",
+      },
+    },
+    {
+      selector: ".pending-layout",
+      style: {
+        opacity: 0,
+        events: "no",
+      },
+    },
+    {
+      selector: "node[status = 'draft']",
+      style: {
+        "border-style": isFantasy ? "dashed" : "solid",
+        "border-dash-pattern": [4, 2],
+        "underlay-color": "#2dd4bf", // Teal glow for AI discovery
+        "underlay-padding": 12,
+        "underlay-opacity": 0.25,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+      },
+    },
     {
       selector: "node:selected",
       style: {

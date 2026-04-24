@@ -28,6 +28,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - Follow the constitution's library-first, TDD, privacy, DI, and documentation principles.
 - Do not commit implementation changes without tests for the affected behavior.
+- When adding or updating tests for changed behavior, cover both the expected success path and at least one meaningful negative, cancellation, or failure path.
 - Use constructor-based dependency injection for services and stores.
 - Prefer local-first and client-side solutions when the architecture allows it.
 - Keep user-facing language clear and plain.

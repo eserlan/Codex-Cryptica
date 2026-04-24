@@ -12,6 +12,7 @@
     LayoutGrid,
     List,
     Tag,
+    X,
   } from "lucide-svelte";
 
   let {
@@ -35,6 +36,7 @@
   let searchQuery = $state("");
   let typeFilters = $state<Set<string>>(new Set());
   const activeVaultId = $derived(vault.activeVaultId);
+  const labelFilters = $derived(uiStore.labelFilters);
   const focusedEntityId = $derived(uiStore.focusedEntityId);
   const viewMode = $derived(uiStore.explorerViewMode);
   const allowedTypeSet = $derived.by(() =>
@@ -74,7 +76,8 @@
     const allEntities = vault.allEntities;
     const filtered: Entity[] = [];
     const query = searchQuery.trim().toLowerCase();
-    const filterAll = typeFilters.size === 0;
+    const filterAllTypes = typeFilters.size === 0;
+    const activeLabels = Array.from(labelFilters);
 
     for (let i = 0; i < allEntities.length; i++) {
       const e = allEntities[i];
@@ -94,10 +97,17 @@
       const matchesSearch =
         !query ||
         e.title.toLowerCase().includes(query) ||
-        e.content.toLowerCase().includes(query);
-      const matchesType = filterAll || typeFilters.has(e.type);
+        e.content.toLowerCase().includes(query) ||
+        e.labels?.some((l) => l.toLowerCase().includes(query));
 
-      if (matchesSearch && matchesType) {
+      const matchesType = filterAllTypes || typeFilters.has(e.type);
+
+      // AND logic for labels
+      const matchesLabels =
+        activeLabels.length === 0 ||
+        (e.labels && activeLabels.every((f) => e.labels?.includes(f)));
+
+      if (matchesSearch && matchesType && matchesLabels) {
         filtered.push(e);
       }
     }
@@ -118,6 +128,7 @@
 
     if (type === "all") {
       typeFilters = new Set();
+      uiStore.clearLabelFilters();
       return;
     }
 
@@ -177,7 +188,7 @@
       class="flex items-center gap-1 rounded-xl border border-theme-border bg-theme-surface/50 px-2 py-1.5 shadow-sm"
     >
       <button
-        onclick={() => (typeFilters = new Set())}
+        onclick={(e) => toggleTypeFilter("all", e)}
         title="Show all categories"
         aria-label="Show all categories"
         aria-pressed={typeFilters.size === 0}
@@ -243,6 +254,33 @@
         <Tag class="w-3.5 h-3.5" />
       </button>
     </div>
+
+    {#if labelFilters.size > 0}
+      <div
+        class="mt-3 flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
+      >
+        {#each Array.from(labelFilters).sort() as label}
+          <div
+            class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-theme-primary/10 border border-theme-primary/20 text-[9px] font-bold text-theme-primary uppercase tracking-wider"
+          >
+            <span>{label}</span>
+            <button
+              onclick={() => uiStore.removeLabelFilter(label)}
+              class="hover:text-theme-text transition-colors"
+              aria-label={`Remove ${label} filter`}
+            >
+              <X class="w-2.5 h-2.5" />
+            </button>
+          </div>
+        {/each}
+        <button
+          onclick={() => uiStore.clearLabelFilters()}
+          class="px-2 py-0.5 text-[9px] font-bold text-theme-muted hover:text-theme-primary uppercase tracking-wider transition-colors"
+        >
+          Clear All
+        </button>
+      </div>
+    {/if}
   </div>
 
   <div
@@ -252,7 +290,7 @@
     {#snippet entityItem(entity: Entity)}
       {@const cat = categories.getCategory(entity.type)}
       <div
-        class="group relative flex items-stretch rounded-xl border transition-all {entity.id ===
+        class="group relative flex items-center rounded-xl border transition-all {entity.id ===
         focusedEntityId
           ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-accent/20'
           : 'border-theme-border bg-theme-surface/50 hover:border-theme-primary/50 hover:bg-theme-primary/5'}"
@@ -266,7 +304,7 @@
           ondragend={() => onDragEnd?.()}
           onclick={() => onSelect?.(entity)}
           title={`Select ${entity.title}`}
-          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-xl"
+          class="flex flex-1 min-w-0 items-center gap-2 p-2.5 text-left focus:outline-none focus:ring-2 focus:ring-theme-accent/20 rounded-l-xl"
         >
           <span
             class="{getIconClass(
@@ -280,25 +318,36 @@
               {entity.title}
             </div>
           </div>
-          {#if entity.labels && entity.labels.length > 0}
-            <div class="flex gap-1 shrink-0 ml-auto flex-wrap justify-end">
-              {#each entity.labels as label}
-                <span
-                  class="text-[7px] px-1 bg-theme-primary/10 text-theme-primary rounded uppercase tracking-[0.1em] truncate max-w-[40px] font-mono"
-                >
-                  {label}
-                </span>
-              {/each}
-            </div>
-          {/if}
         </button>
+
+        {#if entity.labels && entity.labels.length > 0}
+          <div class="flex gap-1 shrink-0 px-2 flex-wrap justify-end">
+            {#each entity.labels as label}
+              <button
+                type="button"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  uiStore.toggleLabelFilter(label, e.ctrlKey || e.metaKey);
+                }}
+                class="text-[7px] px-1 rounded uppercase tracking-[0.1em] truncate max-w-[60px] font-mono transition-all border {labelFilters.has(
+                  label,
+                )
+                  ? 'bg-theme-primary text-theme-bg border-theme-primary'
+                  : 'bg-theme-primary/10 text-theme-primary border-transparent hover:border-theme-primary/50 hover:bg-theme-primary/20'}"
+              >
+                {label}
+              </button>
+            {/each}
+          </div>
+        {/if}
+
         {#if onOpenZen}
           <button
             type="button"
             onclick={() => onOpenZen(entity)}
             title="Open in Zen Mode"
             aria-label="Open {entity.title} in Zen Mode"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 rounded-r-xl"
           >
             <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
           </button>

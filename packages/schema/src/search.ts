@@ -12,12 +12,13 @@ export interface SearchEntry {
 export interface SearchResult {
   id: string;
   title: string;
-  type?: string; // Entity category ID
+  type?: string;
   imageUrl?: string; // Local OPFS path or temporary blob URL
   path: string;
   excerpt?: string;
   score: number;
   matchType: "title" | "content";
+  status?: SearchEntry["status"];
   highlights?: Array<{ start: number; length: number }>;
 }
 

@@ -66,6 +66,11 @@ export interface TextGenerationService {
     onUpdate: (partial: string) => void,
     demoMode?: boolean,
     categories?: string[],
+    options?: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: Entity[];
+    },
   ): Promise<void>;
   generateMergeProposal(
     apiKey: string,

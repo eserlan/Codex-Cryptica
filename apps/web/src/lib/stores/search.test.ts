@@ -266,6 +266,14 @@ describe("SearchStore", () => {
       expect(consoleSpy).toHaveBeenCalled();
       consoleSpy.mockRestore();
     });
+
+    it("includes drafts in search service options", async () => {
+      await store.setQuery("draft query");
+      expect(mockSearchService.search).toHaveBeenCalledWith(
+        "draft query",
+        expect.objectContaining({ includeDrafts: true }),
+      );
+    });
   });
 
   describe("setSelectedIndex", () => {

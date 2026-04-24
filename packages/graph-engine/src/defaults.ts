@@ -12,8 +12,9 @@ export const DEFAULT_LAYOUT_OPTIONS = {
   gravity: 0.25,
   nodeRepulsion: 18000,
   idealEdgeLength: 55,
+  edgeElasticity: 0.45,
   nodeSeparation: 55,
-  numIter: 5000,
+  numIter: 2200,
   nodeDimensionsIncludeLabels: true,
   nestingReprGrpFactor: 1.2,
   initialEnergyOnIncremental: 0.3,
@@ -30,27 +31,28 @@ export const DEFAULT_LAYOUT_OPTIONS = {
 export const getDynamicLayoutOptions = (nodeCount: number) => {
   const quality = nodeCount > 500 ? "draft" : "default";
 
-  // Shorter edges pull connected nodes into tight huddles around their hub
-  const edgeLength = Math.min(70, 15 + Math.sqrt(nodeCount) * 1.5);
+  const edgeLength = Math.min(450, 90 + Math.sqrt(nodeCount) * 9);
 
-  const separation = Math.min(100, 20 + Math.sqrt(nodeCount) * 2.5);
+  const separation = Math.min(600, 120 + Math.sqrt(nodeCount) * 15);
 
-  // Higher repulsion pushes non-connected nodes further apart while
-  // short edges still keep directly-connected nodes in tight clusters
-  const repulsion = Math.min(200000, 30000 + nodeCount * 500);
+  const repulsion = Math.min(1600000, 250000 + nodeCount * 2400);
 
-  // Lower gravity lets clusters drift into their own regions of space
-  // rather than being forced into one mixed ball
-  const gravity = Math.max(0.08, 0.25 - nodeCount * 0.0005);
+  // Lower gravity so clusters spread into their own regions rather than
+  // collapsing into one mixed ball; floor is low so large graphs stay cohesive
+  const gravity = Math.max(0.005, 0.05 - nodeCount * 0.00015);
+
+  // Draft quality uses a coarser algorithm — fewer iterations still converge
+  const numIter = nodeCount > 200 ? 1200 : DEFAULT_LAYOUT_OPTIONS.numIter;
 
   return {
     ...DEFAULT_LAYOUT_OPTIONS,
     quality,
+    numIter,
     nodeRepulsion: repulsion,
     nodeSeparation: separation,
     idealEdgeLength: edgeLength,
     gravity,
-    gravityRange: 5.5,
+    gravityRange: 1.5,
   };
 };
 

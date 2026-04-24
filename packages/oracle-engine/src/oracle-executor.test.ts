@@ -127,6 +127,7 @@ describe("OracleActionExecutor - Detailed", () => {
           ),
         }),
       );
+      expect(mockContext.graph.requestFit).not.toHaveBeenCalled();
     });
 
     it("should auto-apply create connections when connection discovery is auto-apply", async () => {

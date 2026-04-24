@@ -182,4 +182,81 @@ describe("proposerStore", () => {
     expect(mockService.clearVault).toHaveBeenCalledWith("test-vault");
     expect(proposerStore.allPendingProposals).toHaveLength(0);
   });
+
+  it("keeps the global analysis state active until concurrent entity analyses finish", async () => {
+    let resolveSource: (value: []) => void = () => {};
+    let resolveTarget: (value: []) => void = () => {};
+
+    mockAnalyzeEntity.mockImplementation(
+      (
+        _apiKey: string,
+        _modelName: string,
+        _vaultId: string,
+        entityId: string,
+      ): Promise<[]> =>
+        new Promise((resolve) => {
+          if (entityId === "source") {
+            resolveSource = resolve;
+          } else if (entityId === "target") {
+            resolveTarget = resolve;
+          }
+        }),
+    );
+
+    const { proposerStore } = await import("./proposer.svelte");
+
+    mockVault.entities["source"] = {
+      id: "source",
+      title: "Source",
+      connections: [],
+    };
+    mockVault.entities["target"] = {
+      id: "target",
+      title: "Target",
+      connections: [],
+    };
+    mockVault.allEntities.push(
+      mockVault.entities["source"],
+      mockVault.entities["target"],
+    );
+
+    const sourceRun = proposerStore.analyzeEntityById("source");
+    await vi.waitFor(() => {
+      expect(proposerStore.isEntityAnalyzing("source")).toBe(true);
+      expect(mockAnalyzeEntity).toHaveBeenCalledWith(
+        "test-key",
+        expect.any(String),
+        "test-vault",
+        "source",
+        expect.any(String),
+        expect.any(Array),
+      );
+    });
+
+    const targetRun = proposerStore.analyzeEntityById("target");
+    await vi.waitFor(() => {
+      expect(proposerStore.isEntityAnalyzing("target")).toBe(true);
+      expect(mockAnalyzeEntity).toHaveBeenCalledWith(
+        "test-key",
+        expect.any(String),
+        "test-vault",
+        "target",
+        expect.any(String),
+        expect.any(Array),
+      );
+    });
+
+    resolveSource([]);
+    await sourceRun;
+
+    expect(proposerStore.isEntityAnalyzing("source")).toBe(false);
+    expect(proposerStore.isEntityAnalyzing("target")).toBe(true);
+    expect(proposerStore.isAnalyzing).toBe(true);
+
+    resolveTarget([]);
+    await targetRun;
+
+    expect(proposerStore.isEntityAnalyzing("target")).toBe(false);
+    expect(proposerStore.isAnalyzing).toBe(false);
+  });
 });
