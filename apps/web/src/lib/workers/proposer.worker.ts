@@ -14,6 +14,7 @@ function normalizeTargetId(value: string): string {
 async function analyzeEntityWithModel(
   apiKey: string,
   modelName: string,
+  vaultId: string,
   entityId: string,
   content: string,
   availableTargets: { id: string; name: string }[],
@@ -132,7 +133,8 @@ Only return the JSON. If no connections are found, return empty array [].`;
 
   for (const p of bestProposalsByTarget.values()) {
     proposals.push({
-      id: `${entityId}:${p.targetId}`,
+      id: `${vaultId}:${entityId}:${p.targetId}`,
+      vaultId,
       sourceId: entityId,
       targetId: p.targetId,
       type: p.type || "related",
@@ -157,11 +159,18 @@ self.onmessage = async (e: MessageEvent) => {
 
   try {
     if (type === "ANALYZE") {
-      const { apiKey, modelName, entityId, content, availableTargets } =
-        payload;
+      const {
+        apiKey,
+        modelName,
+        vaultId,
+        entityId,
+        content,
+        availableTargets,
+      } = payload;
       const proposals = await analyzeEntityWithModel(
         apiKey,
         modelName,
+        vaultId,
         entityId,
         content,
         availableTargets,

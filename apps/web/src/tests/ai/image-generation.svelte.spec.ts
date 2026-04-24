@@ -30,11 +30,12 @@ describe("ImageGenerationService", () => {
 
     service = new DefaultImageGenerationService(mockClientManager);
     (uiStore as any).aiDisabled = false;
+    localStorage.clear();
   });
 
   describe("AI Disabled Gating", () => {
     it("should throw error in generateImage when AI Disabled is ON", async () => {
-      (uiStore as any).aiDisabled = true;
+      localStorage.setItem("codex_ai_disabled", "true");
       await expect(
         service.generateImage("key", "prompt", "model"),
       ).rejects.toThrow("AI features are disabled.");
@@ -66,6 +67,12 @@ describe("ImageGenerationService", () => {
         "model",
       );
       expect(result).toBe("query");
+    });
+
+    it("should return query immediately if isAIEnabled is false", async () => {
+      localStorage.setItem("codex_ai_disabled", "true");
+      const result = await service.distillVisualPrompt("key", "q", "c", "m");
+      expect(result).toBe("q");
     });
   });
 });

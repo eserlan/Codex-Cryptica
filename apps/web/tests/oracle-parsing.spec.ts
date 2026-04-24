@@ -41,7 +41,7 @@ test.describe("Oracle Response Parsing & Smart Apply", () => {
         removeEntry: async () => {},
       });
     });
-    await page.goto("/");
+    await page.goto("http://0.0.0.0:5173/");
 
     // Wait for app to be ready
     await page.waitForFunction(

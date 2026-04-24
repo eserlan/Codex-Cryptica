@@ -86,7 +86,10 @@ Quickly browse and filter all your world entities via the persistent sidebar. Cl
 Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.
 
 ### Proactive Discovery
-While you chat, the Oracle automatically identifies new characters, locations, and items. Look for 'Found Lore' chips at the bottom of messages to quickly add them to your vault.
+While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.
+
+### Oracle Automation
+Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.
 
 ### Reviewing Drafts
 Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.

@@ -373,4 +373,66 @@ describe("DefaultTextGenerationService", () => {
       ).rejects.toThrow("Plot analysis failed: Timeout");
     });
   });
+
+  describe("expandQuery", () => {
+    it("should return expanded query from model", async () => {
+      const mockText = vi.fn().mockReturnValue("Expanded query");
+      mockModel.generateContent.mockResolvedValue({
+        response: { text: mockText },
+      });
+
+      const result = await service.expandQuery("key", "original query", []);
+      expect(result).toBe("Expanded query");
+    });
+
+    it("should return original query if expansion fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Fail"));
+      const result = await service.expandQuery("key", "original query", []);
+      expect(result).toBe("original query");
+    });
+  });
+
+  describe("distillContext", () => {
+    it("should return distilled context", async () => {
+      const mockText = vi.fn().mockReturnValue("distilled context");
+      mockModel.generateContent.mockResolvedValue({
+        response: { text: mockText },
+      });
+
+      const result = await service.distillContext("key", "context", "model");
+      expect(result).toBe("distilled context");
+    });
+
+    it("should return raw context if distillContext fails", async () => {
+      mockModel.generateContent.mockRejectedValue(new Error("Timeout"));
+      const result = await service.distillContext("key", "context", "model");
+      expect(result).toBe("context");
+    });
+  });
+
+  describe("merge and reconcile failure paths", () => {
+    it("should handle error in generateMergeProposal catch block", async () => {
+       mockModel.generateContent.mockImplementationOnce(() => {
+         throw new Error("Direct throw");
+       });
+       await expect(
+         service.generateMergeProposal("key", "model", {}, [])
+       ).rejects.toThrow("Merge failed: Direct throw");
+    });
+
+    it("should handle error in reconcileEntityUpdate catch block", async () => {
+       mockModel.generateContent.mockImplementationOnce(() => {
+         throw new Error("Direct throw");
+       });
+       await expect(
+         service.reconcileEntityUpdate!(
+           "key",
+           "model",
+           { title: "T", type: "npc", content: "", lore: "" },
+           { chronicle: "C", lore: "L" },
+           []
+         )
+       ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+    });
+  });
 });

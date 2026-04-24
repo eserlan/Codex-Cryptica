@@ -24,6 +24,7 @@ export class ChatHistoryService {
   messages = $state<ChatMessage[]>([]);
   lastUpdated = $state<number>(0);
   private db: AppSettingsStore | null = null;
+  private debounceTimeout: ReturnType<typeof setTimeout> | null = null;
 
   /**
    * Initialize the chat history service by loading saved messages from IndexedDB.
@@ -50,6 +51,10 @@ export class ChatHistoryService {
    * Should be called when the service is destroyed or messages are cleared.
    */
   destroy() {
+    if (this.debounceTimeout) {
+      clearTimeout(this.debounceTimeout);
+      this.debounceTimeout = null;
+    }
     this.messages.forEach((m) => {
       if (m.imageUrl?.startsWith("blob:")) {
         URL.revokeObjectURL(m.imageUrl);
@@ -101,6 +106,29 @@ export class ChatHistoryService {
       if (persist) {
         await this.saveToDB();
       }
+    }
+  }
+
+  async addProposal(messageId: string, proposal: any) {
+    const msgIndex = this.messages.findIndex((m) => m.id === messageId);
+    if (msgIndex !== -1) {
+      const msg = this.messages[msgIndex];
+      const existing = msg.proposals || [];
+      if (existing.some((p: any) => p.title === proposal.title)) return;
+
+      const proposals = [...existing, proposal];
+      this.messages[msgIndex] = { ...msg, proposals };
+      this.messages = [...this.messages];
+      this.lastUpdated = Date.now();
+
+      // Debounce persistence for high-frequency incremental discovery (PR Comment #8)
+      if (this.debounceTimeout) {
+        clearTimeout(this.debounceTimeout);
+      }
+      this.debounceTimeout = setTimeout(() => {
+        void this.saveToDB();
+        this.debounceTimeout = null;
+      }, 500);
     }
   }
 

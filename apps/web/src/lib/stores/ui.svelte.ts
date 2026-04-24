@@ -54,10 +54,13 @@ export class UIStore {
   archiveActivityLog = $state<ActivityEvent[]>([]);
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
+  labelFilters = $state<Set<string>>(new Set());
 
   // Sidebar State
   leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+  activeSidebarTool = $state<"oracle" | "explorer" | "ai-assessment" | "none">(
+    "none",
+  );
   leftSidebarWidth = $state(280);
   rightSidebarWidth = $state(380);
 
@@ -216,7 +219,7 @@ export class UIStore {
     }
   }
 
-  toggleSidebarTool(tool: "oracle" | "explorer" | "none") {
+  toggleSidebarTool(tool: "oracle" | "explorer" | "ai-assessment" | "none") {
     if (tool === "none" || this.activeSidebarTool === tool) {
       this.leftSidebarOpen = false;
       this.activeSidebarTool = "none";
@@ -394,6 +397,34 @@ export class UIStore {
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_explorer_view_mode", mode);
     }
+  }
+
+  toggleLabelFilter(label: string, isMulti = false) {
+    if (isMulti) {
+      const next = new Set(this.labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      this.labelFilters = next;
+    } else {
+      if (this.labelFilters.has(label) && this.labelFilters.size === 1) {
+        this.labelFilters = new Set();
+      } else {
+        this.labelFilters = new Set([label]);
+      }
+    }
+  }
+
+  removeLabelFilter(label: string) {
+    const next = new Set(this.labelFilters);
+    next.delete(label);
+    this.labelFilters = next;
+  }
+
+  clearLabelFilters() {
+    this.labelFilters = new Set();
   }
 
   getCollapsedLabelGroups(vaultId: string | null) {

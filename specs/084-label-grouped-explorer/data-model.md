@@ -28,9 +28,17 @@ Represents the saved collapsed state for label sections in the explorer.
 - **Persistence Scope**: Browser-local preference for the current user environment.
 - **Behavior**: Updated whenever a label section is collapsed or expanded and restored when the UI store initializes.
 
+### Label Filter Set
+
+Represents the collection of labels currently active as filters in the explorer.
+
+- **Labels**: A set of unique label strings.
+- **Filtering Logic**: Matches entities that contain ALL labels in the set ("AND" logic).
+- **Behavior**: Clicking a label pill selects it exclusively; Ctrl/Cmd+Click toggles inclusion.
+
 ### Filtered Explorer Result
 
-Represents the existing explorer result set after search and category filters are applied.
+Represents the explorer result set after search, category, and label filters are applied.
 
 - **Source Entities**: The current vault entity collection.
 - **Applied Filters**: Search query and selected entity-type filters.
