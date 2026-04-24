@@ -40,13 +40,14 @@
   });
 
   const handleFindInGraph = () => {
+    const entityId = entity?.id;
     onClose();
     // Short delay to let the modal close transition finish
     setTimeout(() => {
       ui.findInGraph();
 
       const cy = (window as any).cy;
-      const nodeId = entity.id;
+      const nodeId = entityId;
       if (!cy || !nodeId) return;
 
       const node = cy.$id(nodeId);
