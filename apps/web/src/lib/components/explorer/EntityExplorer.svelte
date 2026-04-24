@@ -25,6 +25,22 @@
   let draftCount = $derived(
     vault.allEntities.filter((e) => e.status === "draft").length,
   );
+
+  async function handleApproveDraft(entity: Entity) {
+    try {
+      await vault.updateEntity(entity.id, { status: "active" });
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    }
+  }
+
+  async function handleRejectDraft(entity: Entity) {
+    try {
+      await vault.deleteEntity(entity.id);
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    }
+  }
 </script>
 
 <div
@@ -105,6 +121,8 @@
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
       onFindInGraph={handleFindInGraph}
       showDraftsOnly={explorerTab === "review"}
+      onApproveDraft={explorerTab === "review" ? handleApproveDraft : undefined}
+      onRejectDraft={explorerTab === "review" ? handleRejectDraft : undefined}
     />
   </div>
 </div>

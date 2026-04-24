@@ -103,6 +103,32 @@
     }
   };
 
+  let isDraftActioning = $state(false);
+
+  const handleApproveDraft = async () => {
+    if (!entity || isDraftActioning) return;
+    isDraftActioning = true;
+    try {
+      await vault.updateEntity(entity.id, { status: "active" });
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
+    }
+  };
+
+  const handleRejectDraft = async () => {
+    if (!entity || isDraftActioning) return;
+    isDraftActioning = true;
+    try {
+      await vault.deleteEntity(entity.id);
+      onClose();
+    } catch (err: any) {
+      isDraftActioning = false;
+      uiStore.notify(`Error: ${err.message}`, "error");
+    }
+  };
+
   const navigateTo = async (id: string) => {
     if (editState.isEditing) {
       if (
@@ -244,6 +270,9 @@
         : onPopOut
           ? handlePopOutClick
           : undefined}
+      onApproveDraft={handleApproveDraft}
+      onRejectDraft={handleRejectDraft}
+      {isDraftActioning}
     />
 
     <!-- Navigation Tabs -->
