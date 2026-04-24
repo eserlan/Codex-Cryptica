@@ -55,9 +55,17 @@ export class SearchStore {
       if (!raw) return [];
       const parsed = JSON.parse(raw) as SearchResult[];
       if (!Array.isArray(parsed)) return [];
-      return parsed
-        .map((entry) => this.normalizeRecent(entry))
-        .filter((entry): entry is SearchResult => Boolean(entry && entry.path));
+
+      // ⚡ Bolt Optimization: Replace chained .map().filter() with a single imperative loop.
+      const normalized: SearchResult[] = [];
+      const len = parsed.length;
+      for (let i = 0; i < len; i++) {
+        const entry = this.normalizeRecent(parsed[i]);
+        if (entry && entry.path) {
+          normalized.push(entry);
+        }
+      }
+      return normalized;
     } catch (error) {
       console.warn("SearchStore: Failed to parse recent searches.", error);
       return [];
@@ -118,16 +126,22 @@ export class SearchStore {
         defaultVisibility: this.vault.defaultVisibility,
       };
 
-      const filteredResults = results.filter((result) => {
+      // ⚡ Bolt Optimization: Replace .filter() with an imperative loop
+      const filteredResults: SearchResult[] = [];
+      const len = results.length;
+      for (let i = 0; i < len; i++) {
+        const result = results[i];
         const entity = this.vault.entities[result.id];
         if (!entity) {
           debugStore.warn(
             `[SearchStore] Result entity not found in vault: ${result.id}`,
           );
-          return false;
+          continue;
         }
-        return isEntityVisible(entity, settings);
-      });
+        if (isEntityVisible(entity, settings)) {
+          filteredResults.push(result);
+        }
+      }
 
       debugStore.log(
         `[SearchStore] ${filteredResults.length} results visible.`,
@@ -159,10 +173,17 @@ export class SearchStore {
       }
 
       // Add to recents
-      this.recents = [
-        normalized,
-        ...this.recents.filter((r) => r.id !== normalized.id),
-      ].slice(0, 5);
+      // ⚡ Bolt Optimization: Replace spread with .filter() and .slice() with a single imperative loop
+      const nextRecents: SearchResult[] = [normalized];
+      const len = this.recents.length;
+      for (let i = 0; i < len; i++) {
+        const r = this.recents[i];
+        if (r.id !== normalized.id) {
+          nextRecents.push(r);
+          if (nextRecents.length === 5) break;
+        }
+      }
+      this.recents = nextRecents;
 
       if (typeof localStorage !== "undefined") {
         localStorage.setItem(

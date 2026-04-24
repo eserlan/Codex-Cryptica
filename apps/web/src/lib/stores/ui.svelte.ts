@@ -505,10 +505,16 @@ export class UIStore {
       localStorage.setItem("codex_last_connection_label", label);
 
       // Update recent labels
-      const updated = [
-        label,
-        ...this.recentConnectionLabels.filter((l) => l !== label),
-      ].slice(0, 5);
+      // ⚡ Bolt Optimization: Replace .filter() and .slice() with a single imperative loop
+      const updated: string[] = [label];
+      const len = this.recentConnectionLabels.length;
+      for (let i = 0; i < len; i++) {
+        const l = this.recentConnectionLabels[i];
+        if (l !== label) {
+          updated.push(l);
+          if (updated.length === 5) break;
+        }
+      }
       this.recentConnectionLabels = updated;
       localStorage.setItem(
         "codex_recent_connection_labels",
