@@ -374,7 +374,7 @@ describe("proposerStore", () => {
     expect(proposerStore.history["source"]).toHaveLength(1);
     expect(proposerStore.history["target"]).toHaveLength(1);
 
-    resolveSave?.();
+    if (resolveSave) resolveSave();
     await pendingRemoval;
   });
 
