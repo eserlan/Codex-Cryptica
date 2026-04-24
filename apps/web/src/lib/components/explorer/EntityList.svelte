@@ -374,12 +374,18 @@
             }}
             title="Open in Zen Mode"
             aria-label="Open {entity.title} in Zen Mode"
-            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100"
+            class="shrink-0 flex items-center justify-center px-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity text-theme-muted hover:text-theme-primary focus:outline-none focus:opacity-100 focus-visible:opacity-100 {!(
+              onApproveDraft &&
+              onRejectDraft &&
+              entity.status === 'draft'
+            )
+              ? 'rounded-r-xl'
+              : ''}"
           >
             <span class="icon-[lucide--book-open] h-3.5 w-3.5"></span>
           </button>
         {/if}
-        {#if onApproveDraft && onRejectDraft}
+        {#if onApproveDraft && onRejectDraft && entity.status === "draft"}
           <button
             type="button"
             onclick={(e) => {

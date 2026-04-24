@@ -165,7 +165,7 @@
       </button>
     {/if}
 
-    {#if !editState.isEditing && entity?.status === "draft" && onApproveDraft && onRejectDraft}
+    {#if !editState.isEditing && entity?.status === "draft" && !vault.isGuest && onApproveDraft && onRejectDraft}
       <button
         onclick={onApproveDraft}
         disabled={isDraftActioning}

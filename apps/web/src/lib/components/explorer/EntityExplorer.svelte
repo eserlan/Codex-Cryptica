@@ -26,19 +26,29 @@
     vault.allEntities.filter((e) => e.status === "draft").length,
   );
 
+  const actioningIds = $state(new Set<string>());
+
   async function handleApproveDraft(entity: Entity) {
+    if (actioningIds.has(entity.id)) return;
+    actioningIds.add(entity.id);
     try {
       await vault.updateEntity(entity.id, { status: "active" });
     } catch (err: any) {
       uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      actioningIds.delete(entity.id);
     }
   }
 
   async function handleRejectDraft(entity: Entity) {
+    if (actioningIds.has(entity.id)) return;
+    actioningIds.add(entity.id);
     try {
       await vault.deleteEntity(entity.id);
     } catch (err: any) {
       uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      actioningIds.delete(entity.id);
     }
   }
 </script>
@@ -121,8 +131,12 @@
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
       onFindInGraph={handleFindInGraph}
       showDraftsOnly={explorerTab === "review"}
-      onApproveDraft={explorerTab === "review" ? handleApproveDraft : undefined}
-      onRejectDraft={explorerTab === "review" ? handleRejectDraft : undefined}
+      onApproveDraft={explorerTab === "review" && !vault.isGuest
+        ? handleApproveDraft
+        : undefined}
+      onRejectDraft={explorerTab === "review" && !vault.isGuest
+        ? handleRejectDraft
+        : undefined}
     />
   </div>
 </div>

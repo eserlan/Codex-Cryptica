@@ -159,8 +159,9 @@
       await vault.deleteEntity(entity.id);
       onClose();
     } catch (err: any) {
-      isDraftActioning = false;
       uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      isDraftActioning = false;
     }
   };
 </script>
@@ -205,7 +206,7 @@
           TRANSIENT MODE: CHANGES WILL NOT BE SAVED
         </div>
       {/if}
-      {#if entity.status === "draft"}
+      {#if entity.status === "draft" && !vault.isGuest}
         <div
           class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
         >
