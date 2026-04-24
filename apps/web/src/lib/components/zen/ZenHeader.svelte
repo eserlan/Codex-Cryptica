@@ -5,6 +5,10 @@
   import { ui } from "$lib/stores/ui.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -44,16 +48,16 @@
     onClose();
     // Short delay to let the modal close transition finish
     setTimeout(() => {
+      if (!entityId) return;
+
+      // This will trigger GraphView to center and zoom
+      dispatchSearchEntityFocus(entityId, DEFAULT_SEARCH_ENTITY_ZOOM);
+
+      // This ensures the entity sidebar is open to this entity
+      vault.selectedEntityId = entityId;
+
+      // Signal finding
       ui.findInGraph();
-
-      const cy = (window as any).cy;
-      const nodeId = entityId;
-      if (!cy || !nodeId) return;
-
-      const node = cy.$id(nodeId);
-      if (node.length > 0) {
-        cy.center(node);
-      }
     }, 300);
   };
 </script>

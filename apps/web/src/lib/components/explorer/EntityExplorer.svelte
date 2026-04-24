@@ -3,11 +3,22 @@
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
   import { Database, X } from "lucide-svelte";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   import type { Entity } from "schema";
 
   function handleSelect(entity: Entity) {
     uiStore.openZenMode(entity.id);
+  }
+
+  function handleFindInGraph(entity: Entity) {
+    dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
+    vault.selectedEntityId = entity.id;
+    uiStore.findInGraph();
+    if (uiStore.isMobile) uiStore.closeSidebar();
   }
 
   let explorerTab = $state<"all" | "review">("all");
@@ -92,6 +103,7 @@
     <EntityList
       onSelect={handleSelect}
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+      onFindInGraph={handleFindInGraph}
       showDraftsOnly={explorerTab === "review"}
     />
   </div>
