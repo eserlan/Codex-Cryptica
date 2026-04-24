@@ -426,7 +426,6 @@ describe("SearchService", () => {
     await promise;
 
     // Should have indexed in batches of 100
-    console.log(indexBatchSpy.mock.calls.map((c) => c[0].length));
     expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 100, one for remaining 20
     expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(100);
     expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(20);
