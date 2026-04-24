@@ -41,6 +41,7 @@ description: "Actionable, dependency-ordered tasks for the Entity Alias Support 
 - [x] T008 [US1] Implement pill rendering and removal logic in `AliasInput.svelte`
 - [x] T009 [US1] Implement input handling for `Enter` and `,` delimiters in `AliasInput.svelte`
 - [x] T010 [US1] Integrate `AliasInput` into the edit mode section of `apps/web/src/lib/components/zen/ZenHeader.svelte`
+- [x] T021 [US1] Integrate `AliasInput` and alias display into `apps/web/src/lib/components/zen/ZenSidebar.svelte`
 - [x] T011 [US1] Ensure `entity.aliases` is correctly passed to and updated by `EntityStore.updateEntity` in `apps/web/src/lib/stores/vault/entity-store.svelte.ts`
 - [x] T012 [P] [US1] Add unit tests for `AliasInput.svelte` in `apps/web/src/lib/components/labels/AliasInput.test.ts`
 

@@ -80,9 +80,9 @@ As a vault maintainer, I want to search for an entity using any of its aliases, 
 - **FR-001**: The system MUST allow entities to have zero or more aliases.
 - **FR-002**: The system MUST persist aliases as an ordered list of strings in the vault data (YAML frontmatter).
 - **FR-003**: The Entity Explorer MUST display up to the first two aliases for any entity that has them, using a secondary visual style. If more than two aliases exist, an indicator MUST be shown (e.g., "+N more").
-- **FR-004**: Zen Mode MUST display all entity aliases prominently in the header area.
+- **FR-004**: Zen Mode MUST display all entity aliases prominently in the header area and sidebar.
 - **FR-005**: The search system MUST index aliases and return matching entities when an alias matches the search query. Alias matches MUST be weighted higher than matches in the general content/lore but lower than matches in the primary title.
-- **FR-006**: The system MUST provide a user interface in Zen Edit Mode to add and remove aliases.
+- **FR-006**: The system MUST provide a user interface in Zen Edit Mode (header and sidebar) to add and remove aliases.
 
 ### Key Entities
 
