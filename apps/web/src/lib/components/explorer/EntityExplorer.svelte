@@ -3,6 +3,10 @@
   import { vault } from "$lib/stores/vault.svelte";
   import EntityList from "./EntityList.svelte";
   import { Database, X } from "lucide-svelte";
+  import {
+    dispatchSearchEntityFocus,
+    DEFAULT_SEARCH_ENTITY_ZOOM,
+  } from "$lib/components/search/search-focus";
 
   import type { Entity } from "schema";
 
@@ -10,10 +14,43 @@
     uiStore.openZenMode(entity.id);
   }
 
+  function handleFindInGraph(entity: Entity) {
+    dispatchSearchEntityFocus(entity.id, DEFAULT_SEARCH_ENTITY_ZOOM);
+    vault.selectedEntityId = entity.id;
+    uiStore.findInGraph();
+    if (uiStore.isMobile) uiStore.closeSidebar();
+  }
+
   let explorerTab = $state<"all" | "review">("all");
   let draftCount = $derived(
     vault.allEntities.filter((e) => e.status === "draft").length,
   );
+
+  const actioningIds = $state(new Set<string>());
+
+  async function handleApproveDraft(entity: Entity) {
+    if (actioningIds.has(entity.id)) return;
+    actioningIds.add(entity.id);
+    try {
+      await vault.updateEntity(entity.id, { status: "active" });
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      actioningIds.delete(entity.id);
+    }
+  }
+
+  async function handleRejectDraft(entity: Entity) {
+    if (actioningIds.has(entity.id)) return;
+    actioningIds.add(entity.id);
+    try {
+      await vault.deleteEntity(entity.id);
+    } catch (err: any) {
+      uiStore.notify(`Error: ${err.message}`, "error");
+    } finally {
+      actioningIds.delete(entity.id);
+    }
+  }
 </script>
 
 <div
@@ -92,7 +129,14 @@
     <EntityList
       onSelect={handleSelect}
       onOpenZen={(entity) => uiStore.openZenMode(entity.id)}
+      onFindInGraph={handleFindInGraph}
       showDraftsOnly={explorerTab === "review"}
+      onApproveDraft={explorerTab === "review" && !vault.isGuest
+        ? handleApproveDraft
+        : undefined}
+      onRejectDraft={explorerTab === "review" && !vault.isGuest
+        ? handleRejectDraft
+        : undefined}
     />
   </div>
 </div>

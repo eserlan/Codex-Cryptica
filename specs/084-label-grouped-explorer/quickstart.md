@@ -85,7 +85,26 @@ In label mode, a multi-labeled entity can appear in more than one section. The e
 2. Confirm it still opens normally in the main app view.
 3. If drag-and-drop is enabled in your current workflow, confirm grouped entries still start drag operations correctly.
 
-### 7. Verify Persistence
+### 7. Verify Label Filtering & Graph Synchronization
+
+1. Click on a label pill on any entity.
+2. Confirm that the list filters to show only entities with that label.
+3. Confirm an "Active Filters" bar appears below the search bar showing the selected label.
+4. **Confirm that the Graph View (if visible) also filters to show only nodes matching that label.**
+5. Ctrl/Cmd+Click on another label pill.
+6. Confirm that the list now shows only entities containing BOTH labels (AND logic).
+7. **Confirm that the Graph View also reflects the combined "AND" filter.**
+8. Click the 'X' on an active filter pill to remove it.
+9. Confirm that the filter is removed and both the list and graph update accordingly.
+10. **Add a label filter from the Graph HUD and confirm it appears in the Explorer.**
+
+### 8. Verify Search Integration
+
+1. Clear all filters.
+2. Type the name of a label into the search bar.
+3. Confirm that entities with that label are surfaced, even if the label name is not in their title or content.
+
+### 9. Verify Persistence
 
 1. Leave the explorer in label view.
 2. Collapse one label section.

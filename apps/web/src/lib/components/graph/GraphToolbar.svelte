@@ -15,6 +15,7 @@
       isInitial?: boolean,
       isForced?: boolean,
       caller?: string,
+      randomizeForced?: boolean,
     ) => Promise<void>;
     selectedCount: number;
   }>();
@@ -58,10 +59,10 @@
 
 {#if !ui.isGuestMode}
   <div
-    class="absolute bottom-6 left-6 z-20 flex flex-col gap-2 items-start max-w-[calc(100vw-3rem)]"
+    class="absolute bottom-4 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:left-6 z-20 flex flex-col gap-2 items-center md:items-start max-w-[calc(100vw-2rem)] md:max-w-[calc(100vw-3rem)]"
   >
     {#if cy}
-      <div class="relative">
+      <div class="relative hidden md:block">
         <Minimap
           {cy}
           absolute={false}
@@ -74,14 +75,14 @@
 
     {#if !vault.isGuest && activeGuests.length > 0}
       <div
-        class="pointer-events-auto w-[320px] max-w-[calc(100vw-3rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-[10px] text-theme-text shadow-lg backdrop-blur overflow-hidden"
+        class="pointer-events-auto w-[320px] max-w-[calc(100vw-2rem)] rounded-lg border border-theme-primary/25 bg-theme-surface/95 px-3 py-2 text-xs text-theme-text shadow-lg backdrop-blur overflow-hidden"
         style:height={`${guestPanelHeight}px`}
         style:max-height="calc(100vh - 6rem)"
         transition:fade
       >
         <div class="flex items-center justify-between gap-3 mb-2">
           <div
-            class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono"
+            class="flex items-center gap-2 text-theme-primary uppercase tracking-[0.2em] font-mono text-[11px]"
           >
             <span class="icon-[lucide--users] w-3 h-3"></span>
             Active Guests
@@ -106,7 +107,7 @@
                     >{guest.displayName}</span
                   >
                   <span
-                    class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[8px] text-theme-muted"
+                    class="rounded border border-theme-border/60 bg-theme-bg/60 px-1.5 py-0.5 uppercase tracking-[0.2em] text-[10px] text-theme-muted"
                   >
                     {guest.status === "viewing" ? "viewing" : "connected"}
                   </span>
@@ -123,7 +124,9 @@
       </div>
     {/if}
 
-    <div class="flex gap-1 items-center flex-wrap">
+    <div
+      class="flex gap-1 items-center flex-wrap justify-center md:justify-start bg-theme-surface/60 md:bg-transparent p-1.5 md:p-0 rounded-full md:rounded-none border border-theme-border/30 md:border-none backdrop-blur-md md:backdrop-blur-none"
+    >
       <button
         class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {showMinimap
           ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
@@ -161,7 +164,7 @@
           ><span class="icon-[lucide--maximize] w-4 h-4"></span></button
         >
         <button
-          class="w-8 h-8 flex-shrink-0 flex items-center justify-center border transition {graph.stableLayout
+          class="w-8 h-8 flex-shrink-0 hidden sm:flex items-center justify-center border transition {graph.stableLayout
             ? 'border-theme-primary bg-theme-primary/20 text-theme-primary'
             : 'border-theme-border bg-theme-surface/80 text-theme-muted hover:text-theme-primary'}"
           onclick={() =>
@@ -197,7 +200,7 @@
         {/if}
         <button
           class="w-8 h-8 flex-shrink-0 flex items-center justify-center border border-theme-border bg-theme-surface/80 text-theme-primary hover:bg-theme-primary/20 hover:text-theme-text transition"
-          onclick={() => onApplyLayout(false, true, "UI Redraw Button")}
+          onclick={() => onApplyLayout(false, true, "UI Redraw Button", true)}
           title="Redraw Layout"
           aria-label="Redraw Layout"
           ><span
@@ -248,13 +251,13 @@
       >
 
       <div
-        class="flex items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
+        class="hidden sm:flex items-center gap-1 bg-theme-surface/80 border border-theme-border rounded px-2 h-8"
       >
-        <span class="text-[9px] font-mono text-theme-primary font-bold"
+        <span class="text-[11px] font-mono text-theme-primary font-bold"
           >{currentZoom.toFixed(2)}x</span
         >
         <button
-          class="text-[8px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
+          class="text-[10px] font-black bg-theme-primary/10 text-theme-primary hover:bg-theme-primary hover:text-theme-bg px-1 rounded transition-colors uppercase tracking-tighter"
           onclick={() =>
             cy?.animate({
               zoom: 9,

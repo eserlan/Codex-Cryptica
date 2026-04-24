@@ -87,6 +87,7 @@ describe("EntityStore", () => {
           status: "active",
           labels: [],
           tags: [],
+          aliases: [],
           connections: [],
         } as LocalEntity,
         place: {
@@ -98,6 +99,7 @@ describe("EntityStore", () => {
           status: "active",
           labels: ["important"],
           tags: [],
+          aliases: [],
           connections: [],
         } as LocalEntity,
       },
@@ -465,6 +467,30 @@ describe("EntityStore", () => {
       expect(onBatchUpdate).toHaveBeenCalledWith({
         hero: { tags: ["new"] },
       });
+    });
+
+    it("should preserve existing metadata when batch updates patch coordinates", async () => {
+      repository.entities.hero.metadata = {
+        region: ["north"],
+        coordinates: { x: 1, y: 2 },
+      } as any;
+
+      await store.batchUpdate({
+        hero: { metadata: { coordinates: { x: 10, y: 20 } } },
+      });
+
+      expect(store.entities.hero.metadata).toEqual({
+        region: ["north"],
+        coordinates: { x: 10, y: 20 },
+      });
+      expect(vaultEventBus.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "BATCH_UPDATED",
+          patches: {
+            hero: { metadata: { coordinates: { x: 10, y: 20 } } },
+          },
+        }),
+      );
     });
 
     it("should call invalidateUrlCache for updated images", async () => {

@@ -3,6 +3,7 @@
   import { searchStore } from "$lib/stores/search.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { categories } from "$lib/stores/categories.svelte";
+  import { uiStore } from "$lib/stores/ui.svelte";
   import { getIconClass } from "$lib/utils/icon";
   import type { SearchResult } from "schema";
   import { renderMarkdown } from "$lib/utils/markdown";
@@ -18,6 +19,18 @@
   let debounceTimer: ReturnType<typeof setTimeout>;
 
   const isCanvasPage = $derived(page.url.pathname.startsWith("/canvas"));
+  const hasLeftSidebar = $derived(uiStore.leftSidebarOpen);
+  const hasEntityPanel = $derived(Boolean(vault.selectedEntityId));
+  let overlayClass = $derived(
+    `fixed z-[95] flex items-start justify-center bg-black/50 backdrop-blur-sm max-md:inset-x-0 max-md:top-[var(--header-height,65px)] max-md:bottom-14 ${
+      hasLeftSidebar ? "md:left-96" : "md:left-0"
+    } ${hasEntityPanel ? "md:right-[400px] lg:right-[450px]" : "md:right-0"} md:top-[var(--header-height,65px)] md:bottom-0 ${
+      hasLeftSidebar || hasEntityPanel ? "px-4 pt-[12vh]" : "pt-[15vh]"
+    }`,
+  );
+  let dialogClass = $derived(
+    "w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body",
+  );
 
   // Auto-focus input when modal opens; clear pending debounce when closed
   $effect(() => {
@@ -109,17 +122,16 @@
 {#if searchStore.isOpen}
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
-    class="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/50 backdrop-blur-sm"
+    class={overlayClass}
     onclick={handleBackdropClick}
     onkeydown={(e) => e.key === "Escape" && searchStore.close()}
     role="dialog"
     aria-modal="true"
     tabindex="-1"
     data-testid="search-modal"
+    data-layout={hasLeftSidebar || hasEntityPanel ? "main" : "global"}
   >
-    <div
-      class="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-lg shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[70vh] font-body"
-    >
+    <div class={dialogClass}>
       <!-- Input Header -->
       <div class="p-4 border-b border-zinc-200 dark:border-zinc-800">
         <div class="relative">
@@ -204,6 +216,14 @@
                     query: searchStore.query,
                     inline: true,
                   })}
+
+                  {#if result.status === "draft"}
+                    <span
+                      class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700"
+                    >
+                      Draft
+                    </span>
+                  {/if}
 
                   {#if isCanvasPage}
                     <button

@@ -47,6 +47,7 @@ describe("SearchStore", () => {
       status: "active",
       tags: ["tag-a", "tag-b"],
       labels: [],
+      aliases: [],
       connections: [],
       metadata: { region: ["north"], rarity: ["rare"] },
       _path: ["world", "hero-1.md"],
@@ -76,6 +77,117 @@ describe("SearchStore", () => {
     );
   });
 
+  it("does not index coordinate-only entity updates", async () => {
+    const entity: LocalEntity = {
+      id: "hero-1",
+      title: "Hero One",
+      content: "Body",
+      lore: "Lore",
+      type: "character",
+      status: "active",
+      tags: [],
+      labels: [],
+      aliases: [],
+      connections: [],
+      metadata: { coordinates: { x: 10, y: 20 } },
+    } as any;
+
+    vaultEventBus.emit({
+      type: "ENTITY_UPDATED",
+      vaultId: "vault-1",
+      entity,
+      patch: { metadata: { coordinates: { x: 10, y: 20 } } },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mocks.searchService.index).not.toHaveBeenCalled();
+  });
+
+  it("does not index coordinate-only batch updates", async () => {
+    const entities = [
+      {
+        id: "hero-1",
+        title: "Hero One",
+        content: "Body",
+        lore: "Lore",
+        type: "character",
+        status: "active",
+        tags: [],
+        labels: [],
+        aliases: [],
+        connections: [],
+        metadata: { coordinates: { x: 10, y: 20 } },
+      },
+      {
+        id: "hero-2",
+        title: "Hero Two",
+        content: "Body",
+        lore: "",
+        type: "location",
+        status: "active",
+        tags: [],
+        labels: [],
+        aliases: [],
+        connections: [],
+        metadata: { coordinates: { x: 30, y: 40 } },
+      },
+    ] as LocalEntity[];
+
+    vaultEventBus.emit({
+      type: "BATCH_UPDATED",
+      vaultId: "vault-1",
+      entities,
+      patches: {
+        "hero-1": { metadata: { coordinates: { x: 10, y: 20 } } },
+        "hero-2": { metadata: { coordinates: { x: 30, y: 40 } } },
+      },
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mocks.searchService.index).not.toHaveBeenCalled();
+  });
+
+  it("indexes batch updates when metadata includes searchable fields", async () => {
+    const entities = [
+      {
+        id: "hero-1",
+        title: "Hero One",
+        content: "Body",
+        lore: "Lore",
+        type: "character",
+        status: "active",
+        tags: [],
+        labels: [],
+        aliases: [],
+        connections: [],
+        metadata: {
+          coordinates: { x: 10, y: 20 },
+          region: ["north"],
+        } as any,
+      },
+    ] as any;
+
+    vaultEventBus.emit({
+      type: "BATCH_UPDATED",
+      vaultId: "vault-1",
+      entities,
+      patches: {
+        "hero-1": {
+          metadata: {
+            coordinates: { x: 10, y: 20 },
+            region: ["north"],
+          } as any,
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect(mocks.searchService.index).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it("rebuilds the index from cold sync chunks", async () => {
     const entities = {
       "hero-1": {
@@ -87,6 +199,7 @@ describe("SearchStore", () => {
         status: "active",
         tags: ["tag-a"],
         labels: [],
+        aliases: [],
         connections: [],
         metadata: {},
       } as LocalEntity,
@@ -99,6 +212,7 @@ describe("SearchStore", () => {
         status: "active",
         tags: [],
         labels: [],
+        aliases: [],
         connections: [],
         metadata: {},
       } as LocalEntity,
@@ -127,6 +241,7 @@ describe("SearchStore", () => {
         status: "active",
         tags: ["tag-a"],
         labels: [],
+        aliases: [],
         connections: [],
         metadata: {},
       } as LocalEntity,
@@ -139,6 +254,7 @@ describe("SearchStore", () => {
         status: "active",
         tags: [],
         labels: [],
+        aliases: [],
         connections: [],
         metadata: {},
       } as LocalEntity,

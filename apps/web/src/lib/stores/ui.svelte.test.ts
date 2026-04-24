@@ -54,6 +54,9 @@ describe("UIStore", () => {
     localStorage.removeItem("codex_explorer_collapsed_label_groups");
     localStorage.removeItem("codex_vtt_sidebar_collapsed");
     localStorage.removeItem("codex_vtt_entity_list_collapsed");
+    localStorage.removeItem("codex_entity_discovery_mode");
+    localStorage.removeItem("codex_connection_discovery_mode");
+    localStorage.removeItem("codex_auto_archive");
     localStorage.removeItem("codex_world_page_dismissed_at");
     localStorage.removeItem("codex_dismissed_landing");
 
@@ -63,6 +66,9 @@ describe("UIStore", () => {
     uiStore.dismissedLandingPage = false;
     uiStore.dismissedWorldPage = false;
     uiStore.explorerViewMode = "list";
+    uiStore.entityDiscoveryMode = "suggest";
+    uiStore.connectionDiscoveryMode = "suggest";
+    uiStore.autoArchive = false;
     uiStore.explorerCollapsedLabelGroups = {};
     uiStore.closeSidebar();
     uiStore.showCanvasPalette = true;
@@ -197,6 +203,32 @@ describe("UIStore", () => {
     vi.advanceTimersByTime(5000);
     expect(uiStore.notification).toBe(null);
     vi.useRealTimers();
+  });
+
+  it("should persist oracle automation modes", () => {
+    uiStore.setEntityDiscoveryMode("auto-create");
+    uiStore.setConnectionDiscoveryMode("auto-apply");
+
+    expect(uiStore.entityDiscoveryMode).toBe("auto-create");
+    expect(uiStore.connectionDiscoveryMode).toBe("auto-apply");
+    expect(uiStore.autoArchive).toBe(true);
+    expect(localStorage.getItem("codex_entity_discovery_mode")).toBe(
+      "auto-create",
+    );
+    expect(localStorage.getItem("codex_connection_discovery_mode")).toBe(
+      "auto-apply",
+    );
+    expect(localStorage.getItem("codex_auto_archive")).toBe("true");
+  });
+
+  it("should keep the legacy auto-archive toggle in sync with entity discovery", () => {
+    uiStore.toggleAutoArchive(true);
+    expect(uiStore.entityDiscoveryMode).toBe("auto-create");
+    expect(uiStore.autoArchive).toBe(true);
+
+    uiStore.toggleAutoArchive(false);
+    expect(uiStore.entityDiscoveryMode).toBe("suggest");
+    expect(uiStore.autoArchive).toBe(false);
   });
 
   it("should not let an older timeout clear a newer persistent notification", () => {

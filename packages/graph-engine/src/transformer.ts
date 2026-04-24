@@ -21,6 +21,7 @@ export interface GraphNode {
     start_date?: TemporalMetadata;
     end_date?: TemporalMetadata;
     dateLabel?: string;
+    textureVariant?: number;
   };
   position?: { x: number; y: number };
 }
@@ -63,6 +64,8 @@ const formatDate = (date?: TemporalMetadata) => {
 
 const EMPTY_LABELS: string[] = [];
 
+const getTextureVariant = () => Math.floor(Math.random() * 4);
+
 export class GraphTransformer {
   static entitiesToElements(
     entities: Entity[],
@@ -82,11 +85,6 @@ export class GraphTransformer {
     const count = entities.length;
     const weights = new Map<string, number>();
 
-    // Dynamically calculate spread based on entity count.
-    // Larger vaults need more initial room.
-    const spread = Math.max(2000, Math.sqrt(count) * 250);
-    const halfSpread = spread / 2;
-
     // Precompute rendered degree so node sizing matches the graph after
     // connections to hidden or missing targets have been filtered out.
     for (let i = 0; i < count; i++) {
@@ -105,10 +103,12 @@ export class GraphTransformer {
       }
     }
 
-    // OPTIMIZATION: Use a loop instead of flatMap to avoid creating intermediate arrays
-    // Performance: Imperative loop to avoid iterator allocation on hot path.
-    // Length is accessed directly as modern engines optimize this and it avoids inconsistent local caching.
-    for (let i = 0; i < entities.length; i++) {
+    // phyllotaxis spiral distribution for unplaced nodes
+    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
+    // Initial radius provides a decent base spread even for small graphs
+    const spiralRadius = Math.max(1200, Math.sqrt(count) * 100);
+
+    for (let i = 0; i < count; i++) {
       const entity = entities[i];
       if (!entity.id) continue;
 
@@ -117,8 +117,6 @@ export class GraphTransformer {
       );
 
       // Visibility markers for Admin visual cues
-      // OPTIMIZATION: Simple string comparisons are ~10x faster than Regex
-      // We check for existence first to avoid '|| []' allocation.
       let isRevealed = false;
       const tags = entity.tags;
       if (tags) {
@@ -143,7 +141,6 @@ export class GraphTransformer {
           }
         }
       }
-      // _isHidden was unused and removed
 
       // Create Node
       const nodeData: GraphNode["data"] = {
@@ -157,41 +154,42 @@ export class GraphTransformer {
         end_date: entity.end_date,
         dateLabel,
         labels: entity.labels ?? EMPTY_LABELS,
+        textureVariant: getTextureVariant(),
       };
       if (entity.image) nodeData.image = entity.image;
       if (entity.thumbnail) nodeData.thumbnail = entity.thumbnail;
       if (isRevealed) (nodeData as any).isRevealed = true;
 
       const coords = entity.metadata?.coordinates;
-      const hasValidCoords =
-        coords &&
-        typeof coords.x === "number" &&
-        typeof coords.y === "number" &&
+      const hasValidCoords = !!(
+        coords?.x != null &&
+        coords?.y != null &&
         Number.isFinite(coords.x) &&
-        Number.isFinite(coords.y);
+        Number.isFinite(coords.y)
+      );
 
       // Assign a stable-ish random position based on ID if no coords exist.
       // Performance: Compute a simple hash in a single pass to avoid multiple split/reduce cycles.
-      let hash = 0;
-      if (!hasValidCoords) {
-        const id = entity.id;
-        const len = id.length;
-        for (let j = 0; j < len; j++) {
-          hash = (hash << 5) - hash + id.charCodeAt(j);
-          hash |= 0; // Convert to 32bit integer
-        }
+      if (hasValidCoords) {
+        elements.push({
+          group: "nodes",
+          data: nodeData,
+          position: coords,
+        });
+      } else {
+        const angle = i * GOLDEN_ANGLE;
+        const distance = spiralRadius * Math.sqrt((i + 0.5) / count);
+        // Mark as pending layout so it stays invisible until placed
+        (nodeData as any).isPendingLayout = true;
+        elements.push({
+          group: "nodes",
+          data: nodeData,
+          position: {
+            x: Math.cos(angle) * distance,
+            y: Math.sin(angle) * distance,
+          },
+        });
       }
-
-      elements.push({
-        group: "nodes",
-        data: nodeData,
-        position: hasValidCoords
-          ? coords
-          : {
-              x: (Math.abs(hash) % spread) - halfSpread,
-              y: (Math.abs(hash * 13) % spread) - halfSpread,
-            },
-      });
 
       // Create Edges
       const connections = entity.connections;
@@ -235,6 +233,84 @@ const sanitizeFontForCytoscape = (fontFamily?: string): string => {
   return firstFont || "sans-serif";
 };
 
+const getThemeTextureStyle = (texture?: string) => {
+  if (!texture) return {};
+
+  return {
+    "background-image": `url('/themes/${texture}')`,
+    "background-fit": "cover",
+    "background-clip": "node",
+    "background-image-crossorigin": "null",
+    "background-repeat": "no-repeat",
+  };
+};
+
+const getThemeTextureVariantStyles = (texture?: string) => {
+  if (texture !== "blood.svg") return [];
+
+  return [
+    {
+      selector: "node[textureVariant = 1]",
+      style: {
+        "background-image": "url('/themes/blood-90.svg')",
+      },
+    },
+    {
+      selector: "node[textureVariant = 2]",
+      style: {
+        "background-image": "url('/themes/blood-180.svg')",
+      },
+    },
+    {
+      selector: "node[textureVariant = 3]",
+      style: {
+        "background-image": "url('/themes/blood-270.svg')",
+      },
+    },
+  ];
+};
+
+const getFantasyNodeStyle = (
+  template: StylingTemplate,
+): Record<string, string | number | number[]> => {
+  if (template.id !== "fantasy") return {};
+
+  const borderWidth = template.graph.nodeBorderWidth ?? 1;
+
+  return {
+    shape: "polygon",
+    "shape-polygon-points": [
+      -0.82, -0.68, 0, -0.96, 0.82, -0.68, 0.72, 0.26, 0, 0.98, -0.72, 0.26,
+    ],
+    "background-fit": "cover",
+    "background-clip": "node",
+    "background-opacity": 0.5,
+    "border-width": borderWidth,
+    "border-color": template.tokens.primary,
+    "border-opacity": 0.68,
+  };
+};
+
+const getFantasyEdgeStyle = (
+  template: StylingTemplate,
+): Record<string, string | number | number[]> => {
+  if (template.id !== "fantasy") return {};
+
+  return {
+    width: (template.graph.edgeWidth ?? 1) + 1,
+    "line-style": "dashed",
+    "line-dash-pattern": [13, 4, 2, 5],
+    "line-dash-offset": 2,
+    "line-cap": "round",
+    "arrow-scale": 0.45,
+    opacity: 0.44,
+    "underlay-color": template.tokens.background,
+    "underlay-opacity": 0.18,
+    "underlay-padding": 2,
+    "text-background-opacity": 0.68,
+  };
+};
+
 export const getGraphStyle = (
   template: StylingTemplate,
   categories: Category[],
@@ -242,13 +318,17 @@ export const getGraphStyle = (
 ): any[] => {
   const { tokens, graph } = template;
 
+  const isFantasy = template.id === "fantasy";
+
   // Base styles (excluding revealed overrides which need to come last)
   const baseStyle: any[] = [
     {
       selector: "node",
       style: {
-        "background-color": tokens.background,
-        "border-width": graph.nodeBorderWidth,
+        // Force parchment-like background color for all nodes, matching theme surface/bg
+        "background-color": tokens.surface || tokens.background,
+        ...getThemeTextureStyle(tokens.texture),
+        "border-width": graph.nodeBorderWidth + 2,
         "border-color": tokens.primary,
         width: 32,
         height: 32,
@@ -257,6 +337,7 @@ export const getGraphStyle = (
         color: tokens.text,
         "font-family": sanitizeFontForCytoscape(tokens.fontHeader),
         "font-size": 10,
+        "min-zoomed-font-size": 8,
         "text-valign": "bottom",
         "text-margin-y": 8,
         "text-max-width": 80,
@@ -265,8 +346,10 @@ export const getGraphStyle = (
         "text-opacity": 1,
         "transition-property": "opacity, text-opacity, width, height",
         "transition-duration": 200,
+        ...getFantasyNodeStyle(template),
       },
     },
+    ...getThemeTextureVariantStyles(tokens.texture),
     {
       selector: "node[weight <= 1]",
       style: {
@@ -306,7 +389,10 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-image": "data(resolvedImage)",
         "background-image-crossorigin": "null",
-        "border-width": graph.nodeBorderWidth + 1,
+        "background-opacity": 1,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 5
+          : graph.nodeBorderWidth + 6,
         "border-color": tokens.primary,
       },
     });
@@ -318,7 +404,7 @@ export const getGraphStyle = (
     {
       selector: ".selected-source",
       style: {
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         "border-color": "#facc15", // Keep yellow for functional clarity
         "background-color": tokens.surface,
       },
@@ -333,10 +419,11 @@ export const getGraphStyle = (
         "curve-style": "bezier",
         "target-arrow-shape": "triangle",
         "arrow-scale": 0.6,
-        opacity: 0.6,
+        opacity: 0.35,
         label: "data(label)",
         "text-rotation": "autorotate",
         "font-size": 8,
+        "min-zoomed-font-size": 8,
         "font-family": sanitizeFontForCytoscape(tokens.fontBody),
         color: tokens.text,
         "text-background-color": tokens.background,
@@ -345,6 +432,7 @@ export const getGraphStyle = (
         "text-margin-y": -8,
         "transition-property": "opacity, text-opacity",
         "transition-duration": 200,
+        ...getFantasyEdgeStyle(template),
       },
     },
     {
@@ -398,17 +486,49 @@ export const getGraphStyle = (
     selector: `node[type="${cat.id}"]`,
     style: {
       "border-color": cat.color,
-      "border-width": graph.nodeBorderWidth + 2,
+      "border-width": isFantasy
+        ? graph.nodeBorderWidth + 1
+        : graph.nodeBorderWidth + 4,
+      // For fantasy, we want the category color to overlay the parchment background
+      "background-color": cat.color,
+      "background-opacity": isFantasy ? 0.58 : 0.55,
     },
   }));
 
+  // Image width override ensures that nodes with images have thick borders
+  // even if category styles (which come before) set a thinner width.
+  const imageWidthOverride = showImages
+    ? [
+        {
+          selector:
+            "node[resolvedImage][resolvedImage != 'none'], node[image][resolvedImage][resolvedImage != 'none'], node[thumbnail][resolvedImage][resolvedImage != 'none']",
+          style: {
+            "border-width": isFantasy
+              ? graph.nodeBorderWidth + 5
+              : graph.nodeBorderWidth + 8,
+          },
+        },
+      ]
+    : [];
+
   // Revealed styles come after category borders
   const revealedStyles: any[] = [
+    // Reset opacity for image nodes — categoryStyles sets 0.4 which would bleed through portraits
+    ...(showImages
+      ? [
+          {
+            selector: "node[resolvedImage][resolvedImage != 'none']",
+            style: { "background-opacity": 1 },
+          },
+        ]
+      : []),
     {
       selector: "node[isRevealed]",
       style: {
-        "border-width": graph.nodeBorderWidth + 4,
-        "background-clip": "none",
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 2
+          : graph.nodeBorderWidth + 10,
+        "background-clip": isFantasy ? "node" : "none",
         "overlay-opacity": 0,
       },
     },
@@ -422,7 +542,9 @@ export const getGraphStyle = (
         "background-clip": "node",
         "background-fit": "cover",
         "background-position-y": "50%",
-        "border-width": graph.nodeBorderWidth + 4,
+        "border-width": isFantasy
+          ? graph.nodeBorderWidth + 2
+          : graph.nodeBorderWidth + 10,
       },
     });
   }
@@ -431,11 +553,37 @@ export const getGraphStyle = (
   // (category colors, revealed borders, and focus-mode opacities)
   const selectionStyles: any[] = [
     {
+      selector: "node[isPendingLayout]",
+      style: {
+        opacity: 0,
+        events: "no",
+      },
+    },
+    {
+      selector: ".pending-layout",
+      style: {
+        opacity: 0,
+        events: "no",
+      },
+    },
+    {
+      selector: "node[status = 'draft']",
+      style: {
+        "border-style": isFantasy ? "dashed" : "solid",
+        "border-dash-pattern": [4, 2],
+        "underlay-color": "#2dd4bf", // Teal glow for AI discovery
+        "underlay-padding": 12,
+        "underlay-opacity": 0.25,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
+      },
+    },
+    {
       selector: "node:selected",
       style: {
         "background-color": tokens.surface,
+        "background-opacity": 1,
         "border-color": tokens.primary,
-        "border-width": graph.nodeBorderWidth + 1,
+        "border-width": graph.nodeBorderWidth + 4,
         color: "#fff",
         opacity: 1,
         "text-opacity": 1,
@@ -443,8 +591,8 @@ export const getGraphStyle = (
         "text-outline-width": 2,
         "underlay-color": tokens.primary,
         "underlay-padding": 8,
-        "underlay-opacity": 0.3,
-        "underlay-shape": graph.nodeShape,
+        "underlay-opacity": isFantasy ? 0 : 0.3,
+        "underlay-shape": isFantasy ? "polygon" : graph.nodeShape,
         "z-index": 1000,
       },
     },
@@ -463,6 +611,7 @@ export const getGraphStyle = (
   return [
     ...baseStyle,
     ...categoryStyles,
+    ...imageWidthOverride,
     ...revealedStyles,
     ...selectionStyles,
   ];

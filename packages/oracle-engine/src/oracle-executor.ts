@@ -2,10 +2,14 @@ import type {
   OracleIntent,
   OracleExecutionContext,
   ChatMessage,
+  ConnectionDiscoveryMode,
+  EntityDiscoveryMode,
+  DiscoveryProposal,
 } from "./types";
 import { OracleCommandParser } from "./oracle-parser";
 import { OracleGenerator } from "./oracle-generator";
 import { DraftingEngine, draftingEngine } from "./drafting-engine";
+import { buildRelatedEntityContext } from "./reconciliation-context";
 
 export class OracleActionExecutor {
   private generator: OracleGenerator;
@@ -173,15 +177,29 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         content: "",
         lore: "",
       });
+      const analysisText = this.buildCreateConnectionContext(name, context);
+      const connectionMode = this.getConnectionDiscoveryMode(context);
+      const appliedConnections = await this.handleConnectionDiscovery(
+        id,
+        context,
+        analysisText,
+      );
+      const connectionSuffix =
+        connectionMode === "auto-apply" && appliedConnections > 0
+          ? ` and added ${appliedConnections} connection${appliedConnections === 1 ? "" : "s"}`
+          : connectionMode === "suggest"
+            ? " and queued connection suggestions"
+            : "";
 
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
         role: "system",
-        content: `✅ Created node: **${name}** (${type.toUpperCase()})`,
+        content: `✅ Created node: **${name}** (${type.toUpperCase()})${connectionSuffix}`,
       });
 
       context.vault.selectedEntityId = id;
-      context.graph.requestFit();
+      // Graph sync will trigger a real layout+fit after the node is added.
+      // Forcing an immediate fit here can zoom to temporary seed positions.
     } catch (err: any) {
       await context.chatHistory.addMessage({
         id: crypto.randomUUID(),
@@ -189,6 +207,32 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         content: `❌ ${err.message}`,
       });
     }
+  }
+
+  private buildCreateConnectionContext(
+    name: string,
+    context: OracleExecutionContext,
+  ): string | undefined {
+    const recentMessages = (context.chatHistory?.messages || [])
+      .slice(-8)
+      .map((message: ChatMessage) => message.content?.trim())
+      .filter((content: string | undefined): content is string =>
+        Boolean(content),
+      );
+
+    if (recentMessages.length === 0) {
+      return undefined;
+    }
+
+    const joined = recentMessages.join("\n\n");
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const nameRegex = new RegExp(`\\b${escapedName}\\b`, "i");
+
+    if (nameRegex.test(joined)) {
+      return joined;
+    }
+
+    return `${name}\n\n${joined}`;
   }
 
   private async executeConnect(
@@ -525,8 +569,9 @@ The Lore Oracle supports several slash commands to help you manage your vault:
       return;
     }
 
+    const userMsgId = crypto.randomUUID();
     await context.chatHistory.addMessage({
-      id: crypto.randomUUID(),
+      id: userMsgId,
       role: "user",
       content: query,
     });
@@ -579,13 +624,20 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         );
         const imageUrl = URL.createObjectURL(blob);
 
-        const finalMsgs = [...context.chatHistory.messages];
-        const last = finalMsgs[finalMsgs.length - 1];
-        last.imageUrl = imageUrl;
-        last.imageBlob = blob;
-        last.content = `Generated visualization for: "${query}"`;
-        last.entityId = primaryEntityId;
-        context.chatHistory.setMessages(finalMsgs);
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const lastIdx = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
+        if (lastIdx !== -1) {
+          finalMsgs[lastIdx].imageUrl = imageUrl;
+          finalMsgs[lastIdx].imageBlob = blob;
+          finalMsgs[lastIdx].content =
+            `Generated visualization for: "${query}"`;
+          finalMsgs[lastIdx].entityId = primaryEntityId;
+        }
+        await context.chatHistory.setMessages(finalMsgs);
 
         // Auto-attach to entity if possible
         if (primaryEntityId && !context.isDemoMode) {
@@ -604,33 +656,66 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             query,
             context,
             handlePartialResponse,
+            {
+              requestId: assistantMsg.id,
+              vaultId: context.vaultId,
+            },
           );
 
-        // Final update with entity context
-        const finalMsgs = [...context.chatHistory.messages];
-        const userMsgIndex = finalMsgs.length - 2;
-        const assistantMsgIndex = finalMsgs.length - 1;
+        // Final update with entity context — read live messages, not the stale snapshot
+        const finalMsgs = (await context.chatHistory.getMessages?.()) ?? [
+          ...context.chatHistory.messages,
+        ];
+        const userMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === userMsgId,
+        );
+        const assistantMsgIndex = finalMsgs.findIndex(
+          (m: any) => m.id === assistantMsg.id,
+        );
 
-        finalMsgs[userMsgIndex].entityId = primaryEntityId;
-        finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
-        finalMsgs[assistantMsgIndex].sources = sourceIds;
-        finalMsgs[assistantMsgIndex].hasDrawAction =
-          context.tier === "advanced";
+        if (userMsgIndex !== -1) {
+          finalMsgs[userMsgIndex].entityId = primaryEntityId;
+        }
+        if (assistantMsgIndex !== -1) {
+          finalMsgs[assistantMsgIndex].entityId = primaryEntityId;
+          finalMsgs[assistantMsgIndex].sources = sourceIds;
+          finalMsgs[assistantMsgIndex].hasDrawAction =
+            context.tier === "advanced";
+        }
 
         // Proactive Extraction
         try {
+          const entityDiscoveryMode = this.getEntityDiscoveryMode(context);
+          if (entityDiscoveryMode === "off") {
+            await context.chatHistory.setMessages(finalMsgs);
+            return;
+          }
+
           const combinedText = `${query}\n\n${finalMsgs[assistantMsgIndex].content}`;
           const engineToUse = context.draftingEngine ?? this.draftingEngine;
           const proposals = await engineToUse.propose(combinedText, {
             existingEntities: Object.values(context.vault.entities || {}),
             history: context.chatHistory.messages,
+            categories: context.categories,
           });
 
           if (proposals.length > 0) {
-            finalMsgs[assistantMsgIndex].proposals = proposals;
+            const existingProposals =
+              finalMsgs[assistantMsgIndex].proposals || [];
+            const newProposals = proposals.filter(
+              (p: DiscoveryProposal) =>
+                !existingProposals.some(
+                  (e: DiscoveryProposal) => e.title === p.title,
+                ),
+            );
 
-            for (const p of proposals) {
-              context.logActivity?.({
+            finalMsgs[assistantMsgIndex].proposals = [
+              ...existingProposals,
+              ...newProposals,
+            ];
+
+            for (const p of newProposals) {
+              await context.logActivity?.({
                 type: "discovery",
                 title: p.title,
                 entityType: p.type,
@@ -639,7 +724,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
             }
 
             // Handle Auto-Archive if enabled (skip for guests and demo mode)
-            const autoArchiveEnabled = context.uiStore.autoArchive;
+            const autoArchiveEnabled = entityDiscoveryMode === "auto-create";
             if (
               autoArchiveEnabled &&
               !context.vault.isGuest &&
@@ -656,25 +741,62 @@ The Lore Oracle supports several slash commands to help you manage your vault:
                       status: "draft",
                     },
                   );
-                  context.logActivity?.({
+                  await context.logActivity?.({
                     type: "archive",
                     title: p.title,
                     entityType: p.type,
                     entityId: id,
                   });
+                  await this.handleConnectionDiscovery(id, context);
                 } else {
-                  // Smart Update (Non-destructive append)
                   const existing = context.vault.entities[p.entityId];
                   if (existing) {
-                    await context.vault.updateEntity(p.entityId, {
-                      lore: (existing.lore || "") + "\n\n" + p.draft.lore,
-                    });
-                    context.logActivity?.({
+                    if (context.textGeneration?.reconcileEntityUpdate) {
+                      try {
+                        const reconciled =
+                          await context.textGeneration.reconcileEntityUpdate(
+                            context.effectiveApiKey || "",
+                            context.modelName,
+                            existing,
+                            {
+                              chronicle: p.draft.chronicle,
+                              lore: p.draft.lore,
+                            },
+                            buildRelatedEntityContext({
+                              entity: existing,
+                              incoming: {
+                                chronicle: p.draft.chronicle,
+                                lore: p.draft.lore,
+                              },
+                              vault: context.vault,
+                              getConsolidatedContext: (related) =>
+                                context.contextRetrieval.getConsolidatedContext(
+                                  related,
+                                ),
+                            }),
+                          );
+
+                        await context.vault.updateEntity(p.entityId, {
+                          content: reconciled.content,
+                          lore: reconciled.lore,
+                        });
+                      } catch {
+                        await context.vault.updateEntity(p.entityId, {
+                          lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                        });
+                      }
+                    } else {
+                      await context.vault.updateEntity(p.entityId, {
+                        lore: (existing.lore || "") + "\n\n" + p.draft.lore,
+                      });
+                    }
+                    await context.logActivity?.({
                       type: "update",
                       title: p.title,
                       entityType: p.type,
                       entityId: p.entityId,
                     });
+                    await this.handleConnectionDiscovery(p.entityId, context);
                   }
                 }
               }
@@ -684,7 +806,7 @@ The Lore Oracle supports several slash commands to help you manage your vault:
           console.warn("[OracleExecutor] Extraction failed", extractErr);
         }
 
-        context.chatHistory.setMessages(finalMsgs);
+        await context.chatHistory.setMessages(finalMsgs);
       }
     } catch (err: any) {
       await context.chatHistory.addMessage({
@@ -692,6 +814,54 @@ The Lore Oracle supports several slash commands to help you manage your vault:
         role: "system",
         content: err.message || "Error generating response.",
       });
+    }
+  }
+
+  private getEntityDiscoveryMode(
+    context: OracleExecutionContext,
+  ): EntityDiscoveryMode {
+    if (context.automationPolicy?.entityDiscovery) {
+      return context.automationPolicy.entityDiscovery;
+    }
+    if (context.uiStore?.entityDiscoveryMode) {
+      return context.uiStore.entityDiscoveryMode;
+    }
+    return context.uiStore?.autoArchive ? "auto-create" : "suggest";
+  }
+
+  private getConnectionDiscoveryMode(
+    context: OracleExecutionContext,
+  ): ConnectionDiscoveryMode {
+    return (
+      context.automationPolicy?.connectionDiscovery ||
+      context.uiStore?.connectionDiscoveryMode ||
+      "suggest"
+    );
+  }
+
+  private async handleConnectionDiscovery(
+    entityId: string,
+    context: OracleExecutionContext,
+    analysisText?: string,
+  ) {
+    const mode = this.getConnectionDiscoveryMode(context);
+    if (mode === "off" || !context.proposeConnectionsForEntity) {
+      return 0;
+    }
+
+    try {
+      return (
+        (await context.proposeConnectionsForEntity(entityId, {
+          apply: mode === "auto-apply",
+          analysisText,
+        })) || 0
+      );
+    } catch (error: unknown) {
+      console.warn(
+        "[OracleExecutor] Failed to handle connection discovery",
+        error,
+      );
+      return 0;
     }
   }
 

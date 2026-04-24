@@ -98,6 +98,7 @@ export interface WorldServiceDependencies {
       modelName: string,
       onUpdate: (partial: string) => void,
       demoMode?: boolean,
+      categories?: string[],
     ): Promise<void>;
   } | null;
 }
@@ -342,6 +343,7 @@ export class WorldServiceImplementation {
         result = partial;
       },
       false,
+      undefined,
     );
 
     const description = result.trim();

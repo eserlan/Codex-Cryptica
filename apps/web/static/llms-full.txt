@@ -11,7 +11,7 @@ Chat with the AI about your world. Ask questions, brainstorm ideas, or get help 
 The Oracle works in two modes: System Proxy (free, uses shared access) or Custom API Key (direct connection to Google Gemini). The status badge in the Oracle sidebar shows which mode is active.
 
 ### Visual Graph
-Navigate your lore through a dynamic, interactive map. See exactly how characters, locations, and events intertwine.
+Navigate your lore through a dynamic, interactive web. Nodes grow visually larger as visible links accumulate around them, making major lore hubs easy to identify at a glance.
 
 ### World Front Page
 Use the briefing field to edit the world blurb directly. If it is empty, the Generate Briefing button appears inside the field; if it already has text, the generate action moves to the bottom next to Save Briefing. Tagged `frontpage` entities stay pinned at the top of recent entities and show their chronicle/body preview there.
@@ -56,15 +56,19 @@ For Advanced Tier users: Instantly generate visuals for your lore. Look for the 
 Explore the tool with pre-loaded sample data. Any changes you make are transient. Click 'Save as World' in Settings or the Oracle to keep your work.
 
 ### AI Disabled
-Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
+Prefer a non-AI experience? Enable AI Disabled in Settings to disable all AI-powered features. The Oracle remains available for utility commands like /roll, /create, /connect and /merge.
 
 ### SEO Prerendering
 Our marketing and legal pages are pre-baked as static HTML for instant loading and perfect search engine indexing, while your data remains private and client-side.
 
 ### Map Mode
 Plot your world data onto custom geographic or tactical canvases with persistent pins and Fog of War.
+
 ### VTT Mode
 Turn the map into a lightweight tactical board. Add tokens, move them with grid snapping, manage initiative, measure distances, and save encounters without changing the underlying map.
+
+### VTT Entity List
+Open Vault Entities in the VTT sidebar to search your world notes, then drag characters, creatures, or items straight onto the map to create tokens. A ghost marker follows your cursor so placement stays precise.
 
 ### Spatial Canvas
 Design custom layouts like conspiracy boards or quest flowcharts. Drag entities onto the infinite board, draw visual links with custom themed labels, and navigate via name-based URL slugs. Includes a theme-aware MiniMap for seamless navigation.
@@ -80,6 +84,15 @@ Quickly browse and filter all your world entities via the persistent sidebar. Cl
 
 ### Navigation Hub
 Access your core tools (Oracle, Explorer) via the Activity Bar on the leftmost edge. Tools remain persistent as you switch between Graph, Map, and Canvas views.
+
+### Proactive Discovery
+While you chat, the Oracle can identify new characters, locations, and items. In Settings, choose whether discoveries are off, shown as chips for review, or saved automatically as drafts.
+
+### Oracle Automation
+Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.
+
+### Reviewing Drafts
+Entities created via Auto-Archive appear as 'Drafts'. Find them in the Review tab of the Entity Explorer or as semi-transparent 'Ghost' nodes on the graph canvas. Click Verify to make them permanent.
 
 
 ## Help Documentation

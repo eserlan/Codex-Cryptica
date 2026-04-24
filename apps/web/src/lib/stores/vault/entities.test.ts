@@ -283,6 +283,7 @@ describe("Vault Entities Operations", () => {
           status: "active",
           tags: [],
           labels: [],
+          aliases: [],
           connections: [],
           content: "Content 1",
           updatedAt: 100,

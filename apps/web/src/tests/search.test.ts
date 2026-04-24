@@ -77,7 +77,12 @@ describe("SearchService", () => {
   });
 
   it("should initialize", async () => {
-    await expect(service.init()).resolves.toBe(true);
+    // Calling init directly should now trigger worker creation via ensureWorker
+    // or we can just call search/index to trigger it.
+    await expect(service.init()).resolves.toBeUndefined();
+    // init() in search.ts returns void and doesn't call api.initIndex if api is null
+    // So we need to trigger ensureWorker
+    await (service as any).ensureWorker();
     expect(mockApi.initIndex).toHaveBeenCalled();
   });
 
@@ -89,7 +94,7 @@ describe("SearchService", () => {
       path: "/test.md",
       updatedAt: Date.now(),
     };
-    await expect(service.index(entry)).resolves.toBe(true);
+    await service.index(entry);
     expect(mockApi.add).toHaveBeenCalledWith(entry);
   });
 
@@ -105,9 +110,10 @@ describe("SearchService", () => {
           }),
       );
 
-      (service as any).api = mockApi;
+      // Trigger worker initialization
+      await (service as any).ensureWorker();
 
-      const entities = Array.from({ length: 52 }, (_, index) => ({
+      const entities = Array.from({ length: 102 }, (_, index) => ({
         id: `${index}`,
         title: `Entity ${index}`,
         content: `Content ${index}`,
@@ -116,17 +122,16 @@ describe("SearchService", () => {
 
       const batchPromise = (service as any).indexBatch(entities);
 
-      await Promise.resolve();
-
-      expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() => {
+        expect(mockApi.addBatch).toHaveBeenCalledTimes(1);
+      });
       expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
 
-      await Promise.resolve();
-      await Promise.resolve();
-
-      expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
+      await vi.waitFor(() => {
+        expect(mockApi.addBatch).toHaveBeenCalledTimes(2);
+      });
       expect(pendingAdds).toHaveLength(1);
 
       pendingAdds.splice(0).forEach((resolve) => resolve());
@@ -156,9 +161,6 @@ describe("SearchService", () => {
       data: { _docIds: ["1"], someSegment: "data" },
       updatedAt: 123,
     });
-
-    // We need to bypass the initialization wait loop for testing
-    (service as any).isInitialized = true;
 
     const result = await service.loadIndex("test-vault");
     expect(result).toBe(true);
@@ -205,7 +207,10 @@ describe("SearchService", () => {
     });
   });
 
-  it("should bridge logs from worker to debugStore", () => {
+  it("should bridge logs from worker to debugStore", async () => {
+    // Trigger worker creation
+    await (service as any).ensureWorker();
+
     // Get the callback passed to setLogger
     const logCallback = (mockApi.setLogger as any).mock.calls[0][0];
     expect(logCallback).toBeDefined();
@@ -237,7 +242,7 @@ describe("SearchService", () => {
       // Reset the bus and recreate the service to ensure clean slate
       vaultEventBus.reset(false);
       service = new SearchService();
-      await service.init();
+      await (service as any).ensureWorker();
 
       // Initialize the vault ID
       vaultEventBus.emit({ type: "VAULT_OPENING", vaultId: "v1" });
@@ -300,16 +305,21 @@ describe("SearchService", () => {
     });
 
     it("should run background sync on SYNC_COMPLETE if needed", async () => {
+      vi.useFakeTimers();
       (service as any).needsFullContentSweep = true;
       const syncSpy = vi
         .spyOn(service as any, "indexContentInBackground")
         .mockResolvedValue(undefined);
 
       vaultEventBus.emit({ type: "SYNC_COMPLETE", vaultId: "v1" });
-      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Advance the 3000ms delay
+      vi.advanceTimersByTime(3000);
+      await Promise.resolve(); // flush microtasks
 
       expect(syncSpy).toHaveBeenCalledWith("v1");
       expect((service as any).needsFullContentSweep).toBe(false);
+      vi.useRealTimers();
     });
 
     it("should index on ENTITY_UPDATED if relevant fields changed", async () => {
@@ -376,54 +386,72 @@ describe("SearchService", () => {
   });
 
   it("should index content in background using Dexie and batching", async () => {
+    vi.useFakeTimers();
     const { entityDb } = await import("$lib/utils/entity-db");
     const indexBatchSpy = vi
       .spyOn(service as any, "indexBatch")
       .mockResolvedValue(undefined);
 
-    (service as any).api = mockApi;
+    await (service as any).ensureWorker();
     (service as any).activeVaultId = "v1";
 
     // Mock Dexie iteration
-    const mockRecords = Array.from({ length: 60 }, (_, i) => ({
+    const mockRecords = Array.from({ length: 120 }, (_, i) => ({
       entityId: `${i}`,
       content: `content ${i}`,
       vaultId: "v1",
     }));
 
-    // Mock where().equals().each()
-    const eachMock = vi.fn(async (callback) => {
-      for (const record of mockRecords) {
-        await callback(record);
-      }
-    });
+    const mockMetadatas = mockRecords.map((r) => ({
+      id: r.entityId,
+      title: `Title ${r.entityId}`,
+    }));
 
+    let contentCallCount = 0;
     vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
       equals: vi.fn().mockReturnValue({
-        each: eachMock,
+        offset: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockImplementation(() => {
+          if (contentCallCount === 0) {
+            contentCallCount++;
+            return Promise.resolve(mockRecords.slice(0, 100));
+          } else if (contentCallCount === 1) {
+            contentCallCount++;
+            return Promise.resolve(mockRecords.slice(100));
+          }
+          return Promise.resolve([]);
+        }),
       }),
     } as any);
 
-    // Mock metadata lookup
-    vi.spyOn(entityDb.graphEntities, "get").mockImplementation((async ([
-      _v,
-      id,
-    ]: [string, string]) => ({
-      id,
-      title: `Title ${id}`,
-    })) as any);
+    vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
+      equals: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue(mockMetadatas),
+      }),
+    } as any);
 
-    await (service as any).indexContentInBackground("v1");
+    const promise = (service as any).indexContentInBackground("v1");
 
-    // Should have indexed in batches of 50
-    expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 50, one for remaining 10
-    expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(50);
-    expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(10);
+    // Advance timers for the 500ms delay inside the batch loop
+    await vi.runAllTimersAsync();
+    await promise;
+
+    // Should have indexed in batches of 100
+    expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 100, one for remaining 20
+    expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(100);
+    expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(20);
+
+    vi.useRealTimers();
   });
 
-  it("should terminate correctly", () => {
+  it("should terminate correctly", async () => {
+    // Trigger worker creation
+    await (service as any).ensureWorker();
+
     const releaseSpy = vi.fn();
     (service as any).api = {
+      ...mockApi,
       [Symbol.for("comlink.releaseProxy")]: releaseSpy,
     };
     const terminateSpy = vi.spyOn((service as any).worker, "terminate");
@@ -437,8 +465,10 @@ describe("SearchService", () => {
   });
 
   describe("AutoSave and VisibilityChange", () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       vi.useFakeTimers();
+      // Ensure worker is ready so callbacks are registered
+      await (service as any).ensureWorker();
     });
 
     afterEach(() => {
@@ -531,7 +561,6 @@ describe("SearchService", () => {
       vi.spyOn(entityDb.searchIndex, "get").mockRejectedValue(
         new Error("DB Error"),
       );
-      (service as any).isInitialized = true;
 
       const result = await service.loadIndex("v1");
       expect(result).toBe(false);

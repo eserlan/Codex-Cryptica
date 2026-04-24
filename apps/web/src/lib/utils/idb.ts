@@ -67,21 +67,25 @@ interface CodexDB extends DBSchema {
     };
   };
   proposals: {
-    key: string; // composite key or auto-inc? Let's use id or [sourceId, targetId]
+    key: string; // unique id for the proposal: `${vaultId}:${sourceId}:${targetId}`
     value: {
-      id: string; // unique id for the proposal
+      id: string;
+      vaultId: string;
       sourceId: string;
       targetId: string;
       type: string;
       context: string;
       reason: string;
       confidence: number;
-      status: "pending" | "accepted" | "rejected";
+      status: "pending" | "accepted" | "rejected" | "verified";
       timestamp: number;
     };
     indexes: {
       "by-source": string;
       "by-status": string;
+      "by-vault": string;
+      "by-vault-status": [string, string];
+      "by-vault-source": [string, string];
     };
   };
   canvases: {
@@ -107,8 +111,8 @@ interface CodexDB extends DBSchema {
 }
 
 export const DB_NAME = "CodexCryptica";
-// DB_VERSION was bumped to 15 to resolve a version conflict during development.
-export const DB_VERSION = 15;
+// DB_VERSION was bumped to 16 to support vault-scoping for AI proposals.
+export const DB_VERSION = 16;
 
 let dbPromise: Promise<IDBPDatabase<CodexDB>> | null = null;
 
@@ -165,6 +169,20 @@ export function getDB() {
           const store = db.createObjectStore("proposals", { keyPath: "id" });
           store.createIndex("by-source", "sourceId");
           store.createIndex("by-status", "status");
+          store.createIndex("by-vault", "vaultId");
+          store.createIndex("by-vault-status", ["vaultId", "status"]);
+          store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+        } else if (oldVersion < 16) {
+          const store = transaction.objectStore("proposals");
+          if (!store.indexNames.contains("by-vault")) {
+            store.createIndex("by-vault", "vaultId");
+          }
+          if (!store.indexNames.contains("by-vault-status")) {
+            store.createIndex("by-vault-status", ["vaultId", "status"]);
+          }
+          if (!store.indexNames.contains("by-vault-source")) {
+            store.createIndex("by-vault-source", ["vaultId", "sourceId"]);
+          }
         }
 
         if (!db.objectStoreNames.contains("canvases")) {

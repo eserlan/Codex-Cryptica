@@ -24,7 +24,7 @@
   </div>
 
   <div
-    class="max-w-[90%] rounded-lg px-3 py-2 text-xs shadow-sm border
+    class="max-w-[95%] sm:max-w-[90%] rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs shadow-sm border
            {isMe
       ? 'bg-theme-primary/10 border-theme-primary/30 text-theme-text rounded-tr-none'
       : 'bg-theme-surface border-theme-border rounded-tl-none text-theme-text shadow-inner'}"

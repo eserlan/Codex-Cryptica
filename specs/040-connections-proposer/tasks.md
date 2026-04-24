@@ -110,6 +110,7 @@ description: "Task list for Connections Proposer implementation"
 - [x] T027 [P] Add loading skeletons/spinners for active background scans in the UI.
 - [x] T028 Performance audit: verify 60fps target during background worker execution.
 - [x] T029 Final E2E verification of `quickstart.md` scenarios.
+- [x] T030 Implement dynamic connection filtering logic ("All > 0.9 OR Top 3") in `ProposerStore.analyzeAndApplyEntityById`.
 
 ---
 

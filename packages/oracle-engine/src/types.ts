@@ -2,12 +2,22 @@
  * Oracle Engine Type Definitions
  */
 
+import type { EntityType, Category } from "schema";
+
 /**
  * Connection mode for the Oracle service.
  * - `system-proxy`: Uses the Cloudflare Worker proxy (no user API key required)
  * - `custom-key`: Uses the user's own Gemini API key directly
  */
 export type ConnectionMode = "system-proxy" | "custom-key";
+
+export type EntityDiscoveryMode = "off" | "suggest" | "auto-create";
+export type ConnectionDiscoveryMode = "off" | "suggest" | "auto-apply";
+
+export interface OracleAutomationPolicy {
+  entityDiscovery: EntityDiscoveryMode;
+  connectionDiscovery: ConnectionDiscoveryMode;
+}
 
 /**
  * Oracle message role types
@@ -88,8 +98,6 @@ export interface UndoableAction {
   redo: () => Promise<void>;
 }
 
-import type { EntityType } from "schema";
-
 /**
  * Transient draft state used during chat
  */
@@ -142,10 +150,32 @@ export interface OracleExecutionContext {
   graph?: any;
   undoRedo?: any;
   draftingEngine?: any;
+  categories?: Category[];
+  automationPolicy?: OracleAutomationPolicy;
+  proposeConnectionsForEntity?: (
+    entityId: string,
+    options?: { apply?: boolean; analysisText?: string },
+  ) => Promise<number | void>;
   logActivity?: (event: {
     type: "discovery" | "archive" | "update";
     title: string;
     entityType: string;
     entityId?: string;
-  }) => void;
+  }) => void | Promise<void>;
+}
+
+/**
+ * Oracle Background Worker Event Types
+ */
+export type OracleWorkerEventType =
+  | "ORACLE_THINKING_START"
+  | "ORACLE_THINKING_END"
+  | "ORACLE_ENTITY_DISCOVERED"
+  | "ORACLE_ERROR";
+
+export interface OracleWorkerEvent {
+  type: OracleWorkerEventType;
+  payload?: any;
+  vaultId?: string;
+  requestId?: string;
 }

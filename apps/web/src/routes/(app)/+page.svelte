@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
@@ -119,6 +120,14 @@
     building ? null : page.url.searchParams.get("shareId"),
   );
   const isGuestMode = $derived(!!shareId);
+
+  onMount(() => {
+    // Eagerly prefetch the heavy components in the background a second after boot
+    // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
+    setTimeout(() => {
+      loadHeavyComponents();
+    }, 1000);
+  });
 
   // Consolidate reactive pre-loading and fallback loading into a single effect
   // to prevent race conditions during dynamic imports.

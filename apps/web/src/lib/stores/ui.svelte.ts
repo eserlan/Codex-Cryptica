@@ -1,13 +1,31 @@
 import { base } from "$app/paths";
 import type { ActivityEvent } from "$lib/types/activity";
+import type {
+  ConnectionDiscoveryMode,
+  EntityDiscoveryMode,
+} from "@codex/oracle-engine";
 
 const ACTIVE_THEME_STORAGE_KEY = "codex-cryptica-active-theme";
 const EXPLORER_COLLAPSED_LABELS_STORAGE_KEY =
   "codex_explorer_collapsed_label_groups";
 const VTT_SIDEBAR_COLLAPSED_STORAGE_KEY = "codex_vtt_sidebar_collapsed";
 const VTT_ENTITY_LIST_COLLAPSED_STORAGE_KEY = "codex_vtt_entity_list_collapsed";
+const ENTITY_DISCOVERY_MODE_STORAGE_KEY = "codex_entity_discovery_mode";
+const CONNECTION_DISCOVERY_MODE_STORAGE_KEY = "codex_connection_discovery_mode";
 
 type ExplorerCollapsedLabelGroups = Record<string, string[]>;
+
+function isEntityDiscoveryMode(
+  value: string | null,
+): value is EntityDiscoveryMode {
+  return value === "off" || value === "suggest" || value === "auto-create";
+}
+
+function isConnectionDiscoveryMode(
+  value: string | null,
+): value is ConnectionDiscoveryMode {
+  return value === "off" || value === "suggest" || value === "auto-apply";
+}
 
 export type SettingsTab =
   | "vault"
@@ -16,6 +34,10 @@ export type SettingsTab =
   | "theme"
   | "about"
   | "help";
+
+export const MIN_LEFT_SIDEBAR_WIDTH = 240;
+export const MIN_RIGHT_SIDEBAR_WIDTH = 320;
+export const MAX_SIDEBAR_VW = 40;
 
 export class UIStore {
   showSettings = $state(false);
@@ -31,13 +53,20 @@ export class UIStore {
   showChangelog = $state(false);
   lastSeenVersion = $state<string | null>(null);
   autoArchive = $state(false);
+  entityDiscoveryMode = $state<EntityDiscoveryMode>("suggest");
+  connectionDiscoveryMode = $state<ConnectionDiscoveryMode>("suggest");
   archiveActivityLog = $state<ActivityEvent[]>([]);
   explorerViewMode = $state<"list" | "label">("list");
   explorerCollapsedLabelGroups = $state<ExplorerCollapsedLabelGroups>({});
+  labelFilters = $state<Set<string>>(new Set());
 
   // Sidebar State
   leftSidebarOpen = $state(false);
-  activeSidebarTool = $state<"oracle" | "explorer" | "none">("none");
+  activeSidebarTool = $state<"oracle" | "explorer" | "ai-assessment" | "none">(
+    "none",
+  );
+  leftSidebarWidth = $state(280);
+  rightSidebarWidth = $state(380);
 
   // Main View State
   mainViewMode = $state<"visualization" | "focus">("visualization");
@@ -102,12 +131,33 @@ export class UIStore {
         }
       }
 
-      const autoArchive = localStorage.getItem("codex_auto_archive");
-      if (autoArchive !== null) {
-        this.autoArchive = autoArchive === "true";
-      }
+      this.loadOracleAutomationSettings();
 
       this.lastSeenVersion = localStorage.getItem("codex_last_seen_version");
+
+      const savedLeftWidth = localStorage.getItem("codex_left_sidebar_width");
+      if (savedLeftWidth !== null) {
+        const width = parseInt(savedLeftWidth, 10);
+        if (!isNaN(width)) {
+          const maxWidth = (window.innerWidth * MAX_SIDEBAR_VW) / 100;
+          this.leftSidebarWidth = Math.max(
+            MIN_LEFT_SIDEBAR_WIDTH,
+            Math.min(width, maxWidth),
+          );
+        }
+      }
+
+      const savedRightWidth = localStorage.getItem("codex_right_sidebar_width");
+      if (savedRightWidth !== null) {
+        const width = parseInt(savedRightWidth, 10);
+        if (!isNaN(width)) {
+          const maxWidth = (window.innerWidth * MAX_SIDEBAR_VW) / 100;
+          this.rightSidebarWidth = Math.max(
+            MIN_RIGHT_SIDEBAR_WIDTH,
+            Math.min(width, maxWidth),
+          );
+        }
+      }
 
       const explorerMode = localStorage.getItem("codex_explorer_view_mode");
       if (explorerMode === "list" || explorerMode === "label") {
@@ -197,7 +247,7 @@ export class UIStore {
     }
   }
 
-  toggleSidebarTool(tool: "oracle" | "explorer" | "none") {
+  toggleSidebarTool(tool: "oracle" | "explorer" | "ai-assessment" | "none") {
     if (tool === "none" || this.activeSidebarTool === tool) {
       this.leftSidebarOpen = false;
       this.activeSidebarTool = "none";
@@ -258,6 +308,30 @@ export class UIStore {
     this.activeSidebarTool = "none";
   }
 
+  private leftSidebarSaveTimeout: number | null = null;
+  setLeftSidebarWidth(width: number) {
+    this.leftSidebarWidth = width;
+    if (typeof window !== "undefined") {
+      if (this.leftSidebarSaveTimeout)
+        clearTimeout(this.leftSidebarSaveTimeout);
+      this.leftSidebarSaveTimeout = window.setTimeout(() => {
+        localStorage.setItem("codex_left_sidebar_width", width.toString());
+      }, 500);
+    }
+  }
+
+  private rightSidebarSaveTimeout: number | null = null;
+  setRightSidebarWidth(width: number) {
+    this.rightSidebarWidth = width;
+    if (typeof window !== "undefined") {
+      if (this.rightSidebarSaveTimeout)
+        clearTimeout(this.rightSidebarSaveTimeout);
+      this.rightSidebarSaveTimeout = window.setTimeout(() => {
+        localStorage.setItem("codex_right_sidebar_width", width.toString());
+      }, 500);
+    }
+  }
+
   markVersionAsSeen(version: string) {
     this.lastSeenVersion = version;
     if (typeof window !== "undefined") {
@@ -293,9 +367,56 @@ export class UIStore {
   }
 
   toggleAutoArchive(enabled: boolean) {
-    this.autoArchive = enabled;
+    this.setEntityDiscoveryMode(enabled ? "auto-create" : "suggest");
+  }
+
+  setEntityDiscoveryMode(mode: EntityDiscoveryMode) {
+    this.entityDiscoveryMode = mode;
+    this.autoArchive = mode === "auto-create";
     if (typeof window !== "undefined") {
-      localStorage.setItem("codex_auto_archive", String(enabled));
+      localStorage.setItem(ENTITY_DISCOVERY_MODE_STORAGE_KEY, mode);
+      localStorage.setItem("codex_auto_archive", String(this.autoArchive));
+    }
+  }
+
+  setConnectionDiscoveryMode(mode: ConnectionDiscoveryMode) {
+    this.connectionDiscoveryMode = mode;
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CONNECTION_DISCOVERY_MODE_STORAGE_KEY, mode);
+    }
+  }
+
+  get oracleAutomationPolicy() {
+    return {
+      entityDiscovery: this.entityDiscoveryMode,
+      connectionDiscovery: this.connectionDiscoveryMode,
+    };
+  }
+
+  private loadOracleAutomationSettings() {
+    const savedEntityMode = localStorage.getItem(
+      ENTITY_DISCOVERY_MODE_STORAGE_KEY,
+    );
+    if (isEntityDiscoveryMode(savedEntityMode)) {
+      this.entityDiscoveryMode = savedEntityMode;
+      this.autoArchive = savedEntityMode === "auto-create";
+    } else {
+      const autoArchive = localStorage.getItem("codex_auto_archive");
+      if (autoArchive !== null) {
+        this.autoArchive = autoArchive === "true";
+        this.entityDiscoveryMode = this.autoArchive ? "auto-create" : "suggest";
+        localStorage.setItem(
+          ENTITY_DISCOVERY_MODE_STORAGE_KEY,
+          this.entityDiscoveryMode,
+        );
+      }
+    }
+
+    const savedConnectionMode = localStorage.getItem(
+      CONNECTION_DISCOVERY_MODE_STORAGE_KEY,
+    );
+    if (isConnectionDiscoveryMode(savedConnectionMode)) {
+      this.connectionDiscoveryMode = savedConnectionMode;
     }
   }
 
@@ -304,6 +425,34 @@ export class UIStore {
     if (typeof window !== "undefined") {
       localStorage.setItem("codex_explorer_view_mode", mode);
     }
+  }
+
+  toggleLabelFilter(label: string, isMulti = false) {
+    if (isMulti) {
+      const next = new Set(this.labelFilters);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      this.labelFilters = next;
+    } else {
+      if (this.labelFilters.has(label) && this.labelFilters.size === 1) {
+        this.labelFilters = new Set();
+      } else {
+        this.labelFilters = new Set([label]);
+      }
+    }
+  }
+
+  removeLabelFilter(label: string) {
+    const next = new Set(this.labelFilters);
+    next.delete(label);
+    this.labelFilters = next;
+  }
+
+  clearLabelFilters() {
+    this.labelFilters = new Set();
   }
 
   getCollapsedLabelGroups(vaultId: string | null) {
@@ -472,6 +621,29 @@ export class UIStore {
 
   closeBulkLabelDialog() {
     this.bulkLabelDialog = { open: false, entityIds: [] };
+  }
+
+  // Lightbox State
+  lightbox = $state<{
+    show: boolean;
+    imageUrl: string;
+    title: string;
+  }>({
+    show: false,
+    imageUrl: "",
+    title: "",
+  });
+
+  openLightbox(imageUrl: string, title: string) {
+    this.lightbox = {
+      show: true,
+      imageUrl,
+      title,
+    };
+  }
+
+  closeLightbox() {
+    this.lightbox.show = false;
   }
 
   // Compatibility aliases (can be deprecated later)

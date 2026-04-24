@@ -1,10 +1,15 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
-import { TIER_MODES, type TextGenerationService } from "schema";
+import {
+  TIER_MODES,
+  type RelatedEntityContext,
+  type TextGenerationService,
+} from "schema";
 import { buildQueryExpansionPrompt } from "./prompts/query-expansion";
 import { buildSystemInstruction } from "./prompts/system-instructions";
 import { buildMergeProposalPrompt } from "./prompts/merge-proposal";
 import { buildPlotAnalysisPrompt } from "./prompts/plot-analysis";
 import { buildContextDistillationPrompt } from "./prompts/context-distillation";
+import { buildEntityReconciliationPrompt } from "./prompts/entity-reconciliation";
 import { contextRetrievalService as defaultContextRetrievalService } from "./context-retrieval.service";
 import { isAIEnabled, assertAIEnabled } from "./capability-guard";
 
@@ -21,7 +26,10 @@ export class DefaultTextGenerationService implements TextGenerationService {
   ): Promise<string> {
     if (!isAIEnabled()) return query;
     try {
-      const basicModel = this.aiClientManager.getModel(apiKey, TIER_MODES.lite);
+      const basicModel = await this.aiClientManager.getModel(
+        apiKey,
+        TIER_MODES.lite,
+      );
 
       const conversationContext = history
         .slice(-4)
@@ -53,7 +61,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     if (!isAIEnabled()) return context;
     if (!context.trim()) return context;
 
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
     const prompt = buildContextDistillationPrompt(context);
 
     try {
@@ -76,7 +84,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     sources: any[],
   ): Promise<{ body: string; lore?: string }> {
     assertAIEnabled();
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const targetContext = `--- TARGET: ${target.title} (${target.type}) ---\n${this.contextRetrievalService.getConsolidatedContext(target)}`;
     const sourceContext = sources
@@ -103,6 +111,56 @@ export class DefaultTextGenerationService implements TextGenerationService {
     }
   }
 
+  async reconcileEntityUpdate(
+    apiKey: string,
+    modelName: string,
+    entity: any,
+    incoming: {
+      chronicle: string;
+      lore: string;
+    },
+    relatedEntities: RelatedEntityContext[] = [],
+  ): Promise<{
+    content: string;
+    lore: string;
+  }> {
+    assertAIEnabled();
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
+    const prompt = buildEntityReconciliationPrompt(
+      entity,
+      incoming,
+      relatedEntities,
+    );
+
+    try {
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("Missing JSON payload");
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]) as Partial<{
+        content: string;
+        lore: string;
+      }>;
+
+      return {
+        content:
+          parsed.content?.trim() || incoming.chronicle || entity.content || "",
+        lore: parsed.lore?.trim() || incoming.lore || entity.lore || "",
+      };
+    } catch (err: any) {
+      console.error(
+        "[TextGenerationService] Entity reconciliation failed:",
+        err,
+      );
+      throw new Error(`Entity reconciliation failed: ${err.message}`, {
+        cause: err,
+      });
+    }
+  }
+
   async generatePlotAnalysis(
     apiKey: string,
     modelName: string,
@@ -111,7 +169,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
     userQuery: string,
   ): Promise<string> {
     assertAIEnabled();
-    const model = this.aiClientManager.getModel(apiKey, modelName);
+    const model = await this.aiClientManager.getModel(apiKey, modelName);
 
     const MAX_SUBJECT_CONTEXT_CHARS = 2000;
     const MAX_CONNECTED_ENTITIES = 20;
@@ -167,12 +225,18 @@ export class DefaultTextGenerationService implements TextGenerationService {
     history: any[],
     context: string,
     modelName: string,
-    onUpdate: (partial: string) => void,
+    onUpdate: (partial: string) => void | Promise<void>,
     demoMode = false,
+    categories?: string[],
+    _options?: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: any[];
+    },
   ): Promise<void> {
     assertAIEnabled();
-    const systemInstruction = buildSystemInstruction(demoMode);
-    const model = this.aiClientManager.getModel(
+    const systemInstruction = buildSystemInstruction(demoMode, categories);
+    const model = await this.aiClientManager.getModel(
       apiKey,
       modelName,
       systemInstruction,
@@ -242,7 +306,7 @@ export class DefaultTextGenerationService implements TextGenerationService {
       for await (const chunk of result.stream) {
         const chunkText = chunk.text();
         fullText += chunkText;
-        onUpdate(fullText);
+        await onUpdate(fullText);
       }
     } catch (err: any) {
       console.error("Gemini API Error:", err);

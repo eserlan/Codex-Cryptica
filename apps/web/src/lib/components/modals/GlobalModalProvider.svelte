@@ -4,9 +4,8 @@
   import { helpStore } from "$lib/stores/help.svelte";
   import { page } from "$app/state";
   import { base } from "$app/paths";
-  import SearchModal from "$lib/components/search/SearchModal.svelte";
-  import SettingsModal from "$lib/components/settings/SettingsModal.svelte";
-  import MobileMenu from "$lib/components/layout/MobileMenu.svelte";
+  import { oracle } from "$lib/stores/oracle.svelte";
+  import { searchStore } from "$lib/stores/search.svelte";
 
   let {
     isMobileMenuOpen = $bindable(false),
@@ -35,7 +34,13 @@
   };
 </script>
 
-<SearchModal />
+{#if searchStore.isOpen}
+  {#await loadModal(() => import("$lib/components/search/SearchModal.svelte"), "SearchModal") then SearchModal}
+    {#if SearchModal}
+      <SearchModal />
+    {/if}
+  {/await}
+{/if}
 
 {#if uiStore.showChangelog}
   {#await loadModal(() => import("./ChangelogModal.svelte"), "ChangelogModal") then ChangelogModal}
@@ -46,14 +51,22 @@
 {/if}
 
 {#if !isLoginRoute}
-  {#await loadModal(() => import("$lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
-    {#if OracleWindow}
-      <OracleWindow />
-    {/if}
-  {/await}
+  {#if oracle.isOpen}
+    {#await loadModal(() => import("$lib/components/oracle/OracleWindow.svelte"), "OracleWindow") then OracleWindow}
+      {#if OracleWindow}
+        <OracleWindow />
+      {/if}
+    {/await}
+  {/if}
 
   {#if browser}
-    <SettingsModal />
+    {#if uiStore.showSettings}
+      {#await loadModal(() => import("$lib/components/settings/SettingsModal.svelte"), "SettingsModal") then SettingsModal}
+        {#if SettingsModal}
+          <SettingsModal />
+        {/if}
+      {/await}
+    {/if}
 
     {#if uiStore.showZenMode}
       {#await loadModal(() => import("./ZenModeModal.svelte"), "ZenModeModal") then ZenModeModal}
@@ -71,7 +84,13 @@
       {/await}
     {/if}
 
-    <MobileMenu bind:isOpen={isMobileMenuOpen} />
+    {#if isMobileMenuOpen}
+      {#await loadModal(() => import("$lib/components/layout/MobileMenu.svelte"), "MobileMenu") then MobileMenu}
+        {#if MobileMenu}
+          <MobileMenu bind:isOpen={isMobileMenuOpen} />
+        {/if}
+      {/await}
+    {/if}
 
     {#if uiStore.confirmationDialog.open}
       {#await loadModal(() => import("./ConfirmationModal.svelte"), "ConfirmationModal") then ConfirmationModal}
@@ -121,6 +140,19 @@
       {#await loadModal(() => import("$lib/components/debug/DebugConsole.svelte"), "DebugConsole") then DebugConsole}
         {#if DebugConsole}
           <DebugConsole />
+        {/if}
+      {/await}
+    {/if}
+
+    <!-- Global Image Lightbox -->
+    {#if uiStore.lightbox.show}
+      {#await loadModal(() => import("$lib/components/zen/ZenImageLightbox.svelte"), "ZenImageLightbox") then ZenImageLightbox}
+        {#if ZenImageLightbox}
+          <ZenImageLightbox
+            bind:show={uiStore.lightbox.show}
+            imageUrl={uiStore.lightbox.imageUrl}
+            title={uiStore.lightbox.title}
+          />
         {/if}
       {/await}
     {/if}

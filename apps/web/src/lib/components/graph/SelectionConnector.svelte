@@ -2,6 +2,7 @@
   import { vault } from "$lib/stores/vault.svelte";
   import { ui } from "$lib/stores/ui.svelte";
   import { fade } from "svelte/transition";
+  import { untrack } from "svelte";
   import type { Core, NodeSingular } from "cytoscape";
 
   let { cy } = $props<{ cy: Core }>();
@@ -12,39 +13,37 @@
   let isSubmitting = $state(false);
   let previousShow = $state(false);
 
+  const updatePosition = () => {
+    if (selection.length === 2) {
+      const p1 = selection[0].renderedPosition();
+      const p2 = selection[1].renderedPosition();
+      position = {
+        x: (p1.x + p2.x) / 2,
+        y: (p1.y + p2.y) / 2,
+      };
+    }
+  };
+
+  const updateSelection = () => {
+    if (!cy) return;
+    const selected = cy.$("node:selected");
+    if (selected.length === 2) {
+      selection = [selected[0] as NodeSingular, selected[1] as NodeSingular];
+      updatePosition();
+    } else {
+      selection = [];
+      ui.showSelectionConnector = false;
+      isSubmitting = false;
+    }
+  };
+
   $effect(() => {
     if (cy) {
-      const updateSelection = () => {
-        const selected = cy.$("node:selected");
-        if (selected.length === 2) {
-          selection = [
-            selected[0] as NodeSingular,
-            selected[1] as NodeSingular,
-          ];
-          updatePosition();
-        } else {
-          selection = [];
-          ui.showSelectionConnector = false;
-          isSubmitting = false;
-        }
-      };
-
-      const updatePosition = () => {
-        if (selection.length === 2) {
-          const p1 = selection[0].renderedPosition();
-          const p2 = selection[1].renderedPosition();
-          position = {
-            x: (p1.x + p2.x) / 2,
-            y: (p1.y + p2.y) / 2,
-          };
-        }
-      };
-
       cy.on("select unselect", "node", updateSelection);
       cy.on("position pan zoom", updatePosition);
 
       // Initial check
-      updateSelection();
+      untrack(() => updateSelection());
 
       return () => {
         cy.off("select unselect", "node", updateSelection);
@@ -100,6 +99,7 @@
   };
 
   const handleKeydown = (e: KeyboardEvent) => {
+    if (!ui.showSelectionConnector) return;
     if (e.key === "Enter") {
       submit();
     } else if (e.key === "Escape") {
@@ -117,7 +117,17 @@
   };
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 {#if selection.length === 2 && ui.showSelectionConnector}
+  <!-- Backdrop for "click outside" closing -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <div
+    class="fixed inset-0 z-30 pointer-events-auto cursor-default"
+    onclick={() => (ui.showSelectionConnector = false)}
+  ></div>
+
   <div
     class="absolute z-40 pointer-events-none"
     style:top="{position.y}px"
@@ -125,8 +135,12 @@
     transition:fade={{ duration: 150 }}
   >
     <div class="pointer-events-auto -translate-x-1/2 -translate-y-1/2">
+      <!-- svelte-ignore a11y_click_events_have_key_events -->
+      <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
         class="bg-theme-surface border border-theme-border shadow-2xl p-3 min-w-[240px] rounded"
+        onclick={(e) => e.stopPropagation()}
+        role="presentation"
       >
         <div
           id="connector-title"

@@ -9,6 +9,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   merge-to-main:
@@ -25,7 +26,7 @@ jobs:
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Merge Staging to Main
         env:
@@ -35,14 +36,59 @@ jobs:
           git merge origin/staging --no-ff -m "🚀 promote: merge staging to main after production deployment"
           git push origin main
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Find latest merged PR to staging for bump label
+        id: find-pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find the most recently merged PR targeting staging
+          PR_NUMBER=$(gh pr list \
+            --base staging \
+            --state merged \
+            --limit 1000 \
+            --json number,mergedAt \
+            --jq 'sort_by(.mergedAt) | if length == 0 then empty else last.number end')
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No merged PRs found targeting staging" >&2
+            exit 1
+          fi
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "Found latest merged staging PR: #$PR_NUMBER"
+
+      - name: Bump web version and service worker cache
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.pr_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/bump-web-version.mjs
+
+      - name: Commit and push version bump
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git add apps/web/package.json apps/web/src/lib/config/index.ts apps/web/src/service-worker.ts
+          git commit -m "chore(web): auto-bump version after staging promotion"
+          git push origin main
+
+      - name: Trigger release workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Triggering release workflow on main..."
+          gh workflow run release.yml --ref main
+
       - name: Notify Discord on Main Merge
         if: success()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.VITE_DISCORD_WEBHOOK_URL_PROD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          LATEST_MERGE=$(git log --oneline -1 --merges)
           SUMMARY="✅ **Staging merged to main**: Production changes are now in the main branch."
-
           PAYLOAD=$(jq -nc --arg content "$SUMMARY" '{content: $content}')
           curl -s -H "Content-Type: application/json" -X POST --data-binary "$PAYLOAD" "$DISCORD_WEBHOOK_URL"

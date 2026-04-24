@@ -32,6 +32,7 @@ export function createZenModeActions(
         content: editState.content,
         lore: editState.lore,
         image: editState.image,
+        aliases: editState.aliases,
         date: editState.date,
         start_date: editState.startDate,
         end_date: editState.endDate,

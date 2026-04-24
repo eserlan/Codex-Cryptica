@@ -21,6 +21,9 @@ vi.mock("$lib/cloud-bridge/p2p/host-service.svelte", () => ({
 vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     isGuestMode: false,
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

@@ -16,7 +16,7 @@ keywords:
 publishedAt: 2026-03-18T12:00:00Z
 ---
 
-![Knowledge Graph Discovery](https://assets.codexcryptica.com/images/blog/filter-discovery-hero.png)
+![Knowledge Graph Discovery](https://assets.codexcryptica.com/images/blog/filters-and-labels/filter-discovery-hero.png)
 
 We’ve all been there. Your archive is overflowing with three hundred notes on NPCs, locations, and forgotten historical scraps. You know the "killer hook" is buried in there somewhere, but finding that specific thread during a live session feels like digging through a digital junk drawer in the dark. It’s frustrating, slow, and it kills the creative flow.
 
@@ -28,7 +28,7 @@ Traditional note-taking apps force you into folders. But folders are brittle. Do
 
 In the Codex, an entity can be many things at once. This is where labels act as the connective tissue.
 
-![Multi-label NPC Details](https://assets.codexcryptica.com/images/blog/entity-labels-example.png)
+![Multi-label NPC Details](https://assets.codexcryptica.com/images/blog/filters-and-labels/entity-labels-example.png)
 
 ---
 
@@ -44,7 +44,7 @@ Think of labels as the "traits" or "moods" of your world. While an entity has a 
 
 The real power of discovery happens in the **Knowledge Graph**. We designed the HUD to handle complex "Multi-Select" queries that feel like tuning a radio to the exact frequency you need.
 
-![Multi-type HUD Filtering](https://assets.codexcryptica.com/images/blog/sidebar-filter-action.png)
+![Multi-type HUD Filtering](https://assets.codexcryptica.com/images/blog/filters-and-labels/sidebar-filter-action.png)
 
 By toggling specific types or labels in the Graph HUD, you can clear the noise and see the signal:
 
@@ -58,7 +58,7 @@ This isn't just about finding data; it's about **seeing the gaps**. If you filte
 
 When you apply a filter, the graph doesn't just list results—it **isolates** them. The rest of your world dims, and the filtered entities begin to glow, revealing the "invisible lines" of influence.
 
-![Filtered Graph Isolation](https://assets.codexcryptica.com/images/blog/graph-filter-highlight.png)
+![Filtered Graph Isolation](https://assets.codexcryptica.com/images/blog/filters-and-labels/graph-filter-highlight.png)
 
 - **Spotting Clusters**: Use labels like `#Suspect` to see if all your potential villains are tethered to the same noble house.
 - **Isolating Bloodlines**: Filter by a family label and watch the graph prune away the world until you see the pure, uninterrupted skeleton of that dynasty.
@@ -69,7 +69,7 @@ Once you've used labels and filters to slice your world into a high-definition f
 
 The `/plot` command is your narrative analyst. It's most powerful when you've already "narrowed the field" using filters. By telling the Oracle exactly which network to look at, you get far more relevant dramatic tensions.
 
-![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/oracle-plot-command.png)
+![Oracle Plot Analysis](https://assets.codexcryptica.com/images/blog/filters-and-labels/oracle-plot-command.png)
 
 - **Analyze Friction**: Filter for `#The-Rebellion` and then type `/plot [Leader Name]`. The Oracle will scan the existing web of filtered connections to identify rivals, political risks, and hidden secrets that naturally emerge from your data.
 - **Uncover Dramatic Hooks**: Use filters to see the "What" (the locations and actors), and use `/plot` to spark the drama. Ask: `/plot tensions at [The Black Iron Tavern]` to see how its links to local factions create a powder keg of possibilities.
@@ -78,7 +78,7 @@ The `/plot` command is your narrative analyst. It's most powerful when you've al
 
 When you find a group of related entities through a filter or a `/plot` analysis in the Graph, you can turn them into a **Spatial Canvas** with a single click.
 
-![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/canvas-discovery-workflow.png)
+![Custom Investigation Murder Board](https://assets.codexcryptica.com/images/blog/filters-and-labels/canvas-discovery-workflow.png)
 
 1. Apply your filters in the **Knowledge Graph** to find your "target group."
 2. Click the **"Add all results to workspace"** button (the Grid icon) that appears in the Graph HUD whenever a filter is active.

@@ -36,6 +36,9 @@ vi.mock("$lib/stores/ui.svelte", () => ({
   uiStore: {
     dismissedWorldPage: false,
     skipWelcomeScreen: false,
+    openLightbox: vi.fn(),
+    closeLightbox: vi.fn(),
+    lightbox: { show: false, imageUrl: "", title: "" },
   },
 }));
 

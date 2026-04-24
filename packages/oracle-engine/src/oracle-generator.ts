@@ -1,6 +1,23 @@
 import type { ChatMessage, OracleExecutionContext } from "./types";
 
 export class OracleGenerator {
+  private buildEntityVisualQuery(entity: {
+    title: string;
+    labels?: string[];
+  }): string {
+    const labels = (entity.labels || []).filter(Boolean);
+    if (labels.length === 0) {
+      return `A visualization of ${entity.title}`;
+    }
+
+    return `A visualization of ${entity.title}
+
+HIGH-PRIORITY VISUAL LABELS:
+${labels.map((label) => `- ${label}`).join("\n")}
+
+Treat these labels as strong visual direction. If they imply mood, genre, attire, symbolism, environment, or composition, prioritize them in the final image prompt.`;
+  }
+
   /**
    * Identifies the primary entity and gathered source IDs for a query
    * without triggering a full text generation cycle.
@@ -55,6 +72,11 @@ export class OracleGenerator {
     query: string,
     context: OracleExecutionContext,
     onPartial: (partial: string) => void,
+    options: {
+      requestId?: string;
+      vaultId?: string;
+      existingEntities?: any[];
+    } = {},
   ): Promise<{ primaryEntityId?: string; sourceIds: string[] }> {
     const alreadySentTitles = this.getSentTitles(context.chatHistory.messages);
 
@@ -81,6 +103,14 @@ export class OracleGenerator {
       );
 
     // 3. Trigger Generation
+    const categoryList = Array.from(
+      new Set(
+        (context.categories || [])
+          .map((c: any) => String(c?.id || "").trim())
+          .filter(Boolean),
+      ),
+    );
+
     await context.textGeneration.generateResponse(
       apiKey,
       query,
@@ -89,6 +119,13 @@ export class OracleGenerator {
       context.modelName,
       onPartial,
       context.isDemoMode,
+      categoryList,
+      {
+        ...options,
+        existingEntities:
+          options.existingEntities ||
+          Object.values(context.vault.entities || {}),
+      },
     );
 
     return { primaryEntityId, sourceIds };
@@ -115,7 +152,7 @@ export class OracleGenerator {
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      `A visualization of ${entity.title}`,
+      this.buildEntityVisualQuery(entity),
       aiContext,
       context.modelName,
       context.isDemoMode,
@@ -153,7 +190,7 @@ export class OracleGenerator {
 
     const visualPrompt = await context.imageGeneration.distillVisualPrompt(
       apiKey,
-      message.content,
+      entity ? this.buildEntityVisualQuery(entity) : message.content,
       aiContext,
       context.modelName,
       context.isDemoMode,
