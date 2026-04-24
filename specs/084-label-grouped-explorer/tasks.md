@@ -106,6 +106,32 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 
 ---
 
+## Phase 7: User Story 4 - Filter Explorer by Clicking Labels (Priority: P2)
+
+**Goal**: Implement interactive label pills and "AND" filtering logic for drill-down discovery.
+
+**Independent Test**: Click labels to filter, use Ctrl+Click for multi-select, and verify "AND" logic surfaces only entities matching all selected labels.
+
+### Tests for User Story 4
+
+- [x] T020 [P] [US4] Add unit tests for "AND" label filtering logic in `apps/web/src/lib/components/explorer/EntityListFiltering.test.ts`
+- [x] T021 [P] [US4] Add unit tests for label text search integration in `apps/web/src/lib/components/explorer/EntityListFiltering.test.ts`
+
+### Implementation for User Story 4
+
+- [x] T022 [US4] Add `labelFilters` set to state in `apps/web/src/lib/components/explorer/EntityList.svelte`
+- [x] T023 [US4] Update `filteredEntities` derivation to apply "AND" logic for `labelFilters`
+- [x] T024 [US4] Update `filteredEntities` derivation to match `searchQuery` against entity labels
+- [x] T025 [US4] Render active label filter pills below the search bar with removal buttons
+- [x] T026 [US4] Update label pill rendering on entity items to be interactive (hover states, click handlers)
+- [x] T027 [US4] Implement `toggleLabelFilter` handler with exclusive click and additive Ctrl+Click behavior
+- [x] T028 [US4] Update help content in `apps/web/src/lib/config/help-content.ts` to describe label filtering
+- [x] T029 [US4] Synchronize label filtering with graph view via `uiStore`
+
+**Checkpoint**: Label-based filtering is functional, integrated with search/categories, and documented.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -116,6 +142,7 @@ description: "Actionable, dependency-ordered tasks for the Label-Grouped Entity 
 - **User Story 2 (Phase 4)**: Depends on the foundational explorer state from Phase 2
 - **User Story 3 (Phase 5)**: Depends on the grouped explorer rendering from Phase 3
 - **Polish (Phase 6)**: Depends on all desired grouped views being complete
+- **User Story 4 (Phase 7)**: Depends on Phase 3 completion (requires entity list/label rendering)
 
 ### Parallel Opportunities
 
