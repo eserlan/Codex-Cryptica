@@ -7,7 +7,7 @@ import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
-const INDEX_BATCH_SIZE = 50;
+const INDEX_BATCH_SIZE = 100;
 
 export class SearchService {
   private worker: Worker | null = null;

@@ -113,7 +113,7 @@ describe("SearchService", () => {
       // Trigger worker initialization
       await (service as any).ensureWorker();
 
-      const entities = Array.from({ length: 52 }, (_, index) => ({
+      const entities = Array.from({ length: 102 }, (_, index) => ({
         id: `${index}`,
         title: `Entity ${index}`,
         content: `Content ${index}`,
@@ -305,16 +305,21 @@ describe("SearchService", () => {
     });
 
     it("should run background sync on SYNC_COMPLETE if needed", async () => {
+      vi.useFakeTimers();
       (service as any).needsFullContentSweep = true;
       const syncSpy = vi
         .spyOn(service as any, "indexContentInBackground")
         .mockResolvedValue(undefined);
 
       vaultEventBus.emit({ type: "SYNC_COMPLETE", vaultId: "v1" });
-      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      // Advance the 3000ms delay
+      vi.advanceTimersByTime(3000);
+      await Promise.resolve(); // flush microtasks
 
       expect(syncSpy).toHaveBeenCalledWith("v1");
       expect((service as any).needsFullContentSweep).toBe(false);
+      vi.useRealTimers();
     });
 
     it("should index on ENTITY_UPDATED if relevant fields changed", async () => {
@@ -381,6 +386,7 @@ describe("SearchService", () => {
   });
 
   it("should index content in background using Dexie and batching", async () => {
+    vi.useFakeTimers();
     const { entityDb } = await import("$lib/utils/entity-db");
     const indexBatchSpy = vi
       .spyOn(service as any, "indexBatch")
@@ -390,40 +396,42 @@ describe("SearchService", () => {
     (service as any).activeVaultId = "v1";
 
     // Mock Dexie iteration
-    const mockRecords = Array.from({ length: 60 }, (_, i) => ({
+    const mockRecords = Array.from({ length: 120 }, (_, i) => ({
       entityId: `${i}`,
       content: `content ${i}`,
       vaultId: "v1",
     }));
 
-    // Mock where().equals().each()
-    const eachMock = vi.fn(async (callback) => {
-      for (const record of mockRecords) {
-        await callback(record);
-      }
-    });
+    const mockMetadatas = mockRecords.map((r) => ({
+      id: r.entityId,
+      title: `Title ${r.entityId}`,
+    }));
 
     vi.spyOn(entityDb.entityContent, "where").mockReturnValue({
       equals: vi.fn().mockReturnValue({
-        each: eachMock,
+        toArray: vi.fn().mockResolvedValue(mockRecords),
       }),
     } as any);
 
-    // Mock metadata lookup
-    vi.spyOn(entityDb.graphEntities, "get").mockImplementation((async ([
-      _v,
-      id,
-    ]: [string, string]) => ({
-      id,
-      title: `Title ${id}`,
-    })) as any);
+    vi.spyOn(entityDb.graphEntities, "where").mockReturnValue({
+      equals: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue(mockMetadatas),
+      }),
+    } as any);
 
-    await (service as any).indexContentInBackground("v1");
+    const promise = (service as any).indexContentInBackground("v1");
 
-    // Should have indexed in batches of 50
-    expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 50, one for remaining 10
-    expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(50);
-    expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(10);
+    // Advance timers for the 500ms delay inside the batch loop
+    await vi.runAllTimersAsync();
+    await promise;
+
+    // Should have indexed in batches of 100
+    console.log(indexBatchSpy.mock.calls.map((c) => c[0].length));
+    expect(indexBatchSpy).toHaveBeenCalledTimes(2); // One for 100, one for remaining 20
+    expect(indexBatchSpy.mock.calls[0][0]).toHaveLength(100);
+    expect(indexBatchSpy.mock.calls[1][0]).toHaveLength(20);
+
+    vi.useRealTimers();
   });
 
   it("should terminate correctly", async () => {
