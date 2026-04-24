@@ -217,8 +217,10 @@
                     inline: true,
                   })}
 
-                  {#if result.status === 'draft'}
-                    <span class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700">
+                  {#if result.status === "draft"}
+                    <span
+                      class="ml-2 px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-800 text-[9px] font-bold uppercase tracking-wider text-zinc-500 border border-zinc-300 dark:border-zinc-700"
+                    >
                       Draft
                     </span>
                   {/if}

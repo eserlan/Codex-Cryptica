@@ -3,6 +3,7 @@
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
   import type { Entity } from "schema";
+  import AliasInput from "$lib/components/labels/AliasInput.svelte";
 
   let {
     entity,
@@ -61,21 +62,41 @@
       {/if}
     </div>
     {#if editState.isEditing}
-      <input
-        type="text"
-        bind:value={editState.title}
-        aria-label="Entity Title"
-        class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
-        placeholder="Entity Title"
-      />
+      <div class="space-y-2">
+        <input
+          type="text"
+          bind:value={editState.title}
+          aria-label="Entity Title"
+          class="bg-theme-bg border border-theme-primary text-theme-text px-3 py-1 focus:outline-none focus:border-theme-primary font-body font-bold text-2xl md:text-3xl w-full placeholder-theme-muted rounded"
+          placeholder="Entity Title"
+        />
+        <AliasInput bind:aliases={editState.aliases} />
+      </div>
     {:else}
-      <h1
-        id="entity-modal-title"
-        data-testid="entity-title"
-        class="text-2xl md:text-4xl font-body font-bold text-theme-text tracking-wide"
-      >
-        {entity?.title || ""}
-      </h1>
+      <div class="flex flex-col gap-1">
+        <h1
+          id="entity-modal-title"
+          data-testid="entity-title"
+          class="text-2xl md:text-4xl font-body font-bold text-theme-text tracking-wide"
+        >
+          {entity?.title || ""}
+        </h1>
+        {#if entity?.aliases && entity.aliases.length > 0}
+          <div class="flex flex-wrap gap-1.5 mt-1">
+            <span
+              class="text-[10px] font-bold text-theme-muted uppercase tracking-widest self-center mr-1"
+              >aka:</span
+            >
+            {#each entity.aliases as alias}
+              <div
+                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+              >
+                {alias}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
     {/if}
   </div>
 

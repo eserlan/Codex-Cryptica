@@ -37,7 +37,7 @@ export class OracleBridge {
    */
   public get textGeneration(): TextGenerationService {
     if (!this.api) {
-        throw new Error("[OracleBridge] Worker not initialized");
+      throw new Error("[OracleBridge] Worker not initialized");
     }
     return this.api as unknown as TextGenerationService;
   }
@@ -47,7 +47,7 @@ export class OracleBridge {
    */
   public get draftingEngine(): any {
     if (!this.api) {
-        throw new Error("[OracleBridge] Worker not initialized");
+      throw new Error("[OracleBridge] Worker not initialized");
     }
     return this.api;
   }

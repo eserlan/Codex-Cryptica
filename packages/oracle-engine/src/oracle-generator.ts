@@ -122,7 +122,9 @@ Treat these labels as strong visual direction. If they imply mood, genre, attire
       categoryList,
       {
         ...options,
-        existingEntities: options.existingEntities || Object.values(context.vault.entities || {}),
+        existingEntities:
+          options.existingEntities ||
+          Object.values(context.vault.entities || {}),
       },
     );
 

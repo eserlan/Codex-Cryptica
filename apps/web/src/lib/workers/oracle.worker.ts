@@ -3,7 +3,10 @@ import * as Comlink from "comlink";
 import { aiClientManager } from "../services/ai/client-manager";
 import { DefaultTextGenerationService } from "../services/ai/text-generation.service";
 import { draftingEngine } from "@codex/oracle-engine";
-import type { OracleWorkerEvent, DiscoveryProposal } from "@codex/oracle-engine";
+import type {
+  OracleWorkerEvent,
+  DiscoveryProposal,
+} from "@codex/oracle-engine";
 
 /**
  * OracleWorker handles heavy-lifting AI and logic tasks off the main thread.
@@ -22,16 +25,34 @@ class OracleWorker {
     this.eventBus.postMessage(event);
   }
 
-  async expandQuery(apiKey: string, query: string, history: any[]): Promise<string> {
+  async expandQuery(
+    apiKey: string,
+    query: string,
+    history: any[],
+  ): Promise<string> {
     return this.textGeneration.expandQuery(apiKey, query, history);
   }
 
-  async distillContext(apiKey: string, context: string, modelName: string): Promise<string> {
+  async distillContext(
+    apiKey: string,
+    context: string,
+    modelName: string,
+  ): Promise<string> {
     return this.textGeneration.distillContext(apiKey, context, modelName);
   }
 
-  async generateMergeProposal(apiKey: string, modelName: string, target: any, sources: any[]): Promise<any> {
-    return this.textGeneration.generateMergeProposal(apiKey, modelName, target, sources);
+  async generateMergeProposal(
+    apiKey: string,
+    modelName: string,
+    target: any,
+    sources: any[],
+  ): Promise<any> {
+    return this.textGeneration.generateMergeProposal(
+      apiKey,
+      modelName,
+      target,
+      sources,
+    );
   }
 
   async reconcileEntityUpdate(
@@ -39,9 +60,15 @@ class OracleWorker {
     modelName: string,
     entity: any,
     incoming: { chronicle: string; lore: string },
-    relatedEntities: any[] = []
+    relatedEntities: any[] = [],
   ): Promise<any> {
-    return this.textGeneration.reconcileEntityUpdate(apiKey, modelName, entity, incoming, relatedEntities);
+    return this.textGeneration.reconcileEntityUpdate(
+      apiKey,
+      modelName,
+      entity,
+      incoming,
+      relatedEntities,
+    );
   }
 
   async generatePlotAnalysis(
@@ -49,9 +76,15 @@ class OracleWorker {
     modelName: string,
     subject: any,
     connectedEntities: any[],
-    userQuery: string
+    userQuery: string,
   ): Promise<string> {
-    return this.textGeneration.generatePlotAnalysis(apiKey, modelName, subject, connectedEntities, userQuery);
+    return this.textGeneration.generatePlotAnalysis(
+      apiKey,
+      modelName,
+      subject,
+      connectedEntities,
+      userQuery,
+    );
   }
 
   async generateResponse(
@@ -63,7 +96,11 @@ class OracleWorker {
     onUpdate: (partial: string) => void,
     demoMode = false,
     categories?: string[],
-    options: { vaultId?: string; requestId?: string; existingEntities?: any[] } = {}
+    options: {
+      vaultId?: string;
+      requestId?: string;
+      existingEntities?: any[];
+    } = {},
   ): Promise<void> {
     const { vaultId, requestId, existingEntities = [] } = options;
     const discoveredTitles = new Set<string>();
@@ -90,30 +127,40 @@ class OracleWorker {
               categories,
             });
 
-            const newProposals = proposals.filter(p => !discoveredTitles.has(p.title));
+            const newProposals = proposals.filter(
+              (p) => !discoveredTitles.has(p.title),
+            );
             for (const p of newProposals) {
               discoveredTitles.add(p.title);
               this.emit({
                 type: "ORACLE_ENTITY_DISCOVERED",
                 vaultId,
                 requestId,
-                payload: p
+                payload: p,
               });
             }
           }
         },
         demoMode,
-        categories
+        categories,
       );
     } catch (err: any) {
-      this.emit({ type: "ORACLE_ERROR", vaultId, requestId, payload: err.message });
+      this.emit({
+        type: "ORACLE_ERROR",
+        vaultId,
+        requestId,
+        payload: err.message,
+      });
       throw err;
     } finally {
       this.emit({ type: "ORACLE_THINKING_END", vaultId, requestId });
     }
   }
 
-  async propose(text: string, context: { existingEntities: any[]; history: any[]; categories?: any[] }): Promise<DiscoveryProposal[]> {
+  async propose(
+    text: string,
+    context: { existingEntities: any[]; history: any[]; categories?: any[] },
+  ): Promise<DiscoveryProposal[]> {
     return draftingEngine.propose(text, context);
   }
 }

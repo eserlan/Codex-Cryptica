@@ -18,7 +18,7 @@ If you need to notify the UI of a background event without a direct request-resp
 // Inside OracleWorker
 this.emit({
   type: "SOME_EVENT",
-  payload: { data: "..." }
+  payload: { data: "..." },
 });
 ```
 

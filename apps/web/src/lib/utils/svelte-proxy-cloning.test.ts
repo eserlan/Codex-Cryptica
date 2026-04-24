@@ -10,8 +10,8 @@ vi.hoisted(() => {
 
 describe("Svelte 5 Proxy Cloning (Web Worker Boundary)", () => {
   it("should fail to clone a raw proxy (Negative Case)", () => {
-    // Note: In some test environments (like JSDOM/HappyDOM), structuredClone 
-    // might be more permissive than a real Web Worker. 
+    // Note: In some test environments (like JSDOM/HappyDOM), structuredClone
+    // might be more permissive than a real Web Worker.
     // However, this simulates the constraint.
     const rawData = { name: "Elara", tags: ["npc"] };
     const proxy = $state(rawData);
@@ -24,13 +24,13 @@ describe("Svelte 5 Proxy Cloning (Web Worker Boundary)", () => {
   it("should successfully clone a snapshotted object (Positive Case)", () => {
     const rawData = { name: "Elara", tags: ["npc"] };
     const proxy = $state(rawData);
-    
+
     const snapshot = $state.snapshot(proxy);
-    
+
     // The snapshot should be a plain object
     expect(snapshot).not.toBe(proxy);
     expect(snapshot).toEqual(rawData);
-    
+
     // structuredClone should always work on the snapshot
     const cloned = structuredClone(snapshot);
     expect(cloned).toEqual(rawData);

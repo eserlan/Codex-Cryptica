@@ -38,13 +38,13 @@ describe("capability-guard", () => {
     it("should handle missing window/localStorage gracefully (worker path)", () => {
       const originalWindow = global.window;
       const originalLocalStorage = global.localStorage;
-      
+
       // Simulate non-browser environment
       delete (global as any).window;
       delete (global as any).localStorage;
-      
+
       expect(isAIEnabled()).toBe(true);
-      
+
       // Restore
       global.window = originalWindow;
       global.localStorage = originalLocalStorage;

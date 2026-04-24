@@ -161,7 +161,12 @@ describe("ChatHistoryService", () => {
 
     it("should ignore duplicate proposals by title", async () => {
       await service.init(mockDB);
-      const msg = { id: "m1", role: "assistant", content: "c", proposals: [{ title: "Existing NPC" }] } as any;
+      const msg = {
+        id: "m1",
+        role: "assistant",
+        content: "c",
+        proposals: [{ title: "Existing NPC" }],
+      } as any;
       service.messages = [msg];
 
       await service.addProposal("m1", { title: "Existing NPC" });

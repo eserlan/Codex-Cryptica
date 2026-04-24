@@ -78,6 +78,12 @@ export class SearchEngine {
           resolution: 9,
         },
         {
+          field: "aliases",
+          tokenize: "full",
+          optimize: true,
+          resolution: 9,
+        },
+        {
           field: "keywords",
           tokenize: "full",
           optimize: true,
@@ -181,10 +187,21 @@ export class SearchEngine {
 
     // Process results from all fields
     for (const fieldResult of results) {
-      const field = fieldResult.field as "title" | "content" | "keywords";
+      const field = fieldResult.field as
+        | "title"
+        | "aliases"
+        | "content"
+        | "keywords";
       const isTitle = field === "title";
+      const isAliases = field === "aliases";
       const isKeywords = field === "keywords";
-      const baseScore = isTitle ? 1.0 : isKeywords ? 0.8 : 0.5;
+      const baseScore = isTitle
+        ? 1.0
+        : isAliases
+          ? 0.9
+          : isKeywords
+            ? 0.8
+            : 0.5;
 
       this.log(
         "info",

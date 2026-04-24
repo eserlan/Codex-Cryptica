@@ -58,12 +58,13 @@ packages/
 
 ## Complexity Tracking
 
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| Hybrid RPC/Event Model     | Real-time discovery| Pure RPC requires waiting for end of call; user needs incremental feedback. |
-| Metadata Cloning           | Thread isolation   | Direct memory access (SharedArrayBuffer) is too complex for this data model. |
+| Violation              | Why Needed          | Simpler Alternative Rejected Because                                         |
+| ---------------------- | ------------------- | ---------------------------------------------------------------------------- |
+| Hybrid RPC/Event Model | Real-time discovery | Pure RPC requires waiting for end of call; user needs incremental feedback.  |
+| Metadata Cloning       | Thread isolation    | Direct memory access (SharedArrayBuffer) is too complex for this data model. |
 
 ## Phase 7: Search Visibility for Drafts
+
 - [x] Update `ContextRetrievalService` to set `includeDrafts: true` in search calls.
 - [x] Update `SearchStore` to include drafts in global search results.
 - [x] Add "Draft" badge to `SearchModal` results for better visual clarity.

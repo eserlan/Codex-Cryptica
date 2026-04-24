@@ -32,6 +32,37 @@ describe("Entity Schema Validation", () => {
     }
   });
 
+  it("should validate an entity with aliases", () => {
+    const aliasedEntity = {
+      id: "npc-5",
+      type: "npc",
+      title: "King Arthur",
+      aliases: ["Wart", "The High King"],
+    };
+
+    const result = EntitySchema.safeParse(aliasedEntity);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.aliases).toContain("Wart");
+      expect(result.data.aliases).toHaveLength(2);
+    }
+  });
+
+  it("should default aliases to an empty array when omitted", () => {
+    const entityWithoutAliases = {
+      id: "npc-6",
+      type: "npc",
+      title: "Aliasless NPC",
+    };
+
+    const result = EntitySchema.safeParse(entityWithoutAliases);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.aliases).toEqual([]);
+      expect(result.data.aliases).toHaveLength(0);
+    }
+  });
+
   it("should accept custom entity types (flexible categories)", () => {
     const customTypeEntity = {
       id: "artifact-1",

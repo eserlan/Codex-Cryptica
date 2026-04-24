@@ -4,6 +4,7 @@
   import { oracle } from "$lib/stores/oracle.svelte";
   import LabelBadge from "$lib/components/labels/LabelBadge.svelte";
   import LabelInput from "$lib/components/labels/LabelInput.svelte";
+  import AliasInput from "$lib/components/labels/AliasInput.svelte";
   import { isEntityVisible, type Entity } from "schema";
 
   let {
@@ -97,28 +98,60 @@
   class="w-full md:w-80 lg:w-96 md:border-r border-theme-border p-4 md:p-5 md:overflow-y-auto custom-scrollbar bg-theme-surface shrink-0"
   data-testid="zen-sidebar"
 >
-  <!-- Labels -->
-  <div class="mb-4 space-y-2">
-    {#if entity?.labels?.length}
-      <div class="flex flex-wrap gap-1.5">
-        {#each entity.labels as label}
-          <LabelBadge
-            {label}
-            removable={!vault.isGuest}
-            onRemove={() => {
-              if (entity) {
-                vault.removeLabel(entity.id, label).catch((err) => {
-                  console.error(`[ZenSidebar] Failed to remove label: ${err}`);
-                });
-              }
-            }}
-          />
-        {/each}
-      </div>
-    {/if}
+  <!-- Labels & Aliases -->
+  <div class="mb-4 space-y-4">
+    {#if !editState.isEditing}
+      <div class="space-y-2">
+        {#if entity?.labels?.length}
+          <div class="flex flex-wrap gap-1.5">
+            {#each entity.labels as label}
+              <LabelBadge
+                {label}
+                removable={!vault.isGuest}
+                onRemove={() => {
+                  if (entity) {
+                    vault.removeLabel(entity.id, label).catch((err) => {
+                      console.error(
+                        `[ZenSidebar] Failed to remove label: ${err}`,
+                      );
+                    });
+                  }
+                }}
+              />
+            {/each}
+          </div>
+        {/if}
 
-    {#if entity && !vault.isGuest}
-      <LabelInput entityId={entity.id} />
+        {#if entity?.aliases?.length}
+          <div class="flex flex-wrap gap-1.5">
+            {#each entity.aliases as alias}
+              <div
+                class="px-2 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-[10px] font-bold text-theme-secondary uppercase tracking-wider"
+              >
+                {alias}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {:else if !vault.isGuest}
+      <div class="space-y-4">
+        <div class="space-y-1">
+          <label
+            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
+            for="zen-labels">Labels</label
+          >
+          <LabelInput entityId={entity?.id || ""} />
+        </div>
+
+        <div class="space-y-1">
+          <label
+            class="block text-[10px] tracking-widest uppercase font-header text-theme-secondary font-bold"
+            for="zen-aliases">Aliases</label
+          >
+          <AliasInput bind:aliases={editState.aliases} />
+        </div>
+      </div>
     {/if}
   </div>
 

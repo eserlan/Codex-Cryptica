@@ -53,6 +53,7 @@
 
   // Edit State
   let editTitle = $state("");
+  let editAliases = $state<string[]>([]);
   let editContent = $state("");
   let editLore = $state("");
   let editType = $state("");
@@ -74,6 +75,7 @@
   const startEditing = () => {
     if (!entity) return;
     editTitle = entity.title;
+    editAliases = [...(entity.aliases || [])];
     editContent = entity.content || "";
     editLore = entity.lore || "";
     editType = entity.type;
@@ -94,6 +96,7 @@
     try {
       await vault.updateEntity(entity.id, {
         title: editTitle,
+        aliases: $state.snapshot(editAliases),
         content: editContent,
         lore: editLore,
         image: editImage,
@@ -156,7 +159,13 @@
       />
     {/if}
 
-    <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
+    <DetailHeader
+      {entity}
+      {isEditing}
+      bind:editTitle
+      bind:editAliases
+      {onClose}
+    />
 
     <div
       class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"

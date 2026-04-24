@@ -412,27 +412,27 @@ describe("DefaultTextGenerationService", () => {
 
   describe("merge and reconcile failure paths", () => {
     it("should handle error in generateMergeProposal catch block", async () => {
-       mockModel.generateContent.mockImplementationOnce(() => {
-         throw new Error("Direct throw");
-       });
-       await expect(
-         service.generateMergeProposal("key", "model", {}, [])
-       ).rejects.toThrow("Merge failed: Direct throw");
+      mockModel.generateContent.mockImplementationOnce(() => {
+        throw new Error("Direct throw");
+      });
+      await expect(
+        service.generateMergeProposal("key", "model", {}, []),
+      ).rejects.toThrow("Merge failed: Direct throw");
     });
 
     it("should handle error in reconcileEntityUpdate catch block", async () => {
-       mockModel.generateContent.mockImplementationOnce(() => {
-         throw new Error("Direct throw");
-       });
-       await expect(
-         service.reconcileEntityUpdate!(
-           "key",
-           "model",
-           { title: "T", type: "npc", content: "", lore: "" },
-           { chronicle: "C", lore: "L" },
-           []
-         )
-       ).rejects.toThrow("Entity reconciliation failed: Direct throw");
+      mockModel.generateContent.mockImplementationOnce(() => {
+        throw new Error("Direct throw");
+      });
+      await expect(
+        service.reconcileEntityUpdate!(
+          "key",
+          "model",
+          { title: "T", type: "npc", content: "", lore: "" },
+          { chronicle: "C", lore: "L" },
+          [],
+        ),
+      ).rejects.toThrow("Entity reconciliation failed: Direct throw");
     });
   });
 });

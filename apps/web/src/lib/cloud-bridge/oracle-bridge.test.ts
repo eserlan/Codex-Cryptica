@@ -7,7 +7,7 @@ vi.mock("$app/environment", () => ({
 }));
 
 const { releaseProxySymbol } = vi.hoisted(() => ({
-  releaseProxySymbol: Symbol("releaseProxy")
+  releaseProxySymbol: Symbol("releaseProxy"),
 }));
 
 vi.mock("comlink", () => ({
@@ -61,24 +61,31 @@ describe("OracleBridge", () => {
 
   it("should throw error if textGeneration is accessed before init", () => {
     (bridge as any).api = null;
-    expect(() => bridge.textGeneration).toThrow("[OracleBridge] Worker not initialized");
+    expect(() => bridge.textGeneration).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
   });
 
   it("should throw error if draftingEngine is accessed before init", () => {
     (bridge as any).api = null;
-    expect(() => bridge.draftingEngine).toThrow("[OracleBridge] Worker not initialized");
+    expect(() => bridge.draftingEngine).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
   });
 
   it("should handle worker initialization failure", () => {
     vi.mocked(Comlink.wrap).mockImplementationOnce(() => {
       throw new Error("Init fail");
     });
-    
+
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     const failBridge = new OracleBridge();
-    
+
     expect(failBridge.isReady).toBe(false);
-    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining("Failed to initialize OracleWorker"), expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to initialize OracleWorker"),
+      expect.any(Error),
+    );
     consoleSpy.mockRestore();
   });
 });

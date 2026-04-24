@@ -102,6 +102,7 @@ export class SearchService {
           case "ENTITY_UPDATED":
             if (
               event.patch.title !== undefined ||
+              event.patch.aliases !== undefined ||
               event.patch.content !== undefined ||
               event.patch.tags !== undefined ||
               event.patch.lore !== undefined
@@ -431,6 +432,7 @@ export class SearchService {
     return {
       id: entity.id,
       title: entity.title,
+      aliases: (entity.aliases || []).join(" "),
       content: entity.content || "",
       type: entity.type,
       path,

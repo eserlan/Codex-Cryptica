@@ -42,6 +42,14 @@ vi.mock("$lib/stores/vault.svelte", () => ({
         status: "active",
         content: "",
       },
+      {
+        id: "e4",
+        title: "King Arthur",
+        type: "npc",
+        aliases: ["Wart", "High King"],
+        status: "active",
+        content: "",
+      },
     ],
   },
 }));
@@ -114,6 +122,17 @@ describe("EntityList Filtering", () => {
     expect(screen.queryByText("City Guard")).toBeNull();
     expect(screen.queryByText("Castle Guard")).toBeNull();
     expect(screen.getByText("Merchant")).not.toBeNull();
+  });
+
+  it("surfaces entities when searching for their aliases", async () => {
+    render(EntityList);
+
+    const searchInput = screen.getByPlaceholderText("Search entities...");
+    await fireEvent.input(searchInput, { target: { value: "Wart" } });
+
+    // Should show "King Arthur" because it has the "Wart" alias
+    expect(screen.queryByText("City Guard")).toBeNull();
+    expect(screen.getByText("King Arthur")).not.toBeNull();
   });
 
   it("clears label filters when removal button is clicked", async () => {
