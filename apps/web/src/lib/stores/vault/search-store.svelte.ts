@@ -5,6 +5,7 @@ import { debugStore } from "../debug.svelte";
 
 const SEARCH_FIELDS = new Set([
   "title",
+  "aliases",
   "content",
   "lore",
   "tags",
@@ -117,6 +118,7 @@ export class SearchStore {
     await services.search.index({
       id: entity.id,
       title: entity.title,
+      aliases: (entity.aliases || []).join(" "),
       content: entity.content,
       lore: entity.lore,
       type: entity.type,

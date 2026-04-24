@@ -1,8 +1,14 @@
 # Codex-Cryptica Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-19
+Auto-generated from all feature plans. Last updated: 2026-04-24
 
 ## Active Technologies
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit web app, `zod` for schema validation, `flexsearch` via `@codex/search-engine`, `js-yaml` for frontmatter. (090-entity-aliases)
+- OPFS (via `VaultRepository`) using YAML frontmatter in Markdown files. (090-entity-aliases)
+
+- TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4 (088-adjustable-sidebars)
+- `localStorage` (via existing `uiStore` integration) (088-adjustable-sidebars)
 
 - TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine` (087-gen-oracle-content)
 - OPFS (Primary Vault), IndexedDB (Registry & Draft Metadata), LocalStorage (Auto-Archive setting) (087-gen-oracle-content)
@@ -151,14 +157,16 @@ TypeScript: Follow standard conventions
 
 ## Recent Changes
 
+- 090-entity-aliases: Added support for alternative names (aliases) to world entities with weighted search indexing and management UI in Zen Mode header.
+
 - 089-label-filtering: Added interactive label pills in entity explorer with "AND" filtering logic, active filter UI, and label-based search integration. (Refinement of 084)
 
 - 088-offload-ai-creation: Offloaded Lore Oracle's chat generation, entity discovery, and reconciliation to a background Web Worker using Comlink for improved UI responsiveness.
 
+- 088-adjustable-sidebars: Added TypeScript 5.9.3, Svelte 5 (Runes) + SvelteKit, Tailwind 4
+
 - 087-gen-oracle-content: Added TypeScript 5.9.3 (Svelte 5 Runes) + `@google/generative-ai` (Gemini SDK), `idb` (IndexedDB), `packages/oracle-engine`, `packages/vault-engine`
 
 - 0.18.0 - The Tactical Explorer Update: Added Label-Grouped Entity Explorer with persistence, VTT sidebar Entity List, and token drag-and-drop. Improved Zen Popout error handling and map coordinate bounds safety.
-
-- 085-vtt-entity-list: Added VTT sidebar "Vault Entities" section with collapsible entity list, drag-to-map token placement (host add / guest request), canvas ghost-token drag preview, and persisted sidebar collapse state. Also added label-grouped explorer view mode with collapsible label groups and persisted view state.
 
 <!-- MANUAL ADDITIONS START -->

@@ -2,7 +2,12 @@
   import type { Entity } from "schema";
   import { fade } from "svelte/transition";
   import { vault } from "$lib/stores/vault.svelte";
-  import { uiStore } from "$lib/stores/ui.svelte";
+  import {
+    uiStore,
+    MIN_RIGHT_SIDEBAR_WIDTH,
+    MAX_SIDEBAR_VW,
+  } from "$lib/stores/ui.svelte";
+  import ResizerHandle from "./layout/ResizerHandle.svelte";
 
   // Sub-components
   import DetailHeader from "./entity-detail/DetailHeader.svelte";
@@ -48,6 +53,7 @@
 
   // Edit State
   let editTitle = $state("");
+  let editAliases = $state<string[]>([]);
   let editContent = $state("");
   let editLore = $state("");
   let editType = $state("");
@@ -69,6 +75,7 @@
   const startEditing = () => {
     if (!entity) return;
     editTitle = entity.title;
+    editAliases = [...(entity.aliases || [])];
     editContent = entity.content || "";
     editLore = entity.lore || "";
     editType = entity.type;
@@ -89,6 +96,7 @@
     try {
       await vault.updateEntity(entity.id, {
         title: editTitle,
+        aliases: $state.snapshot(editAliases),
         content: editContent,
         lore: editLore,
         image: editImage,
@@ -134,13 +142,30 @@
 {#if entity}
   <aside
     transition:fade={{ duration: 200 }}
-    class="pointer-events-auto flex h-full w-full md:w-[400px] lg:w-[450px] flex-col overflow-hidden border-l border-theme-border bg-theme-surface shadow-2xl transition-all duration-300 font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50"
+    class="pointer-events-auto flex h-full w-full flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono max-md:absolute max-md:right-0 max-md:bottom-0 max-md:h-[calc(100%-60px)] relative z-50 shrink-0"
+    style:width={uiStore.isMobile ? "100%" : `${uiStore.rightSidebarWidth}px`}
     style:background-color="var(--theme-panel-fill)"
     style:background-image="var(--bg-theme-surface)"
     style:background-size="cover"
     data-testid="entity-detail-panel"
   >
-    <DetailHeader {entity} {isEditing} bind:editTitle {onClose} />
+    {#if !uiStore.isMobile}
+      <ResizerHandle
+        side="right"
+        minWidth={MIN_RIGHT_SIDEBAR_WIDTH}
+        maxWidthVW={MAX_SIDEBAR_VW}
+        currentWidth={uiStore.rightSidebarWidth}
+        onResize={(w) => uiStore.setRightSidebarWidth(w)}
+      />
+    {/if}
+
+    <DetailHeader
+      {entity}
+      {isEditing}
+      bind:editTitle
+      bind:editAliases
+      {onClose}
+    />
 
     <div
       class="flex-1 min-h-0 overflow-y-auto custom-scrollbar bg-theme-bg flex flex-col overscroll-contain"

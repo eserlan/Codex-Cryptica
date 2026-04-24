@@ -303,7 +303,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-explorer",
     title: "Entity Explorer",
     content:
-      "Quickly browse and filter all your world entities via the persistent sidebar. Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down.",
+      "Quickly browse and filter all your world entities via the persistent sidebar. Search by title, labels, or alternative names (aliases). Switch between List and Label views to group entities by their labels. Click label pills to filter the explorer, or use Ctrl/Cmd+Click to combine multiple labels for a focused drill-down.",
     icon: "icon-[lucide--database]",
   },
   "activity-bar": {
@@ -326,6 +326,13 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     content:
       "Entity Discovery controls record creation. Connection Discovery controls graph links. Keep connections on Suggest if you want proposed edges reviewed before they appear on the graph.",
     icon: "icon-[lucide--sliders-horizontal]",
+  },
+  "adjustable-sidebars": {
+    id: "adjustable-sidebars",
+    title: "Adjustable Sidebars",
+    content:
+      "Dynamically resize the left and right sidebars to suit your workspace needs. Hover over the inner edge of a sidebar and drag left or right. Your custom widths are automatically saved across sessions.",
+    icon: "icon-[lucide--separator-vertical]",
   },
   "draft-review": {
     id: "draft-review",

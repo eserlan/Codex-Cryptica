@@ -71,6 +71,7 @@ describe("SyncStore", () => {
               status: "active",
               tags: [],
               labels: [],
+              aliases: [],
               connections: [],
             },
           },

@@ -58,6 +58,7 @@ describe("ClipboardService", () => {
       connections: [],
       tags: [],
       labels: [],
+      aliases: [],
     };
 
     const result = await service.copyEntity(mockEntity);

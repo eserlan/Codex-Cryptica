@@ -7,7 +7,7 @@ import { debugStore } from "../stores/debug.svelte";
 import { entityDb } from "../utils/entity-db";
 import { vaultEventBus } from "../stores/vault/events";
 
-const INDEX_BATCH_SIZE = 50;
+const INDEX_BATCH_SIZE = 100;
 
 export class SearchService {
   private worker: Worker | null = null;
@@ -91,7 +91,10 @@ export class SearchService {
           case "SYNC_COMPLETE":
             // Trigger full content indexing sweep in background ONLY if cold boot
             if (this.needsFullContentSweep) {
-              this.indexContentInBackground(event.vaultId);
+              // Delay the background sync to let the UI finish rendering first
+              setTimeout(() => {
+                this.indexContentInBackground(event.vaultId);
+              }, 3000);
               this.needsFullContentSweep = false;
             }
             break;
@@ -99,6 +102,7 @@ export class SearchService {
           case "ENTITY_UPDATED":
             if (
               event.patch.title !== undefined ||
+              event.patch.aliases !== undefined ||
               event.patch.content !== undefined ||
               event.patch.tags !== undefined ||
               event.patch.lore !== undefined
@@ -129,40 +133,62 @@ export class SearchService {
     debugStore.log(`[SearchService] Starting background content sync...`);
     const start = performance.now();
     let indexedCount = 0;
-    const batch: any[] = [];
     const BATCH_SIZE = INDEX_BATCH_SIZE;
 
     try {
-      await entityDb.entityContent
+      const metadatas = await entityDb.graphEntities
         .where("vaultId")
         .equals(vaultId)
-        .each(async (record) => {
+        .toArray();
+
+      const metaMap = new Map(metadatas.map((m) => [m.id, m]));
+
+      let offset = 0;
+      while (true) {
+        if (this.activeVaultId !== vaultId) {
+          debugStore.log(
+            `[SearchService] Background sync aborted (vault switched).`,
+          );
+          return;
+        }
+
+        const records = await entityDb.entityContent
+          .where("vaultId")
+          .equals(vaultId)
+          .offset(offset)
+          .limit(BATCH_SIZE)
+          .toArray();
+
+        if (records.length === 0) break;
+
+        const currentBatch = [];
+        for (const record of records) {
           // We need the full metadata to prevent FlexSearch from overwriting the document
           // with empty fields, as 'add/update' replaces the entire document.
-          const metadata = await entityDb.graphEntities.get([
-            vaultId,
-            record.entityId,
-          ]);
+          const metadata = metaMap.get(record.entityId);
 
           if (metadata) {
-            batch.push({
+            currentBatch.push({
               ...metadata,
               content: record.content,
               lore: record.lore,
             });
-
-            if (batch.length >= BATCH_SIZE) {
-              const currentBatch = [...batch];
-              batch.length = 0;
-              await this.indexBatch(currentBatch);
-              indexedCount += currentBatch.length;
-            }
           }
-        });
+        }
 
-      if (batch.length > 0) {
-        await this.indexBatch(batch);
-        indexedCount += batch.length;
+        if (currentBatch.length > 0) {
+          await this.indexBatch(currentBatch);
+          indexedCount += currentBatch.length;
+        }
+
+        if (records.length < BATCH_SIZE) break;
+
+        offset += records.length;
+
+        // Stagger batches to let the main thread and IndexedDB breathe.
+        // 500ms delay between chunks provides a smooth background sync
+        // without choking UI interactivity.
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       debugStore.log(
@@ -339,14 +365,43 @@ export class SearchService {
         `[SearchService] Save started: Exporting index for ${vaultId}...`,
       );
       const start = performance.now();
-      const data = await api.exportIndex();
+      const rawData = await api.exportIndex();
+
+      const explicitKeyCount =
+        typeof rawData?.keyCount === "number" ? rawData.keyCount : undefined;
+      const segmentedKeyCount =
+        rawData?.isSegmented &&
+        rawData?.segments &&
+        typeof rawData.segments === "object"
+          ? Object.keys(rawData.segments).length
+          : undefined;
+      const encodedPayload =
+        rawData?.isEncoded && rawData && typeof rawData === "object"
+          ? "payload" in rawData
+            ? (rawData as any).payload
+            : "data" in rawData
+              ? (rawData as any).data
+              : undefined
+          : undefined;
+      const encodedKeyCount =
+        rawData?.isEncoded &&
+        encodedPayload &&
+        typeof encodedPayload === "object"
+          ? Array.isArray(encodedPayload)
+            ? encodedPayload.length
+            : Object.keys(encodedPayload).length
+          : undefined;
+      const keyCount =
+        explicitKeyCount ??
+        segmentedKeyCount ??
+        encodedKeyCount ??
+        Object.keys(rawData || {}).length;
 
       // Ensure we have actual index data (more than just docCount)
-      const keyCount = Object.keys(data).length;
-      if (data && keyCount > 1) {
+      if (rawData && keyCount > 1) {
         await entityDb.searchIndex.put({
           vaultId,
-          data,
+          data: rawData,
           updatedAt: Date.now(),
         });
         this.isDirty = false; // Reset dirty state after successful save
@@ -377,6 +432,7 @@ export class SearchService {
     return {
       id: entity.id,
       title: entity.title,
+      aliases: (entity.aliases || []).join(" "),
       content: entity.content || "",
       type: entity.type,
       path,

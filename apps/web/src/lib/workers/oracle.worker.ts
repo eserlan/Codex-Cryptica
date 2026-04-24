@@ -139,7 +139,6 @@ class OracleWorker {
 
               return true;
             });
-
             for (const p of newProposals) {
               if (proposalsEmitted >= MAX_PROPOSALS) break;
 
