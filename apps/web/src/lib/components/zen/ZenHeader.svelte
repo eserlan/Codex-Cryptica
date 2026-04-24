@@ -2,8 +2,12 @@
   import { getIconClass } from "$lib/utils/icon";
   import { categories } from "$lib/stores/categories.svelte";
   import { vault } from "$lib/stores/vault.svelte";
+  import { ui } from "$lib/stores/ui.svelte";
   import type { Entity } from "schema";
   import AliasInput from "$lib/components/labels/AliasInput.svelte";
+
+  import { page } from "$app/state";
+  import { base } from "$app/paths";
 
   let {
     entity,
@@ -28,6 +32,29 @@
     onClose: () => void;
     onPopOut?: () => void;
   }>();
+
+  const isGraphView = $derived.by(() => {
+    const path = page.url.pathname;
+    const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+    return path === base || path === normalizedBase || path === "/";
+  });
+
+  const handleFindInGraph = () => {
+    onClose();
+    // Short delay to let the modal close transition finish
+    setTimeout(() => {
+      ui.findInGraph();
+
+      const cy = (window as any).cy;
+      const nodeId = entity.id;
+      if (!cy || !nodeId) return;
+
+      const node = cy.$id(nodeId);
+      if (node.length > 0) {
+        cy.center(node);
+      }
+    }, 300);
+  };
 </script>
 
 <header
@@ -102,6 +129,17 @@
 
   <div class="flex items-center gap-2 md:gap-3">
     {#if !editState.isEditing}
+      {#if isGraphView}
+        <button
+          onclick={handleFindInGraph}
+          class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
+          title="Find in Graph"
+          aria-label="Find in Graph"
+          data-testid="zen-find-in-graph-button"
+        >
+          <span class="icon-[lucide--target] w-4 h-4"></span>
+        </button>
+      {/if}
       <button
         onclick={onCopy}
         class="px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-xs font-bold tracking-widest"
