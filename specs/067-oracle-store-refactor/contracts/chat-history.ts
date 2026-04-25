@@ -2,7 +2,8 @@ export interface IChatHistoryService {
   messages: ChatMessage[];
   lastUpdated: number;
 
-  init(): Promise<void>;
+  init(db: AppSettingsStore, vaultId: string): Promise<void>;
+  switchVault(newVaultId: string): Promise<void>;
   addMessage(msg: ChatMessage): Promise<void>;
   removeMessage(id: string): Promise<void>;
   clearMessages(): Promise<void>;
