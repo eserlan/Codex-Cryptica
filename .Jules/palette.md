@@ -26,3 +26,6 @@
 ## 2024-05-18 - Icon-Only Buttons Require Explicit aria-label
 **Learning:** While the `title` attribute provides a tooltip for sighted users on hover, it is not consistently read by all screen readers or in all contexts as an accessible name for an element. For icon-only buttons, especially in modals or highly interactive components, relying solely on `title` can result in empty or unhelpful announcements for assistive technologies.
 **Action:** Always provide an explicit `aria-label` attribute on icon-only `<button>` elements, even if a `title` attribute is already present. This ensures robust accessibility across different screen readers.
+## 2025-04-25 - Async Button Attributes
+**Learning:** For components executing async operations like Vault creation or importing, the `isLoading` state was properly disabling the button and changing its text visually, but lacked semantic context for screen readers.
+**Action:** Always complement the `disabled={isLoading}` attribute with `aria-busy={isLoading}` to ensure screen readers correctly interpret and announce the loading state.
